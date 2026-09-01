@@ -2,7 +2,7 @@
 title: Accessibility Skill Security Model
 description: STRIDE threat model for the accessibility skill scanners, runtime browser harness, generated evidence, and design-intent verification boundary
 author: microsoft/hve-core
-ms.date: 2026-08-26
+ms.date: 2026-08-31
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -126,19 +126,19 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary                                           | Assets Protected                                            | Controls Enforced                                                                                                                                                        |
-|----------------------------------------------------|-------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Path A CLI target to classifier                    | Host network position, local filesystem, argument semantics | Reject leading dash, credentials, unsupported/ambiguous schemes, network shares, remote file authorities, missing files, and directories; classify before npx            |
-| Path A remote HTTP(S) target                       | Internal services reachable from the workstation            | Loopback permitted by default; other hosts require `--allow-host` or `--allow-external`; residual redirect, DNS, subresource, and browser egress remains G-INF-1         |
-| Path A local filesystem                            | Operator-selected local content                             | Accept an explicit existing regular local path or local `file:` URI; reject non-local authority; access runs as the operator and is not repository-confined              |
-| npm registry                                       | Path A scanner integrity                                    | Exact package version; argv without shell; no lockfile integrity for npx resolution (G-SUP-1)                                                                            |
-| Path B config and CLI to Python guard              | Browser destination and host network position               | JSON Schema; absolute credential-free HTTP(S); host authorization; external authorization never overrides scheme validation                                              |
-| Path B config/environment to JavaScript navigation | Navigation and artifact identity                            | Reassert HTTP(S); route paths and trigger destinations remain same-origin; portable path-bearing identifiers are rejected before writes                                  |
-| Python to Node/npm/PowerShell child                | Caller environment and execution context                    | Argument-list spawning; full inherited environment is explicit residual G-INF-3                                                                                          |
-| Playwright to system Chrome                        | Browser identity, parser surface, network position          | Fixed channel and launch arguments; ephemeral profile; launch-bound readiness/version evidence; endpoint owns binary identity and patching (G-SUP-2)                     |
-| Browser and direct requests to web content         | Host network position and target-derived data               | Broken-link direct requests use at most five validated same-origin redirect hops; no complete browser redirect, DNS, worker, socket, download, or process-egress control |
-| Browser/runner to evidence                         | Artifact integrity and confidentiality                      | Portable identifiers, run-root containment, bounded normalized shape, hashes where supported, and target-derived content treated as untrusted                            |
-| Design-intent record to verifier                   | Human decision integrity                                    | Safe YAML loading, schema/semantic validation, digest binding, contained atomic writes, and no generator-authored override                                               |
+| Boundary                                           | Assets Protected                                            | Controls Enforced                                                                                                                                                                                                             |
+|----------------------------------------------------|-------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Path A CLI target to classifier                    | Host network position, local filesystem, argument semantics | Reject leading dash, credentials, unsupported/ambiguous schemes, network shares, remote file authorities, missing files, and directories; classify before npx                                                                 |
+| Path A remote HTTP(S) target                       | Internal services reachable from the workstation            | Loopback permitted by default; other hosts require `--allow-host` or `--allow-external`; residual redirect, DNS, subresource, and browser egress remains G-INF-1                                                              |
+| Path A local filesystem                            | Operator-selected local content                             | Accept an explicit existing regular local path or local `file:` URI; reject network-shaped resolved paths before any filesystem probe; reject non-local authority; access runs as the operator and is not repository-confined |
+| npm registry                                       | Path A scanner integrity                                    | Exact package version; argv without shell; no lockfile integrity for npx resolution (G-SUP-1)                                                                                                                                 |
+| Path B config and CLI to Python guard              | Browser destination and host network position               | JSON Schema; absolute credential-free HTTP(S); host authorization; external authorization never overrides scheme validation                                                                                                   |
+| Path B config/environment to JavaScript navigation | Navigation and artifact identity                            | Reassert HTTP(S); route paths and trigger destinations remain same-origin; portable path-bearing identifiers are rejected before writes                                                                                       |
+| Python to Node/npm/PowerShell child                | Caller environment and execution context                    | Argument-list spawning; full inherited environment is explicit residual G-INF-3                                                                                                                                               |
+| Playwright to system Chrome                        | Browser identity, parser surface, network position          | Fixed channel and launch arguments; ephemeral profile; launch-bound readiness/version evidence; endpoint owns binary identity and patching (G-SUP-2)                                                                          |
+| Browser and direct requests to web content         | Host network position and target-derived data               | Broken-link direct requests use at most five validated same-origin redirect hops; no complete browser redirect, DNS, worker, socket, download, or process-egress control                                                      |
+| Browser/runner to evidence                         | Artifact integrity and confidentiality                      | Portable identifiers, run-root containment, bounded normalized shape, hashes where supported, and target-derived content treated as untrusted                                                                                 |
+| Design-intent record to verifier                   | Human decision integrity                                    | Safe YAML loading, schema/semantic validation, digest binding, contained atomic writes, and no generator-authored override                                                                                                    |
 
 ## Assets
 
@@ -190,7 +190,7 @@ flowchart TD
 
 ### Elevation of Privilege
 
-* Network shares, non-local file authorities, leading-dash targets, and shell interpretation are rejected. Reads still occur with the invoking user's filesystem permissions.
+* Network shares, non-local file authorities, leading-dash targets, and shell interpretation are rejected. Network-shaped paths are rejected at the filesystem boundary on the resolved path, so a `file:` URI cannot decode into a UNC path and elicit an outbound request before the scan starts. Reads still occur with the invoking user's filesystem permissions.
 
 ### Risk Rating
 
@@ -414,11 +414,14 @@ flowchart TD
 
 ### Spoofing
 
-* Probe, surface, state, journey, and visual-review machine identifiers use one portable grammar and are validated before path construction.
+* Probe, route, surface, state, journey, and visual-review machine identifiers use one portable grammar and are validated before path construction.
+* Configuration-supplied aliases do not override a schema-validated identifier. The calibration journey identifier is taken from the validated `id` and re-asserted before any path is composed.
 
 ### Tampering
 
 * Runtime-owned evidence uses contained roots, regular-file checks, atomic patterns, and hashes where supported. Invalid identifiers are rejected rather than normalized into collisions.
+* Calibration evidence paths are asserted to remain beneath the resolved run root before any directory is created, so a configured identifier cannot steer a write outside that root.
+* Visual-review artifact paths carry route, surface, and state as separate validated segments, so distinct routes sharing a surface and state cannot overwrite each other's evidence.
 
 ### Repudiation
 

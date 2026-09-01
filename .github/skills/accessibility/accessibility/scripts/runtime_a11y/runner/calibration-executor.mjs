@@ -11,6 +11,7 @@ import { createCalibrationCheckpoint, validateCalibrationCheckpoint } from './ca
 import { processAtPlanCase } from './at-plan-executor.mjs';
 import { launchChrome } from './_shared.mjs';
 import { resolveRouteUrl } from './route.mjs';
+import { assertArtifactId } from './validation.mjs';
 import { captureVisualReviewEvidence } from './visual-review-executor.mjs';
 
 function stripNonAuthoritativePersistedArtifactHashes(value, seen = new WeakMap()) {
@@ -149,9 +150,14 @@ function persistJsonArtifact(targetPath, payload) {
   return { artifactPath: resolvedTargetPath, artifactHash };
 }
 
-function persistSampleEvidence({ runRoot = null, journeyId, ordinal, payload }) {
-  const resolvedRunRoot = runRoot ? path.resolve(runRoot) : process.cwd();
+export function persistSampleEvidence({ runRoot = null, journeyId, ordinal, payload }) {
+  const resolvedRunRoot = path.resolve(runRoot || process.cwd());
+  assertArtifactId(String(journeyId), 'Journey ID');
   const evidencePath = path.join(resolvedRunRoot, 'journeys', String(journeyId), String(ordinal), 'evidence.json');
+  // Containment is asserted before persistJsonArtifact so no directory is created on an escape path.
+  if (!isWithinRoot(resolvedRunRoot, evidencePath)) {
+    throw new Error(`Calibration evidence path escapes the run root: ${evidencePath}`);
+  }
   const persisted = persistJsonArtifact(evidencePath, payload);
   const artifactReference = path.relative(resolvedRunRoot, persisted.artifactPath).replace(/\\/g, '/');
   return {
@@ -322,7 +328,11 @@ function buildProfileFingerprint(config, journey = {}) {
 }
 
 function normalizeJourney(config, journey, index) {
-  const journeyId = String(journey?.journeyId || journey?.id || `journey-${index + 1}`);
+  // The schema validates `id`, so it is preferred over the `journeyId` alias.
+  const journeyId = assertArtifactId(
+    String(journey?.id || journey?.journeyId || `journey-${index + 1}`),
+    'Journey ID',
+  );
   return {
     journeyId,
     title: journey?.title || `Calibration journey ${journeyId}`,

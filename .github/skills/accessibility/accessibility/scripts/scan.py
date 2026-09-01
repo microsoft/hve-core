@@ -127,8 +127,19 @@ def normalize_results(raw_results: dict[str, Any], target: str) -> dict[str, Any
     return normalized
 
 
+def _is_network_path(path: Path) -> bool:
+    """Return True for UNC or protocol-relative paths that would reach the network."""
+    return str(path).replace("\\", "/").startswith("//")
+
+
 def _canonical_local_file(path: Path) -> str:
     """Return a canonical file URI for an existing regular local file."""
+    # Rejected before any probe so a UNC path never triggers an outbound SMB request.
+    if _is_network_path(path):
+        raise ScriptError(
+            "Network-share and protocol-relative scan targets are not supported",
+            EXIT_USAGE,
+        )
     if not path.exists():
         raise ScriptError("Local scan target does not exist", EXIT_USAGE)
     if not path.is_file():

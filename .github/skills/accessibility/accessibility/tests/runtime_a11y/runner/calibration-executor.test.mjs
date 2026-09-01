@@ -3,7 +3,7 @@
 
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
@@ -12,6 +12,7 @@ import {
   classifyAtCaseResult,
   defaultRunAtCase,
   detectGuidepupNvda,
+  persistSampleEvidence,
   probePrerequisites,
   resolveArtifactPath,
   resolveCalibrationCases,
@@ -23,6 +24,56 @@ import {
 function computeArtifactHash(filePath) {
   return createHash('sha256').update(readFileSync(filePath)).digest('hex');
 }
+
+test('resolveCalibrationCases ignores the unvalidated journeyId alias', () => {
+  const cases = resolveCalibrationCases({
+    calibration: { journeys: [{ id: 'safe', journeyId: '../../../../outside' }] },
+  });
+  assert.equal(cases.length, 1);
+  assert.equal(cases[0].journeyId, 'safe');
+});
+
+test('resolveCalibrationCases rejects a traversal-bearing journey identifier', () => {
+  assert.throws(
+    () => resolveCalibrationCases({ calibration: { journeys: [{ journeyId: '../../escape' }] } }),
+    /Journey ID/,
+  );
+  assert.throws(
+    () => resolveCalibrationCases({ calibration: { journeys: [{ id: '../../escape' }] } }),
+    /Journey ID/,
+  );
+});
+
+test('persistSampleEvidence refuses to write outside the run root', () => {
+  const runRoot = mkdtempSync(join(tmpdir(), 'a11y-calibration-escape-'));
+  const escapeRoot = mkdtempSync(join(tmpdir(), 'a11y-calibration-outside-'));
+  try {
+    assert.throws(
+      () => persistSampleEvidence({
+        runRoot,
+        journeyId: '../../escape',
+        ordinal: 0,
+        payload: { marker: 'should-not-be-written' },
+      }),
+      /Journey ID/,
+    );
+    // The containment assertion is proven independently of the identifier grammar.
+    assert.throws(
+      () => persistSampleEvidence({
+        runRoot: join(runRoot, 'nested'),
+        journeyId: '..',
+        ordinal: 0,
+        payload: { marker: 'should-not-be-written' },
+      }),
+      /Journey ID|escapes the run root/,
+    );
+    assert.equal(existsSync(join(runRoot, '..', 'escape')), false);
+    assert.deepEqual(readdirSync(escapeRoot), []);
+  } finally {
+    rmSync(runRoot, { recursive: true, force: true });
+    rmSync(escapeRoot, { recursive: true, force: true });
+  }
+});
 
 // Minimal Playwright browser double. runRealCalibrationSession opens one shared
 // page per session; without this the session launches real headed Chrome, which

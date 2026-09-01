@@ -130,6 +130,7 @@
             "required": ["id"],
             "properties": {
               "id": { "$ref": "#/$defs/artifactId" },
+              "journeyId": { "$ref": "#/$defs/artifactId" },
               "title": { "type": "string" },
               "route": { "type": "string" },
               "surfaceId": { "$ref": "#/$defs/artifactId" },

@@ -72,6 +72,14 @@ def test_given_unsupported_base_url_when_validate_then_raises_script_error(
             "bad state",
         ),
         ({"calibration": {"journeys": [{"id": "../journey"}]}}, "../journey"),
+        (
+            {
+                "calibration": {
+                    "journeys": [{"id": "safe", "journeyId": "../../escape"}]
+                }
+            },
+            "../../escape",
+        ),
     ],
 )
 def test_given_invalid_artifact_id_when_validate_then_raises_script_error(

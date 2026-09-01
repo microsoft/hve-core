@@ -162,3 +162,46 @@ def test_given_external_target_without_authorization_when_resolve_then_rejects()
 ):
     with pytest.raises(scan.ScriptError, match="--allow-host HOST"):
         scan.resolve_scan_target("https://example.com/page")
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "file:////attacker.example/share/page.html",
+        "file://localhost//attacker.example/share/page.html",
+    ],
+)
+def test_given_unc_file_uri_when_resolve_then_rejects_before_network_probe(
+    target: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    probes: list[str] = []
+    original_exists = Path.exists
+
+    def _record_exists(self: Path) -> bool:
+        probes.append(str(self))
+        return original_exists(self)
+
+    monkeypatch.setattr(Path, "exists", _record_exists)
+
+    with pytest.raises(scan.ScriptError, match="Network-share"):
+        scan.resolve_scan_target(target, allow_external=True)
+
+    assert not any(scan._is_network_path(Path(probe)) for probe in probes)
+
+
+def test_given_unc_path_when_canonical_local_file_then_rejects_without_probe(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    probes: list[str] = []
+
+    def _record_exists(self: Path) -> bool:
+        probes.append(str(self))
+        return True
+
+    monkeypatch.setattr(Path, "exists", _record_exists)
+
+    with pytest.raises(scan.ScriptError, match="Network-share"):
+        scan._canonical_local_file(Path(r"\\attacker.example\share\page.html"))
+
+    assert probes == []

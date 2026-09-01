@@ -1761,8 +1761,9 @@ test('processAtPlanCase reports navigation errors and cleans up the browser', as
   assert.equal(result.evidence.error.includes('trigger navigation failed'), true);
 });
 
-test('processAtPlanCase rejects an unsupported target before navigation', async () => {
+test('processAtPlanCase rejects an unsupported target before launching a browser', async () => {
   let navigationCount = 0;
+  let browserLaunches = 0;
   const page = {
     goto: async () => {
       navigationCount += 1;
@@ -1798,10 +1799,16 @@ test('processAtPlanCase rejects an unsupported target before navigation', async 
       async start() {},
       async stop() {},
     }),
-    browserFactory: async () => browser,
+    browserFactory: async () => {
+      browserLaunches += 1;
+      return browser;
+    },
   });
 
   assert.equal(result.status, 'error');
+  // The launch counter is the assertion that falsifies the ordering defect;
+  // navigationCount alone stays zero whether or not validation precedes launch.
+  assert.equal(browserLaunches, 0);
   assert.equal(navigationCount, 0);
   assert.match(result.evidence.error, /AT-plan target URL/);
 });

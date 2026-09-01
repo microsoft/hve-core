@@ -576,6 +576,8 @@ export async function processAtPlanCase({
   };
 
   try {
+    // Asserted here so an unsupported target is rejected before any browser is obtained.
+    assertHttpUrl(resolvedTarget, 'AT-plan target URL');
     const driverInput = {
       platform: normalizedPlatform,
       driverName: effectiveDriverName,

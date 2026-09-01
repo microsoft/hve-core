@@ -42,10 +42,22 @@ export function resolveBrowserVersion(browser, configuredVersion) {
   }
 }
 
+// Route identity is derived rather than required so existing plans stay valid.
+export function buildRouteArtifactId(route) {
+  const explicit = route?.routeId || route?.id;
+  if (explicit) {
+    return String(explicit);
+  }
+  const routePath = String(route?.path || route?.route || '/');
+  const normalized = routePath.replace(/^\/+/, '').replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
+  return normalized.slice(0, 128) || 'root';
+}
+
 export function buildVisualReviewArtifactSegment(route, stateName) {
+  const routeId = assertArtifactId(buildRouteArtifactId(route), 'Route ID');
   const surfaceId = assertArtifactId(route?.surfaceId || 'surface', 'Surface ID');
   const stateId = assertArtifactId(stateName, 'State ID');
-  return [surfaceId, stateId];
+  return [routeId, surfaceId, stateId];
 }
 
 function getVisualReviewFilters(config = {}) {
