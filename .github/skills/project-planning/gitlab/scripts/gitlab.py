@@ -926,19 +926,33 @@ def _request_bytes(
                 content_type = ""
                 if hasattr(response, "headers"):
                     content_type = str(response.headers.get("Content-Type", "") or "")
-                result = _read_capped(
-                    response,
-                    MAX_BODY_BYTES,
-                    fail_on_limit=require_json,
-                )
+                try:
+                    result = _read_capped(
+                        response,
+                        MAX_BODY_BYTES,
+                        fail_on_limit=require_json,
+                    )
+                except GitLabError as error:
+                    raise GitLabAPIError(
+                        method=method,
+                        resource=_scrub_url(url),
+                        message=str(error),
+                        request_id=_response_request_id(response),
+                    ) from error
                 if require_json and result.strip():
                     if not content_type:
-                        raise GitLabError(
-                            "unexpected Content-Type: <missing>", EXIT_FAILURE
+                        raise GitLabAPIError(
+                            method=method,
+                            resource=_scrub_url(url),
+                            message="unexpected Content-Type: <missing>",
+                            request_id=_response_request_id(response),
                         )
                     if not content_type.lower().startswith("application/json"):
-                        raise GitLabError(
-                            f"unexpected Content-Type: {content_type}", EXIT_FAILURE
+                        raise GitLabAPIError(
+                            method=method,
+                            resource=_scrub_url(url),
+                            message=f"unexpected Content-Type: {content_type}",
+                            request_id=_response_request_id(response),
                         )
                 _audit_outcome(audit_actor, method, url, "success")
                 return result

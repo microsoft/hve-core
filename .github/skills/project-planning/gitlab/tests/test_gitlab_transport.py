@@ -22,6 +22,7 @@ from test_constants import (
 )
 
 REQUEST_ENDPOINT = f"{TEST_API_URL}/test"
+REQUEST_ENDPOINT_WITH_CONTEXT = f"{REQUEST_ENDPOINT}?private_token=hidden#fragment"
 REQUEST_JSON = {"iid": 7, "title": "MR"}
 REQUEST_BODY = '{"iid": 7, "title": "MR"}'
 NON_JSON_BODY = "plain text output"
@@ -721,16 +722,48 @@ class TestGitLabTransportHardening:
         response.headers = {"Content-Type": content_type} if content_type else {}
         mocker.patch("gitlab._OPENER.open", return_value=response)
 
-        with pytest.raises(gitlab.GitLabError) as exc_info:
+        with pytest.raises(gitlab.GitLabAPIError) as exc_info:
             gitlab._request_bytes(
                 "GET",
-                REQUEST_ENDPOINT,
+                REQUEST_ENDPOINT_WITH_CONTEXT,
                 headers={"PRIVATE-TOKEN": TEST_GITLAB_TOKEN},
                 require_json=True,
             )
 
         assert exc_info.value.exit_code == gitlab.EXIT_FAILURE
-        assert expected_fragment in str(exc_info.value)
+        assert exc_info.value.method == "GET"
+        assert exc_info.value.resource == REQUEST_ENDPOINT
+        rendered = str(exc_info.value)
+        assert expected_fragment in rendered
+        assert "hidden" not in rendered
+        assert "fragment" not in rendered
+
+    def test_rejects_oversized_json_response_as_api_error(
+        self,
+        configured_gitlab: ConfiguredGitLab,
+        response_factory: ResponseFactory,
+        mocker: MockerFixture,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(gitlab, "MAX_BODY_BYTES", 16)
+        response = _json_response(response_factory, "x" * 17)
+        mocker.patch("gitlab._OPENER.open", return_value=response)
+
+        with pytest.raises(gitlab.GitLabAPIError) as exc_info:
+            gitlab._request_bytes(
+                "POST",
+                REQUEST_ENDPOINT_WITH_CONTEXT,
+                headers={"PRIVATE-TOKEN": TEST_GITLAB_TOKEN},
+                require_json=True,
+            )
+
+        assert exc_info.value.exit_code == gitlab.EXIT_FAILURE
+        assert exc_info.value.method == "POST"
+        assert exc_info.value.resource == REQUEST_ENDPOINT
+        rendered = str(exc_info.value)
+        assert "response body exceeds size limit" in rendered
+        assert "hidden" not in rendered
+        assert "fragment" not in rendered
 
     def test_allows_application_json_content_type(
         self,
