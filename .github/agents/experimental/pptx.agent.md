@@ -130,9 +130,9 @@ When validating changed or added slides, always pass a `-Slides` range that incl
    * Continue iterating until validation passes.
 3. After five iterations without passing all checks, report progress and ask the user whether to continue or accept the current state.
 4. When validation passes:
-  * Keep the generated PPTX in the working root as the canonical artifact. Make at most one final delivery copy only when the user explicitly specifies its inside- or outside-root destination. Do not copy when no destination is specified or when a delivery copy was already made.
-  * When the specified delivery destination exists, request explicit overwrite confirmation before replacing it. Do not replace it when confirmation is absent or declined.
-  * Open only the generated working-root PPTX, and only when the user explicitly requests it. Otherwise, report its path.
+    * Keep the generated PPTX in the working root as the canonical artifact. Make at most one final delivery copy only when the user explicitly specifies its inside- or outside-root destination. Do not copy when no destination is specified or when a delivery copy was already made.
+    * When the specified delivery destination exists, request explicit overwrite confirmation before replacing it. Do not replace it when confirmation is absent or declined.
+    * Open only the generated working-root PPTX, and only when the user explicitly requests it. Otherwise, report its path.
    * Report results and ask whether to continue refining or finalize.
 
 ## Required Protocol
