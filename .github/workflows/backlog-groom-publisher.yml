@@ -1,0 +1,596 @@
+name: Backlog Grooming Publisher
+
+on:
+  workflow_run:
+    workflows:
+      - Backlog Grooming Sweep
+    branches:
+      - main
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      final-run-id:
+        description: Orchestrator run that uploaded the accepted final aggregate
+        required: true
+        type: string
+      final-artifact-id:
+        description: Exact immutable final artifact ID from the reducer summary
+        required: true
+        type: string
+      final-digest:
+        description: Expected canonical SHA-256 digest of the final aggregate
+        required: true
+        type: string
+      sweep-id:
+        description: Expected immutable sweep ID
+        required: true
+        type: string
+      snapshot-digest:
+        description: Expected immutable snapshot digest
+        required: true
+        type: string
+      source-sha:
+        description: Expected orchestrator source revision
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.repository_id }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  discover:
+    name: Discover terminal publication input
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      terminal: ${{ steps.discover.outputs.terminal }}
+      final-run-id: ${{ steps.discover.outputs.final-run-id }}
+      final-artifact-id: ${{ steps.discover.outputs.final-artifact-id }}
+      sweep-id: ${{ steps.discover.outputs.sweep-id }}
+      source-sha: ${{ steps.discover.outputs.source-sha }}
+    steps:
+      - name: Resolve manual or completed-run input
+        id: discover
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          FINAL_RUN_ID: ${{ inputs.final-run-id }}
+          FINAL_ARTIFACT_ID: ${{ inputs.final-artifact-id }}
+          SWEEP_ID: ${{ inputs.sweep-id }}
+          SOURCE_SHA: ${{ inputs.source-sha }}
+        with:
+          script: |
+            const parsePositiveInteger = (name, value) => {
+              const parsed = Number(value);
+              if (!Number.isSafeInteger(parsed) || parsed <= 0) throw new Error(`${name} must be a positive safe integer`);
+              return parsed;
+            };
+            const automaticRunId = context.payload.workflow_run?.id;
+            const manualReplay = !automaticRunId;
+            const finalRunId = manualReplay
+              ? parsePositiveInteger("final-run-id", process.env.FINAL_RUN_ID)
+              : parsePositiveInteger("final-run-id", String(automaticRunId));
+            const { data: run } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: finalRunId });
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            const { data: defaultRef } = await github.rest.git.getRef({
+              ...context.repo,
+              ref: `heads/${repository.default_branch}`,
+            });
+            if (run.path !== ".github/workflows/backlog-groom-orchestrator.yml" ||
+                run.head_branch !== repository.default_branch || run.head_sha !== defaultRef.object.sha) {
+              throw new Error("Publication requires the current default-branch orchestrator revision");
+            }
+            if (manualReplay) {
+              core.setOutput("terminal", "true");
+              core.setOutput("final-run-id", String(finalRunId));
+              core.setOutput("final-artifact-id", String(parsePositiveInteger("final-artifact-id", process.env.FINAL_ARTIFACT_ID)));
+              core.setOutput("sweep-id", process.env.SWEEP_ID);
+              core.setOutput("source-sha", process.env.SOURCE_SHA);
+              return;
+            }
+            const artifacts = await github.paginate(
+              github.rest.actions.listWorkflowRunArtifacts,
+              { ...context.repo, run_id: finalRunId, per_page: 100 },
+            );
+            const pattern = new RegExp(`^backlog-grooming-sweep-v1-([a-f0-9]{64})-final-${finalRunId}$`);
+            const finals = artifacts.filter((artifact) => !artifact.expired && pattern.test(artifact.name));
+            if (finals.length === 0) {
+              core.info("Completed orchestrator run is nonterminal; publication is not required");
+              core.setOutput("terminal", "false");
+              return;
+            }
+            if (finals.length !== 1) throw new Error("Completed orchestrator run has ambiguous final artifacts");
+            core.setOutput("terminal", "true");
+            core.setOutput("final-run-id", String(finalRunId));
+            core.setOutput("final-artifact-id", String(finals[0].id));
+            core.setOutput("sweep-id", finals[0].name.match(pattern)[1]);
+            core.setOutput("source-sha", run.head_sha);
+
+  publish:
+    name: Revalidate and publish compact trusted sweep state
+    needs: discover
+    if: ${{ needs.discover.outputs.terminal == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      issues: write
+    steps:
+      - name: Authenticate exact final artifact metadata
+        id: authenticate
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          FINAL_RUN_ID: ${{ needs.discover.outputs.final-run-id }}
+          FINAL_ARTIFACT_ID: ${{ needs.discover.outputs.final-artifact-id }}
+          SWEEP_ID: ${{ needs.discover.outputs.sweep-id }}
+          SOURCE_SHA: ${{ needs.discover.outputs.source-sha }}
+        with:
+          script: |
+            const parsePositiveInteger = (name, value) => {
+              const parsed = Number(value);
+              if (!Number.isSafeInteger(parsed) || parsed <= 0) throw new Error(`${name} must be a positive safe integer`);
+              return parsed;
+            };
+            const finalRunId = parsePositiveInteger("final-run-id", process.env.FINAL_RUN_ID);
+            const { data: run } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: finalRunId });
+            const artifactId = parsePositiveInteger("final-artifact-id", process.env.FINAL_ARTIFACT_ID);
+            const sweepId = process.env.SWEEP_ID;
+            const sourceSha = process.env.SOURCE_SHA;
+            if (!/^[a-f0-9]{64}$/.test(sweepId) || !/^[a-f0-9]{40}$/.test(sourceSha)) {
+              throw new Error("sweep-id or source-sha has an invalid format");
+            }
+            const { data: artifact } = await github.rest.actions.getArtifact({ ...context.repo, artifact_id: artifactId });
+            if (artifact.expired || artifact.workflow_run?.id !== finalRunId ||
+                artifact.name !== `backlog-grooming-sweep-v1-${sweepId}-final-${finalRunId}` ||
+                run.path !== ".github/workflows/backlog-groom-orchestrator.yml" ||
+                run.head_sha !== sourceSha || run.conclusion !== "success") {
+              throw new Error("Final artifact metadata is not bound to the accepted successful orchestrator run");
+            }
+            core.setOutput("final-run-id", String(finalRunId));
+            core.setOutput("final-artifact-id", String(artifactId));
+            core.setOutput("sweep-id", sweepId);
+            core.setOutput("source-sha", sourceSha);
+      - name: Download exact final aggregate
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ steps.authenticate.outputs.final-artifact-id }}
+          path: final-input
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.authenticate.outputs.final-run-id }}
+      - name: Publish compact trusted tracker
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          FINAL_RUN_ID: ${{ steps.authenticate.outputs.final-run-id }}
+          FINAL_DIGEST: ${{ inputs.final-digest }}
+          SWEEP_ID: ${{ steps.authenticate.outputs.sweep-id }}
+          SNAPSHOT_DIGEST: ${{ inputs.snapshot-digest }}
+          SOURCE_SHA: ${{ steps.authenticate.outputs.source-sha }}
+        with:
+          script: |
+            const crypto = require("crypto");
+            const fs = require("fs");
+            const canonicalize = (value) => {
+              if (Array.isArray(value)) return `[${value.map(canonicalize).join(",")}]`;
+              if (value !== null && typeof value === "object") return `{${Object.keys(value).sort().map(
+                (key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`,
+              ).join(",")}}`;
+              return JSON.stringify(value);
+            };
+            const digest = (value) => crypto.createHash("sha256").update(canonicalize(value)).digest("hex");
+            const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value) &&
+              Object.keys(value).sort().join("|") === [...keys].sort().join("|");
+            const aggregateKeys = [
+              "schema_version", "sweep_id", "snapshot_digest", "source_sha", "completed_at",
+              "predecessor_aggregate_digest",
+              "total_snapshot_count", "completed_waves", "assessed", "deferred", "prior_cursor",
+              "next_cursor", "stop_reason", "planned_sweep_aic",
+              "checkpoint_digests", "rows", "aggregate_digest",
+            ];
+            const aggregate = JSON.parse(fs.readFileSync("final-input/aggregate.json", "utf8"));
+            const { aggregate_digest: recordedDigest, ...material } = aggregate;
+            if (!/^[a-f0-9]{64}$/.test(process.env.SWEEP_ID) ||
+                (process.env.FINAL_DIGEST && !/^[a-f0-9]{64}$/.test(process.env.FINAL_DIGEST)) ||
+                (process.env.SNAPSHOT_DIGEST && !/^[a-f0-9]{64}$/.test(process.env.SNAPSHOT_DIGEST)) ||
+                !/^[a-f0-9]{40}$/.test(process.env.SOURCE_SHA)) {
+              throw new Error("Publisher digest or source revision input has an invalid format");
+            }
+            if (!exactKeys(aggregate, aggregateKeys) || digest(material) !== recordedDigest ||
+                (process.env.FINAL_DIGEST && recordedDigest !== process.env.FINAL_DIGEST) ||
+                aggregate.schema_version !== "backlog-grooming-sweep-aggregate/v1" ||
+                aggregate.sweep_id !== process.env.SWEEP_ID ||
+                (process.env.SNAPSHOT_DIGEST && aggregate.snapshot_digest !== process.env.SNAPSHOT_DIGEST) ||
+                aggregate.source_sha !== process.env.SOURCE_SHA ||
+                (aggregate.predecessor_aggregate_digest !== null &&
+                 !/^[a-f0-9]{64}$/.test(aggregate.predecessor_aggregate_digest)) ||
+                aggregate.assessed + aggregate.deferred !== aggregate.total_snapshot_count ||
+                aggregate.checkpoint_digests.length !== aggregate.completed_waves ||
+                aggregate.rows.length !== aggregate.total_snapshot_count) {
+              throw new Error("Final sweep aggregate failed trusted publication validation");
+            }
+            const marker = "<!-- gh-aw:backlog-grooming-tracker -->";
+            const resolveTrustedTrackerState = async () => {
+              const issues = await github.paginate(
+                github.rest.issues.listForRepo,
+                { ...context.repo, state: "all", per_page: 100 },
+              );
+              const trackers = issues.filter((issue) => !issue.pull_request && issue.body?.includes(marker) &&
+                issue.user?.login === "github-actions[bot]" && issue.user?.type === "Bot");
+              if (trackers.length > 1) throw new Error("Multiple trusted backlog grooming trackers are ambiguous");
+              const tracker = trackers[0] ?? null;
+              let aggregateDigest = null;
+              if (!tracker) return { tracker, aggregateDigest, fingerprint: null };
+              const currentStateMatch = tracker.body.match(/<!-- gh-aw:backlog-grooming-state (\{.*\}) -->/);
+              if (!currentStateMatch) {
+                if (aggregate.predecessor_aggregate_digest !== null) {
+                  throw new Error("Trusted backlog grooming tracker state is malformed");
+                }
+                core.info("Trusted marker-only tracker accepted for initial publication");
+              } else {
+                const currentState = JSON.parse(currentStateMatch[1]);
+                if (!/^[a-f0-9]{64}$/.test(currentState.aggregate_digest)) {
+                  throw new Error("Trusted backlog grooming tracker aggregate digest is invalid");
+                }
+                aggregateDigest = currentState.aggregate_digest;
+              }
+              return {
+                tracker,
+                aggregateDigest,
+                fingerprint: `${tracker.id}:${tracker.updated_at}:${tracker.body}`,
+              };
+            };
+            const initialTrackerState = await resolveTrustedTrackerState();
+            if (initialTrackerState.aggregateDigest !== aggregate.aggregate_digest &&
+                initialTrackerState.aggregateDigest !== aggregate.predecessor_aggregate_digest) {
+              throw new Error("Trusted backlog grooming tracker changed after this sweep snapshot was captured");
+            }
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.FINAL_RUN_ID}`;
+            const state = JSON.stringify({
+              schema_version: aggregate.schema_version,
+              sweep_id: aggregate.sweep_id,
+              completed_at: aggregate.completed_at,
+              next_cursor: aggregate.next_cursor,
+              aggregate_digest: aggregate.aggregate_digest,
+            });
+            const report = [
+              marker,
+              `<!-- gh-aw:backlog-grooming-state ${state} -->`,
+              "",
+              "# Backlog Grooming Sweep",
+              "",
+              `Sweep \`${aggregate.sweep_id}\` completed with immutable aggregate \`${aggregate.aggregate_digest}\` in orchestrator run ${process.env.FINAL_RUN_ID}.`,
+              "",
+              "| Completed | Snapshot issues | Waves | Assessed | Deferred | Prior cursor | Next cursor | Planned AIC | Stop reason |",
+              "|---|---|---|---|---|---|---|---|---|",
+              `| ${aggregate.completed_at} | ${aggregate.total_snapshot_count} | ${aggregate.completed_waves} | ${aggregate.assessed} | ${aggregate.deferred} | ${aggregate.prior_cursor} | ${aggregate.next_cursor} | ${aggregate.planned_sweep_aic} | ${aggregate.stop_reason} |`,
+              "",
+              `Inspect the [source workflow run](${runUrl}) for retained detailed evidence.`,
+              "",
+              "All findings are advisory for maintainer review.",
+            ].join("\n");
+            if (report.length > 65000) throw new Error("Compact trusted tracker exceeds 65,000 characters");
+            const mutationTrackerState = await resolveTrustedTrackerState();
+            if (mutationTrackerState.aggregateDigest !== aggregate.aggregate_digest &&
+                mutationTrackerState.aggregateDigest !== aggregate.predecessor_aggregate_digest) {
+              throw new Error("Trusted backlog grooming tracker changed before mutation");
+            }
+            if (mutationTrackerState.aggregateDigest === aggregate.aggregate_digest) {
+              core.info("Trusted backlog grooming tracker already contains this aggregate; publication is idempotent");
+              await core.summary.addRaw(report).write();
+              return;
+            }
+            if (mutationTrackerState.fingerprint !== initialTrackerState.fingerprint) {
+              throw new Error("Trusted backlog grooming tracker identity or state changed before mutation");
+            }
+            if (!mutationTrackerState.tracker) {
+              await github.rest.issues.create({ ...context.repo, title: "Backlog grooming tracker", body: report });
+            } else {
+              await github.rest.issues.update({
+                ...context.repo,
+                issue_number: mutationTrackerState.tracker.number,
+                body: report,
+                state: "open",
+              });
+            }
+            await core.summary.addRaw(report).write();
+
+  publish-history:
+    name: Publish optional report history
+    needs:
+      - discover
+      - publish
+    if: ${{ vars.BACKLOG_GROOM_PUBLISH_GH_PAGES == 'true' }}
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Authenticate exact final artifact metadata
+        id: authenticate
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          FINAL_RUN_ID: ${{ needs.discover.outputs.final-run-id }}
+          FINAL_ARTIFACT_ID: ${{ needs.discover.outputs.final-artifact-id }}
+          SWEEP_ID: ${{ needs.discover.outputs.sweep-id }}
+          SOURCE_SHA: ${{ needs.discover.outputs.source-sha }}
+        with:
+          script: |
+            const parsePositiveInteger = (name, value) => {
+              const parsed = Number(value);
+              if (!Number.isSafeInteger(parsed) || parsed <= 0) throw new Error(`${name} must be a positive safe integer`);
+              return parsed;
+            };
+            const finalRunId = parsePositiveInteger("final-run-id", process.env.FINAL_RUN_ID);
+            const { data: run } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: finalRunId });
+            const artifactId = parsePositiveInteger("final-artifact-id", process.env.FINAL_ARTIFACT_ID);
+            const sweepId = process.env.SWEEP_ID;
+            const sourceSha = process.env.SOURCE_SHA;
+            if (!/^[a-f0-9]{64}$/.test(sweepId) || !/^[a-f0-9]{40}$/.test(sourceSha)) {
+              throw new Error("sweep-id or source-sha has an invalid format");
+            }
+            const { data: artifact } = await github.rest.actions.getArtifact({ ...context.repo, artifact_id: artifactId });
+            if (artifact.expired || artifact.workflow_run?.id !== finalRunId ||
+                artifact.name !== `backlog-grooming-sweep-v1-${sweepId}-final-${finalRunId}` ||
+                run.path !== ".github/workflows/backlog-groom-orchestrator.yml" ||
+                run.head_sha !== sourceSha || run.conclusion !== "success") {
+              throw new Error("Final artifact metadata is not bound to the accepted successful orchestrator run");
+            }
+            core.setOutput("final-run-id", String(finalRunId));
+            core.setOutput("final-artifact-id", String(artifactId));
+            core.setOutput("sweep-id", sweepId);
+            core.setOutput("source-sha", sourceSha);
+      - name: Download exact final aggregate
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ steps.authenticate.outputs.final-artifact-id }}
+          path: final-input
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.authenticate.outputs.final-run-id }}
+      - name: Publish historical report
+        id: publish
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          FINAL_RUN_ID: ${{ steps.authenticate.outputs.final-run-id }}
+          FINAL_DIGEST: ${{ inputs.final-digest }}
+          SWEEP_ID: ${{ steps.authenticate.outputs.sweep-id }}
+          SNAPSHOT_DIGEST: ${{ inputs.snapshot-digest }}
+          SOURCE_SHA: ${{ steps.authenticate.outputs.source-sha }}
+        with:
+          script: |
+            const crypto = require("crypto");
+            const fs = require("fs");
+            const canonicalize = (value) => {
+              if (Array.isArray(value)) return `[${value.map(canonicalize).join(",")}]`;
+              if (value !== null && typeof value === "object") return `{${Object.keys(value).sort().map(
+                (key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`,
+              ).join(",")}}`;
+              return JSON.stringify(value);
+            };
+            const digest = (value) => crypto.createHash("sha256").update(canonicalize(value)).digest("hex");
+            const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value) &&
+              Object.keys(value).sort().join("|") === [...keys].sort().join("|");
+            const escapeHtml = (value) => String(value ?? "")
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#39;");
+            const display = (value) => escapeHtml(
+              typeof value === "string" ? value : JSON.stringify(value ?? ""),
+            );
+            const aggregateKeys = [
+              "schema_version", "sweep_id", "snapshot_digest", "source_sha", "completed_at",
+              "predecessor_aggregate_digest",
+              "total_snapshot_count", "completed_waves", "assessed", "deferred", "prior_cursor",
+              "next_cursor", "stop_reason", "planned_sweep_aic",
+              "checkpoint_digests", "rows", "aggregate_digest",
+            ];
+            const aggregate = JSON.parse(fs.readFileSync("final-input/aggregate.json", "utf8"));
+            const { aggregate_digest: recordedDigest, ...material } = aggregate;
+            if (!/^[a-f0-9]{64}$/.test(process.env.SWEEP_ID) ||
+                (process.env.FINAL_DIGEST && !/^[a-f0-9]{64}$/.test(process.env.FINAL_DIGEST)) ||
+                (process.env.SNAPSHOT_DIGEST && !/^[a-f0-9]{64}$/.test(process.env.SNAPSHOT_DIGEST)) ||
+                !/^[a-f0-9]{40}$/.test(process.env.SOURCE_SHA)) {
+              throw new Error("Publisher digest or source revision input has an invalid format");
+            }
+            if (!exactKeys(aggregate, aggregateKeys) || digest(material) !== recordedDigest ||
+                (process.env.FINAL_DIGEST && recordedDigest !== process.env.FINAL_DIGEST) ||
+                aggregate.schema_version !== "backlog-grooming-sweep-aggregate/v1" ||
+                aggregate.sweep_id !== process.env.SWEEP_ID ||
+                (process.env.SNAPSHOT_DIGEST && aggregate.snapshot_digest !== process.env.SNAPSHOT_DIGEST) ||
+                aggregate.source_sha !== process.env.SOURCE_SHA ||
+                (aggregate.predecessor_aggregate_digest !== null &&
+                 !/^[a-f0-9]{64}$/.test(aggregate.predecessor_aggregate_digest)) ||
+                aggregate.assessed + aggregate.deferred !== aggregate.total_snapshot_count ||
+                aggregate.checkpoint_digests.length !== aggregate.completed_waves ||
+                aggregate.rows.length !== aggregate.total_snapshot_count) {
+              throw new Error("Final sweep aggregate failed trusted publication validation");
+            }
+            const reportsBranch = "backlog-grooming-reports";
+            const completedDate = String(aggregate.completed_at).slice(0, 10);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(completedDate)) throw new Error("Aggregate completion date is invalid");
+            const reportSlug = `${completedDate}-${aggregate.sweep_id.slice(0, 8)}`;
+            const reportPath = `backlog-grooming/sweeps/${reportSlug}/index.html`;
+            const aggregatePath = `backlog-grooming/sweeps/${reportSlug}/aggregate.json`;
+            const repositoryPath = context.repo.repo.toLowerCase() === `${context.repo.owner.toLowerCase()}.github.io`
+              ? ""
+              : `/${context.repo.repo}`;
+            const pagesRoot = `https://${context.repo.owner.toLowerCase()}.github.io${repositoryPath}/backlog-grooming`;
+            const reportUrl = `${pagesRoot}/sweeps/${reportSlug}/`;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.FINAL_RUN_ID}`;
+            const rowHtml = aggregate.rows.map((row) => [
+              "<tr>",
+              `<th scope="row"><a href="${escapeHtml(`${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/issues/${row.issue}`)}">#${escapeHtml(row.issue)}</a></th>`,
+              `<td>${display(row.title)}</td>`,
+              `<td>${display(row.disposition)}</td>`,
+              `<td>${display(row.assessment_status)}</td>`,
+              `<td>${display(row.grooming_finding)}</td>`,
+              `<td>${display(row.recommended_next_step)}</td>`,
+              `<td><details><summary>Evidence for issue #${escapeHtml(row.issue)}</summary><dl><dt>Selection</dt><dd>${display(row.selection_reason)}</dd><dt>Activity and ownership</dt><dd>${display(row.activity_and_ownership_context)}</dd><dt>Acceptance signals</dt><dd>${display(row.acceptance_signals)}</dd><dt>Repository evidence</dt><dd>${display(row.repository_evidence)}</dd><dt>Lineage</dt><dd>${display(row.lineage_evidence)}</dd><dt>Similarity</dt><dd>${display(row.similarity_outcome)}</dd></dl></details></td>`,
+              "</tr>",
+            ].join("")).join("");
+            const reportHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'"><title>Backlog grooming ${escapeHtml(reportSlug)}</title><style>body{font-family:ui-sans-serif,system-ui,sans-serif;line-height:1.45;margin:0;color:#202124;background:#f6f8fa}main{max-width:1600px;margin:auto;padding:2rem}h1{margin-bottom:.25rem}.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.75rem;margin:1.5rem 0}.meta div{background:#fff;border:1px solid #d0d7de;padding:.75rem}.table-wrap{overflow:auto;background:#fff;border:1px solid #d0d7de}table{border-collapse:collapse;width:100%;min-width:1100px}th,td{border-bottom:1px solid #d8dee4;padding:.65rem;text-align:left;vertical-align:top}th{background:#eef1f4;position:sticky;top:0}td{max-width:28rem;white-space:pre-wrap;overflow-wrap:anywhere}summary{cursor:pointer;font-weight:600}dt{font-weight:600;margin-top:.5rem}dd{margin-left:0}a{color:#0969da}</style></head><body><main><p><a href="../../">Backlog grooming history</a></p><h1>Backlog grooming sweep</h1><p>Advisory findings for maintainer review. No candidate issue was mutated.</p><section class="meta"><div><strong>Completed</strong><br>${display(aggregate.completed_at)}</div><div><strong>Snapshot</strong><br>${aggregate.total_snapshot_count} issues</div><div><strong>Assessed</strong><br>${aggregate.assessed}</div><div><strong>Deferred</strong><br>${aggregate.deferred}</div><div><strong>Waves</strong><br>${aggregate.completed_waves}</div><div><strong>Source</strong><br><a href="${escapeHtml(runUrl)}">orchestrator run ${escapeHtml(process.env.FINAL_RUN_ID)}</a></div></section><p><strong>Aggregate digest:</strong> <code>${escapeHtml(aggregate.aggregate_digest)}</code></p><div class="table-wrap"><table><thead><tr><th>Issue</th><th>Title</th><th>Disposition</th><th>Status</th><th>Finding</th><th>Recommended next step</th><th>Evidence</th></tr></thead><tbody>${rowHtml}</tbody></table></div></main></body></html>`;
+            const accessibleReportHtml = reportHtml.replace(
+              "<table><thead><tr><th>Issue</th><th>Title</th><th>Disposition</th><th>Status</th><th>Finding</th><th>Recommended next step</th><th>Evidence</th></tr>",
+              `<table><caption>Issue assessments for ${escapeHtml(reportSlug)}</caption><thead><tr><th scope="col">Issue</th><th scope="col">Title</th><th scope="col">Disposition</th><th scope="col">Status</th><th scope="col">Finding</th><th scope="col">Recommended next step</th><th scope="col">Evidence</th></tr>`,
+            );
+
+            let branchRef;
+            let branchCommit;
+            let history = [];
+            try {
+              ({ data: branchRef } = await github.rest.git.getRef({ ...context.repo, ref: `heads/${reportsBranch}` }));
+              ({ data: branchCommit } = await github.rest.git.getCommit({ ...context.repo, commit_sha: branchRef.object.sha }));
+              try {
+                const { data: historyFile } = await github.rest.repos.getContent({
+                  ...context.repo,
+                  path: "backlog-grooming/history.json",
+                  ref: reportsBranch,
+                });
+                if (Array.isArray(historyFile) || historyFile.type !== "file" || !historyFile.content) {
+                  throw new Error("Report history is not a regular file");
+                }
+                history = JSON.parse(Buffer.from(historyFile.content, "base64").toString("utf8"));
+              } catch (error) {
+                if (error.status !== 404) throw error;
+              }
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              const { data: repository } = await github.rest.repos.get({ ...context.repo });
+              const { data: defaultRef } = await github.rest.git.getRef({
+                ...context.repo,
+                ref: `heads/${repository.default_branch}`,
+              });
+              branchRef = null;
+              ({ data: branchCommit } = await github.rest.git.getCommit({
+                ...context.repo,
+                commit_sha: defaultRef.object.sha,
+              }));
+            }
+            if (!Array.isArray(history)) throw new Error("Report history must be an array");
+            const existing = history.find((entry) => entry.aggregate_digest === aggregate.aggregate_digest);
+            const collision = history.find((entry) => entry.slug === reportSlug &&
+              entry.aggregate_digest !== aggregate.aggregate_digest);
+            if (collision) throw new Error("Immutable report path collides with a different aggregate");
+            let reportCommitSha = branchRef?.object.sha;
+            if (!existing) {
+              const entry = {
+                slug: reportSlug,
+                completed_at: aggregate.completed_at,
+                sweep_id: aggregate.sweep_id,
+                aggregate_digest: aggregate.aggregate_digest,
+                assessed: aggregate.assessed,
+                deferred: aggregate.deferred,
+                total_snapshot_count: aggregate.total_snapshot_count,
+                source_run_id: process.env.FINAL_RUN_ID,
+              };
+              history = [entry, ...history].sort((left, right) =>
+                String(right.completed_at).localeCompare(String(left.completed_at)));
+              const historyRows = history.map((item) => `<tr><th scope="row"><a href="sweeps/${escapeHtml(item.slug)}/">${escapeHtml(item.completed_at)}</a></th><td>${item.assessed}</td><td>${item.deferred}</td><td>${item.total_snapshot_count}</td><td><code>${escapeHtml(item.aggregate_digest)}</code></td></tr>`).join("");
+              const indexHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>Backlog grooming history</title><style>body{font-family:ui-sans-serif,system-ui,sans-serif;line-height:1.5;max-width:1100px;margin:auto;padding:2rem;color:#202124}table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid #d0d7de;padding:.75rem;text-align:left}code{overflow-wrap:anywhere}a{color:#0969da}</style></head><body><main><h1>Backlog grooming history</h1><p>Immutable advisory reports generated from authenticated sweep artifacts.</p><table><thead><tr><th>Completed</th><th>Assessed</th><th>Deferred</th><th>Snapshot</th><th>Aggregate digest</th></tr></thead><tbody>${historyRows}</tbody></table></main></body></html>`;
+              const accessibleIndexHtml = indexHtml.replace(
+                "<table><thead><tr><th>Completed</th><th>Assessed</th><th>Deferred</th><th>Snapshot</th><th>Aggregate digest</th></tr>",
+                "<table><caption>Published backlog grooming sweeps</caption><thead><tr><th scope=\"col\">Completed</th><th scope=\"col\">Assessed</th><th scope=\"col\">Deferred</th><th scope=\"col\">Snapshot</th><th scope=\"col\">Aggregate digest</th></tr>",
+              );
+              const latest = `${JSON.stringify(entry, null, 2)}\n`;
+              const files = [
+                [reportPath, accessibleReportHtml],
+                [aggregatePath, `${JSON.stringify(aggregate, null, 2)}\n`],
+                ["backlog-grooming/history.json", `${JSON.stringify(history, null, 2)}\n`],
+                ["backlog-grooming/latest.json", latest],
+                ["backlog-grooming/index.html", accessibleIndexHtml],
+              ];
+              const tree = [];
+              for (const [path, content] of files) {
+                const { data: blob } = await github.rest.git.createBlob({
+                  ...context.repo,
+                  content: Buffer.from(content).toString("base64"),
+                  encoding: "base64",
+                });
+                tree.push({ path, mode: "100644", type: "blob", sha: blob.sha });
+              }
+              const { data: nextTree } = await github.rest.git.createTree({
+                ...context.repo,
+                base_tree: branchCommit.tree.sha,
+                tree,
+              });
+              const { data: nextCommit } = await github.rest.git.createCommit({
+                ...context.repo,
+                message: `docs(backlog): publish sweep ${reportSlug}`,
+                tree: nextTree.sha,
+                parents: [branchCommit.sha],
+              });
+              if (branchRef) {
+                await github.rest.git.updateRef({
+                  ...context.repo,
+                  ref: `heads/${reportsBranch}`,
+                  sha: nextCommit.sha,
+                  force: false,
+                });
+              } else {
+                await github.rest.git.createRef({
+                  ...context.repo,
+                  ref: `refs/heads/${reportsBranch}`,
+                  sha: nextCommit.sha,
+                });
+              }
+              reportCommitSha = nextCommit.sha;
+            }
+            if (!reportCommitSha) throw new Error("Report history commit could not be resolved");
+            const { data: authenticatedReportRef } = await github.rest.git.getRef({
+              ...context.repo,
+              ref: `heads/${reportsBranch}`,
+            });
+            if (authenticatedReportRef.object.type !== "commit" ||
+                authenticatedReportRef.object.sha !== reportCommitSha) {
+              throw new Error("Report history commit is not the current authenticated branch head");
+            }
+            core.setOutput("report-commit-sha", reportCommitSha);
+            await core.summary.addRaw(`[View the optional detailed report](${reportUrl}).`).write();
+      - name: Record immutable Pages provenance
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          REPORT_COMMIT_SHA: ${{ steps.publish.outputs.report-commit-sha }}
+        with:
+          script: |
+            const crypto = require("crypto");
+            const fs = require("fs");
+            if (!/^[a-f0-9]{40}$/.test(process.env.REPORT_COMMIT_SHA)) {
+              throw new Error("Authenticated report commit is required for Pages provenance");
+            }
+            const material = {
+              schema_version: "backlog-grooming-pages-provenance/v1",
+              publisher_run_id: String(context.runId),
+              publisher_run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT),
+              publisher_source_sha: context.sha,
+              repository_id: String(context.payload.repository.id),
+              report_commit_sha: process.env.REPORT_COMMIT_SHA,
+            };
+            const canonicalize = (value) => {
+              if (Array.isArray(value)) return `[${value.map(canonicalize).join(",")}]`;
+              if (value !== null && typeof value === "object") return `{${Object.keys(value).sort().map(
+                (key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`,
+              ).join(",")}}`;
+              return JSON.stringify(value);
+            };
+            const provenance = {
+              ...material,
+              provenance_digest: crypto.createHash("sha256").update(canonicalize(material)).digest("hex"),
+            };
+            fs.mkdirSync("pages-provenance", { recursive: true });
+            fs.writeFileSync(
+              "pages-provenance/provenance.json",
+              `${JSON.stringify(provenance, null, 2)}\n`,
+            );
+      - name: Upload immutable Pages provenance
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backlog-grooming-pages-provenance-${{ github.run_id }}
+          path: pages-provenance/provenance.json
+          if-no-files-found: error
+          retention-days: 30
