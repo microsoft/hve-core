@@ -37,7 +37,7 @@ The agent runs in one of two modes. Only the interactive mode is ever surfaced t
 * **Workflow (automation, hidden):** used only when an automation host (such as a gh-aw workflow) explicitly declares workflow autonomy mode. In this mode:
   * Do not pause for human input. Skip Step 2 (Human Scope Confirmation), Step 3 (Perspective and Depth Selection), and Step 5 (Human-Steered Walk-Back Loop) entirely.
   * Use the perspectives and depth the host supplies. When the host omits them, default to `full` perspectives at `basic` depth.
-  * Treat the Step 1 change brief and auto-detected hotspots as the confirmed scope without further prompting.
+  * Use the Step 1 change brief and auto-detected hotspots as the working scope without further prompting. Keep generated scope, evidence, and recommendations labeled as automation-derived rather than human-confirmed.
   * When the host runtime exposes no subagent capability, apply each selected perspective's lens inline in a single pass instead of dispatching subagents in Step 6.
   * Defer output, persistence, and submission to the host's output contract instead of writing the interactive findings report.
 
@@ -61,6 +61,7 @@ The review workflow is defined by the `code-review` skill, not duplicated here. 
 
 * `SKILL.md` (skill entrypoint)
 * `references/context-bootstrap.md`
+* `references/change-risk-model.md`
 * `references/depth-tiers.md`
 * `references/severity-taxonomy.md`
 * `references/output-formats.md`
@@ -89,8 +90,9 @@ Read every external file exactly once using a single full-range `read_file` call
 2. Compute the diff once. Use the Decision Tree in #file:../../instructions/coding-standards/code-review/diff-computation.instructions.md to determine the diff type, then generate the structured diff via the `pr-reference` skill to an explicit output path and produce the changed-file list. Run the bash (`generate.sh` / `list-changed-files.sh`) or PowerShell (`generate.ps1` / `list-changed-files.ps1`) variant for the current platform, using the exact per-platform invocations from the instructions file: exclude `min.js,min.css,map`, output to `.copilot-tracking/pr/pr-reference.xml`, and exclude deleted files from the changed-file list. Apply the Non-Source Artifact Skip List and Large Diff Handling rules. Capture the base branch, branch name, changed-file surface, extensions, and the diff output path passed to the output flag.
 3. Apply the working-tree supplement from the Feature Branch Diff case in diff-computation.instructions.md to capture untracked, unstaged, and staged files. Merge surviving paths into the changed-file list, deduplicating against the committed diff.
 4. Draft a concise **change brief** following the context-bootstrap reference: what the change does, the primary files or modules involved, the likely risk areas, and notable test or rollout considerations.
-5. Auto-detect **hotspot candidates** from the diff and file paths — files touching authentication, authorization, cryptography, parsing, deserialization, persistence, secrets handling, networking, or concurrency. Also tag specialist concern signal classes from the cross-skill-forks registry for security, supply-chain, RAI or AI, accessibility, sustainability or efficiency, and privacy or PII so later surfacing can reuse the same detection pass.
-6. **Resolve PR context when one exists.** When the run targets a pull request (a PR number or URL was supplied, or the current branch maps to an open PR), fetch the PR deliverable metadata once with the available poster (for example `gh pr view <pr> --json number,url,state,mergeable,mergeStateStatus,baseRefName,headRefName,body,statusCheckRollup,closingIssuesReferences` and `gh issue view <n> --json number,title,body` for each linked issue), and parse the PR-template checkboxes from the body. Capture the result as the `prContext` object for `diff-state.json`. When no PR is resolvable (local-only review) or no poster capability is available, omit `prContext`.
+5. Gather `changeRiskEvidence` using the six categories and evidence states in the change-risk reference. Cite concrete evidence, keep missing inputs `unavailable`, identify agent-generated qualitative evidence as proposed, and derive an advisory `recommendedDepth`; use `standard` for incomplete or inconclusive evidence unless observed evidence supports `comprehensive`.
+6. Auto-detect **hotspot candidates** from the diff and file paths: files touching authentication, authorization, cryptography, parsing, deserialization, persistence, secrets handling, networking, or concurrency. Also tag specialist concern signal classes from the cross-skill-forks registry for security, supply-chain, RAI or AI, accessibility, sustainability or efficiency, and privacy or PII so later surfacing can reuse the same detection pass.
+7. **Resolve PR context when one exists.** When the run targets a pull request (a PR number or URL was supplied, or the current branch maps to an open PR), fetch the PR deliverable metadata once with the available poster (for example `gh pr view <pr> --json number,url,state,mergeable,mergeStateStatus,baseRefName,headRefName,body,statusCheckRollup,closingIssuesReferences` and `gh issue view <n> --json number,title,body` for each linked issue), and parse the PR-template checkboxes from the body. Capture the result as the `prContext` object for `diff-state.json`. When no PR is resolvable (local-only review) or no poster capability is available, omit `prContext`.
 
 If diff computation fails or the diff is empty, report the error and stop. Do not advance to orientation, scoping, or dispatch without a valid diff.
 
@@ -98,15 +100,15 @@ If diff computation fails or the diff is empty, report the error and stop. Do no
 
 1. Build a factual orientation walkthrough from the full diff using the walkthrough-protocol reference. Summarize changed areas, entry points, control flow, data flow, blast radius, and likely hotspots. Keep the walkthrough in Register 1 and do not assign severity, verdicts, or recommendations there.
 2. Present an enumerated dispatch board derived from the walkthrough and the confirmed scope. Each board item should include `id`, `area`, `status`, `register`, `summary`, `links`, and `selectableSymbols`, and should be seeded from the change brief, hotspots, and diff surface.
-3. Pause for human confirmation before deeper dispatch. Invite the human to confirm or edit the walkthrough, bookmark or reject board items, and request a full sweep when they want a batch pass across the current board.
-4. Persist the walkthrough narrative, the approved board items, and the human choices in a canonical dispatch manifest. For workflow mode, skip the pause and use a batch sweep of all board items when the host supplies no explicit board selection.
+3. Present the change-risk evidence and advisory recommendation with the walkthrough. Pause for human confirmation before deeper dispatch. Invite the human to correct the evidence, confirm or edit the walkthrough, bookmark or reject board items, and request a full sweep when they want a batch pass across the current board.
+4. Carry the corrected evidence forward for the canonical `diff-state.json` write in Step 4. Carry the walkthrough narrative, approved board items, and human choices forward for the canonical dispatch-manifest write. Do not duplicate `changeRiskEvidence` in the dispatch manifest. For workflow mode, skip the pause and use a batch sweep of all board items when the host supplies no explicit board selection.
 
 ### Step 3: Perspective and Depth Selection
 
 After the orientation walkthrough and board are confirmed, pause again to collect two independent choices:
 
 1. **Perspectives** (multi-select): present `functional`, `standards`, `accessibility`, `pr`, `security`, and `readiness`, plus `full`. Pre-populate a **recommended default derived from the confirmed change scope** — for example, propose `accessibility` only when a UI/markup/document surface is in scope, propose `security` when a hotspot touches auth, crypto, parsing, deserialization, secrets, or networking, and propose `readiness` when changed documentation is in scope or a PR/issue context was resolved in Step 1. The human adjusts the selection. Selecting `full` expands to all six perspectives.
-2. **Depth level** (single choice): `basic` (Tier 1), `standard` (Tier 2, default), or `comprehensive` (Tier 3), applied as a verification-rigor dial per the depth-tiers reference. Depth does not add or remove perspectives — it controls how deeply each selected perspective verifies the confirmed scope and hotspots.
+2. **Depth level** (single choice): present the corrected `changeRiskEvidence` and `recommendedDepth`, then ask the human to select `basic` (Tier 1), `standard` (Tier 2, default), or `comprehensive` (Tier 3). Record the selection as `depthTier` and explain the choice, including any difference from the recommendation, in `depthRationale`. Depth does not add or remove perspectives; it controls how deeply each selected perspective verifies the confirmed scope and hotspots.
 
 Wait for the human's selections before dispatching.
 
@@ -126,7 +128,24 @@ Wait for the human's selections before dispatching.
      "extensions": ["<ext1>", "<ext2>"],
      "diffPatchPath": ".copilot-tracking/pr/pr-reference.xml",
      "findingsFolder": ".copilot-tracking/reviews/code-reviews/<sanitized-branch>/",
+     "reviewStateProvenance": {
+       "scope": "<human-confirmed|automation-derived>",
+       "changeRiskEvidence": "<human-confirmed|automation-derived>",
+       "recommendedDepth": "automation-derived",
+       "depthTier": "<human-confirmed|automation-derived>",
+       "depthRationale": "<human-confirmed|automation-derived>"
+     },
+     "changeRiskEvidence": [
+       { "signal": "change-scope", "availability": "observed", "evidence": "<concise evidence>" },
+       { "signal": "path-criticality", "availability": "qualitative", "evidence": "<concise evidence>" },
+       { "signal": "history", "availability": "unavailable", "evidence": "<why unavailable>" },
+       { "signal": "test-presence", "availability": "observed", "evidence": "<concise evidence>" },
+       { "signal": "coverage", "availability": "unavailable", "evidence": "<why unavailable>" },
+       { "signal": "rollback", "availability": "qualitative", "evidence": "<concise evidence>" }
+     ],
+     "recommendedDepth": "<basic|standard|comprehensive>",
      "depthTier": "<basic|standard|comprehensive>",
+    "depthRationale": "<interactive human rationale or workflow host/default rationale and any difference from recommendedDepth>",
      "selectedPerspectives": ["<perspective>"],
      "hotspots": ["<confirmed hotspot path>"],
      "outOfScope": ["<excluded path or area>"],
@@ -146,7 +165,7 @@ Wait for the human's selections before dispatching.
    }
    ```
 
-   The `untrackedFiles` array lists paths with no committed diff; subagents read those files in full and treat all lines as in-scope. Omit or empty it when none exist. Set `diffPatchPath` to the same path passed to `--output` in Step 1 (default `.copilot-tracking/pr/pr-reference.xml`); the two must stay in sync so the diff path is never implicitly coupled to the skill's default output location. Include the `prContext` object only when Step 1 resolved a pull request; the Readiness perspective reads it for PR description, linked-issue, checkbox, and mergeable-state checks and skips those checks when it is absent.
+    The `untrackedFiles` array lists paths with no committed diff; subagents read those files in full and treat all lines as in-scope. Omit or empty it when none exist. `reviewStateProvenance` records the origin of the confirmed scope and decision state without expressing confidence. In interactive mode, mark `scope`, `changeRiskEvidence`, `depthTier`, and `depthRationale` as `human-confirmed`, while `recommendedDepth` remains `automation-derived` and advisory. In workflow mode, mark all five values as `automation-derived`. `changeRiskEvidence` contains exactly the six checklist signals, and each entry records `observed`, `unavailable`, or `qualitative` evidence. In interactive mode, `depthTier` is the human-selected depth and `depthRationale` explains that selection and any divergence. Set `diffPatchPath` to the same path passed to `--output` in Step 1 (default `.copilot-tracking/pr/pr-reference.xml`); the two must stay in sync so the diff path is never implicitly coupled to the skill's default output location. Include the `prContext` object only when Step 1 resolved a pull request; the Readiness perspective reads it for PR description, linked-issue, checkbox, and mergeable-state checks and skips those checks when it is absent.
 3. Write a canonical `dispatch-manifest.json` alongside the diff-state so the run can track `phaseGates`, `currentPhase`, `nextActions`, and the board items. Record the orientation step as complete once the human accepts the walkthrough and selected board items.
 
 ### Step 5: Human-Steered Walk-Back Loop

@@ -3,7 +3,7 @@ title: Dependency Pinning
 description: How HVE Core enforces dependency pinning across GitHub Actions, npm, pip, and shell downloads with automated CI validation
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-08-24
 ms.topic: concept
 keywords:
   - dependency pinning
@@ -252,7 +252,7 @@ flowchart LR
 ## Related Resources
 
 * [Security Model](security-model.md): Supply chain threats S-1, S-2, SC-1, SC-4, and SC-6
-* [Branch Protection](../contributing/branch-protection.md): Required status checks including dependency pinning
+* [Branch Protection](../contributing/branch-protection.md): The `main` ruleset, its required status checks, and how CI gates merges
 
 ---
 
