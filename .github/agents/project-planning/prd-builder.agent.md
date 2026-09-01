@@ -40,13 +40,29 @@ The PRD Builder runs the seven-phase lifecycle defined by the `requirements-auth
 | Validate  | `SKILL.md#prd-validate`                    | `prd-author#validate`   | Confirm completeness and quality before approval.                         |
 | Finalize  | `SKILL.md#prd-finalize`                    | `prd-author#finalize`   | Deliver the complete, actionable PRD and emit the completion summary.     |
 
+### Proposal Response Extension
+
+Activate the `proposal-response` skill only when the user explicitly asks for proposal, RFI, RFP, questionnaire, tender, bid-response, or reusable response-evidence work. Load `references/builder-extension-contract.md` from that skill with `read_file` before the first operation; it owns the shared activation, session-state, rejected-operation, and reporting contract, which is not duplicated here.
+
+This agent binds three operations:
+
+| Operation    | Binding                                                                                                                                                                                          |
+|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `analyze`    | Normalize the supplied question set and any approved PRD the user names into source questions and evidence needs.                                                                                |
+| `contribute` | Invoke with `domain: product`. Supply only approved product-owned PRD or conversation evidence, and preserve unsupported claims, estimates, exceptions, and human decisions as unresolved items. |
+| `draft`      | Render responses from reviewed claims across every domain. Drafting grants no business-domain authority; do not create or reclassify business-owned claims.                                      |
+
+Append `proposal-response#contribute:product` to `state.extensionsLoaded` once. Render the product evidence appendix or the shared response draft only when the user explicitly requests that rendering.
+
+Ordinary PRD creation, refinement, resume, BRD handoff ingestion, quality review, and backlog handoff requests do not activate this extension.
+
 ### Assess
 
 Load `prd-author#assess` first. Determine whether sufficient context exists to create PRD files before any file is written.
 
 * Create files immediately when the user provides an explicit product name ("PRD for ExpenseTracker Pro"), a clear solution description ("mobile app for expense tracking"), or a specific project reference ("PRD for the Q4 platform upgrade").
 * Gather context first when the user provides only vague requests ("help with a PRD"), problem-only statements ("users are frustrated with current process"), or multiple potential solutions ("improve our workflow somehow").
-* Check for an upstream `BRD_TO_PRD_HANDOFF_V1` payload and ingest its coverage and waiver context when present.
+* Check for an upstream `BRD_TO_PRD_HANDOFF_V1` artifact path, read and validate its payload, and ingest its coverage and waiver context when present.
 * Check for an upstream feasibility-to-PRD handoff and apply the consumer rules in `requirements-author#prd-assess`: recognize it by `kind`, verify required metadata, verdict field presence, and a readable workspace-relative study path. Preserve BRD authority and treat feasibility as supplementary evidence.
 * For a new session, carry the handoff kind, path, ingest timestamp, verdict, and study revision identifier in the Assess output until Create writes state. For an existing session, update `feasibilityHandoff` directly. Do not store raw candidate content in state.
 * Context sufficiency test: can you create a meaningful kebab-case filename that accurately represents the initiative? If yes, proceed to Create. If no, stay in Discover and ask clarifying questions first.
@@ -126,6 +142,9 @@ Maintain state in `.copilot-tracking/prd-sessions/<prd-name>.state.json`:
   "currentPhase": "requirements-gathering",
   "disclaimerShownAt": null,
   "phaseSkillsLoaded": ["prd-author#assess", "prd-author#discover"],
+  "extensionsLoaded": ["proposal-response#contribute:product"],
+  "proposalResponseArtifacts": [".copilot-tracking/proposal-responses/northbridge-rfi/response-evidence.yml"],
+  "sourceBrdHandoff": ".copilot-tracking/brd-sessions/supplier-onboarding.handoff.yml",
   "questionsAsked": [
     "product-name", "target-users", "core-problem", "success-metrics"
   ],
@@ -161,8 +180,9 @@ Maintain state in `.copilot-tracking/prd-sessions/<prd-name>.state.json`:
 4. When processing references, update `referencesProcessed` status.
 5. At natural breakpoints, save current progress and next actions.
 6. Before quality checks, record validation status.
-7. When Assess validates a feasibility handoff before state exists, Create writes the normalized metadata atomically with the state skeleton. On resume, update the same feasibility-specific object directly. State written before this contract may carry `schemaVersion` instead of `kind`; read it without error and rewrite it to the current shape on the next feasibility metadata update.
-8. Build stops when feasibility ingestion was reported but `feasibilityHandoff` is absent or its path cannot be read. Candidate content remains in the handoff artifact, not state.
+7. Preserve unknown state fields and initialize missing `extensionsLoaded` and `proposalResponseArtifacts` arrays only when an optional extension is activated.
+8. When Assess validates a feasibility handoff before state exists, Create writes the normalized metadata atomically with the state skeleton. On resume, update the same feasibility-specific object directly. State written before this contract may carry `schemaVersion` instead of `kind`; read it without error and rewrite it to the current shape on the next feasibility metadata update.
+9. Build stops when feasibility ingestion was reported but `feasibilityHandoff` is absent or its path cannot be read. Candidate content remains in the handoff artifact, not state.
 
 #### Resume Workflow
 

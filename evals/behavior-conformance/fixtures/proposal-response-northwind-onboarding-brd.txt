@@ -1,0 +1,21 @@
+---
+title: Northwind Supplier Onboarding BRD
+description: Approved business requirements for supplier onboarding modernization.
+version: 1.3
+---
+
+## Business Goals
+
+* BG-001: Reduce supplier onboarding cycle time.
+
+## Functional Requirements
+
+* FR-021: The platform records each supplier's tax identity before activation.
+
+## Non-Functional Requirements
+
+* NFR-014: Supplier portal availability target is 99.9% monthly.
+
+## Constraints
+
+* CON-003: Supplier data stays within the customer's contracted region.

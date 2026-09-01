@@ -3,7 +3,7 @@ title: Coding Standards/Powershell/Pester
 description: Instructions for Pester testing conventions
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,11 @@ Instructions for Pester testing conventions
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these instructions whenever a `.Tests.ps1` file adds or changes Pester
+coverage, fixtures, mocks, or cleanup. They extend the PowerShell conventions
+with repository test layout and Pester 5 patterns; run tests through the
+repository test runner when it is available rather than invoking Pester
+directly.
 
 ## Example usage
 
