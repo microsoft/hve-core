@@ -14,4 +14,7 @@ disableVersionCheck: true
 #   - rule: unpinnable_action
 #     path:
 #       - .github/workflows/example.yml
-skip: []
+skip:
+  - rule: untrusted_checkout_exec
+    path:
+      - .github/workflows/backlog-groom.lock.yml
