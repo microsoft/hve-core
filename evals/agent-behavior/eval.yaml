@@ -1818,7 +1818,7 @@ stimuli:
   - type: output-matches
     name: no-content-search-substitution
     config:
-      pattern: (?is)(do not|must not|never|without).{0,120}(substitut|approximate|fallback).{0,120}(content|text).{0,30}search|(content|text).{0,30}search.{0,120}(must not|do not|never).{0,120}(substitut|approximate|fallback)
+      pattern: (?is)(do not|must not|never|without).{0,120}(substitute|substitution|approximate|fallback).{0,120}(content|text).{0,30}search|(content|text).{0,30}search.{0,120}(must not|do not|never).{0,120}(substitute|substitution|approximate|fallback)
 - name: engagement-report-reviewer-grounding-and-privacy
   prompt: |
     Review an external engagement report draft. It says production deployment
