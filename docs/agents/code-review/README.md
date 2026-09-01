@@ -17,7 +17,7 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-08-05
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 10
 ---
@@ -43,6 +43,8 @@ The code review system is a single human-gated agent that reviews your changes b
 
 ```mermaid
 flowchart TD
+  accTitle: Code Review Architecture and Perspective Subagents
+  accDescr: The orchestrator dispatches six review perspectives, uses interactive subagents and shared protocols, and combines code-review and domain skills into one review report.
   ORCH["Code Review<br/>(Orchestrator)"]
 
   subgraph Perspectives
@@ -136,6 +138,8 @@ The agent runs a human-gated flow. Each step pauses for your input where the tab
 
 ```mermaid
 flowchart TD
+  accTitle: Code Review Seven-Step Workflow
+  accDescr: Review proceeds from context bootstrap through orientation, perspective and depth selection, dispatch preparation, a human-steered walk-back loop, parallel perspective dispatch, and merged persistence.
   S1["Step 1: Context Bootstrap<br/>compute diff, draft change brief, detect hotspots, resolve PR context"]
   S2["Step 2: Orientation Floor + Dispatch Board<br/>factual walkthrough, enumerated board (gate)"]
   S3["Step 3: Perspective + Depth Selection (gate)"]

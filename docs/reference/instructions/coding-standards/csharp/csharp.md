@@ -3,7 +3,7 @@ title: Coding Standards/Csharp/Csharp
 description: "C# (CSharp) code authoring conventions"
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ C# (CSharp) code authoring conventions
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these conventions to C# production and test files when choosing project
+layout, nullable contracts, naming, member order, documentation, and modern
+C# syntax. Test files also use the C# test instructions for framework,
+fixture, and mocking conventions.
 
 ## Example usage
 

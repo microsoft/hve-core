@@ -3,7 +3,7 @@ title: Project Planning/Adr Standards
 description: "Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status taxonomy, naming rules, ASR trigger schema, and Microsoft-attributed paraphrases for ADR Creator sessions"
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this reference when an ADR session selects MADR or Y-Statement output,
+assigns status or filenames, evaluates ASR triggers, or manages supersession.
+It is the embedded standards boundary; activate research for frameworks or
+revisions outside the listed set instead of synthesizing them from memory.
 
 ## Example usage
 

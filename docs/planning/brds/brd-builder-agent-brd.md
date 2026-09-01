@@ -3,7 +3,7 @@ brd_id: "BRD-2026-Q2-BRD-BUILDER"
 title: "BRD Builder Agent Requirements"
 description: "Business Requirements Document for the BRD Builder agent, capturing business goals, requirements, and traceability for the project-planning collection's BRD authoring workflow."
 author: "HVE Core Maintainers"
-ms.date: "2026-08-01"
+ms.date: "2026-08-20"
 ms.topic: "reference"
 keywords:
   - brd builder
@@ -218,6 +218,8 @@ NFR-008: The BRD Builder operates across HVE-Core distribution contexts (reposit
 
 ```mermaid
 flowchart LR
+  accTitle: BRD Builder Lifecycle and Handoff
+  accDescr: Discover, Define, and Govern consume shared requirements templates and quality guidance, use reviewer validation, and emit a handoff to the PRD Builder.
     A[Discover] --> B[Define]
     B --> C[Govern]
     H[(requirements-author skill)] -. template, taxonomy, lifecycle .-> A

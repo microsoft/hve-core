@@ -111,6 +111,87 @@ stimuli:
           pattern: '(?i)(planner\s+state\.json|\.copilot-tracking[/\\]ds[/\\][^\s]+[/\\]state\.json)'
           negate: true
 
+  - name: data-science-engineering-coach-problem-framing-missing-outcome
+    prompt: |
+      I confirm the `problem-framing` job. The request is: "We want to do
+      something with our engagement data." No business outcome is stated, and I
+      decline to define one when you ask.
+
+      State which skill owns the work, what you produce, and what happens next.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: framing-routes-to-experiment-design
+        config:
+          pattern: '(?is)problem-framing.*experiment-design.*episodic'
+      - type: output-matches
+        name: assigns-outcome-definition-gap
+        config:
+          pattern: '(?is)(outcome[- ]definition|define the (business )?outcome).*?gap'
+      - type: output-matches
+        name: gap-carries-answer-holder-and-coordinator
+        config:
+          pattern: '(?is)answer holder.*?coordinator'
+      - type: output-matches
+        name: performs-no-candidate-analysis
+        config:
+          pattern: '(?is)(no candidate analysis|no analysis was performed|without analysis|does not analyze|before candidate analysis)'
+      - type: output-matches
+        name: completes-rather-than-discarding
+        config:
+          pattern: '(?is)(completed work|completes|completion|complete the invocation)'
+      - type: output-matches
+        name: missing-outcome-does-not-become-an-experiment
+        config:
+          pattern: '(?is)(does not|will not|rather than|instead of|no)\s+\w*\s*(start|become|becomes|treat|design|run|scope)[^.]{0,60}(MVE|minimum viable experiment|experiment)'
+      - type: output-matches
+        name: user-confirmed-next-job
+        config:
+          pattern: '(?is)(ask|offer|confirm|choose|would you like).*?(next|another).*?(job|feasibility|experiment)'
+
+  - name: data-science-engineering-coach-problem-framing-unresolved-axis
+    prompt: |
+      I confirm the `problem-framing` job. The stated outcome is: "Determine
+      whether pre-engagement inputs predict whether an engagement succeeds."
+      Nobody can tell you whether the intent is to anticipate outcomes or to set
+      those inputs as policy.
+
+      State which skill owns the work, what you produce, and what happens next.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: framing-routes-to-experiment-design
+        config:
+          pattern: '(?is)problem-framing.*experiment-design.*episodic'
+      - type: output-matches
+        name: marks-unknown-and-continues
+        config:
+          pattern: '(?is)unknown.*?(continue|proceed|remaining)'
+      - type: output-matches
+        name: gap-carries-answer-holder-and-coordinator
+        config:
+          pattern: '(?is)answer holder.*?coordinator'
+      - type: output-matches
+        name: candidates-carry-grounded-and-original-labels
+        config:
+          pattern: '(?is)(\[G\]|grounded|cited).*?(\[O\]|repository-original|original routing|original judgement)'
+      - type: output-matches
+        name: no-candidate-selected
+        config:
+          pattern: '(?is)(does not select|do not select|not select|without selecting|no candidate is selected|selects none|no recommendation|does not rank|not rank|no ranking|not ranked)'
+      - type: output-matches
+        name: completes-episodically
+        config:
+          pattern: '(?is)(episodic|completes|completion|completed).*?(invocation|job|work)'
+      - type: output-matches
+        name: user-confirmed-next-job
+        config:
+          pattern: '(?is)(ask|offer|confirm|choose|would you like).*?(next|another).*?(job|feasibility|experiment)'
+
   - name: data-science-engineering-coach-durable-write-scan
     prompt: |
       I selected catalog enrichment and approved a customer-repository output

@@ -118,6 +118,27 @@ stimuli:
         config:
           pattern: "(?is)(artifact|directory|file\\s+name).*(experiment-design).*(methodology|MVE|hypothes|vetting)"
 
+  - name: instruction-github-backlog-grooming-conformance
+    prompt: |
+      You are assessing backlog health and writing state under
+      `.copilot-tracking/github-issues/backlog/weekly/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path), and what does it require for eligibility, continuation, reporting,
+      and automated safety?
+    tags:
+      category: behavior-conformance
+      instruction: github-backlog-grooming
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)github-issues/backlog|github-backlog-grooming"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)all\\s+open|paginate|cursor|markdown|tracker|advisory|no\\s+(automatic\\s+)?clos"
+
   - name: instruction-community-interaction-conformance
     prompt: |
       You are about to post a public comment on a GitHub issue declining a
