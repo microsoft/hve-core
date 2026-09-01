@@ -107,6 +107,23 @@ Describe 'Dormant extension provenance signer' -Tag 'Unit' {
         }
     }
 
+    It 'Binds the event-default checkout to the authorized source before execution' {
+        $packageSteps = @($script:Signer['jobs']['package']['steps'])
+        $checkout = @($packageSteps | Where-Object { [string]$_['name'] -eq 'Checkout code' })[0]
+        $checkout['with'].Contains('ref') | Should -BeFalse
+        [bool]$checkout['with']['persist-credentials'] | Should -BeFalse
+
+        $stepNames = [string[]]@($packageSteps | ForEach-Object { [string]$_['name'] })
+        $checkoutIndex = [Array]::IndexOf($stepNames, 'Checkout code')
+        $verifyIndex = [Array]::IndexOf($stepNames, 'Verify checked-out source')
+        $verifyIndex | Should -Be ($checkoutIndex + 1)
+
+        $verify = $packageSteps[$verifyIndex]
+        [string]$verify['env']['EXPECTED_SOURCE'] | Should -BeExactly '${{ github.sha }}'
+        [string]$verify['run'] | Should -Match 'git rev-parse HEAD'
+        [string]$verify['run'] | Should -Match 'CHECKED_OUT_SOURCE.*EXPECTED_SOURCE'
+    }
+
     It 'Keeps privileged attestation checkout-free and release-write-free' {
         $permissions = $script:Signer['jobs']['attest']['permissions']
         [string[]]@($permissions.Keys | Sort-Object) |
