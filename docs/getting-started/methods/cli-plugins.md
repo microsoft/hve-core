@@ -3,7 +3,7 @@ title: Copilot CLI Plugin
 description: Register an HVE Core catalog ref and install the complete hve-core plugin
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-08-31
 ms.topic: how-to
 keywords:
   - copilot cli
@@ -16,6 +16,9 @@ Install the complete HVE Core component set as a Copilot CLI plugin for terminal
 ## Prerequisites
 
 * GitHub Copilot CLI installed and authenticated
+
+Pinned-commit installation also requires Git and PowerShell 7.4. The same
+installer works on Windows and macOS through `pwsh`.
 
 ## Register hve-core as a Plugin Marketplace
 
@@ -47,6 +50,63 @@ A published channel release provides release assurance for its exact tag,
 including release gates, SBOMs, attestations, provenance verification, and the
 configured publication path. The development tip does not provide that
 published-release assurance.
+
+## Install an Arbitrary Pinned Commit
+
+Use the HVE Core installer when you need an exact commit that has no published
+release tag. The script version comes from your trusted HVE Core checkout; the
+plugin content it installs comes from the commit supplied through `CommitSha`.
+You can run the script while your terminal is in any downstream repository by
+using the script's absolute path.
+
+From a trusted HVE Core checkout, install the default pinned commit
+`0c14eea959a5ff355871205acf14807c7fa7d4a7`:
+
+```powershell
+pwsh -NoProfile -File ./scripts/plugins/Install-HveCorePlugin.ps1
+```
+
+Install a different exact commit or preview the operation:
+
+```powershell
+pwsh -NoProfile -File ./scripts/plugins/Install-HveCorePlugin.ps1 -CommitSha <full-commit-sha>
+pwsh -NoProfile -File ./scripts/plugins/Install-HveCorePlugin.ps1 -WhatIf
+```
+
+The installer accepts only a full 40-character hexadecimal object ID. It
+fetches that object directly, verifies that it is the detached `HEAD`, checks
+the plugin metadata, and stores the immutable pin at:
+
+```text
+$HOME/.hve-core/copilot-plugin-pins/<full-commit-sha>/
+├── marketplace.json
+└── source/
+```
+
+The generated marketplace is named `hve-core-<full-commit-sha>`. It locates
+the contained plugin source at `./source`, then installs the qualified plugin
+`hve-core@hve-core-<full-commit-sha>`.
+
+> [!IMPORTANT]
+> `-WhatIf` performs no acquisition or mutation. It validates parameters,
+> prerequisites, and an existing pin read-only. For a missing pin, remote
+> commit and manifest verification remain pending until a real installation.
+
+The script never removes or replaces an existing marketplace or installed
+plugin. If the SHA-specific marketplace name already exists, inspect the
+registration before changing it. If registration succeeds but installation
+fails, retry the qualified install shown in the error. For the default pin, the
+recovery command is:
+
+```bash
+copilot plugin install hve-core@hve-core-0c14eea959a5ff355871205acf14807c7fa7d4a7
+```
+
+This commit pin proves exact object equality to the SHA you selected. It does
+not provide the release attestations or provenance guarantees associated with
+an HVE Core release tag. The implementation uses platform-neutral PowerShell
+and Git behavior; an authorized live macOS installation remains required before
+claiming observed macOS verification.
 
 ## Browse Available Plugins
 
@@ -90,7 +150,11 @@ Each plugin includes:
 | Skills       | Yes           | Self-contained skill packages                      |
 | Instructions | No            | Included for `#file:` references, not auto-applied |
 
-The one marketplace entry resolves the repository root. Root `plugin.json` declares the complete agents, commands, rules, skills, and hook membership as repository-relative `.github/...` paths. The client resolves the root README and LICENSE; no generated plugin tree or plugin ZIP participates in Git-source installation.
+The one marketplace entry resolves the repository root. Root `plugin.json`
+declares the complete agents, commands, rules, and skills as repository-relative
+`.github/...` paths. It declares no hooks. The client resolves the root README
+and LICENSE; no generated plugin tree or plugin ZIP participates in Git-source
+installation.
 
 ## Limitations
 
