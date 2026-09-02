@@ -21,6 +21,11 @@ on:
         description: "Canonical release tag bound to the caller event"
         required: true
         type: string
+
+concurrency:
+  group: extension-provenance-signer-${{ inputs.release-tag }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
@@ -41,6 +46,7 @@ jobs:
           owner: microsoft
           repositories: hve-core
           permission-administration: read
+          permission-contents: read
 
       - name: Authenticate release principal and governance
         shell: bash
