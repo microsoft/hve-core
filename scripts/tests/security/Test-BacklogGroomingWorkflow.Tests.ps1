@@ -614,7 +614,7 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $script:Orchestrator | Should -Match 'shard_id: \$\{\{ matrix\.shard\.shard_id \}\}'
         $script:Orchestrator | Should -Match 'ordered_candidate_ids: \$\{\{ toJSON\(matrix\.shard\.ordered_candidate_ids\) \}\}'
         $script:Orchestrator | Should -Not -Match '(?ms)^  assess:.*?shard_id: shard-01'
-        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read'
+        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read\s+pull-requests: read'
         $script:Orchestrator | Should -Match '(?ms)^  assess:.*?secrets:\s+COPILOT_GITHUB_TOKEN: \$\{\{ secrets\.COPILOT_GITHUB_TOKEN \}\}\s+GH_AW_GITHUB_MCP_SERVER_TOKEN: \$\{\{ secrets\.GH_AW_GITHUB_MCP_SERVER_TOKEN \}\}\s+GH_AW_GITHUB_TOKEN: \$\{\{ secrets\.GH_AW_GITHUB_TOKEN \}\}'
         $script:Orchestrator | Should -Not -Match '(?ms)^  assess:.*?secrets: inherit'
         [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
@@ -738,7 +738,7 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:Publisher | Should -Match "if: \$\{\{ needs\.discover\.outputs\.terminal == 'true' \}\}"
         $script:Publisher | Should -Match '(?m)^          artifact-ids: \$\{\{ steps\.authenticate\.outputs\.final-artifact-id \}\}$'
         $script:Publisher | Should -Match 'run\.path !== "\.github/workflows/backlog-groom-orchestrator\.yml"'
-        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read'
+        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read\s+pull-requests: read'
         $script:Source | Should -Not -Match '(?m)^\s+issues: write$'
         $script:Lock | Should -Not -Match '(?m)^\s+issues: write$'
     }
