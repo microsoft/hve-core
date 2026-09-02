@@ -94,9 +94,9 @@ state.
    corroborate the extracted acceptance signals.
 7. Assess possible overlap and apply exactly one qualitative similarity outcome
    plus one repository-grounded disposition to every deeply assessed issue.
-8. Finalize every selected issue row, then derive the assessed count, deferred
-  count, stop reason, and next cursor from those final row statuses. Ensure the
-  stop reason accounts for every deferred row and distinct deferral reason.
+8. Finalize every selected issue row as `Assessed` or `Deferred`. Preserve a
+  non-empty reason on every deferred row; the isolated result job derives all
+  structural run state from the validated final rows and trusted caller input.
 9. Render the compact report and request one validated shard result after
    every successful assessment. Request `noop` only when the assessment cannot
    complete according to the calling workflow.
@@ -108,21 +108,12 @@ shared policy. Include the run timestamp, total open inventory, assessed count,
 priority cohort count, round-robin cohort count, deferred count, stop reason,
 and next cursor in a short labeled run summary before the issue index.
 
-For shard-result publication, encode the same report as JSON with exactly `run`
-and `issues` and use this exact schema:
+For shard-result publication, encode the final rows as JSON with exactly
+`issues` and use this exact schema. Do not include the display summary or a
+`run` object in the publication input:
 
 ```json
 {
-  "run": {
-    "timestamp": "RFC 3339 timestamp",
-    "total_open_inventory": 0,
-    "assessed": 0,
-    "priority_cohort": 0,
-    "round_robin_cohort": 0,
-    "deferred": 0,
-    "stop_reason": "non-empty text",
-    "next_cursor": 0
-  },
   "issues": [
     {
       "issue": 1,
@@ -146,7 +137,7 @@ and `issues` and use this exact schema:
 }
 ```
 
-Use integers without `#` or prose for `issue`, `next_cursor`, and every count.
+Use an integer without `#` or prose for `issue`.
 Use exactly `Match`, `Similar`, `Distinct`, or `Uncertain` for
 `similarity_outcome`; put compared issue numbers in the finding rather than the
 enum value. Use exactly `Still needed`, `Likely completed`, `Superseded`,

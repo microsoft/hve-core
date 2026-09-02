@@ -216,6 +216,83 @@ BeforeAll {
         return $Value -ceq 'true'
     }
 
+    function Invoke-GroomingResultJob {
+        param(
+            [Parameter(Mandatory)] [hashtable]$ReportData,
+            [Parameter(Mandatory)] [int[]]$OrderedCandidateIds,
+            [Parameter(Mandatory)] [AllowEmptyCollection()] [int[]]$PriorityCandidateIds,
+            [Parameter(Mandatory)] [AllowEmptyCollection()] [int[]]$RoundRobinCandidateIds,
+            [Parameter(Mandatory)] [int]$TotalOpenInventory,
+            [Parameter(Mandatory)] [int]$PriorCursor,
+            [Parameter(Mandatory)] [string]$StartedAt,
+            [Parameter(Mandatory)] [string]$CompletedAt,
+            [Parameter(Mandatory)] [string]$TestRoot
+        )
+
+        $scriptMatch = [regex]::Match(
+            $script:Source,
+            '(?ms)^            script: \|\r?\n(?<body>.*?)^        - name: Upload immutable shard result'
+        )
+        if (-not $scriptMatch.Success) { throw 'Result-job script was not found' }
+
+        $workDirectory = Join-Path $TestRoot ([guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $workDirectory | Out-Null
+        $agentOutputPath = Join-Path $workDirectory 'agent-output.json'
+        $wrapperPath = Join-Path $workDirectory 'result-job.cjs'
+        @{
+            items = @(@{
+                    type = 'publish_backlog_grooming_result'
+                    'report-data' = $ReportData | ConvertTo-Json -Depth 12 -Compress
+                    'started-at' = $StartedAt
+                    'completed-at' = $CompletedAt
+                })
+        } | ConvertTo-Json -Depth 15 | Set-Content -LiteralPath $agentOutputPath -Encoding utf8NoBOM
+
+        $scriptBody = $scriptMatch.Groups['body'].Value -replace '(?m)^              ', ''
+        $wrapper = @'
+const core = { setFailed: (message) => { throw new Error(message); } };
+(async () => {
+'@ + $scriptBody + @'
+})().catch((error) => {
+  console.error(error.message);
+  process.exit(1);
+});
+'@
+        Set-Content -LiteralPath $wrapperPath -Value $wrapper -Encoding utf8NoBOM
+
+        $environment = @{
+            GH_AW_AGENT_OUTPUT = $agentOutputPath
+            SHARD_ID = 'shard-01'
+            MANIFEST_DIGEST = 'a' * 64
+            ORDERED_CANDIDATE_IDS = ConvertTo-Json -InputObject $OrderedCandidateIds -Compress
+            PRIORITY_CANDIDATE_IDS = ConvertTo-Json -InputObject $PriorityCandidateIds -Compress
+            ROUND_ROBIN_CANDIDATE_IDS = ConvertTo-Json -InputObject $RoundRobinCandidateIds -Compress
+            TOTAL_OPEN_INVENTORY = [string]$TotalOpenInventory
+            PRIOR_CURSOR = [string]$PriorCursor
+            ORCHESTRATOR_RUN_ID = '12345'
+            ORCHESTRATOR_ATTEMPT = '1'
+        }
+        $previousEnvironment = @{}
+        foreach ($name in $environment.Keys) {
+            $previousEnvironment[$name] = [Environment]::GetEnvironmentVariable($name)
+            [Environment]::SetEnvironmentVariable($name, [string]$environment[$name])
+        }
+
+        Push-Location $workDirectory
+        try {
+            $nodeOutput = & node $wrapperPath 2>&1
+            if ($LASTEXITCODE -ne 0) { throw ($nodeOutput -join "`n") }
+            return Get-Content -LiteralPath (Join-Path $workDirectory 'result-output/shard-result.json') -Raw |
+                ConvertFrom-Json
+        }
+        finally {
+            Pop-Location
+            foreach ($name in $previousEnvironment.Keys) {
+                [Environment]::SetEnvironmentVariable($name, $previousEnvironment[$name])
+            }
+        }
+    }
+
     $script:Source = Read-RepoFile '.github/workflows/backlog-groom.md'
     $script:Lock = Read-RepoFile '.github/workflows/backlog-groom.lock.yml'
     $script:Orchestrator = Read-RepoFile '.github/workflows/backlog-groom-orchestrator.yml'
@@ -286,14 +363,15 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
 
     It 'validates structured report data and computes deterministic result provenance' {
         $script:Source | Should -Match 'JSON\.parse\(String\(requests\[0\]\["report-data"\]'
-        $script:Source | Should -Match 'exactKeys\(payload, \["run", "issues"\]\)'
+        $script:Source | Should -Match 'exactKeys\(payload, \["issues"\]\)'
+        $script:Source | Should -Not -Match 'const runKeys ='
         $script:Source | Should -Match 'const similarities = new Set\(\["Match", "Similar", "Distinct", "Uncertain"\]\)'
         $script:Source | Should -Match 'const dispositions = new Set\(\["Still needed", "Likely completed", "Superseded", "Possible duplicate", "Needs correction", "Uncertain"\]\)'
         $script:Source | Should -Match 'row\.acceptance_signals'
         $script:Source | Should -Match 'const lineageKeys = \["original_delivery", "replacement_or_removal"\]'
         $script:Source | Should -Match 'Superseded requires distinct original-delivery and replacement-or-removal evidence'
-        $script:Source | Should -Match 'assessedRows !== run\.assessed \|\| deferredRows !== run\.deferred'
-        $script:Source | Should -Match 'Report row statuses do not match the run counts'
+        $script:Source | Should -Match 'const reportData = \{ run, issues: payload\.issues \}'
+        $script:Source | Should -Match 'report_data: reportData'
         $script:Source | Should -Match 'Deferred rows require a reason, Uncertain outcomes, and empty lineage evidence'
         $script:Source | Should -Match 'Assessed rows cannot include a deferral reason'
         $script:Source | Should -Match 'const canonicalize = \(value\) =>'
@@ -308,7 +386,7 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
             items = @(
                 @{
                     type = 'publish_backlog_grooming_report'
-                    'report-data' = '{"run":{"timestamp":"2026-08-11T00:33:20Z"},"issues":[]}'
+                    'report-data' = '{"issues":[]}'
                 }
             )
         } | ConvertTo-Json -Depth 5 | ConvertFrom-Json
@@ -316,10 +394,115 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $request = $agentOutput.items | Where-Object type -EQ 'publish_backlog_grooming_report'
         $payload = $request.'report-data' | ConvertFrom-Json
 
-        $payload.run.timestamp.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') |
-            Should -Be '2026-08-11T00:33:20Z'
         $payload.issues.Count | Should -Be 0
+        $payload.PSObject.Properties.Name | Should -Be @('issues')
         $script:Source | Should -Not -Match 'requests\[0\]\.report_data'
+    }
+}
+
+Describe 'Rows-authoritative backlog grooming result construction' -Tag 'Unit' {
+    BeforeAll {
+        $script:AssessedRow = @{
+            issue = 1
+            title = 'Assessed issue'
+            selection_reason = 'Priority cohort'
+            activity_and_ownership_context = 'Recent maintainer activity'
+            acceptance_signals = 'Requested behavior is present'
+            repository_evidence = @('src/example.ps1')
+            lineage_evidence = [ordered]@{ original_delivery = @(); replacement_or_removal = @() }
+            similarity_outcome = 'Distinct'
+            disposition = 'Still needed'
+            grooming_finding = 'Evidence supports assessment'
+            recommended_next_step = 'Maintain the issue'
+            assessment_status = 'Assessed'
+            deferral_reason = ''
+        }
+        $script:DeferredRow = @{
+            issue = 1
+            title = 'Deferred issue'
+            selection_reason = 'Round-robin cohort'
+            activity_and_ownership_context = 'Issue could not be hydrated'
+            acceptance_signals = 'Requested behavior requires later assessment'
+            repository_evidence = @('Issue unavailable after snapshot')
+            lineage_evidence = [ordered]@{ original_delivery = @(); replacement_or_removal = @() }
+            similarity_outcome = 'Uncertain'
+            disposition = 'Uncertain'
+            grooming_finding = 'Evidence is incomplete'
+            recommended_next_step = 'Reassess in a later snapshot'
+            assessment_status = 'Deferred'
+            deferral_reason = 'Issue unavailable after snapshot'
+        }
+    }
+
+    It 'constructs mixed status run state and preserves distinct row reasons' {
+        $rows = 1..5 | ForEach-Object {
+            $row = if ($_ -in 2, 5) { $script:DeferredRow.Clone() } else { $script:AssessedRow.Clone() }
+            $row.issue = $_
+            $row.title = "Issue $_"
+            if ($_ -eq 5) { $row.deferral_reason = 'Repository evidence unavailable' }
+            $row
+        }
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = $rows } `
+            -OrderedCandidateIds @(1, 2, 3, 4, 5) -PriorityCandidateIds @(1, 2) `
+            -RoundRobinCandidateIds @(3, 4, 5) -TotalOpenInventory 25 -PriorCursor 99 `
+            -StartedAt '2026-09-02T10:00:00Z' -CompletedAt '2026-09-02T10:05:00Z' -TestRoot $TestDrive
+
+        $result.report_data.run.timestamp.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ') |
+            Should -Be '2026-09-02T10:05:00.000Z'
+        $result.report_data.run.total_open_inventory | Should -Be 25
+        $result.report_data.run.assessed | Should -Be 3
+        $result.report_data.run.priority_cohort | Should -Be 2
+        $result.report_data.run.round_robin_cohort | Should -Be 3
+        $result.report_data.run.deferred | Should -Be 2
+        $result.report_data.run.stop_reason | Should -Be 'Deferred rows: 2; distinct non-empty reasons: 2'
+        $result.report_data.run.next_cursor | Should -Be 4
+        $result.report_data.issues[1].deferral_reason | Should -Be 'Issue unavailable after snapshot'
+        $result.report_data.issues[4].deferral_reason | Should -Be 'Repository evidence unavailable'
+        $result.report_data.PSObject.Properties.Name | Should -Be @('run', 'issues')
+    }
+
+    It 'constructs the complete result for all assessed rows' {
+        $rows = 7, 9 | ForEach-Object {
+            $row = $script:AssessedRow.Clone()
+            $row.issue = $_
+            $row
+        }
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = $rows } `
+            -OrderedCandidateIds @(7, 9) -PriorityCandidateIds @(7) -RoundRobinCandidateIds @(9) `
+            -TotalOpenInventory 10 -PriorCursor 4 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.run.assessed | Should -Be 2
+        $result.report_data.run.deferred | Should -Be 0
+        $result.report_data.run.stop_reason | Should -Be 'Complete shard assessed'
+        $result.report_data.run.next_cursor | Should -Be 9
+    }
+
+    It 'retains the prior cursor when every row is deferred' {
+        $rows = 11, 13 | ForEach-Object {
+            $row = $script:DeferredRow.Clone()
+            $row.issue = $_
+            $row
+        }
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = $rows } `
+            -OrderedCandidateIds @(11, 13) -PriorityCandidateIds @() -RoundRobinCandidateIds @(11, 13) `
+            -TotalOpenInventory 20 -PriorCursor 8 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:02:00Z' -TestRoot $TestDrive
+
+        $result.report_data.run.assessed | Should -Be 0
+        $result.report_data.run.deferred | Should -Be 2
+        $result.report_data.run.stop_reason | Should -Be 'Deferred rows: 2; distinct non-empty reasons: 1'
+        $result.report_data.run.next_cursor | Should -Be 8
+    }
+
+    It 'rejects model-authored run state before canonical construction' {
+        $row = $script:AssessedRow.Clone()
+        {
+            Invoke-GroomingResultJob -ReportData @{ issues = @($row); run = @{ assessed = 1 } } `
+                -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+                -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+                -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+        } | Should -Throw '*Report data does not match the canonical top-level schema*'
     }
 }
 
@@ -713,25 +896,22 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
     }
 
     It 'gives the model the exact structured publisher contract' {
-        foreach ($key in @('timestamp', 'total_open_inventory', 'assessed', 'priority_cohort', 'round_robin_cohort', 'deferred', 'stop_reason', 'next_cursor')) {
-            $script:Agent | Should -Match ([regex]::Escape("`"$key`""))
-        }
         foreach ($key in @('issue', 'title', 'selection_reason', 'activity_and_ownership_context', 'acceptance_signals', 'repository_evidence', 'lineage_evidence', 'original_delivery', 'replacement_or_removal', 'similarity_outcome', 'disposition', 'grooming_finding', 'recommended_next_step', 'assessment_status', 'deferral_reason')) {
             $script:Agent | Should -Match ([regex]::Escape("`"$key`""))
         }
-        $script:Agent | Should -Match 'Use integers without `#` or prose for `issue`, `next_cursor`, and every count'
+        $script:Agent | Should -Match 'JSON with exactly\s+`issues`'
+        $script:Agent | Should -Match 'Do not include the display summary or a\s+`run` object'
+        $script:Agent | Should -Match 'Use an integer without `#` or prose for `issue`'
         $script:Agent | Should -Match 'Use exactly `Assessed` or `Deferred` for `assessment_status`'
         $script:Agent | Should -Match 'For `Deferred`, use a\s+non-empty `deferral_reason`, `Uncertain` similarity and disposition, and empty\s+lineage arrays'
-        $script:Agent | Should -Match 'Finalize every selected issue row as `Assessed` or `Deferred` before deriving\s+the assessed count, deferred count, stop reason, and next cursor'
-        $script:Agent | Should -Match 'stop reason accounts for every deferred row and distinct deferral reason'
+        $script:Agent | Should -Match 'isolated result job derives all\s+structural run state from the validated final rows and trusted caller input'
         $script:Policy | Should -Match 'Calculate the assessed and deferred counts from those\s+final statuses'
         $script:Policy | Should -Match 'Derive the stop reason from the complete set of final deferred\s+rows and account for every distinct deferral reason'
-        $script:Source | Should -Match 'Derive `run\.assessed` and `run\.deferred` from those final statuses'
-        $script:Source | Should -Match 'derive `run\.stop_reason` from all final deferred rows and distinct deferral\s+reasons'
-        $script:Source | Should -Match 'Verify those run fields against the final rows\s+before calling `publish-backlog-grooming-result`'
+        $script:Source | Should -Match 'report-data`: a JSON string containing exactly the final `issues` array'
+        $script:Source | Should -Match 'derives canonical timestamp, inventory, cohort counts,\s+assessment counts, stop reason, and cursor'
         $script:Agent | Should -Match 'put compared issue numbers in the finding rather than the\s+enum value'
         [regex]::Matches($script:Source, 'result_digest').Count | Should -Be 1
-        $script:Source | Should -Match 'return only the canonical Backlog Grooming Report required by the\s+imported agent'
+        $script:Source | Should -Match 'return only the canonical\s+Backlog Grooming Report required by the imported agent'
     }
 
     It 'requires repository-grounded dispositions and evidence-backed maintainer actions' {

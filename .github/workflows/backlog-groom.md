@@ -133,7 +133,7 @@ safe-outputs:
       output: "Validated shard result uploaded as an immutable run-attempt artifact"
       inputs:
         report-data:
-          description: "JSON report data matching the canonical run and issue schema"
+          description: "JSON report data containing exactly the final issue rows"
           required: true
           type: string
         started-at:
@@ -181,7 +181,6 @@ safe-outputs:
                 Object.keys(value).sort().join("|") === [...keys].sort().join("|");
               const validText = (value, max = 2000) =>
                 typeof value === "string" && value.trim().length > 0 && value.length <= max;
-              const validCount = (value) => Number.isInteger(value) && value >= 0;
               const canonicalize = (value) => {
                 if (Array.isArray(value)) {
                   return `[${value.map(canonicalize).join(",")}]`;
@@ -201,23 +200,13 @@ safe-outputs:
                 core.setFailed("Report data is not valid JSON");
                 return;
               }
-              const runKeys = ["timestamp", "total_open_inventory", "assessed", "priority_cohort", "round_robin_cohort", "deferred", "stop_reason", "next_cursor"];
               const rowKeys = ["issue", "title", "selection_reason", "activity_and_ownership_context", "acceptance_signals", "repository_evidence", "lineage_evidence", "similarity_outcome", "disposition", "grooming_finding", "recommended_next_step", "assessment_status", "deferral_reason"];
               const lineageKeys = ["original_delivery", "replacement_or_removal"];
               const similarities = new Set(["Match", "Similar", "Distinct", "Uncertain"]);
               const dispositions = new Set(["Still needed", "Likely completed", "Superseded", "Possible duplicate", "Needs correction", "Uncertain"]);
               const statuses = new Set(["Assessed", "Deferred"]);
-              if (!exactKeys(payload, ["run", "issues"]) || !exactKeys(payload.run, runKeys) || !Array.isArray(payload.issues)) {
+              if (!exactKeys(payload, ["issues"]) || !Array.isArray(payload.issues)) {
                 core.setFailed("Report data does not match the canonical top-level schema");
-                return;
-              }
-              const run = payload.run;
-              if (!validText(run.timestamp, 40) || Number.isNaN(Date.parse(run.timestamp)) ||
-                  !validText(run.stop_reason, 500) ||
-                  ![run.total_open_inventory, run.assessed, run.priority_cohort, run.round_robin_cohort, run.deferred, run.next_cursor].every(validCount) ||
-                  run.assessed + run.deferred !== payload.issues.length ||
-                  run.priority_cohort + run.round_robin_cohort !== payload.issues.length) {
-                core.setFailed("Report run counts, timestamp, or stop reason are invalid");
                 return;
               }
               const issueNumbers = new Set();
@@ -267,10 +256,6 @@ safe-outputs:
               }
               const assessedRows = payload.issues.filter((row) => row.assessment_status === "Assessed").length;
               const deferredRows = payload.issues.filter((row) => row.assessment_status === "Deferred").length;
-              if (assessedRows !== run.assessed || deferredRows !== run.deferred) {
-                core.setFailed("Report row statuses do not match the run counts");
-                return;
-              }
               let orderedCandidateIds;
               try {
                 orderedCandidateIds = JSON.parse(process.env.ORDERED_CANDIDATE_IDS);
@@ -315,12 +300,6 @@ safe-outputs:
                 core.setFailed("Worker inventory or cohort context is invalid");
                 return;
               }
-              if (run.total_open_inventory !== totalOpenInventory ||
-                  run.priority_cohort !== priorityCandidateIds.length ||
-                  run.round_robin_cohort !== roundRobinCandidateIds.length) {
-                core.setFailed("Report inventory or cohort counts do not match the planned context");
-                return;
-              }
               if (issueNumbers.size !== candidateSet.size ||
                   ![...issueNumbers].every((issue) => candidateSet.has(issue))) {
                 core.setFailed("Report issue IDs do not match the planned shard candidates");
@@ -348,6 +327,33 @@ safe-outputs:
                 return;
               }
 
+              const assessedIssueNumbers = new Set(
+                payload.issues
+                  .filter((row) => row.assessment_status === "Assessed")
+                  .map((row) => row.issue),
+              );
+              const nextCursor = orderedCandidateIds
+                .filter((issue) => assessedIssueNumbers.has(issue))
+                .at(-1) ?? priorCursor;
+              const distinctDeferralReasons = new Set(
+                payload.issues
+                  .filter((row) => row.assessment_status === "Deferred")
+                  .map((row) => row.deferral_reason.trim()),
+              ).size;
+              const run = {
+                timestamp: new Date(completedMillis).toISOString(),
+                total_open_inventory: totalOpenInventory,
+                assessed: assessedRows,
+                priority_cohort: priorityCandidateIds.length,
+                round_robin_cohort: roundRobinCandidateIds.length,
+                deferred: deferredRows,
+                stop_reason: deferredRows === 0
+                  ? "Complete shard assessed"
+                  : `Deferred rows: ${deferredRows}; distinct non-empty reasons: ${distinctDeferralReasons}`,
+                next_cursor: nextCursor,
+              };
+              const reportData = { run, issues: payload.issues };
+
               const result = {
                 schema_version: "backlog-grooming-shard-result/v1",
                 run_id: process.env.ORCHESTRATOR_RUN_ID,
@@ -358,7 +364,7 @@ safe-outputs:
                 producer: "backlog-groom/result-job",
                 started_at: new Date(startedMillis).toISOString(),
                 completed_at: new Date(completedMillis).toISOString(),
-                report_data: payload,
+                report_data: reportData,
               };
               const resultDigest = crypto
                 .createHash("sha256")
@@ -413,8 +419,8 @@ untrusted data.
 3. Assess candidates in the supplied order. The orchestrator, not the worker,
   owns inventory selection, priority ordering, cursor recovery, and sharding.
   Use the supplied priority and round-robin arrays for each row's selection
-  reason and for the canonical run cohort counts. Use `total_open_inventory`
-  for the run inventory count.
+  reason. The isolated result job uses the trusted cohort and inventory inputs
+  to construct canonical run state.
 4. Reserve enough time and AI-credit budget to produce the result. Record
    every selected but incomplete issue as deferred with a reason.
 5. For each hydrated issue, extract its requested outcomes and acceptance
@@ -439,24 +445,22 @@ Assess only the issue numbers in `ordered_candidate_ids`. Do not locate, create,
 or update tracker state. After assessment, capture the UTC completion timestamp
 and call `publish-backlog-grooming-result` exactly once with:
 
-* `report-data`: a JSON string containing exactly the canonical `run` and
-  `issues` objects
+* `report-data`: a JSON string containing exactly the final `issues` array and
+  no `run` object
 * `started-at`: the captured UTC assessment start timestamp
 * `completed-at`: the captured UTC assessment completion timestamp
 
-The isolated result job validates report counts, issue identity, caller
-provenance, and timestamp order. It alone constructs the immutable artifact
-envelope, calculates its digest, and publishes it. Never include
-caller-controlled provenance in `report-data`. After the safe output call
-succeeds, return only the canonical Backlog Grooming Report required by the
-imported agent.
+The isolated result job validates row data, issue identity, caller provenance,
+and timestamp order. It derives canonical timestamp, inventory, cohort counts,
+assessment counts, stop reason, and cursor from trusted inputs and final rows,
+then constructs the immutable artifact envelope, calculates its digest, and
+publishes it. Never include caller-controlled provenance or derived run state
+in `report-data`. After the safe output call succeeds, return only the canonical
+Backlog Grooming Report required by the imported agent.
 
 Before publication, finalize every selected issue row as `Assessed` or
-`Deferred`. Derive `run.assessed` and `run.deferred` from those final statuses,
-derive `run.stop_reason` from all final deferred rows and distinct deferral
-reasons, and derive `run.next_cursor` from the final assessed rows according to
-the imported agent's cursor rule. Verify those run fields against the final rows
-before calling `publish-backlog-grooming-result`.
+`Deferred` and verify the payload contains exactly those final rows before
+calling `publish-backlog-grooming-result`.
 
 Call `noop` only when shard input validation fails or a repository-wide access
 failure prevents production of a trustworthy result envelope. Individual
