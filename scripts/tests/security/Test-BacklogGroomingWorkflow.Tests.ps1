@@ -319,7 +319,10 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
     }
 
     It 'keeps model permissions read-only and safe outputs bounded' {
-        $script:Source | Should -Match '(?ms)^permissions:\s+contents: read\s+issues: read$'
+        $script:Source | Should -Match '(?ms)^tools:\s+github:\s+toolsets: \[context, repos, issues, pull_requests\]\s+allowed-repos: public\s+min-integrity: unapproved$'
+        $script:Source | Should -Match '(?ms)^permissions:\s+contents: read\s+issues: read\s+pull-requests: read$'
+        $script:Lock | Should -Match '"GITHUB_TOOLSETS": "context,repos,issues,pull_requests"'
+        $script:Lock | Should -Match '"min-integrity": "unapproved"'
         $script:Source | Should -Match '(?ms)^  noop:\s+max: 1\s+report-as-issue: false'
         $script:Source | Should -Match '(?m)^    publish-backlog-grooming-result:$'
         $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?permissions: \{\}'

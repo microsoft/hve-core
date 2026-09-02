@@ -111,9 +111,19 @@ imports:
 
 checkout: false
 
+# Backlog grooming evaluates community-authored issues, so public issue content
+# is expected to be unapproved input. Keep repository scope public and toolsets
+# read-only; the imported untrusted-content boundary treats issue text as data.
+tools:
+  github:
+    toolsets: [context, repos, issues, pull_requests]
+    allowed-repos: public
+    min-integrity: unapproved
+
 permissions:
   contents: read
   issues: read
+  pull-requests: read
 
 safe-outputs:
   threat-detection: false
