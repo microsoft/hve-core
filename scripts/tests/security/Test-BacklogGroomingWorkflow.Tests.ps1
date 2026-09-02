@@ -722,6 +722,13 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
         $script:Agent | Should -Match 'Use integers without `#` or prose for `issue`, `next_cursor`, and every count'
         $script:Agent | Should -Match 'Use exactly `Assessed` or `Deferred` for `assessment_status`'
         $script:Agent | Should -Match 'For `Deferred`, use a\s+non-empty `deferral_reason`, `Uncertain` similarity and disposition, and empty\s+lineage arrays'
+        $script:Agent | Should -Match 'Finalize every selected issue row as `Assessed` or `Deferred` before deriving\s+the assessed count, deferred count, stop reason, and next cursor'
+        $script:Agent | Should -Match 'stop reason accounts for every deferred row and distinct deferral reason'
+        $script:Policy | Should -Match 'Calculate the assessed and deferred counts from those\s+final statuses'
+        $script:Policy | Should -Match 'Derive the stop reason from the complete set of final deferred\s+rows and account for every distinct deferral reason'
+        $script:Source | Should -Match 'Derive `run\.assessed` and `run\.deferred` from those final statuses'
+        $script:Source | Should -Match 'derive `run\.stop_reason` from all final deferred rows and distinct deferral\s+reasons'
+        $script:Source | Should -Match 'Verify those run fields against the final rows\s+before calling `publish-backlog-grooming-result`'
         $script:Agent | Should -Match 'put compared issue numbers in the finding rather than the\s+enum value'
         [regex]::Matches($script:Source, 'result_digest').Count | Should -Be 1
         $script:Source | Should -Match 'return only the canonical Backlog Grooming Report required by the\s+imported agent'

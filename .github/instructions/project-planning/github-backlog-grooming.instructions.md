@@ -129,9 +129,11 @@ maintainer actions.
 
 ## Advisory Report
 
-Start with a short summary that states the assessment scope, inventory count,
-assessed count, deferred count, and stop reason. Follow it with this compact
-issue index:
+Finalize one row for every selected issue as `Assessed` or `Deferred` before
+deriving the summary. Calculate the assessed and deferred counts from those
+final statuses. Derive the stop reason from the complete set of final deferred
+rows and account for every distinct deferral reason without requiring an
+issue-by-issue list. Follow the summary with this compact issue index:
 
 | Issue | Similarity | Disposition | Status | Recommended next step |
 |-------|------------|-------------|--------|-----------------------|

@@ -451,6 +451,13 @@ caller-controlled provenance in `report-data`. After the safe output call
 succeeds, return only the canonical Backlog Grooming Report required by the
 imported agent.
 
+Before publication, finalize every selected issue row as `Assessed` or
+`Deferred`. Derive `run.assessed` and `run.deferred` from those final statuses,
+derive `run.stop_reason` from all final deferred rows and distinct deferral
+reasons, and derive `run.next_cursor` from the final assessed rows according to
+the imported agent's cursor rule. Verify those run fields against the final rows
+before calling `publish-backlog-grooming-result`.
+
 Call `noop` only when shard input validation fails or a repository-wide access
 failure prevents production of a trustworthy result envelope. Individual
 candidate retrieval or evidence gaps produce canonical `Deferred` rows.

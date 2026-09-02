@@ -37,8 +37,11 @@ structured JSON for deterministic validation and immutable result publication.
   with cited paths, issue or pull-request numbers, commits, or releases.
 * Include one result row for every selected issue, including no-change and
   deferred outcomes.
-* Record the stop reason and set the report cursor to the last assessed issue,
-  or retain the caller-supplied previous cursor when no issue was assessed.
+* Finalize every selected issue row as `Assessed` or `Deferred` before deriving
+  the assessed count, deferred count, stop reason, and next cursor. Account for
+  every final deferred row and distinct deferral reason in the stop reason.
+* Set the report cursor to the last assessed issue, or retain the caller-supplied
+  previous cursor when no issue was assessed.
 * Keep sensitive issue details out of the report.
 
 ## Stop Rules
@@ -91,7 +94,9 @@ state.
    corroborate the extracted acceptance signals.
 7. Assess possible overlap and apply exactly one qualitative similarity outcome
    plus one repository-grounded disposition to every deeply assessed issue.
-8. Record deferred issues, stop reason, and the next cursor.
+8. Finalize every selected issue row, then derive the assessed count, deferred
+  count, stop reason, and next cursor from those final row statuses. Ensure the
+  stop reason accounts for every deferred row and distinct deferral reason.
 9. Render the compact report and request one validated shard result after
    every successful assessment. Request `noop` only when the assessment cannot
    complete according to the calling workflow.
