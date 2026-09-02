@@ -81,7 +81,8 @@ state.
    implementation, supersession, duplication, or intentional-removal evidence.
    Follow explicit links between issues, pull requests, and commits.
    For `Superseded`, record both the original surface's delivery lineage and its
-   removal or replacement lineage when both are available.
+  removal or replacement lineage. Select `Superseded` only when both lineage
+  arrays can contain non-empty, distinct evidence; otherwise use `Uncertain`.
 6. Inspect relevant commits or releases when pull-request or issue linkage does
    not establish the current state. Use `Uncertain` when required repository
    evidence is unavailable, conflicting, or too weak to support a disposition.

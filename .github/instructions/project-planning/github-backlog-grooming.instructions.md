@@ -107,9 +107,10 @@ Assign exactly one repository-grounded disposition:
    establishes how it was delivered.
 * `Superseded`: current repository evidence shows the named surface was removed,
    replaced, or intentionally abandoned, and identifies the replacement or
-   decision history. When repository history contains both, cite the original
-   surface's delivery issue or pull request and the later removal or replacement
-   issue or pull request so the evidence chain establishes both states.
+   decision history. Select `Superseded` only when repository history establishes
+   both states: cite the original surface's delivery issue or pull request and
+   the later removal or replacement issue or pull request. If either state cannot
+   be established with distinct evidence, use `Uncertain`.
 * `Possible duplicate`: the similarity outcome is `Match` or `Similar`, another
    open or closed issue requests the same outcome, and repository history does
    not establish a distinct remaining need. Treat this as a maintainer decision,

@@ -747,8 +747,10 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
     }
 
     It 'requires complete legacy and replacement lineage for superseded work' {
-        $script:Agent | Should -Match 'For `Superseded`, record both the original surface''s delivery lineage and its\s+removal or replacement lineage when both are available'
-        $script:Policy | Should -Match 'cite the original\s+surface''s delivery issue or pull request and the later removal or replacement\s+issue or pull request'
+        $script:Agent | Should -Match 'Select `Superseded` only when both lineage\s+arrays can contain non-empty, distinct evidence; otherwise use `Uncertain`'
+        $script:Policy | Should -Match 'Select `Superseded` only when repository history establishes\s+both states: cite the original surface''s delivery issue or pull request and\s+the later removal or replacement issue or pull request'
+        $script:Policy | Should -Match 'If either state cannot\s+be established with distinct evidence, use `Uncertain`'
+        $script:Agent | Should -Not -Match 'when both are available'
         $script:Agent | Should -Match '`lineage_evidence` with exactly\s+`original_delivery` and `replacement_or_removal` arrays'
         $script:Agent | Should -Match 'For `Superseded`, both\s+arrays contain non-empty, distinct'
     }
