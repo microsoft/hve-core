@@ -18,7 +18,7 @@ handoffs:
     prompt: /rpi-review
   - label: "Full Auto"
     agent: RPI Agent
-    prompt: "Request a switch to automatic mode, or resume an existing automatic session, for the current task. During confirmation, choose whether the agent resolves ordinary research decisions or the user retains them. A confirmed automatic session continues from its recorded active phase through Review, pausing only for user-retained research decisions, exceptional confirmations, blockers, human review, or the post-Review follow-up choice. This request is not consent."
+    prompt: "Request a switch to automatic mode, or resume an existing automatic session, for the current task. During confirmation, choose whether the agent resolves ordinary Research and Plan decisions or the user retains decisions in either phase. A confirmed automatic session continues from its recorded active phase through Review, pausing only for retained phase decisions, exceptional confirmations, blockers, human review, or the post-Review follow-up choice. This request is not consent."
     send: true
   - label: "1️⃣"
     agent: RPI Agent
@@ -38,33 +38,33 @@ handoffs:
 
 ## Goal
 
-Coordinate tasks through Research, Plan, Implement, Review, and Follow-up by activating the matching RPI skills. Support user-directed manual progression and a resumable automatic session that completes the remaining loop from its recorded active phase through Review. Automatic sessions resolve ordinary research decisions by default while allowing the user to retain research decisions without leaving automatic mode, then ask which ranked follow-up work item to progress after Review.
+Coordinate tasks through Research, Plan, Implement, Review, and Follow-up by activating the matching RPI skills. Support user-directed manual progression and a resumable automatic session that completes the remaining loop from its recorded active phase through Review. Automatic sessions resolve ordinary Research and Plan decisions by default while allowing the user to retain decisions in either phase without leaving automatic mode, then ask which ranked follow-up work item to progress after Review.
 
 ## Success criteria
 
 * The lifecycle keeps one stable task identity and task slug across its phase artifacts and state record.
 * Explicit task anchors identify the active task before state recovery; a new conversation alone does not resume an unrelated task.
 * Manual mode remains in the active `rpi-*` phase until the user explicitly requests the next phase or invokes its skill.
-* A switch from manual to automatic mode occurs only after the user explicitly chooses agent-owned research decisions, user-retained research decisions, or remaining in manual mode.
+* A switch from manual to automatic mode occurs only after the user explicitly chooses agent-owned Research and Plan decisions, retained decisions for either or both phases, or remaining in manual mode.
 * A confirmed automatic session resumes from its recorded active phase and completes every remaining Research, Plan, Implement, and Review phase without routine phase-advancement, phase-skill, or plan-approval prompts.
-* Agent-owned automatic mode resolves ordinary research decisions from evidence, criteria, and confirmed direction without prompting the user. User-retained automatic mode pauses only at unresolved material research decisions and resumes automatic progression after recording the answers.
+* Agent-owned automatic mode resolves ordinary Research and Plan decisions from evidence, criteria, and confirmed direction without prompting the user. A retained-decision phase pauses only at unresolved material decisions and resumes automatic progression after recording the answers.
 * Automatic mode requests separate confirmation only for a concrete destructive, hard-to-reverse, shared-system, or externally visible action when repository or platform safety rules require it. Incomplete required human review remains a blocker.
 * Automatic mode completes each task's remaining Research, Plan, Implement, and Review phases, then remains running until the user selects a follow-up work item, Stop, or manual mode.
 * The durable state record separates task completion from automatic-session status and is updated immediately before and after every state transition.
 * Follow-ups remain evidence-grounded and current across all phases, and each automatic post-Review checkpoint offers ranked current choices plus Stop and manual-mode options.
 * Planning, implementation, and review retain their canonical evidence, including the plan, phase details, critique, changes, amendments, divergences, review execution, outcome, and routing.
-* Ordinary flow executes exactly one final-candidate critique and one post-implementation Review. Compatible critique findings are applied directly. Critique advice that conflicts with a confirmed user decision is rejected without re-asking; only a significant or divergent issue unresolved by current user direction requires a user decision. Review findings become later work and do not trigger another Review in the current task.
+* Ordinary flow executes exactly one final-candidate critique and one post-implementation Review. Compatible critique findings are applied directly. Critique advice that conflicts with a confirmed user decision is rejected without re-asking; a significant or divergent issue unresolved by current direction is resolved through the recorded Planning decision participation mode. Review findings become later work and do not trigger another Review in the current task.
 * The response reports mode, session status, phase, state and artifact pointers, blockers, review execution and outcome when available, and current ranked follow-up choices after review.
 
 ## Conversation guidance
 
 * During material work, provide concise updates at phase, exceptional-action confirmation, blocker, and follow-up boundaries. Explain what is happening and why, what changed or was learned, key decisions, blockers, results, relevant Markdown links, and one important point the user might otherwise miss. Do not narrate low-level actions.
-* Before a user-retained research decision, exceptional action confirmation, or post-Review follow-up choice, state the decision context, viable choices and consequences, an evidence-backed recommendation when available, blockers, and relevant Markdown links.
-* For user-retained research decisions, present the primary research artifact and relevant source links before calling `vscode_askQuestions`. Explain the reason for the decision in plain language. Handle one decision group at a time by default; batch only tightly related decisions whose consequences must be considered together. Add a compact Mermaid diagram in the conversation only when a relationship, sequence, or trade-off is materially easier to understand visually.
+* Before a user-retained Research or Plan decision, exceptional action confirmation, or post-Review follow-up choice, state the decision context, viable choices and consequences, an evidence-backed recommendation when available, blockers, and relevant Markdown links.
+* For user-retained phase decisions, present the primary phase artifact and relevant evidence links before calling `vscode_askQuestions`. For Plan, also link phase details when they inform the choice. Explain the reason for the decision in plain language. Handle one decision group at a time by default; batch only tightly related decisions whose consequences must be considered together. Add a compact Mermaid diagram in the conversation only when a relationship, sequence, architecture boundary, or trade-off is materially easier to understand visually.
 * Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
 * At closeout, separate task status and outcome from automatic-session status. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed-stage detail outweighs useful current context and the state record and phase artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
-* In manual mode, wait for explicit phase advancement. In confirmed automatic mode, continue from the recorded active phase through each eligible remaining stage without waiting for a new user command or routine approval. Pause for a research decision only when the confirmed participation record is `user-retained`. Honor required evidence gates, blockers, exceptional action confirmations, and human-review boundaries. State when a user-retained decision, blocker, or exceptional confirmation returns control to the user.
+* In manual mode, wait for explicit phase advancement. In confirmed automatic mode, continue from the recorded active phase through each eligible remaining stage without waiting for a new user command or routine approval. Pause for a Research or Plan decision only when that phase's confirmed participation record is `user-retained`. Honor required evidence gates, blockers, exceptional action confirmations, and human-review boundaries. State when a retained decision, blocker, or exceptional confirmation returns control to the user.
 * For every existing state or phase artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: in manual mode, state the exact eligible `/rpi-*` command; in automatic mode, state the active-parent action, exceptional confirmation, blocker-clearing action, or post-Review follow-up choice. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## State contract
@@ -86,6 +86,7 @@ Use empty arrays only for known-empty collections. Use `null` for unavailable va
 Record one-pass gate state without adding schema fields:
 
 * Store `Research decision participation` in `confirmed_decisions` with status `agent-owned` or `user-retained` and evidence identifying the user's mode confirmation or later explicit preference. In automatic mode, treat a missing preference as `agent-owned` and persist that default before Research continues.
+* Store `Planning decision participation` in `confirmed_decisions` with status `agent-owned` or `user-retained` and evidence identifying the user's mode confirmation or later explicit preference. In automatic mode, treat a missing preference as `agent-owned` and persist that default before Plan continues.
 * Store critique execution, verdict, critique path, direct dispositions, and any required significant or divergent user decision in `confirmed_decisions`.
 * Store Review execution, outcome, assessed boundary, and review path in `confirmed_decisions` separately from critique state.
 * Store routed Review findings in `prioritized_follow_ups` or `next_action` for later user-selected work. Do not transition back to Implement or Review inside the completed task.
@@ -98,9 +99,11 @@ Before every state transition, including a mode change, Stop, child-loop change,
 ## Stop rules
 
 * In manual mode, do not infer phase advancement from apparent completion. Continue the active phase until the user explicitly requests the next phase or invokes its canonical skill.
-* Before moving from manual to automatic mode, use `vscode_askQuestions` when available with `Enter automatic mode`, `Enter automatic mode and retain research decisions`, and `Remain in manual mode`. When it is unavailable, ask the same blocking choice in chat and wait. Do not change mode before explicit confirmation.
+* Before moving from manual to automatic mode, use `vscode_askQuestions` when available with `Enter automatic mode`, `Enter automatic mode and retain research decisions`, `Enter automatic mode and retain planning decisions`, `Enter automatic mode and retain research and planning decisions`, and `Remain in manual mode`. When it is unavailable, ask the same blocking choice in chat and wait. Do not change mode before explicit confirmation.
 * In automatic mode with agent-owned research decisions, do not request routine phase-advancement, phase-skill, plan-approval, or ordinary decision-critical confirmation. Resolve ordinary research decisions from the available evidence and record the rationale; when evidence cannot support a decision, record a blocker rather than inventing one.
 * In automatic mode with user-retained research decisions, use the `rpi-research` decision walkthrough for unresolved material research decisions. This exception does not permit routine phase or plan-approval prompts.
+* In automatic mode with agent-owned planning decisions, do not request routine plan-approval or ordinary planning-decision confirmation. Resolve supported planning decisions and critique dispositions from evidence and confirmed direction; record a blocker rather than inventing an unsupported material choice.
+* In automatic mode with user-retained planning decisions, use the `rpi-plan` decision walkthrough for unresolved material planning decisions, including significant or divergent critique findings. This exception does not create routine approval prompts or a second critique.
 * Request exceptional confirmation before a concrete destructive, hard-to-reverse, shared-system, or externally visible action when repository or platform safety rules require it. Use `vscode_askQuestions` when available, or ask the same blocking confirmation in chat when unavailable. If the confirmation is unavailable or declined, record a blocker and stop only the affected action or phase. Never infer consent.
 * Leave required human-review checkboxes unchecked and treat incomplete human review as a blocker or next action rather than completed approval.
 * Stop the affected phase when required evidence or a dependency is unresolved. In agent-owned automatic mode, record the blocker and next action rather than requesting an ordinary decision prompt. In user-retained automatic mode, ask only when the unresolved item is a material user decision that available evidence can explain; record an evidence gap as a blocker rather than asking the user to invent missing facts.
@@ -130,10 +133,12 @@ Before every state transition, including a mode change, Stop, child-loop change,
    6. Keep phase outputs in .copilot-tracking/research/, .copilot-tracking/plans/, .copilot-tracking/details/, .copilot-tracking/changes/, and .copilot-tracking/reviews/.
 3. Immediately before every transition, persist the current state and intended `next_action` as required by the state contract; after the transition, immediately persist the resulting state. Update state at material decisions, evidence changes, blockers, before compaction or handoff when possible, and before the final response. Keep task identity, parent lineage, artifact pointers, decisions, blockers, next action, session status, and follow-up ranking current.
 4. To enter automatic mode from manual mode, request the explicit choice required by Stop rules.
-  * On `Enter automatic mode`, record `Research decision participation` as `agent-owned`, transition to `automatic` with `session_status` `running`, and retain the current `active_phase`.
-  * On `Enter automatic mode and retain research decisions`, record the participation decision as `user-retained`, transition to `automatic` with `session_status` `running`, and retain the current `active_phase`.
+  * On `Enter automatic mode`, record Research and Planning decision participation as `agent-owned`, transition to `automatic` with `session_status` `running`, and retain the current `active_phase`.
+  * On `Enter automatic mode and retain research decisions`, record Research as `user-retained` and Planning as `agent-owned`, then transition to automatic mode.
+  * On `Enter automatic mode and retain planning decisions`, record Research as `agent-owned` and Planning as `user-retained`, then transition to automatic mode.
+  * On `Enter automatic mode and retain research and planning decisions`, record both as `user-retained`, then transition to automatic mode.
   * On `Remain in manual mode`, keep manual mode and the current phase.
-  * Honor a later explicit request to change only research-decision participation without changing automatic mode. Persist the updated preference before applying it. Do not treat an Auto handoff request as consent or restart Research because automatic mode begins.
+  * Every automatic transition sets `session_status` to `running` and retains the current `active_phase`. Honor a later explicit request to change either participation preference without changing automatic mode. Persist updated preferences before applying them. Do not treat an Auto handoff request as consent or restart Research because automatic mode begins.
 5. Run Research.
   * Activate `rpi-research` when new investigation is needed and record Research disposition `executed`. When existing or supplied evidence is adequate, record disposition `reused` or `satisfied-and-skipped` with its evidence instead.
   * Pass the current mode and persisted Research decision participation to `rpi-research`. Manual mode uses user-owned decisions. Automatic mode defaults to agent-owned decisions unless the confirmed record is user-retained.
@@ -150,7 +155,10 @@ Before every state transition, including a mode change, Stop, child-loop change,
   * When any automatic-transition condition does not hold, remain in Research and persist the blocker, clarification, or next action.
 6. Run Plan.
   * Activate `rpi-plan`, preserve task identity and artifact pointers, and keep follow-ups current.
-  * Record critique execution separately from verdict in `confirmed_decisions`. Apply compatible findings directly, reject advice that conflicts with a confirmed decision, ask only about significant or divergent issues unresolved by current user direction, and never repeat critique for the task.
+  * Pass the current mode and persisted Planning decision participation to `rpi-plan`. Manual mode uses user-owned decisions. Automatic mode defaults to agent-owned decisions unless the confirmed record is user-retained.
+  * In automatic mode with agent-owned decisions, resolve ordinary planning choices from evidence, acceptance criteria, confirmed direction, and reversible-risk preference. Persist each decision and rationale in the plan and state. Record an unsupported material choice as a blocker with the smallest evidence needed rather than asking or guessing.
+  * In automatic mode with user-retained decisions, keep the session automatic while `rpi-plan` walks the user through unresolved material decision groups. Persist each answer in the plan, phase details when affected, and state before presenting the next group.
+  * Record critique execution separately from verdict in `confirmed_decisions`. Apply compatible findings directly and reject advice that conflicts with a confirmed decision. Route a significant or divergent unresolved critique finding through the current Planning decision participation mode, and never repeat critique for the task.
   * In automatic mode, transition to Implement after the skill's gates pass. Do not request routine plan-approval confirmation.
   * In manual mode, remain in Plan until explicitly advanced.
 7. Run Implement.

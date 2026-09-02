@@ -17,6 +17,12 @@ Use one date and one lower-kebab-case task slug across the task's durable artifa
 
 The research, changes, and review paths belong to their respective RPI stages. Planning creates or revises only the plan, phase details, and critique artifact unless a justified research activation is required.
 
+## Artifact audience and order
+
+The plan is the user-facing planning source of truth and the downstream implementation checklist. Put its Executive Summary, User Decisions and Requirements, Planning Readiness and Next Step, goals, scope, requirements, acceptance criteria, risks and open questions, phase checklist, and dependencies before Sources, Critique Disposition, and Artifact Self-Check. Keep each fact in one canonical section; summary prose projects current state without creating another decision authority. Acceptance Criteria is the single verification record, so requirements do not repeat criteria inline.
+
+Phase details are implementation-facing. Keep their full phase and task context, likely targets, dependencies, validation expectations, completion evidence, and unresolved items. They do not need to repeat the plan's reader summary or decision walkthrough.
+
 ## Identity and markers
 
 Use one stable task ID throughout the artifact set. Use `Pxx` for phase IDs and `Pxx-Txx` for task IDs. Put each marker immediately before its matching heading:
@@ -35,13 +41,36 @@ Use one stable overall task ID. Keep current `Pxx` and `Pxx-Txx` markers for nav
 
 ## User decisions and requirements
 
-The plan's `## User Decisions and Requirements` section is a concise freeform list of current user intent. Build and interpret the list from user prompts, user-pointed external documents, tasks, issues, and prior research that captures the user's task, goals, requirements, or accepted decisions. Preserve each entry's meaning without forcing it into a taxonomy. Add optional source pointers inside entries when they clarify the basis for an item.
+The plan's `## User Decisions and Requirements` section has two distinct records. Confirmed User Direction is a concise freeform list of current user intent from prompts, user-pointed documents, tasks, issues, prior research, and accepted decisions. Planning Decisions and Feedback holds unresolved, proposed, deferred, and resolved material choices grouped by dependency and decision context. Each row records group, status, owner, rationale or requested input, evidence, and impact.
 
-The planner synthesizes the list and current evidence into separate top-level `## Goals`, `## Scope and Non-Goals`, `## Functional Requirements`, `## Non-Functional Requirements`, and `## Acceptance Criteria` sections before `## Phase Checklist`. These sections are independently editable current planning content. They inform one another but do not duplicate the freeform list or become its subheadings. Keep unresolved proposals and blockers outside the user list until the user confirms them.
+The planner synthesizes confirmed direction and current evidence into separate top-level `## Goals`, `## Scope and Non-Goals`, `## Functional Requirements`, `## Non-Functional Requirements`, and `## Acceptance Criteria` sections before `## Phase Checklist`. These sections inform one another without duplicating confirmed direction or unresolved decision rows. Move a resolved user-owned choice into Confirmed User Direction and update or close its decision row.
 
 When the user makes a clear change, update the list and every affected synthesized section directly without asking a redundant question. Reconcile the plan, phase details, executive summary, phases, task markers, dependencies, references, critique inputs, and follow-up items after the update. Do not silently weaken or contradict a confirmed requirement.
 
-When a decision-critical change remains unclear, ask only a small focused question set. Before asking, send a conversation message containing the affected user decision or requirement and plan area, the finding or conflict, viable choices, material consequences, an evidence-backed recommendation when available, and Markdown links to relevant planning artifacts, documents, code, or authoritative external sources when available. The question tool may refine the choice, but the decision context belongs in the conversation. Apply the user's answer to the freeform list and all affected synthesized sections.
+When a decision-critical change remains unclear, apply the Planning Decision Walkthrough below. The question tool collects a choice; its evidence and explanation remain in the conversation and plan.
+
+## Planning decision walkthrough
+
+Resolve decision participation before presenting unresolved material planning decisions.
+
+| Mode                                         | Decision owner | Behavior                                                                                                                                                  |
+|----------------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Standalone or manual RPI                     | User           | Walk through unresolved material decision groups and persist each answer before continuing.                                                               |
+| Automatic RPI Agent, default                 | Agent          | Resolve supported ordinary planning decisions and critique dispositions; stop on an unsupported material choice rather than asking or guessing.           |
+| Automatic RPI Agent, user-retained           | User           | Keep the session automatic, pause Plan for focused decision groups, then resume automatic progression after required answers and planning gates complete. |
+| Parent-owned orchestration such as RPI Quick | Parent         | Follow the parent-provided decision-participation and continuation contract.                                                                              |
+
+Build groups from unresolved rows in Planning Decisions and Feedback. Order them by dependency, blocker status, and effect on Planning Readiness. A group contains one decision by default. Combine decisions only when they share the same choice, evidence, and consequences or when answering one independently would be misleading.
+
+For each `user-owned` or `user-retained` group:
+
+1. Persist the pending group and its evidence before conversation.
+2. Present the plan, phase details when relevant, and supporting research, source, or code as Markdown links. Explain the decision, why it matters now, viable choices and consequences, evidence-backed recommendation when available, uncertainty, and readiness effect in plain language.
+3. Add a compact Mermaid diagram in conversation only when architecture, dependency, sequence, or a trade-off would otherwise be difficult to understand. The diagram supplements accessible prose.
+4. Call `vscode_askQuestions` when available with one concise question per decision and fixed options plus freeform input when useful. When unavailable, ask the same question in chat and wait.
+5. Persist the answer, provenance, affected requirements and phases, and readiness effect before presenting the next group.
+
+When no unresolved material decision exists, record that no walkthrough is required and do not ask for acknowledgment. In `agent-owned` mode, apply the same group ordering internally, select only evidence-supported options, and persist each rationale. Missing decision-critical evidence produces Not ready or Blocked with the smallest evidence needed.
 
 ## Planning opening and material updates
 
@@ -84,7 +113,7 @@ Use `âœ…` only for an evidence-backed settled decision or achieved readiness, `â
 
 ## Implementation-time updates and follow-up items
 
-When `rpi-implement` updates the plan or phase details during implementation, update the freeform user list and the affected synthesized sections when the change affects a current confirmed decision or requirement. Reconcile the updated facts, markers, details, dependencies, and executive summary. Remove superseded active content rather than retaining plan-state history. A significant or divergent discovery may require a user decision and plan update before affected work resumes, but the task's critique is not repeated.
+When `rpi-implement` updates the plan or phase details during implementation, update Confirmed User Direction and the affected synthesized sections when the change affects current confirmed intent. Record unresolved choices in Planning Decisions and Feedback. Reconcile the updated facts, markers, details, dependencies, and executive summary. Remove superseded active content rather than retaining plan-state history. A significant or divergent discovery may require a user decision and plan update before affected work resumes, but the task's critique is not repeated.
 
 Persist any user answer that informed an implementation-time update in the freeform list and affected synthesized sections.
 
@@ -92,20 +121,19 @@ Every plan includes `## Follow-Up Items` immediately before `## Handoff`. Initia
 
 ## Executive summary
 
-Every plan checklist includes a user-facing `## Executive Summary` immediately after `## Task Metadata` and before `## Sources`. It gives readers a useful overview before the detailed evidence, scope, and phases.
+Every plan checklist includes a user-facing `## Executive Summary` immediately after `## Task Metadata`. It gives readers a useful overview before decisions, readiness, requirements, and phases.
 
 Include these elements when evidence supports them:
 
 * Explain, in approachable language, what the plan will implement and why the outcome matters.
-* Highlight current user decisions and requirements and their practical consequences without creating a second decision authority.
 * Include a `### What You May Not Know` subsection for important context, dependencies, risks, or constraints that a user might otherwise miss.
-* State unresolved decisions or blockers and the next action when they remain. Do not present an unsupported assumption as a settled decision.
+* State planning execution status, readiness, confidence, and residual uncertainty in plain language. Keep detailed decisions, blockers, and next actions in their canonical sections.
 
 Keep summary claims synchronized with the evidence and the detailed plan. Do not invent claims, decisions, resources, risks, or links. Link to same-plan sections when navigation helps, and add an authoritative external explanatory link only when supplied evidence supports it and it materially improves comprehension. Keep workspace-relative paths as plain text, not Markdown links.
 
 Use readable Markdown selectively: concise paragraphs and lists for structure, bold for essential reader attention, and italics when introducing a term. Plain Markdown has no underline syntax. Use renderer-specific underline only when the generated tracking artifact's renderer is known to support it and the emphasis is essential; pair it with a plain-Markdown fallback, preferably bold. Do not use underline as decoration or repeat it for routine emphasis.
 
-Update the executive summary after every material plan change, including critique-driven revisions, user decisions or their consequences, goals, scope, phases, dependencies, acceptance criteria, risks, and readiness. Before critique handoff and again before finalization, reconcile the summary with the current user list and synthesized plan. Summary synchronization is a readiness condition.
+Update the executive summary after every material plan change, including critique-driven revisions, user decisions or their consequences, goals, scope, phases, dependencies, acceptance criteria, risks, and readiness. Before critique handoff and finalization, reconcile the summary with confirmed direction, decision rows, synthesized sections, and Planning Readiness and Next Step. Summary synchronization is a readiness condition.
 
 ## Research readiness
 
@@ -119,7 +147,7 @@ When none apply, plan from the supplied evidence. When one applies, ask `rpi-res
 
 ## Overall planning and bounded assignments
 
-The planning parent owns the freeform user list, synthesized sections, phase order, dependencies, follow-up items, critique disposition, both planning artifacts, and finalization. It may dispatch one or more `RPI Planner` subagents for bounded planning assignments.
+The planning parent owns Confirmed User Direction, Planning Decisions and Feedback, synthesized sections, phase order, dependencies, follow-up items, critique disposition, both planning artifacts, and finalization. It may dispatch one or more `RPI Planner` subagents for bounded planning assignments.
 
 Every `RPI Planner` dispatch contains:
 
@@ -133,7 +161,7 @@ Independent assignments may run in parallel. Dependent assignments run sequentia
 
 ## Independent critique
 
-Activate `rpi-plan-critique` once by default, only when the primary planner judges both the plan and phase details to be implementation-ready candidates. Do not critique an initial draft merely because it exists. Before dispatch, lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence. Dispatch a fresh generic critique worker with the exact task context, current user list, caller requirements, research, evidence, dependencies, acceptance criteria, plan path, details path, and one critique output path. The critique worker reads plan sources and writes only the critique artifact and returns one complete actionable finding set.
+Activate `rpi-plan-critique` once by default, only when the primary planner judges both the plan and phase details to be implementation-ready candidates. Do not critique an initial draft merely because it exists. Before dispatch, lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence. Dispatch a fresh generic critique worker with the exact task context, confirmed direction, resolved planning decisions, caller requirements, research, evidence, dependencies, acceptance criteria, plan path, details path, and one critique output path. The critique worker reads plan sources and writes only the critique artifact and returns one complete actionable finding set.
 
 The critique is a one-time internal readiness gate. Its verdict returns to the planning parent, which owns revision, decision requests, and finalization. It is not a peer lifecycle transition and does not cause a standalone user to invoke another stage.
 
@@ -142,7 +170,7 @@ Record the latest critique findings and their dispositions in the plan's standal
 * Revise the plan directly for localized evidence-backed corrections, applying all planner-owned findings in one coherent batch.
 * Dispatch `RPI Planner` for a bounded planning assignment when deeper planning work is needed.
 * Preserve confirmed user requests and answers when critique advice conflicts with them. Reject conflicting advice without re-asking when current user direction already resolves it.
-* Ask a small set of decision-critical questions only when a significant or divergent finding is not resolved by current user direction and affects requirements, scope, architecture, acceptance criteria, dependencies, or evidence boundary.
+* Route a significant or divergent finding not resolved by current user direction through the current Planning Decision Walkthrough when it affects requirements, scope, architecture, acceptance criteria, dependencies, or evidence boundary.
 * Close every `PC-xxx` with its declared owner, disposition, and exact resolving evidence, then finalize without another critique.
 * Finalize after direct corrections and required user decisions are resolved and any accepted residual risk is explicitly recorded.
 
@@ -152,7 +180,7 @@ Phase details describe context, intent, boundaries, likely targets, dependencies
 
 ## Planning conversation and closeout
 
-Use the planning opening and material-update protocol above during planning work. Before a decision question, state the decision context, viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links.
+Use the planning opening and material-update protocol above during planning work. Use the Planning Decision Walkthrough for material choices and critique findings. Keep automatic agent-owned decisions free of routine prompts and keep user-retained automatic sessions automatic while awaiting a decision group.
 
 At closeout, report planning execution status separately from readiness or decision state. Include results, important updates, decisions, and blockers or open items. Advise `/compact` only when stale tool output, superseded reasoning, or completed-stage detail outweighs useful context and the durable plan, details, and critique artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 
@@ -164,4 +192,4 @@ For every relevant existing artifact, use the two-cell row `| [actual/workspace-
 
 ## Final planning handoff
 
-The final plan identifies the implementation handoff with task IDs, markers, and artifact paths. Its durable implementation-context record identifies the plan, phase details, latest critique, relevant research, and downstream changes-record role. A standalone planning response advises `/rpi-implement` only when the plan is ready. The parent continues instead in `rpi-quick` or confirmed automatic RPI Agent mode. It does not create a separate legacy log artifact or require a line-based verification pass.
+The final plan identifies the implementation handoff with task IDs, markers, and artifact paths. Its Planning Readiness and Next Step record identifies the plan, phase details, latest critique, relevant research, downstream changes-record role, decision participation, blockers, gates, and continuation. A standalone planning response advises `/rpi-implement` only when the plan is ready. The parent continues instead in `rpi-quick` or confirmed automatic RPI Agent mode. It does not create a separate legacy log artifact or require a line-based verification pass.
