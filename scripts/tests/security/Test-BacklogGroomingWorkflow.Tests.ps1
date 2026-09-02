@@ -226,7 +226,8 @@ BeforeAll {
             [Parameter(Mandatory)] [int]$PriorCursor,
             [Parameter(Mandatory)] [string]$StartedAt,
             [Parameter(Mandatory)] [string]$CompletedAt,
-            [Parameter(Mandatory)] [string]$TestRoot
+            [Parameter(Mandatory)] [string]$TestRoot,
+            [switch]$ApplyTemplateTransportEscaping
         )
 
         $scriptMatch = [regex]::Match(
@@ -239,10 +240,14 @@ BeforeAll {
         New-Item -ItemType Directory -Path $workDirectory | Out-Null
         $agentOutputPath = Join-Path $workDirectory 'agent-output.json'
         $wrapperPath = Join-Path $workDirectory 'result-job.cjs'
+        $serializedReportData = $ReportData | ConvertTo-Json -Depth 12 -Compress
+        if ($ApplyTemplateTransportEscaping) {
+            $serializedReportData = $serializedReportData.Replace('${{', '$\{\{')
+        }
         @{
             items = @(@{
                     type = 'publish_backlog_grooming_result'
-                    'report-data' = $ReportData | ConvertTo-Json -Depth 12 -Compress
+                    'report-data' = $serializedReportData
                     'started-at' = $StartedAt
                     'completed-at' = $CompletedAt
                 })
@@ -365,7 +370,9 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
     }
 
     It 'validates structured report data and computes deterministic result provenance' {
-        $script:Source | Should -Match 'JSON\.parse\(String\(requests\[0\]\["report-data"\]'
+        $script:Source | Should -Match 'const reportData = String\(requests\[0\]\["report-data"\]'
+        $script:Source | Should -Match '\.replaceAll\("\$\\\\\{\\\\\{", "\$" \+ "\{\{"\)'
+        $script:Source | Should -Match 'payload = JSON\.parse\(reportData\)'
         $script:Source | Should -Match 'exactKeys\(payload, \["issues"\]\)'
         $script:Source | Should -Not -Match 'const runKeys ='
         $script:Source | Should -Match 'const similarities = new Set\(\["Match", "Similar", "Distinct", "Uncertain"\]\)'
@@ -481,6 +488,18 @@ Describe 'Rows-authoritative backlog grooming result construction' -Tag 'Unit' {
         $result.report_data.run.next_cursor | Should -Be 9
     }
 
+    It 'decodes template-syntax transport escaping before parsing report data' {
+        $row = $script:AssessedRow.Clone()
+        $row.repository_evidence = @('GH_AW_GITHUB_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}')
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive -ApplyTemplateTransportEscaping
+
+        $result.report_data.issues[0].repository_evidence[0] |
+            Should -Be 'GH_AW_GITHUB_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}'
+    }
+
     It 'retains the prior cursor when every row is deferred' {
         $rows = 11, 13 | ForEach-Object {
             $row = $script:DeferredRow.Clone()
@@ -531,7 +550,8 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
     }
 
     It 'uploads the validated result without issue-write or SARIF permissions' {
-        $script:Lock | Should -Match 'JSON\.parse\(String\(requests\[0\]\["report-data"\]'
+        $script:Lock | Should -Match '\.replaceAll\("\$\\\\\{\\\\\{", "\$" \+ "\{\{"\)'
+        $script:Lock | Should -Match 'payload = JSON\.parse\(reportData\)'
         $script:Lock | Should -Match 'Possible duplicate requires a Match or Similar outcome'
         $script:Lock | Should -Match 'Superseded requires distinct original-delivery and replacement-or-removal evidence'
         $script:Lock | Should -Match 'result-output/shard-result\.json'
