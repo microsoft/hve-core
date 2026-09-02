@@ -29,28 +29,28 @@ def test_run_scan_raises_on_called_process_error() -> None:
     error = subprocess.CalledProcessError(1, "npx", stderr="boom")
     with patch("scan.subprocess.run", side_effect=error):
         with pytest.raises(scan.ScriptError, match="Scanner failed: boom"):
-            scan.run_scan("https://example.com")
+            scan.run_scan("https://example.com", allow_external=True)
 
 
 def test_run_scan_uses_placeholder_when_stderr_is_empty() -> None:
     error = subprocess.CalledProcessError(1, "npx", stderr="")
     with patch("scan.subprocess.run", side_effect=error):
         with pytest.raises(scan.ScriptError, match="No scanner output captured"):
-            scan.run_scan("https://example.com")
+            scan.run_scan("https://example.com", allow_external=True)
 
 
 def test_run_scan_raises_on_invalid_json() -> None:
     with patch("scan.subprocess.run") as mock_run:
         mock_run.return_value = SimpleNamespace(stdout="not json", stderr="")
         with pytest.raises(scan.ScriptError, match="invalid JSON"):
-            scan.run_scan("https://example.com")
+            scan.run_scan("https://example.com", allow_external=True)
 
 
 def test_run_scan_raises_on_non_dict_payload() -> None:
     with patch("scan.subprocess.run") as mock_run:
         mock_run.return_value = SimpleNamespace(stdout="[]", stderr="")
         with pytest.raises(scan.ScriptError, match="unexpected payload"):
-            scan.run_scan("https://example.com")
+            scan.run_scan("https://example.com", allow_external=True)
 
 
 def test_write_output_prints_to_stdout_when_no_path(capsys) -> None:
@@ -75,7 +75,14 @@ def test_main_success_writes_output(tmp_path: Path) -> None:
     with patch("scan.subprocess.run") as mock_run:
         mock_run.return_value = SimpleNamespace(stdout='{"violations": []}', stderr="")
 
-        exit_code = scan.main(["https://example.com", "--output", str(out)])
+        exit_code = scan.main(
+            [
+                "https://example.com",
+                "--allow-external",
+                "--output",
+                str(out),
+            ]
+        )
 
     assert exit_code == scan.EXIT_SUCCESS
     assert out.exists()
@@ -83,7 +90,7 @@ def test_main_success_writes_output(tmp_path: Path) -> None:
 
 def test_main_returns_error_code_on_script_error(capsys) -> None:
     with patch("scan.subprocess.run", side_effect=FileNotFoundError("npx")):
-        exit_code = scan.main(["https://example.com"])
+        exit_code = scan.main(["http://127.0.0.1:3000"])
 
     assert exit_code == scan.EXIT_USAGE
     assert "Error:" in capsys.readouterr().err
