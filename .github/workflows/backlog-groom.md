@@ -213,6 +213,9 @@ safe-outputs:
                 return;
               }
               const rowKeys = ["issue", "title", "selection_reason", "activity_and_ownership_context", "acceptance_signals", "repository_evidence", "lineage_evidence", "similarity_outcome", "disposition", "grooming_finding", "recommended_next_step", "assessment_status", "deferral_reason"];
+              const deferredReasonAliasKeys = rowKeys
+                .filter((key) => key !== "deferral_reason")
+                .concat("deferred_reason");
               const lineageKeys = ["original_delivery", "replacement_or_removal"];
               const similarities = new Set(["Match", "Similar", "Distinct", "Uncertain"]);
               const dispositions = new Set(["Still needed", "Likely completed", "Superseded", "Possible duplicate", "Needs correction", "Uncertain"]);
@@ -221,6 +224,14 @@ safe-outputs:
                 core.setFailed("Report data does not match the canonical top-level schema");
                 return;
               }
+              payload.issues = payload.issues.map((row) => {
+                if (!exactKeys(row, deferredReasonAliasKeys)) {
+                  return row;
+                }
+                const normalizedRow = { ...row, deferral_reason: row.deferred_reason };
+                delete normalizedRow.deferred_reason;
+                return normalizedRow;
+              });
               const issueNumbers = new Set();
               for (const row of payload.issues) {
                 if (!exactKeys(row, rowKeys) || !Number.isInteger(row.issue) || row.issue <= 0 || issueNumbers.has(row.issue) ||

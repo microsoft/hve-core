@@ -502,6 +502,42 @@ Describe 'Rows-authoritative backlog grooming result construction' -Tag 'Unit' {
             Should -Be 'GH_AW_GITHUB_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}'
     }
 
+    It 'normalizes the exact deferred_reason key alias' {
+        $row = $script:AssessedRow.Clone()
+        $row.Remove('deferral_reason')
+        $row.deferred_reason = ''
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.issues[0].PSObject.Properties.Name | Should -Contain 'deferral_reason'
+        $result.report_data.issues[0].PSObject.Properties.Name | Should -Not -Contain 'deferred_reason'
+        $result.report_data.issues[0].deferral_reason | Should -Be ''
+    }
+
+    It 'rejects rows containing both deferral reason key spellings' {
+        $row = $script:AssessedRow.Clone()
+        $row.deferred_reason = ''
+        {
+            Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+                -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+                -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+                -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+        } | Should -Throw '*Report issue data does not match the canonical row schema*'
+    }
+
+    It 'rejects rows containing an unrelated unknown key' {
+        $row = $script:AssessedRow.Clone()
+        $row.unexpected_reason = ''
+        {
+            Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+                -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+                -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+                -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+        } | Should -Throw '*Report issue data does not match the canonical row schema*'
+    }
+
     It 'retains the prior cursor when every row is deferred' {
         $rows = 11, 13 | ForEach-Object {
             $row = $script:DeferredRow.Clone()
