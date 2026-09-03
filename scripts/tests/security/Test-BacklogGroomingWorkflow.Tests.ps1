@@ -381,6 +381,7 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Match 'const dispositions = new Set\(\["Still needed", "Likely completed", "Superseded", "Possible duplicate", "Needs correction", "Uncertain"\]\)'
         $script:Source | Should -Match 'row\.acceptance_signals'
         $script:Source | Should -Match 'const lineageKeys = \["original_delivery", "replacement_or_removal"\]'
+        $script:Source | Should -Match 'const boundEvidenceItems = \(value\) => Array\.isArray\(value\)'
         $script:Source | Should -Match 'const hasValidSupersessionLineage = \(row\) =>'
         $script:Source | Should -Match 'row\.disposition === "Superseded" && !hasValidSupersessionLineage\(row\)'
         $script:Source | Should -Match 'const reportData = \{ run, issues: payload\.issues \}'
@@ -517,6 +518,24 @@ Describe 'Rows-authoritative backlog grooming result construction' -Tag 'Unit' {
         $result.report_data.issues[0].deferral_reason | Should -Be ''
     }
 
+    It 'bounds overlong repository and lineage evidence items' {
+        $row = $script:AssessedRow.Clone()
+        $row.repository_evidence = @((('R' * 642) -join ''))
+        $row.lineage_evidence = [ordered]@{
+            original_delivery = @(('O' * 510) -join '')
+            replacement_or_removal = @(('P' * 510) -join '')
+        }
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.issues[0].repository_evidence[0].Length | Should -Be 500
+        $result.report_data.issues[0].repository_evidence[0] | Should -Match '\.\.\.$'
+        $result.report_data.issues[0].lineage_evidence.original_delivery[0].Length | Should -Be 500
+        $result.report_data.issues[0].lineage_evidence.replacement_or_removal[0].Length | Should -Be 500
+    }
+
     It 'rejects rows containing both deferral reason key spellings' {
         $row = $script:AssessedRow.Clone()
         $row.deferred_reason = ''
@@ -626,6 +645,7 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Lock | Should -Match '\.replaceAll\("\$\\\\\{\\\\\{", "\$" \+ "\{\{"\)'
         $script:Lock | Should -Match 'payload = JSON\.parse\(reportData\)'
         $script:Lock | Should -Match 'Possible duplicate requires a Match or Similar outcome'
+        $script:Lock | Should -Match 'const boundEvidenceItems = \(value\) => Array\.isArray\(value\)'
         $script:Lock | Should -Match 'const hasValidSupersessionLineage = \(row\) =>'
         $script:Lock | Should -Match 'row\.disposition === "Superseded" && !hasValidSupersessionLineage\(row\)'
         $script:Lock | Should -Match 'result-output/shard-result\.json'

@@ -191,6 +191,11 @@ safe-outputs:
                 Object.keys(value).sort().join("|") === [...keys].sort().join("|");
               const validText = (value, max = 2000) =>
                 typeof value === "string" && value.trim().length > 0 && value.length <= max;
+              const boundEvidenceItems = (value) => Array.isArray(value)
+                ? value.map((item) => typeof item === "string" && item.length > 500
+                  ? `${item.slice(0, 497).trimEnd()}...`
+                  : item)
+                : value;
               const canonicalize = (value) => {
                 if (Array.isArray(value)) {
                   return `[${value.map(canonicalize).join(",")}]`;
@@ -231,12 +236,25 @@ safe-outputs:
                 return;
               }
               payload.issues = payload.issues.map((row) => {
-                if (!exactKeys(row, deferredReasonAliasKeys)) {
-                  return row;
+                let normalizedRow = row;
+                if (exactKeys(row, deferredReasonAliasKeys)) {
+                  normalizedRow = { ...row, deferral_reason: row.deferred_reason };
+                  delete normalizedRow.deferred_reason;
                 }
-                const normalizedRow = { ...row, deferral_reason: row.deferred_reason };
-                delete normalizedRow.deferred_reason;
-                return normalizedRow;
+                if (!exactKeys(normalizedRow, rowKeys)) {
+                  return normalizedRow;
+                }
+                const lineage = normalizedRow.lineage_evidence;
+                return {
+                  ...normalizedRow,
+                  repository_evidence: boundEvidenceItems(normalizedRow.repository_evidence),
+                  lineage_evidence: exactKeys(lineage, lineageKeys)
+                    ? {
+                      original_delivery: boundEvidenceItems(lineage.original_delivery),
+                      replacement_or_removal: boundEvidenceItems(lineage.replacement_or_removal),
+                    }
+                    : lineage,
+                };
               });
               const issueNumbers = new Set();
               for (const row of payload.issues) {
