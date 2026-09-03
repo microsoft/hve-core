@@ -10,7 +10,9 @@
     Reads the pinned module manifest and installs each module at the declared
     version. Modules already present at the correct version are skipped unless
     -Force is specified. Transient PSGallery failures are retried with
-    exponential backoff.
+    exponential backoff. If PowerShellGet's default registration returns
+    without making PSGallery visible, installation uses a temporary repository
+    at the canonical endpoint and removes it afterward.
 
     Colocation rationale: this script lives in scripts/security/ because it
     consumes ps-module-versions.json (the pinned-version manifest that the
@@ -76,6 +78,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$PSGallerySourceUri = 'https://www.powershellgallery.com/api/v2'
 
 #region Functions
 
@@ -149,13 +152,14 @@ function Register-DefaultPSGallery {
     .SYNOPSIS
         Registers PowerShellGet's default PSGallery repository.
     .OUTPUTS
-        [void]
+        [bool] True when PSGallery is discoverable after registration.
     #>
     [CmdletBinding()]
-    [OutputType([void])]
+    [OutputType([bool])]
     param()
 
-    Register-PSRepository -Default -ErrorAction Stop
+    $null = Register-PSRepository -Default -ErrorAction Stop
+    return [bool](Get-PSRepository -Name 'PSGallery' -ErrorAction SilentlyContinue)
 }
 
 function Initialize-Repository {
@@ -163,10 +167,10 @@ function Initialize-Repository {
     .SYNOPSIS
         Initializes the requested repository before installation.
     .OUTPUTS
-        [void]
+        [string] Repository name to use for installation.
     #>
     [CmdletBinding()]
-    [OutputType([void])]
+    [OutputType([string])]
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
@@ -175,15 +179,23 @@ function Initialize-Repository {
 
     $repo = Get-PSRepository -Name $Name -ErrorAction SilentlyContinue
     if ($repo) {
-        return
+        return $Name
     }
 
     if ($Name -ne 'PSGallery') {
-        return
+        return $Name
     }
 
-    Register-DefaultPSGallery
-    Write-Host "📦 Registered repository $Name" -ForegroundColor DarkCyan
+    if (Register-DefaultPSGallery) {
+        Write-Host "📦 Registered repository $Name" -ForegroundColor DarkCyan
+        return $Name
+    }
+
+    $temporaryName = "HVEPSGallery-$PID-$([guid]::NewGuid().ToString('N'))"
+    $null = Register-PSRepository -Name $temporaryName -SourceLocation $PSGallerySourceUri `
+        -InstallationPolicy Untrusted -ErrorAction Stop
+    Write-Host "📦 Registered temporary repository $temporaryName" -ForegroundColor DarkCyan
+    return $temporaryName
 }
 
 function Install-SingleModule {
@@ -221,30 +233,61 @@ function Install-SingleModule {
 
     $isCI = $env:GITHUB_ACTIONS -eq 'true'
 
-    Initialize-Repository -Name $Repository
+    $resolvedRepository = $Repository
+    $installError = $null
 
-    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
-        try {
-            Install-Module -Name $Name -RequiredVersion $Version -Force -Scope $Scope -Repository $Repository -ErrorAction Stop
-            Write-Host "✅ Installed $Name $Version (attempt $attempt)" -ForegroundColor Green
-            return
-        }
-        catch {
-            if ($attempt -eq $MaxAttempts) {
-                $msg = "Failed to install $Name $Version after $MaxAttempts attempts: $($_.Exception.Message)"
-                if ($isCI) {
-                    Write-Host "::error::$msg"
+    try {
+        $resolvedRepository = Initialize-Repository -Name $Repository
+        for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+            try {
+                # -Force suppresses the prompt for the temporary Untrusted source;
+                # RequiredVersion and the canonical source remain fixed.
+                Install-Module -Name $Name -RequiredVersion $Version -Force -Scope $Scope -Repository $resolvedRepository -ErrorAction Stop
+                Write-Host "✅ Installed $Name $Version (attempt $attempt)" -ForegroundColor Green
+                return
+            }
+            catch {
+                if ($attempt -eq $MaxAttempts) {
+                    $msg = "Failed to install $Name $Version after $MaxAttempts attempts: $($_.Exception.Message)"
+                    if ($isCI) {
+                        Write-Host "::error::$msg"
+                    }
+                    throw $msg
                 }
-                throw $msg
+                $delay = $BaseDelaySeconds * [math]::Pow(2, $attempt - 1)
+                $warnMsg = "Attempt $attempt/$MaxAttempts failed for ${Name}: $($_.Exception.Message). Retrying in ${delay}s..."
+                if ($isCI) {
+                    Write-Host "::warning::$warnMsg"
+                }
+                Write-Host "⚠️  $warnMsg" -ForegroundColor Yellow
+                Start-Sleep -Seconds $delay
             }
-            $delay = $BaseDelaySeconds * [math]::Pow(2, $attempt - 1)
-            $warnMsg = "Attempt $attempt/$MaxAttempts failed for ${Name}: $($_.Exception.Message). Retrying in ${delay}s..."
-            if ($isCI) {
-                Write-Host "::warning::$warnMsg"
-            }
-            Write-Host "⚠️  $warnMsg" -ForegroundColor Yellow
-            Start-Sleep -Seconds $delay
         }
+    }
+    catch {
+        $installError = $_
+    }
+    finally {
+        if ($resolvedRepository -ne $Repository) {
+            try {
+                $null = Unregister-PSRepository -Name $resolvedRepository -ErrorAction Stop
+                Write-Host "🧹 Removed temporary repository $resolvedRepository" -ForegroundColor DarkCyan
+            }
+            catch {
+                $cleanupMessage = "Failed to remove temporary repository ${resolvedRepository}: $($_.Exception.Message)"
+                if ($null -eq $installError) {
+                    throw $cleanupMessage
+                }
+                if ($isCI) {
+                    Write-Host "::warning::$cleanupMessage"
+                }
+                Write-Warning $cleanupMessage
+            }
+        }
+    }
+
+    if ($null -ne $installError) {
+        throw $installError
     }
 }
 
