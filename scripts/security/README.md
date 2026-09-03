@@ -409,13 +409,13 @@ it to `scripts/lib/`.
 
 #### Contract
 
-| Aspect       | Detail                                                                                                                                     |
-|--------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| Error mode   | `$ErrorActionPreference = 'Stop'`; throws on exhausted retries                                                                             |
-| Exit code    | 0 on success, 1 on any module install failure                                                                                              |
-| Logging      | Timestamped `Write-Host` (green success, yellow retry, red failure); emits `::warning::` annotations when `$env:GITHUB_ACTIONS -eq 'true'` |
-| Idempotent   | Skips modules already present at the required version (`Get-Module -ListAvailable`) unless `-Force` is specified                           |
-| Side effects | `Import-Module` each installed module into the session when `-Import` is specified                                                         |
+| Aspect       | Detail                                                                                                                                                                         |
+|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Error mode   | `$ErrorActionPreference = 'Stop'`; throws on exhausted retries                                                                                                                 |
+| Exit code    | 0 on success, 1 on any module install failure                                                                                                                                  |
+| Logging      | Timestamped `Write-Host` (green success, yellow retry, red failure); emits `::warning::` annotations when `$env:GITHUB_ACTIONS -eq 'true'`                                     |
+| Idempotent   | Skips modules already present at the required version (`Get-Module -ListAvailable`) unless `-Force` is specified; verifies default PSGallery registration before use           |
+| Side effects | Imports requested modules; creates and removes a temporary canonical PSGallery alias when default registration is unavailable; cleanup also runs after an installation failure |
 
 #### Parameters
 
