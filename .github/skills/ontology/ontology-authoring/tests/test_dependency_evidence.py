@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 from ontology_authoring.dependency_evidence import (
     EvidenceError,
+    apply_audited_license_override,
     collect_license_inventory,
     extract_license_fields,
     read_lock_packages,
@@ -57,6 +58,32 @@ def metadata_with_license(expression: str | None = "MIT") -> Message:
     if expression:
         metadata["License-Expression"] = expression
     return metadata
+
+
+def test_given_atheris_3_1_without_metadata_when_override_then_apache_license_is_recorded() -> None:
+    # Arrange
+    unknown_license = {
+        "expression": None,
+        "declared": None,
+        "classifiers": [],
+        "status": "unknown",
+    }
+
+    # Act
+    license_fields, metadata_source = apply_audited_license_override(
+        "atheris",
+        "3.1.0",
+        unknown_license,
+        "https://pypi.org/pypi",
+    )
+
+    # Assert
+    assert (license_fields["expression"], license_fields["status"], metadata_source) == (
+        "Apache-2.0",
+        "known",
+        "https://api.github.com/repos/google/atheris/git/blobs/"
+        "7a4a3ea2424c09fbe48d455aed1eaa94d9124835",
+    )
 
 
 def test_given_public_lock_when_read_then_direct_dependency_is_identified(tmp_path: Path) -> None:

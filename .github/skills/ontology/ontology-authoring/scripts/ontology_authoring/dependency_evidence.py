@@ -25,6 +25,15 @@ EXIT_FAILURE = 1
 EXIT_ERROR = 2
 PUBLIC_INDEX = "https://pypi.org/simple"
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+AUDITED_LICENSE_OVERRIDES = {
+    ("atheris", "3.1.0"): {
+        "expression": "Apache-2.0",
+        "metadataSource": (
+            "https://api.github.com/repos/google/atheris/git/blobs/"
+            "7a4a3ea2424c09fbe48d455aed1eaa94d9124835"
+        ),
+    },
+}
 
 
 class EvidenceError(Exception):
@@ -47,7 +56,8 @@ def sha256_file(path: Path) -> str:
 
 def write_json(path: Path, value: dict[str, Any]) -> None:
     """Write stable UTF-8 JSON with a trailing newline."""
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(value, indent=2,
+                    sort_keys=True) + "\n", encoding="utf-8")
 
 
 def read_lock_packages(lock_path: Path) -> tuple[list[dict[str, Any]], set[str]]:
@@ -64,7 +74,8 @@ def read_lock_packages(lock_path: Path) -> tuple[list[dict[str, Any]], set[str]]
             raise EvidenceError("uv.lock contains a malformed package entry")
         source = package.get("source")
         if not isinstance(source, dict):
-            raise EvidenceError(f"Package {package.get('name', '<unknown>')} has no source")
+            raise EvidenceError(
+                f"Package {package.get('name', '<unknown>')} has no source")
         if "virtual" in source or "editable" in source:
             for dependency in package.get("dependencies", []):
                 if isinstance(dependency, dict) and isinstance(dependency.get("name"), str):
@@ -79,7 +90,8 @@ def read_lock_packages(lock_path: Path) -> tuple[list[dict[str, Any]], set[str]]
                 f"Package {package.get('name', '<unknown>')} is not locked to {PUBLIC_INDEX}"
             )
         if not isinstance(package.get("name"), str) or not isinstance(package.get("version"), str):
-            raise EvidenceError("Registry package is missing a name or version")
+            raise EvidenceError(
+                "Registry package is missing a name or version")
         registry_packages.append(package)
 
     return registry_packages, direct_names
@@ -113,10 +125,12 @@ def fetch_public_metadata(name: str, version: str) -> dict[str, Any]:
         with urllib.request.urlopen(url, timeout=30) as response:  # noqa: S310
             payload = json.load(response)
     except (OSError, urllib.error.URLError, json.JSONDecodeError) as error:
-        raise EvidenceError(f"Could not retrieve public metadata for {name}=={version}") from error
+        raise EvidenceError(
+            f"Could not retrieve public metadata for {name}=={version}") from error
     info = payload.get("info") if isinstance(payload, dict) else None
     if not isinstance(info, dict):
-        raise EvidenceError(f"Public metadata is malformed for {name}=={version}")
+        raise EvidenceError(
+            f"Public metadata is malformed for {name}=={version}")
     expression = str(info.get("license_expression") or "").strip()
     declared = str(info.get("license") or "").strip()
     if declared.upper() == "UNKNOWN":
@@ -134,11 +148,36 @@ def fetch_public_metadata(name: str, version: str) -> dict[str, Any]:
     }
 
 
+def apply_audited_license_override(
+    name: str,
+    version: str,
+    license_fields: dict[str, Any],
+    metadata_source: str,
+) -> tuple[dict[str, Any], str]:
+    """Apply an exact audited fallback when package metadata omits its license."""
+    if license_fields["status"] != "unknown":
+        return license_fields, metadata_source
+    override = AUDITED_LICENSE_OVERRIDES.get(
+        (canonicalize_name(name), version))
+    if override is None:
+        return license_fields, metadata_source
+    return (
+        {
+            "expression": override["expression"],
+            "declared": None,
+            "classifiers": [],
+            "status": "known",
+        },
+        override["metadataSource"],
+    )
+
+
 def collect_license_inventory(
     lock_path: Path,
     distribution_provider: Callable[[str], importlib.metadata.Distribution]
     = importlib.metadata.distribution,
-    public_metadata_provider: Callable[[str, str], dict[str, Any]] = fetch_public_metadata,
+    public_metadata_provider: Callable[[
+        str, str], dict[str, Any]] = fetch_public_metadata,
 ) -> list[dict[str, Any]]:
     """Reconcile every locked registry package with its installed metadata."""
     packages, direct_names = read_lock_packages(lock_path)
@@ -152,17 +191,25 @@ def collect_license_inventory(
             metadata_source = "https://pypi.org/pypi"
         else:
             if distribution.version != package["version"]:
-                license_fields = public_metadata_provider(name, package["version"])
+                license_fields = public_metadata_provider(
+                    name, package["version"])
                 metadata_source = "https://pypi.org/pypi"
             else:
                 license_fields = extract_license_fields(distribution.metadata)
                 metadata_source = "installed-core-metadata"
+        license_fields, metadata_source = apply_audited_license_override(
+            name,
+            package["version"],
+            license_fields,
+            metadata_source,
+        )
         inventory.append(
             {
                 "name": canonicalize_name(name),
                 "version": package["version"],
                 "relationship": (
-                    "direct" if canonicalize_name(name) in direct_names else "transitive"
+                    "direct" if canonicalize_name(
+                        name) in direct_names else "transitive"
                 ),
                 "source": PUBLIC_INDEX,
                 "metadataSource": metadata_source,
@@ -170,16 +217,19 @@ def collect_license_inventory(
             }
         )
 
-    unknown = [item["name"] for item in inventory if item["license"]["status"] == "unknown"]
+    unknown = [item["name"]
+               for item in inventory if item["license"]["status"] == "unknown"]
     if unknown:
-        raise EvidenceError(f"Unknown license metadata: {', '.join(sorted(unknown))}")
+        raise EvidenceError(
+            f"Unknown license metadata: {', '.join(sorted(unknown))}")
     return sorted(inventory, key=lambda item: item["name"])
 
 
 def create_evidence(args: argparse.Namespace) -> None:
     """Create the license inventory, generation record, and inner hash manifest."""
     if not SHA_PATTERN.fullmatch(args.source_commit):
-        raise EvidenceError("source commit must be a full lowercase 40-character SHA")
+        raise EvidenceError(
+            "source commit must be a full lowercase 40-character SHA")
     bundle_dir = args.bundle_dir.resolve()
     bundle_dir.mkdir(parents=True, exist_ok=True)
     lock_path = bundle_dir / "uv.lock"
@@ -187,7 +237,8 @@ def create_evidence(args: argparse.Namespace) -> None:
     command_path = bundle_dir / "command-evidence.json"
     for required_path in (lock_path, sbom_path, command_path, args.pyproject):
         if not required_path.is_file():
-            raise EvidenceError(f"Required evidence input is missing: {required_path}")
+            raise EvidenceError(
+                f"Required evidence input is missing: {required_path}")
 
     inventory = collect_license_inventory(lock_path)
     inventory_path = bundle_dir / "dependency-license-inventory.json"
@@ -227,7 +278,8 @@ def create_evidence(args: argparse.Namespace) -> None:
     for path in sorted(bundle_dir.iterdir(), key=lambda item: item.name):
         if path.is_file() and path != manifest_path:
             files.append(
-                {"path": path.name, "sha256": sha256_file(path), "sizeBytes": path.stat().st_size}
+                {"path": path.name, "sha256": sha256_file(
+                    path), "sizeBytes": path.stat().st_size}
             )
     write_json(
         manifest_path,
