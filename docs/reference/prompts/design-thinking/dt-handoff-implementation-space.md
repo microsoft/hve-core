@@ -3,7 +3,7 @@ title: Dt Handoff Implementation Space
 description: Compiles DT Methods 7-9 into research-ready input for rpi-research at the Implementation Space exit
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Compiles DT Methods 7-9 into research-ready input for rpi-research at the Implem
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when Methods 7 through 9 and their earlier lineage are ready for an Implementation Space handoff to RPI research. Continue Design Thinking work when the implementation evidence or exit tier is incomplete.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the `project-slug`. The prompt checks completion across the project lineage and compiles available implementation evidence; the resulting exit tier informs research but does not bypass it or certify production readiness.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/dt-handoff-implementation-space project-slug=factory-floor-maintenance
+```
+
+The prompt creates a research-ready implementation handoff with recorded gaps and lineage.
