@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import json
 import pathlib
+import traceback
+from collections.abc import Callable
 
 import gitlab
 import pytest
@@ -95,11 +97,14 @@ class TestMain:
             "sys.argv", ["gitlab", "--fields", "profile", "auth", "status"]
         )
 
-        with pytest.raises(SystemExit) as exc_info:
-            gitlab.main()
+        assert gitlab.main() == gitlab.EXIT_USAGE
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert "--fields is not valid with auth commands" in capsys.readouterr().err
+        # main is the sole emission boundary: it must produce exactly one
+        # redacted "error: ..." line when GITLAB_DEBUG is unset.
+        assert (
+            capsys.readouterr().err
+            == "error: --fields is not valid with auth commands\n"
+        )
 
     @pytest.mark.parametrize(
         "argv",
@@ -118,10 +123,7 @@ class TestMain:
         )
         monkeypatch.setattr("sys.argv", argv)
 
-        with pytest.raises(SystemExit) as exc_info:
-            gitlab.main()
-
-        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert gitlab.main() == gitlab.EXIT_USAGE
         assert "gitlab auth {login|device-login|status|logout}" in (
             capsys.readouterr().err
         )
@@ -156,10 +158,7 @@ class TestMain:
         monkeypatch.setattr(gitlab, "require_environment", lambda: None)
         monkeypatch.setattr("sys.argv", argv)
 
-        with pytest.raises(SystemExit) as exc_info:
-            gitlab.main()
-
-        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert gitlab.main() == gitlab.EXIT_USAGE
         assert USAGE_MAIN in capsys.readouterr().err
 
     def test_main_passes_empty_arguments_when_only_fields_are_present(
@@ -170,10 +169,7 @@ class TestMain:
         monkeypatch.setattr(gitlab, "require_environment", lambda: None)
         monkeypatch.setattr("sys.argv", ARGV_FIELDS_ONLY)
 
-        with pytest.raises(SystemExit) as exc_info:
-            gitlab.main()
-
-        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert gitlab.main() == gitlab.EXIT_USAGE
         assert gitlab.selected_fields == FIELDS_MR
         assert USAGE_MAIN in capsys.readouterr().err
 
@@ -220,9 +216,61 @@ class TestMain:
         assert captured.err.strip() == "error: unexpected GitLab CLI failure"
         assert "hidden" not in captured.err
 
+    def test_main_handles_typed_error_at_single_redacted_boundary(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        error = gitlab.GitLabError("private_token=hidden", gitlab.EXIT_USAGE)
+        debug_traceback = mocker.patch.object(gitlab, "_emit_debug_traceback")
+        monkeypatch.setattr(gitlab, "require_environment", lambda: None)
+        monkeypatch.setitem(
+            gitlab.COMMANDS,
+            "mr-list",
+            lambda _args: (_ for _ in ()).throw(error),
+        )
+        monkeypatch.setattr("sys.argv", ARGV_MAIN_LIST)
+
+        result = gitlab.main()
+
+        assert result == gitlab.EXIT_USAGE
+        assert capsys.readouterr().err == "error: private_token=[REDACTED]\n"
+        debug_traceback.assert_called_once_with(error)
+
 
 class TestAuthCommands:
     """Tests for stateful OAuth command behavior."""
+
+    @pytest.mark.parametrize(
+        ("provider", "command"),
+        [
+            ("gitlab.oauth.authorization_code_login", gitlab.cmd_auth_login),
+            ("gitlab.oauth.device_login", gitlab.cmd_auth_device_login),
+        ],
+    )
+    def test_login_wrapper_traceback_excludes_provider_secret(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+        tmp_path: pathlib.Path,
+        provider: str,
+        command: Callable[[list[str]], None],
+    ) -> None:
+        store_path = tmp_path / "gitlab" / "gitlab-token.json"
+        _configure_oauth(monkeypatch, store_path)
+        mocker.patch(
+            provider,
+            side_effect=gitlab.oauth.OAuthError("access_token=provider-secret"),
+        )
+
+        with pytest.raises(gitlab.GitLabError) as exc_info:
+            command([])
+
+        formatted = "".join(traceback.format_exception(exc_info.value))
+        assert "provider-secret" not in formatted
+        assert "access_token=[REDACTED]" in formatted
+        assert exc_info.value.exit_code == gitlab.EXIT_FAILURE
 
     def test_login_surfaces_url_and_persists_profile(
         self,
@@ -308,7 +356,6 @@ class TestAuthCommands:
         self,
         monkeypatch: pytest.MonkeyPatch,
         tmp_path: pathlib.Path,
-        capsys: pytest.CaptureFixture[str],
     ) -> None:
         store_path = tmp_path / "gitlab" / "gitlab-token.json"
         monkeypatch.setenv("GITLAB_AUTH_MODE", "oauth")
@@ -316,8 +363,8 @@ class TestAuthCommands:
         monkeypatch.setenv("GITLAB_OAUTH_CLIENT_ID", "client")
         monkeypatch.setenv("GITLAB_TOKEN_STORE", str(store_path))
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.cmd_auth_status([])
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert "must not be set" in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert "must not be set" in str(exc_info.value)
