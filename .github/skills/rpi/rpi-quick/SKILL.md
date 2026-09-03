@@ -21,7 +21,7 @@ Coordinate one task through evidence, planning, execution, review, and explicit 
 	4. When Research is `Blocked`, `Needs clarification`, or `Not ready`, or another transition requirement is not met, stop in Research and record the blocker or next action.
 2. Run `rpi-plan` to create or revise the ordinary Markdown plan and phase details. Its `rpi-plan-critique` gate is internal to planning and returns its disposition to the planning parent.
 3. Run `rpi-implement` for approved `Pxx` and `Pxx-Txx` work. Consume its return, including completed and remaining markers, validation coverage, blockers, plan and detail updates, follow-up items, and readiness or the reason work is awaiting a significant or divergent user decision.
-4. Run `rpi-review` once after Implementation returns and no affected work awaits a user decision. It uses one `RPI Review Builder`, standard by default, to build the record from the current plan, details, critique, changes record, and validation evidence. Standard completely assesses the material acceptance boundary while minimizing elapsed work. The `rpi-quick` parent owns final outcome, route dispositions, and continuation. Use agent-owned Review decisions and skip item questions unless the user explicitly requested the Review Item Walkthrough. Record builder execution, final Review execution, outcome, and route decisions separately.
+4. Run `rpi-review` once after Implementation returns and no affected work awaits a user decision. It uses one phase-and-task-matched review subagent, or an unnamed general-purpose subagent when no suitable specialist exists, to build the record from the current plan, details, critique, changes record, and validation evidence. Standard completely assesses the material acceptance boundary while minimizing elapsed work. The `rpi-quick` parent owns final outcome, route dispositions, and continuation. Use agent-owned Review decisions and skip item questions unless the user explicitly requested the Review Item Walkthrough. Record builder execution, final Review execution, outcome, and route decisions separately.
 5. Follow-up: route defects, decision gaps, research gaps, and residual work to their correct next destination.
 
 When Review finds open work, route it to the appropriate later stage or distinct follow-up item. Do not execute it or run Review again inside the current lifecycle.
@@ -29,9 +29,9 @@ When Review finds open work, route it to the appropriate later stage or distinct
 ## Delegation crosswalk
 
 * Research readiness -> assess existing evidence, then use `rpi-research` only for a demonstrated investigation need
-* Plan -> `rpi-plan`, which may use `RPI Planner` for one exact phase and `rpi-plan-critique` for an independent critique
+* Plan -> `rpi-plan`, which may use phase-and-task-matched or unnamed general-purpose planning subagents and `rpi-plan-critique` for an independent critique
 * Implement -> `rpi-implement`
-* Review -> `rpi-review`, which uses one `RPI Review Builder` for evidence comparison and document construction
+* Review -> `rpi-review`, which uses one phase-matched or unnamed general-purpose review worker for evidence comparison and document construction
 * Follow-up -> handled by the parent from the review record
 
 ## Inputs

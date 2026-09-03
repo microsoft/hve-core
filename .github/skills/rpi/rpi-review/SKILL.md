@@ -10,7 +10,7 @@ user-invocable: true
 
 ## Goal
 
-Produce one complete, evidence-based review record after implementation finishes. Use one `RPI Review Builder` to compare the complete supplied acceptance boundary as quickly as the evidence permits. The primary review parent owns the final outcome, every route disposition, continuation, and user conversation.
+Produce one complete, evidence-based review record after implementation finishes. Use one selected review worker to compare the complete supplied acceptance boundary as quickly as the evidence permits. The primary review parent owns the final outcome, every route disposition, continuation, and user conversation.
 
 ## Flow
 
@@ -18,11 +18,11 @@ Produce one complete, evidence-based review record after implementation finishes
 2. Resolve review depth. Use `standard` by default. Use `deep` only when the user explicitly requests a deep review; do not infer it from task size, complexity, uncertainty, or risk. Record depth and provenance.
 3. Resolve candidate decision participation: `user-owned` for standalone and manual RPI, `agent-owned` by default for confirmed automatic RPI Agent or rpi-quick, and `user-retained` only when an automatic-session user explicitly keeps Review decisions. If the review record already exists, use only its latest Parent Decision Record participation event and ignore pre-record preference state. Record provenance.
 4. Confirm plan markers, phase details, changes evidence, handoff prose, blockers, remaining work, follow-up items, and validation state are reconciled enough to form a credible review boundary. Inspect the review path and parent state when present. An existing builder execution of `started`, Complete, Partial, or Blocked consumes the one builder invocation; reconcile that record and do not dispatch a replacement. If an existing builder execution has no canonical participation event, stop final Review execution Blocked and outcome Not accepted rather than restoring a stale preference.
-5. Before creating a builder reservation, confirm whether `RPI Review Builder` is visible and dispatchable in the active host. Retain the availability result without writing `started` or dispatching.
+5. Before creating a worker reservation, inspect available skills and subagents. A candidate's stable name contains `review` or `reviewer`, or its description explicitly says it is used during review; select it only when its description fits evidence comparison and review-document construction for this task. Exclude this skill and other RPI lifecycle phase entrypoints from helper selection. Activate useful matching skills as scoped review criteria. Prefer one matching subagent. When none fits, select an unnamed general-purpose subagent by omitting the agent selection. Retain the selected worker identity or `general-purpose` and dispatch availability without writing `started` or dispatching.
 6. When no builder execution exists, create the canonical record skeleton at `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md` using [templates/review-log.md](templates/review-log.md). Persist Scope and Evidence and Opening Review State, append one stable participation event to Parent Decision Record, then, when parent state exists, require one successful state write that removes pre-record preference and stores only the record pointer/revision. Do not continue if any write fails.
-	* When the availability result is unavailable, set builder execution metadata to `Blocked (not dispatched: unavailable)`, append final Review execution Blocked and outcome Not accepted with the exact later-new-review condition, and persist only the record pointer and derived projections in parent state. Do not write `started`, compare evidence inline, or dispatch a substitute. These terminal records consume the current Review even if availability changes later.
+	* When subagent dispatch is unavailable, set builder execution metadata to `Blocked (not dispatched: unavailable)`, append final Review execution Blocked and outcome Not accepted with the exact later-new-review condition, and persist only the record pointer and derived projections in parent state. Do not write `started` or compare evidence inline. These terminal records consume the current Review even if availability changes later.
 	* When availability passes, persist builder candidate identity, depth and provenance, and builder execution `started` before dispatch. Do not dispatch if this write fails.
-7. Dispatch exactly one `RPI Review Builder` with the stable task identity, review depth and provenance, exact scope, acceptance basis, complete artifact set, exact read boundary, canonical template, review-record path, and write authority limited to the review record except `## Parent Decision Record`.
+7. Dispatch exactly one selected review worker with the stable task identity, review purpose, review depth and provenance, exact scope, acceptance basis, complete artifact set, exact read boundary, canonical template, review-record path, compact return, and write authority limited to the review record except `## Parent Decision Record`. For an unnamed general-purpose worker, explicitly prohibit source, plan, phase-details, critique, research, changes-record, parent-state, and Parent Decision Record edits; user questions; final outcome or route decisions; destination invocation; and nested delegation.
 	* In standard depth, require complete coverage of every material contract in the supplied boundary while minimizing elapsed work: one marker-driven comparison, all directly relevant supplied evidence, concise findings, and no restatement, cosmetic feedback, exhaustive strengths, low-impact suggestions, continual narration, or additional workers.
 	* In deep depth, require broader cross-evidence tracing, stress-test alternatives and boundaries, and include substantive lower-severity concerns within the same supplied boundary. Deep does not permit open-ended research, nested workers, or a second review pass.
 	* The builder writes the evidence body, one complete `RV-xxx` finding set, proposed execution status and outcome, validation coverage, limitations, and proposed routes. The builder does not ask the user, mutate parent state, select continuation, or invoke a destination.
@@ -47,7 +47,7 @@ Produce one complete, evidence-based review record after implementation finishes
 ## Success criteria
 
 * One review record exists at the canonical path and includes all compared artifacts, review depth and provenance, builder execution, and parent decisions.
-* Exactly one `RPI Review Builder` invocation builds the evidence body and complete finding set for the supplied task boundary; no generic lens fan-out or nested worker runs.
+* Exactly one selected review-worker invocation builds the evidence body and complete finding set for the supplied task boundary; no review-lens fan-out or nested worker runs. A suitable phase-matched specialist is preferred, with an unnamed general-purpose fallback when none exists.
 * Builder execution `started` is persisted before dispatch; started and terminal records prevent another builder invocation on resume.
 * A stranded `started` record resolves to final Review execution Blocked and outcome Not accepted with a later-new-review condition and never causes replacement dispatch.
 * Standard depth is the default and completely assesses the material acceptance boundary while omitting low-value review work. Deep occurs only from explicit user direction.
@@ -64,7 +64,7 @@ Produce one complete, evidence-based review record after implementation finishes
 ## Constraints
 
 * Do not implement fixes or mutate the plan, phase details, critique, research, or changes record in this stage. Review may create or update only its one canonical review record.
-* Use only `RPI Review Builder` for review assessment and document construction. Do not dispatch generic lenses, per-phase workers, or another review builder. If the required builder is unavailable, stop Blocked and name the rerun condition rather than building the evidence body inline.
+* Use only the one selected review worker for assessment and document construction. Do not dispatch review lenses, per-phase workers, or another review worker. A named RPI worker is optional: use a phase-and-task-matched subagent when available, otherwise use the unnamed general-purpose fallback. If subagent dispatch itself is unavailable, stop Blocked and name the rerun condition rather than building the evidence body inline.
 * Treat builder findings, proposed outcome, and routes as advisory evidence. The primary parent owns final decisions, parent state, user conversation, continuation, and follow-up selection.
 * Use plain-text workspace-relative paths in the review record.
 * Use [references/review.md](references/review.md) for the review method, outcome vocabulary, routing detail, and conversation protocol.
@@ -75,7 +75,7 @@ Use [references/review.md](references/review.md) as the authority for the state-
 
 ## Stop rules
 
-* Stop as Blocked if a reviewable artifact set cannot be formed, the required builder is unavailable, or evidence is insufficient for a credible verdict. Use final outcome Not accepted for Blocked Review execution.
+* Stop as Blocked if a reviewable artifact set cannot be formed, subagent dispatch is unavailable, or evidence is insufficient for a credible verdict. Use final outcome Not accepted for Blocked Review execution.
 * Do not use Conformant or Conformant with justified divergence while material skipped, deferred, or unresolved findings remain. Use Defects found for a credible review with implementation defects, Residual work for distinct non-blocking work, and Not accepted when blocked evidence or unresolved critical boundaries prevent acceptance.
 * Complete a partial review only when the record names the evidence boundary and routes the missing work.
 * Do not dispatch the builder again after Complete, Partial, or Blocked. Parent decisions and later remediation do not create a review loop.

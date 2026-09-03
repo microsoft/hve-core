@@ -169,7 +169,7 @@ The parent alone records accepted, rejected, and deferred material. Workers retu
 
 <!-- Add rows as research proceeds. Use C# for codebase evidence and W# for external evidence. Code rows use path:line and "not applicable" for retrieval metadata. External rows use source title plus URL and retrieval date plus version. -->
 
-* Delegation: {{cycle_and_wave_annotated RPI Researcher or selected-specialist evidence files under .copilot-tracking/research/subagents/YYYY-MM-DD/, or "inline: fallback reason" when suitable dispatch was unavailable}}
+* Delegation: {{cycle_and_wave_annotated selected research worker or general-purpose evidence files under .copilot-tracking/research/subagents/YYYY-MM-DD/, or "inline: fallback reason" when dispatch was unavailable}}
 
 | ID | Claim or finding | Source or location               | Retrieved and version      | Tool                   | Confidence       | Notes       |
 |----|------------------|----------------------------------|----------------------------|------------------------|------------------|-------------|

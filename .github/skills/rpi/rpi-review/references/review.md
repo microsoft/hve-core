@@ -18,9 +18,9 @@ Read research when it is relevant to an evidence or decision gap. Use markers an
 
 ## Review method
 
-The primary parent resolves scope, acceptance basis, depth, and artifact readiness, initializes the canonical review record, and dispatches one `RPI Review Builder`. The builder owns the evidence comparison and review-document body. The parent owns only final outcome and route decisions in `## Parent Decision Record`, parent state, conversation, and continuation.
+The primary parent resolves scope, acceptance basis, depth, artifact readiness, and one review worker, initializes the canonical review record, and dispatches that worker. The worker owns the evidence comparison and review-document body. The parent owns only final outcome and route decisions in `## Parent Decision Record`, parent state, conversation, and continuation.
 
-The builder performs one marker-driven pass:
+The selected review worker performs one marker-driven pass:
 
 1. Compare plan requirements and acceptance criteria with completed `Pxx` and `Pxx-Txx` evidence.
 2. Reconcile implementation-time plan or phase-detail updates with current planning state, triggering evidence, user decisions, and critique state.
@@ -29,9 +29,9 @@ The builder performs one marker-driven pass:
 5. Evaluate completed-work summaries, validation, blockers, remaining work, and intended behavior for material drift.
 6. Write one complete substantive `RV-xxx` finding set, proposed outcome, and proposed routes in the review record.
 
-Do not dispatch other review workers. The builder cannot delegate. Inspect existing review state first; `started`, Complete, Partial, or Blocked consumes the invocation. An existing record uses its latest participation event and never restores pre-record preference state. If existing builder execution lacks a canonical participation event, stop final execution Blocked and outcome Not accepted.
+Do not dispatch other review workers. The selected worker cannot delegate. Inspect existing review state first; `started`, Complete, Partial, or Blocked consumes the invocation. An existing record uses its latest participation event and never restores pre-record preference state. If existing builder execution lacks a canonical participation event, stop final execution Blocked and outcome Not accepted.
 
-For a new Review, check builder visibility before reservation and retain that result. Initialize the record, persist opening state, append the participation event, and replace pre-record preference with the record pointer before any `started` reservation or builder-unavailable terminal event. When unavailable, record builder metadata as `Blocked (not dispatched: unavailable)` plus final execution Blocked and outcome Not accepted with the exact later-new-review condition; do not write `started`, compare inline, or dispatch a substitute. Those terminal records consume the current Review. When available, persist candidate identity, depth, provenance, and `started` before dispatch. A stranded `started` resolves to final execution Blocked and outcome Not accepted with a later-new-review condition.
+For a new Review, inspect available skills and subagents. A candidate is phase-matched when its stable name contains `review` or `reviewer`, or its description explicitly says it is used during review; use it only when its description also fits evidence comparison and review-document construction for the current task. Exclude `rpi-review` itself and other RPI lifecycle phase entrypoints. Activate useful matching skills as scoped review criteria. Prefer one matching subagent, but do not require a named RPI worker. When none fits, select an unnamed general-purpose subagent by omitting the agent selection and prompt it with the review purpose, exact evidence, output path, compact return, write boundary, and review restrictions. Check the selected dispatch path before reservation and retain that result. Initialize the record, persist opening state, append the participation event, and replace pre-record preference with the record pointer before any `started` reservation or unavailable terminal event. When subagent dispatch is unavailable, record builder metadata as `Blocked (not dispatched: unavailable)` plus final execution Blocked and outcome Not accepted with the exact later-new-review condition; do not write `started` or compare inline. Those terminal records consume the current Review. When available, persist worker identity, candidate identity, depth, provenance, and `started` before dispatch. A stranded `started` resolves to final execution Blocked and outcome Not accepted with a later-new-review condition.
 
 ## Review depth
 
@@ -91,7 +91,7 @@ Before builder dispatch, initialize the one review record and persist its canoni
 * Acceptance basis: [requirements, acceptance criteria, critique dispositions, or other review basis]
 * Review depth: [standard default or explicit-user deep]
 * Comparison boundary: [evidence comparison and its limit]
-* Authority: [builder writes the review body; parent owns outcome, routes, and continuation]
+* Authority: [selected review worker writes the review body; parent owns outcome, routes, and continuation]
 * Current blockers: [active blockers]
 * Relevant links: [Markdown links when available]
 
@@ -100,7 +100,7 @@ This is the starting review state and may evolve only through the existing evide
 
 Omit Current blockers when none are active. Omit Relevant links when no valid link is available. Do not invent readiness, acceptance support, links, or an outcome before comparison supports one.
 
-The parent does not narrate builder internals. In standard mode, send no continual review updates unless builder execution is Partial or Blocked, a parent decision is required, or the final record is ready. In deep mode, the same materiality gate applies. Persist parent-owned outcome and route dispositions before projecting them in conversation.
+The parent does not narrate review-worker internals. In standard mode, send no continual review updates unless worker execution is Partial or Blocked, a parent decision is required, or the final record is ready. In deep mode, the same materiality gate applies. Persist parent-owned outcome and route dispositions before projecting them in conversation.
 
 Send a continual update only when the item changes review direction, execution status or outcome, a material finding or artifact state, a blocker or decision need, validation state, routing or handoff, or the user's likely understanding. Suppress low-level actions, routine tool calls, raw worker returns, unchanged state, and minor rows or edits.
 
@@ -118,7 +118,7 @@ Next review action: [next comparison, validation assessment, focused question, r
 
 Use `✅` only for evidence-backed conformance, a completed comparison, or passed validation. Use `⚠️` for a substantive finding, residual work, failed, skipped, or unavailable validation, or a decision or evidence gap. Use `⛔` when review progress is blocked. Markers are optional and must be paired with text.
 
-The builder never asks the user questions. The parent uses the Review Item Walkthrough below when decision participation is user-owned or user-retained. Confirmed automatic RPI Agent and rpi-quick use agent-owned decisions by default and skip the walkthrough unless the user explicitly retains Review decisions.
+The selected review worker never asks the user questions. The parent uses the Review Item Walkthrough below when decision participation is user-owned or user-retained. Confirmed automatic RPI Agent and rpi-quick use agent-owned decisions by default and skip the walkthrough unless the user explicitly retains Review decisions.
 
 At closeout, report review execution status separately from outcome. Include results, material findings, decisions, blockers or open items, and anything the user might otherwise miss. Advise `/compact` only when stale output, superseded reasoning, or completed comparison detail outweighs current context and the review record and compared artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 

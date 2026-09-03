@@ -147,15 +147,18 @@ When none apply, plan from the supplied evidence. When one applies, ask `rpi-res
 
 ## Overall planning and bounded assignments
 
-The planning parent owns Confirmed User Direction, Planning Decisions and Feedback, synthesized sections, phase order, dependencies, follow-up items, critique disposition, both planning artifacts, and finalization. It may dispatch one or more `RPI Planner` subagents for bounded planning assignments.
+The planning parent owns Confirmed User Direction, Planning Decisions and Feedback, synthesized sections, phase order, dependencies, follow-up items, critique disposition, both planning artifacts, and finalization. It may activate planning skills or dispatch subagents selected from their available stable names and descriptions for bounded planning assignments.
 
-Every `RPI Planner` dispatch contains:
+Select a skill or subagent only when its stable name contains `plan` or `planning`, or its description explicitly says it is used during planning, and its description fits the bounded assignment. Exclude `rpi-plan`, `rpi-plan-critique`, and other RPI lifecycle phase entrypoints. Activate selected skills as scoped guidance. When delegated work has no suitable planning subagent, dispatch an unnamed general-purpose subagent with the agent selection omitted.
+
+Every planning-worker dispatch contains:
 
 * Exact plan and phase-details paths
 * Relevant user decisions and requirements, caller requirements, and supplied evidence pointers
 * A bounded assignment to refine details, examine supplied sources, propose decisions or options, expose assumptions, or challenge and refute current goals, phases, or tasks with counter-evidence
 * An explicit allowed write boundary
 * An expected return that states findings, proposed or completed changes within the boundary, assumptions, unresolved items, and evidence
+* A prohibition on production source edits, implementation, Review, overall-plan decisions, nested delegation, and writes outside explicitly assigned plan or phase-detail sections
 
 Independent assignments may run in parallel. Dependent assignments run sequentially. The worker does not perform unbounded research, implement production changes, critique the full plan, or redesign the overall plan. The primary planner evaluates every return and decides whether to add, update, delete, recreate, reorder, split, merge, or replace current plan or detail content. A subagent return does not automatically become plan content.
 
@@ -181,7 +184,7 @@ The critique is a one-time internal readiness gate. Its verdict returns to the p
 Record the latest critique findings and their dispositions in the plan's standalone top-level `## Critique Disposition` section. Use the critique verdict to select the smallest next action:
 
 * Revise the plan directly for localized evidence-backed corrections, applying all planner-owned findings in one coherent batch.
-* Dispatch `RPI Planner` for a bounded planning assignment when deeper planning work is needed.
+* Dispatch a phase-matched planning subagent, or an unnamed general-purpose subagent with the planning restrictions above, when deeper planning work is needed.
 * Preserve confirmed user requests and answers when critique advice conflicts with them. Reject conflicting advice without re-asking when current user direction already resolves it.
 * Route a significant or divergent finding not resolved by current user direction through the current Planning Decision Walkthrough when it affects requirements, scope, architecture, acceptance criteria, dependencies, or evidence boundary.
 * Close every `PC-xxx` with its declared owner, disposition, and exact resolving evidence, then finalize without a retry or closure critique.

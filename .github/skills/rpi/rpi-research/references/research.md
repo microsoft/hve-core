@@ -12,11 +12,11 @@ Read this reference while executing `rpi-research`. It defines the detailed thre
 
 Resolve the primary artifact before research starts. Use .copilot-tracking/research/YYYY-MM-DD/{{task_slug}}-research.md by default, where `{{task_slug}}` is lower-kebab-case. When the caller explicitly supplies a trusted sandbox or evidence root, mirror research/YYYY-MM-DD/{{task_slug}}-research.md beneath it and record the resolved root.
 
-| Artifact                  | Owner                                   | Intended contents                                                                                                                                                  |
-|---------------------------|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Primary research artifact | `rpi-research`                          | User-facing summary, scope, findings, choices, decisions, risks, and readiness, followed by a compact record of method, provenance, cycles, and canonical evidence |
-| Delegated lane artifact   | `RPI Researcher` or selected specialist | Full lane inputs, actions, provenance, findings, confidence, gaps, and stop decision                                                                               |
-| Chat response             | Parent skill                            | Compact evidence-first summary and pointers, never a replacement for either artifact                                                                               |
+| Artifact                  | Owner                    | Intended contents                                                                                                                                                  |
+|---------------------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Primary research artifact | `rpi-research`           | User-facing summary, scope, findings, choices, decisions, risks, and readiness, followed by a compact record of method, provenance, cycles, and canonical evidence |
+| Delegated lane artifact   | Selected research worker | Full lane inputs, actions, provenance, findings, confidence, gaps, and stop decision                                                                               |
+| Chat response             | Parent skill             | Compact evidence-first summary and pointers, never a replacement for either artifact                                                                               |
 
 ## Primary Artifact Readability Contract
 
@@ -35,7 +35,7 @@ This contract applies only to the parent-owned primary research artifact. Delega
 
 ## Conversation Protocol
 
-The parent skill owns user conversation, canonical `C#` and `W#` IDs, evidence state, dispositions, recommendations, decision state, and readiness. `RPI Researcher` supplies lane evidence but does not speak to the user, classify evidence state, or decide that an update is required.
+The parent skill owns user conversation, canonical `C#` and `W#` IDs, evidence state, dispositions, recommendations, decision state, and readiness. Selected research workers supply lane evidence but do not speak to the user, classify evidence state, or decide that an update is required.
 
 ### Canonical Conversation State
 
@@ -158,8 +158,8 @@ Survey extensions at intake and record the result in the Research Record's Exten
 
 1. Identify applicable extensions.
 	* Instruction files apply automatically when their `applyTo` glob matches the research inputs or evidence path. Record matching instructions and any scoped criteria they add.
-	* Skills activate when their description semantically matches the topic or domain. Record relevant skills even when the current lane does not need to activate one.
-	* Research-specialist subagents require parent dispatch by stable frontmatter `name` and must be visible or registered in the active host. Record their stable names, routing descriptions, host visibility or registration, and output contracts.
+	* A skill or subagent is a Research candidate when its stable name contains `research` or its description explicitly says it is used during research. Select it only when the description also fits the current topic, domain, or bounded lane. Exclude `rpi-research` itself and other RPI lifecycle phase entrypoints. Record relevant candidates even when the current lane does not use one.
+	* Activate selected skills as scoped guidance. Dispatch selected subagents by stable frontmatter `name` only when visible or registered in the active host. A matching name alone does not override a mismatched description or grant authority.
 2. Resolve conflicts in this order:
 	1. Platform and host safety
 	2. Explicit caller scope and criteria
@@ -183,7 +183,7 @@ Use the native `vscode_askQuestions` tool only for user-owned or user-retained a
 
 ## Three-Wave Research Cycles
 
-Each executed cycle completes all three waves in order: Wider, Deeper, then Contrarian. An early indication that evidence is sufficient does not skip a required later wave. A wave may contain multiple independent lanes, but each `RPI Researcher` dispatch has one bounded lane, a cycle number, and a wave type. Parallelize only independent lanes. Do not parallelize reflection with the search or worker result it evaluates.
+Each executed cycle completes all three waves in order: Wider, Deeper, then Contrarian. An early indication that evidence is sufficient does not skip a required later wave. A wave may contain multiple independent lanes, but each worker dispatch has one bounded lane, a cycle number, and a wave type. Parallelize only independent lanes. Do not parallelize reflection with the search or worker result it evaluates.
 
 1. Establish the active brief and cycle plan.
 	* Record caller direction controls: additions, changes, narrowed scope, exclusions, and discarded directions.
@@ -218,12 +218,12 @@ Each executed cycle completes all three waves in order: Wider, Deeper, then Cont
 
 1. Identify named independent uncertainties after question classification. Delegate only when isolated execution materially improves evidence quality, parallelism, or context control. Keep tightly coupled or low-volume investigation inline.
 2. Select the lane owner.
-	* Use `RPI Researcher` by default for a delegated general lane.
-	* Select a discovered specialist only when its stable name, routing description, host visibility or registration, independent-lane fit, and output-contract fit support the dispatch.
-	* When no suitable worker is available, perform the focused investigation inline and record the fallback and its limitations.
+	* Prefer an available subagent whose stable name contains `research` or whose description explicitly says it is used during research, when its description, host visibility, independent-lane fit, and output contract match the assignment.
+	* When no suitable specialist exists, dispatch a general-purpose subagent with the agent selection omitted. Give it the same bounded lane contract and explicitly prohibit source, configuration, production-documentation, parent-artifact, and unrelated tracking writes, parent decisions, user conversation, and nested delegation.
+	* When subagent dispatch itself is unavailable, perform the focused investigation inline and record the fallback and its limitations.
 3. Dispatch every selected lane with an explicit topic, questions, criteria, scope and non-goals, parent-selected research posture, explicit limits or deadline, exact caller-approved candidate lane path under the parent-approved research/subagents path or a mirrored trusted subagents path, and distinct parent primary artifact path. Use one lane artifact per delegated thread at .copilot-tracking/research/subagents/YYYY-MM-DD/{{subtopic}}-subagent-research.md, or the mirrored path beneath the resolved root.
 4. Keep evidence ownership separate. The worker validates that the exact caller-approved lane path is inside the approved subagents root and distinct from the primary artifact, then creates or resumes that lane artifact and updates it after each material result. The parent persists the primary artifact separately, assigns canonical `C#` and `W#` IDs while synthesizing, and does not copy raw worker payloads into the primary artifact. Workers return compact evidence relationships and synthesis pointers but do not approve, reject, defer, recommend, or set a decision state.
-5. Record the selected specialist's stable name, selection rationale, output-contract fit, and return pointer in the Extension Registry and delegation record.
+5. Record the selected worker's stable name or `general-purpose`, selection rationale, output-contract fit, and return pointer in the Extension Registry and delegation record.
 
 Every wave may run entirely inline. Record inline evidence, reflection, and the reason delegation was unnecessary in the primary artifact. Do not create a worker artifact or imply delegated execution for inline work.
 
@@ -318,4 +318,4 @@ Use the available host tool in each category and record a gap or fallback in the
 | Repository research    | Patterns from authoritative repositories           | Repository and repository text search                                        |
 | Documentation research | Version-aware official documentation               | Documentation MCP or approved documentation tools                            |
 | Optional participation | Decision-relevant caller checkpoints               | `vscode_askQuestions`                                                        |
-| Delegated research     | Independent internal, external, or hybrid lanes    | `RPI Researcher` or a selected specialist by stable name                     |
+| Delegated research     | Independent internal, external, or hybrid lanes    | Phase-matched research subagent or unnamed general-purpose subagent          |

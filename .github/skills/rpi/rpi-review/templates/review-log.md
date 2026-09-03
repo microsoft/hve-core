@@ -24,7 +24,7 @@
 
 ## Parent Decision Record
 
-<!-- The RPI Review Builder leaves this section unchanged. The primary review parent owns it. -->
+<!-- The selected review worker leaves this section unchanged. The primary review parent owns it. -->
 
 Append events in order. Never rewrite or delete an earlier row. The latest event for a subject is current.
 
@@ -53,6 +53,7 @@ Append events in order. Never rewrite or delete an earlier row. The latest event
 * Review scope: {{full_task_or_bounded_pxx_or_pxx_txx_scope}}
 * Assessed boundary: {{requirements_scope_architecture_acceptance_dependencies_and_evidence_boundary_summary}}
 * Review depth and provenance: {{standard_or_deep}}; {{default_or_explicit_user_request}}
+* Review worker: {{stable_name_or_general_purpose_with_selection_basis}}
 * Builder candidate identity: {{task_id_scope_and_artifact_revision_or_hash}}
 * Builder execution: {{started_Complete_Partial_Blocked_or_Blocked_not_dispatched_unavailable}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
@@ -103,6 +104,6 @@ Unresolved plan follow-up items remain distinct follow-up work. Do not treat the
 * [ ] Findings are substantive, evidence-grounded, severity-graded, and use stable `RV-xxx` IDs with one proposed route each.
 * [ ] Execution status, proposed outcome, validation coverage, limitations, and proposed routes are complete and internally consistent.
 * [ ] Standard review completely assessed the material boundary while omitting restatement, cosmetic feedback, exhaustive strengths, low-impact suggestions, and continual narration; deep review remained inside the supplied boundary.
-* [ ] The builder did not edit Parent Decision Record, ask the user, mutate source or parent state, dispatch another worker, execute validation, or invoke a destination.
+* [ ] The selected review worker did not edit Parent Decision Record, ask the user, mutate source or parent state, dispatch another worker, execute validation, or invoke a destination.
 * Checked boundary: {{requirements_markers_updates_validation_follow_ups_and_gaps}}
 * Missing or limited evidence: {{none_or_exact_unassessed_boundary}}
