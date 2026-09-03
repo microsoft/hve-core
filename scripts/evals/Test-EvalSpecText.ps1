@@ -4,12 +4,12 @@
 
 <#
 .SYNOPSIS
-    Runs alex.js and retext-profanities against the AI-artifact markdown corpus.
+    Runs retext-equality and retext-profanities against the AI-artifact markdown corpus.
 
 .DESCRIPTION
     Walks the markdown corpus under `.github/{agents,prompts,instructions,skills}/**/*.md`
     and `docs/**/*.md`, strips YAML frontmatter from each file, and pipes the
-    bodies through a Node shim that runs alex.js and retext-profanities. Writes
+    bodies through a Node shim that runs retext-equality and retext-profanities. Writes
     a JSON report and exits 1 when any rule fires. The intent is corpus
     protection: keeping agents, instructions, prompts, skills, and docs free of
     insensitive or foul language. Eval stimulus YAML under `evals/` is
@@ -38,11 +38,12 @@
     Path to the node executable. Defaults to 'node' on PATH.
 
 .PARAMETER FailOnAlex
-    Treat alex.js findings as errors (exit 1) instead of warnings. Off by
-    default: alex.js surface tone/style findings as `::warning` annotations
-    that do not flip the exit code, while every retext-profanities finding
-    remains a hard error. Enable when running a strict local sweep or when
-    a downstream gate wants alex parity with profanity.
+    Treat alex-compatible retext-equality findings as errors (exit 1) instead
+    of warnings. Off by default: equality findings use the `alex` source and
+    surface as `::warning` annotations that do not flip the exit code, while
+    every retext-profanities finding remains a hard error. Enable when running
+    a strict local sweep or when a downstream gate wants alex parity with
+    profanity.
 
 .EXAMPLE
     pwsh -File scripts/evals/Test-EvalSpecText.ps1

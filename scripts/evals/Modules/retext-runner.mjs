@@ -3,9 +3,9 @@
 //
 // retext-runner.mjs
 //
-// Runs alex.js (inclusive-language linter) and retext-profanities against
-// stimulus prompt text supplied via a JSON manifest on stdin. Emits a JSON
-// report on stdout and exits with code 1 when any message is flagged.
+// Runs retext-equality and retext-profanities against stimulus prompt text
+// supplied via a JSON manifest on stdin. Emits a JSON report on stdout and
+// exits with code 1 when any message is flagged.
 //
 // Manifest schema:
 //   [{ "spec": "<rel-path>", "stimulus": "<name>", "text": "<prompt>" }, ...]
@@ -14,11 +14,12 @@
 //   { "results": [ { spec, stimulus, source, messages: [{rule, message, line, column}] } ] }
 
 import { stdin as input, stdout as output, stderr } from 'node:process';
-import { text as alexText } from 'alex';
 import { unified } from 'unified';
 import retextEnglish from 'retext-english';
+import retextEquality from 'retext-equality';
 import retextProfanities from 'retext-profanities';
 import retextStringify from 'retext-stringify';
+import { compareMessage } from 'vfile-sort';
 
 // Phrase-aware allowlist keyed by rule ID. When a rule fires, the ±60-char
 // window around the match is tested against each regex. A match suppresses
@@ -194,9 +195,16 @@ function normalizeMessage(message, source) {
     };
 }
 
-async function runAlex(text) {
-    const vfile = alexText(text);
-    return (vfile.messages ?? [])
+const equalityProcessor = unified()
+    .use(retextEnglish)
+    .use(retextEquality)
+    .use(retextProfanities)
+    .use(retextStringify);
+
+async function runEquality(text) {
+    const file = await equalityProcessor.process(text);
+    return [...(file.messages ?? [])]
+        .sort(compareMessage)
         .filter((m) => !isAllowedByPhrase(m, text))
         .map((m) => normalizeMessage(m, 'alex'));
 }
@@ -248,7 +256,7 @@ async function main() {
         }
 
         const [alexMessages, profMessages] = await Promise.all([
-            runAlex(text),
+            runEquality(text),
             runProfanities(text),
         ]);
         const messages = [...alexMessages, ...profMessages];
