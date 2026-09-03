@@ -1,7 +1,7 @@
 ---
 name: rpi-plan-critique
 description: "Independently critique an RPI plan and phase details once against supplied evidence without editing plan sources. Use when planning credibility needs a read-only assessment."
-argument-hint: "[plan=...] [details=...] [evidence=...] [output=...] [depth={fast|deep}]"
+argument-hint: "[plan=...] [details=...] [evidence=...] [output=...] [depth={standard|deep}]"
 license: MIT
 user-invocable: true
 ---
@@ -10,15 +10,15 @@ user-invocable: true
 
 ## Goal
 
-Return one substantive, evidence-grounded credibility assessment of an RPI plan and its phase details. Finish with a concise material-risk assessment by default; broaden depth only when the user explicitly requests `deep`. The critique is read-only with respect to plan sources and writes only the caller-specified critique artifact.
+Return one substantive, evidence-grounded credibility assessment of an RPI plan and its phase details. Complete the material assessment as quickly as the supplied evidence permits by default; broaden depth only when the user explicitly requests `deep`. The critique is read-only with respect to plan sources and writes only the caller-specified critique artifact.
 
 ## Flow
 
-1. Confirm the exact task identity, plan, phase details, evidence, requirements, decisions, dependencies, acceptance criteria, critique output path, and critique depth supplied by the caller. Use `fast` when depth is omitted. Use `deep` only when the caller records explicit user direction; otherwise downgrade an unsupported deep request to fast and record the limitation.
+1. Confirm the exact task identity, plan, phase details, evidence, requirements, decisions, dependencies, acceptance criteria, critique output path, and critique depth supplied by the caller. Use `standard` when depth is omitted. Use `deep` only when the caller records explicit user direction; otherwise downgrade an unsupported deep request to standard and record the limitation.
 2. Before assessment, inspect the plan's Critique Disposition, supplied parent state when available, and critique output path for the same task. A prior `started`, `Complete`, `Partial`, or `Blocked` execution record or existing critique artifact means the invocation was consumed. Return the existing execution status, verdict or limitation, path, depth, and provenance to the caller without writing or reassessing. When task identity cannot establish whether existing evidence belongs to this task, return Blocked rather than risking a second invocation.
 3. Read the plan, phase details, and directly relevant supplied evidence. Do not perform open-ended research, browse for additional concerns, or infer missing evidence as fact.
 4. Define the supplied inputs and criterion boundary, then assess the full boundary once across requirements, research, phases, tasks, acceptance criteria, dependencies, decisions, risks, and missed concerns.
-	* In `fast`, prioritize implementation blockers, contradictions, missing dependencies or acceptance coverage, unsupported scope or architecture, and material risks. Omit plan restatement, cosmetic feedback, exhaustive strengths, and low-impact suggestions. Return as soon as the complete evidence-supported actionable set for the supplied boundary is recorded.
+	* In `standard`, assess the complete supplied boundary while prioritizing implementation blockers, contradictions, missing dependencies or acceptance coverage, unsupported scope or architecture, and material risks. Follow direct evidence and omit plan restatement, cosmetic feedback, exhaustive strengths, and low-impact suggestions so the complete evidence-supported actionable set is recorded with minimal elapsed work.
 	* In `deep`, trace supplied evidence more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns. Deep remains one assessment and does not widen research authority.
 	* In either depth, return one complete finding set rather than serializing findings across critique passes.
 5. Write the critique using [templates/plan-critique.md](templates/plan-critique.md). Use severity-graded `PC-xxx` findings keyed to relevant requirement, research, phase, or task IDs. For each actionable finding, name the smallest useful change, action owner, exact resolving evidence, and whether it is a direct planner correction or needs a significant or divergent user decision.
@@ -31,12 +31,12 @@ Return one substantive, evidence-grounded credibility assessment of an RPI plan 
 * Supplied research, evidence pointers, draft details, and decisions
 * Dependencies and acceptance criteria
 * One critique output path
-* Critique depth and provenance: `fast` by default or `deep` from explicit user direction
+* Critique depth and provenance: `standard` by default or `deep` from explicit user direction
 
 ## Success criteria
 
 * The critique distinguishes evidence-backed concerns from missing evidence.
-* Critique depth and provenance are recorded. Fast remains concise and material-risk focused; deep occurs only from explicit user direction.
+* Critique depth and provenance are recorded. Standard completely assesses the material supplied boundary while minimizing low-value work; deep occurs only from explicit user direction.
 * Re-entry preflight returns existing same-task critique evidence without writing or reassessing and blocks when task identity cannot safely distinguish it.
 * Findings identify substantive gaps rather than structure, formatting, or cosmetic preferences.
 * The critique records its inputs, criterion boundary, coverage assessment, and limitations.
@@ -58,7 +58,7 @@ Return one substantive, evidence-grounded credibility assessment of an RPI plan 
 
 ## Conversation guidance
 
-* In fast mode, suppress continual updates unless a blocker prevents completion. In deep mode, provide concise updates only at meaningful boundaries. Explain the assessment action and why it matters, material findings, blockers, and relevant artifact links without narrating low-level actions.
+* In standard mode, suppress continual updates unless a blocker prevents completion. In deep mode, provide concise updates only at meaningful boundaries. Explain the assessment action and why it matters, material findings, blockers, and relevant artifact links without narrating low-level actions.
 * Do not ask the user questions during critique. Record any significant or divergent decision need in its finding and return it to the planning parent or standalone caller for disposition.
 * Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
 * At closeout, separate critique execution status, Complete, Partial, or Blocked, from its Pass, Revise, or Blocked verdict. Identify the highest-impact finding, its action owner, the smallest next action, and whether a user response is required. A planner-owned revision does not require user input.

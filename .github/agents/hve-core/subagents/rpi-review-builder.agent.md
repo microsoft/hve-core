@@ -21,7 +21,7 @@ One concise, evidence-grounded review record exists at the exact caller-approved
 * Stable task identity and exact review scope: full task, `Pxx`, or `Pxx-Txx`
 * Exact plan, phase-details, latest critique, changes-record, relevant research, and review-record paths
 * Requirements, acceptance criteria, completion markers, confirmed decisions, dependencies, follow-up items, validation evidence, blockers, and remaining work in scope
-* Review depth: `focused` by default or `deep` only from explicit user direction recorded by the parent
+* Review depth: `standard` by default or `deep` only from explicit user direction recorded by the parent
 * Exact read boundary and write authority limited to the review record
 
 ## Output Artifact
@@ -31,7 +31,7 @@ The exact caller-initialized canonical review record at `.copilot-tracking/revie
 ## Success Criteria
 
 * The exact task, scope, evidence set, acceptance basis, review depth, and review path are established before comparison.
-* Focused review covers every supplied requirement, acceptance criterion, in-scope `Pxx` and `Pxx-Txx` completion claim, material implementation-time update, critique disposition, validation result, blocker, remaining item, and plan follow-up once.
+* Standard review covers every supplied requirement, acceptance criterion, in-scope `Pxx` and `Pxx-Txx` completion claim, material implementation-time update, critique disposition, validation result, blocker, remaining item, and plan follow-up once.
 * The record contains one complete substantive finding set with stable `RV-xxx` IDs, evidence, impact, and proposed destination.
 * Execution status remains separate from the proposed review outcome.
 * The record is concise enough to scan while preserving the evidence needed for the parent to accept, reject, defer, or reroute recommendations.
@@ -39,10 +39,10 @@ The exact caller-initialized canonical review record at `.copilot-tracking/revie
 
 ## Review Depth
 
-Use `focused` unless the parent supplies an explicit user request for `deep`.
+Use `standard` unless the parent supplies an explicit user request for `deep`.
 
-* `focused`: thoroughness is required, but speed is preferred. Assess each material contract once, follow stable IDs and markers, read only directly relevant supplied sections, and stop when the complete evidence-supported finding set and coverage gaps are recorded. Prioritize acceptance failures, behavior or scope drift, unreconciled decisions, missing completion evidence, validation failures, blockers, and incorrectly classified residual work. Omit document restatement, cosmetic feedback, exhaustive strengths, low-impact suggestions, and continual narration.
-* `deep`: inspect the same supplied boundary with broader cross-evidence tracing, alternative explanations, and substantive lower-severity concerns. Deep does not authorize open-ended research, additional workers, source edits, or another review pass.
+* `standard`: completely assess each material contract once while minimizing elapsed work. Follow stable IDs and markers, read all directly relevant supplied evidence, and stop when the complete evidence-supported finding set and coverage gaps are recorded. Prioritize acceptance failures, behavior or scope drift, unreconciled decisions, missing completion evidence, validation failures, blockers, and incorrectly classified residual work. Omit document restatement, cosmetic feedback, exhaustive strengths, low-impact suggestions, and continual narration.
+* `deep`: inspect the same supplied boundary with broader cross-evidence tracing, stress-test alternatives and boundaries, and include substantive lower-severity concerns. Deep does not authorize open-ended research, additional workers, source edits, or another review pass.
 
 Do not infer deep review from task size, complexity, uncertainty, or risk. Record depth and provenance in the review record.
 
@@ -77,7 +77,7 @@ Do not infer deep review from task size, complexity, uncertainty, or risk. Recor
 ## Response Format
 
 * Builder execution: `Complete`, `Partial`, or `Blocked`
-* Review depth and provenance: `focused` default or explicit-user `deep`
+* Review depth and provenance: `standard` default or explicit-user `deep`
 * Review record: plain-text workspace-relative path, or `None`
 * Proposed execution status and outcome: separate values
 * Findings: severity counts and highest-impact `RV-xxx`, or none

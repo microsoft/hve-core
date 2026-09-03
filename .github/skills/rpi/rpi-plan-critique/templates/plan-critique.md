@@ -8,7 +8,7 @@
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
 * Phase details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
 * Critique execution status: {{Complete, Partial, or Blocked}}
-* Critique depth: {{fast_or_deep}}
+* Critique depth: {{standard_or_deep}}
 * Depth provenance: {{default_or_explicit_user_request}}
 * Invocation consumed: yes
 
@@ -21,7 +21,7 @@
 
 ## Coverage Assessment
 
-<!-- In fast mode, aggregate fully covered IDs where practical and give individual rows to Partial or Missing coverage and material concerns. In deep mode, expand traceability when it helps resolve substantive concerns. -->
+<!-- In standard mode, aggregate fully covered IDs where practical and give individual rows to Partial or Missing coverage and material concerns. In deep mode, expand traceability when it helps resolve substantive concerns. -->
 
 | Requirement, research, phase, or task ID | Coverage                       | Evidence or concern     |
 |------------------------------------------|--------------------------------|-------------------------|

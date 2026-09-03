@@ -29,16 +29,18 @@ The builder performs one marker-driven pass:
 5. Evaluate completed-work summaries, validation, blockers, remaining work, and intended behavior for material drift.
 6. Write one complete substantive `RV-xxx` finding set, proposed outcome, and proposed routes in the review record.
 
-Do not dispatch other review workers. The builder cannot delegate. Before comparison, the parent confirms reconciliation is sufficient for a credible boundary and inspects the review path and parent state. A `started`, Complete, Partial, or Blocked builder execution consumes the one invocation. When no execution exists, the parent initializes the record and persists Scope and Evidence, Opening Review State, builder candidate identity, depth, provenance, and `started` before dispatch. On resume, reconcile existing evidence instead of dispatching a replacement. When `started` has no trusted terminal record or return, the parent records final Review Blocked and the exact condition for a later new Review after the ambiguity or path problem is resolved.
+Do not dispatch other review workers. The builder cannot delegate. Inspect existing review state first; `started`, Complete, Partial, or Blocked consumes the invocation. An existing record uses its latest participation event and never restores pre-record preference state. If existing builder execution lacks a canonical participation event, stop final execution Blocked and outcome Not accepted.
+
+For a new Review, check builder visibility before reservation and retain that result. Initialize the record, persist opening state, append the participation event, and replace pre-record preference with the record pointer before any `started` reservation or builder-unavailable terminal event. When unavailable, record builder metadata as `Blocked (not dispatched: unavailable)` plus final execution Blocked and outcome Not accepted with the exact later-new-review condition; do not write `started`, compare inline, or dispatch a substitute. Those terminal records consume the current Review. When available, persist candidate identity, depth, provenance, and `started` before dispatch. A stranded `started` resolves to final execution Blocked and outcome Not accepted with a later-new-review condition.
 
 ## Review depth
 
-| Depth     | Selection rule        | Builder behavior                                                                                                                                                                                          |
-|-----------|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `focused` | Default               | Thoroughly cover every material acceptance contract once, prefer speed, follow markers and direct evidence, and omit restatement, cosmetics, exhaustive strengths, low-impact suggestions, and narration. |
-| `deep`    | Explicit user request | Trace the same supplied boundary more broadly and include substantive lower-severity concerns without open-ended research, nested workers, or another pass.                                               |
+| Depth      | Selection rule        | Builder behavior                                                                                                                                                                                                            |
+|------------|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `standard` | Default               | Completely assess every material acceptance contract once as quickly as evidence permits, follow markers and direct evidence, and omit restatement, cosmetics, exhaustive strengths, low-impact suggestions, and narration. |
+| `deep`     | Explicit user request | Trace the same supplied boundary more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns without open-ended research, nested workers, or another pass.                       |
 
-Do not infer deep review from task size, complexity, uncertainty, or risk. Focused review changes prioritization and presentation, not required coverage of material acceptance evidence.
+Do not infer deep review from task size, complexity, uncertainty, or risk. Standard review minimizes elapsed work without reducing complete coverage of material acceptance evidence.
 
 Before comparison, confirm plan markers, phase details, changes evidence, handoff prose, blockers, remaining work, follow-up items, and validation state are current. Stop as Blocked when stale or missing evidence prevents a credible task boundary.
 
@@ -87,7 +89,7 @@ Before builder dispatch, initialize the one review record and persist its canoni
 * Review scope: [full task, Pxx, or Pxx-Txx scope]
 * Evidence set and readiness: [available compared artifacts and readiness]
 * Acceptance basis: [requirements, acceptance criteria, critique dispositions, or other review basis]
-* Review depth: [focused default or explicit-user deep]
+* Review depth: [standard default or explicit-user deep]
 * Comparison boundary: [evidence comparison and its limit]
 * Authority: [builder writes the review body; parent owns outcome, routes, and continuation]
 * Current blockers: [active blockers]
@@ -98,7 +100,7 @@ This is the starting review state and may evolve only through the existing evide
 
 Omit Current blockers when none are active. Omit Relevant links when no valid link is available. Do not invent readiness, acceptance support, links, or an outcome before comparison supports one.
 
-The parent does not narrate builder internals. In focused mode, send no continual review updates unless builder execution is Partial or Blocked, a parent decision is required, or the final record is ready. In deep mode, the same materiality gate applies. Persist parent-owned outcome and route dispositions before projecting them in conversation.
+The parent does not narrate builder internals. In standard mode, send no continual review updates unless builder execution is Partial or Blocked, a parent decision is required, or the final record is ready. In deep mode, the same materiality gate applies. Persist parent-owned outcome and route dispositions before projecting them in conversation.
 
 Send a continual update only when the item changes review direction, execution status or outcome, a material finding or artifact state, a blocker or decision need, validation state, routing or handoff, or the user's likely understanding. Suppress low-level actions, routine tool calls, raw worker returns, unchanged state, and minor rows or edits.
 
@@ -116,7 +118,7 @@ Next review action: [next comparison, validation assessment, focused question, r
 
 Use `✅` only for evidence-backed conformance, a completed comparison, or passed validation. Use `⚠️` for a substantive finding, residual work, failed, skipped, or unavailable validation, or a decision or evidence gap. Use `⛔` when review progress is blocked. Markers are optional and must be paired with text.
 
-The builder never asks the user questions. When its finding exposes a user-owned decision, the parent persists the decision context, then states viable choices and consequences, evidence-backed recommendation when available, blockers, and relevant Markdown links before asking.
+The builder never asks the user questions. The parent uses the Review Item Walkthrough below when decision participation is user-owned or user-retained. Confirmed automatic RPI Agent and rpi-quick use agent-owned decisions by default and skip the walkthrough unless the user explicitly retains Review decisions.
 
 At closeout, report review execution status separately from outcome. Include results, material findings, decisions, blockers or open items, and anything the user might otherwise miss. Advise `/compact` only when stale output, superseded reasoning, or completed comparison detail outweighs current context and the review record and compared artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
 
@@ -131,7 +133,40 @@ After the builder returns, the primary parent reads the review record once and d
 * Whether a significant decision returns to `rpi-plan`, an evidence gap returns to `rpi-research`, a defect becomes later `rpi-implement`, or residual work enters the follow-up queue
 * Standalone advisory or parent-orchestrated continuation
 
-Record those decisions only in `## Parent Decision Record` and parent state when present. Preserve builder findings and comparison tables as evidence. Do not redo the review, rewrite findings to fit a preferred outcome, dispatch another builder, or let the builder transition phases.
+Append those decisions only to `## Parent Decision Record`. Preserve builder findings and comparison tables as evidence. When parent state exists, store one pointer containing the review path, latest decision event ID, and record revision or hash, plus derived `next_action` and accepted follow-up projections. Do not duplicate decision payloads in state, redo the review, rewrite findings to fit a preferred outcome, dispatch another builder, or let the builder transition phases.
+
+Parent Decision Record is the recovery authority. Give each event a stable `RD-xxx` ID and subject, and never rewrite or remove prior events. The latest event for a subject is current. On recovery, rebuild stale or missing state projections from the record; when state conflicts, the record governs and the corrected projection must persist before transition.
+
+## Review Item Walkthrough
+
+Resolve decision participation before route disposition:
+
+| Context                                                     | Mode            | Behavior                                                                                                           |
+|-------------------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------|
+| Standalone or manual RPI Review                             | `user-owned`    | Walk through each actionable finding separately and persist the answer before the next item.                       |
+| Confirmed automatic RPI Agent                               | `agent-owned`   | Skip item questions and decide proposed routes from evidence before the separate post-Review follow-up checkpoint. |
+| Automatic RPI Agent with explicit retained Review decisions | `user-retained` | Keep the session automatic, walk through findings, then resume after decisions are recorded.                       |
+| rpi-quick                                                   | `agent-owned`   | Skip the walkthrough unless the user explicitly requested Review decisions.                                        |
+
+For each user-owned or user-retained `RV-xxx`, first persist the pending item. Then present the review record and cited evidence as Markdown links and explain in approachable language:
+
+* What the review found and what scope it affects
+* Why it matters and what could happen if it is not addressed
+* The builder's proposed destination and the parent's suggested answer
+* Material uncertainty and whether more evidence could change the decision
+
+Use `vscode_askQuestions` when available with one finding per turn. Configure freeform input and offer:
+
+* `Use suggested action: [plain-language action]`, marked recommended
+* `Gather more information`
+* `Skip this item`
+* `Finish review decisions`
+
+The freeform box lets the user provide another route, owner, rationale, constraint, or evidence request. When the tool is unavailable, show the same options in chat and wait.
+
+Append each response as an `RD-xxx` event before continuing. Suggested action accepts or changes the route as described. Gather more information defers the decision and assigns the smallest evidence action to the appropriate owner. Skip rejects the proposed route but preserves the finding and its final-outcome consequence. Finish stops the walkthrough and appends deferred events for all undecided findings. If a response is ambiguous, ask one clarification about that item rather than moving forward. Do not ask for acknowledgment when no actionable findings exist.
+
+Material skipped or deferred findings prevent `Conformant` and `Conformant with justified divergence`. A credible completed review may still use Defects found or Residual work; reserve Not accepted for blocked evidence or unresolved critical boundaries that prevent acceptance. Record whether the walkthrough completed, finished early, or was skipped automatically, including decided and remaining finding IDs.
 
 ## Review Closeout Projection
 

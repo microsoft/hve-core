@@ -165,12 +165,12 @@ Activate `rpi-plan-critique` at most once, only when the primary planner judges 
 
 Select one critique depth and record its provenance before dispatch:
 
-| Depth  | Selection rule                           | Assessment behavior                                                                                                                                                                                |
-|--------|------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `fast` | Default                                  | Find the complete evidence-supported set of implementation blockers and material credibility gaps without restating the plan, cataloging cosmetics, or expanding low-impact suggestions.           |
-| `deep` | Explicit user request to critique deeply | Trace the supplied evidence more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns. It remains one invocation and performs no open-ended research. |
+| Depth      | Selection rule                           | Assessment behavior                                                                                                                                                                                                   |
+|------------|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `standard` | Default                                  | Assess the complete material supplied boundary as quickly as evidence permits, returning every evidence-supported implementation blocker and credibility gap without restatement, cosmetics, or low-impact expansion. |
+| `deep`     | Explicit user request to critique deeply | Trace the supplied evidence more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns. It remains one invocation and performs no open-ended research.                    |
 
-Do not infer deep mode from plan size, complexity, uncertainty, or risk. Fast changes prioritization and output focus, not the requirement to return every actionable material concern visible in the supplied boundary.
+Do not infer deep mode from plan size, complexity, uncertainty, or risk. Standard optimizes prioritization and output for minimal elapsed work without reducing complete coverage of actionable material concerns in the supplied boundary.
 
 Before dispatch, inspect the plan's Critique Disposition, parent state when present, and the critique path. A `started`, `Complete`, `Partial`, or `Blocked` execution record or existing critique artifact consumes the task's single invocation. On resume, reconcile existing evidence instead of dispatching a replacement. Persist `started`, candidate identity, selected depth and provenance, and output path immediately before dispatch; do not dispatch if that write fails.
 

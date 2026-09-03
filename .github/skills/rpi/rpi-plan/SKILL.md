@@ -33,12 +33,12 @@ Read [references/planning.md](references/planning.md) for readiness, executive-s
    * Persist each answer or agent-owned decision in User Decisions and Requirements, every affected synthesized section, phase details when affected, and parent state before presenting the next group or continuing.
 9. Keep the stable overall task ID and current `Pxx` and `Pxx-Txx` markers for navigation. During planning, the primary planner may add, update, delete, recreate, reorder, split, merge, or replace phases and tasks, and may renumber current IDs so the plan and details remain aligned. Remove obsolete active content rather than retaining it for identifier history.
 10. Run at most one final-candidate internal critique invocation, only when the primary planner judges both the plan and phase details to be implementation-ready candidates.
-   * Resolve critique depth before dispatch. Use `fast` by default. Use `deep` only when the user explicitly requests a deep critique; do not infer it from complexity or risk. Record depth and provenance in Critique Disposition and parent state when present.
+   * Resolve critique depth before dispatch. Use `standard` by default. Use `deep` only when the user explicitly requests a deep critique; do not infer it from complexity or risk. Record depth and provenance in Critique Disposition and parent state when present.
    * Before dispatch, inspect Critique Disposition, parent state, and the critique path. A prior `started`, `Complete`, `Partial`, or `Blocked` execution record or an existing task critique artifact consumes the task's one invocation. Reconcile that evidence and do not dispatch again.
    * Before dispatch, lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence in the candidate.
    * Persist critique execution as `started` with candidate identity, depth, and output path before dispatch. If this write fails, do not dispatch. Then invoke one fresh critique worker that activates `rpi-plan-critique` with the selected depth, exact task context, caller requirements, research and evidence pointers, plan and details paths, current user decisions and requirements, dependencies, acceptance criteria, and one critique output path.
    * Give the critique worker read access to the supplied evidence and write access only to the critique artifact. Do not critique an initial draft merely because it exists.
-   * In `fast`, require a concise but complete actionable finding set for the supplied boundary. Prioritize implementation blockers, contradictions, missing dependencies or acceptance coverage, unsupported scope or architecture, and material risk. Omit plan restatement, cosmetic feedback, exhaustive strengths, and low-impact suggestions. Read only supplied evidence needed to resolve a material concern.
+   * In `standard`, require a complete actionable finding set for the supplied boundary while minimizing elapsed work. Prioritize implementation blockers, contradictions, missing dependencies or acceptance coverage, unsupported scope or architecture, and material risk. Omit plan restatement, cosmetic feedback, exhaustive strengths, and low-impact suggestions. Read all directly relevant supplied evidence needed to assess the material boundary.
    * In `deep`, assess the same supplied boundary with broader evidence tracing, alternative stress testing, and substantive lower-severity concerns. Deep mode does not permit open-ended research or a second invocation.
    * Each `PC-xxx` records its action owner, exact resolving evidence, and whether the planner can apply it directly or needs a significant or divergent user decision.
    * Treat confirmed user requests and answers as authoritative when critique advice conflicts with them. Apply compatible planner-owned corrections in one coherent batch. Reject a conflicting recommendation when current user direction already resolves it. Route a significant or divergent finding not resolved by current direction through the decision-participation protocol in step 8 when it affects requirements, scope, architecture, acceptance criteria, dependencies, or evidence boundaries.
@@ -52,7 +52,7 @@ Read [references/planning.md](references/planning.md) for readiness, executive-s
 * Draft plan details, decisions, dependencies, and acceptance criteria when available
 * Existing plan and phase-details artifacts when resuming
 * Decision-participation mode: `user-owned`, `agent-owned`, or `user-retained`, with parent mode and provenance when applicable
-* Critique depth: `fast` by default or `deep` only from explicit user direction, with provenance
+* Critique depth: `standard` by default or `deep` only from explicit user direction, with provenance
 
 ## Success criteria
 
@@ -63,7 +63,7 @@ Read [references/planning.md](references/planning.md) for readiness, executive-s
 * Details provide evidence-based context and completion expectations for every planned task without prescribing unsupported choreography.
 * Acceptance Criteria is the canonical verification record and is not repeated under functional or non-functional requirements.
 * Research is activated only for a demonstrated readiness gap.
-* At most one critique invocation begins only after both artifacts are implementation-ready candidates. Fast is the recorded default; deep requires explicit user direction. Its complete finding set and dispositions are recorded before finalization, and no retry, closure critique, or second invocation runs for the task.
+* At most one critique invocation begins only after both artifacts are implementation-ready candidates. Standard is the recorded default and completely assesses the material supplied boundary; deep requires explicit user direction. Its complete finding set and dispositions are recorded before finalization, and no retry, closure critique, or second invocation runs for the task.
 
 ## Constraints
 

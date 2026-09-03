@@ -26,15 +26,11 @@
 
 <!-- The RPI Review Builder leaves this section unchanged. The primary review parent owns it. -->
 
-* Final execution status: {{Complete_Partial_or_Blocked}}
-* Final outcome: {{Conformant_Conformant_with_justified_divergence_Defects_found_Residual_work_or_Not_accepted}}
-* Outcome rationale: {{parent_evidence_based_rationale}}
-* Builder recovery: {{none_or_stranded_started_evidence_and_later_new_review_condition}}
-* Continuation: {{standalone_advisory_parent_transition_follow_up_choice_or_no_handoff}}
+Append events in order. Never rewrite or delete an earlier row. The latest event for a subject is current.
 
-| Finding            | Proposed destination                         | Parent disposition                     | Final destination or next action         | Rationale                     |
-|--------------------|----------------------------------------------|----------------------------------------|------------------------------------------|-------------------------------|
-| {{RV_xxx_or_none}} | {{rpi_implement_plan_research_or_follow_up}} | {{accepted_rejected_deferred_changed}} | {{destination_owner_or_smallest_action}} | {{parent_decision_rationale}} |
+| Event      | Subject                                                   | Decision source       | Status or value                                         | Proposed destination | Final destination | Owner     | More information needed  | Smallest next action | Rationale                     |
+|------------|-----------------------------------------------------------|-----------------------|---------------------------------------------------------|----------------------|-------------------|-----------|--------------------------|----------------------|-------------------------------|
+| {{RD-001}} | {{participation_walkthrough_execution_outcome_or_RV_xxx}} | {{user_agent_system}} | {{current_value_or_accepted_rejected_deferred_changed}} | {{none_or_route}}    | {{none_or_route}} | {{owner}} | {{none_or_evidence_gap}} | {{action}}           | {{parent_decision_rationale}} |
 
 ## Validation Evidence
 
@@ -56,9 +52,9 @@
 * Review date: {{YYYY-MM-DD}}
 * Review scope: {{full_task_or_bounded_pxx_or_pxx_txx_scope}}
 * Assessed boundary: {{requirements_scope_architecture_acceptance_dependencies_and_evidence_boundary_summary}}
-* Review depth and provenance: {{focused_or_deep}}; {{default_or_explicit_user_request}}
+* Review depth and provenance: {{standard_or_deep}}; {{default_or_explicit_user_request}}
 * Builder candidate identity: {{task_id_scope_and_artifact_revision_or_hash}}
-* Builder execution: {{started_Complete_Partial_or_Blocked}}
+* Builder execution: {{started_Complete_Partial_Blocked_or_Blocked_not_dispatched_unavailable}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
 * Phase details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
 * Plan critique: .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
@@ -106,7 +102,7 @@ Unresolved plan follow-up items remain distinct follow-up work. Do not treat the
 * [ ] Every supplied requirement, acceptance criterion, in-scope marker, material update, critique disposition, validation result, blocker, remaining item, and plan follow-up has an assessment or explicit gap.
 * [ ] Findings are substantive, evidence-grounded, severity-graded, and use stable `RV-xxx` IDs with one proposed route each.
 * [ ] Execution status, proposed outcome, validation coverage, limitations, and proposed routes are complete and internally consistent.
-* [ ] Focused review omitted restatement, cosmetic feedback, exhaustive strengths, low-impact suggestions, and continual narration; deep review remained inside the supplied boundary.
+* [ ] Standard review completely assessed the material boundary while omitting restatement, cosmetic feedback, exhaustive strengths, low-impact suggestions, and continual narration; deep review remained inside the supplied boundary.
 * [ ] The builder did not edit Parent Decision Record, ask the user, mutate source or parent state, dispatch another worker, execute validation, or invoke a destination.
 * Checked boundary: {{requirements_markers_updates_validation_follow_ups_and_gaps}}
 * Missing or limited evidence: {{none_or_exact_unassessed_boundary}}

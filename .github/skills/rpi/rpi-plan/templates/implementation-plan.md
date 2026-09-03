@@ -127,7 +127,7 @@ The planner maintains acceptance criteria here as the canonical verification rec
 Record the latest critique findings, their disposition, and any explicitly accepted residual risk. Keep this section outside user decisions and current planning synthesis.
 
 * Critique candidate identity: {{task_id_plan_and_details_revision_or_hash}}
-* Critique depth and provenance: {{fast_or_deep}}; {{default_or_explicit_user_request}}
+* Critique depth and provenance: {{standard_or_deep}}; {{default_or_explicit_user_request}}
 * Critique execution: {{not_run_started_complete_partial_or_blocked}}
 * Single invocation consumed: {{yes_or_no}}
 
