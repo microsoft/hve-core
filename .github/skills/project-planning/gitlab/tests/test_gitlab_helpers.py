@@ -101,6 +101,113 @@ def _is_main_guard(node: ast.AST) -> bool:
     )
 
 
+class _ExitMechanismVisitor(ast.NodeVisitor):
+    """Collect process-exit violations using lexical import bindings."""
+
+    _IMPLICIT_BINDINGS = {
+        "SystemExit": "builtins.SystemExit",
+        "sys": "sys",
+    }
+
+    def __init__(self, guarded: set[int]) -> None:
+        self.guarded = guarded
+        self.scope_stack: list[tuple[dict[str, str], dict[str, str]]] = []
+        self.violations: list[str] = []
+
+    def visit(self, node: ast.AST) -> object:
+        if id(node) in self.guarded:
+            return None
+        return super().visit(node)
+
+    def visit_Module(self, node: ast.Module) -> None:
+        self._visit_scope(node.body, self._IMPLICIT_BINDINGS, is_class=False)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        if node.name == "die":
+            self.violations.append("def die")
+        self._visit_function(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        if node.name == "die":
+            self.violations.append("def die")
+        self._visit_function(node)
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        for base in node.bases:
+            self.visit(base)
+        for keyword in node.keywords:
+            self.visit(keyword)
+        self._visit_scope(node.body, self._child_bindings(), is_class=True)
+
+    def visit_Raise(self, node: ast.Raise) -> None:
+        raised = node.exc.func if isinstance(node.exc, ast.Call) else node.exc
+        if self._resolve_target(raised) == "builtins.SystemExit":
+            self.violations.append("raise SystemExit")
+        self.generic_visit(node)
+
+    def visit_Call(self, node: ast.Call) -> None:
+        if self._resolve_target(node.func) == "sys.exit":
+            self.violations.append("sys.exit")
+        self.generic_visit(node)
+
+    def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        self.visit(node.args)
+        if node.returns is not None:
+            self.visit(node.returns)
+        self._visit_scope(node.body, self._child_bindings(), is_class=False)
+
+    def _visit_scope(
+        self,
+        body: list[ast.stmt],
+        inherited: dict[str, str],
+        *,
+        is_class: bool,
+    ) -> None:
+        bindings = inherited.copy()
+        for statement in body:
+            self._collect_import_bindings(statement, bindings)
+        child_bindings = inherited if is_class else bindings
+        self.scope_stack.append((bindings, child_bindings))
+        for statement in body:
+            self.visit(statement)
+        self.scope_stack.pop()
+
+    def _collect_import_bindings(self, node: ast.AST, bindings: dict[str, str]) -> None:
+        if id(node) in self.guarded or isinstance(
+            node,
+            (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda),
+        ):
+            return
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                bound_name = alias.asname or alias.name.partition(".")[0]
+                bindings[bound_name] = alias.name if alias.asname else bound_name
+            return
+        if isinstance(node, ast.ImportFrom) and node.module is not None:
+            for alias in node.names:
+                if alias.name != "*":
+                    bindings[alias.asname or alias.name] = f"{node.module}.{alias.name}"
+            return
+        for child in ast.iter_child_nodes(node):
+            self._collect_import_bindings(child, bindings)
+
+    def _child_bindings(self) -> dict[str, str]:
+        return self.scope_stack[-1][1]
+
+    def _resolve_target(self, node: ast.AST | None) -> str | None:
+        if isinstance(node, ast.Name):
+            return self.scope_stack[-1][0].get(node.id)
+        if isinstance(node, ast.Attribute):
+            parent = self._resolve_target(node.value)
+            if parent is not None:
+                return f"{parent}.{node.attr}"
+        return None
+
+
 def _exit_mechanism_violations(source: str) -> list[str]:
     """Return violations of the single-failure-mechanism contract.
 
@@ -117,29 +224,9 @@ def _exit_mechanism_violations(source: str) -> list[str]:
                 for child in ast.walk(statement):
                     guarded.add(id(child))
 
-    violations: list[str] = []
-    for node in ast.walk(tree):
-        if id(node) in guarded:
-            continue
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
-            node.name == "die"
-        ):
-            violations.append("def die")
-        elif isinstance(node, ast.Raise):
-            raised = node.exc
-            if isinstance(raised, ast.Call):
-                raised = raised.func
-            if isinstance(raised, ast.Name) and raised.id == "SystemExit":
-                violations.append("raise SystemExit")
-        elif (
-            isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Attribute)
-            and node.func.attr == "exit"
-            and isinstance(node.func.value, ast.Name)
-            and node.func.value.id == "sys"
-        ):
-            violations.append("sys.exit")
-    return violations
+    visitor = _ExitMechanismVisitor(guarded)
+    visitor.visit(tree)
+    return visitor.violations
 
 
 class TestRedact:
@@ -349,6 +436,36 @@ class TestSourceContracts:
             ("def bypass():\n    raise SystemExit(2)\n", "raise SystemExit"),
             ("def bypass():\n    sys.exit(2)\n", "sys.exit"),
             ("def die(message):\n    return message\n", "def die"),
+            (
+                "import builtins\n\ndef bypass():\n    raise builtins.SystemExit(2)\n",
+                "raise SystemExit",
+            ),
+            (
+                "def owner():\n    import builtins as bi\n"
+                "    raise bi.SystemExit(2)\n\n"
+                "def sibling():\n    raise bi.SystemExit(2)\n",
+                "raise SystemExit",
+            ),
+            (
+                "class Owner:\n"
+                "    from builtins import SystemExit as Stop\n"
+                "    raise Stop(2)\n\n"
+                "    def method(self):\n        raise Stop(2)\n",
+                "raise SystemExit",
+            ),
+            (
+                "def outer():\n    import sys as system\n\n"
+                "    def inner():\n        system.exit(2)\n",
+                "sys.exit",
+            ),
+            (
+                "from sys import exit\n\ndef bypass():\n    exit(2)\n",
+                "sys.exit",
+            ),
+            (
+                "def bypass():\n    from sys import exit as stop\n    stop(2)\n",
+                "sys.exit",
+            ),
         ],
     )
     def test_source_contract_detects_second_failure_mechanism(
@@ -360,6 +477,24 @@ class TestSourceContracts:
         guarded = 'if __name__ == "__main__":\n    sys.exit(main())\n'
 
         assert _exit_mechanism_violations(guarded) == []
+
+    @pytest.mark.parametrize(
+        "source",
+        [
+            (
+                "class Owner:\n    from sys import exit\n\n"
+                "    def method(self):\n"
+                "        def exit(code):\n            return code\n\n"
+                "        exit(2)\n"
+            ),
+            (
+                "def owner():\n    import sys as target\n\n"
+                "def sibling(target):\n    target.exit(2)\n"
+            ),
+        ],
+    )
+    def test_source_contract_allows_unrelated_exit_forms(self, source: str) -> None:
+        assert _exit_mechanism_violations(source) == []
 
     @pytest.mark.parametrize(
         "source",
