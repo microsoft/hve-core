@@ -26,10 +26,10 @@ else:
     FUZZING = True
 
 
-# A CLI failure surfaces as SystemExit from the dispatch-layer die() helper
-# or as GitLabError from a library-level helper that promises a return
-# value. Both are expected refusals, not fuzz findings.
-_EXPECTED_CLI_ERRORS = (SystemExit, gitlab.GitLabError)
+# A CLI failure surfaces as GitLabError, the module's single failure
+# mechanism. Nothing raises SystemExit outside the __main__ guard, so an
+# expected refusal is always this one type, not a fuzz finding.
+_EXPECTED_CLI_ERRORS = (gitlab.GitLabError,)
 
 
 def fuzz_strip_git_suffix(data: bytes) -> None:
@@ -200,7 +200,7 @@ class TestGitLabFuzzHarness:
 
     @pytest.mark.parametrize("value", ["", "abc", "12a", "-1"])
     def test_validate_numeric_id_rejects_invalid_values(self, value: str) -> None:
-        with pytest.raises(SystemExit):
+        with pytest.raises(gitlab.GitLabError):
             gitlab.validate_numeric_id(value)
 
     def test_extract_field_handles_nested_values(self) -> None:
