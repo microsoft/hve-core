@@ -1,0 +1,421 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/skills/ontology/ontology-authoring/assets/schemas/normalized-evidence.schema.json",
+  "title": "Ontology Builder Normalized Evidence",
+  "description": "Adapter-independent structural evidence extracted from one confirmed local source.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "source",
+    "nodes",
+    "edges",
+    "findings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9._~/-]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "inventoryId",
+        "adapter",
+        "mediaType",
+        "displayPath",
+        "sha256"
+      ],
+      "properties": {
+        "inventoryId": {
+          "$ref": "#/$defs/id"
+        },
+        "adapter": {
+          "enum": [
+            "pasted-text",
+            "text",
+            "markdown",
+            "csv",
+            "json",
+            "turtle",
+            "rdf-xml",
+            "owl",
+            "docx",
+            "pptx"
+          ]
+        },
+        "mediaType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "displayPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "additionalProperties": false
+    },
+    "location": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "locator"
+      ],
+      "properties": {
+        "documentId": {
+          "$ref": "#/$defs/id"
+        },
+        "part": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relationshipId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "textRange": {
+          "type": "object",
+          "required": [
+            "start",
+            "end"
+          ],
+          "properties": {
+            "start": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "order": {
+      "type": "object",
+      "required": [
+        "source"
+      ],
+      "properties": {
+        "source": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "derived": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "derivationMethod": {
+          "type": "string",
+          "minLength": 1
+        },
+        "derivationConfidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false,
+      "dependentRequired": {
+        "derived": [
+          "derivationMethod",
+          "derivationConfidence"
+        ],
+        "derivationMethod": [
+          "derived",
+          "derivationConfidence"
+        ],
+        "derivationConfidence": [
+          "derived",
+          "derivationMethod"
+        ]
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "location",
+        "order",
+        "status",
+        "confidence",
+        "limitations"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "enum": [
+            "document",
+            "section",
+            "heading",
+            "paragraph",
+            "text-run",
+            "list",
+            "list-item",
+            "table",
+            "table-row",
+            "table-cell",
+            "hyperlink",
+            "slide",
+            "notes",
+            "shape",
+            "group",
+            "connector",
+            "chart",
+            "chart-series",
+            "chart-category",
+            "diagram",
+            "diagram-node"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        },
+        "order": {
+          "$ref": "#/$defs/order"
+        },
+        "status": {
+          "enum": [
+            "complete",
+            "partial"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "edge": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "sourceNodeId",
+        "targetNodeId",
+        "basis",
+        "location",
+        "confidence",
+        "limitations"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "enum": [
+            "contains",
+            "precedes",
+            "groups",
+            "connects-from",
+            "connects-to",
+            "list-parent",
+            "table-member",
+            "hyperlink-target",
+            "diagram-relation",
+            "derived-reading-order"
+          ]
+        },
+        "sourceNodeId": {
+          "$ref": "#/$defs/id"
+        },
+        "targetNodeId": {
+          "$ref": "#/$defs/id"
+        },
+        "basis": {
+          "enum": [
+            "explicit",
+            "derived"
+          ]
+        },
+        "derivationMethod": {
+          "type": "string",
+          "minLength": 1
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "basis": {
+                "const": "derived"
+              }
+            },
+            "required": [
+              "basis"
+            ]
+          },
+          "then": {
+            "required": [
+              "derivationMethod"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "connects-from",
+                  "connects-to",
+                  "diagram-relation"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "basis": {
+                "const": "explicit"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "finding": {
+      "type": "object",
+      "required": [
+        "id",
+        "location",
+        "category",
+        "reason",
+        "disposition",
+        "partialNodeIds"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        },
+        "category": {
+          "enum": [
+            "image-requires-ocr",
+            "audio",
+            "video",
+            "embedded-object",
+            "macro",
+            "unsupported-diagram-part",
+            "malformed-diagram-part",
+            "unsupported-chart-part",
+            "unresolved-relationship",
+            "parser-limit"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "disposition": {
+          "enum": [
+            "unsupported",
+            "partial",
+            "rejected"
+          ]
+        },
+        "partialNodeIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

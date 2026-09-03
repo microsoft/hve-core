@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": {
+    "slug": "service-operations",
+    "name": "Service Operations Ontology"
+  },
+  "phase": "research",
+  "context": {
+    "status": "pending",
+    "businessActivity": { "value": null, "confirmed": false },
+    "ontologyPurpose": { "value": null, "confirmed": false },
+    "domainScope": { "value": null, "confirmed": false },
+    "usersAndDecisions": { "value": null, "confirmed": false },
+    "sourceBoundary": { "value": null, "confirmed": false }
+  },
+  "sourceInventory": [
+    {
+      "id": "source:concepts.txt",
+      "kind": "file",
+      "displayPath": "sources/concepts.txt",
+      "status": "supported",
+      "adapter": "text",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "limitations": []
+    }
+  ],
+  "evidenceDocuments": [],
+  "contributions": [],
+  "decisions": [],
+  "candidates": [],
+  "approvals": [],
+  "gates": {
+    "research": { "status": "pending", "inputDigests": [], "downstreamInvalidated": false },
+    "design": { "status": "pending", "inputDigests": [], "downstreamInvalidated": false },
+    "implement": { "status": "pending", "inputDigests": [], "downstreamInvalidated": false },
+    "deployHandoff": { "status": "deferred", "target": "033 Fabric Ontology Edge AI Agent" }
+  },
+  "artifacts": [],
+  "reports": [],
+  "timestamps": {
+    "createdAt": "2026-09-01T12:00:00Z",
+    "updatedAt": "2026-09-01T12:00:00Z"
+  }
+}

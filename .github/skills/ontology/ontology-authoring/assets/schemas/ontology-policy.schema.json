@@ -1,0 +1,342 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/skills/ontology/ontology-authoring/assets/schemas/ontology-policy.schema.json",
+  "title": "Ontology Identity and Semantic Policy",
+  "description": "Machine-readable release-one identity and semantic profile selected for one ontology project.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "namespace",
+    "terms",
+    "semanticProfile"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "namespace": {
+      "$ref": "#/$defs/namespace"
+    },
+    "terms": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/term"
+      }
+    },
+    "semanticProfile": {
+      "$ref": "#/$defs/semanticProfile"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9._~/-]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "absoluteIri": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://"
+    },
+    "approval": {
+      "type": "object",
+      "required": [
+        "approver",
+        "role",
+        "rationale",
+        "approvedAt",
+        "inputDigests"
+      ],
+      "properties": {
+        "approver": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approvedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "inputDigests": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/sha256"
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "namespace": {
+      "type": "object",
+      "required": [
+        "baseIri",
+        "status",
+        "approval"
+      ],
+      "properties": {
+        "baseIri": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/absoluteIri"
+            },
+            {
+              "type": "string",
+              "pattern": "[/#]$"
+            }
+          ]
+        },
+        "status": {
+          "const": "approved"
+        },
+        "approval": {
+          "$ref": "#/$defs/approval"
+        }
+      },
+      "additionalProperties": false
+    },
+    "term": {
+      "type": "object",
+      "required": [
+        "termId",
+        "iri",
+        "kind",
+        "preferredLabel",
+        "aliases",
+        "status"
+      ],
+      "properties": {
+        "termId": {
+          "$ref": "#/$defs/id"
+        },
+        "iri": {
+          "$ref": "#/$defs/absoluteIri"
+        },
+        "kind": {
+          "enum": [
+            "class",
+            "object-property",
+            "datatype-property",
+            "annotation-property"
+          ]
+        },
+        "preferredLabel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "status": {
+          "enum": [
+            "approved",
+            "deprecated"
+          ]
+        },
+        "previousIri": {
+          "$ref": "#/$defs/absoluteIri"
+        },
+        "replacementTermId": {
+          "$ref": "#/$defs/id"
+        },
+        "replacementIri": {
+          "$ref": "#/$defs/absoluteIri"
+        },
+        "replacementApproval": {
+          "$ref": "#/$defs/approval"
+        },
+        "changeKind": {
+          "enum": [
+            "unchanged",
+            "label-only",
+            "approved-replacement"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "deprecated"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "replacementTermId",
+              "replacementIri",
+              "replacementApproval",
+              "changeKind"
+            ],
+            "properties": {
+              "replacementTermId": {
+                "$ref": "#/$defs/id"
+              },
+              "replacementIri": {
+                "$ref": "#/$defs/absoluteIri"
+              },
+              "replacementApproval": {
+                "$ref": "#/$defs/approval"
+              },
+              "changeKind": {
+                "const": "approved-replacement"
+              }
+            }
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": { "replacementTermId": true },
+                  "required": ["replacementTermId"]
+                },
+                {
+                  "properties": { "replacementIri": true },
+                  "required": ["replacementIri"]
+                },
+                {
+                  "properties": { "replacementApproval": true },
+                  "required": ["replacementApproval"]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "previousIri": true
+            },
+            "required": [
+              "previousIri"
+            ]
+          },
+          "then": {
+            "properties": {
+              "changeKind": true
+            },
+            "required": [
+              "changeKind"
+            ]
+          }
+        }
+      ]
+    },
+    "semanticProfile": {
+      "type": "object",
+      "required": [
+        "authorityArtifact",
+        "constraintArtifact",
+        "inference",
+        "networkAccess",
+        "allowedPredicates",
+        "allowedTypes",
+        "prohibitedFeatures"
+      ],
+      "properties": {
+        "authorityArtifact": {
+          "const": "ontology.ttl"
+        },
+        "constraintArtifact": {
+          "const": "shapes.ttl"
+        },
+        "inference": {
+          "const": "disabled"
+        },
+        "networkAccess": {
+          "const": "disabled"
+        },
+        "allowedPredicates": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "rdf:type",
+              "rdfs:subClassOf",
+              "rdfs:subPropertyOf",
+              "rdfs:domain",
+              "rdfs:range",
+              "rdfs:label",
+              "rdfs:comment",
+              "owl:deprecated"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "allowedTypes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "rdf:Property",
+              "rdfs:Class",
+              "owl:Class",
+              "owl:ObjectProperty",
+              "owl:DatatypeProperty",
+              "owl:AnnotationProperty"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "prohibitedFeatures": {
+          "type": "array",
+          "minItems": 10,
+          "items": {
+            "enum": [
+              "owl:imports",
+              "owl:sameAs",
+              "owl:equivalentClass",
+              "owl:equivalentProperty",
+              "owl:propertyChainAxiom",
+              "owl:hasKey",
+              "owl:Restriction",
+              "owl:unionOf",
+              "owl:intersectionOf",
+              "owl:complementOf",
+              "sh:rule",
+              "sh:js",
+              "remote-context",
+              "remote-graph",
+              "sparql-service",
+              "automatic-alignment"
+            ]
+          },
+          "uniqueItems": true,
+          "allOf": [
+            { "contains": { "const": "owl:imports" } },
+            { "contains": { "const": "owl:sameAs" } },
+            { "contains": { "const": "owl:equivalentClass" } },
+            { "contains": { "const": "owl:equivalentProperty" } },
+            { "contains": { "const": "owl:Restriction" } },
+            { "contains": { "const": "sh:rule" } },
+            { "contains": { "const": "sh:js" } },
+            { "contains": { "const": "remote-graph" } },
+            { "contains": { "const": "sparql-service" } },
+            { "contains": { "const": "automatic-alignment" } }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0.0",
+  "namespace": {
+    "baseIri": "https://example.org/service-operations/",
+    "status": "approved",
+    "approval": {
+      "approver": "ontology-owner@example.com",
+      "role": "Ontology owner",
+      "rationale": "The namespace is controlled by the publishing organization.",
+      "approvedAt": "2026-09-01T14:00:00Z",
+      "inputDigests": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    }
+  },
+  "terms": [
+    {
+      "termId": "term:service",
+      "iri": "https://example.org/service-operations/Service",
+      "kind": "class",
+      "preferredLabel": "Managed service",
+      "aliases": [
+        "Service"
+      ],
+      "status": "approved",
+      "previousIri": "https://example.org/service-operations/Service",
+      "changeKind": "label-only"
+    },
+    {
+      "termId": "term:support-team",
+      "iri": "https://example.org/service-operations/SupportTeam",
+      "kind": "class",
+      "preferredLabel": "Support team",
+      "aliases": [],
+      "status": "approved",
+      "changeKind": "unchanged"
+    }
+  ],
+  "semanticProfile": {
+    "authorityArtifact": "ontology.ttl",
+    "constraintArtifact": "shapes.ttl",
+    "inference": "disabled",
+    "networkAccess": "disabled",
+    "allowedPredicates": [
+      "rdf:type",
+      "rdfs:subClassOf",
+      "rdfs:subPropertyOf",
+      "rdfs:domain",
+      "rdfs:range",
+      "rdfs:label",
+      "rdfs:comment",
+      "owl:deprecated"
+    ],
+    "allowedTypes": [
+      "rdf:Property",
+      "rdfs:Class",
+      "owl:Class",
+      "owl:ObjectProperty",
+      "owl:DatatypeProperty",
+      "owl:AnnotationProperty"
+    ],
+    "prohibitedFeatures": [
+      "owl:imports",
+      "owl:sameAs",
+      "owl:equivalentClass",
+      "owl:equivalentProperty",
+      "owl:propertyChainAxiom",
+      "owl:hasKey",
+      "owl:Restriction",
+      "owl:unionOf",
+      "owl:intersectionOf",
+      "owl:complementOf",
+      "sh:rule",
+      "sh:js",
+      "remote-context",
+      "remote-graph",
+      "sparql-service",
+      "automatic-alignment"
+    ]
+  }
+}

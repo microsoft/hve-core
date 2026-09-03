@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "namespace": {
+    "baseIri": "https://example.org/service-operations/",
+    "status": "approved",
+    "approval": {
+      "approver": "ontology-owner@example.com",
+      "role": "Ontology owner",
+      "rationale": "Approved namespace.",
+      "approvedAt": "2026-09-01T14:00:00Z",
+      "inputDigests": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    }
+  },
+  "terms": [
+    {
+      "termId": "term:service",
+      "iri": "https://example.org/service-operations/ManagedService",
+      "previousIri": "https://example.org/service-operations/Service",
+      "kind": "class",
+      "preferredLabel": "Managed service",
+      "aliases": [],
+      "status": "approved",
+      "changeKind": "label-only"
+    }
+  ],
+  "semanticProfile": {
+    "authorityArtifact": "ontology.ttl",
+    "constraintArtifact": "shapes.ttl",
+    "inference": "disabled",
+    "networkAccess": "disabled",
+    "allowedPredicates": [],
+    "allowedTypes": [],
+    "prohibitedFeatures": [
+      "owl:imports", "owl:sameAs", "owl:equivalentClass", "owl:equivalentProperty",
+      "owl:Restriction", "sh:rule", "sh:js", "remote-graph", "sparql-service",
+      "automatic-alignment"
+    ]
+  }
+}

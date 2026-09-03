@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectSlug": "service-operations",
+  "generatedAt": "2026-09-01T12:00:00Z",
+  "baseIri": "https://example.org/service-operations/",
+  "capabilities": {
+    "sampledInstancesApplicable": false,
+    "competencyChecksApplicable": false
+  },
+  "artifacts": [
+    { "role": "ontology", "path": "ontology.ttl", "mediaType": "text/turtle", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "semantic-authority" }
+  ],
+  "candidatesExcludedFromApprovedGraphs": true,
+  "noDeploymentOccurred": true,
+  "packageDigest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+}

@@ -1,0 +1,577 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/skills/ontology/ontology-authoring/assets/schemas/package-manifest.schema.json",
+  "title": "Ontology Builder Package Manifest",
+  "description": "Completeness and authority contract for a finalized local ontology package.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "projectSlug",
+    "generatedAt",
+    "baseIri",
+    "capabilities",
+    "artifacts",
+    "candidatesExcludedFromApprovedGraphs",
+    "noDeploymentOccurred",
+    "packageDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "projectSlug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "baseIri": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9+.-]*://"
+    },
+    "capabilities": {
+      "type": "object",
+      "required": [
+        "sampledInstancesApplicable",
+        "competencyChecksApplicable"
+      ],
+      "properties": {
+        "sampledInstancesApplicable": {
+          "type": "boolean"
+        },
+        "competencyChecksApplicable": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 19,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/requiredArtifactRoles"
+        }
+      ]
+    },
+    "candidatesExcludedFromApprovedGraphs": {
+      "const": true
+    },
+    "noDeploymentOccurred": {
+      "const": true
+    },
+    "packageDigest": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "properties": {
+              "sampledInstancesApplicable": {
+                "const": true
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "contains": {
+              "properties": {
+                "role": {
+                  "const": "sampled-instances"
+                }
+              },
+              "required": [
+                "role"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "properties": {
+              "competencyChecksApplicable": {
+                "const": true
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "contains": {
+              "properties": {
+                "role": {
+                  "const": "competency-checks"
+                }
+              },
+              "required": [
+                "role"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "artifact": {
+      "type": "object",
+      "required": [
+        "role",
+        "path",
+        "mediaType",
+        "sha256",
+        "authority"
+      ],
+      "properties": {
+        "role": {
+          "enum": [
+            "confirmed-context",
+            "source-manifest",
+            "normalized-evidence",
+            "research-design-brief",
+            "design-ontology-specification",
+            "semantic-policy",
+            "ontology",
+            "shapes",
+            "mappings",
+            "sampled-instances",
+            "syntax-report",
+            "conformance-report",
+            "policy-report",
+            "competency-questions",
+            "competency-checks",
+            "provenance",
+            "rights",
+            "candidates",
+            "decisions",
+            "approvals",
+            "no-deployment-attestation"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "^(?:/|[A-Za-z]:|.*(?:^|/)\\.\\.(?:/|$))"
+          }
+        },
+        "mediaType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "authority": {
+          "enum": [
+            "semantic-authority",
+            "constraint",
+            "evidence",
+            "fixture",
+            "report",
+            "governance"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "role": {
+                "const": "semantic-policy"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authority": {
+                "const": "governance"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "role": {
+                "const": "ontology"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authority": {
+                "const": "semantic-authority"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "role": {
+                "const": "shapes"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authority": {
+                "const": "constraint"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "role": {
+                "const": "sampled-instances"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authority": {
+                "const": "fixture"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "role": {
+                "enum": [
+                  "syntax-report",
+                  "conformance-report",
+                  "policy-report"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authority": {
+                "const": "report"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "requiredArtifactRoles": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/contains-confirmed-context"
+        },
+        {
+          "$ref": "#/$defs/contains-source-manifest"
+        },
+        {
+          "$ref": "#/$defs/contains-normalized-evidence"
+        },
+        {
+          "$ref": "#/$defs/contains-research-design-brief"
+        },
+        {
+          "$ref": "#/$defs/contains-design-ontology-specification"
+        },
+        {
+          "$ref": "#/$defs/contains-semantic-policy"
+        },
+        {
+          "$ref": "#/$defs/contains-ontology"
+        },
+        {
+          "$ref": "#/$defs/contains-shapes"
+        },
+        {
+          "$ref": "#/$defs/contains-mappings"
+        },
+        {
+          "$ref": "#/$defs/contains-syntax-report"
+        },
+        {
+          "$ref": "#/$defs/contains-conformance-report"
+        },
+        {
+          "$ref": "#/$defs/contains-policy-report"
+        },
+        {
+          "$ref": "#/$defs/contains-competency-questions"
+        },
+        {
+          "$ref": "#/$defs/contains-provenance"
+        },
+        {
+          "$ref": "#/$defs/contains-rights"
+        },
+        {
+          "$ref": "#/$defs/contains-candidates"
+        },
+        {
+          "$ref": "#/$defs/contains-decisions"
+        },
+        {
+          "$ref": "#/$defs/contains-approvals"
+        },
+        {
+          "$ref": "#/$defs/contains-no-deployment-attestation"
+        }
+      ]
+    },
+    "contains-confirmed-context": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "confirmed-context"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-source-manifest": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "source-manifest"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-normalized-evidence": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "normalized-evidence"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-research-design-brief": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "research-design-brief"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-design-ontology-specification": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "design-ontology-specification"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-semantic-policy": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "semantic-policy"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-ontology": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "ontology"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-shapes": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "shapes"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-mappings": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "mappings"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-syntax-report": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "syntax-report"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-conformance-report": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "conformance-report"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-policy-report": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "policy-report"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-competency-questions": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "competency-questions"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-provenance": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "provenance"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-rights": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "rights"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-candidates": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "candidates"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-decisions": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "decisions"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-approvals": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "approvals"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    },
+    "contains-no-deployment-attestation": {
+      "contains": {
+        "properties": {
+          "role": {
+            "const": "no-deployment-attestation"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      }
+    }
+  }
+}

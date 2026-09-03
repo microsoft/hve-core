@@ -1,0 +1,243 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Ontology Dependency Authority
+
+on:
+  push:
+    branches:
+      - feat/ontology-builder-agent
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: 'Full source commit SHA to lock and verify'
+        required: true
+        type: string
+
+concurrency:
+  group: ontology-dependency-authority-${{ github.event_name == 'push' && github.sha || inputs.source_commit }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    name: Generate Canonical Dependency Authority
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      ARTIFACT_NAME: ontology-dependency-authority-${{ github.event_name == 'push' && github.sha || inputs.source_commit }}
+      BUNDLE_DIR: dependency-authority
+      CHECKOUT_ACTION: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      PUBLIC_INDEX: https://pypi.org/simple
+      PYTHON_VERSION: '3.11'
+      SOURCE_COMMIT: ${{ github.event_name == 'push' && github.sha || inputs.source_commit }}
+      UPLOAD_ARTIFACT_ACTION: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      UV_VERSION: '0.10.8'
+    steps:
+      - name: Validate dispatch authority
+        env:
+          BOOTSTRAP_REF: refs/heads/feat/ontology-builder-agent
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${SOURCE_COMMIT}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::source_commit must be a full lowercase 40-character SHA"
+            exit 1
+          fi
+          if [[ "${EVENT_NAME}" == "push" && "${WORKFLOW_REF}" != "${BOOTSTRAP_REF}" ]]; then
+            echo "::error::Bootstrap pushes must use ${BOOTSTRAP_REF}"
+            exit 1
+          fi
+          if [[ "${EVENT_NAME}" == "workflow_dispatch" && "${WORKFLOW_REF}" != "refs/heads/${DEFAULT_BRANCH}" ]]; then
+            echo "::error::Manual dispatch must use the default-branch definition"
+            exit 1
+          fi
+          if [[ "${EVENT_NAME}" != "push" && "${EVENT_NAME}" != "workflow_dispatch" ]]; then
+            echo "::error::Unsupported dependency authority event: ${EVENT_NAME}"
+            exit 1
+          fi
+
+      - name: Checkout trusted authority controls
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: authority-controls
+          persist-credentials: false
+          ref: ${{ github.event_name == 'push' && github.sha || github.event.repository.default_branch }}
+
+      - name: Checkout requested source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          path: requested-source
+          persist-credentials: false
+          ref: ${{ inputs.source_commit }}
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+
+      - name: Install integrity-verified uv
+        env:
+          UV_AARCH64_SHA256: 661860e954f87dcd823251191866af3486484d1a9df60eed56f4586ed7559e3d
+          UV_X86_64_SHA256: f0c566b55683395a62fefb9261a060fa09824914b5682c3b9629fa154762ae2f
+        run: |
+          set -euo pipefail
+          architecture="$(uname -m)"
+          if [[ "${architecture}" == "x86_64" ]]; then
+            uv_arch="x86_64-unknown-linux-gnu"
+            uv_sha256="${UV_X86_64_SHA256}"
+          elif [[ "${architecture}" == "aarch64" ]]; then
+            uv_arch="aarch64-unknown-linux-gnu"
+            uv_sha256="${UV_AARCH64_SHA256}"
+          else
+            echo "::error::Unsupported architecture for uv: ${architecture}"
+            exit 1
+          fi
+          archive="${RUNNER_TEMP}/uv.tar.gz"
+          curl --fail --location --proto '=https' --silent --show-error \
+            "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${uv_arch}.tar.gz" \
+            --output "${archive}"
+          echo "${uv_sha256}  ${archive}" | sha256sum --check --strict
+          mkdir -p "${RUNNER_TEMP}/uv-bin"
+          tar --extract --gzip --file "${archive}" --directory "${RUNNER_TEMP}/uv-bin" \
+            --strip-components=1 "uv-${uv_arch}/uv" "uv-${uv_arch}/uvx"
+          echo "${RUNNER_TEMP}/uv-bin" >> "${GITHUB_PATH}"
+
+      - name: Generate canonical public lock
+        working-directory: requested-source/.github/skills/ontology/ontology-authoring
+        env:
+          UV_DEFAULT_INDEX: ${{ env.PUBLIC_INDEX }}
+          UV_INDEX: ''
+          UV_INDEX_URL: ''
+          UV_EXTRA_INDEX_URL: ''
+          UV_FIND_LINKS: ''
+        run: |
+          set -euo pipefail
+          uv --version
+          uv lock --refresh --no-sources --python "${PYTHON_VERSION}"
+          uv lock --check --no-sources --python "${PYTHON_VERSION}"
+          uv sync --locked --all-groups --no-install-project --no-sources \
+            --python "${PYTHON_VERSION}"
+
+      - name: Test exact dependency environment
+        working-directory: requested-source/.github/skills/ontology/ontology-authoring
+        env:
+          PYTHONPATH: ${{ github.workspace }}/authority-controls/.github/skills/ontology/ontology-authoring/scripts
+        run: |
+          set -euo pipefail
+          mkdir -p "${GITHUB_WORKSPACE}/${BUNDLE_DIR}"
+          .venv/bin/python -m pytest \
+            -c "${GITHUB_WORKSPACE}/authority-controls/.github/skills/ontology/ontology-authoring/pyproject.toml" \
+            "${GITHUB_WORKSPACE}/authority-controls/.github/skills/ontology/ontology-authoring/tests/test_dependency_evidence.py" \
+            "${GITHUB_WORKSPACE}/authority-controls/.github/skills/ontology/ontology-authoring/tests/test_verify_dependency_artifact.py" \
+            --junitxml "${GITHUB_WORKSPACE}/${BUNDLE_DIR}/test-results.xml"
+          .venv/bin/python - <<'PY'
+          import json
+          import platform
+
+          import jsonschema
+          import pyshacl
+          import rdflib
+
+          result = {
+              "imports": {
+                  "jsonschema": jsonschema.__version__,
+                  "pyshacl": pyshacl.__version__,
+                  "rdflib": rdflib.__version__,
+              },
+              "python": platform.python_version(),
+              "status": "passed",
+          }
+          with open("import-results.json", "w", encoding="utf-8") as stream:
+              json.dump(result, stream, indent=2, sort_keys=True)
+              stream.write("\n")
+          PY
+          mv import-results.json "${GITHUB_WORKSPACE}/${BUNDLE_DIR}/"
+          uv tree --frozen --all-groups > "${GITHUB_WORKSPACE}/${BUNDLE_DIR}/dependency-tree.txt"
+
+      - name: Export dependency evidence
+        working-directory: requested-source/.github/skills/ontology/ontology-authoring
+        env:
+          WORKFLOW_RUN_ID: ${{ github.run_id }}
+          WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          WORKFLOW_SOURCE: ${{ github.workflow_ref }}
+        run: |
+          set -euo pipefail
+          cp uv.lock "${GITHUB_WORKSPACE}/${BUNDLE_DIR}/uv.lock"
+          cp pyproject.toml "${GITHUB_WORKSPACE}/${BUNDLE_DIR}/pyproject.toml"
+          uv export --frozen --all-groups --format cyclonedx1.5 \
+            --output-file "${GITHUB_WORKSPACE}/${BUNDLE_DIR}/dependency-sbom.cdx.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          import platform
+          import subprocess
+
+          commands = [
+              "uv lock --refresh --no-sources --python 3.11",
+              "uv lock --check --no-sources --python 3.11",
+              "uv sync --locked --all-groups --no-install-project --no-sources --python 3.11",
+              "python -m pytest focused dependency evidence tests",
+              "python import jsonschema, pyshacl, rdflib",
+              "uv tree --frozen --all-groups",
+              "uv export --frozen --all-groups --format cyclonedx1.5",
+          ]
+          evidence = {
+              "commands": [{"command": command, "result": "passed"} for command in commands],
+              "platform": platform.platform(),
+              "pythonVersion": platform.python_version(),
+              "uvVersion": subprocess.check_output(["uv", "--version"], text=True).strip(),
+          }
+          path = os.path.join(os.environ["GITHUB_WORKSPACE"], os.environ["BUNDLE_DIR"], "command-evidence.json")
+          with open(path, "w", encoding="utf-8") as stream:
+              json.dump(evidence, stream, indent=2, sort_keys=True)
+              stream.write("\n")
+          PY
+          PYTHONPATH="${GITHUB_WORKSPACE}/authority-controls/.github/skills/ontology/ontology-authoring/scripts" \
+            .venv/bin/python -m ontology_authoring.dependency_evidence \
+            --bundle-dir "${GITHUB_WORKSPACE}/${BUNDLE_DIR}" \
+            --pyproject "${GITHUB_WORKSPACE}/${BUNDLE_DIR}/pyproject.toml" \
+            --repository "${GITHUB_REPOSITORY}" \
+            --source-commit "${SOURCE_COMMIT}" \
+            --workflow-ref "${WORKFLOW_SOURCE}" \
+            --workflow-run-id "${WORKFLOW_RUN_ID}" \
+            --workflow-run-url "${WORKFLOW_RUN_URL}" \
+            --artifact-name "${ARTIFACT_NAME}" \
+            --checkout-action "${CHECKOUT_ACTION}" \
+            --upload-artifact-action "${UPLOAD_ARTIFACT_ACTION}" \
+            --python-version "$(.venv/bin/python --version | cut -d' ' -f2)" \
+            --uv-version "$(uv --version | cut -d' ' -f2)"
+
+      - name: Upload immutable authority bundle
+        id: upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.BUNDLE_DIR }}/*
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+      - name: Record retrieval identity
+        env:
+          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## Dependency authority retrieval identity"
+            echo ""
+            echo "- Repository: ${GITHUB_REPOSITORY}"
+            echo "- Source commit: ${SOURCE_COMMIT}"
+            echo "- Workflow run ID: ${GITHUB_RUN_ID}"
+            echo "- Artifact name: ${ARTIFACT_NAME}"
+            echo "- Artifact ID: ${ARTIFACT_ID}"
+            echo "- Artifact URL: ${ARTIFACT_URL}"
+            echo "- GitHub artifact digest: ${ARTIFACT_DIGEST}"
+          } >> "${GITHUB_STEP_SUMMARY}"

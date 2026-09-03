@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "namespace": {
+    "baseIri": "https://example.org/draft/",
+    "status": "draft"
+  },
+  "terms": [],
+  "semanticProfile": {
+    "authorityArtifact": "ontology.ttl",
+    "constraintArtifact": "shapes.ttl",
+    "inference": "disabled",
+    "networkAccess": "disabled",
+    "allowedPredicates": [],
+    "allowedTypes": [],
+    "prohibitedFeatures": []
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectSlug": "service-operations",
+  "generatedAt": "2026-09-01T12:00:00Z",
+  "baseIri": "https://example.org/service-operations/",
+  "capabilities": {
+    "sampledInstancesApplicable": false,
+    "competencyChecksApplicable": false
+  },
+  "artifacts": [
+    { "role": "confirmed-context", "path": "context.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "governance" },
+    { "role": "source-manifest", "path": "source-manifest.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "evidence" },
+    { "role": "normalized-evidence", "path": "evidence.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "evidence" },
+    { "role": "research-design-brief", "path": "research-design-brief.md", "mediaType": "text/markdown", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "governance" },
+    { "role": "design-ontology-specification", "path": "ontology-specification.md", "mediaType": "text/markdown", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "governance" },
+    { "role": "semantic-policy", "path": "ontology-policy.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "governance" },
+    { "role": "ontology", "path": "ontology.ttl", "mediaType": "text/turtle", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "semantic-authority" },
+    { "role": "shapes", "path": "shapes.ttl", "mediaType": "text/turtle", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "constraint" },
+    { "role": "mappings", "path": "mappings.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "evidence" },
+    { "role": "syntax-report", "path": "reports/syntax.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "report" },
+    { "role": "conformance-report", "path": "reports/conformance.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "report" },
+    { "role": "policy-report", "path": "reports/policy.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "report" },
+    { "role": "competency-questions", "path": "competency-questions.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "governance" },
+    { "role": "provenance", "path": "provenance.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "evidence" },
+    { "role": "rights", "path": "rights.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "governance" },
+    { "role": "candidates", "path": "candidates.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "evidence" },
+    { "role": "decisions", "path": "decisions.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "governance" },
+    { "role": "approvals", "path": "approvals.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "governance" },
+    { "role": "no-deployment-attestation", "path": "no-deployment.json", "mediaType": "application/json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "authority": "governance" }
+  ],
+  "candidatesExcludedFromApprovedGraphs": true,
+  "noDeploymentOccurred": true,
+  "packageDigest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+}

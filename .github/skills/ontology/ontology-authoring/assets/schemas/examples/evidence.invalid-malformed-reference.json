@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "evidence:service-concepts",
+  "source": {
+    "inventoryId": "source:service-concepts.docx",
+    "adapter": "docx",
+    "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "displayPath": "sources/service-concepts.docx",
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "nodes": [],
+  "edges": [
+    {
+      "id": "edge:service-concepts/broken",
+      "type": "contains",
+      "sourceNodeId": "not a stable identifier",
+      "targetNodeId": "node:service-concepts/missing",
+      "basis": "explicit",
+      "location": {
+        "documentId": "evidence:service-concepts",
+        "locator": "source"
+      },
+      "confidence": 1,
+      "limitations": []
+    }
+  ],
+  "findings": []
+}

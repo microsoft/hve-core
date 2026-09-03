@@ -1,0 +1,979 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/schemas/ontology-builder-state.schema.json",
+  "title": "Ontology Builder State Schema",
+  "description": "Schema for resumable Ontology Builder state under .copilot-tracking/ontology-builder/{project-slug}/state.json.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "project",
+    "phase",
+    "context",
+    "sourceInventory",
+    "evidenceDocuments",
+    "contributions",
+    "decisions",
+    "candidates",
+    "approvals",
+    "gates",
+    "artifacts",
+    "reports",
+    "timestamps"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "project": {
+      "$ref": "#/$defs/project"
+    },
+    "phase": {
+      "enum": [
+        "research",
+        "design",
+        "implement",
+        "deploy-handoff"
+      ]
+    },
+    "context": {
+      "$ref": "#/$defs/businessContext"
+    },
+    "sourceInventory": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sourceInventoryEntry"
+      }
+    },
+    "evidenceDocuments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidenceDocument"
+      }
+    },
+    "contributions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/contribution"
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/decision"
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidate"
+      }
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/approval"
+      }
+    },
+    "gates": {
+      "$ref": "#/$defs/gates"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "reports": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/report"
+      }
+    },
+    "timestamps": {
+      "$ref": "#/$defs/timestamps"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "context": {
+            "properties": {
+              "status": {
+                "const": "pending"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "sourceInventory": {
+            "maxItems": 0
+          },
+          "evidenceDocuments": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "enum": [
+              "design",
+              "implement",
+              "deploy-handoff"
+            ]
+          }
+        },
+        "required": [
+          "phase"
+        ]
+      },
+      "then": {
+        "properties": {
+          "gates": {
+            "properties": {
+              "research": {
+                "properties": {
+                  "status": {
+                    "const": "approved"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "enum": [
+              "implement",
+              "deploy-handoff"
+            ]
+          }
+        },
+        "required": [
+          "phase"
+        ]
+      },
+      "then": {
+        "properties": {
+          "gates": {
+            "properties": {
+              "design": {
+                "properties": {
+                  "status": {
+                    "const": "approved"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": "deploy-handoff"
+          }
+        },
+        "required": [
+          "phase"
+        ]
+      },
+      "then": {
+        "properties": {
+          "gates": {
+            "properties": {
+              "implement": {
+                "properties": {
+                  "status": {
+                    "const": "approved"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9._~/-]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "project": {
+      "type": "object",
+      "required": [
+        "slug",
+        "name"
+      ],
+      "properties": {
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "contextField": {
+      "type": "object",
+      "required": [
+        "value",
+        "confirmed"
+      ],
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "confirmed": {
+          "type": "boolean"
+        },
+        "confirmedBy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confirmedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "confirmed": {
+                "const": true
+              }
+            },
+            "required": [
+              "confirmed"
+            ]
+          },
+          "then": {
+            "required": [
+              "confirmedBy",
+              "confirmedAt"
+            ],
+            "properties": {
+              "value": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "confirmedContextField": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/contextField"
+        },
+        {
+          "properties": {
+            "confirmed": {
+              "const": true
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "businessContext": {
+      "type": "object",
+      "required": [
+        "status",
+        "businessActivity",
+        "ontologyPurpose",
+        "domainScope",
+        "usersAndDecisions",
+        "sourceBoundary"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pending",
+            "confirmed"
+          ]
+        },
+        "businessActivity": {
+          "$ref": "#/$defs/contextField"
+        },
+        "ontologyPurpose": {
+          "$ref": "#/$defs/contextField"
+        },
+        "domainScope": {
+          "$ref": "#/$defs/contextField"
+        },
+        "usersAndDecisions": {
+          "$ref": "#/$defs/contextField"
+        },
+        "sourceBoundary": {
+          "$ref": "#/$defs/contextField"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "confirmed"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "businessActivity": {
+                "$ref": "#/$defs/confirmedContextField"
+              },
+              "ontologyPurpose": {
+                "$ref": "#/$defs/confirmedContextField"
+              },
+              "domainScope": {
+                "$ref": "#/$defs/confirmedContextField"
+              },
+              "usersAndDecisions": {
+                "$ref": "#/$defs/confirmedContextField"
+              },
+              "sourceBoundary": {
+                "$ref": "#/$defs/confirmedContextField"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "sourceInventoryEntry": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "displayPath",
+        "status",
+        "adapter",
+        "limitations"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "file",
+            "pasted-text"
+          ]
+        },
+        "displayPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "supported",
+            "unsupported",
+            "skipped",
+            "failed"
+          ]
+        },
+        "adapter": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "supported"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "sha256"
+            ],
+            "properties": {
+              "adapter": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "else": {
+            "required": [
+              "reason"
+            ]
+          }
+        }
+      ]
+    },
+    "evidenceDocument": {
+      "type": "object",
+      "required": [
+        "id",
+        "inventoryId",
+        "schemaVersion",
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "inventoryId": {
+          "$ref": "#/$defs/id"
+        },
+        "schemaVersion": {
+          "const": "1.0.0"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "additionalProperties": false
+    },
+    "attribution": {
+      "type": "object",
+      "required": [
+        "contributor",
+        "role"
+      ],
+      "properties": {
+        "contributor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "evidenceDocumentId",
+        "sourceNodeIds"
+      ],
+      "properties": {
+        "evidenceDocumentId": {
+          "$ref": "#/$defs/id"
+        },
+        "sourceNodeIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "contribution": {
+      "type": "object",
+      "required": [
+        "id",
+        "attribution",
+        "content",
+        "recordedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "attribution": {
+          "$ref": "#/$defs/attribution"
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "recordedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "required": [
+        "id",
+        "status",
+        "statement",
+        "rationale",
+        "decidedBy",
+        "decidedAt",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "status": {
+          "enum": [
+            "proposed",
+            "accepted",
+            "rejected",
+            "superseded"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decidedBy": {
+          "$ref": "#/$defs/attribution"
+        },
+        "decidedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/provenance"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "candidate": {
+      "type": "object",
+      "required": [
+        "id",
+        "statement",
+        "status",
+        "confidence",
+        "evidence",
+        "gaps",
+        "validationQuestions"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "unresolved",
+            "accepted",
+            "rejected"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/provenance"
+          }
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "validationQuestions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "approval": {
+      "type": "object",
+      "required": [
+        "id",
+        "gate",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "gate": {
+          "enum": [
+            "research",
+            "design",
+            "implement"
+          ]
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "approved",
+            "rejected",
+            "stale"
+          ]
+        },
+        "approver": {
+          "$ref": "#/$defs/attribution"
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decidedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "inputDigests": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/sha256"
+          },
+          "uniqueItems": true
+        },
+        "invalidatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "invalidationReason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "approved",
+                  "rejected"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "approver",
+              "rationale",
+              "decidedAt",
+              "inputDigests"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "stale"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "invalidatedAt",
+              "invalidationReason",
+              "inputDigests"
+            ]
+          }
+        }
+      ]
+    },
+    "gate": {
+      "type": "object",
+      "required": [
+        "status",
+        "inputDigests",
+        "downstreamInvalidated"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pending",
+            "approved",
+            "rejected",
+            "stale"
+          ]
+        },
+        "approvalId": {
+          "$ref": "#/$defs/id"
+        },
+        "inputDigests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sha256"
+          },
+          "uniqueItems": true
+        },
+        "downstreamInvalidated": {
+          "type": "boolean"
+        },
+        "invalidatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "invalidationReason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "approved"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "approvalId"
+            ],
+            "properties": {
+              "inputDigests": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "stale"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "invalidatedAt",
+              "invalidationReason"
+            ]
+          }
+        }
+      ]
+    },
+    "gates": {
+      "type": "object",
+      "required": [
+        "research",
+        "design",
+        "implement",
+        "deployHandoff"
+      ],
+      "properties": {
+        "research": {
+          "$ref": "#/$defs/gate"
+        },
+        "design": {
+          "$ref": "#/$defs/gate"
+        },
+        "implement": {
+          "$ref": "#/$defs/gate"
+        },
+        "deployHandoff": {
+          "type": "object",
+          "required": [
+            "status",
+            "target"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "deferred",
+                "ready"
+              ]
+            },
+            "target": {
+              "const": "033 Fabric Ontology Edge AI Agent"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifact": {
+      "type": "object",
+      "required": [
+        "id",
+        "role",
+        "path",
+        "sha256",
+        "authority"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "authority": {
+          "enum": [
+            "semantic-authority",
+            "constraint",
+            "evidence",
+            "fixture",
+            "report",
+            "governance"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "report": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "status",
+        "path",
+        "generatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "syntax",
+            "conformance",
+            "policy",
+            "competency",
+            "semantic-diff"
+          ]
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "passed",
+            "failed",
+            "not-applicable"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "timestamps": {
+      "type": "object",
+      "required": [
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

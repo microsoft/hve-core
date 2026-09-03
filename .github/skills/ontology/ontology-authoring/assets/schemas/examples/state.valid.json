@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": {
+    "slug": "service-operations",
+    "name": "Service Operations Ontology"
+  },
+  "phase": "research",
+  "context": {
+    "status": "confirmed",
+    "businessActivity": {
+      "value": "Operate and support managed business services.",
+      "confirmed": true,
+      "confirmedBy": "operator@example.com",
+      "confirmedAt": "2026-09-01T12:00:00Z"
+    },
+    "ontologyPurpose": {
+      "value": "Create shared terminology for service ownership and escalation.",
+      "confirmed": true,
+      "confirmedBy": "operator@example.com",
+      "confirmedAt": "2026-09-01T12:00:00Z"
+    },
+    "domainScope": {
+      "value": "Service ownership, support teams, and escalation paths.",
+      "confirmed": true,
+      "confirmedBy": "operator@example.com",
+      "confirmedAt": "2026-09-01T12:00:00Z"
+    },
+    "usersAndDecisions": {
+      "value": "Service managers deciding ownership and escalation routing.",
+      "confirmed": true,
+      "confirmedBy": "operator@example.com",
+      "confirmedAt": "2026-09-01T12:00:00Z"
+    },
+    "sourceBoundary": {
+      "value": "sources/service-operations/",
+      "confirmed": true,
+      "confirmedBy": "operator@example.com",
+      "confirmedAt": "2026-09-01T12:00:00Z"
+    }
+  },
+  "sourceInventory": [],
+  "evidenceDocuments": [],
+  "contributions": [],
+  "decisions": [],
+  "candidates": [],
+  "approvals": [],
+  "gates": {
+    "research": {
+      "status": "pending",
+      "inputDigests": [],
+      "downstreamInvalidated": false
+    },
+    "design": {
+      "status": "pending",
+      "inputDigests": [],
+      "downstreamInvalidated": false
+    },
+    "implement": {
+      "status": "pending",
+      "inputDigests": [],
+      "downstreamInvalidated": false
+    },
+    "deployHandoff": {
+      "status": "deferred",
+      "target": "033 Fabric Ontology Edge AI Agent"
+    }
+  },
+  "artifacts": [],
+  "reports": [],
+  "timestamps": {
+    "createdAt": "2026-09-01T12:00:00Z",
+    "updatedAt": "2026-09-01T12:00:00Z"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "evidence:service-concepts",
+  "source": {
+    "inventoryId": "source:service-concepts.docx",
+    "adapter": "docx",
+    "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "displayPath": "sources/service-concepts.docx",
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "nodes": [
+    {
+      "id": "node:service-concepts/document",
+      "type": "document",
+      "text": "Service concepts",
+      "location": {
+        "documentId": "evidence:service-concepts",
+        "part": "word/document.xml",
+        "locator": "/w:document/w:body"
+      },
+      "order": { "source": 0 },
+      "status": "complete",
+      "confidence": 1,
+      "limitations": []
+    },
+    {
+      "id": "node:service-concepts/heading-1",
+      "type": "heading",
+      "text": "Service ownership",
+      "location": {
+        "documentId": "evidence:service-concepts",
+        "part": "word/document.xml",
+        "locator": "/w:document/w:body/w:p[1]"
+      },
+      "order": { "source": 1 },
+      "status": "complete",
+      "confidence": 1,
+      "limitations": [],
+      "attributes": { "level": 1 }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge:service-concepts/contains-heading-1",
+      "type": "contains",
+      "sourceNodeId": "node:service-concepts/document",
+      "targetNodeId": "node:service-concepts/heading-1",
+      "basis": "explicit",
+      "location": {
+        "documentId": "evidence:service-concepts",
+        "part": "word/document.xml",
+        "locator": "/w:document/w:body/w:p[1]"
+      },
+      "confidence": 1,
+      "limitations": []
+    }
+  ],
+  "findings": []
+}
