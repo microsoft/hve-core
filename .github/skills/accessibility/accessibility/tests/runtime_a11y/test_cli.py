@@ -590,18 +590,26 @@ def test_given_calibration_run_when_prerequisite_only_then_reports_readiness(
 
 
 @pytest.mark.parametrize(
-    "command",
-    ["run-calibration", "capture-visual-review"],
+    ("command", "extra_args"),
+    [
+        ("run-calibration", []),
+        ("capture-visual-review", []),
+        ("run-all", []),
+        ("probe", ["axe"]),
+    ],
 )
 def test_given_non_loopback_base_url_override_when_running_then_rejects(
     tmp_path: Path,
     command: str,
+    extra_args: list[str],
     capsys,
 ) -> None:
     # The config's own baseUrl is guarded at load time. A --base-url override
     # replaces it afterwards, so the override must re-enter the guard or the
-    # single chokepoint is bypassed. Both commands exit with a usage code for
-    # unrelated environment reasons, so the assertion is on the reported cause.
+    # single chokepoint is bypassed. Every command that accepts the override is
+    # covered, because a command missing from this list is exactly how the
+    # run-all and probe paths kept the bypass. Commands exit with a usage code
+    # for unrelated environment reasons, so the assertion is on the cause.
     config_path = tmp_path / "runtime.json"
     config_path.write_text(
         json.dumps(
@@ -620,6 +628,7 @@ def test_given_non_loopback_base_url_override_when_running_then_rejects(
     exit_code = cli.main(
         [
             command,
+            *extra_args,
             "--config",
             str(config_path),
             "--base-url",

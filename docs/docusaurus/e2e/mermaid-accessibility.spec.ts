@@ -31,7 +31,7 @@ const mermaidBrowserBundle = path.join(packageRoot, 'node_modules/mermaid/dist/m
 test.describe('Mermaid accessibility', () => {
   test('all deployed source fences render with associated metadata', async ({ page }) => {
     test.setTimeout(120000);
-    expect(inventory).toHaveLength(63);
+    expect(inventory).toHaveLength(64);
 
     await page.goto('/hve-core/', { waitUntil: 'domcontentloaded' });
     await page.addScriptTag({ path: mermaidBrowserBundle });
