@@ -6,5 +6,9 @@
   "license": "MIT",
   "dependencies": {
     "@vscode/vsce": "3.9.2"
+  },
+  "overrides": {
+    "fast-uri": "3.1.6",
+    "qs": "6.16.0"
   }
 }
