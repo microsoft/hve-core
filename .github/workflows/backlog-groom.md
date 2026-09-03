@@ -220,6 +220,12 @@ safe-outputs:
               const similarities = new Set(["Match", "Similar", "Distinct", "Uncertain"]);
               const dispositions = new Set(["Still needed", "Likely completed", "Superseded", "Possible duplicate", "Needs correction", "Uncertain"]);
               const statuses = new Set(["Assessed", "Deferred"]);
+              const hasValidSupersessionLineage = (row) => {
+                const original = row.lineage_evidence.original_delivery;
+                const replacement = row.lineage_evidence.replacement_or_removal;
+                return original.length > 0 && replacement.length > 0 &&
+                  replacement.some((item) => !original.includes(item));
+              };
               if (!exactKeys(payload, ["issues"]) || !Array.isArray(payload.issues)) {
                 core.setFailed("Report data does not match the canonical top-level schema");
                 return;
@@ -251,6 +257,10 @@ safe-outputs:
                   core.setFailed("Report issue data does not match the canonical row schema");
                   return;
                 }
+                if (row.disposition === "Superseded" && !hasValidSupersessionLineage(row)) {
+                  row.disposition = "Uncertain";
+                  row.similarity_outcome = "Uncertain";
+                }
                 if (row.assessment_status === "Deferred" &&
                     (!validText(row.deferral_reason, 500) || row.similarity_outcome !== "Uncertain" ||
                      row.disposition !== "Uncertain" || row.lineage_evidence.original_delivery.length !== 0 ||
@@ -265,15 +275,6 @@ safe-outputs:
                 if ((row.disposition === "Possible duplicate") && !["Match", "Similar"].includes(row.similarity_outcome)) {
                   core.setFailed("Possible duplicate requires a Match or Similar outcome");
                   return;
-                }
-                if (row.disposition === "Superseded") {
-                  const original = row.lineage_evidence.original_delivery;
-                  const replacement = row.lineage_evidence.replacement_or_removal;
-                  if (original.length === 0 || replacement.length === 0 ||
-                      !replacement.some((item) => !original.includes(item))) {
-                    core.setFailed("Superseded requires distinct original-delivery and replacement-or-removal evidence");
-                    return;
-                  }
                 }
                 issueNumbers.add(row.issue);
               }

@@ -381,7 +381,8 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Match 'const dispositions = new Set\(\["Still needed", "Likely completed", "Superseded", "Possible duplicate", "Needs correction", "Uncertain"\]\)'
         $script:Source | Should -Match 'row\.acceptance_signals'
         $script:Source | Should -Match 'const lineageKeys = \["original_delivery", "replacement_or_removal"\]'
-        $script:Source | Should -Match 'Superseded requires distinct original-delivery and replacement-or-removal evidence'
+        $script:Source | Should -Match 'const hasValidSupersessionLineage = \(row\) =>'
+        $script:Source | Should -Match 'row\.disposition === "Superseded" && !hasValidSupersessionLineage\(row\)'
         $script:Source | Should -Match 'const reportData = \{ run, issues: payload\.issues \}'
         $script:Source | Should -Match 'report_data: reportData'
         $script:Source | Should -Match 'Deferred rows require a reason, Uncertain outcomes, and empty lineage evidence'
@@ -538,6 +539,40 @@ Describe 'Rows-authoritative backlog grooming result construction' -Tag 'Unit' {
         } | Should -Throw '*Report issue data does not match the canonical row schema*'
     }
 
+    It 'downgrades unsupported supersession outcomes to uncertain' {
+        $row = $script:AssessedRow.Clone()
+        $row.disposition = 'Superseded'
+        $row.similarity_outcome = 'Distinct'
+        $row.grooming_finding = 'A later dependency upgrade may have superseded the request'
+        $row.recommended_next_step = 'Verify the upgrade before closing the issue'
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.issues[0].disposition | Should -Be 'Uncertain'
+        $result.report_data.issues[0].similarity_outcome | Should -Be 'Uncertain'
+        $result.report_data.issues[0].grooming_finding | Should -Be $row.grooming_finding
+        $result.report_data.issues[0].recommended_next_step | Should -Be $row.recommended_next_step
+        $result.report_data.issues[0].assessment_status | Should -Be 'Assessed'
+    }
+
+    It 'preserves supersession outcomes with distinct lineage' {
+        $row = $script:AssessedRow.Clone()
+        $row.disposition = 'Superseded'
+        $row.lineage_evidence = [ordered]@{
+            original_delivery = @('PR #100 delivered the original behavior')
+            replacement_or_removal = @('PR #200 replaced the original behavior')
+        }
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.issues[0].disposition | Should -Be 'Superseded'
+        $result.report_data.issues[0].similarity_outcome | Should -Be 'Distinct'
+    }
+
     It 'retains the prior cursor when every row is deferred' {
         $rows = 11, 13 | ForEach-Object {
             $row = $script:DeferredRow.Clone()
@@ -591,7 +626,8 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Lock | Should -Match '\.replaceAll\("\$\\\\\{\\\\\{", "\$" \+ "\{\{"\)'
         $script:Lock | Should -Match 'payload = JSON\.parse\(reportData\)'
         $script:Lock | Should -Match 'Possible duplicate requires a Match or Similar outcome'
-        $script:Lock | Should -Match 'Superseded requires distinct original-delivery and replacement-or-removal evidence'
+        $script:Lock | Should -Match 'const hasValidSupersessionLineage = \(row\) =>'
+        $script:Lock | Should -Match 'row\.disposition === "Superseded" && !hasValidSupersessionLineage\(row\)'
         $script:Lock | Should -Match 'result-output/shard-result\.json'
         $script:Lock | Should -Match 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'
         $script:Lock | Should -Not -Match '(?m)^\s*issues: write$'
