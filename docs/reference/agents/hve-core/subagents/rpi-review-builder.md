@@ -1,21 +1,21 @@
 ---
-title: Vally Test Author
-description: "Authors Vally conformance test stimuli in two modes: from-artifact (read a prompt, instructions, agent, or skill file and draft a stimulus block) and corpus-import (turn a CSV or XLSX corpus into stimulus blocks), with safety-lint refusal enforcement and SHA-256 dedupe before append-only writes to the routed eval file"
-sidebar_position: 5
+title: RPI Review Builder
+description: Builds one complete RPI review record from a bounded planning and implementation evidence set. Use when rpi-review needs its canonical review document.
+sidebar_position: 4
 author: Microsoft
 ms.date: 2026-09-03
 ms.topic: reference
 keywords:
   - agent
   - hve-core
-  - vally-test-author
+  - rpi-review-builder
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                                                    |
 |-------------|--------------------------------------------------------------------------|
 | Kind        | agent                                                                    |
-| Source      | `.github/agents/hve-core/subagents/vally-test-author.agent.md`           |
+| Source      | `.github/agents/hve-core/subagents/rpi-review-builder.agent.md`          |
 | Invocation  | Delegated subagent, dispatched by a parent agent (not selected directly) |
 | Interactive | No                                                                       |
 <!-- END AUTO-GENERATED: metadata -->
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Authors Vally conformance test stimuli in two modes: from-artifact (read a prompt, instructions, agent, or skill file and draft a stimulus block) and corpus-import (turn a CSV or XLSX corpus into stimulus blocks), with safety-lint refusal enforcement and SHA-256 dedupe before append-only writes to the routed eval file
+Builds one complete RPI review record from a bounded planning and implementation evidence set. Use when rpi-review needs its canonical review document.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

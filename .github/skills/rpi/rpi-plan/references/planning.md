@@ -161,7 +161,20 @@ Independent assignments may run in parallel. Dependent assignments run sequentia
 
 ## Independent critique
 
-Activate `rpi-plan-critique` once by default, only when the primary planner judges both the plan and phase details to be implementation-ready candidates. Do not critique an initial draft merely because it exists. Before dispatch, lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence. Dispatch a fresh generic critique worker with the exact task context, confirmed direction, resolved planning decisions, caller requirements, research, evidence, dependencies, acceptance criteria, plan path, details path, and one critique output path. The critique worker reads plan sources and writes only the critique artifact and returns one complete actionable finding set.
+Activate `rpi-plan-critique` at most once, only when the primary planner judges both the plan and phase details to be implementation-ready candidates. Do not critique an initial draft merely because it exists.
+
+Select one critique depth and record its provenance before dispatch:
+
+| Depth  | Selection rule                           | Assessment behavior                                                                                                                                                                                |
+|--------|------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `fast` | Default                                  | Find the complete evidence-supported set of implementation blockers and material credibility gaps without restating the plan, cataloging cosmetics, or expanding low-impact suggestions.           |
+| `deep` | Explicit user request to critique deeply | Trace the supplied evidence more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns. It remains one invocation and performs no open-ended research. |
+
+Do not infer deep mode from plan size, complexity, uncertainty, or risk. Fast changes prioritization and output focus, not the requirement to return every actionable material concern visible in the supplied boundary.
+
+Before dispatch, inspect the plan's Critique Disposition, parent state when present, and the critique path. A `started`, `Complete`, `Partial`, or `Blocked` execution record or existing critique artifact consumes the task's single invocation. On resume, reconcile existing evidence instead of dispatching a replacement. Persist `started`, candidate identity, selected depth and provenance, and output path immediately before dispatch; do not dispatch if that write fails.
+
+Lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence. Dispatch one fresh generic critique worker with selected depth, exact task context, confirmed direction, resolved planning decisions, caller requirements, research, evidence, dependencies, acceptance criteria, plan path, details path, and one critique output path. The critique worker reads plan sources and directly relevant supplied evidence, writes only the critique artifact, and returns one complete actionable finding set.
 
 The critique is a one-time internal readiness gate. Its verdict returns to the planning parent, which owns revision, decision requests, and finalization. It is not a peer lifecycle transition and does not cause a standalone user to invoke another stage.
 
@@ -171,8 +184,10 @@ Record the latest critique findings and their dispositions in the plan's standal
 * Dispatch `RPI Planner` for a bounded planning assignment when deeper planning work is needed.
 * Preserve confirmed user requests and answers when critique advice conflicts with them. Reject conflicting advice without re-asking when current user direction already resolves it.
 * Route a significant or divergent finding not resolved by current user direction through the current Planning Decision Walkthrough when it affects requirements, scope, architecture, acceptance criteria, dependencies, or evidence boundary.
-* Close every `PC-xxx` with its declared owner, disposition, and exact resolving evidence, then finalize without another critique.
+* Close every `PC-xxx` with its declared owner, disposition, and exact resolving evidence, then finalize without a retry or closure critique.
 * Finalize after direct corrections and required user decisions are resolved and any accepted residual risk is explicitly recorded.
+
+Any returned execution status consumes the invocation. Partial or Blocked critique evidence remains terminal for the gate. If its missing evidence or open findings cannot be resolved by the planning parent, stop Plan with the exact blocker rather than dispatching again.
 
 ## Detail quality
 

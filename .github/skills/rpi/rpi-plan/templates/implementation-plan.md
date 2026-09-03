@@ -126,9 +126,14 @@ The planner maintains acceptance criteria here as the canonical verification rec
 
 Record the latest critique findings, their disposition, and any explicitly accepted residual risk. Keep this section outside user decisions and current planning synthesis.
 
-| Critique run and finding | Disposition                                        | Plan response or residual risk |
-|--------------------------|----------------------------------------------------|--------------------------------|
-| {{CR_xxx_finding_key}}   | {{resolved_superseded_accepted_with_risk_or_open}} | {{response_or_risk}}           |
+* Critique candidate identity: {{task_id_plan_and_details_revision_or_hash}}
+* Critique depth and provenance: {{fast_or_deep}}; {{default_or_explicit_user_request}}
+* Critique execution: {{not_run_started_complete_partial_or_blocked}}
+* Single invocation consumed: {{yes_or_no}}
+
+| Critique run and finding | Disposition                                        | Action owner                   | Exact resolving evidence                | Decision route                                     | Plan response or residual risk |
+|--------------------------|----------------------------------------------------|--------------------------------|-----------------------------------------|----------------------------------------------------|--------------------------------|
+| {{PC_xxx_finding_key}}   | {{resolved_superseded_accepted_with_risk_or_open}} | {{planning_parent_user_other}} | {{artifact_state_validation_or_answer}} | {{direct_correction_or_significant_user_decision}} | {{response_or_risk}}           |
 
 ## Artifact Self-Check
 
@@ -137,6 +142,7 @@ Record the latest critique findings, their disposition, and any explicitly accep
 * [ ] Functional and non-functional requirements are current, and Acceptance Criteria is their single verification record.
 * [ ] Every `Pxx` and `Pxx-Txx` marker has matching phase details, dependencies, expected results, validation expectations, and completion evidence.
 * [ ] Risks, open questions, blockers, critique findings, and accepted residual risks have owners and next actions.
+* [ ] Critique depth and provenance are recorded; at most one invocation was dispatched, and all findings are disposed without a retry or closure critique.
 * [ ] Planning execution, readiness, continuation owner, gates, next action, and implementation paths are complete and consistent.
 * [ ] Follow-Up Items remain outside active plan completion and acceptance claims.
 * Checked sections: {{list_of_checked_sections}}

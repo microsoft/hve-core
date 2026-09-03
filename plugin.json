@@ -42,6 +42,7 @@
     ".github/agents/hve-core/subagents/hve-artifact-tester.agent.md",
     ".github/agents/hve-core/subagents/rpi-planner.agent.md",
     ".github/agents/hve-core/subagents/rpi-researcher.agent.md",
+    ".github/agents/hve-core/subagents/rpi-review-builder.agent.md",
     ".github/agents/hve-core/subagents/vally-test-author.agent.md",
     ".github/agents/privacy/privacy-planner.agent.md",
     ".github/agents/privacy/privacy-reviewer.agent.md",
