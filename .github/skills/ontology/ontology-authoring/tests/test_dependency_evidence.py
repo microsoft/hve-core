@@ -60,7 +60,7 @@ def metadata_with_license(expression: str | None = "MIT") -> Message:
     return metadata
 
 
-def test_given_atheris_3_1_without_metadata_when_override_then_apache_license_is_recorded() -> None:
+def test_given_atheris_3_0_without_metadata_when_override_then_apache_license_is_recorded() -> None:
     # Arrange
     unknown_license = {
         "expression": None,
@@ -72,7 +72,7 @@ def test_given_atheris_3_1_without_metadata_when_override_then_apache_license_is
     # Act
     license_fields, metadata_source = apply_audited_license_override(
         "atheris",
-        "3.1.0",
+        "3.0.0",
         unknown_license,
         "https://pypi.org/pypi",
     )

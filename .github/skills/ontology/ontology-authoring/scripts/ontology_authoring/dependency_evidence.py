@@ -26,7 +26,7 @@ EXIT_ERROR = 2
 PUBLIC_INDEX = "https://pypi.org/simple"
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 AUDITED_LICENSE_OVERRIDES = {
-    ("atheris", "3.1.0"): {
+    ("atheris", "3.0.0"): {
         "expression": "Apache-2.0",
         "metadataSource": (
             "https://api.github.com/repos/google/atheris/git/blobs/"
