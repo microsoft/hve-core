@@ -355,6 +355,8 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Match 'Worker candidate IDs must be unique positive integers'
         $script:Source | Should -Not -Match 'Worker candidate IDs must be unique positive integers in ascending order'
         $script:Source | Should -Match 'The orchestrator, not the worker,\s+owns inventory selection'
+        $script:Source | Should -Match 'Keep each `repository_evidence` and\s+`lineage_evidence` item to at most 500 characters'
+        $script:Source | Should -Match 'summarized\s+negative-search scopes instead of directory listings or extended prose'
         $script:Source | Should -Not -Match '<!-- gh-aw:backlog-grooming-tracker -->'
     }
 

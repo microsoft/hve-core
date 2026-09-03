@@ -472,7 +472,10 @@ Backlog Grooming Report required by the imported agent.
 
 Before publication, finalize every selected issue row as `Assessed` or
 `Deferred` and verify the payload contains exactly those final rows before
-calling `publish-backlog-grooming-result`.
+calling `publish-backlog-grooming-result`. Keep each `repository_evidence` and
+`lineage_evidence` item to at most 500 characters. Use concise stable paths,
+issue or pull-request numbers, commit or release identifiers, or summarized
+negative-search scopes instead of directory listings or extended prose.
 
 Call `noop` only when shard input validation fails or a repository-wide access
 failure prevents production of a trustworthy result envelope. Individual
