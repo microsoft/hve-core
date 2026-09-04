@@ -56,17 +56,17 @@ This skill owns scope, scenario design, fidelity, sandbox state, execution evide
 * Do not equate mechanical validation with behavior grading or simulation with native execution.
 * The lead writes sandbox files. Executors and graders return evidence without modifying targets or lead-owned logs.
 
-## Reasoning Profile Model Map
+## Reasoning Profile Resolution
 
-Select the target's responsibility profile, then use the first available model in its ordered list.
+Select the target's responsibility profile, then resolve a currently available model for it at run time rather than from a fixed list.
 
-| Profile | Ordered models                                   | Typical responsibility                            |
-|---------|--------------------------------------------------|---------------------------------------------------|
-| High    | Claude Opus 5, GPT-5.6 Sol, GPT-5.5              | Deepest reasoning responsibilities                |
-| Medium  | GPT-5.6 Terra, Claude Sonnet 5, MAI-Code-1-Flash | Semantic design, authoring, and calibrated review |
-| Low     | GPT-5.6 Luna, MAI-Code-1-Flash, Claude Haiku 4.5 | Literal bounded execution                         |
+| Profile | Typical responsibility                            | Task area in the Copilot model comparison                            |
+|---------|---------------------------------------------------|----------------------------------------------------------------------|
+| High    | Deepest reasoning responsibilities                | Deep reasoning and debugging; long-horizon autonomous coding         |
+| Medium  | Semantic design, authoring, and calibrated review | General-purpose coding and agent tasks; agentic software development |
+| Low     | Literal bounded execution                         | Fast help with simple or repetitive tasks                            |
 
-Use the `(copilot)` suffix in host model identifiers. The executor uses the target profile; the independent grader uses the higher of Medium and that profile. If the selected profile is unavailable, disclose the nearest available proxy and do not claim target-profile equivalence.
+Resolve names from the GitHub Copilot docs: the supported-models page under `copilot/reference/ai-models/` lists current models, per-client availability, and retirements; the model-comparison page beside it groups models by the task areas above. When a target declares `model:`, use it. When a High target omits `model:`, run at the session's selected model and record it as the resolved High model. Use the `(copilot)` suffix in host model identifiers. The executor uses the target profile; the independent grader uses the higher of Medium and that profile. If the resolved profile is unavailable, disclose the nearest available proxy and do not claim target-profile equivalence.
 
 ## Dispatch
 

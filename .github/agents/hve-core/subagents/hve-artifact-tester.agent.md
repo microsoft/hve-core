@@ -25,7 +25,7 @@ This subagent omits `model:` so it does not pin its own tier. The `hve-builder-t
 ## Inputs
 
 * Target artifact file(s) to test, split into an isolation set and a together set.
-* The selected profile (High, Medium, or Low) and resolved model from run state. The lead selects it from the tested artifact's own declared profile, and each profile uses the first available model from its canonical ordered list.
+* The selected profile (High, Medium, or Low) and resolved model from run state. The lead selects the profile from the tested artifact's own declared profile or responsibility and resolves a currently available model for it.
 * Sandbox folder path in `.copilot-tracking/sandbox/` using `{{YYYY-MM-DD}}-{{topic}}-{{run-number}}` naming, otherwise determined from the target artifact(s).
 * The stated purpose, requirements, and expectations for the artifact(s).
 * (Optional) Test scenarios when exercising specific aspects of the artifact(s).

@@ -60,17 +60,16 @@ Use a subagent when the host needs a specialized independent review dimension or
 * Routing `description`: write it so a parent can decide when to delegate, in the shape "Use when ..." naming the specialization. Supplied metadata or `rpi-research` uses the description to identify a relevant subagent, so the description is the discovery surface.
 * Stable `name`: hve-builder dispatches by the `name` from frontmatter, not by file path or glob. Give it a distinct, namespaced name to avoid collisions across installed libraries.
 * Structured return: return a bounded, structured summary the orchestrator can act on. Selecting the extension's tool set stays with its author under the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md).
-* Model fit: `model:` is optional. An omitted extension subagent model inherits the invoking parent's model. When the extension needs a stable profile, select it by responsibility and use the scalar agent or subagent value defined in [artifact-types.md](artifact-types.md). Prompt artifacts may use that reference's host-supported fallback form.
+* Model fit: `model:` is optional and omitted by default; an omitted extension subagent inherits the invoking parent's model. Declare it only when the extension needs a stable Medium or Low profile, and resolve the current model name by the procedure in [artifact-types.md](artifact-types.md). A High responsibility omits `model:` unless the caller supplies one.
 * Host registration: confirm the host registers the subagent through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or standard `agents` membership in its marketplace package entry so approved lifecycle dispatch can reach it.
 
-Example frontmatter:
+Example frontmatter, inheriting the parent's model:
 
 ```yaml
 ---
 name: Terraform Module Reviewer
 description: "Reviews a Terraform module and returns severity-graded findings. Use when reviewing Terraform module changes."
 user-invocable: false
-model: GPT-5.6 Terra (copilot)
 ---
 ```
 

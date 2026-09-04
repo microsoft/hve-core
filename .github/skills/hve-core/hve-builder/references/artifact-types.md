@@ -57,21 +57,26 @@ Example: a team wants `rpi-research` and `rpi-plan` to draw on an internal desig
 
 ## Choose the model profile
 
-The `model:` field is optional. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent or prompt model uses the current session or model-picker selection. When a stable profile is needed, select High, Medium, or Low from the responsibility before authoring `model:`. Use Low for bounded, literal, mechanical execution, Medium for semantic discovery, architecture, authoring, research, and calibrated review, and High only when the responsibility requires the deepest reasoning profile.
+The `model:` field is optional and omitted by default. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent or prompt uses the current session or model-picker selection. Omission keeps the choice with the user, who sees the models their plan and client offer.
 
-Agent and subagent frontmatter accepts only a single scalar string for `model:`; the Copilot CLI's frontmatter parser rejects an array value and drops the artifact entirely. Declare the selected profile's canonical scalar:
+When a stable profile is needed, select High, Medium, or Low from the responsibility before touching `model:`:
 
-* High: `Claude Opus 5 (copilot)`
-* Medium: `GPT-5.6 Terra (copilot)`
-* Low: `GPT-5.6 Luna (copilot)`
+* High is the deepest reasoning profile. Omit `model:` for a High responsibility unless the caller supplies a model. The strongest available model changes often and varies by plan and client, so pinning one removes the user's ability to pick it.
+* Medium covers semantic discovery, architecture, authoring, research, and calibrated review. Declare `model:` only when the artifact must run at a predictable profile regardless of the session, for example a fresh-context reviewer that should not inherit a Low parent.
+* Low covers bounded, literal, mechanical execution. Declaring `model:` is common here, because pinning a fast, low-cost model is the point.
 
-A prompt's `model:` may instead declare the selected profile's exact ordered three-model fallback list, since prompts are not affected by the CLI's agent-parsing constraint:
+Agent and subagent frontmatter accepts only a single scalar string for `model:`; the Copilot CLI's frontmatter parser rejects an array value and drops the artifact entirely. A prompt may instead declare an ordered list, which the host uses for availability fallback within the selected profile; the list never replaces profile selection. Use the exact model-picker name with the `(copilot)` suffix.
 
-* High: `Claude Opus 5 (copilot)`, `GPT-5.6 Sol (copilot)`, `GPT-5.5 (copilot)`
-* Medium: `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`
-* Low: `GPT-5.6 Luna (copilot)`, `MAI-Code-1-Flash (copilot)`, `Claude Haiku 4.5 (copilot)`
+### Resolve current model names
 
-The list order provides availability fallback within the selected profile; it never replaces profile selection.
+Do not copy model names from this reference or from sibling artifacts; models are added, renamed, and retired several times a year. Resolve them at authoring time from GitHub's own documentation, and record the source and date in the authoring evidence.
+
+1. Fetch the supported-models page in the GitHub Copilot docs (`docs.github.com`, under `copilot/reference/ai-models/supported-models`). It lists every current model, per-client availability, the retirement table with suggested replacements, and which models support configurable reasoning levels.
+2. Fetch the model-comparison page beside it (`copilot/reference/ai-models/model-comparison`). Its "Recommended models by task" table groups models by task area. Map task areas to profiles: deep reasoning, debugging, and long-horizon autonomous work are High; general-purpose coding and agent tasks and agentic software development are Medium; fast help with simple or repetitive tasks is Low.
+3. When the rendered pages are unavailable, search the `github/docs` repository for the same content under `content/copilot/reference/ai-models/`. The source uses Liquid variables for some names, so prefer the rendered page when both are reachable.
+4. Confirm the candidate is available in the target client (VS Code, Copilot CLI, or the coding agent) and does not appear in the retirement table with a past date. For a prompt fallback list, order models within the profile by the comparison page's description, strongest fit first.
+
+These locations and headings describe where the information lives today. If they move, search the Copilot documentation for the current model list and task comparison rather than treating the paths above as fixed.
 
 ## Worked example: compact skill plus one low-reasoning worker
 
@@ -89,7 +94,7 @@ user-invocable: true
 
 Subagent dispatch line in the skill's Flow: dispatch `CSV Profiler Worker` with the CSV path and the output path, then read its returned summary.
 
-Worker subagent (`.agent.md` under `subagents/`), pinned to a fixed low tier because it always runs there:
+Worker subagent (`.agent.md` under `subagents/`), pinned to a fixed Low profile because it always runs there. The model name below was resolved from the supported-models page when this example was written; resolve a current one when authoring.
 
 ```yaml
 ---

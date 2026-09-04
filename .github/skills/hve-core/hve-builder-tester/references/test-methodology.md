@@ -59,7 +59,7 @@ Never silently substitute simulation for native execution. Agent and subagent `t
 
 ## Profile Selection
 
-Use the Reasoning Profile Model Map in the skill body. Prefer explicit target metadata; otherwise infer profile from responsibility. Run the executor at the target profile and independent grading at the higher of Medium and that profile.
+Use the Reasoning Profile Resolution in the skill body. Prefer explicit target metadata; otherwise infer profile from responsibility. Run the executor at the target profile and independent grading at the higher of Medium and that profile.
 
 Label a run as proxy evidence when the selected target profile is unavailable or target metadata maps to no canonical profile. A proxy verdict does not establish behavior at the intended profile. Record this limitation in the durable report because sandbox evidence may be removed.
 

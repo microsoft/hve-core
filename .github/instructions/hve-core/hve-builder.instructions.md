@@ -47,7 +47,7 @@ Select every type that has a distinct responsibility. Prefer the simplest viable
 * Write `description` as concise trigger metadata that says what the artifact does and when it applies.
 * Use stable `name` values for skills and agents. Instruction files alone declare `applyTo`.
 * Keep skill frontmatter portable. Do not put agent-only fields such as `tools`, `model`, `agent`, `handoffs`, or `applyTo` in a skill.
-* Agent and subagent `model` values are scalar. Prompt model declarations may use the host-supported fallback form. Select a model profile from responsibility rather than authoring effort.
+* Omit `model` unless a stable Medium or Low profile is needed or the caller supplies one; a High responsibility inherits the user's selection. Agent and subagent `model` values are scalar. Prompt model declarations may use the host-supported fallback form. Select a model profile from responsibility rather than authoring effort, and resolve current model names from the Copilot documentation rather than copying them.
 * Treat agent and subagent `tools` configuration as user-managed and opaque. Reproduce an exact caller-supplied configuration without assessing it.
 * Preserve existing non-tool capability-bearing frontmatter in improve and refactor work unless the caller requests a change or verified evidence establishes a defect or capability gap.
 * Within a skill package, use paths relative to the skill root. Refer to other attached artifacts by stable name rather than hard-coded installation paths.
