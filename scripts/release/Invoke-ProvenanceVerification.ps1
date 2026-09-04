@@ -21,11 +21,14 @@
 .PARAMETER ExpectedSourceSha
     Full source commit SHA validated by the release producer.
 
+.PARAMETER ExpectedSignerSha
+    Full immutable commit SHA containing the trusted signer workflow definition.
+
 .PARAMETER ReleaseTag
     Canonical release tag validated by the release producer.
 
 .EXAMPLE
-    ./Invoke-ProvenanceVerification.ps1 -ArtifactDirectory ./artifacts -Repository microsoft/hve-core -ExpectedSourceSha 0123456789012345678901234567890123456789 -ReleaseTag v3.4.0
+    ./Invoke-ProvenanceVerification.ps1 -ArtifactDirectory ./artifacts -Repository microsoft/hve-core -ExpectedSourceSha 0123456789012345678901234567890123456789 -ExpectedSignerSha abcdefabcdefabcdefabcdefabcdefabcdefabcd -ReleaseTag v3.4.0
 #>
 
 [CmdletBinding()]
@@ -42,6 +45,10 @@ param(
     [Parameter(Mandatory = $false)]
     [ValidatePattern('^[0-9a-f]{40}$')]
     [string]$ExpectedSourceSha = $env:EXPECTED_SOURCE_SHA,
+
+    [Parameter(Mandatory = $false)]
+    [ValidatePattern('^[0-9a-f]{40}$')]
+    [string]$ExpectedSignerSha = $env:EXPECTED_SIGNER_SHA,
 
     [Parameter(Mandatory = $false)]
     [ValidatePattern('^(?:v|prerelease-v)[0-9]+\.[0-9]+\.[0-9]+$')]
@@ -342,6 +349,74 @@ function Assert-VsixProvenancePolicy {
     }
 }
 
+function Assert-VsixProvenanceSidecars {
+    <#
+    .SYNOPSIS
+        Requires released provenance sidecars to match the authenticated bundle.
+    .PARAMETER VerificationJson
+        Authenticated JSON emitted by GitHub CLI bundle verification.
+    .PARAMETER SigstorePath
+        Released Sigstore bundle path supplied to GitHub CLI.
+    .PARAMETER IntotoPath
+        Released in-toto JSON Lines sidecar path.
+    .OUTPUTS
+        None.
+    #>
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$VerificationJson,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SigstorePath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$IntotoPath
+    )
+
+    try {
+        $Results = ConvertFrom-Json -InputObject $VerificationJson -Depth 100 -NoEnumerate
+        $ReleasedBundle = Get-Content -LiteralPath $SigstorePath -Raw -Encoding utf8 |
+            ConvertFrom-Json -Depth 100
+        $IntotoLines = @(Get-Content -LiteralPath $IntotoPath -Encoding utf8 |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    }
+    catch {
+        throw 'Provenance invariant failed: released provenance sidecar is malformed JSON'
+    }
+
+    if ($Results -isnot [System.Array] -or $Results.Count -ne 1) {
+        throw 'Provenance invariant failed: bundle verification must contain exactly one result'
+    }
+    if ($IntotoLines.Count -ne 1) {
+        throw 'Provenance invariant failed: released in-toto sidecar must contain exactly one envelope'
+    }
+    try {
+        $ReleasedEnvelope = ConvertFrom-Json -InputObject $IntotoLines[0] -Depth 100
+    }
+    catch {
+        throw 'Provenance invariant failed: released in-toto sidecar is malformed JSON'
+    }
+    if (-not $ReleasedBundle.PSObject.Properties['dsseEnvelope']) {
+        throw 'Provenance invariant failed: released Sigstore bundle has no DSSE envelope'
+    }
+
+    $AuthenticatedBundleJson = ConvertTo-Json -InputObject $Results[0].attestation -Depth 100 -Compress
+    $ReleasedBundleJson = ConvertTo-Json -InputObject $ReleasedBundle -Depth 100 -Compress
+    if (-not [string]::Equals($AuthenticatedBundleJson, $ReleasedBundleJson, [System.StringComparison]::Ordinal)) {
+        throw 'Provenance invariant failed: authenticated bundle differs from released Sigstore sidecar'
+    }
+    $BundleEnvelopeJson = ConvertTo-Json -InputObject $ReleasedBundle.dsseEnvelope -Depth 100 -Compress
+    $ReleasedEnvelopeJson = ConvertTo-Json -InputObject $ReleasedEnvelope -Depth 100 -Compress
+    if (-not [string]::Equals($BundleEnvelopeJson, $ReleasedEnvelopeJson, [System.StringComparison]::Ordinal)) {
+        throw 'Provenance invariant failed: released in-toto sidecar differs from the authenticated bundle envelope'
+    }
+}
+
 function Invoke-ProvenanceVerification {
     <#
     .SYNOPSIS
@@ -363,6 +438,10 @@ function Invoke-ProvenanceVerification {
         [string]$ExpectedSourceSha,
 
         [Parameter(Mandatory = $true)]
+        [ValidatePattern('^[0-9a-f]{40}$')]
+        [string]$ExpectedSignerSha,
+
+        [Parameter(Mandatory = $true)]
         [ValidatePattern('^(?:v|prerelease-v)[0-9]+\.[0-9]+\.[0-9]+$')]
         [string]$ReleaseTag
     )
@@ -381,14 +460,24 @@ function Invoke-ProvenanceVerification {
         throw 'Provenance invariant failed: release artifacts must contain exactly one VSIX'
     }
 
+    $VsixArtifact = $VsixArtifacts[0]
+    $SigstorePath = "$($VsixArtifact.FullName).sigstore.json"
+    $IntotoPath = "$($VsixArtifact.FullName).intoto.jsonl"
+    foreach ($SidecarPath in @($SigstorePath, $IntotoPath)) {
+        if (-not (Test-Path -LiteralPath $SidecarPath -PathType Leaf)) {
+            throw "Provenance invariant failed: required provenance sidecar not found: $([System.IO.Path]::GetFileName($SidecarPath))"
+        }
+    }
+
     foreach ($artifact in $artifacts) {
         $fullPath = [System.IO.Path]::GetFullPath($artifact.FullName)
         if ($artifact.Name -like '*.vsix') {
             $Arguments = @(
                 'attestation', 'verify', $fullPath,
                 '--repo', $Repository,
-                '--signer-workflow', "$Repository/.github/workflows/extension-provenance.yml",
-                '--signer-digest', $ExpectedSourceSha,
+                '--bundle', $SigstorePath,
+                '--signer-workflow', "$Repository/.github/workflows/extension-provenance-signer.yml",
+                '--signer-digest', $ExpectedSignerSha,
                 '--source-digest', $ExpectedSourceSha,
                 '--source-ref', "refs/tags/$ReleaseTag",
                 '--predicate-type', 'https://slsa.dev/provenance/v1',
@@ -396,7 +485,9 @@ function Invoke-ProvenanceVerification {
                 '--format', 'json'
             )
             $VerificationOutput = @(Invoke-ExternalCommand -Command 'gh' -Arguments $Arguments)
-            Assert-VsixProvenancePolicy -VerificationJson ($VerificationOutput -join [Environment]::NewLine) -Artifact $artifact -Repository $Repository -ExpectedSourceSha $ExpectedSourceSha -ReleaseTag $ReleaseTag
+            $VerificationJson = $VerificationOutput -join [Environment]::NewLine
+            Assert-VsixProvenancePolicy -VerificationJson $VerificationJson -Artifact $artifact -Repository $Repository -ExpectedSourceSha $ExpectedSourceSha -ReleaseTag $ReleaseTag
+            Assert-VsixProvenanceSidecars -VerificationJson $VerificationJson -SigstorePath $SigstorePath -IntotoPath $IntotoPath
         }
         elseif ($artifact.Name -like '*.zip') {
             $null = Invoke-ExternalCommand -Command 'gh' -Arguments @('attestation', 'verify', $fullPath, '--repo', $Repository)
@@ -409,7 +500,7 @@ function Invoke-ProvenanceVerification {
 
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        Invoke-ProvenanceVerification -ArtifactDirectory $ArtifactDirectory -Repository $Repository -ExpectedSourceSha $ExpectedSourceSha -ReleaseTag $ReleaseTag
+        Invoke-ProvenanceVerification -ArtifactDirectory $ArtifactDirectory -Repository $Repository -ExpectedSourceSha $ExpectedSourceSha -ExpectedSignerSha $ExpectedSignerSha -ReleaseTag $ReleaseTag
     }
     catch {
         Write-Error -ErrorAction Continue "Invoke-ProvenanceVerification failed: $($_.Exception.Message)"

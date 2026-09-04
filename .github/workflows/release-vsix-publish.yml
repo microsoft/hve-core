@@ -36,6 +36,8 @@ jobs:
         id: identity
         shell: bash
         env:
+          EVENT_ACTOR: ${{ github.actor }}
+          EVENT_ACTOR_ID: ${{ github.actor_id }}
           EVENT_NAME: ${{ github.event_name }}
           EVENT_REF: ${{ github.ref }}
           EVENT_REF_NAME: ${{ github.ref_name }}
@@ -44,8 +46,14 @@ jobs:
           EVENT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
+          readonly EXPECTED_ACTOR='hve-core-release-please[bot]'
+          readonly EXPECTED_ACTOR_ID='254602402'
           if [ "$EVENT_NAME" != 'push' ] || [ "$EVENT_REF_TYPE" != 'tag' ]; then
             echo "::error::Release producer requires a push event for a tag"
+            exit 1
+          fi
+          if [ "$EVENT_ACTOR" != "$EXPECTED_ACTOR" ] || [ "$EVENT_ACTOR_ID" != "$EXPECTED_ACTOR_ID" ]; then
+            echo "::error::Release tag push was not created by the expected Release App principal"
             exit 1
           fi
           if [ "$EVENT_REF" != "refs/tags/$EVENT_REF_NAME" ]; then
@@ -168,15 +176,15 @@ jobs:
           MATCHED_RELEASES=''
           for attempt in $(seq 1 12); do
             RESPONSE_FILE="$RUNNER_TEMP/releases-$attempt.json"
-            if ! gh api "/repos/$REPOSITORY/releases?per_page=100" > "$RESPONSE_FILE"; then
+            if ! gh api --paginate --slurp "/repos/$REPOSITORY/releases?per_page=100" > "$RESPONSE_FILE"; then
               echo "::error::Release discovery API failed on attempt $attempt"
               exit 1
             fi
-            if ! jq -e 'type == "array"' "$RESPONSE_FILE" >/dev/null; then
+            if ! jq -e 'type == "array" and length > 0 and all(.[]; type == "array")' "$RESPONSE_FILE" >/dev/null; then
               echo "::error::Release discovery returned a malformed response on attempt $attempt"
               exit 1
             fi
-            if ! MATCHED_RELEASES=$(jq --arg tag "$EXPECTED_TAG" '[.[] | select(.tag_name == $tag)]' "$RESPONSE_FILE"); then
+            if ! MATCHED_RELEASES=$(jq --arg tag "$EXPECTED_TAG" '[.[][] | select(.tag_name == $tag)]' "$RESPONSE_FILE"); then
               echo "::error::Unable to parse release discovery response on attempt $attempt"
               exit 1
             fi
@@ -279,8 +287,11 @@ jobs:
 
           ARTIFACT_DIRECTORY="$RUNNER_TEMP/published-artifacts"
           mkdir -p "$ARTIFACT_DIRECTORY"
-          gh release download "$RELEASE_TAG" -R "$REPOSITORY" \
-            -p "hve-core-$RELEASE_VERSION.vsix" -D "$ARTIFACT_DIRECTORY"
+          VSIX_NAME="hve-core-$RELEASE_VERSION.vsix"
+          for asset in "$VSIX_NAME" "$VSIX_NAME.spdx.json" "$VSIX_NAME.sigstore.json" \
+            "$VSIX_NAME.intoto.jsonl" 'dependencies.spdx.json'; do
+            gh release download "$RELEASE_TAG" -R "$REPOSITORY" -p "$asset" -D "$ARTIFACT_DIRECTORY"
+          done
           if [ "$CHANNEL" = 'Stable' ]; then
             gh release download "$RELEASE_TAG" -R "$REPOSITORY" \
               -p 'hve-core.openvex.json' -D "$ARTIFACT_DIRECTORY"
@@ -291,50 +302,9 @@ jobs:
             -ExpectedSourceSha "$EXPECTED_SHA" \
             -ReleaseTag "$RELEASE_TAG"
 
-  generate-dependency-sbom:
-    name: Generate Dependency SBOM
-    needs: [validate-release]
-    if: ${{ needs.validate-release.outputs.release-state == 'draft' }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout dependency manifests
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.sha }}
-          sparse-checkout: |
-            package.json
-            package-lock.json
-            .syft.yaml
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-      - name: Generate dependency SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          path: .
-          format: spdx-json
-          output-file: dependencies.spdx.json
-          upload-release-assets: false
-          upload-artifact: false
-          config: .syft.yaml
-          dependency-snapshot: true
-      - name: Upload dependency SBOM artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: sbom-dependencies
-          path: dependencies.spdx.json
-          if-no-files-found: error
-      - name: Upload dependency SBOM to release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-          TAG: ${{ needs.validate-release.outputs.tag-name }}
-        run: gh release upload "$TAG" dependencies.spdx.json --clobber -R "$REPOSITORY"
-
   extension-provenance:
     name: Package and Attest VS Code Extension
-    needs: [validate-release, generate-dependency-sbom]
+    needs: [validate-release]
     if: ${{ needs.validate-release.outputs.release-state == 'draft' }}
     uses: ./.github/workflows/extension-provenance.yml
     with:
@@ -343,14 +313,16 @@ jobs:
       channel: ${{ needs.validate-release.outputs.channel }}
       release-tag: ${{ needs.validate-release.outputs.tag-name }}
     permissions:
-      contents: write
+      contents: read
       id-token: write
       attestations: write
       artifact-metadata: write
+    secrets:
+      release-app-private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
   vex-attest:
     name: Attest and Upload Stable VEX
-    needs: [validate-release, generate-dependency-sbom]
+    needs: [validate-release, extension-provenance]
     if: ${{ needs.validate-release.outputs.release-state == 'draft' && needs.validate-release.outputs.channel == 'Stable' }}
     uses: ./.github/workflows/vex-attest.yml
     with:
@@ -386,10 +358,15 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ./artifacts
-          gh release download "$RELEASE_TAG" -R "$REPOSITORY" -p '*.vsix' -D ./artifacts
           if [ "$CHANNEL" = 'Stable' ]; then
             gh release download "$RELEASE_TAG" -R "$REPOSITORY" -p 'hve-core.openvex.json' -D ./artifacts
           fi
+      - name: Download attested extension artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: extension-attested
+          path: ./artifacts
+          digest-mismatch: error
       - name: Verify build provenance
         shell: pwsh
         env:
@@ -407,7 +384,7 @@ jobs:
 
   sbom-diff:
     name: Stable SBOM Dependency Diff
-    needs: [validate-release, generate-dependency-sbom]
+    needs: [validate-release, extension-provenance]
     if: ${{ needs.validate-release.outputs.release-state == 'draft' && needs.validate-release.outputs.channel == 'Stable' }}
     runs-on: ubuntu-latest
     continue-on-error: true
@@ -510,9 +487,9 @@ jobs:
           TAG: ${{ needs.validate-release.outputs.tag-name }}
         run: |
           set -euo pipefail
-          gh release view "$TAG" --json body --jq '.body' -R "$REPOSITORY" > notes.md
-          cat >> notes.md <<'EOF'
-
+          gh release view "$TAG" --json body --jq '.body' -R "$REPOSITORY" > notes.current.md
+          cat > verification-block.md <<'EOF'
+          <!-- hve-core:verification:start -->
           ## Verifying Downloads
 
           All release assets include [Sigstore](https://www.sigstore.dev/) build-provenance
@@ -538,7 +515,39 @@ jobs:
 
           See [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md)
           for full supply-chain verification details including SBOM and VEX validation.
+          <!-- hve-core:verification:end -->
           EOF
+          python3 <<'PYTHON'
+          import pathlib
+          import re
+          import sys
+
+          start = '<!-- hve-core:verification:start -->'
+          end = '<!-- hve-core:verification:end -->'
+          current = pathlib.Path('notes.current.md').read_text(encoding='utf-8')
+          block = pathlib.Path('verification-block.md').read_text(encoding='utf-8').rstrip('\n')
+          owned_markers = re.findall(r'<!-- hve-core:verification:[^>]*-->', current)
+          if any(marker not in {start, end} for marker in owned_markers):
+            print('::error::Stable release notes contain an unknown verification marker')
+            sys.exit(1)
+          start_count = current.count(start)
+          end_count = current.count(end)
+          if start_count == 0 and end_count == 0:
+            separator = '' if not current else ('' if current.endswith('\n\n') else ('\n' if current.endswith('\n') else '\n\n'))
+            updated = current + separator + block + '\n'
+          elif start_count == 1 and end_count == 1:
+            start_index = current.index(start)
+            end_index = current.index(end)
+            if end_index < start_index:
+              print('::error::Stable release-note verification markers are reversed')
+              sys.exit(1)
+            end_index += len(end)
+            updated = current[:start_index] + block + current[end_index:]
+          else:
+            print(f'::error::Stable release-note verification markers are malformed: start={start_count}, end={end_count}')
+            sys.exit(1)
+          pathlib.Path('notes.md').write_text(updated, encoding='utf-8')
+          PYTHON
           gh release edit "$TAG" --notes-file notes.md -R "$REPOSITORY"
 
   publish-release:
@@ -555,16 +564,14 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout release asset verifier
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Download verified extension artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          ref: ${{ github.sha }}
-          sparse-checkout: |
-            scripts/lib/Modules/CIHelpers.psm1
-            scripts/release/Assert-ReleaseAssetSet.ps1
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-      - name: Verify draft release assets
+          name: extension-attested
+          path: ./extension-release
+          digest-mismatch: error
+      - name: Verify local artifacts and current draft occupancy
+        id: occupancy
         shell: bash
         env:
           CHANNEL: ${{ needs.validate-release.outputs.channel }}
@@ -575,28 +582,54 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
-          ASSET_NAMES="$RUNNER_TEMP/draft-asset-names.txt"
-          gh api --paginate "/repos/$REPOSITORY/releases/$RELEASE_ID/assets?per_page=100" \
-            --jq '.[].name' > "$ASSET_NAMES"
-          if [ ! -s "$ASSET_NAMES" ]; then
-            echo "::error::Draft $RELEASE_TAG carries no release assets"
+          VSIX="hve-core-$RELEASE_VERSION.vsix"
+          EXTENSION_ASSETS=("$VSIX" "$VSIX.spdx.json" "$VSIX.sigstore.json" "$VSIX.intoto.jsonl")
+          UPLOAD_ASSETS=(dependencies.spdx.json "${EXTENSION_ASSETS[@]}")
+          mapfile -t LOCAL_ASSETS < <(find extension-release -mindepth 1 -maxdepth 1 -type f -printf '%f\n' | sort)
+          mapfile -t EXPECTED_UPLOAD < <(printf '%s\n' "${UPLOAD_ASSETS[@]}" | sort)
+          if [ "${LOCAL_ASSETS[*]}" != "${EXPECTED_UPLOAD[*]}" ]; then
+            echo "::error::Verified extension artifact does not contain the exact fixed release file set"
             exit 1
           fi
-          REQUIRED_LIST="$RUNNER_TEMP/draft-required-assets.txt"
-          printf '%s\n' 'dependencies.spdx.json' > "$REQUIRED_LIST"
-          ARGUMENTS=(
-            -AssetNamePath "$ASSET_NAMES"
-            -RequiredAssetPath "$REQUIRED_LIST"
-            -Version "$RELEASE_VERSION"
-            -ReleaseTag "$RELEASE_TAG"
-          )
-          if [ "$CHANNEL" = 'Stable' ]; then
-            printf '%s\n' 'hve-core.openvex.json' >> "$REQUIRED_LIST"
-            OPTIONAL_LIST="$RUNNER_TEMP/draft-optional-assets.txt"
-            printf '%s\n' 'dependency-diff.md' > "$OPTIONAL_LIST"
-            ARGUMENTS+=( -OptionalAssetPath "$OPTIONAL_LIST" )
+
+          RELEASE_FILE="$RUNNER_TEMP/current-draft.json"
+          gh api "/repos/$REPOSITORY/releases/$RELEASE_ID" > "$RELEASE_FILE"
+          if ! jq -e --arg tag "$RELEASE_TAG" --arg sha "${{ github.sha }}" \
+            '.tag_name == $tag and .target_commitish == $sha and .draft == true' "$RELEASE_FILE" >/dev/null; then
+            echo "::error::Release identity or draft state changed before extension upload"
+            exit 1
           fi
-          pwsh -NoProfile -File ./scripts/release/Assert-ReleaseAssetSet.ps1 "${ARGUMENTS[@]}"
+          REMOTE_ASSETS="$RUNNER_TEMP/current-draft-assets.txt"
+          jq -r '.assets[].name' "$RELEASE_FILE" | sort > "$REMOTE_ASSETS"
+          ALLOWED_BASE=()
+          if [ "$CHANNEL" = 'Stable' ]; then
+            ALLOWED_BASE+=(hve-core.openvex.json)
+            if grep -Fxq 'dependency-diff.md' "$REMOTE_ASSETS"; then
+              ALLOWED_BASE+=(dependency-diff.md)
+            fi
+          fi
+          mapfile -t BASE_SORTED < <(printf '%s\n' "${ALLOWED_BASE[@]}" | sort)
+          mapfile -t PRESENT_UPLOAD < <(comm -12 "$REMOTE_ASSETS" <(printf '%s\n' "${EXPECTED_UPLOAD[@]}"))
+          EXPECTED_REMOTE=("${BASE_SORTED[@]}" "${PRESENT_UPLOAD[@]}")
+          mapfile -t EXPECTED_REMOTE < <(printf '%s\n' "${EXPECTED_REMOTE[@]}" | sort)
+          if [ "$(cat "$REMOTE_ASSETS")" != "$(printf '%s\n' "${EXPECTED_REMOTE[@]}")" ]; then
+            echo "::error::Draft $RELEASE_TAG contains missing or unexpected pre-publication assets"
+            exit 1
+          fi
+          if [ "${#PRESENT_UPLOAD[@]}" -gt 0 ]; then
+            EXISTING="$RUNNER_TEMP/existing-upload"
+            mkdir -p "$EXISTING"
+            for asset in "${PRESENT_UPLOAD[@]}"; do
+              gh release download "$RELEASE_TAG" -R "$REPOSITORY" -p "$asset" -D "$EXISTING"
+              cmp -- "extension-release/$asset" "$EXISTING/$asset" || {
+                echo "::error::Existing draft asset $asset differs from the verified artifact"
+                exit 1
+              }
+            done
+          fi
+          mapfile -t MISSING_UPLOAD < <(comm -23 <(printf '%s\n' "${EXPECTED_UPLOAD[@]}") "$REMOTE_ASSETS")
+          MISSING_JSON=$(jq -cn '$ARGS.positional' --args "${MISSING_UPLOAD[@]}")
+          echo "missing-json=$MISSING_JSON" >> "$GITHUB_OUTPUT"
       - name: Generate GitHub App Token
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
@@ -609,10 +642,55 @@ jobs:
         env:
           CHANNEL: ${{ needs.validate-release.outputs.channel }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_ID: ${{ needs.validate-release.outputs.release-id }}
           REPOSITORY: ${{ github.repository }}
+          SOURCE_SHA: ${{ needs.validate-release.outputs.source-sha }}
           TAG: ${{ needs.validate-release.outputs.tag-name }}
+          MISSING_JSON: ${{ steps.occupancy.outputs.missing-json }}
+          VERSION: ${{ needs.validate-release.outputs.version }}
         run: |
           set -euo pipefail
+          VSIX="hve-core-$VERSION.vsix"
+          EXTENSION_ASSETS=("$VSIX" "$VSIX.spdx.json" "$VSIX.sigstore.json" "$VSIX.intoto.jsonl")
+          if ! jq -e 'type == "array" and all(.[]; type == "string")' <<< "$MISSING_JSON" >/dev/null; then
+            echo '::error::Managed upload decision is invalid'
+            exit 1
+          fi
+          mapfile -t MISSING_ASSETS < <(jq -r '.[]' <<< "$MISSING_JSON")
+
+          CURRENT_RELEASE="$RUNNER_TEMP/pre-publication-release.json"
+          gh api "/repos/$REPOSITORY/releases/$RELEASE_ID" > "$CURRENT_RELEASE"
+          if ! jq -e --arg tag "$TAG" --arg sha "$SOURCE_SHA" --arg channel "$CHANNEL" '
+            .tag_name == $tag and .target_commitish == $sha and .draft == true
+            and (($channel == "Stable" and .prerelease == false)
+              or ($channel == "PreRelease" and .prerelease == true))
+          ' "$CURRENT_RELEASE" >/dev/null; then
+            echo '::error::Release identity or draft state changed before publication mutation'
+            exit 1
+          fi
+          if [ "${#MISSING_ASSETS[@]}" -gt 0 ]; then
+            UPLOAD_PATHS=()
+            for asset in "${MISSING_ASSETS[@]}"; do
+              UPLOAD_PATHS+=("extension-release/$asset")
+            done
+            gh release upload "$TAG" "${UPLOAD_PATHS[@]}" -R "$REPOSITORY"
+          fi
+
+          REMOTE_ASSETS="$RUNNER_TEMP/final-draft-assets.txt"
+          gh api --paginate "/repos/$REPOSITORY/releases/${{ needs.validate-release.outputs.release-id }}/assets?per_page=100" \
+            --jq '.[].name' | sort > "$REMOTE_ASSETS"
+          EXPECTED=(dependencies.spdx.json "${EXTENSION_ASSETS[@]}")
+          if [ "$CHANNEL" = 'Stable' ]; then
+            EXPECTED+=(hve-core.openvex.json)
+            if grep -Fxq 'dependency-diff.md' "$REMOTE_ASSETS"; then
+              EXPECTED+=(dependency-diff.md)
+            fi
+          fi
+          mapfile -t EXPECTED < <(printf '%s\n' "${EXPECTED[@]}" | sort)
+          if [ "$(cat "$REMOTE_ASSETS")" != "$(printf '%s\n' "${EXPECTED[@]}")" ]; then
+            echo "::error::Draft $TAG does not contain the exact final release asset set"
+            exit 1
+          fi
           if [ "$CHANNEL" = 'PreRelease' ]; then
             gh release edit "$TAG" --prerelease --draft=false -R "$REPOSITORY"
           else

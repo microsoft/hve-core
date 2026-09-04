@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-name: Extension Provenance
+name: Extension Provenance Signer
 
 on:
   workflow_call:
@@ -21,11 +21,6 @@ on:
         description: "Canonical release tag bound to the caller event"
         required: true
         type: string
-    secrets:
-      release-app-private-key:
-        description: "Private key for the fixed hve-core Release App"
-        required: true
-
 permissions:
   contents: read
 
@@ -33,15 +28,16 @@ jobs:
   authorize:
     name: Authorize Release Tag
     runs-on: ubuntu-latest
+    environment: release-governance
     permissions:
       contents: read
     steps:
-      - name: Generate read-only Release App token
+      - name: Generate governance-read Release App token
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: 2646666
-          private-key: ${{ secrets.release-app-private-key }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
           owner: microsoft
           repositories: hve-core
           permission-administration: read
@@ -116,6 +112,40 @@ jobs:
             exit 1
           fi
 
+          RELEASE_PAGES="$RUNNER_TEMP/release-pages.json"
+          RELEASE_LIST="$RUNNER_TEMP/releases.json"
+          gh api --paginate --slurp "/repos/$REPOSITORY/releases?per_page=100" > "$RELEASE_PAGES"
+          if ! jq -e 'type == "array" and length > 0 and all(.[]; type == "array")' "$RELEASE_PAGES" >/dev/null; then
+            echo '::error::Release discovery returned a malformed response'
+            exit 1
+          fi
+          jq '[.[][]]' "$RELEASE_PAGES" > "$RELEASE_LIST"
+          if ! jq -e --arg tag "$EVENT_REF_NAME" --arg sha "$EVENT_SHA" --arg channel "$DERIVED_CHANNEL" '
+            [.[] | select(.tag_name == $tag)] as $matches
+            | ($matches | length) == 1
+            and $matches[0].target_commitish == $sha
+            and $matches[0].draft == true
+            and (($channel == "Stable" and $matches[0].prerelease == false)
+              or ($channel == "PreRelease" and $matches[0].prerelease == true))
+          ' "$RELEASE_LIST" >/dev/null; then
+            echo '::error::Exact draft release identity does not match the immutable tag event'
+            exit 1
+          fi
+
+          CHANNEL_BRANCH='release/stable'
+          if [ "$DERIVED_CHANNEL" = 'PreRelease' ]; then
+            CHANNEL_BRANCH='release/prerelease'
+          fi
+          BRANCH_FILE="$RUNNER_TEMP/channel-branch.json"
+          gh api "/repos/$REPOSITORY/git/ref/heads/$CHANNEL_BRANCH" > "$BRANCH_FILE"
+          BRANCH_SHA=$(jq -er '.object.sha | select(type == "string" and test("^[0-9a-f]{40}$"))' "$BRANCH_FILE")
+          COMPARE_FILE="$RUNNER_TEMP/channel-compare.json"
+          gh api "/repos/$REPOSITORY/compare/$EVENT_SHA...$BRANCH_SHA" > "$COMPARE_FILE"
+          if ! jq -e '.status == "ahead" or .status == "identical"' "$COMPARE_FILE" >/dev/null; then
+            echo "::error::Release commit is not contained in the expected $CHANNEL_BRANCH branch"
+            exit 1
+          fi
+
           RULESET_PAGES="$RUNNER_TEMP/tag-ruleset-pages.json"
           RULESET_LIST="$RUNNER_TEMP/tag-rulesets.json"
           gh api --paginate --slurp "/repos/$REPOSITORY/rulesets?includes_parents=true&targets=tag&per_page=100" \
@@ -140,20 +170,27 @@ jobs:
 
           if ! jq -e --arg name "$CREATION_RULESET" '
             type == "object" and .name == $name and .target == "tag" and .enforcement == "active"
+            and .source_type == "Repository" and .source == "microsoft/hve-core"
             and (.conditions.ref_name.include | type == "array")
             and ((.conditions.ref_name.include | sort) == (["refs/tags/prerelease-v*", "refs/tags/v*"] | sort))
             and .conditions.ref_name.exclude == []
             and (([.rules[].type] | sort) == (["creation"] | sort))
+            and (.bypass_actors | type == "array" and length == 1)
+            and .bypass_actors[0].actor_type == "Integration"
+            and .bypass_actors[0].actor_id == 2646666
+            and .bypass_actors[0].bypass_mode == "always"
           ' "$RUNNER_TEMP/$CREATION_RULESET.json" >/dev/null; then
             echo "::error::$CREATION_RULESET does not provide the exact active release-tag creation boundary"
             exit 1
           fi
           if ! jq -e --arg name "$IMMUTABLE_RULESET" '
             type == "object" and .name == $name and .target == "tag" and .enforcement == "active"
+            and .source_type == "Repository" and .source == "microsoft/hve-core"
             and (.conditions.ref_name.include | type == "array")
             and ((.conditions.ref_name.include | sort) == (["refs/tags/prerelease-v*", "refs/tags/v*"] | sort))
             and .conditions.ref_name.exclude == []
             and (([.rules[].type] | sort) == (["deletion", "non_fast_forward", "update"] | sort))
+            and .bypass_actors == []
           ' "$RUNNER_TEMP/$IMMUTABLE_RULESET.json" >/dev/null; then
             echo "::error::$IMMUTABLE_RULESET does not provide the exact active release-tag immutability boundary"
             exit 1
@@ -318,14 +355,6 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Upload dependency SBOM artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: sbom-dependencies
-          path: attestation-input/dependencies.spdx.json
-          if-no-files-found: error
-          retention-days: 30
-
   attest:
     name: Attest hve-core
     needs: [authorize, package]
@@ -468,6 +497,7 @@ jobs:
           mkdir -p attested
           cp -- "input/$VSIX_NAME" "attested/$VSIX_NAME"
           cp -- "input/$VSIX_NAME.spdx.json" "attested/$VSIX_NAME.spdx.json"
+          cp -- "input/dependencies.spdx.json" "attested/dependencies.spdx.json"
           cp -- "$BUNDLE_PATH" "attested/$VSIX_NAME.sigstore.json"
           jq -c '.dsseEnvelope' "$BUNDLE_PATH" > "attested/$VSIX_NAME.intoto.jsonl"
 
@@ -476,9 +506,18 @@ jobs:
         with:
           name: extension-attested
           path: |
+            attested/dependencies.spdx.json
             attested/${{ steps.policy.outputs.vsix-name }}
             attested/${{ steps.policy.outputs.vsix-name }}.spdx.json
             attested/${{ steps.policy.outputs.vsix-name }}.sigstore.json
             attested/${{ steps.policy.outputs.vsix-name }}.intoto.jsonl
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload validated dependency SBOM artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom-dependencies
+          path: input/dependencies.spdx.json
           if-no-files-found: error
           retention-days: 30

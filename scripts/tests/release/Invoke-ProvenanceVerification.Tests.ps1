@@ -7,6 +7,7 @@ BeforeAll {
 
     $script:Repository = 'microsoft/hve-core'
     $script:SourceSha = '0123456789abcdef0123456789abcdef01234567'
+    $script:SignerSha = 'abcdef0123456789abcdef0123456789abcdef01'
     $script:ReleaseTag = 'v3.4.0'
 
     function New-VerifiedResultFixture {
@@ -29,6 +30,11 @@ BeforeAll {
         $Fixture = [ordered]@{
             attestation       = [ordered]@{
                 mediaType = 'application/vnd.dev.sigstore.bundle.v0.3+json'
+                dsseEnvelope = [ordered]@{
+                    payloadType = 'application/vnd.in-toto+json'
+                    payload = 'c2FuaXRpemVk'
+                    signatures = @([ordered]@{ keyid = ''; sig = 'c2lnbmF0dXJl' })
+                }
             }
             verificationResult = [ordered]@{
                 signature          = [ordered]@{
@@ -95,6 +101,12 @@ Describe 'Invoke-ProvenanceVerification' -Tag 'Unit' {
         Set-Content -LiteralPath $script:vsixPath -Value 'sanitized VSIX bytes'
         $script:Fixture = New-VerifiedResultFixture -VsixPath $script:vsixPath
         $script:VerificationJson = ConvertTo-Json -InputObject @($script:Fixture) -Depth 30 -Compress
+        $script:SigstorePath = "$script:vsixPath.sigstore.json"
+        $script:IntotoPath = "$script:vsixPath.intoto.jsonl"
+        $script:Fixture.attestation | ConvertTo-Json -Depth 30 -Compress |
+            Set-Content -LiteralPath $script:SigstorePath -Encoding utf8NoBOM
+        $script:Fixture.attestation.dsseEnvelope | ConvertTo-Json -Depth 30 -Compress |
+            Set-Content -LiteralPath $script:IntotoPath -Encoding utf8NoBOM
 
         Mock Invoke-ExternalCommand {
             if ($Arguments -contains '--format') {
@@ -106,18 +118,19 @@ Describe 'Invoke-ProvenanceVerification' -Tag 'Unit' {
 
     It 'Accepts one cryptographically verified VSIX with the expected policy' {
         {
-            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ReleaseTag $script:ReleaseTag
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
         } | Should -Not -Throw
     }
 
     It 'Invokes cryptographic verification before policy parsing with the exact VSIX arguments' {
-        Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ReleaseTag $script:ReleaseTag
+        Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
 
         $ExpectedArguments = @(
             'attestation', 'verify', [System.IO.Path]::GetFullPath($script:vsixPath),
             '--repo', $script:Repository,
-            '--signer-workflow', "$script:Repository/.github/workflows/extension-provenance.yml",
-            '--signer-digest', $script:SourceSha,
+            '--bundle', $script:SigstorePath,
+            '--signer-workflow', "$script:Repository/.github/workflows/extension-provenance-signer.yml",
+            '--signer-digest', $script:SignerSha,
             '--source-digest', $script:SourceSha,
             '--source-ref', "refs/tags/$script:ReleaseTag",
             '--predicate-type', 'https://slsa.dev/provenance/v1',
@@ -133,9 +146,11 @@ Describe 'Invoke-ProvenanceVerification' -Tag 'Unit' {
 
     It 'Throws when no artifacts are present' {
         Remove-Item -LiteralPath $script:vsixPath
+        Remove-Item -LiteralPath $script:SigstorePath
+        Remove-Item -LiteralPath $script:IntotoPath
 
         {
-            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ReleaseTag $script:ReleaseTag
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
         } | Should -Throw '*No release artifacts found*'
         Should -Invoke Invoke-ExternalCommand -Times 0 -Exactly
     }
@@ -145,7 +160,7 @@ Describe 'Invoke-ProvenanceVerification' -Tag 'Unit' {
         Set-Content -LiteralPath (Join-Path $script:tempDir 'plugin.zip') -Value 'zip'
 
         {
-            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ReleaseTag $script:ReleaseTag
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
         } | Should -Throw '*exactly one VSIX*'
         Should -Invoke Invoke-ExternalCommand -Times 0 -Exactly
     }
@@ -154,7 +169,7 @@ Describe 'Invoke-ProvenanceVerification' -Tag 'Unit' {
         Set-Content -LiteralPath (Join-Path $script:tempDir 'second.vsix') -Value 'second'
 
         {
-            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ReleaseTag $script:ReleaseTag
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
         } | Should -Throw '*exactly one VSIX*'
         Should -Invoke Invoke-ExternalCommand -Times 0 -Exactly
     }
@@ -163,16 +178,36 @@ Describe 'Invoke-ProvenanceVerification' -Tag 'Unit' {
         $script:VerificationJson = '{not-json'
 
         {
-            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ReleaseTag $script:ReleaseTag
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
         } | Should -Throw '*malformed JSON*'
         Should -Invoke Invoke-ExternalCommand -Times 1 -Exactly
+    }
+
+    It 'Rejects a released Sigstore sidecar that differs from the authenticated bundle' {
+        $Tampered = $script:Fixture.attestation | ConvertTo-Json -Depth 30 | ConvertFrom-Json -Depth 30
+        $Tampered.mediaType = 'application/example'
+        $Tampered | ConvertTo-Json -Depth 30 -Compress |
+            Set-Content -LiteralPath $script:SigstorePath -Encoding utf8NoBOM
+
+        {
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
+        } | Should -Throw '*authenticated bundle differs from released Sigstore sidecar*'
+    }
+
+    It 'Rejects a released in-toto sidecar that differs from its authenticated bundle' {
+        '{"payloadType":"application/example","payload":"","signatures":[]}' |
+            Set-Content -LiteralPath $script:IntotoPath -Encoding utf8NoBOM
+
+        {
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
+        } | Should -Throw '*released in-toto sidecar differs from the authenticated bundle envelope*'
     }
 
     It 'Rejects authenticated output that is not an array' {
         $script:VerificationJson = $script:Fixture | ConvertTo-Json -Depth 30 -Compress
 
         {
-            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ReleaseTag $script:ReleaseTag
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
         } | Should -Throw '*authenticated verification output must be an array*'
     }
 
@@ -188,7 +223,7 @@ Describe 'Invoke-ProvenanceVerification' -Tag 'Unit' {
         }
 
         {
-            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ReleaseTag $script:ReleaseTag
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
         } | Should -Throw '*exactly one result*'
     }
 
@@ -197,7 +232,7 @@ Describe 'Invoke-ProvenanceVerification' -Tag 'Unit' {
         $script:VerificationJson = ConvertTo-Json -InputObject @($script:Fixture) -Depth 30 -Compress
 
         {
-            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ReleaseTag $script:ReleaseTag
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
         } | Should -Throw '*verification result has a missing or unknown field*'
     }
 
@@ -215,7 +250,7 @@ Describe 'Invoke-ProvenanceVerification' -Tag 'Unit' {
         $script:VerificationJson = ConvertTo-Json -InputObject @($script:Fixture) -Depth 30 -Compress
 
         {
-            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ReleaseTag $script:ReleaseTag
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
         } | Should -Throw '*exactly one subject*'
     }
 
@@ -315,20 +350,20 @@ Describe 'Invoke-ProvenanceVerification' -Tag 'Unit' {
         $script:VerificationJson = ConvertTo-Json -InputObject @($script:Fixture) -Depth 30 -Compress
 
         {
-            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ReleaseTag $script:ReleaseTag
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
         } | Should -Throw $Error
     }
 
     It 'Retains ZIP and OpenVEX cryptographic verification without parsing sidecars' {
         $ZipPath = Join-Path $script:tempDir 'hve-core-plugin.zip'
         $VexPath = Join-Path $script:tempDir 'hve-core.openvex.json'
-        $SidecarPath = Join-Path $script:tempDir 'sample.vsix.sigstore.json'
+        $UnrelatedPath = Join-Path $script:tempDir 'unrelated.metadata.json'
         Set-Content -LiteralPath $ZipPath -Value 'zip bytes'
         Set-Content -LiteralPath $VexPath -Value '{"sanitized":true}'
-        Set-Content -LiteralPath $SidecarPath -Value '{not-trusted}'
+        Set-Content -LiteralPath $UnrelatedPath -Value '{not-trusted}'
 
         {
-            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ReleaseTag $script:ReleaseTag
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
         } | Should -Not -Throw
 
         Should -Invoke Invoke-ExternalCommand -Times 3 -Exactly
