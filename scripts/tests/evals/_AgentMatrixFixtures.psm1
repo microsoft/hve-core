@@ -15,14 +15,12 @@ function New-FixtureRoot {
 
     $root = Join-Path $Base ("amd-" + [Guid]::NewGuid().ToString('N'))
     $matrixRoot = Join-Path $root 'evals/results/agent-matrix'
-    $surfaceRoot = Join-Path $root 'evals/baseline-equivalence/surface-signatures'
     $inventoryPath = Join-Path $root 'evals/agent-behavior/AGENTS.yml'
-    New-Item -ItemType Directory -Path $matrixRoot, $surfaceRoot -Force | Out-Null
+    New-Item -ItemType Directory -Path $matrixRoot -Force | Out-Null
     New-Item -ItemType Directory -Path (Split-Path -Parent $inventoryPath) -Force | Out-Null
     return [pscustomobject]@{
         Root          = $root
         MatrixRoot    = $matrixRoot
-        SurfaceRoot   = $surfaceRoot
         InventoryPath = $inventoryPath
     }
 }

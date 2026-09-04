@@ -316,6 +316,7 @@ jobs:
   eval-execute:
     name: Eval Execute (${{ matrix.kind }})
     runs-on: ubuntu-latest
+    timeout-minutes: 240
     needs: [eval-validation, content-moderation]
     # Repository secrets are not exposed to fork PRs; clean-skip execution there.
     # Only run when eval-relevant paths changed (see eval-validation detect step).
@@ -414,7 +415,7 @@ jobs:
         if: env.EVAL_EXECUTE == 'true'
         shell: pwsh
         run: |
-          npm run ci:eval:execute -- -Kind ${{ matrix.kind }} -ChangedSpecManifestPath logs/changed-spec-stimuli.json -Model gpt-5.6-luna -SkipInputModeration
+          npm run ci:eval:execute -- -Kind ${{ matrix.kind }} -ChangedSpecManifestPath logs/changed-spec-stimuli.json -Model gpt-5.6-luna -SkipInputModeration -EnableBaselineEquivalence -EquivalenceTier calibration
           if ($LASTEXITCODE -ne 0) {
             'EVAL_EXECUTE_FAILED=true' >> $env:GITHUB_ENV
           }
@@ -425,12 +426,16 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: eval-execution-results-${{ matrix.kind }}
+          # Aggregate results only. Raw agent transcripts and judge logs are withheld
+          # because artifacts on a public repository are readable by anyone and a
+          # transcript can contain anything the agent printed, including job environment.
           path: |
             logs/changed-ai-artifacts.json
             logs/changed-spec-stimuli.json
             logs/stimulus-presence.json
             logs/eval-summary.json
             logs/eval-results-*.json
+            logs/baseline-equivalence-*.json
           retention-days: 30
           if-no-files-found: ignore
 
