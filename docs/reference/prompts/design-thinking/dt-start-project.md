@@ -3,7 +3,7 @@ title: Dt Start Project
 description: Start a new Design Thinking coaching project with state initialization and first coaching interaction
 sidebar_position: 15
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Start a new Design Thinking coaching project with state initialization and first
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to initialize a new Design Thinking coaching project and begin the first method. Use the resume prompt when durable project state already exists.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide a unique `project-slug`, then optionally add context, stakeholders, and industry. The prompt creates the project state and starts the first coaching interaction from that context.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/dt-start-project project-slug=factory-floor-maintenance industry=manufacturing
+```
+
+The prompt initializes the project and begins Method 1 coaching for the manufacturing scenario.
