@@ -55,7 +55,7 @@ Pre-requisite setup: activate the `backlog-execute` skill by name. It owns the s
    * Normalize the confirmed project name once, then compare against that value for the rest of the run.
    * Hydrate every existing work item the set names, including every parent reference and every link endpoint, requesting `System.TeamProject` explicitly in the read call's field list. Use the batch read for more than one identifier.
    * Reject the whole operation set and stop when any hydrated `System.TeamProject` does not match the confirmed project, when the field is absent from a response, or when a target cannot be read at all. Do not skip the mismatched entry and continue.
-   * Record the verified binding in `handoff-logs.md`, naming the confirmed project and the item identifiers it covers, before the first mutation.
+   * Record the verified binding before the first mutation, naming the confirmed project and the item identifiers it covers. A live run records it in `handoff-logs.md`; a dry run records it in `handoff-dryrun.md`.
 3. Validate hierarchy before creating: fetch any supplied parent and verify the relationship is legal per the Relationship Semantics section of the Azure DevOps reference in the `backlog-management` skill. Report an invalid pairing; never create the child unparented instead.
 4. Run the `backlog-execute` Required Flow against the dispatched operation set, supplying the Azure DevOps deltas below.
 5. Return the result in the shape given under Response Format.

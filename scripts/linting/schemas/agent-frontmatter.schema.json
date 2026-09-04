@@ -47,18 +47,8 @@
       "description": "A list of tool or tool set names available for this custom agent. Can include built-in tools, tool sets, MCP tools, or tools contributed by extensions"
     },
     "model": {
-      "oneOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      ],
-      "description": "The AI model(s) to use when running the agent. If not specified, the currently selected model in model picker is used."
+      "type": "string",
+      "description": "The AI model to use when running the agent. Must be a single scalar string; array/fallback-list values are a VS Code Copilot Chat-only extension not supported by the Copilot CLI. If not specified, the currently selected model in model picker is used."
     },
     "target": {
       "type": "string",

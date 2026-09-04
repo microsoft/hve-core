@@ -2,7 +2,13 @@
 title: DT Learning Tutor
 description: "Design Thinking learning tutor providing structured curriculum, comprehension checks, and adaptive pacing"
 sidebar_position: 2
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - design-thinking
+  - dt-learning-tutor
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

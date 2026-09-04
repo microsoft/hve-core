@@ -1,0 +1,1255 @@
+name: Backlog Grooming Sweep
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      protocol-version:
+        description: 'Internal continuation protocol; leave the default for initiation'
+        required: true
+        type: string
+        default: backlog-grooming-sweep/v1
+      sweep-id:
+        description: 'Internal continuation sweep identity; leave empty for initiation'
+        required: false
+        type: string
+        default: ''
+      wave-number:
+        description: 'Internal continuation wave number; leave at one for initiation'
+        required: true
+        type: number
+        default: 1
+      snapshot-run-id:
+        description: 'Internal continuation snapshot run identity'
+        required: false
+        type: string
+        default: ''
+      snapshot-artifact-id:
+        description: 'Internal continuation snapshot artifact identity'
+        required: false
+        type: string
+        default: ''
+      snapshot-digest:
+        description: 'Internal continuation snapshot digest'
+        required: false
+        type: string
+        default: ''
+      checkpoint-run-id:
+        description: 'Internal continuation checkpoint run identity'
+        required: false
+        type: string
+        default: ''
+      checkpoint-artifact-id:
+        description: 'Internal continuation checkpoint artifact identity'
+        required: false
+        type: string
+        default: ''
+      checkpoint-digest:
+        description: 'Internal continuation checkpoint digest'
+        required: false
+        type: string
+        default: ''
+
+concurrency:
+  group: backlog-grooming-sweep-active-${{ github.repository_id }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  SWEEP_PROTOCOL_VERSION: backlog-grooming-sweep/v1
+  SWEEP_ARTIFACT_RETENTION_DAYS: 30
+  SWEEP_DISCOVERY_DOWNLOAD_LIMIT: 50
+  SWEEP_DISCOVERY_METADATA_LIMIT: 500
+  SWEEP_SHARD_COUNT: 2
+  SWEEP_SHARD_WIDTH: 5
+  SWEEP_MAX_PARALLEL: 2
+  SWEEP_PER_WORKER_AIC: 1000
+
+jobs:
+  plan:
+    name: Discover or plan bounded sweep wave
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      issues: read
+    outputs:
+      mode: ${{ steps.plan.outputs.mode }}
+      sweep-id: ${{ steps.plan.outputs.sweep-id }}
+      wave-number: ${{ steps.plan.outputs.wave-number }}
+      required-waves: ${{ steps.plan.outputs.required-waves }}
+      snapshot-digest: ${{ steps.plan.outputs.snapshot-digest }}
+      source-sha: ${{ steps.plan.outputs.source-sha }}
+      source-ref-name: ${{ steps.plan.outputs.source-ref-name }}
+      snapshot-run-id: ${{ steps.plan.outputs.snapshot-run-id }}
+      snapshot-artifact-id: ${{ steps.snapshot.outputs.artifact-id || steps.plan.outputs.snapshot-artifact-id }}
+      prior-checkpoint-run-id: ${{ steps.plan.outputs.prior-checkpoint-run-id }}
+      prior-checkpoint-artifact-id: ${{ steps.plan.outputs.prior-checkpoint-artifact-id }}
+      prior-checkpoint-digest: ${{ steps.plan.outputs.prior-checkpoint-digest }}
+      shard-matrix: ${{ steps.plan.outputs.shard-matrix }}
+      manifest-digest: ${{ steps.plan.outputs.manifest-digest }}
+      manifest-artifact-id: ${{ steps.manifest.outputs.artifact-id }}
+      planned-aic-per-wave: ${{ steps.plan.outputs.planned-aic-per-wave }}
+      planned-sweep-aic: ${{ steps.plan.outputs.planned-sweep-aic }}
+      continuation-authenticated: ${{ steps.plan.outputs.continuation-authenticated }}
+    steps:
+      - name: Plan initiation, resume, or continuation
+        id: plan
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_PROTOCOL_VERSION: ${{ inputs.protocol-version || 'backlog-grooming-sweep/v1' }}
+          INPUT_SWEEP_ID: ${{ inputs.sweep-id }}
+          INPUT_WAVE_NUMBER: ${{ inputs.wave-number || 1 }}
+          INPUT_SNAPSHOT_RUN_ID: ${{ inputs.snapshot-run-id }}
+          INPUT_SNAPSHOT_ARTIFACT_ID: ${{ inputs.snapshot-artifact-id }}
+          INPUT_SNAPSHOT_DIGEST: ${{ inputs.snapshot-digest }}
+          INPUT_CHECKPOINT_RUN_ID: ${{ inputs.checkpoint-run-id }}
+          INPUT_CHECKPOINT_ARTIFACT_ID: ${{ inputs.checkpoint-artifact-id }}
+          INPUT_CHECKPOINT_DIGEST: ${{ inputs.checkpoint-digest }}
+        with:
+          script: |
+            const crypto = require("crypto");
+            const fs = require("fs");
+            const path = require("path");
+
+            const canonicalize = (value) => {
+              if (Array.isArray(value)) return `[${value.map(canonicalize).join(",")}]`;
+              if (value !== null && typeof value === "object") {
+                return `{${Object.keys(value).sort().map(
+                  (key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`,
+                ).join(",")}}`;
+              }
+              return JSON.stringify(value);
+            };
+            const digest = (value) => crypto.createHash("sha256").update(canonicalize(value)).digest("hex");
+            const parseInteger = (name, value, minimum, maximum = Number.MAX_SAFE_INTEGER) => {
+              const parsed = Number(value);
+              if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
+                throw new Error(`${name} must be a safe integer from ${minimum} through ${maximum}`);
+              }
+              return parsed;
+            };
+            const exactKeys = (value, keys) => value && typeof value === "object" &&
+              !Array.isArray(value) && Object.keys(value).sort().join("|") === [...keys].sort().join("|");
+            const assertPositiveUniqueIds = (name, ids) => {
+              if (!Array.isArray(ids) || ids.some((id) => !Number.isSafeInteger(id) || id <= 0) ||
+                  new Set(ids).size !== ids.length) {
+                throw new Error(`${name} must contain unique positive safe integers`);
+              }
+            };
+            const workflowPath = ".github/workflows/backlog-groom-orchestrator.yml";
+            const getArtifactMetadata = async (artifactId) => {
+              const { data: artifact } = await github.rest.actions.getArtifact({
+                ...context.repo,
+                artifact_id: parseInteger("artifact-id", artifactId, 1),
+              });
+              if (artifact.expired || !artifact.workflow_run?.id) {
+                throw new Error(`Artifact ${artifactId} is expired or lacks producing-run identity`);
+              }
+              const { data: run } = await github.rest.actions.getWorkflowRun({
+                ...context.repo,
+                run_id: artifact.workflow_run.id,
+              });
+              if (run.path !== workflowPath) {
+                throw new Error(`Artifact ${artifactId} was not produced by ${workflowPath}`);
+              }
+              return { artifact, run };
+            };
+            const authenticateArtifact = ({ artifact, run }, expected) => {
+              if ((expected.name && artifact.name !== expected.name) ||
+                  (expected.runId && String(run.id) !== String(expected.runId)) ||
+                  (expected.sourceSha && run.head_sha !== expected.sourceSha)) {
+                throw new Error(`Artifact ${artifact.id} provenance does not match its bound identity`);
+              }
+            };
+            const downloadArtifact = async (artifactId, destination, authenticatedMetadata = null) => {
+              const metadata = authenticatedMetadata ?? await getArtifactMetadata(artifactId);
+              fs.mkdirSync(destination, { recursive: true });
+              const archivePath = `${destination}.zip`;
+              const { data: archive } = await github.rest.actions.downloadArtifact({
+                ...context.repo,
+                artifact_id: metadata.artifact.id,
+                archive_format: "zip",
+              });
+              fs.writeFileSync(archivePath, Buffer.from(archive));
+              await exec.exec("unzip", ["-q", archivePath, "-d", destination]);
+              fs.rmSync(archivePath, { force: true });
+              return metadata;
+            };
+            const snapshotKeys = [
+              "schema_version", "sweep_id", "repository_id", "repository", "workflow_ref",
+              "source_ref", "source_sha", "initiating_run_id", "initiating_attempt", "captured_at",
+              "prior_successful_timestamp", "prior_cursor", "prior_published_aggregate_digest",
+              "ordered_issue_ids", "cursor_candidate_ids",
+              "priority_issue_ids",
+              "total_snapshot_count", "eligibility_predicate_version", "shard_count", "shard_width",
+              "max_parallel", "wave_capacity", "required_waves", "per_worker_ai_credits",
+              "planned_aic_per_wave", "planned_sweep_aic", "snapshot_digest",
+            ];
+            const validateSnapshot = (snapshot) => {
+              if (!exactKeys(snapshot, snapshotKeys) ||
+                  snapshot.schema_version !== "backlog-grooming-sweep-snapshot/v1" ||
+                  snapshot.repository_id !== String(context.payload.repository.id) ||
+                  snapshot.repository !== `${context.repo.owner}/${context.repo.repo}` ||
+                  snapshot.workflow_ref !== `${context.repo.owner}/${context.repo.repo}/${workflowPath}@${snapshot.source_ref}` ||
+                  (snapshot.prior_published_aggregate_digest !== null &&
+                   !/^[a-f0-9]{64}$/.test(snapshot.prior_published_aggregate_digest)) ||
+                  !/^[a-f0-9]{64}$/.test(snapshot.sweep_id) ||
+                  !/^[a-f0-9]{64}$/.test(snapshot.snapshot_digest)) {
+                throw new Error("Sweep snapshot identity or schema is invalid");
+              }
+              const { snapshot_digest: recordedDigest, ...material } = snapshot;
+              if (digest(material) !== recordedDigest) throw new Error("Sweep snapshot digest mismatch");
+              assertPositiveUniqueIds("ordered_issue_ids", snapshot.ordered_issue_ids);
+              assertPositiveUniqueIds("cursor_candidate_ids", snapshot.cursor_candidate_ids);
+              if (snapshot.ordered_issue_ids.length !== snapshot.total_snapshot_count ||
+                  snapshot.cursor_candidate_ids.length !== snapshot.total_snapshot_count ||
+                  [...snapshot.ordered_issue_ids].sort((a, b) => a - b).join(",") !== snapshot.ordered_issue_ids.join(",") ||
+                  [...snapshot.cursor_candidate_ids].sort((a, b) => a - b).join(",") !==
+                    [...snapshot.ordered_issue_ids].sort((a, b) => a - b).join(",")) {
+                throw new Error("Sweep snapshot issue orders are inconsistent");
+              }
+              const expectedWaves = Math.max(1, Math.ceil(snapshot.total_snapshot_count / snapshot.wave_capacity));
+              if (snapshot.wave_capacity !== snapshot.shard_count * snapshot.shard_width ||
+                  snapshot.required_waves !== expectedWaves ||
+                  snapshot.planned_aic_per_wave !== snapshot.shard_count * snapshot.per_worker_ai_credits ||
+                  snapshot.planned_sweep_aic !== snapshot.required_waves * snapshot.planned_aic_per_wave ||
+                  !Number.isSafeInteger(snapshot.planned_sweep_aic)) {
+                throw new Error("Sweep snapshot capacity or AIC arithmetic is invalid");
+              }
+            };
+            const checkpointKeys = [
+              "schema_version", "sweep_id", "snapshot_digest", "wave_number", "required_waves",
+              "source_run_id", "source_attempt", "source_manifest_artifact_id", "source_manifest_digest",
+              "source_aggregate_run_id", "source_aggregate_artifact_id", "source_aggregate_digest",
+              "prior_checkpoint_run_id", "prior_checkpoint_artifact_id", "prior_checkpoint_digest",
+              "assessed_issue_ids", "deferred_issue_ids", "cumulative_covered_count", "cumulative_digest",
+              "remaining_count", "sweep_complete", "completed_at", "checkpoint_digest",
+            ];
+            const validateCheckpoint = (checkpoint, snapshot) => {
+              if (!exactKeys(checkpoint, checkpointKeys) ||
+                  checkpoint.schema_version !== "backlog-grooming-sweep-checkpoint/v1" ||
+                  checkpoint.sweep_id !== snapshot.sweep_id || checkpoint.snapshot_digest !== snapshot.snapshot_digest ||
+                  checkpoint.required_waves !== snapshot.required_waves ||
+                  !/^[a-f0-9]{64}$/.test(checkpoint.checkpoint_digest)) {
+                throw new Error("Sweep checkpoint identity or schema is invalid");
+              }
+              const { checkpoint_digest: recordedDigest, ...material } = checkpoint;
+              if (digest(material) !== recordedDigest) throw new Error("Sweep checkpoint digest mismatch");
+              if (checkpoint.wave_number < 1 || checkpoint.wave_number > snapshot.required_waves ||
+                  checkpoint.remaining_count !== snapshot.total_snapshot_count - checkpoint.cumulative_covered_count ||
+                  checkpoint.sweep_complete !== (checkpoint.cumulative_covered_count === snapshot.total_snapshot_count)) {
+                throw new Error("Sweep checkpoint transition counts are invalid");
+              }
+            };
+
+            if (context.eventName === "schedule" && new Date().getUTCDate() > 7) {
+              core.setOutput("mode", "calendar-noop");
+              core.setOutput("shard-matrix", "[]");
+              core.setOutput("continuation-authenticated", "false");
+              return;
+            }
+
+            if (process.env.INPUT_PROTOCOL_VERSION !== process.env.SWEEP_PROTOCOL_VERSION) {
+              throw new Error("Unknown sweep continuation protocol version");
+            }
+            const continuationValues = [
+              process.env.INPUT_SWEEP_ID, process.env.INPUT_SNAPSHOT_RUN_ID,
+              process.env.INPUT_SNAPSHOT_ARTIFACT_ID, process.env.INPUT_SNAPSHOT_DIGEST,
+              process.env.INPUT_CHECKPOINT_RUN_ID, process.env.INPUT_CHECKPOINT_ARTIFACT_ID,
+              process.env.INPUT_CHECKPOINT_DIGEST,
+            ];
+            const continuationCount = continuationValues.filter(Boolean).length;
+            if (continuationCount !== 0 && continuationCount !== continuationValues.length) {
+              throw new Error("Continuation identity fields must be all empty or all populated");
+            }
+            const isContinuation = continuationCount === continuationValues.length;
+            if (isContinuation && context.actor !== "github-actions[bot]") {
+              throw new Error("Continuation fields are accepted only from github-actions[bot]");
+            }
+            if (!isContinuation && Number(process.env.INPUT_WAVE_NUMBER) !== 1) {
+              throw new Error("Initial dispatch must use wave one");
+            }
+
+            fs.mkdirSync("sweep-output", { recursive: true });
+            let snapshot;
+            let snapshotArtifactId = "";
+            let snapshotRunId = "";
+            let priorCheckpoint = null;
+            let priorCheckpointArtifactId = "";
+            let priorCheckpointRunId = "";
+            let mode = "new";
+            let waveNumber = 1;
+
+            if (isContinuation) {
+              waveNumber = parseInteger("wave-number", process.env.INPUT_WAVE_NUMBER, 2);
+              const snapshotMetadata = await downloadArtifact(
+                process.env.INPUT_SNAPSHOT_ARTIFACT_ID,
+                "continuation-snapshot",
+              );
+              snapshot = JSON.parse(fs.readFileSync("continuation-snapshot/snapshot.json", "utf8"));
+              validateSnapshot(snapshot);
+              if (process.env.GITHUB_SHA !== snapshot.source_sha) {
+                throw new Error("Coordinator source ref moved after the immutable sweep snapshot was captured");
+              }
+              authenticateArtifact(snapshotMetadata, {
+                name: `backlog-grooming-sweep-v1-${snapshot.repository_id}-snapshot-${snapshot.sweep_id}`,
+                runId: process.env.INPUT_SNAPSHOT_RUN_ID,
+                sourceSha: snapshot.source_sha,
+              });
+              const checkpointMetadata = await downloadArtifact(
+                process.env.INPUT_CHECKPOINT_ARTIFACT_ID,
+                "continuation-checkpoint",
+              );
+              priorCheckpoint = JSON.parse(fs.readFileSync("continuation-checkpoint/checkpoint.json", "utf8"));
+              validateCheckpoint(priorCheckpoint, snapshot);
+              authenticateArtifact(checkpointMetadata, {
+                name: `backlog-grooming-sweep-v1-${snapshot.sweep_id}-checkpoint-${waveNumber - 1}-${process.env.INPUT_CHECKPOINT_RUN_ID}`,
+                runId: process.env.INPUT_CHECKPOINT_RUN_ID,
+                sourceSha: snapshot.source_sha,
+              });
+              waveNumber = parseInteger("wave-number", process.env.INPUT_WAVE_NUMBER, 2, snapshot.required_waves);
+              if (snapshot.sweep_id !== process.env.INPUT_SWEEP_ID ||
+                  snapshot.snapshot_digest !== process.env.INPUT_SNAPSHOT_DIGEST ||
+                  priorCheckpoint.checkpoint_digest !== process.env.INPUT_CHECKPOINT_DIGEST ||
+                  waveNumber !== priorCheckpoint.wave_number + 1 || priorCheckpoint.sweep_complete) {
+                throw new Error("Continuation tuple does not match the accepted predecessor");
+              }
+              snapshotArtifactId = process.env.INPUT_SNAPSHOT_ARTIFACT_ID;
+              snapshotRunId = process.env.INPUT_SNAPSHOT_RUN_ID;
+              priorCheckpointArtifactId = process.env.INPUT_CHECKPOINT_ARTIFACT_ID;
+              priorCheckpointRunId = process.env.INPUT_CHECKPOINT_RUN_ID;
+              mode = "continuation";
+              const allArtifacts = await github.paginate(
+                github.rest.actions.listArtifactsForRepo,
+                { ...context.repo, per_page: 100 },
+              );
+              const acceptedPrefix = `backlog-grooming-sweep-v1-${snapshot.sweep_id}-checkpoint-${waveNumber}-`;
+              const acceptedCandidates = allArtifacts.filter(
+                (artifact) => !artifact.expired && artifact.name.startsWith(acceptedPrefix),
+              );
+              if (acceptedCandidates.length > 1) {
+                throw new Error("Multiple accepted checkpoints for one sweep wave are ambiguous");
+              }
+              if (acceptedCandidates.length === 1) {
+                const acceptedMetadata = await downloadArtifact(
+                  acceptedCandidates[0].id,
+                  "accepted-duplicate-checkpoint",
+                );
+                const acceptedCheckpoint = JSON.parse(
+                  fs.readFileSync("accepted-duplicate-checkpoint/checkpoint.json", "utf8"),
+                );
+                validateCheckpoint(acceptedCheckpoint, snapshot);
+                authenticateArtifact(acceptedMetadata, {
+                  name: `backlog-grooming-sweep-v1-${snapshot.sweep_id}-checkpoint-${waveNumber}-${acceptedCheckpoint.source_run_id}`,
+                  runId: acceptedCheckpoint.source_run_id,
+                  sourceSha: snapshot.source_sha,
+                });
+                if (acceptedCheckpoint.wave_number !== waveNumber ||
+                    acceptedCheckpoint.prior_checkpoint_digest !== priorCheckpoint.checkpoint_digest) {
+                  throw new Error("Existing checkpoint does not match the duplicate dispatch predecessor");
+                }
+                core.info(`Wave ${waveNumber} already has an accepted checkpoint; duplicate dispatch is a no-op`);
+                core.setOutput("mode", "complete-noop");
+                core.setOutput("shard-matrix", "[]");
+                return;
+              }
+            } else {
+              const allArtifacts = await github.paginate(
+                github.rest.actions.listArtifactsForRepo,
+                { ...context.repo, per_page: 100 },
+              );
+              const snapshotPrefix = `backlog-grooming-sweep-v1-${context.payload.repository.id}-snapshot-`;
+              const candidates = allArtifacts.filter(
+                (artifact) => !artifact.expired && artifact.name.startsWith(snapshotPrefix),
+              );
+              if (candidates.length > Number(process.env.SWEEP_DISCOVERY_METADATA_LIMIT)) {
+                throw new Error("Active sweep discovery metadata candidate limit exceeded");
+              }
+              let discoveryDownloads = 0;
+              let discoveryMetadataScans = 0;
+              const consumeMetadataScan = () => {
+                discoveryMetadataScans += 1;
+                if (discoveryMetadataScans > Number(process.env.SWEEP_DISCOVERY_METADATA_LIMIT)) {
+                  throw new Error("Active sweep discovery metadata candidate limit exceeded");
+                }
+              };
+              const consumeDiscoveryDownload = () => {
+                discoveryDownloads += 1;
+                if (discoveryDownloads > Number(process.env.SWEEP_DISCOVERY_DOWNLOAD_LIMIT)) {
+                  throw new Error("Active sweep discovery candidate download limit exceeded");
+                }
+              };
+              const active = [];
+              for (const artifact of candidates) {
+                const destination = path.join("discovery", String(artifact.id));
+                let snapshotMetadata;
+                consumeMetadataScan();
+                try {
+                  snapshotMetadata = await getArtifactMetadata(artifact.id);
+                } catch (error) {
+                  core.warning(`Ignoring untrusted narrowed snapshot artifact ${artifact.id}: ${error.message}`);
+                  continue;
+                }
+                consumeDiscoveryDownload();
+                await downloadArtifact(artifact.id, destination, snapshotMetadata);
+                let candidateSnapshot;
+                try {
+                  candidateSnapshot = JSON.parse(fs.readFileSync(path.join(destination, "snapshot.json"), "utf8"));
+                  validateSnapshot(candidateSnapshot);
+                  if (candidateSnapshot.source_ref !== process.env.GITHUB_REF ||
+                      candidateSnapshot.source_sha !== process.env.GITHUB_SHA) {
+                    throw new Error("Snapshot ref or source revision does not match the active coordinator run");
+                  }
+                  authenticateArtifact(snapshotMetadata, {
+                    name: `backlog-grooming-sweep-v1-${candidateSnapshot.repository_id}-snapshot-${candidateSnapshot.sweep_id}`,
+                    runId: candidateSnapshot.initiating_run_id,
+                    sourceSha: candidateSnapshot.source_sha,
+                  });
+                } catch (error) {
+                  core.warning(`Ignoring invalid narrowed snapshot artifact ${artifact.id}: ${error.message}`);
+                  continue;
+                }
+                const checkpointPrefix = `backlog-grooming-sweep-v1-${candidateSnapshot.sweep_id}-checkpoint-`;
+                const checkpointArtifacts = allArtifacts.filter(
+                  (item) => !item.expired && item.name.startsWith(checkpointPrefix),
+                );
+                const validCheckpoints = [];
+                for (const checkpointArtifact of checkpointArtifacts) {
+                  const checkpointDestination = path.join("discovery-checkpoints", String(checkpointArtifact.id));
+                  let checkpointMetadata;
+                  consumeMetadataScan();
+                  try {
+                    checkpointMetadata = await getArtifactMetadata(checkpointArtifact.id);
+                  } catch (error) {
+                    core.warning(`Ignoring untrusted narrowed checkpoint artifact ${checkpointArtifact.id}: ${error.message}`);
+                    continue;
+                  }
+                  consumeDiscoveryDownload();
+                  await downloadArtifact(checkpointArtifact.id, checkpointDestination, checkpointMetadata);
+                  try {
+                    const checkpoint = JSON.parse(
+                      fs.readFileSync(path.join(checkpointDestination, "checkpoint.json"), "utf8"),
+                    );
+                    validateCheckpoint(checkpoint, candidateSnapshot);
+                    authenticateArtifact(checkpointMetadata, {
+                      name: `backlog-grooming-sweep-v1-${candidateSnapshot.sweep_id}-checkpoint-${checkpoint.wave_number}-${checkpoint.source_run_id}`,
+                      runId: checkpoint.source_run_id,
+                      sourceSha: candidateSnapshot.source_sha,
+                    });
+                    validCheckpoints.push({ artifact: checkpointMetadata.artifact, checkpoint });
+                  } catch (error) {
+                    core.warning(`Ignoring invalid narrowed checkpoint artifact ${checkpointArtifact.id}: ${error.message}`);
+                  }
+                }
+                validCheckpoints.sort((left, right) => left.checkpoint.wave_number - right.checkpoint.wave_number);
+                const covered = new Set();
+                let predecessor = null;
+                for (const [index, entry] of validCheckpoints.entries()) {
+                  const current = entry.checkpoint;
+                  const expectedWave = index + 1;
+                  const expectedIds = candidateSnapshot.cursor_candidate_ids.slice(
+                    index * candidateSnapshot.wave_capacity,
+                    (index + 1) * candidateSnapshot.wave_capacity,
+                  );
+                  const expectedSortedIds = [...expectedIds].sort((a, b) => a - b);
+                  const currentIds = [...current.assessed_issue_ids, ...current.deferred_issue_ids].sort((a, b) => a - b);
+                  if (current.wave_number !== expectedWave || JSON.stringify(currentIds) !== JSON.stringify(expectedSortedIds) ||
+                      currentIds.some((issue) => covered.has(issue)) ||
+                      current.prior_checkpoint_artifact_id !== (predecessor ? String(predecessor.artifact.id) : null) ||
+                      current.prior_checkpoint_run_id !== (predecessor ? String(predecessor.checkpoint.source_run_id) : null) ||
+                      current.prior_checkpoint_digest !== (predecessor?.checkpoint.checkpoint_digest ?? null) ||
+                      current.cumulative_covered_count !== covered.size + currentIds.length) {
+                    throw new Error("Active sweep checkpoint chain is missing, reordered, duplicated, or broken");
+                  }
+                  currentIds.forEach((issue) => covered.add(issue));
+                  predecessor = entry;
+                }
+                const latest = validCheckpoints.at(-1) ?? null;
+                if (!latest?.checkpoint.sweep_complete) {
+                  active.push({ artifact, snapshot: candidateSnapshot, latest });
+                }
+              }
+              if (active.length > 1) throw new Error("Multiple valid active backlog grooming sweeps are ambiguous");
+              if (active.length === 1) {
+                snapshot = active[0].snapshot;
+                snapshotArtifactId = String(active[0].artifact.id);
+                snapshotRunId = String(active[0].artifact.workflow_run?.id ?? snapshot.initiating_run_id);
+                priorCheckpoint = active[0].latest?.checkpoint ?? null;
+                priorCheckpointArtifactId = String(active[0].latest?.artifact.id ?? "");
+                priorCheckpointRunId = String(active[0].latest?.artifact.workflow_run?.id ?? "");
+                waveNumber = priorCheckpoint ? priorCheckpoint.wave_number + 1 : 1;
+                mode = priorCheckpoint ? "resume" : "resume-wave-one";
+              }
+            }
+
+            if (!snapshot) {
+              const marker = "<!-- gh-aw:backlog-grooming-tracker -->";
+              const allIssues = await github.paginate(
+                github.rest.issues.listForRepo,
+                { ...context.repo, state: "all", per_page: 100 },
+              );
+              const trackers = allIssues.filter((issue) => !issue.pull_request &&
+                issue.body?.includes(marker) && issue.user?.login === "github-actions[bot]" &&
+                issue.user?.type === "Bot");
+              if (trackers.length > 1) throw new Error("Multiple trusted backlog grooming trackers are ambiguous");
+              let priorSuccessfulTimestamp = "1970-01-01T00:00:00.000Z";
+              let priorCursor = 0;
+              let priorPublishedAggregateDigest = null;
+              if (trackers.length === 1) {
+                const stateMatch = trackers[0].body.match(/<!-- gh-aw:backlog-grooming-state (\{.*\}) -->/);
+                if (stateMatch) {
+                  const state = JSON.parse(stateMatch[1]);
+                  priorSuccessfulTimestamp = new Date(state.completed_at).toISOString();
+                  priorCursor = parseInteger("trusted prior cursor", state.next_cursor, 0);
+                  if (!/^[a-f0-9]{64}$/.test(state.aggregate_digest)) {
+                    throw new Error("Trusted tracker aggregate digest is invalid");
+                  }
+                  priorPublishedAggregateDigest = state.aggregate_digest;
+                }
+              }
+              const trackerNumber = trackers[0]?.number;
+              const openIssues = allIssues.filter((issue) => issue.state === "open" &&
+                !issue.pull_request && issue.number !== trackerNumber).sort((a, b) => a.number - b.number);
+              const priority = openIssues.filter(
+                (issue) => Date.parse(issue.updated_at) > Date.parse(priorSuccessfulTimestamp),
+              );
+              const roundRobin = [
+                ...openIssues.filter((issue) => issue.number > priorCursor),
+                ...openIssues.filter((issue) => issue.number <= priorCursor),
+              ];
+              const cursorIds = [];
+              const seen = new Set();
+              for (const issue of [...priority, ...roundRobin]) {
+                if (!seen.has(issue.number)) {
+                  seen.add(issue.number);
+                  cursorIds.push(issue.number);
+                }
+              }
+              const shardCount = Number(process.env.SWEEP_SHARD_COUNT);
+              const shardWidth = Number(process.env.SWEEP_SHARD_WIDTH);
+              const maxParallel = Number(process.env.SWEEP_MAX_PARALLEL);
+              const perWorkerAic = Number(process.env.SWEEP_PER_WORKER_AIC);
+              const waveCapacity = shardCount * shardWidth;
+              const requiredWaves = Math.max(1, Math.ceil(openIssues.length / waveCapacity));
+              const plannedAicPerWave = shardCount * perWorkerAic;
+              const plannedSweepAic = requiredWaves * plannedAicPerWave;
+              if (![waveCapacity, requiredWaves, plannedAicPerWave, plannedSweepAic].every(Number.isSafeInteger)) {
+                throw new Error("Sweep capacity or AIC exceeds safe integer arithmetic");
+              }
+              const capturedAt = new Date().toISOString();
+              const identityMaterial = {
+                repository_id: String(context.payload.repository.id),
+                repository: `${context.repo.owner}/${context.repo.repo}`,
+                workflow_ref: process.env.GITHUB_WORKFLOW_REF,
+                source_ref: process.env.GITHUB_REF,
+                source_sha: process.env.GITHUB_SHA,
+                initiating_run_id: String(context.runId),
+                initiating_attempt: Number(process.env.GITHUB_RUN_ATTEMPT),
+                captured_at: capturedAt,
+                ordered_issue_ids: openIssues.map((issue) => issue.number),
+              };
+              const identityDigest = digest(identityMaterial);
+              const sweepId = digest({ ...identityMaterial, identity_digest: identityDigest });
+              const material = {
+                schema_version: "backlog-grooming-sweep-snapshot/v1",
+                sweep_id: sweepId,
+                repository_id: String(context.payload.repository.id),
+                repository: `${context.repo.owner}/${context.repo.repo}`,
+                workflow_ref: process.env.GITHUB_WORKFLOW_REF,
+                source_ref: process.env.GITHUB_REF,
+                source_sha: process.env.GITHUB_SHA,
+                initiating_run_id: String(context.runId),
+                initiating_attempt: Number(process.env.GITHUB_RUN_ATTEMPT),
+                captured_at: capturedAt,
+                prior_successful_timestamp: priorSuccessfulTimestamp,
+                prior_cursor: priorCursor,
+                prior_published_aggregate_digest: priorPublishedAggregateDigest,
+                ordered_issue_ids: openIssues.map((issue) => issue.number),
+                cursor_candidate_ids: cursorIds,
+                priority_issue_ids: priority.map((issue) => issue.number),
+                total_snapshot_count: openIssues.length,
+                eligibility_predicate_version: "open-non-pull-request-excluding-trusted-tracker/v1",
+                shard_count: shardCount,
+                shard_width: shardWidth,
+                max_parallel: maxParallel,
+                wave_capacity: waveCapacity,
+                required_waves: requiredWaves,
+                per_worker_ai_credits: perWorkerAic,
+                planned_aic_per_wave: plannedAicPerWave,
+                planned_sweep_aic: plannedSweepAic,
+              };
+              snapshot = { ...material, snapshot_digest: digest(material) };
+              validateSnapshot(snapshot);
+              fs.writeFileSync("sweep-output/snapshot.json", `${JSON.stringify(snapshot, null, 2)}\n`);
+            }
+
+            if (waveNumber > snapshot.required_waves) {
+              core.setOutput("mode", "complete-noop");
+              core.setOutput("shard-matrix", "[]");
+              return;
+            }
+            const start = (waveNumber - 1) * snapshot.wave_capacity;
+            const waveIssueIds = snapshot.cursor_candidate_ids.slice(start, start + snapshot.wave_capacity);
+            const prioritySet = new Set(snapshot.priority_issue_ids);
+            const shards = Array.from({ length: snapshot.shard_count }, (_, index) => ({
+              shard_id: `shard-${String(index + 1).padStart(2, "0")}`,
+              ordered_candidate_ids: [],
+            }));
+            waveIssueIds.forEach((issue, index) => shards[index % snapshot.shard_count].ordered_candidate_ids.push(issue));
+            const matrix = shards.filter((shard) => shard.ordered_candidate_ids.length > 0).map((shard) => ({
+              ...shard,
+              priority_candidate_ids: shard.ordered_candidate_ids.filter((id) => prioritySet.has(id)),
+              round_robin_candidate_ids: shard.ordered_candidate_ids.filter((id) => !prioritySet.has(id)),
+              total_open_inventory: snapshot.total_snapshot_count,
+              prior_cursor: snapshot.prior_cursor,
+              worker_timeout_minutes: 20,
+            }));
+            const manifestMaterial = {
+              schema_version: "backlog-grooming-wave-manifest/v1",
+              sweep_id: snapshot.sweep_id,
+              snapshot_digest: snapshot.snapshot_digest,
+              wave_number: waveNumber,
+              required_waves: snapshot.required_waves,
+              prior_checkpoint_run_id: priorCheckpointRunId || null,
+              prior_checkpoint_artifact_id: priorCheckpointArtifactId || null,
+              prior_checkpoint_digest: priorCheckpoint?.checkpoint_digest ?? null,
+              ordered_issue_ids: waveIssueIds,
+              planned_aic: snapshot.planned_aic_per_wave,
+              run_id: String(context.runId),
+              attempt: Number(process.env.GITHUB_RUN_ATTEMPT),
+              shards: matrix,
+            };
+            const manifest = { ...manifestMaterial, manifest_digest: digest(manifestMaterial) };
+            fs.writeFileSync("sweep-output/manifest.json", `${JSON.stringify(manifest, null, 2)}\n`);
+            if (!fs.existsSync("sweep-output/snapshot.json")) {
+              fs.copyFileSync(
+                isContinuation ? "continuation-snapshot/snapshot.json" :
+                  path.join("discovery", snapshotArtifactId, "snapshot.json"),
+                "sweep-output/snapshot-reference.json",
+              );
+            }
+            core.setOutput("mode", mode);
+            core.setOutput("sweep-id", snapshot.sweep_id);
+            core.setOutput("wave-number", String(waveNumber));
+            core.setOutput("required-waves", String(snapshot.required_waves));
+            core.setOutput("snapshot-digest", snapshot.snapshot_digest);
+            core.setOutput("source-sha", snapshot.source_sha);
+            core.setOutput("source-ref-name", snapshot.source_ref.replace(/^refs\/(heads|tags)\//, ""));
+            core.setOutput("snapshot-run-id", snapshotRunId || String(context.runId));
+            core.setOutput("snapshot-artifact-id", snapshotArtifactId);
+            core.setOutput("prior-checkpoint-run-id", priorCheckpointRunId);
+            core.setOutput("prior-checkpoint-artifact-id", priorCheckpointArtifactId);
+            core.setOutput("prior-checkpoint-digest", priorCheckpoint?.checkpoint_digest ?? "");
+            core.setOutput("shard-matrix", JSON.stringify(matrix));
+            core.setOutput("manifest-digest", manifest.manifest_digest);
+            core.setOutput("planned-aic-per-wave", String(snapshot.planned_aic_per_wave));
+            core.setOutput("planned-sweep-aic", String(snapshot.planned_sweep_aic));
+            core.setOutput("continuation-authenticated", String(isContinuation));
+      - name: Upload immutable sweep snapshot
+        id: snapshot
+        if: ${{ steps.plan.outputs.mode == 'new' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backlog-grooming-sweep-v1-${{ github.repository_id }}-snapshot-${{ steps.plan.outputs.sweep-id }}
+          path: sweep-output/snapshot.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload immutable wave manifest
+        id: manifest
+        if: ${{ steps.plan.outputs.mode != 'complete-noop' && steps.plan.outputs.mode != 'calendar-noop' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backlog-grooming-sweep-v1-${{ steps.plan.outputs.sweep-id }}-manifest-${{ steps.plan.outputs.wave-number }}-${{ github.run_id }}
+          path: sweep-output/manifest.json
+          if-no-files-found: error
+          retention-days: 30
+
+  assess:
+    name: Assess ${{ matrix.shard.shard_id }}
+    needs: plan
+    if: ${{ needs.plan.outputs.shard-matrix != '[]' }}
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shard-matrix) }}
+    uses: ./.github/workflows/backlog-groom.lock.yml
+    with:
+      shard_id: ${{ matrix.shard.shard_id }}
+      manifest_digest: ${{ needs.plan.outputs.manifest-digest }}
+      ordered_candidate_ids: ${{ toJSON(matrix.shard.ordered_candidate_ids) }}
+      priority_candidate_ids: ${{ toJSON(matrix.shard.priority_candidate_ids) }}
+      round_robin_candidate_ids: ${{ toJSON(matrix.shard.round_robin_candidate_ids) }}
+      total_open_inventory: ${{ matrix.shard.total_open_inventory }}
+      prior_cursor: ${{ matrix.shard.prior_cursor }}
+      orchestrator_run_id: ${{ github.run_id }}
+      orchestrator_attempt: ${{ fromJSON(github.run_attempt) }}
+      continuation_authenticated: ${{ needs.plan.outputs.continuation-authenticated == 'true' }}
+      worker_timeout_minutes: ${{ matrix.shard.worker_timeout_minutes }}
+    permissions:
+      actions: write
+      contents: read
+      issues: read
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+      GH_AW_GITHUB_MCP_SERVER_TOKEN: ${{ secrets.GH_AW_GITHUB_MCP_SERVER_TOKEN }}
+      GH_AW_GITHUB_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+
+  validate-wave:
+    name: Validate complete wave result set
+    needs:
+      - plan
+      - assess
+    if: >-
+      ${{ always() && needs.plan.result == 'success' &&
+          needs.plan.outputs.mode != 'calendar-noop' &&
+          needs.plan.outputs.mode != 'complete-noop' &&
+          (needs.assess.result == 'success' ||
+           (needs.assess.result == 'skipped' && needs.plan.outputs.shard-matrix == '[]')) }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      aggregate-digest: ${{ steps.validate.outputs.aggregate-digest }}
+      aggregate-artifact-id: ${{ steps.aggregate.outputs.artifact-id }}
+      assessed-ids: ${{ steps.validate.outputs.assessed-ids }}
+      deferred-ids: ${{ steps.validate.outputs.deferred-ids }}
+    steps:
+      - name: Check out the validator implementation
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download wave manifest
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.plan.outputs.manifest-artifact-id }}
+          path: wave-manifest
+      - name: Download shard results
+        if: ${{ needs.plan.outputs.shard-matrix != '[]' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: backlog-grooming-proof-${{ github.run_id }}-${{ github.run_attempt }}-shard-*
+          path: wave-results
+      - name: Validate wave artifacts
+        id: validate
+        shell: pwsh
+        env:
+          MANIFEST_PATH: wave-manifest/manifest.json
+          RESULTS_DIRECTORY: wave-results
+          AGGREGATE_DIRECTORY: wave-aggregate
+          EXPECTED_RUN_ID: ${{ github.run_id }}
+          EXPECTED_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          ./scripts/security/Invoke-BacklogGroomWaveValidator.ps1 `
+            -ManifestPath $env:MANIFEST_PATH `
+            -ResultsDirectory $env:RESULTS_DIRECTORY `
+            -AggregateDirectory $env:AGGREGATE_DIRECTORY `
+            -ExpectedRunId $env:EXPECTED_RUN_ID `
+            -ExpectedAttempt $env:EXPECTED_ATTEMPT
+      - name: Upload immutable wave aggregate
+        id: aggregate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backlog-grooming-sweep-v1-${{ needs.plan.outputs.sweep-id }}-aggregate-${{ needs.plan.outputs.wave-number }}-${{ github.run_id }}
+          path: wave-aggregate/aggregate.json
+          if-no-files-found: error
+          retention-days: 30
+
+  checkpoint:
+    name: Accept wave checkpoint
+    needs:
+      - plan
+      - validate-wave
+    if: ${{ needs.validate-wave.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      checkpoint-digest: ${{ steps.checkpoint.outputs.checkpoint-digest }}
+      sweep-complete: ${{ steps.checkpoint.outputs.sweep-complete }}
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+    steps:
+      - name: Download sweep snapshot
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.plan.outputs.snapshot-artifact-id }}
+          path: checkpoint-snapshot
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.plan.outputs.snapshot-run-id }}
+      - name: Download current aggregate
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.validate-wave.outputs.aggregate-artifact-id }}
+          path: checkpoint-aggregate
+      - name: Download current manifest
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.plan.outputs.manifest-artifact-id }}
+          path: checkpoint-manifest
+      - name: Download prior checkpoint
+        if: ${{ needs.plan.outputs.prior-checkpoint-artifact-id != '' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.plan.outputs.prior-checkpoint-artifact-id }}
+          path: prior-checkpoint
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.plan.outputs.prior-checkpoint-run-id }}
+      - name: Build accepted checkpoint
+        id: checkpoint
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          MANIFEST_ARTIFACT_ID: ${{ needs.plan.outputs.manifest-artifact-id }}
+          AGGREGATE_ARTIFACT_ID: ${{ needs.validate-wave.outputs.aggregate-artifact-id }}
+          AGGREGATE_DIGEST: ${{ needs.validate-wave.outputs.aggregate-digest }}
+          ASSESSED_IDS: ${{ needs.validate-wave.outputs.assessed-ids }}
+          DEFERRED_IDS: ${{ needs.validate-wave.outputs.deferred-ids }}
+          PRIOR_CHECKPOINT_RUN_ID: ${{ needs.plan.outputs.prior-checkpoint-run-id }}
+          PRIOR_CHECKPOINT_ARTIFACT_ID: ${{ needs.plan.outputs.prior-checkpoint-artifact-id }}
+          PRIOR_CHECKPOINT_DIGEST: ${{ needs.plan.outputs.prior-checkpoint-digest }}
+        with:
+          script: |
+            const crypto = require("crypto");
+            const fs = require("fs");
+            const canonicalize = (value) => {
+              if (Array.isArray(value)) return `[${value.map(canonicalize).join(",")}]`;
+              if (value !== null && typeof value === "object") return `{${Object.keys(value).sort().map(
+                (key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`,
+              ).join(",")}}`;
+              return JSON.stringify(value);
+            };
+            const digest = (value) => crypto.createHash("sha256").update(canonicalize(value)).digest("hex");
+            const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value) &&
+              Object.keys(value).sort().join("|") === [...keys].sort().join("|");
+            const snapshot = JSON.parse(fs.readFileSync("checkpoint-snapshot/snapshot.json", "utf8"));
+            const manifest = JSON.parse(fs.readFileSync("checkpoint-manifest/manifest.json", "utf8"));
+            const aggregate = JSON.parse(fs.readFileSync("checkpoint-aggregate/aggregate.json", "utf8"));
+            const assessedIds = JSON.parse(process.env.ASSESSED_IDS);
+            const deferredIds = JSON.parse(process.env.DEFERRED_IDS);
+            const waveIds = [...assessedIds, ...deferredIds].sort((a, b) => a - b);
+            const waveNumber = Number("${{ needs.plan.outputs.wave-number }}");
+            const expectedIds = snapshot.cursor_candidate_ids.slice(
+              (waveNumber - 1) * snapshot.wave_capacity,
+              waveNumber * snapshot.wave_capacity,
+            );
+            const expectedSortedIds = [...expectedIds].sort((a, b) => a - b);
+            const manifestKeys = [
+              "schema_version", "sweep_id", "snapshot_digest", "wave_number", "required_waves",
+              "prior_checkpoint_run_id", "prior_checkpoint_artifact_id", "prior_checkpoint_digest",
+              "ordered_issue_ids", "planned_aic", "run_id", "attempt", "shards", "manifest_digest",
+            ];
+            const aggregateKeys = [
+              "schema_version", "sweep_id", "snapshot_digest", "wave_number", "required_waves",
+              "manifest_digest", "source_run_id", "source_attempt", "result_digests",
+              "assessed_issue_ids", "deferred_issue_ids", "rows", "aggregate_digest",
+            ];
+            const { manifest_digest: recordedManifestDigest, ...manifestMaterial } = manifest;
+            const { aggregate_digest: recordedAggregateDigest, ...aggregateMaterial } = aggregate;
+            if (!exactKeys(manifest, manifestKeys) || digest(manifestMaterial) !== recordedManifestDigest ||
+                manifest.schema_version !== "backlog-grooming-wave-manifest/v1" ||
+                manifest.sweep_id !== snapshot.sweep_id || manifest.snapshot_digest !== snapshot.snapshot_digest ||
+                manifest.wave_number !== waveNumber || manifest.run_id !== String(context.runId) ||
+                JSON.stringify(manifest.ordered_issue_ids) !== JSON.stringify(expectedIds) ||
+                recordedManifestDigest !== "${{ needs.plan.outputs.manifest-digest }}" ||
+                !exactKeys(aggregate, aggregateKeys) || digest(aggregateMaterial) !== recordedAggregateDigest ||
+                aggregate.schema_version !== "backlog-grooming-wave-aggregate/v1" ||
+                aggregate.sweep_id !== snapshot.sweep_id || aggregate.snapshot_digest !== snapshot.snapshot_digest ||
+                aggregate.wave_number !== waveNumber || aggregate.source_run_id !== String(context.runId) ||
+                aggregate.manifest_digest !== recordedManifestDigest ||
+                recordedAggregateDigest !== process.env.AGGREGATE_DIGEST ||
+                JSON.stringify(aggregate.assessed_issue_ids) !== JSON.stringify(assessedIds) ||
+                JSON.stringify(aggregate.deferred_issue_ids) !== JSON.stringify(deferredIds) ||
+                JSON.stringify(waveIds) !== JSON.stringify(expectedSortedIds) ||
+                JSON.stringify(aggregate.rows.map((row) => row.issue).sort((a, b) => a - b)) !==
+                  JSON.stringify(expectedSortedIds)) {
+              throw new Error("Checkpoint manifest, aggregate, or wave coverage validation failed");
+            }
+            let prior = null;
+            if (process.env.PRIOR_CHECKPOINT_ARTIFACT_ID) {
+              prior = JSON.parse(fs.readFileSync("prior-checkpoint/checkpoint.json", "utf8"));
+              if (prior.checkpoint_digest !== process.env.PRIOR_CHECKPOINT_DIGEST ||
+                  prior.wave_number + 1 !== waveNumber || prior.sweep_complete) {
+                throw new Error("Checkpoint predecessor mismatch");
+              }
+            } else if (waveNumber !== 1) {
+              throw new Error("Only wave one may omit a predecessor checkpoint");
+            }
+            const cumulativeCoveredCount = (prior?.cumulative_covered_count ?? 0) + waveIds.length;
+            const material = {
+              schema_version: "backlog-grooming-sweep-checkpoint/v1",
+              sweep_id: snapshot.sweep_id,
+              snapshot_digest: snapshot.snapshot_digest,
+              wave_number: waveNumber,
+              required_waves: snapshot.required_waves,
+              source_run_id: String(context.runId),
+              source_attempt: Number(process.env.GITHUB_RUN_ATTEMPT),
+              source_manifest_artifact_id: String(process.env.MANIFEST_ARTIFACT_ID),
+              source_manifest_digest: "${{ needs.plan.outputs.manifest-digest }}",
+              source_aggregate_run_id: String(context.runId),
+              source_aggregate_artifact_id: String(process.env.AGGREGATE_ARTIFACT_ID),
+              source_aggregate_digest: process.env.AGGREGATE_DIGEST,
+              prior_checkpoint_run_id: process.env.PRIOR_CHECKPOINT_RUN_ID || null,
+              prior_checkpoint_artifact_id: process.env.PRIOR_CHECKPOINT_ARTIFACT_ID || null,
+              prior_checkpoint_digest: process.env.PRIOR_CHECKPOINT_DIGEST || null,
+              assessed_issue_ids: assessedIds,
+              deferred_issue_ids: deferredIds,
+              cumulative_covered_count: cumulativeCoveredCount,
+              cumulative_digest: digest({
+                prior: prior?.cumulative_digest ?? null,
+                wave_number: waveNumber,
+                assessed_issue_ids: assessedIds,
+                deferred_issue_ids: deferredIds,
+              }),
+              remaining_count: snapshot.total_snapshot_count - cumulativeCoveredCount,
+              sweep_complete: cumulativeCoveredCount === snapshot.total_snapshot_count,
+              completed_at: new Date().toISOString(),
+            };
+            const checkpoint = { ...material, checkpoint_digest: digest(material) };
+            if (checkpoint.remaining_count < 0 ||
+                checkpoint.sweep_complete !== (waveNumber === snapshot.required_waves)) {
+              throw new Error("Checkpoint terminal state is inconsistent with snapshot coverage");
+            }
+            fs.mkdirSync("checkpoint-output", { recursive: true });
+            fs.writeFileSync("checkpoint-output/checkpoint.json", `${JSON.stringify(checkpoint, null, 2)}\n`);
+            core.setOutput("checkpoint-digest", checkpoint.checkpoint_digest);
+            core.setOutput("sweep-complete", String(checkpoint.sweep_complete));
+      - name: Upload accepted checkpoint
+        id: upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backlog-grooming-sweep-v1-${{ needs.plan.outputs.sweep-id }}-checkpoint-${{ needs.plan.outputs.wave-number }}-${{ github.run_id }}
+          path: checkpoint-output/checkpoint.json
+          if-no-files-found: error
+          retention-days: 30
+
+  continue:
+    name: Dispatch the next bounded wave
+    needs:
+      - plan
+      - checkpoint
+    if: ${{ needs.checkpoint.result == 'success' && needs.checkpoint.outputs.sweep-complete == 'false' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Dispatch exact successor
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: "backlog-groom-orchestrator.yml",
+              ref: "${{ needs.plan.outputs.source-ref-name }}",
+              inputs: {
+                "protocol-version": process.env.SWEEP_PROTOCOL_VERSION,
+                "sweep-id": "${{ needs.plan.outputs.sweep-id }}",
+                "wave-number": String(Number("${{ needs.plan.outputs.wave-number }}") + 1),
+                "snapshot-run-id": "${{ needs.plan.outputs.snapshot-run-id }}",
+                "snapshot-artifact-id": "${{ needs.plan.outputs.snapshot-artifact-id }}",
+                "snapshot-digest": "${{ needs.plan.outputs.snapshot-digest }}",
+                "checkpoint-run-id": String(context.runId),
+                "checkpoint-artifact-id": "${{ needs.checkpoint.outputs.artifact-id }}",
+                "checkpoint-digest": "${{ needs.checkpoint.outputs.checkpoint-digest }}",
+              },
+            });
+
+  reduce:
+    name: Reduce the complete immutable snapshot
+    needs:
+      - plan
+      - checkpoint
+    if: ${{ needs.checkpoint.result == 'success' && needs.checkpoint.outputs.sweep-complete == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      final-digest: ${{ steps.reduce.outputs.final-digest }}
+      final-artifact-id: ${{ steps.final.outputs.artifact-id }}
+    steps:
+      - name: Download sweep snapshot
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.plan.outputs.snapshot-artifact-id }}
+          path: reduction-snapshot
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.plan.outputs.snapshot-run-id }}
+      - name: Download terminal checkpoint
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.checkpoint.outputs.artifact-id }}
+          path: reduction-terminal
+      - name: Validate chain and reduce rows
+        id: reduce
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SNAPSHOT_RUN_ID: ${{ needs.plan.outputs.snapshot-run-id }}
+          SNAPSHOT_ARTIFACT_ID: ${{ needs.plan.outputs.snapshot-artifact-id }}
+          TERMINAL_CHECKPOINT_ARTIFACT_ID: ${{ needs.checkpoint.outputs.artifact-id }}
+        with:
+          script: |
+            const crypto = require("crypto");
+            const fs = require("fs");
+            const canonicalize = (value) => {
+              if (Array.isArray(value)) return `[${value.map(canonicalize).join(",")}]`;
+              if (value !== null && typeof value === "object") return `{${Object.keys(value).sort().map(
+                (key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`,
+              ).join(",")}}`;
+              return JSON.stringify(value);
+            };
+            const digest = (value) => crypto.createHash("sha256").update(canonicalize(value)).digest("hex");
+            const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value) &&
+              Object.keys(value).sort().join("|") === [...keys].sort().join("|");
+            const parsePositiveInteger = (name, value) => {
+              const parsed = Number(value);
+              if (!Number.isSafeInteger(parsed) || parsed <= 0) throw new Error(`${name} must be a positive safe integer`);
+              return parsed;
+            };
+            const workflowPath = ".github/workflows/backlog-groom-orchestrator.yml";
+            const authenticateArtifact = async (artifactId, expectedName, expectedRunId, expectedSha) => {
+              const parsedArtifactId = parsePositiveInteger("artifact-id", artifactId);
+              const parsedRunId = parsePositiveInteger("run-id", expectedRunId);
+              const { data: artifact } = await github.rest.actions.getArtifact({
+                ...context.repo,
+                artifact_id: parsedArtifactId,
+              });
+              const { data: run } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: parsedRunId });
+              if (artifact.expired || artifact.name !== expectedName || artifact.workflow_run?.id !== parsedRunId ||
+                  run.path !== workflowPath || run.head_sha !== expectedSha) {
+                throw new Error(`Artifact ${parsedArtifactId} failed authoritative producer validation`);
+              }
+              return parsedArtifactId;
+            };
+            const download = async (artifactId, destination, expectedName, expectedRunId, expectedSha) => {
+              const parsedArtifactId = await authenticateArtifact(
+                artifactId,
+                expectedName,
+                expectedRunId,
+                expectedSha,
+              );
+              fs.mkdirSync(destination, { recursive: true });
+              const archive = `${destination}.zip`;
+              const { data } = await github.rest.actions.downloadArtifact({
+                ...context.repo,
+                artifact_id: parsedArtifactId,
+                archive_format: "zip",
+              });
+              fs.writeFileSync(archive, Buffer.from(data));
+              await exec.exec("unzip", ["-q", archive, "-d", destination]);
+              fs.rmSync(archive, { force: true });
+            };
+            const snapshot = JSON.parse(fs.readFileSync("reduction-snapshot/snapshot.json", "utf8"));
+            const { snapshot_digest: recordedSnapshotDigest, ...snapshotMaterial } = snapshot;
+            if (digest(snapshotMaterial) !== recordedSnapshotDigest ||
+                snapshot.sweep_id !== "${{ needs.plan.outputs.sweep-id }}" ||
+                recordedSnapshotDigest !== "${{ needs.plan.outputs.snapshot-digest }}") {
+              throw new Error("Reduction snapshot identity or digest validation failed");
+            }
+            await authenticateArtifact(
+              process.env.SNAPSHOT_ARTIFACT_ID,
+              `backlog-grooming-sweep-v1-${snapshot.repository_id}-snapshot-${snapshot.sweep_id}`,
+              process.env.SNAPSHOT_RUN_ID,
+              snapshot.source_sha,
+            );
+            let checkpoint = JSON.parse(fs.readFileSync("reduction-terminal/checkpoint.json", "utf8"));
+            await authenticateArtifact(
+              process.env.TERMINAL_CHECKPOINT_ARTIFACT_ID,
+              `backlog-grooming-sweep-v1-${snapshot.sweep_id}-checkpoint-${snapshot.required_waves}-${context.runId}`,
+              String(context.runId),
+              snapshot.source_sha,
+            );
+            const checkpointKeys = [
+              "schema_version", "sweep_id", "snapshot_digest", "wave_number", "required_waves",
+              "source_run_id", "source_attempt", "source_manifest_artifact_id", "source_manifest_digest",
+              "source_aggregate_run_id", "source_aggregate_artifact_id", "source_aggregate_digest",
+              "prior_checkpoint_run_id", "prior_checkpoint_artifact_id", "prior_checkpoint_digest",
+              "assessed_issue_ids", "deferred_issue_ids", "cumulative_covered_count", "cumulative_digest",
+              "remaining_count", "sweep_complete", "completed_at", "checkpoint_digest",
+            ];
+            const manifestKeys = [
+              "schema_version", "sweep_id", "snapshot_digest", "wave_number", "required_waves",
+              "prior_checkpoint_run_id", "prior_checkpoint_artifact_id", "prior_checkpoint_digest",
+              "ordered_issue_ids", "planned_aic", "run_id", "attempt", "shards", "manifest_digest",
+            ];
+            const aggregateKeys = [
+              "schema_version", "sweep_id", "snapshot_digest", "wave_number", "required_waves",
+              "manifest_digest", "source_run_id", "source_attempt", "result_digests",
+              "assessed_issue_ids", "deferred_issue_ids", "rows", "aggregate_digest",
+            ];
+            const chain = [];
+            while (checkpoint) {
+              const { checkpoint_digest: recordedDigest, ...material } = checkpoint;
+              if (!exactKeys(checkpoint, checkpointKeys) || digest(material) !== recordedDigest ||
+                  checkpoint.schema_version !== "backlog-grooming-sweep-checkpoint/v1" ||
+                  checkpoint.sweep_id !== snapshot.sweep_id || checkpoint.snapshot_digest !== snapshot.snapshot_digest ||
+                  checkpoint.required_waves !== snapshot.required_waves) {
+                throw new Error("Checkpoint chain validation failed");
+              }
+              chain.push(checkpoint);
+              if (!checkpoint.prior_checkpoint_artifact_id) break;
+              const destination = `chain-${checkpoint.wave_number - 1}`;
+              await download(
+                checkpoint.prior_checkpoint_artifact_id,
+                destination,
+                `backlog-grooming-sweep-v1-${snapshot.sweep_id}-checkpoint-${checkpoint.wave_number - 1}-${checkpoint.prior_checkpoint_run_id}`,
+                checkpoint.prior_checkpoint_run_id,
+                snapshot.source_sha,
+              );
+              const prior = JSON.parse(fs.readFileSync(`${destination}/checkpoint.json`, "utf8"));
+              if (prior.checkpoint_digest !== checkpoint.prior_checkpoint_digest ||
+                  prior.source_run_id !== checkpoint.prior_checkpoint_run_id ||
+                  prior.wave_number !== checkpoint.wave_number - 1) {
+                throw new Error("Checkpoint predecessor link failed");
+              }
+              checkpoint = prior;
+            }
+            chain.reverse();
+            if (chain.length !== snapshot.required_waves || chain.some((item, index) => item.wave_number !== index + 1)) {
+              throw new Error("Complete checkpoint chain is missing or reordered");
+            }
+            const rowsByIssue = new Map();
+            let coveredCount = 0;
+            let prior = null;
+            for (const item of chain) {
+              const expectedIds = snapshot.cursor_candidate_ids.slice(
+                (item.wave_number - 1) * snapshot.wave_capacity,
+                item.wave_number * snapshot.wave_capacity,
+              );
+              const expectedSortedIds = [...expectedIds].sort((a, b) => a - b);
+              const waveIds = [...item.assessed_issue_ids, ...item.deferred_issue_ids].sort((a, b) => a - b);
+              const expectedCumulativeDigest = digest({
+                prior: prior?.cumulative_digest ?? null,
+                wave_number: item.wave_number,
+                assessed_issue_ids: item.assessed_issue_ids,
+                deferred_issue_ids: item.deferred_issue_ids,
+              });
+              coveredCount += expectedIds.length;
+              if (JSON.stringify(waveIds) !== JSON.stringify(expectedSortedIds) ||
+                  item.prior_checkpoint_run_id !== (prior?.source_run_id ?? null) ||
+                  item.prior_checkpoint_digest !== (prior?.checkpoint_digest ?? null) ||
+                  item.cumulative_covered_count !== coveredCount ||
+                  item.cumulative_digest !== expectedCumulativeDigest ||
+                  item.remaining_count !== snapshot.total_snapshot_count - coveredCount ||
+                  item.sweep_complete !== (coveredCount === snapshot.total_snapshot_count)) {
+                throw new Error("Checkpoint cumulative coverage or predecessor invariant failed");
+              }
+              const manifestDestination = `manifest-${item.wave_number}`;
+              await download(
+                item.source_manifest_artifact_id,
+                manifestDestination,
+                `backlog-grooming-sweep-v1-${snapshot.sweep_id}-manifest-${item.wave_number}-${item.source_run_id}`,
+                item.source_run_id,
+                snapshot.source_sha,
+              );
+              const manifest = JSON.parse(fs.readFileSync(`${manifestDestination}/manifest.json`, "utf8"));
+              const { manifest_digest: recordedManifestDigest, ...manifestMaterial } = manifest;
+              if (!exactKeys(manifest, manifestKeys) || digest(manifestMaterial) !== recordedManifestDigest ||
+                  recordedManifestDigest !== item.source_manifest_digest ||
+                  manifest.schema_version !== "backlog-grooming-wave-manifest/v1" ||
+                  manifest.sweep_id !== snapshot.sweep_id || manifest.snapshot_digest !== snapshot.snapshot_digest ||
+                  manifest.wave_number !== item.wave_number || manifest.required_waves !== snapshot.required_waves ||
+                  manifest.run_id !== item.source_run_id || manifest.attempt !== item.source_attempt ||
+                  manifest.prior_checkpoint_run_id !== item.prior_checkpoint_run_id ||
+                  manifest.prior_checkpoint_artifact_id !== item.prior_checkpoint_artifact_id ||
+                  manifest.prior_checkpoint_digest !== item.prior_checkpoint_digest ||
+                  JSON.stringify(manifest.ordered_issue_ids) !== JSON.stringify(expectedIds) ||
+                  manifest.planned_aic !== snapshot.planned_aic_per_wave) {
+                throw new Error("Wave manifest provenance or snapshot slice failed");
+              }
+              const destination = `aggregate-${item.wave_number}`;
+              await download(
+                item.source_aggregate_artifact_id,
+                destination,
+                `backlog-grooming-sweep-v1-${snapshot.sweep_id}-aggregate-${item.wave_number}-${item.source_aggregate_run_id}`,
+                item.source_aggregate_run_id,
+                snapshot.source_sha,
+              );
+              const aggregate = JSON.parse(fs.readFileSync(`${destination}/aggregate.json`, "utf8"));
+              const { aggregate_digest: recordedDigest, ...material } = aggregate;
+              if (!exactKeys(aggregate, aggregateKeys) || digest(material) !== recordedDigest ||
+                  recordedDigest !== item.source_aggregate_digest ||
+                  aggregate.schema_version !== "backlog-grooming-wave-aggregate/v1" ||
+                  aggregate.sweep_id !== snapshot.sweep_id || aggregate.snapshot_digest !== snapshot.snapshot_digest ||
+                  aggregate.wave_number !== item.wave_number || aggregate.required_waves !== snapshot.required_waves ||
+                  aggregate.manifest_digest !== manifest.manifest_digest ||
+                  aggregate.source_run_id !== item.source_aggregate_run_id ||
+                  aggregate.source_attempt !== item.source_attempt ||
+                  JSON.stringify(aggregate.assessed_issue_ids) !== JSON.stringify(item.assessed_issue_ids) ||
+                  JSON.stringify(aggregate.deferred_issue_ids) !== JSON.stringify(item.deferred_issue_ids) ||
+                  JSON.stringify(aggregate.rows.map((row) => row.issue)) !== JSON.stringify(expectedIds) ||
+                  aggregate.result_digests.length !== manifest.shards.length) {
+                throw new Error("Wave aggregate provenance failed");
+              }
+              for (const row of aggregate.rows) {
+                if (rowsByIssue.has(row.issue) || !snapshot.ordered_issue_ids.includes(row.issue)) {
+                  throw new Error(`Duplicate or out-of-snapshot result ${row.issue}`);
+                }
+                rowsByIssue.set(row.issue, row);
+              }
+              prior = item;
+            }
+            const rows = snapshot.cursor_candidate_ids.map((issue) => rowsByIssue.get(issue));
+            if (rows.some((row) => !row) || rowsByIssue.size !== snapshot.total_snapshot_count) {
+              throw new Error("Final result set does not exactly equal the snapshot");
+            }
+            const assessedRows = rows.filter((row) => row.assessment_status === "Assessed");
+            const deferredRows = rows.filter((row) => row.assessment_status === "Deferred");
+            const cursorRows = snapshot.cursor_candidate_ids.map((issue) => rowsByIssue.get(issue))
+              .filter((row) => row.assessment_status === "Assessed");
+            const completedAt = chain.map((item) => item.completed_at).sort().at(-1);
+            const finalMaterial = {
+              schema_version: "backlog-grooming-sweep-aggregate/v1",
+              sweep_id: snapshot.sweep_id,
+              snapshot_digest: snapshot.snapshot_digest,
+              source_sha: snapshot.source_sha,
+              predecessor_aggregate_digest: snapshot.prior_published_aggregate_digest,
+              completed_at: completedAt,
+              total_snapshot_count: snapshot.total_snapshot_count,
+              completed_waves: chain.length,
+              assessed: assessedRows.length,
+              deferred: deferredRows.length,
+              prior_cursor: snapshot.prior_cursor,
+              next_cursor: cursorRows.length > 0 ? cursorRows.at(-1).issue : snapshot.prior_cursor,
+              stop_reason: deferredRows.length === 0 ? "Complete snapshot assessed" : `${deferredRows.length} snapshot issues deferred`,
+              planned_sweep_aic: snapshot.planned_sweep_aic,
+              checkpoint_digests: chain.map((item) => item.checkpoint_digest),
+              rows,
+            };
+            const finalAggregate = { ...finalMaterial, aggregate_digest: digest(finalMaterial) };
+            fs.mkdirSync("final-output", { recursive: true });
+            fs.writeFileSync("final-output/aggregate.json", `${JSON.stringify(finalAggregate, null, 2)}\n`);
+            const report = [
+              "# Backlog Grooming Sweep Detail", "",
+              "| Issue | Title | Disposition | Assessment status | Recommended next step |", "|---|---|---|---|---|",
+              ...rows.map((row) => `| #${row.issue} | ${String(row.title).replace(/\|/g, "\\|").replace(/\r?\n/g, "<br>")} | ${row.disposition} | ${row.assessment_status} | ${String(row.recommended_next_step).replace(/\|/g, "\\|").replace(/\r?\n/g, "<br>")} |`),
+            ].join("\n");
+            fs.writeFileSync("final-output/report.md", `${report}\n`);
+            core.setOutput("final-digest", finalAggregate.aggregate_digest);
+      - name: Upload final detailed sweep evidence
+        id: final
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backlog-grooming-sweep-v1-${{ needs.plan.outputs.sweep-id }}-final-${{ github.run_id }}
+          path: final-output
+          if-no-files-found: error
+          retention-days: 30
+      - name: Record automatic publication inputs
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            await core.summary
+              .addHeading("Backlog grooming publication queued")
+              .addTable([
+                [{ data: "Publisher input", header: true }, { data: "Value", header: true }],
+                ["final-run-id", String(context.runId)],
+                ["final-artifact-id", "${{ steps.final.outputs.artifact-id }}"],
+                ["final-digest", "${{ steps.reduce.outputs.final-digest }}"],
+                ["sweep-id", "${{ needs.plan.outputs.sweep-id }}"],
+                ["snapshot-digest", "${{ needs.plan.outputs.snapshot-digest }}"],
+                ["source-sha", "${{ needs.plan.outputs.source-sha }}"],
+              ])
+              .addRaw("\nThe completed run activates Backlog Grooming Publisher automatically. These values also support an exact manual replay.\n")
+              .write();

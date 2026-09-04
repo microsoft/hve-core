@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { evaluateAssertion, normalizeSpokenOutput } from './assertions.mjs';
 import { applyStateEmulation, applyTrigger, resolveTargetUrl, launchChrome, maximizeBrowserWindow, snapshotAccessibilityTree, ensureAutomationWindowFocused, ensureScreenReaderStopped } from './_shared.mjs';
 import { createScreenReaderDriver } from './drivers/driver-contract.mjs';
+import { assertHttpUrl } from './validation.mjs';
 
 const ALLOWED_STATUSES = new Set(['pass', 'fail', 'candidate', 'unsupported', 'error']);
 
@@ -96,6 +97,7 @@ function isRetryableNavigationError(error, retryableErrorPatterns) {
 }
 
 async function navigatePageWithRetry({ page, context, targetUrl, runtimeConfig }) {
+  assertHttpUrl(targetUrl, 'AT-plan target URL');
   const policy = resolveNavigationPolicy(runtimeConfig);
   const attempts = [];
   let resolvedPage = page;
@@ -193,7 +195,10 @@ async function preparePageLifecycle({
   const triggerSequence = resolveTriggerSequence(matrixCase, surface);
   if (triggerSequence.length > 0 && !triggerAfterDriverStart) {
     for (const trigger of triggerSequence) {
-      await applyTrigger(resolvedPage, trigger, { strict: true });
+      await applyTrigger(resolvedPage, trigger, {
+        strict: true,
+        baseUrl: resolvedTargetUrl,
+      });
     }
   }
   return {
@@ -571,6 +576,8 @@ export async function processAtPlanCase({
   };
 
   try {
+    // Asserted here so an unsupported target is rejected before any browser is obtained.
+    assertHttpUrl(resolvedTarget, 'AT-plan target URL');
     const driverInput = {
       platform: normalizedPlatform,
       driverName: effectiveDriverName,
@@ -763,7 +770,10 @@ export async function processAtPlanCase({
     if (resolvedPage && triggerAfterDriverStart) {
       const triggerSequence = resolveTriggerSequence(matrixCase, resolvedSurface);
       for (const trigger of triggerSequence) {
-        await applyTrigger(resolvedPage, trigger, { strict: true });
+        await applyTrigger(resolvedPage, trigger, {
+          strict: true,
+          baseUrl: resolvedTarget,
+        });
       }
     }
 

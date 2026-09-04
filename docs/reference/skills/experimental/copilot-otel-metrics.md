@@ -2,7 +2,13 @@
 title: copilot-otel-metrics
 description: "Set up GitHub Copilot OpenTelemetry capture: configure the VS Code export settings, generate a local Grafana stack and dashboard, or generate the Azure collector, infrastructure, and dashboard for an organization."
 sidebar_position: 2
-ms.date: 2026-07-27
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - experimental
+  - copilot-otel-metrics
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -38,7 +44,7 @@ It has four independent modes. Name one directly, or describe the outcome you wa
 Reach for something else when:
 
 * You want seat-level Copilot adoption figures across an organization. The GitHub Copilot Metrics API answers that far more cheaply, though it returns no spans, tokens, or latency.
-* You want session lifecycle events rather than OTel signals. [Local Telemetry](../../../customization/local-telemetry) covers the hook-based JSONL capture.
+* You want session lifecycle events rather than OTel signals. This skill covers OTel signals only.
 * You are instrumenting your own service rather than measuring Copilot. [telemetry-foundations](../shared/telemetry-foundations) carries the OpenTelemetry naming conventions for that.
 
 ## Example usage

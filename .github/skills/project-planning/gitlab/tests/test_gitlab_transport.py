@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import io
 import json
+import pathlib
 import subprocess
 import urllib.request
 from typing import cast
@@ -21,6 +22,7 @@ from test_constants import (
 )
 
 REQUEST_ENDPOINT = f"{TEST_API_URL}/test"
+REQUEST_ENDPOINT_WITH_CONTEXT = f"{REQUEST_ENDPOINT}?private_token=hidden#fragment"
 REQUEST_JSON = {"iid": 7, "title": "MR"}
 REQUEST_BODY = '{"iid": 7, "title": "MR"}'
 NON_JSON_BODY = "plain text output"
@@ -46,6 +48,25 @@ def _text_response(response_factory: ResponseFactory, body: str) -> object:
     return response
 
 
+def _oauth_profile(
+    *,
+    issuer: str = TEST_GITLAB_URL,
+    client_id: str = "client",
+    expires_at: int = 4_102_444_800,
+) -> gitlab.credentials.Profile:
+    return {
+        "issuer": issuer,
+        "client_id": client_id,
+        "access_token": "oauth-access",
+        "refresh_token": "oauth-refresh",
+        "token_type": "Bearer",
+        "obtained_at": 1,
+        "expires_at": expires_at,
+        "scopes": ["api"],
+        "usable": True,
+    }
+
+
 class TestRequireEnvironment:
     """Tests for require_environment."""
 
@@ -53,7 +74,8 @@ class TestRequireEnvironment:
         gitlab.require_environment()
 
         assert gitlab.gitlab_url == TEST_GITLAB_URL
-        assert gitlab.gitlab_token == TEST_GITLAB_TOKEN
+        assert gitlab.auth_context is not None
+        assert gitlab.auth_context.token == TEST_GITLAB_TOKEN
         assert gitlab.api_url == TEST_API_URL
 
     @pytest.mark.parametrize(
@@ -70,16 +92,15 @@ class TestRequireEnvironment:
         self,
         monkeypatch: pytest.MonkeyPatch,
         base_url: str,
-        capsys: pytest.CaptureFixture[str],
     ) -> None:
         monkeypatch.setenv("GITLAB_URL", base_url)
         monkeypatch.setenv("GITLAB_TOKEN", TEST_GITLAB_TOKEN)
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.require_environment()
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert "origin-only" in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert "origin-only" in str(exc_info.value)
 
     def test_accepts_clean_origin_base_url(
         self, monkeypatch: pytest.MonkeyPatch
@@ -90,6 +111,69 @@ class TestRequireEnvironment:
         gitlab.require_environment()
 
         assert gitlab.api_url == "https://gitlab.example.com/api/v4"
+
+    def test_oauth_mode_rejects_legacy_token(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GITLAB_AUTH_MODE", "oauth")
+        monkeypatch.setenv("GITLAB_OAUTH_CLIENT_ID", "client")
+
+        with pytest.raises(gitlab.GitLabError) as exc_info:
+            gitlab.require_environment()
+
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+
+    def test_legacy_mode_is_explicit(self) -> None:
+        gitlab.require_environment()
+
+        assert gitlab.auth_context is not None
+        assert gitlab.auth_context.mode == "legacy-token"
+
+    def test_unset_mode_does_not_infer_legacy_from_token(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.delenv("GITLAB_AUTH_MODE")
+
+        with pytest.raises(gitlab.GitLabError) as exc_info:
+            gitlab.require_environment()
+
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert "must not be set in oauth mode" in str(exc_info.value)
+
+    def test_oauth_mode_loads_bound_profile(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: pathlib.Path,
+    ) -> None:
+        store_path = tmp_path / "gitlab" / "gitlab-token.json"
+        gitlab.credentials.save_store(
+            store_path,
+            {"schema_version": 1, "profiles": {"default": _oauth_profile()}},
+        )
+        monkeypatch.setenv("GITLAB_AUTH_MODE", "oauth")
+        monkeypatch.delenv("GITLAB_TOKEN")
+        monkeypatch.setenv("GITLAB_OAUTH_CLIENT_ID", "client")
+        monkeypatch.setenv("GITLAB_TOKEN_STORE", str(store_path))
+
+        gitlab.require_environment()
+
+        assert gitlab.auth_context == gitlab.AuthContext(
+            mode="oauth",
+            issuer=TEST_GITLAB_URL,
+            profile_name="default",
+            store_path=store_path,
+            client_id="client",
+        )
+
+    def test_auth_context_repr_omits_legacy_token(self) -> None:
+        context = gitlab.AuthContext(
+            mode="legacy-token",
+            issuer=TEST_GITLAB_URL,
+            token=TEST_GITLAB_TOKEN,
+        )
+
+        assert TEST_GITLAB_TOKEN not in repr(context)
 
     @pytest.mark.parametrize(
         ("env_name", "env_value", "expected_message"),
@@ -105,15 +189,14 @@ class TestRequireEnvironment:
         env_name: str,
         env_value: str,
         expected_message: str,
-        capsys: pytest.CaptureFixture[str],
     ) -> None:
         monkeypatch.setenv(env_name, env_value)
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.require_environment()
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert expected_message in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert expected_message in str(exc_info.value)
 
 
 class TestProject:
@@ -144,39 +227,35 @@ class TestProject:
         assert gitlab.project() == expected
 
     def test_requires_remote_when_project_not_configured(
-        self, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
+        self, mocker: MockerFixture
     ) -> None:
         mocker.patch("subprocess.check_output", side_effect=FileNotFoundError)
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.project()
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert PROJECT_NOT_FOUND in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert PROJECT_NOT_FOUND in str(exc_info.value)
 
-    def test_rejects_unparseable_remote(
-        self, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_rejects_unparseable_remote(self, mocker: MockerFixture) -> None:
         mocker.patch(
             "subprocess.check_output",
             return_value="ssh://gitlab.example.com/group/project.git\n",
         )
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.project()
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert PARSE_REMOTE_ERROR in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert PARSE_REMOTE_ERROR in str(exc_info.value)
 
-    def test_rejects_empty_path_after_host(
-        self, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_rejects_empty_path_after_host(self, mocker: MockerFixture) -> None:
         mocker.patch(
             "subprocess.check_output", return_value="https://gitlab.example.com/.git\n"
         )
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.project()
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert EMPTY_REMOTE_PATH_ERROR in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert EMPTY_REMOTE_PATH_ERROR in str(exc_info.value)
 
     @pytest.mark.parametrize(
         "remote_url",
@@ -190,15 +269,14 @@ class TestProject:
         self,
         mocker: MockerFixture,
         remote_url: str,
-        capsys: pytest.CaptureFixture[str],
     ) -> None:
         mocker.patch("subprocess.check_output", return_value=remote_url)
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.project()
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert "invalid project path" in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert "invalid project path" in str(exc_info.value)
 
     def test_accepts_owner_project_path_from_remote(
         self, mocker: MockerFixture
@@ -240,6 +318,221 @@ class TestRequest:
         assert json.loads(request_data.decode()) == {"title": "MR"}
         assert _request_headers(request)["private-token"] == TEST_GITLAB_TOKEN
         assert '"iid": 7' in capsys.readouterr().out
+
+    def test_oauth_request_uses_bearer_header(
+        self,
+        configured_gitlab: ConfiguredGitLab,
+        response_factory: ResponseFactory,
+        mocker: MockerFixture,
+    ) -> None:
+        profile = {"access_token": "oauth-access"}
+        gitlab.auth_context = gitlab.AuthContext(
+            mode="oauth", issuer="https://gitlab.example.com"
+        )
+        mocker.patch("gitlab._oauth_profile", return_value=profile)
+        opener = mocker.patch(
+            "gitlab._OPENER.open",
+            return_value=_json_response(response_factory, REQUEST_BODY),
+        )
+
+        gitlab.request("GET", REQUEST_ENDPOINT, quiet=True)
+
+        headers = _request_headers(opener.call_args.args[0])
+        assert headers["authorization"] == "Bearer oauth-access"
+        assert "private-token" not in headers
+
+    def test_oauth_get_refreshes_and_replays_once_after_401(
+        self,
+        response_factory: ResponseFactory,
+        http_error_factory: HttpErrorFactory,
+        mocker: MockerFixture,
+    ) -> None:
+        gitlab.auth_context = gitlab.AuthContext(
+            mode="oauth",
+            issuer=TEST_GITLAB_URL,
+            profile_name="default",
+            store_path=pathlib.Path("/unused"),
+            client_id="client",
+        )
+        opener = mocker.patch(
+            "gitlab._OPENER.open",
+            side_effect=[
+                http_error_factory("unauthorized", 401, REQUEST_ENDPOINT),
+                _json_response(response_factory, REQUEST_BODY),
+            ],
+        )
+        mocker.patch(
+            "gitlab._force_oauth_refresh",
+            return_value=_oauth_profile(),
+        )
+
+        result = gitlab._request_bytes("GET", REQUEST_ENDPOINT)
+
+        assert json.loads(result) == REQUEST_JSON
+        assert opener.call_count == 2
+
+    def test_oauth_post_does_not_replay_after_401(
+        self,
+        http_error_factory: HttpErrorFactory,
+        mocker: MockerFixture,
+    ) -> None:
+        gitlab.auth_context = gitlab.AuthContext(
+            mode="oauth",
+            issuer=TEST_GITLAB_URL,
+            profile_name="default",
+            store_path=pathlib.Path("/unused"),
+            client_id="client",
+        )
+        opener = mocker.patch(
+            "gitlab._OPENER.open",
+            side_effect=http_error_factory("unauthorized", 401, REQUEST_ENDPOINT),
+        )
+        refresh = mocker.patch("gitlab._force_oauth_refresh")
+
+        with pytest.raises(gitlab.GitLabAPIError):
+            gitlab._request_bytes("POST", REQUEST_ENDPOINT, data={"title": "MR"})
+
+        assert opener.call_count == 1
+        refresh.assert_not_called()
+
+    def test_retryable_refresh_failure_preserves_profile(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+        tmp_path: pathlib.Path,
+    ) -> None:
+        store_path = tmp_path / "gitlab" / "gitlab-token.json"
+        profile = _oauth_profile(expires_at=1)
+        gitlab.credentials.save_store(
+            store_path,
+            {"schema_version": 1, "profiles": {"default": profile}},
+        )
+        context = gitlab.AuthContext(
+            mode="oauth",
+            issuer=TEST_GITLAB_URL,
+            profile_name="default",
+            store_path=store_path,
+            client_id="client",
+        )
+        mocker.patch(
+            "gitlab.oauth.refresh_profile",
+            side_effect=gitlab.oauth.OAuthError(
+                "connection refused",
+                retryable=True,
+            ),
+        )
+
+        with pytest.raises(gitlab.GitLabError):
+            gitlab._oauth_profile(context)
+
+        stored = gitlab.credentials.get_profile(
+            gitlab.credentials.load_store(store_path),
+            "default",
+        )
+        assert stored["usable"] is True
+
+    def test_uncertain_refresh_failure_retains_unusable_tombstone(
+        self,
+        mocker: MockerFixture,
+        tmp_path: pathlib.Path,
+    ) -> None:
+        store_path = tmp_path / "gitlab" / "gitlab-token.json"
+        profile = _oauth_profile(expires_at=1)
+        gitlab.credentials.save_store(
+            store_path,
+            {"schema_version": 1, "profiles": {"default": profile}},
+        )
+        context = gitlab.AuthContext(
+            mode="oauth",
+            issuer=TEST_GITLAB_URL,
+            profile_name="default",
+            store_path=store_path,
+            client_id="client",
+        )
+        mocker.patch(
+            "gitlab.oauth.refresh_profile",
+            side_effect=gitlab.oauth.OAuthError(
+                "response lost",
+                retryable=True,
+                completion_uncertain=True,
+            ),
+        )
+
+        with pytest.raises(gitlab.GitLabError):
+            gitlab._oauth_profile(context)
+
+        stored = gitlab.credentials.get_profile(
+            gitlab.credentials.load_store(store_path),
+            "default",
+        )
+        assert stored["usable"] is False
+
+    def test_terminal_refresh_failure_marks_profile_unusable(
+        self,
+        mocker: MockerFixture,
+        tmp_path: pathlib.Path,
+    ) -> None:
+        store_path = tmp_path / "gitlab" / "gitlab-token.json"
+        profile = _oauth_profile(expires_at=1)
+        gitlab.credentials.save_store(
+            store_path,
+            {"schema_version": 1, "profiles": {"default": profile}},
+        )
+        context = gitlab.AuthContext(
+            mode="oauth",
+            issuer=TEST_GITLAB_URL,
+            profile_name="default",
+            store_path=store_path,
+            client_id="client",
+        )
+        mocker.patch(
+            "gitlab.oauth.refresh_profile",
+            side_effect=gitlab.oauth.OAuthError(
+                "invalid grant",
+                code="invalid_grant",
+            ),
+        )
+
+        with pytest.raises(gitlab.GitLabError):
+            gitlab._oauth_profile(context)
+
+        stored = gitlab.credentials.get_profile(
+            gitlab.credentials.load_store(store_path),
+            "default",
+        )
+        assert stored["usable"] is False
+
+    def test_locked_profile_binding_mismatch_prevents_refresh(
+        self,
+        mocker: MockerFixture,
+        tmp_path: pathlib.Path,
+    ) -> None:
+        store_path = tmp_path / "gitlab" / "gitlab-token.json"
+        gitlab.credentials.save_store(
+            store_path,
+            {
+                "schema_version": 1,
+                "profiles": {
+                    "default": _oauth_profile(
+                        issuer="https://attacker.example.com",
+                        expires_at=1,
+                    )
+                },
+            },
+        )
+        context = gitlab.AuthContext(
+            mode="oauth",
+            issuer=TEST_GITLAB_URL,
+            profile_name="default",
+            store_path=store_path,
+            client_id="client",
+        )
+        refresh = mocker.patch("gitlab.oauth.refresh_profile")
+
+        with pytest.raises(gitlab.GitLabError):
+            gitlab._oauth_profile(context)
+
+        refresh.assert_not_called()
 
     def test_suppresses_output_when_quiet(
         self,
@@ -295,13 +588,15 @@ class TestRequest:
         error = http_error_factory('{"message": "forbidden"}', code=403)
 
         mocker.patch("gitlab._OPENER.open", side_effect=error)
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabAPIError) as exc_info:
             gitlab.request("GET", REQUEST_ENDPOINT)
 
-        assert exc_info.value.code == gitlab.EXIT_FAILURE
-        error_lines = capsys.readouterr().err.splitlines()
-        assert "forbidden" in error_lines[0]
-        assert f"error: HTTP 403 from GET {REQUEST_ENDPOINT}" in error_lines[1]
+        assert exc_info.value.exit_code == gitlab.EXIT_FAILURE
+        assert exc_info.value.status == 403
+        rendered = str(exc_info.value)
+        assert rendered.startswith(f"HTTP 403 from GET {REQUEST_ENDPOINT}")
+        assert "forbidden" in rendered
+        assert capsys.readouterr().err == ""
 
     def test_reports_raw_http_error_body(
         self,
@@ -313,12 +608,13 @@ class TestRequest:
         error = http_error_factory("Service unavailable", code=503)
 
         mocker.patch("gitlab._OPENER.open", side_effect=error)
-        with pytest.raises(SystemExit):
+        with pytest.raises(gitlab.GitLabAPIError) as exc_info:
             gitlab.request("DELETE", REQUEST_ENDPOINT)
 
-        error_lines = capsys.readouterr().err.splitlines()
-        assert error_lines[0] == "Service unavailable"
-        assert error_lines[1] == f"error: HTTP 503 from DELETE {REQUEST_ENDPOINT}"
+        assert str(exc_info.value) == (
+            f"HTTP 503 from DELETE {REQUEST_ENDPOINT}: Service unavailable"
+        )
+        assert capsys.readouterr().err == ""
 
     def test_prefers_parsed_http_error_message_and_redacts_it(
         self,
@@ -335,12 +631,13 @@ class TestRequest:
         )
         mocker.patch("gitlab._OPENER.open", side_effect=error)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(gitlab.GitLabAPIError) as exc_info:
             gitlab.request("GET", REQUEST_ENDPOINT)
 
-        output = capsys.readouterr().err
-        assert "token=[REDACTED]" in output
-        assert "abc123" not in output
+        rendered = str(exc_info.value)
+        assert "token=[REDACTED]" in rendered
+        assert "abc123" not in rendered
+        assert capsys.readouterr().err == ""
 
     def test_falls_back_to_redacted_raw_error_body(
         self,
@@ -357,20 +654,19 @@ class TestRequest:
         )
         mocker.patch("gitlab._OPENER.open", side_effect=error)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(gitlab.GitLabAPIError) as exc_info:
             gitlab.request("GET", REQUEST_ENDPOINT)
 
-        output = capsys.readouterr().err
-        assert "token=[REDACTED]" in output
-        assert "abc123" not in output
+        rendered = str(exc_info.value)
+        assert "token=[REDACTED]" in rendered
+        assert "abc123" not in rendered
+        assert capsys.readouterr().err == ""
 
 
 class TestGitLabTransportHardening:
     """Regression tests for hardened transport behavior."""
 
-    def test_uses_timeout_for_git_remote_lookup(
-        self, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_uses_timeout_for_git_remote_lookup(self, mocker: MockerFixture) -> None:
         captured: dict[str, object] = {}
 
         def fake_check_output(*args: object, **kwargs: object) -> str:
@@ -382,12 +678,12 @@ class TestGitLabTransportHardening:
 
         mocker.patch("subprocess.check_output", side_effect=fake_check_output)
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.project()
 
-        assert exc_info.value.code == gitlab.EXIT_FAILURE
+        assert exc_info.value.exit_code == gitlab.EXIT_FAILURE
         assert captured["kwargs"]["timeout"] == gitlab.REQUEST_TIMEOUT
-        assert "timed out resolving git remote for project" in capsys.readouterr().err
+        assert "timed out resolving git remote for project" in str(exc_info.value)
 
     def test_prints_redacted_and_capped_non_json_output(
         self,
@@ -420,23 +716,54 @@ class TestGitLabTransportHardening:
         expected_fragment: str,
         configured_gitlab: ConfiguredGitLab,
         response_factory: ResponseFactory,
-        capsys: pytest.CaptureFixture[str],
         mocker: MockerFixture,
     ) -> None:
         response = response_factory(REQUEST_BODY)
         response.headers = {"Content-Type": content_type} if content_type else {}
         mocker.patch("gitlab._OPENER.open", return_value=response)
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabAPIError) as exc_info:
             gitlab._request_bytes(
                 "GET",
-                REQUEST_ENDPOINT,
+                REQUEST_ENDPOINT_WITH_CONTEXT,
                 headers={"PRIVATE-TOKEN": TEST_GITLAB_TOKEN},
                 require_json=True,
             )
 
-        assert exc_info.value.code == gitlab.EXIT_FAILURE
-        assert expected_fragment in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_FAILURE
+        assert exc_info.value.method == "GET"
+        assert exc_info.value.resource == REQUEST_ENDPOINT
+        rendered = str(exc_info.value)
+        assert expected_fragment in rendered
+        assert "hidden" not in rendered
+        assert "fragment" not in rendered
+
+    def test_rejects_oversized_json_response_as_api_error(
+        self,
+        configured_gitlab: ConfiguredGitLab,
+        response_factory: ResponseFactory,
+        mocker: MockerFixture,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(gitlab, "MAX_BODY_BYTES", 16)
+        response = _json_response(response_factory, "x" * 17)
+        mocker.patch("gitlab._OPENER.open", return_value=response)
+
+        with pytest.raises(gitlab.GitLabAPIError) as exc_info:
+            gitlab._request_bytes(
+                "POST",
+                REQUEST_ENDPOINT_WITH_CONTEXT,
+                headers={"PRIVATE-TOKEN": TEST_GITLAB_TOKEN},
+                require_json=True,
+            )
+
+        assert exc_info.value.exit_code == gitlab.EXIT_FAILURE
+        assert exc_info.value.method == "POST"
+        assert exc_info.value.resource == REQUEST_ENDPOINT
+        rendered = str(exc_info.value)
+        assert "response body exceeds size limit" in rendered
+        assert "hidden" not in rendered
+        assert "fragment" not in rendered
 
     def test_allows_application_json_content_type(
         self,
@@ -499,10 +826,10 @@ class TestGitLabTransportHardening:
     ) -> None:
         monkeypatch.setenv("GITLAB_URL", "http://example.com")
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.require_environment()
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
 
     def test_rejects_non_localhost_http_even_when_allow_env_set(
         self, monkeypatch: pytest.MonkeyPatch
@@ -511,10 +838,10 @@ class TestGitLabTransportHardening:
         monkeypatch.setenv("GITLAB_TOKEN", TEST_GITLAB_TOKEN)
         monkeypatch.setenv("GITLAB_ALLOW_INSECURE", "1")
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.require_environment()
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
 
     def test_rejects_loopback_http_without_allow_env(
         self, monkeypatch: pytest.MonkeyPatch
@@ -523,10 +850,10 @@ class TestGitLabTransportHardening:
         monkeypatch.setenv("GITLAB_TOKEN", TEST_GITLAB_TOKEN)
         monkeypatch.delenv("GITLAB_ALLOW_INSECURE", raising=False)
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.require_environment()
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
 
     def test_accepts_loopback_http_with_allow_env(
         self, monkeypatch: pytest.MonkeyPatch
@@ -541,27 +868,26 @@ class TestGitLabTransportHardening:
         assert gitlab.api_url == "http://127.0.0.1:8080/api/v4"
 
     def test_rejects_invalid_mr_state(self) -> None:
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.cmd_mr_list(["invalid-state"])
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
 
     def test_rejects_invalid_ref(self) -> None:
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.cmd_pipeline_run(["invalid ref"])
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
 
     def test_rejects_zero_for_positive_integer(self) -> None:
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.validate_positive_int("0", "max_results")
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
 
     def test_rejects_oversized_stdin_payload_before_parsing(
         self,
         monkeypatch: pytest.MonkeyPatch,
-        capsys: pytest.CaptureFixture[str],
         mocker: MockerFixture,
     ) -> None:
         monkeypatch.setattr(
@@ -571,11 +897,11 @@ class TestGitLabTransportHardening:
         )
         mocker.patch("gitlab.load_json_payload", side_effect=AssertionError)
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.cmd_mr_create([])
 
-        assert exc_info.value.code == gitlab.EXIT_FAILURE
-        assert "request body exceeds size limit" in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_FAILURE
+        assert "request body exceeds size limit" in str(exc_info.value)
 
     def test_redacts_sensitive_error_bodies(
         self,
@@ -592,7 +918,8 @@ class TestGitLabTransportHardening:
         )
         mocker.patch("gitlab._OPENER.open", side_effect=error)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(gitlab.GitLabAPIError) as exc_info:
             gitlab.request("GET", REQUEST_ENDPOINT)
 
+        assert "abc123" not in str(exc_info.value)
         assert "abc123" not in capsys.readouterr().err

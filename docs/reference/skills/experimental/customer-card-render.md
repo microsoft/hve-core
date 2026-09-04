@@ -2,7 +2,13 @@
 title: customer-card-render
 description: Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline
 sidebar_position: 3
-ms.date: 2026-07-27
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - experimental
+  - customer-card-render
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

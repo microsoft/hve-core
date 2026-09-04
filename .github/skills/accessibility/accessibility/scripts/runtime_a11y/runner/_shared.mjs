@@ -7,8 +7,9 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 import { evaluateAssertion } from './assertions.mjs';
-import { resolveRouteUrl } from './route.mjs';
+import { resolveDestinationUrl, resolveRouteUrl } from './route.mjs';
 import { retainScreenReaderTranscript } from './transcript.mjs';
+import { assertArtifactId, assertHttpUrl } from './validation.mjs';
 import {
   buildProbeResults,
   emitProbeResult,
@@ -653,7 +654,7 @@ async function runTriggerAction(action, strict) {
   await action().catch(() => undefined);
 }
 
-export async function applyTrigger(page, trigger, { strict = false } = {}) {
+export async function applyTrigger(page, trigger, { strict = false, baseUrl = null } = {}) {
   if (!trigger) {
     return;
   }
@@ -661,6 +662,13 @@ export async function applyTrigger(page, trigger, { strict = false } = {}) {
   const action = trigger.action || 'visit';
   const target = trigger.target;
   const locator = resolveLocator(page, target);
+  const currentUrl = baseUrl || (typeof page?.url === 'function' ? page.url() : page?.url);
+  let navigationUrl = null;
+  if (action === 'navigate') {
+    navigationUrl = resolveDestinationUrl(trigger.value || '/', currentUrl);
+  } else if (action === 'visit' && (typeof target === 'string' || target?.value)) {
+    navigationUrl = resolveDestinationUrl(target?.value || target, currentUrl);
+  }
 
   switch (action) {
     case 'click':
@@ -686,14 +694,14 @@ export async function applyTrigger(page, trigger, { strict = false } = {}) {
       break;
     case 'navigate':
       await runTriggerAction(
-        () => page.goto(trigger.value || '/', { waitUntil: 'domcontentloaded' }),
+        () => page.goto(navigationUrl, { waitUntil: 'domcontentloaded' }),
         strict,
       );
       break;
     case 'visit':
-      if (typeof target === 'string' || target?.value) {
+      if (navigationUrl) {
         await runTriggerAction(
-          () => page.goto(target.value || target || '/', { waitUntil: 'domcontentloaded' }),
+          () => page.goto(navigationUrl, { waitUntil: 'domcontentloaded' }),
           strict,
         );
       }
@@ -849,13 +857,6 @@ export async function snapshotAccessibilityTree(page) {
 // profile. Do not pass an explicit --user-data-dir; Playwright rejects it.
 export function buildChromeLaunchOptions(options = {}) {
   const args = [...CHROME_HARDENING_ARGS];
-  if (Array.isArray(options.args)) {
-    for (const arg of options.args) {
-      if (typeof arg === 'string' && arg && !args.includes(arg)) {
-        args.push(arg);
-      }
-    }
-  }
 
   return {
     channel: 'chrome',
@@ -954,6 +955,7 @@ export async function readLiveRegionSnapshot(page, { settleMs = 500 } = {}) {
 export async function runProbeWithPage(callback) {
   const contextData = getRuntimeContext();
   const { config, probeId, surfaceId, state, baseUrl, trace } = contextData;
+  assertHttpUrl(baseUrl, 'Runtime base URL');
   const surface = (config.surfaces || []).find((entry) => entry.id === surfaceId) || null;
   const targetUrl = resolveTargetUrl(baseUrl, surface);
   const browser = await chromium.launch(buildChromeLaunchOptions({ headless: true }));
@@ -970,8 +972,17 @@ export async function runProbeWithPage(callback) {
 
   let tracePath = null;
   if (trace) {
+    assertArtifactId(probeId, 'Probe ID');
+    assertArtifactId(surfaceId, 'Surface ID');
+    assertArtifactId(state, 'State ID');
     await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
-    const artifactsDir = path.join(process.cwd(), 'artifacts', `${probeId}-${surfaceId}-${state}`);
+    const artifactsDir = path.join(
+      process.cwd(),
+      'artifacts',
+      probeId,
+      surfaceId,
+      state,
+    );
     await mkdir(artifactsDir, { recursive: true });
     tracePath = path.join(artifactsDir, 'trace.zip');
   }
@@ -987,7 +998,7 @@ export async function runProbeWithPage(callback) {
     // Discard any live-region updates from hydration so only trigger-driven
     // announcements are counted as a fired status message.
     await clearLiveRegionLog(page);
-    await applyTrigger(page, trigger);
+    await applyTrigger(page, trigger, { baseUrl });
     return await callback({ browser, context, page, targetUrl, surface, state, tracePath, baseUrl, probeId, surfaceId });
   } finally {
     if (tracePath) {

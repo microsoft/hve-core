@@ -47,7 +47,15 @@ Treat delegation as a first-class architecture decision, not an afterthought. Du
 
 ## Choose the model profile
 
-The `model:` field is optional. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent or prompt model uses the current session or model-picker selection. When a stable profile is needed, select High, Medium, or Low from the responsibility before authoring `model:`. Use Low for bounded, literal, mechanical execution, Medium for semantic discovery, architecture, authoring, research, and calibrated review, and High only when the responsibility requires the deepest reasoning profile. Declare the selected profile's exact ordered list:
+The `model:` field is optional. An omitted subagent model inherits the invoking parent's model; an omitted directly invoked agent or prompt model uses the current session or model-picker selection. When a stable profile is needed, select High, Medium, or Low from the responsibility before authoring `model:`. Use Low for bounded, literal, mechanical execution, Medium for semantic discovery, architecture, authoring, research, and calibrated review, and High only when the responsibility requires the deepest reasoning profile.
+
+Agent and subagent frontmatter accepts only a single scalar string for `model:`; the Copilot CLI's frontmatter parser rejects an array value and drops the artifact entirely. Declare the selected profile's canonical scalar:
+
+* High: `Claude Opus 5 (copilot)`
+* Medium: `GPT-5.6 Terra (copilot)`
+* Low: `GPT-5.6 Luna (copilot)`
+
+A prompt's `model:` may instead declare the selected profile's exact ordered three-model fallback list, since prompts are not affected by the CLI's agent-parsing constraint:
 
 * High: `Claude Opus 5 (copilot)`, `GPT-5.6 Sol (copilot)`, `GPT-5.5 (copilot)`
 * Medium: `GPT-5.6 Terra (copilot)`, `Claude Sonnet 5 (copilot)`, `MAI-Code-1-Flash (copilot)`
@@ -78,10 +86,7 @@ Worker subagent (`.agent.md` under `subagents/`), pinned to a fixed low tier bec
 name: CSV Profiler Worker
 description: "Profiles a CSV with a bundled script and returns a summary. Use when profiling CSV data."
 user-invocable: false
-model:
-  - GPT-5.6 Luna (copilot)
-  - MAI-Code-1-Flash (copilot)
-  - Claude Haiku 4.5 (copilot)
+model: GPT-5.6 Luna (copilot)
 ---
 ```
 

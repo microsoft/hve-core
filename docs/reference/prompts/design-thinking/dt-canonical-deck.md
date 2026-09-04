@@ -2,7 +2,13 @@
 title: Dt Canonical Deck
 description: "Canonical deck workflow: asset-ready offer, snapshot generation/refresh, and optional customer-card PowerPoint build"
 sidebar_position: 1
-ms.date: 2026-08-02
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - prompt
+  - design-thinking
+  - dt-canonical-deck
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

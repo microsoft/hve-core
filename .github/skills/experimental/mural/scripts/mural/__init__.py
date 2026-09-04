@@ -55,6 +55,7 @@ from ._constants import (  # noqa: E402,F401
     DEFAULT_PROFILE_NAME,
     DEFAULT_REDIRECT_URI,
     DEFAULT_SCOPES,
+    ENV_ALLOW_INSECURE_API,
     ENV_BASE_URL,
     ENV_CLIENT_ID,
     ENV_CLIENT_SECRET,
@@ -285,7 +286,10 @@ from ._backends import (  # noqa: E402,F401
 # defined above, and so ``_oauth`` (imported below) sees ``_TOKEN_OPENER`` and
 # ``_parse_token_response`` already bound on the package.
 from ._transport import (  # noqa: E402,F401
+    _API_OPENER,
     _RATE_BUCKET,
+    REQUEST_TIMEOUT_SECONDS,
+    _SAS_OPENER,
     _TOKEN_OPENER,
     _authenticated_request,
     _backoff_seconds,
@@ -354,6 +358,8 @@ from ._output import (  # noqa: E402,F401
     _strip_html,
 )
 
+# isort: split
+
 # ---------------------------------------------------------------------------
 # Step 3 — Validation, projection, pagination, asset upload helpers
 # ---------------------------------------------------------------------------
@@ -378,6 +384,7 @@ from ._validation import (  # noqa: E402,F401
     _build_shape_body,
     _build_sticky_note_body,
     _build_textbox_body,
+    _canonicalize_api_base_url,
     _coerce_xy,
     _extract_field,
     _format_output,
@@ -388,6 +395,7 @@ from ._validation import (  # noqa: E402,F401
     _project_record,
     _resolve_workspace_id,
     _unwrap_value_envelope,
+    _validate_api_path,
     _validate_area_layout,
     _validate_asset_url,
     _validate_hyperlink,
@@ -398,6 +406,10 @@ from ._validation import (  # noqa: E402,F401
 # Explicit re-export surface so static analysis recognizes these names as part
 # of the package API (consumed by sibling modules and ``mural.<symbol>`` tests).
 __all__ = [
+    # re-exported transport openers
+    "_API_OPENER",
+    "_SAS_OPENER",
+    "_TOKEN_OPENER",
     # re-exported from ._constants
     "_AUTHORED_BY_AI_TAG_TEXT",
     "_KNOWN_CREDENTIAL_KEYS",
@@ -416,7 +428,9 @@ __all__ = [
     "DEFAULT_PROFILE_NAME",
     "DEFAULT_REDIRECT_URI",
     "DEFAULT_SCOPES",
+    "REQUEST_TIMEOUT_SECONDS",
     "ENV_BASE_URL",
+    "ENV_ALLOW_INSECURE_API",
     "ENV_CLIENT_ID",
     "ENV_CLIENT_SECRET",
     "ENV_DEFAULT_WORKSPACE",
@@ -469,6 +483,7 @@ __all__ = [
     "_MAX_TAG_TEXT_LEN",
     "_MURAL_ID_RE",
     "_VALID_AREA_LAYOUTS",
+    "_canonicalize_api_base_url",
     "_area_cache",
     "_build_area_body",
     "_build_arrow_body",
@@ -486,6 +501,7 @@ __all__ = [
     "_resolve_workspace_id",
     "_unwrap_value_envelope",
     "_validate_area_layout",
+    "_validate_api_path",
     "_validate_asset_url",
     "_validate_hyperlink",
     "_validate_mural_id",

@@ -2,7 +2,13 @@
 title: Hve Core/Markdown
 description: Markdown authoring conventions for all .md files
 sidebar_position: 6
-ms.date: 2026-07-23
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - hve-core
+  - hve-core/markdown
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,8 +28,10 @@ Markdown authoring conventions for all .md files
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these conventions whenever you create or modify Markdown in the
+repository, including frontmatter, headings, lists, tables, links, and code
+fences. Follow any narrower path-specific schema or documentation instructions
+in addition to this baseline rather than substituting a generic Markdown style.
 
 ## Example usage
 

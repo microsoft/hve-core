@@ -2,7 +2,13 @@
 title: RPI Planner
 description: Revise one assigned RPI plan phase and matching phase details within a shared planning artifact. Use when a parent needs bounded phase authoring.
 sidebar_position: 2
-ms.date: 2026-07-23
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - hve-core
+  - rpi-planner
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

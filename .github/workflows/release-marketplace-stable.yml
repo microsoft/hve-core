@@ -104,14 +104,13 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-  discover:
-    name: Discover Marketplace Packages
+  verify-catalog:
+    name: Verify Stable Catalog Version
     needs: [normalize-version]
     runs-on: ubuntu-latest
     permissions:
       contents: read
     outputs:
-      matrix: ${{ steps.discover.outputs.matrix }}
       version: ${{ steps.read-version.outputs.version }}
     steps:
       - name: Checkout code
@@ -119,9 +118,6 @@ jobs:
         with:
           ref: ${{ needs.normalize-version.outputs.tag }}
           persist-credentials: false
-
-      - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
 
       - name: Resolve effective version
         id: read-version
@@ -131,8 +127,8 @@ jobs:
         run: |
           set -euo pipefail
           version="$INPUT_VERSION"
-          # The released tag is the discovery source, so its catalog version and
-          # immutable plugin locator are what the marketplace publish resolves.
+          # The released tag is the publication source, so its catalog version
+          # is what the marketplace publish resolves.
           catalog_version=$(jq -r '.metadata.version' .github/plugin/marketplace.json)
           if [ "$catalog_version" != "$version" ]; then
             echo "::error::Catalog version $catalog_version at the release ref does not match $version"
@@ -140,19 +136,12 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      - name: Discover marketplace packages
-        id: discover
-        shell: pwsh
-        run: |
-          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel 'Stable'
-
   publish:
-    name: Publish Extensions
-    needs: [normalize-version, discover]
+    name: Publish Extension
+    needs: [normalize-version, verify-catalog]
     if: ${{ !inputs.dry-run }}
     uses: ./.github/workflows/extension-marketplace-publish.yml
     with:
-      packages-matrix: ${{ needs.discover.outputs.matrix }}
       tag: ${{ needs.normalize-version.outputs.tag }}
       pre-release: false
     permissions:

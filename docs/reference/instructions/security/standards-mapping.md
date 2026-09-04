@@ -2,7 +2,13 @@
 title: Security/Standards Mapping
 description: "OWASP and NIST security standards references with rpi-research activation for CIS, WAF, CAF, and other runtime lookups"
 sidebar_position: 3
-ms.date: 2026-07-16
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - security
+  - security/standards-mapping
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,8 +28,11 @@ OWASP and NIST security standards references with rpi-research activation for CI
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this orchestration during Security Planner standards mapping to combine
+durable OWASP and NIST references with conditional security skills. Activate
+bounded research for WAF, CAF, regulated frameworks, or volatile service-level
+mappings; do not delegate standards already covered by the named durable
+skills.
 
 ## Example usage
 

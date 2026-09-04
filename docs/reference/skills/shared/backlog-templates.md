@@ -2,7 +2,13 @@
 title: backlog-templates
 description: "Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, Accessibility, and Privacy planners"
 sidebar_position: 1
-ms.date: 2026-07-27
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - shared
+  - backlog-templates
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

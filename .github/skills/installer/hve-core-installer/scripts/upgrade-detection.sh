@@ -38,10 +38,8 @@ main() {
     fail "Unsupported .hve-tracking.json schemaVersion '$schema_version' (expected 2). Delete .hve-tracking.json and re-run the installer for a clean reinstall."
   fi
 
-  local installed_version installed_package installed_profile installed_components source_version version_changed
+  local installed_version installed_profile installed_components source_version version_changed
   installed_version=$(jq -r '.version' "$manifest_path")
-  # Empty when a schema version 2 manifest predates package-explicit selection; no package is inferred.
-  installed_package=$(jq -r '.selection.package // ""' "$manifest_path")
   installed_profile=$(jq -r '.selection.profile // "custom"' "$manifest_path")
   installed_components=$(jq -r '(.selection.components // []) | join(",")' "$manifest_path")
   source_version=$(jq -r '.version' "$hve_core_base_path/package.json")
@@ -53,7 +51,6 @@ main() {
   echo "INSTALLED_VERSION=$installed_version"
   echo "SOURCE_VERSION=$source_version"
   echo "VERSION_CHANGED=$version_changed"
-  echo "INSTALLED_PACKAGE=$installed_package"
   echo "INSTALLED_PROFILE=$installed_profile"
   echo "INSTALLED_COMPONENTS=$installed_components"
 }

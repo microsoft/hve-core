@@ -118,6 +118,27 @@ stimuli:
         config:
           pattern: "(?is)(artifact|directory|file\\s+name).*(experiment-design).*(methodology|MVE|hypothes|vetting)"
 
+  - name: instruction-github-backlog-grooming-conformance
+    prompt: |
+      You are assessing backlog health and writing state under
+      `.copilot-tracking/github-issues/backlog/weekly/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path), and what does it require for eligibility, continuation, reporting,
+      and automated safety?
+    tags:
+      category: behavior-conformance
+      instruction: github-backlog-grooming
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)github-issues/backlog|github-backlog-grooming"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)all\\s+open|paginate|cursor|markdown|tracker|advisory|no\\s+(automatic\\s+)?clos"
+
   - name: instruction-community-interaction-conformance
     prompt: |
       You are about to post a public comment on a GitHub issue declining a
@@ -333,7 +354,7 @@ stimuli:
   - name: instruction-licensing-posture-conformance
     prompt: |
       You are writing a new reference file under
-      `.github/skills/data-science/ds-dataops/references/` that summarizes an
+      `.github/skills/data-science-engineering/dataops/references/` that summarizes an
       upstream CC BY 4.0 documentation page. Which
       `.github/instructions/**/*.instructions.md` file defines the repository
       posture for licensing, reproduction, and attribution of third-party
@@ -628,7 +649,7 @@ stimuli:
   - name: instruction-python-uv-projects-conformance
     prompt: |
       You are setting up a new Python skill virtual environment under
-      `.github/skills/data-science/example-skill/` and need to manage
+      `.github/skills/data-science-engineering/example-skill/` and need to manage
       dependencies with uv. Which `.github/instructions/**/*.instructions.md`
       file applies (cite its path) and which uv commands does it prescribe
       for init, venv creation, dependency add, sync, and lock?
@@ -1339,3 +1360,24 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(paraphrase|verbatim|public[-\s]domain|W3C|CC0|attribution)'
+  - name: instruction-tm7-generation-workflow-conformance
+    prompt: |
+      You are about to run the native Windows Threat Modeling Tool feedback
+      loop from a security planning session. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require of you before the harness takes over
+      the mouse and keyboard, before treating a generated model as
+      authored, and when asked to promote a layout overlay?
+    tags:
+      category: behavior-conformance
+      instruction: tm7-generation-workflow
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)security-planner\\.agent\\.md|security-reviewer\\.agent\\.md|tm7-generation-workflow"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)confirm|wait|operator|pending|not\\s+an?\\s+approval|promote"

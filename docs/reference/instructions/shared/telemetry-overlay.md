@@ -2,7 +2,13 @@
 title: Shared/Telemetry Overlay
 description: "Shared telemetry overlay applying telemetry-foundations vocabulary across planner, ADR, PRD, accessibility, code-review, and implementation artifacts"
 sidebar_position: 6
-ms.date: 2026-08-04
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - shared
+  - shared/telemetry-overlay
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,8 +28,11 @@ Shared telemetry overlay applying telemetry-foundations vocabulary across planne
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this overlay when a covered planning, review, ADR, PRD, accessibility, or
+implementation artifact changes observable production behavior, audit trails,
+or telemetry decisions. Consult `telemetry-foundations` for vocabulary and
+PII controls, apply the matching artifact mandate, and omit telemetry when the
+behavior is not observable.
 
 ## Example usage
 
