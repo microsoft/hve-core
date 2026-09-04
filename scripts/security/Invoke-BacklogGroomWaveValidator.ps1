@@ -527,12 +527,15 @@ function Invoke-BacklogGroomWaveValidation {
     else { @() }
     $ByShard = @{}
     $RowsByIssue = @{}
+    $ContractErrorsByIssue = @{}
+    $Normalizations = [System.Collections.Generic.List[System.Text.Json.JsonElement]]::new()
     $ResultDigests = [System.Collections.Generic.List[string]]::new()
-    $ReportKeys = @('run', 'issues')
+    $ReportKeys = @('run', 'issues', 'contract_errors', 'normalizations')
     $RunKeys = @(
         'timestamp', 'total_open_inventory', 'assessed', 'priority_cohort', 'round_robin_cohort',
-        'deferred', 'stop_reason', 'next_cursor'
+        'deferred', 'contract_errors', 'stop_reason', 'next_cursor'
     )
+    $DiagnosticKeys = @('issue', 'code')
     $RowKeys = @(
         'issue', 'title', 'selection_reason', 'activity_and_ownership_context', 'acceptance_signals',
         'repository_evidence', 'lineage_evidence', 'similarity_outcome', 'disposition', 'grooming_finding',
@@ -545,7 +548,7 @@ function Invoke-BacklogGroomWaveValidation {
     foreach ($ResultPath in $ResultPaths) {
         $Result = Read-JsonElement -Path $ResultPath
         if (-not (Test-ExactJsonKeys -Element $Result -Keys $ResultKeys) -or
-            $Result.GetProperty('schema_version').GetString() -cne 'backlog-grooming-shard-result/v1') {
+            $Result.GetProperty('schema_version').GetString() -cne 'backlog-grooming-shard-result/v2') {
             throw 'Malformed shard result envelope'
         }
         $ResultShardId = $Result.GetProperty('shard_id').GetString()
@@ -558,10 +561,16 @@ function Invoke-BacklogGroomWaveValidation {
         $ReportData = $Result.GetProperty('report_data')
         $Run = [System.Text.Json.JsonElement]::new()
         $Issues = [System.Text.Json.JsonElement]::new()
+        $ContractErrors = [System.Text.Json.JsonElement]::new()
+        $ResultNormalizations = [System.Text.Json.JsonElement]::new()
         $HasRun = $ReportData.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
             $ReportData.TryGetProperty('run', [ref]$Run)
         $HasIssues = $ReportData.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
             $ReportData.TryGetProperty('issues', [ref]$Issues)
+        $HasContractErrors = $ReportData.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
+            $ReportData.TryGetProperty('contract_errors', [ref]$ContractErrors)
+        $HasNormalizations = $ReportData.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
+            $ReportData.TryGetProperty('normalizations', [ref]$ResultNormalizations)
         if ($null -eq $Expected -or $ByShard.ContainsKey($ResultShardId) -or
             $Result.GetProperty('run_id').GetString() -cne $ExpectedRunId -or
             -not (Test-SafeJsonInteger -Element $ResultAttempt -Minimum 1) -or $ResultAttempt.GetInt64() -ne $ExpectedAttempt -or
@@ -569,14 +578,18 @@ function Invoke-BacklogGroomWaveValidation {
             $Result.GetProperty('producer').GetString() -cne 'backlog-groom/result-job' -or
             -not $DatesValid -or $CompletedAt -lt $StartedAt -or
             -not (Test-LongArrayEqual -Left (Assert-PositiveUniqueJsonIds -Name "$ResultShardId ordered_candidate_ids" -Element $Result.GetProperty('ordered_candidate_ids')) -Right $Expected.OrderedCandidateIds) -or
-            -not $HasRun -or -not $HasIssues -or
+            -not $HasRun -or -not $HasIssues -or -not $HasContractErrors -or -not $HasNormalizations -or
             -not (Test-ExactJsonKeys -Element $ReportData -Keys $ReportKeys) -or
             -not (Test-ExactJsonKeys -Element $Run -Keys $RunKeys) -or
             $Issues.ValueKind -ne [System.Text.Json.JsonValueKind]::Array -or
+            $ContractErrors.ValueKind -ne [System.Text.Json.JsonValueKind]::Array -or
+            $ResultNormalizations.ValueKind -ne [System.Text.Json.JsonValueKind]::Array -or
             $Run.GetProperty('total_open_inventory').GetInt64() -ne $Expected.Element.GetProperty('total_open_inventory').GetInt64() -or
             $Run.GetProperty('priority_cohort').GetInt64() -ne $Expected.PriorityCandidateIds.Count -or
             $Run.GetProperty('round_robin_cohort').GetInt64() -ne $Expected.RoundRobinCandidateIds.Count -or
-            $Run.GetProperty('assessed').GetInt64() + $Run.GetProperty('deferred').GetInt64() -ne $Issues.GetArrayLength()) {
+            $Run.GetProperty('assessed').GetInt64() + $Run.GetProperty('deferred').GetInt64() -ne $Issues.GetArrayLength() -or
+            $Run.GetProperty('contract_errors').GetInt64() -ne $ContractErrors.GetArrayLength() -or
+            $Issues.GetArrayLength() + $ContractErrors.GetArrayLength() -ne $Expected.OrderedCandidateIds.Count) {
             throw 'Missing, duplicate, stale, unexpected, or manifest-mismatched shard result'
         }
         $RecordedResultDigest = $Result.GetProperty('result_digest').GetString()
@@ -677,12 +690,57 @@ function Invoke-BacklogGroomWaveValidation {
             }
             $RowsByIssue[$IssueId] = $Row.Clone()
         }
+        foreach ($ContractError in $ContractErrors.EnumerateArray()) {
+            $IssueElement = [System.Text.Json.JsonElement]::new()
+            $CodeElement = [System.Text.Json.JsonElement]::new()
+            $HasIssue = $ContractError.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
+                $ContractError.TryGetProperty('issue', [ref]$IssueElement)
+            $HasCode = $ContractError.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
+                $ContractError.TryGetProperty('code', [ref]$CodeElement)
+            $IssueId = if ($HasIssue -and (Test-SafeJsonInteger -Element $IssueElement -Minimum 1)) {
+                $IssueElement.GetInt64()
+            }
+            else { -1 }
+            if (-not (Test-ExactJsonKeys -Element $ContractError -Keys $DiagnosticKeys) -or
+                -not $HasCode -or $CodeElement.ValueKind -ne [System.Text.Json.JsonValueKind]::String -or
+                $CodeElement.GetString() -cne 'invalid_row_contract' -or
+                $Expected.OrderedCandidateIds -notcontains $IssueId -or
+                $RowsByIssue.ContainsKey($IssueId) -or $ContractErrorsByIssue.ContainsKey($IssueId)) {
+                throw "Malformed, duplicate, advisory-bearing, or out-of-shard contract error $IssueId"
+            }
+            $ContractErrorsByIssue[$IssueId] = $ContractError.Clone()
+        }
+        foreach ($Normalization in $ResultNormalizations.EnumerateArray()) {
+            $IssueElement = [System.Text.Json.JsonElement]::new()
+            $CodeElement = [System.Text.Json.JsonElement]::new()
+            $HasIssue = $Normalization.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
+                $Normalization.TryGetProperty('issue', [ref]$IssueElement)
+            $HasCode = $Normalization.ValueKind -eq [System.Text.Json.JsonValueKind]::Object -and
+                $Normalization.TryGetProperty('code', [ref]$CodeElement)
+            $IssueId = if ($HasIssue -and (Test-SafeJsonInteger -Element $IssueElement -Minimum 1)) {
+                $IssueElement.GetInt64()
+            }
+            else { -1 }
+            if (-not (Test-ExactJsonKeys -Element $Normalization -Keys $DiagnosticKeys) -or
+                -not $HasCode -or $CodeElement.ValueKind -ne [System.Text.Json.JsonValueKind]::String -or
+                $CodeElement.GetString() -cne 'superseded_similarity_normalized' -or
+                -not $RowsByIssue.ContainsKey($IssueId) -or
+                @($Normalizations | Where-Object { $_.GetProperty('issue').GetInt64() -eq $IssueId }).Count -gt 0) {
+                throw "Malformed, duplicate, or unbound normalization $IssueId"
+            }
+            $Normalizations.Add($Normalization.Clone())
+        }
     }
     if ($ByShard.Count -ne $ManifestShards.Count) {
         throw 'Wave result set is incomplete'
     }
-    $Rows = @($OrderedIssueIds | ForEach-Object { $RowsByIssue[$_] })
-    if (@($Rows | Where-Object { $null -eq $_ }).Count -gt 0 -or $RowsByIssue.Count -ne $OrderedIssueIds.Count) {
+    $Rows = @($OrderedIssueIds | Where-Object { $RowsByIssue.ContainsKey($_) } | ForEach-Object { $RowsByIssue[$_] })
+    $ContractErrorIds = [long[]]@($OrderedIssueIds | Where-Object { $ContractErrorsByIssue.ContainsKey($_) })
+    $ContractErrorRecords = @($ContractErrorIds | ForEach-Object { $ContractErrorsByIssue[$_] })
+    if ($RowsByIssue.Count + $ContractErrorsByIssue.Count -ne $OrderedIssueIds.Count -or
+        @($OrderedIssueIds | Where-Object {
+                $RowsByIssue.ContainsKey($_) -eq $ContractErrorsByIssue.ContainsKey($_)
+            }).Count -gt 0) {
         throw 'Wave issue coverage is incomplete or out of snapshot'
     }
     $AssessedIds = [long[]]@($Rows | Where-Object { $_.GetProperty('assessment_status').GetString() -ceq 'Assessed' } |
@@ -696,7 +754,7 @@ function Invoke-BacklogGroomWaveValidation {
     $ResultDigestValues = $ResultDigests.ToArray()
     [Array]::Sort($ResultDigestValues, [System.StringComparer]::Ordinal)
     $AggregateMaterial = [System.Text.Json.Nodes.JsonObject]::new()
-    $AggregateMaterial.Add('schema_version', 'backlog-grooming-wave-aggregate/v1')
+    $AggregateMaterial.Add('schema_version', 'backlog-grooming-wave-aggregate/v2')
     $AggregateMaterial.Add('sweep_id', $Manifest.GetProperty('sweep_id').GetString())
     $AggregateMaterial.Add('snapshot_digest', $Manifest.GetProperty('snapshot_digest').GetString())
     $AggregateMaterial.Add('wave_number', $WaveNumber.GetInt64())
@@ -707,7 +765,10 @@ function Invoke-BacklogGroomWaveValidation {
     $AggregateMaterial.Add('result_digests', (New-JsonArray -Values $ResultDigestValues))
     $AggregateMaterial.Add('assessed_issue_ids', (New-JsonArray -Values $AssessedIds))
     $AggregateMaterial.Add('deferred_issue_ids', (New-JsonArray -Values $DeferredIds))
+    $AggregateMaterial.Add('contract_error_issue_ids', (New-JsonArray -Values $ContractErrorIds))
     $AggregateMaterial.Add('rows', (New-JsonArray -Values $Rows))
+    $AggregateMaterial.Add('contract_errors', (New-JsonArray -Values $ContractErrorRecords))
+    $AggregateMaterial.Add('normalizations', (New-JsonArray -Values $Normalizations.ToArray()))
     $AggregateDigest = Get-CanonicalJsonDigest -Element (Read-JsonElementFromNode -Node $AggregateMaterial)
     $AggregateMaterial.Add('aggregate_digest', $AggregateDigest)
     $SerializerOptions = [System.Text.Json.JsonSerializerOptions]::new()
@@ -721,6 +782,7 @@ function Invoke-BacklogGroomWaveValidation {
         AggregateDigest = $AggregateDigest
         AssessedIds = $AssessedIds
         DeferredIds = $DeferredIds
+        ContractErrorIds = $ContractErrorIds
         AggregatePath = $AggregatePath
     }
 }
@@ -759,6 +821,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         Set-CIOutput -Name 'aggregate-digest' -Value $Validation.AggregateDigest
         Set-CIOutput -Name 'assessed-ids' -Value (New-JsonArray -Values @($Validation.AssessedIds)).ToJsonString()
         Set-CIOutput -Name 'deferred-ids' -Value (New-JsonArray -Values @($Validation.DeferredIds)).ToJsonString()
+        Set-CIOutput -Name 'contract-error-ids' -Value (New-JsonArray -Values @($Validation.ContractErrorIds)).ToJsonString()
         Write-Host 'Backlog grooming wave validation passed' -ForegroundColor Green
         exit 0
     }

@@ -100,7 +100,7 @@ BeforeAll {
             }
         )
         $Result = [ordered]@{
-            schema_version = 'backlog-grooming-shard-result/v1'
+            schema_version = 'backlog-grooming-shard-result/v2'
             run_id = '12345'
             attempt = 1
             shard_id = 'shard-01'
@@ -117,10 +117,13 @@ BeforeAll {
                     priority_cohort = 1
                     round_robin_cohort = 1
                     deferred = 1
+                    contract_errors = 0
                     stop_reason = 'complete'
                     next_cursor = 101
                 }
                 issues = $Rows
+                contract_errors = @()
+                normalizations = @()
             }
         }
         Set-TestDigest -Value $Result -DigestProperty 'result_digest'
@@ -180,7 +183,9 @@ Describe 'Backlog grooming wave validation' -Tag 'Unit' {
 
         $Validation.AssessedIds | Should -Be @(101)
         $Validation.DeferredIds | Should -Be @(102)
+        @($Validation.ContractErrorIds).Count | Should -Be 0
         $Aggregate = Get-Content -LiteralPath $Validation.AggregatePath -Raw | ConvertFrom-Json
+        $Aggregate.schema_version | Should -Be 'backlog-grooming-wave-aggregate/v2'
         $Aggregate.rows.issue | Should -Be @(101, 102)
         $Aggregate.aggregate_digest | Should -BeExactly $Validation.AggregateDigest
         $Aggregate.result_digests | Should -Be @($Fixture.Result.result_digest)
@@ -228,6 +233,72 @@ Describe 'Backlog grooming wave validation' -Tag 'Unit' {
                 -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
                 -ExpectedRunId '12345' -ExpectedAttempt 1 } |
             Should -Throw '*Wave manifest digest mismatch or invalid schema/identity*'
+    }
+
+    It 'preserves the exact three-state partition and trusted disclosures' {
+        $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive 'three-state')
+        $Fixture.Result.report_data.issues[0].disposition = 'Superseded'
+        $Fixture.Result.report_data.issues[0].similarity_outcome = 'Uncertain'
+        $Fixture.Result.report_data.issues[0].lineage_evidence = [ordered]@{
+            original_delivery = @('PR #100 delivered the original behavior')
+            replacement_or_removal = @('PR #200 replaced the original behavior')
+        }
+        $Fixture.Result.report_data.issues = @($Fixture.Result.report_data.issues[0])
+        $Fixture.Result.report_data.contract_errors = @(
+            [ordered]@{ issue = 102; code = 'invalid_row_contract' }
+        )
+        $Fixture.Result.report_data.normalizations = @(
+            [ordered]@{ issue = 101; code = 'superseded_similarity_normalized' }
+        )
+        $Fixture.Result.report_data.run.deferred = 0
+        $Fixture.Result.report_data.run.contract_errors = 1
+        $Fixture.Result.report_data.run.stop_reason = 'Contract errors: 1'
+        Set-TestDigest -Value $Fixture.Result -DigestProperty 'result_digest'
+        Write-TestJson -Value $Fixture.Result -Path $Fixture.ResultPath
+
+        $Validation = Invoke-BacklogGroomWaveValidation -ManifestPath $Fixture.ManifestPath `
+            -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
+            -ExpectedRunId '12345' -ExpectedAttempt 1
+
+        $Validation.AssessedIds | Should -Be @(101)
+        @($Validation.DeferredIds).Count | Should -Be 0
+        $Validation.ContractErrorIds | Should -Be @(102)
+        $Aggregate = Get-Content -LiteralPath $Validation.AggregatePath -Raw | ConvertFrom-Json
+        $Aggregate.contract_errors[0].PSObject.Properties.Name | Should -Be @('issue', 'code')
+        $Aggregate.contract_errors[0].issue | Should -Be 102
+        $Aggregate.normalizations[0].issue | Should -Be 101
+    }
+
+    It 'rejects overlap between accepted rows and contract errors' {
+        $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive 'state-overlap')
+        $Fixture.Result.report_data.contract_errors = @(
+            [ordered]@{ issue = 101; code = 'invalid_row_contract' }
+        )
+        $Fixture.Result.report_data.run.contract_errors = 1
+        Set-TestDigest -Value $Fixture.Result -DigestProperty 'result_digest'
+        Write-TestJson -Value $Fixture.Result -Path $Fixture.ResultPath
+
+        { Invoke-BacklogGroomWaveValidation -ManifestPath $Fixture.ManifestPath `
+                -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
+                -ExpectedRunId '12345' -ExpectedAttempt 1 } | Should -Throw
+    }
+
+    It 'rejects invalid contract-error diagnostic shape <InvalidState>' -ForEach @(
+        @{ InvalidState = 'unknown code'; Diagnostic = [ordered]@{ issue = 102; code = 'unknown' } }
+        @{ InvalidState = 'advisory content'; Diagnostic = [ordered]@{ issue = 102; code = 'invalid_row_contract'; finding = 'model text' } }
+    ) {
+        $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive "diagnostic-$InvalidState")
+        $Fixture.Result.report_data.issues = @($Fixture.Result.report_data.issues[0])
+        $Fixture.Result.report_data.contract_errors = @($Diagnostic)
+        $Fixture.Result.report_data.run.deferred = 0
+        $Fixture.Result.report_data.run.contract_errors = 1
+        Set-TestDigest -Value $Fixture.Result -DigestProperty 'result_digest'
+        Write-TestJson -Value $Fixture.Result -Path $Fixture.ResultPath
+
+        { Invoke-BacklogGroomWaveValidation -ManifestPath $Fixture.ManifestPath `
+                -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
+                -ExpectedRunId '12345' -ExpectedAttempt 1 } |
+            Should -Throw '*Malformed, duplicate, advisory-bearing, or out-of-shard contract error*'
     }
 
     It 'rejects a stale result identity' {
@@ -529,7 +600,7 @@ Describe 'Backlog grooming wave validation' -Tag 'Unit' {
         $Aggregate.result_digests | Should -Be @($Fixture.Result.result_digest, $SecondResult.result_digest | Sort-Object)
     }
 
-    It 'emits the three GitHub outputs at the command boundary' {
+    It 'emits the four GitHub outputs at the command boundary' {
         $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive 'command')
         $OutputPath = Join-Path $TestDrive 'github-output.txt'
         $PreviousOutput = $env:GITHUB_OUTPUT
@@ -545,9 +616,10 @@ Describe 'Backlog grooming wave validation' -Tag 'Unit' {
                 -ExpectedAttempt 1 2>&1
             $LASTEXITCODE | Should -Be 0 -Because ($CommandOutput -join "`n")
             $Outputs = Get-Content -LiteralPath $OutputPath
-            $Outputs.Count | Should -Be 3
+            $Outputs.Count | Should -Be 4
             $Outputs | Should -Contain 'assessed-ids=[101]'
             $Outputs | Should -Contain 'deferred-ids=[102]'
+            $Outputs | Should -Contain 'contract-error-ids=[]'
             @($Outputs | Where-Object { $_ -match '^aggregate-digest=[a-f0-9]{64}$' }).Count | Should -Be 1
             $AggregateBytes = [System.IO.File]::ReadAllBytes((Join-Path $Fixture.AggregateDirectory 'aggregate.json'))
             $AggregateBytes[0..2] | Should -Not -Be @(0xEF, 0xBB, 0xBF)

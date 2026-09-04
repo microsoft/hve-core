@@ -187,9 +187,10 @@ jobs:
             const aggregateKeys = [
               "schema_version", "sweep_id", "snapshot_digest", "source_sha", "completed_at",
               "predecessor_aggregate_digest",
-              "total_snapshot_count", "completed_waves", "assessed", "deferred", "prior_cursor",
+              "total_snapshot_count", "completed_waves", "assessed", "deferred", "contract_errors", "prior_cursor",
               "next_cursor", "stop_reason", "planned_sweep_aic",
-              "checkpoint_digests", "rows", "aggregate_digest",
+              "checkpoint_digests", "rows", "contract_error_issue_ids", "contract_error_details",
+              "normalizations", "aggregate_digest",
             ];
             const aggregate = JSON.parse(fs.readFileSync("final-input/aggregate.json", "utf8"));
             const { aggregate_digest: recordedDigest, ...material } = aggregate;
@@ -201,15 +202,18 @@ jobs:
             }
             if (!exactKeys(aggregate, aggregateKeys) || digest(material) !== recordedDigest ||
                 (process.env.FINAL_DIGEST && recordedDigest !== process.env.FINAL_DIGEST) ||
-                aggregate.schema_version !== "backlog-grooming-sweep-aggregate/v1" ||
+                aggregate.schema_version !== "backlog-grooming-sweep-aggregate/v2" ||
                 aggregate.sweep_id !== process.env.SWEEP_ID ||
                 (process.env.SNAPSHOT_DIGEST && aggregate.snapshot_digest !== process.env.SNAPSHOT_DIGEST) ||
                 aggregate.source_sha !== process.env.SOURCE_SHA ||
                 (aggregate.predecessor_aggregate_digest !== null &&
                  !/^[a-f0-9]{64}$/.test(aggregate.predecessor_aggregate_digest)) ||
-                aggregate.assessed + aggregate.deferred !== aggregate.total_snapshot_count ||
+                aggregate.assessed + aggregate.deferred + aggregate.contract_errors !== aggregate.total_snapshot_count ||
+                aggregate.contract_errors !== 0 ||
                 aggregate.checkpoint_digests.length !== aggregate.completed_waves ||
-                aggregate.rows.length !== aggregate.total_snapshot_count) {
+                aggregate.rows.length !== aggregate.assessed + aggregate.deferred ||
+                aggregate.contract_error_issue_ids.length !== aggregate.contract_errors ||
+                aggregate.contract_error_details.length !== aggregate.contract_errors) {
               throw new Error("Final sweep aggregate failed trusted publication validation");
             }
             const marker = "<!-- gh-aw:backlog-grooming-tracker -->";
@@ -386,9 +390,10 @@ jobs:
             const aggregateKeys = [
               "schema_version", "sweep_id", "snapshot_digest", "source_sha", "completed_at",
               "predecessor_aggregate_digest",
-              "total_snapshot_count", "completed_waves", "assessed", "deferred", "prior_cursor",
+              "total_snapshot_count", "completed_waves", "assessed", "deferred", "contract_errors", "prior_cursor",
               "next_cursor", "stop_reason", "planned_sweep_aic",
-              "checkpoint_digests", "rows", "aggregate_digest",
+              "checkpoint_digests", "rows", "contract_error_issue_ids", "contract_error_details",
+              "normalizations", "aggregate_digest",
             ];
             const aggregate = JSON.parse(fs.readFileSync("final-input/aggregate.json", "utf8"));
             const { aggregate_digest: recordedDigest, ...material } = aggregate;
@@ -400,15 +405,18 @@ jobs:
             }
             if (!exactKeys(aggregate, aggregateKeys) || digest(material) !== recordedDigest ||
                 (process.env.FINAL_DIGEST && recordedDigest !== process.env.FINAL_DIGEST) ||
-                aggregate.schema_version !== "backlog-grooming-sweep-aggregate/v1" ||
+                aggregate.schema_version !== "backlog-grooming-sweep-aggregate/v2" ||
                 aggregate.sweep_id !== process.env.SWEEP_ID ||
                 (process.env.SNAPSHOT_DIGEST && aggregate.snapshot_digest !== process.env.SNAPSHOT_DIGEST) ||
                 aggregate.source_sha !== process.env.SOURCE_SHA ||
                 (aggregate.predecessor_aggregate_digest !== null &&
                  !/^[a-f0-9]{64}$/.test(aggregate.predecessor_aggregate_digest)) ||
-                aggregate.assessed + aggregate.deferred !== aggregate.total_snapshot_count ||
+                aggregate.assessed + aggregate.deferred + aggregate.contract_errors !== aggregate.total_snapshot_count ||
+                aggregate.contract_errors !== 0 ||
                 aggregate.checkpoint_digests.length !== aggregate.completed_waves ||
-                aggregate.rows.length !== aggregate.total_snapshot_count) {
+                aggregate.rows.length !== aggregate.assessed + aggregate.deferred ||
+                aggregate.contract_error_issue_ids.length !== aggregate.contract_errors ||
+                aggregate.contract_error_details.length !== aggregate.contract_errors) {
               throw new Error("Final sweep aggregate failed trusted publication validation");
             }
             const reportsBranch = "backlog-grooming-reports";

@@ -225,12 +225,12 @@ jobs:
               "source_run_id", "source_attempt", "source_manifest_artifact_id", "source_manifest_digest",
               "source_aggregate_run_id", "source_aggregate_artifact_id", "source_aggregate_digest",
               "prior_checkpoint_run_id", "prior_checkpoint_artifact_id", "prior_checkpoint_digest",
-              "assessed_issue_ids", "deferred_issue_ids", "cumulative_covered_count", "cumulative_digest",
+              "assessed_issue_ids", "deferred_issue_ids", "contract_error_issue_ids", "cumulative_covered_count", "cumulative_digest",
               "remaining_count", "sweep_complete", "completed_at", "checkpoint_digest",
             ];
             const validateCheckpoint = (checkpoint, snapshot) => {
               if (!exactKeys(checkpoint, checkpointKeys) ||
-                  checkpoint.schema_version !== "backlog-grooming-sweep-checkpoint/v1" ||
+                  checkpoint.schema_version !== "backlog-grooming-sweep-checkpoint/v2" ||
                   checkpoint.sweep_id !== snapshot.sweep_id || checkpoint.snapshot_digest !== snapshot.snapshot_digest ||
                   checkpoint.required_waves !== snapshot.required_waves ||
                   !/^[a-f0-9]{64}$/.test(checkpoint.checkpoint_digest)) {
@@ -455,7 +455,11 @@ jobs:
                     (index + 1) * candidateSnapshot.wave_capacity,
                   );
                   const expectedSortedIds = [...expectedIds].sort((a, b) => a - b);
-                  const currentIds = [...current.assessed_issue_ids, ...current.deferred_issue_ids].sort((a, b) => a - b);
+                  const currentIds = [
+                    ...current.assessed_issue_ids,
+                    ...current.deferred_issue_ids,
+                    ...current.contract_error_issue_ids,
+                  ].sort((a, b) => a - b);
                   if (current.wave_number !== expectedWave || JSON.stringify(currentIds) !== JSON.stringify(expectedSortedIds) ||
                       currentIds.some((issue) => covered.has(issue)) ||
                       current.prior_checkpoint_artifact_id !== (predecessor ? String(predecessor.artifact.id) : null) ||
@@ -718,6 +722,7 @@ jobs:
       aggregate-artifact-id: ${{ steps.aggregate.outputs.artifact-id }}
       assessed-ids: ${{ steps.validate.outputs.assessed-ids }}
       deferred-ids: ${{ steps.validate.outputs.deferred-ids }}
+      contract-error-ids: ${{ steps.validate.outputs.contract-error-ids }}
     steps:
       - name: Check out the validator implementation
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -807,6 +812,7 @@ jobs:
           AGGREGATE_DIGEST: ${{ needs.validate-wave.outputs.aggregate-digest }}
           ASSESSED_IDS: ${{ needs.validate-wave.outputs.assessed-ids }}
           DEFERRED_IDS: ${{ needs.validate-wave.outputs.deferred-ids }}
+          CONTRACT_ERROR_IDS: ${{ needs.validate-wave.outputs.contract-error-ids }}
           PRIOR_CHECKPOINT_RUN_ID: ${{ needs.plan.outputs.prior-checkpoint-run-id }}
           PRIOR_CHECKPOINT_ARTIFACT_ID: ${{ needs.plan.outputs.prior-checkpoint-artifact-id }}
           PRIOR_CHECKPOINT_DIGEST: ${{ needs.plan.outputs.prior-checkpoint-digest }}
@@ -829,7 +835,9 @@ jobs:
             const aggregate = JSON.parse(fs.readFileSync("checkpoint-aggregate/aggregate.json", "utf8"));
             const assessedIds = JSON.parse(process.env.ASSESSED_IDS);
             const deferredIds = JSON.parse(process.env.DEFERRED_IDS);
-            const waveIds = [...assessedIds, ...deferredIds].sort((a, b) => a - b);
+            const contractErrorIds = JSON.parse(process.env.CONTRACT_ERROR_IDS);
+            const acceptedIds = [...assessedIds, ...deferredIds].sort((a, b) => a - b);
+            const waveIds = [...acceptedIds, ...contractErrorIds].sort((a, b) => a - b);
             const waveNumber = Number("${{ needs.plan.outputs.wave-number }}");
             const expectedIds = snapshot.cursor_candidate_ids.slice(
               (waveNumber - 1) * snapshot.wave_capacity,
@@ -844,7 +852,8 @@ jobs:
             const aggregateKeys = [
               "schema_version", "sweep_id", "snapshot_digest", "wave_number", "required_waves",
               "manifest_digest", "source_run_id", "source_attempt", "result_digests",
-              "assessed_issue_ids", "deferred_issue_ids", "rows", "aggregate_digest",
+              "assessed_issue_ids", "deferred_issue_ids", "contract_error_issue_ids", "rows",
+              "contract_errors", "normalizations", "aggregate_digest",
             ];
             const { manifest_digest: recordedManifestDigest, ...manifestMaterial } = manifest;
             const { aggregate_digest: recordedAggregateDigest, ...aggregateMaterial } = aggregate;
@@ -855,16 +864,19 @@ jobs:
                 JSON.stringify(manifest.ordered_issue_ids) !== JSON.stringify(expectedIds) ||
                 recordedManifestDigest !== "${{ needs.plan.outputs.manifest-digest }}" ||
                 !exactKeys(aggregate, aggregateKeys) || digest(aggregateMaterial) !== recordedAggregateDigest ||
-                aggregate.schema_version !== "backlog-grooming-wave-aggregate/v1" ||
+                aggregate.schema_version !== "backlog-grooming-wave-aggregate/v2" ||
                 aggregate.sweep_id !== snapshot.sweep_id || aggregate.snapshot_digest !== snapshot.snapshot_digest ||
                 aggregate.wave_number !== waveNumber || aggregate.source_run_id !== String(context.runId) ||
                 aggregate.manifest_digest !== recordedManifestDigest ||
                 recordedAggregateDigest !== process.env.AGGREGATE_DIGEST ||
                 JSON.stringify(aggregate.assessed_issue_ids) !== JSON.stringify(assessedIds) ||
                 JSON.stringify(aggregate.deferred_issue_ids) !== JSON.stringify(deferredIds) ||
+                JSON.stringify(aggregate.contract_error_issue_ids) !== JSON.stringify(contractErrorIds) ||
                 JSON.stringify(waveIds) !== JSON.stringify(expectedSortedIds) ||
                 JSON.stringify(aggregate.rows.map((row) => row.issue).sort((a, b) => a - b)) !==
-                  JSON.stringify(expectedSortedIds)) {
+                  JSON.stringify(acceptedIds) ||
+                JSON.stringify(aggregate.contract_errors.map((entry) => entry.issue).sort((a, b) => a - b)) !==
+                  JSON.stringify([...contractErrorIds].sort((a, b) => a - b))) {
               throw new Error("Checkpoint manifest, aggregate, or wave coverage validation failed");
             }
             let prior = null;
@@ -879,7 +891,7 @@ jobs:
             }
             const cumulativeCoveredCount = (prior?.cumulative_covered_count ?? 0) + waveIds.length;
             const material = {
-              schema_version: "backlog-grooming-sweep-checkpoint/v1",
+              schema_version: "backlog-grooming-sweep-checkpoint/v2",
               sweep_id: snapshot.sweep_id,
               snapshot_digest: snapshot.snapshot_digest,
               wave_number: waveNumber,
@@ -896,12 +908,14 @@ jobs:
               prior_checkpoint_digest: process.env.PRIOR_CHECKPOINT_DIGEST || null,
               assessed_issue_ids: assessedIds,
               deferred_issue_ids: deferredIds,
+              contract_error_issue_ids: contractErrorIds,
               cumulative_covered_count: cumulativeCoveredCount,
               cumulative_digest: digest({
                 prior: prior?.cumulative_digest ?? null,
                 wave_number: waveNumber,
                 assessed_issue_ids: assessedIds,
                 deferred_issue_ids: deferredIds,
+                contract_error_issue_ids: contractErrorIds,
               }),
               remaining_count: snapshot.total_snapshot_count - cumulativeCoveredCount,
               sweep_complete: cumulativeCoveredCount === snapshot.total_snapshot_count,
@@ -1067,7 +1081,7 @@ jobs:
               "source_run_id", "source_attempt", "source_manifest_artifact_id", "source_manifest_digest",
               "source_aggregate_run_id", "source_aggregate_artifact_id", "source_aggregate_digest",
               "prior_checkpoint_run_id", "prior_checkpoint_artifact_id", "prior_checkpoint_digest",
-              "assessed_issue_ids", "deferred_issue_ids", "cumulative_covered_count", "cumulative_digest",
+              "assessed_issue_ids", "deferred_issue_ids", "contract_error_issue_ids", "cumulative_covered_count", "cumulative_digest",
               "remaining_count", "sweep_complete", "completed_at", "checkpoint_digest",
             ];
             const manifestKeys = [
@@ -1078,13 +1092,14 @@ jobs:
             const aggregateKeys = [
               "schema_version", "sweep_id", "snapshot_digest", "wave_number", "required_waves",
               "manifest_digest", "source_run_id", "source_attempt", "result_digests",
-              "assessed_issue_ids", "deferred_issue_ids", "rows", "aggregate_digest",
+              "assessed_issue_ids", "deferred_issue_ids", "contract_error_issue_ids", "rows",
+              "contract_errors", "normalizations", "aggregate_digest",
             ];
             const chain = [];
             while (checkpoint) {
               const { checkpoint_digest: recordedDigest, ...material } = checkpoint;
               if (!exactKeys(checkpoint, checkpointKeys) || digest(material) !== recordedDigest ||
-                  checkpoint.schema_version !== "backlog-grooming-sweep-checkpoint/v1" ||
+                  checkpoint.schema_version !== "backlog-grooming-sweep-checkpoint/v2" ||
                   checkpoint.sweep_id !== snapshot.sweep_id || checkpoint.snapshot_digest !== snapshot.snapshot_digest ||
                   checkpoint.required_waves !== snapshot.required_waves) {
                 throw new Error("Checkpoint chain validation failed");
@@ -1112,6 +1127,8 @@ jobs:
               throw new Error("Complete checkpoint chain is missing or reordered");
             }
             const rowsByIssue = new Map();
+            const contractErrorsByIssue = new Map();
+            const normalizations = [];
             let coveredCount = 0;
             let prior = null;
             for (const item of chain) {
@@ -1120,12 +1137,17 @@ jobs:
                 item.wave_number * snapshot.wave_capacity,
               );
               const expectedSortedIds = [...expectedIds].sort((a, b) => a - b);
-              const waveIds = [...item.assessed_issue_ids, ...item.deferred_issue_ids].sort((a, b) => a - b);
+              const waveIds = [
+                ...item.assessed_issue_ids,
+                ...item.deferred_issue_ids,
+                ...item.contract_error_issue_ids,
+              ].sort((a, b) => a - b);
               const expectedCumulativeDigest = digest({
                 prior: prior?.cumulative_digest ?? null,
                 wave_number: item.wave_number,
                 assessed_issue_ids: item.assessed_issue_ids,
                 deferred_issue_ids: item.deferred_issue_ids,
+                contract_error_issue_ids: item.contract_error_issue_ids,
               });
               coveredCount += expectedIds.length;
               if (JSON.stringify(waveIds) !== JSON.stringify(expectedSortedIds) ||
@@ -1172,7 +1194,7 @@ jobs:
               const { aggregate_digest: recordedDigest, ...material } = aggregate;
               if (!exactKeys(aggregate, aggregateKeys) || digest(material) !== recordedDigest ||
                   recordedDigest !== item.source_aggregate_digest ||
-                  aggregate.schema_version !== "backlog-grooming-wave-aggregate/v1" ||
+                  aggregate.schema_version !== "backlog-grooming-wave-aggregate/v2" ||
                   aggregate.sweep_id !== snapshot.sweep_id || aggregate.snapshot_digest !== snapshot.snapshot_digest ||
                   aggregate.wave_number !== item.wave_number || aggregate.required_waves !== snapshot.required_waves ||
                   aggregate.manifest_digest !== manifest.manifest_digest ||
@@ -1180,7 +1202,11 @@ jobs:
                   aggregate.source_attempt !== item.source_attempt ||
                   JSON.stringify(aggregate.assessed_issue_ids) !== JSON.stringify(item.assessed_issue_ids) ||
                   JSON.stringify(aggregate.deferred_issue_ids) !== JSON.stringify(item.deferred_issue_ids) ||
-                  JSON.stringify(aggregate.rows.map((row) => row.issue)) !== JSON.stringify(expectedIds) ||
+                  JSON.stringify(aggregate.contract_error_issue_ids) !== JSON.stringify(item.contract_error_issue_ids) ||
+                  JSON.stringify([
+                    ...aggregate.rows.map((row) => row.issue),
+                    ...aggregate.contract_errors.map((entry) => entry.issue),
+                  ].sort((a, b) => a - b)) !== JSON.stringify(expectedSortedIds) ||
                   aggregate.result_digests.length !== manifest.shards.length) {
                 throw new Error("Wave aggregate provenance failed");
               }
@@ -1190,19 +1216,30 @@ jobs:
                 }
                 rowsByIssue.set(row.issue, row);
               }
+              for (const entry of aggregate.contract_errors) {
+                if (rowsByIssue.has(entry.issue) || contractErrorsByIssue.has(entry.issue) ||
+                    !snapshot.ordered_issue_ids.includes(entry.issue)) {
+                  throw new Error(`Duplicate or out-of-snapshot contract error ${entry.issue}`);
+                }
+                contractErrorsByIssue.set(entry.issue, entry);
+              }
+              normalizations.push(...aggregate.normalizations);
               prior = item;
             }
-            const rows = snapshot.cursor_candidate_ids.map((issue) => rowsByIssue.get(issue));
-            if (rows.some((row) => !row) || rowsByIssue.size !== snapshot.total_snapshot_count) {
+            const rows = snapshot.cursor_candidate_ids.flatMap((issue) => rowsByIssue.has(issue) ? [rowsByIssue.get(issue)] : []);
+            const contractErrorIssueIds = snapshot.cursor_candidate_ids.filter((issue) => contractErrorsByIssue.has(issue));
+            const contractErrors = contractErrorIssueIds.map((issue) => contractErrorsByIssue.get(issue));
+            if (rowsByIssue.size + contractErrorsByIssue.size !== snapshot.total_snapshot_count ||
+                snapshot.cursor_candidate_ids.some((issue) => rowsByIssue.has(issue) === contractErrorsByIssue.has(issue))) {
               throw new Error("Final result set does not exactly equal the snapshot");
             }
             const assessedRows = rows.filter((row) => row.assessment_status === "Assessed");
             const deferredRows = rows.filter((row) => row.assessment_status === "Deferred");
             const cursorRows = snapshot.cursor_candidate_ids.map((issue) => rowsByIssue.get(issue))
-              .filter((row) => row.assessment_status === "Assessed");
+              .filter((row) => row?.assessment_status === "Assessed");
             const completedAt = chain.map((item) => item.completed_at).sort().at(-1);
             const finalMaterial = {
-              schema_version: "backlog-grooming-sweep-aggregate/v1",
+              schema_version: "backlog-grooming-sweep-aggregate/v2",
               sweep_id: snapshot.sweep_id,
               snapshot_digest: snapshot.snapshot_digest,
               source_sha: snapshot.source_sha,
@@ -1212,12 +1249,18 @@ jobs:
               completed_waves: chain.length,
               assessed: assessedRows.length,
               deferred: deferredRows.length,
+              contract_errors: contractErrors.length,
               prior_cursor: snapshot.prior_cursor,
               next_cursor: cursorRows.length > 0 ? cursorRows.at(-1).issue : snapshot.prior_cursor,
-              stop_reason: deferredRows.length === 0 ? "Complete snapshot assessed" : `${deferredRows.length} snapshot issues deferred`,
+              stop_reason: contractErrors.length > 0
+                ? `${contractErrors.length} snapshot issues have contract errors`
+                : deferredRows.length === 0 ? "Complete snapshot assessed" : `${deferredRows.length} snapshot issues deferred`,
               planned_sweep_aic: snapshot.planned_sweep_aic,
               checkpoint_digests: chain.map((item) => item.checkpoint_digest),
               rows,
+              contract_error_issue_ids: contractErrorIssueIds,
+              contract_error_details: contractErrors,
+              normalizations,
             };
             const finalAggregate = { ...finalMaterial, aggregate_digest: digest(finalMaterial) };
             fs.mkdirSync("final-output", { recursive: true });

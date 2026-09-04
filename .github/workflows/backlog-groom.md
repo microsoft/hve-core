@@ -226,8 +226,14 @@ safe-outputs:
               const dispositions = new Set(["Still needed", "Likely completed", "Superseded", "Possible duplicate", "Needs correction", "Uncertain"]);
               const statuses = new Set(["Assessed", "Deferred"]);
               const hasValidSupersessionLineage = (row) => {
-                const original = row.lineage_evidence.original_delivery;
-                const replacement = row.lineage_evidence.replacement_or_removal;
+                const lineage = row?.lineage_evidence;
+                if (!exactKeys(lineage, lineageKeys) ||
+                    !Array.isArray(lineage.original_delivery) ||
+                    !Array.isArray(lineage.replacement_or_removal)) {
+                  return false;
+                }
+                const original = lineage.original_delivery;
+                const replacement = lineage.replacement_or_removal;
                 return original.length > 0 && replacement.length > 0 &&
                   replacement.some((item) => !original.includes(item));
               };
@@ -235,69 +241,6 @@ safe-outputs:
                 core.setFailed("Report data does not match the canonical top-level schema");
                 return;
               }
-              payload.issues = payload.issues.map((row) => {
-                let normalizedRow = row;
-                if (exactKeys(row, deferredReasonAliasKeys)) {
-                  normalizedRow = { ...row, deferral_reason: row.deferred_reason };
-                  delete normalizedRow.deferred_reason;
-                }
-                if (!exactKeys(normalizedRow, rowKeys)) {
-                  return normalizedRow;
-                }
-                const lineage = normalizedRow.lineage_evidence;
-                return {
-                  ...normalizedRow,
-                  repository_evidence: boundEvidenceItems(normalizedRow.repository_evidence),
-                  lineage_evidence: exactKeys(lineage, lineageKeys)
-                    ? {
-                      original_delivery: boundEvidenceItems(lineage.original_delivery),
-                      replacement_or_removal: boundEvidenceItems(lineage.replacement_or_removal),
-                    }
-                    : lineage,
-                };
-              });
-              const issueNumbers = new Set();
-              for (const row of payload.issues) {
-                if (!exactKeys(row, rowKeys) || !Number.isInteger(row.issue) || row.issue <= 0 || issueNumbers.has(row.issue) ||
-                    !validText(row.title, 500) || !validText(row.selection_reason, 200) ||
-                    !validText(row.activity_and_ownership_context) || !validText(row.acceptance_signals) ||
-                    !Array.isArray(row.repository_evidence) || row.repository_evidence.length === 0 ||
-                    !row.repository_evidence.every((item) => validText(item, 500)) ||
-                    !exactKeys(row.lineage_evidence, lineageKeys) ||
-                    !Array.isArray(row.lineage_evidence.original_delivery) ||
-                    !Array.isArray(row.lineage_evidence.replacement_or_removal) ||
-                    !row.lineage_evidence.original_delivery.every((item) => validText(item, 500)) ||
-                    !row.lineage_evidence.replacement_or_removal.every((item) => validText(item, 500)) ||
-                    !similarities.has(row.similarity_outcome) || !dispositions.has(row.disposition) ||
-                    !validText(row.grooming_finding) || !validText(row.recommended_next_step) ||
-                    !statuses.has(row.assessment_status) || typeof row.deferral_reason !== "string" ||
-                    row.deferral_reason.length > 500) {
-                  core.setFailed("Report issue data does not match the canonical row schema");
-                  return;
-                }
-                if (row.disposition === "Superseded" && !hasValidSupersessionLineage(row)) {
-                  row.disposition = "Uncertain";
-                  row.similarity_outcome = "Uncertain";
-                }
-                if (row.assessment_status === "Deferred" &&
-                    (!validText(row.deferral_reason, 500) || row.similarity_outcome !== "Uncertain" ||
-                     row.disposition !== "Uncertain" || row.lineage_evidence.original_delivery.length !== 0 ||
-                     row.lineage_evidence.replacement_or_removal.length !== 0)) {
-                  core.setFailed("Deferred rows require a reason, Uncertain outcomes, and empty lineage evidence");
-                  return;
-                }
-                if (row.assessment_status === "Assessed" && row.deferral_reason !== "") {
-                  core.setFailed("Assessed rows cannot include a deferral reason");
-                  return;
-                }
-                if ((row.disposition === "Possible duplicate") && !["Match", "Similar"].includes(row.similarity_outcome)) {
-                  core.setFailed("Possible duplicate requires a Match or Similar outcome");
-                  return;
-                }
-                issueNumbers.add(row.issue);
-              }
-              const assessedRows = payload.issues.filter((row) => row.assessment_status === "Assessed").length;
-              const deferredRows = payload.issues.filter((row) => row.assessment_status === "Deferred").length;
               let orderedCandidateIds;
               try {
                 orderedCandidateIds = JSON.parse(process.env.ORDERED_CANDIDATE_IDS);
@@ -342,11 +285,89 @@ safe-outputs:
                 core.setFailed("Worker inventory or cohort context is invalid");
                 return;
               }
+              const normalizedRows = payload.issues.map((row) => {
+                let normalizedRow = row;
+                if (exactKeys(row, deferredReasonAliasKeys)) {
+                  normalizedRow = { ...row, deferral_reason: row.deferred_reason };
+                  delete normalizedRow.deferred_reason;
+                }
+                if (!exactKeys(normalizedRow, rowKeys)) {
+                  return normalizedRow;
+                }
+                const lineage = normalizedRow.lineage_evidence;
+                return {
+                  ...normalizedRow,
+                  repository_evidence: boundEvidenceItems(normalizedRow.repository_evidence),
+                  lineage_evidence: exactKeys(lineage, lineageKeys)
+                    ? {
+                      original_delivery: boundEvidenceItems(lineage.original_delivery),
+                      replacement_or_removal: boundEvidenceItems(lineage.replacement_or_removal),
+                    }
+                    : lineage,
+                };
+              });
+              const issueNumbers = new Set();
+              const acceptedRows = [];
+              const contractErrors = [];
+              const normalizations = [];
+              for (let row of normalizedRows) {
+                let normalization = null;
+                if (!Number.isInteger(row?.issue) || row.issue <= 0 ||
+                    !candidateSet.has(row.issue) || issueNumbers.has(row.issue)) {
+                  core.setFailed("Report issue identity does not match a unique planned shard candidate");
+                  return;
+                }
+                issueNumbers.add(row.issue);
+                if (row.similarity_outcome === "Superseded" && row.disposition === "Superseded" &&
+                    hasValidSupersessionLineage(row)) {
+                  row = { ...row, similarity_outcome: "Uncertain" };
+                  normalization = { issue: row.issue, code: "superseded_similarity_normalized" };
+                }
+                if (!exactKeys(row, rowKeys) || !validText(row.title, 500) || !validText(row.selection_reason, 200) ||
+                    !validText(row.activity_and_ownership_context) || !validText(row.acceptance_signals) ||
+                    !Array.isArray(row.repository_evidence) || row.repository_evidence.length === 0 ||
+                    !row.repository_evidence.every((item) => validText(item, 500)) ||
+                    !exactKeys(row.lineage_evidence, lineageKeys) ||
+                    !Array.isArray(row.lineage_evidence.original_delivery) ||
+                    !Array.isArray(row.lineage_evidence.replacement_or_removal) ||
+                    !row.lineage_evidence.original_delivery.every((item) => validText(item, 500)) ||
+                    !row.lineage_evidence.replacement_or_removal.every((item) => validText(item, 500)) ||
+                    !similarities.has(row.similarity_outcome) || !dispositions.has(row.disposition) ||
+                    !validText(row.grooming_finding) || !validText(row.recommended_next_step) ||
+                    !statuses.has(row.assessment_status) || typeof row.deferral_reason !== "string" ||
+                    row.deferral_reason.length > 500) {
+                  contractErrors.push({ issue: row.issue, code: "invalid_row_contract" });
+                  continue;
+                }
+                if (row.disposition === "Superseded" && !hasValidSupersessionLineage(row)) {
+                  row.disposition = "Uncertain";
+                  row.similarity_outcome = "Uncertain";
+                }
+                if (row.assessment_status === "Deferred" &&
+                    (!validText(row.deferral_reason, 500) || row.similarity_outcome !== "Uncertain" ||
+                     row.disposition !== "Uncertain" || row.lineage_evidence.original_delivery.length !== 0 ||
+                     row.lineage_evidence.replacement_or_removal.length !== 0)) {
+                  contractErrors.push({ issue: row.issue, code: "invalid_row_contract" });
+                  continue;
+                }
+                if (row.assessment_status === "Assessed" && row.deferral_reason !== "") {
+                  contractErrors.push({ issue: row.issue, code: "invalid_row_contract" });
+                  continue;
+                }
+                if ((row.disposition === "Possible duplicate") && !["Match", "Similar"].includes(row.similarity_outcome)) {
+                  contractErrors.push({ issue: row.issue, code: "invalid_row_contract" });
+                  continue;
+                }
+                acceptedRows.push(row);
+                if (normalization) normalizations.push(normalization);
+              }
               if (issueNumbers.size !== candidateSet.size ||
                   ![...issueNumbers].every((issue) => candidateSet.has(issue))) {
                 core.setFailed("Report issue IDs do not match the planned shard candidates");
                 return;
               }
+              const assessedRows = acceptedRows.filter((row) => row.assessment_status === "Assessed").length;
+              const deferredRows = acceptedRows.filter((row) => row.assessment_status === "Deferred").length;
 
               const startedAt = String(requests[0]["started-at"] ?? "");
               const completedAt = String(requests[0]["completed-at"] ?? "");
@@ -370,7 +391,7 @@ safe-outputs:
               }
 
               const assessedIssueNumbers = new Set(
-                payload.issues
+                acceptedRows
                   .filter((row) => row.assessment_status === "Assessed")
                   .map((row) => row.issue),
               );
@@ -378,7 +399,7 @@ safe-outputs:
                 .filter((issue) => assessedIssueNumbers.has(issue))
                 .at(-1) ?? priorCursor;
               const distinctDeferralReasons = new Set(
-                payload.issues
+                acceptedRows
                   .filter((row) => row.assessment_status === "Deferred")
                   .map((row) => row.deferral_reason.trim()),
               ).size;
@@ -389,15 +410,23 @@ safe-outputs:
                 priority_cohort: priorityCandidateIds.length,
                 round_robin_cohort: roundRobinCandidateIds.length,
                 deferred: deferredRows,
-                stop_reason: deferredRows === 0
+                contract_errors: contractErrors.length,
+                stop_reason: contractErrors.length > 0
+                  ? `Contract errors: ${contractErrors.length}`
+                  : deferredRows === 0
                   ? "Complete shard assessed"
                   : `Deferred rows: ${deferredRows}; distinct non-empty reasons: ${distinctDeferralReasons}`,
                 next_cursor: nextCursor,
               };
-              const reportData = { run, issues: payload.issues };
+              const reportData = {
+                run,
+                issues: acceptedRows,
+                contract_errors: contractErrors,
+                normalizations,
+              };
 
               const result = {
-                schema_version: "backlog-grooming-shard-result/v1",
+                schema_version: "backlog-grooming-shard-result/v2",
                 run_id: process.env.ORCHESTRATOR_RUN_ID,
                 attempt,
                 shard_id: process.env.SHARD_ID,
