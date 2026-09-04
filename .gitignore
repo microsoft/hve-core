@@ -7,6 +7,18 @@
 evals/results/
 vally-results/
 
+# Baseline-equivalence run residue. The driver clears and re-materializes both
+# directories on every run, so any content here is disposable. The surface
+# placeholder stays tracked: vally's spec linter resolves environment.files
+# sources, so the directory has to exist in a clean checkout.
+evals/baseline-equivalence/customized/workspace/
+evals/baseline-equivalence/customized/surface/**
+!evals/baseline-equivalence/customized/surface/.github/
+!evals/baseline-equivalence/customized/surface/.github/.gitkeep
+# Concurrency lock for the shared surface. Held for the duration of a run and
+# removed on exit, but a killed run can leave it behind.
+evals/baseline-equivalence/customized/.surface.lock
+
 # Generated Copilot plugin packages
 /plugins/
 

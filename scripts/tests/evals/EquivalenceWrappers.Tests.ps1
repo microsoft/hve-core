@@ -28,6 +28,33 @@ BeforeAll {
 
         return $resultsRoot
     }
+
+    function script:New-DriverCompareSpec {
+        <#
+        .SYNOPSIS
+            Seeds the comparison contract the driver resolves before any run.
+        #>
+        param(
+            [Parameter(Mandatory)][string]$RepoRoot
+        )
+
+        $specDir = Join-Path $RepoRoot 'evals/baseline-equivalence'
+        New-Item -ItemType Directory -Path $specDir -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $specDir 'compare.eval.yml') -Encoding utf8NoBOM -Value @'
+name: fixture-compare
+type: capability
+defaults:
+  executor: copilot-sdk
+stimuli:
+  - name: fixture-stimulus
+    prompt: "Fixture prompt."
+    tags: {category: baseline-equivalence, policy: equivalent}
+    rubric:
+      - Score a tie when both responses satisfy the same contract.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Equivalent?"}}
+'@
+    }
 }
 
 Describe 'New-EquivalenceDashboard.ps1' -Tag 'Unit' {
@@ -94,23 +121,25 @@ Describe 'New-EquivalenceDashboard.ps1' -Tag 'Unit' {
 }
 
 Describe 'Invoke-BaselineEquivalence.ps1' -Tag 'Unit' {
-    Context 'Applied artifact wiring (workspace present)' {
+    Context 'Applied artifact wiring (surface present)' {
         BeforeAll {
             $script:DriverRepo = Join-Path $TestDrive 'driver-repo'
-            $script:Workspace = Join-Path $script:DriverRepo 'evals/baseline-equivalence/customized/workspace'
-            New-Item -ItemType Directory -Path (Join-Path $script:Workspace '.github/agents') -Force | Out-Null
-            Set-Content -LiteralPath (Join-Path $script:Workspace '.github/agents/bar.agent.md') -Value 'seed' -Encoding utf8NoBOM
+            # The reported artifact list is read from the surface directory, which is
+            # what the customized spec copies into each trial. Reading it from the
+            # workspace root would report a surface the agent never receives.
+            $script:Surface = Join-Path $script:DriverRepo 'evals/baseline-equivalence/customized/surface'
+            New-Item -ItemType Directory -Path (Join-Path $script:Surface '.github/agents') -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $script:Surface '.github/agents/bar.agent.md') -Value 'seed' -Encoding utf8NoBOM
 
-            $signatureDir = Join-Path $script:DriverRepo 'evals/baseline-equivalence/surface-signatures'
-            New-Item -ItemType Directory -Path $signatureDir -Force | Out-Null
-            Set-Content -LiteralPath (Join-Path $signatureDir 'rpi-agent.yml') -Value "description: stub`n" -Encoding utf8NoBOM
-            $compareSpecPath = Join-Path $script:DriverRepo 'evals/baseline-equivalence/compare.eval.yml'
-            Set-Content -LiteralPath $compareSpecPath -Value "surface_signatures: {}`n" -Encoding utf8NoBOM
+            # The driver resolves the comparison contract before any model-backed work,
+            # so every synthetic repository needs one. Without it `vally compare` would
+            # fall back to a preference rubric that cannot measure equivalence.
+            New-DriverCompareSpec -RepoRoot $script:DriverRepo
 
             $script:SummaryPath = Join-Path $TestDrive 'driver-summary.json'
             & $script:DriverScript `
                 -Agent 'rpi-agent' `
-                -Tier 'pr' `
+                -Tier 'devloop' `
                 -RepoRoot $script:DriverRepo `
                 -OutputPath $script:SummaryPath `
                 -WhatIf *> $null
@@ -121,7 +150,7 @@ Describe 'Invoke-BaselineEquivalence.ps1' -Tag 'Unit' {
             Test-Path -LiteralPath $script:SummaryPath | Should -BeTrue
         }
 
-        It 'Populates variants.b.applied with the seeded artifact' {
+        It 'Populates variants.b.applied from the surface directory' {
             $script:Summary.variants.b.applied | Should -Contain '.github/agents/bar.agent.md'
         }
     }
@@ -130,18 +159,12 @@ Describe 'Invoke-BaselineEquivalence.ps1' -Tag 'Unit' {
         BeforeAll {
             $script:DriverRepoEmpty = Join-Path $TestDrive 'driver-repo-empty'
             New-Item -ItemType Directory -Path $script:DriverRepoEmpty -Force | Out-Null
-
-            $signatureDirEmpty = Join-Path $script:DriverRepoEmpty 'evals/baseline-equivalence/surface-signatures'
-            New-Item -ItemType Directory -Path $signatureDirEmpty -Force | Out-Null
-            Set-Content -LiteralPath (Join-Path $signatureDirEmpty 'rpi-agent.yml') -Value "description: stub`n" -Encoding utf8NoBOM
-            $compareSpecPathEmpty = Join-Path $script:DriverRepoEmpty 'evals/baseline-equivalence/compare.eval.yml'
-            New-Item -ItemType Directory -Path (Split-Path -Parent $compareSpecPathEmpty) -Force | Out-Null
-            Set-Content -LiteralPath $compareSpecPathEmpty -Value "surface_signatures: {}`n" -Encoding utf8NoBOM
+            New-DriverCompareSpec -RepoRoot $script:DriverRepoEmpty
 
             $script:SummaryPathEmpty = Join-Path $TestDrive 'driver-summary-empty.json'
             & $script:DriverScript `
                 -Agent 'rpi-agent' `
-                -Tier 'pr' `
+                -Tier 'devloop' `
                 -RepoRoot $script:DriverRepoEmpty `
                 -OutputPath $script:SummaryPathEmpty `
                 -WhatIf *> $null
