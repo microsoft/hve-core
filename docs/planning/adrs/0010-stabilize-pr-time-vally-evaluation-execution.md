@@ -3,7 +3,7 @@ id: "0010"
 title: "Stabilize PR-time Vally evaluation execution"
 description: "Stabilize and accelerate PR-time Vally evaluations through typed-result parsing, shard-batched moderation, self-contained worker stimuli, semantic graders, and GPT-5.6 Luna."
 author: "HVE Core Maintainers"
-ms.date: "2026-08-20"
+ms.date: "2026-08-31"
 ms.topic: "reference"
 status: "proposed"
 proposed_date: "2026-07-10"
@@ -38,6 +38,9 @@ related:
   - path: "0002-adopt-vally-as-agent-and-skill-behavior-evaluation-framework.md"
     relation: "influenced-by"
     note: "Refines the PR-time execution and grading behavior established by ADR 0002."
+  - path: "0011-define-vally-baseline-equivalence-evaluation-policy.md"
+    relation: "influences"
+    note: "ADR 0011 renames this proposal's baseline-equivalence tier vocabulary and extends its typed-record rule to the equivalence results reader; see the reconciliation note in Decision Outcome."
 asr_triggers:
   - kind: "performance"
     evidence: "A 47-trial paired benchmark on 2026-07-10 measured median trial time of 12.8 seconds for Claude Haiku 4.5 and 7.9 seconds for GPT-5.6 Luna."
@@ -167,6 +170,28 @@ The decision has five parts:
   require.
 5. Use GPT-5.6 Luna as the Low-profile PR evaluation default in the dispatcher,
    agent matrix, baseline-equivalence PR fallback, and eval workflow.
+
+> **Reconciliation note (2026-08-01).** This proposal predates the Vally 0.11
+> migration and ADR 0011. Three of its terms have moved, and the boundary is
+> recorded here rather than by rewriting the proposal above:
+>
+> * The baseline-equivalence tiers named `pr` and `nightly` are renamed
+>   `devloop` and `ci` by ADR 0011. The retired names are rejected rather than
+>   aliased, so "baseline-equivalence PR fallback" in part 5 now reads as the
+>   `devloop` tier default. The model selection itself is unchanged: `devloop`
+>   still resolves GPT-5.6 Luna as its low-cost default. `Invoke-AgentMatrix.ps1`
+>   retains the `pr` and `nightly` vocabulary and is out of scope for that
+>   rename.
+> * The typed-record rule in part 1 remains correct and is now implemented in
+>   both readers. `VallyRunner.psm1` applied it to eval results; the equivalence
+>   results reader in `EquivalenceParsing.psm1` applies the same rule, including
+>   the treatment of an absent or blank `type` as a legacy trial record.
+> * "Backward compatibility with legacy Vally result files" continues to apply
+>   to untyped trial records. It does not extend to the equivalence reporting
+>   summary, which ADR 0011 versions as `schemaVersion: "2.0.0"` and whose
+>   consumers reject an unsupported major version rather than degrading.
+>
+> No decision outcome in this proposal is withdrawn by that note.
 
 ## Moderation Reconciliation Semantics
 
