@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hve-core.microsoft.com/schemas/ontology-authoring/runtime-provisioning-evidence.schema.json",
+  "title": "Ontology runtime provisioning evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "createdAt",
+    "status",
+    "environmentClass",
+    "lockSha256",
+    "networkVerification",
+    "packages",
+    "restoreClass",
+    "target"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "const": "passed"
+    },
+    "environmentClass": {
+      "const": "external-lock-keyed-cache"
+    },
+    "lockSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "networkVerification": {
+      "const": "socket-connect-denied-during-imports"
+    },
+    "packages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "jsonschema",
+        "pyshacl",
+        "rdflib"
+      ],
+      "properties": {
+        "jsonschema": {
+          "const": "4.25.1"
+        },
+        "pyshacl": {
+          "const": "0.40.1"
+        },
+        "rdflib": {
+          "const": "7.6.0"
+        }
+      }
+    },
+    "restoreClass": {
+      "enum": [
+        "canonical-public-index",
+        "environment-configured-index"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "architecture",
+        "operatingSystem",
+        "pythonAbi",
+        "pythonImplementation",
+        "pythonVersion",
+        "uvVersion"
+      ],
+      "properties": {
+        "architecture": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operatingSystem": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pythonAbi": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pythonImplementation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pythonVersion": {
+          "type": "string",
+          "pattern": "^3\\.11\\.[0-9]+$"
+        },
+        "uvVersion": {
+          "const": "0.10.8"
+        }
+      }
+    }
+  }
+}

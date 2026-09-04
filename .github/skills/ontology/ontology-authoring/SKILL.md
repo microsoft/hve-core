@@ -21,7 +21,27 @@ constraint content. Read
 any lifecycle record from `templates/`. Validate policy records against
 `assets/schemas/ontology-policy.schema.json`, normalized extraction against
 `assets/schemas/normalized-evidence.schema.json`, and final contents against
-`assets/schemas/package-manifest.schema.json`.
+`assets/schemas/package-manifest.schema.json`. Validate successful runtime
+provisioning evidence against
+`assets/schemas/runtime-provisioning-evidence.schema.json`.
+
+## Portable runtime
+
+Provision the deterministic Python 3.11 runtime from the committed public lock:
+
+```bash
+scripts/install-runtime.sh
+```
+
+```powershell
+./scripts/Install-OntologyRuntime.ps1
+```
+
+Both entry paths require `uv` 0.10.8, install only runtime dependencies into an
+external cache keyed by the lock digest, and exclude development and fuzz groups.
+Environment-level index configuration is supported for restricted networks, but
+endpoint values are never written to evidence. Use `--evidence-output` in Bash or
+`-EvidenceOutput` in PowerShell to retain the redacted runtime evidence record.
 
 ## Goal
 
