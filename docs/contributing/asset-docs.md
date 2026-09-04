@@ -3,7 +3,7 @@ title: Asset reference documentation
 description: How contributors generate, author, and validate reference pages for agents, prompts, instructions, and skills
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-09-02
+ms.date: 2026-09-04
 ms.topic: how-to
 keywords:
   - asset documentation
@@ -131,8 +131,8 @@ another model to rewrite generated regions.
 
 Local and pull request validation use the same validator at different scopes:
 
-| Context                   | Scope                | Enforcement                                                                                                                          |
-|---------------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| Context                   | Scope                | Enforcement                                                                                                                                     |
+|---------------------------|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
 | `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, generated-region sync, and Required instruction and prompt guidance                                               |
 | Pull request validation   | Changed assets/pages | The same checks, limited to paths affected relative to the configured base; Required instruction and prompt guidance is blocking for this scope |
 
