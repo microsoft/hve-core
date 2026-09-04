@@ -10,7 +10,9 @@
 #          `ruff check --fix` followed by `ruff format` (mutates source;
 #          intended for local developer use). Projects that commit uv.lock must
 #          already provide a ruff binary matching the locked version; the runner
-#          verifies it and never synchronizes dependencies.
+#          verifies it and never synchronizes dependencies. This differs
+#          deliberately from Invoke-PythonTests.ps1, which provisions before
+#          testing; lint remains a non-installing validation command.
 # Author: HVE Core Team
 
 #Requires -Version 7.4

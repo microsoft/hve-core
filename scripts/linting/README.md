@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-08-13
+ms.date: 2026-09-03
 ms.topic: reference
 keywords:
   - powershell
@@ -452,9 +452,10 @@ Purpose: Enforce Python code quality standards across all Python skills in the r
 
 ##### Features
 
-* Discovers Python skills via `pyproject.toml` file search
+* Discovers lint-eligible Python projects via `pyproject.toml`, excluding generated `plugins/` output, dependency trees, and the heavyweight `scripts/evals/moderation` project
 * Resolves ruff per project: a project committing `uv.lock` must already provide a ruff binary matching the locked version, preferring its own `.venv` over a global install
 * Fails a project before running ruff when no exact-version binary is present, reporting the required version and `uv sync --locked` as the setup action; it never installs or synchronizes dependencies
+* Intentionally verifies existing environments while `Invoke-PythonTests.ps1` provisions before testing; devcontainer and coding-agent setup synchronize all lint-eligible locked projects, including `.github/hooks/shared/telemetry`
 * Falls back to the project `.venv` ruff and then a global ruff, without a version guarantee, for projects that have no `uv.lock`
 * Default mode runs `ruff check` followed by the non-mutating `ruff format --check`, always running both so a lint failure cannot hide a formatting failure
 * Lints each skill directory independently

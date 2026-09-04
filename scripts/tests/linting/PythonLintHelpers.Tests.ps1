@@ -98,6 +98,22 @@ Describe 'Get-PythonSkill' -Tag 'Unit' {
             $result.Count | Should -Be 1
             ($result -join ';') | Should -Match 'docs[\\/]plugins[\\/]sample$'
         }
+
+        It 'Excludes moderation while retaining the telemetry hook project' {
+            $repo = Join-Path $TestDrive 'repo-with-non-skill-projects'
+            $moderation = Join-Path $repo 'scripts/evals/moderation'
+            $telemetry = Join-Path $repo '.github/hooks/shared/telemetry'
+            New-Item -ItemType Directory -Path $moderation -Force | Out-Null
+            New-Item -ItemType Directory -Path $telemetry -Force | Out-Null
+            Set-Content -Path (Join-Path $moderation 'pyproject.toml') -Value ''
+            Set-Content -Path (Join-Path $telemetry 'pyproject.toml') -Value ''
+
+            $result = Get-PythonSkill -RepoRoot $repo
+
+            $result.Count | Should -Be 1
+            ($result -join ';') | Should -Match '[\\/]hooks[\\/]shared[\\/]telemetry$'
+            ($result -join ';') | Should -Not -Match '[\\/]evals[\\/]moderation$'
+        }
     }
 
     Context 'When repository contains no pyproject.toml files' {
@@ -108,6 +124,20 @@ Describe 'Get-PythonSkill' -Tag 'Unit' {
             $result = Get-PythonSkill -RepoRoot $repo
 
             @($result).Count | Should -Be 0
+        }
+    }
+
+    Context 'When scanning the current repository' {
+        It 'Finds a lockfile with a usable ruff version for every eligible project' {
+            $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+            $projects = @(Get-PythonSkill -RepoRoot $repoRoot)
+
+            $projects.Count | Should -BeGreaterThan 0
+            foreach ($project in $projects) {
+                $lockPath = Join-Path $project 'uv.lock'
+                Test-Path $lockPath -PathType Leaf | Should -BeTrue -Because "$project is eligible for locked setup"
+                Get-LockedRuffVersion -LockPath $lockPath | Should -Not -BeNullOrEmpty -Because "$project must lock ruff"
+            }
         }
     }
 }

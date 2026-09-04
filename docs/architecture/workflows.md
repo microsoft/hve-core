@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-08-13
+ms.date: 2026-09-03
 ms.topic: overview
 ---
 
@@ -431,8 +431,8 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 
 `npm run lint:py` runs the same command set as `python-lint.yml`: `ruff check` followed by the non-mutating `ruff format --check`. Execution conditions still differ in three ways:
 
-* Provisioning: the hosted lane runs `uv sync --locked` itself, while the local runner only verifies that a project committing `uv.lock` already provides that exact ruff version. When it does not, the local run fails before ruff executes and reports `uv sync --locked` as the setup action. Projects without a `uv.lock` fall back to the project `.venv` ruff and then a global ruff, with no version guarantee.
-* Project scope: local discovery covers every directory containing a `pyproject.toml`, including projects that `pr-validation.yml` excludes from its per-PR matrix.
+* Provisioning: the hosted lane runs `uv sync --locked` itself. The local lint runner intentionally verifies rather than provisions, while `test:py` provisions before testing. A locked project without the exact ruff version fails before ruff executes and reports `uv sync --locked` as the setup action. Devcontainer and coding-agent setup synchronize every lint-eligible project, including the telemetry hook, with `uv sync --locked`.
+* Project scope: local discovery covers directories containing a `pyproject.toml` except generated `plugins/` output, dependency trees, and `scripts/evals/moderation`. The moderation eval remains excluded from per-PR Python matrix jobs and local lint because its torch/detoxify environment belongs to the dedicated moderation lane. Other eligible projects outside `.github/skills`, including `.github/hooks/shared/telemetry`, remain in local and hosted lint scope.
 * Execution gate: the hosted lane defaults to running only when a pull request changes `.py` or `.pyi` files, while the local lane always scans every discovered project.
 
 ## Related Documentation
