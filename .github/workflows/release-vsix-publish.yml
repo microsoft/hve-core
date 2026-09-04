@@ -307,7 +307,7 @@ jobs:
     name: Package and Attest VS Code Extension
     needs: [validate-release]
     if: ${{ needs.validate-release.outputs.release-state == 'draft' }}
-    uses: microsoft/hve-core/.github/workflows/extension-provenance-signer.yml@3a09401536cef0c4559db1aa64b7d1010638fd67
+    uses: microsoft/hve-core/.github/workflows/extension-provenance-signer.yml@3a09401536cef0c4559db1aa64b7d1010638fd67 # PR #2823 squash
     with:
       source-ref: ${{ github.sha }}
       version: ${{ needs.validate-release.outputs.version }}

@@ -978,7 +978,7 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
 
     It 'Limits the reusable signer to one protected release-tag push caller' {
         $callers = @(Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
-            Select-String -Pattern 'uses:\s+microsoft/hve-core/\.github/workflows/extension-provenance-signer\.yml@3a09401536cef0c4559db1aa64b7d1010638fd67\s*$')
+            Select-String -Pattern 'uses:\s+microsoft/hve-core/\.github/workflows/extension-provenance-signer\.yml@3a09401536cef0c4559db1aa64b7d1010638fd67\s+# PR #2823 squash\s*$')
         $callers | Should -HaveCount 1
         Split-Path -Path $callers[0].Path -Leaf | Should -BeExactly 'release-vsix-publish.yml'
 
