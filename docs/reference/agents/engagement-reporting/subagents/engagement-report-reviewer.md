@@ -3,7 +3,7 @@ title: Engagement Report Reviewer
 description: "Reviews engagement report drafts for grounding, privacy, audience fit, style, terminology, and continuity."
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-24
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - agent
@@ -37,7 +37,9 @@ Routine weekly reports use the reporting skill's silent inline review instead.
 
 ## Example usage
 
-The report generator supplies the draft, research index, coverage summary,
-prior-period continuity context, audience, and selected template. The reviewer
-writes focused findings under the report's `review/` working directory and
-returns a pass, revise, or blocked disposition.
+The report generator supplies the validated reporting date and report-type slug,
+the parent-established effective-ignore result for `.working/`, the draft,
+research index, coverage summary, prior-period continuity context, audience,
+and selected template. The reviewer derives and canonically confines the three
+fixed artifacts under the report's `review/` working directory, then returns a
+pass, revise, or blocked disposition.

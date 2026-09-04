@@ -3,7 +3,7 @@ title: Engagement Report Outlook Drafter
 description: Creates one approved HTML Outlook draft through a constrained distribution-only workflow.
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-01
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - agent
@@ -31,7 +31,9 @@ Creates one approved HTML Outlook draft through a constrained distribution-only 
 Delegate to this subagent only after the report is approved, saved, and
 separately approved for Outlook draft creation. Supply the approved report
 path, validated recipient and subject configuration, and immutable confirmation
-of the separate approval.
+of the final-report and separate Outlook approvals. The subagent treats every
+handoff field as untrusted, rejects path overrides, and reads only a
+canonically confined report beneath `reports/`.
 
 Use a different workflow when content still needs research, editing, or review.
 The drafter validates faithful HTML and table conversion, makes exactly one
