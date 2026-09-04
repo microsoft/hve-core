@@ -3,9 +3,6 @@
 name: Ontology Dependency Authority
 
 on:
-  push:
-    branches:
-      - feat/ontology-builder-agent
   workflow_dispatch:
     inputs:
       source_commit:
@@ -14,7 +11,7 @@ on:
         type: string
 
 concurrency:
-  group: ontology-dependency-authority-${{ github.event_name == 'push' && github.sha || inputs.source_commit }}
+  group: ontology-dependency-authority-${{ inputs.source_commit }}
   cancel-in-progress: false
 
 permissions:
@@ -27,20 +24,18 @@ jobs:
     permissions:
       contents: read
     env:
-      ARTIFACT_NAME: ontology-dependency-authority-${{ github.event_name == 'push' && github.sha || inputs.source_commit }}
+      ARTIFACT_NAME: ontology-dependency-authority-${{ inputs.source_commit }}
       BUNDLE_DIR: dependency-authority
       CHECKOUT_ACTION: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       PUBLIC_INDEX: https://pypi.org/simple
       PYTHON_VERSION: '3.11'
-      SOURCE_COMMIT: ${{ github.event_name == 'push' && github.sha || inputs.source_commit }}
+      SOURCE_COMMIT: ${{ inputs.source_commit }}
       UPLOAD_ARTIFACT_ACTION: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       UV_VERSION: '0.10.8'
     steps:
       - name: Validate dispatch authority
         env:
-          BOOTSTRAP_REF: refs/heads/feat/ontology-builder-agent
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-          EVENT_NAME: ${{ github.event_name }}
           WORKFLOW_REF: ${{ github.ref }}
         run: |
           set -euo pipefail
@@ -48,16 +43,8 @@ jobs:
             echo "::error::source_commit must be a full lowercase 40-character SHA"
             exit 1
           fi
-          if [[ "${EVENT_NAME}" == "push" && "${WORKFLOW_REF}" != "${BOOTSTRAP_REF}" ]]; then
-            echo "::error::Bootstrap pushes must use ${BOOTSTRAP_REF}"
-            exit 1
-          fi
-          if [[ "${EVENT_NAME}" == "workflow_dispatch" && "${WORKFLOW_REF}" != "refs/heads/${DEFAULT_BRANCH}" ]]; then
+          if [[ "${WORKFLOW_REF}" != "refs/heads/${DEFAULT_BRANCH}" ]]; then
             echo "::error::Manual dispatch must use the default-branch definition"
-            exit 1
-          fi
-          if [[ "${EVENT_NAME}" != "push" && "${EVENT_NAME}" != "workflow_dispatch" ]]; then
-            echo "::error::Unsupported dependency authority event: ${EVENT_NAME}"
             exit 1
           fi
 
@@ -66,7 +53,7 @@ jobs:
         with:
           path: authority-controls
           persist-credentials: false
-          ref: ${{ github.event_name == 'push' && github.sha || github.event.repository.default_branch }}
+          ref: ${{ github.event.repository.default_branch }}
 
       - name: Checkout requested source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
