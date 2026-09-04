@@ -12,7 +12,9 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 * Default to `.copilot-tracking/` for every intermediate, working, or scratch file a skill produces. This file-based tracking takes precedence over memory: persist durable working state to the dated tracking artifact rather than relying on session, conversation, or working memory.
 * Persist research, planning, details, changes, and review outputs under `.copilot-tracking/` using the conventions below.
 * Use `{{task_slug}}` for task slugs and `{{YYYY-MM-DD}}` for dates. Keep `{{task_slug}}` lower-kebab-case.
-* Generated tracking Markdown starts with `<!-- markdownlint-disable-file -->` and uses plain-text workspace-relative paths. Do not use markdown links, backticks around paths, or `#file:` directives in tracking artifacts.
+* Generated tracking Markdown starts with `<!-- markdownlint-disable-file -->` and never uses `#file:` directives or line-number references.
+* Plans under `.copilot-tracking/plans/` and changes records under `.copilot-tracking/changes/` are read by people in an editor. In those two artifacts, wrap code, commands, and symbols in backticks, and link an existing file or folder with the workspace-relative path as the link text and a path relative to the artifact file as the destination, for example `[scripts/plugins/Sync-PluginManifest.ps1](../../../scripts/plugins/Sync-PluginManifest.ps1)`. Keep a not-yet-created path in backticks.
+* Research, critique, review, and other tracking artifacts use plain-text workspace-relative paths without Markdown links or backticks around paths.
 * Markdown is the default tracking format. Versioned payload contracts and session state use the YAML or JSON format defined by their owning schema. Do not add `applyTo` metadata or create a `.instructions.md` tracking artifact.
 
 ## Handoff Expectations

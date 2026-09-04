@@ -51,8 +51,8 @@ Do not infer deep review from task size, complexity, uncertainty, or risk. Recor
 1. Validate task identity, review scope, exact artifact paths, acceptance basis, depth, read boundary, and review-record write authority. When the caller-initialized review path is safe but another required input prevents assessment, update builder execution to Blocked and record the exact blocker before returning. When the review path itself is unsafe or cannot be validated, return Blocked without writing.
 2. Update only the exact caller-initialized review record using the supplied `rpi-review` template. Preserve `## Parent Decision Record` unchanged and update builder execution from `started` to Complete, Partial, or Blocked when finalizing.
 3. Traverse the supplied boundary by requirement and stable marker rather than by file narration:
-   * Map requirements and acceptance criteria to completion evidence and validation.
-   * Reconcile phase and task goals, task-local targets and acceptance criteria, plan updates, confirmed decisions, critique dispositions, blockers, remaining work, and follow-up items.
+   * Map plan requirements and each task's `Requirements:` block to completion evidence and validation in the changes record.
+   * Reconcile phase and task Goals, Requirements, Details, References, plan updates, confirmed decisions, critique dispositions, blockers, remaining work, and follow-up items.
    * Identify material defects, decision gaps, evidence gaps, and distinct residual work.
 4. Write one complete set of severity-graded `RV-xxx` findings. Propose `rpi-implement`, `rpi-plan`, `rpi-research`, or a distinct follow-up destination for each actionable finding.
 5. Record execution status, proposed outcome, validation coverage, limitations, and proposed routing. Read the completed record once to verify coverage and internal consistency.

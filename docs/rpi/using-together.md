@@ -123,27 +123,65 @@ Key findings:
    .copilot-tracking/reviews/plans/2025-01-28/blob-storage-plan-critique.md
    ```
 
-5. Verify the plan structure:
+5. Verify the plan structure. The plan opens with an executive summary and a diagrammed `## Phase Checklist`; supporting sections such as decisions, readiness, requirements, and sources follow it:
 
-```markdown
+````markdown
+## Phase Checklist
+
+```mermaid
+flowchart LR
+    client["src/storage/blob_client.py"]
+    writer["src/pipeline/writers/blob_writer.py"]
+    factory["src/pipeline/factory.py"]
+    writer -->|uploads through| client
+    factory -->|constructs| writer
+    classDef new stroke-dasharray: 5 5
+    class client,writer new
+```
+
 <!-- rpi:phase id=P01 -->
 ### [ ] P01: Storage Client Setup
 
-* Goal: Establish a storage boundary that can upload pipeline output through the supported Azure Blob interface.
+Goals:
+* Establish a storage boundary that can upload pipeline output through the supported Azure Blob interface.
+
+Dependencies:
+* None
+
+```mermaid
+flowchart LR
+    client["src/storage/blob_client.py"]
+    writer["src/pipeline/writers/blob_writer.py"]
+    factory["src/pipeline/factory.py"]
+    writer -->|uploads through| client
+    factory -->|constructs| writer
+    classDef phase fill:#fff3bf,stroke:#f08c00,stroke-width:2px
+    class client phase
+```
 
 <!-- rpi:task id=P01-T01 -->
 #### [ ] P01-T01: Create BlobStorageClient class
 
-* Goal: Pipeline code can stream content to Azure Blob Storage without depending directly on SDK client construction.
-* Likely targets:
-   * `src/storage/`: storage client implementation
-   * `src/pipeline/writers/base.py`: existing writer contract
-* References and examples:
-   * `azure.storage.blob.aio.BlobClient.upload_blob`: illustrative async upload API from research
-* Acceptance criteria:
-   * A caller can upload a stream through the storage boundary and receive a clear success or failure result.
-* Validation:
-   * Unit tests cover successful upload and SDK error translation.
+Goals:
+* Pipeline code can stream content to Azure Blob Storage without depending directly on SDK client construction.
+
+Requirements:
+* FR-001, NFR-002
+* Upload failures surface as the pipeline's existing error types, not raw SDK exceptions.
+* A caller can upload a stream through the storage boundary and receive a clear success or failure result.
+
+Details:
+* Research found no existing storage abstraction; `WriterBase` is the only contract writers share today.
+* Follow the async client pattern already used by the queue integration rather than introducing a second style.
+* Add unit tests for successful upload and SDK error translation alongside the existing writer tests.
+
+References:
+* [src/pipeline/writers/base.py](../../../src/pipeline/writers/base.py): existing writer contract
+* [.copilot-tracking/research/2025-01-28/blob-storage-research.md](../../research/2025-01-28/blob-storage-research.md):
+  * Q1 under `## Findings` recommends `azure.storage.blob.aio.BlobClient.upload_blob` for streaming uploads.
+
+Dependencies:
+* None
 
 <!-- rpi:phase id=P02 -->
 ### [ ] P02: Writer Implementation
@@ -153,9 +191,9 @@ Key findings:
 
 <!-- rpi:phase id=P03 -->
 ### [ ] P03: Integration
-```
+````
 
-Use `Pxx` and `Pxx-Txx` IDs, headings, and markers to navigate the plan. They remain stable when surrounding text changes.
+Use `Pxx` and `Pxx-Txx` IDs, headings, and markers to navigate the plan. They remain stable when surrounding text changes. Code, commands, and symbols use backticks, and existing files are Markdown links relative to the plan so you can open them from the editor.
 
 `/rpi-plan` owns the complete plan. Planning subagents default to `adaptive`: they are preferred for large, relatively independent phases. Set `delegation=never` to keep planning inline or `delegation=always` to require a bounded subagent assignment for every phase. `rpi-plan-critique` independently assesses the complete plan once.
 
@@ -182,6 +220,8 @@ P01-T01 and P01-T02 have completion evidence.
 Check the code and validation evidence, then continue to the next approved `Pxx` or `Pxx-Txx` item.
 
 If implementation requires a significant departure from the approved plan, record the discovery in the changes record, obtain any required decision, and update the affected plan tasks before dependent work resumes. Preserve the existing critique as historical evidence; do not run it again. Ordinary local judgment and non-material updates remain in Implement.
+
+When a completed task creates something a later task needs, such as a new class or contract path the plan did not name, implementation adds a `Guidance:` block to that later task so the next agent does not have to rediscover it.
 
 1. When the in-scope implementation is ready for review, hand off the plan, critique disposition, and changes record:
 

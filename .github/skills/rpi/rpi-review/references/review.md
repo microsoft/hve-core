@@ -21,8 +21,8 @@ The primary parent resolves scope, acceptance basis, depth, artifact readiness, 
 
 The selected review worker performs one marker-driven pass:
 
-1. Compare plan requirements and acceptance criteria with completed `Pxx` and `Pxx-Txx` evidence.
-2. Reconcile implementation-time plan updates with current phase and task goals, targets, technical references, acceptance criteria, triggering evidence, user decisions, and critique state.
+1. Compare plan requirements and each task's `Requirements:` block with completed `Pxx` and `Pxx-Txx` evidence.
+2. Reconcile implementation-time plan updates with current phase and task Goals, Requirements, Details, Guidance, References, triggering evidence, user decisions, and critique state.
 3. Check critique finding dispositions and whether significant changes preserved confirmed intent before affected work continued.
 4. Assess every `## Follow-Up Items` entry for scope separation, rationale, owner, and changes-record parity.
 5. Evaluate completed-work summaries, validation, blockers, remaining work, and intended behavior for material drift.

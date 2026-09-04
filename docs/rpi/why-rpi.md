@@ -80,7 +80,8 @@ When evidence is adequate, Research is reused or satisfied-and-skipped instead o
 
 * Giving each phase a coherent outcome goal and each task an observable behavior or capability goal.
 * Identifying dependencies between changes.
-* Keeping likely targets, material APIs or schemas, acceptance criteria, and validation under the task they inform.
+* Keeping requirements, details, and linked references under the task they inform, and leaving verification choices to the implementer.
+* Showing the overall change and each phase's slice of it as Mermaid diagrams in the Phase Checklist.
 * Using code as illustrative guidance unless a real interface or requirement makes it binding.
 * Recording independent `rpi-plan-critique` evidence before implementation readiness.
 

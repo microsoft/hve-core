@@ -112,9 +112,8 @@ Use `/rpi-implement`:
 
 ```text
 Implement the approved plan in .copilot-tracking/plans/ and use the
-the plan and run tests after each component.
-task goals, likely targets, dependencies, and validation under each
-`Pxx-Txx` item.
+Goals, Requirements, Details, References, and Dependencies blocks under
+each `Pxx-Txx` item. Run tests after each component.
 ```
 
 Use `/rpi-review` and reference the changes record:

@@ -64,7 +64,9 @@ The skill creates or revises two coordinated artifacts:
 .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
 ```
 
-The task-centered plan uses stable `Pxx` phase IDs and `Pxx-Txx` task IDs with matching `<!-- rpi:... -->` markers. Every phase defines an outcome-oriented goal. Every task defines the behavior or capability it should establish, likely targets, material technical references, dependencies, acceptance criteria, validation, completion evidence, and unresolved items. An independent critique records `Pass`, `Revise`, or `Blocked` before implementation readiness.
+The task-centered plan uses stable `Pxx` phase IDs and `Pxx-Txx` task IDs with matching `<!-- rpi:... -->` markers. It opens with an executive summary and a Phase Checklist that starts with a Mermaid diagram of the overall change; each phase repeats that diagram with its own portion highlighted.
+
+Every task carries labeled `Goals:`, `Requirements:`, `Details:`, `References:`, and `Dependencies:` blocks, with backticks around code and commands and Markdown links to the files it touches. The `Requirements:` block is the checkable record for the task; how to verify it is left to the implementer. An independent critique records `Pass`, `Revise`, or `Blocked` before implementation readiness.
 
 ### ⚡ Implement with rpi-implement
 

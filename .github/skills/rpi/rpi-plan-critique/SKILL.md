@@ -14,10 +14,10 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 
 ## Flow
 
-1. Confirm the exact task identity, plan, evidence, requirements, decisions, dependencies, task-local acceptance criteria, critique output path, and critique depth supplied by the caller. Use `standard` when depth is omitted. Use `deep` only when the caller records explicit user direction; otherwise downgrade an unsupported deep request to standard and record the limitation.
+1. Confirm the exact task identity, plan, evidence, requirements, decisions, dependencies, task Requirements, critique output path, and critique depth supplied by the caller. Use `standard` when depth is omitted. Use `deep` only when the caller records explicit user direction; otherwise downgrade an unsupported deep request to standard and record the limitation.
 2. Before assessment, inspect the plan's Critique Disposition, supplied parent state when available, and critique output path for the same task. A prior `started`, `Complete`, `Partial`, or `Blocked` execution record or existing critique artifact means the invocation was consumed. Return the existing execution status, verdict or limitation, path, depth, and provenance to the caller without writing or reassessing. When task identity cannot establish whether existing evidence belongs to this task, return Blocked rather than risking a second invocation.
 3. Read the plan and directly relevant supplied evidence. Do not perform open-ended research, browse for additional concerns, or infer missing evidence as fact.
-4. Define the supplied inputs and criterion boundary, then assess the full boundary once across requirements, research, phase and task goals, task-local targets and technical references, acceptance criteria, validation, dependencies, decisions, risks, and missed concerns.
+4. Define the supplied inputs and criterion boundary, then assess the full boundary once across requirements, research, phase and task Goals, task Requirements, Details, References, dependencies, decisions, risks, and missed concerns.
 	* In `standard`, assess the complete supplied boundary while prioritizing implementation blockers, contradictions, missing dependencies or acceptance coverage, unsupported scope or architecture, and material risks. Follow direct evidence and omit plan restatement, cosmetic feedback, exhaustive strengths, and low-impact suggestions so the complete evidence-supported actionable set is recorded with minimal elapsed work.
 	* In `deep`, trace supplied evidence more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns. Deep remains one assessment and does not widen research authority.
 	* In either depth, return one complete finding set rather than serializing findings across critique passes.
@@ -29,7 +29,7 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 * Plan path
 * Caller requirements and task context
 * Supplied research, evidence pointers, draft details, and decisions
-* Dependencies and task-local acceptance criteria
+* Dependencies and task Requirements
 * One critique output path
 * Critique depth and provenance: `standard` by default or `deep` from explicit user direction
 

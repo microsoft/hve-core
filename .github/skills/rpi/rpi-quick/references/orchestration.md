@@ -22,7 +22,7 @@ description: "Orchestration reference for the Research, Plan, Implement, Review,
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
 
-Reuse the dated task artifacts in place. Use plain-text workspace-relative paths and the stable task, phase, task, change, divergence, amendment, critique, and review IDs.
+Reuse the dated task artifacts in place. Follow each stage skill's path and link conventions and use the stable task, phase, task, change, divergence, amendment, critique, and review IDs.
 
 ## Follow-up routing
 

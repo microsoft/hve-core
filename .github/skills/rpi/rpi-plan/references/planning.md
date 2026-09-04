@@ -18,9 +18,35 @@ The research, changes, and review paths belong to their respective RPI stages. P
 
 ## Artifact audience and order
 
-The plan is the user-facing source of truth, implementation handoff, and downstream checklist. Put its Executive Summary, User Decisions and Requirements, Planning Readiness and Next Step, goals, scope, requirements, risks and open questions, phase checklist, and dependencies before Sources, Critique Disposition, and Artifact Self-Check. Keep each fact in one canonical section; summary prose projects current state without creating another decision authority.
+The plan is the user-facing source of truth, implementation handoff, and downstream checklist. A reader should understand what will change and how the work is sequenced before reaching supporting detail, so the sections appear in this order:
 
-Each phase owns one outcome-oriented goal. Each task owns its observable goal, requirements and evidence, likely targets, technical references or examples when material, dependencies, acceptance criteria, validation, completion evidence, and unresolved items. Task-local acceptance criteria are the canonical verification record, so functional and non-functional requirements do not repeat them.
+1. `## Task Metadata`
+2. `## Executive Summary` with `### What You May Not Know`
+3. `## Phase Checklist` with the overall diagram, phases, phase diagrams, and tasks
+4. `## User Decisions and Requirements`
+5. `## Planning Readiness and Next Step`
+6. `## Goals`, `## Scope and Non-Goals`, `## Functional Requirements`, `## Non-Functional Requirements`, `## Risks and Open Questions`, `## Dependencies`, and `## Sources`, each included when it holds content
+7. `## Critique Disposition`, `## Artifact Self-Check`, `## Follow-Up Items`, and `## Handoff`
+
+Keep each fact in one canonical section; summary prose projects current state without creating another decision authority. Each task's `Requirements:` block is the checkable record for that task: it cites `FR-nnn` and `NFR-nnn` identifiers and adds binding conditions rather than restating the requirement catalog. Open decisions, risks, and questions live in `## User Decisions and Requirements` and `## Risks and Open Questions` with the affected `Pxx-Txx` named, not in per-task status blocks.
+
+## Formatting conventions
+
+The plan is read by people in an editor as well as by agents, so it uses ordinary Markdown navigation aids:
+
+* Wrap code, commands, symbols, option names, and identifiers in backticks: `npm run lint:ps`, `New-PluginFixture`, `--json`.
+* Link an existing file or folder with the workspace-relative path as the link text and a path relative to the plan file as the destination. From `.copilot-tracking/plans/{{YYYY-MM-DD}}/`, a repository file is three levels up and a sibling tracking artifact is two levels up:
+
+  ```markdown
+  * [scripts/tests/plugins/Sync-PluginManifest.Tests.ps1](../../../scripts/tests/plugins/Sync-PluginManifest.Tests.ps1): fixture and validation-test patterns
+  * [.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md](../../research/{{YYYY-MM-DD}}/{{task_slug}}-research.md):
+    * Q2 under `## Findings` established the tracking responsibility boundary.
+  ```
+
+* Keep a path that does not exist yet in backticks rather than a link, and convert it to a link once the file exists.
+* Do not use `#file:` directives or line-number references in the plan.
+
+These conventions apply to the plan and to the changes record that `rpi-implement` maintains. Research, critique, and review records follow their own skills.
 
 ## Identity and markers
 
@@ -42,9 +68,9 @@ Use one stable overall task ID. Keep current `Pxx` and `Pxx-Txx` markers for nav
 
 The plan's `## User Decisions and Requirements` section has two distinct records. Confirmed User Direction is a concise freeform list of current user intent from prompts, user-pointed documents, tasks, issues, prior research, and accepted decisions. Planning Decisions and Feedback holds unresolved, proposed, deferred, and resolved material choices grouped by dependency and decision context. Each row records group, status, owner, rationale or requested input, evidence, and impact.
 
-The planner synthesizes confirmed direction and current evidence into separate top-level `## Goals`, `## Scope and Non-Goals`, `## Functional Requirements`, and `## Non-Functional Requirements` sections before `## Phase Checklist`. Task-local acceptance criteria connect those requirements to planned work without duplicating confirmed direction or unresolved decision rows. Move a resolved user-owned choice into Confirmed User Direction and update or close its decision row.
+The planner synthesizes confirmed direction and current evidence into separate top-level `## Goals`, `## Scope and Non-Goals`, `## Functional Requirements`, and `## Non-Functional Requirements` sections after `## Phase Checklist`. Number functional requirements `FR-nnn` and non-functional requirements `NFR-nnn` so tasks can cite them. Each task's `Requirements:` block connects those requirements to planned work without duplicating confirmed direction or unresolved decision rows. Move a resolved user-owned choice into Confirmed User Direction and update or close its decision row.
 
-When the user makes a clear change, update the list and every affected plan section directly without asking a redundant question. Reconcile the executive summary, phases, task markers, goals, targets, dependencies, references, acceptance criteria, critique inputs, and follow-up items after the update. Do not silently weaken or contradict a confirmed requirement.
+When the user makes a clear change, update the list and every affected plan section directly without asking a redundant question. Reconcile the executive summary, phases, task markers, Goals, Requirements, Details, References, Dependencies, diagrams, critique inputs, and follow-up items after the update. Do not silently weaken or contradict a confirmed requirement.
 
 When a decision-critical change remains unclear, apply the Planning Decision Walkthrough below. The question tool collects a choice; its evidence and explanation remain in the conversation and plan.
 
@@ -113,7 +139,15 @@ Use `âœ…` only for an evidence-backed settled decision or achieved readiness, `â
 
 ## Implementation-time updates and follow-up items
 
-When `rpi-implement` updates the plan during implementation, update Confirmed User Direction and affected sections when the change affects current confirmed intent. Record unresolved choices in Planning Decisions and Feedback. Reconcile updated goals, targets, technical references, acceptance criteria, validation, markers, dependencies, and the executive summary. Remove superseded active content rather than retaining plan-state history. A significant or divergent discovery may require a user decision and plan update before affected work resumes, but the task's critique is not repeated.
+When `rpi-implement` updates the plan during implementation, update Confirmed User Direction and affected sections when the change affects current confirmed intent. Record unresolved choices in Planning Decisions and Feedback. Reconcile updated Goals, Requirements, Details, References, markers, dependencies, diagrams, and the executive summary. Remove superseded active content rather than retaining plan-state history. A significant or divergent discovery may require a user decision and plan update before affected work resumes, but the task's critique is not repeated.
+
+Implementation may also add a `Guidance:` block to a later task. It belongs immediately after that task's `Details:` and names something earlier work created that the later task needs and the plan did not already call out, such as a class, API, contract, helper, fixture, or path. Keep it short and concrete:
+
+```markdown
+Guidance:
+* Consider using the contracts added under `scripts/plugins/contracts/`.
+* `Get-PluginSyncSummary` in `scripts/plugins/Sync-PluginManifest.ps1` already builds the summary object; extend it rather than adding a second builder.
+```
 
 Persist any user answer that informed an implementation-time update in the freeform list and affected synthesized sections.
 
@@ -129,11 +163,11 @@ Include these elements when evidence supports them:
 * Include a `### What You May Not Know` subsection for important context, dependencies, risks, or constraints that a user might otherwise miss.
 * State planning execution status, readiness, confidence, and residual uncertainty in plain language. Keep detailed decisions, blockers, and next actions in their canonical sections.
 
-Keep summary claims synchronized with the evidence and the detailed plan. Do not invent claims, decisions, resources, risks, or links. Link to same-plan sections when navigation helps, and add an authoritative external explanatory link only when supplied evidence supports it and it materially improves comprehension. Keep workspace-relative paths as plain text, not Markdown links.
+Keep summary claims synchronized with the evidence and the detailed plan. Do not invent claims, decisions, resources, risks, or links. Link to same-plan sections when navigation helps, and add an authoritative external explanatory link only when supplied evidence supports it and it materially improves comprehension. Follow the Formatting conventions above for paths, code, and commands.
 
 Use readable Markdown selectively: concise paragraphs and lists for structure, bold for essential reader attention, and italics when introducing a term. Plain Markdown has no underline syntax. Use renderer-specific underline only when the generated tracking artifact's renderer is known to support it and the emphasis is essential; pair it with a plain-Markdown fallback, preferably bold. Do not use underline as decoration or repeat it for routine emphasis.
 
-Update the executive summary after every material plan change, including critique-driven revisions, user decisions or their consequences, goals, scope, phases, dependencies, acceptance criteria, risks, and readiness. Before critique handoff and finalization, reconcile the summary with confirmed direction, decision rows, synthesized sections, and Planning Readiness and Next Step. Summary synchronization is a readiness condition.
+Update the executive summary after every material plan change, including critique-driven revisions, user decisions or their consequences, goals, scope, phases, dependencies, requirements, risks, and readiness. Before critique handoff and finalization, reconcile the summary with confirmed direction, decision rows, synthesized sections, and Planning Readiness and Next Step. Summary synchronization is a readiness condition.
 
 ## Research readiness
 
@@ -147,7 +181,7 @@ When none apply, plan from the supplied evidence. When one applies, ask `rpi-res
 
 ## Overall planning and bounded assignments
 
-The planning parent owns Confirmed User Direction, Planning Decisions and Feedback, phase and task goals, targets, references, acceptance criteria, phase order, dependencies, follow-up items, critique disposition, the complete plan, and finalization. It may activate planning skills or dispatch subagents selected from their available stable names and descriptions for bounded planning assignments.
+The planning parent owns Confirmed User Direction, Planning Decisions and Feedback, phase and task blocks, diagrams, phase order, dependencies, follow-up items, critique disposition, the complete plan, and finalization. It may activate planning skills or dispatch subagents selected from their available stable names and descriptions for bounded planning assignments.
 
 Select a skill or subagent only when its stable name contains `plan` or `planning`, or its description explicitly says it is used during planning, and its description fits the bounded assignment. Exclude `rpi-plan`, `rpi-plan-critique`, and other RPI lifecycle phase entrypoints. Activate selected skills as scoped guidance. When delegated work has no suitable planning subagent, dispatch an unnamed general-purpose subagent with the agent selection omitted.
 
@@ -163,7 +197,7 @@ Every planning-worker dispatch contains:
 
 * Exact plan path and assigned `Pxx` section
 * Relevant user decisions and requirements, caller requirements, and supplied evidence pointers
-* A bounded assignment to define or refine phase and task goals, task-local targets, references, dependencies, acceptance criteria, validation, completion-evidence state, or unresolved items
+* A bounded assignment to define or refine the phase's Goals and Dependencies and each task's Goals, Requirements, Details, References, or Dependencies, using the Phase and task blocks and Formatting conventions in this reference
 * An explicit write boundary limited to the assigned phase
 * An expected return that states findings, proposed or completed changes within the boundary, assumptions, unresolved items, and evidence
 * A prohibition on production source edits, implementation, Review, overall-plan decisions, nested delegation, and writes outside the assigned plan section
@@ -185,7 +219,7 @@ Do not infer deep mode from plan size, complexity, uncertainty, or risk. Standar
 
 Before dispatch, inspect the plan's Critique Disposition, parent state when present, and the critique path. A `started`, `Complete`, `Partial`, or `Blocked` execution record or existing critique artifact consumes the task's single invocation. On resume, reconcile existing evidence instead of dispatching a replacement. Persist `started`, candidate identity, selected depth and provenance, and output path immediately before dispatch; do not dispatch if that write fails.
 
-Lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence. Dispatch one fresh generic critique worker with selected depth, exact task context, confirmed direction, resolved planning decisions, caller requirements, research, evidence, dependencies, task-local acceptance criteria, plan path, and one critique output path. The critique worker reads the plan and directly relevant supplied evidence, writes only the critique artifact, and returns one complete actionable finding set.
+Lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence. Dispatch one fresh generic critique worker with selected depth, exact task context, confirmed direction, resolved planning decisions, caller requirements, research, evidence, dependencies, task Requirements, plan path, and one critique output path. The critique worker reads the plan and directly relevant supplied evidence, writes only the critique artifact, and returns one complete actionable finding set.
 
 The critique is a one-time internal readiness gate. Its verdict returns to the planning parent, which owns revision, decision requests, and finalization. It is not a peer lifecycle transition and does not cause a standalone user to invoke another stage.
 
@@ -194,17 +228,58 @@ Record the latest critique findings and their dispositions in the plan's standal
 * Revise the plan directly for localized evidence-backed corrections, applying all planner-owned findings in one coherent batch.
 * Dispatch a phase-matched planning subagent, or an unnamed general-purpose subagent with the planning restrictions above, when deeper planning work is needed.
 * Preserve confirmed user requests and answers when critique advice conflicts with them. Reject conflicting advice without re-asking when current user direction already resolves it.
-* Route a significant or divergent finding not resolved by current user direction through the current Planning Decision Walkthrough when it affects requirements, scope, architecture, acceptance criteria, dependencies, or evidence boundary.
+* Route a significant or divergent finding not resolved by current user direction through the current Planning Decision Walkthrough when it affects requirements, scope, architecture, dependencies, or evidence boundary.
 * Close every `PC-xxx` with its declared owner, disposition, and exact resolving evidence, then finalize without a retry or closure critique.
 * Finalize after direct corrections and required user decisions are resolved and any accepted residual risk is explicitly recorded.
 
 Any returned execution status consumes the invocation. Partial or Blocked critique evidence remains terminal for the gate. If its missing evidence or open findings cannot be resolved by the planning parent, stop Plan with the exact blocker rather than dispatching again.
 
-## Goal and task quality
+## Phase and task blocks
 
-A phase goal states the coherent behavior, capability, or future state the phase establishes and why it matters. It aligns its tasks without specifying their exact implementation sequence.
+Each phase and task is a heading followed by labeled blocks. A label is a plain line ending in a colon, followed directly by its bullet list. This keeps the plan scannable and gives implementation a predictable place to read and update.
 
-A task goal states an observable behavior, capability, or state that advances the phase goal. Keep the implementation handoff directly under that task: likely files, folders, components, or symbols; requirements and evidence; dependencies; acceptance criteria; validation; completion-evidence state; unresolved items; and material APIs, schemas, libraries, symbols, or concise code examples. Treat examples as illustrative unless a requirement or interface contract makes them binding. Omit empty optional example sections.
+A phase has these blocks, then its diagram, then its tasks:
+
+* `Goals:` states the coherent behavior, capability, or future state the phase establishes and why it matters. It aligns the tasks without dictating their implementation sequence.
+* `Dependencies:` names prerequisite phases or external conditions, or `None`.
+
+A task has these blocks in this order:
+
+* `Goals:` states the observable behavior, capability, or state the task establishes. Write the outcome, not the steps.
+* `Requirements:` is the checkable record for the task. Cite the `FR-nnn`, `NFR-nnn`, PRD, BRD, or ADR identifiers the task satisfies when they exist, then list the binding conditions that must hold when the task is done. When a shape is contractual, such as a JSON summary, an API signature, or a schema, put it in a fenced code block here and state that it is a contract.
+* `Details:` gives the implementer evidence-backed context: what exists today and what it lacks, the approach the evidence supports, boundaries to respect, what to avoid and why, tests to add or remove, repository-owned checks worth running such as `npm run test:ps -- -TestPath <path>`, and where to follow existing patterns. State a supported assumption here when the implementer may resolve it locally. Leave room for judgment; do not script keystrokes or prescribe how to verify.
+* `Guidance:` is optional and usually added by implementation. See Implementation-time updates and follow-up items.
+* `References:` links the files, folders, and tracking artifacts the implementer needs, each with a short reason. Point into research or prior decisions with a nested bullet that names the section and item, such as `Q2 under ## Findings`.
+* `Dependencies:` names prerequisite tasks or `None`.
+
+A task does not carry acceptance, validation, completion, or unresolved-item blocks. Completion is the `[x]` marker plus the changes record. An open decision goes in Planning Decisions and Feedback and a risk or question goes in Risks and Open Questions, each naming the affected `Pxx-Txx`.
+
+Treat examples and illustrative code as guidance unless a requirement or interface contract makes them binding, and say which applies.
+
+## Phase Checklist diagrams
+
+Once the phases are stable and before critique dispatch, add Mermaid diagrams so a reader can see the shape of the change without reading every task.
+
+The overall diagram sits directly under the `## Phase Checklist` heading, before the first phase. It shows the components, files, contracts, tests, or behaviors the plan changes and how they relate through calls, data flow, or dependencies. Give every node a short stable ID and a readable label. Mark nodes that do not exist yet with a dashed `classDef` so new work is distinguishable from modified work. Include only nodes that help the user understand the change; a complex plan produces a complex diagram, and that is acceptable, but do not list every file.
+
+Each phase diagram sits after the phase's `Dependencies:` block and before its first task. Copy the overall diagram's nodes and edges, apply a highlight `classDef` to the nodes the phase changes, and leave the rest unstyled so the reader can locate the phase within the whole. When the overall diagram is large, drop nodes that are far from the phase but keep the immediate neighbors. Reuse the overall diagram's node IDs exactly.
+
+```mermaid
+flowchart LR
+    sync["scripts/plugins/Sync-PluginManifest.ps1"]
+    summary["PluginSyncSummary class"]
+    tests["scripts/tests/plugins/Sync-PluginManifest.Tests.ps1"]
+    manifest["plugin.json"]
+    sync -->|builds| summary
+    sync -->|writes| manifest
+    tests -->|exercises| sync
+    classDef new stroke-dasharray: 5 5
+    classDef phase fill:#fff3bf,stroke:#f08c00,stroke-width:2px
+    class summary new
+    class sync,summary phase
+```
+
+Keep the diagrams current when phases or tasks are added, merged, split, or removed during planning or implementation.
 
 ## Planning conversation and closeout
 
