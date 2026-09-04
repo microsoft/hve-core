@@ -21,3 +21,6 @@ skip:
       - .github/workflows/extension-provenance-signer.yml
     job:
       - package
+  - rule: untrusted_checkout_exec
+    path:
+      - .github/workflows/backlog-groom.lock.yml

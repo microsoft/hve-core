@@ -11,6 +11,7 @@ import { createCalibrationCheckpoint, validateCalibrationCheckpoint } from './ca
 import { processAtPlanCase } from './at-plan-executor.mjs';
 import { launchChrome } from './_shared.mjs';
 import { resolveRouteUrl } from './route.mjs';
+import { assertArtifactId } from './validation.mjs';
 import { captureVisualReviewEvidence } from './visual-review-executor.mjs';
 
 function stripNonAuthoritativePersistedArtifactHashes(value, seen = new WeakMap()) {
@@ -149,9 +150,14 @@ function persistJsonArtifact(targetPath, payload) {
   return { artifactPath: resolvedTargetPath, artifactHash };
 }
 
-function persistSampleEvidence({ runRoot = null, journeyId, ordinal, payload }) {
-  const resolvedRunRoot = runRoot ? path.resolve(runRoot) : process.cwd();
+export function persistSampleEvidence({ runRoot = null, journeyId, ordinal, payload }) {
+  const resolvedRunRoot = path.resolve(runRoot || process.cwd());
+  assertArtifactId(String(journeyId), 'Journey ID');
   const evidencePath = path.join(resolvedRunRoot, 'journeys', String(journeyId), String(ordinal), 'evidence.json');
+  // Containment is asserted before persistJsonArtifact so no directory is created on an escape path.
+  if (!isWithinRoot(resolvedRunRoot, evidencePath)) {
+    throw new Error(`Calibration evidence path escapes the run root: ${evidencePath}`);
+  }
   const persisted = persistJsonArtifact(evidencePath, payload);
   const artifactReference = path.relative(resolvedRunRoot, persisted.artifactPath).replace(/\\/g, '/');
   return {
@@ -322,7 +328,11 @@ function buildProfileFingerprint(config, journey = {}) {
 }
 
 function normalizeJourney(config, journey, index) {
-  const journeyId = String(journey?.journeyId || journey?.id || `journey-${index + 1}`);
+  // The schema validates `id`, so it is preferred over the `journeyId` alias.
+  const journeyId = assertArtifactId(
+    String(journey?.id || journey?.journeyId || `journey-${index + 1}`),
+    'Journey ID',
+  );
   return {
     journeyId,
     title: journey?.title || `Calibration journey ${journeyId}`,
@@ -534,161 +544,31 @@ function normalizeVersionOutput(output) {
     .find(Boolean) || null;
 }
 
-// path.basename follows the host OS separator rules, so a Windows path handed
-// to a Linux process keeps its backslashes and returns unchanged. The probe
-// resolves paths for a caller-supplied platform, which may differ from the host,
-// so split on both separators.
-function executableName(candidate) {
-  const segments = String(candidate || '').split(/[\\/]/);
-  return segments[segments.length - 1] || String(candidate || '');
-}
-
-function normalizeChromeVersion(output) {
-  const trimmed = normalizeVersionOutput(output);
-  if (!trimmed) {
-    return null;
-  }
-  const versionMatch = trimmed.match(/(\d+(?:\.\d+){1,3})/);
-  return versionMatch ? versionMatch[1] : null;
-}
-
-function probePlaywrightChromeVersion({ env = {}, platform = 'linux', spawn }) {
-  if (platform !== 'win32') {
-    return null;
-  }
-  const script = "import('playwright').then(({ chromium }) => { const value = chromium.executablePath(); if (value) console.log(value); }).catch(() => process.exit(1));";
-  const probe = spawn(process.execPath, ['-e', script], { encoding: 'utf8' });
-  const resolvedPath = normalizeVersionOutput(probe.stdout || probe.stderr || '');
-  if (!resolvedPath) {
-    return null;
-  }
-  // Read the version from file metadata rather than executing the browser
-  // binary; on Windows a `--version` invocation opens a browser window.
-  return probeChromeVersionFromFileMetadata({ executable: resolvedPath, platform, spawn });
-}
-
-function probeChromeVersionFromFileMetadata({ executable, platform = 'linux', spawn }) {
-  if (platform !== 'win32' || !executable) {
-    return null;
-  }
-  const powershellScript = `[System.Diagnostics.FileVersionInfo]::GetVersionInfo('${String(executable).replace(/'/g, "''")}').ProductVersion`;
-  const probe = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', powershellScript], { encoding: 'utf8' });
-  return normalizeChromeVersion(`${probe.stdout || ''}${probe.stderr || ''}`);
-}
-
-function probeChromeVersion({ executable, env = {}, platform = 'linux', spawn }) {
-  if (!executable) {
-    return null;
-  }
-  // On Windows, `chrome.exe --version` does not print a version and exit. It
-  // launches a browser window against the user's default profile, which steals
-  // OS foreground focus from the automation window and survives Playwright
-  // teardown because Playwright never owned the process. Read the version from
-  // file metadata instead and never execute the browser binary here.
-  if (platform === 'win32') {
-    return probeChromeVersionFromFileMetadata({ executable, platform, spawn });
-  }
-  const probe = spawn(executable, ['--version'], { encoding: 'utf8' });
-  return normalizeChromeVersion(`${probe.stdout || ''}${probe.stderr || ''}`);
-}
-
-export function resolveChromeExecutable({ env = {}, platform = 'linux', spawn }) {
-  const candidates = [];
-  const explicitCandidates = [
-    env.RUNTIME_A11Y_CHROME_PATH,
-    env.CHROME_BIN,
-    env.PLAYWRIGHT_CHROME_EXECUTABLE_PATH,
-    env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
-  ].filter((entry) => typeof entry === 'string' && entry.trim().length > 0);
-  candidates.push(...explicitCandidates);
-
-  if (platform === 'win32') {
-    const localAppData = env.LOCALAPPDATA ? path.join(env.LOCALAPPDATA, 'Google', 'Chrome', 'Application', 'chrome.exe') : null;
-    const programFiles = [env.ProgramFiles, env.PROGRAMFILES, env['ProgramFiles'], env['PROGRAMFILES'], 'C:\\Program Files'].find((entry) => typeof entry === 'string' && entry.trim().length > 0);
-    const programFilesX86 = [env['ProgramFiles(x86)'], env['PROGRAMFILES(X86)'], 'C:\\Program Files (x86)'].find((entry) => typeof entry === 'string' && entry.trim().length > 0);
-    candidates.push(
-      localAppData,
-      programFiles ? path.join(programFiles, 'Google', 'Chrome', 'Application', 'chrome.exe') : null,
-      programFilesX86 ? path.join(programFilesX86, 'Google', 'Chrome', 'Application', 'chrome.exe') : null,
-      'chrome.exe',
-    );
-  } else {
-    candidates.push('google-chrome', 'chromium');
-  }
-
-  const uniqueCandidates = [];
-  const seenCandidates = new Set();
-  for (const candidate of candidates) {
-    if (!candidate) {
-      continue;
+async function probePlaywrightChrome(launchBrowser) {
+  let browser = null;
+  let version = null;
+  let error = null;
+  try {
+    browser = await launchBrowser();
+    version = browser?.version?.() || null;
+    if (!version) {
+      error = 'Chrome launch did not report a browser version.';
     }
-    const key = String(candidate);
-    if (seenCandidates.has(key)) {
-      continue;
-    }
-    seenCandidates.add(key);
-    uniqueCandidates.push(key);
-  }
-
-  for (const candidate of uniqueCandidates) {
-    const trimmed = String(candidate).trim();
-    if (!trimmed) {
-      continue;
-    }
-
-    const isAbsolutePath = path.isAbsolute(trimmed) || /^[a-z]:[\\/]/i.test(trimmed) || trimmed.includes('/') || trimmed.includes('\\');
-    if (isAbsolutePath) {
-      if (!existsSync(trimmed)) {
-        continue;
-      }
-      const version = probeChromeVersion({ executable: trimmed, env, platform, spawn });
-      if (version) {
-        return {
-          executable: executableName(trimmed),
-          version,
-        };
-      }
-      continue;
-    }
-
-    if (platform === 'win32') {
-      const playrightVersion = probePlaywrightChromeVersion({ env, platform, spawn });
-      if (playrightVersion) {
-        return {
-          executable: 'chrome.exe',
-          version: playrightVersion,
-        };
+  } catch (launchError) {
+    error = `Chrome launch failed: ${launchError instanceof Error ? launchError.message : String(launchError)}`;
+  } finally {
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeError) {
+        error = `Chrome close failed: ${closeError instanceof Error ? closeError.message : String(closeError)}`;
       }
     }
-
-    const lookup = spawn(platform === 'win32' ? 'where.exe' : 'which', [trimmed], { encoding: 'utf8' });
-    const resolvedPath = normalizeVersionOutput(lookup.stdout || lookup.stderr || '');
-    if (!resolvedPath) {
-      continue;
-    }
-
-    const version = probeChromeVersion({ executable: resolvedPath, env, platform, spawn });
-    if (version) {
-      return {
-        executable: executableName(resolvedPath),
-        version,
-      };
-    }
   }
-
-  if (platform === 'win32') {
-    const playrightVersion = probePlaywrightChromeVersion({ env, platform, spawn });
-    if (playrightVersion) {
-      return {
-        executable: 'chrome.exe',
-        version: playrightVersion,
-      };
-    }
-  }
-
   return {
-    executable: null,
-    version: null,
+    executable: version && !error ? 'channel:chrome' : null,
+    version: version && !error ? version : null,
+    error,
   };
 }
 
@@ -890,14 +770,16 @@ export async function probePrerequisites(config = {}, runtime = null) {
   const env = executionRuntime?.env || process.env || {};
   const spawn = executionRuntime?.spawnSync || spawnSync;
   const desktop = detectInteractiveDesktop({ env, platform, spawn });
-  const chrome = resolveChromeExecutable({ env, platform, spawn });
+  const chrome = await probePlaywrightChrome(
+    executionRuntime?.dependencies?.launchBrowser || launchChrome,
+  );
   const nvda = await detectGuidepupNvda({ platform, spawn, importGuidepup: executionRuntime?.dependencies?.importGuidepup });
   const reasons = [];
   if (!desktop.ok) {
     reasons.push('Interactive desktop was not available.');
   }
   if (!chrome.executable || !chrome.version) {
-    reasons.push('Chrome executable/version was not verified.');
+    reasons.push(chrome.error || 'Chrome launch/version was not verified.');
   }
   if (!nvda.guidepupRegistered) {
     reasons.push('NVDA registration for isolated Guidepup execution was not verified.');

@@ -33,6 +33,8 @@ All artifacts live under `.copilot-tracking/ppt/{{YYYY-MM-DD}}/{{ppt-name}}/` wi
     └── {{ppt-name}}.pptx
 ```
 
+The PPTX under `slide-deck/` is the canonical generated artifact and remains in the working root. After validation passes, one optional final delivery copy may be made only to an explicitly user-specified inside- or outside-root destination. Do not make a copy when no destination is specified or after a delivery copy has already been made. Request explicit overwrite confirmation before replacing an existing destination. After validation passes, open only the canonical generated PPTX when the user explicitly requests it; otherwise, report its path.
+
 Include `<!-- markdownlint-disable-file -->` at the top of all markdown files created under `.copilot-tracking/`.
 
 ## Content Conventions

@@ -3,7 +3,7 @@ title: Mural Credentials (Experimental)
 description: Configure and manage credential storage backends for the Mural skill (keyring, file, env-only).
 sidebar_position: 10
 author: microsoft/hve-core
-ms.date: 2026-05-08
+ms.date: 2026-08-31
 ms.topic: how-to
 keywords: [mural, credentials, keyring, oauth, experimental]
 estimated_reading_time: 8
@@ -50,15 +50,16 @@ When the resolved backend has no credentials and the matching environment variab
 
 ## Bootstrap walkthrough
 
-Run `mural auth bootstrap` to onboard a new workstation. The walkthrough proceeds through seven stages:
+Run `mural auth bootstrap` to onboard a new workstation and register Mural app credentials. Bootstrap does not run the OAuth login flow; that is a separate step with `mural auth login`. The walkthrough proceeds through eight stages:
 
-1. **Detect existing credentials.** The skill calls `mural auth status` internally and aborts with a hint when credentials already exist for the active profile. Pass `--force` to bypass detection and re-collect credentials over a populated backend.
-2. **Explain Mural app registration.** The walkthrough prints the URL of the Mural developer portal at [https://app.mural.co/me/apps](https://app.mural.co/me/apps) and instructs the operator to register an app with the loopback redirect URL `http://localhost:8765/callback` and the scopes `identity:read`, `workspaces:read`, `murals:read`, and `murals:write`.
-3. **Collect credentials.** The walkthrough prompts for the OAuth client ID and client secret using `getpass`. Both values are masked in the terminal and never echoed.
-4. **Run OAuth.** The skill starts a localhost loopback listener bound to `127.0.0.1:8765`, opens the Mural authorization endpoint in the default browser, and exchanges the returned authorization code for an access token and refresh token.
+1. **Detect existing credentials.** The skill reads `MURAL_CLIENT_ID` from the active backend and aborts with a hint when a value already exists for the active profile. Pass `--force` to bypass detection and re-collect credentials over a populated backend.
+2. **Explain Mural app registration.** The walkthrough prints the URL of the Mural developer portal at [https://app.mural.co/me/apps](https://app.mural.co/me/apps) and instructs the operator to register an app with the loopback redirect URL `http://localhost:8765/callback` and the scopes `identity:read`, `workspaces:read`, `rooms:read`, `murals:read`, `templates:read`, `murals:write`, `templates:write`, and `rooms:write`.
+3. **Open the developer portal.** The walkthrough makes a best-effort attempt to open the portal URL in the default browser. A failure here is ignored and never aborts the flow.
+4. **Collect credentials.** The walkthrough prompts for the Mural app client ID and client secret using `getpass`. Both values are masked in the terminal and never echoed.
 5. **Persist via the resolved backend.** The skill writes the credentials through the backend selected by `MURAL_CREDENTIAL_BACKEND` (defaulting to `auto`). When `auto` falls back to `file`, the walkthrough prints a single WARN that names the reason.
-6. **Verify against `/me`.** The skill calls the Mural `/me` endpoint with the freshly minted access token to confirm the credentials work end-to-end before exiting.
-7. **Report status.** The walkthrough closes by invoking `mural auth status` so the operator sees the resolved backend, source URI, and per-key presence.
+6. **Verify the write round-trips.** The skill reads the client ID back from the backend and confirms it matches what was just written, so a silent backend fault surfaces immediately.
+7. **Probe the credentials.** Unless `--no-test` is passed, the skill posts a `client_credentials` grant to the Mural token endpoint to confirm Mural accepts the pair. Bootstrap mints no access token, so this stage does not call `/me`.
+8. **Report next steps.** The walkthrough prints the profile and resolved backend, then directs the operator to run `mural auth status` to confirm the credentials resolve and `mural auth login --profile <name>` to obtain tokens.
 
 When `MURAL_NONINTERACTIVE=1` is set, `mural auth bootstrap` refuses to prompt and exits with a hint that points at `mural auth setup`.
 
@@ -107,9 +108,9 @@ export MURAL_CREDENTIAL_BACKEND=auto
 * **No SecretService on Linux headless.** `mural auth status` reports `keyring=unavailable`. Set `MURAL_CREDENTIAL_BACKEND=file` for the workstation, or install and run a SecretService implementation (for example `gnome-keyring-daemon --components=secrets`) and re-run `mural auth login`.
 * **Locked Keychain on macOS.** `mural auth login` fails with `keyring: refused to unlock`. Unlock the login keychain in Keychain Access and retry, or pass `--force` to re-prompt.
 * **DPAPI failure on Windows.** `mural auth login` reports `keyring backend raised an error`. The most common cause is running under a Windows service account that has no profile loaded. Set `MURAL_CREDENTIAL_BACKEND=file` for the service account, or run the command interactively under the operator account first.
-* **Foreign-owned credential file refused (G3).** `mural auth status` reports `file backend refused: st_uid mismatch`. Re-run `mural auth bootstrap` under the owning user account, or `chown` the file to the current user; the runtime intentionally refuses files owned by a different uid.
-* **Mode-0600 enforcement is loud (G5).** Setting `MURAL_ENV_FILE_RELAXED=1` now emits a single WARN per process to surface the loosened constraint. The variable continues to skip mode-0600 enforcement; remove it from CI configuration once the environment is hardened.
-* **Symlinked credential file (G6).** The runtime refuses to follow a symlinked credential file (`O_NOFOLLOW` is set on open). Replace the symlink with a regular file in the expected location, or update `MURAL_ENV_FILE` to point at the real path.
+* **Foreign-owned credential file refused.** The runtime raises `Refusing to load <path>: file is owned by uid <uid> (expected <uid>)`. Re-run `mural auth bootstrap` under the owning user account, or `chown` the file to the current user; the runtime intentionally refuses files owned by a different uid.
+* **Mode-0600 enforcement is loud.** Setting `MURAL_ENV_FILE_RELAXED=1` now emits a single WARN per process to surface the loosened constraint. The variable continues to skip mode-0600 enforcement; remove it from CI configuration once the environment is hardened.
+* **Symlinked credential file.** The runtime refuses to follow a symlinked credential file (`O_NOFOLLOW` is set on open). Replace the symlink with a regular file in the expected location, or update `MURAL_ENV_FILE` to point at the real path.
 
 ## Migration
 
