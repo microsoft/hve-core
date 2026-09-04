@@ -3,7 +3,7 @@ title: vex-triage
 description: "Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document, skipping the scan phase - Brought to you by microsoft/hve-core"
 sidebar_position: 15
 author: Microsoft
-ms.date: 2026-09-02
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - prompt
@@ -28,7 +28,7 @@ Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document, 
 
 ## When to use it
 
-Use this prompt to triage CVEs from an existing supported scan report or SBOM and draft an OpenVEX document without rescanning. Use vex-scan when current dependency discovery and enrichment are still required.
+Use this prompt to triage CVEs from an existing supported scan report or SBOM and draft an OpenVEX document without running the scan again. Use vex-scan when current dependency discovery and enrichment are still required.
 
 ## How to use it
 
