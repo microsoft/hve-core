@@ -21,27 +21,21 @@ constraint content. Read
 any lifecycle record from `templates/`. Validate policy records against
 `assets/schemas/ontology-policy.schema.json`, normalized extraction against
 `assets/schemas/normalized-evidence.schema.json`, and final contents against
-`assets/schemas/package-manifest.schema.json`. Validate successful runtime
-provisioning evidence against
-`assets/schemas/runtime-provisioning-evidence.schema.json`.
+`assets/schemas/package-manifest.schema.json`.
 
-## Portable runtime
+## Python runtime
 
-Provision the deterministic Python 3.11 runtime from the committed public lock:
+Run deterministic Python entry points through the standard HVE-Core skill
+environment:
 
 ```bash
-scripts/install-runtime.sh
+uv run --project <skill-root> --frozen --no-dev --no-group fuzz \
+  python <skill-root>/scripts/<entrypoint>.py
 ```
 
-```powershell
-./scripts/Install-OntologyRuntime.ps1
-```
-
-Both entry paths require `uv` 0.10.8, install only runtime dependencies into an
-external cache keyed by the lock digest, and exclude development and fuzz groups.
-Environment-level index configuration is supported for restricted networks, but
-endpoint values are never written to evidence. Use `--evidence-output` in Bash or
-`-EvidenceOutput` in PowerShell to retain the redacted runtime evidence record.
+The project requires Python 3.11 and uses the committed `uv.lock`. Runtime calls
+exclude the development and fuzz groups. Let `uv` honor environment-level index
+configuration in restricted networks without persisting endpoint values.
 
 ## Goal
 
