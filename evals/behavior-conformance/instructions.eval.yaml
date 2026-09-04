@@ -351,7 +351,7 @@ stimuli:
         config:
           pattern: "(?i)license|attribution|reproduce|standard|posture"
 
-  - name: instruction-licensing-posture-conformance
+  - name: instruction-data-science-licensing-posture-conformance
     prompt: |
       You are writing a new reference file under
       `.github/skills/data-science-engineering/dataops/references/` that summarizes an

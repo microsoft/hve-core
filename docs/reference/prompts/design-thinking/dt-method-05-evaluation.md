@@ -3,7 +3,7 @@ title: Dt Method 05 Evaluation
 description: Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt during Method 5c when stakeholders need to compare concepts through desirability, feasibility, and viability. Use concept articulation first when candidate concepts are not yet clear enough to evaluate.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the `project-slug` and optionally name the stakeholder groups that should participate. The prompt facilitates evidence-based evaluation and records alignment or disagreement rather than inventing consensus.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/dt-method-05-evaluation project-slug=factory-floor-maintenance stakeholderGroups="operators, managers, IT"
+```
+
+The prompt compares current concepts across the three lenses and records stakeholder perspectives.

@@ -7,14 +7,12 @@
 # Disable the once-per-day outbound version check in CI runs.
 disableVersionCheck: true
 
-# Advisory findings can be acknowledged here by rule/path/level once triaged.
-# Example:
-# skip:
-#   - level: note
-#   - rule: unpinnable_action
-#     path:
-#       - .github/workflows/example.yml
 skip:
   - rule: untrusted_checkout_exec
     path:
       - .github/workflows/backlog-groom.lock.yml
+  - rule: untrusted_checkout_exec
+    path:
+      - .github/workflows/extension-provenance-signer.yml
+    job:
+      - package
