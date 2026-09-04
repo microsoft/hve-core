@@ -1005,13 +1005,13 @@ foreach ($plan in $artifactPlan) {
             trials           = $r.trials
             runDir           = $r.runDir
             resultsPath      = $r.resultsPath
-                        status           = $specStatus
-                        failedOrErroredTrials = if ($r.ContainsKey('failedOrErroredTrials')) { @($r.failedOrErroredTrials) } else { @() }
+            status           = $specStatus
+            failedOrErroredTrials = if ($r.ContainsKey('failedOrErroredTrials')) { @($r.failedOrErroredTrials) } else { @() }
         })
     }
 
-        $status = if (-not $allSpecsRan) { 'skipped' }
-                            elseif ($artifactHasEvaluatorError) { 'evaluator-error' }
+    $status = if ($artifactHasEvaluatorError) { 'evaluator-error' }
+              elseif (-not $allSpecsRan) { 'skipped' }
               elseif ($artifactHasHardFail -or $artifactAuthoritativeFailed -gt 0 -or $artifactExitCode -ne 0) { 'fail' }
               elseif ($artifactAdvisoryFailed -gt 0) { 'advisory-fail' }
               else { 'pass' }

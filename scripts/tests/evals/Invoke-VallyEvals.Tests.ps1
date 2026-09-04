@@ -837,6 +837,14 @@ stimuli:
         $summary.totals.failedSpecs | Should -Be 1
         $summary.perArtifact[0].status | Should -Be 'fail'
         $summary.perArtifact[0].assertionsFailed | Should -Be 2
+        $summary.perArtifact[0].failedOrErroredTrials | Should -HaveCount 2
+
+        $perArtifactFile = Join-Path $fx.LogsDir 'eval-results-agent-sample-agent.json'
+        $detail = Get-Content -LiteralPath $perArtifactFile -Raw | ConvertFrom-Json
+        $detail.failedOrErroredTrials | Should -HaveCount 2
+        $detail.specs[0].failedOrErroredTrials | Should -HaveCount 2
+        $detail.failedOrErroredTrials[0].PSObject.Properties.Name | Should -Not -Contain 'output'
+        $detail.failedOrErroredTrials[0].PSObject.Properties.Name | Should -Not -Contain 'trajectory'
     }
 
     It 'Fails closed when Vally exits nonzero without a results file' {
