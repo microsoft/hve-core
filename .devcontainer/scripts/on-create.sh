@@ -80,6 +80,7 @@ main() {
 
   echo "Installing PowerShell modules..."
   if [[ -n "${PSGALLERY_SOURCE}" ]]; then
+    # shellcheck disable=SC2016  # PowerShell expands these environment variables.
     PSGALLERY_REPO="${PSGALLERY_REPO}" PSGALLERY_SOURCE="${PSGALLERY_SOURCE}" \
       pwsh -NoProfile -Command 'Register-PSRepository -Name $env:PSGALLERY_REPO -SourceLocation $env:PSGALLERY_SOURCE -InstallationPolicy Trusted -ErrorAction SilentlyContinue'
   fi

@@ -6,7 +6,8 @@ BeforeAll {
     $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
     $script:OnCreatePath = Join-Path $script:RepoRoot '.devcontainer/scripts/on-create.sh'
     $script:CopilotSetupPath = Join-Path $script:RepoRoot '.github/workflows/copilot-setup-steps.yml'
-    $script:BashCommand = Get-Command bash -CommandType Application -ErrorAction SilentlyContinue
+    $script:BashCommand = Get-Command bash -CommandType Application -ErrorAction SilentlyContinue |
+        Select-Object -First 1
 
     function ConvertTo-BashLiteral {
         [CmdletBinding()]
@@ -62,8 +63,9 @@ BeforeAll {
             $env:UV_CALL_LOG = $CallLog
             $env:UV_FAIL_DIR = $FailDirectory
             $command = "source $(ConvertTo-BashLiteral $script:OnCreatePath); sync_python_environments $(ConvertTo-BashLiteral $TestRepo)"
-            & $script:BashCommand.Source -c $command
-            return $LASTEXITCODE
+            & $script:BashCommand.Source -c $command | Out-Null
+            $exitCode = $LASTEXITCODE
+            return $exitCode
         }
         finally {
             $env:PATH = $originalPath
@@ -82,13 +84,18 @@ BeforeAll {
 
         New-Item -ItemType Directory -Path $Directory -Force | Out-Null
         $stubPath = Join-Path $Directory 'uv'
-        Set-Content -Path $stubPath -Value @'
-#!/usr/bin/env bash
-printf '%s|%s\n' "${PWD}" "$*" >> "${UV_CALL_LOG}"
-if [[ -n "${UV_FAIL_DIR:-}" && "${PWD}" == *"${UV_FAIL_DIR}" ]]; then
-  exit 42
-fi
-'@
+        $stubContent = @(
+            '#!/usr/bin/env bash'
+            'printf ''%s|%s\n'' "${PWD}" "$*" >> "${UV_CALL_LOG}"'
+            'if [[ -n "${UV_FAIL_DIR:-}" && "${PWD}" == *"${UV_FAIL_DIR}" ]]; then'
+            '  exit 42'
+            'fi'
+        ) -join "`n"
+        [System.IO.File]::WriteAllText(
+            $stubPath,
+            "$stubContent`n",
+            [System.Text.UTF8Encoding]::new($false)
+        )
         & chmod +x $stubPath
         return $stubPath
     }
@@ -117,9 +124,10 @@ Describe 'on-create Python environment sync contract' -Tag 'Unit' {
                 return
             }
 
-            $script:TestRepo = Join-Path $TestDrive 'repo'
-            $script:StubDirectory = Join-Path $TestDrive 'bin'
-            $script:CallLog = Join-Path $TestDrive 'uv-calls.log'
+            $testRoot = Join-Path $TestDrive ([guid]::NewGuid().ToString())
+            $script:TestRepo = Join-Path $testRoot 'repo'
+            $script:StubDirectory = Join-Path $testRoot 'bin'
+            $script:CallLog = Join-Path $testRoot 'uv-calls.log'
             New-Item -ItemType Directory -Path $script:TestRepo -Force | Out-Null
             New-UvStub -Directory $script:StubDirectory | Out-Null
         }
