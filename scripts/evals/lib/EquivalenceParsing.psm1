@@ -484,6 +484,8 @@ function Measure-AgentInvocationEvidence {
 
         Missing, duplicate, failed, wrong-path, and malformed evidence is counted so
         callers can fail closed instead of treating absence as successful delivery.
+        A single failed key receives a bounded structural reason code without retaining
+        tool arguments, result content, transcript text, or absolute paths.
     .OUTPUTS
         [hashtable] Invocation evidence counts, diagnostics, and per-model identity.
     #>
@@ -510,6 +512,7 @@ function Measure-AgentInvocationEvidence {
     $expectedKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     $observed = @{}
     $recordCounts = @{}
+    $failureReasons = @{}
     $failed = 0
     $wrongPath = 0
     $malformed = 0
@@ -528,6 +531,7 @@ function Measure-AgentInvocationEvidence {
         return @{
             Model = ''; Expected = $expectedKeys.Count; Observed = 0; Failed = 0
             Missing = $expectedKeys.Count; Duplicate = 0; WrongPath = 0; Malformed = 0
+            FailedKey = $null; ReasonCode = $null
             HasCompleteEvidence = $false; Diagnostics = @($diagnostics)
         }
     }
@@ -572,6 +576,7 @@ function Measure-AgentInvocationEvidence {
             if (-not ($record.PSObject.Properties['trajectory'] -and $record.trajectory -and
                     $record.trajectory.PSObject.Properties['events'] -and $record.trajectory.events)) {
                 $malformed++
+                $failureReasons[$key] = 'malformed-record'
                 $diagnostics.Add("Invocation record '$key' has no trajectory events.")
                 continue
             }
@@ -579,6 +584,9 @@ function Measure-AgentInvocationEvidence {
             $candidateCalls = @{}
             $recordHasSuccessfulRead = $false
             $recordHasWrongPath = $false
+            $recordHasCorrelatedResult = $false
+            $recordHasFailedToolResult = $false
+            $recordHasSuccessfulUnmarkedResult = $false
             foreach ($trajectoryEvent in @($record.trajectory.events)) {
                 if (-not $trajectoryEvent -or -not $trajectoryEvent.PSObject.Properties['type'] -or -not $trajectoryEvent.PSObject.Properties['data']) { continue }
                 if ($trajectoryEvent.type -eq 'tool_call') {
@@ -600,6 +608,7 @@ function Measure-AgentInvocationEvidence {
                 $callId = [string]$trajectoryEvent.data.toolCallId
                 if (-not $candidateCalls.ContainsKey($callId)) { continue }
 
+                $recordHasCorrelatedResult = $true
                 $success = $trajectoryEvent.data.PSObject.Properties['success'] -and [bool]$trajectoryEvent.data.success
                 $resultText = if ($trajectoryEvent.data.PSObject.Properties['result'] -and $trajectoryEvent.data.result) {
                     $trajectoryEvent.data.result | ConvertTo-Json -Depth 30 -Compress
@@ -608,16 +617,35 @@ function Measure-AgentInvocationEvidence {
                 if ($success -and $resultText -match $contentMarker) {
                     $recordHasSuccessfulRead = $true
                 }
+                elseif ($success) {
+                    $recordHasSuccessfulUnmarkedResult = $true
+                }
+                else {
+                    $recordHasFailedToolResult = $true
+                }
             }
             if ($recordHasSuccessfulRead) {
                 $observed[$key] = 1
             }
             elseif ($candidateCalls.Count -gt 0) {
                 $failed++
-                $diagnostics.Add("Invocation read for '$key' failed or returned no RPI Agent content.")
+                $failureReasons[$key] = if ($recordHasSuccessfulUnmarkedResult) {
+                    'successful-result-without-agent-marker'
+                }
+                elseif ($recordHasFailedToolResult) {
+                    'failed-tool-result'
+                }
+                elseif (-not $recordHasCorrelatedResult) {
+                    'missing-correlated-result'
+                }
+                else {
+                    'missing-correlated-result'
+                }
+                $diagnostics.Add("Invocation read for '$key' failed structural validation: $($failureReasons[$key]).")
             }
             elseif ($recordHasWrongPath) {
                 $wrongPath++
+                $failureReasons[$key] = 'wrong-path'
                 $diagnostics.Add("Invocation record '$key' referenced an unexpected RPI Agent path.")
             }
         }
@@ -633,11 +661,17 @@ function Measure-AgentInvocationEvidence {
         }
         if (-not $observed.ContainsKey($key)) {
             $missing++
+            if (-not $failureReasons.ContainsKey($key)) {
+                $failureReasons[$key] = 'no-exact-read'
+            }
             $diagnostics.Add("Invocation evidence is missing for '$key'.")
         }
     }
 
     $observedCount = @($observed.Keys | Where-Object { [int]$observed[$_] -gt 0 }).Count
+    $failedKeys = @($failureReasons.Keys | Where-Object { -not $observed.ContainsKey($_) } | Sort-Object)
+    $failedKey = if ($failedKeys.Count -eq 1) { [string]$failedKeys[0] } else { $null }
+    $reasonCode = if ($failedKey) { [string]$failureReasons[$failedKey] } else { $null }
     $complete = $expectedKeys.Count -gt 0 -and $observedCount -eq $expectedKeys.Count -and
         $failed -eq 0 -and $missing -eq 0 -and $duplicate -eq 0 -and $wrongPath -eq 0 -and $malformed -eq 0
 
@@ -645,6 +679,7 @@ function Measure-AgentInvocationEvidence {
         Model = $model; Expected = $expectedKeys.Count; Observed = $observedCount
         Failed = $failed; Missing = $missing; Duplicate = $duplicate
         WrongPath = $wrongPath; Malformed = $malformed
+        FailedKey = $failedKey; ReasonCode = $reasonCode
         HasCompleteEvidence = $complete; Diagnostics = @($diagnostics)
     }
 }

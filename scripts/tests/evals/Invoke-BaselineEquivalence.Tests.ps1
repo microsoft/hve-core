@@ -492,6 +492,8 @@ stimuli:
 stimuli:
   - name: stub-stimulus
     prompt: "Stub prompt."
+    invariants: [stub-invariant]
+    customized_required: [stub-guard]
     tags: {category: baseline-equivalence, policy: equivalent}
 '@
         foreach ($variantDir in @('baseline', 'customized')) {
@@ -514,7 +516,7 @@ defaults:
 
     AfterEach {
         Remove-Item Alias:vally -Force -ErrorAction SilentlyContinue
-        Remove-Item Env:STUB_VALLY_COMPARE_MODE -ErrorAction SilentlyContinue
+        Remove-Item Env:STUB_VALLY_COMPARE_MODE, Env:STUB_VALLY_BASELINE_MODE, Env:STUB_VALLY_CUSTOMIZED_MODES, Env:STUB_VALLY_CUSTOMIZED_COUNT_PATH, Env:STUB_VALLY_CALL_LOG -ErrorAction SilentlyContinue
     }
 
     It 'Counts each failed empty compare once across ci models' {
@@ -562,6 +564,81 @@ defaults:
         $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
         $summary.verdict | Should -Be 'fail'
         $LASTEXITCODE | Should -Be 0
+    }
+
+    It 'Retries one eligible customized GPT attempt and makes the retry authoritative' {
+        $env:STUB_VALLY_BASELINE_MODE = 'invocation-pass'
+        $env:STUB_VALLY_CUSTOMIZED_MODES = 'invocation-failed-tool,invocation-pass'
+        $env:STUB_VALLY_CUSTOMIZED_COUNT_PATH = Join-Path $TestDrive "customized-count-$([Guid]::NewGuid()).txt"
+        $env:STUB_VALLY_CALL_LOG = Join-Path $TestDrive 'vally-calls.jsonl'
+        $env:STUB_VALLY_COMPARE_MODE = 'pass'
+
+        & $script:ScriptPath `
+            -Agent 'rpi-agent' `
+            -Tier 'calibration' `
+            -RepoRoot $script:StubRepoRoot `
+            -OutputPath $script:StubOutputPath `
+            -NoBaselineCache *> $null
+
+        $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
+        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-5.6-luna' })
+        $calls = @(Get-Content -LiteralPath $env:STUB_VALLY_CALL_LOG | ForEach-Object { , ($_ | ConvertFrom-Json) })
+        $baselineCalls = @($calls | Where-Object { $_[0] -eq 'eval' -and $_[2] -match '[/\\]baseline[/\\]' })
+        $customizedCalls = @($calls | Where-Object { $_[0] -eq 'eval' -and $_[2] -match '[/\\]customized[/\\]' })
+
+        $gptAttempts.Count | Should -Be 2
+        $gptAttempts[0].reasonCode | Should -Be 'failed-tool-result'
+        $gptAttempts[1].hasCompleteEvidence | Should -BeTrue
+        $summary.invocationFailures | Should -Be 0
+        $baselineCalls.Count | Should -Be 2
+        $customizedCalls.Count | Should -Be 3
+    }
+
+    It 'Does not retry an ineligible missing exact read' {
+        $env:STUB_VALLY_BASELINE_MODE = 'invocation-pass'
+        $env:STUB_VALLY_CUSTOMIZED_MODES = 'invocation-no-exact-read'
+        $env:STUB_VALLY_CUSTOMIZED_COUNT_PATH = Join-Path $TestDrive "customized-count-$([Guid]::NewGuid()).txt"
+        $env:STUB_VALLY_COMPARE_MODE = 'pass'
+
+        & $script:ScriptPath `
+            -Agent 'rpi-agent' `
+            -Tier 'calibration' `
+            -RepoRoot $script:StubRepoRoot `
+            -OutputPath $script:StubOutputPath `
+            -NoBaselineCache *> $null
+
+        $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
+        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-5.6-luna' })
+
+        $gptAttempts.Count | Should -Be 1
+        $gptAttempts[0].reasonCode | Should -Be 'no-exact-read'
+        $summary.invocationFailures | Should -BeGreaterThan 0
+        [int](Get-Content -LiteralPath $env:STUB_VALLY_CUSTOMIZED_COUNT_PATH -Raw) | Should -Be 2
+    }
+
+    It 'Fails closed without reusing attempt one when the retry creates no run' {
+        $env:STUB_VALLY_BASELINE_MODE = 'invocation-pass'
+        $env:STUB_VALLY_CUSTOMIZED_MODES = 'invocation-failed-tool,silent-crash'
+        $env:STUB_VALLY_CUSTOMIZED_COUNT_PATH = Join-Path $TestDrive "customized-count-$([Guid]::NewGuid()).txt"
+        $env:STUB_VALLY_COMPARE_MODE = 'pass'
+
+        & $script:ScriptPath `
+            -Agent 'rpi-agent' `
+            -Tier 'calibration' `
+            -RepoRoot $script:StubRepoRoot `
+            -OutputPath $script:StubOutputPath `
+            -NoBaselineCache *> $null
+
+        $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
+        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-5.6-luna' })
+
+        $gptAttempts.Count | Should -Be 2
+        $gptAttempts[0].reasonCode | Should -Be 'failed-tool-result'
+        $gptAttempts[1].observed | Should -Be 0
+        $gptAttempts[1].failedKey | Should -BeNullOrEmpty
+        $summary.invocationFailures | Should -BeGreaterThan 0
+        $summary.runHealthFailures | Should -BeGreaterThan 0
+        $summary.verdict | Should -Be 'fail'
     }
 }
 

@@ -615,7 +615,20 @@ Describe 'Measure-AgentInvocationEvidence' -Tag 'Unit' {
 
         $result.Failed | Should -Be 1
         $result.Missing | Should -Be 1
+        $result.FailedKey | Should -Be 'stim-1||0'
+        $result.ReasonCode | Should -Be 'failed-tool-result'
         $result.HasCompleteEvidence | Should -BeFalse
+    }
+
+    It 'Classifies an exact read with no correlated result without exposing event content' {
+        $record = New-InvocationRecord
+        $record.trajectory.events = @($record.trajectory.events[0])
+        $root = Write-InvocationRun -Records @($record)
+        $result = Measure-AgentInvocationEvidence -RunDir $root -StimulusNames @('stim-1')
+
+        $result.FailedKey | Should -Be 'stim-1||0'
+        $result.ReasonCode | Should -Be 'missing-correlated-result'
+        ($result | ConvertTo-Json -Depth 5) | Should -Not -Match '/tmp/trial'
     }
 
     It 'Rejects a wrong agent path even when content looks valid' {
@@ -624,6 +637,8 @@ Describe 'Measure-AgentInvocationEvidence' -Tag 'Unit' {
 
         $result.WrongPath | Should -Be 1
         $result.Missing | Should -Be 1
+        $result.FailedKey | Should -Be 'stim-1||0'
+        $result.ReasonCode | Should -Be 'wrong-path'
         $result.HasCompleteEvidence | Should -BeFalse
     }
 
@@ -632,6 +647,7 @@ Describe 'Measure-AgentInvocationEvidence' -Tag 'Unit' {
         $result = Measure-AgentInvocationEvidence -RunDir $root -StimulusNames @('stim-1')
 
         $result.Failed | Should -Be 1
+        $result.ReasonCode | Should -Be 'successful-result-without-agent-marker'
         $result.HasCompleteEvidence | Should -BeFalse
     }
 
@@ -640,6 +656,8 @@ Describe 'Measure-AgentInvocationEvidence' -Tag 'Unit' {
         $result = Measure-AgentInvocationEvidence -RunDir $root -StimulusNames @('stim-1') -ExpectedTrials 2
 
         $result.Missing | Should -Be 1
+        $result.FailedKey | Should -Be 'stim-1||1'
+        $result.ReasonCode | Should -Be 'no-exact-read'
         $result.HasCompleteEvidence | Should -BeFalse
     }
 
@@ -681,11 +699,15 @@ Describe 'Measure-AgentInvocationEvidence' -Tag 'Unit' {
         $result.HasCompleteEvidence | Should -BeFalse
     }
 
-    It 'Counts malformed result lines' {
-        $root = Write-InvocationRun -Records @((New-InvocationRecord)) -RawLines @('{not-json')
+    It 'Counts malformed records and classifies a keyed record' {
+        $record = New-InvocationRecord
+        $record.trajectory.Remove('events')
+        $root = Write-InvocationRun -Records @($record) -RawLines @('{not-json')
         $result = Measure-AgentInvocationEvidence -RunDir $root -StimulusNames @('stim-1')
 
-        $result.Malformed | Should -Be 1
+        $result.Malformed | Should -Be 2
+        $result.FailedKey | Should -Be 'stim-1||0'
+        $result.ReasonCode | Should -Be 'malformed-record'
         $result.HasCompleteEvidence | Should -BeFalse
     }
 }

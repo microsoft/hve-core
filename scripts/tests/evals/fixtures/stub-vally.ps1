@@ -42,6 +42,10 @@ if ($args.Count -eq 0 -or $args[0] -notin @('eval', 'compare')) {
     exit 64
 }
 
+if ($env:STUB_VALLY_CALL_LOG) {
+    Add-Content -LiteralPath $env:STUB_VALLY_CALL_LOG -Value (, $args | ConvertTo-Json -Compress) -Encoding utf8
+}
+
 if ($args[0] -eq 'compare') {
     $outputPath = $null
     for ($i = 1; $i -lt $args.Count; $i++) {
@@ -78,11 +82,12 @@ if ($env:STUB_VALLY_ARGV_OUT) {
 
 $specPath  = $null
 $outputDir = $null
+$model = ''
 for ($i = 1; $i -lt $args.Count; $i++) {
     switch ($args[$i]) {
         '--eval-spec'  { $specPath  = $args[++$i] }
         '--output-dir' { $outputDir = $args[++$i] }
-        '--model'      { $null = $args[++$i] }
+        '--model'      { $model = [string]$args[++$i] }
         default        { }
     }
 }
@@ -105,7 +110,21 @@ if ($env:STUB_VALLY_MODES_JSON) {
     }
 }
 
-$mode = if ($specBase -and $modes.ContainsKey($specBase)) {
+$variant = if (($specPath -replace '\\', '/') -match '/customized/') { 'customized' } else { 'baseline' }
+$mode = if ($variant -eq 'customized' -and $env:STUB_VALLY_CUSTOMIZED_MODES) {
+    $sequence = @(([string]$env:STUB_VALLY_CUSTOMIZED_MODES) -split ',' | Where-Object { $_ })
+    $countPath = [string]$env:STUB_VALLY_CUSTOMIZED_COUNT_PATH
+    $customizedCount = if ($countPath -and (Test-Path -LiteralPath $countPath)) {
+        [int](Get-Content -LiteralPath $countPath -Raw)
+    }
+    else { 0 }
+    if ($countPath) { Set-Content -LiteralPath $countPath -Value ($customizedCount + 1) -Encoding ascii }
+    [string]$sequence[[Math]::Min($customizedCount, $sequence.Count - 1)]
+}
+elseif ($variant -eq 'baseline' -and $env:STUB_VALLY_BASELINE_MODE) {
+    [string]$env:STUB_VALLY_BASELINE_MODE
+}
+elseif ($specBase -and $modes.ContainsKey($specBase)) {
     [string]$modes[$specBase]
 }
 elseif ($env:STUB_VALLY_MODE) {
@@ -117,6 +136,9 @@ else {
 
 if ($mode -eq 'crash') {
     Write-Error "stub-vally: simulated crash"
+    exit 99
+}
+if ($mode -eq 'silent-crash') {
     exit 99
 }
 
@@ -147,6 +169,46 @@ function New-StubRecord {
         }
     }
     if ($Typed) { $record['type'] = 'trial-result' }
+    return $record
+}
+
+function New-InvocationStubRecord {
+    param(
+        [ValidateSet('pass', 'failed-tool', 'no-exact-read')]
+        [string]$InvocationMode
+    )
+
+    $record = New-StubRecord -Name 'stub-stimulus' -Passed $true -Typed
+    $record['stimulus'] = 'stub-stimulus'
+    $record['model'] = $model
+    $record['trialIndex'] = 0
+    $record.gradeResult['stimulusName'] = 'stub-stimulus'
+    $record.gradeResult.details = @(
+        [ordered]@{ name = 'stub-invariant'; kind = 'code'; passed = $true; score = 1.0 },
+        [ordered]@{ name = 'stub-guard'; kind = 'code'; passed = $true; score = 1.0 }
+    )
+    $record.trajectory['events'] = if ($InvocationMode -eq 'no-exact-read') {
+        @([ordered]@{ type = 'assistant_message'; data = [ordered]@{ status = 'complete' } })
+    }
+    else {
+        @(
+            [ordered]@{
+                type = 'tool_call'
+                data = [ordered]@{
+                    toolCallId = 'stub-agent-read'
+                    arguments = [ordered]@{ path = '.github/agents/hve-core/rpi-agent.agent.md' }
+                }
+            },
+            [ordered]@{
+                type = 'tool_result'
+                data = [ordered]@{
+                    toolCallId = 'stub-agent-read'
+                    success = $InvocationMode -eq 'pass'
+                    result = [ordered]@{ content = $(if ($InvocationMode -eq 'pass') { 'name: RPI Agent' } else { '' }) }
+                }
+            }
+        )
+    }
     return $record
 }
 
@@ -223,6 +285,9 @@ $records = switch ($mode) {
         )
         @($record)
     }
+    'invocation-pass' { @((New-InvocationStubRecord -InvocationMode 'pass')) }
+    'invocation-failed-tool' { @((New-InvocationStubRecord -InvocationMode 'failed-tool')) }
+    'invocation-no-exact-read' { @((New-InvocationStubRecord -InvocationMode 'no-exact-read')) }
     default {
         Write-Error "stub-vally: unknown mode '$mode'"
         exit 66
