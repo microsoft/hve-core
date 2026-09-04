@@ -112,6 +112,37 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result.perStimulus['missing-grade'].errored | Should -Be 1
         }
 
+        It 'Retains only safe failed and errored trial diagnostics' {
+            $runDir = Join-Path $script:WorkRoot 'run-diagnostics'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $failedRecord = @{
+                trajectory = @{ stimulus = @{ name = 'failed-stimulus' }; output = 'raw model output'; metrics = @{ wallTimeMs = 9 } }
+                gradeResult = @{ passed = $false; score = 0.4; graderDetail = 'raw grader detail' }
+            } | ConvertTo-Json -Depth 6 -Compress
+            $erroredRecord = @{
+                trajectory = @{ stimulus = @{ name = 'errored-stimulus' }; output = 'transient raw output' }
+            } | ConvertTo-Json -Depth 6 -Compress
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value @($failedRecord, $erroredRecord) -Encoding utf8
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir
+
+            $diagnostics = @($result.failedOrErroredTrials)
+            $diagnostics | Should -HaveCount 2
+            $diagnostics[0].ordinal | Should -Be 1
+            $diagnostics[0].outcome | Should -Be 'failed'
+            $diagnostics[0].stimulusName | Should -Be 'failed-stimulus'
+            $diagnostics[0].score | Should -Be 0.4
+            $diagnostics[0].passed | Should -BeFalse
+            $diagnostics[0].errorState | Should -BeNullOrEmpty
+            $diagnostics[1].ordinal | Should -Be 2
+            $diagnostics[1].outcome | Should -Be 'errored'
+            $diagnostics[1].passed | Should -BeNullOrEmpty
+            $diagnostics[1].errorState | Should -Be 'no-gradeable-verdict'
+            $diagnostics[0].PSObject.Properties.Name | Should -Not -Contain 'trajectory'
+            $diagnostics[0].PSObject.Properties.Name | Should -Not -Contain 'output'
+            $diagnostics[0].PSObject.Properties.Name | Should -Not -Contain 'graderDetail'
+        }
+
         It 'Ignores typed non-trial records while accepting typed trial results' {
             $runDir = Join-Path $script:WorkRoot 'run-typed-summary'
             New-Item -ItemType Directory -Path $runDir -Force | Out-Null
@@ -806,6 +837,50 @@ stimuli:
         $summary.totals.failedSpecs | Should -Be 1
         $summary.perArtifact[0].status | Should -Be 'fail'
         $summary.perArtifact[0].assertionsFailed | Should -Be 2
+        $summary.perArtifact[0].failedOrErroredTrials | Should -HaveCount 2
+
+        $perArtifactFile = Join-Path $fx.LogsDir 'eval-results-agent-sample-agent.json'
+        $detail = Get-Content -LiteralPath $perArtifactFile -Raw | ConvertFrom-Json
+        $detail.failedOrErroredTrials | Should -HaveCount 2
+        $detail.specs[0].failedOrErroredTrials | Should -HaveCount 2
+        $detail.failedOrErroredTrials[0].PSObject.Properties.Name | Should -Not -Contain 'output'
+        $detail.failedOrErroredTrials[0].PSObject.Properties.Name | Should -Not -Contain 'trajectory'
+    }
+
+    It 'Fails closed when Vally exits nonzero without a results file' {
+        $spec = @'
+name: advisory-cover
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+      instruction: sample-instruction
+      advisory: true
+'@
+        $artifacts = @(
+            @{ kind = 'instruction'; artifactId = 'sample-instruction'; path = '.github/instructions/hve-core/sample.instructions.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'instruction-sample.yaml'; Yaml = $spec })
+        $noResultsCommand = Join-Path $fx.Root 'no-results.ps1'
+        "param([Parameter(ValueFromRemainingArguments=`$true)]`$Arguments)`nexit 1" | Set-Content -LiteralPath $noResultsCommand -Encoding utf8
+
+        & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath `
+            -EvalRoot $fx.EvalRoot `
+            -LogsDir $fx.LogsDir `
+            -RepoRoot $fx.Root `
+            -VallyCommand $noResultsCommand `
+            -SkipInputModeration `
+            -SkipOutputModeration *> $null
+        $LASTEXITCODE | Should -Be 1
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be 1
+        $summary.perSpec[0].status | Should -Be 'evaluator-error'
+        $summary.perArtifact[0].status | Should -Be 'evaluator-error'
+        $detail = Get-Content -LiteralPath (Join-Path $fx.LogsDir 'eval-results-instruction-sample-instruction.json') -Raw | ConvertFrom-Json
+        $detail.specs[0].status | Should -Be 'evaluator-error'
+        $detail.status | Should -Be 'evaluator-error'
     }
 
     It 'Exits 2 when a non-deleted artifact has no covering spec' {
