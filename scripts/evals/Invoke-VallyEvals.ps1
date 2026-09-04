@@ -650,6 +650,24 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
     $result['moderationInput'] = $inputModeration
     $result['moderationOutput'] = $outputModeration
 
+    $isEvaluatorError = $result.exitCode -ne 0 -and
+        $result.trials -eq 0 -and
+        $result.assertionsPassed -eq 0 -and
+        $result.assertionsFailed -eq 0
+    if ($isEvaluatorError) {
+        $result['status'] = 'evaluator-error'
+        $result['isAdvisory'] = $false
+        $specResults[$runKey] = $result
+        $failedSpecs++
+        $promotedRunKeys[$runKey] = $true
+        Write-Host "::error file=$specRel::Vally exited $($result.exitCode) without gradeable trial or assertion evidence; promoting evaluator error to CI failure"
+        if ($FailFast) {
+            Write-Host "::warning::FailFast set; skipping remaining specs after evaluator error in $specRel"
+            break
+        }
+        continue
+    }
+
     $advisoryMap = Get-SpecStimulusAdvisoryMap -SpecPath $specAbs -TagFilter $tag
     $result['perStimulusAdvisory'] = $advisoryMap
 
@@ -1005,6 +1023,7 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
 
 $hardFailStatuses = @(
     'fail',
+    'evaluator-error',
     'content-moderation-input',
     'content-moderation-error-input',
     'content-moderation-output',
@@ -1019,6 +1038,8 @@ foreach ($plan in $artifactPlan) {
     $artifactAuthoritativeFailed = 0
     $artifactAdvisoryFailed      = 0
     $artifactHasHardFail = $false
+    $artifactHasEvaluatorError = $false
+    $artifactFailedOrErroredTrials = [System.Collections.Generic.List[object]]::new()
     $specBreakdown     = [System.Collections.Generic.List[object]]::new()
     $allSpecsRan       = $true
 
@@ -1052,9 +1073,16 @@ foreach ($plan in $artifactPlan) {
 
         # A failing spec status (e.g. content moderation) gates even with zero assertion failures.
         if ($specStatus -in $hardFailStatuses) { $artifactHasHardFail = $true }
+        if ($specStatus -eq 'evaluator-error') { $artifactHasEvaluatorError = $true }
 
         # A nonzero exit gates only when the spec is not advisory.
         if ($r.exitCode -ne 0 -and -not $specIsAdvisory -and $artifactExitCode -eq 0) { $artifactExitCode = $r.exitCode }
+
+        if ($r.ContainsKey('failedOrErroredTrials') -and $null -ne $r.failedOrErroredTrials) {
+            foreach ($trial in $r.failedOrErroredTrials) {
+                $artifactFailedOrErroredTrials.Add($trial) | Out-Null
+            }
+        }
 
         $specBreakdown.Add([ordered]@{
             specPath         = $r.specRel
@@ -1066,10 +1094,13 @@ foreach ($plan in $artifactPlan) {
             trials           = $r.trials
             runDir           = $r.runDir
             resultsPath      = $r.resultsPath
+            status           = $specStatus
+            failedOrErroredTrials = if ($r.ContainsKey('failedOrErroredTrials')) { @($r.failedOrErroredTrials) } else { @() }
         })
     }
 
-    $status = if (-not $allSpecsRan) { 'skipped' }
+    $status = if ($artifactHasEvaluatorError) { 'evaluator-error' }
+              elseif (-not $allSpecsRan) { 'skipped' }
               elseif ($artifactHasHardFail -or $artifactAuthoritativeFailed -gt 0 -or $artifactExitCode -ne 0) { 'fail' }
               elseif ($artifactAdvisoryFailed -gt 0) { 'advisory-fail' }
               else { 'pass' }
@@ -1089,6 +1120,7 @@ foreach ($plan in $artifactPlan) {
         assertionsFailed    = $artifactFailed
         authoritativeFailed = $artifactAuthoritativeFailed
         advisoryFailed      = $artifactAdvisoryFailed
+        failedOrErroredTrials = @($artifactFailedOrErroredTrials)
         specs               = @($specBreakdown)
     }
     Write-JsonFile -Value $artifactRecord -Path $artifactFile
@@ -1105,6 +1137,7 @@ foreach ($plan in $artifactPlan) {
         assertionsFailed    = $artifactFailed
         authoritativeFailed = $artifactAuthoritativeFailed
         advisoryFailed      = $artifactAdvisoryFailed
+        failedOrErroredTrials = @($artifactFailedOrErroredTrials)
         specCount           = $specBreakdown.Count
         resultsFile         = "logs/eval-results-$artifactKey.json"
     }) | Out-Null
@@ -1124,6 +1157,7 @@ foreach ($runKey in $specResults.Keys) {
     }
     if ($r.ContainsKey('status')) { $record['status'] = $r.status }
     if ($r.ContainsKey('isAdvisory')) { $record['isAdvisory'] = [bool]$r.isAdvisory }
+    if ($r.ContainsKey('failedOrErroredTrials')) { $record['failedOrErroredTrials'] = @($r.failedOrErroredTrials) }
     if ($r.ContainsKey('perStimulusAdvisory') -and $null -ne $r.perStimulusAdvisory) {
         $record['advisoryPassed'] = [int]$r.advisoryPassed
         $record['advisoryFailed'] = [int]$r.advisoryFailed
