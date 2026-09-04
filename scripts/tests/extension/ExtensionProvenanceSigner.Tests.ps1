@@ -206,7 +206,7 @@ esac
     }
 }
 
-Describe 'Dormant extension provenance signer' -Tag 'Unit' {
+Describe 'Immutable extension provenance signer' -Tag 'Unit' {
     It 'Declares the immutable authorization, package, and attestation graph' {
         [string[]]@($script:Signer['jobs'].Keys | Sort-Object) |
             Should -Be @('attest', 'authorize', 'package')
@@ -217,11 +217,12 @@ Describe 'Dormant extension provenance signer' -Tag 'Unit' {
         [bool]$script:Signer['concurrency']['cancel-in-progress'] | Should -BeFalse
     }
 
-    It 'Is dormant until a later caller references it' {
+    It 'Has one caller pinned to the merged signer revision' {
         $Callers = @(Get-ChildItem -LiteralPath (Join-Path $script:RepositoryRoot '.github/workflows') -Filter '*.yml' |
                 Where-Object { $_.FullName -ne $script:SignerPath } |
-                Select-String -SimpleMatch 'extension-provenance-signer.yml')
-        $Callers | Should -BeNullOrEmpty
+                Select-String -Pattern 'uses:\s+microsoft/hve-core/\.github/workflows/extension-provenance-signer\.yml@3a09401536cef0c4559db1aa64b7d1010638fd67\s+# PR #2823 squash\s*$')
+        $Callers | Should -HaveCount 1
+        Split-Path -Path $Callers[0].Path -Leaf | Should -BeExactly 'release-vsix-publish.yml'
     }
 
     It 'Limits the scanner acknowledgment to the read-only package job' {

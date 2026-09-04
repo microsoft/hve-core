@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import argparse
 import getpass  # noqa: F401 - re-exposed as patchable facade attribute
-import json
 import logging
 import os
 import pathlib  # noqa: F401 - re-exposed as patchable facade attribute
@@ -243,6 +242,8 @@ from ._output import (  # noqa: E402,F401
     _emit,
     _emit_debug_traceback,
     _emit_json,
+    _emit_json_error,
+    _redact_payload,
 )
 
 # isort: split
@@ -288,6 +289,7 @@ from ._backends import (  # noqa: E402,F401
 from ._transport import (  # noqa: E402,F401
     _API_OPENER,
     _RATE_BUCKET,
+    MAX_ERROR_EXCERPT_CHARS,
     REQUEST_TIMEOUT_SECONDS,
     _SAS_OPENER,
     _TOKEN_OPENER,
@@ -296,6 +298,7 @@ from ._transport import (  # noqa: E402,F401
     _build_api_error,
     _create_asset_url,
     _decode_body,
+    _error_excerpt,
     _extract_error_payload,
     _join_url,
     _NoRedirect,
@@ -1193,7 +1196,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         _autoload_credentials(profile_name)
     except MuralError as exc:
-        print(str(exc), file=sys.stderr)
+        print(_redact(str(exc)), file=sys.stderr)
         return EXIT_FAILURE
     func: Callable[[argparse.Namespace], int] = getattr(args, "func", None)
     if func is None:
@@ -1208,7 +1211,7 @@ def main(argv: list[str] | None = None) -> int:
     except BrokenPipeError:
         return 141
     except MuralAuthScopeError as exc:
-        print(f"auth: {exc}", file=sys.stderr)
+        print(f"auth: {_redact(str(exc))}", file=sys.stderr)
         return 77
     except MuralHumanAuthoredProtected as exc:
         envelope = {
@@ -1216,7 +1219,7 @@ def main(argv: list[str] | None = None) -> int:
             "mural": exc.mural_id,
             "widget": exc.widget_id,
         }
-        print(json.dumps(envelope), file=sys.stderr)
+        _emit_json_error(envelope)
         return EXIT_NOPERM
     except MuralTagMergeConflict as exc:
         envelope = {
@@ -1229,7 +1232,7 @@ def main(argv: list[str] | None = None) -> int:
             "extra": exc.extra,
             "attempts": exc.attempts,
         }
-        print(json.dumps(envelope), file=sys.stderr)
+        _emit_json_error(envelope)
         return EXIT_TEMPFAIL
     except MuralAreaCapacityExceeded as exc:
         envelope = {
@@ -1240,14 +1243,22 @@ def main(argv: list[str] | None = None) -> int:
             "computed_extent": exc.computed_extent,
             "suggestion": exc.suggestion,
         }
-        print(json.dumps(envelope), file=sys.stderr)
+        _emit_json_error(envelope)
         return EXIT_AREA_CAPACITY
     except MuralBulkAtomicAbort as exc:
         envelope = {"error": "bulk_atomic_abort", "aborted": True, **exc.summary}
-        print(json.dumps(envelope), file=sys.stderr)
+        _emit_json_error(envelope)
         return EXIT_TEMPFAIL
+    except MuralAPIError as exc:
+        code = f" code={exc.code}" if exc.code else ""
+        request_id = f" request_id={_redact(exc.request_id)}" if exc.request_id else ""
+        print(
+            f"error: HTTP {exc.status}{code}: {_redact(exc.message)}{request_id}",
+            file=sys.stderr,
+        )
+        return 1
     except MuralError as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        print(f"error: {_redact(str(exc))}", file=sys.stderr)
         return 1
     except Exception as exc:  # noqa: BLE001
         print(f"internal error: {_redact(repr(exc))}", file=sys.stderr)
