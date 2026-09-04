@@ -3,7 +3,7 @@ title: SBOM Verification
 description: Verify, download, and inspect the Software Bill of Materials published with each HVE Core release
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-29
+ms.date: 2026-09-04
 ms.topic: how-to
 keywords:
   - SBOM
@@ -66,12 +66,14 @@ Verify SPDX predicates through their primary artifact subjects:
 ```bash
 # Stable VSIX
 gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
-  --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance.yml \
+  --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
+  --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67 \
   --predicate-type https://spdx.dev/Document/v2.3
 
 # PreRelease VSIX
 gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
-  --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance.yml \
+  --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
+  --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67 \
   --predicate-type https://spdx.dev/Document/v2.3
 
 ```
@@ -100,7 +102,7 @@ runner, the expected external parameters, one resolved source dependency, and
 the expected builder identity. Missing, additional, or mismatched policy fields
 fail verification.
 
-The signer remains `extension-provenance.yml`. Its `contents: read` package job
+The signer is `extension-provenance-signer.yml`. Its `contents: read` package job
 installs and packages; its separate privileged attestation job receives the
 VSIX and dependency SBOM through fixed-name, digest-checked artifact transfers.
 No job both installs or packages dependencies and signs the result.

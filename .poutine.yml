@@ -13,11 +13,6 @@ disableVersionCheck: true
 skip:
   - rule: untrusted_checkout_exec
     path:
-      - .github/workflows/extension-provenance.yml
-    job:
-      - package
-  - rule: untrusted_checkout_exec
-    path:
       - .github/workflows/extension-provenance-signer.yml
     job:
       - package

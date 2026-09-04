@@ -2,7 +2,7 @@
 title: Security
 description: Security vulnerability reporting procedures and Microsoft's coordinated disclosure policy
 author: Microsoft Security Response Center
-ms.date: 2026-08-29
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - security
@@ -103,11 +103,13 @@ HVE Core publishes cryptographically attested assets under exact channel tags:
    ```bash
    # Stable VSIX
    gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
-     --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance.yml
+    --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
+    --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67
 
    # PreRelease VSIX
    gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
-     --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance.yml
+    --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
+    --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67
    ```
 
 The GitHub Release is the canonical verification surface for SLSA and Sigstore
@@ -133,7 +135,7 @@ GitHub-hosted runner, the expected external parameters, one resolved source
 dependency, and the expected builder identity. Missing, additional, or
 mismatched policy fields fail verification.
 
-`extension-provenance.yml` retains the signer identity but separates duties.
+`extension-provenance-signer.yml` provides the signer identity and separates duties.
 Its `contents: read` package job installs dependencies and packages the VSIX.
 The dependent privileged attestation job receives fixed-name artifacts through
 digest-checked transfers and never installs dependencies or packages the
@@ -205,12 +207,12 @@ The `.sigstore.json` bundle contains the full Sigstore verification material. Th
 
 ### Attestation Topology
 
-| Subject or predicate payload           | Channel               | Signer workflow            |
-|----------------------------------------|-----------------------|----------------------------|
-| VSIX subject                           | Stable and PreRelease | `extension-provenance.yml` |
-| SPDX predicates over the VSIX          | Stable and PreRelease | `extension-provenance.yml` |
-| OpenVEX document subject               | Stable only           | `vex-attest.yml`           |
-| OpenVEX predicate over dependency SBOM | Stable only           | `vex-attest.yml`           |
+| Subject or predicate payload           | Channel               | Signer workflow                   |
+|----------------------------------------|-----------------------|-----------------------------------|
+| VSIX subject                           | Stable and PreRelease | `extension-provenance-signer.yml` |
+| SPDX predicates over the VSIX          | Stable and PreRelease | `extension-provenance-signer.yml` |
+| OpenVEX document subject               | Stable only           | `vex-attest.yml`                  |
+| OpenVEX predicate over dependency SBOM | Stable only           | `vex-attest.yml`                  |
 
 Per-artifact SBOM files are predicate payloads, not independently attested
 subjects. `dependencies.spdx.json` is an SPDX predicate payload on both

@@ -21,7 +21,7 @@ BeforeAll {
     # Every workflow that participates in building, attesting, publishing, or
     # reconciling the one hve-core package.
     $script:PackagingWorkflow = [string[]]@(
-        'extension-provenance.yml'
+        'extension-provenance-signer.yml'
         'extension-marketplace-publish.yml'
         'release-marketplace-prerelease.yml'
         'release-marketplace-stable.yml'
@@ -770,7 +770,7 @@ Describe 'Retired multi-package contracts' -Tag 'Unit' {
     # Every retired contract is proved absent from the active packaging and
     # release surface, so a reintroduced matrix or ZIP job fails here first.
     It 'Declares no package matrix input or output in <Workflow>' -ForEach @(
-        @{ Workflow = 'extension-provenance.yml' }
+        @{ Workflow = 'extension-provenance-signer.yml' }
         @{ Workflow = 'extension-marketplace-publish.yml' }
         @{ Workflow = 'release-marketplace-prerelease.yml' }
         @{ Workflow = 'release-marketplace-stable.yml' }
@@ -785,7 +785,7 @@ Describe 'Retired multi-package contracts' -Tag 'Unit' {
     }
 
     It 'Declares no job-level matrix strategy in <Workflow>' -ForEach @(
-        @{ Workflow = 'extension-provenance.yml' }
+        @{ Workflow = 'extension-provenance-signer.yml' }
         @{ Workflow = 'extension-marketplace-publish.yml' }
         @{ Workflow = 'release-prerelease.yml' }
         @{ Workflow = 'release-vsix-publish.yml' }
@@ -802,7 +802,7 @@ Describe 'Retired multi-package contracts' -Tag 'Unit' {
     }
 
     It 'Invokes no retired package selection or discovery script in <Workflow>' -ForEach @(
-        @{ Workflow = 'extension-provenance.yml' }
+        @{ Workflow = 'extension-provenance-signer.yml' }
         @{ Workflow = 'extension-marketplace-publish.yml' }
         @{ Workflow = 'release-marketplace-prerelease.yml' }
         @{ Workflow = 'release-marketplace-stable.yml' }
@@ -875,10 +875,6 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
         $inputs.Contains('channel') | Should -BeTrue
         $document['on']['workflow_call'].Contains('outputs') | Should -BeFalse
 
-        $checkout = Get-NamedJobStep -Document $document -JobName 'package' -StepName 'Checkout code'
-        [string]$checkout['with']['ref'] |
-            Should -BeExactly '${{ github.sha }}'
-
         $steps = Get-JobStepText -Document $document -JobName 'package'
         @($steps | Where-Object { $_ -match 'Prepare-Extension\.ps1$' }) | Should -HaveCount 1
         @($steps | Where-Object { $_ -match 'Package-Extension\.ps1 @arguments' }) | Should -HaveCount 1
@@ -923,7 +919,7 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
         $result.Output | Should -Match 'source-ref'
     }
 
-    It 'Fails a committed template version mismatch in extension-provenance.yml' -Skip:$script:SkipShellFixtureTests {
+    It 'Fails a committed template version mismatch in extension-provenance-signer.yml' -Skip:$script:SkipShellFixtureTests {
         $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-provenance-signer.yml') `
             -JobName 'package' -StepName 'Validate packaging inputs'
         $result = Invoke-WorkflowShellStep -Body ([string]$step['run']) -TemplateVersion '3.3.0' -Environment @{
@@ -935,7 +931,7 @@ Describe 'One-package build and artifact naming' -Tag 'Unit' {
         $result.Output | Should -Match 'is 3\.3\.0 but the caller requested 3\.5\.0'
     }
 
-    It 'Fails a blank version in extension-provenance.yml' -Skip:$script:SkipShellFixtureTests {
+    It 'Fails a blank version in extension-provenance-signer.yml' -Skip:$script:SkipShellFixtureTests {
         $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-provenance-signer.yml') `
             -JobName 'package' -StepName 'Validate packaging inputs'
         $result = Invoke-WorkflowShellStep -Body ([string]$step['run']) -TemplateVersion '3.3.0' -Environment @{
@@ -982,7 +978,7 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
 
     It 'Limits the reusable signer to one protected release-tag push caller' {
         $callers = @(Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
-                Select-String -Pattern 'uses:\s+\./\.github/workflows/extension-provenance\.yml\s*$')
+            Select-String -Pattern 'uses:\s+microsoft/hve-core/\.github/workflows/extension-provenance-signer\.yml@3a09401536cef0c4559db1aa64b7d1010638fd67\s*$')
         $callers | Should -HaveCount 1
         Split-Path -Path $callers[0].Path -Leaf | Should -BeExactly 'release-vsix-publish.yml'
 
@@ -1027,9 +1023,9 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
             $jobText | Should -Not -Match 'RELEASE_APP_PRIVATE_KEY|app-token\.outputs\.token'
         }
 
-            $newSignerCallers = @(Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
-                Select-String -Pattern 'uses:\s+.*extension-provenance-signer\.yml@')
-            $newSignerCallers | Should -HaveCount 0 -Because 'the bootstrap signer stays dormant until its squash SHA exists'
+        $newSignerCallers = @(Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
+            Select-String -Pattern 'uses:\s+.*extension-provenance-signer\.yml@')
+        $newSignerCallers | Should -HaveCount 1
     }
 
     It 'Accepts the exact Release App and active tag rulesets before packaging' -Skip:$script:SkipShellFixtureTests {
@@ -1115,11 +1111,19 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
             Should -Not -Match 'poutine:ignore'
     }
 
-    It 'Checks out the run commit in <Workflow> step <StepName>' -ForEach @(
-        @{ Workflow = 'extension-provenance-signer.yml'; JobName = 'package'; StepName = 'Checkout code' }
-        @{ Workflow = 'release-vsix-publish.yml'; JobName = 'verify-provenance'; StepName = 'Checkout verification script' }
-    ) {
-        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name $Workflow) -JobName $JobName -StepName $StepName
+    It 'Verifies the event-default signer checkout before source execution' {
+        $document = Get-WorkflowDocument -Name 'extension-provenance-signer.yml'
+        $checkout = Get-NamedJobStep -Document $document -JobName 'package' -StepName 'Checkout code'
+        $checkout['with'].Contains('ref') | Should -BeFalse
+        $verify = Get-NamedJobStep -Document $document -JobName 'package' -StepName 'Verify checked-out source'
+        [string]$verify['env']['EXPECTED_SOURCE'] | Should -BeExactly '${{ github.sha }}'
+        [string]$verify['run'] | Should -Match 'git rev-parse HEAD'
+        [string]$verify['run'] | Should -Match 'CHECKED_OUT_SOURCE.*EXPECTED_SOURCE'
+    }
+
+    It 'Checks out the run commit for release verification' {
+        $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
+        $step = Get-NamedJobStep -Document $document -JobName 'verify-provenance' -StepName 'Checkout verification script'
         [string]$step['with']['ref'] | Should -BeExactly '${{ github.sha }}'
     }
 
@@ -1965,7 +1969,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
     It 'Calls the consolidated authorized signer with all validated inputs' {
         $builder = $script:ReleaseProducer['jobs']['extension-provenance']
         [string[]]@($builder['needs']) | Should -Be @('validate-release')
-        [string]$builder['uses'] | Should -BeExactly './.github/workflows/extension-provenance.yml'
+        [string]$builder['uses'] | Should -BeExactly 'microsoft/hve-core/.github/workflows/extension-provenance-signer.yml@3a09401536cef0c4559db1aa64b7d1010638fd67'
         [string]$builder['with']['source-ref'] | Should -BeExactly '${{ github.sha }}'
         [string]$builder['with']['version'] | Should -BeExactly '${{ needs.validate-release.outputs.version }}'
         [string]$builder['with']['channel'] | Should -BeExactly '${{ needs.validate-release.outputs.channel }}'
@@ -1984,6 +1988,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
         [string]$publishedVerification['run'] | Should -Match 'gh release download.*\-p "\$asset"'
         [string]$publishedVerification['run'] | Should -Match 'Invoke-ProvenanceVerification\.ps1'
         [string]$publishedVerification['run'] | Should -Match 'ExpectedSourceSha.*EXPECTED_SHA'
+        [string]$publishedVerification['run'] | Should -Match 'ExpectedSignerSha.*3a09401536cef0c4559db1aa64b7d1010638fd67'
         [string]$publishedVerification['env']['EXPECTED_SHA'] | Should -BeExactly '${{ steps.identity.outputs.source-sha }}'
         [string]$script:ReleaseProducer['jobs']['validate-release']['permissions']['attestations'] | Should -BeExactly 'read'
     }
@@ -2004,6 +2009,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
         ) -Environment @{
             CHANNEL         = 'Stable'
             EXPECTED_SHA    = $sourceSha
+            EXPECTED_SIGNER_SHA = '3a09401536cef0c4559db1aa64b7d1010638fd67'
             GH_TOKEN        = 'fixture-token'
             RELEASE_ID      = '123'
             RELEASE_TAG     = "v$version"
@@ -2012,6 +2018,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
         }
         $result.ExitCode | Should -Be 0
         $result.Output | Should -Match "ExpectedSourceSha $sourceSha"
+        $result.Output | Should -Match 'ExpectedSignerSha 3a09401536cef0c4559db1aa64b7d1010638fd67'
     }
 
     It 'Fails published verification when the source SHA binding is absent' -Skip:$script:SkipShellFixtureTests {
@@ -2283,7 +2290,7 @@ Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
     It 'Uses the verified create-github-app-token version comment consistently' {
         $pinMatches = Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
             Select-String -SimpleMatch 'actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1'
-        $pinMatches | Should -HaveCount 12
+        $pinMatches | Should -HaveCount 11
         @($pinMatches | Where-Object { $_.Line -notmatch '# v3\.2\.0\s*$' }) |
             Should -BeNullOrEmpty
     }

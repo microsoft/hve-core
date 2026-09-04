@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-08-29
+ms.date: 2026-09-04
 ms.topic: reference
 ---
 
@@ -64,7 +64,7 @@ The extension is automatically packaged and published through GitHub Actions:
 | `.github/workflows/release-stable.yml`                 | Published PreRelease; dispatch     | Opens the reviewed PreRelease to Stable promotion       |
 | `.github/workflows/release-stable-publish.yml`         | Merged PR to `release/stable`      | Prepares metadata or creates the exact tag and draft    |
 | `.github/workflows/release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`    | Produces and publishes the release assets from the tag  |
-| `.github/workflows/extension-provenance.yml`           | Reusable workflow                  | Packages, transfers, and attests the VSIX in split jobs |
+| `.github/workflows/extension-provenance-signer.yml`    | Reusable workflow                  | Packages, transfers, and attests the VSIX in split jobs |
 | `.github/workflows/release-marketplace-stable.yml`     | Published Stable release; dispatch | Publishes the release VSIX to VS Code Marketplace       |
 | `.github/workflows/release-marketplace-prerelease.yml` | Published PreRelease; dispatch     | Publishes the release VSIX to VS Code Marketplace       |
 
@@ -273,14 +273,15 @@ Production channel publication is workflow-owned. Do not bypass the release
 asset, attestation verification, or Azure OIDC path with a PAT-based direct
 publish.
 
-| Channel    | Release asset selector  | Attestation signer         | Marketplace mode                  |
-|------------|-------------------------|----------------------------|-----------------------------------|
-| PreRelease | `prerelease-v<version>` | `extension-provenance.yml` | `vsce --pre-release` through OIDC |
-| Stable     | `v<version>`            | `extension-provenance.yml` | Stable publication through OIDC   |
+| Channel    | Release asset selector  | Attestation signer                | Marketplace mode                  |
+|------------|-------------------------|-----------------------------------|-----------------------------------|
+| PreRelease | `prerelease-v<version>` | `extension-provenance-signer.yml` | `vsce --pre-release` through OIDC |
+| Stable     | `v<version>`            | `extension-provenance-signer.yml` | Stable publication through OIDC   |
 
 The generic publisher receives the exact channel tag, downloads the one matching
-VSIX release asset, verifies its provenance against `extension-provenance.yml`,
-and publishes it with `--azure-credential`.
+VSIX release asset, verifies its provenance against `extension-provenance-signer.yml`
+at signer revision `3a09401536cef0c4559db1aa64b7d1010638fd67`, and publishes it
+with `--azure-credential`.
 
 Release verification first authenticates the attestation cryptographically,
 then applies fail-closed semantic policy. The policy checks the exact subject
@@ -422,7 +423,7 @@ Use the reviewed two-PR workflow for publishing pre-releases:
     same release SHA.
 8. Verify the release GitHub App token publishes the prerelease. The
     Marketplace workflow passes the validated tag and
-    `.github/workflows/extension-provenance.yml` signer to the generic
+    `.github/workflows/extension-provenance-signer.yml` signer to the generic
     publisher for release-asset verification and OIDC publication.
 
 ### Content Parity

@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-08-29
+ms.date: 2026-09-04
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -134,7 +134,7 @@ Published channels do not synchronize release metadata or changelog history to
 
 ### Packaging and Verification Boundary
 
-`extension-provenance.yml` retains the signer path and separates packaging
+`extension-provenance-signer.yml` provides the signer path and separates packaging
 from signing. Its `package` job installs dependencies and builds the VSIX with
 only `contents: read`. Its dependent privileged `attest` job receives the
 fixed-name VSIX and dependency SBOM through digest-checked transfers. It never

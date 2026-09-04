@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-08-29
+ms.date: 2026-09-04
 ms.topic: overview
 keywords:
   - github actions
@@ -120,7 +120,7 @@ Individual validation workflows called by orchestration workflows:
 | `dependency-review.yml`               | Dependency vulnerability review*               | N/A (GitHub native)                      |
 | `gh-code-scanning.yml`                | GitHub code scanning alert retrieval           | N/A (PowerShell direct)                  |
 | `create-gh-code-scanning-issues.yml`  | Create GitHub code scanning issues from alerts | N/A (bash + gh CLI direct)               |
-| `extension-provenance.yml`            | Split VSIX packaging, attestation, and upload  | N/A                                      |
+| `extension-provenance-signer.yml`     | Split VSIX packaging, attestation, and upload  | N/A                                      |
 | `copyright-headers.yml`               | Copyright header validation                    | `npm run validate:copyright`             |
 | `gitleaks-scan.yml`                   | Secret detection scanning                      | N/A (gitleaks direct)                    |
 | `plugin-validation.yml`               | Plugin manifest, locator, and hook validation  | `npm run plugin:validate`                |
@@ -259,7 +259,7 @@ packaging and attestation, provenance verification, publication, and milestone
 closure. Stable additionally retains OpenVEX attestation, verification notes,
 and a best-effort dependency diff when a previous dependency SBOM is available.
 
-`extension-provenance.yml` retains the signer path but separates duties. Its
+`extension-provenance-signer.yml` provides the signer path and separates duties. Its
 `package` job installs dependencies and packages the extension with only
 `contents: read`. Its dependent privileged `attest` job receives the fixed-name
 VSIX and dependency SBOM through digest-checked transfers. It does not install
@@ -348,10 +348,10 @@ flowchart LR
 
 ### Channel Tags and Attestation Signers
 
-| Channel    | Exact release tag       | Attestation signer         |
-|------------|-------------------------|----------------------------|
-| PreRelease | `prerelease-v<version>` | `extension-provenance.yml` |
-| Stable     | `v<version>`            | `extension-provenance.yml` |
+| Channel    | Exact release tag       | Attestation signer                |
+|------------|-------------------------|-----------------------------------|
+| PreRelease | `prerelease-v<version>` | `extension-provenance-signer.yml` |
+| Stable     | `v<version>`            | `extension-provenance-signer.yml` |
 
 Both callers pass the exact tag to the generic publisher, which resolves the
 signer to the one constant both channels sign from. It downloads the matching
@@ -423,16 +423,14 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `ci:eval:run:skills`            | `vally eval --suite skill-quality`                                                                    | CI-owned model-backed lane                  |
 | `ci:eval:run:agents`            | `vally eval --suite agent-behavior`                                                                   | CI-owned model-backed lane                  |
 | `ci:eval:run:scripts`           | `vally eval --suite script-validation`                                                                | CI-owned model-backed lane                  |
-| `ci:eval:compare`               | `vally compare`                                                                                       | CI-owned comparison lane                    |
+| `ci:eval:equivalence`           | `Invoke-BaselineEquivalence.ps1`                                                                      | CI-owned model-backed comparison lane       |
 | `ci:eval:presence`              | `Test-StimulusPresence.ps1` (changed-artifact eval-spec coverage gate)                                | CI-owned manifest lane                      |
 | `ci:eval:execute`               | `Invoke-VallyEvals.ps1` (run evals for changed artifacts)                                             | CI-owned model-backed lane                  |
 | `ci:eval:moderate`              | `Invoke-ContentModeration.ps1`                                                                        | CI-owned moderation lane                    |
 | `ci:eval:moderate:corpus`       | `Invoke-CorpusModeration.ps1`                                                                         | CI-owned moderation lane                    |
 | `ci:eval:moderate:artifacts`    | `Invoke-ArtifactModeration.ps1`                                                                       | CI-owned moderation lane                    |
 | `ci:eval:moderate:test`         | Runs `Invoke-ContentModeration.Tests.ps1`                                                             | CI-owned test lane                          |
-| `ci:eval:equivalence`           | `Invoke-BaselineEquivalence.ps1`                                                                      | CI-owned model-backed lane                  |
 | `ci:eval:dashboard`             | `New-EquivalenceDashboard.ps1`                                                                        | CI-owned noninteractive report lane         |
-| `ci:eval:run:equivalence`       | Runs baseline and customized equivalence specs                                                        | CI-owned model-backed lane                  |
 | `ci:eval:behavior-prompts`      | `vally eval --eval-spec evals/behavior-conformance/prompts.eval.yaml`                                 | CI-owned model-backed lane                  |
 | `ci:eval:behavior-instructions` | `vally eval --eval-spec evals/behavior-conformance/instructions.eval.yaml`                            | CI-owned model-backed lane                  |
 | `ci:eval:behavior-skills`       | `vally eval --eval-spec evals/behavior-conformance/skill-behavior.eval.yaml`                          | CI-owned model-backed lane                  |

@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-09-03
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - github actions
@@ -125,7 +125,7 @@ publication. Stable additionally preserves `hve-core.openvex.json`, its
 attestations, verification notes, and a best-effort dependency diff when a
 previous dependency SBOM is available.
 
-The retained `extension-provenance.yml` signer has separate `package` and
+The pinned `extension-provenance-signer.yml` signer has separate `package` and
 `attest` jobs. The package job installs dependencies and builds the VSIX with
 only `contents: read`. The privileged attestation job receives the fixed-name
 VSIX and dependency SBOM through digest-checked transfers and never installs or

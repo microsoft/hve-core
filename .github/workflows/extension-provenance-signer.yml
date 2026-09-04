@@ -21,6 +21,11 @@ on:
         description: "Canonical release tag bound to the caller event"
         required: true
         type: string
+
+concurrency:
+  group: extension-provenance-signer-${{ inputs.release-tag }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
@@ -41,6 +46,7 @@ jobs:
           owner: microsoft
           repositories: hve-core
           permission-administration: read
+          permission-contents: read
 
       - name: Authenticate release principal and governance
         shell: bash
@@ -222,8 +228,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.sha }}
           persist-credentials: false
+
+      - name: Verify checked-out source
+        shell: bash
+        env:
+          EXPECTED_SOURCE: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          CHECKED_OUT_SOURCE=$(git rev-parse HEAD)
+          if [ "$CHECKED_OUT_SOURCE" != "$EXPECTED_SOURCE" ]; then
+            echo "::error::Checked-out source $CHECKED_OUT_SOURCE does not match authorized event source $EXPECTED_SOURCE"
+            exit 1
+          fi
 
       - name: Validate packaging inputs
         shell: bash
