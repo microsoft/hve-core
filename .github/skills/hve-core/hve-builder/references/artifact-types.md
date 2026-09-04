@@ -10,7 +10,7 @@ Use this reference during intake to decompose the request by responsibility, cho
 
 Choose every type whose responsibility is independently necessary. Prefer skills for reusable on-demand capability and subagents for isolated work, but do not force a path-scoped convention into a skill or a user entry point into a subagent merely because of ranking.
 
-The Choosing the Artifact Type by Responsibility section of `hve-builder.instructions.md` holds the canonical responsibility, form, and activation table. That surface is always loaded whenever a target artifact is edited, so it is the copy that has to exist; restating it here would only create drift. This reference therefore depends on that instruction file, and both ship in the same package. Keep them together when redistributing the skill.
+The Choose Artifacts by Responsibility section of `hve-builder.instructions.md` holds the canonical responsibility, form, and activation table. That surface is always loaded whenever a target artifact is edited, so it is the copy that has to exist; restating it here would only create drift. This reference therefore depends on that instruction file, and both ship in the same package. Keep them together when redistributing the skill.
 
 When a request spans responsibilities, split it deliberately: a skill may own the workflow, subagents may isolate execution and review, an instruction file may govern matching paths, and a prompt may provide a user entry point. Confirm only splits that widen the caller's write boundary or product surface.
 
@@ -44,6 +44,16 @@ Treat delegation as a first-class architecture decision, not an afterthought. Du
 * Design the loop explicitly: define dispatch inputs, owned evidence, return schema, stage gate, and which later step consumes the result. Parallelize only independent work.
 * Favor reuse. Check whether an existing subagent already covers the responsibility before creating a new one, and prefer extending or adjusting an existing subagent over duplicating it.
 * Make the contract executable. A create-only worker writes its owned log once; progressive logs require edit capability. A parent that dispatches subagents declares its allowed agent set.
+
+## Extending an existing workflow
+
+When the request adds project-specific capability to a workflow such as `rpi-research`, `rpi-plan`, or `code-review`, extend it rather than fork it. Read the workflow's skill first and capture how it discovers helpers (name and description matching, registration) and what it passes on dispatch. Then choose the artifact by where the work should run:
+
+* A skill when the knowledge should load into the workflow's own context and be applied while it works: source locations, indexing steps, query and citation conventions, and bundled scripts. The workflow stays in control and nothing is isolated.
+* A subagent when gathering is high-volume, parallelizable, or would crowd out the parent's working context: a lane worker that gathers and indexes, then returns a bounded summary and an evidence pointer.
+* Both when a skill holds the reusable corpus instructions and scripts and a thin subagent activates that skill for isolated lanes.
+
+Example: a team wants `rpi-research` and `rpi-plan` to draw on an internal design-document corpus. A skill whose name or description marks it for use during research and planning documents where the corpus lives, how to run its indexing script, and how to cite results; both workflows discover it through their helper-selection rules. If the corpus is large enough that indexing would flood the parent's context, add a research specialist subagent that runs the index in an isolated lane and returns findings to `rpi-research`. [extending-hve-builder.md](extending-hve-builder.md) works this example through each workflow's contract.
 
 ## Choose the model profile
 

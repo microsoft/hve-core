@@ -1,6 +1,6 @@
 ---
 name: hve-builder
-description: 'Author, review, or validate Copilot artifacts with one final behavior gate after candidate convergence.'
+description: 'Create, improve, refactor, review, or validate prompts, instructions, agents, subagents, and skills, and build or extend HVE workflows. Use when authoring or upgrading a Copilot customization artifact, or when connecting a workflow such as rpi-research or rpi-plan to project-specific knowledge, tools, or conventions.'
 argument-hint: "[targets=...] [mode={create|improve|refactor|replace|review|validate}] [requirements=...]"
 license: MIT
 user-invocable: true
@@ -10,9 +10,16 @@ user-invocable: true
 
 ## Goal
 
-Deliver a usable prompt, instruction, agent, subagent, or skill, or a credible read-only report, with the fewest lifecycle turns that preserve independent review and final-state evidence.
+Deliver a usable prompt, instruction, agent, subagent, or skill that meets the requirements catalog, or a credible read-only report, with the fewest lifecycle turns that preserve independent review and final-state evidence.
 
 Read [references/workflow-contract.md](references/workflow-contract.md) first; it owns mode routing, candidate convergence, the final behavior gate, and overall outcomes. Apply [references/requirements-catalog.md](references/requirements-catalog.md) as the quality standard. The References section maps the remaining on-demand references.
+
+## Use Cases
+
+* Create a new artifact from a stated need, choosing the type by responsibility and activation through [references/artifact-types.md](references/artifact-types.md).
+* Turn an existing draft, prompt, or ad hoc instruction set into an artifact that meets the catalog, preserving its contract unless the caller asks for a change.
+* Extend an HVE workflow with project-specific capability. For example, a team that wants `rpi-research` and `rpi-plan` to use an internal corpus needs a skill that tells those workflows how to gather, index, and cite that corpus, or a research or planning subagent that does the gathering in isolated context and returns a summary. Choose between them by whether the work needs its own context, and author against the target workflow's discovery and dispatch contract in [references/extending-hve-builder.md](references/extending-hve-builder.md).
+* Author a host extension (instruction, skill, or subagent) that hve-builder itself discovers in a downstream repository.
 
 ## Modes
 
@@ -20,7 +27,7 @@ Use `create`, `improve`, `refactor`, `replace`, `review`, or `validate` as defin
 
 ## Flow
 
-1. Resolve the targets, mode, requirements, approved write boundary, evidence root, architecture, and applicable conventions.
+1. Resolve the targets, mode, requirements, approved write boundary, evidence root, architecture, and applicable conventions. When the request extends an existing workflow, read that workflow's skill and capture its discovery rules and dispatch contract before selecting the artifact type.
 2. For an existing target in a mutating mode, capture its current contract and non-tool capability surface. Activate `rpi-research` only for open-ended exploration or a decision-critical evidence gap.
 3. Author the complete candidate directly within the approved boundary. Gather known requirements and findings first, then make coherent changes rather than serial micro-edits.
 4. Run applicable non-mutating local validation. Gather and close in-scope mechanical findings before independent review, and record unavailable CI evidence honestly.

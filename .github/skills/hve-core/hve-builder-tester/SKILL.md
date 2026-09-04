@@ -1,6 +1,6 @@
 ---
 name: hve-builder-tester
-description: 'Run one complete black-box behavior test for HVE artifacts with explicit fidelity and independent grading.'
+description: 'Run one complete black-box behavior test of a prompt, instruction, agent, subagent, or skill with explicit fidelity and independent grading. Use as the final behavior gate after hve-builder freezes a candidate, or directly to test an existing artifact without changing it.'
 argument-hint: "[targets=...] [types=...] [profile={high|medium|low}] [fidelity={simulation|native}] [purpose=...] [retain-sandbox]"
 license: MIT
 user-invocable: true
@@ -10,9 +10,9 @@ user-invocable: true
 
 ## Goal
 
-Exercise a prompt, instruction, agent, subagent, or skill once through representative black-box scenarios and produce a durable report that states exactly what the evidence supports.
+Exercise a prompt, instruction, agent, subagent, or skill once through representative black-box scenarios and produce a durable report that states exactly what the evidence supports. The report is evidence for the caller; this skill never edits the target or prescribes a retest.
 
-This skill owns scope, scenario design, fidelity, sandbox state, execution evidence, independent grading, reporting, and cleanup. Read [references/test-methodology.md](references/test-methodology.md) for behavior and containment decisions, [references/stage-dispatch.md](references/stage-dispatch.md) for independent grading, and [references/report-format.md](references/report-format.md) for the durable report.
+This skill owns scope, scenario design, fidelity, sandbox state, execution evidence, independent grading, reporting, and cleanup. Read [references/test-methodology.md](references/test-methodology.md) for black-box design, fidelity, and containment decisions, [references/stage-dispatch.md](references/stage-dispatch.md) for independent grading, and [references/report-format.md](references/report-format.md) for the durable report.
 
 ## Flow
 
@@ -86,7 +86,7 @@ Use the `(copilot)` suffix in host model identifiers. The executor uses the targ
 
 ## Handoff
 
-Return the durable report to the direct caller or HVE Builder. Do not revise artifacts or prescribe another test within the current caller run. When HVE Builder is the caller, Pass supports its final outcome; Revise, Deferred, or Blocked terminates that HVE Builder run and may inform a later invocation.
+Return the durable report to the direct caller or HVE Builder. When HVE Builder is the caller, Pass supports its final outcome; Revise, Deferred, or Blocked terminates that HVE Builder run and may inform a later invocation.
 
 ## Final Response Contract
 
