@@ -1,9 +1,9 @@
 ---
 title: rpi-plan-critique
-description: Independently critique an RPI plan and phase details once against supplied evidence without editing plan sources. Use when planning credibility needs a read-only assessment.
+description: Independently critique an RPI implementation plan once against supplied evidence without editing the plan. Use when planning credibility needs a read-only assessment.
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-02
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Independently critique an RPI plan and phase details once against supplied evidence without editing plan sources. Use when planning credibility needs a read-only assessment.
+Independently critique an RPI implementation plan once against supplied evidence without editing the plan. Use when planning credibility needs a read-only assessment.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

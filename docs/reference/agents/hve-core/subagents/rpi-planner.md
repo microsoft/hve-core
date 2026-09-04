@@ -1,9 +1,9 @@
 ---
 title: RPI Planner
-description: Revise one assigned RPI plan phase and matching phase details within a shared planning artifact. Use when a parent needs bounded phase authoring.
+description: Revise one assigned phase within an RPI implementation plan. Use when a parent needs bounded phase authoring during planning.
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - agent
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Revise one assigned RPI plan phase and matching phase details within a shared planning artifact. Use when a parent needs bounded phase authoring.
+Revise one assigned phase within an RPI implementation plan. Use when a parent needs bounded phase authoring during planning.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

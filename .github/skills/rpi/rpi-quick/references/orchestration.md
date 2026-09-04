@@ -7,7 +7,7 @@ description: "Orchestration reference for the Research, Plan, Implement, Review,
 ## Lifecycle
 
 1. Assess research readiness from caller-supplied research, task details, decisions, and plan inputs. Activate `rpi-research` only when evidence is missing, stale, contradictory, insufficient for planning, or when complexity, uncertainty, dependencies, risk, or a decision-critical question warrants investigation. When evidence is adequate, record why Research is reused or satisfied-and-skipped.
-2. Run Plan to create or revise marker-addressed plan and phase-detail artifacts. Its independent critique is an internal planning gate and returns to the planning parent.
+2. Run Plan to create or revise one marker-addressed, task-centered plan. Its independent critique is an internal planning gate and returns to the planning parent.
 3. Run Implement to complete approved `Pxx` and `Pxx-Txx` tasks and record changes, validation, divergences, and amendments. For a significant or divergent amendment, pause affected work, obtain the user decision, and update the current plan without repeating critique.
 4. Run Review once after Implement to compare all planning and execution evidence, then separate execution status from outcome.
 5. Follow-up routes open work to research, planning, implementation, or a distinct future item.
@@ -18,7 +18,6 @@ description: "Orchestration reference for the Research, Plan, Implement, Review,
 
 * `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`
 * `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`
-* `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`
 * `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`

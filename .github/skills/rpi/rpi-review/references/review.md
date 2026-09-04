@@ -9,7 +9,6 @@ description: "Reference protocol for evidence-based RPI review, outcome separati
 Review one task set using these paths:
 
 * `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`
-* `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`
 * `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
@@ -23,7 +22,7 @@ The primary parent resolves scope, acceptance basis, depth, artifact readiness, 
 The selected review worker performs one marker-driven pass:
 
 1. Compare plan requirements and acceptance criteria with completed `Pxx` and `Pxx-Txx` evidence.
-2. Reconcile implementation-time plan or phase-detail updates with current planning state, triggering evidence, user decisions, and critique state.
+2. Reconcile implementation-time plan updates with current phase and task goals, targets, technical references, acceptance criteria, triggering evidence, user decisions, and critique state.
 3. Check critique finding dispositions and whether significant changes preserved confirmed intent before affected work continued.
 4. Assess every `## Follow-Up Items` entry for scope separation, rationale, owner, and changes-record parity.
 5. Evaluate completed-work summaries, validation, blockers, remaining work, and intended behavior for material drift.
@@ -42,7 +41,7 @@ For a new Review, inspect available skills and subagents. A candidate is phase-m
 
 Do not infer deep review from task size, complexity, uncertainty, or risk. Standard review minimizes elapsed work without reducing complete coverage of material acceptance evidence.
 
-Before comparison, confirm plan markers, phase details, changes evidence, handoff prose, blockers, remaining work, follow-up items, and validation state are current. Stop as Blocked when stale or missing evidence prevents a credible task boundary.
+Before comparison, confirm plan markers and task-local context, changes evidence, handoff prose, blockers, remaining work, follow-up items, and validation state are current. Stop as Blocked when stale or missing evidence prevents a credible task boundary.
 
 ## Separate execution from outcome
 

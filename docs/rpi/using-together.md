@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-09-04
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -25,8 +25,8 @@ This guide walks through an evidence-led RPI lifecycle for a complex task. `RPI 
 ┌────────────────────┐     ┌─────────────────────┐     ┌────────────────────┐     ┌────────────────────┐
 │ Research readiness │ ──→ │ Plan                │ ──→ │ Implement          │ ──→ │ Review             │
 │                    │     │ rpi-plan            │     │ rpi-implement      │     │ rpi-review         │
-│ Reuse evidence or  │     │ Parent-owned plan,  │     │ Direct execution,  │     │ One reconciliation │
-│ research a gap     │     │ details, critique   │     │ changes, validation│     │ record and routing │
+│ Reuse evidence or  │     │ Goals, task context,│     │ Direct execution,  │     │ One reconciliation │
+│ research a gap     │     │ critique            │     │ changes, validation│     │ record and routing │
 └────────────────────┘     └─────────────────────┘     └────────────────────┘     └────────────────────┘
      │                                                                    │
      │ demonstrated gap                                                   │ routes open work
@@ -116,11 +116,10 @@ Key findings:
    - Include error handling and retry logic
    ```
 
-4. Review the output. `/rpi-plan` creates a plan, matching phase-details artifact, and independent critique:
+4. Review the output. `/rpi-plan` creates one task-centered plan and an independent critique:
 
    ```text
    .copilot-tracking/plans/2025-01-28/blob-storage-plan.md
-   .copilot-tracking/details/2025-01-28/blob-storage-phase-details.md
    .copilot-tracking/reviews/plans/2025-01-28/blob-storage-plan-critique.md
    ```
 
@@ -130,11 +129,21 @@ Key findings:
 <!-- rpi:phase id=P01 -->
 ### [ ] P01: Storage Client Setup
 
+* Goal: Establish a storage boundary that can upload pipeline output through the supported Azure Blob interface.
+
 <!-- rpi:task id=P01-T01 -->
 #### [ ] P01-T01: Create BlobStorageClient class
 
-<!-- rpi:task id=P01-T02 -->
-#### [ ] P01-T02: Add configuration schema
+* Goal: Pipeline code can stream content to Azure Blob Storage without depending directly on SDK client construction.
+* Likely targets:
+   * `src/storage/`: storage client implementation
+   * `src/pipeline/writers/base.py`: existing writer contract
+* References and examples:
+   * `azure.storage.blob.aio.BlobClient.upload_blob`: illustrative async upload API from research
+* Acceptance criteria:
+   * A caller can upload a stream through the storage boundary and receive a clear success or failure result.
+* Validation:
+   * Unit tests cover successful upload and SDK error translation.
 
 <!-- rpi:phase id=P02 -->
 ### [ ] P02: Writer Implementation
@@ -146,17 +155,17 @@ Key findings:
 ### [ ] P03: Integration
 ```
 
-Use `Pxx` and `Pxx-Txx` IDs, headings, and markers to navigate between the plan and phase-details artifact. They remain stable when surrounding text changes.
+Use `Pxx` and `Pxx-Txx` IDs, headings, and markers to navigate the plan. They remain stable when surrounding text changes.
 
-`/rpi-plan` owns the overall checklist and phase details. It may use bounded assistance internally for one exact phase, while `rpi-plan-critique` independently assesses the complete plan and details.
+`/rpi-plan` owns the complete plan. Planning subagents default to `adaptive`: they are preferred for large, relatively independent phases. Set `delegation=never` to keep planning inline or `delegation=always` to require a bounded subagent assignment for every phase. `rpi-plan-critique` independently assesses the complete plan once.
 
 ### Implement
 
-1. Open or reference the plan, phase-details, and critique artifacts. Use a fresh context only when accumulated conversation detail would impede the approved work.
+1. Open or reference the plan and critique artifacts. Use a fresh context only when accumulated conversation detail would impede the approved work.
 2. Use `/rpi-implement` to execute directly and flexibly within the approved scope:
 
    ```text
-   /rpi-implement plan=.copilot-tracking/plans/2025-01-28/blob-storage-plan.md details=.copilot-tracking/details/2025-01-28/blob-storage-phase-details.md task=P01-T01
+   /rpi-implement plan=.copilot-tracking/plans/2025-01-28/blob-storage-plan.md task=P01-T01
    ```
 
 3. Review change evidence as each approved task completes. After `P01` completes:
@@ -172,9 +181,9 @@ P01-T01 and P01-T02 have completion evidence.
 
 Check the code and validation evidence, then continue to the next approved `Pxx` or `Pxx-Txx` item.
 
-If implementation requires a significant departure from the approved plan, record a linked `DIV-xxx` in the changes record and `AM-xxx` amendment in the plan, then update the affected phase-details section. Return those records for a fresh `rpi-plan-critique` assessment before affected dependent work resumes. Ordinary local judgment and non-material divergence do not require this gate.
+If implementation requires a significant departure from the approved plan, record the discovery in the changes record, obtain any required decision, and update the affected plan tasks before dependent work resumes. Preserve the existing critique as historical evidence; do not run it again. Ordinary local judgment and non-material updates remain in Implement.
 
-1. When the in-scope implementation is ready for review, hand off the plan, phase details, critique disposition, amendments, and changes record:
+1. When the in-scope implementation is ready for review, hand off the plan, critique disposition, and changes record:
 
 ```text
 Implementation complete!
@@ -204,7 +213,7 @@ Ready for review.
 
 3. `/rpi-review` creates or updates one review record:
 
-   * Locates research, plan, phase details, plan critique, amendments, changes, and validation evidence
+   * Locates research, the task-centered plan, plan critique, changes, and validation evidence
    * Reconciles each `Pxx` and `Pxx-Txx` item with completion and change evidence
    * Assesses `AM-xxx` amendments and `DIV-xxx` divergences
    * Uses an optional generic bounded lens only when it reduces a specific review uncertainty
@@ -234,13 +243,13 @@ Destination: distinct follow-up
 Follow-up item:
 - Add performance benchmarks for large file uploads (deferred from research)
 
-Return RV-001 to `rpi-implement`, then review it again before committing.
+Return RV-001 to a later `rpi-implement` invocation.
 ```
 
 1. Address findings through their recorded next owner:
 
    * Address each `RV-xxx` finding through its recorded next owner
-   * Return the implementation defect in `RV-001` to `rpi-implement`, then review it again with `rpi-review` before committing
+   * Return the implementation defect in `RV-001` to a later `rpi-implement` invocation
    * Resolve or explicitly accept material findings before committing
    * Track residual work as a distinct follow-up item
 
@@ -257,15 +266,14 @@ Review routes work rather than silently looping it through a generic worker chai
 
 After completing RPI, you have:
 
-| Artifact               | Location                                                                        | Purpose                                                 |
-|------------------------|---------------------------------------------------------------------------------|---------------------------------------------------------|
-| Research, when it runs | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`           | Evidence and recommendations                            |
-| Plan                   | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`                  | Checkboxes, requirements, decisions, and amendments     |
-| Phase details          | `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`       | Evidence-based context for `Pxx` and `Pxx-Txx` work     |
-| Plan critique          | `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md` | Independent planning credibility assessment             |
-| Changes                | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`             | `CHG-xxx`, `DIV-xxx`, validation, and handoff evidence  |
-| Review                 | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`         | Reconciliation, `RV-xxx` findings, outcome, and routing |
-| Code                   | Your source directories                                                         | Working implementation                                  |
+| Artifact               | Location                                                                        | Purpose                                                  |
+|------------------------|---------------------------------------------------------------------------------|----------------------------------------------------------|
+| Research, when it runs | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`           | Evidence and recommendations                             |
+| Plan                   | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`                  | Goals, task context, requirements, decisions, and status |
+| Plan critique          | `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md` | Independent planning credibility assessment              |
+| Changes                | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`             | Implementation, validation, and handoff evidence         |
+| Review                 | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`         | Reconciliation, `RV-xxx` findings, outcome, and routing  |
+| Code                   | Your source directories                                                         | Working implementation                                   |
 
 ## Common Patterns
 
@@ -284,7 +292,7 @@ For very large tasks:
 
 1. Break work into distinct task identities where the outcomes are independently reviewable.
 2. Reuse adequate research from prior work rather than repeat it.
-3. Keep each plan, phase-details, changes, and review artifact set dated and task-specific.
+3. Keep each plan, critique, changes, and review artifact set dated and task-specific.
 4. Build incrementally.
 
 ### Team Handoffs
@@ -292,7 +300,7 @@ For very large tasks:
 RPI artifacts support handoffs:
 
 * Research doc explains decisions
-* Plan and phase details show remaining `Pxx` and `Pxx-Txx` work
+* The task-centered plan shows remaining `Pxx` and `Pxx-Txx` work and the context needed to implement it
 * Changes record shows completed work, validation, and linked changes or divergences
 * Review record shows separate execution status, outcome, findings, and routing
 
@@ -317,7 +325,7 @@ When `/rpi-review` identifies Critical or High findings:
 1. Open the review log in your editor.
 2. Use `/rpi-implement` to address implementation findings.
 3. Preserve the relevant changes and validation evidence.
-4. Return to review with `/rpi-review` when the evidence is ready.
+4. Preserve the implementation and validation evidence; the original Review remains the task's review record.
 
 ### Research and Planning Flow
 
@@ -334,7 +342,7 @@ When `/rpi-review` identifies research or planning gaps:
 | Lifecycle concept     | Direct skill       | Output                                                                |
 |-----------------------|--------------------|-----------------------------------------------------------------------|
 | Research, when needed | `/rpi-research`    | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md` |
-| Plan                  | `/rpi-plan`        | Plan, phase details, and critique                                     |
+| Plan                  | `/rpi-plan`        | Task-centered plan and critique                                       |
 | Implement             | `/rpi-implement`   | Source changes and changes evidence                                   |
 | Review                | `/rpi-review`      | One review record with status, outcome, and routing                   |
 | Follow-up             | Routed from review | Earliest responsible stage or a distinct next item                    |

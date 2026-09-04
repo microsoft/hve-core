@@ -3,7 +3,7 @@ title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-09-04
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -16,14 +16,14 @@ estimated_reading_time: 6
 
 ## Overview
 
-Review validates that implementations meet acceptance criteria and quality standards before delivery. RPI review reconciles the plan, phase details, critique dispositions, amendments, changes, and validation evidence before routing open work. This stage also covers code review, pull request creation, dashboard testing, and prompt evaluation.
+Review validates that implementations meet acceptance criteria and quality standards before delivery. RPI review reconciles the task-centered plan, critique dispositions, plan updates, changes, and validation evidence before routing open work. This stage also covers code review, pull request creation, dashboard testing, and prompt evaluation.
 
 ## When You Enter This Stage
 
 You enter Review after completing implementation work in [Stage 6: Implementation](implementation).
 
 > [!NOTE]
-> Prerequisites: In-scope implementation is reviewable, with the plan, phase details, changes, and validation evidence available. Commit after the review outcome is conformant or explicitly accepted. Use `/clear` to reset context when a fresh conversation will improve evidence reconciliation.
+> Prerequisites: In-scope implementation is reviewable, with the plan, changes, and validation evidence available. Commit after the review outcome is conformant or explicitly accepted. Use `/clear` to reset context when a fresh conversation will improve evidence reconciliation.
 
 ## Available Tools
 
@@ -67,14 +67,13 @@ Engineers submit work for review and participate as peer reviewers. Tech Leads s
 
 ```text
 /rpi-review Review today's changes to the authentication service against
-.copilot-tracking/plans/2025-01-15/auth-refactor-plan.md and
-.copilot-tracking/details/2025-01-15/auth-refactor-phase-details.md. Reconcile
-the `Pxx` and `Pxx-Txx` completion evidence and check for missing input
+.copilot-tracking/plans/2025-01-15/auth-refactor-plan.md. Reconcile the `Pxx`
+and `Pxx-Txx` goals, task-local acceptance criteria, completion evidence, and
 validation on the new endpoints.
 ```
 
 ```text
-/rpi-review plan=.copilot-tracking/plans/2025-01-15/pagination-plan.md details=.copilot-tracking/details/2025-01-15/pagination-phase-details.md critique=.copilot-tracking/reviews/plans/2025-01-15/pagination-plan-critique.md changes=.copilot-tracking/changes/2025-01-15/pagination-changes.md research=.copilot-tracking/research/2025-01-15/pagination-research.md
+/rpi-review plan=.copilot-tracking/plans/2025-01-15/pagination-plan.md critique=.copilot-tracking/reviews/plans/2025-01-15/pagination-plan-critique.md changes=.copilot-tracking/changes/2025-01-15/pagination-changes.md research=.copilot-tracking/research/2025-01-15/pagination-research.md
 ```
 
 ### Pull Request Workflow
@@ -110,7 +109,6 @@ Test the sensor monitoring dashboard at src/dashboards/sensor_monitor.py, verify
 ```text
 /rpi-review Review the API redesign evidence set:
 - Plan: .copilot-tracking/plans/2025-01-15/api-redesign-plan.md
-- Phase details: .copilot-tracking/details/2025-01-15/api-redesign-phase-details.md
 - Plan critique: .copilot-tracking/reviews/plans/2025-01-15/api-redesign-plan-critique.md
 - Changes: .copilot-tracking/changes/2025-01-15/api-redesign-changes.md
 

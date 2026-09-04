@@ -10,11 +10,11 @@ user-invocable: true
 
 ## Goal
 
-Deliver the approved outcome using the current plan and phase details as evidence. Keep task completion, implementation evidence, plan maintenance, and validation trustworthy for the caller.
+Deliver the approved outcome using the current task-centered plan as evidence. Keep task completion, implementation evidence, plan maintenance, and validation trustworthy for the caller.
 
 ## Flow
 
-1. Resolve the exact plan at `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`, related plan details, and declared invocation scope: the full plan, one `Pxx` phase, or one `Pxx-Txx` task. The declared scope limits completion claims and active implementation.
+1. Resolve the exact plan at `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md` and declared invocation scope: the full plan, one `Pxx` phase, or one `Pxx-Txx` task. Read each in-scope task's goal, likely targets, technical references, dependencies, acceptance criteria, validation, and unresolved items. The declared scope limits completion claims and active implementation.
 2. Create or continue `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` using [templates/changes-log.md](templates/changes-log.md). Record material evidence under descriptive headings tied to plan areas or markers, not per-entry formal IDs.
 3. Before substantive source edits or implementation, update the plan checklist, changes log, and any related state tracking artifacts.
 	* Send the implementation opening defined in [references/implementation.md](references/implementation.md).
@@ -26,14 +26,14 @@ Deliver the approved outcome using the current plan and phase details as evidenc
 6. Classify new implementation information using [references/implementation.md](references/implementation.md): retain ordinary local judgment, apply immediately relevant current-state updates that preserve approved intent, record unrelated work as follow-up-only, and treat a discovery as material only when it requires a new user decision or planning reconsideration.
 7. Ask for the smallest decision-critical user input only when available evidence cannot support a responsible user-owned decision. Persist the result in current planning state and the changes record. If the accepted plan must change, pause only affected dependent work and return the current evidence to planning. The confirmed user decision remains authoritative; do not run another critique.
 8. Run validation expected by the plan or changed behavior after the approved source or correction batch is complete. Record checks, results, and explicit skip reasons without treating validation alone as permission to resume paused dependent work.
-9. Before handing a full-plan or review-ready scope to Review, reconcile plan markers, phase details, completed-work evidence, handoff prose, blockers, remaining work, follow-up items, and validation state.
+9. Before handing a full-plan or review-ready scope to Review, reconcile plan markers and task-local context, completed-work evidence, handoff prose, blockers, remaining work, follow-up items, and validation state.
 10. Return the current implementation result to the caller using the return contract below.
 
 ## Inputs
 
 * Approved plan path or task context
 * Optional declared scope: full plan, exact `Pxx` phase, or exact `Pxx-Txx` task
-* Phase details, supplied evidence, latest critique disposition, and prior changes record when available
+* Task-local plan context, supplied evidence, latest critique disposition, and prior changes record when available
 
 ## Success criteria
 
@@ -44,11 +44,11 @@ Deliver the approved outcome using the current plan and phase details as evidenc
 * Only a whole declared-scope `Pxx` phase that is dependency-ready, independent, parallelizable, and write-disjoint may be delegated. The worker is selected by phase-and-task fit or is an unnamed general-purpose fallback with explicit implementation restrictions. It returns expected evidence for primary-agent reconciliation, and individual `Pxx-Txx` tasks are never delegated.
 * The changes record uses descriptive evidence headings and plan or task markers, with no second per-entry identity scheme.
 * Implementation discoveries are classified as local judgment, immediately relevant current-state update, follow-up-only work, or material decision, with the detailed record required by the reference.
-* Affected dependent work resumes after the significant or divergent user decision is reflected in the current plan and details. The task's critique is not repeated.
+* Affected dependent work resumes after the significant or divergent user decision is reflected in the current plan. The task's critique is not repeated.
 * Validation evidence or an explicit skip reason is available for changed behavior.
 * A later invocation may implement applicable Review findings as ordinary work without a correction run type or mandatory second Review.
-* Plan markers, phase details, changes evidence, handoff prose, blockers, remaining work, follow-up items, and validation state are reconciled before Review.
-* The caller receives the current execution status, evidence paths, current plan and detail state, validation coverage, blockers, remaining work, and follow-up items.
+* Plan markers and task-local context, changes evidence, handoff prose, blockers, remaining work, follow-up items, and validation state are reconciled before Review.
+* The caller receives the current execution status, evidence paths, current plan state, validation coverage, blockers, remaining work, and follow-up items.
 
 ## Constraints
 
@@ -72,6 +72,6 @@ Deliver the approved outcome using the current plan and phase details as evidenc
 
 ## Return to Caller
 
-Return the changes-record path, implementation execution status, completed and remaining `Pxx` or `Pxx-Txx` items, validation coverage, blockers, current plan and detail updates, follow-up items, and review readiness or the explicit reason affected work awaits a user decision. Follow the Conversation guidance section for standalone or parent-orchestrated continuation, conditional compaction advice, the linked artifact table, and final next steps.
+Return the changes-record path, implementation execution status, completed and remaining `Pxx` or `Pxx-Txx` items, validation coverage, blockers, current plan updates, follow-up items, and review readiness or the explicit reason affected work awaits a user decision. Follow the Conversation guidance section for standalone or parent-orchestrated continuation, conditional compaction advice, the linked artifact table, and final next steps.
 
 

@@ -3,7 +3,7 @@ title: Understanding the RPI Workflow
 description: Learn how Research, Plan, Implement, Review, and Follow-up guide evidence-led delivery
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-29
+ms.date: 2026-09-04
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -57,19 +57,18 @@ Reuse supplied or completed evidence when it is adequate. Record why research wa
 
 Use `/rpi-plan` when adequate evidence must become a sequenced, verifiable implementation strategy. Planning focuses on dependencies, acceptance criteria, boundaries, and stable work identifiers instead of changing source files.
 
-The skill creates or revises three coordinated artifacts:
+The skill creates or revises two coordinated artifacts:
 
 ```text
 .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
-.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
 .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
 ```
 
-The plan uses stable `Pxx` phase IDs and `Pxx-Txx` task IDs with matching `<!-- rpi:... -->` markers. Phase details add evidence-based context, boundaries, dependencies, validation expectations, and completion evidence. An independent critique records `Pass`, `Revise`, or `Blocked` before implementation readiness.
+The task-centered plan uses stable `Pxx` phase IDs and `Pxx-Txx` task IDs with matching `<!-- rpi:... -->` markers. Every phase defines an outcome-oriented goal. Every task defines the behavior or capability it should establish, likely targets, material technical references, dependencies, acceptance criteria, validation, completion evidence, and unresolved items. An independent critique records `Pass`, `Revise`, or `Blocked` before implementation readiness.
 
 ### ⚡ Implement with rpi-implement
 
-Use `/rpi-implement` to execute approved `Pxx` or `Pxx-Txx` work. Provide the dated plan, phase details, critique disposition, and exact phase or task when the execution scope is bounded.
+Use `/rpi-implement` to execute approved `Pxx` or `Pxx-Txx` work. Provide the dated plan, critique disposition, and exact phase or task when the execution scope is bounded.
 
 Implementation records material work and truthful validation in:
 
@@ -77,7 +76,7 @@ Implementation records material work and truthful validation in:
 .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
 ```
 
-Each material change receives a `CHG-xxx` identifier. Completion checkboxes change only after evidence exists. If implementation needs a significant departure from the approved plan, it records a linked `DIV-xxx` and `AM-xxx`, updates the affected phase details, and returns the amendment for fresh plan critique. Affected dependent work resumes only after a `Pass` disposition; unrelated completed work remains intact.
+Completion checkboxes change only after evidence exists. If implementation needs a significant departure from the approved plan, it records the discovery in the changes record, updates the affected plan tasks after the required decision, and pauses only dependent work until the plan is current. The existing critique remains historical evidence and is not repeated.
 
 ### ✅ Review with rpi-review
 
@@ -102,7 +101,7 @@ Choose the smallest entry surface that owns the next action:
 | `RPI Agent`        | You want a user-selected lifecycle wrapper                    | Activates the applicable RPI skills with one task identity                      |
 | `/rpi-quick`       | You want a skill-based full-flow entry point                  | Coordinates research readiness, planning, implementation, review, and follow-up |
 | `/rpi-research`    | A demonstrated evidence gap blocks credible progress          | Produces research evidence without planning or implementation                   |
-| `/rpi-plan`        | Adequate evidence needs an implementation strategy            | Produces the plan, phase details, and critique disposition                      |
+| `/rpi-plan`        | Adequate evidence needs an implementation strategy            | Produces the task-centered plan and critique disposition                        |
 | `/rpi-implement`   | Approved work is ready to execute                             | Produces source changes, change evidence, and validation                        |
 | `/rpi-review`      | Implementation evidence is ready for reconciliation           | Produces one review record and routes open work                                 |
 | `/rpi-walkthrough` | You want to understand code or artifacts before changing them | Explains one segment at a time and captures requested changes when needed       |
@@ -116,10 +115,10 @@ Use `/clear` or a new chat when a long lifecycle has accumulated context, you ar
 Durable artifacts carry the necessary context:
 
 ```text
-research, when it runs → plan and details → changes → review and routed follow-up
+research, when it runs → task-centered plan → changes → review and routed follow-up
 ```
 
-Resume with the same stable task ID and open or reference the relevant dated artifacts. Navigate plan and detail sections with `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
+Resume with the same stable task ID and open or reference the relevant dated artifacts. Navigate plan sections with `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 
 For the technical explanation of why this matters, see [Context Engineering](context-engineering).
 

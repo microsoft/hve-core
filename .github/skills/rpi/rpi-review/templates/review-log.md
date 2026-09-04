@@ -57,7 +57,6 @@ Append events in order. Never rewrite or delete an earlier row. The latest event
 * Builder candidate identity: {{task_id_scope_and_artifact_revision_or_hash}}
 * Builder execution: {{started_Complete_Partial_Blocked_or_Blocked_not_dispatched_unavailable}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
-* Phase details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
 * Plan critique: .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
 * Changes: .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
 * Other evidence considered: {{research_validation_or_bounded_lens_evidence}}

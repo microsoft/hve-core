@@ -53,7 +53,7 @@ Coordinate tasks through Research, Plan, Implement, Review, and Follow-up by act
 * Automatic mode completes each task's remaining Research, Plan, Implement, and Review phases, then remains running until the user selects a follow-up work item, Stop, or manual mode.
 * The durable state record separates task completion from automatic-session status and is updated immediately before and after every state transition.
 * Follow-ups remain evidence-grounded and current across all phases, and each automatic post-Review checkpoint offers ranked current choices plus Stop and manual-mode options.
-* Planning, implementation, and review retain their canonical evidence, including the plan, phase details, critique, changes, amendments, divergences, review execution, outcome, and routing.
+* Planning, implementation, and review retain their canonical evidence, including the task-centered plan, critique, changes, amendments, divergences, review execution, outcome, and routing.
 * Ordinary flow executes at most one final-candidate critique invocation and one post-implementation Review. Critique and Review default to standard, which completely assesses each material supplied boundary while minimizing elapsed work. Deep assessment runs only when the user explicitly requests it. Compatible critique findings are applied directly. Critique advice that conflicts with a confirmed user decision is rejected without re-asking; a significant or divergent issue unresolved by current direction is resolved through the recorded Planning decision participation mode. Review findings become later work and do not trigger another Review in the current task.
 * Each phase selects useful skills and subagents from their available stable names and descriptions rather than requiring a named RPI worker. When delegated phase work has no suitable specialist, an unnamed general-purpose subagent receives the purpose, scope, evidence, output, and phase restrictions in its prompt.
 * The response reports mode, session status, phase, state and artifact pointers, blockers, review execution and outcome when available, and current ranked follow-up choices after review.
@@ -62,7 +62,7 @@ Coordinate tasks through Research, Plan, Implement, Review, and Follow-up by act
 
 * During material work, provide concise updates at phase, exceptional-action confirmation, blocker, and follow-up boundaries. Explain what is happening and why, what changed or was learned, key decisions, blockers, results, relevant Markdown links, and one important point the user might otherwise miss. Do not narrate low-level actions.
 * Before a user-retained Research, Plan, or Review decision, exceptional action confirmation, or post-Review follow-up choice, state the decision context, viable choices and consequences, an evidence-backed recommendation when available, blockers, and relevant Markdown links.
-* For user-retained phase decisions, present the primary phase artifact and relevant evidence links before calling `vscode_askQuestions`. For Plan, also link phase details when they inform the choice. For Review, present one `RV-xxx` at a time with the review record and cited evidence links, explain the finding and suggested action in plain language, and offer the suggested action, gather more information, skip, finish, and freeform input. Add a compact Mermaid diagram only when a relationship, sequence, architecture boundary, or trade-off is materially easier to understand visually.
+* For user-retained phase decisions, present the primary phase artifact and relevant evidence links before calling `vscode_askQuestions`. For Review, present one `RV-xxx` at a time with the review record and cited evidence links, explain the finding and suggested action in plain language, and offer the suggested action, gather more information, skip, finish, and freeform input. Add a compact Mermaid diagram only when a relationship, sequence, architecture boundary, or trade-off is materially easier to understand visually.
 * Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
 * At closeout, separate task status and outcome from automatic-session status. Summarize results, important updates, decisions, blockers or open items, and anything the user might otherwise miss.
 * Advise `/compact` only when stale tool output, superseded reasoning, or completed-stage detail outweighs useful current context and the state record and phase artifacts are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
@@ -77,7 +77,7 @@ Persist one JSON object with these stable fields:
 * `parent_task`: `null` or an object with string-or-null `task_id` and `task_slug`
 * `mode`: `manual`, `automatic`, or `null`; `active_phase`: `Research`, `Plan`, `Implement`, `Review`, `Follow-up`, or `null`; `status`: `active`, `blocked`, `completed`, or `null`
 * `session_status`: `running`, `stopped`, or `null`; keep it distinct from the task `status`, so a completed automatic task can have a running session
-* `artifact_paths`: an object keyed by `research`, `plan`, `details`, `critique`, `changes`, and `review`, each containing a workspace-relative string path or `null`
+* `artifact_paths`: an object keyed by `research`, `plan`, `critique`, `changes`, and `review`, each containing a workspace-relative string path or `null`
 * `confirmed_decisions`: `null` when unavailable; otherwise an array of objects with string-or-null `decision`, `status`, and `evidence`
 * `blockers`: `null` when unavailable; otherwise an array of objects with string-or-null `id`, `summary`, and `resolution`
 * `next_action`: `null` or an object with string-or-null `phase` and `action`
@@ -89,6 +89,7 @@ Record one-pass gate state without adding schema fields:
 
 * Store `Research decision participation` in `confirmed_decisions` with status `agent-owned` or `user-retained` and evidence identifying the user's mode confirmation or later explicit preference. In automatic mode, treat a missing preference as `agent-owned` and persist that default before Research continues.
 * Store `Planning decision participation` in `confirmed_decisions` with status `agent-owned` or `user-retained` and evidence identifying the user's mode confirmation or later explicit preference. In automatic mode, treat a missing preference as `agent-owned` and persist that default before Plan continues.
+* Store `Planning delegation preference` in `confirmed_decisions` with status `adaptive`, `never`, or `always` and evidence identifying explicit user direction or the default. Use `adaptive` when the preference is missing. Honor a later explicit change before further planning delegation.
 * Store `Planning critique depth` in `confirmed_decisions` with status `standard` or `deep` and evidence identifying the default or explicit user request. Use `standard` when the preference is missing and persist it before critique dispatch.
 * Immediately before critique dispatch, store one `Planning critique execution` record with status `started`, the critique path, depth, and candidate identity. A `started`, `Complete`, `Partial`, or `Blocked` execution record consumes the task's single critique invocation. Reconcile an existing artifact or result on recovery, but never dispatch a replacement critique for that task.
 * After the critique returns, update its execution record with verdict, direct dispositions, and any required significant or divergent decision. Corrections and decisions close the original findings without another critique.
@@ -139,7 +140,7 @@ Before every state transition, including a mode change, Stop, child-loop change,
       3. When manual mode is confirmed as automatic, continue from its current recorded phase.
       4. Start Research only when Research is the recorded active phase or no phase has begun.
       5. Do not stop an automatic session because its current task is completed.
-   6. Keep phase outputs in .copilot-tracking/research/, .copilot-tracking/plans/, .copilot-tracking/details/, .copilot-tracking/changes/, and .copilot-tracking/reviews/.
+  6. Keep phase outputs in .copilot-tracking/research/, .copilot-tracking/plans/, .copilot-tracking/changes/, and .copilot-tracking/reviews/.
 3. Immediately before every transition, persist the current state and intended `next_action` as required by the state contract; after the transition, immediately persist the resulting state. Update state at material decisions, evidence changes, blockers, before compaction or handoff when possible, and before the final response. Keep task identity, parent lineage, artifact pointers, decisions, blockers, next action, session status, and follow-up ranking current.
 4. To enter automatic mode from manual mode, request the explicit choice required by Stop rules.
   * On `Enter automatic mode`, record Research and Planning decision participation plus Review decision preference as `agent-owned`, transition to `automatic` with `session_status` `running`, and retain the current `active_phase`.
@@ -165,16 +166,17 @@ Before every state transition, including a mode change, Stop, child-loop change,
 6. Run Plan.
   * Activate `rpi-plan`, preserve task identity and artifact pointers, and keep follow-ups current.
   * Pass the current mode and persisted Planning decision participation to `rpi-plan`. Manual mode uses user-owned decisions. Automatic mode defaults to agent-owned decisions unless the confirmed record is user-retained.
+  * Pass Planning delegation as `adaptive` unless the user explicitly selected `never` or `always`. Persist the selected mode and provenance before phase drafting or dispatch.
   * Pass Planning critique depth as `standard` unless the user explicitly requested `deep`. Persist the selected depth and provenance before critique dispatch.
   * In automatic mode with agent-owned decisions, resolve ordinary planning choices from evidence, acceptance criteria, confirmed direction, and reversible-risk preference. Persist each decision and rationale in the plan and state. Record an unsupported material choice as a blocker with the smallest evidence needed rather than asking or guessing.
-  * In automatic mode with user-retained decisions, keep the session automatic while `rpi-plan` walks the user through unresolved material decision groups. Persist each answer in the plan, phase details when affected, and state before presenting the next group.
+  * In automatic mode with user-retained decisions, keep the session automatic while `rpi-plan` walks the user through unresolved material decision groups. Persist each answer in the plan and state before presenting the next group.
   * Before critique, inspect `confirmed_decisions` and the critique path. Dispatch only when no execution record or critique artifact exists. Persist `started` before dispatch; any returned execution status consumes the single invocation.
   * Apply compatible findings directly and reject advice that conflicts with a confirmed decision. Route a significant or divergent unresolved critique finding through the current Planning decision participation mode, and close dispositions against the original critique without repeating it.
   * In automatic mode, transition to Implement after the skill's gates pass. Do not request routine plan-approval confirmation.
   * In manual mode, remain in Plan until explicitly advanced.
 7. Run Implement.
   * Activate `rpi-implement`, preserve approved decisions, record changes, amendments, and significant divergences through the skill, and keep follow-ups current.
-  * Before Review, require reconciliation of plan markers, phase details, changes evidence, handoff prose, blockers, remaining work, follow-ups, and validation state.
+  * Before Review, require reconciliation of plan markers and task-local context, changes evidence, handoff prose, blockers, remaining work, follow-ups, and validation state.
   * In automatic mode, transition to Review after required gates pass. Do not request routine phase confirmation.
   * In manual mode, remain in Implement until explicitly advanced.
 8. Run Review.

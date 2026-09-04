@@ -90,7 +90,7 @@ to `hve-builder`; they are not independent agents or lifecycle owners.
 **Activates:** The matching RPI skills for the applicable lifecycle concepts:
 
 * `rpi-research` only when research readiness identifies a demonstrated gap
-* `rpi-plan` for the parent-owned plan, phase details, and independent critique
+* `rpi-plan` for the parent-owned task-centered plan and independent critique
 * `rpi-implement` for direct execution and change evidence
 * `rpi-review` for one evidence-reconciliation record and outcome routing
 
@@ -100,7 +100,6 @@ to `hve-builder`; they are not independent agents or lifecycle owners.
 
 * `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`
 * `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`
-* `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md`
 * `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
@@ -302,7 +301,7 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 
 1. Gather task context, decisions, acceptance criteria, and any completed research
 2. Use `/rpi-research` when a demonstrated planning-readiness gap remains
-3. Use `/rpi-plan` with the available evidence to create a plan, matching phase details, and independent critique
+3. Use `/rpi-plan` with the available evidence to create a task-centered plan and independent critique
 4. Use `/rpi-implement` to execute approved work and record change evidence
 5. Use `/rpi-review` to reconcile the implementation against the plan and route follow-up
 

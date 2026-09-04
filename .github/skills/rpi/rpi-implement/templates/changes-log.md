@@ -5,7 +5,6 @@
 
 * Task ID: {{task_id}}
 * Related plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
-* Phase details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
 * Implementation date: {{YYYY-MM-DD}}
 
 ## Execution Status
@@ -32,9 +31,9 @@ Use a descriptive subheading for each completed-work item. Do not assign a per-e
 * Completion evidence: {{evidence}}
 * Validation: {{run_passed_failed_skipped_or_unavailable}}
 
-## Implementation-Time Plan and Detail Updates
+## Implementation-Time Plan Updates
 
-Use a descriptive subheading for each update. The plan and details remain the current-state authority; this record retains rationale and evidence history.
+Use a descriptive subheading for each update. The plan remains the current-state authority; this record retains rationale and evidence history.
 
 ### {{plan_or_detail_update_heading}}
 
@@ -56,7 +55,7 @@ For a follow-up-only update, record why the item is outside immediate scope and 
 
 ## Pre-Review Reconciliation
 
-* Plan markers and phase details: {{current_or_gap}}
+* Plan markers and task-local context: {{current_or_gap}}
 * Completed-work evidence and handoff prose: {{current_or_gap}}
 * Validation, blockers, remaining work, and follow-up items: {{current_or_gap}}
 * Review readiness: {{ready_or_not_ready_with_reason}}
@@ -80,7 +79,7 @@ For a follow-up-only update, record why the item is outside immediate scope and 
 * Declared scope and markers: {{full_plan_Pxx_or_Pxx_Txx_with_completed_scope_markers_and_all_remaining_active_plan_markers}}
 * Validation coverage: {{validation_summary}}
 * Blockers: {{none_or_blocker_summary}}
-* Current plan and detail updates: {{none_or_descriptive_update_summary}}
+* Current plan updates: {{none_or_descriptive_update_summary}}
 * Planning and critique state: {{current_ready_or_awaiting_state_with_relevant_PC_xxx_when_applicable}}
 * Follow-up items: {{none_or_follow_up_summary}}
 * Review readiness or no-handoff reason: {{ready_for_review_or_explicit_reason}}

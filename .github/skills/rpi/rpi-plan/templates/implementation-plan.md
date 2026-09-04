@@ -43,11 +43,11 @@ Keep this as a concise freeform list. Preserve the user's meaning and add source
 |----------------------------------|------------------------------------------------------------------------------------------------|
 | Planning execution and readiness | {{Complete/Partial/Blocked/Needs clarification and Ready/Not ready/Blocked with reason}}       |
 | Decision participation           | {{user-owned/agent-owned/user-retained with mode and provenance}}                              |
+| Planning delegation              | {{adaptive/never/always with caller or default provenance}}                                    |
 | Blockers                         | {{none_or_current_blockers}}                                                                   |
 | Latest critique                  | .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md with {{verdict}} |
 | Relevant research                | {{research_path_or_not_applicable_with_reason}}                                                |
 | Plan                             | .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md                                   |
-| Phase details                    | .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md                        |
 | Changes-record role              | .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md is implementation evidence   |
 | Continuation owner               | {{user/rpi-quick/manual RPI Agent/confirmed automatic RPI Agent}}                              |
 | Required gates or confirmations  | {{passed_pending_or_failed_gates}}                                                             |
@@ -85,14 +85,6 @@ The planner synthesizes and maintains these current requirements from the user l
   * Objective threshold or evaluation condition: {{objective_threshold_or_evaluation_condition}}
   * Operating condition or verification approach, if needed: {{concise_condition_or_objective_verification}}
 
-## Acceptance Criteria
-
-The planner maintains acceptance criteria here as the canonical verification record rather than repeating them under requirements.
-
-* Criterion: {{observable_acceptance_criterion}}
-  * Related requirement or plan item: {{requirement_or_pxx_reference}}
-  * Verification: {{observable_check_or_evidence}}
-
 ## Risks and Open Questions
 
 | Priority  | Type                                    | Risk, question, or planning item | Impact     | Smallest action or evidence needed | Owner                       |
@@ -104,15 +96,27 @@ The planner maintains acceptance criteria here as the canonical verification rec
 <!-- rpi:phase id=P01 -->
 ### [ ] P01: {{phase_name}}
 
-* Intent: {{phase_outcome}}
+* Goal: {{coherent_behavior_or_outcome_this_phase_establishes_and_why_it_matters}}
 * Dependencies: {{phase_dependencies_or_none}}
 
 <!-- rpi:task id=P01-T01 -->
 #### [ ] P01-T01: {{task_name}}
 
-* Requirement and evidence: {{requirement_or_source}}
-* Expected result: {{observable_result}}
-* Detail section: P01-T01 in .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-phase-details.md
+* Goal: {{observable_behavior_capability_or_state_this_task_establishes}}
+* Requirements and evidence: {{requirement_ids_research_decisions_or_constraints}}
+* Likely targets:
+  * {{workspace_relative_file_folder_component_or_symbol}}: {{why_it_is_relevant}}
+* References and examples:
+  * {{api_schema_library_symbol_or_concise_code_example}}: {{how_it_informs_the_task_and_whether_it_is_required_or_illustrative}}
+* Dependencies: {{task_dependencies_or_none}}
+* Acceptance criteria:
+  * {{observable_condition_that_proves_the_task_goal}}
+* Validation:
+  * {{check_or_evidence_that_verifies_the_acceptance_criterion}}
+* Completion evidence: {{implementation_owned_evidence_or_pending}}
+* Unresolved items: {{none_or_supported_assumption_question_or_decision_gap}}
+
+<!-- Omit References and examples when research and planning found no material implementation reference. Code examples are illustrative unless a requirement or interface contract explicitly makes them binding. -->
 
 ## Dependencies
 
@@ -126,7 +130,7 @@ The planner maintains acceptance criteria here as the canonical verification rec
 
 Record the latest critique findings, their disposition, and any explicitly accepted residual risk. Keep this section outside user decisions and current planning synthesis.
 
-* Critique candidate identity: {{task_id_plan_and_details_revision_or_hash}}
+* Critique candidate identity: {{task_id_and_plan_revision_or_hash}}
 * Critique depth and provenance: {{standard_or_deep}}; {{default_or_explicit_user_request}}
 * Critique execution: {{not_run_started_complete_partial_or_blocked}}
 * Single invocation consumed: {{yes_or_no}}
@@ -139,8 +143,10 @@ Record the latest critique findings, their disposition, and any explicitly accep
 
 * [ ] Executive Summary, confirmed direction, grouped decisions, readiness, goals, scope, requirements, risks, phases, and dependencies are understandable without reading Sources or Critique Disposition.
 * [ ] Planning decision participation and provenance are recorded; user-owned and user-retained groups have persisted answers, while agent-owned groups have evidence-backed rationales or honest blockers.
-* [ ] Functional and non-functional requirements are current, and Acceptance Criteria is their single verification record.
-* [ ] Every `Pxx` and `Pxx-Txx` marker has matching phase details, dependencies, expected results, validation expectations, and completion evidence.
+* [ ] Planning delegation and provenance are recorded; adaptive, never, or always behavior was followed without overriding phase boundaries.
+* [ ] Functional and non-functional requirements are current, and every requirement is covered by task-local goals and acceptance criteria.
+* [ ] Every `Pxx` has an outcome-oriented goal, and every `Pxx-Txx` has a task goal, likely targets, dependencies, acceptance criteria, validation, completion evidence, and unresolved-item state.
+* [ ] Task goals describe observable behavior, capability, or state without prescribing unsupported implementation steps; technical references and examples are task-local and labeled as required or illustrative.
 * [ ] Risks, open questions, blockers, critique findings, and accepted residual risks have owners and next actions.
 * [ ] Critique depth and provenance are recorded; at most one invocation was dispatched, and all findings are disposed without a retry or closure critique.
 * [ ] Planning execution, readiness, continuation owner, gates, next action, and implementation paths are complete and consistent.
