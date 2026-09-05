@@ -10,7 +10,7 @@ Use this reference during intake to decompose the request by responsibility, cho
 
 Choose every type whose responsibility is independently necessary. Prefer skills for reusable on-demand capability and subagents for isolated work, but do not force a path-scoped convention into a skill or a user entry point into a subagent merely because of ranking.
 
-The Choose Artifacts by Responsibility section of `hve-builder.instructions.md` holds the canonical responsibility, form, and activation table. That surface is always loaded whenever a target artifact is edited, so it is the copy that has to exist; restating it here would only create drift. This reference therefore depends on that instruction file, and both ship in the same package. Keep them together when redistributing the skill.
+The Choose Artifacts by Responsibility section of `hve-builder.instructions.md` holds the canonical responsibility, form, and activation table. Confirm that the host loaded it; otherwise read that instruction by its stable name before routing. Do not assume path matching loads it in every host or read-only review context. This reference depends on that instruction file, and both ship in the same package. Keep them together when redistributing the skill.
 
 When a request spans responsibilities, split it deliberately: a skill may own the workflow, subagents may isolate execution and review, an instruction file may govern matching paths, and a prompt may provide a user entry point. Confirm only splits that widen the caller's write boundary or product surface.
 
@@ -20,20 +20,20 @@ Selecting an agent tool set is outside this routing. Apply the Tool-configuratio
 
 For every rule or fact the artifact would carry, place it where it loads at the right time and binds with the right force. This keeps always-loaded surfaces short and moves enforcement off advisory prose.
 
-| Load timing     | Home                                                  | Use for                                                                                       |
-|-----------------|-------------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| Always loaded   | Root agent instruction file (AGENTS.md or equivalent) | Durable, non-inferable, project-wide facts: key commands, non-default conventions, invariants |
-| Scoped by path  | Path-scoped instruction file with an `applyTo` glob   | Conventions that apply only to some files or languages                                        |
-| On demand       | Skill body and its references                         | Recurring workflows and domain knowledge needed only sometimes                                |
-| Deferred detail | Skill references, templates, and assets               | Full schemas, long examples, and reusable skeletons                                           |
-| Delegated       | Subagent                                              | Isolated, high-volume, tier-specific, or verification work returning a summary                |
+### Load timing
 
-| Authority | Home                                                     | Use for                                                          |
-|-----------|----------------------------------------------------------|------------------------------------------------------------------|
-| Advisory  | Instruction and skill prose                              | Guidance the model should follow and can override with judgment  |
-| Enforced  | Hooks, permission modes, pipeline checks, strict schemas | Non-negotiable rules that must hold regardless of model judgment |
+* Always loaded: put durable, non-inferable, project-wide facts in the root agent instruction file, such as AGENTS.md or its equivalent. Include key commands, non-default conventions, and invariants.
+* Scoped by path: put conventions limited to particular files or languages in path-scoped instructions with an `applyTo` glob.
+* On demand: put recurring workflows and knowledge needed only sometimes in a skill body and its references.
+* Deferred detail: put full schemas, long examples, and reusable skeletons in skill references, templates, and assets.
+* Delegated: put isolated, high-volume, profile-specific, or verification work returning a summary in a subagent.
 
-A single requirement often splits across both axes. For example, "do not write to protected paths" belongs in advisory prose for context and in an enforced control for the guarantee. Choose that enforced home from the Authority table rather than defaulting to a hook.
+### Authority
+
+* Advisory: instruction and skill prose states behavioral requirements subject to instruction precedence. It does not provide a deterministic enforcement guarantee.
+* Enforced: hooks, permission modes, pipeline checks, and strict schemas implement non-negotiable rules that must hold regardless of model judgment.
+
+A single requirement often splits across both axes. For example, "do not write to protected paths" belongs in advisory prose for context and in an enforced control for the guarantee. Choose the control that enforces the requirement rather than defaulting to a hook.
 
 ## Delegation analysis
 
@@ -94,14 +94,14 @@ user-invocable: true
 
 Subagent dispatch line in the skill's Flow: dispatch `CSV Profiler Worker` with the CSV path and the output path, then read its returned summary.
 
-Worker subagent (`.agent.md` under `subagents/`), pinned to a fixed Low profile because it always runs there. The model name below was resolved from the supported-models page when this example was written; resolve a current one when authoring.
+Worker subagent (`.agent.md` under `subagents/`), pinned to a fixed Low profile because it always runs there. Replace the placeholder below with a currently available model resolved by the procedure above; it is not a deployable model identifier.
 
 ```yaml
 ---
 name: CSV Profiler Worker
 description: "Profiles a CSV with a bundled script and returns a summary. Use when profiling CSV data."
 user-invocable: false
-model: GPT-5.6 Luna (copilot)
+model: <resolved-low-profile-model> (copilot)
 ---
 ```
 

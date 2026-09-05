@@ -4,7 +4,7 @@ description: 'Ranked, evidence-grounded instruction-quality standard and stale p
 <!-- markdownlint-disable-file -->
 # Instruction Quality Requirements Catalog
 
-The quality standard the `hve-builder` skill applies when it creates, improves, refactors, or replaces a prompt, instruction file, agent, subagent, or skill. Each requirement is a decision rule an author can apply and a reviewer can check.
+The quality standard the `hve-builder` skill applies when it creates, improves, refactors, replaces, or reviews a prompt, instruction file, agent, subagent, or skill. Each requirement is a decision rule an author can apply and a reviewer can check. Mechanical validation checks structure; it does not establish instruction quality.
 
 ## Provenance
 
@@ -12,10 +12,27 @@ The requirements distill first-party model-provider guidance retrieved on 2026-0
 
 ## How to use this catalog
 
-* Categories are ranked by leverage. When effort is limited, satisfy lower-numbered categories first.
+* Categories are ordered as an authoring guide, not a waiver of safety, authority, or acceptance requirements. Apply every material requirement and record justified exceptions.
 * Each entry is a short name, a decision rule, and an applied example. Apply the rule, not the label.
-* Treat Stale patterns to retire as a closed list to remove on sight.
+* Use the maintenance decisions below before applying Stale patterns to retire. A pattern is a review signal, not permission to remove required behavior.
 * Cite requirements by category and short name (for example, "Outcome and structure: explicit success criteria") in author logs and review findings.
+
+## Authoring and maintenance decisions
+
+Start with the behavior the caller needs, not a preferred artifact shape. For each material instruction, identify its trigger and scope, required action or decision, observable result, authority boundary, and response to missing evidence. Put these details in the smallest useful rule or shared contract; do not require a separate section for every detail.
+
+For an existing artifact, capture its current purpose, activation, inputs, outputs, consumers, stop conditions, and non-tool capability surface before editing. Compare proposed changes against that baseline and the caller's acceptance criteria. A shorter artifact is not an improvement if it loses a required behavior.
+
+* Keep an instruction when it encodes a current requirement, a non-obvious convention, a safety boundary, or a demonstrated correction that is not supplied reliably elsewhere. A new explicit requirement does not need a history of failures to justify inclusion.
+* Create an instruction when a required behavior has no suitable owner. Choose its artifact type and load timing before writing it, and define an observable acceptance check.
+* Improve an instruction when the owner and activation remain suitable but its behavior is ambiguous, incomplete, contradictory, or unsupported. State which requirement or finding the change addresses.
+* Refactor when the required behavior is correct but duplication, organization, or context placement makes it harder to follow. Preserve triggers, authority, outputs, and stop conditions; moving content requires checking that its consumers still load it.
+* Replace when wording changes cannot fix an unsuitable responsibility, activation mechanism, interface, or control-flow design. Confirm the replacement and migration boundary, preserve required capabilities in the new owner, and update callers and references before retiring the old owner.
+* Delete a rule when it is obsolete, contradicted by current evidence, redundant with an applicable canonical rule, or no longer serves a requirement. Identify what replaces it or why nothing must replace it. Check references, activation, and downstream consumers before deleting an artifact. Removing required behavior or changing architecture needs explicit approval; a cleanup request alone does not grant it.
+
+These decisions can apply together to different rules or targets. Deletion is an operation within an approved mutating boundary, not a separate lifecycle mode. In read-only review, recommend dispositions without changing source. The workflow contract owns the inferred `create,improve,refactor` default, explicit mode limits, write authority, delta classification, validation, and the final behavior gate.
+
+Before tuning wording, define the cheapest check that could reject the proposed change: a structure check for metadata, a consumer check for relocated guidance, or a representative behavioral scenario for a changed decision. Record the requirement, disposition, rationale, and evidence in the existing author or review record. Do not add process logs to the production artifact.
 
 ## 1. Agent architecture
 
@@ -35,12 +52,13 @@ Write the artifact outcome-first. Role and process serve the outcome; they never
 * Explicit success criteria: name completion conditions an evaluation can score. Example: "Done when the targeted tests pass and the response names any skipped validation."
 * Stop rules and missing evidence: define when to stop and what to do when evidence is absent, so silence never becomes an unsupported "no." Example: "If the sources do not support the claim, ask for the smallest missing source or state the gap."
 * Short, bounded role: keep any persona to a line or two beside goals, success criteria, constraints, and stop rules. Example: "Role: coding assistant for this repo. Goal: implement the requested change with targeted validation."
-* Clear sectioning: separate role, goal, success criteria, constraints, output, and stop rules into distinct sections. Example: headings for Role, Goal, Success criteria, Constraints, Output, and Stop rules.
+* Clear sectioning: separate goals, constraints, outputs, and stop rules when the artifact's complexity warrants it; do not add empty ceremony to a short path-scoped convention. Example: a multi-stage skill uses distinct sections, while a small instruction file uses a concise rule list.
 * Explain non-obvious reasons: give the reason for a constraint when it is not self-evident, so the model generalizes correctly. Example: "Avoid ellipses because the output is read aloud by text-to-speech."
 * Positive framing: say what to do, not only what to avoid. Example: "Write prose paragraphs" rather than only "do not use bullet lists."
 * One structural convention: use Markdown headings or XML-style tags consistently within an artifact; do not mix or nest them gratuitously. Providers accept both; none requires XML or calls it stale. Example: headings throughout a skill body; tags only for bounded supporting content the artifact already uses.
+* Reference format follows use: prefer descriptive headings with self-contained rules for long guidance, conditional bullets for decisions, and numbered lists when order or precedence matters. Keep tables for compact comparisons. Use YAML or JSON when a parser or stable data contract needs explicit fields; XML is useful for bounded content when the host already uses it. No format guarantees better model adherence; evaluate a disputed choice on the target task.
 * Emphasis matched to enforcement: reserve forceful wording for a tested, enforceable constraint with clear scope, and state each rule once. Example: keep "never expose secrets"; delete a second copy of the rule rather than strengthening it.
-* Depth and length belong to runtime controls: set reasoning effort and verbosity through the model's controls and encode only what those controls cannot express. Example: pin the effort setting and state the priority order a short answer must keep; delete "think harder" and "be thorough."
+* Depth and length belong to runtime controls: use reasoning effort and verbosity controls when the target host exposes them; otherwise state task-specific completeness and output requirements without inventing settings. Example: require cited findings and skipped-check disclosure rather than "think harder" or "be thorough."
 * Re-evaluate on model migration: move the model unchanged, pin effort to match prior depth, baseline evaluations, trim inherited emphasis that newer models over-trigger on, then re-evaluate. Example: migrate with the old prompt, baseline, then remove legacy persistence reminders that no longer help.
 * Output shape matches need: add heavier formatting only when it improves comprehension or interface stability. Example: "Return JSON for the API payload; use prose for the user explanation."
 * Execution status is not a verdict: use distinct vocabularies for whether work ran and whether it passed. Example: record execution as Deferred and the verdict as unavailable rather than a partial pass.
@@ -56,7 +74,7 @@ Route facts by load timing and authority. Always-loaded files stay short and dur
 * Deliberate precedence, no contradictions: plan how nested and merged instructions resolve, and never state contradictory rules across overlapping scopes. Example: a package-level file intentionally overrides the package's test command; no file says both "never use mocks" and "prefer mocks."
 * Mechanically checkable where possible: prefer a runnable command over a subjective instruction. Example: "Run the auth test suite" beats "test thoroughly."
 * Reference, do not copy: point to canonical files instead of pasting style guides, command inventories, or templates. Example: link the formatter config rather than restating its rules.
-* Living documentation: add a rule after an observed, repeated mistake, not preemptively; prune rules that no longer change behavior. Example: add a path rule after repeated migration errors, then remove it when it stops helping.
+* Living documentation: add rules for explicit requirements or observed gaps, not speculative edge cases; prune rules that no longer serve either. Example: encode a required migration constraint before the first migration, then retire it when the migration path is removed.
 
 ## 4. Skills and referenced artifacts
 
@@ -83,7 +101,7 @@ Treat delegation as an architecture decision. Delegate isolated, high-volume, or
 * One narrow purpose per subagent: specialize each subagent by description, prompt, and model. Example: a reviewer subagent reviews diff risks only.
 * Descriptions drive routing: write the description so a parent can decide when to delegate. Example: "Use after code changes to find correctness and security gaps."
 * Model profile from responsibility: `model:` is optional and omitted by default; an omitted value inherits the parent (subagent) or the session selection (agent or prompt). A High responsibility omits it unless the caller supplies a model. Declare it only for a stable Medium or Low profile, as a scalar on agents and subagents or an ordered fallback list on prompts, and resolve current model names from GitHub's Copilot model documentation by the procedure in [artifact-types.md](artifact-types.md) rather than copying them from another artifact. Example: omit `model:` for a reviewer that inherits its parent; pin a literal mechanical runner to a currently listed low-cost model.
-* Bounded, condensed return: return a distilled summary of roughly one to two thousand tokens and write full fidelity to an evidence artifact. State whether nested dispatch is permitted, since hosts commonly disable or cap it. Example: "Return the file list, decisions, and blockers; write the full trace to the evidence path."
+* Bounded, condensed return: return only the fields the consumer needs and write full detail to an evidence artifact when required. Use a numeric budget only when the caller or a measured host constraint supplies one. State whether nested dispatch is permitted. Example: "Return the file list, decisions, and blockers; write the full trace to the evidence path."
 * Fresh-context, bounded review: verify with a reviewer that sees the diff and criteria, not the author's reasoning, and tell it what to ignore, because a reviewer prompted to find gaps over-reports. Example: "Review the change against the plan; report correctness gaps only. Ignore style unless it breaks a stated requirement."
 * Preserve the existing capability surface: in improve and refactor work, keep existing non-tool capability-bearing frontmatter unless the caller requests a change or verified evidence supports one. The workflow contract owns the approval route. Example: keep an established `agents:` dependency set unless approved evidence supports a change.
 * Memory by decision: add persistent memory only when the subagent needs it; memory adds read and write capability. Example: give a conventions subagent project memory; give a one-off review none.
@@ -163,7 +181,7 @@ Author for reuse across hosts and for durability over time.
 
 ## Stale patterns to retire
 
-Remove these on sight. Each is superseded by a requirement above.
+Review these against the current host, target model, required behavior, and maintenance decisions above. Retire or replace a pattern only when the evidence supports it and the approved mode permits the change. Preserve a necessary safety boundary or interface until its replacement is established; record uncertainty instead of assuming obsolescence.
 
 * Persona-only prompting as a complete strategy.
 * All-caps persistence and broad must or never defaults copied from older stacks without target-model evaluation.
@@ -174,8 +192,20 @@ Remove these on sight. Each is superseded by a requirement above.
 * Response prefilling for output shaping on model families that no longer support it.
 * JSON mode where schema-constrained structured outputs are supported.
 * Kitchen-sink instruction files, copied style guides, copied templates, and exhaustive edge-case lists.
-* Singular AGENT.md where AGENTS.md is the current format; keep a compatibility link where needed.
+* Singular AGENT.md where the target host expects AGENTS.md. Migrate references; add compatibility support only when the caller requests it.
 * Unsourced length ceilings and invented universal caps.
 * Fixed iteration counts as quality theater; use evidence-backed completion gates and reserve a one-shot boundary for a final test that depends on a frozen candidate.
 * Model names pinned for a High responsibility, copied from another artifact, or chosen without first selecting a responsibility-based profile.
 * Calling simulation or emulation native runtime validation.
+
+## Source references
+
+These are the upstream guidance families named in Provenance, not evidence of a new retrieval or native validation. The maintenance decisions and HVE lifecycle rules are repository conventions. Verify current host or model documentation when a decision depends on version-specific behavior.
+
+* OpenAI: [Prompt engineering](https://platform.openai.com/docs/guides/prompt-engineering) and [Reasoning best practices](https://platform.openai.com/docs/guides/reasoning-best-practices)
+* Anthropic: [Prompt engineering overview](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview) and [Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)
+* Google: [Prompt design strategies](https://ai.google.dev/gemini-api/docs/prompting-strategies)
+* Agent Skills: [Specification](https://agentskills.io/specification)
+* AGENTS.md: [Convention](https://agents.md/)
+* VS Code: [Custom instructions](https://code.visualstudio.com/docs/copilot/customization/custom-instructions), [Custom agents](https://code.visualstudio.com/docs/copilot/customization/custom-agents), and [Agent skills](https://code.visualstudio.com/docs/copilot/customization/agent-skills)
+* GitHub Copilot: [Supported models](https://docs.github.com/en/copilot/reference/ai-models/supported-models) and [Model comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison)

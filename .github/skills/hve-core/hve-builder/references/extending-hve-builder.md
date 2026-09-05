@@ -10,11 +10,9 @@ hve-builder is built to be extended by the host project it runs in. A downstream
 
 Discovery differs by artifact type. Two of the three mechanisms are automatic; when HVE Builder needs an open-ended survey, it activates `rpi-research` to perform the exploration and returns only a bounded result to the lifecycle.
 
-| Extension type                        | How HVE Builder identifies it                                                                                                                                         | Author burden                                                                                                                     |
-|---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| Instruction file (`.instructions.md`) | Auto-applies when its `applyTo` glob matches the files being created or edited.                                                                                       | Write an `applyTo` glob that covers the target artifact paths.                                                                    |
-| Skill (`SKILL.md`)                    | Activates on a semantic match between the request and its `description`.                                                                                              | Write a `description` whose trigger words match the artifact type and domain.                                                     |
-| Subagent (`.agent.md`)                | Does not auto-load. Supplied metadata may identify it; an open-ended availability survey uses `rpi-research`, and HVE Builder dispatches an approved match by `name`. | Write a routing-oriented `description` and a stable `name`, and confirm the host registers the subagent so the survey can see it. |
+* Instruction files apply when their `applyTo` globs match the target paths under the host's instruction-loading rules. Write globs covering the artifacts the convention governs.
+* Skills activate on a semantic match between the request and their `description`. Name the artifact type and domain in the trigger metadata.
+* Subagents do not auto-load. Supplied metadata or an open-ended `rpi-research` survey identifies an eligible worker; HVE Builder dispatches an approved match by stable `name`. Supply a routing description and confirm host registration.
 
 The practical consequence: instruction files and skills extend hve-builder with no change to the skill. A subagent extends hve-builder only when its description is written for routing and supplied metadata or `rpi-research` findings identify it, because the orchestrator reaches subagents by name rather than by reading files at a path.
 
@@ -55,13 +53,13 @@ description: "Author and review Terraform modules against organization conventio
 
 ## Authoring a discoverable extension subagent
 
-Use a subagent when the host needs a specialized independent review dimension or tier-specific execution that materially benefits from isolation. Because subagents are not auto-loaded, three things must be true for hve-builder to reach one.
+Use a subagent when the host needs a specialized independent review dimension or tier-specific execution that materially benefits from isolation. Make the worker discoverable and give it a bounded dispatch contract.
 
 * Routing `description`: write it so a parent can decide when to delegate, in the shape "Use when ..." naming the specialization. Supplied metadata or `rpi-research` uses the description to identify a relevant subagent, so the description is the discovery surface.
 * Stable `name`: hve-builder dispatches by the `name` from frontmatter, not by file path or glob. Give it a distinct, namespaced name to avoid collisions across installed libraries.
 * Structured return: return a bounded, structured summary the orchestrator can act on. Selecting the extension's tool set stays with its author under the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md).
 * Model fit: `model:` is optional and omitted by default; an omitted extension subagent inherits the invoking parent's model. Declare it only when the extension needs a stable Medium or Low profile, and resolve the current model name by the procedure in [artifact-types.md](artifact-types.md). A High responsibility omits `model:` unless the caller supplies one.
-* Host registration: confirm the host registers the subagent through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or standard `agents` membership in its marketplace package entry so approved lifecycle dispatch can reach it.
+* Host registration: verify both that the host discovers the agent and that the invoking parent permits dispatch. For plugin distribution, the plugin manifest declares component membership; a marketplace entry locates the plugin. Parent `agents:` restrictions are a separate constraint, and omission permits access only where the target host documents that behavior.
 
 Example frontmatter, inheriting the parent's model:
 
@@ -73,7 +71,7 @@ user-invocable: false
 ---
 ```
 
-When you author a standalone subagent before its parent or package entry exists, do not invent a parent to register it. Record the deferred registration explicitly: the exact pending target (a fixed parent `agents:` array, a parent whose omission intentionally grants unrestricted access, or standard `agents` membership in `.github/plugin/marketplace.json`), the owner responsible for wiring it, and the validation command that confirms it (for example `npm run plugin:validate` for marketplace packages). Leave subagent discoverability marked incomplete until that registration is done, because the lifecycle cannot dispatch an unregistered subagent by name.
+When you author a standalone subagent before its registration exists, do not invent a parent to register it. Record the exact pending manifest or parent permission, its owner, and the check that confirms it. In hve-core, root `plugin.json` owns component membership and `.github/plugin/marketplace.json` is only a locator; `npm run plugin:validate` checks distribution consistency, not live host activation. Leave dispatch readiness incomplete until host visibility and parent permission are confirmed.
 
 ## Worked example
 
@@ -91,14 +89,12 @@ The subagent guidance above is enough to build a worker that hve-builder itself 
 
 Before authoring, read the target workflow's skill and extract six things. Author the extension against all six, not against the generic pattern alone.
 
-| Contract element      | What to extract from the target workflow                                                                                                                                        |
-|-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Discovery eligibility | What the workflow requires before it will select a helper: the name or description tokens it matches on, and whether host visibility or explicit registration is also required. |
-| Registry record       | Whether the workflow records selected and skipped extensions, and which fields that record demands.                                                                             |
-| Dispatch inputs       | The exact fields the parent passes on dispatch. A worker that expects different inputs will misinterpret its assignment.                                                        |
-| Owned output path     | Where the worker writes, how that path is constructed, and how it is kept distinct from the parent's own artifact.                                                              |
-| Evidence ownership    | Which decisions belong to the worker and which the parent reserves. This is where most extensions overreach.                                                                    |
-| Return contract       | The shape and bounds of what the worker hands back.                                                                                                                             |
+* Discovery eligibility: capture required name or description tokens and any host-visibility or registration prerequisites.
+* Registry record: capture whether selected and skipped extensions are recorded and which fields the registry requires.
+* Dispatch inputs: capture the exact fields the parent passes. A worker expecting different inputs will misinterpret its assignment.
+* Owned output path: capture where the worker writes, how the path is constructed, and how it stays distinct from the parent's artifact.
+* Evidence ownership: identify decisions delegated to the worker and those reserved to the parent.
+* Return contract: capture the shape and bounds of the worker's return.
 
 ### Worked example: an internal corpus for `rpi-research` and `rpi-plan`
 
@@ -146,7 +142,7 @@ user-invocable: false
 
 The subagent activates the `acme-corpus-research-planning` skill for its corpus instructions rather than repeating them, so the corpus knowledge has one source of truth. It omits `model:` so it inherits the invoking parent's model and stays consistent with the cycle that dispatched it. A planning-side subagent is rarely needed: `rpi-plan` dispatches bounded phase authoring with the plan path, assigned phase section, evidence, and expected return, and the skill already supplies the citations that authoring needs.
 
-Register the specialist the same way as any other extension subagent: through a fixed parent `agents:` array, an intentionally unrestricted parent that omits `agents:`, or standard `agents` membership in the host's marketplace package entry. Until that registration exists, the lifecycle cannot dispatch it by name, so record the deferred registration explicitly using the rule in Authoring a discoverable extension subagent.
+Register the specialist using the host discovery and parent-permission checks in Authoring a discoverable extension subagent. Distribution membership alone does not establish live dispatch readiness; record any deferred registration explicitly.
 
 ## Safety boundary
 

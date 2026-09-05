@@ -8,9 +8,9 @@ Use this reference to design one complete behavior run without overstating what 
 
 ## Black-Box Scenarios
 
-A scenario exercises the target through its documented interface and describes only user-visible inputs and expected behavior. Keep the target path, internal headings, authoring history, expected answer, profile metadata, and test framing out of scenario text. The dispatch wrapper carries target and containment metadata.
+A scenario exercises the target through its documented interface using a realistic user request and any necessary fixture data. Keep the target path, internal headings, authoring history, expected answer, grading assertions, profile metadata, and test framing out of scenario text. Record expected behavior separately in the design for the grader. The dispatch wrapper carries target and containment metadata; the executor does not receive the grading assertions.
 
-Design the smallest set that covers material requirements. Use one isolation scenario for a single target and add a together scenario only when connected artifacts have integration behavior. Assign stable IDs, map requirements to observable signals, and record intentionally untested behavior.
+Design the smallest set that covers material requirements. Isolation describes which targets run together, not the number of scenarios. Use as many independent requests as needed to distinguish the target's material decisions, and add together scenarios when connected artifacts have integration behavior. Assign stable IDs, map requirements to observable signals, and record intentionally untested behavior. For maintenance changes, cover required behavior that must survive as well as the corrected decision; do not infer equivalence from a single successful example.
 
 Before execution, confirm that each scenario:
 
@@ -26,7 +26,7 @@ Before execution, confirm that each scenario:
 | `simulation` | `HVE Artifact Tester` follows the target literally in a contained sandbox and emulates unavailable or unsafe actions | Contract interpretation, instruction clarity, handoffs, documented outputs, and stop behavior |
 | `native`     | The registered target receives the black-box scenario directly                                                       | Observed activation, output, and stop behavior for that run and profile                       |
 
-Simulation is the default. Native fidelity requires all of these conditions:
+Simulation is the default. Native fidelity requires an explicit caller request and all of these conditions:
 
 1. The host can activate the target.
 2. The target is read-only or an enforced sandbox or hook contains every write.
@@ -61,7 +61,9 @@ Never silently substitute simulation for native execution. Agent and subagent `t
 
 Use the Reasoning Profile Resolution in the skill body. Prefer explicit target metadata; otherwise infer profile from responsibility. Run the executor at the target profile and independent grading at the higher of Medium and that profile.
 
-Label a run as proxy evidence when the selected target profile is unavailable or target metadata maps to no canonical profile. A proxy verdict does not establish behavior at the intended profile. Record this limitation in the durable report because sandbox evidence may be removed.
+Bind the resolved model using the host dispatch API's model-selection field or equivalent enforced host configuration. Record the requested model, accepted host selection or runtime metadata, and actual model if the host reports it. Passing a model name in prompt text or receiving a worker's self-report does not verify selection.
+
+Label a run as proxy evidence when the selected profile is unavailable, target metadata maps to no canonical profile, host binding cannot be verified, or the reported model differs from the selection. A proxy verdict does not establish behavior at the intended profile. Record the discrepancy and any undisclosed runtime identity in the durable report. If intended-profile evidence is required, record that coverage gap as Partial rather than claiming completion.
 
 ## Sandbox and Evidence
 
@@ -69,5 +71,5 @@ Label a run as proxy evidence when the selected target profile is unavailable or
 * Record targets, types, candidate revision, profile and model, fidelity, containment, groupings, purpose, requirements, requirement mapping, and pre-run workspace state in `run-state.md`.
 * The lead writes `run-state.md`, `test-design.md`, `test-log.md`, and `test-review.md` from its own work and returned evidence.
 * Distinguish observed, simulated, and emulated actions in `test-log.md`. Record post-run state and treat an unexpected out-of-sandbox write as blocking.
-* Write the durable report before cleaning the sandbox. Retain transient evidence only when requested.
+* Write the durable report before cleaning the sandbox. Preserve scenario inputs, requirement mapping, decisive trace excerpts, and the grader's rationale in that report or durable companion evidence. Findings must remain assessable after transient files are removed; sandbox paths alone are not evidence retention. Retain the full sandbox only when requested.
 * Use plain-text workspace-relative paths in tracking logs and Markdown links only in durable human-facing output.

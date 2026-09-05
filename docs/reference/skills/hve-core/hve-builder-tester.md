@@ -34,6 +34,6 @@ Use `hve-builder` when the artifact needs to change; the tester never edits a ta
 
 ## Example usage
 
-Ask to test a new `csv-profiler` skill and its worker subagent together. The skill creates a sandbox, designs scenarios that describe only user-visible inputs and expected behavior, and dispatches `HVE Artifact Tester` at the skill's profile to follow the artifacts literally in simulation.
+Ask to test a new `csv-profiler` skill and its worker subagent together. The skill creates a sandbox, designs scenarios with realistic user requests and fixture data, and keeps expected outcomes in a separate grader-only design. It dispatches `HVE Artifact Tester` at the skill's profile to follow the artifacts literally in simulation.
 
-It logs which actions were observed, simulated, or emulated, dispatches an independent grader over the finalized design and log, and writes a report under `.copilot-tracking/hve-builder/` with the verdict, coverage, untested behavior, and an unchecked human-review box.
+It logs which actions were observed, simulated, or emulated, dispatches an independent grader over the finalized design and log, and writes a report under `.copilot-tracking/hve-builder/` with the verdict, coverage, untested behavior, and an unchecked human-review box. The report preserves decisive trace evidence before sandbox cleanup. Native execution requires an explicit request and satisfied containment preconditions.

@@ -23,7 +23,7 @@ If `rpi-research` is unavailable, record Deferred with an exact rerun condition 
 Dispatch one generic Medium-profile reviewer in fresh context after the complete candidate exists. Give it:
 
 * Known targets and their stated purpose
-* Caller requirements and acceptance criteria
+* Caller requirements, acceptance criteria, and the pre-edit contract or source baseline for maintenance work
 * The requirements catalog, review rubric, and applicable repository overlays
 * An evidence path and read-only source boundary
 * A request for one complete, bounded finding set
@@ -34,4 +34,4 @@ For closure, give the reviewer only the original finding IDs, corrected targets,
 
 ## Evidence Shape
 
-The review log records inputs, evidence inspected, applicable dimensions, verdict, findings, limitations, and next action. Use plain-text workspace-relative paths. The parent records each disposition and keeps source corrections outside the review evidence file.
+The review log records inputs, evidence inspected, applicable dimensions, verdict, findings, limitations, and next action. Distinguish required corrections from advisory suggestions. Use plain-text workspace-relative paths. The parent records each disposition and keeps source corrections outside the review evidence file.
