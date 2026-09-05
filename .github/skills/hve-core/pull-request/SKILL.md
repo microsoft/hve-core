@@ -1,6 +1,6 @@
 ---
 name: pull-request
-description: 'Drafts or opens a GitHub pull request from the current branch with a concise, template-aware description and changed-area preflight checks. Use when a user asks to prepare, create, open, or update a pull request.'
+description: 'Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs. Use when a user asks to prepare, create, or update a pull request.'
 argument-hint: '[base=auto] [draft=false] [action=prepare|create|update]'
 license: MIT
 user-invocable: true
@@ -20,8 +20,9 @@ and enough targeted local evidence to catch likely CI failures without running b
 default.
 
 Success means the title and body reflect the committed branch diff, the repository template is
-preserved when present, changed-area preflight checks pass, and an external pull request is created
-or updated only after one final approval.
+preserved when present, changed-area preflight checks pass, any authorized preflight repairs are
+committed under repository conventions, and an external pull request is created or updated only
+after one final approval.
 
 ## Inputs
 
@@ -36,8 +37,9 @@ changes the resulting pull request.
 ## Flow
 
 1. Run the platform-matching script in `scripts/` to collect branch, commit, changed-file, diff-stat,
-   worktree, base-divergence, and template context. The script uses the local remote-tracking ref and
-   does not fetch, merge, rebase, push, or edit the branch.
+   working tree, base-divergence, and template context. Preserve the initial working-tree state as the
+   exclusion boundary for later repairs. The script uses the local remote-tracking ref and does not
+   fetch, merge, rebase, push, or edit the branch.
 2. Stop if the repository, head branch, base ref, or merge base cannot be resolved. If the branch has
    no committed changes from the merge base, report that there is nothing to submit. Treat
    uncommitted files as excluded from the pull request and ask whether to continue only when the
@@ -69,17 +71,28 @@ changes the resulting pull request.
    user explicitly requests them or no narrower reliable owner exists. Follow repository dependency
    bootstrap rules before dependency-backed commands.
 9. Record only checks that actually ran in the pull request. Leave hosted CI checks and human review
-   attestations unchecked. If a required targeted check fails, keep the prepared description but stop
-   before external creation or update; report the failure without changing branch source unless the
-   user asks for a fix.
-10. For `prepare`, return the proposed title, the body path, base and head branches, divergence, and
-    preflight result. For `create` or `update`, also search for an open pull request with the same head
-    and base, then present the final title, body path, target, draft state, validation result, and
-   upstream push state. Ask once for approval covering any needed push and the pull request write.
-11. After approval, push the current branch when needed and use the available GitHub integration to
-    create or update the pull request. Never force-push. If an open pull request already exists, update
-    it only when the requested action permits; otherwise return its URL instead of creating a
-    duplicate.
+   attestations unchecked. If a required targeted check fails, keep the prepared description and stop
+   before external creation or update. Do not change branch source unless the user asks for a fix.
+10. When the user asks to fix a local test or CI-confidence failure, treat that request as authority to
+   commit only the resulting validated repairs. Capture the tracked and untracked working-tree baseline
+   before editing, apply the smallest in-scope correction, and rerun every check affected by it. After
+   the checks pass, resolve the repository's applicable commit instructions, stage only the exact
+   repair delta created by this workflow, inspect the staged diff, and create one or more logical
+   commits. Use Conventional Commits when the repository requires them; otherwise use its stated
+   convention or a concise imperative subject. Never stage pre-existing edits, unrelated changes,
+   validation logs, or the pull request body. If the repair cannot be separated safely, commit
+   authority is unclear, or the commit fails, stop before push or pull request write. Do not amend,
+   squash, rebase, or create an empty commit unless the user explicitly requests it.
+11. After a repair commit, rerun the context collector and refresh the committed diff, title, body,
+   validation evidence, divergence, and push state. For `prepare`, return the proposed title, body
+   path, base and head branches, repair commits, divergence, and preflight result. For `create` or
+   `update`, also search for an open pull request with the same head and base, then present the final
+   title, body path, target, draft state, repair commits, validation result, and upstream push state.
+   Ask once for approval covering any needed push and the pull request write.
+12. After approval, push the current branch when needed and use the available GitHub integration to
+   create or update the pull request. Never force-push. If an open pull request already exists, update
+   it only when the requested action permits; otherwise return its URL instead of creating a
+   duplicate.
 
 ## Template Rules
 
@@ -97,7 +110,8 @@ reintroducing a separate end-to-end workflow.
 
 ## CI Confidence
 
-The local gate predicts likely CI outcomes; it does not claim that unrun hosted checks passed. Use
+The local gate predicts likely CI outcomes; it does not claim that hosted checks passed when they did
+not run. Use
 these priorities:
 
 1. Checks explicitly required by applicable repository instructions for the changed paths
@@ -108,6 +122,20 @@ these priorities:
 Do not mark the pull request ready for external creation when a required selected check failed,
 dependencies needed for that check are unavailable, or generated projections known to be required are
 stale. Report hosted status checks as pending after creation.
+
+## Preflight Repair Commits
+
+Preflight remains non-mutating until the user asks to fix a reported failure. That request authorizes
+source correction and a repair-only commit, not staging other working-tree content. Use the initial and
+pre-repair working-tree snapshots to distinguish existing changes from workflow-created repairs. If the
+same file contains inseparable pre-existing edits, leave it unstaged and stop with the exact manual
+separation needed.
+
+Commit only after the owning checks pass. Apply repository commit instructions by their normal scope
+and precedence, including required Conventional Commit type and scope, subject style, body, footer,
+signing, or verification rules. Inspect the staged name-status and patch before committing, then verify
+the resulting commit contains only the validated repair delta. Recollect branch context after every
+repair commit because commit evidence, divergence, and push state have changed.
 
 ## Description Standard
 
@@ -122,16 +150,17 @@ user's behalf.
 
 ## Stop Rules
 
-* Stop as `Blocked` when branch identity, base identity, merge base, template choice, or write authority
-  cannot be resolved.
+* Stop as `Blocked` when branch identity, base identity, merge base, template choice, commit authority,
+   repair-delta isolation, or write authority cannot be resolved.
 * Stop as `Revise` before an external write when a required targeted preflight check fails or the
-  description has an unsupported claim.
+   description has an unsupported claim. A requested repair remains `Revise` until affected checks pass
+   and its repair-only commit succeeds.
 * Stop as `Prepared` after writing and validating the local description when no external action was
   requested.
 * Stop as `Created` or `Updated` only after returning the pull request URL and hosted CI state.
 
 ## Final Response
 
-Return the outcome, title, base and head, pull request body path, targeted checks and results, skipped
-broad checks, material limitations, and pull request URL when one exists. Keep the response brief and
-do not repeat the full body.
+Return the outcome, title, base and head, pull request body path, repair commits, targeted checks and
+results, skipped broad checks, material limitations, and pull request URL when one exists. Keep the
+response brief and do not repeat the full body.
