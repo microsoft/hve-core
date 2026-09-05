@@ -102,14 +102,20 @@ HVE Core publishes cryptographically attested assets under exact channel tags:
 
    ```bash
    # Stable VSIX
+   TAG='v<version>'
+   SOURCE_SHA=$(gh api "repos/microsoft/hve-core/commits/$TAG" --jq '.sha')
    gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
-    --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
-    --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67
+     --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
+     --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67 \
+     --source-digest "$SOURCE_SHA" --source-ref "refs/tags/$TAG"
 
    # PreRelease VSIX
+   TAG='prerelease-v<version>'
+   SOURCE_SHA=$(gh api "repos/microsoft/hve-core/commits/$TAG" --jq '.sha')
    gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
-    --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
-    --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67
+     --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
+     --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67 \
+     --source-digest "$SOURCE_SHA" --source-ref "refs/tags/$TAG"
    ```
 
 The GitHub Release is the canonical verification surface for SLSA and Sigstore
@@ -182,11 +188,16 @@ build provenance for the OpenVEX file as a subject, and an OpenVEX predicate
 over `dependencies.spdx.json` as a subject.
 
 ```bash
+TAG='v<version>'
+SOURCE_SHA=$(gh api "repos/microsoft/hve-core/commits/$TAG" --jq '.sha')
+
 gh attestation verify hve-core.openvex.json -R microsoft/hve-core \
-  --signer-workflow microsoft/hve-core/.github/workflows/vex-attest.yml
+  --signer-workflow microsoft/hve-core/.github/workflows/vex-attest.yml \
+  --source-digest "$SOURCE_SHA" --source-ref "refs/tags/$TAG"
 
 gh attestation verify dependencies.spdx.json -R microsoft/hve-core \
   --signer-workflow microsoft/hve-core/.github/workflows/vex-attest.yml \
+  --source-digest "$SOURCE_SHA" --source-ref "refs/tags/$TAG" \
   --predicate-type https://openvex.dev/ns/v0.2.0
 ```
 
