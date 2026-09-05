@@ -128,12 +128,12 @@ A conformant VULN_REPORT_V1 uses `N/A` for Location, Finding, and Recommendation
 
 Expected Form A result:
 
-| Category                 | Expected result                                                                 |
-|--------------------------|---------------------------------------------------------------------------------|
+| Category                 | Expected result                                                                      |
+|--------------------------|--------------------------------------------------------------------------------------|
 | Validated controls       | `Insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.` |
-| Control drift            | `T-IDENTITY-001` / `CTRL-AUTHZ` with `AUTHZ-OBJECT`                              |
-| Residual planned risk    | `T-WEB-002` with `ERROR-DETAIL`                                                  |
-| Newly introduced threats | `SESSION-ROTATE`                                                                |
+| Control drift            | `T-IDENTITY-001` / `CTRL-AUTHZ` with `AUTHZ-OBJECT`                                  |
+| Residual planned risk    | `T-WEB-002` with `ERROR-DETAIL`                                                      |
+| Newly introduced threats | `SESSION-ROTATE`                                                                     |
 | Obsolete plan items      | `Insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.` |
 
 When a finding has only semantic similarity to a plan item and no explicit identity, component, control, bucket, standard, or backlog match, place it only in Limitations and insufficient evidence as unassessed input. It occupies no drift category and is not treated as an unmatched newly introduced threat.
