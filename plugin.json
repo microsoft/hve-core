@@ -195,6 +195,7 @@
   "skills": [
     ".github/skills/accessibility/accessibility",
     ".github/skills/coding-standards/code-review",
+    ".github/skills/coding-standards/hve-artifact-authoring",
     ".github/skills/coding-standards/python-foundational",
     ".github/skills/data-science-engineering/analysis-authoring",
     ".github/skills/data-science-engineering/data-catalog",
