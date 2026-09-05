@@ -3,7 +3,7 @@
 
 ## Executive Summary
 
-* Bottom line: {{plain_language_acceptance_result}}
+* Assessment: {{plain_language_proposed_acceptance_result_and_assessed_scope}}
 * Why this matters: {{practical_effect_on_the_users_goal}}
 * Builder execution: {{Complete_Partial_or_Blocked}}
 * Proposed review execution: {{Complete_Partial_or_Blocked}}
@@ -11,20 +11,46 @@
 * Validation coverage: {{validation_summary}}
 * Confidence and limitations: {{confidence_and_material_limits}}
 
+The assessment above is the builder's proposal. Parent Decision Record contains the current final decision and next actions, or states that decisions are pending.
+
+## What You May Not Know
+
+{{material_behavior_change_justified_divergence_or_evidence_limit_the_reader_could_otherwise_miss_or_none}}
+
 ## Findings and Proposed Routes
+
+Order findings by severity and impact. If none are supported, state that no substantive findings were identified within the assessed boundary and retain any coverage limitations. Do not create a placeholder finding.
 
 <!-- rpi:review id=RV-001 -->
 ### RV-001 [{{Critical_High_Medium_or_Low}}]: {{finding_title}}
 
+{{plain_language_description_of_the_gap_and_its_consequence}}
+
 * Related scope: {{Pxx_or_Pxx_Txx_requirement_or_acceptance_id}}
-* Evidence: {{plain_text_workspace_relative_path_or_summary}}
+* Expected behavior: {{binding_requirement_or_accepted_direction}}
+* Observed behavior and evidence: {{what_the_supplied_evidence_establishes_with_paths_and_headings_or_symbols}}
 * Impact: {{why_it_matters}}
+* Resolution condition: {{observable_result_or_missing_evidence_that_would_address_the_finding}}
 * Proposed destination: {{rpi_implement_rpi_plan_rpi_research_or_follow_up}}
 * Smallest useful next action: {{action}}
+
+{{supporting_detail_or_illustrative_example_only_when_needed_to_understand_this_finding}}
 
 ## Parent Decision Record
 
 <!-- The selected review worker leaves this section unchanged. The primary review parent owns it. -->
+
+### Current Disposition
+
+* Based on events: {{latest_RD_event_ids_or_pending_initialization}}
+* Review execution: {{Complete_Partial_Blocked_or_pending}}
+* Final outcome: {{canonical_outcome_or_pending_parent_decision_with_plain_language_reason}}
+* Finding decisions and next actions: {{RV_ids_dispositions_destinations_owners_and_next_actions_or_none}}
+* Decisions still needed: {{undecided_RV_ids_and_outcome_effect_or_none}}
+
+This summary is derived from Decision History, not a second decision record. The latest event for each subject governs; refresh this summary after appending decisions and on recovery.
+
+### Decision History
 
 Append events in order. Never rewrite or delete an earlier row. The latest event for a subject is current.
 
@@ -72,17 +98,13 @@ Append events in order. Never rewrite or delete an earlier row. The latest event
 * Authority split: builder owns review evidence and proposed routes; parent owns final outcome, route dispositions, and continuation
 * Initial blockers: {{none_or_active_blocker_with_next_action}}
 
-### Plan-to-Change Reconciliation
+### Acceptance and Change Coverage
 
-| Current plan scope                 | Descriptive changes-record summary        | Current-state reconciliation      | Gap or rationale     |
-|------------------------------------|-------------------------------------------|-----------------------------------|----------------------|
-| {{Pxx_Pxx_Txx_or_Follow_Up_Items}} | {{completed_work_or_plan_update_heading}} | {{Reconciled_Partial_or_Missing}} | {{gap_or_rationale}} |
+| Requirement or scope                                   | Implementation and validation evidence                | Assessment                  | Finding or rationale                         |
+|--------------------------------------------------------|-------------------------------------------------------|-----------------------------|----------------------------------------------|
+| {{requirement_id_Pxx_Pxx_Txx_or_material_plan_update}} | {{paths_headings_symbols_and_supplied_check_results}} | {{Met_Gap_or_Not_assessed}} | {{RV_id_or_supported_reconciliation_reason}} |
 
-### Completed Work and Update Assessment
-
-| Scope or marker                 | Files or plan area     | Change, evidence, and decision         | Reconciliation and validation    | Assessment            |
-|---------------------------------|------------------------|----------------------------------------|----------------------------------|-----------------------|
-| {{Pxx_Pxx_Txx_or_plan_section}} | {{paths_or_plan_area}} | {{summary_evidence_and_user_decision}} | {{current_state_and_validation}} | {{reconciled_or_gap}} |
+Cover every material requirement and in-scope completion claim, grouping rows only when their evidence and assessment are shared. Include implementation-time plan updates and confirmed decisions. Keep detailed gaps in their findings instead of repeating them here.
 
 ### Critique and Follow-Up Assessment
 
@@ -100,8 +122,9 @@ Unresolved plan follow-up items remain distinct follow-up work. Do not treat the
 ### Builder Self-Check
 
 * [ ] Every supplied requirement, acceptance criterion, in-scope marker, material update, critique disposition, validation result, blocker, remaining item, and plan follow-up has an assessment or explicit gap.
-* [ ] Findings are substantive, evidence-grounded, severity-graded, and use stable `RV-xxx` IDs with one proposed route each.
+* [ ] Findings are substantive, evidence-grounded, severity-graded, and use stable `RV-xxx` IDs with expected and observed behavior, a resolution condition, and one proposed route each.
 * [ ] Execution status, proposed outcome, validation coverage, limitations, and proposed routes are complete and internally consistent.
+* [ ] The summary is scoped and advisory, findings keep their supporting context together, and acceptance coverage distinguishes demonstrated gaps from unassessed behavior.
 * [ ] Standard review completely assessed the material boundary while omitting restatement, cosmetic feedback, exhaustive strengths, low-impact suggestions, and continual narration; deep review remained inside the supplied boundary.
 * [ ] The selected review worker did not edit Parent Decision Record, ask the user, mutate source or parent state, dispatch another worker, execute validation, or invoke a destination.
 * Checked boundary: {{requirements_markers_updates_validation_follow_ups_and_gaps}}

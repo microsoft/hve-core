@@ -22,14 +22,17 @@ Resolve the primary artifact before research starts. Use .copilot-tracking/resea
 
 The primary artifact serves the end user as well as downstream RPI agents. Put its user-facing sections immediately after the metadata table and keep the Research Record at the end.
 
-* Use Executive Summary for the bottom line, importance, execution status, confidence, and residual uncertainty.
-* Put the goal, audience, boundaries, criteria, requested output, and answerable questions in Scope and Questions.
-* Put each material result, its parent-owned evidence state, and its practical implication in Findings, with `C#` and `W#` IDs as traceability pointers rather than substitutes for explanation. Evidence state is canonical in Findings and is not repeated in the Research Record.
+* Lead with Executive Summary, What You May Not Know, Findings, and Recommendation and Alternatives, then put Scope and Questions, Decisions and Feedback, Risks and Open Questions, and Planning Readiness and Next Step before the Research Record. Lead the summary with the result and its practical effect, then execution status, confidence, and uncertainty.
+* Use What You May Not Know for material discoveries, constraints, or trade-offs a reader could otherwise miss. State `None` when there is nothing material to add; do not invent surprises or repeat the summary.
+* Put each material result under a descriptive Findings heading. Explain the answer and its practical implication before its question IDs, parent-owned evidence state, evidence, and confidence basis. Keep counter-evidence, limitations, and useful examples with that finding. Use `C#` and `W#` IDs as traceability pointers rather than substitutes for explanation. Evidence state is canonical in Findings and is not repeated in the Research Record.
+* Put the goal, audience, boundaries, criteria, requested output, and answerable questions in Scope and Questions. A limitation that qualifies the bottom line also belongs in the summary so a reader does not mistake a bounded result for a universal claim.
 * Use Recommendation and Alternatives for the selected approach and trade-offs in `convergence` mode. In other modes, present the current decision state and viable choices without forcing a recommendation.
 * Use Decisions and Feedback for confirmed, proposed, deferred, and unresolved decisions plus concrete requests for criticism, suggestions, or confirmation. Use Risks and Open Questions for remaining risks, evidence gaps, and potential further research.
 * Keep Planning Readiness and Next Step as the canonical continuation record for users and RPI parents. Record decision participation there and keep execution status, Research disposition, and Planning Readiness distinct.
-* Keep each synthesized fact in one user-facing section. The Research Record retains only method, extension and participation provenance, cycle detail, canonical evidence, and the self-check.
+* Keep the full explanation in one owning section; summaries and decisions may refer to it without copying its detail. The Research Record retains only method, extension and participation provenance, cycle detail, canonical evidence, and the self-check.
 * Refresh affected user-facing sections after parent synthesis and after any material finding, decision, risk, or readiness change.
+
+Use prose and short lists for explanations, and tables for compact comparisons or canonical records. Wrap code, commands, and symbols in backticks; retain plain-text workspace-relative paths under the shared tracking convention. Add a Mermaid diagram only when it clarifies an evidence-backed relationship or alternative, and distinguish observed behavior from a proposed design. Examples are illustrative unless a cited requirement or interface makes them binding. Describe constraints and implications for planning without prescribing phases, task sequences, or an implementation recipe.
 
 This contract applies only to the parent-owned primary research artifact. Delegated lane artifacts are agent-facing evidence records and remain optimized for accurate, compact parent consumption. Do not add reader summaries or presentation requirements to worker artifacts unless a caller separately changes their audience.
 
@@ -233,7 +236,7 @@ Maintain the primary artifact as the authoritative synthesized record.
 
 * Keep reader-oriented claims understandable on their own and connect each material claim to the detailed record with evidence IDs.
 * Assign every material result exactly one parent-owned evidence state in Findings: unverified hypothesis or conjecture, partially supported claim, evidence-backed finding, weakened or disproved claim, or unresolved possibility. Confidence does not replace evidence state.
-* Keep codebase and external evidence in one Evidence Log. Add `C1`, `C2`, and onward for codebase evidence; each includes a workspace-relative `path:line`, tool category, claim, confidence, and provenance note.
+* Keep codebase and external evidence in one Evidence Log. Add `C1`, `C2`, and onward for codebase evidence; each includes a workspace-relative path with a heading or symbol, tool category, claim, confidence, and provenance note. Use stable locators rather than maintained line numbers.
 * Add `W1`, `W2`, and onward for external evidence; each includes source title, URL, retrieval date, version or date, claim, confidence, and provenance note.
 * Map every material finding to one or more research questions and evidence IDs. Keep sourced facts separate from inferences.
 * Prefer current primary or official sources for external facts. When a material claim needs corroboration, use independent credible evidence where available and record conflicts and their resolution criteria.
@@ -280,7 +283,7 @@ The continuation handoff is pointer-first: include current decisions, blockers, 
 When no executable validation ran, label the review an artifact self-check. Confirm that the primary artifact contains:
 
 * Complete user-facing sections for the summary, scope and questions, findings, recommendation or decision state, decisions and feedback, risks and open questions, readiness, and next action
-* No duplicated synthesized fact across the user-facing sections and Research Record
+* Finding-local explanation, supporting detail, confidence basis, and counter-evidence, with summaries grounded in those findings rather than duplicated detail
 * Method and boundary records for posture, provenance, scope, limits, candidate areas, evidence root, constraints, and prior knowledge
 * Extension, participation, and direction records with selected or skipped reasons, answers or no-interaction rationale, and revalidation effects
 * Every executed cycle's ordered Wider, Deeper, and Contrarian waves, reflections, worker evidence relationships, parent dispositions, and re-entry evaluation

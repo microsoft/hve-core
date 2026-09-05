@@ -10,7 +10,9 @@ user-invocable: true
 
 ## Goal
 
-Produce a dated, human-readable primary research artifact that helps the end user understand the result, challenge the evidence, suggest changes, and make any required decision without planning, implementing, or reviewing. Preserve the parent-owned evidence, decision state, and planning-readiness record beneath that reader-first summary. Each executed research cycle completes wider, deeper, and contrarian waves in that order. The artifact, not the chat response, is the durable source of truth.
+Produce a dated, human-readable primary research artifact that helps the end user understand the result, challenge the evidence, suggest changes, and make any required decision without planning, implementing, or reviewing. Lead with the summary, material discoveries, findings, and alternatives; keep supporting context with the finding that needs it.
+
+Preserve the parent-owned evidence, decision state, and planning-readiness record beneath that reader-first synthesis. Each executed research cycle completes wider, deeper, and contrarian waves in that order. The artifact, not the chat response, is the durable source of truth.
 
 Use `templates/research.md` as the primary-artifact skeleton. Read `references/research.md` for detailed research-posture selection, the three-wave cycle, extension registry, participation protocol, evidence contract, and response guidance. Follow the shared conventions in `copilot-tracking.instructions.md`.
 
@@ -54,8 +56,8 @@ Derive `{{task_slug}}` from the primary target with lower-kebab-case and use the
 	3. Contrarian: investigate inline or dispatch named independent uncertainties to seek credible counter-evidence and in-scope alternatives that challenge the active ideas, conjectures, hypotheses, claims, and questions. Honor caller exclusions and specific-only boundaries.
 	4. Reflect after each material search or worker return as a separate action. Keep worker returns compact, lift evidence into the primary artifact rather than duplicating raw output, and apply the material-update decision rules in `references/research.md`.
 7. Parent-synthesize the completed cycle. Map findings to questions and stable `C#` and `W#` evidence IDs. The parent alone records accepted, rejected, and deferred material with evidence-based rationale; workers provide evidence and synthesis pointers without selecting a final recommendation or decision state. Record alternatives, current and unresolved decisions, risks, potential further research, Planning Readiness, and Research disposition.
-	* Refresh Executive Summary, Findings, Recommendation and Alternatives, Decisions and Feedback, Risks and Open Questions, and Planning Readiness and Next Step after synthesis and any later material change.
-	* Keep each fact in one canonical user-facing section. Use the Research Record only for method, provenance, cycle, and detailed evidence needed for auditability or downstream consumption.
+	* Refresh Executive Summary, What You May Not Know, Findings, Recommendation and Alternatives, Decisions and Feedback, Risks and Open Questions, and Planning Readiness and Next Step after synthesis and any later material change.
+	* Keep each finding's explanation, evidence, confidence basis, and supporting detail together using the Primary Artifact Readability Contract in `references/research.md`. Summaries may refer to those findings without copying their detail. Use the Research Record only for method, provenance, cycle, and detailed evidence needed for auditability or downstream consumption.
 	* Write the user-facing sections in plain language and make them understandable without reading the Research Record. Keep evidence IDs as traceability pointers rather than substitutes for explanation.
 	* Do not impose this human-readable presentation contract on delegated lane artifacts; those remain optimized for the parent agent that consumes them.
 	* In `convergence` mode, select one recommendation only when the evidence supports it.
@@ -85,11 +87,11 @@ Derive `{{task_slug}}` from the primary target with lower-kebab-case and use the
 
 ## Success Criteria
 
-* The primary artifact presents its Executive Summary, Scope and Questions, Findings, Recommendation and Alternatives, Decisions and Feedback, Risks and Open Questions, and Planning Readiness and Next Step before the Research Record.
-* Each material fact has one canonical presentation; the Research Record contains only method, provenance, cycle, and detailed evidence needed for auditability or downstream consumption.
+* The primary artifact presents Executive Summary, What You May Not Know, Findings, Recommendation and Alternatives, Scope and Questions, Decisions and Feedback, Risks and Open Questions, and Planning Readiness and Next Step before the Research Record.
+* Each material finding has a self-contained explanation, practical implication, evidence state, confidence basis, and supporting detail. Summaries remain grounded in those findings; the Research Record contains only method, provenance, cycle, and detailed evidence needed for auditability or downstream consumption.
 * A primary research artifact exists at the resolved evidence path and records extensions, participation, candidate research areas, evidence, decisions, further research, and readiness without duplicating the user-facing synthesis.
 * Every executed research cycle records wider, deeper, and contrarian waves in that order, parent synthesis dispositions, and an evidence-based re-entry decision.
-* Findings answer each question or identify the smallest missing evidence. Every codebase finding uses a stable `C#` ID with a workspace-relative `path:line`; every external finding uses a stable `W#` ID with a URL and retrieval date.
+* Findings answer each question or identify the smallest missing evidence. Every codebase finding uses a stable `C#` ID with a workspace-relative path and heading or symbol; every external finding uses a stable `W#` ID with a URL and retrieval date.
 * The artifact preserves alternatives and records a selected recommendation with evidence-based rejection rationale when the caller requests convergence. Other output modes preserve the decision state without forcing a selection.
 * Material decisions are resolved according to the recorded participation mode. User-owned and user-retained decisions use a focused, link-backed walkthrough; agent-owned decisions record an evidence-based selection or an honest blocker.
 * Delegated worker artifacts contain full lane evidence when delegation is justified and remain optimized for agent consumption rather than end-user presentation. The worker is selected by phase-and-task fit or is an unnamed general-purpose fallback with explicit Research restrictions. Inline waves record their evidence and fallback disposition in the primary artifact without implying a worker ran.

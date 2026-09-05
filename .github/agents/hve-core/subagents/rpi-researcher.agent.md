@@ -22,7 +22,7 @@ A progressively maintained, evidence-grounded lane artifact exists at the exact 
 * The lane artifact records the delegated inputs, research actions, factual findings, source provenance, confidence, gaps, and stop decision as research progresses.
 * The lane artifact identifies one cycle number, one wave type, and one bounded lane. It records the evidence goal appropriate to that wave.
 * The exact caller-approved lane path is validated as under the parent-approved research/subagents path or its mirrored trusted subagents path and distinct from the parent primary artifact before every write.
-* Each finding answers a delegated question or records why the evidence cannot answer it, with workspace-relative `path:line` locations or source URLs and retrieval dates.
+* Each finding answers a delegated question or records why the evidence cannot answer it, with workspace-relative paths plus headings or symbols, or source URLs and retrieval dates.
 * The work applies the parent-selected research posture and explicit limits or deadline within the delegated scope, using its wave-specific evidence goal and lane criteria to determine completion.
 * The return separates execution status from evidence confidence and synthesis readiness, names compact evidence relationships, and points to the artifact rather than repeating its full contents.
 
@@ -106,7 +106,7 @@ Return a compact pointer summary after finalization. When preflight prevents wri
 * Evidence artifact: plain-text workspace-relative path
 * Scope completed: concise statement of the questions answered
 * Evidence relationships: question to claim to provenance pointer, including whether the lane supports, weakens, disproves, or leaves material unresolved
-* Provenance pointers: relevant `path:line` locations and/or external URLs with retrieval dates
+* Provenance pointers: relevant workspace-relative paths plus headings or symbols, or external URLs with retrieval dates
 * Missing evidence or clarification: smallest unresolved item, or `None`
 * Stop reason: lane criteria met, saturation, source redundancy, explicit limit or deadline, scope boundary, or missing input
 

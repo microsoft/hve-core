@@ -15,6 +15,22 @@ Review one task set using these paths:
 
 Read research when it is relevant to an evidence or decision gap. Use markers and stable IDs rather than line references.
 
+## Review document contract
+
+Use `templates/review-log.md` for one record that a person can review and a later RPI stage can act on. Lead with Executive Summary, What You May Not Know, Findings and Proposed Routes, and Parent Decision Record. Put validation, risks, and the detailed Review Record afterward.
+
+* Keep the Executive Summary concise and explicit about its assessed scope, proposed outcome, material findings, validation, and limits. Label builder conclusions as proposals; final decisions belong to the parent.
+* Use What You May Not Know for a material behavior change, justified divergence, or evidence limit that changes the reader's interpretation. State `None` rather than manufacturing additional concerns.
+* Order findings by severity and impact. Give each a descriptive heading and plain-language explanation, then keep its requirement, expected behavior, observed evidence, consequence, resolution condition, and proposed route together. State when behavior is unassessed rather than implying a demonstrated defect.
+* Describe the outcome or evidence needed to resolve a finding, not a mandatory patch recipe. Preserve local implementation judgment unless an accepted requirement or interface fixes the solution. Label non-binding examples as illustrative.
+* Record acceptance and change coverage once in the Review Record. Group related markers only when each remains identifiable and shares the evidence and assessment. Assess material plan updates and confirmed decisions without duplicating the changes record or the finding body.
+* Use prose and short lists for explanation, tables for compact coverage and decisions, and backticks for code, commands, and symbols. Keep paths plain-text and workspace-relative under the shared tracking convention. Include a Mermaid diagram only when it clarifies a material relationship or drift, distinguishing intended from observed behavior.
+* When no substantive findings exist, say so within the assessed boundary. Retain validation limits and residual work without inventing `RV-xxx` entries or implying unassessed scope passed.
+
+The parent maintains Current Disposition inside Parent Decision Record as a readable projection of the latest Decision History events. Show final execution, outcome and reason, finding dispositions and next actions, pending decisions, and the event IDs that support them. Before decisions exist, say `pending`; do not substitute the builder's proposal.
+
+Append events first, then refresh the projection before closeout or handoff. On recovery, events govern any stale projection. The entire Parent Decision Record remains outside worker write authority.
+
 ## Review method
 
 The primary parent resolves scope, acceptance basis, depth, artifact readiness, and one review worker, initializes the canonical review record, and dispatches that worker. The worker owns the evidence comparison and review-document body. The parent owns only final outcome and route decisions in `## Parent Decision Record`, parent state, conversation, and continuation.
@@ -63,7 +79,7 @@ Do not use one vocabulary as a substitute for the other. A complete execution ma
 
 ## Finding and routing rules
 
-Each builder-authored `RV-xxx` finding names severity, evidence, impact, and proposed destination. The primary parent records one disposition for each route: accepted, rejected, deferred, or changed, with rationale and next action.
+Each builder-authored `RV-xxx` finding names severity, the binding requirement or accepted direction, expected versus observed behavior, evidence, impact, a checkable resolution condition, and proposed destination. Missing evidence is an explicit limitation or evidence gap, not proof of a defect. The primary parent records one disposition for each route: accepted, rejected, deferred, or changed, with rationale and next action.
 
 * Route implementation defects that fit the current accepted direction to a later `rpi-implement` invocation.
 * Route significant or divergent decisions or invalid plan assumptions to `rpi-plan`.
@@ -132,7 +148,9 @@ After the builder returns, the primary parent reads the review record once and d
 * Whether a significant decision returns to `rpi-plan`, an evidence gap returns to `rpi-research`, a defect becomes later `rpi-implement`, or residual work enters the follow-up queue
 * Standalone advisory or parent-orchestrated continuation
 
-Append those decisions only to `## Parent Decision Record`. Preserve builder findings and comparison tables as evidence. When parent state exists, store one pointer containing the review path, latest decision event ID, and record revision or hash, plus derived `next_action` and accepted follow-up projections. Do not duplicate decision payloads in state, redo the review, rewrite findings to fit a preferred outcome, dispatch another builder, or let the builder transition phases.
+Append those decisions only to Decision History within `## Parent Decision Record`, then refresh its Current Disposition from the latest events. Preserve builder findings and comparison tables as evidence. When parent state exists, store one pointer containing the review path, latest decision event ID, and record revision or hash, plus derived `next_action` and accepted follow-up projections.
+
+Do not duplicate decision payloads in state, redo the review, rewrite findings to fit a preferred outcome, dispatch another builder, or let the builder transition phases.
 
 Parent Decision Record is the recovery authority. Give each event a stable `RD-xxx` ID and subject, and never rewrite or remove prior events. The latest event for a subject is current. On recovery, rebuild stale or missing state projections from the record; when state conflicts, the record governs and the corrected projection must persist before transition.
 

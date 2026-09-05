@@ -10,7 +10,11 @@ user-invocable: true
 
 ## Goal
 
-Produce one complete, evidence-based review record after implementation finishes. Use one selected review worker to compare the complete supplied acceptance boundary as quickly as the evidence permits. The primary review parent owns the final outcome, every route disposition, continuation, and user conversation.
+Produce one complete, human-readable, evidence-based review record after implementation finishes. Lead with the scoped assessment and material findings, keep evidence and resolution conditions with each finding, and make the parent's final decisions easy to distinguish from worker proposals.
+
+Use one selected review worker to compare the complete supplied acceptance boundary as quickly as the evidence permits. The primary review parent owns the final outcome, every route disposition, continuation, and user conversation.
+
+Read [references/review.md](references/review.md) for the review document contract, method, outcome vocabulary, routing, and conversation protocol. Use [templates/review-log.md](templates/review-log.md) as the canonical record skeleton.
 
 ## Flow
 
@@ -27,7 +31,7 @@ Produce one complete, evidence-based review record after implementation finishes
 	* In deep depth, require broader cross-evidence tracing, stress-test alternatives and boundaries, and include substantive lower-severity concerns within the same supplied boundary. Deep does not permit open-ended research, nested workers, or a second review pass.
 	* The builder writes the evidence body, one complete `RV-xxx` finding set, proposed execution status and outcome, validation coverage, limitations, and proposed routes. The builder does not ask the user, mutate parent state, select continuation, or invoke a destination.
 8. Read the completed review record and compact builder return once. Do not redo the evidence comparison or dispatch another worker. A Partial or Blocked builder result is terminal and must name the unassessed boundary or blocker. On recovery, stranded `started` is also terminal: record final Review execution Blocked and outcome Not accepted, preserve the evidence, and name the exact condition for a later new Review.
-9. Resolve every actionable `RV-xxx` according to decision participation. Treat `## Parent Decision Record` as the append-only canonical decision log. Append a stable event for each participation, walkthrough, execution, outcome, and route decision; never rewrite an earlier event.
+9. Resolve every actionable `RV-xxx` according to decision participation. Treat Decision History within `## Parent Decision Record` as the append-only canonical decision log. Append a stable event for each participation, walkthrough, execution, outcome, and route decision; never rewrite an earlier event. Refresh the section's Current Disposition from those events as a reader-facing projection, not an independent decision authority.
 	* For `user-owned` or `user-retained`, present one finding at a time. Before asking, link the review record and cited evidence, then explain in plain language what was found, why it matters, the proposed route, consequences, uncertainty, and a suggested answer.
 	* Use `vscode_askQuestions` when available. Offer `Use suggested action: [plain-language action]` as the recommended option, `Gather more information`, `Skip this item`, and `Finish review decisions`; allow freeform input so the user also has an empty response box. When unavailable, present the same choices in chat and wait.
 	* Append each answer and its finding, route, owner, rationale, evidence need, and outcome effect before asking about the next item. `Gather more information` defers or changes the route to the appropriate evidence owner. `Skip this item` rejects the proposed route without erasing the finding. `Finish review decisions` stops questions and appends deferred events for every undecided item. Material skipped or deferred findings prevent a conformant final outcome.
@@ -52,13 +56,14 @@ Produce one complete, evidence-based review record after implementation finishes
 * A stranded `started` record resolves to final Review execution Blocked and outcome Not accepted with a later-new-review condition and never causes replacement dispatch.
 * Standard depth is the default and completely assesses the material acceptance boundary while omitting low-value review work. Deep occurs only from explicit user direction.
 * The record separates execution state from outcome verdict.
-* Findings are substantive, evidence-grounded, severity-graded `RV-xxx` records with an explicit destination.
+* Findings are substantive, evidence-grounded, severity-graded `RV-xxx` records with expected versus observed behavior, a checkable resolution condition, and an explicit destination. Supporting detail stays with its finding rather than becoming a separate implementation recipe.
+* The document leads with its scoped assessment, material findings, and parent decisions; acceptance coverage is recorded once and missing evidence is not reported as a demonstrated defect.
 * Defects, decision gaps, research gaps, and residual work are routed to distinct destinations.
 * Descriptive implementation-time plan updates, their rationale and evidence, material revision readiness, and plan follow-up items are explicitly assessed.
 * Validation evidence is recorded or explicitly unavailable or skipped with a reason.
 * Findings are routed clearly without creating closure, correction, full, targeted, or amended review modes.
 * The primary parent records the final outcome and each accepted, rejected, deferred, or changed route without rewriting builder evidence.
-* Parent Decision Record is append-only and canonical. Parent state stores only its path/revision pointer and derived active-route and follow-up projections; recovery rebuilds projections from the record.
+* Decision History within Parent Decision Record is append-only and canonical. Its Current Disposition is a synchronized reader-facing projection. Parent state stores only the record's path/revision pointer and derived active-route and follow-up projections; recovery rebuilds projections from the events.
 * User-owned and user-retained Review present each actionable finding separately with linked, plain-language context and the required suggested, gather, skip, finish, and freeform choices. Agent-owned automatic Review records decisions without the walkthrough.
 
 ## Constraints

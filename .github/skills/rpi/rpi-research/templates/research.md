@@ -22,30 +22,24 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 * Research status: {{complete_partial_blocked_or_needs_clarification_with_a_plain_language_reason}}
 * Confidence and uncertainty: {{confidence_level_what_is_well_supported_and_what_remains_uncertain}}
 
-## Scope and Questions
+## What You May Not Know
 
-* Goal: {{research_target_and_decision_or_outcome_supported}}
-* Audience and use: {{who_will_use_the_evidence_and_how}}
-* In scope: {{included_paths_domains_components_or_sources}}
-* Out of scope: {{excluded_work_sources_and_decisions}}
-* Decision and evidence criteria: {{acceptance_or_decision_criteria}}
-* Requested output: {{summary_comparison_recommendation_audit_or_walkthrough}}
-
-| ID | Question                | Source                   | Status                    |
-|----|-------------------------|--------------------------|---------------------------|
-| Q1 | {{answerable_question}} | {{explicit_or_inferred}} | {{open/answered/blocked}} |
+{{material_discoveries_constraints_or_trade_offs_that_change_how_the_reader_should_interpret_the_result_or_none}}
 
 ## Findings
 
-<!-- Include only material results. Assign each result one parent-owned evidence state: unverified hypothesis/conjecture, partially supported claim, evidence-backed finding, weakened/disproved claim, or unresolved possibility. Explain the result before citing its evidence IDs. -->
+<!-- Repeat a descriptive finding heading for each material result. Keep supporting detail with the finding that needs it; scale prose and lists to the evidence rather than filling a fixed-length explanation. -->
 
-| Question | Result                    | Evidence state      | Why it matters                        | Evidence  | Confidence          |
-|----------|---------------------------|---------------------|---------------------------------------|-----------|---------------------|
-| Q1       | {{plain_language_result}} | {{canonical_state}} | {{decision_or_practical_implication}} | {{C1,W1}} | {{high/medium/low}} |
+### {{plain_language_finding_title}}
 
-### Supporting Detail (when applicable)
+{{answer_to_the_research_question_and_why_it_matters_for_the_users_goal}}
 
-{{concise_examples_diagrams_file_trees_or_configuration_needed_to_support_the_findings}}
+* Questions: {{Q1_or_related_question_ids}}
+* Evidence state: {{unverified_hypothesis_conjecture_partially_supported_claim_evidence_backed_finding_weakened_disproved_claim_or_unresolved_possibility}}
+* Evidence: {{C1_W1_and_what_the_sources_establish}}
+* Confidence and limits: {{confidence_basis_counter_evidence_and_remaining_uncertainty}}
+
+{{supporting_detail_example_or_diagram_only_when_needed_to_understand_or_check_this_finding}}
 
 ## Recommendation and Alternatives
 
@@ -58,6 +52,19 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 | Option       | Benefits     | Costs and risks     | Evidence  | Disposition                           |
 |--------------|--------------|---------------------|-----------|---------------------------------------|
 | {{approach}} | {{benefits}} | {{costs_and_risks}} | {{C1,W1}} | {{selected/rejected/viable/deferred}} |
+
+## Scope and Questions
+
+* Goal: {{research_target_and_decision_or_outcome_supported}}
+* Audience and use: {{who_will_use_the_evidence_and_how}}
+* In scope: {{included_paths_domains_components_or_sources}}
+* Out of scope: {{excluded_work_sources_and_decisions}}
+* Decision and evidence criteria: {{acceptance_or_decision_criteria}}
+* Requested output: {{summary_comparison_recommendation_audit_or_walkthrough}}
+
+| ID | Question                | Source                   | Status                    |
+|----|-------------------------|--------------------------|---------------------------|
+| Q1 | {{answerable_question}} | {{explicit_or_inferred}} | {{open/answered/blocked}} |
 
 ## Decisions and Feedback
 
@@ -167,14 +174,14 @@ The parent alone records accepted, rejected, and deferred material. Workers retu
 
 ### Evidence Log
 
-<!-- Add rows as research proceeds. Use C# for codebase evidence and W# for external evidence. Code rows use path:line and "not applicable" for retrieval metadata. External rows use source title plus URL and retrieval date plus version. -->
+<!-- Add rows as research proceeds. Use C# for codebase evidence and W# for external evidence. Code rows use workspace-relative paths plus headings or symbols and "not applicable" for retrieval metadata. External rows use source title plus URL and retrieval date plus version. -->
 
 * Delegation: {{cycle_and_wave_annotated selected research worker or general-purpose evidence files under .copilot-tracking/research/subagents/YYYY-MM-DD/, or "inline: fallback reason" when dispatch was unavailable}}
 
-| ID | Claim or finding | Source or location               | Retrieved and version      | Tool                   | Confidence       | Notes       |
-|----|------------------|----------------------------------|----------------------------|------------------------|------------------|-------------|
-| C1 | {{finding}}      | {{workspace_relative_path:line}} | not applicable             | {{search/read/usages}} | {{high/med/low}} | {{context}} |
-| W1 | {{finding}}      | {{source_title_and_url}}         | {{YYYY-MM-DD_and_version}} | {{external_research}}  | {{high/med/low}} | {{context}} |
+| ID | Claim or finding | Source or location                                | Retrieved and version      | Tool                   | Confidence       | Notes       |
+|----|------------------|---------------------------------------------------|----------------------------|------------------------|------------------|-------------|
+| C1 | {{finding}}      | {{workspace_relative_path_and_heading_or_symbol}} | not applicable             | {{search/read/usages}} | {{high/med/low}} | {{context}} |
+| W1 | {{finding}}      | {{source_title_and_url}}                          | {{YYYY-MM-DD_and_version}} | {{external_research}}  | {{high/med/low}} | {{context}} |
 
 <!-- Prefer primary sources, triangulate material external claims when credible independent evidence exists, and record conflicts below. Group repeated code searches in Notes when they materially informed the result. -->
 
@@ -186,7 +193,8 @@ The parent alone records accepted, rejected, and deferred material. Workers retu
 
 * [ ] The user-facing sections explain the result, scope, findings, alternatives, decisions, risks, readiness, and next action without requiring the Research Record.
 * [ ] Every question is answered or names the smallest missing evidence, and every material result has one canonical evidence state that distinguishes sourced findings from hypotheses, partial claims, disproved claims, and unresolved possibilities.
-* [ ] Every codebase finding has a `C#` ID and `path:line`; every external finding has a `W#` ID, source title, URL, retrieval date, and version when available.
+* [ ] Findings keep their explanation, supporting detail, evidence state, and confidence basis together; summaries do not introduce unsupported claims.
+* [ ] Every codebase finding has a `C#` ID and workspace-relative path with a heading or symbol; every external finding has a `W#` ID, source title, URL, retrieval date, and version when available.
 * [ ] Every executed cycle records Wider, Deeper, and Contrarian waves in order, parent synthesis, and an evidence-based re-entry decision.
 * [ ] Method, extensions, participation, caller direction changes, delegation, and prior-knowledge treatment are recorded with their limits.
 * [ ] Convergence selects and justifies one recommendation; other modes preserve decision state without forcing a selection.
