@@ -3,7 +3,7 @@ title: Pull Request
 description: Generate pull request descriptions from branch diffs
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Generate pull request descriptions from branch diffs
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to generate a pull request description from branch changes and optionally create the pull request. Use the review prompt when a pull request already exists and needs assessment instead of authoring.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Optionally provide the comparison branch and choose whether to exclude Markdown files. Leave `createPullRequest=false` for description-only work; external creation occurs only when explicitly requested and required repository checks pass.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/pull-request branch=origin/main createPullRequest=false
+```
+
+The prompt analyzes the branch diff and drafts a pull request description without publishing it.

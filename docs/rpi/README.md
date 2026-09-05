@@ -3,7 +3,7 @@ title: Understanding the RPI Workflow
 description: Learn how Research, Plan, Implement, Review, and Follow-up guide evidence-led delivery
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-29
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -12,6 +12,7 @@ keywords:
   - rpi plan
   - rpi implement
   - rpi review
+  - rpi walkthrough
   - follow-up
   - github copilot
 estimated_reading_time: 7
@@ -96,14 +97,15 @@ Follow-up does not rename or repeat another lifecycle concept. It routes defects
 
 Choose the smallest entry surface that owns the next action:
 
-| Entry surface    | Use it when                                          | Contract                                                                        |
-|------------------|------------------------------------------------------|---------------------------------------------------------------------------------|
-| `RPI Agent`      | You want a user-selected lifecycle wrapper           | Activates the applicable RPI skills with one task identity                      |
-| `/rpi-quick`     | You want a skill-based full-flow entry point         | Coordinates research readiness, planning, implementation, review, and follow-up |
-| `/rpi-research`  | A demonstrated evidence gap blocks credible progress | Produces research evidence without planning or implementation                   |
-| `/rpi-plan`      | Adequate evidence needs an implementation strategy   | Produces the plan, phase details, and critique disposition                      |
-| `/rpi-implement` | Approved work is ready to execute                    | Produces source changes, change evidence, and validation                        |
-| `/rpi-review`    | Implementation evidence is ready for reconciliation  | Produces one review record and routes open work                                 |
+| Entry surface      | Use it when                                                   | Contract                                                                        |
+|--------------------|---------------------------------------------------------------|---------------------------------------------------------------------------------|
+| `RPI Agent`        | You want a user-selected lifecycle wrapper                    | Activates the applicable RPI skills with one task identity                      |
+| `/rpi-quick`       | You want a skill-based full-flow entry point                  | Coordinates research readiness, planning, implementation, review, and follow-up |
+| `/rpi-research`    | A demonstrated evidence gap blocks credible progress          | Produces research evidence without planning or implementation                   |
+| `/rpi-plan`        | Adequate evidence needs an implementation strategy            | Produces the plan, phase details, and critique disposition                      |
+| `/rpi-implement`   | Approved work is ready to execute                             | Produces source changes, change evidence, and validation                        |
+| `/rpi-review`      | Implementation evidence is ready for reconciliation           | Produces one review record and routes open work                                 |
+| `/rpi-walkthrough` | You want to understand code or artifacts before changing them | Explains one segment at a time and captures requested changes when needed       |
 
 Select `RPI Agent` when you want a user-selected lifecycle wrapper that activates these same skills. `RPI Agent` and `/rpi-quick` are alternative entry surfaces, not autonomous dispatchers of specialized task workers.
 
@@ -147,6 +149,7 @@ Use research when readiness identifies a gap. Otherwise, select the smallest lif
 * [Why the RPI Workflow Works](why-rpi) - Understand why phase separation improves evidence and traceability
 * [Using RPI Together](using-together) - Follow a complete workflow example
 * [Context Engineering](context-engineering) - Why context management matters
+* [RPI Walkthrough](rpi-walkthrough) - Explore code or artifacts through a guided explanation
 * [Agents Reference](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md) - All available agents
 * [Agent Systems Catalog](../agents/) - Browse all agent families beyond RPI
 

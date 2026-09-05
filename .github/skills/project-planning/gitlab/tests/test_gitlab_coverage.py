@@ -30,24 +30,24 @@ def test_is_loopback_rejects_empty_host() -> None:
 
 
 def test_validate_project_path_rejects_traversal() -> None:
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabError):
         gitlab._validate_project_path("../escape")
 
 
 def test_validate_project_path_rejects_empty() -> None:
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabError):
         gitlab._validate_project_path("")
 
 
 def test_validate_numeric_id_rejects_non_numeric() -> None:
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabError):
         gitlab.validate_numeric_id("abc")
 
 
 def test_validate_numeric_id_rejects_out_of_range() -> None:
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabError):
         gitlab.validate_numeric_id("0")
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabError):
         gitlab.validate_numeric_id(str(gitlab.MAX_NUMERIC_ID + 1))
 
 
@@ -70,7 +70,7 @@ def test_read_capped_rejects_oversized_when_failing(
         def read(self, _amount: int) -> bytes:
             return b"x" * 32
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabError):
         gitlab._read_capped(_Response(), 16, fail_on_limit=True)
 
 
@@ -96,7 +96,7 @@ def test_request_bytes_rejects_missing_content_type(
 
     mocker.patch("gitlab._OPENER.open", return_value=_Response())
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabError):
         gitlab._request_bytes("GET", f"{TEST_API_URL}/projects/1", require_json=True)
 
 
@@ -131,7 +131,7 @@ def test_mr_update_rejects_oversized_stdin(
     monkeypatch.setenv("GITLAB_PROJECT", "group/project")
     stdin_factory("x" * (gitlab.MAX_BODY_BYTES + 1))  # type: ignore[operator]
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabError):
         gitlab.cmd_mr_update(["9"])
 
 
@@ -143,5 +143,5 @@ def test_mr_comment_rejects_oversized_stdin(
     monkeypatch.setenv("GITLAB_PROJECT", "group/project")
     stdin_factory("x" * (gitlab.MAX_BODY_BYTES + 1))  # type: ignore[operator]
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabError):
         gitlab.cmd_mr_comment(["9"])

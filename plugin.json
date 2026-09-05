@@ -166,6 +166,7 @@
     ".github/instructions/project-planning/adr-standards.instructions.md",
     ".github/instructions/project-planning/backlog-guardrails.instructions.md",
     ".github/instructions/project-planning/community-interaction.instructions.md",
+    ".github/instructions/project-planning/github-backlog-grooming.instructions.md",
     ".github/instructions/rai-planning/rai-identity.instructions.md",
     ".github/instructions/rai-planning/rai-license-posture.instructions.md",
     ".github/instructions/security/identity.instructions.md",

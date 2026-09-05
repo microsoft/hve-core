@@ -74,6 +74,11 @@ from ._validation import (
 LOGGER = logging.getLogger("mural")
 REQUEST_TIMEOUT_SECONDS = 30
 
+# Upper bound on ordinary Mural API response text carried inside an exception.
+# Token and SAS boundaries never carry opaque bodies. For the remaining API
+# diagnostics, ``_redact`` and this cap provide defense in depth.
+MAX_ERROR_EXCERPT_CHARS = 512
+
 
 def _pkg() -> Any:
     """Return the live ``mural`` package module for monkeypatch-aware routing."""
@@ -88,6 +93,21 @@ def _redact(text: str) -> str:
     for pattern, replacement in _REDACT_PATTERNS:
         redacted = pattern.sub(replacement, redacted)
     return redacted
+
+
+def _error_excerpt(text: str) -> str:
+    """Return a redacted, length-bounded ordinary API response excerpt.
+
+    Credential-bearing token and SAS response bodies are discarded at their
+    boundaries instead. Redaction runs before truncation here so cutting cannot
+    sever a key from its value and defeat substitution patterns.
+    """
+    if not text:
+        return ""
+    redacted = _redact(text)
+    if len(redacted) <= MAX_ERROR_EXCERPT_CHARS:
+        return redacted
+    return f"{redacted[:MAX_ERROR_EXCERPT_CHARS]}... (truncated)"
 
 
 @dataclass
@@ -260,14 +280,18 @@ def _parse_token_response(resp: Any) -> dict[str, Any]:
         raise MuralAPIError(
             status,
             "TOKEN_BAD_CONTENT_TYPE",
-            f"token endpoint returned non-JSON Content-Type: {content_type}",
+            "token endpoint returned non-JSON Content-Type",
         )
     body_bytes = _read_capped(resp, MURAL_MAX_BODY_BYTES)
     text = body_bytes.decode("utf-8", errors="replace")
     try:
         data = json.loads(text)
     except json.JSONDecodeError as exc:
-        raise MuralAPIError(status, "TOKEN_INVALID_JSON", text) from exc
+        raise MuralAPIError(
+            status,
+            "TOKEN_INVALID_JSON",
+            "token endpoint returned malformed JSON",
+        ) from exc
     if not isinstance(data, dict):
         raise MuralAPIError(
             status,
@@ -310,13 +334,10 @@ def _refresh_access_token(
             data = _parse_token_response(resp)
             status = getattr(resp, "status", 200)
     except urllib.error.HTTPError as exc:
-        text = _read_response_body(exc).decode("utf-8", errors="replace")
-        _emit(f"refresh failed: HTTP {exc.code} {text}", level=logging.ERROR)
-        raise MuralAPIError(
-            exc.code, "REFRESH_FAILED", text or "refresh failed"
-        ) from exc
+        _emit(f"refresh failed: HTTP {exc.code}", level=logging.ERROR)
+        raise MuralAPIError(exc.code, "REFRESH_FAILED", "token refresh failed") from exc
     if status >= 400:
-        raise MuralAPIError(status, "REFRESH_FAILED", json.dumps(data))
+        raise MuralAPIError(status, "REFRESH_FAILED", "token refresh failed")
     if "access_token" not in data:
         raise MuralAPIError(status, "REFRESH_INVALID_PAYLOAD", "missing access_token")
     return data
@@ -515,7 +536,14 @@ def _extract_error_payload(
 
 
 def _build_api_error(status: int, body_bytes: bytes, headers_obj: Any) -> MuralAPIError:
+    """Build a :class:`MuralAPIError` from a non-2xx response.
+
+    Ordinary Mural API messages are bounded and redacted here rather than
+    inside :func:`_extract_error_payload`, which stays a pure decode seam for
+    fuzzing. Token and SAS response bodies do not use this path.
+    """
     code, message, request_id = _extract_error_payload(body_bytes, headers_obj)
+    message = _error_excerpt(message or "")
     if not message:
         message = f"HTTP {status}"
     return MuralAPIError(status, code, message, request_id)
@@ -599,12 +627,14 @@ def _upload_to_sas(
         with _http(request, timeout=REQUEST_TIMEOUT_SECONDS) as resp:  # type: ignore[arg-type]
             status = getattr(resp, "status", 200)
             if status >= 400:
-                payload = _read_response_body(resp).decode("utf-8", errors="replace")
-                raise MuralAPIError(status, "ASSET_UPLOAD_FAILED", payload)
+                raise MuralAPIError(
+                    status,
+                    "ASSET_UPLOAD_FAILED",
+                    "asset upload failed",
+                )
     except urllib.error.HTTPError as exc:
-        text = _read_response_body(exc).decode("utf-8", errors="replace")
         raise MuralAPIError(
-            exc.code, "ASSET_UPLOAD_FAILED", text or "upload failed"
+            exc.code, "ASSET_UPLOAD_FAILED", "asset upload failed"
         ) from exc
     except urllib.error.URLError as exc:
         raise MuralError(f"network error uploading to asset url: {exc}") from exc

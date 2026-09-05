@@ -3,7 +3,7 @@
 
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
@@ -12,11 +12,11 @@ import {
   classifyAtCaseResult,
   defaultRunAtCase,
   detectGuidepupNvda,
+  persistSampleEvidence,
   probePrerequisites,
   resolveArtifactPath,
   resolveCalibrationCases,
   resolveContainedArtifactPath,
-  resolveChromeExecutable,
   runDefaultVisualPreflight,
   runRealCalibrationSession,
 } from '../../../scripts/runtime_a11y/runner/calibration-executor.mjs';
@@ -24,6 +24,56 @@ import {
 function computeArtifactHash(filePath) {
   return createHash('sha256').update(readFileSync(filePath)).digest('hex');
 }
+
+test('resolveCalibrationCases ignores the unvalidated journeyId alias', () => {
+  const cases = resolveCalibrationCases({
+    calibration: { journeys: [{ id: 'safe', journeyId: '../../../../outside' }] },
+  });
+  assert.equal(cases.length, 1);
+  assert.equal(cases[0].journeyId, 'safe');
+});
+
+test('resolveCalibrationCases rejects a traversal-bearing journey identifier', () => {
+  assert.throws(
+    () => resolveCalibrationCases({ calibration: { journeys: [{ journeyId: '../../escape' }] } }),
+    /Journey ID/,
+  );
+  assert.throws(
+    () => resolveCalibrationCases({ calibration: { journeys: [{ id: '../../escape' }] } }),
+    /Journey ID/,
+  );
+});
+
+test('persistSampleEvidence refuses to write outside the run root', () => {
+  const runRoot = mkdtempSync(join(tmpdir(), 'a11y-calibration-escape-'));
+  const escapeRoot = mkdtempSync(join(tmpdir(), 'a11y-calibration-outside-'));
+  try {
+    assert.throws(
+      () => persistSampleEvidence({
+        runRoot,
+        journeyId: '../../escape',
+        ordinal: 0,
+        payload: { marker: 'should-not-be-written' },
+      }),
+      /Journey ID/,
+    );
+    // The containment assertion is proven independently of the identifier grammar.
+    assert.throws(
+      () => persistSampleEvidence({
+        runRoot: join(runRoot, 'nested'),
+        journeyId: '..',
+        ordinal: 0,
+        payload: { marker: 'should-not-be-written' },
+      }),
+      /Journey ID|escapes the run root/,
+    );
+    assert.equal(existsSync(join(runRoot, '..', 'escape')), false);
+    assert.deepEqual(readdirSync(escapeRoot), []);
+  } finally {
+    rmSync(runRoot, { recursive: true, force: true });
+    rmSync(escapeRoot, { recursive: true, force: true });
+  }
+});
 
 // Minimal Playwright browser double. runRealCalibrationSession opens one shared
 // page per session; without this the session launches real headed Chrome, which
@@ -807,70 +857,6 @@ test('classifyAtCaseResult maps unsupported, assertion, product, infrastructure,
   }
 });
 
-test('resolveChromeExecutable uses ProgramFiles and ProgramFiles(x86) fallbacks on Windows', () => {
-  const result = resolveChromeExecutable({
-    env: {
-      ProgramFiles: 'C:\\Program Files',
-      'ProgramFiles(x86)': 'C:\\Program Files (x86)',
-    },
-    platform: 'win32',
-    spawn: (command, args = []) => {
-      if (command === 'where.exe') {
-        return { stdout: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\r\n', stderr: '' };
-      }
-      if (command === 'powershell.exe') {
-        return { stdout: '150.0.7871.127\r\n', stderr: '' };
-      }
-      return { stdout: '', stderr: '' };
-    },
-  });
-
-  assert.equal(result.executable, 'chrome.exe');
-  assert.equal(result.version, '150.0.7871.127');
-});
-
-test('resolveChromeExecutable falls back to standard Windows Chrome roots when env vars are absent', () => {
-  const result = resolveChromeExecutable({
-    env: {},
-    platform: 'win32',
-    spawn: (command, args = []) => {
-      if (command === 'where.exe') {
-        return { stdout: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\r\n', stderr: '' };
-      }
-      if (command === 'powershell.exe') {
-        return { stdout: '150.0.7871.127\r\n', stderr: '' };
-      }
-      return { stdout: '', stderr: '' };
-    },
-  });
-
-  assert.equal(result.executable, 'chrome.exe');
-  assert.equal(result.version, '150.0.7871.127');
-});
-
-test('resolveChromeExecutable uses PowerShell file metadata without spawning Chrome on Windows', () => {
-  const recorded = [];
-  const result = resolveChromeExecutable({
-    env: {},
-    platform: 'win32',
-    spawn: (command, args = []) => {
-      recorded.push({ command, args });
-      if (command === 'where.exe') {
-        return { stdout: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\r\n', stderr: '' };
-      }
-      if (command === 'powershell.exe') {
-        return { stdout: '150.0.7871.127\r\n', stderr: '' };
-      }
-      return { stdout: '', stderr: '' };
-    },
-  });
-
-  assert.equal(result.executable, 'chrome.exe');
-  assert.equal(result.version, '150.0.7871.127');
-  assert.equal(recorded.some(({ command, args }) => command && /(?:^|[\\/])(?:chrome|chromium)(?:\.exe)?$/i.test(command) && Array.isArray(args) && args.includes('--version')), false);
-  assert.equal(recorded.some(({ command }) => command === 'powershell.exe'), true);
-});
-
 test('detectGuidepupNvda accepts registry-backed NVDA registration without persisting installation paths', async () => {
   const result = await detectGuidepupNvda({
     platform: 'win32',
@@ -891,6 +877,7 @@ test('detectGuidepupNvda accepts registry-backed NVDA registration without persi
 });
 
 test('probePrerequisites reports ready for interactive desktop, Chrome, and isolated Guidepup NVDA', async () => {
+  let browserClosed = false;
   const runtime = {
     platform: 'win32',
     env: {
@@ -913,6 +900,12 @@ test('probePrerequisites reports ready for interactive desktop, Chrome, and isol
       return { stdout: '', stderr: '' };
     },
     dependencies: {
+      launchBrowser: async () => ({
+        version: () => '150.0.7871.127',
+        close: async () => {
+          browserClosed = true;
+        },
+      }),
       importGuidepup: async () => ({
         nvda: {
           start: async () => {},
@@ -928,13 +921,14 @@ test('probePrerequisites reports ready for interactive desktop, Chrome, and isol
   const result = await probePrerequisites({}, runtime);
   assert.equal(result.ok, true);
   assert.equal(result.desktopUnlocked, true);
-  assert.equal(result.chromeExecutable, 'chrome.exe');
+  assert.equal(result.chromeExecutable, 'channel:chrome');
   assert.equal(result.chromeVersion, '150.0.7871.127');
   assert.equal(result.nvdaAvailable, true);
   assert.equal(result.guidepupRegistered, true);
   assert.equal(result.reason, null);
-  assert.equal(result.metadata.chromeExecutable, 'chrome.exe');
+  assert.equal(result.metadata.chromeExecutable, 'channel:chrome');
   assert.equal(result.metadata.platform, 'win32');
+  assert.equal(browserClosed, true);
 });
 
 test('probePrerequisites reports the blocking reasons when Windows prerequisites are missing', async () => {
@@ -953,6 +947,9 @@ test('probePrerequisites reports the blocking reasons when Windows prerequisites
       return { stdout: '', stderr: '' };
     },
     dependencies: {
+      launchBrowser: async () => {
+        throw new Error('system Chrome unavailable');
+      },
       importGuidepup: async () => null,
     },
   };
@@ -964,8 +961,34 @@ test('probePrerequisites reports the blocking reasons when Windows prerequisites
   assert.equal(result.nvdaAvailable, false);
   assert.equal(result.guidepupRegistered, false);
   assert.ok(result.reasons.includes('Interactive desktop was not available.'));
-  assert.ok(result.reasons.includes('Chrome executable/version was not verified.'));
+  assert.ok(result.reasons.includes('Chrome launch failed: system Chrome unavailable'));
   assert.ok(result.reasons.includes('NVDA registration for isolated Guidepup execution was not verified.'));
+});
+
+test('probePrerequisites fails when launched Chrome cannot be closed', async () => {
+  const runtime = {
+    platform: 'linux',
+    env: { RUNTIME_A11Y_INTERACTIVE_DESKTOP: 'true' },
+    spawnSync: () => ({ stdout: '', stderr: '' }),
+    dependencies: {
+      launchBrowser: async () => ({
+        version: () => '150.0.7871.127',
+        close: async () => {
+          throw new Error('close blocked');
+        },
+      }),
+      importGuidepup: async () => ({
+        nvda: { capabilities: ['nvda'] },
+      }),
+    },
+  };
+
+  const result = await probePrerequisites({}, runtime);
+
+  assert.equal(result.ok, false);
+  assert.equal(result.chromeExecutable, null);
+  assert.equal(result.chromeVersion, null);
+  assert.ok(result.reasons.includes('Chrome close failed: close blocked'));
 });
 
 test('runDefaultVisualPreflight writes a 2x5 preflight summary and hashes the captured artifacts', async () => {

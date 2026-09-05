@@ -2,7 +2,7 @@
 title: Extension Scripts
 description: PowerShell scripts for manifest-driven VS Code extension preparation and packaging
 author: HVE Core Team
-ms.date: 2026-08-19
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - powershell
@@ -22,8 +22,10 @@ The extension packaging pipeline follows the one plugin manifest:
 
 1. `Prepare-Extension.ps1` maps root `plugin.json` to one extension manifest and README
 2. `Package-Extension.ps1` stages tracked contribution files and creates one `.vsix`
-3. `Resolve-VsixFile.ps1` requires exactly one VSIX for provenance workflows
-4. `Export-AttestationBundle.ps1` writes Sigstore and in-toto sidecars
+3. `extension-provenance-signer.yml` packages in a `contents: read` job, then transfers
+  the VSIX to a separate privileged attestation job with digest checking
+4. `Resolve-VsixFile.ps1` requires exactly one VSIX for provenance workflows
+5. `Export-AttestationBundle.ps1` writes Sigstore and in-toto sidecars
 
 Membership comes from root `plugin.json`. Stable and PreRelease preparation use the same component set. Repository-relative `.github/...` declarations become extension contribution paths without adding plugin-root README or license files.
 
@@ -94,7 +96,7 @@ Purpose: Produce a distributable extension package from prepared contents.
 Resolves the single `.vsix` file within a directory.
 
 Purpose: Return the one VSIX path in a directory, failing when zero or multiple
-`.vsix` files are present. Used by the `extension-provenance.yml` reusable
+`.vsix` files are present. Used by the `extension-provenance-signer.yml` reusable
 workflow to locate the downloaded VSIX before signing and attestation.
 
 #### Parameters
@@ -140,13 +142,21 @@ for verification and release upload.
 
 ## GitHub Actions Integration
 
-The `extension-package.yml` reusable workflow has one `package` job. It checks
-out the requested source, prepares the complete HVE Core contributions, and
-packages one `.vsix` file.
+`release-vsix-publish.yml` is the sole post-tag release producer. A push of an
+exact `v<version>` or `prerelease-v<version>` tag invokes
+`extension-provenance-signer.yml` after the producer validates the protected tag,
+source commit, channel branch, committed versions, and exact draft release.
 
-It runs under `contents: read` only. The separate `extension-provenance.yml`
-workflow holds the signing scopes, downloads the built VSIX, and never installs
-dependencies.
+The `extension-provenance-signer.yml` signer path has two separate jobs. Its
+`package` job checks out the immutable tag commit, installs dependencies,
+prepares the complete HVE Core contributions, and packages one `.vsix` with
+only `contents: read`. Its dependent `attest` job has the signing and release
+write scopes, downloads the VSIX and dependency SBOM through fixed-name,
+digest-checked artifact transfers, and never installs dependencies or packages
+the extension. No job both packages and signs.
+
+Marketplace workflows do not build another VSIX. They consume only the VSIX
+from the matching published GitHub release after provenance verification.
 
 See [Build Workflows](../../docs/architecture/workflows.md) for pipeline
 details.
