@@ -89,7 +89,7 @@ review-friendly, public-safe schema.
 Sources:
 
 * Microsoft Purview sensitivity labels: <https://learn.microsoft.com/purview/sensitivity-labels>
-* Microsoft data classification categories (Customer Data, EUII, EUPI, OII): <https://learn.microsoft.com/compliance/assurance/assurance-data-classification>
+* Microsoft Purview data classification overview: <https://learn.microsoft.com/purview/data-classification-overview>
 
 ## Private overlay for internal taxonomies
 
