@@ -64,12 +64,15 @@ changes the resulting pull request.
 7. Apply the public-output guard from the applicable content-policy instructions. Do not copy private
    classifications, sensitive values, or raw suspect content into the pull request body.
 8. Run the CI-confidence gate. Always run `git diff --check` against the committed branch diff, then
-   select the smallest non-mutating checks that own the changed areas from package scripts,
-   path-scoped instructions, and workflow configuration. Prefer focused tests, syntax checks,
-   check-mode generators, and artifact validators. Do not run full validation aggregates, CI-prefixed
-   commands, browser suites, service-dependent tests, security scans, or unrelated checks unless the
-   user explicitly requests them or no narrower reliable owner exists. Follow repository dependency
-   bootstrap rules before dependency-backed commands.
+   match changed paths against workflow triggers and select the smallest non-mutating checks that own
+   those areas from package scripts, path-scoped instructions, and the matching workflow steps. Prefer
+   focused tests, syntax checks, check-mode generators, and artifact validators. Do not run full
+   validation aggregates or CI-prefixed wrappers unless the user explicitly requests them. When a
+   matching workflow calls a CI-prefixed wrapper, run its locally safe non-mutating component checks
+   if no equivalent local-safe package command exists; the prefix alone is not a reason to skip them.
+   Do not infer browser suites, service-dependent tests, security scans, or other lane-specific
+   prerequisites from this component-check rule. Follow repository dependency bootstrap rules before
+   dependency-backed commands.
 9. Record only checks that actually ran in the pull request. Leave hosted CI checks and human review
    attestations unchecked. If a required targeted check fails, keep the prepared description and stop
    before external creation or update. Do not change branch source unless the user asks for a fix.
@@ -114,14 +117,17 @@ The local gate predicts likely CI outcomes; it does not claim that hosted checks
 not run. Use
 these priorities:
 
-1. Checks explicitly required by applicable repository instructions for the changed paths
-2. Focused tests for changed executable behavior
-3. Linters, type checks, parsers, or check-mode generators for changed artifacts
-4. `git diff --check` for patch hygiene
+1. Locally safe non-mutating checks from workflows whose path triggers match the changed files
+2. Checks explicitly required by applicable repository instructions for the changed paths
+3. Focused tests for changed executable behavior
+4. Linters, type checks, parsers, or check-mode generators for changed artifacts
+5. `git diff --check` for patch hygiene
 
 Do not mark the pull request ready for external creation when a required selected check failed,
 dependencies needed for that check are unavailable, or generated projections known to be required are
-stale. Report hosted status checks as pending after creation.
+stale. If a matching workflow step cannot run locally because it needs a browser, service, credential,
+moderation environment, or other CI-only prerequisite, record it as pending or unavailable instead of
+silently omitting it. Report hosted status checks as pending after creation.
 
 ## Preflight Repair Commits
 
