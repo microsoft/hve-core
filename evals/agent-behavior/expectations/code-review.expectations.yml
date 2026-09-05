@@ -52,3 +52,47 @@ expectations:
       - Applies fixes directly to the reviewed source files.
     priority: high
     contract_ref: "agent review scope and stimulus boundary"
+
+  - expectation_id: explicit-plan-context-enters-review-flow
+    summary: An explicit Security Planner reference is recognized without premature correlation.
+    signal: Orientation or the dispatch board identifies the baseline and recommends the security perspective.
+    pass_criteria: |
+      For `code-review-security-planning-drift-context`, the first response carries
+      the supplied baseline forward, recommends security review, and waits for
+      merged findings before running drift correlation.
+    failure_modes:
+      - Ignores the supplied baseline.
+      - Emits final drift counts before perspective findings exist.
+      - Replaces the normal orientation and confirmation flow with drift output.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 1 Security plan drift context and Step 7 execution point"
+
+  - expectation_id: no-plan-context-preserves-default
+    summary: Code Review does not activate security-plan drift without plan context.
+    signal: No `securityPlanContext`, `security_plan_drift`, or drift section appears in the ordinary class recipe.
+    pass_criteria: |
+      For `code-review-class-recipe`, the response remains the normal
+      orientation and dispatch-board flow with no plan-drift state or output.
+    failure_modes:
+      - Searches for or selects an ambient baseline without a qualifying signal.
+      - Emits a drift section or structured drift field.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 1 drift skip behavior"
+
+  - expectation_id: drift-output-is-bounded-and-diff-scoped
+    summary: Executed correlation uses the optional structured carrier and preserves diff-scope limits.
+    signal: Final connected-workflow output carries `security_plan_drift` and insufficient-evidence reasons for validated and obsolete categories.
+    pass_criteria: |
+      When confirmed plan context reaches Step 7 after security findings merge,
+      output uses the bounded drift section and optional field, treats validated
+      controls and obsolete plan items as insufficient evidence, and does not
+      add an executed drift result to specialist recommendations.
+    failure_modes:
+      - Claims a validated control from diff-only findings.
+      - Claims an obsolete plan item from absence in the diff.
+      - Emits the same drift result as a specialist follow-up.
+    priority: high
+    applies_when: "confirmed plan context and merged security findings are available"
+    contract_ref: "agent §Step 7 security-plan drift correlation"

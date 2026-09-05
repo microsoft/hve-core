@@ -3,7 +3,7 @@ title: vex-triage
 description: "Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document, skipping the scan phase - Brought to you by microsoft/hve-core"
 sidebar_position: 15
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document, 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to triage CVEs from an existing supported scan report or SBOM and draft an OpenVEX document without running the scan again. Use vex-scan when current dependency discovery and enrichment are still required.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the required `report` path and optionally the product package URL. The prompt preserves source precedence and drafts status determinations, which require qualified product security review and author-of-record approval before publication.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/vex-triage report=reports/sample-sbom.spdx.json product=pkg:npm/@example/sample-api
+```
+
+The prompt triages the fictional SBOM and creates an evidence-linked OpenVEX draft without running a new scan.

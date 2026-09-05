@@ -3,7 +3,7 @@ title: Dt Method 05 Concepts
 description: Concept articulation for Design Thinking Method 5b from brainstorming themes
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Concept articulation for Design Thinking Method 5b from brainstorming themes
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt during Method 5b to turn selected brainstorming themes into coherent user concepts. Return to convergence when themes have not yet been selected or remain too broad.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the `project-slug` and optionally identify `selectedThemes`. The prompt uses the recorded ideas and themes to articulate concepts without adding unsupported user needs.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/dt-method-05-concepts project-slug=factory-floor-maintenance selectedThemes="shift handoff, visibility"
+```
+
+The prompt turns the selected themes into reviewable concept statements grounded in project evidence.
