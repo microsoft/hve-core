@@ -281,11 +281,7 @@ def _load_jira_env_file(path: Path | None = None) -> None:
     if env_path.is_symlink():
         raise ScriptError("Jira environment file must not be a symlink", EXIT_USAGE)
 
-    flags = (
-        os.O_RDONLY
-        | getattr(os, "O_NOFOLLOW", 0)
-        | getattr(os, "O_NONBLOCK", 0)
-    )
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
     descriptor = -1
     try:
         descriptor = os.open(env_path, flags)
