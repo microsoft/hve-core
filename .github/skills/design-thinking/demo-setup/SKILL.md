@@ -5,7 +5,7 @@ user-invocable: true
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-07-21"
+  last_updated: "2026-09-04"
 ---
 
 # Demo Setup
@@ -147,7 +147,7 @@ Create the project structure and start the DT Coach session with demo context.
 4. The DT Coach loads the customer persona brief as simulated customer context.
 5. Begin Method 1 with the DT Coach greeting and session initialization.
 
-> **Note:** `session_mode: demo` is a demo-setup convention that the DT Coach does not natively recognize yet. Accelerated pacing is enforced by this skill's Step 3 direction to the Coach, not by the `coaching-state.md` schema. Formalizing `session_mode` in the DT Coach agent and coaching-state schema is tracked as a follow-up.
+> **Note:** `session_mode: demo` is a demo-setup convention that the DT Coach does not natively recognize yet. Accelerated pacing is enforced by this skill's Step 3 direction to the Coach, not by the `coaching-state.md` schema. Native `session_mode` support could be formalized in the DT Coach agent and coaching-state schema if a future use case requires it.
 
 Checkpoint: coaching-state.md exists with demo `initial_classification` and Method 1 active.
 

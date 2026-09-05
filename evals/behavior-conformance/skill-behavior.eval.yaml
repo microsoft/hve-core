@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 225
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 228
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -1212,6 +1212,63 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(telemetry|coaching|design\s+thinking|scope)'
+  - name: skill-demo-setup-knowledge
+    prompt: |
+      Summarize how the `demo-setup` skill creates a repeatable HVE Core demo.
+      Mention the customer context, accelerated Design Thinking flow, and
+      runnable prototype output.
+    tags:
+      category: behavior-conformance
+      skill: demo-setup
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(customer\s+persona|conversation\s+seed|accelerated|method[s]?\s+1|prototype)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(demo|design\s+thinking|dt\s+coach|scaffold|walkthrough)'
+  - name: skill-demo-setup-tool-trigger
+    prompt: |
+      I need a repeatable customer demo that simulates an accelerated DT Coach
+      session, generates persona-grounded artifacts, and scaffolds a runnable
+      hi-fi prototype with a presenter's guide. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: demo-setup
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(demo[-\s]setup|customer\s+demo|persona|dt\s+coach|design\s+thinking)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(accelerated|prototype|scaffold|presenter|walkthrough)'
+  - name: skill-demo-setup-bleed-detection
+    prompt: |
+      I am running a real Design Thinking engagement with actual stakeholders
+      and do not need simulated personas or demo scaffolding. Does the
+      `demo-setup` skill apply here? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: demo-setup
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|dt\s+coach|design\s+thinking\s+coach)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(real|actual\s+stakeholder|simulate|simulated|simulation|demo|scaffold)'
   - name: skill-dt-methods-knowledge
     prompt: |
       What body of knowledge does the `dt-methods` skill encode across the
