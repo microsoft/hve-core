@@ -107,12 +107,13 @@ processors:
   # state, and non-map log bodies are overwritten here.
   #
   # Invariant: a carrier the allow-list does not reach is scrubbed unless a
-  # shipped consumer reads it. Span names and metric metadata are therefore
-  # absent, as are carriers this distribution cannot address. Both residual
-  # kinds are registered in SECURITY.md.
+  # shipped consumer reads it. The dashboard's span-name family and metric
+  # names survive; other reachable intrinsic text is normalized. Carriers
+  # this distribution cannot address remain registered in SECURITY.md.
   transform/scrub:
     error_mode: ignore
     trace_statements:
+      - set(span.name, "[redacted]") where not IsMatch(span.name, "invoke_agent.*")
       - set(span.status.message, "[redacted]") where span.status.message != ""
       - set(span.trace_state, "") where span.trace_state != ""
       - set(spanevent.name, "[redacted]")
@@ -120,6 +121,9 @@ processors:
       - set(log.body, "[redacted]") where log.body != nil
       - set(log.severity_text, "[redacted]") where log.severity_text != ""
       - set(log.event_name, "[redacted]") where log.event_name != ""
+    metric_statements:
+      - set(metric.description, "[redacted]") where metric.description != ""
+      - set(metric.unit, "[redacted]") where metric.unit != ""
 
   # Fleet dimensions for grouping. Keep these to org structure; anything that
   # identifies an individual lands on every span they produce.
