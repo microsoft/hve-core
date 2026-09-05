@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-07-15
+ms.date: 2026-09-04
 ms.topic: guide
 keywords:
   - copilot
@@ -38,13 +38,13 @@ Select from the **agent picker dropdown** in the Chat view:
 
 The RPI lifecycle keeps Research, Plan, Implement, Review, and Follow-up distinct for complex development tasks. It begins with research readiness: supplied or completed evidence is reused when adequate, and research runs only for a demonstrated requirements, acceptance, dependency, material-risk, complexity, uncertainty, or decision-critical gap.
 
-`RPI Agent` is a user-selected lifecycle wrapper that activates the matching RPI skills. The `/rpi` prompt provides the same full-lifecycle entry point. Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` when you need a direct phase entry point.
+`RPI Agent` is a user-selected lifecycle wrapper that activates the matching RPI skills. It runs in manual mode by default and can switch to a confirmed automatic session that completes the remaining phases through Review. The `/rpi` prompt provides the same full-lifecycle entry point, and `/rpi-quick` is the skill-based equivalent. Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` when you need a direct phase entry point.
 
-Use the self-contained `rpi-challenger` skill to interrogate a confirmed subject through adaptive skeptical questions. See the [RPI Documentation](../docs/rpi/README.md) for both surfaces.
+Use the self-contained `rpi-challenger` skill to interrogate a confirmed subject through adaptive skeptical questions, and `rpi-walkthrough` to understand code or RPI artifacts one segment at a time. See the [RPI Documentation](../docs/rpi/README.md) for all surfaces.
 
-| Agent         | Purpose                                                            | Key Constraint                                                          |
-|---------------|--------------------------------------------------------------------|-------------------------------------------------------------------------|
-| **RPI Agent** | User-selected lifecycle wrapper that activates matching RPI skills | Uses research readiness and has no fixed specialized task-worker roster |
+| Agent         | Purpose                                                            | Key Constraint                                                                                                   |
+|---------------|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| **RPI Agent** | User-selected lifecycle wrapper that activates matching RPI skills | Manual by default; automatic mode requires explicit confirmation and has no fixed specialized task-worker roster |
 
 ### Documentation and Planning Agents
 
@@ -104,7 +104,11 @@ to `hve-builder`; they are not independent agents or lifecycle owners.
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
 
-**Critical:** `RPI Agent` is a user-selected lifecycle wrapper, not an autonomous loop or a dispatcher for named specialized task workers. It may use generic bounded delegation only when it materially improves an isolated activity. Navigate durable artifacts with the task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
+**Modes:** Manual mode stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. The **Full Auto** handoff requests an automatic session; after you confirm whether ordinary Research and Plan decisions are agent-owned or user-retained, the agent continues through Review without routine approval prompts.
+
+After Review, an automatic session offers ranked follow-up choices plus **Stop automatic session** and **Switch to manual mode**. Blockers, required human review, and destructive or externally visible actions still stop for confirmation.
+
+**Critical:** `RPI Agent` is a user-selected lifecycle wrapper, not a dispatcher for named specialized task workers. Automatic mode begins only after explicit confirmation and never infers consent from a handoff request. It may use generic bounded delegation only when it materially improves an isolated activity. Navigate durable artifacts with the task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 
 ### ux-ui-designer
 

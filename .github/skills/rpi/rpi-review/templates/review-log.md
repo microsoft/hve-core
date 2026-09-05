@@ -85,7 +85,7 @@ Append events in order. Never rewrite or delete an earlier row. The latest event
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
 * Plan critique: .copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md
 * Changes: .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
-* Other evidence considered: {{research_validation_or_bounded_lens_evidence}}
+* Other evidence considered: {{research_or_validation_evidence}}
 
 ### Opening Review State
 

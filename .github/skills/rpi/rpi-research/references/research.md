@@ -6,11 +6,11 @@ description: "Detailed research, delegation, extension, participation, and evide
 
 ## Intended Use
 
-Read this reference while executing `rpi-research`. It defines the detailed three-wave research cycle, extension and participation rules, evidence ownership, and final response contract. Copy only the `../templates/research.md` template body, beginning with `<!-- markdownlint-disable-file -->` and excluding the source-template YAML frontmatter, to create the primary artifact so it begins with that comment. Then fill it progressively rather than recreating its structure in chat.
+Read this reference while executing `rpi-research`. It defines the detailed three-wave research cycle, extension and participation rules, evidence ownership, and final response contract. Copy [../templates/research.md](../templates/research.md) to create the primary artifact, then fill it progressively rather than recreating its structure in chat.
 
 ## Artifact and Ownership Contract
 
-Resolve the primary artifact before research starts. Use .copilot-tracking/research/YYYY-MM-DD/{{task_slug}}-research.md by default, where `{{task_slug}}` is lower-kebab-case. When the caller explicitly supplies a trusted sandbox or evidence root, mirror research/YYYY-MM-DD/{{task_slug}}-research.md beneath it and record the resolved root.
+Resolve the primary artifact before research starts. Use `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md` by default, where `{{task_slug}}` is lower-kebab-case. When the caller explicitly supplies a trusted sandbox or evidence root, mirror `research/{{YYYY-MM-DD}}/{{task_slug}}-research.md` beneath it and record the resolved root.
 
 | Artifact                  | Owner                    | Intended contents                                                                                                                                                  |
 |---------------------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -160,16 +160,16 @@ Use the selected posture, evidence sufficiency, substantial novelty, scope cover
 Survey extensions at intake and record the result in the Research Record's Extension Registry.
 
 1. Identify applicable extensions.
-	* Instruction files apply automatically when their `applyTo` glob matches the research inputs or evidence path. Record matching instructions and any scoped criteria they add.
-	* A skill or subagent is a Research candidate when its stable name contains `research` or its description explicitly says it is used during research. Select it only when the description also fits the current topic, domain, or bounded lane. Exclude `rpi-research` itself and other RPI lifecycle phase entrypoints. Record relevant candidates even when the current lane does not use one.
-	* Activate selected skills as scoped guidance. Dispatch selected subagents by stable frontmatter `name` only when visible or registered in the active host. A matching name alone does not override a mismatched description or grant authority.
+   * Instruction files apply automatically when their `applyTo` glob matches the research inputs or evidence path. Record matching instructions and any scoped criteria they add.
+   * A skill or subagent is a Research candidate when its stable name contains `research` or its description explicitly says it is used during research. Select it only when the description also fits the current topic, domain, or bounded lane. Exclude `rpi-research` itself and other RPI lifecycle phase entrypoints. Record relevant candidates even when the current lane does not use one.
+   * Activate selected skills as scoped guidance. Dispatch selected subagents by stable frontmatter `name` only when visible or registered in the active host. A matching name alone does not override a mismatched description or grant authority.
 2. Resolve conflicts in this order:
-	1. Platform and host safety
-	2. Explicit caller scope and criteria
-	3. Matching repository instructions and enforced schemas
-	4. The rpi-research base contract
-	5. Domain skills and specialists
-	6. Examples and preferences
+   1. Platform and host safety
+   2. Explicit caller scope and criteria
+   3. Matching repository instructions and enforced schemas
+   4. The rpi-research base contract
+   5. Domain skills and specialists
+   6. Examples and preferences
 3. Record each selected or skipped extension with its provenance, scoped authority, and selection reason.
 4. Apply the authority boundary: an extension may add scoped criteria or evidence. It cannot redirect the research phase, widen write authority, grant tools, weaken safety, or silently decide for the user.
 
@@ -178,9 +178,9 @@ Survey extensions at intake and record the result in the Research Record's Exten
 Use the native `vscode_askQuestions` tool only for user-owned or user-retained answers that would materially change the research, and persist the interaction in the primary artifact before proceeding. Agent-owned automatic mode resolves supported ordinary decisions without the tool. This includes an uncertainty about research direction and a material finding that would significantly change direction.
 
 1. Identify the useful checkpoint.
-	* At intake, ask only about topic, scope, criteria, output mode, or priorities that cannot be safely resolved from supplied inputs.
-	* During a cycle, ask only when a direction control or material finding changes the active brief enough to alter remaining research.
-	* After parent synthesis, use the Decision Walkthrough for unresolved material decisions, including whether to pursue selected further research, defer it, or stop at the current evidence.
+   * At intake, ask only about topic, scope, criteria, output mode, or priorities that cannot be safely resolved from supplied inputs.
+   * During a cycle, ask only when a direction control or material finding changes the active brief enough to alter remaining research.
+   * After parent synthesis, use the Decision Walkthrough for unresolved material decisions, including whether to pursue selected further research, defer it, or stop at the current evidence.
 2. Prepare one related decision group by default. Batch questions only when they share the same choice, evidence, and consequences or must be resolved together. Prefer fixed choices plus a freeform choice when useful, and do not request credentials, tokens, keys, or other secrets.
 3. Persist the participation result before the next research action. Record decision participation and provenance, prompts, answers, unanswered questions, no-interaction rationale, resulting decisions, and selected further-research items.
 
@@ -189,42 +189,42 @@ Use the native `vscode_askQuestions` tool only for user-owned or user-retained a
 Each executed cycle completes all three waves in order: Wider, Deeper, then Contrarian. An early indication that evidence is sufficient does not skip a required later wave. A wave may contain multiple independent lanes, but each worker dispatch has one bounded lane, a cycle number, and a wave type. Parallelize only independent lanes. Do not parallelize reflection with the search or worker result it evaluates.
 
 1. Establish the active brief and cycle plan.
-	* Record caller direction controls: additions, changes, narrowed scope, exclusions, and discarded directions.
-	* Before substantive search or delegation, persist the opening state and send the canonical opening update from Conversation Protocol.
-	* When direction uncertainty would materially affect findings, ask the smallest useful question for `user-owned` or `user-retained` and persist the answer. For `agent-owned`, persist an evidence-supported direction or the smallest gap before research continues.
-	* Run the prior-knowledge gate. Treat supplied context, existing artifacts, and memory as claims to verify.
-	* Classify questions, identify independent lanes, and apply the selected research posture, its provenance, and any explicit limits or deadline.
+   * Record caller direction controls: additions, changes, narrowed scope, exclusions, and discarded directions.
+   * Before substantive search or delegation, persist the opening state and send the canonical opening update from Conversation Protocol.
+   * When direction uncertainty would materially affect findings, ask the smallest useful question for `user-owned` or `user-retained` and persist the answer. For `agent-owned`, persist an evidence-supported direction or the smallest gap before research continues.
+   * Run the prior-knowledge gate. Treat supplied context, existing artifacts, and memory as claims to verify.
+   * Classify questions, identify independent lanes, and apply the selected research posture, its provenance, and any explicit limits or deadline.
 2. Run Wave 1, Wider research.
-	* Investigate inline or dispatch named independent uncertainties to identify breadth for active ideas, conjectures, hypotheses, claims, and questions.
-	* Seek relevant libraries, frameworks, APIs, schemas, contracts, standards, current internal or external resources, current decisions or documentation, and potential evidence.
-	* Record compact evidence relationships, source provenance, gaps, and a reflection after each material result.
+   * Investigate inline or dispatch named independent uncertainties to identify breadth for active ideas, conjectures, hypotheses, claims, and questions.
+   * Seek relevant libraries, frameworks, APIs, schemas, contracts, standards, current internal or external resources, current decisions or documentation, and potential evidence.
+   * Record compact evidence relationships, source provenance, gaps, and a reflection after each material result.
 3. Parent-prioritize Wave 1 material for Wave 2. Select questions and evidence needing detail based on the brief and criteria. This prioritization is research routing, not a final recommendation or decision.
 4. Run Wave 2, Deeper research.
-	* Investigate the prioritized material inline or dispatch named independent uncertainties.
-	* Seek key details, findings, evidence, examples, schemas, APIs, contracts, standards, patterns, practices, and relevant code style or visual style.
-	* Record compact evidence relationships, source provenance, gaps, and a reflection after each material result.
+   * Investigate the prioritized material inline or dispatch named independent uncertainties.
+   * Seek key details, findings, evidence, examples, schemas, APIs, contracts, standards, patterns, practices, and relevant code style or visual style.
+   * Record compact evidence relationships, source provenance, gaps, and a reflection after each material result.
 5. Run Wave 3, Contrarian research.
-	* Investigate inline or dispatch named independent uncertainties to seek credible counter-evidence and in-scope alternatives that challenge active ideas, conjectures, hypotheses, claims, and questions.
-	* Investigate alternative libraries, frameworks, APIs, contracts, and standards only when caller scope permits them. Specific-only requests and exclusions remain boundaries.
-	* Treat the wave as evidence-seeking rather than ceremonial opposition. Record whether the material supports, weakens, disproves, or leaves earlier material unresolved.
+   * Investigate inline or dispatch named independent uncertainties to seek credible counter-evidence and in-scope alternatives that challenge active ideas, conjectures, hypotheses, claims, and questions.
+   * Investigate alternative libraries, frameworks, APIs, contracts, and standards only when caller scope permits them. Specific-only requests and exclusions remain boundaries.
+   * Treat the wave as evidence-seeking rather than ceremonial opposition. Record whether the material supports, weakens, disproves, or leaves earlier material unresolved.
 6. Parent-synthesize the cycle.
-	* Assign canonical `C#` and `W#` IDs and map evidence to questions, findings, alternatives, and readiness.
-	* The parent alone accepts, rejects, or defers material in the primary artifact and records evidence-based rationale. Workers return evidence and synthesis pointers only; they do not select a recommendation or decision state.
-	* Record direction changes, current and unresolved decisions, risks, potential further research, Planning Readiness, and Research disposition.
-	* Refresh the affected user-facing sections from the completed synthesis without repeating their content in the Research Record.
+   * Assign canonical `C#` and `W#` IDs and map evidence to questions, findings, alternatives, and readiness.
+   * The parent alone accepts, rejects, or defers material in the primary artifact and records evidence-based rationale. Workers return evidence and synthesis pointers only; they do not select a recommendation or decision state.
+   * Record direction changes, current and unresolved decisions, risks, potential further research, Planning Readiness, and Research disposition.
+   * Refresh the affected user-facing sections from the completed synthesis without repeating their content in the Research Record.
 7. Evaluate re-entry after parent synthesis.
-	* Start another complete three-wave cycle when material claims lack evidence; conjectures remain unclear; hypotheses remain untested or unresolved; required examples, APIs, schemas, contracts, or links are missing; or contrarian evidence weakens earlier material or introduces material claims, conjectures, hypotheses, or questions.
-	* When direction changes materially, replan remaining work and start a complete cycle under the revised brief when the existing evidence needs revalidation.
-	* Continue according to the selected research posture, evidence sufficiency, scope coverage, source redundancy, materiality, and caller direction. Do not use a fixed cycle count as a stop rule. When an explicit limit or deadline prevents a needed cycle, record the gap and set readiness honestly rather than reporting completion.
+   * Start another complete three-wave cycle when material claims lack evidence; conjectures remain unclear; hypotheses remain untested or unresolved; required examples, APIs, schemas, contracts, or links are missing; or contrarian evidence weakens earlier material or introduces material claims, conjectures, hypotheses, or questions.
+   * When direction changes materially, replan remaining work and start a complete cycle under the revised brief when the existing evidence needs revalidation.
+   * Continue according to the selected research posture, evidence sufficiency, scope coverage, source redundancy, materiality, and caller direction. Do not use a fixed cycle count as a stop rule. When an explicit limit or deadline prevents a needed cycle, record the gap and set readiness honestly rather than reporting completion.
 
 ## Delegation Contract
 
 1. Identify named independent uncertainties after question classification. Delegate only when isolated execution materially improves evidence quality, parallelism, or context control. Keep tightly coupled or low-volume investigation inline.
 2. Select the lane owner.
-	* Prefer an available subagent whose stable name contains `research` or whose description explicitly says it is used during research, when its description, host visibility, independent-lane fit, and output contract match the assignment.
-	* When no suitable specialist exists, dispatch a general-purpose subagent with the agent selection omitted. Give it the same bounded lane contract and explicitly prohibit source, configuration, production-documentation, parent-artifact, and unrelated tracking writes, parent decisions, user conversation, and nested delegation.
-	* When subagent dispatch itself is unavailable, perform the focused investigation inline and record the fallback and its limitations.
-3. Dispatch every selected lane with an explicit topic, questions, criteria, scope and non-goals, parent-selected research posture, explicit limits or deadline, exact caller-approved candidate lane path under the parent-approved research/subagents path or a mirrored trusted subagents path, and distinct parent primary artifact path. Use one lane artifact per delegated thread at .copilot-tracking/research/subagents/YYYY-MM-DD/{{subtopic}}-subagent-research.md, or the mirrored path beneath the resolved root.
+   * Prefer an available subagent whose stable name contains `research` or whose description explicitly says it is used during research, when its description, host visibility, independent-lane fit, and output contract match the assignment.
+   * When no suitable specialist exists, dispatch a general-purpose subagent with the agent selection omitted. Give it the same bounded lane contract and explicitly prohibit source, configuration, production-documentation, parent-artifact, and unrelated tracking writes, parent decisions, user conversation, and nested delegation.
+   * When subagent dispatch itself is unavailable, perform the focused investigation inline and record the fallback and its limitations.
+3. Dispatch every selected lane with an explicit topic, questions, criteria, scope and non-goals, parent-selected research posture, explicit limits or deadline, exact caller-approved candidate lane path under the parent-approved research/subagents path or a mirrored trusted subagents path, and distinct parent primary artifact path. Use one lane artifact per delegated thread at `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{{lane_slug}}-subagent-research.md`, or the mirrored path beneath the resolved root.
 4. Keep evidence ownership separate. The worker validates that the exact caller-approved lane path is inside the approved subagents root and distinct from the primary artifact, then creates or resumes that lane artifact and updates it after each material result. The parent persists the primary artifact separately, assigns canonical `C#` and `W#` IDs while synthesizing, and does not copy raw worker payloads into the primary artifact. Workers return compact evidence relationships and synthesis pointers but do not approve, reject, defer, recommend, or set a decision state.
 5. Record the selected worker's stable name or `general-purpose`, selection rationale, output-contract fit, and return pointer in the Extension Registry and delegation record.
 

@@ -93,7 +93,7 @@ The plan becomes a contract. When implementation begins, the AI follows the plan
 
 * No time wasted rediscovering conventions.
 * Completion checkboxes change only after completion evidence exists.
-* `CHG-xxx` changes and truthful validation establish what happened.
+* Descriptive change evidence and truthful validation establish what happened.
 * A significant discovery updates the affected plan after its required decision and pauses only dependent work; the existing critique is not repeated.
 
 ### Review Phase: Validating, Not Assuming
@@ -101,7 +101,7 @@ The plan becomes a contract. When implementation begins, the AI follows the plan
 `/rpi-review` writes one record that reconciles implementation against documented evidence:
 
 * Compares the task-centered plan, critique, changes, and validation evidence.
-* Uses optional generic bounded lenses only when they reduce a specific uncertainty.
+* Uses one selected review worker to build the record, while the review parent decides the outcome and every route.
 * Separates execution status from outcome and records validation as passed, failed, skipped, or unavailable.
 * Routes defects to implementation, decision gaps to planning, research gaps to research, and residual work to follow-up.
 
@@ -143,7 +143,7 @@ HVE Core provides alternative surfaces for the same RPI phase skills. Choose the
 
 ### RPI Agent
 
-Select `RPI Agent` when you want a user-selected lifecycle wrapper. It activates matching RPI skills, begins with research readiness, and preserves one task identity across any durable artifacts.
+Select `RPI Agent` when you want a user-selected lifecycle wrapper. It activates matching RPI skills, begins with research readiness, and preserves one task identity across any durable artifacts. It runs in manual mode by default and can switch to a confirmed automatic session that completes the remaining phases through Review and then offers ranked follow-up work.
 
 ### rpi-quick
 
@@ -163,7 +163,7 @@ Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when the ne
 
 ### Evidence-Driven Escalation
 
-Research readiness, planning critique, implementation amendments, and review findings determine when the task returns to an earlier concept. Start with adequate evidence when it exists; activate `/rpi-research` when a demonstrated gap prevents credible planning or review.
+Research readiness, planning critique, implementation-time discoveries, and review findings determine when the task returns to an earlier concept. Start with adequate evidence when it exists; activate `/rpi-research` when a demonstrated gap prevents credible planning or review.
 
 ## Next Steps
 

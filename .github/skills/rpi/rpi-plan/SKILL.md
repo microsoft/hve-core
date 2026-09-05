@@ -1,7 +1,7 @@
 ---
 name: rpi-plan
 description: "Create one evidence-based RPI implementation plan from supplied context, research, drafts, and decisions. Use when implementation planning is needed."
-argument-hint: "[task=...] [research=...] [context=...] [draft=...] [decisions=...] [delegation={adaptive|never|always}]"
+argument-hint: "[task=...] [research=...] [context=...] [draft=...] [decisions=...] [delegation={adaptive|never|always}] [critique={standard|deep}]"
 license: MIT
 user-invocable: true
 ---

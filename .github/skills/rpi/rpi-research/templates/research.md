@@ -1,8 +1,4 @@
----
-description: "Primary evidence artifact template for rpi-research"
----
 <!-- markdownlint-disable-file -->
-
 # Task Research: {{task_slug}}
 
 Fill every `{{placeholder}}`. Update this file continuously during research, not once at the end. Repeat the marked cycle block as needed. Delete optional sections that do not apply, and omit guidance comments in the completed artifact.
@@ -176,7 +172,7 @@ The parent alone records accepted, rejected, and deferred material. Workers retu
 
 <!-- Add rows as research proceeds. Use C# for codebase evidence and W# for external evidence. Code rows use workspace-relative paths plus headings or symbols and "not applicable" for retrieval metadata. External rows use source title plus URL and retrieval date plus version. -->
 
-* Delegation: {{cycle_and_wave_annotated selected research worker or general-purpose evidence files under .copilot-tracking/research/subagents/YYYY-MM-DD/, or "inline: fallback reason" when dispatch was unavailable}}
+* Delegation: {{cycle_and_wave_annotated selected research worker or general-purpose evidence files under .copilot-tracking/research/subagents/{{YYYY-MM-DD}}/, or "inline: fallback reason" when dispatch was unavailable}}
 
 | ID | Claim or finding | Source or location                                | Retrieved and version      | Tool                   | Confidence       | Notes       |
 |----|------------------|---------------------------------------------------|----------------------------|------------------------|------------------|-------------|

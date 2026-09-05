@@ -47,7 +47,7 @@ The worker owns only the explicit delegated evidence artifact. Create it with th
 
 ## Constraints
 
-* Use the declared tools only. `search` and `read` support workspace evidence. The `web` grant provides `fetch_webpage`; the `githubRepo` grant provides `github_repo` and `github_text_search`. Use those operations with `microsoft-docs/*` for external, repository, and documentation evidence. Use `edit` tools to create the delegated lane artifacts and directories and to update only those artifacts progressively.
+* Use the declared tools only. `search` and `read` support workspace evidence; `web` provides `fetch_webpage`; `microsoft-docs/*` provides documentation lookups; repository search tools such as `github_repo` and `github_text_search` apply only when granted. Use `edit` tools to create the delegated lane artifacts and directories and to update only those artifacts progressively.
 * Before every create or edit, validate that the exact lane path is inside the parent-approved research/subagents path or mirrored trusted subagents path and distinct from the parent primary artifact. The host tool schema does not enforce a path scope, so this preflight is defense in depth rather than path-scoped enforcement. If validation fails, return `Needs clarification` or `Blocked` without writing.
 * Do not use terminal tools, dispatch other agents, or create, modify, or delete source, configuration, production documentation, packaging, or unrelated tracking files.
 * Return evidence and synthesis pointers only. The parent owns selection, rejection, deferral, recommendation, and decision state.
@@ -70,7 +70,7 @@ The worker owns only the explicit delegated evidence artifact. Create it with th
   * `Wider`: find breadth for ideas, conjectures, hypotheses, claims, and questions. Seek relevant libraries, frameworks, APIs, schemas, contracts, standards, current resources, current decisions or documentation, and potential evidence.
   * `Deeper`: investigate parent-prioritized material for details, findings, evidence, examples, schemas, APIs, contracts, standards, patterns, practices, and relevant code or visual style.
   * `Contrarian`: seek credible counter-evidence and caller-permitted alternatives that challenge the active material. Honor specific-only requests and exclusions as scope boundaries.
-2. Start with workspace evidence for internal questions. For external questions, use `fetch_webpage`; for GitHub repository evidence, use `github_repo` and `github_text_search`; use documentation tools when the scope and criteria call for them. Use independent sources when corroboration is required by the criteria.
+2. Start with workspace evidence for internal questions. For external questions, use `fetch_webpage`; for GitHub repository evidence, use `github_repo` and `github_text_search` when granted; use documentation tools when the scope and criteria call for them. Use independent sources when corroboration is required by the criteria.
 3. After each material result, update the lane artifact with what it supports, weakens, disproves, or leaves unresolved; provenance; confidence; remaining gap; and whether lane criteria, source redundancy, an explicit limit, or a scope boundary determines the next action. Keep facts distinct from inferences.
 
 ### Step 2: Finalize

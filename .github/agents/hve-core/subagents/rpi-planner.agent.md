@@ -60,7 +60,7 @@ The supplied plan path, limited to the assigned phase and its `Pxx-Txx` task sec
 4. Fill each task's labeled blocks in order: `Requirements:` with requirement identifiers and the binding conditions that must hold when the task is done, `Details:` with evidence-backed context, boundaries, and supported assumptions, `References:` with linked files, folders, and research sections, then `Dependencies:`. Keep illustrative code labeled as illustrative.
 5. Leave any existing phase diagram in place unless the parent asked you to update it; the parent owns the overall and per-phase diagrams.
 6. Resolve a local choice when the supplied evidence supports it.
-6. Record an assumption the implementer may resolve locally in the assigned task's `Details:`. Return a decision gap, risk, or question to the parent in your response rather than adding a status block; the parent owns the plan's decision and risk tables.
+7. Record an assumption the implementer may resolve locally in the assigned task's `Details:`. Return a decision gap, risk, or question to the parent in your response rather than adding a status block; the parent owns the plan's decision and risk tables.
 8. Use `edit/editFiles` only for the permitted section of the supplied plan.
 
 ## Constraints

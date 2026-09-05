@@ -7,13 +7,14 @@ ms.date: 2026-09-04
 ms.topic: tutorial
 keywords:
   - rpi workflow
-   - rpi agent
-   - rpi research
-   - rpi plan
-   - rpi implement
-   - rpi review
+  - rpi agent
+  - rpi research
+  - rpi plan
+  - rpi implement
+  - rpi review
   - complete workflow
-   - follow-up
+  - follow-up
+  - automatic mode
 estimated_reading_time: 8
 ---
 
@@ -206,15 +207,16 @@ Use `Pxx` and `Pxx-Txx` IDs, headings, and markers to navigate the plan. They re
    /rpi-implement plan=.copilot-tracking/plans/2025-01-28/blob-storage-plan.md task=P01-T01
    ```
 
-3. Review change evidence as each approved task completes. After `P01` completes:
+3. Review change evidence as each approved task completes. The changes record uses descriptive headings tied to plan markers rather than per-entry IDs. After `P01` completes:
 
 ```text
-CHG-001: Add BlobStorageClient
-Related task: P01-T01
-Files: src/storage/blob_client.py
-Validation: Passed
+### Add BlobStorageClient behind the writer contract
 
-P01-T01 and P01-T02 have completion evidence.
+* Related phase or task: P01-T01
+* Files: src/storage/blob_client.py
+* Validation: Passed
+
+P01-T01 and P01-T02 have completion evidence; P01 is checked.
 ```
 
 Check the code and validation evidence, then continue to the next approved `Pxx` or `Pxx-Txx` item.
@@ -254,10 +256,10 @@ Ready for review.
 3. `/rpi-review` creates or updates one review record:
 
    * Locates research, the task-centered plan, plan critique, changes, and validation evidence
-   * Reconciles each `Pxx` and `Pxx-Txx` item with completion and change evidence
-   * Assesses `AM-xxx` amendments and `DIV-xxx` divergences
-   * Uses an optional generic bounded lens only when it reduces a specific review uncertainty
-   * Records severity-graded `RV-xxx` findings, separate execution status and outcome, validation evidence or `Unavailable`, and next-owner routing
+   * Dispatches one selected review worker (a phase-matched subagent such as `RPI Review Builder`, or a general-purpose subagent) to compare each `Pxx` and `Pxx-Txx` item with completion and change evidence
+   * Assesses implementation-time plan updates, critique dispositions, and plan follow-up items
+   * Records severity-graded `RV-xxx` findings, separate execution status and outcome, validation evidence or `Unavailable`, and proposed routing
+   * Keeps final outcome and route decisions with the review parent in `## Parent Decision Record`; in a standalone review you walk through each actionable finding and choose its route
 
 4. Review the findings:
 
@@ -341,7 +343,7 @@ RPI artifacts support handoffs:
 
 * Research doc explains decisions
 * The task-centered plan shows remaining `Pxx` and `Pxx-Txx` work and the context needed to implement it
-* Changes record shows completed work, validation, and linked changes or divergences
+* Changes record shows completed work, validation, and implementation-time plan updates with their rationale
 * Review record shows separate execution status, outcome, findings, and routing
 
 ## Review Routing
@@ -396,11 +398,19 @@ For a long lifecycle, resume with the stable task ID, `Pxx`, `Pxx-Txx`, headings
 
 Choose the entry surface that best fits the task. Both `RPI Agent` and `/rpi-quick` activate the same phase skills.
 
-| Entry surface       | Use it when                                  | Contract                                                  |
-|---------------------|----------------------------------------------|-----------------------------------------------------------|
-| `RPI Agent`         | You want a user-selected lifecycle wrapper   | Activates applicable phase skills from research readiness |
-| `/rpi-quick`        | You want a skill-based full-flow entry point | Same lifecycle contract and one task identity             |
-| Direct phase skills | The next responsible action is already known | Bounded Research, Plan, Implement, or Review work         |
+| Entry surface       | Use it when                                  | Contract                                                                     |
+|---------------------|----------------------------------------------|------------------------------------------------------------------------------|
+| `RPI Agent`         | You want a user-selected lifecycle wrapper   | Activates applicable phase skills from research readiness; manual by default |
+| `/rpi-quick`        | You want a skill-based full-flow entry point | Same lifecycle contract and one task identity                                |
+| Direct phase skills | The next responsible action is already known | Bounded Research, Plan, Implement, or Review work                            |
+
+### Manual and Automatic Mode in RPI Agent
+
+`RPI Agent` starts in manual mode: it stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. Choose **Full Auto** to request an automatic session. The agent asks whether it should resolve ordinary Research and Plan decisions itself or pause for you to retain decisions in either phase, then continues through Review without routine approval prompts. It still stops for blockers, required human review, and any destructive or externally visible action.
+
+After Review, an automatic session presents ranked follow-up choices alongside **Stop automatic session** and **Switch to manual mode**. Selecting a follow-up starts a child task from Research with the completed task recorded as its parent. Review-item decisions are agent-owned in automatic mode unless you explicitly retain them.
+
+Both modes persist one JSON state record with the task identity, mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups, so a later conversation can resume from the recorded phase.
 
 ## Resuming a Long Lifecycle
 
@@ -414,7 +424,7 @@ A long lifecycle can accumulate context. Resume from the durable RPI artifact se
 > [!TIP]
 > For the full explanation of how context affects the lifecycle, see [Context Engineering](context-engineering).
 
-See [Agents Reference](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md) for RPI Agent details.
+See the [RPI Agent reference](../reference/agents/hve-core/rpi-agent) for the agent's state contract and handoffs.
 
 ## Related Guides
 
