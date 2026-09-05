@@ -1,7 +1,7 @@
 ---
 title: Rpi
 description: "Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow"
-sidebar_position: 10
+sidebar_position: 9
 author: Microsoft
 ms.date: 2026-09-04
 ms.topic: reference

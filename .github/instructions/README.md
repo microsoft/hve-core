@@ -64,8 +64,7 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 |------------------------------------------------------------------------------------|------------------------------|---------------------------------------|
 | [hve-core/commit-message.instructions.md](hve-core/commit-message.instructions.md) | Commit actions               | Conventional commit message format    |
 | [hve-core/git-merge.instructions.md](hve-core/git-merge.instructions.md)           | Git operations               | Merge, rebase, and conflict handling  |
-| [hve-core/pull-request.instructions.md](hve-core/pull-request.instructions.md)     | `**/.copilot-tracking/pr/**` | PR generation workflow with subagents |
-| [pull-request.instructions.md](pull-request.instructions.md)                       | `**/.copilot-tracking/pr/**` | Repo-specific PR conventions          |
+| [pull-request.instructions.md](pull-request.instructions.md)                       | `**/.copilot-tracking/pr/**` | HVE Core pull request conventions     |
 
 ### Repository Workflow
 
@@ -238,7 +237,6 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── licensing-posture.instructions.md
 │   ├── markdown.instructions.md
 │   ├── hve-builder.instructions.md
-│   ├── pull-request.instructions.md
 │   └── writing-style.instructions.md
 ├── privacy/                          # Privacy planning
 │   └── privacy-identity.instructions.md
