@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import re
+import stat
 import sys
 import traceback
 import urllib.error
@@ -27,6 +28,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 EXIT_SUCCESS = 0
@@ -39,6 +41,22 @@ ISSUE_KEY_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9]+-\d+$")
 INTEGER_PATTERN = re.compile(r"^\d+$")
 ATLASSIAN_SCOPED_ORIGIN = "https://api.atlassian.com"
 MAX_CLOUD_ID_BYTES = 1024
+MAX_ENV_FILE_BYTES = 64 * 1024
+ENV_KEY_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+JIRA_ENV_KEYS = frozenset(
+    {
+        "JIRA_ALLOW_INSECURE",
+        "JIRA_API_TOKEN",
+        "JIRA_AUDIT_ACTOR",
+        "JIRA_AUDIT_LOG",
+        "JIRA_BASE_URL",
+        "JIRA_CLOUD_ID",
+        "JIRA_CLOUD_TOKEN_MODE",
+        "JIRA_CONFIRM_WRITES",
+        "JIRA_PAT",
+        "JIRA_USER_EMAIL",
+    }
+)
 
 _AUDIT_OP = ""
 
@@ -197,6 +215,117 @@ class JiraAPIError(ScriptError):
             f"JiraAPIError(status={self.status!r}, method={self.method!r}, "
             f"resource={self.resource!r}, request_id={self.request_id!r})"
         )
+
+
+def _default_env_file() -> Path:
+    """Return the default local Jira environment file."""
+    return Path.home() / ".jira.env"
+
+
+def _parse_env_file(content: str) -> dict[str, str]:
+    """Parse dotenv assignments without evaluating shell syntax."""
+    if "\0" in content:
+        raise ScriptError("Jira environment file contains a NUL byte", EXIT_USAGE)
+
+    values: dict[str, str] = {}
+    lines = [line.removesuffix("\r") for line in content.split("\n")]
+    line_index = 0
+    while line_index < len(lines):
+        assignment = lines[line_index].strip()
+        line_number = line_index + 1
+        line_index += 1
+        if not assignment or assignment.startswith("#"):
+            continue
+        if assignment.startswith("export "):
+            assignment = assignment[7:].lstrip()
+
+        key, separator, raw_value = assignment.partition("=")
+        key = key.strip()
+        if not separator or not ENV_KEY_PATTERN.fullmatch(key):
+            raise ScriptError(
+                f"Invalid Jira environment assignment at line {line_number}",
+                EXIT_USAGE,
+            )
+
+        raw_value = raw_value.strip()
+        if raw_value.startswith(("'", '"')):
+            quote = raw_value[0]
+            quoted_value = raw_value[1:]
+            while quote not in quoted_value:
+                if line_index >= len(lines):
+                    raise ScriptError(
+                        f"Unterminated Jira environment value at line {line_number}",
+                        EXIT_USAGE,
+                    )
+                quoted_value += "\n" + lines[line_index]
+                line_index += 1
+            value, trailing = quoted_value.split(quote, 1)
+            trailing = trailing.strip()
+            if trailing and not trailing.startswith("#"):
+                raise ScriptError(
+                    f"Invalid Jira environment value at line {line_number}",
+                    EXIT_USAGE,
+                )
+        else:
+            value = raw_value
+
+        if key in JIRA_ENV_KEYS:
+            values[key] = value
+    return values
+
+
+def _load_jira_env_file(path: Path | None = None) -> None:
+    """Load absent Jira variables from a protected dotenv file."""
+    env_path = path if path is not None else _default_env_file()
+    if not env_path.exists():
+        return
+    if env_path.is_symlink():
+        raise ScriptError("Jira environment file must not be a symlink", EXIT_USAGE)
+
+    flags = (
+        os.O_RDONLY
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_NONBLOCK", 0)
+    )
+    descriptor = -1
+    try:
+        descriptor = os.open(env_path, flags)
+        file_stat = os.fstat(descriptor)
+        if not stat.S_ISREG(file_stat.st_mode):
+            raise ScriptError(
+                "Jira environment path must be a regular file",
+                EXIT_USAGE,
+            )
+        getuid = getattr(os, "getuid", None)
+        if getuid is not None and file_stat.st_uid != getuid():
+            raise ScriptError(
+                "Jira environment file must be owned by the current user",
+                EXIT_USAGE,
+            )
+        if os.name != "nt" and stat.S_IMODE(file_stat.st_mode) & 0o077:
+            raise ScriptError(
+                "Jira environment file permissions must allow owner access only",
+                EXIT_USAGE,
+            )
+        if file_stat.st_size > MAX_ENV_FILE_BYTES:
+            raise ScriptError("Jira environment file exceeds size limit", EXIT_USAGE)
+
+        with os.fdopen(descriptor, encoding="utf-8") as env_file:
+            descriptor = -1
+            content = env_file.read(MAX_ENV_FILE_BYTES + 1)
+    except ScriptError:
+        raise
+    except (OSError, UnicodeError) as error:
+        raise ScriptError("Unable to read Jira environment file", EXIT_USAGE) from error
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    if len(content.encode("utf-8")) > MAX_ENV_FILE_BYTES:
+        raise ScriptError("Jira environment file exceeds size limit", EXIT_USAGE)
+
+    for key, value in _parse_env_file(content).items():
+        if key not in os.environ:
+            os.environ[key] = value
 
 
 def _emit(message: str, *, level: int = logging.ERROR) -> None:
@@ -1151,6 +1280,8 @@ def main() -> int:
         command = getattr(args, "command", "") or ""
         global _AUDIT_OP
         _AUDIT_OP = command
+
+        _load_jira_env_file()
 
         if command in {"create", "update", "transition", "comment"}:
             confirmed = bool(args.confirm) or (

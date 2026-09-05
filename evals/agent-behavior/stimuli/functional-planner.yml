@@ -81,3 +81,33 @@ stimuli:
         config:
           pattern: '(?i)the tool (list|grant|frontmatter) (prevents|blocks|enforces|makes it impossible).{0,60}Jira'
           negate: true
+
+  - name: functional-planner-jira-credential-loading-boundary
+    prompt: |
+      Open the agent artifact at `.github/agents/project-planning/functional-planner.agent.md`.
+
+      Report how Jira configuration reaches the CLI and what the agent must do
+      when CLI validation says configuration is incomplete. Report only the
+      declared behavior; do not run commands, inspect credentials, or contact Jira.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: reports-in-process-data-loading
+        config:
+          pattern: '(?i)(CLI|jira skill).{0,100}(loads?|reads?).{0,80}\.jira\.env.{0,100}(in-process|as data|not.{0,20}shell)'
+      - type: output-matches
+        name: reports-value-free-stop
+        config:
+          pattern: '(?i)(incomplete|missing|required).{0,100}variables?.{0,100}(stop|stops)'
+      - type: output-matches
+        name: does-not-report-credential-values
+        config:
+          pattern: '(?i)JIRA_(API_TOKEN|PAT)\s*=\s*\S+'
+          negate: true
+      - type: output-matches
+        name: does-not-authorize-inline-setup
+        config:
+          pattern: '(?i)(functional planner|the agent)\s+(may|must|should|can|will\s+)?(source|probe|create|edit|run credential setup)'
+          negate: true

@@ -294,13 +294,37 @@ Create directories safely and handle paths properly:
 
 ```bash
 mkdir -p "$(dirname "$OUTPUT_FILE")"
-
-if [[ -f "${config_file}" ]]; then
-  source "${config_file}"
-fi
 ```
 
+Treat sourced configuration as executable code. Establish its authority and
+change contract before use; file existence and quoted expansion do not establish
+provenance. For repository-managed CI configuration, follow the reviewed
+checkout contract in [Security Practices](#repository-managed-ci-configuration).
+
 ## Security Practices
+
+### Repository-Managed CI Configuration
+
+Repository-managed CI configuration is authorized by the reviewed repository
+revision and the resulting checkout. Source it only when its canonical identity
+remains within that checkout and its content remains unchanged after checkout.
+Path or symbolic-link substitution and post-checkout modification invalidate
+that authority. A new reviewed revision and checkout can authorize an update;
+a digest without an authorized baseline cannot.
+
+<!-- <example-ci-configuration-authority> -->
+```bash
+readonly CHECKOUT_ROOT="${GITHUB_WORKSPACE:?GITHUB_WORKSPACE must be set}"
+readonly CONFIG_FILE="${CHECKOUT_ROOT}/ci/config.sh"
+
+# Source only after the CI workflow verifies checkout identity and content state.
+source "${CONFIG_FILE}"
+```
+<!-- </example-ci-configuration-authority> -->
+
+This contract does not define authority for operator-managed, user-selected, or
+externally acquired configuration. Those classes require their own authority
+and change contracts before sourcing.
 
 ### Variable Quoting
 
