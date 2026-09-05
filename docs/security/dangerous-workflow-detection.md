@@ -3,7 +3,7 @@ title: Dangerous Workflow Detection
 description: How the hybrid dangerous-workflow control combines a homegrown template-injection gate with the Poutine supply-chain scanner for GitHub Actions workflows
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-08
+ms.date: 2026-08-30
 ms.topic: reference
 keywords:
   - security
@@ -91,8 +91,8 @@ The split is deliberate:
 * The homegrown gate stays narrow, deterministic, and offline so it can block with near-zero
   false positives.
 * Poutine provides breadth and is maintained upstream, but runs advisory to avoid a noisy hard gate.
-* The `# poutine:ignore untrusted_checkout_exec` marker is honored by Poutine to acknowledge
-  reviewed checkout exceptions. It does not affect the homegrown template-injection gate.
+* Reviewed Poutine exceptions are configured in `.poutine.yml` by rule and path. They do not
+  affect the homegrown template-injection gate.
 * Taint-based expansion of the injection rule (indirect derivations) remains tracked as follow-on work.
   CodeQL's `actions/code-injection` query models untrusted sources as `github.event.*` values, so it
   does not report workflow-input interpolation either; the homegrown input rule covers that case.
@@ -120,27 +120,23 @@ CI-only scanner and is not part of the offline lint pipeline.
 
 ## Suppression
 
-Use the suppression marker only when a checkout is genuinely trusted and the exception has been
-reviewed. The marker is recognized by Poutine on the checkout step line itself or on the immediately
-preceding line:
+Use a rule-and-path skip only when a checkout is genuinely trusted and the exception has been
+reviewed:
 
 ```yaml
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4 # poutine:ignore untrusted_checkout_exec
-        with:
-          ref: ${{ github.ref }}
+skip:
+  - rule: untrusted_checkout_exec
+    path:
+      - .github/workflows/example.yml
 ```
 
-Advisory Poutine findings can also be acknowledged in `.poutine.yml` by rule, path, or level once
-triaged.
+Poutine also supports skip entries by job, level, OSV ID, or package URL. Prefer the narrowest
+combination that matches the reviewed finding.
 
 Use this only for a legitimate trusted checkout. Review expectations:
 
 * The checkout target must be a trusted constant or otherwise intentionally approved.
-* The comment should be added only after a human review confirms that the workflow truly needs the exception.
+* The configuration entry should be added only after review confirms that the workflow needs the exception.
 * Suppressions should be temporary and removed when the workflow is refactored to a safer pattern.
 
 ## Triage flow

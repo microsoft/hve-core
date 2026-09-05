@@ -8,6 +8,16 @@ variable "name_prefix" {
   }
 }
 
+variable "environment" {
+  description = "Environment this deployment serves. Apply one set of resources per environment; a shared workspace gives every reader all environments at once."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[a-z0-9-]{2,12}$", var.environment))
+    error_message = "The environment value must be 2 to 12 lowercase letters, digits, or hyphens."
+  }
+}
+
 variable "resource_group_name" {
   description = "Existing resource group that will hold the telemetry resources."
   type        = string
@@ -19,7 +29,7 @@ variable "location" {
 }
 
 variable "retention_in_days" {
-  description = "Log Analytics retention in days. This is a cost decision, not a default."
+  description = "Log Analytics retention in days. This is a cost decision, not a default, and it is also the deletion boundary: nothing purges before it."
   type        = number
   default     = 90
 
@@ -36,7 +46,7 @@ variable "daily_quota_gb" {
 }
 
 variable "reader_principal_id" {
-  description = "Object ID of the principal that will read telemetry. Empty skips the role assignment."
+  description = "Object ID of the principal that will read telemetry. Empty skips the role assignment. The assignment is scoped to this environment's workspace only."
   type        = string
   default     = ""
 }

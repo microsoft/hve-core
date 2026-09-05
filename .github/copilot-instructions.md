@@ -54,7 +54,6 @@ The project is organized into these main areas:
 * Documentation (`docs/`) - Getting started guides, templates, RPI workflow documentation, and contribution guidelines.
 * Scripts (`scripts/`) - Automation for linting, security validation, extension packaging, and development tools.
 * Skills (`.github/skills/{package-id}/`) - Self-contained skill packages, by convention organized by package.
-* Hooks (`.github/hooks/{package-id}/`) - Package-scoped Copilot hook manifests (JSON) that wire lifecycle event commands.
 * Extension (`extension/`) - VS Code extension source and packaging.
 * GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, composite actions, and issue templates, typically organized into `{package-id}` subdirectories.
 * Plugin manifest (`plugin.json`) - Deterministic membership and metadata for the sole `hve-core` plugin.
@@ -141,12 +140,12 @@ Parent agents reference subagents using glob paths like `.github/agents/**/code-
 
 The plugin manifest owns plugin and VSIX composition:
 
-* Root `plugin.json` owns the complete `hve-core` component membership: package-scoped agents, prompts, instructions, and distributable skills discovered from tracked `.github` paths, plus the fixed telemetry hook. `.github/plugin/marketplace.json` contains one relative locator to the repository root and no component recipe.
-* After adding, changing, moving, or removing a distributable artifact, run `npm run plugin:sync` to update the manifest. Run `npm run plugin:validate` to check manifest drift, marketplace parity and containment, component coverage, and hooks.
+* Root `plugin.json` owns the complete `hve-core` component membership: package-scoped agents, prompts, instructions, and distributable skills discovered from tracked `.github` paths. The manifest declares no hooks. Hooks support was removed with the telemetry hook, so a committed `hooks` field is reported as drift rather than preserved. `.github/plugin/marketplace.json` contains one relative locator to the repository root and no component recipe.
+* After adding, changing, moving, or removing a distributable artifact, run `npm run plugin:sync` to update the manifest. Run `npm run plugin:validate` to check manifest drift, marketplace parity and containment, and component coverage.
 * The installable plugin root is the repository root. Artifact discovery remains limited to package-scoped `.github` paths; do not materialize a copied plugin tree or create a repository-root `plugins/` directory.
 * Run `npm run extension:prepare` or `npm run extension:prepare:prerelease` to refresh the single `extension/package.json` and `extension/README.md`. Stable and PreRelease contain the same component set.
 * After adding, changing, moving, or removing a documentable agent, prompt, instruction, or skill, run `npm run docs:generate` and commit the matching page under `docs/reference/`. The generator owns page frontmatter and the prefix through `<!-- END AUTO-GENERATED: overview -->`; edit only the preserved `When to use it`, applicable `How to use it`, and `Example usage` tail. Do not edit generated regions or catalog indexes by hand.
-* Run `npm run plugin:validate` to confirm the manifest, one-entry locator, component coverage, and hooks are correct.
+* Run `npm run plugin:validate` to confirm the manifest, one-entry locator, and component coverage are correct.
 <!-- </project-structure> -->
 
 <!-- <script-operations> -->
@@ -168,7 +167,6 @@ Commit message scopes map to repository directories:
 * `(prompts)` = `.github/prompts/`
 * `(instructions)` = `.github/instructions/`
 * `(skills)` = `.github/skills/`
-* `(hooks)` = `.github/hooks/`
 * `(templates)` = `.github/ISSUE_TEMPLATE/`
 * `(workflows)` = `.github/workflows/`
 * `(extension)` = `extension/`

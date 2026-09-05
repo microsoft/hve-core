@@ -148,17 +148,22 @@ Describe 'Invoke-AssetDocsGeneration human sections' -Tag 'Unit' {
     It 'Scaffolds the How to use it section for an interactive asset' {
         $content = Get-Content -LiteralPath (Join-Path $script:repo 'docs/reference/agents/hve-core/alpha-agent.md') -Raw
 
-        $content | Should -Match '(?m)^## When to use it$'
-        $content | Should -Match '(?m)^## How to use it$'
-        $content | Should -Match '(?m)^## Example usage$'
+        @([regex]::Matches($content, '(?m)^## .+$').Value) | Should -Be @(
+            '## What it does'
+            '## When to use it'
+            '## How to use it'
+            '## Example usage'
+        )
     }
 
     It 'Omits the How to use it section for a delegated subagent' {
         $content = Get-Content -LiteralPath (Join-Path $script:repo 'docs/reference/agents/hve-core/subagents/nested-sub.md') -Raw
 
-        $content | Should -Match '(?m)^## When to use it$'
-        $content | Should -Not -Match '(?m)^## How to use it$'
-        $content | Should -Match '(?m)^## Example usage$'
+        @([regex]::Matches($content, '(?m)^## .+$').Value) | Should -Be @(
+            '## What it does'
+            '## When to use it'
+            '## Example usage'
+        )
     }
 
     It 'Omits the How to use it section for passive instructions and skills' {
@@ -169,6 +174,10 @@ Describe 'Invoke-AssetDocsGeneration human sections' -Tag 'Unit' {
 
     It 'Marks every scaffolded human section as an unwritten stub' {
         Test-AssetDocStub -Content (Get-Content -LiteralPath (Join-Path $script:repo 'docs/reference/prompts/hve-core/demo.md') -Raw) | Should -BeTrue
+    }
+
+    It 'Keeps output headings out of the scaffold body template' {
+        Get-Content -LiteralPath $script:TemplatePath -Raw | Should -Not -Match '(?m)^## '
     }
 
     It 'Preserves an authored human tail while refreshing the generated regions' {
@@ -233,6 +242,30 @@ Describe 'Invoke-AssetDocsGeneration idempotence' -Tag 'Unit' {
             (Get-Content -LiteralPath (Join-Path $crlfRepo $rel) -Raw) |
                 Should -Be (Get-Content -LiteralPath (Join-Path $lfRepo $rel) -Raw) -Because "page '$rel' must not depend on source line endings"
         }
+    }
+}
+
+Describe 'Invoke-AssetDocsGeneration interactivity migration' -Tag 'Unit' {
+    It 'Removes untouched interactive scaffolding when an existing agent becomes background-only' {
+        $repo = New-AssetFixtureRepo
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        $pagePath = Join-Path $repo 'docs/reference/agents/hve-core/alpha-agent.md'
+        $page = Get-Content -LiteralPath $pagePath -Raw
+        $page = $page -replace 'Provide a concrete example that shows the asset in action, including representative input and the resulting output\.', 'Run the alpha agent with a representative request and preserve this authored example.'
+        Set-Content -LiteralPath $pagePath -Value $page -Encoding utf8NoBOM -NoNewline
+        $expectedTail = [regex]::Match($page, '(?ms)^## Example usage\s*\r?\n.*\z').Value
+        $agentPath = Join-Path $repo '.github/agents/hve-core/alpha-agent.agent.md'
+        $agent = Get-Content -LiteralPath $agentPath -Raw
+        $agent = $agent -replace '(?m)^description:', "user-invocable: false`ndescription:"
+        Set-Content -LiteralPath $agentPath -Value $agent -Encoding utf8NoBOM -NoNewline
+
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+
+        $content = Get-Content -LiteralPath $pagePath -Raw
+        $content | Should -Match 'Background agent'
+        $content | Should -Match '(?m)^\| Interactive\s+\| No\s+\|$'
+        $content | Should -Not -Match '## How to use it'
+        [regex]::Match($content, '(?ms)^## Example usage\s*\r?\n.*\z').Value | Should -BeExactly $expectedTail
     }
 }
 
@@ -340,6 +373,16 @@ Describe 'Invoke-AssetDocsGeneration input validation' -Tag 'Unit' {
 
         { Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $missing } |
             Should -Throw -ExpectedMessage "Template not found: $missing"
+    }
+
+    It 'Throws when an applicable template section body is missing' {
+        $repo = New-AssetFixtureRepo
+        $brokenTemplate = Join-Path $TestDrive 'broken-asset-doc.template.md'
+        $template = Get-Content -LiteralPath $script:TemplatePath -Raw
+        Set-Content -LiteralPath $brokenTemplate -Value ($template -replace '<!-- END ASSET-DOC TEMPLATE: example-usage -->', '') -Encoding utf8NoBOM -NoNewline
+
+        { Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $brokenTemplate } |
+            Should -Throw -ExpectedMessage "Template section 'example-usage' must contain exactly one begin marker and one end marker."
     }
 
     It 'Produces no pages for a repository with no documentable assets' {

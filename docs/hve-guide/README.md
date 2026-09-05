@@ -3,7 +3,7 @@ title: HVE Guide
 description: Role-specific guides and the AI-assisted project lifecycle for engineering teams using HVE Core
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-20
 ms.topic: overview
 keywords:
   - hve guide
@@ -25,6 +25,8 @@ A 9-stage lifecycle from initial setup through ongoing operations, with AI-assis
 
 ```mermaid
 flowchart LR
+  accTitle: AI-Assisted Project Lifecycle
+  accDescr: Nine stages progress from setup through operations, with rework, next-sprint, hotfix, and next-iteration paths returning work to earlier stages.
     S1["1 · Setup"] --> S2["2 · Discovery"]
     S2 --> S3["3 · Product Definition"]
     S3 --> S4["4 · Decomposition"]
@@ -82,6 +84,8 @@ Nine role-specific guides covering recommended capabilities, stage walkthroughs,
 
 ```mermaid
 flowchart TD
+  accTitle: HVE Guide Navigation Entry Points
+  accDescr: A starting decision routes readers to the lifecycle overview, stage navigator, role finder, or role capability reference according to their goal.
     START{Where to Start?} -->|Understand the workflow| LC[Lifecycle Overview]
     START -->|Find tools for my phase| SN[Stage Navigator]
     START -->|Get my role guide| RF[Role Finder]

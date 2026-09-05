@@ -44,7 +44,6 @@ The full repository-relative path inventory remains machine-readable in root `pl
 | Prompts        | `commands`     | `.github/prompts/<package>/**/*.prompt.md`            |
 | Instructions   | `rules`        | `.github/instructions/<package>/**/*.instructions.md` |
 | Skills         | `skills`       | `.github/skills/<package>/<skill>/SKILL.md`           |
-| Hooks          | `hooks`        | `.github/hooks/shared/telemetry.json`                 |
 
 ### Capability Areas
 
@@ -54,7 +53,7 @@ The complete plugin includes:
 * HVE Builder authoring, behavior testing, validation, and Vally conformance support
 * Coding standards and code review for multiple languages and infrastructure formats
 * Security, TM7 threat-model generation, supply-chain security, privacy, accessibility, and Responsible AI planning and review
-* Outcome hypotheses, business requirements, product requirements, architecture decisions, performance, and backlog workflows
+* Outcome hypotheses, business requirements, product requirements, architecture decisions, performance, proposal and RFP responses, and backlog workflows
 * Azure DevOps, GitHub, GitLab, and Jira integrations
 * Design Thinking, UX, data science, experimentation, diagrams, PowerPoint, voice-over, and demo media tooling
 * Documentation authoring, release workflows, Git operations, and local telemetry foundations

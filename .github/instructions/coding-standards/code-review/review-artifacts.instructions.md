@@ -107,6 +107,19 @@ markdown report links to the supporting evidence.
   `target` (PR, MR, ADO, or review artifact), `status` (completed or skipped),
   and a short outcome `summary`.
 
+## Change-Risk Decision State
+
+`diff-state.json` is the canonical owner of the evidence and depth decision used by every review lane:
+
+* `reviewStateProvenance` records `human-confirmed` or `automation-derived` origins for `scope`, `changeRiskEvidence`, `recommendedDepth`, `depthTier`, and `depthRationale`. It describes origin, not confidence.
+* `changeRiskEvidence` contains exactly one entry for each of `change-scope`, `path-criticality`, `history`, `test-presence`, `coverage`, and `rollback`.
+* Each entry contains `signal`, `availability`, and `evidence`. The `availability` field records the evidence state, not confidence in a claim. Its value is `observed`, `unavailable`, or `qualitative`; unavailable inputs remain explicit and are never fabricated.
+* `recommendedDepth` records the advisory `basic`, `standard`, or `comprehensive` recommendation. Use `standard` when evidence is incomplete or inconclusive unless observed evidence supports comprehensive review.
+* In interactive mode, existing `depthTier` remains the human-selected verification depth, and `depthRationale` explains that selection and any difference from `recommendedDepth`. Mark scope, evidence, depth, and rationale as `human-confirmed`; keep the advisory recommendation `automation-derived`.
+* In workflow mode, mark all five provenance values `automation-derived`. Host-supplied or default values are not represented as human-confirmed.
+
+In interactive mode, write these values after human scope and depth confirmation. In workflow mode, write them after automated context preparation. Complete either write before perspective dispatch. Subagents consume the values and provenance as shared context but do not recalculate or overwrite them.
+
 ## Writing Rules
 
 * Always overwrite any existing `review.md` and `metadata.json` for the branch: only the latest review per branch is retained.
