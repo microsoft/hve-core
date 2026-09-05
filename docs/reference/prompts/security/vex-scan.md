@@ -3,7 +3,7 @@ title: vex-scan
 description: "Run a full VEX pipeline that scans dependencies, enriches CVEs, analyzes exploitability, and drafts an OpenVEX document for review - Brought to you by microsoft/hve-core"
 sidebar_position: 14
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Run a full VEX pipeline that scans dependencies, enriches CVEs, analyzes exploit
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when a project needs dependency scanning, CVE enrichment, exploitability analysis, and a draft OpenVEX document. Use vex-triage when a supported scan report or SBOM already exists and scanning should be skipped.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Optionally provide the project `scope` and product package URL. Review the evidence behind every status determination; a qualified product security reviewer and author of record must approve the draft before publication.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/vex-scan scope=packages/api product=pkg:npm/@example/sample-api
+```
+
+The prompt scans the fictional package and produces an evidence-linked OpenVEX draft for qualified review.

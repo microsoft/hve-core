@@ -201,7 +201,7 @@ Where:
 * EXECUTIVE_SUMMARY is markdown; 3–5 sentence narrative summarizing theoretical risks identified in the plan, skills assessed, total checks, and severity distribution.
 * RISK_COUNT is an integer; plan elements with theoretical vulnerability risk.
 * CAUTION_COUNT is an integer; plan elements with potential concerns depending on implementation.
-* COVERED_COUNT is an integer; plan elements already mitigated by existing codebase controls.
+* COVERED_COUNT is an integer counting plan elements whose plan text states a mitigation for the risk. Plan mode does not assess whether that mitigation is implemented. Use the `security-planning` skill's drift capability to correlate a plan-stated mitigation with current repository evidence.
 * NA_COUNT is an integer; plan elements not applicable to any assessed framework.
 * TOTAL_COUNT is an integer; sum of all statuses.
 * CRITICAL_COUNT, HIGH_COUNT, MEDIUM_COUNT, LOW_COUNT are integers counting RISK and CAUTION findings at each severity.

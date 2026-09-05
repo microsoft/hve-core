@@ -88,7 +88,7 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
         $report.warningCount | Should -BeGreaterOrEqual 1
         $report.errorCount | Should -Be 0
         $report.failOnAlex | Should -BeFalse
-        ($report.results | Where-Object { $_.spec -like '*flag.md' }).Count | Should -BeGreaterOrEqual 1
+        @($report.results | Where-Object { $_.spec -like '*flag.md' }).Count | Should -BeGreaterOrEqual 1
     }
 
     It 'Exits 1 on alex-compatible findings when -FailOnAlex is supplied' {
@@ -128,7 +128,7 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
         $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
         $exit | Should -Be 1
         $report.errorCount | Should -BeGreaterOrEqual 1
-        ($report.results | Where-Object { $_.spec -like '*profane.md' }).Count | Should -BeGreaterOrEqual 1
+        @($report.results | Where-Object { $_.spec -like '*profane.md' }).Count | Should -BeGreaterOrEqual 1
     }
 
     It 'Does not include evals/ markdown when scanning the default corpus' {

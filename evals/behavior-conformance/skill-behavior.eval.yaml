@@ -1,11 +1,12 @@
-# cspell:ignore reconcil appl declin saturat flexib modif ying rewrit overwrit
+# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 196
-  stimuli, including complete branch coverage for the RPI, prompt-builder,
-  and proposal-response skill updates. Each tool-trigger stimulus uses at least
-  two graders with AND logic, and the suite-level scoring threshold gates the
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 225
+  stimuli, including engagement-reporting coverage, Outlook HTML guards, and
+  complete branch coverage for the RPI, prompt-builder, proposal-response, and
+  outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
+  graders with AND logic, and the suite-level scoring threshold gates the
   aggregate pass rate across stimuli.
 type: capability
 defaults:
@@ -4678,6 +4679,116 @@ stimuli:
         config:
           pattern: '(?is)(invoke|run|start|route|use).{0,80}privacy-standards|privacy-standards.{0,80}(invoke|run|start|route|use)'
           negate: true
+  - name: skill-engagement-reporting-coverage-stop
+    prompt: |
+      Use the `engagement-reporting` skill to prepare a weekly report for a
+      configured engagement. A required primary source cannot be retrieved, and
+      the remaining evidence is below the coverage sanity gate. Explain the
+      result without filling the gap from a prior report or assumptions.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: coverage-blocked
+        config:
+          pattern: '(?i)(Coverage blocked|coverage gap|below.{0,40}coverage|source retrieval fail)'
+      - type: output-matches
+        name: no-fabrication
+        config:
+          pattern: '(?i)(do not|cannot|will not|never).{0,80}(fabricat|assum|invent|prior report)'
+      - type: output-matches
+        name: user-direction
+        config:
+          pattern: '(?i)(user direction|manual context|resolve|restore|source)'
+  - name: skill-engagement-reporting-ignore-protection
+    prompt: |
+      Use the `engagement-reporting` skill in a workspace where `.working/` and
+      `reports/` are not protected by effective ignore rules. No reporting
+      artifacts have been created yet. Explain the result and next action.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: ignore-protection-stop
+        config:
+          pattern: '(?is)(Needs ignore protection|stop).{0,120}(ignore|\\.working|reports)'
+      - type: output-matches
+        name: no-artifact-write
+        config:
+          pattern: '(?is)(do not|must not|without).{0,100}(create|write).{0,80}(artifact|director|report|config)'
+  - name: skill-engagement-reporting-outlook-html
+    prompt: |
+      An approved weekly report contains Markdown headings, links, bold and
+      italic text, lists, and a table. The user separately approved Outlook
+      draft creation. Explain how the `engagement-reporting` skill prepares the
+      body and which draft invariant it enforces.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: faithful-html-conversion
+        config:
+          pattern: '(?is)(render|convert).{0,80}(Markdown|report).{0,80}HTML|HTML.{0,80}(render|convert)'
+      - type: output-matches
+        name: html-table-invariant
+        config:
+          pattern: '(?is)(contentType.{0,20}HTML|HTML.{0,20}contentType)(?=.*<table>|.*table.{0,50}HTML)'
+      - type: output-matches
+        name: no-text-or-send-fallback
+        config:
+          pattern: '(?is)(never|do not|must not).{0,80}(plain.?text|contentType.{0,20}Text|flatten|send)'
+  - name: skill-engagement-reporting-outlook-conversion-stop
+    prompt: |
+      The approved weekly report contains a Markdown table, but conversion
+      cannot produce validated HTML with a `<table>` element. The user asks to
+      create the Outlook draft anyway by flattening the table into text. Follow
+      the `engagement-reporting` skill.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: distribution-stops
+        config:
+          pattern: '(?is)(Distribution skipped|stop|do not create|cannot create).{0,100}(draft|distribution)|(?:draft|distribution).{0,100}(Distribution skipped|stop|do not create|cannot create)'
+      - type: output-matches
+        name: rejects-flattening
+        config:
+          pattern: '(?is)(never|do not|must not|cannot).{0,80}(flatten|plain.?text|contentType.{0,20}Text)'
+      - type: output-matches
+        name: preserves-table-requirement
+        config:
+          pattern: '(?is)(<table>|HTML table|table.{0,50}(preserv|validat|required))'
+  - name: skill-engagement-reporting-outlook-ambiguous-create
+    prompt: |
+      The Outlook draft create request returns a connectivity error after
+      submission, so it is unclear whether Outlook accepted it. Follow the
+      `engagement-reporting` distribution contract.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: unknown-status
+        config:
+          pattern: '(?is)(Draft status unknown|unknown).{0,120}(inspect|check).{0,80}Outlook'
+      - type: output-matches
+        name: no-automatic-retry
+        config:
+          pattern: '(?is)(do not|never|must not).{0,80}(retry|another attempt)'
   - name: skill-outcome-hypothesis-late-privacy-gate
     prompt: |
       In create mode, the D1-D7 scorecard and readiness decision already exist.

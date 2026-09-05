@@ -63,10 +63,15 @@
     to point at a stub script.
 
 .PARAMETER EquivalenceTier
-    Tier passed to the equivalence driver (`pr` or `nightly`). Defaults to `pr`.
-    Applies only when `-EnableBaselineEquivalence` is set. Per DD-01, PR-tier
+    Tier passed to the equivalence driver (`devloop`, `calibration`, or `ci`).
+    Defaults to `devloop`. `calibration` runs the fixed two-model set while keeping
+    comparison and divergence evidence report-only; deterministic and structural
+    failures remain authoritative.
+    Applies only when `-EnableBaselineEquivalence` is set. Per DD-01, `devloop`
     equivalence dispatch is advisory: failures surface in summary JSON but do
-    not increment `failedSpecs` or change exit code.
+    not increment `failedSpecs` or change exit code. This ValidateSet must stay in
+    step with the driver's accepted tiers, which reject the retired `pr` and
+    `nightly` names outright rather than aliasing them.
 
 .PARAMETER EnableBaselineEquivalence
     Enables Tier 2 baseline-equivalence dispatch for changed or affected agents.
@@ -111,9 +116,16 @@ param(
     [string]$Model = 'gpt-5.6-luna',
     [string]$VallyCommand = 'vally',
     [string]$EquivalenceDriverPath,
-    [ValidateSet('pr','nightly')]
-    [string]$EquivalenceTier = 'pr',
+    [ValidateSet('devloop','calibration','ci')]
+    [string]$EquivalenceTier = 'devloop',
     [switch]$EnableBaselineEquivalence,
+
+    # Restrict equivalence execution to agents whose guards match this corpus. Stimulus
+    # backlinks identify related artifacts and do not authorize an equivalence subject:
+    # the corpus and its customization-boundary guards encode the RPI agent's contract,
+    # so scoring another agent against them fails for reasons unrelated to equivalence.
+    [Parameter(Mandatory = $false)]
+    [string[]]$EquivalenceSubject = @('rpi-agent'),
     [switch]$FailFast,
     [switch]$SkipInputModeration,
     [switch]$SkipOutputModeration,
@@ -479,6 +491,8 @@ if (-not $EquivalenceDriverPath) {
 
 $equivalenceSpecs = @{}
 
+$script:EquivalenceSubjects = @($EquivalenceSubject)
+
 # Resolve covering specs per artifact, then delegate run-plan keying to the
 # VallyRunner helper so the tag-aware runKey logic stays unit-testable.
 $artifactDescriptors = [System.Collections.Generic.List[hashtable]]::new()
@@ -496,9 +510,11 @@ foreach ($artifact in $artifacts) {
     })
 
     if ($EnableBaselineEquivalence -and $artifactKind -eq 'agent' -and $specs.Count -gt 0) {
-        $equivKey = "equivalence:$artifactId"
-        if (-not $equivalenceSpecs.ContainsKey($equivKey)) {
-            $equivalenceSpecs[$equivKey] = $artifactId
+        if ($script:EquivalenceSubjects -contains $artifactId) {
+            $equivKey = "equivalence:$artifactId"
+            if (-not $equivalenceSpecs.ContainsKey($equivKey)) {
+                $equivalenceSpecs[$equivKey] = $artifactId
+            }
         }
     }
 }
@@ -507,6 +523,20 @@ $runPlan        = Get-VallySpecRunPlan -Artifact $artifactDescriptors.ToArray() 
 $uniqueSpecRuns = $runPlan.uniqueSpecRuns
 $artifactPlan   = $runPlan.artifactPlan
 $missingSpecs   = $runPlan.missingSpecs
+
+# The baseline-equivalence corpus is measured only by the dedicated harness, which
+# runs the full canonical population against a materialized customization surface.
+# Running the same specs through generic dispatch produced tag-filtered partial runs,
+# and zero-stimulus runs that still reported success, neither of which can evidence
+# equivalence. Execution is dropped after the run plan is built so the specs still
+# count as coverage; removing them earlier would report an artifact covered only by
+# this corpus as having no covering spec.
+$equivalenceRunKeys = @($uniqueSpecRuns.Keys | Where-Object {
+        ($uniqueSpecRuns[$_].specRel -replace '\\', '/') -match '(^|/)baseline-equivalence/'
+    })
+foreach ($equivalenceRunKey in $equivalenceRunKeys) {
+    $uniqueSpecRuns.Remove($equivalenceRunKey)
+}
 
 if ($missingSpecs.Count -gt 0) {
     foreach ($m in $missingSpecs) {
@@ -619,6 +649,24 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
 
     $result['moderationInput'] = $inputModeration
     $result['moderationOutput'] = $outputModeration
+
+    $isEvaluatorError = $result.exitCode -ne 0 -and
+        $result.trials -eq 0 -and
+        $result.assertionsPassed -eq 0 -and
+        $result.assertionsFailed -eq 0
+    if ($isEvaluatorError) {
+        $result['status'] = 'evaluator-error'
+        $result['isAdvisory'] = $false
+        $specResults[$runKey] = $result
+        $failedSpecs++
+        $promotedRunKeys[$runKey] = $true
+        Write-Host "::error file=$specRel::Vally exited $($result.exitCode) without gradeable trial or assertion evidence; promoting evaluator error to CI failure"
+        if ($FailFast) {
+            Write-Host "::warning::FailFast set; skipping remaining specs after evaluator error in $specRel"
+            break
+        }
+        continue
+    }
 
     $advisoryMap = Get-SpecStimulusAdvisoryMap -SpecPath $specAbs -TagFilter $tag
     $result['perStimulusAdvisory'] = $advisoryMap
@@ -849,6 +897,7 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
     }
     foreach ($slug in $manifestAffected) {
         if ([string]::IsNullOrWhiteSpace($slug)) { continue }
+        if ($script:EquivalenceSubjects -notcontains $slug) { continue }
         $equivKey = "equivalence:$slug"
         if (-not $equivalenceSpecs.ContainsKey($equivKey)) {
             $equivalenceSpecs[$equivKey] = $slug
@@ -878,37 +927,95 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
         & pwsh @equivArgs
         $equivExit = $LASTEXITCODE
 
-        $runs = 0; $invFail = 0; $divFail = 0; $verdict = 'unknown'
-        if (Test-Path -LiteralPath $equivOutPath) {
+        # The previous reader guarded every field with `if ($null -ne ...)` over
+        # zero-initialized defaults, so a renamed or dropped field degraded silently
+        # into `runs = 0` and `verdict = unknown`: a successful run reported as an empty
+        # one, with nothing in the output saying the contract had moved. The schema
+        # version is now checked explicitly and a mismatch is surfaced as a failure.
+        $runs = 0
+        $invFail = 0
+        $runHealthFail = 0
+        $guardFail = 0
+        $dataQualityFail = 0
+        $invocationFail = 0
+        $verdict = 'unknown'
+        $equivalenceGate = 'unknown'
+        $divergenceGate = 'unknown'
+        $contractError = $null
+
+        if (-not (Test-Path -LiteralPath $equivOutPath)) {
+            $contractError = "Equivalence summary not written: $equivOutPath"
+        }
+        else {
             try {
                 $equivSummary = Get-Content -LiteralPath $equivOutPath -Raw | ConvertFrom-Json
-                if ($null -ne $equivSummary.runs)               { $runs    = [int]$equivSummary.runs }
-                if ($null -ne $equivSummary.invariantFailures)  { $invFail = [int]$equivSummary.invariantFailures }
-                if ($null -ne $equivSummary.divergenceFailures) { $divFail = [int]$equivSummary.divergenceFailures }
-                if ($null -ne $equivSummary.verdict)            { $verdict = [string]$equivSummary.verdict }
+
+                $schemaVersion = if ($equivSummary.PSObject.Properties['schemaVersion']) { [string]$equivSummary.schemaVersion } else { '' }
+                $major = ($schemaVersion -split '\.')[0]
+                if ($major -ne '2') {
+                    $contractError = "Unsupported equivalence summary schemaVersion '$schemaVersion'; this consumer requires 2.x. Rerun the equivalence driver."
+                }
+                elseif (-not $equivSummary.PSObject.Properties['dataQualityViolations']) {
+                    # A structurally failed run can report dataQualityViolations as its
+                    # only nonzero counter. Reading a 2.x summary that omits the field
+                    # would silently drop the sole evidence of that failure, so absence
+                    # is a contract error rather than an implied zero.
+                    $contractError = "Equivalence summary declares schemaVersion '$schemaVersion' but omits dataQualityViolations; this consumer requires the 2.x field. Rerun the equivalence driver."
+                }
+                else {
+                    $runs            = [int]$equivSummary.runs
+                    $invFail         = [int]$equivSummary.invariantFailures
+                    $runHealthFail   = [int]$equivSummary.runHealthFailures
+                    $guardFail       = [int]$equivSummary.divergenceGuardFailures
+                    $dataQualityFail = [int]$equivSummary.dataQualityViolations
+                    $invocationFail  = if ($equivSummary.PSObject.Properties['invocationFailures']) { [int]$equivSummary.invocationFailures } else { 0 }
+                    $verdict         = [string]$equivSummary.verdict
+                    $equivalenceGate = [string]$equivSummary.equivalenceGate
+                    $divergenceGate  = [string]$equivSummary.documentedDivergenceGate
+                }
             }
             catch {
-                Write-Host "::warning::Failed to parse equivalence summary $equivOutPath" -ForegroundColor Yellow
+                $contractError = "Failed to read equivalence summary $equivOutPath : $($_.Exception.Message)"
             }
         }
 
-        $assertionsFailed = $invFail + $divFail
+        if ($contractError) {
+            Write-Host "::error::$contractError"
+            $verdict = 'fail'
+        }
+
+        # Deterministic, run-health, delivery, and structural data-quality failures are
+        # authoritative. Divergence guard results are comparative policy evidence and
+        # remain report-only until a later calibration decision makes them a gate.
+        $assertionsFailed = $invFail + $runHealthFail + $dataQualityFail
+        $advisoryAssertionsFailed = $guardFail
         $assertionsPassed = [Math]::Max(0, $runs - $assertionsFailed)
 
         $equivalenceResults.Add([ordered]@{
-            agent              = $agentSlug
-            tier               = $EquivalenceTier
-            verdict            = $verdict
-            exitCode           = $equivExit
-            trials             = $runs
-            assertionsPassed   = $assertionsPassed
-            assertionsFailed   = $assertionsFailed
-            invariantFailures  = $invFail
-            divergenceFailures = $divFail
-            resultsPath        = "logs/baseline-equivalence-$agentSlug.json"
+            agent                    = $agentSlug
+            tier                     = $EquivalenceTier
+            verdict                  = $verdict
+            equivalenceGate          = $equivalenceGate
+            documentedDivergenceGate = $divergenceGate
+            exitCode                 = $equivExit
+            trials                   = $runs
+            assertionsPassed         = $assertionsPassed
+            assertionsFailed         = $assertionsFailed
+            advisoryAssertionsFailed = $advisoryAssertionsFailed
+            invariantFailures        = $invFail
+            runHealthFailures        = $runHealthFail
+            divergenceGuardFailures  = $guardFail
+            dataQualityViolations    = $dataQualityFail
+            invocationFailures       = $invocationFail
+            resultsPath              = "logs/baseline-equivalence-$agentSlug.json"
         }) | Out-Null
 
-        if ($EquivalenceTier -ne 'pr' -and ($equivExit -ne 0 -or $assertionsFailed -gt 0)) {
+        if ($contractError) {
+            # A contract mismatch is not a soft signal. Advisory tiers still tolerate a
+            # failing gate, but they cannot tolerate not knowing what the run reported.
+            $failedSpecs++
+        }
+        elseif ($EquivalenceTier -ne 'devloop' -and ($equivExit -ne 0 -or $assertionsFailed -gt 0)) {
             $failedSpecs++
         }
     }
@@ -916,6 +1023,7 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
 
 $hardFailStatuses = @(
     'fail',
+    'evaluator-error',
     'content-moderation-input',
     'content-moderation-error-input',
     'content-moderation-output',
@@ -930,6 +1038,8 @@ foreach ($plan in $artifactPlan) {
     $artifactAuthoritativeFailed = 0
     $artifactAdvisoryFailed      = 0
     $artifactHasHardFail = $false
+    $artifactHasEvaluatorError = $false
+    $artifactFailedOrErroredTrials = [System.Collections.Generic.List[object]]::new()
     $specBreakdown     = [System.Collections.Generic.List[object]]::new()
     $allSpecsRan       = $true
 
@@ -963,9 +1073,16 @@ foreach ($plan in $artifactPlan) {
 
         # A failing spec status (e.g. content moderation) gates even with zero assertion failures.
         if ($specStatus -in $hardFailStatuses) { $artifactHasHardFail = $true }
+        if ($specStatus -eq 'evaluator-error') { $artifactHasEvaluatorError = $true }
 
         # A nonzero exit gates only when the spec is not advisory.
         if ($r.exitCode -ne 0 -and -not $specIsAdvisory -and $artifactExitCode -eq 0) { $artifactExitCode = $r.exitCode }
+
+        if ($r.ContainsKey('failedOrErroredTrials') -and $null -ne $r.failedOrErroredTrials) {
+            foreach ($trial in $r.failedOrErroredTrials) {
+                $artifactFailedOrErroredTrials.Add($trial) | Out-Null
+            }
+        }
 
         $specBreakdown.Add([ordered]@{
             specPath         = $r.specRel
@@ -977,10 +1094,13 @@ foreach ($plan in $artifactPlan) {
             trials           = $r.trials
             runDir           = $r.runDir
             resultsPath      = $r.resultsPath
+            status           = $specStatus
+            failedOrErroredTrials = if ($r.ContainsKey('failedOrErroredTrials')) { @($r.failedOrErroredTrials) } else { @() }
         })
     }
 
-    $status = if (-not $allSpecsRan) { 'skipped' }
+    $status = if ($artifactHasEvaluatorError) { 'evaluator-error' }
+              elseif (-not $allSpecsRan) { 'skipped' }
               elseif ($artifactHasHardFail -or $artifactAuthoritativeFailed -gt 0 -or $artifactExitCode -ne 0) { 'fail' }
               elseif ($artifactAdvisoryFailed -gt 0) { 'advisory-fail' }
               else { 'pass' }
@@ -1000,6 +1120,7 @@ foreach ($plan in $artifactPlan) {
         assertionsFailed    = $artifactFailed
         authoritativeFailed = $artifactAuthoritativeFailed
         advisoryFailed      = $artifactAdvisoryFailed
+        failedOrErroredTrials = @($artifactFailedOrErroredTrials)
         specs               = @($specBreakdown)
     }
     Write-JsonFile -Value $artifactRecord -Path $artifactFile
@@ -1016,6 +1137,7 @@ foreach ($plan in $artifactPlan) {
         assertionsFailed    = $artifactFailed
         authoritativeFailed = $artifactAuthoritativeFailed
         advisoryFailed      = $artifactAdvisoryFailed
+        failedOrErroredTrials = @($artifactFailedOrErroredTrials)
         specCount           = $specBreakdown.Count
         resultsFile         = "logs/eval-results-$artifactKey.json"
     }) | Out-Null
@@ -1035,6 +1157,7 @@ foreach ($runKey in $specResults.Keys) {
     }
     if ($r.ContainsKey('status')) { $record['status'] = $r.status }
     if ($r.ContainsKey('isAdvisory')) { $record['isAdvisory'] = [bool]$r.isAdvisory }
+    if ($r.ContainsKey('failedOrErroredTrials')) { $record['failedOrErroredTrials'] = @($r.failedOrErroredTrials) }
     if ($r.ContainsKey('perStimulusAdvisory') -and $null -ne $r.perStimulusAdvisory) {
         $record['advisoryPassed'] = [int]$r.advisoryPassed
         $record['advisoryFailed'] = [int]$r.advisoryFailed

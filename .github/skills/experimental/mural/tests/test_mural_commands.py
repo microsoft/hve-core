@@ -76,10 +76,22 @@ def _patch_paginate(
 # ---------------------------------------------------------------------------
 
 
+@pytest.fixture
+def isolated_auth_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+) -> pathlib.Path:
+    credential_path = tmp_path / "mural.default.env"
+    monkeypatch.setenv(ENV_ENV_FILE, str(credential_path))
+    monkeypatch.setenv("MURAL_CREDENTIAL_BACKEND", "file")
+    return credential_path
+
+
 def test_auth_login_happy_path(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     fake_token_store: pathlib.Path,
+    isolated_auth_credentials: pathlib.Path,
 ) -> None:
     record = {"access_token": "x", "granted_scopes": ["murals:read"]}
     seen: dict[str, Any] = {}
@@ -118,6 +130,7 @@ def test_auth_login_propagates_mural_error(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     fake_token_store: pathlib.Path,
+    isolated_auth_credentials: pathlib.Path,
 ) -> None:
     def _boom(**_kwargs: Any) -> dict[str, Any]:
         raise mural_module.MuralError("login boom")
@@ -155,6 +168,7 @@ def test_auth_login_mural_scopes_env_used_when_no_flags(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     fake_token_store: pathlib.Path,
+    isolated_auth_credentials: pathlib.Path,
 ) -> None:
     seen = _patch_login_capture(monkeypatch, mural_module)
     monkeypatch.setenv("MURAL_SCOPES", "murals:read")
@@ -169,6 +183,7 @@ def test_auth_login_mural_scopes_env_overrides_write_flag(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     fake_token_store: pathlib.Path,
+    isolated_auth_credentials: pathlib.Path,
 ) -> None:
     seen = _patch_login_capture(monkeypatch, mural_module)
     monkeypatch.setenv("MURAL_SCOPES", "murals:read,workspaces:read")
@@ -184,6 +199,7 @@ def test_auth_login_explicit_scopes_overrides_env(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     fake_token_store: pathlib.Path,
+    isolated_auth_credentials: pathlib.Path,
 ) -> None:
     seen = _patch_login_capture(monkeypatch, mural_module)
     monkeypatch.setenv("MURAL_SCOPES", "murals:read")
@@ -200,6 +216,7 @@ def test_auth_login_mural_scopes_whitespace_only_rejected(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     fake_token_store: pathlib.Path,
+    isolated_auth_credentials: pathlib.Path,
 ) -> None:
     called: dict[str, Any] = {}
 
@@ -220,6 +237,7 @@ def test_auth_login_default_read_scopes_when_env_unset(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     fake_token_store: pathlib.Path,
+    isolated_auth_credentials: pathlib.Path,
 ) -> None:
     seen = _patch_login_capture(monkeypatch, mural_module)
     monkeypatch.delenv("MURAL_SCOPES", raising=False)
@@ -235,6 +253,7 @@ def test_auth_login_write_flag_when_env_unset(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     fake_token_store: pathlib.Path,
+    isolated_auth_credentials: pathlib.Path,
 ) -> None:
     seen = _patch_login_capture(monkeypatch, mural_module)
     monkeypatch.delenv("MURAL_SCOPES", raising=False)
