@@ -1,5 +1,5 @@
 ﻿#Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
@@ -74,38 +74,33 @@ artifact-classification:
       - sssc-handoff-summary
 "@
 
-    # Create valid disclaimers.yml
-    $script:DisclaimerConfigContent = @"
-version: "1.0"
+    # Create valid disclaimer-language.instructions.md (markdown source of truth)
+    $script:DisclaimerSourceContent = @"
+---
+description: "Test disclaimer source"
+---
 
-disclaimers:
-  rai-planner:
-    id: rai-full-disclaimer
-    label: "RAI Planner Full Disclaimer"
-    applies-to:
-      - handoff-summary
-    text: >-
-      > **Disclaimer** — This agent is an assistive tool only. It does not
-      provide legal, regulatory, or compliance advice.
+# Disclaimer Language
 
-  sssc-planner:
-    id: sssc-full-disclaimer
-    label: "SSSC Planner Full Disclaimer"
-    applies-to:
-      - sssc-handoff-summary
-    text: >-
-      > **Disclaimer** — This SSSC agent is an assistive tool only. It does
-      not provide security, legal, or compliance advice.
+## RAI Planning
+
+> [!CAUTION]
+> **Disclaimer:** This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice.
+
+## SSSC
+
+> [!CAUTION]
+> **Disclaimer:** This SSSC agent is an assistive tool only. It does not provide security, legal, or compliance advice.
 "@
 
     $script:FooterConfigPath = Join-Path $script:ConfigDir 'footer-with-review.yml'
-    $script:DisclaimerConfigPath = Join-Path $script:ConfigDir 'disclaimers.yml'
     Set-Content -Path $script:FooterConfigPath -Value $script:FooterConfigContent -Encoding utf8
-    Set-Content -Path $script:DisclaimerConfigPath -Value $script:DisclaimerConfigContent -Encoding utf8
 
-    # Pre-create bad config files for negative tests (avoids Pester-context YAML parsing issues)
-    $script:BadDisclaimerSectionPath = Join-Path $script:TempTestDir 'bad-disclaimer-section.yml'
-    [System.IO.File]::WriteAllText($script:BadDisclaimerSectionPath, "version: '1.0'`nplaceholder: true`n")
+    $script:DisclaimerSourceDir = Join-Path $script:TempTestDir '.github/instructions/shared'
+    New-Item -ItemType Directory -Path $script:DisclaimerSourceDir -Force | Out-Null
+    $script:DisclaimerSourcePath = Join-Path $script:DisclaimerSourceDir 'disclaimer-language.instructions.md'
+    $script:DisclaimerSourceRelative = '.github/instructions/shared/disclaimer-language.instructions.md'
+    Set-Content -Path $script:DisclaimerSourcePath -Value $script:DisclaimerSourceContent -Encoding utf8
 }
 
 AfterAll {
@@ -133,34 +128,235 @@ Describe 'Import-FooterConfig' -Tag 'Unit' {
     }
 }
 
-Describe 'Import-DisclaimerConfig' -Tag 'Unit' {
-    It 'Loads a valid disclaimer config' {
-        $config = Import-DisclaimerConfig -ConfigPath $script:DisclaimerConfigPath
-        $config.version | Should -Be '1.0'
+Describe 'Import-DisclaimerSource' -Tag 'Unit' {
+    It 'Loads a valid disclaimer markdown source' {
+        $config = Import-DisclaimerSource -SourcePath $script:DisclaimerSourcePath
+        $config.version | Should -Be 'markdown-source'
         $config.disclaimers | Should -Not -BeNullOrEmpty
+        $config.disclaimers['rai-planner'].id | Should -Be 'rai-full-disclaimer'
+        $config.disclaimers['rai-planner'].label | Should -Be 'RAI Planning Disclaimer'
+    }
+
+    It 'Extracts disclaimer prose with the **Disclaimer** prefix stripped' {
+        $config = Import-DisclaimerSource -SourcePath $script:DisclaimerSourcePath
+        $config.disclaimers['rai-planner'].text | Should -BeLike 'This agent is an assistive tool only*'
     }
 
     It 'Throws when file does not exist' {
-        { Import-DisclaimerConfig -ConfigPath (Join-Path $script:TempTestDir 'nonexistent.yml') } | Should -Throw '*not found*'
+        { Import-DisclaimerSource -SourcePath (Join-Path $script:TempTestDir 'nonexistent.md') } | Should -Throw '*not found*'
     }
 
-    It 'Throws when version is missing' {
-        $badConfig = Join-Path $script:TempTestDir 'bad-disclaimer-version.yml'
-        @"
-disclaimers:
-  rai-planner:
-    id: test
-"@ | Set-Content -Path $badConfig -Encoding utf8
-        { Import-DisclaimerConfig -ConfigPath $badConfig } | Should -Throw "*missing 'version'*"
+    It 'Throws when markdown contains no disclaimer sections' {
+        $badSource = Join-Path $script:TempTestDir 'no-sections.md'
+        Set-Content -Path $badSource -Value "# Empty`n`nNo H2 sections here." -Encoding utf8
+        { Import-DisclaimerSource -SourcePath $badSource } | Should -Throw '*No disclaimer sections*'
     }
 
-    It 'Throws when disclaimers section is missing' {
-        $badConfig = Join-Path $script:TempTestDir 'bad-disclaimer-section.yml'
-        @"
-version: '1.0'
-placeholder: true
-"@ | Set-Content -Path $badConfig -Encoding utf8
-        { Import-DisclaimerConfig -ConfigPath $badConfig } | Should -Throw "*missing 'disclaimers'*"
+    It 'Retains prose verbatim when the **Disclaimer:** prefix is absent' {
+        $source = Join-Path $script:TempTestDir 'no-prefix.md'
+        $content = @"
+# Disclaimer Language
+
+## RAI Planning
+
+> [!CAUTION]
+> This text has no bolded prefix and should be retained verbatim.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        $config = Import-DisclaimerSource -SourcePath $source
+        $config.disclaimers['rai-planner'].text | Should -Be 'This text has no bolded prefix and should be retained verbatim.'
+    }
+
+    It 'Joins multi-line CAUTION blockquote prose with single spaces' {
+        $source = Join-Path $script:TempTestDir 'multi-line.md'
+        $content = @"
+# Disclaimer Language
+
+## RAI Planning
+
+> [!CAUTION]
+> **Disclaimer:** First sentence continues
+> across multiple
+> blockquote lines.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        $config = Import-DisclaimerSource -SourcePath $source
+        $config.disclaimers['rai-planner'].text | Should -Be 'First sentence continues across multiple blockquote lines.'
+    }
+
+    It 'Uses only the first CAUTION block when an H2 section contains multiple' {
+        $source = Join-Path $script:TempTestDir 'multi-caution.md'
+        $content = @"
+# Disclaimer Language
+
+## RAI Planning
+
+> [!CAUTION]
+> **Disclaimer:** First caution wins.
+
+Some prose between blocks.
+
+> [!CAUTION]
+> **Disclaimer:** Second caution is ignored.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        $config = Import-DisclaimerSource -SourcePath $source
+        $config.disclaimers['rai-planner'].text | Should -Be 'First caution wins.'
+    }
+
+    It 'Parses multiple H2 sections into distinct planner keys using the first heading word as slug' {
+        $source = Join-Path $script:TempTestDir 'multi-section.md'
+        $content = @"
+# Disclaimer Language
+
+## RAI Planning
+
+> [!CAUTION]
+> **Disclaimer:** RAI text.
+
+## Security Engineering
+
+> [!CAUTION]
+> **Disclaimer:** Security text.
+
+## SSSC
+
+> [!CAUTION]
+> **Disclaimer:** SSSC text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        $config = Import-DisclaimerSource -SourcePath $source
+        $config.disclaimers.Keys | Sort-Object | Should -Be @('rai-planner', 'security-planner', 'sssc-planner')
+        $config.disclaimers['security-planner'].id | Should -Be 'security-full-disclaimer'
+        $config.disclaimers['security-planner'].label | Should -Be 'Security Engineering Disclaimer'
+        $config.disclaimers['sssc-planner'].text | Should -Be 'SSSC text.'
+    }
+
+    It 'Uses an explicit lower-kebab disclaimer id while preserving the readable heading' {
+        $source = Join-Path $script:TempTestDir 'explicit-id.md'
+        $content = @"
+# Disclaimer Language
+
+## Data Science and Engineering Coaching
+
+<!-- disclaimer-id: data-science-engineering -->
+> [!CAUTION]
+> **Disclaimer:** Data science and engineering text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        $config = Import-DisclaimerSource -SourcePath $source
+        $config.disclaimers.ContainsKey('data-science-engineering-planner') | Should -BeTrue
+        $config.disclaimers.ContainsKey('data-planner') | Should -BeFalse
+        $config.disclaimers['data-science-engineering-planner'].id | Should -Be 'data-science-engineering-full-disclaimer'
+        $config.disclaimers['data-science-engineering-planner'].label | Should -Be 'Data Science and Engineering Coaching Disclaimer'
+    }
+
+    It 'Preserves first-word fallback identifiers when metadata is absent' {
+        $config = Import-DisclaimerSource -SourcePath $script:DisclaimerSourcePath
+        $config.disclaimers['rai-planner'].id | Should -Be 'rai-full-disclaimer'
+        $config.disclaimers['sssc-planner'].id | Should -Be 'sssc-full-disclaimer'
+    }
+
+    It 'Rejects an empty disclaimer id marker' {
+        $source = Join-Path $script:TempTestDir 'invalid-empty-marker.md'
+        $content = @"
+# Disclaimer Language
+
+## Data Science and Engineering Coaching
+
+<!-- disclaimer-id:  -->
+> [!CAUTION]
+> **Disclaimer:** Data science and engineering text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        { Import-DisclaimerSource -SourcePath $source } | Should -Throw '*disclaimer-id*'
+    }
+
+    It 'Rejects a non-kebab disclaimer id marker' {
+        $source = Join-Path $script:TempTestDir 'invalid-non-kebab-marker.md'
+        $content = @"
+# Disclaimer Language
+
+## Data Science and Engineering Coaching
+
+<!-- disclaimer-id: Data_Science -->
+> [!CAUTION]
+> **Disclaimer:** Data science and engineering text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        { Import-DisclaimerSource -SourcePath $source } | Should -Throw '*disclaimer-id*'
+    }
+
+    It 'Rejects disclaimer id markers with noncanonical comment whitespace: <Marker>' -ForEach @(
+        @{ Marker = '<!--disclaimer-id: data-science-engineering -->' }
+        @{ Marker = '<!--  disclaimer-id: data-science-engineering -->' }
+    ) {
+        $source = Join-Path $script:TempTestDir "invalid-comment-whitespace-$([guid]::NewGuid().ToString('N')).md"
+        $content = @"
+# Disclaimer Language
+
+## Data Science and Engineering Coaching
+
+$Marker
+> [!CAUTION]
+> **Disclaimer:** Data science and engineering text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        { Import-DisclaimerSource -SourcePath $source } | Should -Throw '*disclaimer-id*'
+    }
+
+    It 'Rejects multiple disclaimer id markers in one section' {
+        $source = Join-Path $script:TempTestDir 'invalid-multiple-markers.md'
+        $content = @"
+# Disclaimer Language
+
+## Data Science and Engineering Coaching
+
+<!-- disclaimer-id: data-science -->
+<!-- disclaimer-id: data-science-engineering -->
+> [!CAUTION]
+> **Disclaimer:** Data science and engineering text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        { Import-DisclaimerSource -SourcePath $source } | Should -Throw '*multiple disclaimer-id*'
+    }
+
+    It 'Rejects a disclaimer id marker that is not immediately before CAUTION' {
+        $source = Join-Path $script:TempTestDir 'invalid-misplaced-marker.md'
+        $content = @"
+# Disclaimer Language
+
+## Data Science and Engineering Coaching
+
+<!-- disclaimer-id: data-science-engineering -->
+
+Intervening prose.
+> [!CAUTION]
+> **Disclaimer:** Data science and engineering text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        { Import-DisclaimerSource -SourcePath $source } | Should -Throw '*immediately before*'
+    }
+
+    It 'Silently skips H2 sections that contain no CAUTION blockquote' {
+        $source = Join-Path $script:TempTestDir 'empty-section.md'
+        $content = @"
+# Disclaimer Language
+
+## RAI Planning
+
+Some prose with no caution block here.
+
+## Security Engineering
+
+> [!CAUTION]
+> **Disclaimer:** Security text only.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        $config = Import-DisclaimerSource -SourcePath $source
+        $config.disclaimers.ContainsKey('rai-planner') | Should -BeFalse
+        $config.disclaimers.Keys | Should -Be @('security-planner')
+        $config.disclaimers['security-planner'].text | Should -Be 'Security text only.'
     }
 }
 
@@ -256,7 +452,7 @@ Describe 'Find-ArtifactReferences' -Tag 'Unit' {
 Describe 'Test-AIArtifactCompliance' -Tag 'Unit' {
     BeforeAll {
         $script:FooterConfig = Import-FooterConfig -ConfigPath $script:FooterConfigPath
-        $script:DisclaimerConfig = Import-DisclaimerConfig -ConfigPath $script:DisclaimerConfigPath
+        $script:DisclaimerConfig = Import-DisclaimerSource -SourcePath $script:DisclaimerSourcePath
     }
 
     Context 'Agentic tier (Tier 1 only)' {
@@ -456,7 +652,7 @@ description: Unrelated instruction
 Describe 'Test-AIArtifactValidation' -Tag 'Unit' {
     BeforeAll {
         $script:FooterConfig = Import-FooterConfig -ConfigPath $script:FooterConfigPath
-        $script:DisclaimerConfig = Import-DisclaimerConfig -ConfigPath $script:DisclaimerConfigPath
+        $script:DisclaimerConfig = Import-DisclaimerSource -SourcePath $script:DisclaimerSourcePath
     }
 
     BeforeEach {
@@ -501,7 +697,7 @@ $($script:Tier1Text)
             $result = Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerConfigPath '.github/config/disclaimers.yml'
+                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md'
 
             $result.TotalFiles | Should -BeGreaterOrEqual 2
             $result.FilesWithArtifacts | Should -BeGreaterOrEqual 2
@@ -528,7 +724,7 @@ $($script:Tier1Text)
             $result = Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerConfigPath '.github/config/disclaimers.yml' `
+                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md' `
                 -ExcludePaths @('**/excluded/**')
 
             $excludedResults = $result.Results | Where-Object { $_.RelativePath -like '*excluded*' }
@@ -550,7 +746,7 @@ $($script:Tier1Text)
             $result = Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerConfigPath '.github/config/disclaimers.yml' `
+                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md' `
                 -FailOnMissing
 
             $result.HasFailures | Should -BeTrue
@@ -569,7 +765,7 @@ $($script:Tier1Text)
             $result = Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerConfigPath '.github/config/disclaimers.yml'
+                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md'
 
             $result.HasFailures | Should -BeFalse
         }
@@ -592,7 +788,7 @@ $($script:Tier1Text)
             Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerConfigPath '.github/config/disclaimers.yml' `
+                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md' `
                 -OutputPath $outputPath
 
             $outputFullPath | Should -Exist
@@ -602,5 +798,93 @@ $($script:Tier1Text)
             $json.totalFiles | Should -BeGreaterOrEqual 2
             $json.results | Should -Not -BeNullOrEmpty
         }
+    }
+}
+
+Describe 'Backlog handoff classification' -Tag 'Unit' {
+    BeforeAll {
+        # These cases run against the real repository footer config so they prove the
+        # shipped classification covers generated backlog handoffs, not a synthetic fixture.
+        $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $script:RealFooterConfig = Import-FooterConfig -ConfigPath (Join-Path $repoRoot '.github/config/footer-with-review.yml')
+        $script:RealDisclaimerConfig = Import-DisclaimerSource -SourcePath $script:DisclaimerSourcePath
+
+        $script:RealNoteText = $script:RealFooterConfig.footers.'ai-content-note'.text
+        $script:RealCheckboxText = $script:RealFooterConfig.footers.'human-review-checkbox'.text
+
+        $script:HandoffRoot = Join-Path $script:TempTestDir 'handoff-scope'
+        $script:HandoffScopes = @(
+            '.copilot-tracking/workitems/execution/test-scope'
+            '.copilot-tracking/github-issues/execution/test-scope'
+            '.copilot-tracking/jira-issues/execution/test-scope'
+        )
+        foreach ($scope in $script:HandoffScopes) {
+            New-Item -ItemType Directory -Path (Join-Path $script:HandoffRoot $scope) -Force | Out-Null
+        }
+
+        # Mirror the real footer config and a disclaimer source into the fixture root so
+        # discovery can run unmocked against a realistic repository layout.
+        $fixtureConfigDir = Join-Path $script:HandoffRoot '.github/config'
+        New-Item -ItemType Directory -Path $fixtureConfigDir -Force | Out-Null
+        Copy-Item -Path (Join-Path $repoRoot '.github/config/footer-with-review.yml') -Destination (Join-Path $fixtureConfigDir 'footer-with-review.yml') -Force
+
+        $fixtureDisclaimerDir = Join-Path $script:HandoffRoot '.github/instructions/shared'
+        New-Item -ItemType Directory -Path $fixtureDisclaimerDir -Force | Out-Null
+        Copy-Item -Path $script:DisclaimerSourcePath -Destination (Join-Path $fixtureDisclaimerDir 'disclaimer-language.instructions.md') -Force
+    }
+
+    It 'Classifies a scoped handoff.md as human-facing under <_>' -ForEach @(
+        '.copilot-tracking/workitems/execution/test-scope'
+        '.copilot-tracking/github-issues/execution/test-scope'
+        '.copilot-tracking/jira-issues/execution/test-scope'
+    ) {
+        $refs = Find-ArtifactReferences `
+            -ArtifactClassification $script:RealFooterConfig.'artifact-classification' `
+            -RelativePath "$_/handoff.md"
+
+        $refs.Count | Should -Be 1
+        $refs[0].Tier | Should -Be 'human-facing'
+        $refs[0].RequiredFooters | Should -Contain 'human-review-checkbox'
+    }
+
+    It 'Fails a scoped handoff.md that omits the human review checkbox' {
+        $filePath = Join-Path $script:HandoffRoot '.copilot-tracking/github-issues/execution/test-scope/handoff.md'
+        $content = "# Handoff - Scope`n`n## Planned Operations`n`n* [ ] GH001 - Create - ``{{TEMP-1}}`` - Summary`n`n$($script:RealNoteText)`n"
+        Set-Content -Path $filePath -Value $content -Encoding utf8
+
+        $result = Test-AIArtifactCompliance -FilePath $filePath -FooterConfig $script:RealFooterConfig -DisclaimerConfig $script:RealDisclaimerConfig -RepoRoot $script:HandoffRoot
+        $result.Passed | Should -BeFalse
+        ($result.Issues -join ' ') | Should -Match 'Human Review Checkbox'
+    }
+
+    It 'Passes a scoped handoff.md that carries both required footers' {
+        $filePath = Join-Path $script:HandoffRoot '.copilot-tracking/github-issues/execution/test-scope/handoff.md'
+        $content = "# Handoff - Scope`n`n## Planned Operations`n`n* [ ] GH001 - Create - ``{{TEMP-1}}`` - Summary`n`n## Human Review`n`n$($script:RealNoteText)`n`n$($script:RealCheckboxText)`n"
+        Set-Content -Path $filePath -Value $content -Encoding utf8
+
+        $result = Test-AIArtifactCompliance -FilePath $filePath -FooterConfig $script:RealFooterConfig -DisclaimerConfig $script:RealDisclaimerConfig -RepoRoot $script:HandoffRoot
+        $result.Passed | Should -BeTrue
+        $result.Issues.Count | Should -Be 0
+    }
+
+    It 'Discovers a generated handoff.md, which does not use the .instructions.md suffix' {
+        $filePath = Join-Path $script:HandoffRoot '.copilot-tracking/github-issues/execution/test-scope/handoff.md'
+        $content = "# Handoff - Scope`n`n## Planned Operations`n`n* [ ] GH001 - Create - ``{{TEMP-1}}`` - Summary`n`n$($script:RealNoteText)`n"
+        Set-Content -Path $filePath -Value $content -Encoding utf8
+
+        Mock git { $script:HandoffRoot } -ParameterFilter { $args[0] -eq 'rev-parse' }
+        Mock Write-CIAnnotation {}
+        Mock Test-CIEnvironment { $false }
+        Mock Get-StandardTimestamp { '2025-01-01T00:00:00Z' }
+        Mock Write-Host {}
+
+        $result = Test-AIArtifactValidation `
+            -Paths @('.copilot-tracking/github-issues') `
+            -FooterConfigPath '.github/config/footer-with-review.yml' `
+            -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md' `
+            -FailOnMissing
+
+        $result.FilesWithArtifacts | Should -Be 1
+        $result.HasFailures | Should -BeTrue
     }
 }

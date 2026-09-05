@@ -1,5 +1,5 @@
 ---
-description: 'Theme discovery for Design Thinking Method 4c through philosophy-based clustering - Brought to you by microsoft/hve-core'
+description: 'Theme discovery for Design Thinking Method 4c through philosophy-based clustering'
 agent: dt-coach
 argument-hint: "project-slug=... [ideaCount=...]"
 ---

@@ -1,11 +1,46 @@
 #!/usr/bin/env bash
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # on-create.sh
 # Install system dependencies for HVE Core development container
 
 set -euo pipefail
+
+sync_python_environments() {
+  local repo_root
+  local project_file
+  local project_dir
+  local failed=0
+
+  repo_root="$(cd "${1}" && pwd)"
+
+  while IFS= read -r -d '' project_file; do
+    project_dir="$(dirname "${project_file}")"
+    echo "Installing dependencies in ${project_dir}"
+
+    if [[ ! -f "${project_dir}/uv.lock" ]]; then
+      echo "ERROR: Missing uv.lock in ${project_dir}" >&2
+      failed=1
+      continue
+    fi
+
+    if ! (cd "${project_dir}" && uv sync --locked); then
+      echo "ERROR: uv sync --locked failed in ${project_dir}" >&2
+      failed=1
+    fi
+  done < <(
+    find "${repo_root}" \
+      -type d \( \
+        -name node_modules -o \
+        -path "${repo_root}/plugins" -o \
+        -path "${repo_root}/scripts/evals/moderation" \
+      \) -prune -o \
+      -type f -name pyproject.toml -print0
+  )
+
+  return "${failed}"
+}
 
 main() {
   # Enterprise artifact hub overrides (public defaults when unset)
@@ -45,12 +80,11 @@ main() {
 
   echo "Installing PowerShell modules..."
   if [[ -n "${PSGALLERY_SOURCE}" ]]; then
+    # shellcheck disable=SC2016  # PowerShell expands these environment variables.
     PSGALLERY_REPO="${PSGALLERY_REPO}" PSGALLERY_SOURCE="${PSGALLERY_SOURCE}" \
       pwsh -NoProfile -Command 'Register-PSRepository -Name $env:PSGALLERY_REPO -SourceLocation $env:PSGALLERY_SOURCE -InstallationPolicy Trusted -ErrorAction SilentlyContinue'
   fi
-  PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
-  PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
-  PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
+  pwsh -NoProfile -File scripts/security/Install-PSModules.ps1 -Repository "${PSGALLERY_REPO}"
 
   echo "Installing gitleaks..."
   # Download gitleaks tarball and verify checksum before extracting
@@ -99,6 +133,29 @@ main() {
   sudo install /tmp/cosign /usr/local/bin/cosign
   rm /tmp/cosign
 
+  echo "Installing osv-scanner..."
+  OSV_SCANNER_VERSION="2.3.8"
+  if [[ "${ARCH}" == "x86_64" ]]; then
+    OSV_ARCH="amd64"
+    OSV_SCANNER_SHA256="bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc"
+  elif [[ "${ARCH}" == "aarch64" ]]; then
+    OSV_ARCH="arm64"
+    OSV_SCANNER_SHA256="8158b18edd2d03b1a30d905ca91b032bc62262167be8f206c27114f08823e27c"
+  else
+    echo "ERROR: Unsupported architecture for osv-scanner: ${ARCH}" >&2
+    exit 1
+  fi
+  curl -sSfL "${GITHUB_RELEASES_URL}/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_${OSV_ARCH}" -o /tmp/osv-scanner
+
+  echo "Checking osv-scanner binary integrity..."
+  if ! echo "${OSV_SCANNER_SHA256}  /tmp/osv-scanner" | sha256sum -c --quiet -; then
+    echo "ERROR: SHA256 checksum verification failed for osv-scanner binary" >&2
+    rm /tmp/osv-scanner
+    exit 1
+  fi
+  sudo install /tmp/osv-scanner /usr/local/bin/osv-scanner
+  rm /tmp/osv-scanner
+
   echo "Installing uv package manager..."
   # Dependencies are pinned for stability. Dependabot and security workflows manage updates.
   UV_VERSION="0.10.8"
@@ -123,10 +180,18 @@ main() {
   sudo tar -xzf /tmp/uv.tar.gz -C /usr/local/bin --strip-components=1 "uv-${UV_ARCH}/uv" "uv-${UV_ARCH}/uvx"
   rm /tmp/uv.tar.gz
 
-  echo "Syncing Python environments for skills..."
-  find .github/skills -name pyproject.toml -type f -execdir uv sync \;
+  echo "Syncing lint-eligible Python environments..."
+  if ! sync_python_environments "."; then
+    echo "ERROR: One or more Python environment installations failed" >&2
+    exit 1
+  fi
+
+  echo "Syncing Python environment for moderation eval..."
+  (cd scripts/evals/moderation && uv sync --locked)
 
   echo "System dependencies installed successfully"
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

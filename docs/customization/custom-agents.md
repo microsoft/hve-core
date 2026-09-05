@@ -2,7 +2,7 @@
 title: Creating Custom Agents
 description: Build specialized agents with tool restrictions, subagent delegation, and mode-based workflows for your team
 author: Microsoft
-ms.date: 2026-02-24
+ms.date: 2026-08-12
 ms.topic: how-to
 keywords:
   - agents
@@ -34,7 +34,7 @@ description: "Reviews pull request changes for style, correctness, and security 
 
 More complex agents add `tools`, `agents`, `handoffs`, and `disable-model-invocation` fields. See the [Frontmatter Reference](#frontmatter-reference) section for the complete field set.
 
-Agent files live in `.github/agents/{collection-id}/`. Subagents go in a `subagents/` subdirectory within their collection folder:
+Agent files live in `.github/agents/{package-id}/`. Subagents go in a `subagents/` subdirectory within their package folder:
 
 ```text
 .github/agents/
@@ -44,54 +44,48 @@ Agent files live in `.github/agents/{collection-id}/`. Subagents go in a `subage
 │       └── security-checker.agent.md
 ```
 
-## Creating Your First Agent
+## Improving an Existing Agent
 
-Walk through creating a code review agent for Contoso's engineering team using Prompt Builder.
+Walk through improving the current RPI Planner subagent using `hve-builder`.
 
-**Step 1:** Create the agent file at `.github/agents/contoso/code-reviewer.agent.md` with minimal frontmatter:
-
-```yaml
----
-name: Contoso Code Reviewer
-description: "Reviews code changes for Contoso's TypeScript API standards - Brought to you by contoso/engineering"
----
-```
-
-**Step 2:** Use `/prompt-build` to generate the agent body. Provide existing agents as reference context with `files` and specify the target file with `promptFiles`:
+### Step 1: Identify the target and requirements
 
 ```text
-/prompt-build files=.github/agents/hve-core/implementation-validator.agent.md promptFiles=.github/agents/contoso/code-reviewer.agent.md
+RPI Planner target: .github/agents/hve-core/subagents/rpi-planner.agent.md
+Requirements: Preserve bounded phase ownership, marker-based addressing, and
+the structured response contract.
 ```
 
-Prompt Builder analyzes the reference agents, generates the protocol body with purpose, steps, and response format, and validates the result against repository conventions.
-
-**Step 3:** Evaluate the generated agent with `/prompt-analyze`:
+### Step 2: Run HVE Builder in improve mode
 
 ```text
-/prompt-analyze promptFiles=.github/agents/contoso/code-reviewer.agent.md
+Use hve-builder with mode=improve and
+targets=.github/agents/hve-core/subagents/rpi-planner.agent.md. Preserve its
+existing capability-bearing frontmatter and the rpi-plan phase contract.
 ```
 
-This produces a structured report covering purpose, capabilities, issues organized by severity, and an overall quality assessment. Address any critical or major findings before committing.
+HVE Builder reads the known target and applicable conventions, confirms the
+write boundary, then authors within the current `rpi-plan` architecture.
 
-**Step 4:** Iterate with `/prompt-build` to apply fixes identified by the analysis:
+### Step 3: Review the evidence
 
-```text
-/prompt-build files=.github/agents/contoso/code-reviewer.agent.md promptFiles=.github/agents/contoso/code-reviewer.agent.md
-```
-
-When `promptFiles` points to an existing file, Prompt Builder refines it rather than starting from scratch.
+Review HVE Builder's independent static verdict, behavior-test disposition,
+host validation result, and overall outcome. Address actionable findings before
+committing.
 
 > [!TIP]
-> Run `/prompt-analyze` first to identify quality issues, then use `/prompt-build` to apply fixes. This two-step pattern produces consistent, well-structured agents.
-
-**Step 5:** Invoke the agent in Copilot Chat by selecting it from the agent picker or referencing it by name.
+> Use `hve-builder` review mode for read-only assessment. Use improve mode only
+> when source changes are approved.
 
 ### Consolidating Agents
 
-Use `/prompt-refactor` to merge overlapping agents or clean up related agent files:
+Use `hve-builder` refactor mode to merge overlapping agents or clean up related
+agent files without intentionally changing behavior:
 
 ```text
-/prompt-refactor promptFiles=.github/agents/contoso/*.agent.md requirements="merge overlapping review agents into a single orchestrator"
+Use hve-builder with mode=refactor,
+targets=.github/agents/contoso/*.agent.md, and requirements="merge overlapping
+review agents into a single orchestrator without changing supported behavior".
 ```
 
 ## Subagent Patterns
@@ -212,7 +206,7 @@ Create the requested artifacts based on analysis.
 Run validation commands and report results.
 ```
 
-HVE Core includes several mode-based agents you can study as patterns: task planners for research-plan-implement workflows, PR analyzers for autonomous review, and design thinking coaches for facilitated multi-turn sessions.
+HVE Core includes several mode-based agents you can study as patterns: RPI Agent for lifecycle coordination, PR analyzers for autonomous review, and Design Thinking coaches for facilitated multi-turn sessions.
 
 ## Role Scenarios
 
@@ -222,28 +216,46 @@ HVE Core includes several mode-based agents you can study as patterns: task plan
 
 **Tailspin Toys' engineering manager** authors a PR triage agent that categorizes incoming pull requests by area (frontend, backend, infrastructure), estimates review complexity, and suggests appropriate reviewers based on file ownership patterns.
 
-For full frontmatter schema, naming conventions, and contribution requirements, see [Contributing: Custom Agents](../contributing/custom-agents.md).
+For full frontmatter schema, naming conventions, and contribution requirements, see [Contributing: Custom Agents](../contributing/custom-agents).
 
 ## Frontmatter Reference
 
 Agent frontmatter supports these fields:
 
-| Field                      | Type    | Required | Purpose                                                      |
-|----------------------------|---------|----------|--------------------------------------------------------------|
-| `name`                     | string  | Yes      | Human-readable name shown in the agent picker                |
-| `description`              | string  | Yes      | One-line purpose with attribution suffix                     |
-| `tools`                    | array   | No       | Restrict available tools; omit for full access               |
-| `agents`                   | array   | No       | Human-readable names of subagent dependencies                |
-| `handoffs`                 | array   | No       | Structured transitions to other agents                       |
-| `disable-model-invocation` | boolean | No       | Set `true` for orchestrators that only delegate to subagents |
-| `user-invocable`           | boolean | No       | Set `false` for subagents not meant for direct invocation    |
+| Field                      | Type    | Required | Purpose                                                                            |
+|----------------------------|---------|----------|------------------------------------------------------------------------------------|
+| `name`                     | string  | Yes      | Human-readable name shown in the agent picker                                      |
+| `description`              | string  | Yes      | One-line purpose describing what the agent does and when to use it                 |
+| `tools`                    | array   | No       | Restrict available tools; omit for full access                                     |
+| `agents`                   | array   | No       | Human-readable names of subagent dependencies                                      |
+| `handoffs`                 | array   | No       | Structured transitions to other agents                                             |
+| `model`                    | string  | No       | Preferred model; omit to inherit; array/fallback-list values break the Copilot CLI |
+| `disable-model-invocation` | boolean | No       | Set `true` for orchestrators that only delegate to subagents                       |
+| `user-invocable`           | boolean | No       | Set `false` for subagents not meant for direct invocation                          |
+
+### model
+
+Specifies a preferred AI model as a single string. When omitted, a subagent inherits the invoking parent's model, and a directly invoked agent uses the current session or model-picker selection.
+
+```yaml
+# Single model
+model: GPT-5.6 Terra (copilot)
+```
+
+The [official custom agents configuration reference](https://docs.github.com/en/copilot/reference/custom-agents-configuration) defines `model` as `string` for GitHub.com, the Copilot CLI, and supported IDEs.
+VS Code Copilot Chat additionally accepts an array of fallback models, but the Copilot CLI's frontmatter parser rejects that form with `model: Expected string, received array` and drops the agent entirely.
+This is an open, unresolved incompatibility tracked in [github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133).
+Use a single scalar `model` value so agents load correctly in the Copilot CLI. Array-form fallback lists remain valid for `.prompt.md` files only.
+
+When a stable model is needed, select a responsibility profile first (High, Medium, or Low), then declare that profile's canonical scalar rather than an arbitrary catalog entry: Low is `GPT-5.6 Luna (copilot)` for bounded, literal, mechanical execution; Medium is `GPT-5.6 Terra (copilot)` for semantic discovery, authoring, or calibrated review; High is `Claude Opus 5 (copilot)` for the deepest reasoning tasks.
+Accepted models are those in `scripts/linting/model-catalog.json` whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`. Run `npm run lint:models` to validate.
 
 ### description
 
-Include attribution to identify the source organization or repository:
+Write a concise, single-sentence purpose statement that a parent or user can use to decide when to invoke the agent:
 
 ```yaml
-description: "Reviews code for API standards - Brought to you by contoso/engineering"
+description: "Reviews code changes for API standards conformance"
 ```
 
 ### tools
@@ -257,19 +269,22 @@ Tool values support four naming patterns:
 | Category-specific | `edit/createFile`, `execute/runInTerminal`    |
 | Wildcard          | `github/*`, `ado/*`                           |
 
+The set of available tools evolves with GitHub Copilot and VS Code. For the authoritative, current list, see the official [VS Code custom agents documentation](https://code.visualstudio.com/docs/copilot/customization/custom-agents). To invoke a granted tool from the agent body, use the `#tool:` reference syntax (for example, `#tool:codebase`); see [Contributing: Custom Agents](../contributing/custom-agents) for details.
+
 ### agents
 
 Declares subagent dependencies using their human-readable `name` values. Reference subagents in the body using glob paths so resolution works regardless of nesting depth:
 
 ```yaml
 agents:
-  - Researcher Subagent
-  - Phase Implementor
+  - Contoso Research Analyst
+  - RPI Planner
 ```
 
 ```markdown
-Delegate research to the researcher subagent
-at `.github/agents/**/researcher-subagent.agent.md`.
+Activate `rpi-research` for open-ended or decision-critical research. Dispatch
+the RPI Planner only from the canonical `rpi-plan` workflow when bounded phase
+authoring is required.
 ```
 
 ### handoffs
@@ -278,13 +293,9 @@ Defines structured transitions between agents. Each entry specifies a label (sho
 
 ```yaml
 handoffs:
-  - label: "Research Topic"
-    agent: "Researcher Subagent"
-    prompt: "Research the following topic"
-    send: true
-  - label: "Review Changes"
-    agent: "Implementation Validator"
-    prompt: "Validate the implementation against the plan"
+  - label: "Coordinate RPI Work"
+    agent: "RPI Agent"
+    prompt: "Coordinate this task through the applicable RPI phases"
     send: true
 ```
 
@@ -295,8 +306,8 @@ Set to `true` for orchestrator agents that coordinate subagents without performi
 ```yaml
 disable-model-invocation: true
 agents:
-  - Researcher Subagent
-  - Phase Implementor
+  - Contoso Security Checker
+  - Contoso Style Validator
 ```
 
 ### user-invocable

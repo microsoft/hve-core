@@ -1,292 +1,469 @@
-name: Pre-Release Pipeline
-
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Pre-Release Preparation
+# Prepares the odd-minor pre-release channel from release/prerelease.
+#
+# Merging the reviewed main -> release/prerelease promotion runs release-please in
+# pull-request-only mode against the dedicated pre-release config and manifest, so
+# the version change is reviewed before any tag exists. Merging that managed
+# release pull request runs release-please in tag-only mode, which creates the tag
+# and draft release at the merge commit. The resulting tag push starts the sole
+# post-tag producer.
 on:
   pull_request:
     types: [closed]
-    branches: [main]
-
+    branches:
+      - release/prerelease
+# One release at a time per target branch. The reviewed promotion merge and the
+# managed release merge carry different pull request numbers but mutate the same
+# branch, so the lock is the branch identity and a run is never cancelled.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-release/prerelease
   cancel-in-progress: false
-
 permissions:
   contents: read
-
 jobs:
-  prerelease-tag:
-    name: Tag and Create Pre-Release
+  # Every mutable pre-tag decision happens here, before any job holds release
+  # write permission. validate-release keeps sole ownership of the post-tag
+  # release-output and channel-state checks.
+  validate-trigger:
+    name: Validate Pre-Release Trigger
     if: >
       github.event.pull_request.merged == true
-      && github.event.pull_request.head.ref == 'prerelease/next'
+      && github.event.pull_request.base.ref == 'release/prerelease'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (
+        github.event.pull_request.head.ref == 'release-promotion--main--to--release-prerelease'
+        || github.event.pull_request.head.ref == 'release-please--branches--release/prerelease'
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      mode: ${{ steps.identity.outputs.mode }}
+      release-tag: ${{ steps.managed.outputs.release-tag }}
+      release-version: ${{ steps.managed.outputs.release-version }}
+    steps:
+      - name: Validate merged head identity
+        id: identity
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          EVENT_SHA: ${{ github.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          MANAGED_HEAD: release-please--branches--release/prerelease
+          MERGED: ${{ github.event.pull_request.merged }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          PROMOTION_HEAD: release-promotion--main--to--release-prerelease
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ "$MERGED" != 'true' ] || [ "$BASE_REF" != 'release/prerelease' ] || [ "$HEAD_REPOSITORY" != "$REPOSITORY" ]; then
+            echo "::error::Pre-Release trigger is not a merged same-repository pull request into release/prerelease"
+            exit 1
+          fi
+          if [ "$MERGE_SHA" != "$EVENT_SHA" ]; then
+            echo "::error::Pull request merge commit $MERGE_SHA does not match event SHA $EVENT_SHA"
+            exit 1
+          fi
+          if ! printf '%s' "$EVENT_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::Pre-Release trigger carries an invalid event SHA"
+            exit 1
+          fi
+
+          # Head classification is exact equality against the two authorized
+          # constants, never a prefix or substring match.
+          if [ "$HEAD_REF" = "$MANAGED_HEAD" ]; then
+            MODE='managed'
+          elif [ "$HEAD_REF" = "$PROMOTION_HEAD" ]; then
+            MODE='promotion'
+          else
+            echo "::error::Merged head $HEAD_REF is not an authorized Pre-Release release head"
+            exit 1
+          fi
+
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+
+      # Executable tooling would come from main, but this job runs none: the
+      # workspace exists only so read-only git commands have a repository.
+      - name: Checkout Pre-Release trigger validation workspace
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: trigger-validation
+          persist-credentials: false
+
+      - name: Validate promotion intent and candidate state
+        if: ${{ steps.identity.outputs.mode == 'promotion' }}
+        env:
+          EVENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/trigger-validation"
+
+          # hve-core is public, so this origin access is intentionally
+          # credential free; the fetch and ls-remote below stop working if the
+          # repository ever becomes private.
+
+          # Every value is read from the immutable merge commit, never from the
+          # moving branch, the pull request body, or transient job state.
+          git fetch --no-tags --depth 1 origin "$EVENT_SHA"
+          CANDIDATE=$(git show "$EVENT_SHA:release-please-prerelease-config.json" | jq -r '.packages["."]["release-as"] // ""')
+          BASELINE=$(git show "$EVENT_SHA:.release-please-prerelease-manifest.json" | jq -r '.["."] // ""')
+          for entry in "candidate:$CANDIDATE" "baseline:$BASELINE"; do
+            value=${entry#*:}
+            if [[ "$value" == *$'\n'* || "$value" == *$'\r'* || ! "$value" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::${entry%%:*} PreRelease version is not canonical MAJOR.MINOR.PATCH"
+              exit 1
+            fi
+          done
+          CANDIDATE_MINOR=${CANDIDATE#*.}
+          CANDIDATE_MINOR=${CANDIDATE_MINOR%%.*}
+          if (( 10#$CANDIDATE_MINOR % 2 == 0 )); then
+            echo "::error::PreRelease candidate $CANDIDATE has an even minor"
+            exit 1
+          fi
+          if [ "$CANDIDATE" = "$BASELINE" ] || [ "$(printf '%s\n%s\n' "$CANDIDATE" "$BASELINE" | sort -V | tail -1)" = "$BASELINE" ]; then
+            echo "::error::PreRelease promotion proposes $CANDIDATE but release/prerelease already carries $BASELINE"
+            exit 1
+          fi
+
+          # release-please creates this tag next, and a tag is immutable, so a
+          # transport failure aborts under set -e instead of reporting the
+          # identity as available.
+          CANDIDATE_REF="refs/tags/prerelease-v$CANDIDATE"
+          OCCUPIED=$(git ls-remote origin "$CANDIDATE_REF")
+          if [ -n "$OCCUPIED" ]; then
+            echo "::error::$CANDIDATE_REF already exists; the PreRelease release identity is occupied"
+            exit 1
+          fi
+
+          echo "Merged promotion advances release/prerelease from $BASELINE to $CANDIDATE"
+
+      # A managed rerun recovers the release already created at this immutable
+      # merge commit, so this arm proves consumed intent and release parity
+      # without treating an existing identity as a failure.
+      - name: Validate managed release intent was consumed
+        id: managed
+        if: ${{ steps.identity.outputs.mode == 'managed' }}
+        env:
+          EVENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/trigger-validation"
+
+          # hve-core is public, so this origin access is intentionally
+          # credential free; the fetch below stops working if the repository
+          # ever becomes private.
+          git fetch --no-tags --depth 1 origin "$EVENT_SHA"
+          INTENT=$(git show "$EVENT_SHA:release-please-prerelease-config.json" | jq -r '.packages["."]["release-as"] // ""')
+          if [ -n "$INTENT" ]; then
+            echo "::error::Managed Pre-Release merge still carries release-as $INTENT"
+            exit 1
+          fi
+
+          VERSION=$(git show "$EVENT_SHA:.release-please-prerelease-manifest.json" | jq -r '.["."] // ""')
+          if [[ "$VERSION" == *$'\n'* || "$VERSION" == *$'\r'* || ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::.release-please-prerelease-manifest.json at $EVENT_SHA is not canonical MAJOR.MINOR.PATCH"
+            exit 1
+          fi
+          VERSION_MINOR=${VERSION#*.}
+          VERSION_MINOR=${VERSION_MINOR%%.*}
+          if (( 10#$VERSION_MINOR % 2 == 0 )); then
+            echo "::error::Managed Pre-Release release $VERSION has an even minor"
+            exit 1
+          fi
+
+          {
+            echo "release-tag=prerelease-v$VERSION"
+            echo "release-version=$VERSION"
+          } >> "$GITHUB_OUTPUT"
+          echo "Managed Pre-Release merge is ready to tag prerelease-v$VERSION"
+
+  release-please:
+    name: Release Please on release/prerelease
+    needs: [validate-trigger]
+    if: >
+      github.event.pull_request.merged == true
+      && github.event.pull_request.base.ref == 'release/prerelease'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (
+        github.event.pull_request.head.ref == 'release-promotion--main--to--release-prerelease'
+        || github.event.pull_request.head.ref == 'release-please--branches--release/prerelease'
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     outputs:
-      tag_name: ${{ steps.tag.outputs.tag_name }}
-      version: ${{ steps.tag.outputs.version }}
+      release-pr-branch: ${{ steps.release-pr.outputs.branch }}
     steps:
       - name: Generate GitHub App Token
         id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
-          persist-credentials: false
-
-      - name: Extract version and create tag
-        id: tag
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: release-please-prerelease-config.json
+          manifest-file: .release-please-prerelease-manifest.json
+          target-branch: release/prerelease
+          # Only the managed release pull request tags. The reviewed promotion
+          # merge prepares metadata without creating a tag. The classification
+          # comes from validate-trigger, so the raw head ref is never
+          # reinterpreted after it was authorized.
+          skip-github-release: ${{ needs.validate-trigger.outputs.mode != 'managed' }}
+          skip-github-pull-request: ${{ needs.validate-trigger.outputs.mode == 'managed' }}
+      - name: Verify managed release identity
+        if: ${{ needs.validate-trigger.outputs.mode == 'managed' }}
+        shell: bash
         env:
+          CREATED_SHA: ${{ steps.release.outputs.sha }}
+          CREATED_TAG: ${{ steps.release.outputs.tag_name }}
+          EXPECTED_CHANNEL: PreRelease
+          EXPECTED_SHA: ${{ github.sha }}
+          EXPECTED_TAG: ${{ needs.validate-trigger.outputs.release-tag }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          REPO: ${{ github.repository }}
-          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          PATHS_RELEASED: ${{ steps.release.outputs.paths_released }}
+          ROOT_RELEASE_CREATED: ${{ steps.release.outputs.release_created }}
+          ANY_RELEASE_CREATED: ${{ steps.release.outputs.releases_created }}
+          REPOSITORY: ${{ github.repository }}
         run: |
-          VERSION=$(echo "$PR_TITLE" | grep -oE 'pre-release [0-9]+\.[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-          if [ -z "$VERSION" ]; then
-            echo "⚠️ Could not extract version from PR title, falling back to manifest"
-            VERSION=$(jq -r '.["."] // "0.0.0"' .release-please-manifest.json 2>/dev/null || echo "")
+          set -euo pipefail
+          if [ -n "$ROOT_RELEASE_CREATED" ] && [ "$ROOT_RELEASE_CREATED" != 'true' ] && [ "$ROOT_RELEASE_CREATED" != 'false' ]; then
+            echo "::error::release-please returned invalid root release_created state"
+            exit 1
           fi
-          if [ -z "$VERSION" ]; then
-            echo "::error::Could not extract version from PR title or manifest: $PR_TITLE"
+          if [ "$ANY_RELEASE_CREATED" != 'true' ] && [ "$ANY_RELEASE_CREATED" != 'false' ]; then
+            echo "::error::release-please returned invalid releases_created state"
+            exit 1
+          fi
+          if ! printf '%s' "$PATHS_RELEASED" | jq -e 'type == "array"' >/dev/null; then
+            echo "::error::release-please returned malformed paths_released"
+            exit 1
+          fi
+          if [ "$ROOT_RELEASE_CREATED" = 'true' ]; then
+            if [ "$ANY_RELEASE_CREATED" != 'true' ] \
+              || ! printf '%s' "$PATHS_RELEASED" | jq -e 'length == 1 and .[0] == "."' >/dev/null \
+              || [ "$CREATED_TAG" != "$EXPECTED_TAG" ] \
+              || [ "$CREATED_SHA" != "$EXPECTED_SHA" ]; then
+              echo "::error::release-please created an unexpected managed release identity"
+              exit 1
+            fi
+          elif [ "$ANY_RELEASE_CREATED" != 'false' ] \
+            || ! printf '%s' "$PATHS_RELEASED" | jq -e 'length == 0' >/dev/null \
+            || [ -n "$CREATED_TAG" ] \
+            || [ -n "$CREATED_SHA" ]; then
+            echo "::error::release-please returned inconsistent empty managed release outputs"
             exit 1
           fi
 
-          # Even/odd convention: pre-release versions must have odd minor
-          PRE_MINOR=$(echo "$VERSION" | cut -d. -f2)
-          if (( PRE_MINOR % 2 == 0 )); then
-            echo "::error::Pre-release version $VERSION must have an odd minor (even/odd convention)"
+          tag_object=$(gh api "/repos/$REPOSITORY/git/ref/tags/$EXPECTED_TAG" --jq '.object.type + " " + .object.sha')
+          object_type=${tag_object%% *}
+          object_sha=${tag_object##* }
+          visited=''
+          tag_sha=''
+          for _ in $(seq 1 10); do
+            if [[ ! "$object_sha" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "::error::$EXPECTED_TAG resolved to an invalid Git object"
+              exit 1
+            fi
+            if [ "$object_type" = 'commit' ]; then
+              tag_sha="$object_sha"
+              break
+            fi
+            if [ "$object_type" != 'tag' ]; then
+              echo "::error::$EXPECTED_TAG resolved to unsupported object type $object_type"
+              exit 1
+            fi
+            case " $visited " in
+              *" $object_sha "*)
+                echo "::error::$EXPECTED_TAG tag chain revisits $object_sha"
+                exit 1
+                ;;
+            esac
+            visited="$visited $object_sha"
+            tag_object=$(gh api "/repos/$REPOSITORY/git/tags/$object_sha" --jq '.object.type + " " + .object.sha')
+            object_type=${tag_object%% *}
+            object_sha=${tag_object##* }
+          done
+          if [ "$tag_sha" != "$EXPECTED_SHA" ]; then
+            echo "::error::$EXPECTED_TAG does not resolve to managed merge $EXPECTED_SHA"
             exit 1
           fi
 
-          TAG="hve-core-v${VERSION}"
-
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
-
-          if ! gh api "/repos/$REPO/git/refs/tags/$TAG" --silent 2>/dev/null; then
-            gh api "/repos/$REPO/git/refs" \
-              -f "ref=refs/tags/$TAG" \
-              -f "sha=$MERGE_SHA"
-            echo "Created tag $TAG"
-          else
-            echo "Tag $TAG already exists"
+          release_file="$RUNNER_TEMP/managed-release.json"
+          gh api "/repos/$REPOSITORY/releases/tags/$EXPECTED_TAG" > "$release_file"
+          if ! jq -e 'type == "object"' "$release_file" >/dev/null; then
+            echo "::error::$EXPECTED_TAG release lookup returned a malformed response"
+            exit 1
           fi
-
-      - name: Create draft pre-release GitHub Release
+          release_tag=$(jq -er '.tag_name | select(type == "string")' "$release_file")
+          release_target=$(jq -er '.target_commitish | select(type == "string")' "$release_file")
+          release_draft=$(jq -er '.draft | select(type == "boolean") | tostring' "$release_file")
+          release_prerelease=$(jq -er '.prerelease | select(type == "boolean") | tostring' "$release_file")
+          if [ "$release_tag" != "$EXPECTED_TAG" ] || [ "$release_target" != "$EXPECTED_SHA" ]; then
+            echo "::error::$EXPECTED_TAG release does not target managed merge $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ "$EXPECTED_CHANNEL" = 'Stable' ] && [ "$release_prerelease" != 'false' ]; then
+            echo "::error::$EXPECTED_TAG is unexpectedly marked as a PreRelease"
+            exit 1
+          fi
+          if [ "$EXPECTED_CHANNEL" = 'PreRelease' ] && [ "$release_draft" != 'true' ] && [ "$release_prerelease" != 'true' ]; then
+            echo "::error::Published $EXPECTED_TAG is not marked as a PreRelease"
+            exit 1
+          fi
+          if [ "$EXPECTED_CHANNEL" != 'Stable' ] && [ "$EXPECTED_CHANNEL" != 'PreRelease' ]; then
+            echo "::error::Unsupported managed release channel $EXPECTED_CHANNEL"
+            exit 1
+          fi
+      - name: Capture release preparation branch
+        id: release-pr
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          TAG: ${{ steps.tag.outputs.tag_name }}
-          VERSION: ${{ steps.tag.outputs.version }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REPO: ${{ github.repository }}
+          PRS_CREATED: ${{ steps.release.outputs.prs_created }}
+          RELEASE_PR: ${{ steps.release.outputs.pr }}
+          VALIDATED_MODE: ${{ needs.validate-trigger.outputs.mode }}
         run: |
-          BODY=$(gh pr view "$PR_NUMBER" \
-            --json body --jq '.body' \
-            -R "$REPO")
+          set -euo pipefail
+          branch=''
+          if [ "$PRS_CREATED" = 'true' ]; then
+            branch=$(printf '%s' "$RELEASE_PR" | jq -r '.headBranchName // ""')
+            if ! printf '%s' "$branch" | grep -Eq '^release-please--[A-Za-z0-9._/-]+$'; then
+              echo "::error::release-please reported an unexpected preparation branch"
+              exit 1
+            fi
+          fi
+          if [ "$VALIDATED_MODE" = 'promotion' ] && [ -z "$branch" ]; then
+            echo "::error::release-please prepared no release pull request for the reviewed promotion"
+            exit 1
+          fi
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
 
-          gh release create "$TAG" \
-            --title "hve-core $VERSION (pre-release)" \
-            --prerelease \
-            --draft \
-            --notes "$BODY" \
-            -R "$REPO"
-
-  close-milestone:
-    name: Close Pre-Release Milestone
-    needs: [prerelease-tag]
+  sync-release-pr:
+    name: Sync Release Preparation Versions
+    needs:
+      - release-please
+    if: ${{ !cancelled() && !failure() && needs.release-please.outputs.release-pr-branch != '' }}
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-    steps:
-      - name: Close milestone for pre-release version
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ needs.prerelease-tag.outputs.version }}
-        run: |
-          REPO="${{ github.repository }}"
-          MAJOR=$(echo "$VERSION" | cut -d. -f1)
-          MINOR=$(echo "$VERSION" | cut -d. -f2)
-          TITLE="v${MAJOR}.${MINOR}.0"
-          NUMBER=$(gh api "/repos/$REPO/milestones?state=open&per_page=100" \
-            --jq ".[] | select(.title == \"$TITLE\") | .number")
-          if [ -n "$NUMBER" ]; then
-            gh api "/repos/$REPO/milestones/$NUMBER" \
-              -X PATCH -f state=closed
-            echo "✅ Closed milestone $TITLE (#$NUMBER)"
-          else
-            echo "ℹ️ No open milestone found matching '$TITLE' — skipping"
-          fi
-
-  extension-package-prerelease:
-    name: Package VS Code Extensions (Pre-Release)
-    needs: [prerelease-tag]
-    uses: ./.github/workflows/extension-package.yml
-    with:
-      version: ${{ needs.prerelease-tag.outputs.version }}
-      channel: PreRelease
     permissions:
       contents: read
-
-  generate-dependency-sbom:
-    name: Generate Dependency SBOM
-    needs: [prerelease-tag]
-    runs-on: ubuntu-latest
-    permissions:
-      # write required for gh release upload to attach SBOM to the release
-      contents: write
     steps:
-      - name: Checkout dependency manifests
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+      - name: Checkout trusted release updater
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
           sparse-checkout: |
-            package.json
-            package-lock.json
-            .syft.yaml
+            scripts/release/Set-RepositoryVersion.ps1
+            scripts/plugins/Sync-PluginManifest.ps1
           sparse-checkout-cone-mode: false
           persist-credentials: false
-
-      - name: Generate dependency SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          path: .
-          format: spdx-json
-          output-file: dependencies.spdx.json
-          upload-release-assets: false
-          upload-artifact: false
-          config: .syft.yaml
-          dependency-snapshot: true
-
-      - name: Upload dependency SBOM artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: sbom-dependencies
-          path: dependencies.spdx.json
-
-      - name: Upload dependency SBOM to release
+      # The managed branch is resolved to one immutable commit and fetched over a
+      # credential-free remote, so no write token exists while the tree is
+      # transformed.
+      - name: Resolve and fetch the release preparation commit
+        id: preparation
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_BRANCH: ${{ needs.release-please.outputs.release-pr-branch }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
         run: |
-          gh release upload "${{ needs.prerelease-tag.outputs.tag_name }}" \
-            "dependencies.spdx.json" \
-            --clobber -R "${{ github.repository }}"
-
-  attest-and-upload:
-    name: Attest and Upload (${{ matrix.id }})
-    needs: [prerelease-tag, extension-package-prerelease, generate-dependency-sbom]
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.extension-package-prerelease.outputs.collections-matrix) }}
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    steps:
-      - name: Checkout Syft config
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          sparse-checkout: .syft.yaml
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Download dependency SBOM
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sbom-dependencies
-          path: ./sbom
-
-      - name: Download VSIX artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: extension-vsix-${{ matrix.id }}
-          path: ./dist
-
-      - name: Resolve VSIX filename
-        id: vsix
-        run: |
-          shopt -s nullglob
-          files=(dist/*.vsix)
-          if [[ ${#files[@]} -eq 0 ]]; then
-            echo "::error::No VSIX file found in dist/"
+          set -euo pipefail
+          if [[ ! "$RELEASE_BRANCH" =~ ^release-please--[A-Za-z0-9._/-]+$ ]]; then
+            echo "::error::$RELEASE_BRANCH is not a managed release preparation branch"
             exit 1
           fi
-          if [[ ${#files[@]} -gt 1 ]]; then
-            echo "::error::Expected exactly one VSIX file but found ${#files[@]}: ${files[*]}"
+
+          resolved_object=$(gh api "/repos/$REPOSITORY/git/ref/heads/$RELEASE_BRANCH" --jq '.object.sha')
+          if [[ ! "$resolved_object" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::$RELEASE_BRANCH did not resolve to a commit SHA"
             exit 1
           fi
-          VSIX_FILE="${files[0]}"
-          VSIX_NAME=$(basename "$VSIX_FILE")
-          echo "file=$VSIX_FILE" >> "$GITHUB_OUTPUT"
-          echo "name=$VSIX_NAME" >> "$GITHUB_OUTPUT"
 
-      - name: Generate SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          file: ${{ steps.vsix.outputs.file }}
-          format: spdx-json
-          output-file: dist/${{ steps.vsix.outputs.name }}.spdx.json
-          artifact-name: sbom-${{ matrix.id }}
-          upload-release-assets: false
-          upload-artifact: true
-          config: .syft.yaml
+          RELEASE_REPO="$GITHUB_WORKSPACE/release-preparation"
+          mkdir -p "$RELEASE_REPO"
+          git -C "$RELEASE_REPO" init --quiet
+          git -C "$RELEASE_REPO" -c credential.helper= fetch --no-tags --depth 1 \
+            "$SERVER_URL/$REPOSITORY.git" \
+            "+refs/heads/$RELEASE_BRANCH:refs/remotes/preparation/head"
+          fetched_object=$(git -C "$RELEASE_REPO" rev-parse refs/remotes/preparation/head)
+          if [ "$fetched_object" != "$resolved_object" ]; then
+            echo "::error::$RELEASE_BRANCH moved from $resolved_object to $fetched_object during preparation"
+            exit 1
+          fi
+          git -C "$RELEASE_REPO" checkout --quiet --detach refs/remotes/preparation/head
 
-      - name: Verify SBOM files exist
+          echo "commit=$resolved_object" >> "$GITHUB_OUTPUT"
+      - name: Update committed version fields and retire the promotion intent
+        id: transform
         run: |
-          test -f "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
-            || { echo "::error::Per-VSIX SBOM not found: dist/${{ steps.vsix.outputs.name }}.spdx.json"; exit 1; }
-          test -f "sbom/dependencies.spdx.json" \
-            || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
+          set -euo pipefail
+          RELEASE_REPO="$GITHUB_WORKSPACE/release-preparation"
+          VERSION=$(jq -r '.["."] // ""' "$RELEASE_REPO/.release-please-prerelease-manifest.json")
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::.release-please-prerelease-manifest.json has no MAJOR.MINOR.PATCH root version"
+            exit 1
+          fi
 
-      - name: Attest build provenance
-        id: attest
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
-        with:
-          subject-path: ${{ steps.vsix.outputs.file }}
+          # The promotion wrote exact release intent. It must describe this
+          # managed release, and it is retired here so it can never survive the
+          # merge into a later release-please run on the branch.
+          CONFIG="$RELEASE_REPO/release-please-prerelease-config.json"
+          INTENT=$(jq -r '.packages["."]["release-as"] // ""' "$CONFIG")
+          if [ "$INTENT" != "$VERSION" ]; then
+            echo "::error::release-please-prerelease-config.json carries release-as '$INTENT' but the managed release is $VERSION"
+            exit 1
+          fi
+          jq 'del(.packages["."]["release-as"])' "$CONFIG" > "$CONFIG.sync"
+          mv "$CONFIG.sync" "$CONFIG"
 
-      - name: Attest SBOM
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-path: ${{ steps.vsix.outputs.file }}
-          sbom-path: dist/${{ steps.vsix.outputs.name }}.spdx.json
+          # Component membership is resynchronized from this preparation tree
+          # and every version field is normalized to the managed release
+          # version. Neither step transforms a source ref or records a
+          # release candidate.
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
+              -RepoRoot "$RELEASE_REPO"
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Set-RepositoryVersion.ps1" \
+              -Version "$VERSION" \
+              -RepoRoot "$RELEASE_REPO"
 
-      - name: Attest dependency SBOM
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-path: ${{ steps.vsix.outputs.file }}
-          sbom-path: sbom/dependencies.spdx.json
-
-      - name: Upload assets to GitHub Release
+          cd "$RELEASE_REPO"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all
+          if git diff --cached --quiet; then
+            echo "Preparation already carries $VERSION and its synchronized plugin manifest"
+            echo "committed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "chore(release): sync committed versions and plugin manifest to $VERSION"
+          echo "committed=true" >> "$GITHUB_OUTPUT"
+      # The write credential exists only for this push, and the lease binds the
+      # update to the exact commit the tree was built from.
+      - name: Push the synchronized release preparation commit
+        if: ${{ steps.transform.outputs.committed == 'true' }}
         env:
-          GH_TOKEN: ${{ github.token }}
-          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+          EXPECTED_COMMIT: ${{ steps.preparation.outputs.commit }}
+          GH_APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_BRANCH: ${{ needs.release-please.outputs.release-pr-branch }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
         run: |
-          cp "$BUNDLE_PATH" \
-            "dist/${{ steps.vsix.outputs.name }}.sigstore.json"
-          jq -c '.dsseEnvelope' "$BUNDLE_PATH" > \
-            "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl"
-          gh release upload "${{ needs.prerelease-tag.outputs.tag_name }}" \
-            "${{ steps.vsix.outputs.file }}" \
-            "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
-            "dist/${{ steps.vsix.outputs.name }}.sigstore.json" \
-            "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl" \
-            --clobber -R "${{ github.repository }}"
-
-  publish-release:
-    name: Publish Pre-Release
-    needs: [prerelease-tag, attest-and-upload]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Publish GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.prerelease-tag.outputs.tag_name }}
-          REPO: ${{ github.repository }}
-        run: |
-          gh release edit "$TAG" --draft=false -R "$REPO"
+          set -euo pipefail
+          RELEASE_REPO="$GITHUB_WORKSPACE/release-preparation"
+          push_host=${SERVER_URL#https://}
+          git -C "$RELEASE_REPO" -c credential.helper= push \
+            --force-with-lease="refs/heads/$RELEASE_BRANCH:$EXPECTED_COMMIT" \
+            "https://x-access-token:$GH_APP_TOKEN@$push_host/$REPOSITORY.git" \
+            "HEAD:refs/heads/$RELEASE_BRANCH"

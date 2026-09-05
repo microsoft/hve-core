@@ -1,17 +1,19 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Dependency Review
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
-      - '**/package.json'
-      - '**/package-lock.json'
-      - '**/pyproject.toml'
-      - '**/uv.lock'
-      - '**/requirements*.txt'
-      - '.github/workflows/dependency-review.yml'
+      - "**/package.json"
+      - "**/package-lock.json"
+      - "**/pyproject.toml"
+      - "**/uv.lock"
+      - "**/requirements*.txt"
+      - ".github/workflows/dependency-review.yml"
   workflow_call:
 
 permissions:
@@ -22,20 +24,20 @@ jobs:
     name: Review Dependencies
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Elevated for Dependency Submission API (uv.lock)
+      contents: write # Elevated for Dependency Submission API (uv.lock)
       pull-requests: write
-    
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Submit uv.lock dependencies  # Runs on push (base snapshots) and non-fork PRs
+      - name: Submit uv.lock dependencies # Runs on push (base snapshots) and non-fork PRs
         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: advanced-security/component-detection-dependency-submission-action@b876b8cc341a53970394b33ea0ca4e86c25542de # v0.1.3
+        uses: advanced-security/component-detection-dependency-submission-action@31f25a8de68ae5ce2ca274bc28546a78683c15ce # v0.1.4
         with:
-          detectorArgs: 'UvLock=EnableIfDefaultOff'
+          detectorArgs: "UvLock=EnableIfDefaultOff"
 
       - name: Dependency Review
         if: github.event_name == 'pull_request'
@@ -44,6 +46,15 @@ jobs:
           retry-on-snapshot-warnings: true
           retry-on-snapshot-warnings-timeout: 120
           fail-on-severity: moderate
+          # GHSA-69w3-r845-3855 (CVE-2026-1839): transformers Trainer
+          # arbitrary code execution via torch.load() without weights_only.
+          # The advisory states the issue only affects torch>=2.2 used with
+          # PyTorch < 2.6; the moderation eval pins torch==2.9.1 (>=2.6), so
+          # safe_globals() protection applies and the path is not exploitable.
+          # The only patched release (5.0.0rc3) is a pre-release that breaks
+          # detoxify==0.5.2, which requires transformers<5.
+          allow-ghsas: >-
+            GHSA-69w3-r845-3855
           comment-summary-in-pr: always
           license-check: true
           allow-licenses: >-
@@ -55,19 +66,173 @@ jobs:
             WTFPL, LicenseRef-scancode-unicode
           # Packages with compound SPDX expressions containing GPL or MPL
           # from bundled code; distributed licenses are permissive.
+          # @github/copilot and its platform-specific binaries (including
+          # @github/copilot-linuxmusl-arm64 and @github/copilot-linuxmusl-x64
+          # added in v1.0.63) use a non-SPDX proprietary license
+          # (LicenseRef-bad-see-license-in-license.md); it is GitHub's own
+          # CLI toolchain, pulled transitively via @github/copilot-sdk by the
+          # vally copilot-sdk executor used to run the eval suites.
           # pkg:npm/hve-core is the private root package (never published to npm).
           # pkg:pypi/certifi uses MPL-2.0 (Mozilla CA bundle).
           # pkg:pypi/charset-normalizer is MIT licensed but some older wheel
           # metadata declares a compound SPDX expression; the action treats
           # compound expressions as a mismatch against allow-licenses.
+          # pkg:pypi/tqdm reports MIT AND MPL-2.0 in the submitted moderation
+          # graph; the action treats the compound expression as a mismatch.
+          # pkg:pypi/shapely declares a compound SPDX expression
+          # (BSD-3-Clause AND LGPL-2.1-only); shapely's distributed code is
+          # BSD-3-Clause and the LGPL component refers to bundled GEOS headers.
+          # The mural skill keyring/cryptography stack below ships permissive
+          # licenses (Apache-2.0, MIT, BSD-3-Clause, PSF-2.0) per each
+          # project's source repository, but PyPI metadata reports "unknown"
+          # so the action requires explicit allowlisting.
+          # pkg:npm/lightningcss (and its optional platform-specific binaries)
+          # is MPL-2.0 licensed; it is pulled in transitively by
+          # @docusaurus/faster's Rspack toolchain. MPL-2.0 is file-level
+          # copyleft and safe to consume as a dependency.
+          # pkg:npm/uri-js declares a compound SPDX expression
+          # (BSD-2-Clause AND BSD-2-Clause-Views); both components are
+          # permissive BSD variants, but the action treats the compound
+          # expression as a mismatch against allow-licenses.
+          # The pkg:pypi/torch ML stack below is the transitive dependency
+          # graph of the moderation eval (scripts/evals/moderation). torch
+          # resolves from the CPU-only wheel index
+          # (download.pytorch.org/whl/cpu), so the nvidia-*-cu12 CUDA runtime
+          # libraries are no longer pulled in. PyPI metadata reports
+          # "unknown" for the remaining packages so the action cannot match
+          # them against allow-licenses: torch is BSD-3-Clause; filelock is
+          # Unlicense (public domain); hf-xet, idna, and safetensors ship
+          # permissive licenses (Apache-2.0 / BSD-style) per their source
+          # repositories. pkg:pypi/regex declares a compound SPDX expression
+          # (CNRI-Python AND Apache-2.0) and is pulled transitively by
+          # transformers; CNRI-Python is a permissive PSF-style license. The
+          # moderation eval is an internal test harness, not a distributed
+          # product.
+          # The security-planning TM7 harness adds a Windows-only UI
+          # Automation group. Every package below ships a permissive license
+          # that already appears in allow-licenses; the action cannot match
+          # them because the dependency graph reports a compound expression or
+          # "unknown". Verified against the installed wheels:
+          # pkg:pypi/pywinauto declares a compound SPDX expression
+          # (BSD-3-Clause AND LGPL-2.1-only AND LGPL-2.1-or-later). The
+          # distributed wheel is BSD-3-Clause only: its METADATA declares
+          # "License: BSD 3-clause" with the OSI BSD classifier, its bundled
+          # LICENSE is the BSD 3-clause text, and the package contains no LGPL
+          # reference. The LGPL components are detected in the upstream source
+          # repository and are not redistributed in the wheel. This is the
+          # same situation as shapely above.
+          # pkg:pypi/comtypes is MIT (License-Expression: MIT).
+          # pkg:pypi/pillow is MIT-CMU (License-Expression: MIT-CMU).
+          # pkg:pypi/pywin32 is PSF (OSI Python Software Foundation License).
+          # The harness is Windows-only, opt-in, and not distributed as a
+          # product; portable TM7 generation requires none of these.
+          #
+          # axe-core and @axe-core/playwright are MPL-2.0, which is file-level
+          # copyleft rather than project-level. Both are already vendored at the
+          # same version by the Docusaurus site; the accessibility skill's
+          # runtime harness pins the same pair so probes resolve without a
+          # network fetch. They are development-time test tooling that is never
+          # linked into or redistributed with a shipped artifact, and no
+          # MPL-covered file is modified.
+          #
+          # pkg:npm/through2 resolves as the compound expression
+          # "MIT AND MITNFA", which the action cannot match against
+          # allow-licenses even though both halves are permissive; the package
+          # lockfile records plain MIT. It arrives transitively through regedit,
+          # which the accessibility harness uses to detect a local NVDA install.
+          # The nested scripts/extension/marketplace-publisher graph below is
+          # a manifest-scoped duplicate of the root @vscode/vsce 3.9.2
+          # build-time toolchain; every package resolves at the identical
+          # version already present in the root lockfile, but Dependency
+          # Review treats the new manifest as new dependencies.
+          # pkg:npm/binaryextensions, pkg:npm/editions,
+          # pkg:npm/istextorbinary, pkg:npm/textextensions, and
+          # pkg:npm/version-range are Artistic-2.0 build-time transitive
+          # dependencies of vsce. Artistic-2.0 is allowed only for these
+          # exact packages, not repository-wide.
+          # pkg:npm/typed-rest-client declares MIT in its own package
+          # metadata; the scanner's compound expression is metadata
+          # uncertainty, not a copyleft obligation.
+          # pkg:npm/hve-core-marketplace-publisher is the private nested
+          # root package (never published to npm) and is locally MIT.
+          # pkg:npm/%40vscode/vsce-sign is first-party Microsoft build-time
+          # publisher tooling under a non-SPDX reference ("SEE LICENSE IN
+          # LICENSE.txt") that resolves to the Microsoft Software License
+          # Terms published with the package at
+          # https://www.npmjs.com/package/@vscode/vsce-sign; those terms cover
+          # this build-time use, and the toolchain tarball is never shipped as
+          # a release asset.
+          # pkg:pypi/pyyaml is MIT licensed per its own source repository, but
+          # its PyPI metadata declares no SPDX expression, so the action cannot
+          # match it against allow-licenses. It is a direct dependency of the
+          # architecture-diagrams, data-catalog, and feasibility skills, which
+          # parse YAML through yaml.SafeLoader.
+          # pkg:npm/robust-predicates resolves as the compound expression
+          # "LicenseRef-scancode-public-domain AND Unlicense", which the action
+          # cannot match even though both halves are public-domain dedications
+          # and Unlicense already appears in allow-licenses. It arrives
+          # transitively through mermaid's d3 dependency graph and renders
+          # documentation diagrams at build time.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
             pkg:pypi/certifi,
             pkg:pypi/charset-normalizer,
+            pkg:pypi/shapely,
+            pkg:pypi/backports-tarfile,
+            pkg:pypi/cryptography,
+            pkg:pypi/jaraco-classes,
+            pkg:pypi/jaraco-context,
+            pkg:pypi/jaraco-functools,
+            pkg:pypi/keyrings-alt,
+            pkg:pypi/torch,
+            pkg:pypi/filelock,
+            pkg:pypi/hf-xet,
+            pkg:pypi/idna,
+            pkg:pypi/safetensors,
+            pkg:pypi/regex,
+            pkg:pypi/tqdm,
+            pkg:pypi/pywinauto,
+            pkg:pypi/comtypes,
+            pkg:pypi/pillow,
+            pkg:pypi/pywin32,
+            pkg:pypi/pyyaml,
             pkg:npm/dompurify,
+            pkg:npm/robust-predicates,
             pkg:npm/lunr-languages,
-            pkg:npm/hve-core
+            pkg:npm/%40github/copilot,
+            pkg:npm/%40github/copilot-darwin-arm64,
+            pkg:npm/%40github/copilot-darwin-x64,
+            pkg:npm/%40github/copilot-linux-arm64,
+            pkg:npm/%40github/copilot-linux-x64,
+            pkg:npm/%40github/copilot-win32-arm64,
+            pkg:npm/%40github/copilot-win32-x64,
+            pkg:npm/%40github/copilot-linuxmusl-arm64,
+            pkg:npm/%40github/copilot-linuxmusl-x64,
+            pkg:npm/lightningcss,
+            pkg:npm/lightningcss-android-arm64,
+            pkg:npm/lightningcss-darwin-arm64,
+            pkg:npm/lightningcss-darwin-x64,
+            pkg:npm/lightningcss-freebsd-x64,
+            pkg:npm/lightningcss-linux-arm-gnueabihf,
+            pkg:npm/lightningcss-linux-arm64-gnu,
+            pkg:npm/lightningcss-linux-arm64-musl,
+            pkg:npm/lightningcss-linux-x64-gnu,
+            pkg:npm/lightningcss-linux-x64-musl,
+            pkg:npm/lightningcss-win32-arm64-msvc,
+            pkg:npm/lightningcss-win32-x64-msvc,
+            pkg:npm/uri-js,
+            pkg:npm/axe-core,
+            pkg:npm/%40axe-core/playwright,
+            pkg:npm/through2,
+            pkg:npm/hve-core,
+            pkg:npm/hve-core-marketplace-publisher,
+            pkg:npm/%40vscode/vsce-sign,
+            pkg:npm/binaryextensions,
+            pkg:npm/editions,
+            pkg:npm/istextorbinary,
+            pkg:npm/textextensions,
+            pkg:npm/typed-rest-client,
+            pkg:npm/version-range
           show-openssf-scorecard: true
           warn-on-openssf-scorecard-level: 3
-

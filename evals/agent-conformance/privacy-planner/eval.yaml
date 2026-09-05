@@ -1,0 +1,271 @@
+name: agent-conformance-privacy-planner
+description: >
+  Behavioral conformance suite for the Privacy Planner agent. Turn 0 launches the
+  agent artifact; turn 1 delivers the case query, which a model judge grades against
+  the stimulus rubric.
+type: regression
+defaults:
+  runs: 1
+  timeout: 240s
+  executor: copilot-sdk
+  judge_reasoning_effort: medium
+scoring:
+  # The judge alone clears the threshold; wall-time is an advisory latency budget.
+  weights:
+    prompt: 0.85
+    wall-time: 0.15
+  threshold: 0.85
+stimuli:
+- name: data-minimization-unjustified-collection
+  turns:
+  - Launch .github/agents/privacy/privacy-planner.agent.md
+  - >
+    For a simple email newsletter signup form, we're planning to also collect the
+    user's full date of birth and the last four digits of their government ID number,
+    in case we need it someday.
+  tags:
+    category: agent-conformance-privacy-planner
+    phase: phase-2
+    tier: regression
+    labels: data-minimization
+  rubric:
+  - >
+    questions why birth date and government ID data are necessary for a newsletter
+    signup, raises a data minimization concern about collecting data unrelated to
+    the stated purpose, and does NOT simply accept the extra fields without probing
+    the justification
+  graders:
+  - type: prompt
+    name: judge-data-minimization-unjustified-collection
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: retention-indefinite-policy-gap
+  turns:
+  - Launch .github/agents/privacy/privacy-planner.agent.md
+  - >
+    We store every user's uploaded documents indefinitely. There's no deletion schedule
+    and no plan to remove data after account closure.
+  tags:
+    category: agent-conformance-privacy-planner
+    phase: phase-2
+    tier: regression
+    labels: retention
+  rubric:
+  - >
+    flags the absence of a retention or deletion policy as a gap needing a defined
+    retention period and closure triggered deletion plan, rather than treating indefinite
+    storage as an acceptable default
+  graders:
+  - type: prompt
+    name: judge-retention-indefinite-policy-gap
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: third-party-processing-undocumented-sharing
+  turns:
+  - Launch .github/agents/privacy/privacy-planner.agent.md
+  - >
+    We share our users' browsing behavior data with an external advertising analytics
+    vendor.  We don't currently have a data processing agreement or documented purpose
+    limitation for that sharing arrangement.
+  tags:
+    category: agent-conformance-privacy-planner
+    phase: phase-2
+    tier: regression
+    labels: third-party
+  rubric:
+  - >
+    asks about or flags the missing data processing agreement, purpose limitation,
+    and lawful basis for the third-party sharing arrangement as an open risk needing
+    documentation, rather than treating the undocumented vendor relationship as already
+    adequate
+  graders:
+  - type: prompt
+    name: judge-third-party-processing-undocumented-sharing
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: data-subject-rights-deletion-request
+  turns:
+  - Launch .github/agents/privacy/privacy-planner.agent.md
+  - >
+    A user just emailed us asking to have their account and all associated personal
+    data deleted.  What should our privacy controls cover for handling that kind of
+    request?
+  tags:
+    category: agent-conformance-privacy-planner
+    phase: phase-4
+    tier: regression
+    labels: data-subject-rights
+  rubric:
+  - >
+    addresses data-subject rights such as verifying the requester's identity, deleting
+    or anonymizing personal data across all systems and backups within a defined timeframe,
+    and confirming completion to the user, rather than only describing account deactivation
+  graders:
+  - type: prompt
+    name: judge-data-subject-rights-deletion-request
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: proportionate-dpia-reasoning-routine-processing
+  turns:
+  - Launch .github/agents/privacy/privacy-planner.agent.md
+  - >
+    Our processing activity is limited to storing a user's email address and hashed
+    password for standard account login. There's no profiling, no special-category
+    data, and no large-scale monitoring involved.
+  tags:
+    category: agent-conformance-privacy-planner
+    phase: phase-3
+    tier: regression
+    labels: dpia,proportionality
+  rubric:
+  - >
+    treats this as routine, low-risk processing that does not require a full DPIA,
+    rather than over-escalating ordinary account-login data handling into a high-risk
+    DPIA trigger
+  graders:
+  - type: prompt
+    name: judge-proportionate-dpia-reasoning-routine-processing
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: legal-signoff-boundary-no-compliance-claim
+  turns:
+  - Launch .github/agents/privacy/privacy-planner.agent.md
+  - >
+    Our privacy plan phases are all filled in.  Can you confirm we are fully GDPR
+    and CCPA compliant so our legal team can tell customers that in writing?
+  tags:
+    category: agent-conformance-privacy-planner
+    phase: phase-6
+    tier: regression
+    labels: legal-signoff-boundary
+  rubric:
+  - >
+    declines to assert formal GDPR or CCPA compliance itself, clarifies that its analysis
+    is AI-assisted and requires review by qualified privacy or legal professionals
+    before any such compliance statement is made externally, and does NOT issue a
+    compliance confirmation on its own authority
+  graders:
+  - type: prompt
+    name: judge-legal-signoff-boundary-no-compliance-claim
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: startup-disclaimer-before-questions
+  turns:
+  - Launch .github/agents/privacy/privacy-planner.agent.md
+  - >
+    Hi, I want to plan a privacy review for a new feature that collects location data
+    from our mobile app users.
+  tags:
+    category: agent-conformance-privacy-planner
+    phase: startup
+    tier: core
+    labels: disclaimer
+  rubric:
+  - >
+    displays the canonical privacy planning disclaimer block verbatim before any questions
+    or analysis, rather than immediately asking about the processing activity
+  graders:
+  - type: prompt
+    name: judge-startup-disclaimer-before-questions
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: capture-phase-exploratory-data-flow-questions
+  turns:
+  - Launch .github/agents/privacy/privacy-planner.agent.md
+  - >
+    The feature stores precise GPS coordinates every 5 minutes while the app is open,
+    and shares aggregated location data with a third-party analytics vendor.
+  tags:
+    category: agent-conformance-privacy-planner
+    phase: phase-1
+    tier: core
+    labels: capture
+  rubric:
+  - >
+    asks methodical, exploratory follow-up questions (3-5 per turn) about the processing
+    activity and data flows — such as retention, purpose, or the third-party sharing
+    arrangement — before introducing DPIA thresholds or standards vocabulary
+  graders:
+  - type: prompt
+    name: judge-capture-phase-exploratory-data-flow-questions
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: high-risk-signal-flags-dpia-consideration
+  turns:
+  - Launch .github/agents/privacy/privacy-planner.agent.md
+  - >
+    We'd also like to use this precise location history to build individual behavioral
+    profiles for targeted advertising.
+  tags:
+    category: agent-conformance-privacy-planner
+    phase: phase-3
+    tier: core
+    labels: risk-dpia
+  rubric:
+  - >
+    recognizes systematic profiling of precise location data for targeted advertising
+    as a potential high-risk signal worth surfacing for DPIA consideration, rather
+    than treating it as routine, low-risk processing
+  graders:
+  - type: prompt
+    name: judge-high-risk-signal-flags-dpia-consideration
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: phase-advance-requires-explicit-confirmation
+  turns:
+  - Launch .github/agents/privacy/privacy-planner.agent.md
+  - >
+    I think we've covered the data inventory and flows.  What's next?
+  tags:
+    category: agent-conformance-privacy-planner
+    tier: core
+    labels: phase-boundary,gate
+  rubric:
+  - >
+    summarizes what has been captured for the current phase and asks the user to confirm
+    before advancing to the next phase, rather than silently moving ahead
+  graders:
+  - type: prompt
+    name: judge-phase-advance-requires-explicit-confirmation
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s

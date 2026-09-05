@@ -1,5 +1,5 @@
 ---
-description: 'Export Design Thinking artifacts to a collaborative FigJam board or Figma Design file using the official Figma MCP server - Brought to you by microsoft/hve-core'
+description: 'Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server'
 agent: 'DT Coach'
 argument-hint: "project-slug=... [board-title=...] [method=latest] [output-type=figjam]"
 tools:
@@ -512,7 +512,3 @@ The Figma MCP server applies rate limits based on your Figma plan:
 * **Dev or Full seats on Professional/Organization/Enterprise**: Per-minute rate limits matching Figma REST API Tier 1.
 
 For best results, ensure team members have Dev or Full seats on a paid Figma plan.
-
----
-
-Brought to you by microsoft/hve-core

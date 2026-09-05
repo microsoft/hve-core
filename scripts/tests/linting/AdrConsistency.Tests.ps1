@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', 'RuleCases',
@@ -37,6 +37,68 @@ Describe 'Invoke-AdrConsistencyValidation pass fixtures' -Tag 'Unit' {
     It 'rule <RuleId> (<Dir>) pass fixture produces zero violations' -ForEach $RuleCases {
         $path = Join-Path $script:FixtureRoot $Dir 'pass.md'
         $result = Invoke-AdrConsistencyValidation -Path $path -RepoRoot $script:RepoRoot
+        $result.Violations.Count | Should -Be 0
+    }
+}
+
+Describe 'Invoke-AdrConsistencyValidation affected component citations' -Tag 'Unit' {
+    It 'accepts directory affected components cited in context' {
+        $path = Join-Path $TestDrive 'directory-affected-component.md'
+        @'
+---
+status: accepted
+date: 2025-01-01
+deciders:
+    - Engineering System
+consulted:
+    - Documentation Maintainers
+informed:
+    - Contributors
+related_requirements:
+    - REQ-directory-citations
+supersedes: []
+superseded_by: []
+affected_components:
+    - evals/
+success_criteria:
+    - metric: directory-citation-validation
+      target: zero false positive violations
+      measurement_window: per-PR
+      source: README.md
+decisionMetadata:
+    driverToTriggerMap:
+        Directory affected component citations: ASR-directory-citation
+---
+
+# ADR 9999: Accept directory affected component citations
+
+## Status
+
+Accepted
+
+## Context
+
+The `evals/` directory is cited directly because it is the affected component.
+
+## Decision
+
+Directory affected components may be cited as directory paths.
+
+## Consequences
+
+The ADR consistency validator accepts directory citations.
+
+## Affected Components
+
+* evals/
+
+## More Information
+
+See README.md for repository validation context.
+'@ | Set-Content -LiteralPath $path -Encoding UTF8
+
+        $result = Invoke-AdrConsistencyValidation -Path $path -RepoRoot $script:RepoRoot
+
         $result.Violations.Count | Should -Be 0
     }
 }

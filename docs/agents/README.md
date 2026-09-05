@@ -3,7 +3,7 @@ title: Agent Systems Catalog
 description: Overview of all hve-core agent systems with workflow documentation and quick links
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-05-20
+ms.date: 2026-08-06
 ms.topic: overview
 keywords:
   - github copilot
@@ -14,47 +14,50 @@ estimated_reading_time: 5
 
 hve-core organizes specialized agents into functional groups. Each group combines agents, prompts, and instruction files into cohesive workflows for specific engineering tasks.
 
-| Group                                   | Agents   | Complexity  | Documentation                                                                   |
-|-----------------------------------------|----------|-------------|---------------------------------------------------------------------------------|
-| RPI Orchestration                       | 6        | High        | [RPI Documentation](../rpi/README.md)                                           |
-| [Code Review](#code-review)             | 3        | Medium      | [Code Review](code-review/README.md)                                            |
-| GitHub Backlog Management               | 1 active | Very High   | [Backlog Manager](github-backlog/README.md)                                     |
-| ADO Backlog Management                  | 2 active | Very High   | [Backlog Manager](ado-backlog/README.md)                                        |
-| Jira Backlog Management                 | 2 active | Very High   | Backlog Manager                                                                 |
-| [Project Planning](#project-planning)   | 10       | Medium-High | [Project Planning](project-planning/README.md)                                  |
-| [Security Planning](#security-planning) | 3 active | Very High   | [Security Planner](security/README.md), [SSSC Planner](sssc-planning/README.md) |
-| [RAI Planning](#rai-planning)           | 1 active | Very High   | [RAI Planner](rai-planning/README.md)                                           |
-| [Data Science](#data-science)           | 5        | Medium      | Data Science                                                                    |
-| Experimental                            | 2        | Medium      | Experiment Designer                                                             |
-| DevOps Quality                          | 1        | High        | Planned                                                                         |
-| Meta/Engineering                        | 2        | High        | [Prompt Builder](../contributing/instructions.md), Doc Ops                      |
-| Infrastructure                          | 1        | Very High   | Planned                                                                         |
-| Utility                                 | 1        | Low-Medium  | [Memory Agent](github-backlog/using-together.md#session-persistence)            |
-| [Design Thinking](#design-thinking)     | 2        | High        | Active                                                                          |
+| Group                                     | Agents   | Complexity  | Documentation                                                                                                                  |
+|-------------------------------------------|----------|-------------|--------------------------------------------------------------------------------------------------------------------------------|
+| RPI Orchestration                         | 1        | High        | [RPI Documentation](../rpi/README.md)                                                                                          |
+| [Code Review](#code-review)               | 3        | Medium      | [Code Review](code-review/README.md)                                                                                           |
+| [Backlog Management](#backlog-management) | 2 active | Very High   | [Backlog Management](backlog/README.md)                                                                                        |
+| [Project Planning](#project-planning)     | 9        | Medium-High | [Project Planning](project-planning/README.md)                                                                                 |
+| [Security Planning](#security-planning)   | 3 active | Very High   | [Security Planner](security/README.md), [SSSC Planner](sssc-planning/README.md)                                                |
+| [RAI Planning](#rai-planning)             | 1 active | Very High   | [RAI Planner](rai-planning/README.md)                                                                                          |
+| [Data Science](#data-science)             | 5        | Medium      | Data Science                                                                                                                   |
+| Experimental                              | 2        | Medium      | Experiment Designer                                                                                                            |
+| DevOps Quality                            | 1        | High        | Planned                                                                                                                        |
+| Meta/Engineering                          | 1        | High        | `hve-builder`, [Documentation](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/documentation.agent.md) |
+| Infrastructure                            | 1        | Very High   | Planned                                                                                                                        |
+| [Design Thinking](#design-thinking)       | 2        | High        | Active                                                                                                                         |
 
 ## RPI Orchestration
 
-The Research, Plan, Implement methodology separates complex tasks into specialized phases. Six agents (task-researcher, task-planner, task-implementor, task-reviewer, task-challenger, and the RPI orchestrator) coordinate through planning files to deliver structured engineering workflows. See the [RPI Documentation](../rpi/) for the full guide.
+The Research, Plan, Implement, Review methodology separates complex tasks into specialized phases. RPI Agent coordinates `rpi-research`, `rpi-plan`, `rpi-implement`, and `rpi-review` through durable artifacts. The self-contained `rpi-challenger` skill complements the lifecycle by challenging a confirmed subject through adaptive skeptical questions. See the [RPI Documentation](../rpi/) for the full guide.
 
 ## Code Review
 
-Three agents provide pre-PR code review on local branches. Code Review Functional catches logic errors, edge cases, and error handling gaps across five focus areas. Code Review Standards enforces project-defined conventions through dynamically loaded language skills. Code Review Full orchestrates both in a single pass and produces a merged, deduplicated report. See the [Code Review Documentation](code-review/) for usage guides and skill authoring.
+A single human-gated Code Review agent provides pre-PR review on local branches. It confirms scope with you, then dispatches the perspectives you choose, functional, standards, accessibility, security, and PR, each to a thin skill-backed subagent, and merges them into one deduplicated report. A depth tier (basic, standard, or comprehensive) controls how deeply each perspective verifies the change. See the [Code Review Documentation](code-review/) for usage guides and skill authoring.
 
-## GitHub Backlog Management
+## Backlog Management
 
-Automates issue discovery, triage, sprint planning, and execution across GitHub repositories. The backlog manager agent orchestrates five distinct workflows with three-tier autonomy control. See the [Backlog Manager Documentation](github-backlog/) for workflow guides.
+Automates work discovery, triage, sprint planning, task planning, and execution across Azure DevOps, GitHub, and Jira. One set of workflows serves all three: the commands resolve which tracker backs the workspace at runtime, so there is no per-platform variant to choose.
 
-## ADO Backlog Management
+`backlog-plan` covers the read-only half and `backlog-execute` covers every tracker mutation, gated by three-tier autonomy, dry-run preview, and content sanitization. The Backlog Manager agent orchestrates both across a longer session, and the Functional Planner agent converts a PRD into a planned hierarchy. See the [Backlog Management Documentation](backlog/README.md) for workflow guides and per-platform differences.
 
-Automates work item discovery, triage, sprint planning, execution, PR creation, build monitoring, and task planning across Azure DevOps projects. The ADO Backlog Manager agent orchestrates nine distinct workflows with three-tier autonomy control. The PRD-to-WIT agent translates product requirements into structured work items. See the [Backlog Manager Documentation](ado-backlog/README.md) for workflow guides.
+### Azure DevOps Delivery Workflows
 
-## Jira Backlog Management
+Three workflows have no cross-platform equivalent and remain Azure DevOps only:
 
-Automates issue discovery, triage, execution, and PRD-to-issue translation across Jira projects. The Jira Backlog Manager agent orchestrates workflows with three-tier autonomy control, mirroring the GitHub and ADO backlog management patterns.
+| Workflow              | Documentation                                       |
+|-----------------------|-----------------------------------------------------|
+| Build monitoring      | [Build Monitoring](ado-backlog/build-monitoring.md) |
+| Pull request creation | [Pull Request Creation](ado-backlog/pr-creation.md) |
+| PRD planning          | [PRD Planning](ado-backlog/prd-planning.md)         |
 
 ## Project Planning
 
-Ten specialized agents for project planning activities. Includes builders for Business Requirements Documents, Product Requirements Documents, Architecture Decision Records, architecture diagrams, agile coaching, meeting analysis, network ISA-95 planning, product manager advising, system architecture review, and UX/UI design. See the [Project Planning Agents](project-planning/README.md) for detailed documentation.
+Specialized agents for project planning activities. Includes builders for Business Requirements Documents, Product Requirements Documents, and Architecture Decision Records, plus meeting analysis, network ISA-95 planning, system architecture review, and UX/UI design.
+
+Agile story coaching now runs inside the backlog skill's work-item quality reference rather than as a separate agent, and architecture diagrams are delivered through the portable architecture-diagrams skill. See the [Project Planning Agents](project-planning/README.md).
 
 ## Data Science
 
@@ -70,15 +73,11 @@ Agents focused on deployment reliability and build pipeline analysis.
 
 ## Meta/Engineering
 
-The prompt builder agent creates and validates prompt engineering artifacts. Supports interactive authoring with sandbox testing for prompts, instructions, agents, and skills. The doc-ops agent manages documentation coverage analysis and freshness tracking across the repository.
+The `hve-builder` skill creates, improves, refactors, reviews, and validates prompt-engineering artifacts through independent quality gates. The Documentation agent coordinates documentation audit, drift, authoring, and validation across the repository through its four modes.
 
 ## Infrastructure
 
 Manages cloud infrastructure provisioning and configuration. Handles Bicep and Terraform deployments with validation and drift detection.
-
-## Utility
-
-General-purpose agents for cross-cutting concerns such as session persistence and context management across workflows.
 
 ## Security Planning
 
@@ -98,8 +97,6 @@ The Design Thinking agents provide AI-assisted coaching through a nine-method, t
 |---------------------|--------------------------------------------------------------|
 | `dt-coach`          | Coaches teams through all 9 DT methods with session tracking |
 | `dt-learning-tutor` | Teaches DT curriculum with exercises and assessments         |
-
-> Brought to you by microsoft/hve-core
 
 ---
 

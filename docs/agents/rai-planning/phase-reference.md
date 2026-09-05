@@ -13,21 +13,21 @@ tags:
   - reference
   - phases
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-08-03
 ms.topic: reference
 estimated_reading_time: 8
 ---
 
 ## Phase Summary
 
-| Phase | Name                        | NIST AI RMF      | Key output                                                                      | State fields updated                                    |
-|-------|-----------------------------|------------------|---------------------------------------------------------------------------------|---------------------------------------------------------|
-| 1     | AI System Scoping           | Govern + Map     | `system-definition-pack.md`, `stakeholder-impact-map.md`                        | `currentPhase`, `entryMode`, `securityPlanRef`          |
-| 2     | Risk Classification         | Govern           | Risk classification screening summary (appended to `system-definition-pack.md`) | `riskClassification`                                    |
-| 3     | RAI Standards Mapping       | Govern + Measure | `rai-standards-mapping.md`                                                      | `standardsMapped`                                       |
-| 4     | RAI Security Model Analysis | Measure          | `rai-security-model-addendum.md`                                                | `securityModelAnalysisStarted`, `raiThreatCount`        |
-| 5     | RAI Impact Assessment       | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md`        | `impactAssessmentGenerated`, `evidenceRegisterComplete` |
-| 6     | Review and Handoff          | Manage           | `rai-review-summary.md`, backlog items                                          | `handoffGenerated`                                      |
+| Phase | Name                        | NIST AI RMF      | Key output (all in `rai-plan.md`)                                                 | State fields updated                                    |
+|-------|-----------------------------|------------------|-----------------------------------------------------------------------------------|---------------------------------------------------------|
+| 1     | AI System Scoping           | Govern + Map     | `## System Definition` and `## Stakeholder Impact` sections                       | `currentPhase`, `entryMode`, `securityPlanRef`          |
+| 2     | Risk Classification         | Govern           | `### Risk Classification Screening` subsection under `## System Definition`       | `riskClassification`                                    |
+| 3     | RAI Standards Mapping       | Govern + Measure | `## Standards Mapping` section                                                    | `standardsMapped`                                       |
+| 4     | RAI Security Model Analysis | Measure          | `## Threat Addendum` section                                                      | `securityModelAnalysisStarted`, `raiThreatCount`        |
+| 5     | RAI Impact Assessment       | Manage           | `## Control Surface Catalog`, `## Evidence Register`, and `## Tradeoffs` sections | `impactAssessmentGenerated`, `evidenceRegisterComplete` |
+| 6     | Review and Handoff          | Manage           | `## Review Summary` section, backlog items                                        | `handoffGenerated`                                      |
 
 ## Phase 1: AI System Scoping
 
@@ -58,8 +58,8 @@ In `from-security-plan` mode, AI components from the security plan are pre-popul
 
 ### Outputs
 
-* `system-definition-pack.md`: AI system inventory, component catalog, and deployment context
-* `stakeholder-impact-map.md`: Stakeholder roles, power dynamics, and impact pathways
+* `rai-plan.md` `## System Definition` section: AI system inventory, component catalog, and deployment context (with an `### AI Component Inventory` subsection)
+* `rai-plan.md` `## Stakeholder Impact` section: Stakeholder roles, power dynamics, and impact pathways
 
 ### State Transitions
 
@@ -79,7 +79,7 @@ Screen the AI system for risk using NIST AI RMF 1.0 trustworthiness characterist
 
 ### Inputs
 
-* System definition pack from Phase 1
+* `rai-plan.md` `## System Definition` section from Phase 1
 
 ### Process
 
@@ -103,7 +103,7 @@ Each indicator uses its own assessment method (binary, categorical, or continuou
 
 ### Outputs
 
-* Risk classification screening summary appended to `system-definition-pack.md`
+* Risk classification screening summary in the `### Risk Classification Screening` subsection under `## System Definition` in `rai-plan.md`
 
 ### State Transitions
 
@@ -122,7 +122,7 @@ Map each AI component against NIST AI RMF 1.0 trustworthiness characteristics an
 
 ### Inputs
 
-* System definition pack from Phase 1
+* `rai-plan.md` `## System Definition` section from Phase 1
 
 ### Process
 
@@ -144,11 +144,11 @@ For each characteristic-component pair, the agent identifies:
 * Regulatory jurisdiction and framework obligations
 * Existing compliance posture
 
-The Researcher Subagent is dispatched for runtime lookups of specific regulatory frameworks (WAF, CAF, ISO 42001, EU AI Act) when the assessment requires detail beyond embedded standards.
+The planner activates `rpi-research` for runtime lookups of specific regulatory frameworks (WAF, CAF, ISO 42001, EU AI Act) when the assessment requires detail beyond embedded standards.
 
 ### Outputs
 
-* `rai-standards-mapping.md`: Characteristic-by-component mapping with NIST subcategory references and compliance gaps
+* `rai-plan.md` `## Standards Mapping` section: Characteristic-by-component mapping with NIST subcategory references and compliance gaps
 
 ### State Transitions
 
@@ -167,8 +167,8 @@ Identify AI-specific threats across all components using a structured threat tax
 
 ### Inputs
 
-* System definition pack from Phase 1
-* RAI standards mapping from Phase 3
+* `rai-plan.md` `## System Definition` section from Phase 1
+* `rai-plan.md` `## Standards Mapping` section from Phase 3
 * Security plan threat catalog (when using from-security-plan mode)
 
 ### Process
@@ -199,7 +199,7 @@ Each threat is assigned a concern level based on contextual analysis rather than
 
 ### Outputs
 
-* `rai-security-model-addendum.md`: Threat catalog with IDs, categories, descriptions, risk ratings, and recommended mitigations
+* `rai-plan.md` `## Threat Addendum` section: Threat catalog with IDs, categories, descriptions, risk ratings, and recommended mitigations
 
 ### State Transitions
 
@@ -219,8 +219,8 @@ Explore control surface completeness for each identified threat. Document eviden
 
 ### Inputs
 
-* RAI security model addendum from Phase 4
-* RAI standards mapping from Phase 3
+* `rai-plan.md` `## Threat Addendum` section from Phase 4
+* `rai-plan.md` `## Standards Mapping` section from Phase 3
 * Evidence provided by the user or discovered in the codebase
 
 ### Process
@@ -242,11 +242,11 @@ Common tradeoff examples:
 
 ### Outputs
 
-* `control-surface-catalog.md`: Control inventory mapped to threats with effectiveness ratings
-* `evidence-register.md`: Evidence log documenting existing mitigations, gaps, and collection difficulty
-* `rai-tradeoffs.md`: Characteristic conflict analysis with resolution recommendations
+* `rai-plan.md` `## Control Surface Catalog` section: Control inventory mapped to threats with effectiveness ratings
+* `rai-plan.md` `## Evidence Register` section: Evidence log documenting existing mitigations, gaps, and collection difficulty
+* `rai-plan.md` `## Tradeoffs` section: Characteristic conflict analysis with resolution recommendations
 
-The control surface catalog and evidence register are agentic artifacts that include only the AI-content transparency note. RAI tradeoffs is a human-facing artifact that also includes the human review checkbox. See [Handoff Pipeline](handoff-pipeline#artifact-attribution-and-review) for the complete footer classification.
+The Control Surface Catalog and Evidence Register sections are agentic content that includes only the AI-content transparency note. The Tradeoffs section is human-facing content that also includes the human review checkbox. See [Handoff Pipeline](handoff-pipeline#artifact-attribution-and-review) for the complete footer classification.
 
 ### State Transitions
 
@@ -266,7 +266,7 @@ Generate a review summary covering observations across six dimensions and produc
 
 ### Inputs
 
-* All artifacts from Phases 1-5
+* Completed `rai-plan.md` sections from Phases 1-5
 * User preferences for backlog format and handoff system
 
 ### Process
@@ -294,7 +294,7 @@ Gaps identified across Phases 3-5 are converted to work items using the same dua
 
 ### Outputs
 
-* `rai-review-summary.md`: Review summary with observations across six dimensions and maturity indicators
+* `rai-plan.md` `## Review Summary` section: Observations across six dimensions and maturity indicators
 * Backlog items in the user's preferred format
 
 All Phase 6 artifacts are human-facing and include the AI-content transparency note and human review checkbox. The handoff summary and compact handoff summary also include the full RAI Planner disclaimer. See [Handoff Pipeline](handoff-pipeline#artifact-attribution-and-review) for the complete footer classification.

@@ -1,0 +1,11 @@
+{
+  "params": {
+    "eps_px": 120.0,
+    "min_samples": 2
+  },
+  "widgets": [
+    {"id": "n1", "type": "shape", "x": 0.0, "y": 0.0, "width": 10.0, "height": 10.0},
+    {"id": "n2", "type": "shape", "x": 500.0, "y": 0.0, "width": 10.0, "height": 10.0},
+    {"id": "n3", "type": "shape", "x": 0.0, "y": 500.0, "width": 10.0, "height": 10.0}
+  ]
+}

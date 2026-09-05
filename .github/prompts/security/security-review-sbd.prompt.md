@@ -1,7 +1,7 @@
 ---
 name: security-review-sbd
 agent: Security Reviewer
-description: "Runs a Secure by Design principles assessment based on UK and Australian government guidance - Brought to you by microsoft/hve-core"
+description: "Run a Secure by Design principles assessment per UK and Australian government guidance"
 argument-hint: "[scope=path/to/dir]"
 ---
 

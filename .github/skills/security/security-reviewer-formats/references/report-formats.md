@@ -201,7 +201,7 @@ Where:
 * EXECUTIVE_SUMMARY is markdown; 3–5 sentence narrative summarizing theoretical risks identified in the plan, skills assessed, total checks, and severity distribution.
 * RISK_COUNT is an integer; plan elements with theoretical vulnerability risk.
 * CAUTION_COUNT is an integer; plan elements with potential concerns depending on implementation.
-* COVERED_COUNT is an integer; plan elements already mitigated by existing codebase controls.
+* COVERED_COUNT is an integer counting plan elements whose plan text states a mitigation for the risk. Plan mode does not assess whether that mitigation is implemented. Use the `security-planning` skill's drift capability to correlate a plan-stated mitigation with current repository evidence.
 * NA_COUNT is an integer; plan elements not applicable to any assessed framework.
 * TOTAL_COUNT is an integer; sum of all statuses.
 * CRITICAL_COUNT, HIGH_COUNT, MEDIUM_COUNT, LOW_COUNT are integers counting RISK and CAUTION findings at each severity.
@@ -210,6 +210,25 @@ Where:
 * CHECKLIST_ROWS is pipe-delimited rows for each RISK or CAUTION item with NOT_STARTED status.
 * SKILLS_TABLE_ROWS is pipe-delimited rows for each skill with metadata.
 
----
+## RAI Report Format
 
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
+`RAI_REPORT_V1` applies to RAI audit, diff, and plan modes. It contains report metadata, the
+verbatim RAI Planning CAUTION supplied by the parent from `disclaimer-language.instructions.md`,
+an executive summary, findings by framework, recommendations or mitigations, structured
+limitations, an evidence appendix, and an unchecked human-review handoff. Audit and diff also
+contain verification summary counts. Plan mode contains no verification summary and uses only
+`RAI_PLAN_FINDINGS_COLLECTION_V1`.
+
+The header includes Date, Repository, Agent, Mode, Frameworks, and the parent-resolved report
+path. Diff reports include changed files. Plan reports include the plan source. Findings use RAI
+framework terminology, evidence provenance, necessary-capability reasoning where applicable,
+and AI STRIDE categories only when source-supported. The handoff records `Human acceptance:
+PENDING`; it does not claim approval, certification, or sign-off.
+
+The active-mode base path must match exactly one pattern:
+
+* Audit: `.copilot-tracking/rai-reviews/{{YYYY-MM-DD}}/rai-report-{{REPO}}-{{YYYYMMDD}}.md`
+* Diff: `.copilot-tracking/rai-reviews/{{YYYY-MM-DD}}/rai-report-diff-{{REPO}}-{{YYYYMMDD}}.md`
+* Plan: `.copilot-tracking/rai-reviews/{{YYYY-MM-DD}}/rai-plan-assessment-{{REPO}}-{{YYYYMMDD}}.md`
+
+The parent resolves the report path before dispatch. Use the unsuffixed active-mode pattern as the base path. If the base path is occupied, append `-2`, then the lowest available integer `-N`, immediately before `.md`. The generator accepts only the exact base path or the base path with `-[2-9][0-9]*` immediately before `.md`, rejects every other path form, and never overwrites an occupied path.

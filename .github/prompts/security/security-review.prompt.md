@@ -1,7 +1,7 @@
 ---
 name: security-review
 agent: Security Reviewer
-description: "Runs an OWASP vulnerability assessment against the current codebase - Brought to you by microsoft/hve-core"
+description: "Run an OWASP vulnerability assessment against the current codebase"
 argument-hint: "[scope=path/to/dir] [mode={audit|diff|plan}] [targetSkill={owasp-top-10|owasp-llm|owasp-agentic|owasp-mcp|owasp-infrastructure|owasp-cicd|secure-by-design}]"
 ---
 

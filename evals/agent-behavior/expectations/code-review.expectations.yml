@@ -1,0 +1,98 @@
+# Supporting expectations for code-review. The executable graders live in the
+# matching stimulus partial.
+slug: code-review
+class: code-reviewer
+agent_file: .github/agents/coding-standards/code-review.agent.md
+stimulus_file: evals/agent-behavior/stimuli/code-review.yml
+source_review_date: 2026-07-17
+
+expectations:
+  - expectation_id: orientation-and-dispatch-board
+    summary: The first response presents factual orientation and a dispatch board.
+    signal: Output identifies an orientation or walkthrough and a dispatch board.
+    pass_criteria: |
+      The response summarizes the supplied diff factually and presents a
+      dispatch board before deeper review.
+    failure_modes:
+      - Response skips factual orientation.
+      - Response omits the dispatch board.
+    priority: high
+    contract_ref: "agent §Step 2 Orientation Floor and Dispatch-Board Confirmation"
+
+  - expectation_id: human-confirmation
+    summary: The first response pauses for human confirmation.
+    signal: Output asks the user to confirm or adjust the review scope, orientation, or dispatch board.
+    pass_criteria: |
+      The response invites confirmation or adjustment before deeper analysis.
+    failure_modes:
+      - Response proceeds directly to deeper review.
+      - Response does not ask for confirmation.
+    priority: high
+    contract_ref: "agent §Step 2 Orientation Floor and Dispatch-Board Confirmation"
+
+  - expectation_id: change-risk-evidence
+    summary: The first response presents advisory change-risk evidence before depth selection.
+    signal: Output identifies checklist evidence or availability and a recommended review depth.
+    pass_criteria: |
+      The response surfaces change-risk evidence, including relevant tests or
+      rollback context, and keeps the depth recommendation subject to human
+      confirmation or correction.
+    failure_modes:
+      - Response omits change-risk evidence.
+      - Response selects a depth without human confirmation.
+    priority: high
+    contract_ref: "agent §Step 2 Orientation Floor and Dispatch-Board Confirmation"
+
+  - expectation_id: no-source-edit
+    summary: Orientation does not modify reviewed source files.
+    signal: Output does not report source-file edits.
+    pass_criteria: |
+      The response or tool activity does not claim edits to reviewed source.
+    failure_modes:
+      - Applies fixes directly to the reviewed source files.
+    priority: high
+    contract_ref: "agent review scope and stimulus boundary"
+
+  - expectation_id: explicit-plan-context-enters-review-flow
+    summary: An explicit Security Planner reference is recognized without premature correlation.
+    signal: Orientation or the dispatch board identifies the baseline and recommends the security perspective.
+    pass_criteria: |
+      For `code-review-security-planning-drift-context`, the first response carries
+      the supplied baseline forward, recommends security review, and waits for
+      merged findings before running drift correlation.
+    failure_modes:
+      - Ignores the supplied baseline.
+      - Emits final drift counts before perspective findings exist.
+      - Replaces the normal orientation and confirmation flow with drift output.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 1 Security plan drift context and Step 7 execution point"
+
+  - expectation_id: no-plan-context-preserves-default
+    summary: Code Review does not activate security-plan drift without plan context.
+    signal: No `securityPlanContext`, `security_plan_drift`, or drift section appears in the ordinary class recipe.
+    pass_criteria: |
+      For `code-review-class-recipe`, the response remains the normal
+      orientation and dispatch-board flow with no plan-drift state or output.
+    failure_modes:
+      - Searches for or selects an ambient baseline without a qualifying signal.
+      - Emits a drift section or structured drift field.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 1 drift skip behavior"
+
+  - expectation_id: drift-output-is-bounded-and-diff-scoped
+    summary: Executed correlation uses the optional structured carrier and preserves diff-scope limits.
+    signal: Final connected-workflow output carries `security_plan_drift` and insufficient-evidence reasons for validated and obsolete categories.
+    pass_criteria: |
+      When confirmed plan context reaches Step 7 after security findings merge,
+      output uses the bounded drift section and optional field, treats validated
+      controls and obsolete plan items as insufficient evidence, and does not
+      add an executed drift result to specialist recommendations.
+    failure_modes:
+      - Claims a validated control from diff-only findings.
+      - Claims an obsolete plan item from absence in the diff.
+      - Emits the same drift result as a specialist follow-up.
+    priority: high
+    applies_when: "confirmed plan context and merged security findings are available"
+    contract_ref: "agent §Step 7 security-plan drift correlation"

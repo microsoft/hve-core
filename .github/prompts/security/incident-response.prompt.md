@@ -1,6 +1,7 @@
 ---
-description: "Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core"
+description: "Run an incident response workflow for Azure operations scenarios"
 name: incident-response
+agent: agent
 argument-hint: "[incident-description] [severity={1|2|3|4}] [phase={triage|diagnose|mitigate|rca}]"
 ---
 
@@ -135,7 +136,7 @@ Next Update: {time}
 **Customer Communication:**
 
 ```text
-We are aware of an issue affecting {service}. 
+We are aware of an issue affecting {service}.
 Our team is actively investigating and working to restore normal operations.
 We will provide updates as more information becomes available.
 ```

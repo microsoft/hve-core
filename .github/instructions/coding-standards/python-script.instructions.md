@@ -1,11 +1,18 @@
 ---
 applyTo: '**/*.py'
-description: 'Instructions for Python scripting implementation - Brought to you by microsoft/hve-core'
+description: 'Python scripting conventions'
 ---
 
 # Python Script Instructions
 
 Conventions for Python 3.11+ scripts used in automation, tooling, and CLI applications.
+
+## Environment and Dependency Management
+
+1. **Never use `pip install` directly.** All package management must be handled using `uv` (e.g., `uv add <package>`).
+2. **Never run Python scripts or tools outside a virtual environment.** Always execute scripts via `uv run <script.py>` or ensure the 
+`.venv` is activated before running.
+3. Ensure a `.venv` exists in the project root before executing any Python code. If starting from scratch, refer to the `uv-projects.instructions.md` file for environment setup.
 
 ## Entry Points and Exit Codes
 
@@ -229,7 +236,7 @@ Include module docstrings with description, usage, and examples.
 Organize scripts in this order:
 
 1. Shebang: `#!/usr/bin/env python3`
-2. Copyright header: `# Copyright (c) Microsoft Corporation.`
+2. Copyright header: `# Copyright (c) 2026 Microsoft Corporation. All rights reserved.`
 3. SPDX license identifier: `# SPDX-License-Identifier: MIT`
 4. PEP 723 inline script metadata (if applicable)
 5. Future imports: `from __future__ import annotations`
@@ -249,7 +256,7 @@ PEP 723 inline metadata enables automatic dependency installation with *uv*.
 
 ```python
 #!/usr/bin/env python3
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 # /// script
 # requires-python = ">=3.11"

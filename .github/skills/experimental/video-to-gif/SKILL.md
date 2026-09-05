@@ -1,6 +1,6 @@
 ---
 name: video-to-gif
-description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'
+description: 'Video-to-GIF conversion with FFmpeg two-pass optimization'
 license: MIT
 compatibility: 'Requires FFmpeg on PATH'
 metadata:
@@ -345,5 +345,3 @@ ffmpeg -version
 ### Temporary palette file remains
 
 The scripts clean up `/tmp/palette.png` (or `$env:TEMP\palette.png` on Windows) automatically. If conversion fails mid-process, remove this file manually.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Pytest Tests
 
 on:
@@ -17,6 +19,36 @@ on:
         required: false
         type: boolean
         default: false
+      changed-paths-pattern:
+        description: 'Extended regex of changed paths that trigger this lane; overrides the default Python-file check'
+        required: false
+        type: string
+        default: ''
+      marker-expression:
+        description: 'Pytest -m expression that overrides the project default marker selection'
+        required: false
+        type: string
+        default: ''
+      strict-runtime:
+        description: 'Require runtime-backed tests to run instead of skipping when a runtime is unavailable'
+        required: false
+        type: boolean
+        default: false
+      artifact-suffix:
+        description: 'Suffix that keeps this lane coverage artifact and Codecov name distinct'
+        required: false
+        type: string
+        default: ''
+      pre-pull-compose-file:
+        description: 'Compose document, relative to working-directory, holding the digest-pinned runtime image'
+        required: false
+        type: string
+        default: ''
+      pre-pull-compose-service:
+        description: 'Compose service whose digest-pinned image is pulled before pytest'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -30,7 +62,7 @@ jobs:
       id-token: write  # Required for Codecov OIDC
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -38,34 +70,47 @@ jobs:
       - name: Set artifact name
         id: artifact-name
         shell: bash
-        run: echo "name=pytest-results-$(echo '${{ inputs.working-directory }}' | tr '/' '-')" >> "$GITHUB_OUTPUT"
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+          INPUT_ARTIFACT_SUFFIX: ${{ inputs.artifact-suffix }}
+        run: |
+          set -euo pipefail
+          echo "name=pytest-results-$(echo "$INPUT_WORKING_DIRECTORY" | tr '/' '-')${INPUT_ARTIFACT_SUFFIX}" >> "$GITHUB_OUTPUT"
 
       - name: Check for Python files
         id: check-python
         if: inputs.changed-files-only
         shell: bash
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+          INPUT_CHANGED_PATHS_PATTERN: ${{ inputs.changed-paths-pattern }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
-          # Get base ref for comparison
-          BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before }}"
-          
-          # Check if any Python files changed in the working directory
-          if git diff --name-only "$BASE_SHA" HEAD | grep -q "^${{ inputs.working-directory }}/.*\.py$"; then
+          set -euo pipefail
+          # A lane that owns non-Python inputs supplies its own pattern; the
+          # default keeps the generic Python-file behaviour for every caller.
+          if [ -n "$INPUT_CHANGED_PATHS_PATTERN" ]; then
+            pattern="$INPUT_CHANGED_PATHS_PATTERN"
+          else
+            pattern="^${INPUT_WORKING_DIRECTORY}/.*\.py$"
+          fi
+          if git diff --name-only "$BASE_SHA" HEAD | grep -Eq "$pattern"; then
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
-            echo "Python files changed in ${{ inputs.working-directory }}"
+            echo "Tracked files changed for pattern $pattern"
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            echo "No Python files changed in ${{ inputs.working-directory }}"
+            echo "No tracked files changed for pattern $pattern"
           fi
 
       - name: Install uv
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           version: "0.10.9"
 
       - name: Set up Python
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -73,23 +118,76 @@ jobs:
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
         working-directory: ${{ inputs.working-directory }}
         shell: bash
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         run: |
+          set -euo pipefail
           if [ -f "pyproject.toml" ]; then
             echo "Installing dependencies with uv sync --locked"
             uv sync --locked --dev
           else
-            echo "No pyproject.toml found in ${{ inputs.working-directory }}"
+            echo "No pyproject.toml found in $INPUT_WORKING_DIRECTORY"
             echo "Skipping dependency installation"
           fi
+
+      - name: Set up Node for skill-local runtimes
+        if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Install skill-local Node dependencies
+        if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
+        shell: bash
+        env:
+          SEARCH_ROOT: ${{ inputs.working-directory }}
+        run: ./scripts/ci/install-skill-node-deps.sh
+
+      - name: Pre-pull the digest-pinned runtime image
+        if: inputs.pre-pull-compose-service != '' && (!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true')
+        working-directory: ${{ inputs.working-directory }}
+        shell: bash
+        timeout-minutes: 10
+        env:
+          COMPOSE_FILE_PATH: ${{ inputs.pre-pull-compose-file }}
+          COMPOSE_SERVICE: ${{ inputs.pre-pull-compose-service }}
+        run: |
+          set -euo pipefail
+          # Pulling here keeps registry unavailability distinguishable from a
+          # test failure, and reads the pin from the shipped Compose document
+          # so this lane can never exercise an image the stack no longer uses.
+          image="$(uv run python -c 'import os, yaml; document = yaml.safe_load(open(os.environ["COMPOSE_FILE_PATH"], encoding="utf-8")); print(document["services"][os.environ["COMPOSE_SERVICE"]]["image"])')"
+          case "$image" in
+            *@sha256:*) ;;
+            *) echo "::error::runtime image '$image' is not digest-pinned"; exit 1 ;;
+          esac
+          for attempt in 1 2 3; do
+            if docker pull "$image"; then
+              echo "Pulled $image on attempt $attempt"
+              exit 0
+            fi
+            echo "::warning::docker pull attempt $attempt failed for $image"
+            sleep $((attempt * 10))
+          done
+          echo "::error::exhausted 3 pull attempts for $image"
+          exit 1
 
       - name: Run pytest with coverage
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
         working-directory: ${{ inputs.working-directory }}
         shell: bash
+        env:
+          INPUT_MARKER_EXPRESSION: ${{ inputs.marker-expression }}
+          COPILOT_OTEL_STRICT_RUNTIME: ${{ inputs.strict-runtime && '1' || '0' }}
         run: |
+          set -euo pipefail
           if [ -f "pyproject.toml" ]; then
             echo "Running pytest with coverage"
-            uv run pytest --cov --cov-report=xml:coverage.xml --cov-report=term-missing -v
+            if [ -n "$INPUT_MARKER_EXPRESSION" ]; then
+              uv run pytest -m "$INPUT_MARKER_EXPRESSION" --cov --cov-report=xml:coverage.xml --cov-report=term-missing -v
+            else
+              uv run pytest --cov --cov-report=xml:coverage.xml --cov-report=term-missing -v
+            fi
           else
             echo "No pyproject.toml found - skipping tests"
           fi
@@ -106,12 +204,12 @@ jobs:
 
       - name: Upload to Codecov
         if: success() && (!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true')
-        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           files: ${{ inputs.working-directory }}/coverage.xml
           use_oidc: true
           fail_ci_if_error: false
           verbose: true
           flags: pytest
-          name: pytest-coverage-${{ inputs.working-directory }}
+          name: pytest-coverage-${{ inputs.working-directory }}${{ inputs.artifact-suffix }}
         continue-on-error: true

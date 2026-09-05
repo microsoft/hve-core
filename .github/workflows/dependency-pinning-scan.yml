@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Dependency Pinning Scan
 
 on:
@@ -55,13 +57,18 @@ jobs:
       is-compliant: ${{ steps.pinning.outputs.is-compliant }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Run Dependency Pinning Validation
         id: pinning
         shell: pwsh
+        env:
+          INPUT_SOFT_FAIL: ${{ inputs.soft-fail }}
+          INPUT_DEPENDENCY_TYPES: ${{ inputs.dependency-types }}
+          INPUT_THRESHOLD: ${{ inputs.threshold }}
+          INPUT_UPLOAD_SARIF: ${{ inputs.upload-sarif }}
         run: |
           Write-Host "Validating dependency SHA pinning compliance..."
           
@@ -76,18 +83,18 @@ jobs:
           }
           
           # Enable failure on threshold violations unless soft-fail is requested
-          if ('${{ inputs.soft-fail }}' -ne 'true') {
+          if ($env:INPUT_SOFT_FAIL -ne 'true') {
             $params['FailOnUnpinned'] = $true
           }
           
           # Pass dependency types filter to script
-          if ('${{ inputs.dependency-types }}') {
-            $params['IncludeTypes'] = '${{ inputs.dependency-types }}'
+          if ($env:INPUT_DEPENDENCY_TYPES) {
+            $params['IncludeTypes'] = $env:INPUT_DEPENDENCY_TYPES
           }
           
           # Pass compliance threshold to script (script handles enforcement)
-          if ('${{ inputs.threshold }}') {
-            $params['Threshold'] = [int]'${{ inputs.threshold }}'
+          if ($env:INPUT_THRESHOLD) {
+            $params['Threshold'] = [int]$env:INPUT_THRESHOLD
           }
           
           # Run validation script (JSON format)
@@ -95,7 +102,7 @@ jobs:
           $jsonExitCode = $LASTEXITCODE
           
           # Generate SARIF format if requested
-          if ('${{ inputs.upload-sarif }}' -eq 'true') {
+          if ($env:INPUT_UPLOAD_SARIF -eq 'true') {
             Write-Host "Generating SARIF format for Security tab..."
             $params['Format'] = 'sarif'
             $params['OutputPath'] = 'logs/dependency-pinning-results.sarif'

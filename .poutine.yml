@@ -1,0 +1,21 @@
+# Poutine configuration
+# Poutine runs as an advisory supply-chain scanner in CI (see
+# .github/workflows/dangerous-workflow-scan.yml). Findings are uploaded to the
+# Security tab as SARIF under the "poutine" category and do not block merge.
+# The homegrown dangerous-workflow/template-injection check remains the hard gate.
+
+# Disable the once-per-day outbound version check in CI runs.
+disableVersionCheck: true
+
+# The read-only package job intentionally executes the release source to build
+# the VSIX. The dependent privileged attestation job has no source checkout,
+# local action, repository script, package manager, secret, or release write.
+skip:
+  - rule: untrusted_checkout_exec
+    path:
+      - .github/workflows/extension-provenance-signer.yml
+    job:
+      - package
+  - rule: untrusted_checkout_exec
+    path:
+      - .github/workflows/backlog-groom.lock.yml

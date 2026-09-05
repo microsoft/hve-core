@@ -1,6 +1,6 @@
 ---
 name: Dependency Reviewer
-description: "Reviews dependency changes for licensing, maintenance status, necessity, and SHA pinning compliance - Brought to you by microsoft/hve-core"
+description: "Reviews dependency changes for licensing, maintenance status, necessity, and SHA pinning compliance"
 ---
 
 # Dependency Reviewer

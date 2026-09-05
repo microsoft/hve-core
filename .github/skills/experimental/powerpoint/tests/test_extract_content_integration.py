@@ -1,17 +1,19 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Integration tests for extract_content using a real PPTX fixture."""
 
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 import yaml
 from extract_content import main
+from validate_deck import max_severity, validate_deck
 
 EXPECTED_FIXTURE = {
     "metadata": {
         "title": "Minimal Test Fixture",
-        "author": "ChatGPT",
+        "author": "HVE Core Test Fixture",
     },
     "slides": {
         1: {
@@ -24,6 +26,7 @@ EXPECTED_FIXTURE = {
         },
         2: {
             "layout": "Title and Content",
+            "speaker_notes": "This is a speaker note for slide 2.",
             "texts": ["Slide with Image", "Below is an embedded image."],
             "element_types": ["textbox", "textbox", "image"],
             "image_path": "images/image-01.png",
@@ -83,6 +86,7 @@ def test_main_extracts_real_fixture(minimal_test_fixture_path, tmp_path):
     ]
     assert slide_2["slide"] == 2
     assert slide_2["layout"] == expected_slide_2["layout"]
+    assert slide_2["speaker_notes"] == expected_slide_2["speaker_notes"]
     assert [element["text"] for element in slide_2["elements"][:2]] == expected_slide_2[
         "texts"
     ]
@@ -119,3 +123,16 @@ def test_main_resolves_theme_colors_for_real_fixture(
     assert (
         slide_1["elements"][0]["font_color"] == EXPECTED_FIXTURE["slide_1_font_color"]
     )
+
+
+@pytest.mark.integration
+def test_generated_fixture_passes_validate_deck(
+    minimal_test_fixture_path: Path,
+) -> None:
+    """Roundtrip: programmatically generated PPTX passes
+    structural validation."""
+
+    results = validate_deck(minimal_test_fixture_path)
+    severity = max_severity(results)
+
+    assert severity == "none", f"validate_deck reported {severity}: {results}"

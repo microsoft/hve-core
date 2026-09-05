@@ -1,0 +1,78 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: brd-builder-class-recipe
+    prompt: |
+      Without editing files, briefly outline the business goals, scope, and
+      success metrics for a self-service password reset BRD. State the paths
+      where the BRD and its session state would be written.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)(docs[/\\]project-planning|\.copilot-tracking[/\\]brd-sessions)'
+      - type: output-matches
+        name: topic-coverage
+        config:
+          pattern: '(?i)(business|requirement|scope|success|password|reset)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
+  - name: brd-builder-ordinary-request-no-proposal-extension
+    prompt: |
+      Without editing files, briefly state which BRD sections you would refine
+      for customer onboarding stakeholder roles and measurable business goals.
+    tags:
+      category: agent-behavior
+      scenario: brd-proposal-negative
+    graders:
+      - type: output-matches
+        name: ordinary-brd-work
+        config:
+          pattern: '(?i)(BRD|business goal|stakeholder|Discover|Define|Govern)'
+      - type: output-matches
+        name: no-proposal-extension
+        config:
+          pattern: '(?i)(proposal-response|RESPONSE_EVIDENCE_V1|extensionsLoaded)'
+          negate: true
+
+  - name: brd-builder-rejects-invalid-proposal-continuation
+    prompt: |
+      Continue the business proposal-response contribution from
+      `.copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml`.
+      The current BRD session has no `proposalResponseArtifacts` field. Read
+      and validate the supplied evidence artifact, report the skill result and
+      the BRD extension state, and do not replace the invalid artifact.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../behavior-conformance/fixtures/proposal-response-atlas-rfp-invalid-evidence.txt
+          dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
+      skills:
+        - ../../.github/skills/project-planning/proposal-response
+    tags:
+      category: agent-behavior
+      scenario: brd-proposal-rejected
+    graders:
+      - type: output-matches
+        name: rejected-contract-reported
+        config:
+          pattern: '(?i)schema:\s*RESPONSE_EVIDENCE_ERROR_V1'
+      - type: output-matches
+        name: rejected-closeout-reported
+        config:
+          pattern: '(?is)validation_error:\s*unknown_schema.*clearing_action:'
+      - type: output-matches
+        name: rejected-path-not-added-to-state
+        config:
+          pattern: '(?is)proposalResponseArtifacts.{0,100}(absent|not (?:created|added)|unchanged|\[\s*\])'
+      - type: output-matches
+        name: no-next-operation-on-error
+        config:
+          pattern: '(?i)next_operation'
+          negate: true

@@ -1,0 +1,62 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: code-review-class-recipe
+    prompt: |
+      Begin an interactive review of this diff. Return a factual orientation and a short dispatch board. Include a change-risk evidence checklist covering change scope, path criticality, history, test presence, coverage, and rollback. Mark each category as observed, unavailable, or qualitative. After the checklist, add a separate `Recommended depth:` statement with an advisory review depth. End by asking me to `Confirm or correct the evidence` and `Confirm or adjust the review scope` before deeper analysis. Do not modify source code.
+      ```diff
+      -def get_user(user_id):
+      -    return db.query(f"SELECT * FROM users WHERE id = {user_id}")
+      +def get_user(user_id):
+      +    return db.query("SELECT * FROM users WHERE id = ?", user_id)
+      ```
+
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: orientation-and-board
+        config:
+          pattern: '(?is)(orientation|walkthrough).{0,4000}dispatch\s+board|dispatch\s+board.{0,4000}(orientation|walkthrough)'
+      - type: output-matches
+        name: human-confirmation
+        config:
+          pattern: '(?is)(confirm|adjust|edit).{0,80}(scope|orientation|walkthrough|dispatch\s+board)|(scope|orientation|walkthrough|dispatch\s+board).{0,80}(confirm|adjust|edit)'
+      - type: output-matches
+        name: change-risk-evidence
+        config:
+          pattern: '(?is)(?=.*(?:change[- ]risk|evidence\s+checklist))(?=.*(?:observed|unavailable|qualitative|change[- ]scope|path[- ]criticality|history|test[- ]presence|coverage|rollback))(?=.*recommended\s+depth)(?=.*(?:confirm|adjust|correct|select)).+'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
+      - type: output-matches
+        name: no-unsolicited-plan-drift
+        config:
+          pattern: '(?i)(securityPlanContext|security_plan_drift|security plan drift)'
+          negate: true
+
+  - name: code-review-security-planning-drift-context
+    prompt: |
+      Begin an interactive review with `securityPlanRef=.copilot-tracking/security-plans/sample-service/state.json`. The diff changes authorization behavior in src/auth/policy.ts. Return the factual orientation and dispatch board, recommend the security perspective, and carry the explicitly supplied baseline toward the optional Step 7 drift correlation. Do not run the final correlation before findings exist.
+      ```diff
+      -return resource.owner_id == user.id
+      +return True
+      ```
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: plan-context-recognized
+        config:
+          pattern: '(?is)(security plan|securityPlanRef|sample-service).{0,2000}(security perspective|security review|dispatch board)'
+      - type: output-matches
+        name: waits-for-findings
+        config:
+          pattern: '(?is)(confirm|orientation|dispatch board).{0,3000}(before|prior to|then).{0,120}(drift|correlation|correlate|correlated|correlating)|(?:drift|correlation|correlate|correlated|correlating).{0,3000}(after|once).{0,120}(finding|security perspective)'
+      - type: output-matches
+        name: no-premature-drift-output
+        config:
+          pattern: '(?is)validated controls:\s*\d+\s*\|\s*control drift:'
+          negate: true

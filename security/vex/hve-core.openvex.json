@@ -1,0 +1,125 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-09-04-v4",
+  "author": "Microsoft HVE Core Maintainers",
+  "timestamp": "2026-09-04T01:28:45Z",
+  "last_updated": "2026-09-04T01:28:45Z",
+  "version": 4,
+  "tooling": "Maintained via the hve-core SSSC Reviewer VEX assessment capability (AI-assisted drafting) with human review and merge; published and Sigstore-attested by the microsoft/hve-core/.github/workflows/vex-attest.yml reusable workflow.",
+  "statements": [
+    {
+      "vulnerability": {
+        "name": "GHSA-5p2g-fcmc-qvqq",
+        "@id": "https://osv.dev/GHSA-5p2g-fcmc-qvqq",
+        "aliases": [
+          "CVE-2025-71329"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/image-size@2.0.2",
+              "identifiers": {
+                "purl": "pkg:npm/image-size@2.0.2"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_cannot_be_controlled_by_adversary",
+      "impact_statement": "image-size resolves only as a transitive dependency of @docusaurus/mdx-loader 3.10.2, which measures documentation images while the site is built. The images it reads are the repository-controlled files committed under docs/, so a crafted buffer of the kind this advisory requires cannot be supplied. The published site is static output and performs no image parsing at request time. No patched release exists for any published version, so the finding is accepted rather than upgraded away.",
+      "status_notes": "Dependency path: docs/docusaurus/package-lock.json pins image-size 2.0.2, required as image-size ^2.0.2 by @docusaurus/mdx-loader 3.10.2. The same acceptance is recorded as an allowlist entry in audit-ci.json and as an allowed-advisory entry in .github/workflows/dependency-review.yml. Revisit when upstream publishes a patched image-size release or Docusaurus relaxes the ^2.0.2 constraint.",
+      "timestamp": "2026-08-23T00:00:00Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-w3rx-r6r6-pgpr",
+        "@id": "https://osv.dev/GHSA-w3rx-r6r6-pgpr"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/image-size@2.0.2",
+              "identifiers": {
+                "purl": "pkg:npm/image-size@2.0.2"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_cannot_be_controlled_by_adversary",
+      "impact_statement": "image-size resolves only as a transitive dependency of @docusaurus/mdx-loader 3.10.2, which measures documentation images while the site is built. The images it reads are the repository-controlled files committed under docs/, so a crafted buffer of the kind this advisory requires cannot be supplied. The published site is static output and performs no image parsing at request time. No patched release exists for any published version, so the finding is accepted rather than upgraded away.",
+      "status_notes": "Dependency path: docs/docusaurus/package-lock.json pins image-size 2.0.2, required as image-size ^2.0.2 by @docusaurus/mdx-loader 3.10.2. The same acceptance is recorded as an allowlist entry in audit-ci.json and as an allowed-advisory entry in .github/workflows/dependency-review.yml. Revisit when upstream publishes a patched image-size release or Docusaurus relaxes the ^2.0.2 constraint.",
+      "timestamp": "2026-08-23T00:00:00Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-5p2g-fcmc-qvqq",
+        "@id": "https://osv.dev/GHSA-5p2g-fcmc-qvqq",
+        "aliases": [
+          "CVE-2025-71329"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/image-size@2.0.2",
+              "identifiers": {
+                "purl": "pkg:npm/image-size@2.0.2"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "impact_statement": "The vulnerable image-size 2.0.2 component is not installed. The Docusaurus dependency slot named image-size resolves to the separately published image-size-next 2.1.1 package.",
+      "status_notes": "The current Docusaurus dependency tree resolves image-size to the image-size-next 2.1.1 tarball and contains no official image-size 2.0.2 node. The obsolete audit allowlist entry has been removed.",
+      "timestamp": "2026-09-04T01:28:45Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-w3rx-r6r6-pgpr",
+        "@id": "https://osv.dev/GHSA-w3rx-r6r6-pgpr"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/image-size@2.0.2",
+              "identifiers": {
+                "purl": "pkg:npm/image-size@2.0.2"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "impact_statement": "The vulnerable image-size 2.0.2 component is not installed. The Docusaurus dependency slot named image-size resolves to the separately published image-size-next 2.1.1 package.",
+      "status_notes": "The current Docusaurus dependency tree resolves image-size to the image-size-next 2.1.1 tarball and contains no official image-size 2.0.2 node. The obsolete audit allowlist entry has been removed.",
+      "timestamp": "2026-09-04T01:28:45Z"
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Fuzz Tests
 
 on:
@@ -37,22 +39,26 @@ jobs:
         shell: pwsh
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Derive artifact name
         id: meta
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         run: |
-          $name = '${{ inputs.working-directory }}' -replace '/', '-' -replace '^\.', '' -replace '^-', ''
+          $name = $env:INPUT_WORKING_DIRECTORY -replace '/', '-' -replace '^\.', '' -replace '^-', ''
           "artifact-name=fuzz-results-$name" >> $env:GITHUB_OUTPUT
 
       - name: Detect changed Python files
         if: inputs.changed-files-only
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         run: |
           $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
-          $workingDir = '${{ inputs.working-directory }}'
+          $workingDir = $env:INPUT_WORKING_DIRECTORY
           $changed = git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- $workingDir |
             Where-Object { $_ -match '\.py$' }
           if ($changed) {
@@ -64,13 +70,16 @@ jobs:
           }
 
       - name: Check for fuzz harness
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
         run: |
-          if (-not (Test-Path "${{ inputs.working-directory }}/tests/fuzz_harness.py")) {
-            Write-Host "No fuzz harness in ${{ inputs.working-directory }}, skipping"
+          if (-not (Test-Path "$env:INPUT_WORKING_DIRECTORY/tests/fuzz_harness.py")) {
+            Write-Host "No fuzz harness in $env:INPUT_WORKING_DIRECTORY, skipping"
             return
           }
-          Write-Host "Fuzz harness found in ${{ inputs.working-directory }}"
-          if ('${{ inputs.changed-files-only }}' -eq 'true' -and $env:HAS_CHANGES -ne 'true') {
+          Write-Host "Fuzz harness found in $env:INPUT_WORKING_DIRECTORY"
+          if ($env:INPUT_CHANGED_FILES_ONLY -eq 'true' -and $env:HAS_CHANGES -ne 'true') {
             Write-Host "No Python file changes detected, skipping fuzz tests"
             return
           }
@@ -78,13 +87,13 @@ jobs:
 
       - name: Install uv
         if: env.SHOULD_FUZZ == 'true'
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           version: "0.10.9"
 
       - name: Set up Python
         if: env.SHOULD_FUZZ == 'true'
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -99,8 +108,10 @@ jobs:
         id: fuzz
         if: env.SHOULD_FUZZ == 'true'
         working-directory: ${{ inputs.working-directory }}
+        env:
+          INPUT_FUZZ_RUNS: ${{ inputs.fuzz-runs }}
         run: |
-          $fuzzRuns = '${{ inputs.fuzz-runs }}'
+          $fuzzRuns = $env:INPUT_FUZZ_RUNS
           $fuzzOutput = New-TemporaryFile
 
           Write-Host "Running Atheris fuzz tests with $fuzzRuns iterations"
@@ -154,20 +165,30 @@ jobs:
 
       - name: Write results JSON
         if: always() && env.SHOULD_FUZZ == 'true'
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+          FUZZ_EXIT_CODE: ${{ steps.fuzz.outputs.exit_code || 1 }}
+          FUZZ_CRASH_COUNT: ${{ steps.fuzz.outputs.crash_count || 0 }}
+          FUZZ_ITERATIONS: ${{ steps.fuzz.outputs.iterations || 0 }}
+          FUZZ_COV_EDGES: ${{ steps.fuzz.outputs.cov_edges || 0 }}
+          FUZZ_FEATURES: ${{ steps.fuzz.outputs.features || 0 }}
+          FUZZ_CORPUS: ${{ steps.fuzz.outputs.corpus || 0 }}
+          FUZZ_EXEC_PER_SEC: ${{ steps.fuzz.outputs.exec_per_sec || 0 }}
+          FUZZ_RSS: ${{ steps.fuzz.outputs.rss }}
         run: |
           New-Item -ItemType Directory -Path logs -Force | Out-Null
-          $exitCode = [int]'${{ steps.fuzz.outputs.exit_code || 1 }}'
-          $crashCount = [int]'${{ steps.fuzz.outputs.crash_count || 0 }}'
+          $exitCode = [int]$env:FUZZ_EXIT_CODE
+          $crashCount = [int]$env:FUZZ_CRASH_COUNT
           $success = ($exitCode -eq 0) -and ($crashCount -eq 0)
           $result = [ordered]@{
             success        = $success
-            directory      = '${{ inputs.working-directory }}'
-            iterations     = [int]'${{ steps.fuzz.outputs.iterations || 0 }}'
-            coverageEdges  = [int]'${{ steps.fuzz.outputs.cov_edges || 0 }}'
-            features       = [int]'${{ steps.fuzz.outputs.features || 0 }}'
-            corpusEntries  = [int]'${{ steps.fuzz.outputs.corpus || 0 }}'
-            execPerSec     = [int]'${{ steps.fuzz.outputs.exec_per_sec || 0 }}'
-            peakRss        = '${{ steps.fuzz.outputs.rss }}'
+            directory      = $env:INPUT_WORKING_DIRECTORY
+            iterations     = [int]$env:FUZZ_ITERATIONS
+            coverageEdges  = [int]$env:FUZZ_COV_EDGES
+            features       = [int]$env:FUZZ_FEATURES
+            corpusEntries  = [int]$env:FUZZ_CORPUS
+            execPerSec     = [int]$env:FUZZ_EXEC_PER_SEC
+            peakRss        = $env:FUZZ_RSS
             crashes        = $crashCount
             exitCode       = $exitCode
           }
@@ -184,15 +205,26 @@ jobs:
 
       - name: Add job summary
         if: always() && env.SHOULD_FUZZ == 'true'
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+          FUZZ_EXIT_CODE: ${{ steps.fuzz.outputs.exit_code }}
+          FUZZ_ITERATIONS: ${{ steps.fuzz.outputs.iterations }}
+          FUZZ_COV_EDGES: ${{ steps.fuzz.outputs.cov_edges }}
+          FUZZ_FEATURES: ${{ steps.fuzz.outputs.features }}
+          FUZZ_CORPUS: ${{ steps.fuzz.outputs.corpus }}
+          FUZZ_EXEC_PER_SEC: ${{ steps.fuzz.outputs.exec_per_sec }}
+          FUZZ_RSS: ${{ steps.fuzz.outputs.rss }}
+          FUZZ_CRASH_COUNT: ${{ steps.fuzz.outputs.crash_count }}
         run: |
-          $exitCode   = '${{ steps.fuzz.outputs.exit_code }}'
-          $iterations = '${{ steps.fuzz.outputs.iterations }}'
-          $covEdges   = '${{ steps.fuzz.outputs.cov_edges }}'
-          $features   = '${{ steps.fuzz.outputs.features }}'
-          $corpus     = '${{ steps.fuzz.outputs.corpus }}'
-          $execPerSec = '${{ steps.fuzz.outputs.exec_per_sec }}'
-          $rss        = '${{ steps.fuzz.outputs.rss }}'
-          $crashCount = '${{ steps.fuzz.outputs.crash_count }}'
+          $exitCode   = $env:FUZZ_EXIT_CODE
+          $iterations = $env:FUZZ_ITERATIONS
+          $covEdges   = $env:FUZZ_COV_EDGES
+          $features   = $env:FUZZ_FEATURES
+          $corpus     = $env:FUZZ_CORPUS
+          $execPerSec = $env:FUZZ_EXEC_PER_SEC
+          $rss        = $env:FUZZ_RSS
+          $crashCount = $env:FUZZ_CRASH_COUNT
+          $workingDir = $env:INPUT_WORKING_DIRECTORY
 
           $status = if ($exitCode -eq '0' -and $crashCount -eq '0') {
             '✅ **Passed**'
@@ -204,7 +236,7 @@ jobs:
           ## Fuzz Test Results
 
           **Status**: $status
-          **Directory**: ``${{ inputs.working-directory }}``
+          **Directory**: ``$workingDir``
 
           | Metric | Value |
           |--------|-------|
@@ -229,6 +261,8 @@ jobs:
 
       - name: Fail job if crashes found
         if: "steps.fuzz.outputs.crash_count != '0' && !inputs.soft-fail"
+        env:
+          FUZZ_CRASH_COUNT: ${{ steps.fuzz.outputs.crash_count }}
         run: |
-          Write-Host "Fuzz testing found ${{ steps.fuzz.outputs.crash_count }} crash(es)"
+          Write-Host "Fuzz testing found $env:FUZZ_CRASH_COUNT crash(es)"
           exit 1

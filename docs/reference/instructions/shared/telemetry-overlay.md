@@ -1,0 +1,40 @@
+---
+title: Shared/Telemetry Overlay
+description: "Shared telemetry overlay applying telemetry-foundations vocabulary across planner, ADR, PRD, accessibility, code-review, and implementation artifacts"
+sidebar_position: 6
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - shared
+  - shared/telemetry-overlay
+---
+
+<!-- BEGIN AUTO-GENERATED: metadata -->
+| Field       | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Source      | `.github/instructions/shared/telemetry-overlay.instructions.md`                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Invocation  | Applied automatically to `**/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/sssc-reviews/**, **/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**, **/.copilot-tracking/prd-sessions/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/privacy-plans/**, **/.copilot-tracking/privacy-reviews/**, **/.copilot-tracking/reviews/code-reviews/**, **/.copilot-tracking/changes/**` |
+| Interactive | No                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+<!-- END AUTO-GENERATED: metadata -->
+
+## What it does
+
+<!-- BEGIN AUTO-GENERATED: overview -->
+Shared telemetry overlay applying telemetry-foundations vocabulary across planner, ADR, PRD, accessibility, code-review, and implementation artifacts
+<!-- END AUTO-GENERATED: overview -->
+
+## When to use it
+
+Use this overlay when a covered planning, review, ADR, PRD, accessibility, or
+implementation artifact changes observable production behavior, audit trails,
+or telemetry decisions. Consult `telemetry-foundations` for vocabulary and
+PII controls, apply the matching artifact mandate, and omit telemetry when the
+behavior is not observable.
+
+## Example usage
+
+<!-- asset-docs:stub -->
+Provide a concrete example that shows the asset in action, including representative input and the resulting output.

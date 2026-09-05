@@ -123,8 +123,8 @@ action_mappings:
       version: "v4.4.3"
       sha: "b7c566a772e6b6bfb58ed0dc250532a479d7789f"
     - name: "actions/attest-build-provenance"
-      version: "v4.1.0"
-      sha: "a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32"
+      version: "v4.1.1"
+      sha: "0f67c3f4856b2e3261c31976d6725780e5e4c373"
 
   test_results:
     - name: "codecov/codecov-action"
@@ -136,8 +136,8 @@ action_mappings:
       version: "v0.22.2"
       sha: "28d71544de8eaf1b958d335707167c5f783590ad"
     - name: "actions/attest"
-      version: "v4.1.0"
-      sha: "59d89421af93a897026c735860bf21b6eb4f7b26"
+      version: "v4.1.1"
+      sha: "a1948c3f048ba23858d222213b7c278aabede763"
 
 # Storage optimization recommendations
 optimization:

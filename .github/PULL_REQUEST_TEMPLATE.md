@@ -27,17 +27,19 @@ Select all that apply:
 
 **AI Artifacts:**
 
-* [ ] Reviewed contribution with `prompt-builder` agent and addressed all feedback
+* [ ] Reviewed contribution with `hve-builder` and addressed all actionable findings
 * [ ] Copilot instructions (`.github/instructions/*.instructions.md`)
 * [ ] Copilot prompt (`.github/prompts/*.prompt.md`)
 * [ ] Copilot agent (`.github/agents/*.agent.md`)
 * [ ] Copilot skill (`.github/skills/*/SKILL.md`)
+* [ ] Copilot hook (`.github/hooks/*/*.json`)
+* [ ] Eval spec added/updated for changed AI artifacts (`evals/`)
 
 > Note for AI Artifact Contributors:
 >
 > * Agents: Research, indexing/referencing other project (using standard VS Code GitHub Copilot/MCP tools), planning, and general implementation agents likely already exist. Review `.github/agents/` before creating new ones.
 > * Skills: Must include both bash and PowerShell scripts. See [Skills](../docs/contributing/skills.md).
-> * Model Versions: Only contributions targeting the **latest Anthropic and OpenAI models** will be accepted. Older model versions (e.g., GPT-3.5, Claude 3) will be rejected.
+> * Model Versions: Contributions **MUST** target models listed in the model catalog (`scripts/linting/model-catalog.json`) whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`. Run `npm run lint:models` to validate references.
 > * See [Agents Not Accepted](../docs/contributing/custom-agents.md#agents-not-accepted) and [Model Version Requirements](../docs/contributing/ai-artifacts-common.md#model-version-requirements).
 
 **Other:**
@@ -84,22 +86,18 @@ For detailed contribution requirements, see:
 
 ### AI Artifact Contributions
 <!-- If contributing an agent, prompt, instruction, or skill, complete these checks -->
-* [ ] Used `/prompt-analyze` to review contribution
-* [ ] Addressed all feedback from `prompt-builder` review
+* [ ] Used `hve-builder` review mode to review contribution
+* [ ] Addressed all actionable findings from the `hve-builder` review
 * [ ] Verified contribution follows common standards and type-specific requirements
 
-### Required Automated Checks
+### Required Local Checks
 
-The following validation commands must pass before merging:
+The following local-safe validation commands must pass before merging:
 
-* [ ] Markdown linting: `npm run lint:md`
+* [ ] Local validation aggregate: `npm run validate:local`
+* [ ] Documentation validation (if docs changed): `npm run validate:docs`
 * [ ] Spell checking: `npm run spell-check`
-* [ ] Frontmatter validation: `npm run lint:frontmatter`
-* [ ] Skill structure validation: `npm run validate:skills`
 * [ ] Link validation: `npm run lint:md-links`
-* [ ] PowerShell analysis: `npm run lint:ps`
-* [ ] Plugin freshness: `npm run plugin:generate`
-* [ ] Docusaurus tests: `npm run docs:test`
 
 ## Security Considerations
 <!-- ⚠️ WARNING: Do not commit sensitive information such as API keys, passwords, or personal data -->

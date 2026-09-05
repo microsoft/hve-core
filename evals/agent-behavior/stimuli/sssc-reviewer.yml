@@ -1,0 +1,71 @@
+stimuli:
+  - name: sssc-reviewer-class-recipe
+    prompt: |
+      Review the software supply chain security posture of a repository that publishes container images and npm packages from a GitHub Actions pipeline. Summarize the findings with severity, citing the relevant frameworks (OpenSSF Scorecard, SLSA, or Sigstore). Write the report under `.copilot-tracking/sssc-reviews/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: report-path-present
+        config:
+          pattern: '(?is)sssc-reviews[\\/][^\s`]*\.md'
+      - type: output-matches
+        name: supply-chain-scope-present
+        config:
+          pattern: '(?is)(openssf\s+scorecard|scorecard|slsa|sigstore|supply[- ]chain)'
+      - type: output-matches
+        name: review-completion-stated
+        config:
+          pattern: '(?is)(review|report|assessment)[^.]{0,80}(written|created|completed|document(s|ed)?|covers?|produced)|(written|created|completed|document(s|ed)?|covers?|produced)[^.]{0,80}(review|report|assessment)'
+      - type: output-matches
+        name: no-contradictory-findings
+        config:
+          pattern: '(?is)no\s+(findings|issues|concerns)\s+(were\s+)?(found|identified|detected)[\s\S]{0,200}\b(found|identified|detected)\s+(a|an|\d+)\s+\w{0,20}\s?(finding|issue|vulnerability|risk)'
+          negate: true
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)(?!\w)'
+          negate: true
+
+  - name: sssc-reviewer-diff-fallback-retains-supply-chain-files
+    prompt: |
+      Run a `diff` mode supply chain review. The `pr-reference` skill is not
+      installed in this session and cannot be activated, and no changed-files
+      list was supplied. The branch differs from its base branch in exactly two
+      files: `package-lock.json` and `.github/workflows/release.yml`.
+
+      Before assessing anything, state how you resolved the changed files for
+      this run, which of those two files stay in scope for assessment, and how
+      the report records the reduced evidence quality.
+    environment:
+      files:
+        - src: ../../.github/agents/security/sssc-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/security/supply-chain-security
+        - ../../.github/skills/security/security-reviewer-formats
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: diff-scoped-review
+        config:
+          pattern: '(?is)sssc-review-diff|\bdiff\b[^.]{0,80}(review|mode|scope|scoped|assessment)|(review|mode|scope|scoped|assessment)[^.]{0,80}\bdiff\b'
+      - type: output-matches
+        name: no-audit-fallback
+        config:
+          pattern: '(?is)(fall(s|ing|en)?\s+back|fell\s+back|switch(ed|ing)?\s+to|reverted)[^.]{0,40}audit'
+          negate: true
+      - type: output-matches
+        name: changed-file-resolution-stated
+        config:
+          pattern: '(?is)direct[- ]comparison|changed[- ]file resolution|resolution used|two[- ]file assertion|git diff|repository comparison|(compared|comparing|comparison)[^.]{0,60}(branch|repository|base)|(branch|repository|base)[^.]{0,60}(compared|comparing|comparison)|(changed[- ]?files?|file list)[^.]{0,60}(supplied|provided|named|stated|asserted|listed|given)'
+      - type: output-matches
+        name: supply-chain-files-retained
+        config:
+          pattern: '(?is)((?=.*package-lock\.json)(?=.*release\.yml)(?=.*(retain\w*|remain\w*|kept|keep\w*|stay\w*|in scope|scope:)).)|(both\s+\w*\s?\w*\s?files?[^.]{0,60}(retain\w*|remain\w*|kept|keep\w*|stay\w*|in scope))|((retain\w*|keeps?|kept|keeping)[^.]{0,40}both\s+\w*\s?files?)'
+      - type: output-matches
+        name: degraded-evidence-recorded
+        config:
+          pattern: '(?is)(reduced|reduces|reducing|reduce|degraded|degrades|degrading|degrade|limited|lower(ed)?|unavailable)[^.]{0,120}(evidence|rigor|pr-reference|confidence|quality)|(evidence|rigor|pr-reference|confidence)[^.]{0,120}(reduced|reduces|reducing|reduce|degraded|degrades|degrading|degrade|limited|lower(ed)?|unavailable|not available|could not)'

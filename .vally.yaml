@@ -2,34 +2,55 @@ paths:
   evals: evals
   results: evals/results
 
-environments:
-  security:
-    skills:
-      - .github/skills/security/owasp-top-10
-      - .github/skills/security/owasp-cicd
-  coding-standards:
-    skills:
-      - .github/skills/coding-standards/python-foundational
-  security-and-coding:
-    skills:
-      - .github/skills/security/owasp-top-10
-      - .github/skills/coding-standards/python-foundational
+# Environments are declared inline in each eval spec (evals/<suite>/eval.yaml) so
+# that environment.skills paths can be resolved relative to the spec's own
+# directory. Vally resolves environment.skills against the eval-spec directory,
+# not against this config file, so repo-root-relative paths here would not
+# resolve correctly for specs nested under evals/.
 
 suites:
   skill-quality:
     description: Evaluate skill behavior via copilot-sdk agent conversations
     filter:
-      tags:
-        category: skill-quality
+      category: skill-quality
 
   agent-behavior:
     description: Evaluate agent routing and response quality
     filter:
-      tags:
-        category: agent-behavior
+      category: agent-behavior
 
   script-validation:
     description: Validate script correctness via copilot-sdk conversations
     filter:
-      tags:
-        category: script-validation
+      category: script-validation
+
+  agent-conformance-accessibility-planner:
+    description: Behavioral conformance regression suite for the Accessibility Planner agent
+    filter:
+      category: agent-conformance-accessibility-planner
+
+  agent-conformance-dt-coach:
+    description: Behavioral conformance regression suite for the DT Coach agent
+    filter:
+      category: agent-conformance-dt-coach
+
+  agent-conformance-privacy-planner:
+    description: Behavioral conformance regression suite for the Privacy Planner agent
+    filter:
+      category: agent-conformance-privacy-planner
+
+  agent-conformance-rai-planner:
+    description: Behavioral conformance regression suite for the RAI Planner agent
+    filter:
+      category: agent-conformance-rai-planner
+
+  agent-conformance-security-planner:
+    description: Behavioral conformance regression suite for the Security Planner agent
+    filter:
+      category: agent-conformance-security-planner
+
+  agent-conformance-sssc-planner:
+    description: Behavioral conformance regression suite for the SSSC Planner agent
+    filter:
+      category: agent-conformance-sssc-planner
+

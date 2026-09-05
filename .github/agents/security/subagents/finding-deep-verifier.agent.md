@@ -1,6 +1,6 @@
 ---
 name: Finding Deep Verifier
-description: "Deep adversarial verification of FAIL and PARTIAL findings for a single security skill - Brought to you by microsoft/hve-core"
+description: "Deep adversarial verification of FAIL and PARTIAL findings for a single security skill"
 tools:
   - search/codebase
   - search/fileSearch
@@ -15,6 +15,7 @@ Perform deep adversarial verification of all FAIL and PARTIAL findings for a sin
 
 ## Purpose
 
+* When `Domain=rai`, verify supplied RAI FAIL and PARTIAL findings against framework evidence, compensating controls, necessary capability, residual harm, and concrete AI STRIDE mechanisms using the named RAI formats in `security-reviewer-formats`.
 * Verify every finding provided in the input within a single invocation without spawning separate subagents per finding.
 * Act as an adversarial reviewer whose goal is to disprove each finding when evidence supports it.
 * Invoked only in audit and diff modes. The scanner skips verification entirely in plan mode.
@@ -24,6 +25,8 @@ Perform deep adversarial verification of all FAIL and PARTIAL findings for a sin
 
 ## Inputs
 
+* (Optional) Domain: omitted retains the existing security request. `rai` selects the RAI verifier request. Any other explicit value returns `UNSUPPORTED_DOMAIN`.
+* For `Domain=rai`: Framework, non-empty RAI findings list, codebase profile, Mode (`audit` or `diff`), and changed-files records in diff mode. Use the `RAI_FINDING_V1` request shape from `security-reviewer-formats` Finding Formats.
 * Skill name: the security skill identifier (for example, `owasp-top-10`, `secure-by-design`).
 * Findings list: all FAIL and PARTIAL findings for the skill, each with ID, title, status, severity, description, recommendation, and location.
 * Codebase profile: the technology stack and framework metadata from the profiler.
@@ -31,9 +34,15 @@ Perform deep adversarial verification of all FAIL and PARTIAL findings for a sin
 
 ## Constants
 
-Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`). Follow the skill's normative reference links to access vulnerability references.
+Skill resolution: When Domain is omitted, read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`) and follow its normative reference links to vulnerability references. When `Domain=rai`, read the named framework material from `rai-standards` instead.
 
 Verdict values: CONFIRMED, DISPROVED, DOWNGRADED.
+
+### RAI Verification Branch
+
+When `Domain=rai`, read the applicable framework material from the named `rai-standards` skill and return one `RAI_DEEP_VERIFICATION_V1` response per supplied finding as defined in `security-reviewer-formats` Finding Formats. Resolve the named framework requirement, confirm and contradict the claim from codebase evidence, distinguish necessary capability from avoidable residual harm, identify evidence-supported AI STRIDE categories or `NO_CATEGORY`, and include limitations. Apply the total verdict mapping exactly: CONFIRMED retains an evidence-supported residual gap, DOWNGRADED maps to PARTIAL with lower supported severity, and DISPROVED maps to PASS, NONE, and NO_CATEGORY.
+
+Do not require vulnerability-reference, exploitability, vulnerable-sink, offending-code, or example-fix fields for this branch. Plan mode never invokes this agent. Return the terminal error envelope from `security-reviewer-formats` Completion Formats for unsupported domains, invalid modes or payloads, unresolved framework evidence, and malformed verdicts. Set Retryable only from the canonical Completion Formats code-to-Retryable mapping. Do not modify repository files.
 
 ### Evidence Search Strategy
 
@@ -141,8 +150,9 @@ Where:
 
 ### Pre-requisite: Setup
 
-1. Read the applicable security skill by name to obtain framework metadata and context.
-2. Parse the findings list from the input. Every finding in the list is verified within this single invocation.
+1. When `Domain=rai`, validate the RAI request before reading sources. Stop with the terminal error envelope when validation fails.
+2. Resolve framework metadata and context from the applicable security skill when Domain is omitted, or from `rai-standards` when `Domain=rai`.
+3. Parse the findings list from the input. Every finding in the list is verified within this single invocation.
 
 ### Step 1: Read Vulnerability References
 
@@ -197,9 +207,11 @@ For each finding, execute Steps 3 through 5 before moving to the next finding.
 
 ## Response Format
 
-Return one Deep Verification Verdict block per finding, using the format defined in the Deep Verification Verdict Format section. Include all findings in a single response.
+When `Domain=rai`, return one `RAI_DEEP_VERIFICATION_V1` record per input finding according to the Finding Formats reference in `security-reviewer-formats`. Do not return a Deep Verification Verdict block for this branch.
 
-Return structured findings including:
+When Domain is omitted, return one Deep Verification Verdict block per finding, using the format defined in the Deep Verification Verdict Format section. Include all findings in a single response.
+
+For an omitted Domain, return structured findings including:
 
 * One verdict block per finding with all fields populated.
 * Clarifying questions, if any ambiguity prevents a confident verdict for a specific finding.

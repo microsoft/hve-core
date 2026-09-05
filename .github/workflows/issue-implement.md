@@ -14,9 +14,6 @@ on:
 engine: copilot
 timeout-minutes: 30
 
-imports:
-  - ../agents/hve-core/task-implementor.agent.md
-
 checkout:
   sparse-checkout: |
     .github/workflows/
@@ -25,7 +22,6 @@ checkout:
     .github/instructions/hve-core/
     .github/instructions/shared/
     scripts/
-    collections/
     package.json
     justfile
 
@@ -60,10 +56,8 @@ Only proceed if the triggering label is `agent-ready`.
 
 ## Instruction Priority
 
-Follow the Workflow section below as the sole implementation procedure.
-Imported agent files provide domain knowledge and coding standards only.
-Ignore any phase-based, subagent-based, or tracking-file-based procedures
-from imported files.
+Follow the Workflow section below as the sole implementation procedure. This
+workflow is self-contained and does not import another agent protocol.
 
 ## Workflow
 
@@ -96,7 +90,3 @@ from imported files.
 * If the issue is ambiguous or too large, post a comment asking for
   clarification instead of guessing.
 * Keep the PR small and focused.
-
----
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

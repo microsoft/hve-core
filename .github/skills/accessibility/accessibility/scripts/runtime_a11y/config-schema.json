@@ -1,0 +1,323 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microsoft.github.io/hve-core/accessibility/a11y-runtime-config.schema.json",
+  "title": "a11y-runtime.config.json",
+  "description": "Project-supplied runtime accessibility probe configuration: surfaces, interaction states, and probe scoping consumed by the runtime_a11y harness.",
+  "type": "object",
+  "required": ["baseUrl"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "type": "string" },
+    "baseUrl": {
+      "type": "string",
+      "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://",
+      "description": "Absolute HTTP(S) origin the harness probes. Must be loopback or explicitly allowlisted; enforced by the SSRF guard at runtime."
+    },
+    "serveMode": {
+      "type": "string",
+      "enum": ["auto", "served", "external", "off"],
+      "description": "Server ownership for visual review capture. 'auto' reuses a healthy loopback server or starts and stops one it owns; 'served' requires a loopback server to be running already and fails otherwise; 'external' and 'off' never probe or start a server. 'auto' and 'served' accept loopback base URLs only."
+    },
+    "allowlist": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Host or route/path glob patterns the harness may visit."
+    },
+    "syntheticPhrases": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional synthetic phrases emitted by synthetic AT-plan drivers for non-production contract tests."
+    },
+    "routes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "title": { "type": "string" },
+          "surfaceIds": { "type": "array", "items": { "$ref": "#/$defs/artifactId" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "surfaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "$ref": "#/$defs/artifactId" },
+          "type": {
+            "type": "string",
+            "enum": ["page", "component", "widget", "content-type", "global-chrome"]
+          },
+          "route": { "type": "string" },
+          "selector": { "$ref": "#/$defs/selector" },
+          "widgetPattern": { "type": "string" },
+          "ariaAt": { "$ref": "#/$defs/ariaAtOverride" },
+          "states": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/stateEntry" }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "probeScoping": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["probe"],
+        "properties": {
+          "probe": { "$ref": "#/$defs/artifactId" },
+          "surfaces": { "type": "array", "items": { "$ref": "#/$defs/artifactId" } },
+          "states": { "type": "array", "items": { "$ref": "#/$defs/artifactId" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "realScreenReader": {
+      "type": "object",
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/screenReaderAction" }
+        },
+        "expectedAnnouncements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/expectedAnnouncement" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "calibration": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["full", "nvdaOnly"]
+        },
+        "maxExecutionsPerJourney": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "profileVersion": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "calibrationProfile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "manualBoundary": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "reason"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 },
+              "reference": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "journeys": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": { "$ref": "#/$defs/artifactId" },
+              "journeyId": { "$ref": "#/$defs/artifactId" },
+              "title": { "type": "string" },
+              "route": { "type": "string" },
+              "surfaceId": { "$ref": "#/$defs/artifactId" },
+              "state": { "$ref": "#/$defs/artifactId" },
+              "trigger": { "$ref": "#/$defs/trigger" },
+              "triggerSequence": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "$ref": "#/$defs/trigger" }
+              },
+              "triggerAfterDriverStart": { "type": "boolean" },
+              "commands": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/screenReaderAction" }
+              },
+              "assertions": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/expectedAnnouncement" }
+              },
+              "profileFingerprint": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "visualStates": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/artifactId" }
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "visualStates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifactId" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "visualReview": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "evidenceRoot": { "type": "string" },
+        "maxArtifactBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824
+        },
+        "allowlist": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "publicLoopbackOnly": { "type": "boolean" },
+        "rejectPersonalData": { "type": "boolean" },
+        "operatorConfirmedNoPersonalData": { "type": "boolean" },
+        "fullPage": { "type": "boolean" },
+        "traceSnapshots": { "type": "boolean" },
+        "routes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string" },
+              "state": { "$ref": "#/$defs/artifactId" },
+              "surfaceId": { "$ref": "#/$defs/artifactId" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "states": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifactId" }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "artifactId": {
+      "type": "string",
+      "description": "Portable identifier used as an evidence path segment. Excludes trailing dots and Windows reserved device names, which Win32 would collide or fail on.",
+      "pattern": "^(?![Cc][Oo][Nn](\\.|$))(?![Pp][Rr][Nn](\\.|$))(?![Aa][Uu][Xx](\\.|$))(?![Nn][Uu][Ll](\\.|$))(?![Cc][Oo][Mm][1-9](\\.|$))(?![Ll][Pp][Tt][1-9](\\.|$))(?!.*\\.$)[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "selector": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "enum": ["css", "role"] },
+            "value": { "type": "string" },
+            "role": { "type": "string" },
+            "name": { "type": "string" }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "trigger": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": ["visit", "click", "focus", "hover", "type", "select", "press", "navigate", "emulate"]
+        },
+        "target": {
+          "anyOf": [
+            { "type": "string" },
+            { "$ref": "#/$defs/selector" }
+          ]
+        },
+        "value": { "type": "string" },
+        "waitFor": { "$ref": "#/$defs/selector" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "stateEntry": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": { "$ref": "#/$defs/artifactId" },
+        "trigger": { "$ref": "#/$defs/trigger" },
+        "ariaAt": { "$ref": "#/$defs/ariaAtOverride" },
+        "realScreenReader": { "$ref": "#/$defs/realScreenReader" }
+      },
+      "additionalProperties": true
+    },
+    "screenReaderAction": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["command", "pause", "keyboard", "key", "perform", "type", "waitFor"]
+        },
+        "value": { "type": "string", "minLength": 1 },
+        "durationMs": { "type": "integer", "minimum": 0 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "pause" } } },
+          "then": { "required": ["durationMs"] },
+          "else": { "required": ["value"] }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "expectedAnnouncement": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["contains", "matches", "orderedContains"] },
+        "value": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "ariaAtOverride": {
+      "type": "object",
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/screenReaderAction" }
+        },
+        "assertions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/expectedAnnouncement" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "realScreenReader": {
+      "type": "object",
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/screenReaderAction" }
+        },
+        "expectedAnnouncements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/expectedAnnouncement" }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

@@ -5,6 +5,22 @@
 
 # Vally evaluation results
 evals/results/
+vally-results/
+
+# Baseline-equivalence run residue. The driver clears and re-materializes both
+# directories on every run, so any content here is disposable. The surface
+# placeholder stays tracked: vally's spec linter resolves environment.files
+# sources, so the directory has to exist in a clean checkout.
+evals/baseline-equivalence/customized/workspace/
+evals/baseline-equivalence/customized/surface/**
+!evals/baseline-equivalence/customized/surface/.github/
+!evals/baseline-equivalence/customized/surface/.github/.gitkeep
+# Concurrency lock for the shared surface. Held for the duration of a run and
+# removed on exit, but a killed run can leave it behind.
+evals/baseline-equivalence/customized/.surface.lock
+
+# Generated Copilot plugin packages
+/plugins/
 
 # macOS
 .DS_Store
@@ -113,6 +129,7 @@ StyleCopReport.xml
 *.tlh
 *.tmp
 *.tmp_proj
+_tmp*
 *_wpftmp.csproj
 *.log
 *.tlog
@@ -354,6 +371,7 @@ paket-files/
 **/.hypothesis/
 **/.pytest_cache/
 **/.ruff_cache/
+.github/skills/experimental/mural/tests/corpus/[0-9a-f]*
 *.pyc
 venv/
 .venv/
@@ -458,11 +476,28 @@ dependency-pinning-artifacts/
 pr.md
 pr-reference.xml
 
+# Root-level PowerShell scratch files (debug/test/scratch/tmp prefixes at repo root only)
+/debug-*.ps1
+/debug-*.psm1
+/test-*.ps1
+/test-*.psm1
+/scratch-*.ps1
+/scratch-*.psm1
+/tmp-*.ps1
+/tmp-*.psm1
+
 # Dependency pinning scan artifacts
 dependency-pinning-artifacts/
 
 # Copilot tracking
 .copilot-tracking/
+
+# Survey corpus working copies - third-party and internal repositories
+# cloned for read-only assessment. Never commit their source.
+.survey-corpus/
+
+# Local telemetry opt-in marker
+.hve-telemetry
 
 # MCP server configuration - exclude local token files
 .mcp/*-local.json
@@ -473,3 +508,6 @@ dependency-pinning-artifacts/
 docs/docusaurus/build/
 docs/docusaurus/.docusaurus/
 docs/docusaurus/node_modules/
+
+# Playwright test output
+test-results/

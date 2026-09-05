@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: PR Validation
 
 on:
@@ -6,6 +8,8 @@ on:
     branches:
       - main
       - develop
+      - release/prerelease
+      - release/stable
   workflow_dispatch:
 
 concurrency:
@@ -60,7 +64,7 @@ jobs:
       has-projects: ${{ steps.find.outputs.has-projects }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -68,11 +72,17 @@ jobs:
         id: find
         shell: pwsh
         run: |
+          # The moderation eval (scripts/evals/moderation) carries a heavy
+          # torch/detoxify stack and runs weekly via weekly-validation.yml,
+          # so it is excluded from per-PR Python matrix jobs here.
           $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
-            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            Where-Object { $_.FullName -notmatch 'node_modules' -and $_.FullName -notmatch 'evals[\\/]+moderation' } |
             ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
             ForEach-Object { $_ -replace '^\.[\\/]', '' } |
             Sort-Object)
+          # Reject repository-derived paths that could alter command structure downstream.
+          . ./scripts/security/Assert-WorkflowProjectDirectory.ps1
+          $projectList = @(Assert-WorkflowProjectDirectory -Path $projectList)
           $jsonItems = $projectList | ForEach-Object { $_ | ConvertTo-Json -Compress }
           $dirs = '[' + (($jsonItems) -join ',') + ']'
           "directories=$dirs" >> $env:GITHUB_OUTPUT
@@ -82,6 +92,47 @@ jobs:
           } else {
             "has-projects=true" >> $env:GITHUB_OUTPUT
             Write-Output "Found Python projects: $dirs"
+          }
+
+  discover-node-projects:
+    name: Discover Node Skills
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      directories: ${{ steps.find.outputs.directories }}
+      has-projects: ${{ steps.find.outputs.has-projects }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Find Node skills
+        id: find
+        shell: pwsh
+        run: |
+          # A Node skill is any skill (dir containing SKILL.md) that ships at
+          # least one *.test.* / *.spec.* (mjs/cjs/js). The skill root is the
+          # node --test working dir.
+          $skills = @(Get-ChildItem -Path .github/skills -Recurse -Force -Filter SKILL.md -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            ForEach-Object { $_.DirectoryName } |
+            Where-Object { @(Get-ChildItem -Path $_ -Recurse -Force -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '\.(test|spec)\.(mjs|cjs|js)$' -and $_.FullName -notmatch 'node_modules' }).Count -gt 0 } |
+            ForEach-Object { (Resolve-Path -Relative $_) -replace '^\.[\\/]', '' -replace '\\', '/' } |
+            Sort-Object -Unique)
+          # Reject repository-derived paths that could alter command structure downstream.
+          . ./scripts/security/Assert-WorkflowProjectDirectory.ps1
+          $skills = @(Assert-WorkflowProjectDirectory -Path $skills)
+          $jsonItems = $skills | ForEach-Object { $_ | ConvertTo-Json -Compress }
+          $dirs = '[' + (($jsonItems) -join ',') + ']'
+          "directories=$dirs" >> $env:GITHUB_OUTPUT
+          if ($skills.Count -eq 0) {
+            "has-projects=false" >> $env:GITHUB_OUTPUT
+            Write-Output 'No Node skills found'
+          } else {
+            "has-projects=true" >> $env:GITHUB_OUTPUT
+            Write-Output "Found Node skills: $dirs"
           }
 
   python-lint:
@@ -145,6 +196,77 @@ jobs:
       matrix:
         directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
 
+  copilot-otel-runtime-tests:
+    name: Copilot OTEL Runtime Tests
+    uses: ./.github/workflows/pytest-tests.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      working-directory: .github/skills/experimental/copilot-otel-metrics
+      soft-fail: false
+      changed-files-only: true
+      changed-paths-pattern: '^\.github/skills/experimental/copilot-otel-metrics/(examples/.*\.(py|yaml)|examples/azure/agent-host-relay/.*\.yaml|tests/.*\.py|pyproject\.toml)$|^\.github/workflows/(pytest-tests|pr-validation)\.yml$'
+      marker-expression: slow
+      strict-runtime: true
+      artifact-suffix: -runtime
+      pre-pull-compose-file: examples/compose.yaml
+      pre-pull-compose-service: otel-collector
+
+  node-tests:
+    name: "Node Tests (${{ matrix.directory }})"
+    needs: discover-node-projects
+    if: needs.discover-node-projects.outputs.has-projects == 'true'
+    uses: ./.github/workflows/node-tests.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      working-directory: ${{ matrix.directory }}
+      soft-fail: false
+      changed-files-only: true
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.discover-node-projects.outputs.directories) }}
+
+  accessibility-browser-smoke:
+    name: Accessibility Browser Smoke
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      - name: Install accessibility skill Node dependencies
+        shell: bash
+        env:
+          SEARCH_ROOT: .github/skills/accessibility/accessibility
+        run: ./scripts/ci/install-skill-node-deps.sh
+
+      - name: Verify system Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          chrome_bin="$(command -v google-chrome || command -v google-chrome-stable || true)"
+          if [ -z "$chrome_bin" ]; then
+            echo "::error::No system Google Chrome found on the runner; accessibility smoke tests require it"
+            exit 1
+          fi
+          echo "Using system Chrome at: $chrome_bin"
+          "$chrome_bin" --version
+
+      - name: Run accessibility browser smoke tests
+        run: npm run ci:test:a11y:smoke
+
   fuzz-tests:
     name: "Fuzz Tests (${{ matrix.directory }})"
     needs: discover-python-projects
@@ -182,8 +304,10 @@ jobs:
     uses: ./.github/workflows/docusaurus-tests.yml
     permissions:
       contents: read
+      id-token: write # Required for Codecov OIDC in the reusable workflow
     with:
       soft-fail: false
+      changed-files-only: true
 
   frontmatter-validation:
     name: Frontmatter Validation
@@ -201,7 +325,7 @@ jobs:
     uses: ./.github/workflows/adr-consistency-validation.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       changed-files-only: true
@@ -215,6 +339,18 @@ jobs:
       contents: read
     with:
       soft-fail: false
+
+  asset-docs-validation:
+    name: Asset Docs Validation
+    uses: ./.github/workflows/asset-docs-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+      # Outside a pull request both operands are empty, so fall back to a real
+      # ref instead of the literal 'origin/'.
+      base-branch: ${{ github.event.pull_request.base.sha || (github.base_ref && format('origin/{0}', github.base_ref)) || 'origin/main' }}
 
   msdate-freshness:
     name: ms.date Freshness Check
@@ -242,7 +378,20 @@ jobs:
     with:
       soft-fail: false
       changed-files-only: true
-      base-branch: ${{ github.event.pull_request.base.sha || format('origin/{0}', github.base_ref) }}
+      base-branch: ${{ github.event.pull_request.base.sha || (github.base_ref && format('origin/{0}', github.base_ref)) || 'origin/main' }}
+
+  eval-validation:
+    name: Eval Validation
+    uses: ./.github/workflows/eval-validation.yml
+    permissions:
+      contents: read
+      pull-requests: write
+    with:
+      soft-fail: false
+      changed-files-only: true
+      base-branch: ${{ github.event.pull_request.base.sha || (github.base_ref && format('origin/{0}', github.base_ref)) || 'origin/main' }}
+    secrets:
+      copilot-github-token: ${{ secrets.COPILOT_GITHUB_TOKEN }}
 
   link-lang-check:
     name: Link Language Check
@@ -259,35 +408,68 @@ jobs:
       contents: read
     with:
       soft-fail: true
+      changed-files-only: true
+      base-branch: ${{ github.event.pull_request.base.sha || format('origin/{0}', github.base_ref) }}
 
   dependency-pinning-check:
     name: Validate Dependency Pinning
     uses: ./.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
       upload-artifact: false
+
+  devcontainer-lockfile-check:
+    name: Devcontainer Lockfile Integrity
+    uses: ./.github/workflows/devcontainer-lockfile-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
 
   workflow-permissions-check:
     name: Workflow Permissions Check
     uses: ./.github/workflows/workflow-permissions-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
       upload-artifact: false
+
+  workflow-runner-check:
+    name: Workflow Runner Check
+    uses: ./.github/workflows/workflow-runner-scan.yml
+    permissions:
+      contents: read
+      security-events: write # Required for SARIF upload to Security tab
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: false
+
+  dangerous-workflow-check:
+    name: Dangerous Workflow Check
+    uses: ./.github/workflows/dangerous-workflow-scan.yml
+    permissions:
+      contents: read
+      security-events: write # Required for SARIF upload to Security tab
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: false
+      poutine-soft-fail: true # Poutine runs advisory; homegrown template-injection check is the hard gate
 
   action-version-consistency-scan:
     name: Action Version Consistency Scan
     uses: ./.github/workflows/action-version-consistency-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
@@ -298,12 +480,12 @@ jobs:
     uses: ./.github/workflows/gitleaks-scan.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
       upload-artifact: false
-      log-opts: '${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}'
+      log-opts: "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
 
   npm-audit:
     name: npm Security Audit
@@ -312,22 +494,25 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
           cache: "npm"
 
+      - name: Validate public dependency feeds
+        run: npm run lint:public-dependency-feeds
+
       - name: Install dependencies
         run: npm ci
 
-      # Uses audit-ci with an allowlist for advisories that have no upstream
-      # fix available. See audit-ci.json for the current allowlist and rationale.
-      - name: Run security audit
+      # Uses audit-ci with an allowlist for advisories that have no installable
+      # upstream fix. See audit-ci.json for the current allowlist.
+      - name: Audit all npm projects
         run: npm run audit:npm
 
   codeql:
@@ -335,6 +520,283 @@ jobs:
     uses: ./.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
-      security-events: write  # Required for SARIF upload to Security tab
+      security-events: write # Required for SARIF upload to Security tab
       actions: read
 
+  gate-completeness-check:
+    name: PR Gate Completeness
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # The promotion checks read the pull request head through the API instead
+      # of fetching its ref, which needs this scope and nothing more.
+      pull-requests: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      - name: Validate PR gate completeness
+        shell: pwsh
+        run: ./scripts/security/Test-PrValidationGate.ps1 -FailOnViolation
+
+      # The promotion head is the last reviewable state before release-please
+      # can consume its exact release intent, so grammar, parity, advancement,
+      # and the retained candidate record are proved while the pull request is
+      # still open. Branch rulesets decide whether this failing check blocks the
+      # merge; release-prerelease.yml independently revalidates the same intent
+      # before any tag can be created.
+      - name: Validate PreRelease promotion intent advances release/prerelease
+        if: >
+          github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && github.event.pull_request.base.ref == 'release/prerelease'
+          && github.event.pull_request.head.ref == 'release-promotion--main--to--release-prerelease'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PROMOTION_HEAD: release-promotion--main--to--release-prerelease
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ "$HEAD_BRANCH" != "$PROMOTION_HEAD" ]; then
+            echo "::error::PreRelease promotion head $HEAD_BRANCH is not the canonical promotion head"
+            exit 1
+          fi
+          if [[ ! "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::PreRelease promotion event carries an invalid pull request number"
+            exit 1
+          fi
+          if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::PreRelease promotion event carries an invalid head SHA"
+            exit 1
+          fi
+
+          # Every read below is pinned to an immutable commit and served by the
+          # API, so no pull-request ref enters the local object store. A head
+          # that moved after the event fails rather than being proved at a
+          # later tip.
+          CURRENT_HEAD=$(gh api "/repos/$REPOSITORY/pulls/$PR_NUMBER" --jq '.head.sha')
+          if [ "$CURRENT_HEAD" != "$HEAD_SHA" ]; then
+            echo "::error::PreRelease promotion head moved from $HEAD_SHA to $CURRENT_HEAD"
+            exit 1
+          fi
+
+          # release/prerelease is mutable, so it is resolved once and every later
+          # read uses the resolved commit rather than the branch name.
+          BASELINE_SHA=$(gh api "/repos/$REPOSITORY/git/ref/heads/release/prerelease" --jq '.object.sha')
+          if [[ ! "$BASELINE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::release/prerelease did not resolve to a commit SHA"
+            exit 1
+          fi
+
+          CANDIDATE=$(gh api -H 'Accept: application/vnd.github.raw' \
+            "/repos/$REPOSITORY/contents/release-please-prerelease-config.json?ref=$HEAD_SHA" \
+            | jq -r '.packages["."]["release-as"] // ""')
+          BASELINE=$(gh api -H 'Accept: application/vnd.github.raw' \
+            "/repos/$REPOSITORY/contents/.release-please-prerelease-manifest.json?ref=$BASELINE_SHA" \
+            | jq -r '.["."] // ""')
+          for entry in "candidate:$CANDIDATE" "baseline:$BASELINE"; do
+            value=${entry#*:}
+            if [[ "$value" == *$'\n'* || "$value" == *$'\r'* || ! "$value" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::${entry%%:*} PreRelease version is not canonical MAJOR.MINOR.PATCH"
+              exit 1
+            fi
+          done
+          CANDIDATE_MINOR=${CANDIDATE#*.}
+          CANDIDATE_MINOR=${CANDIDATE_MINOR%%.*}
+          if (( 10#$CANDIDATE_MINOR % 2 == 0 )); then
+            echo "::error::PreRelease candidate $CANDIDATE has an even minor"
+            exit 1
+          fi
+          if [ "$CANDIDATE" = "$BASELINE" ] || [ "$(printf '%s\n%s\n' "$CANDIDATE" "$BASELINE" | sort -V | tail -1)" = "$BASELINE" ]; then
+            echo "::error::$HEAD_BRANCH proposes $CANDIDATE but release/prerelease already carries $BASELINE"
+            exit 1
+          fi
+
+          # A tag is immutable, so a transport failure aborts under set -e
+          # instead of reporting the identity as available.
+          CANDIDATE_REF="refs/tags/prerelease-v$CANDIDATE"
+          OCCUPIED=$(git ls-remote origin "$CANDIDATE_REF")
+          if [ -n "$OCCUPIED" ]; then
+            echo "::error::$CANDIDATE_REF already exists; the PreRelease release identity is occupied"
+            exit 1
+          fi
+
+          echo "$HEAD_BRANCH advances release/prerelease from $BASELINE to $CANDIDATE"
+
+      - name: Validate Stable promotion intent advances release/stable
+        if: >
+          github.event_name == 'pull_request'
+          && github.event.pull_request.base.ref == 'release/stable'
+          && startsWith(github.head_ref, 'release-promotion--release-prerelease--to--release-stable--prerelease-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$HEAD_BRANCH" =~ ^release-promotion--release-prerelease--to--release-stable--(prerelease-v[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "::error::Stable promotion head $HEAD_BRANCH does not match the canonical selected-tag grammar"
+            exit 1
+          fi
+          SOURCE_TAG=${BASH_REMATCH[1]}
+          SOURCE_VERSION=${SOURCE_TAG#prerelease-v}
+          SOURCE_MINOR=${SOURCE_VERSION#*.}
+          SOURCE_MINOR=${SOURCE_MINOR%%.*}
+          if (( 10#$SOURCE_MINOR % 2 == 0 )); then
+            echo "::error::Stable promotion source $SOURCE_TAG has an even minor"
+            exit 1
+          fi
+          if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Stable promotion event carries an invalid head SHA"
+            exit 1
+          fi
+
+          # Every read below is pinned to an immutable commit and served by the
+          # API, so no pull-request ref enters the local object store.
+          CURRENT_HEAD=$(gh api "/repos/$REPOSITORY/pulls/$PR_NUMBER" --jq '.head.sha')
+          if [ "$CURRENT_HEAD" != "$HEAD_SHA" ]; then
+            echo "::error::Stable promotion head moved from $HEAD_SHA to $CURRENT_HEAD"
+            exit 1
+          fi
+
+          BASELINE_SHA=$(gh api "/repos/$REPOSITORY/git/ref/heads/release/stable" --jq '.object.sha')
+          if [[ ! "$BASELINE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::release/stable did not resolve to a commit SHA"
+            exit 1
+          fi
+
+          CANDIDATE=$(gh api -H 'Accept: application/vnd.github.raw' \
+            "/repos/$REPOSITORY/contents/release-please-config.json?ref=$HEAD_SHA" \
+            | jq -r '.packages["."]["release-as"] // ""')
+          BASELINE=$(gh api -H 'Accept: application/vnd.github.raw' \
+            "/repos/$REPOSITORY/contents/.release-please-manifest.json?ref=$BASELINE_SHA" \
+            | jq -r '.["."] // ""')
+          for entry in "candidate:$CANDIDATE" "baseline:$BASELINE"; do
+            value=${entry#*:}
+            if [[ "$value" == *$'\n'* || "$value" == *$'\r'* || ! "$value" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::${entry%%:*} Stable version is not canonical MAJOR.MINOR.PATCH"
+              exit 1
+            fi
+          done
+          CANDIDATE_MINOR=${CANDIDATE#*.}
+          CANDIDATE_MINOR=${CANDIDATE_MINOR%%.*}
+          if (( 10#$CANDIDATE_MINOR % 2 != 0 )); then
+            echo "::error::Stable candidate $CANDIDATE has an odd minor"
+            exit 1
+          fi
+          if [ "$CANDIDATE" = "$BASELINE" ] || [ "$(printf '%s\n%s\n' "$CANDIDATE" "$BASELINE" | sort -V | tail -1)" = "$BASELINE" ]; then
+            echo "::error::$HEAD_BRANCH proposes $CANDIDATE but release/stable already carries $BASELINE"
+            exit 1
+          fi
+
+          # Annotated tags peel to a commit through the API, bounded by a hop
+          # limit and a visited set so a malformed chain cannot loop.
+          tag_object=$(gh api "/repos/$REPOSITORY/git/ref/tags/$SOURCE_TAG" --jq '.object.type + " " + .object.sha')
+          object_type=${tag_object%% *}
+          object_sha=${tag_object##* }
+          visited=''
+          SOURCE_SHA=''
+          hop=0
+          while [ "$hop" -lt 10 ]; do
+            hop=$((hop + 1))
+            if [ "$object_type" = 'commit' ]; then
+              SOURCE_SHA="$object_sha"
+              break
+            fi
+            if [ "$object_type" != 'tag' ]; then
+              echo "::error::$SOURCE_TAG resolves to unsupported object type $object_type"
+              exit 1
+            fi
+            case " $visited " in
+              *" $object_sha "*)
+                echo "::error::$SOURCE_TAG tag chain revisits $object_sha"
+                exit 1
+                ;;
+            esac
+            visited="$visited $object_sha"
+            tag_object=$(gh api "/repos/$REPOSITORY/git/tags/$object_sha" --jq '.object.type + " " + .object.sha')
+            object_type=${tag_object%% *}
+            object_sha=${tag_object##* }
+          done
+          if [[ ! "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::$SOURCE_TAG did not peel to a commit within the allowed hops"
+            exit 1
+          fi
+
+          # ahead or identical means the source commit is already reachable from
+          # release/stable, which is what the previous ancestry test proved.
+          CONTAINMENT=$(gh api "/repos/$REPOSITORY/compare/$SOURCE_SHA...$BASELINE_SHA" --jq '.status')
+          if [ "$CONTAINMENT" = 'ahead' ] || [ "$CONTAINMENT" = 'identical' ]; then
+            echo "::error::$SOURCE_TAG at $SOURCE_SHA is already contained in release/stable"
+            exit 1
+          fi
+          echo "$HEAD_BRANCH advances release/stable from $BASELINE to $CANDIDATE using $SOURCE_TAG"
+
+  pr-validation-success:
+    name: PR Validation Success
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    if: always()
+    needs:
+      - spell-check
+      - markdown-lint
+      - table-format
+      - psscriptanalyzer
+      - discover-python-projects
+      - python-lint
+      - copyright-headers
+      - yaml-lint
+      - pester-tests
+      - pytest
+      - copilot-otel-runtime-tests
+      - discover-node-projects
+      - node-tests
+      - accessibility-browser-smoke
+      - fuzz-tests
+      - pip-audit
+      - docusaurus-tests
+      - frontmatter-validation
+      - adr-consistency-validation
+      - ai-artifact-validation
+      - asset-docs-validation
+      - msdate-freshness
+      - plugin-validation
+      - skill-validation
+      - eval-validation
+      - link-lang-check
+      - markdown-link-check
+      - dependency-pinning-check
+      - devcontainer-lockfile-check
+      - workflow-permissions-check
+      - workflow-runner-check
+      - dangerous-workflow-check
+      - action-version-consistency-scan
+      - gitleaks-scan
+      - npm-audit
+      - codeql
+      - gate-completeness-check
+    steps:
+      - name: Verify all jobs succeeded
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          failed=$(echo "$NEEDS_JSON" | jq -r 'to_entries[] | select(.value.result != "success" and .value.result != "skipped") | .key')
+          if [ -n "$failed" ]; then
+            echo "The following jobs did not pass:"
+            echo "$failed"
+            exit 1
+          fi
+          echo "All PR validation jobs passed."

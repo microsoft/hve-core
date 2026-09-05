@@ -3,7 +3,7 @@ title: HVE Core Documentation
 description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, prompts, instructions, and skills to your GitHub Copilot workflow
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-08-13
 ms.topic: overview
 keywords:
   - hve core
@@ -16,13 +16,13 @@ estimated_reading_time: 3
 
 HVE Core gives your team production-ready agents, reusable prompts, coding instructions, and executable skills for GitHub Copilot. You get structured workflows (Research → Plan → Implement), schema-enforced quality gates, and role-specific tooling across 10 engineering disciplines. Install from the VS Code Marketplace and start shipping with AI-assisted engineering in minutes.
 
-## Choose Your Extension
+## Choose Your Installation
 
-|              | HVE Core All                                                                                                | HVE Installer                                                                                                 |
-|--------------|-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| What you get | Every agent, prompt, instruction, and skill in the framework                                                | Pick only the collections you need                                                                            |
-| Best for     | Teams that want the full toolkit out of the box                                                             | Teams that prefer a curated, lightweight setup                                                                |
-| Install      | [Install HVE Core All](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all) | [Install HVE Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) |
+| Option       | HVE Core Extension                                                                                  | Selective Clone                                                            |
+|--------------|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| What you get | Every distributable agent, prompt, instruction, and skill                                           | Complete or custom agents, prompts, instructions, and distributable skills |
+| Best for     | Teams that want managed updates and the complete content set                                        | Teams that want repository-owned, reviewable component selection           |
+| Start        | [Install HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) | Use the included `hve-core-installer` skill with a pinned or cloned source |
 
 > Not sure which to choose? See the [installation methods comparison](getting-started/methods/comparison.md) for a detailed breakdown.
 
@@ -34,14 +34,14 @@ Get up and running with installation, configuration, and your first AI-assisted 
 
 * [Install HVE Core](getting-started/install.md) covers three setup paths from marketplace extension to developer clone
 * [Run your first workflow](getting-started/first-workflow.md) walks through an end-to-end RPI example
-* [Browse available collections](getting-started/collections.md) to see what each bundle includes
+* [Understand the HVE Core identity](getting-started/packages.md) to compare channels and release assurance
 
 ### Leading a Team?
 
-Set up HVE Core for your team with governance, collections, and customization options.
+Set up HVE Core for your team with governance, selective adoption, and customization options.
 
 * [Team adoption guide](customization/team-adoption.md) covers governance, naming conventions, and onboarding
-* [Collections overview](getting-started/collections.md) explains how to bundle and distribute artifacts
+* [HVE Core identity and channels](getting-started/packages.md) explains how artifacts are bundled and distributed
 * [Customization guide](customization/README.md) covers the full spectrum from lightweight instructions to fork-and-extend
 
 ### Contributing to HVE Core?
@@ -59,7 +59,7 @@ Explore advanced capabilities including Design Thinking coaching, security plann
 * [Design Thinking](design-thinking/README.md) guides teams through nine methods across three spaces
 * [Project Planning](agents/project-planning/) covers ADR creation, BRD/PRD building, architecture diagrams, and security plan generation
 * [Security documentation](security/README.md) covers threat modeling and security planning
-* [RPI methodology](rpi/) explains the Research, Plan, Implement agent coordination pattern
+* [RPI methodology](rpi/) explains the Research, Plan, Implement, Review, and Follow-up workflow
 
 ## Roles
 
@@ -81,18 +81,18 @@ Specialized agents are organized into functional groups that combine agents, pro
 
 * [RPI Orchestration](rpi/) separates complex tasks into research, planning, implementation, and review phases
 * [Project Planning](agents/project-planning/) creates ADRs, BRDs, PRDs, architecture diagrams, and security plans through guided AI workflows
-* [GitHub Backlog Manager](agents/github-backlog/) automates issue discovery, triage, sprint planning, and execution
+* [Backlog Management](agents/backlog/) automates work discovery, triage, sprint planning, and execution across Azure DevOps, GitHub, and Jira
 * Additional systems are documented in the [Agent Catalog](agents/)
 
 **[Browse the Agent Catalog →](agents/)**
 
 ## RPI Methodology
 
-Research, Plan, Implement (RPI) decomposes complex engineering tasks into three specialized agents that collaborate through structured handoffs.
+Research, Plan, Implement, Review (RPI) decomposes complex engineering tasks into phase skills coordinated by RPI Agent or invoked directly.
 
 * [Why RPI?](rpi/why-rpi.md) explains the problem statement and design rationale
-* [Task Researcher](rpi/task-researcher.md), [Task Planner](rpi/task-planner.md), and [Task Implementor](rpi/task-implementor.md) cover each agent
-* [Using Together](rpi/using-together.md) describes agent coordination patterns
+* [RPI overview](rpi/) introduces RPI Agent, `/rpi`, and the direct `rpi-*` phase skills
+* [Using Together](rpi/using-together.md) describes phase coordination and durable handoffs
 
 **[RPI Documentation →](rpi/)**
 
@@ -108,9 +108,9 @@ The dt-coach agent guides teams through nine Design Thinking methods across prob
 
 ## Prompt Engineering
 
-HVE Core structures AI artifacts with protocol patterns, input variables, and a four-stage maturity lifecycle.
+HVE Core structures AI artifacts with protocol patterns, input variables, and evidence-backed quality gates.
 
-* [Prompt Builder Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/prompt-builder.agent.md) provides interactive artifact creation with sandbox testing
+* The `hve-builder` skill creates, improves, refactors, replaces, reviews, and validates AI artifacts through one lifecycle
 * [AI Artifacts Overview](contributing/ai-artifacts-common.md) covers common patterns across artifact types
 * [Activation Context](architecture/ai-artifacts.md#activation-context) explains when artifacts activate within workflows
 

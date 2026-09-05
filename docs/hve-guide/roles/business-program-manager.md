@@ -3,7 +3,7 @@ title: Business Program Manager Guide
 description: HVE Core support for business program managers driving stakeholder alignment, business outcomes, and program coordination
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-08-12
 ms.topic: how-to
 keywords:
   - BPM
@@ -18,12 +18,12 @@ estimated_reading_time: 10
 
 This guide is for you if you define business outcomes, manage stakeholder alignment, coordinate cross-team programs, or bridge business strategy to technical delivery. Business program managers share many tools with TPMs but focus on business-level requirements, stakeholder communication, and outcome tracking rather than technical implementation detail.
 
-## Recommended Collections
+## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
-> Your primary collection is `project-planning` (BRD creation, product management guidance, and agile coaching for business requirement gathering and stakeholder alignment). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> For selective clone adoption, choose the business requirements, product advisory, agile coaching, and research components that match your program. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -57,11 +57,11 @@ For technical backlog management, Azure DevOps integration, or GitHub issue work
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Use the **task-researcher** agent to investigate business context, competitive landscape, and stakeholder needs.
+1. Stage 2: Discovery. Use `/rpi-research` to investigate business context, competitive landscape, and stakeholder needs.
 2. Stage 3: Product Definition. Run the **brd-builder** agent to create business requirements documents from stakeholder conversations and strategy inputs.
-3. Stage 3: Advisory. Consult the **product-manager-advisor** agent for prioritization guidance, go-to-market strategy, and product positioning.
+3. Stage 3: Advisory. Continue in the **brd-builder** and **prd-builder** agents, which apply the `requirements-author` skill, for prioritization framing, go-to-market considerations, and product positioning.
 4. Stage 4: Decomposition. Break business objectives into program milestones and coordinate cross-team dependencies.
-5. Stage 5: Planning. Use the **agile-coach** agent to create or refine user stories with clear acceptance criteria for program work items.
+5. Stage 5: Planning. Use the **backlog-manager** agent to create or refine user stories with clear acceptance criteria for program work items. The agent applies the work item quality guidance in the `backlog-management` skill's story-quality reference.
 
 ## Starter Prompts
 
@@ -83,9 +83,11 @@ Continue my claims automation BRD. Pick up where we left off
 and focus on completing the data and reporting requirements section.
 ```
 
+For an explicit RFI, RFP, tender, bid, or questionnaire, BRD Builder can carry the whole sequence: analyze the question set, contribute approved business outcomes, stakeholder roles, constraints, and risks, then draft. Name the approved BRD so each claim cites it rather than recalled text. The resulting response evidence is for internal review and does not grant external-use authority. See the [proposal response workflow](../../agents/project-planning/brd-prd-builders#proposal-response-workflow).
+
 ### Product Requirements Discovery
 
-Select **product-manager-advisor** agent:
+Select **prd-builder** agent:
 
 ```text
 We're building a webhook notification system for our API platform. Walk me
@@ -95,7 +97,7 @@ outcomes would indicate success. Three enterprise customers provided
 interview feedback we can reference.
 ```
 
-For feature prioritization, select **product-manager-advisor** agent:
+For feature prioritization, use the `requirements-author` skill:
 
 ```text
 Advise on prioritization for the identity and access management product
@@ -104,9 +106,11 @@ customer escalation status should weigh highest. Budget constraints limit
 us to 2 engineers for the next quarter.
 ```
 
+Reserve the **backlog-manager** agent for tracker-bound work: discovery, triage, sprint planning, and execution.
+
 ### User Story Coaching
 
-Select **agile-coach** agent to create a story from a rough idea:
+Select **backlog-manager** agent to create a story from a rough idea:
 
 ```text
 I need a user story for adding webhook retry logic to our event
@@ -114,7 +118,7 @@ notification service. Deliveries currently fail silently when endpoints
 return 5xx errors, and customers are missing critical billing events.
 ```
 
-Select **agile-coach** agent to refine a vague story:
+Select **backlog-manager** agent to refine a vague story:
 
 ```text
 Help me refine this story. Title: Improve error handling. Description:
@@ -125,7 +129,7 @@ tied to specific API endpoints.
 
 ### Business Context Research
 
-Select **task-researcher** agent:
+Use `/rpi-research`:
 
 ```text
 Research best practices for migrating from manual invoice approval workflows
@@ -150,15 +154,14 @@ navigation support.
 
 ## Key Agents and Workflows
 
-| Agent                       | Purpose                                                   | Docs                                               |
-|-----------------------------|-----------------------------------------------------------|----------------------------------------------------|
-| **brd-builder**             | Business requirements document creation                   | Agent file                                         |
-| **product-manager-advisor** | Product strategy and prioritization guidance              | Agent file                                         |
-| **agile-coach**             | User story creation and refinement coaching               | Agent file                                         |
-| **task-researcher**         | Business context and market research                      | Agent file                                         |
-| **ux-ui-designer**          | UX/UI guidance for business-facing deliverables           | Agent file                                         |
-| **memory**                  | Session context and preference persistence                | Agent file                                         |
-| **dt-coach**                | Design Thinking coaching for user-centered program design | [Design Thinking](../../design-thinking/README.md) |
+| Agent or skill          | Purpose                                                   | Docs                                               |
+|-------------------------|-----------------------------------------------------------|----------------------------------------------------|
+| **brd-builder**         | Business requirements document creation                   | Agent file                                         |
+| **requirements-author** | BRD and PRD authoring guidance                            | Skill file                                         |
+| **backlog-manager**     | Work item creation, refinement, and backlog coaching      | [Backlog Management](../../agents/backlog/)        |
+| **rpi-research**        | Business context and market research                      | [RPI workflow](../../rpi/)                         |
+| **ux-ui-designer**      | UX/UI guidance for business-facing deliverables           | Agent file                                         |
+| **dt-coach**            | Design Thinking coaching for user-centered program design | [Design Thinking](../../design-thinking/README.md) |
 
 BPMs benefit from **dt-coach** when program design requires user-centered validation. Design Thinking scope conversations (Method 1) and user concepts (Method 5) help BPMs ground business requirements in validated user needs before formal BRD creation.
 
@@ -171,13 +174,13 @@ Prompts complement the agents for cross-cutting workflows:
 
 ## Tips
 
-| Do                                                                    | Don't                                                    |
-|-----------------------------------------------------------------------|----------------------------------------------------------|
-| Start with the **brd-builder** agent for structured requirements      | Create informal requirements without BRD structure       |
-| Use the **product-manager-advisor** agent for data-informed decisions | Make prioritization decisions without advisory input     |
-| Focus on business outcomes and stakeholder alignment                  | Dive into technical implementation details               |
-| Coordinate with TPMs for technical decomposition                      | Attempt Azure DevOps or GitHub issue management directly |
-| Research market context before defining requirements                  | Assume business context without investigation            |
+| Do                                                               | Don't                                                    |
+|------------------------------------------------------------------|----------------------------------------------------------|
+| Start with the **brd-builder** agent for structured requirements | Create informal requirements without BRD structure       |
+| Use the `requirements-author` skill for data-informed decisions  | Make prioritization decisions without advisory input     |
+| Focus on business outcomes and stakeholder alignment             | Dive into technical implementation details               |
+| Coordinate with TPMs for technical decomposition                 | Attempt Azure DevOps or GitHub issue management directly |
+| Research market context before defining requirements             | Assume business context without investigation            |
 
 ## Related Roles
 
@@ -187,7 +190,7 @@ Prompts complement the agents for cross-cutting workflows:
 ## Next Steps
 
 > [!TIP]
-> Explore project planning tools: [Project Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/project-planning.collection.md)
+> Browse the complete HVE Core inventory: [HVE Core package](../../plugins/hve-core.md)
 > Understand the TPM workflow for technical handoff: [TPM Guide](tpm.md)
 > See how program management fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 

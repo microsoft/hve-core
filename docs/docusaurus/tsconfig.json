@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "target": "es2020",
     "noEmit": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["node", "@docusaurus/module-type-aliases", "@docusaurus/theme-classic"]
   },
-  "include": ["src/"]
+  "include": ["src/", "e2e/"],
+  "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/__mocks__/**", "**/__tests__/**"]
 }

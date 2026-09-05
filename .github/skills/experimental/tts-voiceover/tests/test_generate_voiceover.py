@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Tests for generate_voiceover module."""
 
@@ -177,6 +177,61 @@ class TestRunDryRun:
 
         # Assert
         assert rc == 0
+
+
+class TestCollapseNewlines:
+    """Tests for the --collapse-newlines option."""
+
+    def _run_dry(self, tmp_path, notes, extra_args):
+        from generate_voiceover import _run
+
+        content = tmp_path / "content"
+        slide = content / "slide-001"
+        slide.mkdir(parents=True)
+        (slide / "content.yaml").write_text(
+            yaml.dump({"slide": 1, "title": "Multi", "speaker_notes": notes}),
+            encoding="utf-8",
+        )
+        parser = create_parser()
+        args = parser.parse_args(
+            [
+                "--content-dir",
+                str(content),
+                "--output-dir",
+                str(tmp_path / "output"),
+                "--dry-run",
+                *extra_args,
+            ]
+        )
+        return _run(args)
+
+    def test_given_multiline_notes_when_collapse_then_no_newlines_in_ssml(
+        self, tmp_path, capsys
+    ):
+        # Arrange
+        notes = "First line.\nSecond line.\nThird line."
+
+        # Act
+        rc = self._run_dry(tmp_path, notes, ["--collapse-newlines"])
+        out = capsys.readouterr().out
+
+        # Assert
+        assert rc == 0
+        assert "First line. Second line. Third line." in out
+
+    def test_given_multiline_notes_when_not_collapsed_then_newlines_preserved(
+        self, tmp_path, capsys
+    ):
+        # Arrange
+        notes = "First line.\nSecond line."
+
+        # Act
+        rc = self._run_dry(tmp_path, notes, [])
+        out = capsys.readouterr().out
+
+        # Assert
+        assert rc == 0
+        assert "First line.\nSecond line." in out
 
 
 class TestApplyAcronymAliases:

@@ -1,6 +1,6 @@
 ---
 name: owasp-llm
-description: OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base for identifying, assessing, and remediating security risks in large language model systems - Brought to you by microsoft/hve-core.
+description: OWASP Top 10 for LLM Applications (2025) knowledge base for identifying, assessing, and remediating large language model security risks.
 license: CC-BY-SA-4.0
 user-invocable: false
 metadata:
@@ -51,7 +51,3 @@ Source: <https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025
 Modifications: Vulnerability descriptions restructured into agent-consumable reference
 documents with added detection and remediation guidance.
 OWASP® is a registered trademark of the OWASP Foundation. Use does not imply endorsement.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

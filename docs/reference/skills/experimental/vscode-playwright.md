@@ -1,0 +1,37 @@
+---
+title: vscode-playwright
+description: VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation
+sidebar_position: 9
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - experimental
+  - vscode-playwright
+---
+
+<!-- BEGIN AUTO-GENERATED: metadata -->
+| Field       | Value                                                                               |
+|-------------|-------------------------------------------------------------------------------------|
+| Kind        | skill                                                                               |
+| Source      | `.github/skills/experimental/vscode-playwright`                                     |
+| Invocation  | Invoked directly as `/vscode-playwright`, or loaded on demand by referencing agents |
+| Interactive | No                                                                                  |
+<!-- END AUTO-GENERATED: metadata -->
+
+## What it does
+
+<!-- BEGIN AUTO-GENERATED: overview -->
+VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation
+<!-- END AUTO-GENERATED: overview -->
+
+## When to use it
+
+<!-- asset-docs:stub -->
+Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+
+## Example usage
+
+<!-- asset-docs:stub -->
+Provide a concrete example that shows the asset in action, including representative input and the resulting output.

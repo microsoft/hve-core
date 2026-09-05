@@ -1,0 +1,37 @@
+---
+title: dt-rpi-integration
+description: "Design Thinking handoff knowledge for research-ready rpi-research inputs and DT-aware rpi-plan, rpi-implement, and rpi-review context"
+sidebar_position: 4
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - design-thinking
+  - dt-rpi-integration
+---
+
+<!-- BEGIN AUTO-GENERATED: metadata -->
+| Field       | Value                                               |
+|-------------|-----------------------------------------------------|
+| Kind        | skill                                               |
+| Source      | `.github/skills/design-thinking/dt-rpi-integration` |
+| Invocation  | Loaded on demand by referencing agents              |
+| Interactive | No                                                  |
+<!-- END AUTO-GENERATED: metadata -->
+
+## What it does
+
+<!-- BEGIN AUTO-GENERATED: overview -->
+Design Thinking handoff knowledge for research-ready rpi-research inputs and DT-aware rpi-plan, rpi-implement, and rpi-review context
+<!-- END AUTO-GENERATED: overview -->
+
+## When to use it
+
+<!-- asset-docs:stub -->
+Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+
+## Example usage
+
+<!-- asset-docs:stub -->
+Provide a concrete example that shows the asset in action, including representative input and the resulting output.

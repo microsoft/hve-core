@@ -1,0 +1,65 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: security-reviewer-class-recipe
+    prompt: |
+      Review this code for security issues with severity levels:
+      ```python
+      app.run(host='0.0.0.0', debug=True)
+      password = request.args.get('pwd')
+      exec(request.args.get('code'))
+      ```
+
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: findings-table-present
+        config:
+          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|vulnerab|remediation|mitigation|\brisk\b|report\s+saved|skills?\s+assessed|\bsummary\b|\*{2}\s*(?:critical|high|medium|low)\b|\b(?:exposure|disclosure|compromise)\b)'
+      - type: output-matches
+        name: severity-vocab
+        config:
+          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
+      - type: output-matches
+        name: no-unsolicited-plan-drift
+        config:
+          pattern: '(?i)(#{1,6}\s*security[_ -]plan[_ -]drift|"?security_plan_drift"?\s*:|filtered findings:\s*\d+|baseline:\s*(complete|incomplete))'
+          negate: true
+
+  - name: security-reviewer-plan-drift
+    prompt: |
+      Run an audit-mode security review and correlate its completed VULN_REPORT_V1 findings with this supplied Security Planner baseline. Present the normal Scan Completion output first, then the in-conversation security-plan drift body. Do not create a drift artifact.
+
+      Baseline state: projectSlug=sample-service; currentPhase=6; securityPlanFile=.copilot-tracking/security-plans/sample-service/security-plan.md; phaseGates contains valid entries for phases 1 through 6; bucketsCompleted=[web/UI/reporting, identity/auth, build]; standardsMapped=[web/UI/reporting, identity/auth, build]; handoffGenerated={ado:false, github:false}; aiComponents=[]; raiEnabled=false; raiScope=none; raiTier=none; referencesProcessed=[].
+      Baseline plan facts: T-WEB-001 expects request validation at src/api/gateway.ts; T-IDENTITY-001 leaves object authorization open at src/auth/policy.ts; T-WEB-002 accepts verbose error risk at src/api/gateway.ts; T-WEB-003 and WI-SEC-004 reference a removed legacy proxy at src/legacy/proxy.ts.
+      Current VULN_REPORT_V1 audit findings: WEB-INPUT PASS with Severity, Location, Finding, and Recommendation set to N/A; AUTHZ-OBJECT FAIL HIGH at src/auth/policy.ts; ERROR-DETAIL PARTIAL MEDIUM at src/api/gateway.ts; SESSION-ROTATE FAIL HIGH at src/auth/session.ts with no plan match; LEGACY-REMOVED PASS with Severity, Location, Finding, and Recommendation set to N/A.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: scan-before-drift
+        config:
+          pattern: '(?is)(scan completion|report_file_path|report saved).{0,5000}(validated controls|control drift)'
+      - type: output-matches
+        name: scan-and-disclaimers-before-drift
+        config:
+          pattern: '(?is)(scan completion|report_file_path|report saved).{0,5000}AI-assisted findings, risk observations, and suggested remediations.{0,2000}suggested actions and considerations to support a user''s own internal security review and decision[-‑]making.{0,1000}(validated controls|control drift|residual open risks|newly introduced threats|obsolete plan items)'
+      - type: output-matches
+        name: form-a-supported-categories
+        config:
+          pattern: '(?is)control drift.{0,3000}(?:T-IDENTITY-001|AUTHZ-OBJECT).{0,6000}residual.{0,3000}(?:T-WEB-002|ERROR-DETAIL).{0,6000}newly introduced threats.{0,3000}SESSION-ROTATE'
+      - type: output-matches
+        name: form-a-pass-location-limit
+        config:
+          pattern: '(?is)validated controls.{0,2000}insufficient evidence:\s*VULN_REPORT_V1 PASS rows do not include a covered location.{0,5000}obsolete(?: plan)? items.{0,2000}insufficient evidence:\s*VULN_REPORT_V1 PASS rows do not include a covered location'
+      - type: output-matches
+        name: conversational-only
+        config:
+          pattern: '(?i)(created|wrote|saved).{0,80}security-audit-\d{4}-\d{2}-\d{2}-\d{3}\.md'
+          negate: true

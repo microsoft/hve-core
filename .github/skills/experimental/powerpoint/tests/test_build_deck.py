@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Tests for build_deck module."""
 
@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from build_deck import (
+    EXIT_ERROR,
     ContentExtraError,
     _reset_effect_ref,
     _validate_content_extra,
@@ -719,6 +720,62 @@ class TestAddArrowFlowElement:
         result = add_arrow_flow_element(blank_slide, elem, {}, {})
         assert result is None
 
+    def test_label_margin_and_font_overrides(self, blank_slide):
+        elem = {
+            "left": 1.0,
+            "top": 2.0,
+            "width": 10.0,
+            "height": 1.5,
+            "label_margin": 0.02,
+            "font": "Arial",
+            "font_size": 11,
+            "font_color": "#112233",
+            "items": [
+                {"label": "Ingest", "color": "#0078D4"},
+                {"label": "Transform", "color": "#00B050"},
+            ],
+        }
+        add_arrow_flow_element(blank_slide, elem, {}, {})
+        shapes = [s for s in blank_slide.shapes if s.has_text_frame]
+        assert len(shapes) == 2
+        for shape in shapes:
+            tf = shape.text_frame
+            assert tf.margin_left == Inches(0.02)
+            assert tf.margin_right == Inches(0.02)
+            run = tf.paragraphs[0].runs[0]
+            assert run.font.name == "Arial"
+            assert run.font.size == Pt(11)
+            assert f"#{run.font.color.rgb}".lower() == "#112233"
+
+    def test_per_item_overrides_take_precedence(self, blank_slide):
+        elem = {
+            "left": 1.0,
+            "top": 2.0,
+            "width": 10.0,
+            "height": 1.5,
+            "font_size": 14,
+            "font_color": "#112233",
+            "items": [
+                {
+                    "label": "Small",
+                    "size": 9,
+                    "label_margin": 0.01,
+                    "color_text": "#AA0000",
+                },
+                {"label": "Default"},
+            ],
+        }
+        add_arrow_flow_element(blank_slide, elem, {}, {})
+        shapes = [s for s in blank_slide.shapes if s.has_text_frame]
+        small = shapes[0].text_frame
+        assert small.paragraphs[0].runs[0].font.size == Pt(9)
+        assert small.margin_left == Inches(0.01)
+        assert f"#{small.paragraphs[0].runs[0].font.color.rgb}".lower() == "#aa0000"
+        # Default item falls back to elem font_size/font_color and default margin
+        default = shapes[1].text_frame
+        assert default.paragraphs[0].runs[0].font.size == Pt(14)
+        assert f"#{default.paragraphs[0].runs[0].font.color.rgb}".lower() == "#112233"
+
 
 class TestAddNumberedStepElement:
     """Tests for add_numbered_step_element."""
@@ -1392,7 +1449,7 @@ class TestMain:
         mock_prs.save.assert_called_once_with(str(output))
 
     def test_full_build_no_slides(self, mocker, tmp_path):
-        """No slide directories found exits with code 1."""
+        """No slide directories found returns EXIT_ERROR."""
         empty_content = tmp_path / "content"
         empty_content.mkdir()
         style_file = tmp_path / "style.yaml"
@@ -1417,10 +1474,7 @@ class TestMain:
                 str(output),
             ],
         )
-        with pytest.raises(SystemExit) as exc_info:
-            main()
-
-        assert exc_info.value.code == 1
+        assert main() == EXIT_ERROR
         mock_build_slide.assert_not_called()
 
     def test_full_build_with_metadata(self, mocker, tmp_path):
@@ -1523,10 +1577,7 @@ class TestMain:
                 str(template),
             ],
         )
-        with pytest.raises(SystemExit) as exc_info:
-            main()
-
-        assert exc_info.value.code == 1
+        assert main() == EXIT_ERROR
 
     def test_partial_rebuild(self, mocker, tmp_path):
         content_dir, style_file = self._setup_content_dir(tmp_path)
@@ -1744,7 +1795,7 @@ class TestContentExtraValidation:
             _validate_content_extra(script)
 
     def test_build_slide_runs_valid_content_extra(self, blank_presentation, tmp_path):
-        """build_slide executes a valid content-extra.py render function."""
+        """build_slide executes a valid content-extra.py when authorized."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
         (content_dir / "content.yaml").write_text("")
@@ -1758,11 +1809,39 @@ class TestContentExtraValidation:
         )
 
         slide_content = {"layout": "Blank", "elements": []}
-        build_slide(blank_presentation, slide_content, {}, content_dir)
+        build_slide(
+            blank_presentation,
+            slide_content,
+            {},
+            content_dir,
+            allow_scripts=True,
+        )
         assert marker_file.read_text() == "yes"
 
+    def test_build_slide_refuses_content_extra_without_opt_in(
+        self, blank_presentation, tmp_path
+    ):
+        """A present content-extra.py fails the build unless authorized."""
+        content_dir = tmp_path / "slide-001"
+        content_dir.mkdir()
+        (content_dir / "content.yaml").write_text("")
+
+        marker_file = tmp_path / "must_not_exist"
+        script = content_dir / "content-extra.py"
+        script.write_text(
+            f"from pathlib import Path\nPath(r'{marker_file}').write_text('executed')\n"
+        )
+
+        slide_content = {"layout": "Blank", "elements": []}
+        with pytest.raises(ContentExtraError, match="--allow-scripts"):
+            build_slide(blank_presentation, slide_content, {}, content_dir)
+
+        # The sentinel proves the module body never ran, which a log
+        # assertion could not establish.
+        assert not marker_file.exists()
+
     def test_build_slide_rejects_bad_content_extra(self, blank_presentation, tmp_path):
-        """build_slide refuses to execute a content-extra.py with blocked imports."""
+        """An authorized content-extra.py is still linted before execution."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
         (content_dir / "content.yaml").write_text("")
@@ -1772,7 +1851,13 @@ class TestContentExtraValidation:
 
         slide_content = {"layout": "Blank", "elements": []}
         with pytest.raises(ContentExtraError, match="Blocked import 'subprocess'"):
-            build_slide(blank_presentation, slide_content, {}, content_dir)
+            build_slide(
+                blank_presentation,
+                slide_content,
+                {},
+                content_dir,
+                allow_scripts=True,
+            )
 
     def test_dangerous_breakpoint(self, tmp_path):
         """Script calling breakpoint() is rejected."""
@@ -1802,8 +1887,8 @@ class TestContentExtraValidation:
         ):
             _validate_content_extra(script)
 
-    def test_allow_scripts_skips_validation(self, blank_presentation, tmp_path):
-        """build_slide skips validation when allow_scripts is True."""
+    def test_allow_scripts_still_validates(self, blank_presentation, tmp_path):
+        """The opt-in authorizes execution but does not skip the lint."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
         (content_dir / "content.yaml").write_text("")
@@ -1818,17 +1903,18 @@ class TestContentExtraValidation:
         )
 
         slide_content = {"layout": "Blank", "elements": []}
-        build_slide(
-            blank_presentation,
-            slide_content,
-            {},
-            content_dir,
-            allow_scripts=True,
-        )
-        assert marker_file.read_text() == "bypassed"
+        with pytest.raises(ContentExtraError, match="Blocked import 'os'"):
+            build_slide(
+                blank_presentation,
+                slide_content,
+                {},
+                content_dir,
+                allow_scripts=True,
+            )
+        assert not marker_file.exists()
 
-    def test_allow_scripts_false_still_validates(self, blank_presentation, tmp_path):
-        """build_slide validates when allow_scripts is explicitly False."""
+    def test_allow_scripts_false_refuses_execution(self, blank_presentation, tmp_path):
+        """An explicit allow_scripts=False refuses rather than linting."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
         (content_dir / "content.yaml").write_text("")
@@ -1837,7 +1923,7 @@ class TestContentExtraValidation:
         script.write_text("import os\ndef render(s,st,d): pass\n")
 
         slide_content = {"layout": "Blank", "elements": []}
-        with pytest.raises(ContentExtraError, match="Blocked import 'os'"):
+        with pytest.raises(ContentExtraError, match="disabled by default"):
             build_slide(
                 blank_presentation,
                 slide_content,
@@ -1846,34 +1932,33 @@ class TestContentExtraValidation:
                 allow_scripts=False,
             )
 
-    def test_restricted_namespace_blocks_eval(self, blank_presentation, tmp_path):
-        """Runtime namespace strips dangerous builtins even after AST pass."""
+    def test_attribute_call_lint_catches_builtins_eval(
+        self, blank_presentation, tmp_path
+    ):
+        """The attribute-call lint rejects the naive builtins.eval shape.
+
+        The previous runtime namespace substitution did not confine this:
+        ``import builtins`` returns the genuine module with ``eval`` intact.
+        Execution is gated by opt-in; this lint only catches the obvious form.
+        """
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
         (content_dir / "content.yaml").write_text("")
 
-        # Script uses no blocked AST patterns but tries eval at runtime
-        # via a string indirection the AST checker cannot catch.
         script = content_dir / "content-extra.py"
-        script.write_text(
-            "def render(slide, style, content_dir):\n"
-            "    fn = __builtins__['eval']\n"
-            "    fn('1+1')\n"
-        )
+        script.write_text("import builtins\nbuiltins.eval('1+1')\n")
 
         slide_content = {"layout": "Blank", "elements": []}
-        with pytest.raises(KeyError, match="eval"):
+        with pytest.raises(ContentExtraError, match="builtins.eval"):
             build_slide(
                 blank_presentation,
                 slide_content,
                 {},
                 content_dir,
-                allow_scripts=False,
+                allow_scripts=True,
             )
 
-    def test_restricted_namespace_allows_safe_builtins(
-        self, blank_presentation, tmp_path
-    ):
+    def test_safe_builtins_remain_available(self, blank_presentation, tmp_path):
         """Safe builtins like len and range remain available."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
@@ -1893,7 +1978,7 @@ class TestContentExtraValidation:
             slide_content,
             {},
             content_dir,
-            allow_scripts=False,
+            allow_scripts=True,
         )
         assert marker.read_text() == "5"
 
@@ -1915,10 +2000,9 @@ class TestAllowScriptsCLI:
         return content_dir, style_file
 
     def test_allow_scripts_flag_propagates(self, mocker, tmp_path):
-        """--allow-scripts lets a blocked-import script run via main()."""
+        """--allow-scripts authorizes execution of a lint-clean script."""
         marker = tmp_path / "executed"
         extra = (
-            "import os\n"
             "from pathlib import Path\n"
             f"def render(slide, style, d): "
             f"Path(r'{marker}').write_text('ok')\n"

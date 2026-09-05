@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Embed per-slide WAV voice-over files into a PowerPoint deck.
 
@@ -112,7 +112,8 @@ def _add_narration_timing(slide: Slide, shape_id: int, duration_ms: int) -> None
             )
         slide._element.remove(existing)
 
-    timing = etree.fromstring(_TIMING_TEMPLATE)
+    parser = etree.XMLParser(resolve_entities=False, no_network=True)
+    timing = etree.fromstring(_TIMING_TEMPLATE, parser)
     ns = {"p": _PPTX_NS}
     sp_tgt = timing.find(".//p:spTgt", ns)
     if sp_tgt is not None:

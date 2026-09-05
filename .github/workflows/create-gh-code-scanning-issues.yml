@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Create GitHub Code Scanning Issues
 
 on:
@@ -37,6 +39,13 @@ jobs:
         shell: bash
         run: |
             set -euo pipefail
+            # Fail at the boundary on a malformed artifact rather than mid-loop.
+            # An empty array is valid and yields no work.
+            if ! jq -e 'type == "array"' alerts.json > /dev/null; then
+              echo "::error::alerts.json is not a JSON array. The alert fetch step produced a malformed artifact; no issues were processed."
+              exit 1
+            fi
+
             while IFS= read -r alert; do
             RULE_ID=$(echo "$alert" | jq -r '.RuleId')
             RULE_DESC=$(echo "$alert" | jq -r '.RuleDescription')

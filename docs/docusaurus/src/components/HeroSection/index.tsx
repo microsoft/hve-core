@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import React from 'react';
 import Link from '@docusaurus/Link';
 import styles from './styles.module.css';
@@ -20,10 +22,10 @@ export default function HeroSection({
   cta,
 }: HeroSectionProps): React.ReactElement {
   return (
-    <header className={styles.hero}>
+    <section className={styles.hero} aria-labelledby="hero-title">
       <div className={styles.heroPattern} />
       <div className={styles.heroContent}>
-        <h1 className={styles.heroTitle}>{title}</h1>
+        <h1 id="hero-title" className={styles.heroTitle}>{title}</h1>
         <p className={styles.heroSubtitle}>{subtitle}</p>
         {cta && cta.length > 0 && (
           <div className={styles.heroCta}>
@@ -39,6 +41,6 @@ export default function HeroSection({
           </div>
         )}
       </div>
-    </header>
+    </section>
   );
 }

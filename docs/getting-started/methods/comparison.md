@@ -3,7 +3,7 @@ title: Comparing Setup Methods
 description: Decision matrix, decision tree, and method comparison to help you choose the right HVE installation approach
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-08-04
 ms.topic: reference
 keywords:
   - installation
@@ -102,7 +102,7 @@ These methods are for HVE Core contributors or advanced scenarios:
 
 ## Still Not Sure?
 
-Start with the [Marketplace Install](../install.md#marketplace-install-recommended) for the fastest path. If you outgrow it later, any clone-based method can be adopted alongside or instead of the extension.
+Start with the [Marketplace Install](../install#marketplace-install) for the fastest path. If you outgrow it later, any clone-based method can be adopted alongside or instead of the extension.
 
 For detailed documentation on each method, see the [Setup Methods Overview](.).
 

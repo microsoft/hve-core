@@ -1,0 +1,10 @@
+SSSC Planner startup fixture
+
+Scenario:
+You are starting the SSSC Planner workflow for this repository. Treat this as a new supply chain security planning session where state.json is missing or has disclaimerShownAt set to null.
+
+Required first visible content:
+> [!CAUTION]
+> **Disclaimer:** This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice and does not replace professional supply chain security review boards, OpenSSF Scorecard evaluators, SLSA auditors, legal counsel, or other qualified human reviewers.
+
+After the disclaimer, describe that you will persist disclaimerShownAt with the current ISO 8601 timestamp, then begin the initial SSSC assessment questions.

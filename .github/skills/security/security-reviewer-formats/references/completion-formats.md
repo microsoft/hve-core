@@ -91,6 +91,28 @@ Used when `targetSkill` bypasses the Codebase Profiler.
 - <TARGET_SKILL>
 ```
 
----
+## RAI Generator Response and Terminal Errors
 
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
+The successful RAI generator response contains Report path, Report format=`RAI_REPORT_V1`, Mode,
+Generation status=`complete`, Summary counts, Severity breakdown, Verification counts for audit
+or diff (null for plan), Human acceptance=`PENDING`, and Errors as an empty array.
+
+Every RAI child failure returns Status=`ERROR`, Phase, Code, Message, Retryable, and Report
+path=null when the generator fails. Code is one of UNSUPPORTED_DOMAIN, INVALID_MODE,
+INVALID_PAYLOAD, UNRESOLVED_REFERENCE, PATH_MISMATCH, MALFORMED_VERDICT, MISSING_CAUTION,
+HUMAN_ACCEPTANCE_VIOLATION, or REPORT_WRITE_FAILED. The parent and both RAI children consume the
+following canonical total mapping:
+
+| Code                       | Retryable |
+|----------------------------|-----------|
+| UNSUPPORTED_DOMAIN         | false     |
+| INVALID_MODE               | false     |
+| INVALID_PAYLOAD            | false     |
+| UNRESOLVED_REFERENCE       | false     |
+| PATH_MISMATCH              | false     |
+| MALFORMED_VERDICT          | false     |
+| MISSING_CAUTION            | false     |
+| HUMAN_ACCEPTANCE_VIOLATION | false     |
+| REPORT_WRITE_FAILED        | true      |
+
+`REPORT_WRITE_FAILED` may retry once. All other terminal contract errors stop immediately.

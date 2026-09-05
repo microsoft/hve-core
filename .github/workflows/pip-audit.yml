@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: pip-audit
 
 on:
@@ -33,22 +35,26 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Derive artifact name
         id: meta
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         run: |
-          $name = '${{ inputs.working-directory }}' -replace '/', '-' -replace '^\.', '' -replace '^-', ''
+          $name = $env:INPUT_WORKING_DIRECTORY -replace '/', '-' -replace '^\.', '' -replace '^-', ''
           "artifact-name=pip-audit-$name" >> $env:GITHUB_OUTPUT
 
       - name: Check for dependency file changes
         if: inputs.changed-files-only
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         run: |
           $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
-          $workingDir = '${{ inputs.working-directory }}'
+          $workingDir = $env:INPUT_WORKING_DIRECTORY
           $changed = git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- $workingDir |
             Where-Object { $_ -match '(pyproject\.toml|uv\.lock|requirements.*\.txt)$' }
           if ($changed) {
@@ -61,13 +67,13 @@ jobs:
 
       - name: Install uv
         if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           version: "0.10.9"
 
       - name: Setup Python
         if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -82,8 +88,10 @@ jobs:
       - name: Run pip-audit
         id: audit
         if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
+        env:
+          ARTIFACT_NAME: ${{ steps.meta.outputs.artifact-name }}
         run: |
-          $name = '${{ steps.meta.outputs.artifact-name }}'
+          $name = $env:ARTIFACT_NAME
           New-Item -ItemType Directory -Path "$env:GITHUB_WORKSPACE/logs" -Force | Out-Null
           $ignoreArgs = @()
           $knownVulnFile = 'pip-audit-known-vulnerabilities.txt'

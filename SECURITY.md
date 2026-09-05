@@ -2,7 +2,7 @@
 title: Security
 description: Security vulnerability reporting procedures and Microsoft's coordinated disclosure policy
 author: Microsoft Security Response Center
-ms.date: 2026-03-01
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - security
@@ -66,7 +66,10 @@ For comprehensive security documentation including security models and security 
 
 ## Verifying Release Integrity
 
-HVE Core releases are cryptographically signed using GitHub Artifact Attestations. This establishes provenance and allows you to verify that release artifacts were built from this repository's official CI/CD pipeline.
+HVE Core publishes cryptographically attested assets under exact channel tags:
+
+* PreRelease: `prerelease-v<version>`
+* Stable: `v<version>`
 
 ### Verification Steps
 
@@ -80,21 +83,42 @@ HVE Core releases are cryptographically signed using GitHub Artifact Attestation
    brew install gh
    ```
 
-2. Download the release artifact (replace `<version>` with the release tag, e.g., `v1.2.0`):
+2. Download assets from the exact channel tag you intend to verify:
 
    ```bash
-   gh release download <version> -R microsoft/hve-core -p '*.vsix'
+   # PreRelease
+   gh release download prerelease-v<version> -R microsoft/hve-core \
+     -p '*.vsix' -p '*.vsix.spdx.json' -p '*.vsix.sigstore.json' \
+     -p '*.vsix.intoto.jsonl' -p 'dependencies.spdx.json'
+
+   # Stable
+   gh release download v<version> -R microsoft/hve-core \
+     -p '*.vsix' -p '*.vsix.spdx.json' -p '*.vsix.sigstore.json' \
+     -p '*.vsix.intoto.jsonl' \
+     -p 'hve-core.openvex.json' -p 'dependencies.spdx.json'
    ```
 
-3. Verify the attestation:
+3. Verify each primary package with its channel and artifact signer:
 
    ```bash
-   # VSIX extension package
-   gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core
+   # Stable VSIX
+   gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
+    --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
+    --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67
 
-   # Plugin ZIP package (replace <plugin-id> with the collection id)
-   gh attestation verify <plugin-id>.zip -R microsoft/hve-core
+   # PreRelease VSIX
+   gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
+    --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
+    --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67
    ```
+
+The GitHub Release is the canonical verification surface for SLSA and Sigstore
+provenance. `release-vsix-publish.yml` is the sole post-tag producer. It runs
+only for pushes of exact `v<version>` or `prerelease-v<version>` tags and
+validates the protected tag, source, channel branch, committed release state,
+and matching draft before producing assets. Marketplace publication remains a
+separate path that consumes only the published release VSIX. VS Code separately
+verifies the Marketplace signature during installation.
 
 A successful verification confirms:
 
@@ -102,34 +126,97 @@ A successful verification confirms:
 * The build occurred in GitHub Actions
 * The artifact has not been modified since signing
 
+The release gate first authenticates the attestation cryptographically with the
+exact subject digest, signer workflow and revision, source ref and revision,
+and a hosted-runner restriction. It then applies fail-closed semantic policy to
+the authenticated statement. The policy requires the exact subject and digest,
+SLSA provenance v1, GitHub Actions `workflow/v1`, the `push` event, a
+GitHub-hosted runner, the expected external parameters, one resolved source
+dependency, and the expected builder identity. Missing, additional, or
+mismatched policy fields fail verification.
+
+`extension-provenance-signer.yml` provides the signer identity and separates duties.
+Its `contents: read` package job installs dependencies and packages the VSIX.
+The dependent privileged attestation job receives fixed-name artifacts through
+digest-checked transfers and never installs dependencies or packages the
+extension. No job both packages and signs.
+
+> [!IMPORTANT]
+> HVE Core does not claim SLSA Build Level 3. Future Stable and PreRelease
+> releases still require successful runtime evidence, active governance
+> evidence, platform assurance mapping, and qualified human review before such
+> a claim can be made.
+
+Tag governance is a mandatory activation prerequisite and is not yet active or
+proven. The intended `release-tags-creation-by-release-app` ruleset restricts
+creation only and gives the Release App its only bypass. The separate
+`release-tags-immutable` ruleset restricts updates, deletion, and force pushes
+with no bypass. This documentation does not imply that either ruleset is
+installed.
+
+Post-tag recovery begins by classifying the tag and release state. When both
+the tag and matching draft or published release exist, recovery reruns the
+original immutable tag-push workflow. A tag-only state first requires
+release-please to create the missing exact draft; a draft-only state first
+requires release-please to materialize the tag. Partial assets may be replaced
+only while the release remains draft, and publication remains blocked until
+asset and provenance verification succeeds. Do not move, delete, or recreate
+the tag, create a replacement release identity, or convert a published release
+back to draft. The producer has no default `workflow_dispatch` recovery path.
+Its bounded discovery window fails closed but does not guarantee draft
+visibility.
+
 ### Verifying the SBOM
 
-Each release includes a Software Bill of Materials (SBOM) in SPDX 2.3 JSON format, cryptographically attested using Sigstore. For verification steps, download instructions, inspection commands, and SPDX field reference, see the [SBOM Verification Guide](docs/security/sbom-verification.md).
+Both channels publish a per-VSIX SPDX SBOM and `dependencies.spdx.json`.
+These documents are attached as SPDX predicates over the VSIX subject. Because
+the per-artifact and dependency predicates share the SPDX 2.3
+predicate type, one verification can match more than one attestation. For
+commands and inspection guidance, see the [SBOM Verification Guide](docs/security/sbom-verification.md).
+
+### Verifying the VEX Document
+
+The Stable release publishes `hve-core.openvex.json`; the current PreRelease
+workflow does not. The Stable `vex-attest.yml` workflow emits two attestations:
+build provenance for the OpenVEX file as a subject, and an OpenVEX predicate
+over `dependencies.spdx.json` as a subject.
+
+```bash
+gh attestation verify hve-core.openvex.json -R microsoft/hve-core \
+  --signer-workflow microsoft/hve-core/.github/workflows/vex-attest.yml
+
+gh attestation verify dependencies.spdx.json -R microsoft/hve-core \
+  --signer-workflow microsoft/hve-core/.github/workflows/vex-attest.yml \
+  --predicate-type https://openvex.dev/ns/v0.2.0
+```
+
+For download, verification, status interpretation, and how to apply it with Trivy or Grype, see the [VEX Verification Guide](docs/security/vex-verification.md).
 
 ### Release Artifact Formats
 
-Each attested artifact produces a set of companion files uploaded alongside the primary asset:
+Attested primary artifacts can have these companion files:
 
 | Suffix           | Format                 | Purpose                                        |
 |------------------|------------------------|------------------------------------------------|
 | `.spdx.json`     | SPDX 2.3 JSON          | Software Bill of Materials                     |
 | `.sigstore.json` | Sigstore bundle (JSON) | Cryptographic attestation envelope             |
 | `.intoto.jsonl`  | in-toto DSSE envelope  | Provenance statement extracted from the bundle |
+| `.openvex.json`  | OpenVEX v0.2.0 JSON    | Vulnerability exploitability statements (VEX)  |
 
 The `.sigstore.json` bundle contains the full Sigstore verification material. The `.intoto.jsonl` file is the DSSE envelope extracted from the bundle for tools that consume in-toto provenance directly.
 
-### What Gets Signed
+### Attestation Topology
 
-| Artifact               | Channel         | Signed                |
-|------------------------|-----------------|-----------------------|
-| VSIX extension package | GitHub Releases | Yes                   |
-| Plugin ZIP package     | GitHub Releases | Yes                   |
-| Per-extension SBOM     | GitHub Releases | Yes                   |
-| Per-plugin SBOM        | GitHub Releases | Yes                   |
-| Dependency SBOM        | GitHub Releases | Yes                   |
-| Dependency diff        | GitHub Releases | No                    |
-| VS Code Marketplace    | Stable          | Marketplace signature |
-| VS Code Marketplace    | Pre-Release     | Marketplace signature |
+| Subject or predicate payload           | Channel               | Signer workflow                   |
+|----------------------------------------|-----------------------|-----------------------------------|
+| VSIX subject                           | Stable and PreRelease | `extension-provenance-signer.yml` |
+| SPDX predicates over the VSIX          | Stable and PreRelease | `extension-provenance-signer.yml` |
+| OpenVEX document subject               | Stable only           | `vex-attest.yml`                  |
+| OpenVEX predicate over dependency SBOM | Stable only           | `vex-attest.yml`                  |
+
+Per-artifact SBOM files are predicate payloads, not independently attested
+subjects. `dependencies.spdx.json` is an SPDX predicate payload on both
+channels and is additionally a Stable subject for the OpenVEX predicate.
 
 ---
 

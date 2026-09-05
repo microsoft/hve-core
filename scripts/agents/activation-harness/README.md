@@ -36,11 +36,20 @@ Returns:
 
 ## Byte-Budget Contract
 
-The cold-start payload (`CleanWorkspace.ColdStartBytes`) is the gating budget for every agent governed by this harness:
+The cold-start payload (`CleanWorkspace.ColdStartBytes`) is the gating budget for every agent governed by this harness. Budgets are declared as a range in `budgets.json` rather than a single number, so that growth in shared instruction files does not fail an unrelated change:
+
+| Band                       | Meaning                                                       | Suite result      |
+|----------------------------|---------------------------------------------------------------|-------------------|
+| At or below `target`       | Within design intent.                                         | Pass              |
+| Above `target`, at ceiling | Within tolerance; absorbs growth in shared instruction files. | Pass with warning |
+| Above `ceiling`            | Budget violation.                                             | Fail              |
 
 * Pre-refactor baseline for `@adr-creation` is approximately 84 KB and recorded in `baseline.json`.
-* Post-refactor target is **&lt; 44,000 bytes** (≈ 38–43 KB band).
-* The Pester suite under `scripts/tests/agents/activation-harness/` fails fast when the cold-start payload exceeds 44,000 bytes or when an instruction file expected to remain off cold start (for example `adr-handoff.instructions.md`, `adr-byo-template.instructions.md`) appears in `LoadedFiles`.
+* Post-refactor target is **44,000 bytes** with a ceiling of **48,000 bytes**.
+* Every range entry carries a `rationale` explaining why the ceiling sits above the target. The suite asserts that the rationale is present and that `ceiling` is not below `target`.
+* The Pester suite under `scripts/tests/agents/activation-harness/` also fails when an instruction file expected to remain off cold start (for example `adr-handoff.instructions.md`, `adr-byo-template.instructions.md`) appears in `LoadedFiles`.
+
+Raise a `ceiling` only when the growth comes from a shared file the agent does not own. Growth caused by the agent's own design belongs below `target`.
 
 ## Usage
 
@@ -49,6 +58,8 @@ Run the full suite via the npm wrapper:
 ```powershell
 npm run test:activation
 ```
+
+This suite validates the activation contract, including cold-start byte budget, lifecycle load-set composition, scenario distinctness, and runner artifacts. It does not fail on exact `baseline.json` hash or byte-count drift.
 
 Drive the module directly:
 
@@ -61,31 +72,33 @@ Get-AgentActivationFingerprint `
 
 ## Regenerating `baseline.json`
 
-After an intentional change to the agent, to any instruction file it loads, or to any skill file pulled into its load-set (for example an `adr-author` skill script or asset reached via `#file:`), the Pester suite fails until `baseline.json` is recaptured. Use the scripted regenerator rather than hand-editing the file:
+`baseline.json` is the exact snapshot reference for explicit drift audits. After an intentional change to the agent, to any instruction file it loads, or to any skill file pulled into its load-set (for example an `adr-author` skill script or asset reached via `#file:`), use the scripted checks rather than hand-editing the file:
 
 ```powershell
-# Drift check (no writes; exit 1 when out of date — suitable for CI gating)
+# Drift check with no writes. Exits 1 when the snapshot is out of date.
 npm run test:activation:baseline:check
 
 # Recapture the baseline with byte-identical formatting
 npm run test:activation:baseline
 ```
 
-> **PR guard:** Any change to ADR agent, instruction, or skill files that the harness loads invalidates `baseline.json`. Run `npm run test:activation:baseline` and commit the refreshed baseline in the same PR to avoid drift failures in CI.
+> [!NOTE]
+> Any change to ADR agent, instruction, or skill files that the harness loads can invalidate `baseline.json`. Run `npm run test:activation:baseline:check` when you need an exact no-write snapshot audit. Run `npm run test:activation:baseline` only when the drift is intentional and the committed reference should be refreshed.
 
 Workflow:
 
 1. Make the intentional change to the agent, instruction, or skill files.
-2. Run `npm run test:activation` and confirm the failure is the expected drift (not a budget regression).
-3. Run `npm run test:activation:baseline` to rewrite `baseline.json`.
-4. Re-run `npm run test:activation` to confirm the suite passes against the new baseline.
-5. Commit the baseline update alongside the originating agent or instruction change.
+2. Run `npm run test:activation` to confirm the behavior and invariant suite still passes.
+3. Run `npm run test:activation:baseline:check` when the PR needs an exact snapshot drift audit.
+4. Run `npm run test:activation:baseline` to rewrite `baseline.json` when the drift is intentional.
+5. Commit the baseline update alongside the originating agent, instruction, or skill change.
 
 ## Files
 
 * `Get-AgentActivationFingerprint.psm1`: public module exposing the single fingerprint function.
 * `Update-AgentActivationBaseline.ps1`: regenerates `baseline.json` deterministically; supports `-DryRun` for CI drift gating.
 * `baseline.json`: pre-refactor reference fingerprints across all four scenarios for `@adr-creation`.
+* `budgets.json`: per-agent, per-scenario cold-start byte ranges with target, ceiling, and rationale.
 * `README.md`: this document.
 
 <!-- markdownlint-disable MD036 -->

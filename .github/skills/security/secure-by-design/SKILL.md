@@ -1,6 +1,6 @@
 ---
 name: secure-by-design
-description: Secure by Design principles knowledge base for assessing adherence to security-first design, development, and deployment practices across the software lifecycle - Brought to you by microsoft/hve-core.
+description: Secure by Design principles knowledge base for assessing security-first design, development, and deployment across the software lifecycle.
 license: OGL-UK-3.0 AND CC-BY-4.0
 user-invocable: false
 metadata:
@@ -59,7 +59,3 @@ secure-by-design practices across the software lifecycle.
 * **Source**: <https://www.cyber.gov.au/business-government/secure-design/secure-by-design/secure-by-design-foundations>
 * **Modifications**: Synthesized into structured principle-checklist format with cross-references; merged with UK guidance into unified principle areas
 * **Trademark**: Use of ASD/ACSC content does not imply endorsement
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

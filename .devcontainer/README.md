@@ -2,7 +2,7 @@
 title: Dev Container
 description: Pre-configured development environment for HVE Core with all required tools and extensions
 author: HVE Core Team
-ms.date: 2026-04-13
+ms.date: 2026-08-11
 ms.topic: guide
 keywords:
   - devcontainer
@@ -41,6 +41,27 @@ A pre-configured development environment that includes all tools, extensions, an
    * Select **Dev Containers: Reopen in Container**
    * Wait for the container to build (first time takes 5-10 minutes)
 
+## Restricted Networks and Custom Registries
+
+Set restricted-network overrides on the host before opening VS Code, then
+rebuild the container. Supported variables are:
+
+* Build and package indexes: `HVE_DEVCONTAINER_IMAGE`,
+  `NPM_CONFIG_REGISTRY`, `PIP_INDEX_URL`, and `UV_DEFAULT_INDEX`
+* Setup endpoints: `HVE_GITHUB_RELEASES_URL`, `HVE_GITHUB_API_URL`,
+  `HVE_PSGALLERY_REPOSITORY`, and `HVE_PSGALLERY_SOURCE_URL`
+
+Runtime-only npm, pip, and uv overrides can instead use the user-level
+`dev.containers.containerEnv` VS Code setting. This setting cannot select the
+base image or configure setup endpoints because those values are resolved
+during container creation.
+
+See [Install behind a restricted network](../docs/contributing/validation.md#install-behind-a-restricted-network)
+for configuration examples and restore guidance. See
+[Enterprise artifact hub](../docs/customization/enterprise-artifact-hub.md)
+for defaults and the complete environment contract. Keep organization-specific
+endpoints and credentials out of repository files.
+
 ## Included Tools
 
 ### Languages & Runtimes
@@ -53,6 +74,7 @@ A pre-configured development environment that includes all tools, extensions, an
 
 * Git
 * GitHub CLI (`gh`)
+* GitHub Copilot CLI (`copilot`)
 * Azure CLI (`az`)
 * actionlint (GitHub Actions workflow linter)
 
@@ -65,6 +87,7 @@ A pre-configured development environment that includes all tools, extensions, an
 ### Security
 
 * Gitleaks (secret scanning)
+* osv-scanner (dependency vulnerability scanning)
 
 ### PowerShell Modules
 

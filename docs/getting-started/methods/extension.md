@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE Core as a VS Code extension from the marketplace
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-08-13
 ms.topic: how-to
 keywords:
   - extension
@@ -31,11 +31,11 @@ VS Code Extension installation provides HVE Core directly through the VS Code Ma
 * You need to customize custom agents, prompts, or instructions → [Peer Clone](peer-clone.md) or [Git-Ignored](git-ignored.md)
 * Your team needs to version control HVE Core → [Submodule](submodule.md)
 * You're contributing to HVE Core development → [Peer Clone](peer-clone.md)
-* You need to test pre-release versions → [Multi-Root Workspace](multi-root.md)
+* You need to test an unpublished source branch → [Multi-Root Workspace](multi-root)
 
 ## How It Works
 
-The extension packages all HVE Core components (chat agents, prompts, instructions) as a standard VS Code extension. Once installed, all components are immediately available without any additional configuration.
+The marketplace extension ships the complete active HVE Core component set. Stable and PreRelease use the same extension identity and component content; they differ in version, cadence, and source commit.
 
 ```text
 VS Code Extension System
@@ -76,12 +76,8 @@ After installation, verify everything works:
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 2. Click the agent picker dropdown
-3. Verify HVE Core agents appear:
-   * task-planner
-   * task-researcher
-   * task-implementor
-   * pr-review
-   * adr-creation
+3. Verify HVE Core agents such as `RPI Agent`, `Documentation`, `code-review`,
+   and `adr-creation` appear
 
 ## Post-Installation (Optional)
 
@@ -95,18 +91,18 @@ HVE Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` fo
 .copilot-tracking/
 ```
 
-This applies even when using the extension. The folder is created in your project directory when you use agents like `task-researcher` or `pr-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
+This applies even when using the extension. The folder is created in your project directory when you use workflows such as `rpi-research` or `code-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
 
 ## What's Included
 
 The extension provides all HVE Core components:
 
-| Component    | Examples                                |
-|--------------|-----------------------------------------|
-| Chat Agents  | task-planner, pr-review, adr-creation   |
-| Prompts      | git-commit, pull-request, ado-create-pr |
-| Instructions | markdown, python-script, commit-message |
-| Skills       | pr-reference, video-to-gif              |
+| Component    | Examples                                 |
+|--------------|------------------------------------------|
+| Chat Agents  | RPI Agent, code-review, adr-creation     |
+| Prompts      | git-commit, pull-request, ado-create-pr  |
+| Instructions | markdown, python-script, commit-message  |
+| Skills       | rpi-research, pr-reference, video-to-gif |
 
 ## Updating
 
@@ -114,7 +110,24 @@ The extension updates automatically through VS Code's extension system:
 
 * Extensions update automatically when new versions are released (default)
 * Open Extensions view → find "HVE Core" → click **Update** for manual updates
-* Right-click the extension → "Switch to Pre-Release Version" for pre-release access
+* Right-click the extension → "Switch to Pre-Release Version" to select the PreRelease channel
+
+Source moves through reviewed promotions from `main` to `release/prerelease`
+to `release/stable`. PreRelease is packaged from `release/prerelease`; Stable
+is packaged from `release/stable` and may lag newer `main` content. Both
+channels include active components labeled `stable`, `preview`, and
+`experimental`.
+
+The corresponding Copilot CLI sources are ref-less `microsoft/hve-core` for
+current `main`, moving `microsoft/hve-core#release/prerelease` and
+`microsoft/hve-core#release/stable` registrations, and immutable
+`microsoft/hve-core#prerelease-v<version>` and
+`microsoft/hve-core#v<version>` registrations.
+
+Behavior when switching VS Code Marketplace channels or switching among
+same-name CLI marketplace registrations has not been observed in this
+documentation work. This guidance does not assert installed-client or
+duplicate-registration behavior.
 
 ## Comparison with Other Methods
 
@@ -151,7 +164,7 @@ The extension updates automatically through VS Code's extension system:
 #### Steps
 
 1. Install extension from marketplace
-2. Start using `task-planner` and other agents
+2. Start using `RPI Agent` and the direct RPI phase skills
 3. That's it!
 
 ### Scenario 2: Multi-Machine Developer
@@ -182,13 +195,13 @@ The extension updates automatically through VS Code's extension system:
 
 **Goal:** Start with extension, add customization as needs grow
 
-**Solution:** Layer in the installer skill for MCP, installation method guidance, and agent bundle selection; migrate to clone only for full artifact control
+**Solution:** Use the included installer skill for MCP guidance or selective clone adoption; migrate to a direct clone only for full artifact control
 
 #### Steps
 
-1. Start with the HVE Core extension for the flagship RPI workflow
-2. When you need MCP configuration, a different installation method, or the complete artifact library, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation"
-3. When you need to modify prompts, instructions, or skills directly, uninstall extensions and follow a [clone-based method](./)
+1. Start with the HVE Core extension for the complete managed component set
+2. When you need MCP configuration or selected repository-owned components, ask an agent to use the included `hve-core-installer` skill
+3. Choose the complete manifest or a custom selection, review component paths and collisions, then copy to a [clone-based method](./)
 
 ## Troubleshooting
 
@@ -241,26 +254,27 @@ If you have both extension and manual installation (like Peer Clone):
 1. Extensions view → Find "HVE Core"
 2. Click "Update" button
 
-## Need MCP Configuration or Guided Setup?
+## Need MCP Configuration or Selective Adoption?
 
-The extension provides the flagship RPI workflow and core artifacts but does not include MCP server configuration or artifacts from other collections. If you need auto-configured MCP servers, the complete artifact library, or guided setup for any installation method, the HVE Core Installer extension provides the installer skill:
+The extension includes `hve-core-installer`. Ask an agent to invoke it when you need MCP guidance, installation-method selection, or a smaller clone-based component set.
 
-1. Install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension
-2. Ask any agent: "help me customize hve-core installation"
-3. The installer skill guides you through setup method selection and MCP configuration
+1. Ask an agent to use `hve-core-installer`.
+2. Choose the complete manifest or a custom selection for clone adoption.
+3. Review agents, prompts, instructions, distributable skill directories, and collisions before writes.
 
-| Capability                     | HVE Core Extension | Installer Skill               |
-|--------------------------------|-------------------:|-------------------------------|
-| Flagship collection (RPI)      |                  ✅ | ✅ (via clone)                 |
-| All collections (hve-core-all) |                  ❌ | ✅ (via clone)                 |
-| MCP auto-configuration         |                  ❌ | ✅ 4 curated servers           |
-| Agent bundle selection         |  ❌ (flagship only) | ✅ (clone methods only)        |
-| Installation method guidance   |                  ❌ | ✅ peer clone, submodule, etc. |
+| Capability                   | HVE Core Extension | Installer Skill                       |
+|------------------------------|-------------------:|---------------------------------------|
+| Complete managed content     |                Yes | Available for selective cloning       |
+| MCP configuration guidance   |                 No | Four curated servers                  |
+| Multi-kind custom selection  |                 No | Agents, prompts, instructions, skills |
+| Installation method guidance |                 No | Peer clone, submodule, and others     |
 
 > [!NOTE]
-> The installer is a skill that works within any agent conversation. There is no separate "installer agent" in the agent picker. The installer extension packages the skill for VS Code distribution.
+> The installer is a skill that works within any agent conversation. There is no separate installer agent or extension identity.
 
 ## Migration Guide
+
+For retired plugin or extension identities, start with [Migrate to the HVE Core Identity](../package-migration). VS Code does not provide a universal automatic migration between different extension IDs.
 
 ### From Manual Installation to Extension
 

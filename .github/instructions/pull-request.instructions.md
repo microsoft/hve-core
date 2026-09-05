@@ -1,5 +1,5 @@
 ---
-description: 'Repository-specific pull request conventions for hve-core including template mapping, change detection, and maturity tracking - Brought to you by microsoft/hve-core'
+description: 'hve-core pull request conventions: template mapping, change detection, and membership tracking'
 applyTo: '**/.copilot-tracking/pr/**'
 ---
 
@@ -20,7 +20,7 @@ Report that the repository template was used once generation completes.
 These sections require human verification. The agent does not modify them:
 
 * AI artifact contribution verification checkboxes (under the checklist section)
-* Prompt-builder review attestation checkbox (under type of change)
+* HVE Builder review attestation checkbox (under type of change)
 * Free-form other type checkbox (under type of change)
 
 ### Section Fill Guidance
@@ -45,7 +45,7 @@ Leave the section empty with placeholder comments intact when the PR does not in
 
 Document all testing performed by the agent:
 
-* List each automated validation command run in Step 6 and its pass/fail status.
+* List each automated validation command run in Step 7 and its pass/fail status.
 * Summarize security analysis findings.
 * Summarize diff-based assessments performed.
 * Note that manual testing was not performed when applicable.
@@ -55,7 +55,7 @@ Document all testing performed by the agent:
 
 ### Special Insertion Rules
 
-* Insert a GHCP Maturity section before `## Additional Notes` when non-stable GHCP artifacts are detected.
+* Insert a GHCP Membership Changes section before `## Additional Notes` when GHCP artifact membership changes.
 
 ## Checkbox Reference
 
@@ -64,21 +64,21 @@ Single authoritative reference for all checkbox handling in the PR template. All
 > [!NOTE]
 > Review this table when the PR template changes to ensure checkbox purposes and template locations remain accurate.
 
-| Template Location                     | Checkbox Purpose                      | Handling            | Step   | Rule Summary                                                          |
-|---------------------------------------|---------------------------------------|---------------------|--------|-----------------------------------------------------------------------|
-| Type of Change                        | Auto-detected change type categories  | Agent (auto)        | Step 5 | Check via Change Type Detection pattern match                         |
-| Type of Change                        | Prompt-builder review attestation     | Manual              | N/A    | Human verification; never checked by agent                            |
-| Type of Change                        | Free-form other type                  | Manual              | N/A    | Human verification; never checked by agent                            |
-| Security Considerations               | Sensitive data attestation            | Agent (auto)        | Step 5 | Check when customer data and secrets analysis both pass               |
-| Security Considerations               | Dependency security review            | Agent (conditional) | Step 5 | Evaluate only when dependency changes exist                           |
-| Security Considerations               | Privilege scope attestation           | Agent (conditional) | Step 5 | Evaluate only when security scripts are modified                      |
-| Checklist > Required Checks           | Documentation update verification     | Agent (assessed)    | Step 5 | Check when docs/ changes accompany code changes                       |
-| Checklist > Required Checks           | Naming convention compliance          | Agent (assessed)    | Step 5 | Check when changed files follow repository patterns                   |
-| Checklist > Required Checks           | Backwards compatibility verification  | Agent (assessed)    | Step 5 | Check only when diff shows no removal of public API surfaces          |
-| Checklist > Required Checks           | Test coverage verification            | Agent (assessed)    | Step 5 | Check only when test files are in changes                             |
-| Checklist > AI Artifact Contributions | AI artifact contribution verification | Manual              | N/A    | Human verification; never checked by agent                            |
-| Checklist > Required Automated Checks | Validation command results            | Agent (automated)   | Step 6 | Check for each command that passed in Step 6B                         |
-| GHCP Maturity (inserted)              | Non-stable artifact acknowledgment    | Manual              | N/A    | Inserted only when non-stable GHCP artifacts detected; left unchecked |
+| Template Location                     | Checkbox Purpose                      | Handling            | Step   | Rule Summary                                                                  |
+|---------------------------------------|---------------------------------------|---------------------|--------|-------------------------------------------------------------------------------|
+| Type of Change                        | Auto-detected change type categories  | Agent (auto)        | Step 5 | Check via Change Type Detection pattern match                                 |
+| Type of Change                        | HVE Builder review attestation        | Manual              | N/A    | Human verification; never checked by agent                                    |
+| Type of Change                        | Free-form other type                  | Manual              | N/A    | Human verification; never checked by agent                                    |
+| Security Considerations               | Sensitive data attestation            | Agent (auto)        | Step 5 | Check when customer data and secrets analysis both pass                       |
+| Security Considerations               | Dependency security review            | Agent (conditional) | Step 5 | Evaluate only when dependency changes exist                                   |
+| Security Considerations               | Privilege scope attestation           | Agent (conditional) | Step 5 | Evaluate only when security scripts are modified                              |
+| Checklist > Required Checks           | Documentation update verification     | Agent (assessed)    | Step 5 | Check when docs/ changes accompany code changes                               |
+| Checklist > Required Checks           | Naming convention compliance          | Agent (assessed)    | Step 5 | Check when changed files follow repository patterns                           |
+| Checklist > Required Checks           | Backwards compatibility verification  | Agent (assessed)    | Step 5 | Check only when diff shows no removal of public API surfaces                  |
+| Checklist > Required Checks           | Test coverage verification            | Agent (assessed)    | Step 5 | Check only when test files are in changes                                     |
+| Checklist > AI Artifact Contributions | AI artifact contribution verification | Manual              | N/A    | Human verification; never checked by agent                                    |
+| Checklist > Required Local Checks     | Local validation command results      | Agent (automated)   | Step 7 | Check only when the matching local command passed                             |
+| Checklist > Required CI Status Checks | Hosted workflow status results        | Agent (status)      | Step 7 | Check only when the matching hosted status passed; leave Pending CI unchecked |
 
 When a conditional checkbox's trigger condition is not met, annotate the checkbox inline with `(N/A — {brief reason})` to distinguish skipped-as-not-applicable from evaluated-and-failed.
 
@@ -113,36 +113,18 @@ Priority rules:
 * Multiple change types can be selected.
 * When changed files do not match any detection pattern, leave "Other" unchecked for manual completion.
 
-## GHCP Maturity Detection
+## GHCP Distribution Detection
 
 Skip this section when no GHCP artifact files (`.instructions.md`, `.prompt.md`, `.agent.md`, `SKILL.md`) are included in the changes.
 
-After detecting GHCP files from change type detection, look up maturity levels from collection manifest item metadata:
+Determine distributable membership from root `plugin.json` and the sync policy:
 
-1. For each file matching `.instructions.md`, `.prompt.md`, `.agent.md`, or `SKILL.md` patterns, find matching entries in `collections/*.collection.yml`.
-2. Read each item's optional `maturity` field; use `stable` when omitted.
-3. When the same file appears in multiple collections, use the highest-risk effective value in this order: `deprecated`, `experimental`, `preview`, `stable`.
+1. Agents, prompts, and instructions are distributable when they are tracked beneath a package subdirectory and match their canonical suffix.
+2. Skills are distributable when a tracked `.github/skills/<package>/<skill>/SKILL.md` exists and its top-level license has no noncommercial qualifier.
+3. Repository-root artifacts without a package segment are repository-specific.
+4. Do not infer per-artifact maturity. Stable and PreRelease ship the same manifest membership.
 
-Categorize files by maturity:
-
-| Maturity Level | Risk Level  | Indicator                 | Action                          |
-|----------------|-------------|---------------------------|---------------------------------|
-| stable         | ✅ Low       | Production-ready          | Include in standard change list |
-| preview        | 🔶 Medium   | Pre-release feature       | Flag in dedicated section       |
-| experimental   | ⚠️ High     | May have breaking changes | Add warning banner              |
-| deprecated     | 🚫 Critical | Scheduled for removal     | Add deprecation notice          |
-
-## GHCP Maturity Output
-
-If non-stable GHCP files are detected, add this section before Notes.
-
-For experimental files:
-
-```markdown
-> [!WARNING]
-> This PR includes **experimental** GHCP artifacts that may have breaking changes.
-> - `path/to/file.prompt.md`
-```
+When a PR changes distributable membership, mention the affected artifact paths and require `npm run plugin:sync` plus `npm run plugin:validate` in the validation summary.
 
 For deprecated files:
 
@@ -152,23 +134,13 @@ For deprecated files:
 > - `path/to/legacy.agent.md`
 ```
 
-Always include the maturity summary table when any GHCP files are detected:
+Include a membership summary when the PR adds or removes distributable GHCP artifacts:
 
 ```markdown
-## GHCP Artifact Maturity
+## GHCP Membership Changes
 
-| File                     | Type         | Maturity        | Notes            |
-|--------------------------|--------------|-----------------|------------------|
-| `new-feature.prompt.md`  | Prompt       | ⚠️ experimental | Pre-release only |
-| `helper.agent.md`        | Agent        | 🔶 preview      | Pre-release only |
-| `video-to-gif/SKILL.md`  | Skill        | ✅ stable        | All builds       |
-| `coding.instructions.md` | Instructions | ✅ stable        | All builds       |
-```
-
-If any non-stable files detected, add:
-
-```markdown
-### GHCP Maturity Acknowledgment
-- [ ] I acknowledge this PR includes non-stable GHCP artifacts
-- [ ] Non-stable artifacts are intentional for this change
+| File                    | Type   | Membership change |
+|-------------------------|--------|-------------------|
+| `new-feature.prompt.md` | Prompt | Added             |
+| `legacy.agent.md`       | Agent  | Removed           |
 ```

@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -118,6 +118,7 @@ function Get-ActionVersionViolations {
     $actionPattern = 'uses:\s*(?<action>[^@\s]+)@(?<ref>[a-fA-F0-9]{40})(?:\s*#\s*(?<version>.+))?'
 
     $shaVersionMap = @{}
+    $generatedActionVersions = @{}
     $violations = [System.Collections.ArrayList]::new()
     $totalActions = 0
 
@@ -132,11 +133,26 @@ function Get-ActionVersionViolations {
         }
     }
 
+    $workflowRoot = if ((Get-Item -LiteralPath $resolvedPath.Path).PSIsContainer) {
+        $resolvedPath.Path
+    }
+    else {
+        Split-Path $resolvedPath.Path -Parent
+    }
+    $actionsLockPath = Join-Path (Split-Path $workflowRoot -Parent) 'aw/actions-lock.json'
+    if (Test-Path -LiteralPath $actionsLockPath) {
+        $actionsLock = Get-Content -LiteralPath $actionsLockPath -Raw | ConvertFrom-Json
+        foreach ($entry in $actionsLock.entries.PSObject.Properties.Value) {
+            $generatedActionVersions["$($entry.repo)@$($entry.sha)"] = $entry.version
+        }
+    }
+
     $workflowFiles = @(Get-ChildItem -Path $resolvedPath -Filter '*.yml' -Recurse -ErrorAction SilentlyContinue)
     $workflowFiles += @(Get-ChildItem -Path $resolvedPath -Filter '*.yaml' -Recurse -ErrorAction SilentlyContinue)
 
     foreach ($file in $workflowFiles) {
         $lines = Get-Content -Path $file.FullName
+        $isGeneratedGhAwLock = $file.Name -like '*.lock.yml' -and $lines[0] -match '^# gh-aw-metadata:'
         $lineNumber = 0
 
         foreach ($line in $lines) {
@@ -147,6 +163,12 @@ function Get-ActionVersionViolations {
                 $action = $Matches['action']
                 $sha = $Matches['ref']
                 $version = if ($Matches['version']) { $Matches['version'].Trim() } else { $null }
+                if (-not $version -and $isGeneratedGhAwLock) {
+                    $version = $generatedActionVersions["$action@$sha"]
+                }
+                # Normalize gh-aw provenance suffix (e.g. "v9.0.0 (source v9)") so generated
+                # lock files and generated workflows are treated as the same version comment.
+                $normalizedVersion = if ($version) { ($version -replace '\s*\(source[^)]*\)\s*$', '').Trim() } else { $null }
                 $relativePath = [System.IO.Path]::GetRelativePath((Get-Location).Path, $file.FullName)
 
                 # Initialize SHA entry if not present
@@ -159,8 +181,8 @@ function Get-ActionVersionViolations {
                 }
 
                 # Track version and source
-                if ($version -and $version -notin $shaVersionMap[$sha].Versions) {
-                    [void]$shaVersionMap[$sha].Versions.Add($version)
+                if ($normalizedVersion -and $normalizedVersion -notin $shaVersionMap[$sha].Versions) {
+                    [void]$shaVersionMap[$sha].Versions.Add($normalizedVersion)
                 }
                 [void]$shaVersionMap[$sha].Sources.Add(@{
                     File       = $relativePath

@@ -1,0 +1,26 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+#
+# Shaped after a gh-aw generated lock file: a job beneath an empty workflow-level
+# block that declares no block of its own inherits an empty set, so it passes.
+# The nested step-level 'permissions' key exists to catch naive text matching.
+name: CI Lock File Shape
+on: push
+
+permissions: {}
+
+jobs:
+  pre_activation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Render config
+        with:
+          permissions: read-all
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+  agent:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

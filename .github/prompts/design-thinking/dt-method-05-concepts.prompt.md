@@ -1,5 +1,5 @@
 ---
-description: 'Concept articulation for Design Thinking Method 5b from brainstorming themes - Brought to you by microsoft/hve-core'
+description: 'Concept articulation for Design Thinking Method 5b from brainstorming themes'
 agent: dt-coach
 argument-hint: "project-slug=... [selectedThemes=...]"
 ---

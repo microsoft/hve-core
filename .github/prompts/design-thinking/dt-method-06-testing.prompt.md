@@ -1,5 +1,5 @@
 ---
-description: 'Hypothesis-driven testing and constraint validation for Design Thinking Method 6c - Brought to you by microsoft/hve-core'
+description: 'Hypothesis-driven testing and constraint validation for Design Thinking Method 6c'
 agent: dt-coach
 argument-hint: "project-slug=... [testEnvironment=...]"
 ---

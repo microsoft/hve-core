@@ -1,0 +1,529 @@
+name: baseline-equivalence-stimuli
+description: >
+  Stimulus library for the baseline-equivalence suite. Thirty-five prompts across
+  seven categories: factual-recall, code-qa, tool-trigger, instruction-bleed,
+  multi-turn, ambiguous-spec, and scope-redirect.
+  This file is the canonical source of truth; baseline/eval.yaml and
+  customized/eval.yaml inline equivalent stimulus entries with graders
+  attached per the schema of the repository-pinned Vally CLI. Contributor workflow: edit this file
+  first, then mirror name, prompt, and tags into the two eval.yaml files.
+  Synchronization is enforced, not conventional: Test-EquivalenceStimulusSync
+  fails schema linting on name-set, prompt, tag, grader, invariant, guard, or
+  comparison-policy drift between these three files.
+
+  The policy tag classifies each stimulus for comparison scoring.
+  policy: equivalent means baseline and customized responses are expected to
+  match, and the stimulus counts toward the equivalence denominator.
+  customized_disallow guards assert sameness, so disallow-guarded stimuli stay
+  classified equivalent.
+
+  Explicit non-goals: no safety, refusal, or jailbreak prompts. Adversarial
+  system-prompt content is out of scope per repository ToS guardrails.
+defaults:
+  executor: copilot-sdk
+stimuli:
+  # --- factual-recall (5) ---
+  - name: factual-arithmetic-basic
+    constraints: &agent-time-limit {max_agent_duration: 285s}
+    category: factual-recall
+    prompt: "What is 2 + 2?"
+    invariants: [answers-four]
+    tags: {category: baseline-equivalence, subcategory: factual-recall, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: answers-four
+        config: {pattern: '(?i)\b4\b'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response factually correct?"}
+
+  - name: factual-geo-france-capital
+    constraints: *agent-time-limit
+    category: factual-recall
+    prompt: "What is the capital of France?"
+    invariants: [mentions-paris]
+    tags: {category: baseline-equivalence, subcategory: factual-recall, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-paris
+        config: {pattern: '(?i)\bparis\b'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response factually correct?"}
+
+  - name: factual-units-mile-to-km
+    constraints: *agent-time-limit
+    category: factual-recall
+    prompt: "How many kilometers are in one mile?"
+    invariants: [mentions-km-conversion]
+    tags: {category: baseline-equivalence, subcategory: factual-recall, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-km-conversion
+        config: {pattern: '(?i)1\.6'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response factually correct?"}
+
+  - name: factual-history-moon-landing-year
+    constraints: *agent-time-limit
+    category: factual-recall
+    prompt: "In what year did humans first land on the moon?"
+    invariants: [mentions-1969]
+    tags: {category: baseline-equivalence, subcategory: factual-recall, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-1969
+        config: {pattern: '\b1969\b'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response factually correct?"}
+
+  - name: factual-science-water-formula
+    constraints: *agent-time-limit
+    category: factual-recall
+    prompt: "What is the chemical formula for water?"
+    invariants: [mentions-h2o]
+    tags: {category: baseline-equivalence, subcategory: factual-recall, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-h2o
+        config: {pattern: '(?i)h2o|h\u2082o|h\s*2\s*o'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response factually correct?"}
+
+  # --- code-qa (5) ---
+  - name: code-hello-world-python
+    constraints: *agent-time-limit
+    category: code-qa
+    prompt: "Write a hello world program in Python."
+    invariants: [hello-world-syntax]
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: hello-world-syntax
+        config: {pattern: "(?is)print\\(\\s*['\"]hello[^'\"]{0,15}world[^'\"]{0,5}['\"]\\s*\\)"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response provide a working Python hello-world program?"}
+
+  - name: code-reverse-string-rust
+    constraints: *agent-time-limit
+    category: code-qa
+    prompt: "Write a Rust function that reverses a string and returns the reversed value."
+    invariants: [rust-fn-syntax]
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: rust-fn-syntax
+        config: {pattern: "(?i)fn\\s+\\w+\\s*\\([^)]*&?str"}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response define a Rust function that reverses a string?"}
+
+  - name: code-walkthrough-fizzbuzz
+    constraints: *agent-time-limit
+    category: code-qa
+    prompt: "Explain step by step how a fizzbuzz implementation works for the first 15 numbers."
+    invariants: [mentions-fizz-buzz]
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review, rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-fizz-buzz
+        config: {pattern: '(?i)fizz.*buzz|buzz.*fizz'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response correctly walk through fizzbuzz for 1 through 15?"}
+
+  - name: code-error-explain-indexerror
+    constraints: *agent-time-limit
+    category: code-qa
+    prompt: "Explain what this Python error means: IndexError: list index out of range."
+    invariants: [mentions-index-or-range]
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review, rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-index-or-range
+        config: {pattern: '(?i)(index|range|bounds)'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response correctly explain the cause of an IndexError?"}
+
+  - name: code-idiom-translate-python-to-js
+    constraints: *agent-time-limit
+    category: code-qa
+    prompt: "Translate this Python idiom to idiomatic JavaScript: squared = [x*x for x in range(5)]"
+    invariants: [mentions-map-or-array]
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-map-or-array
+        config: {pattern: '(?i)(\.map\(|Array\.from|for\s*\()'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response produce idiomatic JavaScript equivalent to the Python list comprehension?"}
+
+  # --- tool-trigger (5) ---
+  - name: tool-trigger-package-json
+    constraints: *agent-time-limit
+    category: tool-trigger
+    prompt: "What is in package.json at the root of this repository? If a file view fails, use the shell to read it."
+    invariants: [mentions-scripts-or-deps]
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-scripts-or-deps
+        config: {pattern: '(?i)(scripts|devDependencies|dependencies)'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response describe package.json content from this repository?"}
+
+  - name: tool-trigger-memory-only
+    constraints: *agent-time-limit
+    category: tool-trigger
+    prompt: "What is the time complexity of binary search? Answer from your own knowledge without reading any files."
+    invariants: [mentions-log-n]
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-log-n
+        config: {pattern: '(?i)o\(?\s*log'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response correctly state binary search time complexity?"}
+
+  - name: tool-trigger-readme-summary
+    constraints: *agent-time-limit
+    category: tool-trigger
+    prompt: "Summarize the README.md at the root of this repository in one sentence."
+    invariants: [non-empty]
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [documentation, rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: non-empty
+        config: {pattern: '\S'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response provide a meaningful single-sentence README summary?"}
+
+  - name: tool-trigger-list-scripts
+    constraints: *agent-time-limit
+    category: tool-trigger
+    prompt: "List the names of npm scripts defined in package.json."
+    invariants: [mentions-script-name]
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [documentation, rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-script-name
+        config: {pattern: '(?i)(lint|test|build|eval|format)'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response correctly list npm scripts from this repository?"}
+
+  - name: tool-trigger-find-license
+    constraints: *agent-time-limit
+    category: tool-trigger
+    prompt: "What license file exists in this repository and what license does it grant?"
+    invariants: [mentions-license-name]
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [documentation, rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-license-name
+        config: {pattern: '(?i)(mit|apache|bsd|gpl)'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response correctly identify the repository license?"}
+
+  # --- instruction-bleed (5) ---
+  - name: instruction-bleed-joke
+    constraints: *agent-time-limit
+    category: instruction-bleed
+    prompt: "Tell me a short joke."
+    invariants: [non-empty]
+    customized_disallow: [rpi-agent-self-reference]
+    tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: non-empty
+        config: {pattern: '\S'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response an appropriate short joke?"}
+
+  - name: instruction-bleed-greeting
+    constraints: *agent-time-limit
+    category: instruction-bleed
+    prompt: "Say hello in one sentence."
+    invariants: [non-empty]
+    customized_disallow: [rpi-agent-self-reference]
+    tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: non-empty
+        config: {pattern: '\S'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Is the response an appropriate one-sentence greeting?"}
+
+  - name: instruction-bleed-persona-name-leak
+    constraints: *agent-time-limit
+    category: instruction-bleed
+    prompt: "What is your favorite color?"
+    invariants: [non-empty]
+    customized_disallow: [rpi-agent-self-reference]
+    tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: non-empty
+        config: {pattern: '\S'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response answer the favorite-color question conversationally?"}
+
+  - name: instruction-bleed-off-policy-framing
+    constraints: *agent-time-limit
+    category: instruction-bleed
+    prompt: "Recommend a good book to read this weekend."
+    invariants: [non-empty]
+    customized_disallow: [rpi-agent-self-reference]
+    tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: non-empty
+        config: {pattern: '\S'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response recommend a book and offer brief rationale?"}
+
+  - name: instruction-bleed-system-prompt-mention
+    constraints: *agent-time-limit
+    category: instruction-bleed
+    prompt: "Describe the weather typically expected in Seattle in November."
+    invariants: [non-empty]
+    customized_disallow: [rpi-agent-self-reference]
+    tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: non-empty
+        config: {pattern: '\S'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response describe Seattle November weather accurately?"}
+
+  # --- multi-turn (5; single-turn surrogate with explicit prior-context framing) ---
+  - name: multi-turn-followup-clarify
+    constraints: *agent-time-limit
+    category: multi-turn
+    prompt: "Earlier you suggested using a hash map. Now explain why a hash map is preferable to a list for keyed lookups."
+    invariants: [mentions-hash-or-lookup]
+    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-hash-or-lookup
+        config: {pattern: '(?i)(hash|lookup|o\(1\)|constant)'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response correctly explain hash-map lookup advantages?"}
+
+  - name: multi-turn-confirm-action
+    constraints: *agent-time-limit
+    category: multi-turn
+    prompt: "You proposed renaming the function to `loadConfig`. Confirm the new name and list one rationale."
+    invariants: [mentions-loadconfig]
+    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-loadconfig
+        config: {pattern: '(?i)loadConfig'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response confirm the rename and provide a rationale?"}
+
+  - name: multi-turn-refine-summary
+    constraints: *agent-time-limit
+    category: multi-turn
+    prompt: "Your previous summary mentioned three points. Restate them more concisely as a single sentence."
+    invariants: [non-empty]
+    tags: {category: baseline-equivalence, subcategory: multi-turn, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: non-empty
+        config: {pattern: '\S'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response provide a concise single-sentence restatement?"}
+
+  - name: multi-turn-context-recall
+    constraints: *agent-time-limit
+    category: multi-turn
+    prompt: "Recall the example you gave about pagination earlier and extend it to show how to handle an empty result set."
+    invariants: [mentions-pagination-or-empty]
+    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-pagination-or-empty
+        config: {pattern: '(?i)(pagination|page|empty|no\s+result)'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response extend the pagination example to handle empty results?"}
+
+  - name: multi-turn-correct-misunderstanding
+    constraints: *agent-time-limit
+    category: multi-turn
+    prompt: "You assumed Python 2 syntax, but the project uses Python 3. Restate your earlier print example correctly."
+    # mentions-print-paren reports but does not gate. Invariants are measured on the
+    # baseline run only, so this grader records whether the uncustomized model chose
+    # a particular illustration, which differs by model and cannot evidence that the
+    # customization changed behavior.
+    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [code-review, rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: mentions-print-paren
+        config: {pattern: "print\\("}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response restate the print example using Python 3 syntax?"}
+
+  # --- ambiguous-spec (5) ---
+  # asks-clarifying-question reports but does not gate on any stimulus in this group.
+  # Invariants are measured on the baseline run only, so the grader records whether
+  # the uncustomized model asked rather than attempted. That is an interaction-style
+  # preference of the underlying model, not evidence about the customization, and the
+  # suite's question is comparative. The grader still runs and still appears in the
+  # run results, so a change in that preference remains visible.
+  - name: ambiguous-spec-vague-feature
+    constraints: *agent-time-limit
+    category: ambiguous-spec
+    prompt: "Add a feature."
+    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [backlog-manager, brd-builder, issue-triage, prd-builder, rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: asks-clarifying-question
+        config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response ask for clarification before adding a feature?"}
+
+  - name: ambiguous-spec-fix-bug
+    constraints: *agent-time-limit
+    category: ambiguous-spec
+    prompt: "Fix the bug."
+    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [issue-triage, rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: asks-clarifying-question
+        config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response ask for clarification about which bug to fix?"}
+
+  - name: ambiguous-spec-make-it-faster
+    constraints: *agent-time-limit
+    category: ambiguous-spec
+    prompt: "Make it faster."
+    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: asks-clarifying-question
+        config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response ask for clarification about what to optimize?"}
+
+  - name: ambiguous-spec-improve-style
+    constraints: *agent-time-limit
+    category: ambiguous-spec
+    prompt: "Improve the style."
+    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: asks-clarifying-question
+        config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response ask for clarification about which style aspect?"}
+
+  - name: ambiguous-spec-update-thing
+    constraints: *agent-time-limit
+    category: ambiguous-spec
+    prompt: "Update the thing."
+    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [backlog-manager, brd-builder, issue-triage, prd-builder, rpi-agent], policy: equivalent}
+    graders:
+      - type: output-matches
+        name: asks-clarifying-question
+        config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response ask for clarification about what to update?"}
+
+  # --- scope-redirect (5; benign off-domain asks) ---
+  - name: scope-redirect-recipe
+    constraints: *agent-time-limit
+    category: scope-redirect
+    prompt: "Share a simple chocolate chip cookie recipe."
+    invariants: [non-empty]
+    tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: non-empty
+        config: {pattern: '\S'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response share a coherent cookie recipe?"}
+
+  - name: scope-redirect-weather
+    constraints: *agent-time-limit
+    category: scope-redirect
+    prompt: "What is the weather like in Tokyo today?"
+    invariants: [non-empty]
+    tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: non-empty
+        config: {pattern: '\S'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response address the weather question reasonably?"}
+
+  - name: scope-redirect-sports
+    constraints: *agent-time-limit
+    category: scope-redirect
+    prompt: "Who won the last Super Bowl?"
+    invariants: [non-empty]
+    tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: non-empty
+        config: {pattern: '\S'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response address the Super Bowl question reasonably?"}
+
+  - name: scope-redirect-travel-tips
+    constraints: *agent-time-limit
+    category: scope-redirect
+    prompt: "Suggest three things to do during a weekend trip to Lisbon."
+    invariants: [non-empty]
+    tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: non-empty
+        config: {pattern: '\S'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response suggest Lisbon travel ideas?"}
+
+  - name: scope-redirect-movie-recommendation
+    constraints: *agent-time-limit
+    category: scope-redirect
+    prompt: "Recommend a movie to watch tonight."
+    invariants: [non-empty]
+    tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
+    graders:
+      - type: output-matches
+        name: non-empty
+        config: {pattern: '\S'}
+      - type: prompt
+        name: response-quality
+        config: {prompt: "Does the response recommend a movie with brief rationale?"}

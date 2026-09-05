@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Weekly Validation
 
 on:
@@ -36,7 +38,7 @@ jobs:
       has-projects: ${{ steps.find.outputs.has-projects }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -49,6 +51,9 @@ jobs:
             ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
             ForEach-Object { $_ -replace '^\.[\\/]', '' } |
             Sort-Object)
+          # Reject repository-derived paths that could alter command structure downstream.
+          . ./scripts/security/Assert-WorkflowProjectDirectory.ps1
+          $projectList = @(Assert-WorkflowProjectDirectory -Path $projectList)
           $jsonItems = $projectList | ForEach-Object { $_ | ConvertTo-Json -Compress }
           $dirs = '[' + (($jsonItems) -join ',') + ']'
           "directories=$dirs" >> $env:GITHUB_OUTPUT
@@ -87,6 +92,15 @@ jobs:
     permissions:
       contents: read
 
+  markdown-link-check:
+    name: Markdown Link Check (Full Repository)
+    uses: ./.github/workflows/markdown-link-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: true
+      changed-files-only: false
+
   create-stale-docs-issues:
     name: Create or Update Issues for Stale Documentation
     needs: [msdate-freshness]
@@ -98,4 +112,12 @@ jobs:
     permissions:
       contents: read
       issues: write
+
+  agent-conformance:
+    name: Agent Behavioral Conformance
+    uses: ./.github/workflows/agent-conformance.yml
+    permissions:
+      contents: read
+    secrets:
+      copilot-github-token: ${{ secrets.COPILOT_GITHUB_TOKEN }}
 

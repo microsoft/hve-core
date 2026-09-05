@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 using module ../../security/Modules/SecurityClasses.psm1
@@ -22,7 +22,7 @@ BeforeAll {
 
     Save-CIEnvironment
 
-    $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+    $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Workflows'
 }
 
 AfterAll {
@@ -168,6 +168,68 @@ Describe 'Get-ActionVersionViolations' -Tag 'Unit' {
             $lines = $result.Violations | ForEach-Object { $_.Line } | Sort-Object -Unique
             $lines.Count | Should -Be $result.Violations.Count
         }
+
+        It 'Accepts generated lock pins traceable through the gh-aw action manifest' {
+            $repoPath = Join-Path $TestDrive 'generated-lock-manifest'
+            $workflowPath = Join-Path $repoPath '.github/workflows'
+            $actionLockPath = Join-Path $repoPath '.github/aw/actions-lock.json'
+            New-Item -ItemType Directory -Path $workflowPath -Force | Out-Null
+            New-Item -ItemType Directory -Path (Split-Path $actionLockPath -Parent) -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'generated-action-lock.yml') -Destination (Join-Path $workflowPath 'sample.lock.yml')
+            Copy-Item -Path (Join-Path $script:FixturesPath 'generated-actions-lock.json') -Destination $actionLockPath
+
+            $result = Get-ActionVersionViolations -WorkflowPath $workflowPath
+
+            $result.TotalActions | Should -Be 2
+            $result.Violations | Should -BeNullOrEmpty
+            $result.ShaVersionMap['e89c65e17eb281bbd5ff2ff9e9199a03e96654c7'].Versions | Should -Contain 'v0.83.4'
+            $result.ShaVersionMap['3a2844b7e9c422d3c10d287c895573f7108da1b3'].Versions | Should -Contain 'v9.0.0'
+        }
+
+        It 'Accepts a generated lock when scanning a single workflow file' {
+            $repoPath = Join-Path $TestDrive 'generated-lock-file'
+            $workflowPath = Join-Path $repoPath '.github/workflows/sample.lock.yml'
+            $actionLockPath = Join-Path $repoPath '.github/aw/actions-lock.json'
+            New-Item -ItemType Directory -Path (Split-Path $workflowPath -Parent) -Force | Out-Null
+            New-Item -ItemType Directory -Path (Split-Path $actionLockPath -Parent) -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'generated-action-lock.yml') -Destination $workflowPath
+            Copy-Item -Path (Join-Path $script:FixturesPath 'generated-actions-lock.json') -Destination $actionLockPath
+
+            $result = Get-ActionVersionViolations -WorkflowPath $workflowPath
+
+            $result.TotalActions | Should -Be 2
+            $result.Violations | Should -BeNullOrEmpty
+        }
+
+        It 'Rejects an uncommented lock file without gh-aw metadata' {
+            $repoPath = Join-Path $TestDrive 'unmarked-lock'
+            $workflowPath = Join-Path $repoPath '.github/workflows'
+            $actionLockPath = Join-Path $repoPath '.github/aw/actions-lock.json'
+            New-Item -ItemType Directory -Path $workflowPath -Force | Out-Null
+            New-Item -ItemType Directory -Path (Split-Path $actionLockPath -Parent) -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination (Join-Path $workflowPath 'sample.lock.yml')
+            Copy-Item -Path (Join-Path $script:FixturesPath 'generated-actions-lock.json') -Destination $actionLockPath
+
+            $result = Get-ActionVersionViolations -WorkflowPath $workflowPath
+
+            $missingComments = $result.Violations | Where-Object { $_.ViolationType -eq 'MissingVersionComment' }
+            $missingComments.Count | Should -Be 1
+        }
+
+        It 'Rejects a generated lock pin absent from the gh-aw action manifest' {
+            $repoPath = Join-Path $TestDrive 'generated-lock-unknown-pin'
+            $workflowPath = Join-Path $repoPath '.github/workflows/sample.lock.yml'
+            $actionLockPath = Join-Path $repoPath '.github/aw/actions-lock.json'
+            New-Item -ItemType Directory -Path (Split-Path $workflowPath -Parent) -Force | Out-Null
+            New-Item -ItemType Directory -Path (Split-Path $actionLockPath -Parent) -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'generated-action-lock.yml') -Destination $workflowPath
+            Set-Content -LiteralPath $actionLockPath -Value '{"entries":{}}' -Encoding utf8
+
+            $result = Get-ActionVersionViolations -WorkflowPath $workflowPath
+
+            $missingComments = $result.Violations | Where-Object { $_.ViolationType -eq 'MissingVersionComment' }
+            $missingComments.Count | Should -Be 2
+        }
     }
 
     Context 'Version mismatch detection' {
@@ -214,6 +276,17 @@ Describe 'Get-ActionVersionViolations' -Tag 'Unit' {
             $result = Get-ActionVersionViolations -WorkflowPath $testPath
             $mismatch = $result.Violations | Where-Object { $_.ViolationType -eq 'VersionMismatch' } | Select-Object -First 1
             $mismatch.Metadata.AffectedLocations.Count | Should -Be 2
+        }
+
+        It 'Treats gh-aw "(source vN)" provenance suffix as the same version comment' {
+            $testPath = Join-Path $TestDrive 'source-suffix'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'source-suffix-a.yml') -Destination $testPath
+            Copy-Item -Path (Join-Path $script:FixturesPath 'source-suffix-b.yml') -Destination $testPath
+
+            $result = Get-ActionVersionViolations -WorkflowPath $testPath
+            $mismatches = $result.Violations | Where-Object { $_.ViolationType -eq 'VersionMismatch' }
+            $mismatches.Count | Should -Be 0
         }
     }
 
@@ -701,7 +774,7 @@ Describe 'Invoke-ActionVersionConsistency' -Tag 'Unit' {
 Describe 'Main Script Execution' -Tag 'Unit' {
     BeforeAll {
         $script:TestScript = (Resolve-Path (Join-Path $PSScriptRoot '../../security/Test-ActionVersionConsistency.ps1')).Path
-        $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+        $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Workflows'
         # Use cross-platform temp directory (accessible from child process, unlike $TestDrive)
         $tempBase = [System.IO.Path]::GetTempPath()
         $script:MainTestRoot = Join-Path $tempBase "pester-main-$(Get-Random)"
@@ -729,14 +802,17 @@ Describe 'Main Script Execution' -Tag 'Unit' {
         It 'Returns exit code 0 when no violations and no fail flags' {
             Copy-Item -Path (Join-Path $script:FixturesPath 'pinned-workflow.yml') -Destination $script:TestWorkspace
 
-            $null = pwsh -NoProfile -Command "& '$script:TestScript' -Path '$script:TestWorkspace' -Format Json" 2>&1
-            $LASTEXITCODE | Should -Be 0
+            $outputPath = Join-Path $script:TestWorkspace 'report.json'
+            $exitCode = Invoke-ActionVersionConsistency -Path $script:TestWorkspace -Format Json -OutputPath $outputPath
+            $exitCode | Should -BeOfType [int]
+            $exitCode | Should -Be 0
         }
 
-        It 'Returns exit code 1 when FailOnMismatch and mismatches exist' {
+        It 'Returns exit code 1 when FailOnMismatch and mismatches exist' -Tag 'Integration' {
             Copy-Item -Path (Join-Path $script:FixturesPath 'version-mismatch-a.yml') -Destination $script:TestWorkspace
             Copy-Item -Path (Join-Path $script:FixturesPath 'version-mismatch-b.yml') -Destination $script:TestWorkspace
 
+            # Retained guard smoke test for the process exit-code path.
             $tempScript = Join-Path $script:TestWorkspace 'run-test.ps1'
             $scriptContent = @"
 & '$($script:TestScript)' -Path '$($script:TestWorkspace)' -Format Json -FailOnMismatch
@@ -750,21 +826,19 @@ exit `$LASTEXITCODE
         It 'Returns exit code 1 when FailOnMissingComment and missing comments exist' {
             Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $script:TestWorkspace
 
-            $tempScript = Join-Path $script:TestWorkspace 'run-test.ps1'
-            $scriptContent = @"
-& '$($script:TestScript)' -Path '$($script:TestWorkspace)' -Format Json -FailOnMissingComment
-exit `$LASTEXITCODE
-"@
-            Set-Content -Path $tempScript -Value $scriptContent
-            $proc = Start-Process -FilePath 'pwsh' -ArgumentList @('-NoProfile', '-File', $tempScript) -Wait -PassThru -NoNewWindow
-            $proc.ExitCode | Should -Be 1
+            $outputPath = Join-Path $script:TestWorkspace 'report.json'
+            $exitCode = Invoke-ActionVersionConsistency -Path $script:TestWorkspace -Format Json -FailOnMissingComment -OutputPath $outputPath
+            $exitCode | Should -BeOfType [int]
+            $exitCode | Should -Be 1
         }
 
         It 'Returns exit code 0 when violations exist but no fail flags set' {
             Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $script:TestWorkspace
 
-            $null = pwsh -NoProfile -Command "& '$script:TestScript' -Path '$script:TestWorkspace' -Format Json" 2>&1
-            $LASTEXITCODE | Should -Be 0
+            $outputPath = Join-Path $script:TestWorkspace 'report.json'
+            $exitCode = Invoke-ActionVersionConsistency -Path $script:TestWorkspace -Format Json -OutputPath $outputPath
+            $exitCode | Should -BeOfType [int]
+            $exitCode | Should -Be 0
         }
     }
 }

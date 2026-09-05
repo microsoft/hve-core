@@ -1,5 +1,5 @@
 ---
-description: "Unified canonical deck workflow for opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build - Brought to you by microsoft/hve-core"
+description: "Canonical deck workflow: asset-ready offer, snapshot generation/refresh, and optional customer-card PowerPoint build"
 agent: "DT Coach"
 argument-hint: "[project-slug=...] [action=offer|build|run] [method-context=...] [trigger-context=...]"
 ---
@@ -16,13 +16,13 @@ Single prompt that handles both canonical deck and customer-card build flows.
   - `build`: build customer-card PPTX from canonical artifacts.
   - `run`: execute offer flow, and if accepted, execute optional build flow.
 - `${input:method-context}`: Optional method number.
-- `${input:trigger-context:explicit-request}`: Optional offer context (`explicit-request`, `method-exit`, `session-start-check`).
+- `${input:trigger-context:explicit-request}`: Optional offer context (`explicit-request`, `method-exit`).
 
 ## Workflow Rules
 
-1. Canonical workflow is opt-in. If the team has not opted in, ask first.
+1. Canonical workflow is available on request at any time, and offered automatically only at eligible asset-ready method exits.
 2. Decline is valid and non-blocking. Do not gate method transitions.
-3. Apply canonical workflow rules from `.github/instructions/design-thinking/dt-canonical-deck.instructions.md` when active.
+3. Apply canonical workflow rules by loading the `dt-coaching-foundation` skill and its `references/canonical-deck.md`.
 
 ## Step 1: Resolve Project Slug
 
@@ -42,13 +42,9 @@ Once slug is resolved, establish these paths:
 
 ## Step 2: Offer Branch (`action=offer` or `action=run`)
 
-If canonical workflow is not active for this session, ask:
+Run the asset-readiness check from `canonical-deck.md` first. When no DT method outputs map to a supported canonical artifact type, make no offer, say what is missing, and stop.
 
-> I can keep a canonical deck snapshot as we progress and optionally build customer-card slides from it. Want to enable that workflow?
-
-If declined, stop and continue normal coaching.
-
-When active, offer snapshot creation or refresh at natural checkpoints (especially Method 1, 2, 3, and 5 exits):
+When assets are ready, offer snapshot creation or refresh at the Method 3 and Method 5 exits defined in `canonical-deck.md`:
 
 > We can snapshot the canonical deck now so your current artifacts stay traceable. Generate or refresh now?
 
@@ -122,7 +118,7 @@ Success:
 
 Offer declined:
 
-> Skipped for now. We can enable canonical deck workflow any time.
+> Skipped for now. You can ask for the canonical deck any time, and I'll offer again when there's more to capture.
 
 Build failure:
 

@@ -3,7 +3,7 @@ title: SRE / Operations Guide
 description: HVE Core support for SRE and operations engineers managing infrastructure, incidents, and deployment workflows
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-08-03
 ms.topic: how-to
 keywords:
   - SRE
@@ -22,12 +22,12 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 > AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
 > Never treat AI-generated security artifacts as authoritative without independent verification.
 
-## Recommended Collections
+## Capability Groups
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the complete active component set with zero configuration.
 >
-> Your primary collections are `coding-standards` (IaC-specific instructions for Terraform, Bicep, Bash, and GitHub Actions), `security` (incident response tooling), and `hve-core` (structured investigation and remediation workflows). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> For selective clone adoption, choose infrastructure-as-code standards, incident response, supply chain security, and investigation components that match your operational responsibilities. Capability groups help you discover related components; they are not independently installable products. See the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -54,9 +54,9 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 1. Stage 1: Setup. Configure your development environment and install HVE Core tooling using the [Getting Started guide](../../getting-started/install.md). Set up IaC project structure for your infrastructure repository.
 2. Stage 3: Product Definition. Define infrastructure requirements, SLOs, and operational contracts. Use the **security-planner** agent for infrastructure security planning.
 3. Stage 3: Product Definition. Run the **sssc-planner** agent to assess supply chain security of CI/CD pipelines and deployment infrastructure.
-4. Stage 6: Implementation. Write infrastructure code with auto-activated standards for Terraform (`*.tf`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions (`*.yml`). Use the **task-implementor** agent for complex multi-file changes.
+4. Stage 6: Implementation. Write infrastructure code with auto-activated standards for Terraform (`*.tf`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions (`*.yml`). Use `/rpi-implement` for approved complex, multi-file changes.
 5. Stage 8: Delivery. Deploy infrastructure changes through CI/CD pipelines. Use `/git-commit` for conventional commits and `/pull-request` for infrastructure PRs with proper review.
-6. Stage 9: Operations. Handle incidents with `/incident-response` runbooks. Investigate production issues with the **task-researcher** agent for structured root cause analysis.
+6. Stage 9: Operations. Handle incidents with `/incident-response` runbooks. Investigate production issues with `/rpi-research` for structured root cause analysis.
 
 ## Starter Prompts
 
@@ -67,7 +67,7 @@ Include containment steps, GDPR notification timelines, forensic evidence
 preservation, and post-incident review process.
 ```
 
-Select **task-researcher** agent:
+Use `/rpi-research`:
 
 ```text
 Investigate elevated 503 errors on the /api/orders endpoint. Error rate
@@ -95,7 +95,7 @@ Assess the supply chain security posture for our CI/CD pipeline and container in
 /pull-request Create a PR for infrastructure changes
 ```
 
-Select **task-implementor** agent:
+Use `/rpi-implement`:
 
 ```text
 Implement Terraform infrastructure for the Redis cache cluster in the
@@ -106,15 +106,14 @@ encryption at rest. Output the connection string to the Vault KV store.
 
 ## Key Agents and Workflows
 
-| Agent                | Purpose                                             | Docs                                              |
-|----------------------|-----------------------------------------------------|---------------------------------------------------|
-| **task-researcher**  | Structured production issue investigation           | [Task Researcher](../../rpi/task-researcher.md)   |
-| **task-implementor** | Infrastructure code implementation                  | [Task Implementor](../../rpi/task-implementor.md) |
-| **task-reviewer**    | Infrastructure code review                          | [Task Reviewer](../../rpi/task-reviewer.md)       |
-| **security-planner** | Infrastructure security planning                    | Agent file                                        |
-| **sssc-planner**     | Supply chain security assessment for infrastructure | Agent file                                        |
-| **pr-review**        | Pull request review for infrastructure changes      | Agent file                                        |
-| **memory**           | Session context and preference persistence          | Agent file                                        |
+| Agent or skill       | Purpose                                             | Docs                       |
+|----------------------|-----------------------------------------------------|----------------------------|
+| **rpi-research**     | Structured production issue investigation           | [RPI workflow](../../rpi/) |
+| **rpi-implement**    | Infrastructure code implementation                  | [RPI workflow](../../rpi/) |
+| **rpi-review**       | Infrastructure implementation review                | [RPI workflow](../../rpi/) |
+| **security-planner** | Infrastructure security planning                    | Agent file                 |
+| **sssc-planner**     | Supply chain security assessment for infrastructure | Agent file                 |
+| **code-review**      | Pull request review for infrastructure changes      | Agent file                 |
 
 Prompts complement the agents for operational workflows:
 
@@ -129,13 +128,13 @@ Auto-activated instructions apply IaC standards based on file type: Terraform (`
 
 ## Tips
 
-| Do                                                                   | Don't                                                    |
-|----------------------------------------------------------------------|----------------------------------------------------------|
-| Let IaC-specific instructions auto-activate by file type             | Manually enforce Terraform or Bicep standards            |
-| Create incident response runbooks before incidents occur             | Write runbooks reactively during active incidents        |
-| Use the **task-researcher** agent for structured root cause analysis | Debug production issues without systematic investigation |
-| Review infrastructure PRs with the **pr-review** agent               | Merge infrastructure changes without code review         |
-| Use `/git-commit` for consistent, conventional commit history        | Write ad-hoc commit messages for infrastructure changes  |
+| Do                                                            | Don't                                                    |
+|---------------------------------------------------------------|----------------------------------------------------------|
+| Let IaC-specific instructions auto-activate by file type      | Manually enforce Terraform or Bicep standards            |
+| Create incident response runbooks before incidents occur      | Write runbooks reactively during active incidents        |
+| Use `/rpi-research` for structured root cause analysis        | Debug production issues without systematic investigation |
+| Review infrastructure PRs with the **code-review** agent      | Merge infrastructure changes without code review         |
+| Use `/git-commit` for consistent, conventional commit history | Write ad-hoc commit messages for infrastructure changes  |
 
 ## Related Roles
 
@@ -146,8 +145,8 @@ Auto-activated instructions apply IaC standards based on file type: Terraform (`
 ## Next Steps
 
 > [!TIP]
-> Explore IaC coding standards: [Coding Standards Collection](https://github.com/microsoft/hve-core/blob/main/collections/coding-standards.collection.md)
-> Set up incident response tools: [Security Collection](https://github.com/microsoft/hve-core/blob/main/collections/security.collection.md)
+> Browse the complete HVE Core inventory: [HVE Core](../../plugins/hve-core)
+> Review security guidance: [Security Documentation](../../security/)
 > See how operations fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---

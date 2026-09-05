@@ -1,40 +1,37 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 // @ts-check
 import { themes as prismThemes } from 'prism-react-renderer';
 import remarkGithubAlert from 'remark-github-blockquote-alert';
-import * as fs from 'fs';
+import remarkDirective from 'remark-directive';
 import * as path from 'path';
+import { labelRegistry } from './src/data/labelRegistry';
+import { loadPackageCards } from './src/data/pluginManifestCards';
+import remarkTableCaption from './plugins/remark-table-caption.mjs';
+import rehypeTableScope from './plugins/rehype-table-scope.mjs';
 
-const collectionsDir = path.resolve(__dirname, '../../collections');
-
-/**
- * @param {string} name
- */
-function countYamlPaths(name) {
-  const yamlPath = path.join(collectionsDir, `${name}.collection.yml`);
-  let content;
-  try {
-    content = fs.readFileSync(yamlPath, 'utf-8');
-  } catch {
-    throw new Error(
-      `[docusaurus.config.js] Cannot read collection manifest: ${yamlPath}\n` +
-      `Ensure "${name}" exists in the collections/ directory.`,
-    );
-  }
-  return (content.match(/^\s*- path:/gm) || []).length;
-}
-
-const collectionNames = [
-  'ado', 'coding-standards', 'data-science', 'design-thinking',
-  'experimental', 'github', 'gitlab', 'hve-core', 'jira',
-  'project-planning', 'security', 'hve-core-all',
-];
-const collectionCounts = Object.fromEntries(
-  collectionNames.map((n) => [n, countYamlPaths(n)]),
+const packageCards = loadPackageCards(
+  path.resolve(__dirname, '../../.github/plugin/marketplace.json'),
 );
+
+const accessibleGithubPrismTheme = {
+  ...prismThemes.github,
+  styles: prismThemes.github.styles.map((entry) =>
+    entry.types.includes('comment')
+      ? {
+          ...entry,
+          style: {
+            ...entry.style,
+            color: '#505050',
+          },
+        }
+      : entry,
+  ),
+};
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'HVE Core',
+  title: labelRegistry.hveCore,
   tagline: 'AI-Driven Software Development Across the Full Lifecycle',
   favicon: 'img/microsoft-logo.svg',
 
@@ -51,10 +48,12 @@ const config = {
   onBrokenLinks: 'throw',
 
   customFields: {
-    collectionCounts,
+    packageCards,
   },
 
   markdown: {
+    format: 'detect',
+    mermaid: true,
     hooks: {
       onBrokenMarkdownLinks: 'throw',
     },
@@ -85,7 +84,8 @@ const config = {
           showLastUpdateAuthor: true,
           editUrl: ({ docPath }) =>
             `https://github.com/microsoft/hve-core/tree/main/docs/${docPath}`,
-          remarkPlugins: [remarkGithubAlert],
+          remarkPlugins: [remarkGithubAlert, remarkDirective, remarkTableCaption],
+          rehypePlugins: [rehypeTableScope],
         },
         blog: false,
         theme: {
@@ -96,13 +96,20 @@ const config = {
   ],
 
   themes: [
+    '@docusaurus/theme-mermaid',
     [
       '@easyops-cn/docusaurus-search-local',
       /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
       ({
         hashed: true,
+        docsDir: '../',
+        indexBlog: false,
         language: ['en'],
-        highlightSearchTermsOnTargetPage: true,
+        // Disabled: highlighting search terms on the target page injects <mark>
+        // elements and auto-scrolls to them, which disrupts screen readers
+        // (spurious "highlight" announcements + focus/scroll jumps) with no
+        // keyboard affordance to dismiss it.
+        highlightSearchTermsOnTargetPage: false,
         explicitSearchResultPath: true,
       }),
     ],
@@ -115,6 +122,9 @@ const config = {
       colorMode: {
         respectPrefersColorScheme: true,
       },
+      mermaid: {
+        theme: { light: 'neutral', dark: 'dark' },
+      },
       docs: {
         sidebar: {
           hideable: true,
@@ -122,7 +132,7 @@ const config = {
         },
       },
       navbar: {
-        title: 'HVE Core',
+        title: labelRegistry.hveCore,
         logo: {
           alt: 'Microsoft',
           src: 'img/microsoft-logo.svg',
@@ -134,17 +144,17 @@ const config = {
             type: 'docSidebar',
             sidebarId: 'docsSidebar',
             position: 'left',
-            label: 'Documentation',
+            label: labelRegistry.documentation,
           },
           {
             type: 'dropdown',
-            label: 'Topics',
+            label: labelRegistry.topics,
             position: 'left',
             items: [
-              { label: 'Get Started', to: '/docs/getting-started/' },
-              { label: 'Workflows', to: '/docs/rpi/' },
-              { label: 'Customize', to: '/docs/customization/' },
-              { label: 'Reference', to: '/docs/architecture/' },
+              { label: labelRegistry.gettingStarted, to: '/docs/getting-started/' },
+              { label: labelRegistry.rpiWorkflow, to: '/docs/rpi/' },
+              { label: labelRegistry.customizeAndExtend, to: '/docs/customization/' },
+              { label: labelRegistry.architecture, to: '/docs/architecture/' },
             ],
           },
           {
@@ -158,25 +168,27 @@ const config = {
         style: 'dark',
         links: [
           {
-            title: 'Documentation',
+            title: labelRegistry.documentation,
             items: [
-              { label: 'Getting Started', to: '/docs/getting-started/' },
-              { label: 'HVE Guide', to: '/docs/hve-guide/' },
-              { label: 'RPI Workflow', to: '/docs/rpi/' },
-              { label: 'Agents', to: '/docs/agents/' },
-              { label: 'Architecture', to: '/docs/architecture/' },
+              { label: labelRegistry.gettingStarted, to: '/docs/getting-started/' },
+              { label: labelRegistry.hveGuide, to: '/docs/hve-guide/' },
+              { label: labelRegistry.rpiWorkflow, to: '/docs/rpi/' },
+              { label: labelRegistry.agents, to: '/docs/agents/' },
+              { label: labelRegistry.architecture, to: '/docs/architecture/' },
             ],
           },
           {
-            title: 'Resources',
+            title: labelRegistry.resources,
             items: [
+              { label: labelRegistry.accessibility, to: '/accessibility/' },
+              { label: 'Report an accessibility issue', href: 'https://github.com/microsoft/hve-core/issues/new?labels=accessibility' },
               { label: 'Contributing', to: '/docs/contributing/' },
-              { label: 'Security', to: '/docs/security/' },
-              { label: 'Templates', to: '/docs/templates/' },
+              { label: labelRegistry.security, to: '/docs/security/' },
+              { label: labelRegistry.templates, to: '/docs/templates/' },
             ],
           },
           {
-            title: 'Community',
+            title: labelRegistry.community,
             items: [
               {
                 label: 'GitHub',
@@ -185,10 +197,10 @@ const config = {
             ],
           },
         ],
-        copyright: `© Microsoft ${new Date().getFullYear()}. Built with HVE.`,
+        copyright: `© Microsoft ${new Date().getFullYear()}. Built with ${labelRegistry.hveCoreExpanded}. Need help? Start with the documentation and the accessibility resources when available.`,
       },
       prism: {
-        theme: prismThemes.github,
+        theme: accessibleGithubPrismTheme,
         darkTheme: prismThemes.dracula,
       },
     }),

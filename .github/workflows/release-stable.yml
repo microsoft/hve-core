@@ -1,800 +1,551 @@
-name: Stable Release Pipeline
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Stable Release Preparation
+
+# Opens or refreshes the reviewed release/prerelease -> release/stable promotion
+# pull request. Release preparation and creation begin only after that promotion
+# merges, when release-stable-publish.yml runs release-please on release/stable.
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [published]
 
   workflow_dispatch:
+    inputs:
+      prerelease-tag:
+        description: "Published PreRelease tag to promote, for example prerelease-v3.3.101"
+        required: true
+        type: string
 
+# One promotion at a time per target branch. A cancelled run could leave the
+# stable per-hop promotion head half-refreshed.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-release/stable
   cancel-in-progress: false
 
 # Minimal permissions for security
 permissions:
   contents: read
 
+env:
+  SOURCE_BRANCH: release/prerelease
+  BASE_BRANCH: release/stable
+  PROMOTION_HEAD_PREFIX: release-promotion--release-prerelease--to--release-stable
+  TARGET_CONFIG: release-please-config.json
+  TARGET_MANIFEST: .release-please-manifest.json
+  SOURCE_CONFIG: release-please-prerelease-config.json
+  SOURCE_MANIFEST: .release-please-prerelease-manifest.json
+
 jobs:
-  spell-check:
-    name: Spell Check
-    uses: ./.github/workflows/spell-check.yml
-    permissions:
-      contents: read
-    with:
-      soft-fail: false
-
-  markdown-lint:
-    name: Markdown Lint
-    uses: ./.github/workflows/markdown-lint.yml
-    permissions:
-      contents: read
-    with:
-      soft-fail: false
-
-  table-format:
-    name: Table Format Check
-    uses: ./.github/workflows/table-format.yml
-    permissions:
-      contents: read
-    with:
-      soft-fail: false
-
-  dependency-pinning-scan:
-    name: Dependency Pinning Scan
-    uses: ./.github/workflows/dependency-pinning-scan.yml
-    permissions:
-      contents: read
-      security-events: write  # Required for SARIF upload to Security tab
-    with:
-      soft-fail: false
-      upload-sarif: true
-      upload-artifact: true
-
-  action-version-consistency-scan:
-    name: Action Version Consistency Scan
-    uses: ./.github/workflows/action-version-consistency-scan.yml
-    permissions:
-      contents: read
-      security-events: write  # Required for SARIF upload to Security tab
-    with:
-      soft-fail: false
-      upload-sarif: true
-      upload-artifact: true
-
-  gitleaks-scan:
-    name: Gitleaks Secret Scan
-    uses: ./.github/workflows/gitleaks-scan.yml
-    permissions:
-      contents: read
-      security-events: write  # Required for SARIF upload to Security tab
-    with:
-      soft-fail: false
-      upload-sarif: true
-      upload-artifact: true
-
-  pester-tests:
-    name: PowerShell Tests
-    uses: ./.github/workflows/pester-tests.yml
-    permissions:
-      contents: read
-      id-token: write
-    with:
-      soft-fail: false
-      changed-files-only: false
-      code-coverage: true
-
-  docusaurus-tests:
-    name: Docusaurus Tests
-    uses: ./.github/workflows/docusaurus-tests.yml
-    permissions:
-      contents: read
-    with:
-      soft-fail: false
-
-  discover-python-projects:
-    name: Discover Python Projects
+  prepare-promotion:
+    name: Prepare Stable Promotion
+    # Only a published numeric odd-minor pre-release promotes automatically.
+    # Recovery and re-promotion runs use the dispatch input.
+    if: >
+      github.event_name == 'workflow_dispatch'
+      || (
+        github.event.release.prerelease == true
+        && github.event.release.draft == false
+        && startsWith(github.event.release.tag_name, 'prerelease-v')
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: read
     outputs:
-      directories: ${{ steps.find.outputs.directories }}
-      has-projects: ${{ steps.find.outputs.has-projects }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
-      - name: Find Python projects
-        id: find
-        shell: pwsh
-        run: |
-          $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
-            Where-Object { $_.FullName -notmatch 'node_modules' } |
-            ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
-            ForEach-Object { $_ -replace '^\.[\\/]', '' } |
-            Sort-Object)
-          $jsonItems = $projectList | ForEach-Object { $_ | ConvertTo-Json -Compress }
-          $dirs = '[' + (($jsonItems) -join ',') + ']'
-          "directories=$dirs" >> $env:GITHUB_OUTPUT
-          if ($projectList.Count -eq 0) {
-            "has-projects=false" >> $env:GITHUB_OUTPUT
-            Write-Output 'No Python projects found'
-          } else {
-            "has-projects=true" >> $env:GITHUB_OUTPUT
-            Write-Output "Found Python projects: $dirs"
-          }
-
-  python-lint:
-    name: "Python Lint (${{ matrix.directory }})"
-    needs: discover-python-projects
-    if: needs.discover-python-projects.outputs.has-projects == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
-    uses: ./.github/workflows/python-lint.yml
-    permissions:
-      contents: read
-    with:
-      soft-fail: false
-      changed-files-only: false
-      working-directory: ${{ matrix.directory }}
-
-  pytest:
-    name: "Python Tests (${{ matrix.directory }})"
-    needs: discover-python-projects
-    if: needs.discover-python-projects.outputs.has-projects == 'true'
-    uses: ./.github/workflows/pytest-tests.yml
-    permissions:
-      contents: read
-      id-token: write
-    with:
-      working-directory: ${{ matrix.directory }}
-      soft-fail: false
-      changed-files-only: false
-    strategy:
-      fail-fast: false
-      matrix:
-        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
-
-  release-please:
-    name: Release Please
-    needs:
-      - spell-check
-      - markdown-lint
-      - table-format
-      - dependency-pinning-scan
-      - gitleaks-scan
-      - pester-tests
-      - docusaurus-tests
-      - python-lint
-      - pytest
-    # Allow release-please to run when conditional CI jobs (python-lint,
-    # pytest) are skipped. Block only on actual failures or cancellations.
-    if: ${{ !cancelled() && !failure() }}
-    runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
-      version: ${{ steps.release.outputs.version }}
-      major: ${{ steps.release.outputs.major }}
-      minor: ${{ steps.release.outputs.minor }}
-      patch: ${{ steps.release.outputs.patch }}
-    permissions:
-      contents: write
+      promote: ${{ steps.promote.outputs.promote }}
+      version: ${{ steps.resolve.outputs.version }}
+      promotion-head: ${{ steps.state.outputs.promotion-head }}
+      source-sha: ${{ steps.state.outputs.source-sha }}
+      source-tag: ${{ steps.state.outputs.source-tag }}
+      source-version: ${{ steps.state.outputs.source-version }}
+      stable-baseline: ${{ steps.state.outputs.stable-baseline }}
     steps:
       - name: Generate GitHub App Token
         id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
-      - name: Run release-please
-        id: release
-        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+      # Executable release tooling always comes from main, never from the
+      # promotion head or from the release branch being prepared.
+      - name: Checkout trusted release tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          token: ${{ steps.app-token.outputs.token }}
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
-          # On release commits, skip PR creation to prevent bogus PRs
-          # from draft release lazy tag timing. Release commits have zero
-          # unreleased changes so skipping loses nothing. The tag is
-          # created in the next step, ensuring subsequent runs find it.
-          skip-github-pull-request: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(main)') }}
+          ref: main
+          sparse-checkout: |
+            scripts/release/Resolve-ReleasePromotionVersion.ps1
+            scripts/release/Set-RepositoryVersion.ps1
+            scripts/plugins/Sync-PluginManifest.ps1
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
 
-      - name: Validate even-minor convention
-        if: ${{ steps.release.outputs.release_created == 'true' }}
+      # Full history: the promotion merges the selected published tag commit
+      # and the whole range between both release branches, which shallow
+      # history cannot express.
+      - name: Checkout promotion working tree
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          path: promotion
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
+
+      - name: Resolve promotion state
+        id: state
+        env:
+          DISPATCH_TAG: ${{ inputs.prerelease-tag }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
         run: |
-          MINOR="${{ steps.release.outputs.minor }}"
-          if (( MINOR % 2 != 0 )); then
-            echo "::error::Release version ${{ steps.release.outputs.version }} has odd minor ($MINOR). Even/odd convention requires even minor for stable releases."
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/promotion"
+
+          # The anchor is both the changelog commit cutoff and the seed identity,
+          # so it is captured from the current source configuration before any
+          # target-owned restore can replace that file with a copy the seeded
+          # branch predates or never carried.
+          BOOTSTRAP_SHA=$(jq -r '.packages["."]["bootstrap-sha"] // ""' "$TARGET_CONFIG")
+          if ! printf '%s' "$BOOTSTRAP_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::$TARGET_CONFIG carries no lowercase 40-character bootstrap-sha anchor"
             exit 1
           fi
 
-      # Workaround: release-please with "draft": true uses lazy tag
-      # creation. The git tag is not materialized until the release is
-      # published. Without the tag, release-please cannot find the draft
-      # on subsequent runs, breaking version anchoring and causing bogus
-      # major-version PRs. The skip-github-pull-request conditional above
-      # prevents PR creation on release commits (zero unreleased changes),
-      # and this step creates the tag so subsequent runs find the release.
-      # Replace both workarounds with "force-tag-creation": true in
-      # release-please-config.json once release-please-action ships a
-      # version that includes googleapis/release-please#2627.
-      - name: Create git tag for draft release
-        if: ${{ steps.release.outputs.release_created == 'true' }}
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          TAG="${{ steps.release.outputs.tag_name }}"
-          REPO="${{ github.repository }}"
-          if ! gh api "/repos/$REPO/git/refs/tags/$TAG" --silent 2>/dev/null; then
-            gh api "/repos/$REPO/git/refs" \
-              -f "ref=refs/tags/$TAG" \
-              -f "sha=${{ github.sha }}"
-            echo "Created git tag $TAG -> ${{ github.sha }}"
+          # A release branch is seeded and protected by hand. Each channel config
+          # anchor names the exact commit its branch is created at; this workflow
+          # never creates or moves a branch.
+          for entry in "$SOURCE_BRANCH:$SOURCE_CONFIG" "$BASE_BRANCH:$TARGET_CONFIG"; do
+            branch=${entry%%:*}
+            seed_config=${entry#*:}
+            if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+              continue
+            fi
+            SEED_SHA=$(jq -r '.packages["."]["bootstrap-sha"] // ""' "$seed_config")
+            echo "::notice::$branch does not exist yet; create it at $seed_config bootstrap-sha $SEED_SHA and protect both release branches before promotions can open"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          done
+
+          if [ "$EVENT_NAME" = 'workflow_dispatch' ]; then
+            SOURCE_TAG="$DISPATCH_TAG"
           else
-            echo "Git tag $TAG already exists"
+            SOURCE_TAG="$EVENT_TAG"
+          fi
+          if [[ "$SOURCE_TAG" == *$'\n'* || "$SOURCE_TAG" == *$'\r'* || ! "$SOURCE_TAG" =~ ^prerelease-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Stable promotion requires a published prerelease-vMAJOR.MINOR.PATCH PreRelease tag"
+            exit 1
+          fi
+          SOURCE_VERSION=${SOURCE_TAG#prerelease-v}
+          SOURCE_MINOR=${SOURCE_VERSION#*.}
+          SOURCE_MINOR=${SOURCE_MINOR%%.*}
+          if (( 10#$SOURCE_MINOR % 2 == 0 )); then
+            echo "::error::Promotion source $SOURCE_VERSION has an even minor; Stable promotes only the odd-minor PreRelease line"
+            exit 1
+          fi
+          PROMOTION_HEAD="$PROMOTION_HEAD_PREFIX--$SOURCE_TAG"
+
+          git fetch --no-tags origin \
+            "+refs/heads/$SOURCE_BRANCH:refs/remotes/origin/$SOURCE_BRANCH" \
+            "+refs/heads/$BASE_BRANCH:refs/remotes/origin/$BASE_BRANCH"
+          if ! git fetch --no-tags origin "+refs/tags/$SOURCE_TAG:refs/tags/$SOURCE_TAG"; then
+            echo "::error::Published PreRelease tag $SOURCE_TAG does not exist"
+            exit 1
+          fi
+          if ! SOURCE_SHA=$(git rev-parse --verify --end-of-options "refs/tags/$SOURCE_TAG^{commit}"); then
+            echo "::error::$SOURCE_TAG does not resolve to a commit"
+            exit 1
           fi
 
-  close-milestone:
-    name: Close Release Milestone
-    needs: [release-please]
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-    steps:
-      - name: Close milestone for released version
+          release_state=$(gh api "/repos/$REPOSITORY/releases/tags/$SOURCE_TAG" \
+            --jq '[.draft, .prerelease, (.published_at != null), .tag_name] | @tsv' 2>/dev/null || true)
+          if [ "$release_state" != $'false\ttrue\ttrue\t'"$SOURCE_TAG" ]; then
+            echo "::error::$SOURCE_TAG is not a published, non-draft GitHub PreRelease"
+            exit 1
+          fi
+
+          MANIFEST_VERSION=$(git show "$SOURCE_SHA:$SOURCE_MANIFEST" | jq -r '.["."] // ""')
+          if [ "$MANIFEST_VERSION" != "$SOURCE_VERSION" ]; then
+            echo "::error::$SOURCE_TAG resolves to $SOURCE_SHA but $SOURCE_MANIFEST carries $MANIFEST_VERSION"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$SOURCE_SHA" "refs/remotes/origin/$SOURCE_BRANCH"; then
+            echo "::error::$SOURCE_TAG commit $SOURCE_SHA is not contained in $SOURCE_BRANCH"
+            exit 1
+          fi
+
+          STABLE_BASELINE=$(git show "refs/remotes/origin/$BASE_BRANCH:$TARGET_MANIFEST" | jq -r '.["."] // ""')
+          if [[ "$STABLE_BASELINE" == *$'\n'* || "$STABLE_BASELINE" == *$'\r'* || ! "$STABLE_BASELINE" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::$BASE_BRANCH $TARGET_MANIFEST has no MAJOR.MINOR.PATCH version"
+            exit 1
+          fi
+          STABLE_MINOR=${STABLE_BASELINE#*.}
+          STABLE_MINOR=${STABLE_MINOR%%.*}
+          if (( 10#$STABLE_MINOR % 2 != 0 )); then
+            echo "::error::Stable baseline $STABLE_BASELINE has an odd minor"
+            exit 1
+          fi
+
+          if [ "$(git rev-list --count "refs/remotes/origin/$BASE_BRANCH..$SOURCE_SHA")" -eq 0 ]; then
+            echo "::notice::$SOURCE_TAG has no commits ahead of $BASE_BRANCH"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Interlock: a managed release pull request owns the target
+          # branch until it merges, and a foreign promotion head would
+          # race this one.
+          open_prs=$(gh pr list --base "$BASE_BRANCH" --state open --limit 100 \
+            --json number,headRefName -R "$REPOSITORY")
+          managed_release_prs=$(printf '%s' "$open_prs" | jq -r \
+            '[.[] | select(.headRefName | startswith("release-please--")) | "#\(.number) \(.headRefName)"] | join(", ")')
+          if [ -n "$managed_release_prs" ]; then
+            echo "::notice::Managed release pull request still owns $BASE_BRANCH: $managed_release_prs"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          foreign_promotion_prs=$(printf '%s' "$open_prs" | jq -r --arg head "$PROMOTION_HEAD" \
+            '[.[] | select(.headRefName | startswith("release-promotion--")) | select(.headRefName != $head) | "#\(.number) \(.headRefName)"] | join(", ")')
+          if [ -n "$foreign_promotion_prs" ]; then
+            echo "::notice::Another promotion pull request still owns $BASE_BRANCH: $foreign_promotion_prs"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          {
+            echo "continue=true"
+            echo "bootstrap-sha=$BOOTSTRAP_SHA"
+            echo "promotion-head=$PROMOTION_HEAD"
+            echo "source-sha=$SOURCE_SHA"
+            echo "source-tag=$SOURCE_TAG"
+            echo "source-version=$SOURCE_VERSION"
+            echo "stable-baseline=$STABLE_BASELINE"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Resolve exact Stable version
+        id: resolve
+        if: ${{ steps.state.outputs.continue == 'true' }}
+        env:
+          SOURCE_VERSION: ${{ steps.state.outputs.source-version }}
+          STABLE_BASELINE: ${{ steps.state.outputs.stable-baseline }}
+        run: |
+          set -euo pipefail
+          RESOLVED=$(pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Resolve-ReleasePromotionVersion.ps1" \
+              -Channel Stable \
+              -PromotedSourceVersion "$SOURCE_VERSION" \
+              -CurrentStableVersion "$STABLE_BASELINE" \
+              -AsJson)
+
+          VERSION=$(printf '%s' "$RESOLVED" | jq -r '.Version // ""')
+          if [[ "$VERSION" == *$'\n'* || "$VERSION" == *$'\r'* || ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Resolved Stable version $VERSION is not MAJOR.MINOR.PATCH"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Promoting $SOURCE_BRANCH to $BASE_BRANCH as $VERSION"
+
+      # Read-only pre-flight before any promotion branch mutation or release
+      # intent write: an already occupied tag or GitHub release is immutable,
+      # so release-please could never issue this candidate.
+      - name: Validate candidate release identity is unoccupied
+        if: ${{ steps.state.outputs.continue == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
-          MAJOR: ${{ needs.release-please.outputs.major }}
-          MINOR: ${{ needs.release-please.outputs.minor }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ steps.resolve.outputs.version }}
         run: |
-          REPO="${{ github.repository }}"
-          TITLE="v${MAJOR}.${MINOR}.0"
-          NUMBER=$(gh api "/repos/$REPO/milestones?state=open&per_page=100" \
-            --jq ".[] | select(.title == \"$TITLE\") | .number")
-          if [ -n "$NUMBER" ]; then
-            gh api "/repos/$REPO/milestones/$NUMBER" \
-              -X PATCH -f state=closed
-            echo "✅ Closed milestone $TITLE (#$NUMBER)"
-          else
-            echo "ℹ️ No open milestone found matching '$TITLE' — skipping"
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/promotion"
+
+          # A transport or authentication failure aborts under set -e instead
+          # of reporting the identity as available.
+          CANDIDATE_REF="refs/tags/v$VERSION"
+          OCCUPIED=$(git ls-remote origin "$CANDIDATE_REF")
+          if [ -n "$OCCUPIED" ]; then
+            echo "::error::Candidate release identity $CANDIDATE_REF already exists"
+            exit 1
           fi
 
-  reset-prerelease:
-    name: Reset Pre-Release Branch
-    needs: [release-please]
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+          # Only an explicit not-found response proves the release identity is
+          # free. A success means it is occupied, and every auth, rate-limit,
+          # or transport outcome fails closed.
+          set +e
+          PROBE=$(gh api --include "/repos/$REPOSITORY/releases/tags/v$VERSION" 2>&1)
+          PROBE_EXIT=$?
+          set -e
+          if [ "$PROBE_EXIT" -eq 0 ]; then
+            echo "::error::A GitHub release already exists for v$VERSION"
+            exit 1
+          fi
+          if ! printf '%s\n' "$PROBE" | grep -Eq '^HTTP/[0-9.]+ 404|\(HTTP 404\)'; then
+            STATUS_LINE=$(printf '%s\n' "$PROBE" | grep -m1 -E '^HTTP/[0-9.]+ [0-9]{3}' || true)
+            echo "::error::Release lookup for v$VERSION returned no explicit not-found result: ${STATUS_LINE:-no HTTP status}"
+            exit 1
+          fi
+
+          echo "Release identity v$VERSION is unoccupied"
+
+      - name: Refresh the promotion head
+        id: promote
+        if: ${{ steps.state.outputs.continue == 'true' }}
+        env:
+          BOOTSTRAP_SHA: ${{ steps.state.outputs.bootstrap-sha }}
+          PROMOTION_HEAD: ${{ steps.state.outputs.promotion-head }}
+          SOURCE_SHA: ${{ steps.state.outputs.source-sha }}
+          SOURCE_TAG: ${{ steps.state.outputs.source-tag }}
+          STABLE_BASELINE: ${{ steps.state.outputs.stable-baseline }}
+          VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/promotion"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          EXPECTED_HEAD="$PROMOTION_HEAD_PREFIX--$SOURCE_TAG"
+          if [ "$PROMOTION_HEAD" != "$EXPECTED_HEAD" ]; then
+            echo "::error::Promotion head $PROMOTION_HEAD does not match selected source $EXPECTED_HEAD"
+            exit 1
+          fi
+
+          RELEASE_OWNED_FILES=(
+            'CHANGELOG.md' \
+            "$TARGET_CONFIG" \
+            "$TARGET_MANIFEST" \
+            'package.json' \
+            'package-lock.json' \
+            'extension/templates/package.template.json' \
+            'plugin.json' \
+            '.github/plugin/marketplace.json'
+          )
+          ALLOWLIST=$(printf '%s\n' "${RELEASE_OWNED_FILES[@]}")
+
+          merge_ref() {
+            local ref="$1"
+            local favor="$2"
+            if git merge --no-edit "$ref"; then
+              return 0
+            fi
+            local conflicts unexpected
+            conflicts=$(git diff --name-only --diff-filter=U)
+            unexpected=$(printf '%s\n' "$conflicts" | grep -vxF "$ALLOWLIST" || true)
+            git merge --abort
+            if [ -n "$unexpected" ]; then
+              echo "::error::Merging $ref conflicts outside release-owned files:"
+              printf '%s\n' "$unexpected"
+              exit 1
+            fi
+            # Every remaining conflict is release-owned state that the
+            # restore below rewrites from the target branch.
+            git merge --no-edit -X "$favor" "$ref"
+          }
+
+          if git ls-remote --exit-code origin "refs/heads/$PROMOTION_HEAD" >/dev/null 2>&1; then
+            git fetch --no-tags origin "+refs/heads/$PROMOTION_HEAD:refs/remotes/origin/$PROMOTION_HEAD"
+            git checkout -B "$PROMOTION_HEAD" "refs/remotes/origin/$PROMOTION_HEAD"
+          else
+            git checkout -B "$PROMOTION_HEAD" "refs/remotes/origin/$BASE_BRANCH"
+          fi
+
+          # The per-hop head is stable: fast-forward it from the target,
+          # then merge the selected published tag commit. Neither step
+          # force-updates it.
+          merge_ref "refs/remotes/origin/$BASE_BRANCH" theirs
+          merge_ref "$SOURCE_SHA" theirs
+
+          # Target-owned release state is restored whole, so a promotion
+          # never carries a source changelog or catalog forward.
+          # A seeded branch can predate its branch-local manifest, so that one
+          # is restored only when the base already carries it and the first
+          # reviewed promotion introduces it from the merged source instead of
+          # failing on an absent path. The channel config is restored further
+          # below, once the seed anchor establishes who owns it.
+          restore_from_base() {
+            local mode="$1"
+            shift
+            local path
+            local present=()
+            for path in "$@"; do
+              if git cat-file -e "refs/remotes/origin/$BASE_BRANCH:$path" 2>/dev/null; then
+                present+=("$path")
+              elif [ "$mode" = 'required' ]; then
+                echo "::error::$BASE_BRANCH carries no $path"
+                exit 1
+              else
+                echo "::notice::$BASE_BRANCH carries no $path; the merged source copy becomes its first branch-local state"
+              fi
+            done
+            if [ "${#present[@]}" -gt 0 ]; then
+              git checkout "refs/remotes/origin/$BASE_BRANCH" -- "${present[@]}"
+            fi
+          }
+
+          restore_from_base required CHANGELOG.md .github/plugin/marketplace.json
+          restore_from_base optional "$TARGET_MANIFEST"
+
+          # Reapply selected-source shared content on every rerun. Once the
+          # source commit is an ancestor, merging it again is a no-op.
+          git checkout "$SOURCE_SHA" -- \
+            package.json package-lock.json \
+            extension/templates/package.template.json
+
+          TARGET_VERSION=$(jq -r '.["."] // ""' "$TARGET_MANIFEST")
+          if [ "$TARGET_VERSION" != "$STABLE_BASELINE" ]; then
+            echo "::error::Restored $TARGET_MANIFEST is $TARGET_VERSION but the resolved baseline is $STABLE_BASELINE"
+            exit 1
+          fi
+
+          # The captured config anchor owns the seeded branch identity. It comes
+          # from the current source configuration, never from the restored
+          # target copy the seed can predate.
+          if ! printf '%s' "$BOOTSTRAP_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::Captured bootstrap-sha anchor is not a lowercase 40-character commit id"
+            exit 1
+          fi
+          # The seed anchor decides who owns the channel config. A branch still
+          # sitting on its bootstrap commit is the hand-seeded first cutover,
+          # and that historical seed predates current tag, draft, and versioning
+          # policy, so the merged source config is what establishes it. Every
+          # later promotion restores the target-owned config instead, keeping
+          # ordinary steady-state release settings on the branch.
+          BASE_TIP=$(git rev-parse "refs/remotes/origin/$BASE_BRANCH")
+          if [ "$BASE_TIP" = "$BOOTSTRAP_SHA" ]; then
+            echo "::notice::$BASE_BRANCH is still at its bootstrap seed; the merged source $TARGET_CONFIG becomes its first branch-local release configuration"
+          else
+            restore_from_base optional "$TARGET_CONFIG"
+          fi
+
+          # The selected published source decides component membership, and the
+          # target baseline decides the version. Neither transforms a source
+          # ref, records a release candidate, nor generates a plugin root.
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Set-RepositoryVersion.ps1" \
+              -Version "$TARGET_VERSION" \
+              -RepoRoot "$PWD"
+            pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
+              -RepoRoot "$PWD"
+
+          # The captured changelog cutoff and the exact release intent are
+          # written last, so the effective target configuration carries both
+          # whether it was restored from the branch or merged from the source.
+          jq --arg version "$VERSION" --arg bootstrap "$BOOTSTRAP_SHA" '
+            .packages["."]["bootstrap-sha"] = $bootstrap
+            | .packages["."]["release-as"] = $version
+          ' "$TARGET_CONFIG" > "$TARGET_CONFIG.promotion"
+          mv "$TARGET_CONFIG.promotion" "$TARGET_CONFIG"
+          WRITTEN_INTENT=$(jq -r '.packages["."]["release-as"] // ""' "$TARGET_CONFIG")
+          if [ "$WRITTEN_INTENT" != "$VERSION" ]; then
+            echo "::error::$TARGET_CONFIG carries release-as $WRITTEN_INTENT instead of $VERSION"
+            exit 1
+          fi
+          WRITTEN_ANCHOR=$(jq -r '.packages["."]["bootstrap-sha"] // ""' "$TARGET_CONFIG")
+          if [ "$WRITTEN_ANCHOR" != "$BOOTSTRAP_SHA" ]; then
+            echo "::error::$TARGET_CONFIG carries bootstrap-sha $WRITTEN_ANCHOR instead of $BOOTSTRAP_SHA"
+            exit 1
+          fi
+
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
+              -RepoRoot "$PWD" \
+              -Check
+
+          git add -- "${RELEASE_OWNED_FILES[@]}"
+          if git diff --cached --quiet; then
+            git reset --quiet
+          else
+            git commit -m "chore(release): promote $SOURCE_BRANCH to $BASE_BRANCH as $VERSION"
+          fi
+
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse "refs/remotes/origin/$BASE_BRANCH")" ]; then
+            echo "::notice::$PROMOTION_HEAD matches $BASE_BRANCH; nothing to promote"
+            echo "promote=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git push origin "HEAD:refs/heads/$PROMOTION_HEAD"
+          echo "promote=true" >> "$GITHUB_OUTPUT"
+
+  open-promotion-pr:
+    name: Open Stable Promotion PR
+    needs: [prepare-promotion]
+    if: ${{ needs.prepare-promotion.outputs.promote == 'true' }}
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
     steps:
       - name: Generate GitHub App Token
         id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token }}
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: "24"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install PowerShell-Yaml
-        shell: pwsh
-        run: |
-          if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml | Where-Object { $_.Version -eq '0.4.7' })) {
-            Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
-          }
-
-      - name: Reset pre-release branch
-        id: reset-branch
+      # Auto-merge is deliberately never enabled. A human must review and merge
+      # this promotion before release-please prepares the Stable release PR.
+      - name: Open or update the promotion pull request
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
+          VERSION: ${{ needs.prepare-promotion.outputs.version }}
+          HEAD_BRANCH: ${{ needs.prepare-promotion.outputs.promotion-head }}
+          BASE_BRANCH: release/stable
+          SOURCE_BRANCH: release/prerelease
+          SOURCE_SHA: ${{ needs.prepare-promotion.outputs.source-sha }}
+          SOURCE_TAG: ${{ needs.prepare-promotion.outputs.source-tag }}
+          SOURCE_VERSION: ${{ needs.prepare-promotion.outputs.source-version }}
+          STABLE_BASELINE: ${{ needs.prepare-promotion.outputs.stable-baseline }}
         run: |
-          BRANCH="prerelease/next"
-          RELEASED="${{ needs.release-please.outputs.version }}"
-          MAJOR=$(echo "$RELEASED" | cut -d. -f1)
-          MINOR=$(echo "$RELEASED" | cut -d. -f2)
-          PRE_VERSION="${MAJOR}.$((MINOR + 1)).0"
-          echo "pre-version=${PRE_VERSION}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          EXPECTED_HEAD="$PROMOTION_HEAD_PREFIX--$SOURCE_TAG"
+          if [ "$HEAD_BRANCH" != "$EXPECTED_HEAD" ]; then
+            echo "::error::Promotion head $HEAD_BRANCH does not match selected source $EXPECTED_HEAD"
+            exit 1
+          fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+          TITLE="chore(release): promote ${SOURCE_BRANCH} to ${BASE_BRANCH} as ${VERSION}"
+          BODY="## Stable promotion ${VERSION}
 
-          # Build the version-bump commit before pushing.
-          # A single force-push of the final state prevents the remote from
-          # ever seeing prerelease/next identical to main, which would cause
-          # GitHub to auto-close the open PR.
-          git checkout -B "$BRANCH"
+          Promotes published \`${SOURCE_TAG}\` from \`${SOURCE_BRANCH}\` into
+          \`${BASE_BRANCH}\` on the even-minor stable line.
 
-          # Update all version-tracked files and regenerate plugin outputs
-          pwsh -File scripts/release/Update-VersionFiles.ps1 -Version "$PRE_VERSION"
+          | Input | Value |
+          |-------|-------|
+          | Published PreRelease | \`${SOURCE_TAG}\` |
+          | Source commit | \`${SOURCE_SHA}\` |
+          | Promoted pre-release | \`${SOURCE_VERSION}\` |
+          | Stable baseline | \`${STABLE_BASELINE}\` |
+          | Exact release intent | \`${VERSION}\` |
 
-          git add -A
-          git commit -m "chore: reset pre-release version to ${PRE_VERSION}" || echo "No version changes to commit"
-          git push --force origin "$BRANCH"
+          Target-owned changelog, release-please config, and manifest come from
+          \`${BASE_BRANCH}\`. The plugin manifest is resynchronized from the
+          selected published source and every version field is normalized to the
+          target baseline.
 
-      - name: Create or update pre-release PR
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          REPO: ${{ github.repository }}
-        run: |
-          BRANCH="prerelease/next"
-          RELEASED="${{ needs.release-please.outputs.version }}"
-          PRE_VERSION="${{ steps.reset-branch.outputs.pre-version }}"
-          TITLE="chore(main): pre-release ${PRE_VERSION}"
-          BODY="## Pre-Release ${PRE_VERSION}
-
-          Reset after release ${RELEASED}. Next push to main will update this PR.
+          After this pull request merges, \`release-stable-publish.yml\` runs
+          release-please on \`${BASE_BRANCH}\`. Release-please then opens its
+          separately reviewed release PR containing version, changelog, and
+          manifest updates.
 
           ---
-          *Managed automatically by pre-release workflow.*"
+          *Managed automatically by the stable release preparation workflow. Auto-merge is not enabled.*"
 
-          PR_NUMBER=$(gh pr list --head "$BRANCH" --state open \
+          PR_NUMBER=$(gh pr list --head "$HEAD_BRANCH" --base "$BASE_BRANCH" --state open \
             --json number --jq '.[0].number // empty' \
             -R "$REPO")
 
           if [ -n "$PR_NUMBER" ]; then
-            gh pr edit "$PR_NUMBER" \
-              --title "$TITLE" \
-              --body "$BODY" \
-              -R "$REPO"
-            echo "Updated PR #$PR_NUMBER to $PRE_VERSION"
+            gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY" -R "$REPO"
+            echo "Updated promotion PR #$PR_NUMBER for $VERSION"
           else
             gh pr create \
-              --head "$BRANCH" \
-              --base main \
+              --head "$HEAD_BRANCH" \
+              --base "$BASE_BRANCH" \
               --title "$TITLE" \
               --body "$BODY" \
-              --label "autorelease: prerelease" \
               -R "$REPO"
-            echo "Created new pre-release PR"
+            echo "Created promotion PR for $VERSION"
           fi
-
-  extension-package-release:
-    name: Package VS Code Extensions (Release)
-    needs: [release-please]
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    uses: ./.github/workflows/extension-package.yml
-    with:
-      version: ${{ needs.release-please.outputs.version }}
-    permissions:
-      contents: read
-
-  plugin-package-release:
-    name: Package Plugins (Release)
-    needs: [release-please]
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    uses: ./.github/workflows/plugin-package.yml
-    with:
-      version: ${{ needs.release-please.outputs.version }}
-    permissions:
-      contents: read
-
-  generate-dependency-sbom:
-    name: Generate Dependency SBOM
-    needs: [release-please]
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    runs-on: ubuntu-latest
-    permissions:
-      # write required for gh release upload to attach SBOM to the release
-      contents: write
-    steps:
-      - name: Checkout dependency manifests
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          sparse-checkout: |
-            package.json
-            package-lock.json
-            .syft.yaml
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Generate dependency SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          path: .
-          format: spdx-json
-          output-file: dependencies.spdx.json
-          upload-release-assets: false
-          upload-artifact: false
-          config: .syft.yaml
-          dependency-snapshot: true
-
-      - name: Upload dependency SBOM artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: sbom-dependencies
-          path: dependencies.spdx.json
-
-      - name: Upload dependency SBOM to release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release upload "${{ needs.release-please.outputs.tag_name }}" \
-            "dependencies.spdx.json" \
-            --clobber -R "${{ github.repository }}"
-
-  attest-and-upload:
-    name: Attest and Upload (${{ matrix.id }})
-    needs: [release-please, extension-package-release, generate-dependency-sbom]
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.extension-package-release.outputs.collections-matrix) }}
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    steps:
-      - name: Checkout Syft config
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          sparse-checkout: .syft.yaml
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Download dependency SBOM
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sbom-dependencies
-          path: ./sbom
-
-      - name: Download VSIX artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: extension-vsix-${{ matrix.id }}
-          path: ./dist
-
-      - name: Resolve VSIX filename
-        id: vsix
-        run: |
-          shopt -s nullglob
-          files=(dist/*.vsix)
-          if [[ ${#files[@]} -eq 0 ]]; then
-            echo "::error::No VSIX file found in dist/"
-            exit 1
-          fi
-          if [[ ${#files[@]} -gt 1 ]]; then
-            echo "::error::Expected exactly one VSIX file but found ${#files[@]}: ${files[*]}"
-            exit 1
-          fi
-          VSIX_FILE="${files[0]}"
-          VSIX_NAME=$(basename "$VSIX_FILE")
-          echo "file=$VSIX_FILE" >> "$GITHUB_OUTPUT"
-          echo "name=$VSIX_NAME" >> "$GITHUB_OUTPUT"
-
-      - name: Generate SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          file: ${{ steps.vsix.outputs.file }}
-          format: spdx-json
-          output-file: dist/${{ steps.vsix.outputs.name }}.spdx.json
-          artifact-name: sbom-${{ matrix.id }}
-          upload-release-assets: false
-          upload-artifact: true
-          config: .syft.yaml
-
-      - name: Verify SBOM files exist
-        run: |
-          test -f "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
-            || { echo "::error::Per-VSIX SBOM not found: dist/${{ steps.vsix.outputs.name }}.spdx.json"; exit 1; }
-          test -f "sbom/dependencies.spdx.json" \
-            || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
-
-      - name: Attest build provenance
-        id: attest
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
-        with:
-          subject-path: ${{ steps.vsix.outputs.file }}
-
-      - name: Attest SBOM
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-path: ${{ steps.vsix.outputs.file }}
-          sbom-path: dist/${{ steps.vsix.outputs.name }}.spdx.json
-
-      - name: Attest dependency SBOM
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-path: ${{ steps.vsix.outputs.file }}
-          sbom-path: sbom/dependencies.spdx.json
-
-      - name: Upload assets to GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
-        run: |
-          cp "$BUNDLE_PATH" \
-            "dist/${{ steps.vsix.outputs.name }}.sigstore.json"
-          jq -c '.dsseEnvelope' "$BUNDLE_PATH" > \
-            "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl"
-          gh release upload "${{ needs.release-please.outputs.tag_name }}" \
-            "${{ steps.vsix.outputs.file }}" \
-            "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
-            "dist/${{ steps.vsix.outputs.name }}.sigstore.json" \
-            "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl" \
-            --clobber -R "${{ github.repository }}"
-
-  upload-plugin-packages:
-    name: Attest and Upload Plugin (${{ matrix.id }})
-    needs: [release-please, plugin-package-release, generate-dependency-sbom]
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.plugin-package-release.outputs.collections-matrix) }}
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    steps:
-      - name: Checkout Syft config
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          sparse-checkout: .syft.yaml
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Download dependency SBOM
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sbom-dependencies
-          path: ./sbom
-
-      - name: Download plugin artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: plugin-package-${{ matrix.id }}
-          path: ./dist/plugins
-
-      - name: Verify plugin archive exists
-        run: |
-          PLUGIN_ARCHIVE="dist/plugins/${{ matrix.id }}.zip"
-          if [ ! -f "$PLUGIN_ARCHIVE" ]; then
-            echo "::error::Plugin archive not found for collection ${{ matrix.id }}"
-            exit 1
-          fi
-
-      - name: Generate SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          file: dist/plugins/${{ matrix.id }}.zip
-          format: spdx-json
-          output-file: dist/plugins/${{ matrix.id }}.zip.spdx.json
-          artifact-name: sbom-plugin-${{ matrix.id }}
-          upload-release-assets: false
-          upload-artifact: true
-          config: .syft.yaml
-
-      - name: Verify SBOM files exist
-        run: |
-          test -f "dist/plugins/${{ matrix.id }}.zip.spdx.json" \
-            || { echo "::error::Per-plugin SBOM not found: dist/plugins/${{ matrix.id }}.zip.spdx.json"; exit 1; }
-          test -f "sbom/dependencies.spdx.json" \
-            || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
-
-      - name: Attest build provenance
-        id: attest
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
-        with:
-          subject-path: dist/plugins/${{ matrix.id }}.zip
-
-      - name: Attest SBOM
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-path: dist/plugins/${{ matrix.id }}.zip
-          sbom-path: dist/plugins/${{ matrix.id }}.zip.spdx.json
-
-      - name: Attest dependency SBOM
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-path: dist/plugins/${{ matrix.id }}.zip
-          sbom-path: sbom/dependencies.spdx.json
-
-      - name: Upload assets to GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
-        run: |
-          cp "$BUNDLE_PATH" \
-            "dist/plugins/${{ matrix.id }}.zip.sigstore.json"
-          jq -c '.dsseEnvelope' "$BUNDLE_PATH" > \
-            "dist/plugins/${{ matrix.id }}.zip.intoto.jsonl"
-          gh release upload "${{ needs.release-please.outputs.tag_name }}" \
-            "dist/plugins/${{ matrix.id }}.zip" \
-            "dist/plugins/${{ matrix.id }}.zip.spdx.json" \
-            "dist/plugins/${{ matrix.id }}.zip.sigstore.json" \
-            "dist/plugins/${{ matrix.id }}.zip.intoto.jsonl" \
-            --clobber -R "${{ github.repository }}"
-
-  sbom-diff:
-    name: SBOM Dependency Diff
-    needs: [release-please, generate-dependency-sbom]
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    permissions:
-      contents: write
-    steps:
-      - name: Download current dependency SBOM
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sbom-dependencies
-          path: ./current
-
-      - name: Verify current dependency SBOM
-        run: |
-          test -f "current/dependencies.spdx.json" \
-            || { echo "::error::Current dependency SBOM not found in artifact"; exit 1; }
-
-      - name: Download previous release dependency SBOM
-        id: previous
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          REPO="${{ github.repository }}"
-          PREV_TAG=$(gh api "/repos/$REPO/releases/latest" --jq '.tag_name' 2>/dev/null || echo "")
-          if [ -z "$PREV_TAG" ]; then
-            echo "No previous release found"
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "Previous release: $PREV_TAG"
-          echo "tag=$PREV_TAG" >> "$GITHUB_OUTPUT"
-          mkdir -p previous
-          if gh release download "$PREV_TAG" -R "$REPO" -p "dependencies.spdx.json" -D previous 2>/dev/null; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Previous release has no dependency SBOM"
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Generate dependency diff
-        if: ${{ steps.previous.outputs.found == 'true' }}
-        run: |
-          python3 <<'PYTHON'
-          import json
-          import pathlib
-
-          def load_packages(path):
-              with open(path) as f:
-                  data = json.load(f)
-              root_ids = set(data.get('documentDescribes', []))
-              pkgs = {}
-              for p in data.get('packages', []):
-                  if p.get('SPDXID', '') in root_ids:
-                      continue
-                  name = p.get('name', 'unknown')
-                  version = p.get('versionInfo', 'unknown')
-                  pkgs[name] = version
-              return pkgs
-
-          current = load_packages('current/dependencies.spdx.json')
-          previous = load_packages('previous/dependencies.spdx.json')
-
-          added = {k: v for k, v in current.items() if k not in previous}
-          removed = {k: v for k, v in previous.items() if k not in current}
-          changed = {
-              k: (previous[k], current[k])
-              for k in current
-              if k in previous and current[k] != previous[k]
-          }
-
-          lines = ['# Dependency SBOM Diff', '']
-          if not added and not removed and not changed:
-              lines.append('No dependency changes detected.')
-          else:
-              if added:
-                  lines.extend(['## Added', '', '| Package | Version |', '|---------|---------|'])
-                  for name in sorted(added):
-                      lines.append(f'| {name} | {added[name]} |')
-                  lines.append('')
-              if removed:
-                  lines.extend(['## Removed', '', '| Package | Version |', '|---------|---------|'])
-                  for name in sorted(removed):
-                      lines.append(f'| {name} | {removed[name]} |')
-                  lines.append('')
-              if changed:
-                  lines.extend([
-                      '## Version Changes', '',
-                      '| Package | Previous | Current |',
-                      '|---------|----------|---------|',
-                  ])
-                  for name in sorted(changed):
-                      old, new = changed[name]
-                      lines.append(f'| {name} | {old} | {new} |')
-                  lines.append('')
-
-          lines.extend(['', '_Generated from SPDX JSON dependency SBOMs._', ''])
-          pathlib.Path('dependency-diff.md').write_text('\n'.join(lines))
-          count = len(added) + len(removed) + len(changed)
-          print(f'Diff: {len(added)} added, {len(removed)} removed, {len(changed)} changed')
-          PYTHON
-
-      - name: Upload diff to GitHub Release
-        if: ${{ steps.previous.outputs.found == 'true' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release upload "${{ needs.release-please.outputs.tag_name }}" \
-            "dependency-diff.md" \
-            --clobber -R "${{ github.repository }}"
-
-  append-verification-notes:
-    name: Append Verification Instructions
-    needs: [release-please, attest-and-upload, upload-plugin-packages]
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Append verification section to release notes
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG="${{ needs.release-please.outputs.tag_name }}"
-          REPO="${{ github.repository }}"
-          gh release view "$TAG" --json body --jq '.body' -R "$REPO" > notes.md
-          cat >> notes.md <<'EOF'
-
-          ## Verifying Downloads
-
-          All release assets include [Sigstore](https://www.sigstore.dev/) build-provenance
-          attestations generated by GitHub Actions. Verify any downloaded asset with the
-          GitHub CLI:
-
-          ```bash
-          # Verify a VSIX extension package
-          gh attestation verify <file>.vsix --repo microsoft/hve-core
-
-          # Verify a plugin ZIP package
-          gh attestation verify <file>.zip --repo microsoft/hve-core
-          ```
-
-          See [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md)
-          for full supply-chain verification details including SBOM validation.
-          EOF
-          gh release edit "$TAG" --notes-file notes.md -R "$REPO"
-
-  publish-release:
-    name: Publish GitHub Release
-    needs: [release-please, attest-and-upload, upload-plugin-packages, sbom-diff, append-verification-notes]
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Publish GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG="${{ needs.release-please.outputs.tag_name }}"
-          REPO="${{ github.repository }}"
-          # Promote draft to published. The release becomes immutable
-          # after publish with all assets already attached.
-          gh release edit "$TAG" --draft=false -R "$REPO"

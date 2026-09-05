@@ -1,5 +1,5 @@
 ---
-description: 'Problem Space exit handoff - compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher'
+description: 'Compiles DT Methods 1-3 into research-ready input for rpi-research at the Problem Space exit'
 agent: 'agent'
 tools: ['read_file', 'create_file']
 argument-hint: "project-slug=..."
@@ -7,7 +7,7 @@ argument-hint: "project-slug=..."
 
 # Problem Space Exit Handoff
 
-Compile Design Thinking Methods 1-3 outputs into an RPI-ready handoff artifact targeting Task Researcher.
+Compile Design Thinking Methods 1-3 outputs into a research-ready handoff artifact for `rpi-research`.
 Invoke when a team graduates from the Problem Space and chooses lateral handoff to the RPI pipeline.
 
 ## Inputs
@@ -19,6 +19,14 @@ Invoke when a team graduates from the Problem Space and chooses lateral handoff 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
 ## Required Steps
+
+### Step 0: Load Handoff Knowledge
+
+Before compiling any artifacts, activate `dt-rpi-integration`, then load these bundled references through its reference table:
+
+* Handoff contract for the exit-point taxonomy, artifact schema, and quality markers.
+* Subagent handoff for the readiness assessment and compilation workflow.
+* Research context for `rpi-research` framing at the receiving end.
 
 ### Step 1: Read Coaching State
 
@@ -48,7 +56,7 @@ Note any expected artifact missing from the coaching state as a gap.
 
 ### Step 3: Readiness Assessment
 
-Evaluate Problem Space completion against these readiness signals:
+Apply the readiness signals defined in `rpi-handoff-contract.md` and the subagent dispatch protocol from `subagent-handoff.md`. Evaluate Problem Space completion against these readiness signals:
 
 * Synthesis validation shows strength across affinity clustering, insight extraction, problem framing, HMW generation, and stakeholder alignment.
 * The team articulates a discovered problem that differs meaningfully from the original request.
@@ -68,7 +76,7 @@ If critical gaps exist (signals marked `unknown` or `conflicting`), present find
 
 ### Step 4: Produce Handoff Artifact
 
-Create the handoff summary file at `.copilot-tracking/dt/{project-slug}/handoff-summary.md` following the exit-point artifact schema from the DT→RPI handoff contract.
+Create the handoff summary file at `.copilot-tracking/dt/{project-slug}/handoff-summary.md` following the `problem-statement-complete` exit-point schema in the `dt-rpi-integration` handoff contract.
 
 Include the YAML header:
 
@@ -76,7 +84,7 @@ Include the YAML header:
 exit_point: "problem-statement-complete"
 dt_method: 3
 dt_space: "problem"
-handoff_target: "researcher"
+handoff_target: "rpi-research"
 date: "{today's date}"
 ```
 
@@ -91,14 +99,14 @@ Record a lateral transition in the coaching state `transition_log`:
 ```yaml
 - type: lateral
   from_method: 3
-  to: rpi-researcher
-  rationale: "Problem Space complete: handoff to RPI pipeline"
+  to: "rpi-research"
+  rationale: "Problem Space complete: handoff to rpi-research"
   date: "{today's date}"
 ```
 
 ### Step 5: Generate RPI Entry
 
-Create a self-contained RPI handoff document at `.copilot-tracking/dt/{project-slug}/rpi-handoff-problem-space.md` for task-researcher to consume directly.
+Create a self-contained RPI handoff document at `.copilot-tracking/dt/{project-slug}/rpi-handoff-problem-space.md` for `rpi-research` to consume as research-ready input.
 
 Structure the document with these sections:
 
@@ -107,10 +115,10 @@ Structure the document with these sections:
 * Research Themes: key synthesis themes and supporting evidence from Methods 2-3.
 * Constraints: validated and assumed constraints with sources.
 * Investigation Targets: items tagged `assumed`, `unknown`, or `conflicting` that require RPI research.
-* Coaching Notes: context about the DT journey that helps the researcher understand how the problem was discovered.
+* Coaching Notes: context about the DT journey that helps the RPI research phase understand how the problem was discovered.
 
 Inline all content directly rather than referencing `.copilot-tracking/` paths.
-The document stands alone as complete context for the receiving RPI agent.
+The document stands alone as complete context for `rpi-research`.
 
 ---
 

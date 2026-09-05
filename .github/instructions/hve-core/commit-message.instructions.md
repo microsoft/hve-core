@@ -1,5 +1,5 @@
 ---
-description: 'Required instructions for creating all commit messages - Brought to you by microsoft/hve-core'
+description: 'Commit message format and conventions'
 ---
 
 # Commit Message Guidelines
@@ -71,7 +71,7 @@ For larger changes only:
 feat(cloud): add new authentication flow
 
 - add commit message, markdown, C# along with C# test instructions
-- introduce task planner and researcher, prompt builder, and adr creation agents
+- introduce RPI, HVE Builder, and ADR authoring capabilities
 - configure markdownlint and VS Code workspace settings
 - add ADO work items prompts for getting and preparing my work items
 - add .gitignore and cleanup README newlines

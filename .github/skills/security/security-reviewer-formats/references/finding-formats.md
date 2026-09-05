@@ -54,6 +54,31 @@ app.get('/api/admin/users', (req, res) => {
 });
 ```
 
+## RAI Finding and Verification Formats
+
+`RAI_FINDING_V1` contains ID, Title, Status, Severity, Location, Finding, and Recommendation.
+For verifier input, Status is FAIL or PARTIAL and every field is required.
+
+`RAI_DEEP_VERIFICATION_V1` contains Schema, Finding ID, Finding Title, Original Status, Original
+Severity, Framework, Requirement, Confirming Evidence, Contradicting Evidence, Necessary
+Capability Assessment and rationale, Verdict, Verified Status, Verified Severity, Verified
+Categories, Justification, Updated Recommendation, and Limitations. Required verdicts are
+CONFIRMED, DISPROVED, and DOWNGRADED. Necessary Capability Assessment is REQUIRED, AVOIDABLE, or
+NOT_APPLICABLE. Verified Categories contains evidence-supported AI STRIDE categories,
+NO_CATEGORY, or NOT_ASSESSED.
+
+The total mapping is: CONFIRMED retains the source-supported FAIL or PARTIAL status, severity,
+and residual categories; DOWNGRADED maps to PARTIAL with lower evidence-supported severity; and
+DISPROVED maps to PASS, NONE, and NO_CATEGORY. A verifier never emits UNCHANGED.
+
+`RAI_VERIFIED_FINDINGS_COLLECTION_V1` groups each framework's findings. FAIL and PARTIAL items
+are exactly one `RAI_DEEP_VERIFICATION_V1` response; PASS and NOT_ASSESSED items
+are `RAI_FINDING_V1` records with Verdict=UNCHANGED. Every input finding occurs exactly once.
+
+`RAI_PLAN_FINDINGS_COLLECTION_V1` groups framework findings with ID, Title, Status, Severity,
+Finding, Recommendation, and optional limitation. Status is RISK, CAUTION, COVERED, or
+NOT_APPLICABLE. Verification fields are prohibited.
+
 ### Confirming Evidence
 - No auth middleware registered on the admin router at src/api/routes.ts#L42-L48.
 - No global middleware guard for `/api/admin/*` routes.
@@ -89,7 +114,3 @@ app.get('/api/admin/users', requireRole('admin'), (req, res) => {
 - **Recommendation:** N/A
 - **Verdict:** UNCHANGED
 ```
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -97,7 +97,3 @@ human review.
 * Implement artifact provenance validation to ensure only CI-produced artifacts enter deploy
   pipelines.
 * Deploy drift detection tooling to identify and alert on unauthorized production changes.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

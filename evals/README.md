@@ -2,7 +2,7 @@
 title: Evaluations
 description: 'Architecture overview and contributor guide for Vally evaluation specs'
 author: HVE Core Team
-ms.date: 2026-05-14
+ms.date: 2026-08-21
 ---
 
 This directory contains [Vally](https://www.npmjs.com/package/@microsoft/vally-cli) evaluation specs for hve-core.
@@ -11,34 +11,52 @@ This directory contains [Vally](https://www.npmjs.com/package/@microsoft/vally-c
 
 ```text
 evals/
-├── skill-quality/       copilot-sdk evals testing skill behavior
-├── agent-behavior/      copilot-sdk evals testing agent responses
-└── script-validation/   copilot-sdk evals testing deterministic scripts
+├── skill-quality/        copilot-sdk evals testing skill behavior
+├── agent-behavior/       copilot-sdk evals testing agent responses
+├── agent-conformance/    copilot-sdk multi-turn behavioral conformance per planner agent
+├── script-validation/    copilot-sdk evals testing deterministic scripts
+├── baseline-equivalence/ parameterized baseline-vs-customized equivalence suite
+├── behavior-conformance/ Tier 3 advisory conformance for prompts, instructions, and skill behavior
+└── skill-hygiene/        vally lint structural checks for .github/skills/
 ```
 
 ## Executors
 
-| Suite               | Executor      | Purpose                                                                            |
-|---------------------|---------------|------------------------------------------------------------------------------------|
-| `skill-quality`     | `copilot-sdk` | Tests that skills provide accurate guidance via real agent conversation            |
-| `agent-behavior`    | `copilot-sdk` | Tests that agents respond correctly to domain prompts                              |
-| `script-validation` | `copilot-sdk` | Tests agent reasoning about validation rules (will migrate to mock when available) |
+| Suite                  | Executor      | Purpose                                                                                              |
+|------------------------|---------------|------------------------------------------------------------------------------------------------------|
+| `skill-quality`        | `copilot-sdk` | Tests that skills provide accurate guidance via real agent conversation                              |
+| `agent-behavior`       | `copilot-sdk` | Tests that agents respond correctly to domain prompts                                                |
+| `agent-conformance`    | `copilot-sdk` | Two-turn behavioral conformance per planner agent: turn 0 launches the agent, turn 1 sends the case  |
+| `script-validation`    | `copilot-sdk` | Tests agent reasoning about validation rules (will migrate to mock when available)                   |
+| `baseline-equivalence` | `copilot-sdk` | Asserts hve-core agent customization preserves baseline model behavior beyond documented divergences |
+| `behavior-conformance` | `copilot-sdk` | Tier 3 advisory conformance for prompts, instructions, and skill behavior (does not fail PR builds)  |
+| `skill-hygiene`        | `vally lint`  | Structural checks for every `SKILL.md` under `.github/skills/`; authoritative, no executor calls     |
+
+The `skill-hygiene` suite is the only entry that uses `vally lint` instead of `vally eval`. It is a README-only suite (no `eval.yaml`) that reuses the lint pipeline's static grader registry to validate the skill catalog on every PR that touches `.github/skills/`. See [`skill-hygiene/README.md`](skill-hygiene/README.md) for coverage and grader detail.
+
+The `agent-conformance` suites are the only entries that use `turns` stimuli and a model-judge (`type: prompt`) grader. Each suite carries one `eval.yaml` per agent, keyed to a `category: agent-conformance-<agent>` tag with a matching entry in `.vally.yaml`.
+
+`scoring.weights` makes the judge the deciding grader; `wall-time` and `output-contains` are advisory budgets that cannot pass a stimulus on their own. These suites run from `.github/workflows/agent-conformance.yml`, which `weekly-validation.yml` invokes; they are not part of the PR changed-artifact lane.
 
 ## Running Evals
 
 ```bash
 # Lint all eval specs (no execution, fast)
-npm run eval:lint
+npm run ci:eval:lint:vally   # vally schema lint
+npm run ci:eval:lint:schema  # PowerShell schema/shape lint
+npm run ci:eval:lint:skills  # vally lint over .github/skills/ (skill-hygiene suite)
+npm run ci:eval:lint:text    # alex.js + retext-profanities (corpus)
 
-# Run all evals
-npx vally eval
+# Run all maintained eval suites
+npm run ci:eval:run
 
 # Run a specific suite
-npx vally eval --suite skill-quality
-npx vally eval --suite script-validation
+npm run ci:eval:run:skills
+npm run ci:eval:run:scripts
+npm run ci:eval:run:conformance
 
-# Compare results against baseline
-npx vally compare
+# Compare a customized agent against the empty baseline
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier devloop
 ```
 
 ## Adding New Evals
@@ -48,7 +66,7 @@ npx vally compare
    * `copilot-sdk` for testing skill/agent behavior (non-deterministic, use `runs: 3`+).
    * `mock` for testing scripts/validators with fixture files (deterministic, use `runs: 1`). Not yet available - use `copilot-sdk` until the mock executor plugin ships.
 3. Write per-stimulus graders (one stimulus per test case).
-4. Run `npm run eval:lint` to validate the spec.
+4. Run `npm run ci:eval:lint:vally` (or `npm run ci:eval:lint:schema`) to validate the spec.
 5. Tag stimuli with `category` matching a suite filter in `.vally.yaml`.
 
 ## Anti-Patterns
@@ -58,5 +76,12 @@ npx vally compare
 * Don't use `output-contains` as the sole grader for qualitative agent output.
 * Don't bundle multiple test cases into one stimulus with an aggregate grader.
 * Don't pin models in eval specs.
+
+## Command guidance
+
+The `ci:eval:*` prefix identifies CI-owned lanes; it does not prevent direct
+local execution. These lanes are separate from `validate:local` because their
+dependencies, service access, and model cost vary. See [Validation Commands
+and CI-Owned Lanes](../docs/contributing/validation) before reproducing a lane.
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

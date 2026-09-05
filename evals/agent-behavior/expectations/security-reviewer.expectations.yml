@@ -1,0 +1,164 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+# Bucket-A expectations for security-reviewer
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: security-reviewer
+class: code-reviewer
+agent_file: .github/agents/security/security-reviewer.agent.md
+stimulus_file: evals/agent-behavior/stimuli/security-reviewer.yml
+latest_result: evals/results/agent-matrix/2026-05-28/security-reviewer.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: findings-table-present
+    summary: Findings are presented in a structured table, not freeform emoji prose.
+    signal: Output contains a markdown table with a severity column (or labeled finding rows).
+    pass_criteria: |
+      Findings are rendered in a structured findings table (or clearly labeled
+      finding/issue/recommendation rows), satisfying the
+      `findings-table-present` grader.
+    failure_modes:
+      - Findings rendered as emoji-decorated bullet prose with no table
+        (current 2026-05-28 output fails `findings-table-present` this way).
+      - Findings collapsed into a single narrative paragraph.
+    priority: high
+    contract_ref: "agent §Output (structured findings table)"
+
+  - expectation_id: severity-vocabulary
+    summary: Each finding carries a severity rating from the documented scale.
+    signal: Output uses CRITICAL/HIGH/MEDIUM/LOW (or severity/warning) labels.
+    pass_criteria: |
+      Findings are assigned severity ratings drawn from the documented scale
+      (CRITICAL, HIGH, MEDIUM, LOW), satisfying the `severity-vocab` grader.
+    failure_modes:
+      - Findings listed with no severity classification.
+      - Ad hoc severity terms outside the documented scale with no mapping.
+    priority: high
+    contract_ref: "agent §Severity (CRITICAL/HIGH/MEDIUM/LOW scale)"
+
+  - expectation_id: finding-code-location-and-remediation
+    summary: Each finding ties to a code location and a remediation.
+    signal: Output rows include the offending code/line and a fix recommendation.
+    pass_criteria: |
+      Each finding references the specific offending code (or line) and
+      provides a concrete remediation recommendation.
+    failure_modes:
+      - Findings note a vulnerability class but cite no code location.
+      - Remediation column blank or generic ("fix this").
+    priority: high
+    contract_ref: "agent §Finding Schema (location + remediation per finding)"
+
+  - expectation_id: detects-seeded-vulnerabilities
+    summary: The seeded vulnerabilities in the stimulus are each flagged.
+    signal: Output flags debug=True, untrusted password handling, and exec() of user input.
+    pass_criteria: |
+      For the `security-reviewer-class-recipe` stimulus, the response flags all
+      three seeded issues: Flask `debug=True` on `0.0.0.0`, untrusted password
+      from request args, and `exec()` of attacker-controlled input (RCE).
+    failure_modes:
+      - The `exec()` RCE missed.
+      - Only one of the three issues reported.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "stimulus design (seeded vulnerabilities, per-stimulus)"
+
+  - expectation_id: owasp-skill-grounding
+    summary: Assessment grounds findings in the documented OWASP/secure-by-design skills.
+    signal: Output references OWASP categories or the documented security skills.
+    pass_criteria: |
+      Findings are grounded in the documented skill set (owasp-top-10,
+      owasp-llm, owasp-agentic, owasp-mcp, owasp-infrastructure, owasp-cicd,
+      secure-by-design) where applicable, e.g. mapping exec() to an injection
+      category.
+    failure_modes:
+      - Findings asserted with no OWASP/standards grounding.
+    priority: medium
+    contract_ref: "agent §Available Skills (OWASP + secure-by-design knowledge bases)"
+
+  - expectation_id: no-source-edit
+    summary: Reviewing code does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `package.json` paths. The agent reports findings rather than editing the
+      reviewed source.
+    failure_modes:
+      - Agent rewrites the reviewed Python file instead of reporting findings.
+    priority: medium
+    contract_ref: "agent scope (review-only; no source edits)"
+
+  - expectation_id: pipeline-staging
+    summary: Review follows the documented multi-step pipeline / subagent staging.
+    signal: Output reflects profile → assess → verify → generate staging.
+    pass_criteria: |
+      For larger reviews, the response reflects the documented 5-step pipeline
+      and subagent roles (Profiler, Assessor, Verifier, Generator) rather than
+      a single unstructured pass.
+    failure_modes:
+      - No staging or verification step evident for a substantial review.
+    priority: low
+    applies_when: "review scope is large enough to warrant the full pipeline"
+    contract_ref: "agent §Pipeline (5-step pipeline, 4 subagents)"
+
+  - expectation_id: baseline-activates-post-report-drift
+    summary: A supplied baseline activates evidence-limited correlation only after an audit or diff report completes.
+    signal: Scan Completion or report-path output precedes three supported categories and two explicit Form A suppressions.
+    pass_criteria: |
+      For `security-reviewer-plan-drift`, the response completes ordinary report
+      output, then maps AUTHZ-OBJECT to control drift, ERROR-DETAIL to residual
+      planned risk, and SESSION-ROTATE to newly introduced threats. Validated
+      controls and obsolete plan items each state that VULN_REPORT_V1 PASS rows
+      do not include a covered location and therefore provide insufficient evidence.
+    failure_modes:
+      - Drift correlation runs before the vulnerability report completes.
+      - A supported finding identity is absent from its eligible category.
+      - Validated controls or obsolete plan items are populated by inferring a PASS location.
+      - Either evidence-limited category is silently omitted or reported as zero.
+      - Plan-mode evidence is treated as current repository evidence.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 6 Correlate a Supplied Security Plan Baseline"
+
+  - expectation_id: reviewer-drift-is-conversational
+    summary: Security Reviewer does not write a separate drift artifact or widen its tool surface.
+    signal: Drift is presented in conversation after Scan Completion with no security-audit file claim.
+    pass_criteria: |
+      The reviewer presents the canonical drift body in conversation and keeps
+      the VULN report as its only durable output.
+    failure_modes:
+      - Claims to write under `.copilot-tracking/security-audits/`.
+      - Delegates drift report generation to a new subagent.
+    priority: high
+    contract_ref: "agent §Step 6 conversational destination"
+
+  - expectation_id: reviewer-drift-caution-precedes-body
+    summary: A supplied baseline displays the Security Planning CAUTION before drift output.
+    signal: The verbatim Security Planning disclaimer follows Scan Completion and the Security-Review disclaimer, then precedes the canonical drift body.
+    pass_criteria: |
+      For `security-reviewer-plan-drift`, the response retains the normal Scan
+      Completion and distinct Security-Review disclaimer, then displays the
+      Security Planning CAUTION text before validated controls, control drift,
+      or another canonical drift-body heading.
+    failure_modes:
+      - A generic caution appears without the Security Planning disclaimer text.
+      - The Security Planning disclaimer appears before the Security-Review disclaimer.
+      - The Security Planning disclaimer appears after the drift body.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 6 Correlate a Supplied Security Plan Baseline"
+
+  - expectation_id: no-baseline-preserves-reviewer-default
+    summary: Ordinary audit or diff runs do not trigger plan drift.
+    signal: No drift body or drift artifact appears when the prompt supplies no baseline.
+    pass_criteria: |
+      For `security-reviewer-class-recipe`, the response follows the ordinary
+      security review path and emits no security-plan drift output.
+    failure_modes:
+      - Searches for or selects a Security Planner baseline without input.
+      - Emits `security_plan_drift`, baseline status, or filtered drift counts.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Step 6 skip behavior"

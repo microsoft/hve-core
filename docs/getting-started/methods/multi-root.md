@@ -3,7 +3,7 @@ title: Multi-Root Workspace Installation
 description: Set up your enterprise fork of HVE Core using VS Code multi-root workspaces
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - multi-root workspace
@@ -55,7 +55,7 @@ Your enterprise forks the `microsoft/hve-core` repository, adds org-specific age
 
 ## Quick Start
 
-Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided installation-method selection, MCP configuration, or selective clone adoption, ask an agent to use the included `hve-core-installer` skill. Use the manual steps below for direct configuration.
 
 ## Manual Setup
 
@@ -124,7 +124,6 @@ Use the absolute clone path:
     "chat.instructionsFilesLocations": {
       "/workspaces/hve-core/.github/instructions/ado": true,
       "/workspaces/hve-core/.github/instructions/coding-standards": true,
-      "/workspaces/hve-core/.github/instructions/design-thinking": true,
       "/workspaces/hve-core/.github/instructions/github": true,
       "/workspaces/hve-core/.github/instructions/hve-core": true,
       "/workspaces/hve-core/.github/instructions/shared": true,
@@ -132,8 +131,17 @@ Use the absolute clone path:
     },
     "chat.agentSkillsLocations": {
       "/workspaces/hve-core/.github/skills": true,
+      "/workspaces/hve-core/.github/skills/accessibility": true,
       "/workspaces/hve-core/.github/skills/shared": true,
       "/workspaces/hve-core/.github/skills/coding-standards": true,
+      "/workspaces/hve-core/.github/skills/data-science": true,
+      "/workspaces/hve-core/.github/skills/design-thinking": true,
+      "/workspaces/hve-core/.github/skills/hve-core": true,
+      "/workspaces/hve-core/.github/skills/installer": true,
+      "/workspaces/hve-core/.github/skills/project-planning": true,
+      "/workspaces/hve-core/.github/skills/rai": true,
+      "/workspaces/hve-core/.github/skills/rpi": true,
+      "/workspaces/hve-core/.github/skills/security": true,
       "My Project/.github/skills": true
     }
   },
@@ -172,6 +180,20 @@ Use the relative clone path from the workspace file's directory:
     "chat.instructionsFilesLocations": {
       "../../hve-core/.github/instructions/hve-core": true,
       "../../hve-core/.github/instructions/shared": true
+    },
+    "chat.agentSkillsLocations": {
+      "../../hve-core/.github/skills": true,
+      "../../hve-core/.github/skills/accessibility": true,
+      "../../hve-core/.github/skills/coding-standards": true,
+      "../../hve-core/.github/skills/data-science": true,
+      "../../hve-core/.github/skills/design-thinking": true,
+      "../../hve-core/.github/skills/hve-core": true,
+      "../../hve-core/.github/skills/installer": true,
+      "../../hve-core/.github/skills/project-planning": true,
+      "../../hve-core/.github/skills/rai": true,
+      "../../hve-core/.github/skills/rpi": true,
+      "../../hve-core/.github/skills/security": true,
+      "../../hve-core/.github/skills/shared": true
     }
   }
 }
@@ -264,7 +286,7 @@ After setup, verify HVE Core is working:
 1. Check the Explorer sidebar shows both folders
 2. Open Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE Core agents appear (task-planner, task-researcher, etc.)
+4. Verify `RPI Agent` and `Documentation` appear, then confirm `/rpi-research` is available
 
 ## Troubleshooting
 
@@ -287,7 +309,7 @@ After setup, verify HVE Core is working:
 ## Next Steps
 
 * [Your First Workflow](../first-workflow.md) - Try HVE Core with a real task
-* [RPI Workflow](../../rpi/) - Research, Plan, Implement methodology
+* [RPI Workflow](../../rpi/) - Research, Plan, Implement, Review methodology
 * [Back to Installation Guide](../install.md) - Compare other methods
 
 ---

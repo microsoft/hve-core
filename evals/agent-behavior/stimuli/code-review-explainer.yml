@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: code-review-explainer-factual
+    prompt: |
+      As the code-review explainer, give a factual, Register 1 explanation of
+      what this function does. Do not assign severity or recommend changes.
+      ```python
+      def clamp(value, low, high):
+          return max(low, min(value, high))
+      ```
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: explanation-vocabulary
+        config:
+          pattern: '(?i)(function|returns?|parameter|argument|value|purpose|does|bound|clamp|minimum|maximum)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

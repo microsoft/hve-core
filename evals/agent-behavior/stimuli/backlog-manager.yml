@@ -1,0 +1,170 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+#
+# Conformance checks emitted per the vally-tests agent reference.
+# Applicable to this top-level agent: Check 1 (required frontmatter),
+# Check 6 (handoff pattern), Check 7 (tool restrictions), Check 9 (phase and
+# step heading consistency). Checks 4 and 5 are subagent-only and do not apply.
+stimuli:
+  - name: backlog-manager-frontmatter-name-and-description
+    prompt: |
+      Open the agent artifact at `.github/agents/project-planning/backlog-manager.agent.md`.
+
+      Report the human-readable agent name declared in its frontmatter, then restate its declared description verbatim. Do not paraphrase the description and do not describe the file itself.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: reports-human-readable-name
+        config:
+          pattern: '(?i)\bBacklog Manager\b'
+      - type: output-matches
+        name: reports-declared-description
+        config:
+          pattern: '(?i)read-only backlog orchestrator.{0,40}Azure DevOps.{0,20}GitHub.{0,20}Jira'
+      - type: output-matches
+        name: does-not-substitute-filename-for-name
+        config:
+          pattern: '(?i)name\s*(is|:)\s*.{0,3}backlog-manager'
+          negate: true
+
+  - name: backlog-manager-handoff-targets-and-labels
+    prompt: |
+      Open the agent artifact at `.github/agents/project-planning/backlog-manager.agent.md`.
+
+      List every agent it can hand off to and the label each handoff entry carries. Identify each target agent the way the artifact identifies it.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: names-cross-agent-handoff-target
+        config:
+          pattern: '(?i)\bFunctional Planner\b'
+      - type: output-matches
+        name: reports-declared-labels
+        config:
+          pattern: '(?i)(Task Plan|Add Item|PRD to Hierarchy)'
+      - type: output-matches
+        name: identifies-targets-by-name-not-path
+        config:
+          pattern: '(?i)agent\s*:\s*.{0,3}[\w/-]*\.agent\.md'
+          negate: true
+
+  - name: backlog-manager-tool-restriction-fit
+    prompt: |
+      Open the agent artifact at `.github/agents/project-planning/backlog-manager.agent.md`.
+
+      Read its declared `tools:` list together with its declared description. Assess whether that restriction set is appropriate for the role the description states, and name any tool whose presence or absence you consider inconsistent with that role. Justify the assessment from the artifact rather than from general expectations.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: prompt
+        name: tool-restriction-appropriate-for-purpose
+        config:
+          prompt: |
+            The response assesses whether an agent's declared tool set fits its
+            stated purpose. Score high when the response reasons from the
+            artifact's own declared tools and description, recognizes that the
+            declared tracker surface is read-only, and connects that to the
+            description's dispatch-every-mutation role. Score low when the
+            response invents tools, ignores the declared description, or asserts
+            that a tool grant enforces a boundary the host does not enforce.
+          threshold: 0.6
+      - type: output-matches
+        name: does-not-claim-runtime-enforcement-proof
+        config:
+          pattern: '(?i)(this (test|check|eval) (proves|demonstrates|verifies))'
+          negate: true
+
+  - name: backlog-manager-protocol-heading-consistency
+    prompt: |
+      Open the agent artifact at `.github/agents/project-planning/backlog-manager.agent.md`.
+
+      List the headings that carry its workflow protocol, in order and exactly as written in the artifact.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: reports-first-protocol-heading
+        config:
+          pattern: '(?i)Phase\s+1:\s*Platform and Intent Classification'
+      - type: output-matches
+        name: reports-last-protocol-heading
+        config:
+          pattern: '(?i)Phase\s+3:\s*Summary and Handoff'
+      - type: output-matches
+        name: does-not-report-step-headings
+        config:
+          pattern: '(?i)Step\s+\d+:\s*(Platform and Intent|Workflow Dispatch|Summary and Handoff)'
+          negate: true
+
+  - name: backlog-manager-performs-workflow-neutral-github-grooming
+    prompt: |
+      Classify this request as GitHub Grooming, then assess the supplied ordinary
+      issue inventory directly through the reusable grooming policy. Do not
+      invoke a workflow-bound worker, require automation inputs, or execute a
+      GitHub mutation.
+
+      Inventory scope: open issues selected by a maintainer for this review.
+
+      Issue #2558 requests a workflow-neutral grooming policy. Repository
+      evidence shows that
+      `.github/instructions/project-planning/github-backlog-grooming.instructions.md`
+      defines evidence-backed advisory assessment and that Backlog Manager
+      applies it directly. Treat the issue as Distinct and Likely completed.
+
+      Issue #2601 requests automatic closure of inactive issues. Repository
+      evidence contains no implementation and the grooming policy keeps closure
+      advisory and maintainer-owned. Treat the issue as Distinct and Still
+      needed.
+
+      Produce the compact issue index with this exact header:
+
+      | Issue | Similarity | Disposition | Status | Recommended next step |
+
+      Follow it with `Issue #2558` and `Issue #2601` headings in that order.
+      Under each heading, include the exact labels `Repository evidence`,
+      `Similarity outcome`, `Disposition`, `Grooming finding`, `Recommended
+      next step`, and `Assessment status`.
+
+      Explain the handoff using these exact sentences: "Allowed operations are
+      Update and Comment; Close is prohibited." and "Writeback requires
+      per-field approval and a fresh Expected Updated At value; stale approval
+      must stop execution." Do not claim that any issue was changed.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: grooming-classification
+        config:
+          pattern: '(?i)\bGitHub Grooming\b|\bGrooming\b'
+      - type: output-matches
+        name: compact-issue-index
+        config:
+          pattern: '(?i)\|\s*Issue\s*\|\s*Similarity\s*\|\s*Disposition\s*\|\s*Status\s*\|\s*Recommended next step\s*\|'
+      - type: output-matches
+        name: labeled-issue-details
+        config:
+          pattern: '(?is)Issue #?2558.{0,800}Repository evidence.{0,800}Issue #?2601'
+      - type: output-matches
+        name: non-closing-handoff
+        config:
+          pattern: '(?is)(Update|Comment).{0,200}(Close.{0,80}(never|not|prohibit|exclude)|(never|not|prohibit|exclude).{0,80}Close)'
+      - type: output-matches
+        name: approval-freshness
+        config:
+          pattern: '(?i)per-field approval|Expected Updated At|updated_at|fresh|stale approval'
+      - type: output-matches
+        name: no-github-mutation
+        config:
+          pattern: '(?i)(updated|closed|commented on)\s+(github\s+)?issue\s*#?\d+'
+          negate: true
+      - type: output-matches
+        name: no-aw-contract-dependency
+        config:
+          pattern: '(?i)shard[_ -]?id|manifest[_ -]?digest|ordered_candidate_ids|safe[- ]output|publish-backlog-grooming-result'
+          negate: true

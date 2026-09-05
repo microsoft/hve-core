@@ -1,5 +1,5 @@
 ---
-description: "Required instructions for creating or editing any Markdown (.md) files"
+description: "Markdown authoring conventions for all .md files"
 applyTo: '**/*.md'
 ---
 # Markdown Instructions

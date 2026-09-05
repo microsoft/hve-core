@@ -2,8 +2,6 @@
 
 > {{DESCRIPTION}}
 
-{{MATURITY_NOTICE}}
-
 {{BODY}}
 
 ## Included Artifacts
@@ -22,26 +20,26 @@ After installing this extension, the chat agents are available in GitHub Copilot
 
 Some chat agents create workflow artifacts in your project directory. See the [installation guide](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/install.md#post-installation-update-your-gitignore) for recommended `.gitignore` configuration and other setup details.
 
-## Browse All Collections
+## HVE Core Identity and Channels
 
-This extension is part of the HVE ecosystem.
+This extension contains the complete active HVE Core component set.
 
-See the full list of available collections and capabilities:
+Review channel ownership, release assurance, and selective clone adoption:
 
-[Browse Extension Collections](https://microsoft.github.io/hve-core/docs/getting-started/collections)
+[HVE Core Identity and Channels](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/packages.md)
 
 ## Pre-release Channel
 
-HVE Core offers two installation channels:
+HVE Core publishes the same complete component set on two release channels:
 
-| Channel     | Description                                             | Maturity Levels                     |
-|-------------|---------------------------------------------------------|-------------------------------------|
-| Stable      | Production-ready artifacts only                         | `stable`                            |
-| Pre-release | Early access to new features and experimental artifacts | `stable`, `preview`, `experimental` |
+| Channel     | Description                                         | Membership        |
+|-------------|-----------------------------------------------------|-------------------|
+| Stable      | Promoted release cadence                            | Complete manifest |
+| Pre-release | Early access to changes ahead of the next promotion | Complete manifest |
+
+Both channels ship identical content. They differ in version, cadence, release source, and Marketplace channel behavior.
 
 To install the pre-release version, select **Install Pre-Release Version** from the extension page in VS Code.
-
-{{FULL_EDITION}}
 
 ## Requirements
 
@@ -55,7 +53,3 @@ MIT License - see [LICENSE](LICENSE) for details
 ## Support
 
 For issues, questions, or contributions, visit the [GitHub repository](https://github.com/microsoft/hve-core).
-
----
-
-Brought to you by Microsoft ISE HVE Essentials

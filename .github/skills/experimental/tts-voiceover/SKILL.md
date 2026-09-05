@@ -1,6 +1,6 @@
 ---
 name: tts-voiceover
-description: 'Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control - Brought to you by microsoft/hve-core'
+description: 'Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
@@ -19,6 +19,7 @@ This skill reads `content.yaml` files from a PowerPoint skill content directory,
 * **Azure Speech resource** — Free tier provides 500K characters per month.
 * **Authentication** — Key-based (`SPEECH_KEY`) or Microsoft Entra ID (`SPEECH_RESOURCE_ID`).
 * **Python 3.11+** with `uv` for virtual environment management.
+* **Data handling note** — Speaker-notes content is transmitted to the configured `SPEECH_REGION` for synthesis. Operators must pin an approved region and avoid sending regulated or confidential narration.
 
 ### Key-Based Auth
 
@@ -67,15 +68,16 @@ uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output 
 
 ### generate_voiceover.py
 
-| Parameter          | Type   | Default                             | Description                                   |
-|:-------------------|:-------|:------------------------------------|:----------------------------------------------|
-| `--dry-run`        | flag   | `false`                             | Print SSML templates without generating audio |
-| `--voice`          | string | `en-US-Andrew:DragonHDLatestNeural` | Azure TTS voice name                          |
-| `--rate`           | string | `+10%`                              | Speech prosody rate                           |
-| `--content-dir`    | path   | `content`                           | Path to slide content directory               |
-| `--output-dir`     | path   | `voice-over`                        | Path to WAV output directory                  |
-| `--lexicon`        | path   | *(auto-detect)*                     | Custom acronyms.yaml path                     |
-| `--verbose` / `-v` | flag   | `false`                             | Enable verbose (DEBUG) logging output         |
+| Parameter             | Type   | Default                             | Description                                                                                |
+|:----------------------|:-------|:------------------------------------|:-------------------------------------------------------------------------------------------|
+| `--dry-run`           | flag   | `false`                             | Print SSML templates without generating audio                                              |
+| `--voice`             | string | `en-US-Andrew:DragonHDLatestNeural` | Azure TTS voice name                                                                       |
+| `--rate`              | string | `+10%`                              | Speech prosody rate                                                                        |
+| `--content-dir`       | path   | `content`                           | Path to slide content directory                                                            |
+| `--output-dir`        | path   | `voice-over`                        | Path to WAV output directory                                                               |
+| `--lexicon`           | path   | *(auto-detect)*                     | Custom acronyms.yaml path                                                                  |
+| `--collapse-newlines` | flag   | `false`                             | Collapse newlines and whitespace runs in speaker notes into single spaces before synthesis |
+| `--verbose` / `-v`    | flag   | `false`                             | Enable verbose (DEBUG) logging output                                                      |
 
 ### embed_audio.py
 
@@ -108,6 +110,15 @@ Use a custom lexicon:
 uv run scripts/generate_voiceover.py \
   --content-dir content \
   --lexicon custom-acronyms.yaml
+```
+
+Collapse newlines in speaker notes (recommended for block-scalar `|` notes,
+whose line breaks are otherwise spoken as pauses):
+
+```bash
+uv run scripts/generate_voiceover.py \
+  --content-dir content \
+  --collapse-newlines
 ```
 
 Embed generated audio:
@@ -182,6 +193,3 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 | Slides no longer advance on click after embedding    | `embed_audio.py` sets `advClick="0"` for auto-advance. To re-enable, select all slides in PowerPoint and check **Advance Slide > On Mouse Click** in the Transitions tab. |
 | Video export shows "No timings recorded"             | Re-embed audio with the updated `embed_audio.py` which adds narration timing XML automatically.                                                                           |
 
-> Brought to you by microsoft/hve-core
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

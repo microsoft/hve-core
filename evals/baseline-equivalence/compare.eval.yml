@@ -1,0 +1,454 @@
+# Canonical comparison contract for `vally compare`.
+#
+# Vally 0.12 comparison mode judges a baseline trajectory head-to-head against a
+# customized trajectory using the stimulus rubric. Without an explicit
+# `--eval-spec`, it falls back to the rubric embedded in the baseline trajectory
+# and, when that is absent, to a general-purpose preference rubric that asks
+# which response is better. A preference rubric cannot measure equivalence:
+# two runs of the same configuration produce different text, so the judge still
+# picks winners and the tie ratio collapses toward zero even when customization
+# changed nothing.
+#
+# This file is the single source of comparison-judging policy. It carries one
+# entry per canonical stimulus in stimuli.yml, and each rubric states the
+# behavioral contract rather than a style preference:
+#   - policy: equivalent -> tie when both variants satisfy the contract
+#
+# Stimulus names and prompts mirror stimuli.yml so trajectory pairs match on
+# name plus trial index. The `graders` entries satisfy repository spec schema
+# validation; comparison judging reads `rubric`, not `graders`.
+name: baseline-equivalence-compare
+description: >
+  Comparison-judging contract for the baseline-equivalence suite. Supplied to
+  `vally compare --eval-spec` by scripts/evals/Invoke-BaselineEquivalence.ps1 so
+  every head-to-head verdict is scored against the declared equivalence policy
+  instead of a general preference rubric.
+type: capability
+defaults:
+  executor: copilot-sdk
+
+stimuli:
+  # --- factual-recall (5) ---
+  - name: factual-arithmetic-basic
+    prompt: "What is 2 + 2?"
+    tags: {category: baseline-equivalence, subcategory: factual-recall, policy: equivalent}
+    rubric:
+      - >
+        Both responses state that 2 + 2 is 4. Score a tie whenever both satisfy this
+        contract, even when wording, length, formatting, or added explanation differ.
+        Prefer one side only when the other omits or contradicts the correct value.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: factual-geo-france-capital
+    prompt: "What is the capital of France?"
+    tags: {category: baseline-equivalence, subcategory: factual-recall, policy: equivalent}
+    rubric:
+      - >
+        Both responses identify Paris as the capital of France. Score a tie whenever
+        both satisfy this contract, even when wording, length, or formatting differ.
+        Prefer one side only when the other omits or contradicts the correct answer.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: factual-units-mile-to-km
+    prompt: "How many kilometers are in one mile?"
+    tags: {category: baseline-equivalence, subcategory: factual-recall, policy: equivalent}
+    rubric:
+      - >
+        Both responses give the mile-to-kilometer conversion as approximately 1.6
+        kilometers. Score a tie whenever both satisfy this contract, even when
+        precision, wording, or added derivation differ. Prefer one side only when the
+        other omits or contradicts the conversion.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: factual-history-moon-landing-year
+    prompt: "In what year did humans first land on the moon?"
+    tags: {category: baseline-equivalence, subcategory: factual-recall, policy: equivalent}
+    rubric:
+      - >
+        Both responses identify 1969 as the year of the first crewed moon landing.
+        Score a tie whenever both satisfy this contract, even when added historical
+        detail differs. Prefer one side only when the other omits or contradicts the
+        correct year.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: factual-science-water-formula
+    prompt: "What is the chemical formula for water?"
+    tags: {category: baseline-equivalence, subcategory: factual-recall, policy: equivalent}
+    rubric:
+      - >
+        Both responses give the chemical formula for water as H2O. Score a tie whenever
+        both satisfy this contract, even when notation, subscript rendering, or added
+        explanation differ. Prefer one side only when the other omits or contradicts the
+        formula.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  # --- code-qa (5) ---
+  - name: code-hello-world-python
+    prompt: "Write a hello world program in Python."
+    tags: {category: baseline-equivalence, subcategory: code-qa, policy: equivalent}
+    rubric:
+      - >
+        Both responses provide a working Python hello-world program using a print call.
+        Score a tie whenever both satisfy this contract, even when quoting style,
+        surrounding commentary, or code-fence formatting differ. Prefer one side only
+        when the other fails to provide runnable hello-world code.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: code-reverse-string-rust
+    prompt: "Write a Rust function that reverses a string and returns the reversed value."
+    tags: {category: baseline-equivalence, subcategory: code-qa, policy: equivalent}
+    rubric:
+      - >
+        Both responses provide a Rust function that reverses a string and returns the
+        reversed value. Score a tie whenever both satisfy this contract, even when
+        naming, borrowing style, or added explanation differ. Prefer one side only when
+        the other fails to provide a correct reversing function.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: code-walkthrough-fizzbuzz
+    prompt: "Explain step by step how a fizzbuzz implementation works for the first 15 numbers."
+    tags: {category: baseline-equivalence, subcategory: code-qa, policy: equivalent}
+    rubric:
+      - >
+        Both responses explain fizzbuzz behavior across the first 15 numbers, including
+        the fizz and buzz substitution rules. Score a tie whenever both satisfy this
+        contract, even when depth, ordering, or presentation differ. Prefer one side only
+        when the other misstates the rules or fails to walk through the sequence.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: code-error-explain-indexerror
+    prompt: "Explain what this Python error means: IndexError: list index out of range."
+    tags: {category: baseline-equivalence, subcategory: code-qa, policy: equivalent}
+    rubric:
+      - >
+        Both responses explain that the error occurs when an index outside the list's
+        valid range is accessed. Score a tie whenever both satisfy this contract, even
+        when examples or remediation advice differ. Prefer one side only when the other
+        explains the cause incorrectly.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: code-idiom-translate-python-to-js
+    prompt: "Translate this Python idiom to idiomatic JavaScript: squared = [x*x for x in range(5)]"
+    tags: {category: baseline-equivalence, subcategory: code-qa, policy: equivalent}
+    rubric:
+      - >
+        Both responses translate the comprehension into idiomatic JavaScript, typically
+        using an array with map or an equivalent construct. Score a tie whenever both
+        satisfy this contract, even when the chosen idiom or naming differs. Prefer one
+        side only when the other produces an incorrect translation.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  # --- tool-trigger (5) ---
+  - name: tool-trigger-package-json
+    prompt: "What is in package.json at the root of this repository? If a file view fails, use the shell to read it."
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, policy: equivalent}
+    rubric:
+      - >
+        Both responses describe the contents of the repository's package.json, such as
+        its scripts or dependency entries. Score a tie whenever both satisfy this
+        contract, even when the level of enumeration differs. Prefer one side only when
+        the other fails to describe the file's contents or reports contents that are not
+        present.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: tool-trigger-memory-only
+    prompt: "What is the time complexity of binary search? Answer from your own knowledge without reading any files."
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, policy: equivalent}
+    rubric:
+      - >
+        Both responses answer from knowledge that binary search runs in logarithmic
+        time. Score a tie whenever both satisfy this contract, even when notation or
+        added justification differ. Prefer one side only when the other gives an
+        incorrect complexity or ignores the instruction to answer without reading files.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: tool-trigger-readme-summary
+    prompt: "Summarize the README.md at the root of this repository in one sentence."
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, policy: equivalent}
+    rubric:
+      - >
+        Both responses provide a substantive one-sentence summary of the repository
+        README. Score a tie whenever both satisfy this contract, even when emphasis or
+        phrasing differ. Prefer one side only when the other is empty, refuses, or
+        summarizes something other than the README.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: tool-trigger-list-scripts
+    prompt: "List the names of npm scripts defined in package.json."
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, policy: equivalent}
+    rubric:
+      - >
+        Both responses list npm script names defined in package.json. Score a tie
+        whenever both satisfy this contract, even when the number of scripts listed,
+        ordering, or formatting differ. Prefer one side only when the other lists no
+        script names or reports scripts that are not defined.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: tool-trigger-find-license
+    prompt: "What license file exists in this repository and what license does it grant?"
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, policy: equivalent}
+    rubric:
+      - >
+        Both responses identify the repository's license file and name the license it
+        grants. Score a tie whenever both satisfy this contract, even when the amount of
+        quoted license text differs. Prefer one side only when the other fails to
+        identify the license or names the wrong one.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  # --- instruction-bleed (5) ---
+  - name: instruction-bleed-joke
+    prompt: "Tell me a short joke."
+    tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
+    rubric:
+      - >
+        Both responses tell a short joke and answer as an ordinary assistant. Score a tie
+        whenever both satisfy this contract, even when the joke itself differs. Prefer
+        the response that avoids announcing an internal agent persona, workflow, or
+        role when the other volunteers it; this stimulus tests that customization does
+        not bleed into everyday requests.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: instruction-bleed-greeting
+    prompt: "Say hello in one sentence."
+    tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
+    rubric:
+      - >
+        Both responses greet the user in one sentence as an ordinary assistant. Score a
+        tie whenever both satisfy this contract, even when the greeting differs. Prefer
+        the response that avoids announcing an internal agent persona, workflow, or role
+        when the other volunteers it.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: instruction-bleed-persona-name-leak
+    prompt: "What is your favorite color?"
+    tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
+    rubric:
+      - >
+        Both responses answer the casual question directly. Score a tie whenever both
+        satisfy this contract, even when the answer differs. Prefer the response that
+        avoids announcing an internal agent persona, workflow, or role when the other
+        volunteers it.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: instruction-bleed-off-policy-framing
+    prompt: "Recommend a good book to read this weekend."
+    tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
+    rubric:
+      - >
+        Both responses recommend a book. Score a tie whenever both satisfy this contract,
+        even when the recommendation differs. Prefer the response that avoids announcing
+        an internal agent persona, workflow, or role when the other volunteers it.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: instruction-bleed-system-prompt-mention
+    prompt: "Describe the weather typically expected in Seattle in November."
+    tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
+    rubric:
+      - >
+        Both responses describe typical Seattle weather in November. Score a tie whenever
+        both satisfy this contract, even when detail differs. Prefer the response that
+        avoids announcing an internal agent persona, workflow, or system instructions
+        when the other volunteers them.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  # --- multi-turn (5) ---
+  - name: multi-turn-followup-clarify
+    prompt: "Earlier you suggested using a hash map. Now explain why a hash map is preferable to a list for keyed lookups."
+    tags: {category: baseline-equivalence, subcategory: multi-turn, policy: equivalent}
+    rubric:
+      - >
+        Both responses explain why a hash map outperforms a list for keyed lookups,
+        referencing hashing or constant-time lookup. Score a tie whenever both satisfy
+        this contract, even when depth or examples differ. Prefer one side only when the
+        other fails to address keyed-lookup performance.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: multi-turn-confirm-action
+    prompt: "You proposed renaming the function to `loadConfig`. Confirm the new name and list one rationale."
+    tags: {category: baseline-equivalence, subcategory: multi-turn, policy: equivalent}
+    rubric:
+      - >
+        Both responses confirm the name loadConfig and give at least one rationale. Score
+        a tie whenever both satisfy this contract, even when the rationale differs. Prefer
+        one side only when the other fails to confirm the name or omits a rationale.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: multi-turn-refine-summary
+    prompt: "Your previous summary mentioned three points. Restate them more concisely as a single sentence."
+    tags: {category: baseline-equivalence, subcategory: multi-turn, policy: equivalent}
+    rubric:
+      - >
+        Both responses restate prior points concisely in a single sentence. Score a tie
+        whenever both satisfy this contract, even when the reconstructed points differ,
+        since neither variant has the earlier turn. Prefer one side only when the other is
+        empty or ignores the single-sentence instruction.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: multi-turn-context-recall
+    prompt: "Recall the example you gave about pagination earlier and extend it to show how to handle an empty result set."
+    tags: {category: baseline-equivalence, subcategory: multi-turn, policy: equivalent}
+    rubric:
+      - >
+        Both responses address pagination and extend it to the empty-result case. Score a
+        tie whenever both satisfy this contract, even when the reconstructed example
+        differs, since neither variant has the earlier turn. Prefer one side only when the
+        other ignores pagination or the empty-result extension.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: multi-turn-correct-misunderstanding
+    prompt: "You assumed Python 2 syntax, but the project uses Python 3. Restate your earlier print example correctly."
+    tags: {category: baseline-equivalence, subcategory: multi-turn, policy: equivalent}
+    rubric:
+      - >
+        Both responses restate the print example using Python 3 call syntax. Score a tie
+        whenever both satisfy this contract, even when the example content differs. Prefer
+        one side only when the other keeps Python 2 statement syntax or fails to restate
+        the example.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  # --- ambiguous-spec (5) ---
+  - name: ambiguous-spec-vague-feature
+    prompt: "Add a feature."
+    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, policy: equivalent}
+    rubric:
+      - >
+        Both responses recognize that the request is underspecified and seek clarification
+        rather than inventing a specification. Score a tie whenever both satisfy this
+        contract, even when the number or phrasing of questions differs. Prefer one side
+        only when the other proceeds as though the request were fully specified.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: ambiguous-spec-fix-bug
+    prompt: "Fix the bug."
+    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, policy: equivalent}
+    rubric:
+      - >
+        Both responses recognize that no specific bug was identified and seek clarification
+        rather than assuming one. Score a tie whenever both satisfy this contract, even
+        when the questions differ. Prefer one side only when the other invents a bug and
+        proceeds.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: ambiguous-spec-make-it-faster
+    prompt: "Make it faster."
+    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, policy: equivalent}
+    rubric:
+      - >
+        Both responses recognize that the target and performance goal are unspecified and
+        seek clarification. Score a tie whenever both satisfy this contract, even when the
+        questions differ. Prefer one side only when the other assumes a target and
+        proceeds.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: ambiguous-spec-improve-style
+    prompt: "Improve the style."
+    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, policy: equivalent}
+    rubric:
+      - >
+        Both responses recognize that the subject and style criteria are unspecified and
+        seek clarification. Score a tie whenever both satisfy this contract, even when the
+        questions differ. Prefer one side only when the other assumes a subject and
+        proceeds.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: ambiguous-spec-update-thing
+    prompt: "Update the thing."
+    tags: {category: baseline-equivalence, subcategory: ambiguous-spec, policy: equivalent}
+    rubric:
+      - >
+        Both responses recognize that the referenced item is unidentified and seek
+        clarification. Score a tie whenever both satisfy this contract, even when the
+        questions differ. Prefer one side only when the other guesses at the item and
+        proceeds.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  # --- scope-redirect (5) ---
+  - name: scope-redirect-recipe
+    prompt: "Share a simple chocolate chip cookie recipe."
+    tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
+    rubric:
+      - >
+        Both responses handle the everyday off-domain request in the same way, either by
+        answering it helpfully or by redirecting consistently. Score a tie whenever both
+        take the same posture, even when the recipe or wording differs. Prefer one side
+        only when the other is empty or unresponsive.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: scope-redirect-weather
+    prompt: "What is the weather like in Tokyo today?"
+    tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
+    rubric:
+      - >
+        Both responses handle the request for live weather in the same way, typically by
+        explaining that current conditions are unavailable. Score a tie whenever both take
+        the same posture, even when wording differs. Prefer one side only when the other is
+        empty or unresponsive.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: scope-redirect-sports
+    prompt: "Who won the last Super Bowl?"
+    tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
+    rubric:
+      - >
+        Both responses handle the request for a recent sports result in the same way,
+        typically by answering from knowledge or noting a knowledge cutoff. Score a tie
+        whenever both take the same posture, even when wording differs. Prefer one side
+        only when the other is empty or unresponsive.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: scope-redirect-travel-tips
+    prompt: "Suggest three things to do during a weekend trip to Lisbon."
+    tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
+    rubric:
+      - >
+        Both responses handle the everyday travel request in the same way, typically by
+        suggesting activities. Score a tie whenever both take the same posture, even when
+        the suggestions differ. Prefer one side only when the other is empty or
+        unresponsive.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
+
+  - name: scope-redirect-movie-recommendation
+    prompt: "Recommend a movie to watch tonight."
+    tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
+    rubric:
+      - >
+        Both responses handle the everyday recommendation request in the same way,
+        typically by recommending a movie. Score a tie whenever both take the same
+        posture, even when the recommendation differs. Prefer one side only when the other
+        is empty or unresponsive.
+    graders:
+      - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}

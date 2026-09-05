@@ -1,7 +1,7 @@
 ---
 description: >-
-  Initiate responsible AI assessment planning from a completed Security Plan using
-  the RAI Planner agent in from-security-plan mode (recommended)
+  Start responsible AI assessment planning from a completed Security Plan using the
+  RAI Planner agent in from-security-plan mode (recommended)
 agent: "RAI Planner"
 ---
 

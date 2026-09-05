@@ -3,8 +3,12 @@ title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-03-17
+ms.date: 2026-08-19
 ms.topic: how-to
+keywords:
+  - contributing
+  - instructions
+  - standards
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot instruction files (`.instructions.md`) to the hve-core library.
@@ -30,30 +34,29 @@ Create an instructions file when you need to:
 
 ### Location
 
-Instruction files are typically organized in a collection subdirectory by convention:
+Instruction files are typically organized in a package subdirectory by convention:
 
 ```text
 .github/instructions/
-├── {collection-id}/
-│   └── your-instructions.instructions.md   # Collection-scoped
+├── {package-id}/
+│   └── your-instructions.instructions.md   # Package-scoped
 ├── coding-standards/
 │   ├── language.instructions.md             # Language-specific
 │   └── {language}/
 │       └── language.instructions.md         # Language with subdirectory
 ├── shared/
-│   └── cross-collection.instructions.md     # Shared across collections
+│   └── cross-package.instructions.md        # Shared across packages
 └── hve-core/
-    └── markdown.instructions.md               # Collection-scoped (distributed)
+    └── markdown.instructions.md               # Package-scoped (distributed)
 ```
 
 > [!IMPORTANT]
-> Files placed directly at the root of `.github/instructions/` (without a subdirectory) are repo-specific and never distributed through extension packages or collections. Only use root-level placement for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers. Files in subdirectories like `hve-core/`, `ado/`, and `shared/` are collection-scoped and distributable.
+> Files placed directly at the root of `.github/instructions/` (without a subdirectory) are repo-specific and never distributed through the plugin or extension. Only use root-level placement for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers. Files in subdirectories like `hve-core/`, `ado/`, and `shared/` are eligible for distribution.
 
 <!-- markdownlint-disable-next-line MD028 -->
 
 > [!NOTE]
-> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
-> accepts any valid repo-relative path regardless of the artifact's parent directory.
+> Tracked instructions beneath a `.github/instructions/<package>/` subdirectory are included automatically when `npm run plugin:sync` derives root `plugin.json`.
 
 #### Examples
 
@@ -66,7 +69,7 @@ Instruction files are typically organized in a collection subdirectory by conven
 
 * Use lowercase kebab-case: `python-script.instructions.md`
 * Be specific about target: `csharp-tests.instructions.md`
-* Include domain prefix when needed: `ado-wit-planning.instructions.md`
+* Include domain prefix when needed: `adr-standards.instructions.md`
 * Avoid generic names: `code.instructions.md` ❌ → `python-script.instructions.md` ✅
 
 ### File Format
@@ -135,48 +138,11 @@ lastUpdated: '2025-11-19'
 ---
 ```
 
-## Collection Entry Requirements
+## Plugin Manifest Registration
 
-All instructions must have matching entries in one or more `collections/*.collection.yml` manifests, except for repo-specific instructions placed at the root of `.github/instructions/` (without a subdirectory). Collection entries control distribution and maturity.
+Distributable instructions must use the canonical path `.github/instructions/<package>/<subpath>/<name>.instructions.md`. Root-level instructions remain repository-specific and outside plugin membership.
 
-> [!NOTE]
-> Root-level instructions (directly under `.github/instructions/` with no subdirectory) are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Artifact Exclusion](ai-artifacts-common.md#repo-specific-artifact-exclusion) for details.
-
-### Adding Your Instructions to a Collection
-
-After creating your instructions file, add an `items[]` entry in each target collection manifest:
-
-```yaml
-items:
-    # path can reference artifacts from any subfolder
-    - path: .github/instructions/{collection-id}/my-language.instructions.md
-        kind: instruction
-        maturity: stable
-```
-
-For instructions in language subdirectories, use the full path:
-
-```yaml
-items:
-    - path: .github/instructions/coding-standards/csharp/csharp.instructions.md
-        kind: instruction
-        maturity: stable
-```
-
-### Selecting Collections for Instructions
-
-Choose collections based on who uses the technology or pattern:
-
-| Instruction Type        | Recommended Collections                           |
-|-------------------------|---------------------------------------------------|
-| Language standards      | `hve-core-all`, `coding-standards`                |
-| Infrastructure (IaC)    | `hve-core-all`, `coding-standards`                |
-| Documentation standards | `hve-core-all`, `hve-core`                        |
-| Workflow instructions   | `hve-core-all` plus relevant workflow collections |
-| Test standards          | `hve-core-all`, `coding-standards`                |
-| ADO integration         | `hve-core-all`, `ado`, `project-planning`         |
-
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
+Run `npm run plugin:sync` to add the repository-relative `.github/...` path to the `rules` array in root `plugin.json`. Update `docs/plugins/hve-core.md` when the user-visible instruction surface changes, then run `npm run plugin:validate` and `npm run docs:generate:check`.
 
 ## Content Structure Standards
 
@@ -321,13 +287,7 @@ All Python code MUST pass:
 
 #### 8. Attribution Footer
 
-Always include an attribution footer at the end of the file.
-
-```markdown
----
-
-Brought to you by microsoft/hve-core
-```
+Source artifacts carry no attribution footer.
 
 ### XML-Style Block Requirements
 
@@ -581,7 +541,7 @@ Before submitting your instructions file, verify:
 * [ ] Code examples wrapped in XML-style blocks
 * [ ] Anti-patterns section with alternatives
 * [ ] Validation/testing requirements
-* [ ] Attribution footer present
+* [ ] Attribution footer absent
 
 ### Code Examples
 
@@ -645,6 +605,8 @@ Run these commands before submission (see [Common Standards - Common Validation]
 * `npm run lint:md`
 * `npm run spell-check`
 * `npm run lint:md-links`
+* `npm run docs:generate` (required when adding a new instruction; scaffolds the reference page under `docs/reference/instructions/`)
+* `npm run lint:asset-docs`
 
 All checks **MUST** pass before merge.
 
@@ -659,9 +621,9 @@ All checks **MUST** pass before merge.
 
 See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For instructions-specific assistance:
 
-* Review existing examples in `.github/instructions/{collection-id}/` (the conventional location for instruction files)
+* Review existing examples in `.github/instructions/{package-id}/` (the conventional location for instruction files)
 * Test glob patterns using file search commands
-* Use `prompt-builder.agent.md` agent for assistance
+* Use the `hve-builder` skill for authoring, review, refactoring, or validation assistance
 
 ---
 

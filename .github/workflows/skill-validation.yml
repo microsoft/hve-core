@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Skill Validation
 
 on:
@@ -30,18 +32,21 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Run skill validation
         shell: pwsh
+        env:
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
+          INPUT_BASE_BRANCH: ${{ inputs.base-branch }}
         run: |
           $params = @{}
-          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+          if ($env:INPUT_CHANGED_FILES_ONLY -eq 'true') {
             $params['ChangedFilesOnly'] = $true
-            $baseBranch = '${{ inputs.base-branch }}'
+            $baseBranch = $env:INPUT_BASE_BRANCH
             if (-not [string]::IsNullOrEmpty($baseBranch)) {
               $params['BaseBranch'] = $baseBranch
             }

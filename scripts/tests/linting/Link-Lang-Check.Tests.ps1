@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
@@ -17,7 +17,7 @@ BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Link-Lang-Check.ps1'
     . $script:ScriptPath
 
-    $script:FixtureDir = Join-Path $PSScriptRoot '../Fixtures/Linting'
+    $script:FixtureDir = Join-Path $PSScriptRoot '../fixtures/Linting'
 }
 
 AfterAll {

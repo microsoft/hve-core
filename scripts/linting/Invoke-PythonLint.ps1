@@ -1,16 +1,21 @@
 ﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # Invoke-PythonLint.ps1
 #
 # Purpose: Python lint runner. Discovers Python skills via pyproject.toml and
-#          invokes ruff against each. Defaults to read-only `ruff check` for CI
-#          gating. With `-Fix`, applies `ruff check --fix` followed by
-#          `ruff format` (mutates source; intended for local developer use).
+#          invokes ruff against each. Defaults to read-only `ruff check` plus
+#          `ruff format --check` for CI-equivalent gating. With `-Fix`, applies
+#          `ruff check --fix` followed by `ruff format` (mutates source;
+#          intended for local developer use). Projects that commit uv.lock must
+#          already provide a ruff binary matching the locked version; the runner
+#          verifies it and never synchronizes dependencies. This differs
+#          deliberately from Invoke-PythonTests.ps1, which provisions before
+#          testing; lint remains a non-installing validation command.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 param(
@@ -69,18 +74,25 @@ function Invoke-PythonLint {
             if ($Fix) {
                 Write-Host "`nRunning ruff --fix and ruff format in $skillPath..." -ForegroundColor Cyan
             } else {
-                Write-Host "`nRunning ruff in $skillPath..." -ForegroundColor Cyan
+                Write-Host "`nRunning ruff check and ruff format --check in $skillPath..." -ForegroundColor Cyan
             }
 
             Push-Location $skillPath
             try {
-                $ruffCmd = Resolve-RuffCommand -SkillPath $skillPath -GlobalRuffAvailable $globalRuffAvailable
+                $resolution = Resolve-ProjectRuff -SkillPath $skillPath -GlobalRuffAvailable $globalRuffAvailable
+                $ruffCmd = $resolution.command
 
                 if (-not $ruffCmd) {
-                    Write-Host '❌ ruff not available (no .venv and not installed globally)' -ForegroundColor Red
+                    Write-Host "❌ ruff not available: $($resolution.reason)" -ForegroundColor Red
                     $results.success = $false
                     $results.errors += $skillPath
                     continue
+                }
+
+                if ($resolution.resolutionMode -eq 'locked') {
+                    Write-Host "  using ruff $($resolution.resolvedVersion) pinned by uv.lock" -ForegroundColor Gray
+                } else {
+                    Write-Host '  using unlocked ruff fallback (no uv.lock in this project)' -ForegroundColor Gray
                 }
 
                 if ($Fix) {
@@ -101,6 +113,9 @@ function Invoke-PythonLint {
                         output = $combinedOutput
                         fixExitCode = $fixExit
                         formatExitCode = $formatExit
+                        resolutionMode = $resolution.resolutionMode
+                        lockedVersion = $resolution.lockedVersion
+                        resolvedVersion = $resolution.resolvedVersion
                     }
 
                     $results.details += $result
@@ -123,28 +138,45 @@ function Invoke-PythonLint {
                         Write-Host '✓ Autofix and format complete' -ForegroundColor Green
                     }
                 } else {
-                    $output = & $ruffCmd check . 2>&1
-                    $exitCode = $LASTEXITCODE
+                    # Both gates always run so a lint failure never hides a formatting failure.
+                    $checkOutput = & $ruffCmd check . 2>&1
+                    $checkExit = $LASTEXITCODE
+
+                    $formatCheckOutput = & $ruffCmd format --check . 2>&1
+                    $formatCheckExit = $LASTEXITCODE
+
+                    $combinedOutput = (@($checkOutput) + @($formatCheckOutput)) | Out-String
+                    $passed = ($checkExit -eq 0 -and $formatCheckExit -eq 0)
 
                     $result = @{
                         path = $skillPath
-                        passed = ($exitCode -eq 0)
-                        output = $output | Out-String
+                        passed = $passed
+                        output = $combinedOutput
+                        checkExitCode = $checkExit
+                        formatExitCode = $formatCheckExit
+                        resolutionMode = $resolution.resolutionMode
+                        lockedVersion = $resolution.lockedVersion
+                        resolvedVersion = $resolution.resolvedVersion
                     }
 
                     $results.details += $result
                     $results.skillsChecked++
 
-                    if ($exitCode -ne 0) {
-                        Write-Host "$output" -ForegroundColor Red
-                        Write-Host '❌ Linting issues found' -ForegroundColor Red
+                    if (-not $passed) {
+                        Write-Host "$combinedOutput" -ForegroundColor Red
+                        if ($checkExit -ne 0) {
+                            Write-Host '❌ Linting issues found' -ForegroundColor Red
+                        }
+                        if ($formatCheckExit -ne 0) {
+                            Write-Host "❌ Formatting issues found (run 'npm run lint:py:fix' to apply)" -ForegroundColor Red
+                        }
                         $results.success = $false
                         $results.errors += $skillPath
                     } else {
-                        if ($output) {
-                            Write-Host "$output"
+                        if ($combinedOutput.Trim()) {
+                            Write-Host "$combinedOutput"
                         }
-                        Write-Host '✓ No linting issues' -ForegroundColor Green
+                        Write-Host '✓ No linting or formatting issues' -ForegroundColor Green
                     }
                 }
             } catch {

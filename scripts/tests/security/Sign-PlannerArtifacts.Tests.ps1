@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
@@ -17,6 +17,11 @@ BeforeAll {
     ) | ForEach-Object { . ([scriptblock]::Create($_.Extent.Text)) }
 
     Mock Write-Host {}
+}
+
+AfterAll {
+    # Remove the cosign stub so it does not leak into later test suites
+    Remove-Item -Path 'Function:\cosign' -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'Get-ArtifactHash' -Tag 'Unit' {

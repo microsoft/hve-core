@@ -2,7 +2,7 @@
 title: GitHub Copilot Prompts
 description: Coaching and guidance prompts for specific development tasks that provide step-by-step assistance and context-aware support
 author: Edge AI Team
-ms.date: 2026-03-11
+ms.date: 2026-08-01
 ms.topic: hub-page
 estimated_reading_time: 3
 keywords:
@@ -16,11 +16,13 @@ keywords:
 
 ## GitHub Copilot Prompts
 
-This directory contains **coaching and guidance prompts** designed to provide step-by-step assistance for specific development tasks. Unlike instructions that focus on systematic implementation, prompts offer educational guidance and context-aware coaching to help you learn and apply best practices. Prompts are organized by workflow focus areas: onboarding & planning, source control & commit quality, Azure DevOps integration, development tools, documentation & process, and prompt engineering.
+This directory contains **coaching and guidance prompts** designed to provide step-by-step assistance for specific development tasks. Unlike instructions that focus on systematic implementation, prompts offer educational guidance and context-aware coaching to help you learn and apply best practices. Prompts are organized by workflow focus area: planning and RPI, source control, pull requests and review, prompt engineering, Design Thinking, Responsible AI, security, accessibility, data science, and experimental tools.
+
+Backlog and work item workflows are not prompts. They are user-invocable skills that discover the active tracker at runtime and work the same way against Azure DevOps, GitHub, and Jira. See [Backlog & Work Item Management](#backlog--work-item-management).
 
 ## How to Use Prompts
 
-Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g., `/task-research`, `/git-commit`). They provide:
+Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (for example, `/rpi` or `/git-commit`). They provide:
 
 * **Educational Guidance**: Step-by-step coaching approach
 * **Context-Aware Assistance**: Project-specific guidance and examples
@@ -29,11 +31,11 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ## Available Prompts
 
-### Onboarding & Planning
+### Onboarding, Research & Planning
 
-* **[Task Research](./hve-core/task-research.prompt.md)** - Initiates research for task implementation based on user requirements and conversation context (use `/task-research <topic>` to invoke)
-* **[Task Plan](./hve-core/task-plan.prompt.md)** - Creates implementation plans from research documents (use `/task-plan` to invoke)
-* **[Task Implement](./hve-core/task-implement.prompt.md)** - Executes implementation plans with tracking and stop controls (use `/task-implement` to invoke)
+* **[RPI](./hve-core/rpi.prompt.md)** - Coordinates one task through Research, Plan, Implement, Review, and Follow-up with the RPI Agent and matching `rpi-*` skills
+
+Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when you need one bounded RPI phase. Resume longer work from the durable artifacts owned by that workflow rather than from a generic conversation checkpoint.
 
 ### Source Control & Commit Quality
 
@@ -42,50 +44,87 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 * **[Git Merge](./hve-core/git-merge.prompt.md)** - Git merge, rebase, and rebase --onto workflows with conflict handling
 * **[Git Setup](./hve-core/git-setup.prompt.md)** - Verification-first Git configuration assistant
 
-### Azure DevOps Integration
+### Pull Requests & Code Review
 
-#### Work Item Management
+* **[Pull Request](./hve-core/pull-request.prompt.md)** - Generate pull request descriptions from branch diffs
+* **[PR Review](./hve-core/pr-review.prompt.md)** - Review a pull request or local change set via the consolidated Code Review agent
 
-* **[ADO Get My Work Items](./ado/ado-get-my-work-items.prompt.md)** - Retrieves user's work items and organizes into planning files
-* **[ADO Process My Work Items for Task Planning](./ado/ado-process-my-work-items-for-task-planning.prompt.md)** - Processes planning files for task planning with repository context enrichment
+### Prompt Engineering & Evaluation
 
-> **Note:** For comprehensive work item task planning, use the two-step workflow: First run `ado-get-my-work-items` to retrieve and organize work items into planning files, then `ado-process-my-work-items-for-task-planning` to enrich with repository context and generate task planning handoffs.
+* **[Vally Test Write](./hve-core/vally-test-write.prompt.md)** - Author Vally conformance test stimuli for an existing prompt, instructions, agent, or skill
+* **[Evals Import](./hve-core/evals-import.prompt.md)** - Import a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe
 
-#### Pull Requests & Builds
+Use the `hve-builder` skill to create, improve, refactor, review, or validate prompt-engineering artifacts. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills are compatibility aliases that route legacy requests to `hve-builder`; they are not prompt files or independent lifecycle owners. Vally conformance authoring remains owned by `Vally Test Author` and the `vally-tests` skill.
 
-* **[ADO Create Pull Request](./ado/ado-create-pull-request.prompt.md)** - Creates Azure DevOps PRs with work item discovery and reviewer identification
-* **[ADO Get Build Info](./ado/ado-get-build-info.prompt.md)** - Retrieves Azure DevOps build information for PRs or specific builds
+### Backlog & Work Item Management
 
-### GitHub Integration
+These workflows are skills rather than prompts. Each resolves the active tracker at runtime, so the same command serves Azure DevOps, GitHub, and Jira instead of requiring a per-platform variant.
 
-* **[GitHub Add Issue](./github/github-add-issue.prompt.md)** - Create GitHub issues with proper formatting and labels
+* **[Backlog Plan](../skills/project-planning/backlog-plan/SKILL.md)** - Read-only discovery, assigned work, task planning, triage assessment, sprint planning, and session resume
+* **[Backlog Execute](../skills/project-planning/backlog-execute/SKILL.md)** - Create and update tracker items, either one at a time or from a reviewed handoff file
+* **[Functional Planner](../../.github/agents/project-planning/functional-planner.agent.md)** - Turn PRD and BRD artifacts into a planned item hierarchy before anything is written to a tracker
+* **[Backlog Manager](../../.github/agents/project-planning/backlog-manager.agent.md)** - Orchestrate the above across a longer multi-step backlog session
 
-### Jira and GitLab Support
+### Platform Setup & Delivery Context
 
-Jira workflow support is available through dedicated prompts in this directory. GitLab support is currently exposed through the local GitLab skill for merge request and pipeline workflows.
+* **[Jira Skill](../skills/project-planning/jira/SKILL.md)** - Configure local Jira access and use the CLI directly
+* **[GitLab Skill](../skills/project-planning/gitlab/SKILL.md)** - Inspect merge requests, comments, pipelines, jobs, and logs for GitLab-hosted delivery workflows
 
-* **[Jira Discover Issues](./jira/jira-discover-issues.prompt.md)** - Discover Jira issues from documents, assigned work, or JQL searches and create planning files when needed
-* **[Jira Triage Issues](./jira/jira-triage-issues.prompt.md)** - Triage Jira issues with bounded JQL, duplicate checks, and controlled execution
-* **[Jira Execute Backlog](./jira/jira-execute-backlog.prompt.md)** - Execute a reviewed Jira handoff by creating, updating, transitioning, and commenting on issues
-* **[Jira Skill](../skills/jira/jira/SKILL.md)** - Configure local Jira access and use the underlying CLI commands directly when prompt orchestration is not needed
-* **[GitLab Skill](../skills/gitlab/gitlab/SKILL.md)** - Inspect merge requests, comments, pipelines, jobs, and logs for GitLab-hosted delivery workflows
+### Azure DevOps Pull Requests & Builds
+
+* **[ADO Create Pull Request](./hve-core/ado-create-pull-request.prompt.md)** - Create Azure DevOps PRs with generated description, linked work items, and reviewers
+* **[ADO Get Build Info](./hve-core/ado-get-build-info.prompt.md)** - Retrieve build status and logs for a PR or build number
+
+### Design Thinking
+
+* **[DT Start Project](./design-thinking/dt-start-project.prompt.md)** - Start a new Design Thinking coaching project with state initialization
+* **[DT Resume Coaching](./design-thinking/dt-resume-coaching.prompt.md)** - Resume a coaching session by reading state and re-establishing context
+* **[DT Method Next](./design-thinking/dt-method-next.prompt.md)** - Assess project state and recommend the next method with sequencing validation
+* **[DT Canonical Deck](./design-thinking/dt-canonical-deck.prompt.md)** - Canonical deck workflow with snapshot generation and optional customer-card PowerPoint build
+* **[DT Figma Export](./design-thinking/dt-figma-export.prompt.md)** - Export Design Thinking artifacts to a FigJam board or Figma Design file
+* **[DT Handoff - Problem Space](./design-thinking/dt-handoff-problem-space.prompt.md)** - Compile Methods 1-3 outputs into an RPI-ready artifact for `rpi-research`
+* **[DT Handoff - Solution Space](./design-thinking/dt-handoff-solution-space.prompt.md)** - Compile Methods 4-6 outputs into an RPI-ready artifact for `rpi-research`
+* **[DT Handoff - Implementation Space](./design-thinking/dt-handoff-implementation-space.prompt.md)** - Compile Methods 7-9 outputs into an RPI-ready artifact for `rpi-research`
+
+> **Note:** The per-method coaching prompts (`dt-method-04-*`, `dt-method-05-*`, `dt-method-06-*`) are driven by the DT Coach agent mid-session and are not typically invoked directly.
+
+### Responsible AI
+
+* **[RAI Capture](./rai-planning/rai-capture.prompt.md)** - Start RAI assessment planning from existing knowledge (capture mode)
+* **[RAI Plan from PRD](./rai-planning/rai-plan-from-prd.prompt.md)** - Start RAI assessment planning from PRD/BRD artifacts (from-prd mode)
+* **[RAI Plan from Security Plan](./rai-planning/rai-plan-from-security-plan.prompt.md)** - Start RAI assessment planning from a completed Security Plan (recommended)
 
 ### Security
 
+* **[Security Capture](./security/security-capture.prompt.md)** - Start security planning from existing notes (capture mode)
+* **[Security Plan from PRD](./security/security-plan-from-prd.prompt.md)** - Start security planning from PRD/BRD artifacts (from-prd mode)
 * **[Security Review](./security/security-review.prompt.md)** - OWASP vulnerability assessment against the current codebase with configurable mode, scope, and skill selection
-* **[Security Review - Web](./security/security-review-web.prompt.md)** - OWASP Top 10 web vulnerability assessment without codebase profiling (target-skill fast-path)
-* **[Security Review - LLM](./security/security-review-llm.prompt.md)** - OWASP LLM and Agentic vulnerability assessments with codebase profiling for context
-* **[Security Review - Secure by Design](./security/security-review-sbd.prompt.md)** - Secure by Design principles assessment based on UK and Australian government guidance (target-skill fast-path)
+* **[Security Review - Web](./security/security-review-web.prompt.md)** - OWASP Top 10 web vulnerability assessment without codebase profiling
+* **[Security Review - LLM](./security/security-review-llm.prompt.md)** - OWASP LLM and Agentic vulnerability assessments with codebase profiling
+* **[Security Review - Secure by Design](./security/security-review-sbd.prompt.md)** - Secure by Design principles assessment per UK and Australian government guidance
+* **[SSSC Capture](./security/sssc-capture.prompt.md)** - Start supply chain security planning from existing knowledge (capture mode)
+* **[SSSC from BRD](./security/sssc-from-brd.prompt.md)** - Start supply chain security planning from BRD artifacts
+* **[SSSC from PRD](./security/sssc-from-prd.prompt.md)** - Start supply chain security planning from PRD artifacts
+* **[SSSC from Security Plan](./security/sssc-from-security-plan.prompt.md)** - Extend a Security Planner assessment with supply chain coverage
+* **[VEX Scan](./security/vex-scan.prompt.md)** - Full VEX pipeline: scan dependencies, enrich CVEs, analyze exploitability, and draft an OpenVEX document
+* **[VEX Triage](./security/vex-triage.prompt.md)** - Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document
+* **[VEX Implement](./security/vex-implement.prompt.md)** - Plan the work to stand up VEX in a target project as a backlog for `rpi-implement`
 * **[Incident Response](./security/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
-* **[Risk Register](./security/risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
+* **[Risk Register](./security/risk-register.prompt.md)** - Generate a qualitative risk assessment with a P×I matrix and mitigation plans
+
+### Accessibility
+
+* **[Accessibility Coverage Matrix](./accessibility/accessibility-coverage-matrix.prompt.md)** - Build, refresh, report, or probe an accessibility coverage matrix across criteria, surfaces, and methods
 
 ### Data Science
 
-* **[Synthetic Data Generation](./data-science/synth-data-generate.prompt.md)** - Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships
+* **[Synthetic Data Generation](./data-science-engineering/synth-data-generate.prompt.md)** - Generate synthetic data for any subject with realistic patterns and relationships
 
-### Documentation & Process
+### Experimental & Tools
 
-* **[Pull Request](./hve-core/pull-request.prompt.md)** - PR description and review assistance
+* **[PowerPoint](./pptx.prompt.md)** - Create, update, or manage PowerPoint slide decks
+* **[cspell Config](./experimental/cspell-config.prompt.md)** - Create or update the project cspell configuration with project words and ignores
+* **[Graph Research](./experimental/graph-research.prompt.md)** - Research a codebase using an existing graphify knowledge graph with audit-tagged evidence
 
 ## Prompts vs Instructions vs Custom Agents
 
@@ -95,20 +134,20 @@ Jira workflow support is available through dedicated prompts in this directory. 
 
 ## Quick Start
 
-1. **Researching a complex task?** Use `/task-research <topic>` to investigate with [Task Research](./hve-core/task-research.prompt.md)
-2. **Planning implementation?** Use `/task-plan` with a research file to create actionable plans with [Task Plan](./hve-core/task-plan.prompt.md)
-3. **Executing a plan?** Use `/task-implement` to execute plans with [Task Implement](./hve-core/task-implement.prompt.md)
+1. **Coordinating a complete task?** Use [RPI](./hve-core/rpi.prompt.md) with `/rpi task="<outcome>"`
+2. **Working on one RPI phase?** Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review`
+3. **Authoring an HVE artifact?** Use `hve-builder`; use the Vally prompts above only for conformance-test authoring or corpus import
 4. **Committing changes?** Use [Git Commit Message Generator](./hve-core/git-commit-message.prompt.md) or [Git Commit](./hve-core/git-commit.prompt.md)
 5. **Handling merge conflicts?** Use [Git Merge](./hve-core/git-merge.prompt.md)
 6. **Setting up Git?** Use [Git Setup](./hve-core/git-setup.prompt.md)
-7. **Tracking your work?** Run [ADO Get My Work Items](./ado/ado-get-my-work-items.prompt.md) then [ADO Process My Work Items for Task Planning](./ado/ado-process-my-work-items-for-task-planning.prompt.md)
-8. **Creating Azure DevOps PRs?** Use [ADO Create Pull Request](./ado/ado-create-pull-request.prompt.md)
-9. **Checking build status?** Use [ADO Get Build Info](./ado/ado-get-build-info.prompt.md)
-10. **Creating GitHub issues?** Use [GitHub Add Issue](./github/github-add-issue.prompt.md)
+7. **Tracking your work?** Use the [Backlog Plan](../skills/project-planning/backlog-plan/SKILL.md) skill in `my-work` mode, then `task-plan` mode
+8. **Creating Azure DevOps PRs?** Use [ADO Create Pull Request](./hve-core/ado-create-pull-request.prompt.md)
+9. **Checking build status?** Use [ADO Get Build Info](./hve-core/ado-get-build-info.prompt.md)
+10. **Creating or updating tracker items?** Use the [Backlog Execute](../skills/project-planning/backlog-execute/SKILL.md) skill
 11. **Working on PRs?** Use [Pull Request](./hve-core/pull-request.prompt.md)
 12. **Responding to Azure incidents?** Use [Incident Response](./security/incident-response.prompt.md)
-13. **Managing Jira work?** Use [Jira Discover Issues](./jira/jira-discover-issues.prompt.md), [Jira Triage Issues](./jira/jira-triage-issues.prompt.md), or [Jira Execute Backlog](./jira/jira-execute-backlog.prompt.md)
-14. **Need GitLab delivery context?** Review the [GitLab Skill](../skills/gitlab/gitlab/SKILL.md) for setup and command guidance
+13. **Discovering or triaging a backlog?** Use the [Backlog Plan](../skills/project-planning/backlog-plan/SKILL.md) skill in `discover` or `triage` mode
+14. **Need GitLab delivery context?** Review the [GitLab Skill](../skills/project-planning/gitlab/SKILL.md) for setup and command guidance
 15. **Running a security review?** Use [Security Review](./security/security-review.prompt.md) for full OWASP assessment
 
 ## Related Resources

@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-05-13
+ms.date: 2026-08-19
 ms.topic: guide
 keywords:
   - contributing
@@ -23,58 +23,14 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 > * Star the project or add it to your favorites
 > * Mention the project to your peer studio crews and tell your work friends/colleagues
 
-## Build and Validation Requirements
-
-This project uses several tools to maintain code quality and consistency:
-
-### Required Tools
-
-| Tool                      | Purpose                                    |
-|---------------------------|--------------------------------------------||
-| markdownlint-cli2         | Validates markdown formatting and style    |
-| cspell                    | Spell checking across all file types       |
-| markdown-table-formatter  | Ensures consistent table formatting        |
-| markdown-link-check       | Validates markdown links are not broken    |
-| PowerShell 7              | Runs linting, validation, and test scripts |
-| PSScriptAnalyzer (module) | PowerShell static analysis                 |
-| PowerShell-Yaml (module)  | YAML validation via PowerShell             |
-| Pester (module)           | PowerShell test framework                  |
-
-### Validation Commands
-
-Run these npm scripts to validate your changes before submitting:
-
-```bash
-npm run lint:all                  # Run all linters
-npm run lint:md                   # Run markdownlint
-npm run lint:ps                   # Run PowerShell analyzer
-npm run lint:yaml                 # Run YAML linter
-npm run lint:frontmatter          # Validate markdown frontmatter
-npm run lint:links                # Check link language paths
-npm run lint:md-links             # Check markdown links
-npm run lint:collections-metadata # Validate collection metadata
-npm run lint:marketplace          # Validate marketplace metadata
-npm run lint:version-consistency  # Check action version consistency
-npm run validate:copyright        # Validate copyright headers
-npm run validate:skills           # Validate skill directory structure
-npm run spell-check               # Run cspell
-npm run format:tables             # Format markdown tables
-npm run test:ps                   # Run PowerShell tests
-```
-
-For additional validation commands specific to AI artifacts (agents, prompts, instructions, skills), see [Common Standards](./docs/contributing/ai-artifacts-common.md).
-
-### Development Environment
-
-We strongly recommend using the provided DevContainer, which comes pre-configured with all required tools. See the [DevContainer README](./.devcontainer/README.md) for setup instructions.
-
 ## Table of Contents
 
+* [Table of Contents](#table-of-contents)
 * [Build and Validation Requirements](#build-and-validation-requirements)
   * [Required Tools](#required-tools)
   * [Validation Commands](#validation-commands)
   * [Development Environment](#development-environment)
-* [Table of Contents](#table-of-contents)
+* [Label Management](#label-management)
 * [Code of Conduct](#code-of-conduct)
 * [I Have a Question](#i-have-a-question)
 * [I Want To Contribute](#i-want-to-contribute)
@@ -106,10 +62,74 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
   * [Running Tests Locally](#running-tests-locally)
 * [Release Process](#release-process)
   * [How Releases Work](#how-releases-work)
-  * [Version Determination](#version-determination)
+  * [Version Allocation](#version-allocation)
   * [Commit Message Examples](#commit-message-examples)
   * [Release Validation](#release-validation)
 * [Attribution](#attribution)
+
+## Build and Validation Requirements
+
+This project uses several tools to maintain code quality and consistency:
+
+### Required Tools
+
+| Tool                      | Purpose                                    |
+|---------------------------|--------------------------------------------|
+| markdownlint-cli2         | Validates markdown formatting and style    |
+| cspell                    | Spell checking across all file types       |
+| markdown-table-formatter  | Ensures consistent table formatting        |
+| markdown-link-check       | Validates markdown links are not broken    |
+| PowerShell 7              | Runs linting, validation, and test scripts |
+| PSScriptAnalyzer (module) | PowerShell static analysis                 |
+| PowerShell-Yaml (module)  | YAML validation via PowerShell             |
+| Pester (module)           | PowerShell test framework                  |
+
+### Validation Commands
+
+Start with the local-safe command that matches your change. See the
+[Validation Commands and CI-Owned Lanes](./docs/contributing/validation.md)
+guide for package-root setup, targeted checks, explicit fixers, and named CI
+lanes with browser, model, moderation, or credential prerequisites.
+
+```bash
+npm run validate:local             # Run the local-safe validation aggregate
+npm run lint:md                   # Run markdownlint
+npm run lint:ps                   # Run PowerShell analyzer
+npm run lint:yaml                 # Run YAML linter
+npm run lint:frontmatter          # Validate markdown frontmatter
+npm run lint:links                # Check link language paths
+npm run lint:md-links             # Check markdown links
+npm run plugin:validate           # Validate plugin manifest drift, locator, and hooks
+npm run lint:version-consistency  # Check action version consistency
+npm run validate:copyright        # Validate copyright headers
+npm run validate:skills           # Validate skill directory structure
+npm run spell-check               # Run cspell
+npm run format:tables             # Format markdown tables
+npm run test:ps                   # Run PowerShell tests
+```
+
+`ci:*` names CI-owned lanes but does not prevent ordinary local npm execution.
+Generic validation does not select browser, model, moderation, service, or
+credential-dependent lanes automatically.
+
+For additional validation commands specific to AI artifacts (agents, prompts, instructions, skills), see [Common Standards](./docs/contributing/ai-artifacts-common.md).
+
+### Development Environment
+
+We strongly recommend using the provided DevContainer, which comes pre-configured with all required tools. See the [DevContainer README](./.devcontainer/README.md) for setup instructions.
+
+## Label Management
+
+Repository labels are declared in [`.github/labels.yml`](.github/labels.yml)
+and synchronized by the [Label Sync](.github/workflows/label-sync.yml) workflow
+on pushes to `main` or through `workflow_dispatch`.
+
+| Task           | How                                                                                                                                                                |
+|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Add a label    | Add `name`, `color` (bare hex without `#`), and `description` to `.github/labels.yml`, then push to `main`                                                         |
+| Update a label | Edit the existing entry's `color` or `description`                                                                                                                 |
+| Rename a label | Add the old name to the new canonical entry's `aliases` array; synchronization migrates existing assignments                                                       |
+| Delete a label | Remove it in the [GitHub Labels UI](https://github.com/microsoft/hve-core/labels); removing the declaration does not delete it because synchronization is additive |
 
 ## Code of Conduct
 
@@ -189,7 +209,7 @@ Enhancement suggestions are tracked as [GitHub Issues](https://github.com/micros
 * Use a **clear and descriptive title** for the issue to identify the suggestion.
 * Provide a **step-by-step description of the suggested enhancement** in as many details as possible.
 * **Describe the current behavior** and **explain which behavior you expected to see instead** and why. At this point you can also tell which alternatives do not work for you.
-* You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) or [this tool](http://git.gnome.org/browse/byzanz/) on Linux.
+* You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) on Linux.
 * **Explain why this enhancement would be useful** to most HVE Core users. You may also want to point out the other projects that solved it better and which could serve as inspiration.
 
 ### Your First Code Contribution
@@ -213,6 +233,8 @@ For AI artifact documentation (agents, prompts, instructions, skills), see the [
 ## AI Artifact Contributions
 
 HVE Core includes specialized contribution guides for AI artifacts that enhance GitHub Copilot functionality. These artifacts define custom agents, reusable prompts, coding guidelines (instructions), and executable skills.
+
+> **Transparency Note updates:** If your change adds or modifies a skill or agent that generates media, personas, or likenesses, or that introduces an external service dependency or a new decision-shaping behavior, update [`TRANSPARENCY-NOTE.md`](./TRANSPARENCY-NOTE.md) (and the relevant appendix).
 
 ### Getting Started with AI Artifacts
 
@@ -364,21 +386,16 @@ This project uses [release-please](https://github.com/googleapis/release-please)
 
 ### How Releases Work
 
-1. Commit with Conventional Commits - All commits to `main` must follow conventional commit format (see [commit message instructions](./.github/instructions/hve-core/commit-message.instructions.md))
-2. Release PR Creation - After commits are pushed to `main`, release-please automatically creates or updates a "release PR"
-3. Review Release PR - Maintainers review the release PR to verify version bump and changelog accuracy
-4. Merge to Release - When the release PR is merged, a git tag and GitHub Release are automatically created
+1. Commit to `main` with Conventional Commits (see [commit message instructions](./.github/instructions/hve-core/commit-message.instructions.md)).
+2. Review and merge the `main` to `release/prerelease` promotion PR. This creates no tag.
+3. Review and merge release-please's managed PreRelease PR. Its merge creates `prerelease-v<version>`, packages and attests one VSIX, and publishes the prerelease.
+4. Review and merge the `release/prerelease` to `release/stable` promotion PR, then the managed Stable PR. The managed merge creates `v<version>`, packages and attests one VSIX, publishes Stable OpenVEX, and publishes the release.
 
-### Version Determination
+### Version Allocation
 
-Version bumps are determined by commit types:
+Ordinary release versions are branch-owned. PreRelease advances the current PreRelease minor by two and resets patch to zero. Stable advances the promoted PreRelease minor by one and resets patch to zero. This produces odd-minor PreRelease and even-minor Stable versions.
 
-| Commit Type                    | Version Bump | Example                  |
-|--------------------------------|--------------|--------------------------|
-| `feat:`                        | Minor        | 1.0.0 → 1.1.0            |
-| `fix:`                         | Patch        | 1.0.0 → 1.0.1            |
-| `docs:`, `chore:`, `refactor:` | No bump      | Appear in changelog only |
-| `feat!:` or `BREAKING CHANGE:` | Major        | 1.0.0 → 2.0.0            |
+Commit types organize changelog entries but do not select an automatic patch, minor, or major release class. A major-line transition or Stable patch or hotfix requires a separate reviewed release-state decision.
 
 ### Commit Message Examples
 

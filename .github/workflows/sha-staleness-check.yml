@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: SHA Staleness Check
 
 on:
@@ -37,7 +39,7 @@ jobs:
       has-stale: ${{ steps.staleness.outputs.has-stale }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -46,9 +48,10 @@ jobs:
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_MAX_AGE_DAYS: ${{ inputs.max-age-days }}
         run: |
-          $thresholdDays = if ('${{ inputs.max-age-days }}') { 
-            [int]'${{ inputs.max-age-days }}' 
+          $thresholdDays = if ($env:INPUT_MAX_AGE_DAYS) { 
+            [int]$env:INPUT_MAX_AGE_DAYS 
           } else { 
             30 
           }

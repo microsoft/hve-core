@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 <#
@@ -376,7 +376,10 @@ function Test-TopicValue {
         return $null
     }
 
-    $validTopics = @('overview', 'concept', 'tutorial', 'reference', 'how-to', 'troubleshooting')
+    # These mirror the ms.topic enum in
+    # scripts/linting/schemas/docs-frontmatter.schema.json so docs/** is governed
+    # identically whether or not schema validation is enabled.
+    $validTopics = @('overview', 'concept', 'tutorial', 'reference', 'how-to', 'troubleshooting', 'architecture')
     $topicValue = $Frontmatter['ms.topic']
 
     if ($topicValue -notin $validTopics) {
@@ -575,16 +578,23 @@ function Test-DocsFileFields {
 
     $issues = [System.Collections.Generic.List[ValidationIssue]]::new()
 
-    # Required fields
-    $titleIssue = Test-RequiredField -Frontmatter $Frontmatter -FieldName 'title' -RelativePath $RelativePath
-    if ($titleIssue) { $issues.Add($titleIssue) }
+    # Required fields. These mirror the required array in
+    # scripts/linting/schemas/docs-frontmatter.schema.json so docs/** is governed
+    # identically whether or not schema validation is enabled.
+    $requiredFields = @('title', 'description', 'author', 'ms.date', 'ms.topic', 'keywords')
 
-    $descIssue = Test-RequiredField -Frontmatter $Frontmatter -FieldName 'description' -RelativePath $RelativePath
-    if ($descIssue) { $issues.Add($descIssue) }
+    # ADR pages are mapped to adr-frontmatter.schema.json, which is a closed schema
+    # carrying its own categorization field (tags). Requiring keywords here would
+    # demand a property that schema forbids.
+    $isAdr = ($RelativePath -replace '\\', '/') -match '(^|/)docs/planning/adrs/\d{4}-[^/]+\.md$'
+    if ($isAdr) {
+        $requiredFields = $requiredFields | Where-Object { $_ -ne 'keywords' }
+    }
 
-    # Suggested fields
-    $suggestedIssues = Test-SuggestedFields -Frontmatter $Frontmatter -FieldNames @('author', 'ms.date', 'ms.topic') -RelativePath $RelativePath
-    $issues.AddRange($suggestedIssues)
+    foreach ($field in $requiredFields) {
+        $fieldIssue = Test-RequiredField -Frontmatter $Frontmatter -FieldName $field -RelativePath $RelativePath
+        if ($fieldIssue) { $issues.Add($fieldIssue) }
+    }
 
     # Date format
     $dateIssue = Test-DateFormat -Frontmatter $Frontmatter -RelativePath $RelativePath
@@ -835,6 +845,7 @@ function Test-SingleFileFrontmatter {
     # or Copilot footers (which would leak into rendered output).
     $normalizedForSkillCheck = $relativePath -replace '\\', '/'
     $isSkillTemplate = $normalizedForSkillCheck -like '*.github/skills/*/templates/*'
+    $isSkillTestFixture = $normalizedForSkillCheck -like '*.github/skills/*/tests/*fixtures/*'
 
     # Read file content
     try {
@@ -872,7 +883,8 @@ function Test-SingleFileFrontmatter {
     # Only warn about missing frontmatter for content types that require it
     # AI artifacts (.github prompts, instructions, agents, chatmodes) are exempt
     # Skill template assets are exempt (verbatim content rendered into other documents)
-    if (-not $result.HasFrontmatter -and -not $isAiArtifact -and -not $isSkillTemplate) {
+    # Skill test fixtures are exempt (verbatim test data parsed by skill unit tests)
+    if (-not $result.HasFrontmatter -and -not $isAiArtifact -and -not $isSkillTemplate -and -not $isSkillTestFixture) {
         $result.AddWarning('No frontmatter found', 'frontmatter')
         # Continue to footer validation even without frontmatter
     }
@@ -921,9 +933,24 @@ function Test-SingleFileFrontmatter {
             break
         }
     }
+    # Skill test fixtures are verbatim test data; skip footer validation entirely
+    if ($isSkillTestFixture) {
+        $skipFooterForFile = $true
+    }
 
-    # Footer validation for all markdown EXCEPT AI artifacts (prompts, instructions, agents, chatmodes)
-    if (-not $isAiArtifact -and -not $isSkillTemplate -and -not $SkipFooterValidation -and -not $skipFooterForFile) {
+    $isAgenticGhcpAsset = $isAiArtifact -or
+        $isSkillTemplate -or
+        ($normalizedRelativePath -like '.github/workflows/*.md') -or
+        ($normalizedRelativePath -like '.github/skills/*/references/*.md') -or
+        ($normalizedRelativePath -like '.github/skills/*/SKILL.md')
+
+    if ($isAgenticGhcpAsset -and -not $SkipFooterValidation) {
+        $hasFooter = Test-MarkdownFooter -Content $content
+        if ($hasFooter) {
+            $result.AddIssue([ValidationIssue]::new('Error', 'footer', 'Standard Copilot footer is not allowed on agentic GHCP assets', $relativePath))
+        }
+    }
+    elseif (-not $SkipFooterValidation -and -not $skipFooterForFile) {
         # Determine severity based on file type
         $footerSeverity = 'Warning'
         if ($fileTypeInfo.IsRootCommunityFile -or $fileTypeInfo.IsDevContainer -or $fileTypeInfo.IsVSCodeReadme) {

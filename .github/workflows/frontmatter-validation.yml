@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Frontmatter Validation
 
 on:
@@ -40,7 +42,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -50,28 +52,31 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
 
-      - name: Install PowerShell-Yaml
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Run Frontmatter Validation
         shell: pwsh
+        env:
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
+          INPUT_SKIP_FOOTER_VALIDATION: ${{ inputs.skip-footer-validation }}
+          INPUT_WARNINGS_AS_ERRORS: ${{ inputs.warnings-as-errors }}
+          INPUT_FOOTER_EXCLUDE_PATHS: ${{ inputs.footer-exclude-paths }}
         run: |
           $params = @{}
           
-          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+          if ($env:INPUT_CHANGED_FILES_ONLY -eq 'true') {
             $params['ChangedFilesOnly'] = $true
           }
-          if ('${{ inputs.skip-footer-validation }}' -eq 'true') {
+          if ($env:INPUT_SKIP_FOOTER_VALIDATION -eq 'true') {
             $params['SkipFooterValidation'] = $true
           }
-          if ('${{ inputs.warnings-as-errors }}' -eq 'true') {
+          if ($env:INPUT_WARNINGS_AS_ERRORS -eq 'true') {
             $params['WarningsAsErrors'] = $true
           }
           
           # Pass footer exclude paths if provided (overrides script defaults)
-          $footerExcludeInput = '${{ inputs.footer-exclude-paths }}'
+          $footerExcludeInput = $env:INPUT_FOOTER_EXCLUDE_PATHS
           if ($footerExcludeInput -and $footerExcludeInput -ne '') {
             $params['FooterExcludePaths'] = $footerExcludeInput -split ',' | ForEach-Object { $_.Trim() }
           }

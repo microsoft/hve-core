@@ -14,12 +14,12 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 8
 ---
 
-The Security Planner agent walks your team through a structured six-phase security analysis. It starts with project scoping, classifies components into operational buckets, maps relevant standards, performs STRIDE-based threat modeling, generates prioritized backlog items, and hands off to the RAI Planner when AI/ML components are detected.
+The Security Planner agent walks your team through a structured six-phase security analysis. It starts with project scoping, classifies components into operational buckets, maps relevant standards, performs STRIDE-based threat modeling, generates prioritized backlog items, and recommends a Responsible AI assessment when AI/ML components are detected.
 
 > The goal is not to replace security expertise. It is to make sure the right questions get asked, the right standards get referenced, and the resulting work items land in your backlog with enough context to act on.
 
@@ -32,12 +32,14 @@ The Security Planner agent walks your team through a structured six-phase securi
 | ⚡ Actionable output                 | The final phase produces backlog items with acceptance criteria, autonomy tiers, and direct links to the threats they address |
 
 > [!TIP]
-> New to the agent? Read [Why Security Planning?](why-security-planning.md) for the reasoning behind each phase.
+> New to the agent? Read [Why Security Planning?](why-security-planning) for the reasoning behind each phase.
 
 ## The Security Planning Flow
 
 ```mermaid
 flowchart LR
+  accTitle: Security Planning Six-Phase Workflow
+  accDescr: Security planning moves from project scoping through bucket analysis, standards mapping, security modeling, backlog generation, and review handoff, with an optional RAI path for AI systems.
   subgraph Scoping
     A["Phase 1<br/>Project Scoping"]
   end
@@ -54,7 +56,7 @@ flowchart LR
   end
 
   A --> B --> C --> D --> E --> F
-  F -.->|"AI/ML detected"| G["RAI Planner"]
+  F -.->|"AI/ML detected"| G["RAI Planner<br/>(recommended)"]
 ```
 
 ## The Six Phases
@@ -69,7 +71,7 @@ Classifies the application into seven operational buckets: infrastructure, DevOp
 
 ### Phase 3: Standards Mapping
 
-Maps each operational bucket to the relevant controls from OWASP Top 10, NIST 800-53, and CIS Benchmarks. The agent dispatches a Researcher Subagent for WAF and CAF runtime lookups when cloud-hosted components are in scope.
+Maps each operational bucket to the relevant controls from OWASP Top 10, NIST 800-53, and CIS Benchmarks. The agent activates `rpi-research` for WAF and CAF runtime lookups when cloud-hosted components are in scope.
 
 ### Phase 4: Security Model Analysis
 
@@ -81,7 +83,7 @@ Produces work items for Azure DevOps (`WI-SEC-{NNN}`) or GitHub Issues (`{{SEC-T
 
 ### Phase 6: Review and Handoff
 
-Summarizes the full analysis, validates completeness across all buckets, and presents the final deliverables. When Phase 1 detected AI/ML components, this phase dispatches the RAI Planner with a pre-seeded security context.
+Summarizes the full analysis, validates completeness across all buckets, and presents the final deliverables. When Phase 1 detected AI/ML components, this phase recommends a Responsible AI assessment and points the handoff at the Security Planner `state.json`. The RAI Planner is marked dispatched only once the user actually starts that follow-up.
 
 ## Autonomy Levels
 
@@ -125,16 +127,20 @@ The Security Planner supports two entry modes, each matched to a prompt file.
 ## Prerequisites
 
 * The Security Planner agent installed and enabled in your VS Code workspace.
-* The `Researcher Subagent` available for standards lookups in Phase 3.
+* The `rpi-research` skill available for standards lookups in Phase 3.
 * For From-PRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
 
 ## Next Steps
 
-* [Why Security Planning?](why-security-planning.md) for the reasoning behind each phase.
-* [Agent Overview](agent-overview.md) for the architecture and state management details.
-* [Entry Modes](entry-modes.md) for a deep dive into From-PRD vs. capture workflows.
-* [Phase Reference](phase-reference.md) for phase-by-phase field and artifact details.
-* [Handoff Pipeline](handoff-pipeline.md) for backlog generation and RAI dispatch.
+* [Why Security Planning?](why-security-planning) for the reasoning behind each phase.
+* [Agent Overview](agent-overview) for the architecture and state management details.
+* [Entry Modes](entry-modes) for a deep dive into From-PRD vs. capture workflows.
+* [Phase Reference](phase-reference) for phase-by-phase field and artifact details.
+* [Handoff Pipeline](handoff-pipeline) for backlog generation and RAI dispatch.
+
+## Related Agents
+
+* [SSSC Reviewer](sssc-reviewer) for an automated, evidence-verified supply-chain posture report in audit, diff, or plan mode.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

@@ -1,7 +1,9 @@
 ---
 agent: 'agent'
-description: 'Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit'
-model: Claude Haiku 4.5 (copilot)
+description: 'Stage all changes, generate a conventional commit message, and commit'
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
 ---
 
 # Stage, Generate, and Commit
@@ -56,7 +58,7 @@ Commit created successfully with the following message:
 feat: add repo-wide instruction files including prompts and agents
 
 * add commit message, markdown, C# along with C# test instructions
-* introduce task planner and researcher, prompt builder, and adr creation agents
+* introduce RPI, HVE Builder, and ADR authoring capabilities
 * configure markdownlint and VS Code workspace settings
 * add ADO work items prompts for getting and preparing my work items
 * add .gitignore and cleanup README newlines

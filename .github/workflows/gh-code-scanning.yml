@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: GitHub Code Scanning
 
 on:
@@ -20,14 +22,14 @@ jobs:
       REPO: ${{ github.event.repository.name }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Fetch code scanning alerts
         shell: pwsh
         run: |
-          $alerts = & .github/skills/github/gh-code-scanning/scripts/Get-CodeScanningAlerts.ps1 `
+          $alerts = & .github/skills/security/gh-code-scanning/scripts/Get-CodeScanningAlerts.ps1 `
             -Owner $env:OWNER `
             -Repo $env:REPO `
             -OutputFormat Json

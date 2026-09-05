@@ -25,6 +25,11 @@
 
 /* Layer 1: Infima variable overrides */
 :root {
+  /* Search selection pair. Declared once and reused in both color modes so the
+     cue never inherits the theme primary, which differs per mode and fails
+     contrast against the selected foreground in dark mode. */
+  --hve-search-selected-bg: #005a9e;
+  --hve-search-selected-fg: #ffffff;
   --ifm-color-primary: #0f6cbd;
   --ifm-color-primary-dark: #115ea3;
   --ifm-color-primary-darker: #0c3b5e;
@@ -51,11 +56,19 @@
   --ifm-line-height-base: 1.3;
 
   /* Layer 2: Custom MS Learn properties */
-  --ms-learn-hero-bg: #005ba1;
-  --ms-learn-hero-gradient: linear-gradient(174.2deg, #005ba1 0%, #004d88 66.72%, #003e6e);
+  /* SC 1.4.3/1.4.6: gradient stops kept dark so white hero text holds >=7:1 at
+     the lightest stop (extra margin vs. the 4.5:1 minimum) */
+  --ms-learn-hero-bg: #004e8a;
+  --ms-learn-hero-gradient: linear-gradient(174.2deg, #004e8a 0%, #004478 66.72%, #003459);
   --ms-learn-hero-text: #ffffff;
-  --ms-learn-hero-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' fill='none'%3E%3Cpath d='M8 6l10 10m0-10L8 16M38 36l10 10m0-10L38 46' stroke='%23000' stroke-opacity='0.08' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  --ms-learn-hero-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' fill='none'%3E%3Cpath d='M8 6l10 10m0-10L8 16M38 36l10 10m0-10L38 46' stroke='%23000' stroke-opacity='0.05' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   --ms-learn-card-accent: #0078d4;
+
+  /* WCAG 2.4.7 + 1.4.11: dual-band keyboard focus indicator tokens. The inner
+     band stays light and the outer band stays dark so the ring keeps >=3:1
+     contrast against both light and dark surfaces. */
+  --hve-focus-ring-inner: #ffffff;
+  --hve-focus-ring-outer: #003a66;
   --ms-learn-card-border: #e6e6e6;
   --ms-learn-text-subtle: #505050;
   --ms-learn-section-bg: #f2f2f2;
@@ -81,13 +94,96 @@ a:visited {
   color: inherit;
 }
 
-/* Navbar link hover: no underline in nav */
+/* WI-06 / SC 1.4.1: content links carry an underline so color is not the sole
+   means of distinguishing them from surrounding text */
+.markdown a:not([class*='card']):not([class*='button']) {
+  text-decoration: underline;
+}
+
+/* WCAG 2.4.7 + 1.4.11: visible, four-sided keyboard focus indicator with a
+   dual-band treatment that stays visible against both light and dark backgrounds. */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible,
+.cardTitle:focus-visible,
+.packageName:focus-visible,
+.boxCardLinks a:focus-visible {
+  outline: 2px solid var(--hve-focus-ring-inner);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--hve-focus-ring-outer);
+  border-radius: 2px;
+}
+
+/* WCAG 1.4.1: persistent link underlines provide a non-color distinction. */
+.menu__link,
+.table-of-contents__link,
+.navbar__link,
+.cardTitle,
+.packageName,
+.boxCardLinks a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Navbar link hover: keep the persistent underline for navigation links. */
 .navbar__link:hover {
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 .navbar__link:visited {
   color: inherit;
+}
+
+.navbar__search kbd {
+  background-color: #ebedf0;
+  border-color: #6b7680;
+  box-shadow: inset 0 -1px 0 #6b7680;
+  color: #4a5560;
+}
+
+/* SC 1.4.4 Resize Text: the Ctrl+K badges are positioned inside the search
+   field and do not yield as the field narrows, so under browser zoom the
+   "Search" placeholder is clipped from 150% upward (at 200% roughly 36 CSS px
+   of space remains for 51 CSS px of text). The badges are a redundant hint,
+   since the shortcut keeps working without them, so they are removed from
+   layout once the field is too narrow to show both. */
+@media (max-width: 996px) {
+  .navbar__search kbd {
+    display: none;
+  }
+}
+
+/* SC 1.4.3 / 1.4.11: pin search input colors so typed text, placeholder, and the
+   field border keep deterministic >=4.5:1 (text) / >=3:1 (border) contrast
+   instead of inheriting low-contrast Infima defaults */
+.navbar__search-input {
+  background-color: #ffffff;
+  color: #161616;
+  border: 1px solid #6b7680;
+}
+
+.navbar__search-input::placeholder {
+  color: #595959;
+  opacity: 1;
+}
+
+[data-theme='dark'] .navbar__search-input {
+  background-color: #292929;
+  color: #f2f2f2;
+  border: 1px solid #8a8a8a;
+}
+
+[data-theme='dark'] .navbar__search-input::placeholder {
+  color: #b0b0b0;
+  opacity: 1;
+}
+
+html {
+  scroll-padding-top: 54px;
+}
+
+:target {
+  scroll-margin-top: 54px;
 }
 
 /* Navbar: MS Learn-style sizing */
@@ -98,6 +194,38 @@ a:visited {
 
 .navbar__brand {
   gap: 0;
+}
+
+@media (max-width: 420px) {
+  .navbar {
+    height: auto;
+    min-height: 54px;
+    padding: 0 12px;
+  }
+
+  /* SC 1.4.10 Reflow: the search plugin renders its container with
+     `position: absolute; right: 16px`, so the expanded field is outside the flex
+     flow and cannot be stacked by any flex rule. Space is instead made for it by
+     letting the brand size to its content: `flex-basis: 100%` previously forced
+     the brand across the full row, so its title ran underneath the field. */
+  .navbar__brand {
+    flex-basis: auto;
+  }
+
+  /* The wordmark is removed from layout rather than hidden outright so the brand
+     link keeps its full accessible name ("Microsoft HVE Core") while only the
+     logo occupies the row alongside the search field. */
+  .navbar__title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 }
 
 .navbar__logo {
@@ -183,9 +311,21 @@ a:visited {
 .menu__link {
   font-size: 14px;
   font-weight: 400;
-  line-height: 25.6px;
-  padding: 2px 0 2px 16px;
+  line-height: 1.3;
+  padding: 4px 0 4px 16px;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
   color: var(--ifm-font-color-base);
+}
+
+.table-of-contents__link {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  padding-block: 4px;
+  box-sizing: border-box;
 }
 
 .menu__link:hover {
@@ -217,9 +357,26 @@ a:visited {
 
 .menu__caret {
   order: -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   padding: 0;
-  margin-right: -4px;
-  transform: scale(0.5);
+  margin: -2px 0 -2px -8px;
+  box-sizing: border-box;
+  transform: none;
+}
+
+.hash-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: -4px;
+  padding: 0 4px;
+  box-sizing: border-box;
 }
 
 .menu__link--sublist {
@@ -266,6 +423,11 @@ a:visited {
 }
 
 .breadcrumbs__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  min-width: 24px;
+  padding: 2px 0;
   font-size: 14px;
   color: var(--ifm-link-color);
 }
@@ -275,14 +437,13 @@ a:visited {
   padding: 24px 0;
 }
 
-/* TOC: "In this article" heading on right-side TOC */
+/* TOC: right-side article heading styling */
 .table-of-contents {
   border-left: 2px solid var(--ms-learn-card-border);
   padding-left: 1rem;
 }
 
-.table-of-contents::before {
-  content: 'In this article';
+.table-of-contents__title {
   display: block;
   font-size: 14px;
   font-weight: 600;
@@ -314,6 +475,129 @@ a:visited {
   text-decoration: none;
 }
 
+.cardTitle,
+.packageName {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  padding-block: 2px;
+  box-sizing: border-box;
+}
+
+.boxCardLinks a {
+  display: block;
+  min-height: 24px;
+  padding-block: 4px;
+  box-sizing: border-box;
+}
+
+/* Accessible tables: wide tables scroll inside a focusable wrapper (WCAG 2.1.1),
+   while the table keeps native display:table semantics so screen-reader table
+   navigation works. The wrapper shrinks to the table's content width (capped at
+   the content area) so short tables do not draw a full-width outline. */
+.tableWrapper {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  margin-bottom: var(--ifm-spacing-vertical);
+}
+
+.tableWrapper > table {
+  display: table;
+  margin-bottom: 0;
+}
+
+/* Search: highlight the "See all results" footer while it is the active combobox
+   option (aria-activedescendant is roved onto it after the last result), so the
+   selection is visible instead of appearing to jump straight back to the top.
+   Match the result-option highlight exactly (upstream options use
+   background-color: var(--search-local-highlight-color, var(--ifm-color-primary)))
+   and force a contrasting text color, since the footer link is muted gray by
+   default. Keep the link underline in the active state (WCAG 1.4.1: underline is
+   a non-color distinction and must not be removed on selection). */
+/* This repository owns the active-option cue rather than borrowing the upstream
+   hashed CSS-module "cursor" class, which changes on every package build and
+   silently stops matching. aria-selected is set by the SearchBar swizzle on
+   exactly one option at a time, so it is a stable, semantic hook.
+
+   The selected pair is declared explicitly and identically in both color modes.
+   Deferring to the theme primary resolved to a light blue in dark mode, giving
+   2.19:1 against the forced white text. White on #005a9e computes to 7.10:1.
+
+   --search-local-highlight-color is the upstream package's own override hook:
+   its .suggestion.cursor rule reads background-color from that variable and
+   falls back to --ifm-color-primary. That rule carries four class selectors and
+   outweighs the attribute selector below, so declaring background-color here
+   alone loses the cascade and the dark-mode primary (#75b6e7) keeps painting
+   the row. Setting the variable on the selected element resolves upstream's own
+   declaration to the accessible color, so no specificity contest is needed.
+   It is scoped to the selected option rather than :root on purpose: upstream
+   also reads the same variable for unselected mark text, which would then be
+   painted #005a9e on the near-black unselected row. */
+[role='listbox'] [role='option'][aria-selected='true'],
+[class*='hitFooter'] a.search-footer-active {
+  --search-local-highlight-color: var(--hve-search-selected-bg);
+  background-color: var(--hve-search-selected-bg);
+  color: var(--hve-search-selected-fg);
+  border-radius: 4px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* The upstream package paints the matched term with its own color, which
+   resolves to the selected background and makes the characters the user typed
+   disappear from the option they are reading. Repaint it on the selected pair,
+   and keep a weight difference so the match stays distinguishable from adjacent
+   option text for anyone who cannot perceive the color difference. */
+[role='listbox'] [role='option'][aria-selected='true'] mark,
+[class*='hitFooter'] a.search-footer-active mark {
+  background-color: transparent;
+  color: var(--hve-search-selected-fg);
+  font-weight: 700;
+}
+
+/* WCAG 1.4.11 / Windows High Contrast: in forced-colors mode the browser
+   replaces author colors with the user's system palette, so a selection cue
+   expressed only as background-color disappears and the active option becomes
+   indistinguishable. Re-express the cue with system color keywords, which are
+   the only values honoured in this mode, and draw the outline in the paired
+   foreground so it contrasts with the selection background rather than being
+   painted in that same background. */
+@media (forced-colors: active) {
+  [class*='hitFooter'] a.search-footer-active,
+  [role='option'][aria-selected='true'],
+  [role='option'][class*='cursor'] {
+    background-color: Highlight;
+    color: HighlightText;
+    outline: 2px solid HighlightText;
+    outline-offset: -2px;
+    forced-color-adjust: none;
+  }
+
+  /* forced-color-adjust does not inherit, so descendants of the selected option
+     would keep their author colors over a system background. */
+  [class*='hitFooter'] a.search-footer-active *,
+  [role='option'][aria-selected='true'] *,
+  [role='option'][class*='cursor'] * {
+    background-color: transparent;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+
+  /* The focus indicator is drawn with a box-shadow, which forced-colors mode
+     removes. Keep a system-colored outline so keyboard focus stays visible. */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+  }
+}
+
 /* Dark mode: derived from MS Learn dark theme (extracted via Chrome DevTools) */
 [data-theme='dark'] {
   --ifm-color-primary: #75b6e7;
@@ -325,7 +609,8 @@ a:visited {
   --ifm-color-primary-lightest: #cfe4fa;
   --ifm-background-color: #1f1f1f;
   --ifm-font-color-base: #ffffff;
-  --ifm-link-color: #75b6e7;
+  /* WI-06: lighter link tone for additional dark-mode contrast margin (~11:1 on #1f1f1f) */
+  --ifm-link-color: #b8d7f5;
   --ifm-footer-background-color: #091f2c;
   --ifm-card-background-color: #091f2c;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
@@ -342,3 +627,19 @@ a:visited {
   --ms-learn-success: #2ea043;
   --ms-learn-danger: #f85149;
 }
+
+/* WI-07: search dropdown muted-text contrast.
+   @easyops-cn/docusaurus-search-local colors the breadcrumb path and the
+   "See all results" footer link via `var(--search-local-muted-color, ...)`,
+   whose default (#969faf) fails WCAG 1.4.3 against both the popup (#ffffff) and
+   footer (#f5f6f7) backgrounds in light mode and against the dark popup in dark
+   mode. Overriding the variable raises every consumer above 4.5:1 in one place,
+   avoiding a specificity battle with the library's hashed-class rules. */
+:root {
+  --search-local-muted-color: #505050;
+}
+
+[data-theme='dark'] {
+  --search-local-muted-color: #b8d7f5;
+}
+

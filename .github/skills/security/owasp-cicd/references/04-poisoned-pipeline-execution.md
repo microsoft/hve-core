@@ -120,7 +120,3 @@ attacker accesses secrets belonging to private projects.
 * Audit and lock down all files referenced by pipeline configurations (Makefiles, scripts, test
   configurations, linter configurations).
 * Enable and enforce branch protection rules with correlating pipeline trigger restrictions.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

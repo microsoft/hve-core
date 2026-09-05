@@ -1,8 +1,8 @@
 ---
 title: Extension Scripts
-description: PowerShell scripts for VS Code extension preparation, packaging, and collection discovery
+description: PowerShell scripts for manifest-driven VS Code extension preparation and packaging
 author: HVE Core Team
-ms.date: 2026-03-17
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - powershell
@@ -18,49 +18,41 @@ publishing the HVE Core VS Code extension.
 
 ## Architecture
 
-The extension packaging pipeline follows a three-stage process:
+The extension packaging pipeline follows the one plugin manifest:
 
-1. `Find-CollectionManifests.ps1` discovers collection manifests and builds a
-   packaging matrix
-2. `Prepare-Extension.ps1` gathers agents, prompts, instructions, and skills,
-   filtering by maturity and channel
-3. `Package-Extension.ps1` produces one `.vsix` per collection using `vsce`
+1. `Prepare-Extension.ps1` maps root `plugin.json` to one extension manifest and README
+2. `Package-Extension.ps1` stages tracked contribution files and creates one `.vsix`
+3. `extension-provenance-signer.yml` packages in a `contents: read` job, then transfers
+  the VSIX to a separate privileged attestation job with digest checking
+4. `Resolve-VsixFile.ps1` requires exactly one VSIX for provenance workflows
+5. `Export-AttestationBundle.ps1` writes Sigstore and in-toto sidecars
 
-All three scripts import `CIHelpers.psm1` and `CollectionHelpers.psm1` for CI
-platform detection and YAML manifest parsing.
+Membership comes from root `plugin.json`. Stable and PreRelease preparation use the same component set. Repository-relative `.github/...` declarations become extension contribution paths without adding plugin-root README or license files.
 
 ## Scripts
 
 ### `Prepare-Extension.ps1`
 
-Prepares extension contents by auto-discovering agents, prompts, instructions,
-and skills from the repository.
+Prepares extension contents from root `plugin.json`.
 
 Purpose: Gather and filter artifacts for inclusion in the extension package.
 
 #### Features
 
-* Auto-discovers `.agent.md`, `.prompt.md`, `.instructions.md`, and `SKILL.md`
-  files
-* Filters artifacts by maturity level and release channel
-* Supports collection-scoped preparation
+* Maps agents, prompts, instructions, and skills from plugin manifest membership
+* Writes the single `extension/package.json` and `extension/README.md`
+* Produces channel-neutral component membership before packaging
 * Dry-run mode for previewing changes
 
 #### Parameters
 
-* `-ChangelogPath` - Path to the changelog file
-* `-Channel` - Release channel: `Stable` or `PreRelease`
 * `-DryRun` (switch) - Preview changes without modifying files
-* `-Collection` - Collection name for scoped preparation
 
 #### Usage
 
 ```powershell
-# Prepare stable channel
+# Prepare channel-neutral extension resources
 ./scripts/extension/Prepare-Extension.ps1
-
-# Prepare pre-release channel
-./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
 
 # Dry run to preview
 ./scripts/extension/Prepare-Extension.ps1 -DryRun
@@ -76,7 +68,9 @@ Purpose: Produce a distributable extension package from prepared contents.
 
 * Sets version from parameters or changelog
 * Supports pre-release and dev patch builds
-* Collection-scoped packaging
+* One-identity extension packaging
+* Git-tracked path staging with explicit shared resources
+* Repository-pinned `vsce` only, with no installer fallback
 * Dry-run mode for validation
 
 #### Parameters
@@ -85,7 +79,6 @@ Purpose: Produce a distributable extension package from prepared contents.
 * `-DevPatchNumber` - Development patch number for dev builds
 * `-ChangelogPath` - Path to the changelog file
 * `-PreRelease` (switch) - Mark as pre-release build
-* `-Collection` - Collection name for scoped packaging
 * `-DryRun` (switch) - Preview changes without producing a package
 
 #### Usage
@@ -96,57 +89,74 @@ Purpose: Produce a distributable extension package from prepared contents.
 
 # Package a pre-release build
 ./scripts/extension/Package-Extension.ps1 -PreRelease
-
-# Package a specific collection
-./scripts/extension/Package-Extension.ps1 -Collection hve-core
 ```
 
-### `Find-CollectionManifests.ps1`
+### `Resolve-VsixFile.ps1`
 
-Discovers collection manifests for the packaging matrix.
+Resolves the single `.vsix` file within a directory.
 
-Purpose: Build a list of collections to package based on channel and
-maturity rules.
-
-#### Features
-
-* Scans `collections/` for `.collection.yml` files
-* Filters collections by maturity and channel
-* Outputs a matrix for CI workflow consumption
+Purpose: Return the one VSIX path in a directory, failing when zero or multiple
+`.vsix` files are present. Used by the `extension-provenance-signer.yml` reusable
+workflow to locate the downloaded VSIX before signing and attestation.
 
 #### Parameters
 
-* `-Channel` - Release channel filter: `Stable` or `PreRelease`
-* `-CollectionsDir` - Path to the collections directory
+* `-DirectoryPath` - Directory to search for a `.vsix` file (defaults to `$env:VSIX_DIRECTORY`)
 
 #### Usage
 
 ```powershell
-# Discover stable collections
-./scripts/extension/Find-CollectionManifests.ps1 -Channel Stable
+# Resolve the VSIX in a directory
+./scripts/extension/Resolve-VsixFile.ps1 -DirectoryPath ./extension
+```
 
-# Discover all collections for pre-release
-./scripts/extension/Find-CollectionManifests.ps1 -Channel PreRelease
+### `Export-AttestationBundle.ps1`
+
+Exports attestation files from an attestation bundle.
+
+Purpose: Extract the Sigstore and in-toto attestation files from a bundle to
+local paths. Used in the provenance flow to materialize attestation artifacts
+for verification and release upload.
+
+#### Parameters
+
+* `-BundlePath` - Path to the attestation bundle (defaults to `$env:BUNDLE_PATH`)
+* `-SigstorePath` - Output path for the Sigstore attestation (defaults to `$env:SIGSTORE_PATH`)
+* `-IntotoPath` - Output path for the in-toto attestation (defaults to `$env:INTOTO_PATH`)
+
+#### Usage
+
+```powershell
+# Export attestation files from a bundle
+./scripts/extension/Export-AttestationBundle.ps1 -BundlePath ./bundle.json -SigstorePath ./out.sigstore.json -IntotoPath ./out.intoto.jsonl
 ```
 
 ## npm Scripts
 
-| npm Script                     | Description                   |
-|--------------------------------|-------------------------------|
-| `extension:prepare`            | Prepare stable channel        |
-| `extension:prepare:prerelease` | Prepare pre-release channel   |
-| `extension:package`            | Package extension             |
-| `extension:package:prerelease` | Package pre-release extension |
-| `package:extension`            | Alias for `extension:package` |
+| npm Script                     | Description                                               |
+|--------------------------------|-----------------------------------------------------------|
+| `extension:prepare`            | Prepare channel-neutral resources                         |
+| `extension:prepare:prerelease` | Prepare the same resources for the PreRelease entry point |
+| `extension:package`            | Package extension                                         |
+| `extension:package:prerelease` | Package pre-release extension                             |
 
 ## GitHub Actions Integration
 
-The extension packaging workflow (`extension-package.yml`) orchestrates all
-three scripts:
+`release-vsix-publish.yml` is the sole post-tag release producer. A push of an
+exact `v<version>` or `prerelease-v<version>` tag invokes
+`extension-provenance-signer.yml` after the producer validates the protected tag,
+source commit, channel branch, committed versions, and exact draft release.
 
-1. `Find-CollectionManifests.ps1` produces the collection matrix
-2. `Prepare-Extension.ps1` runs per collection to gather artifacts
-3. `Package-Extension.ps1` runs per collection to produce `.vsix` files
+The `extension-provenance-signer.yml` signer path has two separate jobs. Its
+`package` job checks out the immutable tag commit, installs dependencies,
+prepares the complete HVE Core contributions, and packages one `.vsix` with
+only `contents: read`. Its dependent `attest` job has the signing and release
+write scopes, downloads the VSIX and dependency SBOM through fixed-name,
+digest-checked artifact transfers, and never installs dependencies or packages
+the extension. No job both packages and signs.
+
+Marketplace workflows do not build another VSIX. They consume only the VSIX
+from the matching published GitHub release after provenance verification.
 
 See [Build Workflows](../../docs/architecture/workflows.md) for pipeline
 details.

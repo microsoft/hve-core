@@ -2,7 +2,7 @@
 title: PR Reference Skill Reference
 description: XML output format, usage scenarios, output path variations, and semantic invocation patterns
 author: Microsoft
-ms.date: 2026-05-21
+ms.date: 2026-08-25
 ms.topic: reference
 keywords:
   - pr-reference
@@ -98,6 +98,32 @@ Compare against a branch other than `origin/main`, such as a release branch:
 
 The PowerShell script automatically resolves `origin/release/2.0` when a bare branch name is provided.
 
+### Automatic Default Branch Detection
+
+Detect the remote default branch instead of naming it, for repositories whose default is not `main`:
+
+```bash
+./scripts/generate.sh --base-branch auto
+```
+
+```powershell
+./scripts/generate.ps1 -BaseBranch auto
+```
+
+Both scripts resolve `auto` from `refs/remotes/origin/HEAD` and fall back to `origin/main` when that symbolic ref is unset.
+
+### Merge-Base Three-Way Comparison
+
+Compare against the common ancestor of the current branch and the base branch, so commits added to the base branch after you branched stay out of the diff:
+
+```bash
+./scripts/generate.sh --merge-base
+```
+
+```powershell
+./scripts/generate.ps1 -MergeBase
+```
+
 ### Markdown Exclusion for PR Descriptions
 
 Exclude documentation changes from the diff when generating PR descriptions, reducing noise in the output:
@@ -109,6 +135,20 @@ Exclude documentation changes from the diff when generating PR descriptions, red
 ```powershell
 ./scripts/generate.ps1 -ExcludeMarkdownDiff
 ```
+
+### Extension and Path Exclusion
+
+Exclude file extensions or path prefixes from the diff, for branches that carry generated or vendored changes alongside source edits:
+
+```bash
+./scripts/generate.sh --exclude-ext yml,yaml,json --exclude-path docs/,.github/
+```
+
+```powershell
+./scripts/generate.ps1 -ExcludeExt yml,yaml,json -ExcludePath docs/,.github/
+```
+
+Both flags take comma-separated values. A leading dot on an extension and a trailing slash on a path are stripped automatically.
 
 ### Custom Output Path
 
@@ -157,11 +197,12 @@ Different workflows use different output paths and filenames:
 
 Extracts file paths from the PR reference XML diff headers.
 
-| Parameter     | Flag (bash)    | Flag (PowerShell) | Default                                 | Description                                    |
-|---------------|----------------|-------------------|-----------------------------------------|------------------------------------------------|
-| Input path    | `--input, -i`  | `-InputPath`      | `.copilot-tracking/pr/pr-reference.xml` | Path to the PR reference XML                   |
-| Change type   | `--type, -t`   | `-Type`           | `all`                                   | Filter: all, added, deleted, modified, renamed |
-| Output format | `--format, -f` | `-Format`         | `plain`                                 | Output: plain, json, or markdown               |
+| Parameter     | Flag (bash)      | Flag (PowerShell) | Default                                 | Description                                                                        |
+|---------------|------------------|-------------------|-----------------------------------------|------------------------------------------------------------------------------------|
+| Input path    | `--input, -i`    | `-InputPath`      | `.copilot-tracking/pr/pr-reference.xml` | Path to the PR reference XML                                                       |
+| Change type   | `--type, -t`     | `-Type`           | `all`                                   | Filter: all, added, deleted, modified, renamed. Accepts comma-separated values     |
+| Exclude type  | `--exclude-type` | `-ExcludeType`    | (none)                                  | Change types to exclude. Mutually exclusive with `--type` unless `--type` is `all` |
+| Output format | `--format, -f`   | `-Format`         | `plain`                                 | Output: plain, json, or markdown                                                   |
 
 ### read-diff
 
@@ -190,9 +231,3 @@ Generate a PR reference XML excluding markdown diffs, saving to the review track
 ```
 
 Avoid referencing script paths directly in prompts, agents, or instructions. The agent selects the appropriate script based on the current platform.
-
----
-
-<!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->

@@ -1,0 +1,202 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+
+"""Load, validate, and guard the project-supplied a11y-runtime config.
+
+The config schema is described by config-schema.json (JSON Schema 2020-12).
+The SSRF guard restricts probing to loopback hosts unless the target host is
+explicitly allowlisted or external access is confirmed by the caller.
+"""
+
+from __future__ import annotations
+
+import json
+from fnmatch import fnmatch
+from pathlib import Path
+from typing import Any
+from urllib.parse import urlparse
+
+from runtime_a11y._errors import EXIT_USAGE, ScriptError
+
+_SCHEMA_PATH = Path(__file__).with_name("config-schema.json")
+_LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+# Single definition of loopback, shared with callers that gate on the same
+# notion so the guard and its callers cannot disagree about which hosts are
+# local.
+LOOPBACK_HOSTS = _LOOPBACK_HOSTS
+
+
+def load_schema() -> dict[str, Any]:
+    """Load the runtime config JSON Schema."""
+    return json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
+
+
+def load_config(config_path: Path) -> dict[str, Any]:
+    """Read and parse the config file, returning the raw mapping.
+
+    Args:
+        config_path: Path to a11y-runtime.config.json.
+
+    Raises:
+        ScriptError: If the file is missing or not valid JSON.
+    """
+    try:
+        raw = config_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ScriptError(
+            f"Cannot read config file: {config_path}", EXIT_USAGE
+        ) from exc
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ScriptError(
+            f"Config file is not valid JSON: {config_path} ({exc})", EXIT_USAGE
+        ) from exc
+    if not isinstance(parsed, dict):
+        raise ScriptError("Config root must be a JSON object", EXIT_USAGE)
+    return parsed
+
+
+def validate_config(config: dict[str, Any]) -> None:
+    """Validate the config against config-schema.json.
+
+    Raises:
+        ScriptError: If the config does not conform to the schema.
+    """
+    try:
+        import jsonschema
+    except ImportError as exc:  # pragma: no cover - dependency guard
+        raise ScriptError(
+            "The 'jsonschema' package is required to validate the config. "
+            "Install it via 'uv sync'.",
+            EXIT_USAGE,
+        ) from exc
+
+    try:
+        jsonschema.validate(instance=config, schema=load_schema())
+    except jsonschema.ValidationError as exc:
+        raise ScriptError(
+            f"Invalid a11y-runtime config: {exc.message}", EXIT_USAGE
+        ) from exc
+
+
+def _config_for_validation(
+    config: dict[str, Any],
+    require_target: bool,
+) -> dict[str, Any]:
+    """Return a validation copy that injects a loopback placeholder when needed."""
+    if require_target or not isinstance(config, dict):
+        return config
+    if config.get("baseUrl"):
+        return config
+    validation_config = dict(config)
+    validation_config["baseUrl"] = "http://127.0.0.1:3000"
+    return validation_config
+
+
+def _host_is_loopback(host: str) -> bool:
+    return host.lower() in _LOOPBACK_HOSTS
+
+
+def _host_is_allowlisted(host: str, allowlist: list[str]) -> bool:
+    """Return True if the host matches any host-shaped allowlist entry.
+
+    Route/path globs (entries beginning with '/') do not authorize a host and
+    are ignored here. A URL-shaped entry authorizes its own host, so an entry
+    written as ``https://docs.example.com/guide`` is not silently inert.
+    """
+    for entry in allowlist:
+        if not entry or entry.startswith("/"):
+            continue
+        candidate = entry.strip()
+        if "://" in candidate:
+            candidate = urlparse(candidate).hostname or ""
+        else:
+            candidate = candidate.split("/", 1)[0]
+        if candidate and fnmatch(host.lower(), candidate.lower()):
+            return True
+    return False
+
+
+def assert_host_allowed(
+    host: str,
+    allowlist: list[str] | None = None,
+    allow_external: bool = False,
+) -> None:
+    """Require a loopback, allowlisted, or explicitly authorized host."""
+    if _host_is_loopback(host):
+        return
+    if allowlist and _host_is_allowlisted(host, allowlist):
+        return
+    if allow_external:
+        return
+    raise ScriptError(
+        f"Refusing to probe non-loopback host '{host}'. Add it to the allowlist "
+        "or re-run with --allow-external to confirm intentional external access.",
+        EXIT_USAGE,
+    )
+
+
+def _validated_http_host(url: str) -> str:
+    """Return the host from an absolute HTTP(S) URL without credentials."""
+    if (
+        not isinstance(url, str)
+        or not url
+        or any(ord(character) <= 32 or ord(character) == 127 for character in url)
+    ):
+        raise ScriptError(
+            "Config baseUrl must be an absolute HTTP(S) URL without whitespace "
+            "or control characters.",
+            EXIT_USAGE,
+        )
+
+    parsed = urlparse(url)
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+        raise ScriptError(
+            "Config baseUrl must be an absolute HTTP(S) URL with a host "
+            "(for example http://127.0.0.1:3000).",
+            EXIT_USAGE,
+        )
+    if parsed.username is not None or parsed.password is not None:
+        raise ScriptError("Config baseUrl must not include credentials.", EXIT_USAGE)
+    try:
+        parsed.port
+    except ValueError as exc:
+        raise ScriptError(
+            "Config baseUrl includes an invalid port.", EXIT_USAGE
+        ) from exc
+    return parsed.hostname
+
+
+def assert_target_allowed(config: dict[str, Any], allow_external: bool = False) -> None:
+    """Enforce the SSRF/localhost-allowlist guard on the config baseUrl.
+
+    Loopback hosts are always permitted. A non-loopback host is permitted only
+    when it matches a host-shaped allowlist entry or when ``allow_external`` is
+    explicitly set by the caller. Otherwise a ScriptError instructs the caller
+    to confirm external access.
+
+    Raises:
+        ScriptError: If the target host is neither loopback nor authorized.
+    """
+    base_url = config.get("baseUrl", "")
+    host = _validated_http_host(base_url)
+    allowlist = config.get("allowlist") or []
+    assert_host_allowed(
+        host,
+        allowlist=allowlist if isinstance(allowlist, list) else None,
+        allow_external=allow_external,
+    )
+
+
+def load_validated_config(
+    config_path: Path,
+    allow_external: bool = False,
+    require_target: bool = True,
+) -> dict[str, Any]:
+    """Load, schema-validate, and optionally SSRF-guard a config."""
+    config = load_config(config_path)
+    validate_config(_config_for_validation(config, require_target))
+    if require_target:
+        assert_target_allowed(config, allow_external=allow_external)
+    return config
