@@ -119,7 +119,6 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * Pull Requests (`.copilot-tracking/pr/`) - PR reference generation, handoff, and review tracking.
 * Changes (`.copilot-tracking/changes/`) - Implementation changes, amendments, and divergences.
 * Plans (`.copilot-tracking/plans/`) - Ordinary plan checklists.
-* Details (`.copilot-tracking/details/`) - Phase details.
 * Research (`.copilot-tracking/research/`) - Technical research findings and subagent research outputs.
 * Reviews (`.copilot-tracking/reviews/`) - Completed review evidence.
 * ADRs (`.copilot-tracking/adrs/`) - Architecture Decision Record drafts.

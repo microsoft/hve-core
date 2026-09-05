@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-08-26
+ms.date: 2026-08-31
 ms.topic: overview
 sidebar_position: 1
 keywords:
@@ -82,12 +82,14 @@ graph LR
 
 Use the `hve-builder` skill to create, improve, refactor, replace, review, or
 validate prompts, instructions, agents, subagents, and skills. It resolves the
-write boundary, runs independent static review, and applies one behavior gate
-with route-specific execution. Major mutations and behavior-bearing review
-targets execute testing, while eligible no-runtime review targets and Minor or
-Medium mutations are satisfied-and-skipped. Known target files and
-caller-supplied canonical references remain bounded lifecycle reads;
-open-ended exploration and decision-critical research activate `rpi-research`.
+write boundary, completes known edits, independent static review, and local
+validation, then freezes the candidate before one final behavior decision. Major
+mutations and behavior-bearing review targets invoke HVE Builder Tester at most
+once; eligible no-runtime review targets and Minor or Medium mutations are
+satisfied-and-skipped. A behavior finding ends the current run instead of
+starting an edit-and-retest loop. Known target files and caller-supplied canonical
+references remain bounded lifecycle reads; open-ended exploration and
+decision-critical research activate `rpi-research`.
 
 The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills
 remain compatibility aliases for legacy requests. They route to `hve-builder`

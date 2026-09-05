@@ -1,113 +1,132 @@
 ---
-description: 'Mode routing, stage gates, profile selection, iteration rules, and outcome resolution for the hve-builder workflow.'
+description: 'Composable modes, candidate convergence, one final behavior gate, and outcome resolution for hve-builder.'
 ---
 <!-- markdownlint-disable-file -->
 # HVE Builder Workflow Contract
 
-Use this reference to route an `hve-builder` request, dispatch the right workers, and resolve one overall outcome. The requirements catalog defines artifact quality; this contract defines control flow.
+Use this reference as the control-flow authority for an `hve-builder` run. The requirements catalog defines artifact quality; this contract determines when the candidate is final and which evidence permits completion.
 
-## Mode routes
+## Mode Composition
 
-Infer the narrowest mode that satisfies the request. Ask only when two plausible modes would grant materially different write authority.
+Modes name activities that may coexist in one run. Resolve the active set from explicit caller direction and clear intent. When neither specifies a different scope, default to `create`, `improve`, and `refactor` together. Record the set and its inferred or explicit basis without requiring the caller to choose a mode.
 
-| Mode       | Source write authority                                                       | Required stages                                                                                    | Completion intent                                                                                |
-|------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| `create`   | Create the approved targets and directly required support artifacts          | route, author, static review, behavior test, validate                                              | Deliver a new, usable artifact set                                                               |
-| `improve`  | Edit the approved targets and directly required support artifacts            | baseline review, author, static review, behavior test, validate                                    | Improve behavior without changing the approved architecture unless the caller accepts the change |
-| `refactor` | Edit the approved targets; preserve documented behavior                      | baseline review, author, static review, behavior test, validate                                    | Simplify structure while preserving the stated contract                                          |
-| `replace`  | Replace approved targets after recording their intent and migration boundary | baseline intent capture, route, author, static review, behavior test, validate                     | Deliver a new architecture that covers the approved old intent                                   |
-| `review`   | Read source artifacts; write review and test evidence only                   | static review, behavior decision for whether the existing target can affect model action or output | Return an independent quality verdict without source edits                                       |
-| `validate` | Read source artifacts; write validation evidence only                        | validate                                                                                           | Run the host project's mechanical checks without source edits                                    |
+Apply activities where needed, not mechanically to every target. The default permits creating a missing artifact, improving an existing rule, and refactoring related duplication within the requested outcome and approved boundary. It does not require all three activities to produce changes, widen the product surface, or authorize replacement of the architecture.
 
-The behavior gate has separate route-specific decisions. For mutating modes, it is satisfied-and-skipped for every minor or medium change. This includes frontmatter-only changes that do not change capability or behavior, and reference-only changes that update an agent, subagent, or skill name. Major changes alone dispatch `hve-builder-tester`. Record the required skip fields and reason. For review mode, ask whether the existing target can affect model action or output. A behavior-bearing target dispatches `hve-builder-tester` without a source-delta prerequisite. A no-runtime target is satisfied-and-skipped with execution `Not run`, verdict `Not applicable`, fidelity `Not applicable`, and an evidence-backed reason. Validation is required for every mutating mode and for `validate`; it is optional in `review` unless the caller asks for mechanical conformance evidence.
+Honor narrower intent: `refactor only` preserves behavior; `review only`, `validate only`, and a request for explanation do not authorize source changes. For different permissions across targets, record each target's write boundary. An explicit no-edit restriction wins over inferred mutation modes. Ask only when explicit directions conflict and the intended authority cannot be resolved.
 
-## Non-tool capability-surface control
+### Create
 
-Treat existing `agents`, `hooks`, `handoffs`, `model`, and other non-tool capability-bearing frontmatter as baseline behavior. In improve and refactor work, preserve that surface unless the caller explicitly requests a change or verified evidence shows a host incompatibility, native failure, security defect, or required capability gap within approved scope. In replace work, change it only as part of the approved replacement architecture.
+Create approved targets and directly required support artifacts when a required behavior has no suitable owner. Reuse a suitable existing artifact instead of creating another to satisfy the mode label.
 
-Agent and subagent `tools:` configuration sits outside this control entirely, under the Tool-configuration boundary in `requirements-catalog.md`.
+### Improve
 
-When evidence supports a non-tool capability-surface change, return to scope and route before editing, classify the change as Major, and run behavior testing. Without that evidence, a reviewer records an uncertainty or limitation rather than an actionable finding or exact replacement surface.
+Correct or extend behavior within the approved architecture and requirements. Capture the baseline of existing targets and distinguish intended behavior changes from accidental loss.
 
-## Stage order and gates
+### Refactor
 
-1. Scope and route. Resolve targets, mode, requirements, write boundary, evidence root, artifact architecture, applicable repository conventions, and directly required support artifacts. Determine distribution scope: an artifact the host distributes through a package, plugin, or extension carries required wiring as support work, while an artifact deliberately kept repository-specific does not. Intake may classify caller-provided facts, known targets, and already-supplied extension metadata without research. Do not run an open-ended codebase scan at intake; route a need for one through step 3.
-2. Establish the baseline. For `improve`, `refactor`, and `replace`, capture the current contract, non-tool capability-bearing frontmatter, and static findings before edits. Do not inspect agent or subagent `tools:` configuration. Read only already-known target files, supplied criteria, and required canonical references. These bounded lifecycle-stage reads are not codebase exploration. Skip the baseline for a target that does not yet exist; `review` performs its single static assessment in step 5.
-3. Research and explore only when needed. When non-obvious reuse discovery, an extension survey that requires a codebase scan, another open-ended workspace exploration, or an unresolved decision-critical internal, external, or hybrid question could change architecture or acceptance criteria, route it through the sole `rpi-research` bridge in `stage-dispatch.md`. Apply that bridge's return and unavailable-entrypoint rules. On `Needs clarification`, use approved evidence or ask the caller; when the missing answer is decision-critical and cannot be inferred, stop Blocked rather than guessing. Do not substitute a direct worker route or local research contract.
-4. Author. For mutating modes, dispatch a generic Medium-profile authoring subagent using `stage-dispatch.md` inside the approved write boundary. Give it the complete known in-scope source and finding set so it can apply one coherent authoring batch. It performs bounded reads of approved target files and supplied canonical references. A proposed type change, artifact split, non-tool capability-surface change, new support artifact outside that boundary, or newly required exploration returns to scope and route before edits continue.
-5. Review and close static findings. For mutating modes and `review`, dispatch a generic Medium-profile static-review subagent in fresh context against the complete candidate. Do not provide author reasoning or the author log; provide known target files, purpose, requirements, and canonical criteria. Its bounded reads are lifecycle-stage work, not exploration. When the verdict is Revise and all findings remain inside the assessed boundary, apply the complete finding set in one correction batch, then run one targeted closure check limited to the original finding IDs and their acceptance evidence. Do not turn targeted closure into another full static review. Return to scope and route when architecture, capability, safety, acceptance, or the evidence boundary changed. Skip this stage for `validate`.
-6. Test behavior on the final correction state. Continue only after static findings are closed. For mutating modes, classify every changed target before testing. For minor and medium changes, record a satisfied-and-skipped behavior gate. For major changes only, dispatch the `hve-builder-tester` skill with the intended reasoning profile, fidelity, isolation set, together set, requirements, and any eligible prior behavior report for a correction run. In review mode, do not require a source delta. Ask whether the existing target can affect model action or output. Dispatch `hve-builder-tester` for a behavior-bearing review target. For a no-runtime review target, record a satisfied-and-skipped behavior gate with execution `Not run`, verdict `Not applicable`, fidelity `Not applicable`, and an evidence-backed reason. When required review behavior cannot execute, record behavior verdict `Not available` and overall `Deferred` with the exact rerun condition. Skip this stage for `validate`.
-7. Validate the final correction state. For mutating modes and `validate`, dispatch a generic Low-profile validation subagent using `stage-dispatch.md` after source artifacts are at their real paths and the approved correction batch is complete. Classify caller-named or already-known applicable non-mutating checks as `local` or `CI`; generic validation executes local checks only. A specifically requested named CI lane may run directly, while its specialized setup remains separate. Record CI evidence that did not run truthfully and resolve required missing CI evidence as `Deferred`. In `review`, run validation only when requested.
-   * When distribution scope applies, a new or removed distributable artifact requires its wiring to be complete before validation passes: tracked path-and-license eligibility, synchronized root `plugin.json` membership including every declared subagent, the single prepared extension output, and plugin validation. Record wiring that is not applicable, with the reason, rather than omitting it silently.
-8. Resolve. Apply the outcome resolver below. Re-enter authoring for an open original finding or failed final-state gate inside scope; return to routing for a changed assessed boundary; stop on Pass, Revise, Deferred, or Blocked.
+Simplify organization, duplication, or placement while preserving the affected contract. When combined with improve or create, preserve behavior outside their intended changes; the refactor activity does not forbid an explicitly intended improvement elsewhere in the same candidate.
 
-Stages may run in parallel only when neither consumes the other's output. An independent `rpi-research` handoff can run beside baseline review only when it cannot change the baseline target set. Authoring, candidate static review, correction-batch closure, final-state behavior testing, and final-state validation remain ordered because each consumes the preceding source state.
+### Replace
 
-## Stage model selection
+Replace approved targets after capturing their intent, retained capabilities, and migration boundary. This activity may join other modes when the request calls for replacement, but is not part of the inferred default. A cleanup request alone does not authorize a replacement architecture or retirement of required behavior.
 
-The lifecycle uses generic subagent dispatches with a model selected at invocation time rather than named worker frontmatter. `stage-dispatch.md` defines the prompt and evidence contract. This keeps the stage isolated while allowing the parent to select a responsibility-appropriate profile.
+### Review
 
-| Stage                   | Profile          | Why                                                                                         |
-|-------------------------|------------------|---------------------------------------------------------------------------------------------|
-| Authoring, review       | Medium           | Architecture, authoring, and calibrated review require judgment                             |
-| Validation              | Low              | Known-check execution follows a bounded mechanical protocol                                 |
-| Test design and grading | Medium or higher | Coverage and evidence grading require semantic judgment and must not sit below the executor |
-| `HVE Artifact Tester`   | Target profile   | Literal conformance simulation runs at the tier the tested artifact targets                 |
+Assess instruction quality independently. Alone, review reads source and writes review or test evidence only. Combined with authorized mutation, it assesses the final candidate within the same lifecycle rather than starting another review-and-edit loop.
 
-Select the responsibility-appropriate profile, then choose the first model from that profile's canonical ordered list in `artifact-types.md` that appears in the user's available model list. The `hve-builder-tester` lead selects the executor profile from the tested artifact's own declared profile and raises design and grading to the higher of Medium and that profile. Record any profile that could not be selected because it was unavailable, and do not raise or lower a profile merely for convenience.
+### Validate
 
-## Stage result vocabulary
+Check mechanical conformance and record validation evidence. Alone, validate does not edit source, invoke static review, or run behavior tests. Combined with other activities, it does not suppress their required gates.
 
-Workers report execution separately from judgment:
+### Compose the Lifecycle Once
 
-* Authoring status: `Complete`, `Partial`, or `Blocked`
-* Research and exploration status: consume the execution status returned by `rpi-research`; when activation cannot run because it is unavailable, record `Deferred` with the run-specific rerun condition.
+* When source mutation is authorized, run one shared lifecycle: scope, baseline existing targets, author, validate, independently review and close findings, freeze, classify the complete delta, and resolve behavior. Review and validation are required stages even when absent from the mode names; combining modes does not multiply stages or tester invocations.
+* For read-only `review`, run independent static review and the behavior decision; mechanical validation is optional unless requested. For `review,validate`, also run mechanical validation, without granting write authority.
+* For `validate` alone, run mechanical checks only. For explanation or discussion without requested changes or assessment, answer within that scope without starting an authoring lifecycle.
+
+Use the requirements catalog's Authoring and maintenance decisions to choose what to keep, improve, refactor, replace, or delete. Deletion is an operation within an approved mutating boundary. Read-only review only recommends it. A cleanup request permits removing obsolete or redundant guidance inside that boundary, not silently retiring required behavior.
+
+## Final-Candidate Invariant
+
+Resolve the behavior gate once per HVE Builder run.
+
+For a mutating route, the final candidate exists only after all known source changes are applied, static findings are closed, required validation passes, and the assessed source boundary is recorded. For a review route, complete the static assessment and any requested validation against the unchanged source boundary first.
+
+After that boundary is frozen:
+
+* Minor and Medium mutations record `Satisfied-and-skipped`.
+* Major mutations and behavior-bearing review targets invoke `hve-builder-tester` at most once.
+* No source edit, static review, validation pass, or behavior-test invocation follows the tester dispatch in the same run.
+* A non-Pass behavior result ends the run. Its report may seed a later HVE Builder invocation, but never a same-run correction or retest.
+
+## Existing Capability Surface
+
+Treat existing `agents`, `hooks`, `handoffs`, `model`, and other non-tool capability-bearing frontmatter as baseline behavior. Preserve it in improve and refactor modes unless the caller requests a change or verified evidence establishes a host incompatibility, native failure, security defect, or required capability gap. Route an approved change through scope before editing and classify it as Major.
+
+Agent and subagent `tools` configuration remains outside HVE Builder assessment. Apply the Tool-configuration boundary in [requirements-catalog.md](requirements-catalog.md).
+
+## Lifecycle
+
+1. Scope and route. Resolve targets, active mode set, requirements, per-target write boundary, evidence root, architecture, applicable conventions, and directly required distribution support. Intake may classify supplied facts and known paths without exploration.
+2. Establish the baseline. For improve, refactor, and replace, capture the current contract and non-tool capability surface from known targets and supplied references. Skip a missing create target. Review performs its assessment later.
+3. Research only when needed. Use the `rpi-research` bridge in [stage-dispatch.md](stage-dispatch.md) for open-ended exploration, non-obvious reuse or extension discovery, and decision-critical evidence gaps. Do not substitute local discovery.
+4. Author the candidate. The lifecycle lead edits approved targets directly. Gather current requirements and findings before each coherent batch. Return to scope before a type change, artifact split, capability-surface change, or new support artifact outside the boundary.
+5. Validate the candidate. Run known non-mutating local checks, gather their complete in-scope finding set, and close those findings as a coherent batch before independent review. Do not invoke the behavior tester while validation remains open.
+6. Review and close static findings. Dispatch one fresh-context Medium-profile static review against the mechanically valid candidate. Apply its complete in-scope finding set in one correction batch, then run targeted static closure and every validation check affected by the corrections. If either remains open, stop Revise. If the assessed boundary changes, return to scope rather than claiming closure.
+7. Freeze and resolve behavior. Record the final target set, requirements, source revision, static verdict, validation result, classification, profile, fidelity, and grouping. Apply the Final-Candidate Invariant. In read-only review, the unchanged source is already frozen; complete static review and any requested validation before the behavior decision, even when static findings make the eventual overall outcome Revise.
+8. Resolve the run. Apply the Overall Outcome precedence. Do not re-enter an earlier stage after tester dispatch.
+
+Independent work may overlap only when neither task consumes the other's output. Authoring, validation, independent static review, correction closure, source freeze, and behavior testing remain ordered because each establishes the next candidate boundary.
+
+## Static Review
+
+Use [stage-dispatch.md](stage-dispatch.md) for one generic fresh-context reviewer. Give it targets, purpose, requirements, canonical criteria, overlays, and an evidence path, but not author reasoning. It returns one complete severity-graded finding set. Use targeted closure for those finding IDs instead of another broad review.
+
+## Validation
+
+The lifecycle lead runs caller-named or already-known applicable non-mutating checks. Classify each as `local` or `CI`. Generic validation runs local checks only; a named CI lane runs only when the caller specifically requests its reproduction. Dependency bootstrap, browsers, services, credentials, and external environments remain separate actions.
+
+Record per-check owner and status. Local status is `Passed`, `Failed`, `Skipped`, `Deferred`, or `Unavailable`; CI status may also be `Pending CI`. Required unavailable evidence resolves to Deferred rather than Pass. Unexpected source mutation invalidates the candidate until reconciled before freeze.
+
+When distribution scope applies, complete required plugin, extension, and generated-document synchronization before validation passes. Record a non-applicable distribution check with its reason.
+
+## Change Classification
+
+Use the highest class present in the complete source delta.
+
+* Minor: editorial, formatting, comments, links, non-capability frontmatter, or name-reference updates with no rule or behavior change. Record `Satisfied-and-skipped`.
+* Medium: clarifies or reorganizes existing text without materially changing a model action or output. Record `Satisfied-and-skipped`.
+* Major: adds, removes, or materially changes a model action, output, capability surface, write authority, decision rule, stage gate, or safety behavior. Invoke `hve-builder-tester` once after freeze.
+
+For a supported skip, record classification, reason, execution `Not run`, verdict `Not applicable`, and fidelity `Not applicable`.
+
+## Result Vocabulary
+
 * Static review verdict: `Pass`, `Revise`, or `Blocked`
-* Behavior review verdict: `Pass`, `Revise`, `Blocked`, or `Not available`; use `Not available` only when required behavior execution is Deferred before grading, and record the exact rerun condition
-* Behavior execution status: `Complete`, `Partial`, `Deferred`, or `Blocked`
 * Mechanical validation result: `Pass`, `Fail`, or `Deferred`
-* Validation display in `review` mode: `Not requested` when the caller did not request mechanical validation; this is not a validator result and does not affect the overall outcome
-* Per-check validation owner and status: owner is `local` or `CI`; status may be `Passed`, `Failed`, `Pending CI`, `Skipped`, `Deferred`, or `Unavailable`. These fields do not replace the mechanical stage result.
-* Behavior gate disposition: `Executed` or `Satisfied-and-skipped`. This is the single definition of the satisfied-and-skipped display fields: execution status `Not run`, verdict `Not applicable`, fidelity `Not applicable`, and an evidence-backed no-behavior reason. These display values are not execution or review results, and other sections reference this definition rather than restating it.
+* Read-only review validation display: `Not requested` when the caller omitted optional mechanical validation
+* Behavior execution: `Complete`, `Partial`, `Deferred`, `Blocked`, or `Not run`
+* Behavior verdict: `Pass`, `Revise`, `Blocked`, `Not available`, or `Not applicable`
+* Behavior disposition: `Executed` or `Satisfied-and-skipped`
 
-`Partial` means a worker produced usable evidence but did not complete its contract. `Deferred` means a required action could not run in the current environment and names the exact rerun condition. Neither is a pass.
+Use `Not available` only when required behavior execution is Deferred or Blocked before independent grading. Resolve execution Blocked to overall Blocked before applying the Not available deferral rule. `Partial`, `Deferred`, and `Blocked` are not passes. Advisory suggestions are not unresolved required corrections.
 
-## Change classification
+## Overall Outcome
 
-Classify the requested source delta before the behavior gate. When mixed changes exist, use the highest applicable class.
+Use the first matching condition.
 
-| Class  | Decision rule                                                                                                                                                        | Behavior gate                 |
-|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------|
-| Minor  | Editorial, formatting, comments, link repairs, or frontmatter-only and name-reference updates with no capability or rule change                                      | Satisfied-and-skipped         |
-| Medium | Clarifies, reorganizes, or adjusts existing workflow text without adding, removing, or materially changing a model action or output                                  | Satisfied-and-skipped         |
-| Major  | Adds, removes, or materially changes a model action, output, non-tool capability-bearing frontmatter, write authority, decision rule, stage gate, or safety behavior | Dispatch `hve-builder-tester` |
+1. `Blocked`: scope, safety, identity, decision-critical evidence, static assessment, or behavior grading is blocked.
+2. `Deferred`: a required stage or CI result is unavailable, behavior execution is Partial or Deferred, or the behavior verdict is Not available.
+3. `Revise`: required static corrections remain, validation fails, behavior verdict is Revise, or an acceptance criterion is unmet.
+4. `Pass`: every required stage passes or has a supported skip, and every acceptance criterion is met.
 
-For a satisfied-and-skipped gate, record the classification, the specific non-behavior reason, and the display fields defined in Stage result vocabulary. Static review and validation remain required for their applicable routes.
+## Batching and Stop Rules
 
-When a Major change targets an artifact that declares the High profile, the behavior gate runs at that profile. `hve-builder-tester` executes the artifact at High and raises design and grading to match. It falls back to a disclosed proxy run only when the High profile is unavailable in the user's model list, and a proxy run states that its evidence does not establish behavior at the declared profile. Do not report a proxy run as intended-profile evidence, and do not lower the artifact's declared profile to match an executed one.
+* Gather the complete known finding set before editing. Prefer one coherent correction batch to serial micro-edits.
+* Use targeted closure and affected checks after correction. A changed architecture, capability, safety, acceptance, or evidence boundary requires fresh assessment before freeze.
+* Never use behavior testing to discover whether known static or mechanical work is complete.
+* Preserve human-review checkboxes and leave them unchecked.
 
-## Overall outcome resolver
+## Evidence
 
-Resolve the run once, using the first matching row from top to bottom.
-
-| Overall outcome | Condition                                                                                                                                                                                                                                                                                                                                                                           |
-|-----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Blocked`       | Scope, safety, target identity, decision-critical clarification, or required evidence is too ambiguous to proceed responsibly                                                                                                                                                                                                                                                       |
-| `Deferred`      | A required stage could not run; any required CI evidence has per-check status `Pending CI`, `Skipped`, `Deferred`, or `Unavailable` until the evidence becomes available or the requirement is no longer applicable; a required behavior verdict is Not available; or research, exploration, or behavior execution is Partial because an unavailable capability prevents completion |
-| `Revise`        | A review verdict is Revise, validation is Fail, authoring is Partial, or an actionable acceptance criterion remains unmet                                                                                                                                                                                                                                                           |
-| `Pass`          | Every required stage completed or was legitimately satisfied-and-skipped, every required review verdict is Pass, validation is Pass when required, and all acceptance criteria are met                                                                                                                                                                                              |
-
-Never convert validation failure into Pass because static prose looks correct. Never convert an unavailable stage into Pass because another stage succeeded.
-
-## Iteration and stop rules
-
-* Iterate only on evidence-backed findings that can change acceptance. Do not require a fixed number of ceremonial cycles.
-* Apply all approved findings for the current assessed boundary in one coherent correction batch. Run targeted static closure for the original findings, then run behavior testing and validation once against the final correction state.
-* Repeat a full static review, full behavior design, or other broad gate only when architecture, capability, safety, acceptance, or the evidence boundary changed. A failed targeted check remains in the same correction cycle.
-* Stop and report Deferred when the same unresolved finding recurs without new evidence or when the caller's declared budget is exhausted. Name the finding, attempted resolution, and rerun condition.
-* Stop and report Blocked before any destructive, externally visible, or out-of-scope action that lacks required approval.
-* Preserve human review checkboxes. Agents leave them unchecked.
-
-## Evidence boundary
-
-Default durable HVE Builder stage evidence to `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/`. The parent allocates a unique `{{artifact_slug}}-{{stage}}-{{attempt}}.md` path before dispatch by scanning and incrementing the attempt suffix. Read-only workers gather evidence in memory and write their owned log once; workers that promise progressive logging update their owned log. Research and exploration artifacts belong to `rpi-research`; HVE Builder records only the bridge return needed for lifecycle routing. Use plain-text workspace-relative paths inside tracking files. The final response links durable user-facing evidence and preserves plain-text paths inside tracking artifacts.
+Default HVE Builder evidence to `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/`. Allocate unique stage paths without overwriting earlier evidence. Research artifacts remain owned by `rpi-research`. Use plain-text workspace-relative paths inside tracking files and Markdown links in user-facing responses.

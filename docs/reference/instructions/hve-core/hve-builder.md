@@ -1,9 +1,9 @@
 ---
 title: Hve Core/Hve Builder
-description: "Authoring standards for prompts, agents, subagents, instructions, and skills, grounded in the frontier-LLM instruction-quality research"
+description: "Core authoring conventions for prompts, agents, subagents, instructions, and skills"
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-08-31
 ms.topic: reference
 keywords:
   - instruction
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Authoring standards for prompts, agents, subagents, instructions, and skills, grounded in the frontier-LLM instruction-quality research
+Core authoring conventions for prompts, agents, subagents, instructions, and skills
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
