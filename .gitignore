@@ -492,6 +492,10 @@ dependency-pinning-artifacts/
 # Copilot tracking
 .copilot-tracking/
 
+# Survey corpus working copies - third-party and internal repositories
+# cloned for read-only assessment. Never commit their source.
+.survey-corpus/
+
 # Local telemetry opt-in marker
 .hve-telemetry
 

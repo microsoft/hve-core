@@ -31,10 +31,10 @@ flowchart TD
         direction TB
         MERGE[Merge to main] --> PREP[Pre-Release Promotion Preparation]
         PREP --> PROMO[Review main to PreRelease Promotion]
-        PROMO -->|merge, no tag| PRE_RP[Pre-Release Pipeline PR-only mode]
+        PROMO -->|merge, no tag| PRE_RP[Pre-Release Preparation PR-only mode]
         PRE_RP --> PRE_REL[Review managed PreRelease PR]
-        PRE_REL -->|merge| PRE_DRAFT[Tag-only Draft at Managed Merge]
-        PRE_DRAFT --> PRE_EVIDENCE[Release-tag VSIX and Assurance]
+        PRE_REL -->|merge| PRE_DRAFT[Release-please Creates Tag and Draft]
+        PRE_DRAFT -->|tag push| PRE_EVIDENCE[Sole Post-tag VSIX Producer]
         PRE_EVIDENCE --> PRE_PUBLISH[App-token Prerelease Publication]
         PRE_PUBLISH --> PRE_MARKET[Pre-Release Marketplace Publish]
     end
@@ -43,10 +43,10 @@ flowchart TD
         direction TB
         PRE_PUBLISH --> ST_PREP[Stable Release Preparation]
         ST_PREP --> ST_PROMO[Review PreRelease to Stable Promotion]
-        ST_PROMO -->|merge, no tag| ST_RP[Stable Release Publish PR-only mode]
+        ST_PROMO -->|merge, no tag| ST_RP[Stable Release Preparation PR-only mode]
         ST_RP --> ST_REL[Review managed Stable PR]
-        ST_REL -->|merge| ST_DRAFT[Tag-only Draft at Managed Merge]
-        ST_DRAFT --> ST_EVIDENCE[Release-tag VSIX and Assurance]
+        ST_REL -->|merge| ST_DRAFT[Release-please Creates Tag and Draft]
+        ST_DRAFT -->|tag push| ST_EVIDENCE[Sole Post-tag VSIX Producer]
         ST_EVIDENCE --> ST_PUBLISH[App-token Stable Publication]
         ST_PUBLISH --> ST_MARKET[Stable Marketplace Publish]
     end
@@ -59,7 +59,7 @@ flowchart TD
 
     subgraph MANUAL["Manual"]
         direction TB
-        DISPATCH[Recovery Dispatch] --> PREP
+        DISPATCH[Preparation or Marketplace Dispatch] --> PREP
         DISPATCH --> ST_PREP
         DISPATCH --> PUB[Channel Marketplace Workflow]
         PUB --> VSCE[Publish to Marketplace]
@@ -72,9 +72,10 @@ flowchart TD
 |--------------------------------------|-----------------------------------|-------------------------------------------------------------------------|
 | `pr-validation.yml`                  | Pull request, manual              | Pre-merge quality gate for main, develop, and both release branches     |
 | `release-prerelease-prepare.yml`     | Merged PR to `main`, manual       | Open the reviewed `main` to `release/prerelease` promotion PR           |
-| `release-prerelease.yml`             | Merged PR to `release/prerelease` | Prepare or publish the managed odd-minor PreRelease                     |
+| `release-prerelease.yml`             | Merged PR to `release/prerelease` | Prepare metadata or create the exact odd-minor tag and draft            |
 | `release-stable.yml`                 | Published PreRelease, manual      | Open the reviewed `release/prerelease` to `release/stable` promotion PR |
-| `release-stable-publish.yml`         | Merged PR to `release/stable`     | Prepare or publish the managed even-minor Stable release                |
+| `release-stable-publish.yml`         | Merged PR to `release/stable`     | Prepare metadata or create the exact even-minor tag and draft           |
+| `release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`   | Produce and publish the exact immutable channel release                 |
 | `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual           | Scheduled security posture review                                       |
 | `weekly-validation.yml`              | Schedule, manual                  | Weekly full validation sweep                                            |
 | `security-scan.yml`                  | Push to main/develop              | CodeQL security validation                                              |
@@ -83,7 +84,7 @@ flowchart TD
 | `copilot-setup-steps.yml`            | Manual                            | Coding agent environment setup                                          |
 | `devcontainer-change-log.yml`        | Push to main/develop              | Logs devcontainer infrastructure file changes to the step summary       |
 | `devcontainer-lockfile-check.yml`    | Reusable                          | Validates devcontainer lockfile integrity and SHA-256 pinning           |
-| `scorecard.yml`                      | Schedule, push                    | OpenSSF Scorecard security analysis                                     |
+| `scorecard.yml`                      | Schedule, push, post-tag release  | OpenSSF Scorecard security analysis                                     |
 | `codeql-analysis.yml`                | Schedule                          | Weekly CodeQL security scan (also reusable)                             |
 | `dependency-review.yml`              | Pull request                      | Dependency vulnerability review (also reusable)                         |
 | `sha-staleness-check.yml`            | Manual                            | SHA reference freshness check (also reusable)                           |
@@ -101,39 +102,38 @@ GitHub Agentic Workflow markdown files (`issue-triage.md`, `issue-implement.md`,
 
 Individual validation workflows called by orchestration workflows:
 
-| Workflow                              | Purpose                                          | npm Script                               |
-|---------------------------------------|--------------------------------------------------|------------------------------------------|
-| `markdown-lint.yml`                   | Markdownlint validation                          | `npm run lint:md`                        |
-| `spell-check.yml`                     | cspell dictionary check                          | `npm run spell-check`                    |
-| `frontmatter-validation.yml`          | AI artifact frontmatter schemas                  | `npm run lint:frontmatter`               |
-| `markdown-link-check.yml`             | Broken link detection                            | `npm run lint:md-links`                  |
-| `link-lang-check.yml`                 | Link language validation                         | `npm run lint:links`                     |
-| `yaml-lint.yml`                       | YAML syntax validation                           | `npm run lint:yaml`                      |
-| `ps-script-analyzer.yml`              | PowerShell static analysis                       | `npm run lint:ps`                        |
-| `table-format.yml`                    | Markdown table formatting                        | `npm run format:tables`                  |
-| `pester-tests.yml`                    | PowerShell unit tests                            | `npm run test:ps`                        |
-| `skill-validation.yml`                | Skill structure validation                       | `npm run validate:skills`                |
-| `dependency-pinning-scan.yml`         | Dependency pinning validation                    | N/A (PowerShell direct)                  |
-| `sha-staleness-check.yml`             | SHA reference freshness*                         | N/A (PowerShell direct)                  |
-| `codeql-analysis.yml`                 | CodeQL security scanning*                        | N/A (GitHub native)                      |
-| `dependency-review.yml`               | Dependency vulnerability review*                 | N/A (GitHub native)                      |
-| `gh-code-scanning.yml`                | GitHub code scanning alert retrieval             | N/A (PowerShell direct)                  |
-| `create-gh-code-scanning-issues.yml`  | Create GitHub code scanning issues from alerts   | N/A (bash + gh CLI direct)               |
-| `extension-package.yml`               | VS Code extension packaging (unprivileged)       | `npm run extension:package`              |
-| `extension-provenance.yml`            | VS Code extension attestation and release upload | N/A                                      |
-| `copyright-headers.yml`               | Copyright header validation                      | `npm run validate:copyright`             |
-| `gitleaks-scan.yml`                   | Secret detection scanning                        | N/A (gitleaks direct)                    |
-| `plugin-validation.yml`               | Plugin manifest, locator, and hook validation    | `npm run plugin:validate`                |
-| `extension-marketplace-publish.yml`   | Extension marketplace publishing                 | N/A                                      |
-| `python-lint.yml`                     | Python lint and format checks (ruff)             | `npm run lint:py`                        |
-| `pytest-tests.yml`                    | Python unit tests                                | `npm run test:py`                        |
-| `pip-audit.yml`                       | Python dependency auditing                       | N/A (pip-audit direct)                   |
-| `fuzz-tests.yml`                      | Python fuzz testing                              | N/A (pytest direct)                      |
-| `docusaurus-tests.yml`                | Docusaurus test suite                            | N/A (npm test)                           |
-| `model-validation.yml`                | Model reference validation                       | `npm run lint:models`                    |
-| `ai-artifact-validation.yml`          | AI artifact structure validation                 | `npm run lint:ai-artifacts`              |
-| `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity                  | `npm run validate:devcontainer-lockfile` |
-| `action-version-consistency-scan.yml` | Action version consistency                       | `npm run lint:version-consistency`       |
+| Workflow                              | Purpose                                        | npm Script                               |
+|---------------------------------------|------------------------------------------------|------------------------------------------|
+| `markdown-lint.yml`                   | Markdownlint validation                        | `npm run lint:md`                        |
+| `spell-check.yml`                     | cspell dictionary check                        | `npm run spell-check`                    |
+| `frontmatter-validation.yml`          | AI artifact frontmatter schemas                | `npm run lint:frontmatter`               |
+| `markdown-link-check.yml`             | Broken link detection                          | `npm run lint:md-links`                  |
+| `link-lang-check.yml`                 | Link language validation                       | `npm run lint:links`                     |
+| `yaml-lint.yml`                       | YAML syntax validation                         | `npm run lint:yaml`                      |
+| `ps-script-analyzer.yml`              | PowerShell static analysis                     | `npm run lint:ps`                        |
+| `table-format.yml`                    | Markdown table formatting                      | `npm run format:tables`                  |
+| `pester-tests.yml`                    | PowerShell unit tests                          | `npm run test:ps`                        |
+| `skill-validation.yml`                | Skill structure validation                     | `npm run validate:skills`                |
+| `dependency-pinning-scan.yml`         | Dependency pinning validation                  | N/A (PowerShell direct)                  |
+| `sha-staleness-check.yml`             | SHA reference freshness*                       | N/A (PowerShell direct)                  |
+| `codeql-analysis.yml`                 | CodeQL security scanning*                      | N/A (GitHub native)                      |
+| `dependency-review.yml`               | Dependency vulnerability review*               | N/A (GitHub native)                      |
+| `gh-code-scanning.yml`                | GitHub code scanning alert retrieval           | N/A (PowerShell direct)                  |
+| `create-gh-code-scanning-issues.yml`  | Create GitHub code scanning issues from alerts | N/A (bash + gh CLI direct)               |
+| `extension-provenance-signer.yml`     | Split VSIX packaging, attestation, and upload  | N/A                                      |
+| `copyright-headers.yml`               | Copyright header validation                    | `npm run validate:copyright`             |
+| `gitleaks-scan.yml`                   | Secret detection scanning                      | N/A (gitleaks direct)                    |
+| `plugin-validation.yml`               | Plugin manifest, locator, and hook validation  | `npm run plugin:validate`                |
+| `extension-marketplace-publish.yml`   | Extension marketplace publishing               | N/A                                      |
+| `python-lint.yml`                     | Python lint and format checks (ruff)           | `npm run lint:py`                        |
+| `pytest-tests.yml`                    | Python unit tests                              | `npm run test:py`                        |
+| `pip-audit.yml`                       | Python dependency auditing                     | N/A (pip-audit direct)                   |
+| `fuzz-tests.yml`                      | Python fuzz testing                            | N/A (pytest direct)                      |
+| `docusaurus-tests.yml`                | Docusaurus test suite                          | N/A (npm test)                           |
+| `model-validation.yml`                | Model reference validation                     | `npm run lint:models`                    |
+| `ai-artifact-validation.yml`          | AI artifact structure validation               | `npm run lint:ai-artifacts`              |
+| `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity                | `npm run validate:devcontainer-lockfile` |
+| `action-version-consistency-scan.yml` | Action version consistency                     | `npm run lint:version-consistency`       |
 
 Workflows marked with `*` are dual-purpose: they accept `workflow_call` for reuse by orchestration workflows and also run independently via their own triggers.
 
@@ -220,10 +220,11 @@ restores target-owned release metadata, writes the exact `release-as`, and
 opens a reviewed PR. Promotion heads are stable per hop and are updated without
 force. The promotion merge creates no tag.
 
-The release workflows accept only the exact promotion or managed head for
-their channel. A promotion merge selects PR-only mode. A managed PR merge
-selects tag-only mode and creates `prerelease-v<version>` for PreRelease or
-`v<version>` for Stable at that managed merge commit.
+The PR-close release workflows accept only the exact promotion or managed head
+for their channel. A promotion merge selects PR-only mode. A managed PR merge
+selects tag-only mode, and release-please creates
+`prerelease-v<version>` for PreRelease or `v<version>` for Stable plus the
+matching draft at that managed merge commit.
 
 ### Release Version Allocation
 
@@ -243,34 +244,65 @@ not a requirement of `MAJOR.MINOR.PATCH` syntax.
 
 ### Release Channel Jobs
 
-`release-prerelease.yml` jobs: `validate-trigger`, `release-please`, `sync-release-pr`,
-`validate-release`, `close-milestone`, `extension-package-prerelease`,
-`generate-dependency-sbom`, `extension-provenance-prerelease`,
-`verify-provenance`, and `publish-release`.
+`release-prerelease.yml` and `release-stable-publish.yml` each contain only
+`validate-trigger`, `release-please`, and `sync-release-pr`. They remain
+reviewed, pre-tag workflows. They validate the promotion or managed head,
+synchronize committed release state, and let release-please create the exact
+immutable tag and draft.
 
-`release-stable-publish.yml` jobs: `validate-trigger`, `release-please`,
-`sync-release-pr`, `validate-release`, `close-milestone`,
-`extension-package-release`, `extension-provenance`,
-`generate-dependency-sbom`, `vex-attest`, `verify-provenance`, `sbom-diff`,
-`append-verification-notes`, and `publish-release`.
+The resulting tag push starts `release-vsix-publish.yml`, the sole post-tag
+producer for both channels. It validates the protected exact tag, source
+commit, channel, expected release branch, and synchronized committed state. It
+performs bounded exact-draft discovery through 12 attempts separated by 10
+seconds. A matching draft proceeds through dependency SBOM generation,
+packaging and attestation, provenance verification, publication, and milestone
+closure. Stable additionally retains OpenVEX attestation, verification notes,
+and a best-effort dependency diff when a previous dependency SBOM is available.
 
-Both channels build the VSIX in `extension-package.yml`, which holds only
-`contents: read`, and attest it in `extension-provenance.yml`, which holds the
-signing scopes and never installs dependencies. No job does both.
+`extension-provenance-signer.yml` provides the signer path and separates duties. Its
+`package` job installs dependencies and packages the extension with only
+`contents: read`. Its dependent privileged `attest` job receives the fixed-name
+VSIX and dependency SBOM through digest-checked transfers. It does not install
+dependencies or package the extension. No job both packages and signs.
 
-Both release workflows verify event, merge, release-please, and release-tag
-SHA equality plus target-branch ancestry. The extension uses the validated
-release SHA bound to the immutable channel tag. Each workflow attaches one
-VSIX with SPDX, Sigstore, and in-toto sidecars plus
-`dependencies.spdx.json`; Stable also publishes and attests
-`hve-core.openvex.json`.
+Verification is cryptographic first, then semantic and fail closed. GitHub CLI
+verification authenticates the exact subject digest, signer workflow and
+revision, source ref and revision, and hosted-runner constraint. Policy then
+requires the exact subject and digest, SLSA provenance v1, GitHub Actions
+`workflow/v1`, the `push` event, a GitHub-hosted runner, the expected external
+parameters, one resolved source dependency, and the expected builder identity.
+
+If the producer sees a matching published release, it verifies the exact asset
+set and provenance without rebuilding. Recovery depends on the observed state.
+A tag-only state first requires release-please to complete the exact draft; a
+draft-only state first requires release-please to materialize the tag. Once the
+tag and release both exist, rerun the original immutable tag-push workflow.
+Partial draft assets can be replaced before publication, but every required job
+and provenance check must pass before the one-way publish operation. The
+producer has no default `workflow_dispatch` path. Never move, delete, or
+recreate a release tag, create a replacement release identity, or convert a
+published release back to draft. The finite discovery window fails closed on
+uncertain state and does not guarantee draft visibility.
 
 Both channels publish their draft with a release GitHub App token. The
-resulting `published` event triggers the matching Marketplace workflow.
+resulting `published` event triggers a separate Marketplace workflow, which
+consumes only the VSIX from that published GitHub release and does not rebuild.
 Main is not part of either release completion graph. It remains a ref-less
 development-tip channel sourced from canonical `.github` content and is not
 updated by release completion. Release branches, immutable tags, and published
 releases own release state and history.
+
+Tag governance is a mandatory activation prerequisite, but it is not yet
+active or proven. The intended `release-tags-creation-by-release-app` ruleset
+restricts creation only and grants a bypass to the Release App. The separate
+`release-tags-immutable` ruleset restricts updates, deletion, and force pushes
+with no bypass. Documentation of these controls is not evidence that they are
+installed.
+
+This architecture does not establish SLSA Build Level 3. Future Stable and
+PreRelease releases still need successful runtime evidence, active governance
+evidence, platform assurance mapping, and qualified human review before making
+that claim.
 
 The ref-less `microsoft/hve-core` registration sources canonical content from `.github` through the main catalog. An explicit marketplace refresh and plugin update are required for that catalog, which has no release gate, SBOM, or attestation. PreRelease and Stable retain reviewed, release-gated, SBOM-covered, and attested immutable delivery through moving branch registrations and exact tags.
 
@@ -316,10 +348,10 @@ flowchart LR
 
 ### Channel Tags and Attestation Signers
 
-| Channel    | Exact release tag       | Attestation signer         |
-|------------|-------------------------|----------------------------|
-| PreRelease | `prerelease-v<version>` | `extension-provenance.yml` |
-| Stable     | `v<version>`            | `extension-provenance.yml` |
+| Channel    | Exact release tag       | Attestation signer                |
+|------------|-------------------------|-----------------------------------|
+| PreRelease | `prerelease-v<version>` | `extension-provenance-signer.yml` |
+| Stable     | `v<version>`            | `extension-provenance-signer.yml` |
 
 Both callers pass the exact tag to the generic publisher, which resolves the
 signer to the one constant both channels sign from. It downloads the matching
@@ -367,11 +399,11 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `test:ps`                       | `Invoke-PesterTests.ps1`                                                                              | pester-tests.yml                            |
 | `validate:skills`               | `Validate-SkillStructure.ps1`                                                                         | skill-validation.yml                        |
 | `validate:copyright`            | `Test-CopyrightHeaders.ps1`                                                                           | copyright-headers.yml                       |
-| `extension:prepare`             | `pwsh ./scripts/extension/Prepare-Extension.ps1 && npm run extension:postprocess`                     | extension-package.yml                       |
-| `extension:prepare:prerelease`  | `pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease && npm run extension:postprocess` | extension-package.yml                       |
-| `extension:postprocess`         | `markdownlint-cli2 + markdown-table-formatter (extension/**/*.md)`                                    | extension-package.yml                       |
-| `extension:package`             | `Package-Extension.ps1`                                                                               | extension-package.yml                       |
-| `extension:package:prerelease`  | `Package-Extension.ps1 -PreRelease`                                                                   | extension-package.yml                       |
+| `extension:prepare`             | `pwsh ./scripts/extension/Prepare-Extension.ps1 && npm run extension:postprocess`                     | Local                                       |
+| `extension:prepare:prerelease`  | `pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease && npm run extension:postprocess` | Local                                       |
+| `extension:postprocess`         | `markdownlint-cli2 + markdown-table-formatter (extension/**/*.md)`                                    | Local                                       |
+| `extension:package`             | `Package-Extension.ps1`                                                                               | Local                                       |
+| `extension:package:prerelease`  | `Package-Extension.ps1 -PreRelease`                                                                   | Local                                       |
 | `plugin:sync`                   | `Sync-PluginManifest.ps1`                                                                             | Local manifest update                       |
 | `plugin:validate`               | Plugin manifest check plus hook validation                                                            | plugin-validation.yml                       |
 | `lint:py`                       | `ruff check` + `ruff format --check`                                                                  | python-lint.yml                             |

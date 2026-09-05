@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-08-27
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - github actions
@@ -47,30 +47,33 @@ Modular reusable workflows following Single Responsibility Principle. Each workf
 
 Compose multiple reusable workflows for comprehensive validation and security scanning.
 
-| Workflow                          | Triggers                                                | Mode                          | Purpose                                                                                      |
-|-----------------------------------|---------------------------------------------------------|-------------------------------|----------------------------------------------------------------------------------------------|
-| `pr-validation.yml`               | PR to main, develop, or either release branch; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator            |
-| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                           | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                            |
-| `release-prerelease.yml`          | Merged PR to `release/prerelease`                       | Managed PreRelease release    | Prepare the managed release PR or publish the verified odd-minor release and VSIX assurance  |
-| `release-stable.yml`              | Published PreRelease; dispatch                          | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR                  |
-| `release-stable-publish.yml`      | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or publish the verified even-minor release and VSIX assurance |
-| `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                  | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate                  |
-| `backlog-groom-publisher.yml`     | Completed sweep, manual replay                          | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history            |
-| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                                      |
-| `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)                    | SARIF upload                  | OpenSSF Scorecard security posture                                                           |
+| Workflow                          | Triggers                                                | Mode                          | Purpose                                                                           |
+|-----------------------------------|---------------------------------------------------------|-------------------------------|-----------------------------------------------------------------------------------|
+| `pr-validation.yml`               | PR to main, develop, or either release branch; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator |
+| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                           | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                 |
+| `release-prerelease.yml`          | Merged PR to `release/prerelease`                       | Managed PreRelease release    | Prepare the managed release PR or create the exact odd-minor tag and draft        |
+| `release-stable.yml`              | Published PreRelease; dispatch                          | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR       |
+| `release-stable-publish.yml`      | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or create the exact even-minor tag and draft       |
+| `release-vsix-publish.yml`        | Push of `v*` or `prerelease-v*`                         | Post-tag release producer     | Validate, package, attest, verify, and publish the exact immutable release        |
+| `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                  | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate       |
+| `backlog-groom-publisher.yml`     | Completed sweep, manual replay                          | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history |
+| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                           |
+| `scorecard.yml`                   | Push to main, post-tag release, schedule (Sun 3AM UTC)  | SARIF upload                  | OpenSSF Scorecard security posture                                                |
 
 The validation jobs in `pr-validation.yml` feed the `pr-validation-success` aggregator, which is the required merge signal. The `gate-completeness-check` job verifies that every validation job appears in that gate's `needs:` list.
 
 release-stable.yml jobs: prepare-promotion, open-promotion-pr
 
-release-stable-publish.yml jobs: validate-trigger, release-please, sync-release-pr, validate-release, close-milestone, extension-package-release, extension-provenance, generate-dependency-sbom, vex-attest, verify-provenance, sbom-diff, append-verification-notes, publish-release
+release-stable-publish.yml jobs: validate-trigger, release-please,
+sync-release-pr
 
 release-prerelease-prepare.yml jobs: prepare-promotion, open-promotion-pr
 
-release-prerelease.yml jobs: validate-trigger, release-please, sync-release-pr,
-validate-release, close-milestone, extension-package-prerelease,
-generate-dependency-sbom, extension-provenance-prerelease,
-verify-provenance, publish-release
+release-prerelease.yml jobs: validate-trigger, release-please, sync-release-pr
+
+release-vsix-publish.yml jobs: validate-release, generate-dependency-sbom,
+extension-provenance, vex-attest, verify-provenance, sbom-diff,
+append-verification-notes, publish-release, close-milestone
 
 ### Release Channel Contract
 
@@ -82,12 +85,29 @@ release intent but creates no tag or release.
 After release-please opens the managed pull request, `sync-release-pr`
 synchronizes committed versions and removes the consumed `release-as`. Merging
 the reviewed managed pull request runs release-please in tag-only mode.
-Release-please is the sole tag writer:
+Release-please is the sole tag writer and creates the exact immutable tag and
+draft:
 
 * PreRelease creates `prerelease-v<version>`.
 * Stable creates `v<version>`.
 
-Release-please creates the draft channel release at the reviewed managed merge, and publication occurs after packaging and provenance verification complete.
+The tag push starts `release-vsix-publish.yml`, the sole post-tag producer. It
+validates the protected exact tag, source commit, channel, expected branch, and
+committed release state. It then performs bounded exact draft discovery with 12
+attempts separated by 10 seconds. A draft is packaged, attested, verified, and
+published. A matching published release is verified without rebuilding.
+
+Recovery is state-specific because forced tag creation precedes the draft
+request. A matching draft or published release uses the original immutable
+tag-push workflow. A tag with no release first requires release-please to
+create the exact draft, followed by the original producer rerun if its bounded
+discovery expired. A draft with no tag first requires release-please to
+materialize the tag; its duplicate-release result may be red, but the new tag
+event can independently consume the validated draft. Partial draft assets may
+be restored only before publication. The producer has no default
+`workflow_dispatch` recovery path, and no recovery moves, deletes, or recreates
+a tag or converts a published release back to draft. Bounded discovery is a
+fail-closed safety control, not a draft-visibility guarantee.
 
 | Registration                               | Repository contract                                    |
 |--------------------------------------------|--------------------------------------------------------|
@@ -99,11 +119,40 @@ Release-please creates the draft channel release at the reviewed managed merge, 
 
 Publication does not synchronize release metadata or changelog history back to `main`. An explicit marketplace refresh and plugin update are required for ref-less main, which has no release gate, SBOM, or attestation. Release-channel assets remain release-gated, SBOM-covered, and attested.
 
-Both release channels preserve one VSIX, its SPDX, Sigstore, and in-toto sidecars, `dependencies.spdx.json`, provenance verification, and Azure OIDC publication. Stable additionally preserves `hve-core.openvex.json` and its attestations.
+Both release channels preserve one VSIX, its SPDX, Sigstore, and in-toto
+sidecars, `dependencies.spdx.json`, provenance verification, and Azure OIDC
+publication. Stable additionally preserves `hve-core.openvex.json`, its
+attestations, verification notes, and a best-effort dependency diff when a
+previous dependency SBOM is available.
+
+The pinned `extension-provenance-signer.yml` signer has separate `package` and
+`attest` jobs. The package job installs dependencies and builds the VSIX with
+only `contents: read`. The privileged attestation job receives the fixed-name
+VSIX and dependency SBOM through digest-checked transfers and never installs or
+packages. No job both packages and signs.
+
+Release verification is cryptographic first and semantic second. GitHub CLI
+verification authenticates the exact subject digest, signer workflow and
+revision, source ref and revision, and hosted-runner constraint. Fail-closed
+policy then requires the exact subject and digest, SLSA provenance v1, GitHub
+Actions `workflow/v1`, the `push` event, a GitHub-hosted runner, the expected
+external parameters, one resolved source dependency, and the expected builder
+identity.
 
 `extension-marketplace-publish.yml` has four jobs: `validate-inputs`, `verify`, `prepare-publisher`, and `publish`. Input validation resolves immutable release and protected-main commits before Marketplace environment activation. Verification downloads the one VSIX and checks its lane-specific attestation. Publisher preparation builds the minimal locked `vsce` toolchain from protected `main`. The protected publish job re-verifies provenance, obtains Azure OIDC, and invokes `vsce` directly.
 
-Tag protection, Marketplace environment reviewers, and Azure OIDC claim policy remain external controls.
+Tag governance is a mandatory activation prerequisite but is not yet active or
+proven. The intended `release-tags-creation-by-release-app` ruleset restricts
+creation only and grants a bypass to the Release App. The separate
+`release-tags-immutable` ruleset restricts updates, deletion, and force pushes
+with no bypass. Their description here is not evidence that they are installed.
+Marketplace environment reviewers and Azure OIDC claim policy remain external
+controls.
+
+This architecture does not establish SLSA Build Level 3. Future Stable and
+PreRelease releases still require successful runtime evidence, active
+governance evidence, platform assurance mapping, and qualified human review
+before making that claim.
 
 ### Release Version Allocation
 
@@ -123,11 +172,12 @@ requirement of `MAJOR.MINOR.PATCH` syntax.
 
 Release branches and exact tags retain the repository-root plugin source from their selected snapshots. Their reviewed, release-gated VSIX assets remain SBOM-covered, attested, and immutable. The ref-less main catalog instead sources current root `plugin.json` and canonical `.github` artifacts from `main` and has no published-release assurance.
 
-Final publication mints a release GitHub App token and atomically runs
-`gh release edit --prerelease --draft=false`; the resulting published event
-triggers `Pre-Release Marketplace Publish`. Main remains a ref-less
-development-tip channel and is not updated by release completion. Release
-branches, immutable tags, and published releases own release state and history.
+Final publication in `release-vsix-publish.yml` mints a release GitHub App
+token and atomically runs the channel-specific `gh release edit` command with
+`--draft=false`. The resulting published event triggers the matching
+Marketplace workflow. Main remains a ref-less development-tip channel and is
+not updated by release completion. Release branches, immutable tags, and
+published releases own release state and history.
 
 Hosted branch, tag, release, asset, workflow, and installed-client checks are
 authorized manual actions. Local validation does not execute or verify them.

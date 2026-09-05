@@ -162,13 +162,29 @@ def test_check_credential_file_perms_relaxed_override(
 
 
 def test_autoload_credentials_returns_none_when_file_absent(
-    mural_module: Any, tmp_path: pathlib.Path
+    mural_module: Any, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """An absent credential file hydrates nothing and returns ``None``.
+
+    The backend is pinned to ``file`` because ``resolve_backend`` otherwise
+    honours ``auto`` and reaches the developer's real keyring, which hydrates
+    ``env`` with live credentials and makes this test machine-dependent.
+
+    Assertions compare key sets rather than membership against ``env`` so a
+    failure reports credential *names* only. Asserting ``"MURAL_CLIENT_ID"
+    not in env`` makes pytest rewrite the whole mapping into the failure
+    message, printing real secret values.
+    """
+    _isolate_credential_env(monkeypatch, tmp_path)
     missing = tmp_path / "absent.env"
+    monkeypatch.setenv("MURAL_CREDENTIAL_BACKEND", "file")
+    monkeypatch.setenv("MURAL_ENV_FILE", str(missing))
     env: dict[str, str] = {"MURAL_ENV_FILE": str(missing)}
+
     result = mural_module._autoload_credentials("default", env)
+
     assert result is None
-    assert "MURAL_CLIENT_ID" not in env
+    assert set(env) == {"MURAL_ENV_FILE"}
 
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX-only permission semantics")
