@@ -3,7 +3,7 @@ id: "0002"
 title: "Adopt Vally as the agent and skill behavior evaluation framework"
 description: "Adopt Vally (@microsoft/vally-cli) with a Copilot-SDK executor and a multi-suite evals/ tree as the standard way to evaluate the behavior of hve-core's authored AI customization artifacts, wired into PR CI and supported by a vally-tests authoring skill and a content-moderation pipeline."
 author: "HVE Core Team"
-ms.date: "2026-08-20"
+ms.date: "2026-08-31"
 ms.topic: "reference"
 status: "accepted"
 proposed_date: "2026-05-30"
@@ -35,7 +35,10 @@ affected_components:
   - ".github/workflows/pr-validation.yml"
 supersedes: null
 superseded-by: null
-related: []
+related:
+  - path: "0011-define-vally-baseline-equivalence-evaluation-policy.md"
+    relation: "influences"
+    note: "Defines the evaluation policy for the baseline-equivalence guarantee this ADR adopted Vally to provide."
 asr_triggers:
   - kind: "maintainability"
     evidence: "evals/README.md describes the six-suite evaluation architecture; the .github/skills/hve-core/vally-tests skill is the maintained authoring surface."

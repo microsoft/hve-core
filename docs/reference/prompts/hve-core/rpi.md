@@ -3,7 +3,7 @@ title: Rpi
 description: "Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow"
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - prompt
@@ -41,6 +41,8 @@ Reach for a different asset when:
 2. Add `continue=` with a task slug, artifact path, or issue reference to resume an existing task from its recorded state and phase artifacts.
 3. Add `followUp=` to start a child task for a distinct follow-up item from a prior review. It begins at Research unless the prerequisites for a later phase are supplied.
 4. Continue in the agent: advance phases manually with the phase handoffs, or select **Full Auto** to request an automatic session.
+
+Full Auto requires explicit mode confirmation. Required confirmations, blockers, and human review still apply. After Review, the agent presents evidence-grounded follow-up choices before starting another task.
 
 ## Example usage
 

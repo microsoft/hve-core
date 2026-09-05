@@ -51,8 +51,8 @@
     pwsh scripts/evals/Build-AgentBehaviorSpec.ps1 -WhatIf
 
 .NOTES
-    Mirrors the generate-and-commit drift-check pattern used by
-    `scripts/evals/New-AgentSurfaceSignatures.ps1`.
+    Follows the generate-and-commit drift-check pattern: the generated spec is
+    committed, and a drift check re-runs generation to confirm it is current.
 #>
 [CmdletBinding(SupportsShouldProcess)]
 [OutputType([string])]

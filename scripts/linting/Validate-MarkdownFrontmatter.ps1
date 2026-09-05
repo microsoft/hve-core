@@ -29,8 +29,14 @@ param(
 
     [Parameter(Mandatory = $false)]
     [string[]]$ExcludePaths = @(
+        # Test and evaluation fixtures are inputs to a check, not documentation. Adding
+        # repository frontmatter to them changes the content under test: the seed
+        # workspace is copied verbatim into both eval variants, so an agent would read
+        # frontmatter that exists only to satisfy this linter. Each entry names one
+        # fixture directory rather than a broad pattern.
         'scripts/tests/fixtures/**',
         'scripts/tests/linting/fixtures/**',
+        'evals/baseline-equivalence/seed-workspace/**',
         'extension/README.md',
         'extension/README.*.md',
         'extension/templates/README.template.md',

@@ -3,7 +3,7 @@ title: Dt Figma Export
 description: Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,23 @@ Export Design Thinking artifacts to a FigJam board or Figma Design file via the 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to publish existing Design Thinking artifacts to a FigJam board or Figma Design file for collaboration. Use the canonical artifact workflow first when the project content is incomplete or unverified.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Before running the prompt, confirm these prerequisites:
+
+* The DT project artifacts exist under `.copilot-tracking/dt/{project-slug}/`.
+* The `figma` MCP server is configured in your workspace. Add `{"figma": {"type": "http", "url": "https://mcp.figma.com/mcp"}}` to the `servers` object in `.vscode/mcp.json`, then restart VS Code.
+* You have a Figma account with a Dev or Full seat on a Professional, Organization, or Enterprise plan for sustained usage. Starter plans are limited to 6 tool calls per month.
+* Authentication happens through browser OAuth on first use, so no credential files or API keys are required.
+
+Provide the `project-slug` and optionally choose a board title, method, and output type. Confirm the destination and authorization before the prompt creates or changes an external Figma file, then review the exported content for fidelity.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/dt-figma-export project-slug=factory-floor-maintenance method=3 output-type=figjam
+```
+
+After confirmation, the prompt exports the recorded Method 3 artifacts to a FigJam board without inventing missing content.

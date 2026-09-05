@@ -49,7 +49,7 @@ jobs:
           $params = @{
             FailOnMissing          = $true
             CheckSync              = $true
-            RequireAuthoredContent = @('instruction')
+            RequireAuthoredContent = @('instruction', 'prompt')
           }
           if ($env:CHANGED_FILES_ONLY -eq 'true') {
             $params['ChangedFilesOnly'] = $true
