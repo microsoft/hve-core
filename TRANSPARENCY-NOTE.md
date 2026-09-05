@@ -20,7 +20,7 @@ This note covers HVE Core: the files in the `microsoft/hve-core` repository. It 
 
 ## The basics of HVE Core
 
-HVE Core is a collection of text files and supporting tools that shape how GitHub Copilot behaves. It ships custom agents, prompts, instructions, skills, hooks, PowerShell scripts, GitHub Actions workflows, and one complete Visual Studio Code extension and Copilot plugin identity. The point is to give engineering teams a ready-made, review-friendly starting point for AI-assisted software work.
+HVE Core is a collection of text files and supporting tools that shape how GitHub Copilot behaves. It ships custom agents, prompts, instructions, skills, PowerShell scripts, GitHub Actions workflows, and one complete Visual Studio Code extension and Copilot plugin identity. The point is to give engineering teams a ready-made, review-friendly starting point for AI-assisted software work.
 
 HVE Core does not run any AI model itself. It does not train models, host inference, call external services while you use it, or process personal data on its own. All of the AI work happens on the host platform (Copilot Chat or the Copilot CLI). That leaves three areas where HVE Core still carries Responsible AI weight:
 
@@ -34,7 +34,7 @@ The appendices at the end add detail for the agents that most influence downstre
 
 | Term                 | Meaning in HVE Core                                                                                                                                                      |
 |----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Artifact             | A file HVE Core ships: an agent, prompt, instruction, skill, hook, script, or workflow. Other tools read these files; the files do not run on their own.                 |
+| Artifact             | A file HVE Core ships: an agent, prompt, instruction, skill, script, or workflow. Other tools read these files; the files do not run on their own.                       |
 | Custom agent         | A persona (`*.agent.md`) that Copilot Chat can take on to run a specialized workflow. An agent can call subagents and use instructions, prompts, and skills.             |
 | Prompt               | A reusable user-message template (`*.prompt.md`) you load into a Copilot Chat or CLI session.                                                                            |
 | Instructions         | Guidance (`*.instructions.md`) that shapes how the model responds for a given file type, language, or workflow.                                                          |
@@ -56,9 +56,21 @@ HVE Core ships text files and supporting tools. When you load an HVE Core file i
 2. You work with the host's model, now shaped by the file's instructions.
 3. The model's replies come back through the normal Copilot surface.
 
-HVE Core has no model, no API, and no network calls while you author or install it. It ships one optional local telemetry hook that is disabled by default and, when you turn it on, records Copilot session lifecycle events to plaintext files on your own disk with no network egress.
-The processed event stream stores derived signals (such as tool-input key names and a truncated prompt preview) rather than full payloads; a separate, explicit opt-in is required before any verbatim prompt or tool input is captured. See the [Local Telemetry guide](docs/customization/local-telemetry.md) for exactly what is captured and how to disable or remove it.
-Validation tools (linters, frontmatter checks, Pester tests, and plugin manifest checks) run in CI on pull requests. Nothing runs on your machine unless you install the VS Code extension or run a packaged script yourself.
+HVE Core has no model, no API, and no network calls while you author or install it. It ships no telemetry collector that runs on your machine by default. Optional OpenTelemetry export is a Copilot Chat feature you configure yourself, and the `copilot-otel-metrics` skill only generates the settings, local stack, and infrastructure templates you choose to apply. Nothing is collected until you enable that export and run a receiver you control.
+Validation tools (linters, frontmatter checks, Pester tests, plugin generation) run in CI on pull requests. Nothing runs on your machine unless you install the VS Code extension or run a packaged script yourself.
+
+#### If you used the retired telemetry hook
+
+HVE Core previously shipped a session hook that wrote local telemetry on your machine. It has been removed, and the opt-in `copilot-otel-metrics` skill replaces it. Removing the hook stops new writes; it does not delete anything already written, and nothing in HVE Core will delete it for you. Four kinds of artifact are left behind, and you decide what happens to each.
+
+| What was left behind        | Where it is                                                                                                                          | What to do                                                                                                                                                                                         |
+|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Per-project telemetry store | `<repo>/.copilot-tracking/telemetry`, or the directory named by `HVE_TELEMETRY_DIR`                                                  | Holds `sessions-*.jsonl`, `.stacks/`, and `report.generated.html`. Delete the directory when you no longer want the history. It is gitignored, so it was never published, but it is still on disk. |
+| Raw captures                | `raw-input.jsonl` in that same directory                                                                                             | This is the unprocessed capture and the most sensitive of the four. Delete it first if you are triaging.                                                                                           |
+| Cross-project registry      | `~/.hve/telemetry-dirs`, or `$HVE_HOME/telemetry-dirs`; older installs also have `telemetry-dirs.txt`                                | A list of every project directory the hook wrote to. Read it to find stores you have forgotten, then delete it.                                                                                    |
+| Generated launchers         | `~/.hve/generate-report.sh`, `generate-report.ps1`, `clean-telemetry.sh`, `clean-telemetry.ps1`, plus `~/.hve/report.generated.html` | The hook regenerated these each session and will no longer do so. They now point at scripts that are gone, so they fail rather than run. Delete them.                                              |
+
+The cleanup scripts that used to remove these were part of the hook and were removed with it. If you want the registry-driven sweep, take a copy of `.github/hooks/shared/telemetry/` from a tag before the retirement, run it once, and then discard it. Otherwise delete the paths above by hand; they are ordinary files and directories.
 
 Most skills are pure authoring or validation helpers with no independent Responsible AI surface and are not called out individually. A few skills warrant specific mention because they assemble media outputs or depend on external services:
 
@@ -135,7 +147,7 @@ For a set of files, "performance" is not a model-accuracy score. It is how well 
 Quality rests on a few things:
 
 * **CI checks on every pull request.** Markdown linting, frontmatter validation, model-reference checks, link checking, PowerShell and Python linting, YAML validation, collection-metadata and marketplace validation, dependency-pinning and action-version checks, copyright-header checks, and skill-structure validation all run on each pull request and block merge on failure.
-* **Plugin-manifest gate.** The complete root `plugin.json` membership is derived from tracked distributable `.github` source paths; missing or untracked root metadata, drift, invalid locator metadata, escaping or absent component paths, or invalid hooks block merge.
+* **Plugin-manifest gate.** The complete root `plugin.json` membership is derived from tracked distributable `.github` source paths; missing or untracked root metadata, drift, invalid locator metadata, or escaping or absent component paths block merge.
 * **Human review.** Every file change needs human review. Supply-chain and dependency checks surface to reviewers.
 * **Manifest parity and release review.** Stable and PreRelease ship the same complete plugin manifest. Stable release review happens through promotion of a reviewed PreRelease tree into `release/stable`; channel selection changes release cadence and assurance rather than component membership.
 * **Feedback channel.** GitHub issues on `microsoft/hve-core` are the main place for bugs, requests, and concerns.
@@ -145,7 +157,7 @@ HVE Core does not measure performance against a specific model. If you need repr
 ### Getting the best results
 
 * **Pin to a release tag.** Treat the main branch as a moving target. For anything production-relevant, pin to a release tag and review changes before upgrading.
-* **Choose a managed or selective footprint.** The extension and plugin contain the same complete distributable component set. Teams that need fewer repository-owned files can use the included installer skill's complete or custom selection across agents, prompts, instructions, and whole skill directories. The installer preserves repository-relative paths, records schema version 2, and does not copy hooks.
+* **Choose a managed or selective footprint.** The extension and plugin contain the same complete distributable component set. Teams that need fewer repository-owned files can use the included installer skill's complete or custom selection across agents, prompts, instructions, and whole skill directories. The installer preserves repository-relative paths and records schema version 2.
 * **Read an agent's description before loading it.** Each agent file documents its purpose, inputs, outputs, and limits. Skipping this is the most common cause of surprises.
 * **Treat decision-shaping output as a draft.** Planning agents, code-review agents that gate pull requests, and customer-handoff agents produce drafts. Do not turn a draft into a binding decision without qualified human review.
 * **Check saved memory before sharing a workspace.** Agents that write to the memory layer carry context across sessions. Inspect and clear it through the host's controls before sharing a workspace, screenshot, or recording.

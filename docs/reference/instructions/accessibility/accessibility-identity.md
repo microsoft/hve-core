@@ -3,7 +3,7 @@ title: Accessibility/Accessibility Identity
 description: "Identity and orchestration instructions for the Accessibility Planner agent. Contains six-phase workflow, state.json schema reference, session recovery, and question cadence."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,11 @@ Identity and orchestration instructions for the Accessibility Planner agent. Con
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these instructions when an Accessibility Planner session creates, resumes,
+or updates artifacts under `.copilot-tracking/accessibility/`. They govern the
+six-phase workflow, state transitions, evidence gates, and planner handoffs;
+use the accessibility skill for framework details and qualified human review
+for conformance decisions.
 
 ## Example usage
 

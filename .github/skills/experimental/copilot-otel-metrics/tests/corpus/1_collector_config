@@ -1,0 +1,11 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 127.0.0.1:4318
+processors:
+  redaction:
+    allow_all_keys: false
+    allowed_keys:
+      - service.name
+      - http.url

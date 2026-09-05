@@ -17,13 +17,15 @@ import argparse
 import base64
 import io
 import json
+import logging
 import os
 import re
 import sys
+import traceback
 import urllib.error
 import urllib.parse
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
@@ -35,8 +37,88 @@ MAX_BODY_BYTES = 256 * 1024
 MAX_RESULTS = 100
 ISSUE_KEY_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9]+-\d+$")
 INTEGER_PATTERN = re.compile(r"^\d+$")
+ATLASSIAN_SCOPED_ORIGIN = "https://api.atlassian.com"
+MAX_CLOUD_ID_BYTES = 1024
 
 _AUDIT_OP = ""
+
+LOGGER = logging.getLogger("jira")
+# _emit prints to stderr itself and logs at ERROR. Without a handler, logging's
+# lastResort fallback would also write every ERROR record to stderr, printing
+# each message twice. The NullHandler suppresses that while leaving the logger
+# available to an embedder that configures its own handlers.
+LOGGER.addHandler(logging.NullHandler())
+
+# Credential-bearing key names scrubbed from any string routed through
+# ``_redact``. The first nine mirror the mural skill's OAuth/OIDC baseline and
+# are defense-in-depth here: Jira uses PAT and Basic credentials today, but a
+# third-party library or a future OAuth path could log these standard field
+# names. ``code_challenge`` is deliberately absent because a PKCE challenge is
+# public by design and masking it would corrupt an authorization URL.
+_REDACT_KEYS = (
+    "access_token",
+    "refresh_token",
+    "code_verifier",
+    "client_secret",
+    "id_token",  # OIDC ID Token (JWT)
+    "assertion",  # RFC 7521 4.2 - JWT/SAML bearer grant assertion
+    "client_assertion",  # RFC 7521 4.2 - JWT/SAML client authentication
+    "device_code",  # RFC 8628 device-authorization grant pre-auth secret
+    "password",  # RFC 6749 4.3 ROPC credential
+    "jira_pat",
+    "api_token",
+    "personal_access_token",
+)
+# JSON shape: "key": "value". Case-insensitive because upstream payloads are not
+# guaranteed to use canonical casing, and escape-aware so an embedded \" does not
+# terminate the match early.
+_REDACT_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    (
+        re.compile(
+            rf'("{re.escape(key)}"\s*:\s*")((?:\\.|[^"\\])*)(")',
+            re.IGNORECASE,
+        ),
+        r"\1[REDACTED]\3",
+    )
+    for key in _REDACT_KEYS
+]
+# Escaped JSON shape: a payload embedded as a string inside another JSON
+# document arrives as \"key\": \"value\".
+_REDACT_PATTERNS.extend(
+    (
+        re.compile(
+            rf'(\\"{re.escape(key)}\\"\s*:\s*\\")((?:\\.|[^"\\])*)(\\")',
+            re.IGNORECASE,
+        ),
+        r"\1[REDACTED]\3",
+    )
+    for key in _REDACT_KEYS
+)
+# Bare form shape: key=value, with no leading ? or & required. The query-string
+# rule in _redact only fires after a ? or &, so a token pasted into a log line
+# or error body would otherwise survive.
+_REDACT_PATTERNS.extend(
+    (
+        re.compile(rf"(\b{re.escape(key)}=)([^&\s]+)", re.IGNORECASE),
+        r"\1[REDACTED]",
+    )
+    for key in (*_REDACT_KEYS, "code")
+)
+# Percent-encoded form shape: key%3Dvalue.
+_REDACT_PATTERNS.extend(
+    (
+        re.compile(
+            rf"({urllib.parse.quote(key, safe='')}%3[Dd])([^&%\s]+)",
+            re.IGNORECASE,
+        ),
+        r"\1[REDACTED]",
+    )
+    for key in (*_REDACT_KEYS, "code")
+)
+# Azure Blob SAS query strings: drop everything after the storage host's ?.
+_REDACT_PATTERNS.append(
+    (re.compile(r"(\.blob\.core\.windows\.net/[^\s?]+\?)\S+"), r"\1[REDACTED]")
+)
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -70,6 +152,100 @@ class ScriptError(Exception):
     def __init__(self, message: str, exit_code: int = EXIT_FAILURE) -> None:
         super().__init__(message)
         self.exit_code = exit_code
+
+
+class JiraAPIError(ScriptError):
+    """Jira API failure with a controlled, secret-free string form.
+
+    Only the status, method, query-stripped resource, redacted summary, and
+    request ID are rendered. Raw response bodies, request URLs with query
+    strings, and header dictionaries are never part of the string form.
+    """
+
+    def __init__(
+        self,
+        *,
+        status: int | None = None,
+        method: str = "",
+        resource: str = "",
+        message: str = "",
+        request_id: str = "",
+        exit_code: int = EXIT_FAILURE,
+    ) -> None:
+        self.status = status
+        self.method = method
+        self.resource = resource
+        self.message = message
+        self.request_id = request_id
+        super().__init__(message, exit_code)
+
+    def __str__(self) -> str:
+        head = "Jira API request failed"
+        if self.status is not None:
+            head = f"HTTP {self.status}"
+        if self.method and self.resource:
+            head = f"{head} from {self.method} {self.resource}"
+        detail = _redact(self.message).strip() if self.message else ""
+        if detail:
+            head = f"{head}: {detail}"
+        if self.request_id:
+            head = f"{head} (request_id={self.request_id})"
+        return head
+
+    def __repr__(self) -> str:
+        return (
+            f"JiraAPIError(status={self.status!r}, method={self.method!r}, "
+            f"resource={self.resource!r}, request_id={self.request_id!r})"
+        )
+
+
+def _emit(message: str, *, level: int = logging.ERROR) -> None:
+    """Write a redacted message to the module logger and stderr."""
+    redacted = _redact(message)
+    LOGGER.log(level, redacted)
+    print(redacted, file=sys.stderr)
+
+
+def _emit_stdout(text: str, *, end: str = "\n") -> None:
+    """Write redacted text to stdout.
+
+    Command results are attacker-influenced upstream content, so stdout passes
+    the same redaction barrier as stderr rather than bypassing it.
+    """
+    print(_redact(text), end=end)
+
+
+def _emit_structured_stdout(text: str, *, end: str = "\n") -> None:
+    """Write already-sanitized machine-readable output to stdout."""
+    print(text, end=end)
+
+
+def _emit_debug_traceback(exc: BaseException) -> None:
+    """Write a redacted traceback to stderr when ``JIRA_DEBUG`` is set."""
+    if not os.environ.get("JIRA_DEBUG"):
+        return
+    formatted = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    print(_redact(formatted), file=sys.stderr)
+
+
+def _scrub_url(url: str) -> str:
+    """Return a URL with the query string and fragment removed."""
+    parsed = urllib.parse.urlsplit(url)
+    return urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
+
+
+def _response_request_id(response: Any) -> str:
+    """Extract a bounded, safe request-correlation ID when the server sends one."""
+    headers = getattr(response, "headers", None)
+    if headers is None or not hasattr(headers, "get"):
+        return ""
+    for name in ("X-Request-Id", "X-Arequestid", "X-Trace-Id"):
+        value = headers.get(name)
+        if value:
+            candidate = str(value).strip()[:128]
+            if re.fullmatch(r"[A-Za-z0-9._:-]+", candidate):
+                return candidate
+    return ""
 
 
 def _is_loopback_host(hostname: str | None) -> bool:
@@ -176,9 +352,11 @@ def _get_response_content_type(response: Any) -> str:
     return ""
 
 
-def _redact_sensitive_text(text: str) -> str:
-    """Redact common secrets from diagnostic text."""
-    redacted = text.strip()
+def _redact(text: str) -> str:
+    """Redact common secrets from any text bound for stdout, stderr, or logs."""
+    if not text:
+        return text
+    redacted = text
     redacted = re.sub(
         r"(?i)\b(Bearer|Basic)\s+[A-Za-z0-9._~+/=-]+",
         r"\1 [REDACTED]",
@@ -194,13 +372,33 @@ def _redact_sensitive_text(text: str) -> str:
         r"\1\2=[REDACTED]",
         redacted,
     )
+    for pattern, replacement in _REDACT_PATTERNS:
+        redacted = pattern.sub(replacement, redacted)
     return redacted
+
+
+def _sanitize_structured(value: Any, *, sensitive: bool = False) -> Any:
+    """Return JSON-compatible data with sensitive-key values redacted."""
+    if isinstance(value, dict):
+        return {
+            key: _sanitize_structured(
+                child,
+                sensitive=sensitive or str(key).lower() in _REDACT_KEYS,
+            )
+            for key, child in value.items()
+        }
+    if isinstance(value, list):
+        return [_sanitize_structured(item, sensitive=sensitive) for item in value]
+    if sensitive:
+        return "[REDACTED]"
+    return value
 
 
 def _preview_for_logging(text: str, *, limit: int = 2048) -> str:
     """Return a capped, redacted preview suitable for diagnostics."""
-    preview = text if len(text) <= limit else f"{text[:limit]}..."
-    return _redact_sensitive_text(preview)
+    stripped = text.strip()
+    preview = stripped if len(stripped) <= limit else f"{stripped[:limit]}..."
+    return _redact(preview)
 
 
 def _audit_write(event: dict[str, Any]) -> bool:
@@ -215,28 +413,57 @@ def _audit_write(event: dict[str, Any]) -> bool:
     path = os.environ.get("JIRA_AUDIT_LOG", "").strip()
     if not path:
         return False
+    # Redact per value rather than trusting each call site to redact its own
+    # fields. Redacting the serialized line instead would corrupt the JSON,
+    # because the bare form-shape rule consumes the closing quote and comma.
+    record = {
+        key: _redact(value) if isinstance(value, str) else value
+        for key, value in _sanitize_structured(event).items()
+    }
     with open(path, "a", encoding="utf-8") as handle:
-        handle.write(json.dumps(event) + "\n")
+        handle.write(json.dumps(record) + "\n")
     return True
 
 
-def _audit_event(actor: str, method: str, resource: str, event: str) -> dict[str, Any]:
-    """Build a base audit event record with the query string stripped."""
+def _audit_event(
+    actor: str,
+    method: str,
+    event: str,
+    *,
+    origin: str = "",
+    auth_mode: str = "unknown",
+) -> dict[str, Any]:
+    """Build a privacy-bounded base audit event record."""
     return {
         "ts": datetime.now(timezone.utc).isoformat(),
         "skill": "jira",
         "actor": actor,
         "op": _AUDIT_OP,
         "method": method,
-        "resource": urllib.parse.urlsplit(resource).path,
+        "origin": origin,
+        "auth_mode": auth_mode,
         "event": event,
     }
 
 
-def _audit_attempt(actor: str, method: str, resource: str) -> None:
+def _audit_attempt(
+    actor: str,
+    method: str,
+    *,
+    origin: str = "",
+    auth_mode: str = "unknown",
+) -> None:
     """Write the write-ahead attempt record, failing closed when unwritable."""
     try:
-        _audit_write(_audit_event(actor, method, resource, "attempt"))
+        _audit_write(
+            _audit_event(
+                actor,
+                method,
+                "attempt",
+                origin=origin,
+                auth_mode=auth_mode,
+            )
+        )
     except OSError as exc:
         raise ScriptError(
             f"audit log write failed; refusing to proceed: {exc}",
@@ -247,23 +474,30 @@ def _audit_attempt(actor: str, method: str, resource: str) -> None:
 def _audit_outcome(
     actor: str,
     method: str,
-    resource: str,
     outcome: str,
     *,
     status: int | None = None,
     error: str | None = None,
+    origin: str = "",
+    auth_mode: str = "unknown",
 ) -> None:
     """Write the post-operation outcome record (best-effort)."""
-    record = _audit_event(actor, method, resource, "outcome")
+    record = _audit_event(
+        actor,
+        method,
+        "outcome",
+        origin=origin,
+        auth_mode=auth_mode,
+    )
     record["outcome"] = outcome
     if status is not None:
         record["status"] = status
     if error:
-        record["error"] = _redact_sensitive_text(error)
+        record["error"] = _redact(error)
     try:
         _audit_write(record)
     except OSError as exc:
-        print(f"warning: audit outcome write failed: {exc}", file=sys.stderr)
+        _emit(f"warning: audit outcome write failed: {exc}", level=logging.WARNING)
 
 
 def _create_response_with_body(
@@ -301,9 +535,13 @@ class JiraClient:
     """Authenticated Jira REST client."""
 
     api_url: str
-    auth_header: str
+    # repr=False keeps "Bearer <pat>" / "Basic <b64(email:token)>" out of any
+    # accidental repr(client), f-string interpolation, or traceback frame dump.
+    auth_header: str = field(repr=False)
     use_legacy_search: bool
     audit_actor: str
+    audit_origin: str
+    auth_mode: str
 
     @classmethod
     def from_environment(cls) -> "JiraClient":
@@ -320,10 +558,30 @@ class JiraClient:
         jira_pat = os.environ.get("JIRA_PAT", "").strip()
         jira_user_email = os.environ.get("JIRA_USER_EMAIL", "").strip()
         jira_api_token = os.environ.get("JIRA_API_TOKEN", "").strip()
+        configured_cloud_mode = os.environ.get("JIRA_CLOUD_TOKEN_MODE")
+        cloud_mode = configured_cloud_mode.strip() if configured_cloud_mode else ""
+        cloud_id = os.environ.get("JIRA_CLOUD_ID", "")
+
+        if cloud_mode not in {"", "unscoped", "scoped"}:
+            raise ScriptError(
+                "JIRA_CLOUD_TOKEN_MODE must be unscoped or scoped",
+                EXIT_USAGE,
+            )
+        cloud_configuration_present = bool(
+            jira_user_email or jira_api_token or cloud_mode or cloud_id
+        )
+        if jira_pat and cloud_configuration_present:
+            raise ScriptError(
+                "JIRA_PAT cannot be combined with Jira Cloud credentials or mode",
+                EXIT_USAGE,
+            )
 
         if jira_pat:
             auth_header = f"Bearer {jira_pat}"
             use_legacy_search = True
+            api_url = f"{base_url}/rest/api/2"
+            audit_origin = base_url
+            auth_mode = "data-center-pat"
         elif jira_user_email or jira_api_token:
             if not jira_user_email or not jira_api_token:
                 raise ScriptError(
@@ -338,6 +596,24 @@ class JiraClient:
             ).decode("ascii")
             auth_header = f"Basic {credentials}"
             use_legacy_search = False
+            resolved_cloud_mode = cloud_mode or "unscoped"
+            if resolved_cloud_mode == "scoped":
+                normalized_cloud_id = _validate_cloud_id(cloud_id)
+                api_url = (
+                    f"{ATLASSIAN_SCOPED_ORIGIN}/ex/jira/"
+                    f"{urllib.parse.quote(normalized_cloud_id, safe='')}/rest/api/2"
+                )
+                audit_origin = ATLASSIAN_SCOPED_ORIGIN
+                auth_mode = "cloud-scoped-token"
+            else:
+                if cloud_id:
+                    raise ScriptError(
+                        "JIRA_CLOUD_ID is valid only in scoped Cloud token mode",
+                        EXIT_USAGE,
+                    )
+                api_url = f"{base_url}/rest/api/2"
+                audit_origin = base_url
+                auth_mode = "cloud-unscoped-token"
         else:
             raise ScriptError(
                 "Set JIRA_PAT for Jira Server/Data Center or set both "
@@ -346,7 +622,7 @@ class JiraClient:
             )
 
         return cls(
-            api_url=f"{base_url}/rest/api/2",
+            api_url=api_url,
             auth_header=auth_header,
             use_legacy_search=use_legacy_search,
             audit_actor=(
@@ -354,6 +630,8 @@ class JiraClient:
                 or jira_user_email
                 or "jira-pat"
             ),
+            audit_origin=audit_origin,
+            auth_mode=auth_mode,
         )
 
     def request(self, method: str, path: str, data: Any | None = None) -> Any | None:
@@ -378,7 +656,12 @@ class JiraClient:
         }
         body = json.dumps(data).encode("utf-8") if data is not None else None
         request = urllib.request.Request(url, data=body, headers=headers, method=method)
-        _audit_attempt(self.audit_actor, method, path)
+        _audit_attempt(
+            self.audit_actor,
+            method,
+            origin=self.audit_origin,
+            auth_mode=self.auth_mode,
+        )
 
         try:
             with _open_url(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
@@ -403,32 +686,66 @@ class JiraClient:
             body_bytes = _read_response_body(exc)
             raw = body_bytes.decode("utf-8", errors="replace")
             details = _extract_error_message(raw)
+            resource = _scrub_url(url)
+            request_id = _response_request_id(exc)
             _audit_outcome(
-                self.audit_actor, method, path, "error", status=exc.code, error=details
+                self.audit_actor,
+                method,
+                "error",
+                status=exc.code,
+                error=details,
+                origin=self.audit_origin,
+                auth_mode=self.auth_mode,
             )
             if exc.code in {401, 403}:
-                raise ScriptError(
-                    f"HTTP {exc.code} from {method} {url}: authentication failed; "
-                    "the token may be expired or revoked — rotate JIRA_API_TOKEN "
-                    f"or JIRA_PAT. {details}"
+                raise JiraAPIError(
+                    status=exc.code,
+                    method=method,
+                    resource=resource,
+                    request_id=request_id,
+                    message=(
+                        "authentication failed; the token may be expired or "
+                        "revoked — rotate JIRA_API_TOKEN or JIRA_PAT. "
+                        f"{details}"
+                    ),
                 ) from exc
             if exc.code in {301, 302, 303, 307, 308}:
-                raise ScriptError(
-                    "Refusing redirect from "
-                    f"{method} {url}: {details or 'redirect blocked'}"
+                raise JiraAPIError(
+                    status=exc.code,
+                    method=method,
+                    resource=resource,
+                    request_id=request_id,
+                    message=f"refusing redirect; {details or 'redirect blocked'}",
                 ) from exc
-            raise ScriptError(
-                f"HTTP {exc.code} from {method} {url}: {details}"
+            raise JiraAPIError(
+                status=exc.code,
+                method=method,
+                resource=resource,
+                request_id=request_id,
+                message=details,
             ) from exc
         except urllib.error.URLError as exc:
             _audit_outcome(
-                self.audit_actor, method, path, "error", error=str(exc.reason)
+                self.audit_actor,
+                method,
+                "error",
+                error=str(exc.reason),
+                origin=self.audit_origin,
+                auth_mode=self.auth_mode,
             )
-            raise ScriptError(
-                f"Could not reach Jira API at {url}: {exc.reason}"
+            raise JiraAPIError(
+                method=method,
+                resource=_scrub_url(url),
+                message=f"could not reach the Jira API: {exc.reason}",
             ) from exc
 
-        _audit_outcome(self.audit_actor, method, path, "success")
+        _audit_outcome(
+            self.audit_actor,
+            method,
+            "success",
+            origin=self.audit_origin,
+            auth_mode=self.auth_mode,
+        )
 
         if not raw.strip():
             return None
@@ -449,6 +766,21 @@ def _validate_ascii_no_newlines(value: str, *, name: str) -> None:
         value.encode("ascii")
     except UnicodeEncodeError as exc:
         raise ScriptError(f"{name} must be ASCII", EXIT_USAGE) from exc
+
+
+def _validate_cloud_id(value: str) -> str:
+    """Return an opaque Cloud ID that is safe as exactly one path segment."""
+    if not isinstance(value, str) or not value:
+        raise ScriptError("JIRA_CLOUD_ID is required in scoped mode", EXIT_USAGE)
+    if len(value.encode("utf-8")) > MAX_CLOUD_ID_BYTES:
+        raise ScriptError("JIRA_CLOUD_ID exceeds the size limit", EXIT_USAGE)
+    if value.strip() != value or any(char.isspace() for char in value):
+        raise ScriptError("JIRA_CLOUD_ID must not contain whitespace", EXIT_USAGE)
+    if any(ord(char) < 32 or ord(char) == 127 for char in value):
+        raise ScriptError("JIRA_CLOUD_ID contains control characters", EXIT_USAGE)
+    if value in {".", ".."} or any(char in value for char in "/\\%?#"):
+        raise ScriptError("JIRA_CLOUD_ID is not a safe path segment", EXIT_USAGE)
+    return value
 
 
 def _extract_error_message(raw: str) -> str:
@@ -532,14 +864,17 @@ def _stringify_value(value: Any) -> str:
 
 def _print_selected_fields(data: Any, fields: list[str]) -> None:
     """Print selected fields for a single item or a list of items."""
-    if isinstance(data, list):
-        print("\t".join(fields))
-        for item in data:
-            print("\t".join(_extract_field(item, field) for field in fields))
+    sanitized = _sanitize_structured(data)
+    if isinstance(sanitized, list):
+        _emit_structured_stdout("\t".join(fields))
+        for item in sanitized:
+            _emit_structured_stdout(
+                "\t".join(_extract_field(item, name) for name in fields)
+            )
         return
 
-    for field in fields:
-        print(f"{field}: {_extract_field(data, field)}")
+    for name in fields:
+        _emit_structured_stdout(f"{name}: {_extract_field(sanitized, name)}")
 
 
 def _print_result(result: Any, fields: list[str] | None) -> None:
@@ -550,9 +885,9 @@ def _print_result(result: Any, fields: list[str] | None) -> None:
         _print_selected_fields(result, fields)
         return
     if isinstance(result, str):
-        print(_preview_for_logging(result))
+        _emit_stdout(_preview_for_logging(result))
         return
-    print(json.dumps(result, indent=2))
+    _emit_structured_stdout(json.dumps(_sanitize_structured(result), indent=2))
 
 
 def _split_fields(raw_fields: str | None) -> list[str] | None:
@@ -833,13 +1168,18 @@ def main() -> int:
         _print_result(result, args.fields)
         return EXIT_SUCCESS
     except KeyboardInterrupt:
-        print("Interrupted by user", file=sys.stderr)
+        _emit("Interrupted by user", level=logging.WARNING)
         return 130
     except BrokenPipeError:
         return EXIT_FAILURE
     except ScriptError as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        _emit_debug_traceback(exc)
+        _emit(f"error: {exc}")
         return exc.exit_code
+    except Exception as exc:  # noqa: BLE001 - terminal CLI boundary
+        _emit_debug_traceback(exc)
+        _emit("error: unexpected Jira CLI failure")
+        return EXIT_FAILURE
 
 
 if __name__ == "__main__":  # pragma: no cover

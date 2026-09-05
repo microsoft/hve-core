@@ -3,7 +3,7 @@ title: Rpi
 description: "Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow"
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Coordinate one task through the Research, Plan, Implement, Review, and Follow-up
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when one task should move through evidence gathering, planning, implementation, review, and explicit follow-up. Invoke a phase-specific RPI skill when you need only one bounded stage.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the `task`, or use `continue` with a matching durable task identity. The prompt records phase artifacts and state, respects blockers and required confirmations, and presents evidence-grounded follow-up choices after Review.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/rpi task="complete prompt reference guidance"
+```
+
+The prompt establishes one task identity and coordinates the remaining eligible RPI phases with durable evidence.

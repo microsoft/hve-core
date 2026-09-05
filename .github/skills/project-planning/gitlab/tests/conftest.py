@@ -72,20 +72,28 @@ def reset_gitlab_state(monkeypatch: pytest.MonkeyPatch) -> None:
     """Reset module globals and seed environment variables for each test."""
     gitlab.selected_fields = None
     gitlab.gitlab_url = ""
-    gitlab.gitlab_token = ""
     gitlab.api_url = ""
+    gitlab.auth_context = None
 
     monkeypatch.setenv("GITLAB_URL", TEST_GITLAB_URL)
     monkeypatch.setenv("GITLAB_TOKEN", TEST_GITLAB_TOKEN)
+    monkeypatch.setenv("GITLAB_AUTH_MODE", "legacy-token")
     monkeypatch.delenv("GITLAB_PROJECT", raising=False)
+    monkeypatch.delenv("GITLAB_OAUTH_CLIENT_ID", raising=False)
+    monkeypatch.delenv("GITLAB_PROFILE", raising=False)
+    monkeypatch.delenv("GITLAB_TOKEN_STORE", raising=False)
 
 
 @pytest.fixture
 def configured_gitlab() -> ConfiguredGitLab:
     """Return the gitlab module with configured API globals."""
     gitlab.gitlab_url = TEST_GITLAB_URL
-    gitlab.gitlab_token = TEST_GITLAB_TOKEN
     gitlab.api_url = TEST_API_URL
+    gitlab.auth_context = gitlab.AuthContext(
+        mode="legacy-token",
+        issuer=TEST_GITLAB_URL,
+        token=TEST_GITLAB_TOKEN,
+    )
     return gitlab
 
 

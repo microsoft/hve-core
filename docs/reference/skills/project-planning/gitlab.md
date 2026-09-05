@@ -28,10 +28,21 @@ Manage GitLab merge requests and pipelines with a Python CLI
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this skill for GitLab merge-request, note, pipeline, and job-trace workflows.
+OAuth is the default and supports public-client PKCE or human-assisted device
+authorization. Use explicit legacy-token mode only when OAuth is unavailable.
+
+Do not describe device authorization as unattended workload identity. A user
+must approve the request on a browser-capable device.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Register a non-confidential OAuth application, set its application ID, then log
+in and list merge requests:
+
+```bash
+export GITLAB_URL="https://gitlab.com"
+export GITLAB_OAUTH_CLIENT_ID="your-application-id"
+python scripts/gitlab.py auth login
+python scripts/gitlab.py mr-list opened --fields iid,title,author.name
+```

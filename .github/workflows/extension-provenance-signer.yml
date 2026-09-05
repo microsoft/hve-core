@@ -1,0 +1,540 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Extension Provenance Signer
+
+on:
+  workflow_call:
+    inputs:
+      source-ref:
+        description: "Immutable source commit to package and attest (full commit SHA of this run)"
+        required: true
+        type: string
+      version:
+        description: "Full version to package (e.g., 1.0.0)"
+        required: true
+        type: string
+      channel:
+        description: "Release channel (Stable or PreRelease) controlling the pre-release packaging flag"
+        required: true
+        type: string
+      release-tag:
+        description: "Canonical release tag bound to the caller event"
+        required: true
+        type: string
+
+concurrency:
+  group: extension-provenance-signer-${{ inputs.release-tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  authorize:
+    name: Authorize Release Tag
+    runs-on: ubuntu-latest
+    environment: release-governance
+    permissions:
+      contents: read
+    steps:
+      - name: Generate governance-read Release App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: 2646666
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: microsoft
+          repositories: hve-core
+          permission-administration: read
+          permission-contents: read
+
+      - name: Authenticate release principal and governance
+        shell: bash
+        env:
+          EVENT_ACTOR: ${{ github.actor }}
+          EVENT_ACTOR_ID: ${{ github.actor_id }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_REF: ${{ github.ref }}
+          EVENT_REF_NAME: ${{ github.ref_name }}
+          EVENT_REF_TYPE: ${{ github.ref_type }}
+          EVENT_SHA: ${{ github.sha }}
+          INPUT_CHANNEL: ${{ inputs.channel }}
+          INPUT_RELEASE_TAG: ${{ inputs.release-tag }}
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+          INPUT_VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          readonly EXPECTED_REPOSITORY='microsoft/hve-core'
+          readonly EXPECTED_APP_ID='2646666'
+          readonly EXPECTED_APP_SLUG='hve-core-release-please'
+          readonly EXPECTED_ACTOR='hve-core-release-please[bot]'
+          readonly EXPECTED_ACTOR_ID='254602402'
+          readonly CREATION_RULESET='release-tags-creation-by-release-app'
+          readonly IMMUTABLE_RULESET='release-tags-immutable'
+
+          if [ "$REPOSITORY" != "$EXPECTED_REPOSITORY" ] || [ "$EVENT_NAME" != 'push' ] \
+            || [ "$EVENT_REF_TYPE" != 'tag' ] || [ "$EVENT_REF" != "refs/tags/$EVENT_REF_NAME" ]; then
+            echo '::error::Signer requires the canonical repository release-tag push context'
+            exit 1
+          fi
+          if [ "$EVENT_ACTOR" != "$EXPECTED_ACTOR" ] || [ "$EVENT_ACTOR_ID" != "$EXPECTED_ACTOR_ID" ]; then
+            echo '::error::Release tag push was not created by the expected Release App principal'
+            exit 1
+          fi
+          if [ "$RELEASE_APP_SLUG" != "$EXPECTED_APP_SLUG" ]; then
+            echo '::error::Authenticated Release App slug does not match the frozen signer identity'
+            exit 1
+          fi
+          if [[ "$EVENT_REF_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            DERIVED_CHANNEL='Stable'
+            DERIVED_VERSION=${BASH_REMATCH[1]}
+          elif [[ "$EVENT_REF_NAME" =~ ^prerelease-v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            DERIVED_CHANNEL='PreRelease'
+            DERIVED_VERSION=${BASH_REMATCH[1]}
+          else
+            echo '::error::Release tag does not use the canonical channel grammar'
+            exit 1
+          fi
+          if [[ ! "$EVENT_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$INPUT_SOURCE_REF" != "$EVENT_SHA" ] \
+            || [ "$INPUT_RELEASE_TAG" != "$EVENT_REF_NAME" ] || [ "$INPUT_CHANNEL" != "$DERIVED_CHANNEL" ] \
+            || [ "$INPUT_VERSION" != "$DERIVED_VERSION" ]; then
+            echo '::error::Caller inputs do not match the immutable release event identity'
+            exit 1
+          fi
+
+          APP_FILE="$RUNNER_TEMP/release-app.json"
+          BOT_FILE="$RUNNER_TEMP/release-app-bot.json"
+          gh api "/apps/$EXPECTED_APP_SLUG" > "$APP_FILE"
+          gh api "/users/hve-core-release-please%5Bbot%5D" > "$BOT_FILE"
+          if ! jq -e --arg slug "$EXPECTED_APP_SLUG" --argjson id "$EXPECTED_APP_ID" \
+            'type == "object" and .slug == $slug and .id == $id' "$APP_FILE" >/dev/null \
+            || ! jq -e --arg login "$EXPECTED_ACTOR" --argjson id "$EXPECTED_ACTOR_ID" \
+            'type == "object" and .login == $login and .id == $id and .type == "Bot"' \
+            "$BOT_FILE" >/dev/null; then
+            echo '::error::Public Release App identity does not match the frozen signer identity'
+            exit 1
+          fi
+
+          RELEASE_PAGES="$RUNNER_TEMP/release-pages.json"
+          RELEASE_LIST="$RUNNER_TEMP/releases.json"
+          gh api --paginate --slurp "/repos/$REPOSITORY/releases?per_page=100" > "$RELEASE_PAGES"
+          if ! jq -e 'type == "array" and length > 0 and all(.[]; type == "array")' "$RELEASE_PAGES" >/dev/null; then
+            echo '::error::Release discovery returned a malformed response'
+            exit 1
+          fi
+          jq '[.[][]]' "$RELEASE_PAGES" > "$RELEASE_LIST"
+          if ! jq -e --arg tag "$EVENT_REF_NAME" --arg sha "$EVENT_SHA" --arg channel "$DERIVED_CHANNEL" '
+            [.[] | select(.tag_name == $tag)] as $matches
+            | ($matches | length) == 1
+            and $matches[0].target_commitish == $sha
+            and $matches[0].draft == true
+            and (($channel == "Stable" and $matches[0].prerelease == false)
+              or ($channel == "PreRelease" and $matches[0].prerelease == true))
+          ' "$RELEASE_LIST" >/dev/null; then
+            echo '::error::Exact draft release identity does not match the immutable tag event'
+            exit 1
+          fi
+
+          CHANNEL_BRANCH='release/stable'
+          if [ "$DERIVED_CHANNEL" = 'PreRelease' ]; then
+            CHANNEL_BRANCH='release/prerelease'
+          fi
+          BRANCH_FILE="$RUNNER_TEMP/channel-branch.json"
+          gh api "/repos/$REPOSITORY/git/ref/heads/$CHANNEL_BRANCH" > "$BRANCH_FILE"
+          BRANCH_SHA=$(jq -er '.object.sha | select(type == "string" and test("^[0-9a-f]{40}$"))' "$BRANCH_FILE")
+          COMPARE_FILE="$RUNNER_TEMP/channel-compare.json"
+          gh api "/repos/$REPOSITORY/compare/$EVENT_SHA...$BRANCH_SHA" > "$COMPARE_FILE"
+          if ! jq -e '.status == "ahead" or .status == "identical"' "$COMPARE_FILE" >/dev/null; then
+            echo "::error::Release commit is not contained in the expected $CHANNEL_BRANCH branch"
+            exit 1
+          fi
+
+          RULESET_PAGES="$RUNNER_TEMP/tag-ruleset-pages.json"
+          RULESET_LIST="$RUNNER_TEMP/tag-rulesets.json"
+          gh api --paginate --slurp "/repos/$REPOSITORY/rulesets?includes_parents=true&targets=tag&per_page=100" \
+            > "$RULESET_PAGES"
+          if ! jq -e 'type == "array" and length > 0 and all(.[]; type == "array")' "$RULESET_PAGES" >/dev/null; then
+            echo '::error::Tag ruleset discovery returned a malformed response'
+            exit 1
+          fi
+          jq '[.[][]]' "$RULESET_PAGES" > "$RULESET_LIST"
+
+          for RULESET_NAME in "$CREATION_RULESET" "$IMMUTABLE_RULESET"; do
+            MATCH_COUNT=$(jq --arg name "$RULESET_NAME" '[.[] | select(.name == $name)] | length' "$RULESET_LIST")
+            if [ "$MATCH_COUNT" -ne 1 ]; then
+              echo "::error::Required tag ruleset $RULESET_NAME has match count $MATCH_COUNT"
+              exit 1
+            fi
+            RULESET_ID=$(jq -er --arg name "$RULESET_NAME" \
+              '.[] | select(.name == $name) | .id | select(type == "number")' "$RULESET_LIST")
+            gh api "/repos/$REPOSITORY/rulesets/$RULESET_ID?includes_parents=true" \
+              > "$RUNNER_TEMP/$RULESET_NAME.json"
+          done
+
+          if ! jq -e --arg name "$CREATION_RULESET" '
+            type == "object" and .name == $name and .target == "tag" and .enforcement == "active"
+            and .source_type == "Repository" and .source == "microsoft/hve-core"
+            and (.conditions.ref_name.include | type == "array")
+            and ((.conditions.ref_name.include | sort) == (["refs/tags/prerelease-v*", "refs/tags/v*"] | sort))
+            and .conditions.ref_name.exclude == []
+            and (([.rules[].type] | sort) == (["creation"] | sort))
+            and (.bypass_actors | type == "array" and length == 1)
+            and .bypass_actors[0].actor_type == "Integration"
+            and .bypass_actors[0].actor_id == 2646666
+            and .bypass_actors[0].bypass_mode == "always"
+          ' "$RUNNER_TEMP/$CREATION_RULESET.json" >/dev/null; then
+            echo "::error::$CREATION_RULESET does not provide the exact active release-tag creation boundary"
+            exit 1
+          fi
+          if ! jq -e --arg name "$IMMUTABLE_RULESET" '
+            type == "object" and .name == $name and .target == "tag" and .enforcement == "active"
+            and .source_type == "Repository" and .source == "microsoft/hve-core"
+            and (.conditions.ref_name.include | type == "array")
+            and ((.conditions.ref_name.include | sort) == (["refs/tags/prerelease-v*", "refs/tags/v*"] | sort))
+            and .conditions.ref_name.exclude == []
+            and (([.rules[].type] | sort) == (["deletion", "non_fast_forward", "update"] | sort))
+            and .bypass_actors == []
+          ' "$RUNNER_TEMP/$IMMUTABLE_RULESET.json" >/dev/null; then
+            echo "::error::$IMMUTABLE_RULESET does not provide the exact active release-tag immutability boundary"
+            exit 1
+          fi
+
+  package:
+    name: Package hve-core
+    needs: [authorize]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Validate source ref
+        shell: bash
+        env:
+          EVENT_SHA: ${{ github.sha }}
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$INPUT_SOURCE_REF" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::source-ref must be a full 40-character lowercase commit SHA"
+            exit 1
+          fi
+          if [ "$INPUT_SOURCE_REF" != "$EVENT_SHA" ]; then
+            echo "::error::source-ref $INPUT_SOURCE_REF is not the packaging source commit $EVENT_SHA"
+            exit 1
+          fi
+
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify checked-out source
+        shell: bash
+        env:
+          EXPECTED_SOURCE: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          CHECKED_OUT_SOURCE=$(git rev-parse HEAD)
+          if [ "$CHECKED_OUT_SOURCE" != "$EXPECTED_SOURCE" ]; then
+            echo "::error::Checked-out source $CHECKED_OUT_SOURCE does not match authorized event source $EXPECTED_SOURCE"
+            exit 1
+          fi
+
+      - name: Validate packaging inputs
+        shell: bash
+        env:
+          INPUT_CHANNEL: ${{ inputs.channel }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$INPUT_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::version must be canonical MAJOR.MINOR.PATCH"
+            exit 1
+          fi
+          if [ "$INPUT_CHANNEL" != 'Stable' ] && [ "$INPUT_CHANNEL" != 'PreRelease' ]; then
+            echo "::error::channel must be Stable or PreRelease"
+            exit 1
+          fi
+          template_version=$(jq -r .version extension/templates/package.template.json)
+          if [ "$INPUT_VERSION" != "$template_version" ]; then
+            echo "::error::extension/templates/package.template.json is $template_version but the caller requested $INPUT_VERSION"
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts=false
+
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      - name: Prepare extension resources
+        shell: pwsh
+        run: ./scripts/extension/Prepare-Extension.ps1
+
+      - name: Package extension
+        shell: pwsh
+        env:
+          INPUT_CHANNEL: ${{ inputs.channel }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $Arguments = @{
+            Version = $env:INPUT_VERSION
+          }
+          if ($env:INPUT_CHANNEL -eq 'PreRelease') {
+            $Arguments['PreRelease'] = $true
+          }
+          if (Test-Path './CHANGELOG.md') {
+            $Arguments['ChangelogPath'] = './CHANGELOG.md'
+          }
+          ./scripts/extension/Package-Extension.ps1 @Arguments
+
+      - name: Resolve packaged VSIX
+        id: vsix
+        shell: pwsh
+        env:
+          EXPECTED_NAME: hve-core-${{ inputs.version }}.vsix
+          VSIX_DIRECTORY: ./extension
+        run: |
+          $VsixPath = & ./scripts/extension/Resolve-VsixFile.ps1 -DirectoryPath $env:VSIX_DIRECTORY
+          $VsixName = Split-Path -Path $VsixPath -Leaf
+          if ($VsixName -cne $env:EXPECTED_NAME) {
+            throw "Packaged VSIX $VsixName does not match $env:EXPECTED_NAME"
+          }
+          New-Item -Path './attestation-input' -ItemType Directory -Force | Out-Null
+          "file=$VsixPath" >> $env:GITHUB_OUTPUT
+          "name=$VsixName" >> $env:GITHUB_OUTPUT
+
+      - name: Generate per-VSIX SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          file: ${{ steps.vsix.outputs.file }}
+          format: spdx-json
+          output-file: attestation-input/${{ steps.vsix.outputs.name }}.spdx.json
+          upload-release-assets: false
+          upload-artifact: false
+          config: .syft.yaml
+
+      - name: Generate dependency SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          path: .
+          format: spdx-json
+          output-file: attestation-input/dependencies.spdx.json
+          upload-release-assets: false
+          upload-artifact: false
+          config: .syft.yaml
+
+      - name: Assemble fixed attestation input
+        shell: bash
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
+          SOURCE_SHA: ${{ inputs.source-ref }}
+          VERSION: ${{ inputs.version }}
+          VSIX_FILE: ${{ steps.vsix.outputs.file }}
+          VSIX_NAME: ${{ steps.vsix.outputs.name }}
+        run: |
+          set -euo pipefail
+          SBOM_NAME="$VSIX_NAME.spdx.json"
+          DEPENDENCY_SBOM_NAME='dependencies.spdx.json'
+          mkdir -p attestation-input
+          cp -- "$VSIX_FILE" "attestation-input/$VSIX_NAME"
+          test -f "attestation-input/$SBOM_NAME"
+          test -f "attestation-input/$DEPENDENCY_SBOM_NAME"
+          VSIX_SHA=$(sha256sum "attestation-input/$VSIX_NAME" | cut -d' ' -f1)
+          SBOM_SHA=$(sha256sum "attestation-input/$SBOM_NAME" | cut -d' ' -f1)
+          DEPENDENCY_SBOM_SHA=$(sha256sum "attestation-input/$DEPENDENCY_SBOM_NAME" | cut -d' ' -f1)
+          jq -n \
+            --arg sourceSha "$SOURCE_SHA" --arg releaseTag "$RELEASE_TAG" \
+            --arg channel "$CHANNEL" --arg version "$VERSION" \
+            --arg vsix "$VSIX_NAME" --arg vsixSha "$VSIX_SHA" \
+            --arg sbom "$SBOM_NAME" --arg sbomSha "$SBOM_SHA" \
+            --arg dependencySbom "$DEPENDENCY_SBOM_NAME" --arg dependencySbomSha "$DEPENDENCY_SBOM_SHA" \
+            '{sourceSha:$sourceSha,releaseTag:$releaseTag,channel:$channel,version:$version,files:[{name:$vsix,sha256:$vsixSha},{name:$sbom,sha256:$sbomSha},{name:$dependencySbom,sha256:$dependencySbomSha}]}' \
+            > attestation-input/manifest.json
+
+      - name: Upload fixed attestation input
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: extension-attestation-input
+          path: |
+            attestation-input/manifest.json
+            attestation-input/dependencies.spdx.json
+            attestation-input/${{ steps.vsix.outputs.name }}
+            attestation-input/${{ steps.vsix.outputs.name }}.spdx.json
+          if-no-files-found: error
+          retention-days: 30
+
+  attest:
+    name: Attest hve-core
+    needs: [authorize, package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Derive immutable attestation policy
+        id: policy
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_REF: ${{ github.ref }}
+          EVENT_REF_NAME: ${{ github.ref_name }}
+          EVENT_REF_TYPE: ${{ github.ref_type }}
+          EVENT_SHA: ${{ github.sha }}
+          INPUT_CHANNEL: ${{ inputs.channel }}
+          INPUT_RELEASE_TAG: ${{ inputs.release-tag }}
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" != 'push' ] || [ "$EVENT_REF_TYPE" != 'tag' ] \
+            || [ "$EVENT_REF" != "refs/tags/$EVENT_REF_NAME" ]; then
+            echo '::error::Attestation requires a release-tag push context'
+            exit 1
+          fi
+          if [[ "$EVENT_REF_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            DERIVED_CHANNEL='Stable'
+            DERIVED_VERSION=${BASH_REMATCH[1]}
+          elif [[ "$EVENT_REF_NAME" =~ ^prerelease-v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            DERIVED_CHANNEL='PreRelease'
+            DERIVED_VERSION=${BASH_REMATCH[1]}
+          else
+            echo '::error::Attestation tag does not use the canonical channel grammar'
+            exit 1
+          fi
+          if [[ ! "$EVENT_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$INPUT_SOURCE_REF" != "$EVENT_SHA" ] \
+            || [ "$INPUT_RELEASE_TAG" != "$EVENT_REF_NAME" ] || [ "$INPUT_CHANNEL" != "$DERIVED_CHANNEL" ] \
+            || [ "$INPUT_VERSION" != "$DERIVED_VERSION" ]; then
+            echo '::error::Attestation inputs do not match the immutable release event identity'
+            exit 1
+          fi
+          {
+            echo "source-sha=$EVENT_SHA"
+            echo "release-tag=$EVENT_REF_NAME"
+            echo "channel=$DERIVED_CHANNEL"
+            echo "version=$DERIVED_VERSION"
+            echo "vsix-name=hve-core-$DERIVED_VERSION.vsix"
+            echo "sbom-name=hve-core-$DERIVED_VERSION.vsix.spdx.json"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Download fixed attestation input
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: extension-attestation-input
+          path: ./input
+          digest-mismatch: error
+
+      - name: Validate fixed attestation input
+        shell: bash
+        env:
+          CHANNEL: ${{ steps.policy.outputs.channel }}
+          DEPENDENCY_SBOM_NAME: dependencies.spdx.json
+          RELEASE_TAG: ${{ steps.policy.outputs.release-tag }}
+          SBOM_NAME: ${{ steps.policy.outputs.sbom-name }}
+          SOURCE_SHA: ${{ steps.policy.outputs.source-sha }}
+          VERSION: ${{ steps.policy.outputs.version }}
+          VSIX_NAME: ${{ steps.policy.outputs.vsix-name }}
+        run: |
+          set -euo pipefail
+          if [[ "$VSIX_NAME" == */* || "$VSIX_NAME" == *\\* || "$SBOM_NAME" == */* || "$SBOM_NAME" == *\\* ]]; then
+            echo '::error::Derived artifact names must be basenames'
+            exit 1
+          fi
+          mapfile -t INPUT_FILES < <(find input -mindepth 1 -maxdepth 1 -type f -printf '%f\n' | sort)
+          EXPECTED_FILES=("$DEPENDENCY_SBOM_NAME" "$SBOM_NAME" "$VSIX_NAME" 'manifest.json')
+          mapfile -t EXPECTED_FILES < <(printf '%s\n' "${EXPECTED_FILES[@]}" | sort)
+          if [ "${#INPUT_FILES[@]}" -ne 4 ] || [ "${INPUT_FILES[*]}" != "${EXPECTED_FILES[*]}" ]; then
+            echo '::error::Attestation input does not contain the exact fixed file set'
+            exit 1
+          fi
+          VSIX_SHA=$(sha256sum "input/$VSIX_NAME" | cut -d' ' -f1)
+          SBOM_SHA=$(sha256sum "input/$SBOM_NAME" | cut -d' ' -f1)
+          DEPENDENCY_SBOM_SHA=$(sha256sum "input/$DEPENDENCY_SBOM_NAME" | cut -d' ' -f1)
+          if ! jq -e \
+            --arg sourceSha "$SOURCE_SHA" --arg releaseTag "$RELEASE_TAG" \
+            --arg channel "$CHANNEL" --arg version "$VERSION" \
+            --arg vsix "$VSIX_NAME" --arg vsixSha "$VSIX_SHA" \
+            --arg sbom "$SBOM_NAME" --arg sbomSha "$SBOM_SHA" \
+            --arg dependencySbom "$DEPENDENCY_SBOM_NAME" --arg dependencySbomSha "$DEPENDENCY_SBOM_SHA" '
+              type == "object"
+              and ((keys | sort) == (["channel", "files", "releaseTag", "sourceSha", "version"] | sort))
+              and .sourceSha == $sourceSha and .releaseTag == $releaseTag
+              and .channel == $channel and .version == $version
+              and (.files | type == "array" and length == 3)
+              and ((.files | map(keys | sort) | unique) == [["name", "sha256"]])
+              and ((.files | sort_by(.name)) == ([
+                {name:$vsix,sha256:$vsixSha},
+                {name:$sbom,sha256:$sbomSha},
+                {name:$dependencySbom,sha256:$dependencySbomSha}
+              ] | sort_by(.name)))
+            ' input/manifest.json >/dev/null; then
+            echo '::error::Untrusted package manifest does not match frozen attestation policy and local digests'
+            exit 1
+          fi
+
+      - name: Attest build provenance
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: input/${{ steps.policy.outputs.vsix-name }}
+
+      - name: Attest SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: input/${{ steps.policy.outputs.vsix-name }}
+          sbom-path: input/${{ steps.policy.outputs.sbom-name }}
+
+      - name: Attest dependency SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: input/${{ steps.policy.outputs.vsix-name }}
+          sbom-path: input/dependencies.spdx.json
+
+      - name: Export fixed provenance sidecars
+        shell: bash
+        env:
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+          VSIX_NAME: ${{ steps.policy.outputs.vsix-name }}
+        run: |
+          set -euo pipefail
+          if ! jq -e 'type == "object" and (.dsseEnvelope | type == "object")' "$BUNDLE_PATH" >/dev/null; then
+            echo '::error::Build provenance bundle has no valid DSSE envelope'
+            exit 1
+          fi
+          mkdir -p attested
+          cp -- "input/$VSIX_NAME" "attested/$VSIX_NAME"
+          cp -- "input/$VSIX_NAME.spdx.json" "attested/$VSIX_NAME.spdx.json"
+          cp -- "input/dependencies.spdx.json" "attested/dependencies.spdx.json"
+          cp -- "$BUNDLE_PATH" "attested/$VSIX_NAME.sigstore.json"
+          jq -c '.dsseEnvelope' "$BUNDLE_PATH" > "attested/$VSIX_NAME.intoto.jsonl"
+
+      - name: Upload fixed attested artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: extension-attested
+          path: |
+            attested/dependencies.spdx.json
+            attested/${{ steps.policy.outputs.vsix-name }}
+            attested/${{ steps.policy.outputs.vsix-name }}.spdx.json
+            attested/${{ steps.policy.outputs.vsix-name }}.sigstore.json
+            attested/${{ steps.policy.outputs.vsix-name }}.intoto.jsonl
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload validated dependency SBOM artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom-dependencies
+          path: input/dependencies.spdx.json
+          if-no-files-found: error
+          retention-days: 30

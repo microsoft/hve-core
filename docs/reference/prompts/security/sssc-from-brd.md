@@ -3,7 +3,7 @@ title: Sssc From Brd
 description: Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Start supply chain security planning from BRD artifacts using the SSSC Planner a
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when a confirmed BRD should seed software supply chain security planning. Use capture mode when the business requirements are missing or do not provide enough delivery and dependency context.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide an approved or fictional `project-slug`. The SSSC Planner discovers the BRD, extracts relevant evidence, and asks focused questions for supply-chain gaps without assuming the business document is complete security evidence.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/sssc-from-brd project-slug=sample-api
+```
+
+The prompt initializes a draft supply chain security plan from the BRD or falls back to capture questions.
