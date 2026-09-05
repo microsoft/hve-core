@@ -92,12 +92,12 @@ step 4.
 
 ### Operational Variables
 
-| Variable              | When required | Purpose                                                                                 |
-|-----------------------|---------------|-----------------------------------------------------------------------------------------|
-| `JIRA_AUDIT_LOG`      | Optional      | Path to a JSON Lines audit log. When set, every request is audited (see Audit Logging). |
-| `JIRA_AUDIT_ACTOR`    | Optional      | Overrides the recorded actor identity (for example, a CI service principal).            |
-| `JIRA_DEBUG`          | Optional      | Inherited environment only. Set to `1` to print a redacted traceback on failure. Never disables redaction. |
-| `JIRA_ALLOW_INSECURE` | Optional      | Set to `1` to permit explicit loopback HTTP development endpoints only.                 |
+| Variable              | When required | Purpose                                                                                                       |
+|-----------------------|---------------|---------------------------------------------------------------------------------------------------------------|
+| `JIRA_AUDIT_LOG`      | Optional      | Path to a JSON Lines audit log. When set, every request is audited (see Audit Logging).                       |
+| `JIRA_AUDIT_ACTOR`    | Optional      | Overrides the recorded actor identity (for example, a CI service principal).                                  |
+| `JIRA_DEBUG`          | Optional      | Inherited environment only. Set to `1` to print a redacted traceback on failure. Never disables redaction.    |
+| `JIRA_ALLOW_INSECURE` | Optional      | Set to `1` to permit explicit loopback HTTP development endpoints only.                                       |
 | `JIRA_CONFIRM_WRITES` | Optional      | Inherited environment only. Set to `1` to satisfy the write confirmation gate without `--confirm` or `--yes`. |
 
 ### Audit Logging
