@@ -1,7 +1,7 @@
 ---
 title: Security Plan Drift Comparison Model
 description: Evidence preconditions, exclusion rules, five drift categories, and recommendation-only handoff signals.
-ms.date: 2026-09-03
+ms.date: 2026-09-04
 ms.topic: reference
 ---
 
@@ -36,13 +36,15 @@ An explicit caller scope wins over an overlapping exclusion. Record each overlap
 
 | Category                 | Required plan evidence                                              | Required current-state evidence                                                             | Insufficient-evidence condition                                                       |
 |--------------------------|---------------------------------------------------------------------|---------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
-| Validated controls       | Control or mitigation bound to a bucket or threat identity          | Repository-derived `PASS`, or an explicit implementation citation at a covered location     | Evidence is plan-mode, diff-scoped, code-review scoped, or outside the scanned scope  |
+| Validated controls       | Control or mitigation bound to a bucket or threat identity          | Repository-derived `PASS`, or an explicit implementation citation at a covered location     | Evidence is plan-mode, diff-scoped, code-review scoped, outside the scanned scope, or has no covered location |
 | Control drift            | Expected control with a plan reference                              | `FAIL` or `PARTIAL` at a location mapped to the control or component                        | Neither side has a resolvable component or location                                   |
 | Residual planned risk    | Threat identity recorded as open, accepted, or deferred             | Matching current finding or observed absence of remediation                                 | Threat facts are unresolved                                                           |
 | Newly introduced threats | Extractable plan threats, controls, buckets, and backlog identities | Current finding with no matching plan identity                                              | Relevant plan facts are unresolved, so absent and unextracted cannot be distinguished |
-| Obsolete plan items      | Plan item naming a component, path, or standard                     | Current evidence covering the location and showing the item is gone or no longer applicable | Current evidence never covered the referenced location                                |
+| Obsolete plan items      | Plan item naming a component, path, or standard                     | Current evidence covering the location and showing the item is gone or no longer applicable | Current evidence never covered the referenced location or supplies no location         |
 
 Render every suppressed category as `Insufficient evidence: <reason>`. Do not silently omit it and do not count it as zero findings.
+
+Conformant VULN_REPORT_V1 Form A evidence omits Location on `PASS` rows. With Form A alone, render validated controls and obsolete plan items as insufficient evidence rather than inferring locations. Control drift, residual planned risks, and newly introduced threats remain eligible when their `FAIL` or `PARTIAL` records satisfy the table above. Direct Form B evidence with explicit covered locations remains eligible for all five categories.
 
 ## Matching order
 

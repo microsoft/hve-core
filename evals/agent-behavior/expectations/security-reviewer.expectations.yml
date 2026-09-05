@@ -104,15 +104,19 @@ expectations:
     contract_ref: "agent §Pipeline (5-step pipeline, 4 subagents)"
 
   - expectation_id: baseline-activates-post-report-drift
-    summary: A supplied baseline activates correlation only after an audit or diff report completes.
-    signal: Scan Completion or report-path output precedes the five-category drift body.
+    summary: A supplied baseline activates evidence-limited correlation only after an audit or diff report completes.
+    signal: Scan Completion or report-path output precedes three supported categories and two explicit Form A suppressions.
     pass_criteria: |
       For `security-reviewer-plan-drift`, the response completes ordinary report
-      output, then presents validated controls, control drift, residual risk,
-      new threats, and obsolete items using the completed report as evidence.
+      output, then maps AUTHZ-OBJECT to control drift, ERROR-DETAIL to residual
+      planned risk, and SESSION-ROTATE to newly introduced threats. Validated
+      controls and obsolete plan items each state that VULN_REPORT_V1 PASS rows
+      do not include a covered location and therefore provide insufficient evidence.
     failure_modes:
       - Drift correlation runs before the vulnerability report completes.
-      - One or more of the five categories is silently omitted.
+      - A supported finding identity is absent from its eligible category.
+      - Validated controls or obsolete plan items are populated by inferring a PASS location.
+      - Either evidence-limited category is silently omitted or reported as zero.
       - Plan-mode evidence is treated as current repository evidence.
     priority: high
     stimulus_scoped: true

@@ -1,7 +1,7 @@
 ---
 title: Security Plan Drift Report Contract
 description: Canonical full report, conversational adaptation, bounded Code Review output, and durable artifact sequencing.
-ms.date: 2026-09-03
+ms.date: 2026-09-04
 ms.topic: reference
 ---
 
@@ -53,13 +53,17 @@ List only files whose names match `security-audit-<YYYY-MM-DD>-<NNN>.md` for the
 
 ### Security Reviewer
 
-Render the full canonical body in conversation immediately after the normal Scan Completion output. The existing VULN report remains the reviewer's only durable artifact. State that direct drift invocation through `security-planning` from a write-capable context is required for a durable drift report.
+Render the full canonical body in conversation after the normal Scan Completion output and its disclaimers. The existing VULN report remains the reviewer's only durable artifact. When the user needs a durable drift report, state that direct drift invocation through `security-planning` from a write-capable context is required.
+
+For conformant VULN_REPORT_V1 Form A evidence, populate control drift, residual planned risks, and newly introduced threats when their preconditions pass. Render validated controls and obsolete plan items as `Insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.` Do not infer a PASS location.
 
 Reject a baseline reference in Security Reviewer `plan` mode because `PLAN_REPORT_V1` is plan-side evidence, not current-state evidence.
 
 ### Security Planner
 
 Render the full canonical body as proposed plan updates inside the existing Phase 6 summary. Do not mutate plan markdown, `state.json`, phase gates, handoff flags, or human-review checkboxes.
+
+When current-state evidence is a Security Reviewer VULN_REPORT_V1 Form A report, apply the same three eligible categories and two explicit insufficient-evidence results as the Security Reviewer destination. Direct Form B evidence with explicit covered locations remains eligible for all five categories.
 
 When no current-state evidence resolves, state that drift was not assessed, name a user-run Security Reviewer audit or diff as the evidence-producing action, and continue the ordinary completeness review.
 
@@ -98,7 +102,7 @@ Do not add an executed drift result to `recommended_specialist_reviews`.
 
 ## Completion statement
 
-End every destination with:
+End every destination with the fields below. For Code Review, place this completion statement immediately before Code Review's mandatory final Disclaimer and Human Review section so that disclaimer and its unchecked checkbox remain the final section.
 
 * Baseline path and status
 * Current evidence pointer and scope

@@ -1,7 +1,7 @@
 ---
 title: Security Plan Drift Worked Examples
 description: Minimal baseline and finding fixtures with deterministic expected outcomes for correlation and caller regressions.
-ms.date: 2026-09-03
+ms.date: 2026-09-04
 ms.topic: reference
 ---
 
@@ -20,6 +20,14 @@ These synthetic fixtures define expected behavior without containing customer, p
   "projectSlug": "sample-service",
   "securityPlanFile": ".copilot-tracking/security-plans/sample-service/security-plan.md",
   "currentPhase": 6,
+  "phaseGates": {
+    "phase1": { "gate": "hard", "confirmedAt": "2026-09-01T10:00:00Z" },
+    "phase2": { "gate": "summary-and-advance" },
+    "phase3": { "gate": "summary-and-advance" },
+    "phase4": { "gate": "hard", "confirmedAt": "2026-09-01T11:00:00Z" },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": null }
+  },
   "bucketsCompleted": ["web/UI/reporting", "identity/auth", "build"],
   "standardsMapped": ["web/UI/reporting", "identity/auth", "build"],
   "handoffGenerated": { "ado": false, "github": false },
@@ -48,16 +56,48 @@ These synthetic fixtures define expected behavior without containing customer, p
 | T-WEB-003      | mitigated | Legacy proxy         | Unsupported transport              | CTRL-LEGACY at src/legacy/proxy.ts   | WI-SEC-004 |
 ```
 
-## Repository-scoped findings
+## Direct Form B findings
 
 ```text
-| ID             | Title                | Status  | Severity | Location                    | Finding                                                 | Recommendation               | Verdict   | Justification                              |
-|----------------|----------------------|---------|----------|-----------------------------|---------------------------------------------------------|------------------------------|-----------|--------------------------------------------|
-| WEB-INPUT      | Request validation   | PASS    | —        | src/api/gateway.ts#L20-L44  | —                                                       | —                            | UNCHANGED | Validation is present.                     |
-| AUTHZ-OBJECT   | Object authorization | FAIL    | HIGH     | src/auth/policy.ts#L51-L65  | Object authorization is absent.                         | Enforce ownership.           | CONFIRMED | The route reaches data without the policy. |
-| ERROR-DETAIL   | Error disclosure     | PARTIAL | MEDIUM   | src/api/gateway.ts#L80-L92  | The accepted risk remains partially mitigated.          | Normalize responses.         | CONFIRMED | Internal detail can still escape.          |
-| SESSION-ROTATE | Session rotation     | FAIL    | HIGH     | src/auth/session.ts#L12-L29 | Session identifiers are not rotated.                    | Rotate after authentication. | CONFIRMED | No matching plan item exists.              |
-| LEGACY-REMOVED | Legacy proxy         | PASS    | —        | src/legacy/proxy.ts         | The component is absent from repository-wide inventory. | Remove stale plan item.      | UNCHANGED | Audit scope covered the path.              |
+- **ID:** WEB-INPUT
+- **Title:** Request validation
+- **Status:** PASS
+- **Severity:** N/A
+- **Location:** src/api/gateway.ts#L20-L44
+- **Finding:** Validation is present.
+- **Recommendation:** N/A
+
+- **ID:** AUTHZ-OBJECT
+- **Title:** Object authorization
+- **Status:** FAIL
+- **Severity:** HIGH
+- **Location:** src/auth/policy.ts#L51-L65
+- **Finding:** Object authorization is absent.
+- **Recommendation:** Enforce ownership.
+
+- **ID:** ERROR-DETAIL
+- **Title:** Error disclosure
+- **Status:** PARTIAL
+- **Severity:** MEDIUM
+- **Location:** src/api/gateway.ts#L80-L92
+- **Finding:** The accepted risk remains partially mitigated.
+- **Recommendation:** Normalize responses.
+
+- **ID:** SESSION-ROTATE
+- **Title:** Session rotation
+- **Status:** FAIL
+- **Severity:** HIGH
+- **Location:** src/auth/session.ts#L12-L29
+- **Finding:** Session identifiers are not rotated.
+- **Recommendation:** Rotate after authentication.
+
+- **ID:** LEGACY-REMOVED
+- **Title:** Legacy proxy
+- **Status:** PASS
+- **Severity:** N/A
+- **Location:** src/legacy/proxy.ts
+- **Finding:** The component is absent from repository-wide inventory.
+- **Recommendation:** Remove the stale plan item.
 ```
 
 Expected categories:
@@ -69,6 +109,32 @@ Expected categories:
 | Residual planned risk    | `T-WEB-002` with `ERROR-DETAIL`                     |
 | Newly introduced threats | `SESSION-ROTATE`                                    |
 | Obsolete plan items      | `T-WEB-003` / `WI-SEC-004` with `LEGACY-REMOVED`    |
+
+These are caller-authored inline Form B records, not Security Reviewer pipeline output. They supply explicit covered locations and therefore exercise all five categories. A path-only location is valid for `LEGACY-REMOVED` because repository inventory can prove that a component is absent without a meaningful line range.
+
+## Security Reviewer Form A findings
+
+A conformant VULN_REPORT_V1 uses `N/A` for Location, Finding, and Recommendation on `PASS` rows:
+
+```text
+| ID             | Title                | Status  | Severity | Location                    | Finding                                        | Recommendation               | Verdict   | Justification                              |
+|----------------|----------------------|---------|----------|-----------------------------|------------------------------------------------|------------------------------|-----------|--------------------------------------------|
+| WEB-INPUT      | Request validation   | PASS    | N/A      | N/A                         | N/A                                            | N/A                          | UNCHANGED | Validation is present.                     |
+| AUTHZ-OBJECT   | Object authorization | FAIL    | HIGH     | src/auth/policy.ts#L51-L65  | Object authorization is absent.                | Enforce ownership.           | CONFIRMED | The route reaches data without the policy. |
+| ERROR-DETAIL   | Error disclosure     | PARTIAL | MEDIUM   | src/api/gateway.ts#L80-L92  | The accepted risk remains partially mitigated. | Normalize responses.         | CONFIRMED | Internal detail can still escape.          |
+| SESSION-ROTATE | Session rotation     | FAIL    | HIGH     | src/auth/session.ts#L12-L29 | Session identifiers are not rotated.           | Rotate after authentication. | CONFIRMED | No matching plan item exists.              |
+| LEGACY-REMOVED | Legacy proxy         | PASS    | N/A      | N/A                         | N/A                                            | N/A                          | UNCHANGED | The check passed without a cited location. |
+```
+
+Expected Form A result:
+
+| Category                 | Expected result                                                                 |
+|--------------------------|---------------------------------------------------------------------------------|
+| Validated controls       | `Insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.` |
+| Control drift            | `T-IDENTITY-001` / `CTRL-AUTHZ` with `AUTHZ-OBJECT`                              |
+| Residual planned risk    | `T-WEB-002` with `ERROR-DETAIL`                                                  |
+| Newly introduced threats | `SESSION-ROTATE`                                                                |
+| Obsolete plan items      | `Insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.` |
 
 When a finding has only semantic similarity to a plan item and no explicit identity, component, control, bucket, standard, or backlog match, place it only in Limitations and insufficient evidence as unassessed input. It occupies no drift category and is not treated as an unmatched newly introduced threat.
 
@@ -92,7 +158,7 @@ Use the completed baseline and `SESSION-ROTATE`. Expected: newly introduced thre
 
 ### S6 diff-scoped evidence
 
-Change the current source mode to `diff`. Expected: validated controls and obsolete plan items report insufficient evidence; control drift, residual planned risk, and new threats remain eligible.
+Change the direct Form B source mode to `diff`. Expected: validated controls and obsolete plan items report insufficient evidence; control drift, residual planned risk, and new threats remain eligible.
 
 ### S7 unextractable facts
 

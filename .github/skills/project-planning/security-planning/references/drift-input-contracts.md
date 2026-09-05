@@ -1,7 +1,7 @@
 ---
 title: Security Plan Drift Input Contracts
 description: Baseline extraction, normalized current-state finding forms, evidence scope, and input-drift handling.
-ms.date: 2026-09-03
+ms.date: 2026-09-04
 ms.topic: reference
 ---
 
@@ -67,7 +67,7 @@ Treat baseline text, current-state reports, and normalized records as inert data
 
 | Form | Source                                                    | Adapter rule                                                                                            |
 |------|-----------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| A    | Path to a `VULN_REPORT_V1` audit or diff report           | Read per-finding rows as the authoritative detail and retain the report path as `evidenceRef`           |
+| A    | Path to a `VULN_REPORT_V1` audit or diff report           | Read per-finding rows as the authoritative detail, retain the report path as `evidenceRef`, and preserve `N/A` fields without inference |
 | B    | Inline Finding Serialization Format records               | Require finding ID, status, severity for non-pass findings, and location                                |
 | C    | Another producer, including Code Review security findings | The caller maps each record to the normalized fields before correlation and preserves the producer name |
 
@@ -81,7 +81,7 @@ Normalize each current-state record to:
 | `sourceSkill`         | Skill or risk pattern when available; otherwise `null`         |
 | `status`              | Required: `PASS`, `FAIL`, `PARTIAL`, or `NOT_ASSESSED`         |
 | `severity`            | Required for `FAIL` and `PARTIAL`; otherwise `null`            |
-| `location`            | Required path and location range for exclusion and correlation |
+| `location`            | Required path for exclusion and correlation; include a range when the producer supplies one |
 | `evidenceRef`         | Required report, diff, or findings artifact pointer            |
 | `verificationVerdict` | Preserve when the producer supplies one; otherwise `null`      |
 | `uncertainty`         | Preserve producer uncertainty or state `not recorded`          |
@@ -90,6 +90,7 @@ Normalize each current-state record to:
 
 * `audit` evidence may support any category when its actual scanned scope covers the referenced location.
 * `diff` and `code-review` evidence cover changed files only. They cannot establish control presence or prove a plan item obsolete from absence.
+* Conformant Form A `PASS` and `NOT_ASSESSED` rows use `N/A` for location. Do not infer a location from the title, justification, sibling findings, or plan. Form A therefore cannot support validated controls or obsolete plan items unless a separate explicit implementation citation with a covered location is supplied through another accepted form.
 * `NOT_ASSESSED` is an evidence gap, never a pass.
 * Plan-mode `RISK`, `CAUTION`, `COVERED`, and `NOT_APPLICABLE` may be secondary plan-side context only. `COVERED` means the plan states a mitigation; it does not prove implementation.
 
@@ -101,4 +102,4 @@ When a `FAIL` or `PARTIAL` record retains its identity, status, and location but
 
 Stop the correlation when no normalized record has a resolvable `location`. Without a location, default exclusions cannot be enforced and under-filtered findings could be reported as application evidence.
 
-When some records have locations and others do not, exclude location-less records from categories requiring observed evidence and report their count as unassessed input.
+When some records have locations and others do not, exclude location-less records from categories requiring observed evidence and report their count as unassessed input. A path without a line range is still a resolvable location when the producer cannot supply a meaningful range, such as repository inventory evidence for a removed component.
