@@ -27,25 +27,58 @@ Describe 'Get-StimulusBacklink' -Tag 'Unit' {
     }
 
     It 'Extracts a prompt backlink from tags.prompt' {
-        $stim = @{ name = 'p1'; tags = @{ prompt = 'task-plan'; advisory = $true } }
+        $stim = @{ name = 'p1'; tags = @{ prompt = 'sample-prompt'; advisory = $true } }
         $links = Get-StimulusBacklink -Stimulus $stim
         $links.Count | Should -Be 1
         $links[0].kind | Should -Be 'prompt'
-        $links[0].slug | Should -Be 'task-plan'
+        $links[0].slug | Should -Be 'sample-prompt'
     }
 
     It 'Extracts multiple backlinks when several supported kinds are present' {
-        $stim = @{ tags = @{ skill = 'pr-reference'; agent = 'task-planner'; prompt = 'task-plan'; instruction = 'csharp' } }
+        $stim = @{ tags = @{ skill = 'pr-reference'; agent = 'sample-agent'; prompt = 'sample-prompt'; instruction = 'csharp' } }
         $links = Get-StimulusBacklink -Stimulus $stim
         $links.Count | Should -Be 4
         ($links | ForEach-Object { $_.kind }) | Sort-Object | Should -Be @('agent', 'instruction', 'prompt', 'skill')
     }
 
     It 'Trims whitespace from slugs and ignores empty slugs' {
-        $stim = @{ tags = @{ prompt = '  task-plan  '; agent = '' } }
+        $stim = @{ tags = @{ prompt = '  sample-prompt  '; agent = '' } }
         $links = Get-StimulusBacklink -Stimulus $stim
         $links.Count | Should -Be 1
-        $links[0].slug | Should -Be 'task-plan'
+        $links[0].slug | Should -Be 'sample-prompt'
+    }
+
+    It 'Expands a YAML list tag into one record per slug' {
+        # A parsed YAML list cast with [string] joins its elements with a space, which
+        # produced the compound slug 'code-review rpi-agent'. That value reached agent
+        # arguments and output paths, so a real stimulus resolved to a nonexistent agent.
+        $stim = @{ tags = @{ agent = @('code-review', 'rpi-agent') } }
+        $links = Get-StimulusBacklink -Stimulus $stim
+        $links.Count | Should -Be 2
+        ($links | ForEach-Object { $_.slug }) | Sort-Object | Should -Be @('code-review', 'rpi-agent')
+        foreach ($link in $links) { $link.slug | Should -Not -Match '\s' }
+    }
+
+    It 'Treats a single-element list like a scalar' {
+        $stim = @{ tags = @{ agent = @('rpi-agent') } }
+        $links = Get-StimulusBacklink -Stimulus $stim
+        $links.Count | Should -Be 1
+        $links[0].slug | Should -Be 'rpi-agent'
+    }
+
+    It 'Trims and drops empty entries within a list tag' {
+        $stim = @{ tags = @{ agent = @('  rpi-agent  ', '', '   ') } }
+        $links = Get-StimulusBacklink -Stimulus $stim
+        $links.Count | Should -Be 1
+        $links[0].slug | Should -Be 'rpi-agent'
+    }
+
+    It 'Expands the largest corpus backlink list without producing a compound slug' {
+        # The largest real tag in the baseline-equivalence corpus.
+        $stim = @{ tags = @{ agent = @('backlog-manager', 'brd-builder', 'issue-triage', 'prd-builder', 'rpi-agent') } }
+        $links = Get-StimulusBacklink -Stimulus $stim
+        $links.Count | Should -Be 5
+        ($links | Where-Object { $_.slug -match '\s' }) | Should -BeNullOrEmpty
     }
 }
 
@@ -64,7 +97,7 @@ Describe 'New-StimulusIndex' -Tag 'Unit' {
         $promptKeys = $index.coverage.Keys | Where-Object { $_ -like 'prompt:*' }
         $promptKeys.Count | Should -BeGreaterOrEqual 10
 
-        $key = 'prompt:task-plan'
+        $key = 'prompt:rpi'
         $index.coverage.ContainsKey($key) | Should -BeTrue
         $index.coverage[$key] -join ';' | Should -Match 'behavior-conformance/prompts\.eval\.yaml'
     }
@@ -75,7 +108,7 @@ Describe 'New-StimulusIndex' -Tag 'Unit' {
         $instructionKeys = $index.coverage.Keys | Where-Object { $_ -like 'instruction:*' }
         $instructionKeys.Count | Should -BeGreaterOrEqual 30
 
-        $key = 'instruction:ado-backlog-sprint'
+        $key = 'instruction:commit-message'
         $index.coverage.ContainsKey($key) | Should -BeTrue
         $index.coverage[$key] -join ';' | Should -Match 'behavior-conformance/instructions\.eval\.yaml'
     }
@@ -112,13 +145,13 @@ Describe 'Test-StimulusCoverage' -Tag 'Unit' {
     }
 
     It 'Returns covering spec paths for a known prompt backlink' {
-        $paths = Test-StimulusCoverage -Index $script:Index -Kind 'prompt' -ArtifactId 'task-plan'
+        $paths = Test-StimulusCoverage -Index $script:Index -Kind 'prompt' -ArtifactId 'rpi'
         $paths.Count | Should -BeGreaterOrEqual 1
         ($paths -join ';') | Should -Match 'behavior-conformance/prompts\.eval\.yaml'
     }
 
     It 'Returns covering spec paths for a known instruction backlink' {
-        $paths = Test-StimulusCoverage -Index $script:Index -Kind 'instruction' -ArtifactId 'ado-backlog-sprint'
+        $paths = Test-StimulusCoverage -Index $script:Index -Kind 'instruction' -ArtifactId 'commit-message'
         $paths.Count | Should -BeGreaterOrEqual 1
         ($paths -join ';') | Should -Match 'behavior-conformance/instructions\.eval\.yaml'
     }

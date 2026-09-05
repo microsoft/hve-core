@@ -104,6 +104,31 @@ function Get-ModelReferences {
     return @($modelValue.ToString())
 }
 
+function Test-ModelValueIsArray {
+    <#
+    .SYNOPSIS
+    Determines whether a frontmatter model value is an array rather than a scalar string.
+
+    .PARAMETER Frontmatter
+    Parsed frontmatter hashtable.
+
+    .OUTPUTS
+    [bool] $true when the model property is declared as an array.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Frontmatter
+    )
+
+    $modelValue = $Frontmatter['model']
+    if ($null -eq $modelValue) {
+        return $false
+    }
+
+    return ($modelValue -is [System.Collections.IEnumerable] -and $modelValue -isnot [string])
+}
+
 #endregion Functions
 
 #region Main
@@ -150,10 +175,13 @@ function Invoke-ModelReferenceValidation {
         if ($m.provider) { $providerLookup[$m.name] = $m.provider }
     }
 
-    # Find all agent and prompt files
+    # Find all agent and prompt files. A skill may vendor its own runtime
+    # dependencies, and those packages can ship their own agent and prompt files;
+    # those belong to the dependency rather than to this repository.
     $agentFiles = Get-ChildItem -Path $ScanPath -Recurse -Filter '*.agent.md' -ErrorAction SilentlyContinue
     $promptFiles = Get-ChildItem -Path $ScanPath -Recurse -Filter '*.prompt.md' -ErrorAction SilentlyContinue
-    $allFiles = @($agentFiles) + @($promptFiles) | Where-Object { $null -ne $_ }
+    $allFiles = @($agentFiles) + @($promptFiles) |
+        Where-Object { $null -ne $_ -and $_.FullName -notmatch '[\\/](node_modules|\.venv)[\\/]' }
 
     $results = @()
     $warnings = @()
@@ -173,8 +201,9 @@ function Invoke-ModelReferenceValidation {
             continue
         }
 
+        $isArrayModelOnAgent = $file.Name -like '*.agent.md' -and (Test-ModelValueIsArray -Frontmatter $frontmatter)
         $models = Get-ModelReferences -Frontmatter $frontmatter
-        if ($models.Count -eq 0) {
+        if ($models.Count -eq 0 -and -not $isArrayModelOnAgent) {
             continue
         }
 
@@ -182,11 +211,29 @@ function Invoke-ModelReferenceValidation {
         $fileStatus = 'valid'
         $fileModels = @()
 
+        if ($isArrayModelOnAgent) {
+            $fileStatus = 'invalid'
+            $errors += @{
+                file    = $relativePath
+                model   = if ($models.Count -gt 0) { $models -join ', ' } else { '[]' }
+                message = 'Array-form model is not supported for agent files; the Copilot CLI requires a single scalar string'
+            }
+            if ($models.Count -eq 0) {
+                # Empty array-form model (`model: []`) has no per-model entries to loop over below,
+                # so count it here to keep totals consistent with the reported error.
+                $totalReferences++
+                $invalidReferences++
+            }
+        }
+
         foreach ($modelName in $models) {
             $totalReferences++
             $fileModels += $modelName
 
-            if ($modelName -notin $validModelNames) {
+            if ($isArrayModelOnAgent) {
+                $invalidReferences++
+            }
+            elseif ($modelName -notin $validModelNames) {
                 $invalidReferences++
                 $fileStatus = 'invalid'
                 $errors += @{

@@ -1,8 +1,14 @@
 ---
 title: BRD Quality Reviewer
 description: Read-only BRD quality reviewer that emits both BRD_STANDARD_FINDINGS_V1 and BRD_QUALITY_REPORT_V1 payloads
-sidebar_position: 1
-ms.date: 2026-07-05
+sidebar_position: 2
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - project-planning
+  - brd-quality-reviewer
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

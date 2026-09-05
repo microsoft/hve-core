@@ -12,7 +12,7 @@
 #Requires -Version 7.4
 
 Import-Module PowerShell-Yaml -ErrorAction Stop
-Import-Module (Join-Path $PSScriptRoot '../../collections/Modules/CollectionHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/ArtifactHelpers.psm1') -Force
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -262,7 +262,7 @@ function Get-AssetDocsPath {
         Maps a repo-relative .github/<kind>/... asset path to its deterministic
         docs/reference/<kind>/... documentation page path. The intermediate
         directory structure is preserved so nested assets such as agent subagents
-        (.github/agents/<collection>/subagents/<name>.agent.md) and nested
+        (.github/agents/<package>/subagents/<name>.agent.md) and nested
         instructions retain their hierarchy under docs/reference/. File-based kinds
         (agent, prompt, instruction) have their suffix replaced with .md; skills are
         directory-based, so .md is appended to the skill directory name.
@@ -314,6 +314,64 @@ function Get-AssetDocsPath {
 # Invocation and Interactivity Classification
 # ---------------------------------------------------------------------------
 
+function Resolve-FrontmatterFlag {
+    <#
+    .SYNOPSIS
+        Reads a boolean frontmatter field with an explicit default.
+
+    .DESCRIPTION
+        Frontmatter is author-written, so a flag arrives as a real boolean from the
+        YAML parser, as a quoted string, or not at all. Naive truthiness reads the
+        quoted string "false" as true, failing in the permissive direction, and
+        treats an absent key as false even where the schema declares a default of
+        true. This resolver handles each case explicitly rather than guessing.
+
+    .PARAMETER Frontmatter
+        Parsed frontmatter hashtable from Get-AssetFrontmatter.
+
+    .PARAMETER Key
+        Frontmatter field name to read.
+
+    .PARAMETER Default
+        Value returned when the key is absent or null, matching the field's
+        declared schema default.
+
+    .OUTPUTS
+        [bool] The resolved flag value.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowNull()]
+        [hashtable]$Frontmatter,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Key,
+
+        [Parameter(Mandatory = $true)]
+        [bool]$Default
+    )
+
+    if ($null -eq $Frontmatter -or -not $Frontmatter.ContainsKey($Key)) {
+        return $Default
+    }
+
+    $value = $Frontmatter[$Key]
+    if ($null -eq $value) {
+        return $Default
+    }
+    if ($value -is [bool]) {
+        return $value
+    }
+    if ($value -is [string]) {
+        return [string]::Equals($value.Trim(), 'true', [System.StringComparison]::OrdinalIgnoreCase)
+    }
+
+    return $false
+}
+
 function Get-AssetInvocation {
     <#
     .SYNOPSIS
@@ -324,7 +382,9 @@ function Get-AssetInvocation {
         documentation generation can render consistent "how to invoke" guidance.
         Agents surface in the chat agent picker under their display name; prompts run
         as slash commands; instructions apply automatically to files matching their
-        applyTo glob; skills load on demand when a referencing agent needs them.
+        applyTo glob. Skills are classified from their own frontmatter: a skill that
+        is user-invocable is reachable as a slash command, and one that also sets
+        disable-model-invocation is reachable that way only.
 
     .PARAMETER Kind
         The artifact kind (agent, prompt, instruction, skill).
@@ -338,8 +398,9 @@ function Get-AssetInvocation {
 
     .PARAMETER Path
         Optional repo-relative source path. When an agent's path lies under a
-        subagents directory the invocation is classified as a delegated subagent
-        rather than a chat-picker agent.
+        subagents directory the invocation is classified as a delegated subagent.
+        An agent that explicitly sets user-invocable to false elsewhere is
+        classified as a background agent rather than a chat-picker agent.
 
     .OUTPUTS
         [hashtable] With Mechanism and Token keys.
@@ -373,6 +434,10 @@ function Get-AssetInvocation {
             if ($Path -match '(?:^|[\\/])subagents[\\/]') {
                 return @{ Mechanism = 'subagent-delegated'; Token = $displayName }
             }
+            if ($Frontmatter.ContainsKey('user-invocable') -and
+                [string]$Frontmatter['user-invocable'] -ieq 'false') {
+                return @{ Mechanism = 'background-agent'; Token = $displayName }
+            }
             return @{ Mechanism = 'agent-picker'; Token = $displayName }
         }
         'prompt' {
@@ -388,7 +453,15 @@ function Get-AssetInvocation {
             return @{ Mechanism = 'auto-applied'; Token = $applyTo }
         }
         'skill' {
-            return @{ Mechanism = 'skill-load'; Token = $Name }
+            # user-invocable declares a default of true in skill-frontmatter.schema.json.
+            $userInvocable = Resolve-FrontmatterFlag -Frontmatter $Frontmatter -Key 'user-invocable' -Default $true
+            if (-not $userInvocable) {
+                return @{ Mechanism = 'skill-load'; Token = $Name }
+            }
+
+            $modelDisabled = Resolve-FrontmatterFlag -Frontmatter $Frontmatter -Key 'disable-model-invocation' -Default $false
+            $mechanism = if ($modelDisabled) { 'skill-user-only' } else { 'skill-user-and-load' }
+            return @{ Mechanism = $mechanism; Token = "/$Name" }
         }
         default {
             throw "Get-AssetInvocation: unrecognized kind '$Kind'."
@@ -404,10 +477,11 @@ function Test-AssetInteractive {
     .DESCRIPTION
         Classifies whether an asset has an interactive usage flow so documentation
         generation can decide whether to include a "How to use" section. Agents are
-        conversational and always interactive. Prompts are interactive when they
-        declare inputs (argument-hint) or launch an agent (agent field). Instructions
-        and skills are passive: instructions apply automatically and skills load in
-        the background, so neither is interactive.
+        conversational when user-invocable. Delegated agents and agents that
+        explicitly set user-invocable to false are non-interactive. Prompts are
+        interactive when they declare inputs (argument-hint) or launch an agent
+        (agent field). Instructions and skills are passive: instructions apply
+        automatically and skills load in the background, so neither is interactive.
 
     .PARAMETER Kind
         The artifact kind (agent, prompt, instruction, skill).
@@ -442,6 +516,10 @@ function Test-AssetInteractive {
             if ($Path -match '(?:^|[\\/])subagents[\\/]') {
                 return $false
             }
+            if ($Frontmatter.ContainsKey('user-invocable') -and
+                [string]$Frontmatter['user-invocable'] -ieq 'false') {
+                return $false
+            }
             return $true
         }
         'prompt' {
@@ -453,6 +531,125 @@ function Test-AssetInteractive {
             return $false
         }
     }
+}
+
+function Get-AssetDocSectionContract {
+    <#
+    .SYNOPSIS
+        Returns the ordered asset-documentation section contract.
+
+    .DESCRIPTION
+        Defines section identity, heading order, content source, and per-kind
+        status rules in one shared list. A rule may be a direct status or an
+        interactive/non-interactive status map. Call Resolve-AssetDocSectionStatus
+        to obtain the canonical Required, Optional, or NotApplicable result.
+
+    .OUTPUTS
+        [PSCustomObject[]] Ordered section contract entries.
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject[]])]
+    param()
+
+    return @(
+        [PSCustomObject]@{
+            Name            = 'what-it-does'
+            Heading         = '## What it does'
+            GeneratedRegion = 'overview'
+            TemplateRegion  = $null
+            Requirements    = [ordered]@{
+                agent       = 'Required'
+                prompt      = 'Required'
+                instruction = 'Required'
+                skill       = 'Required'
+            }
+        }
+        [PSCustomObject]@{
+            Name            = 'when-to-use-it'
+            Heading         = '## When to use it'
+            GeneratedRegion = $null
+            TemplateRegion  = 'when-to-use-it'
+            Requirements    = [ordered]@{
+                agent       = 'Required'
+                prompt      = 'Required'
+                instruction = 'Required'
+                skill       = 'Required'
+            }
+        }
+        [PSCustomObject]@{
+            Name            = 'how-to-use-it'
+            Heading         = '## How to use it'
+            GeneratedRegion = $null
+            TemplateRegion  = 'how-to-use-it'
+            Requirements    = [ordered]@{
+                agent       = [ordered]@{ Interactive = 'Required'; NonInteractive = 'NotApplicable' }
+                prompt      = [ordered]@{ Interactive = 'Required'; NonInteractive = 'NotApplicable' }
+                instruction = 'NotApplicable'
+                skill       = 'NotApplicable'
+            }
+        }
+        [PSCustomObject]@{
+            Name            = 'example-usage'
+            Heading         = '## Example usage'
+            GeneratedRegion = $null
+            TemplateRegion  = 'example-usage'
+            Requirements    = [ordered]@{
+                agent       = 'Required'
+                prompt      = 'Required'
+                # Optional: scaffolded for instruction pages but not enforced,
+                # because an always-on instruction has no invocation to show.
+                instruction = 'Optional'
+                skill       = 'Required'
+            }
+        }
+    )
+}
+
+function Resolve-AssetDocSectionStatus {
+    <#
+    .SYNOPSIS
+        Resolves a section contract entry for an asset model.
+
+    .PARAMETER Section
+        Entry returned by Get-AssetDocSectionContract.
+
+    .PARAMETER Kind
+        Asset kind used to select the per-kind rule.
+
+    .PARAMETER Interactive
+        Whether the asset has an interactive usage flow.
+
+    .OUTPUTS
+        [string] Required, Optional, or NotApplicable.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][PSCustomObject]$Section,
+        [Parameter(Mandatory = $true)][ValidateSet('agent', 'prompt', 'instruction', 'skill')][string]$Kind,
+        [Parameter(Mandatory = $true)][bool]$Interactive
+    )
+
+    if ($null -eq $Section.PSObject.Properties['Requirements']) {
+        throw "Section '$($Section.Name)' does not define Requirements."
+    }
+
+    $rule = $Section.Requirements[$Kind]
+    if ($null -eq $rule) {
+        throw "Section '$($Section.Name)' does not define a requirement for kind '$Kind'."
+    }
+
+    if ($rule -is [System.Collections.IDictionary]) {
+        $interactionKey = if ($Interactive) { 'Interactive' } else { 'NonInteractive' }
+        $rule = $rule[$interactionKey]
+    }
+
+    $status = [string]$rule
+    if ($status -notin @('Required', 'Optional', 'NotApplicable')) {
+        throw "Section '$($Section.Name)' resolves to unsupported status '$status'."
+    }
+
+    return $status
 }
 
 function Format-AssetInvocation {
@@ -482,8 +679,11 @@ function Format-AssetInvocation {
             if ([string]::IsNullOrWhiteSpace($token)) { return 'Applied automatically' }
             return "Applied automatically to $tick$token$tick"
         }
+        'skill-user-only' { return "Invoked directly as $tick$token$tick; model invocation is disabled, so agents do not load it" }
+        'skill-user-and-load' { return "Invoked directly as $tick$token$tick, or loaded on demand by referencing agents" }
         'skill-load' { return 'Loaded on demand by referencing agents' }
         'subagent-delegated' { return 'Delegated subagent, dispatched by a parent agent (not selected directly)' }
+        'background-agent' { return "Background agent $tick$token$tick, invoked by automation (not selected directly)" }
         default {
             $mechanism = ConvertTo-TableCell -Value ([string]$Invocation.Mechanism)
             Write-Warning "Format-AssetInvocation: unrecognized mechanism '$mechanism'; rendering drift marker."
@@ -762,7 +962,7 @@ function New-AssetPageModel {
     }
 
     $frontmatter = Get-AssetFrontmatter -FilePath $sourceFile
-    $key = Get-CollectionArtifactKey -Kind $kind -Path $relPath
+    $key = Get-ArtifactKey -Kind $kind -Path $relPath
     $description = Get-ArtifactDescription -FilePath $sourceFile
 
     $title = if ($frontmatter.ContainsKey('name') -and $frontmatter['name']) {
@@ -839,9 +1039,10 @@ function New-AssetOverviewBody {
         Renders the overview ("What it does") region body for an asset.
 
     .DESCRIPTION
-        Returns the asset description collapsed to a single line, or a stable
-        fallback sentence when the asset declares no description. Shared by the
-        generator and the validator so the sync check renders identically.
+        Returns the normalized asset description wrapped at 500 characters on
+        word boundaries, or a stable fallback sentence when the asset declares
+        no description. Shared by the generator and the validator so the sync
+        check renders identically.
 
     .PARAMETER Model
         Page model from New-AssetPageModel.
@@ -858,7 +1059,33 @@ function New-AssetOverviewBody {
     if ([string]::IsNullOrWhiteSpace($Model.Description)) {
         return 'This asset does not declare a description.'
     }
-    return ($Model.Description -replace '\r?\n', ' ').Trim()
+
+    $description = ($Model.Description -replace '\r?\n', ' ').Trim()
+    if ($description.Length -le 500) {
+        return $description
+    }
+
+    $lines = [System.Collections.Generic.List[string]]::new()
+    $remaining = $description
+    while ($remaining.Length -gt 500) {
+        $breakIndex = -1
+        for ($index = 500; $index -ge 0; $index--) {
+            if ([char]::IsWhiteSpace($remaining[$index])) {
+                $breakIndex = $index
+                break
+            }
+        }
+
+        if ($breakIndex -lt 1) {
+            break
+        }
+
+        $lines.Add($remaining.Substring(0, $breakIndex).TrimEnd())
+        $remaining = $remaining.Substring($breakIndex).TrimStart()
+    }
+
+    $lines.Add($remaining)
+    return $lines -join "`n"
 }
 
 Export-ModuleMember -Function @(
@@ -867,6 +1094,7 @@ Export-ModuleMember -Function @(
     'Format-MarkdownTable',
     'Format-YamlScalar',
     'Get-AssetDocMarker',
+    'Get-AssetDocSectionContract',
     'Get-AssetDocsPath',
     'Get-AssetFrontmatter',
     'Get-AssetInvocation',
@@ -876,6 +1104,7 @@ Export-ModuleMember -Function @(
     'New-AssetMetadataBlock',
     'New-AssetOverviewBody',
     'New-AssetPageModel',
+    'Resolve-AssetDocSectionStatus',
     'Split-AssetDocByMarkers',
     'Test-AssetDocStub',
     'Test-AssetInteractive'

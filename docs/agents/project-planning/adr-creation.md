@@ -3,8 +3,12 @@ title: ADR Creator
 description: Redirect to the canonical ADR Creator agent and identity instructions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-08-01
 ms.topic: tutorial
+keywords:
+  - adr creator
+  - architecture decision record
+  - project planning
 ---
 
 The canonical agent definition has moved. The ADR Creator agent now lives alongside the other repository agents, and its behavior is governed by a dedicated identity instructions file.

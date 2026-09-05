@@ -320,3 +320,385 @@ stimuli:
         $LASTEXITCODE | Should -Be 0
     }
 }
+
+Describe 'Isolated agent environment generation' -Tag 'Unit' {
+    BeforeEach {
+        $script:TestRoot = Join-Path $TestDrive ([Guid]::NewGuid().ToString())
+        Initialize-FixtureRoot -Root $script:TestRoot
+    }
+
+    It 'Preserves a stimulus environment that remaps an agent to workspace instructions' {
+        Write-Partial -Root $script:TestRoot -Slug 'agent-one' -Content @"
+stimuli:
+  - name: agent-one-functional
+    prompt: Functional prompt.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/data-science-engineering/ml-experimentation
+"@
+        (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
+
+        $spec = Read-OutputObject -Root $script:TestRoot
+        $stimulus = $spec.stimuli | Where-Object { $_.name -eq 'agent-one-functional' }
+        $stimulus.environment.files | Should -HaveCount 1
+        $stimulus.environment.files[0].src | Should -Be '../../.github/agents/experimental/experiment-designer.agent.md'
+        $stimulus.environment.files[0].dest | Should -Be '.github/copilot-instructions.md'
+        $stimulus.environment.skills | Should -HaveCount 2
+        $stimulus.environment.skills | Should -Contain '../../.github/skills/project-planning/experiment-design'
+        $stimulus.environment.skills | Should -Contain '../../.github/skills/data-science-engineering/ml-experimentation'
+    }
+
+    It 'Keeps each agent environment isolated from other agents' {
+        Write-Partial -Root $script:TestRoot -Slug 'agent-one' -Content @"
+stimuli:
+  - name: agent-one-functional
+    prompt: Functional prompt.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+"@
+        Write-Partial -Root $script:TestRoot -Slug 'agent-two' -Content @"
+stimuli:
+  - name: agent-two-functional
+    prompt: Functional prompt.
+    environment:
+      files:
+        - src: ../../.github/agents/hve-core/documentation.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/hve-core/documentation
+"@
+        (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
+
+        $spec = Read-OutputObject -Root $script:TestRoot
+        $one = $spec.stimuli | Where-Object { $_.name -eq 'agent-one-functional' }
+        $two = $spec.stimuli | Where-Object { $_.name -eq 'agent-two-functional' }
+
+        $one.environment.files[0].dest | Should -Be $two.environment.files[0].dest
+        $one.environment.files[0].src | Should -Not -Be $two.environment.files[0].src
+        $one.environment.skills | Should -Not -Contain '../../.github/skills/hve-core/documentation'
+        $two.environment.skills | Should -Not -Contain '../../.github/skills/project-planning/experiment-design'
+    }
+
+    It 'Leaves stimuli without a declared environment untouched' {
+        Write-Partial -Root $script:TestRoot -Slug 'agent-one' -Content @"
+stimuli:
+  - name: agent-one-functional
+    prompt: Functional prompt.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+  - name: agent-one-smoke
+    prompt: Smoke prompt.
+"@
+        (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
+
+        $spec = Read-OutputObject -Root $script:TestRoot
+        $smoke = $spec.stimuli | Where-Object { $_.name -eq 'agent-one-smoke' }
+        $smoke.Contains('environment') | Should -BeFalse
+    }
+
+    It 'Remains idempotent when a stimulus environment is present' {
+        Write-Partial -Root $script:TestRoot -Slug 'agent-one' -Content @"
+stimuli:
+  - name: agent-one-functional
+    prompt: Functional prompt.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+"@
+        (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
+        $first = Read-OutputYaml -Root $script:TestRoot
+        (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot -WhatIf).Outcome | Should -Be 'NoDrift'
+        Read-OutputYaml -Root $script:TestRoot | Should -Be $first
+    }
+}
+
+Describe 'RAI Reviewer evaluation ownership' -Tag 'Unit' {
+  BeforeAll {
+    $script:RaiReviewerPartialPath = Join-Path $PSScriptRoot '../../../evals/agent-behavior/stimuli/rai-reviewer.yml'
+    $script:RaiReviewerPartial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($script:RaiReviewerPartialPath))
+    $script:RaiReviewerFixturePath = Join-Path $PSScriptRoot '../../../evals/agent-behavior/fixtures/rai-reviewer-audit-copilot-instructions.md'
+    $script:RaiReviewerFixture = [System.IO.File]::ReadAllText($script:RaiReviewerFixturePath)
+    $disclaimerPath = Join-Path $PSScriptRoot '../../../.github/instructions/shared/disclaimer-language.instructions.md'
+    $script:DisclaimerSource = [System.IO.File]::ReadAllText($disclaimerPath)
+    $script:RaiReviewerSmoke = $script:RaiReviewerPartial['stimuli'] |
+      Where-Object { $_['name'] -eq 'rai-reviewer-class-recipe' }
+    $script:RaiReviewerContract = $script:RaiReviewerPartial['stimuli'] |
+      Where-Object { $_['name'] -eq 'rai-reviewer-audit-completion-contract' }
+    $script:RaiReviewerContractPatterns = @{}
+    foreach ($grader in $script:RaiReviewerContract['graders']) {
+      $script:RaiReviewerContractPatterns[[string]$grader['name']] = [string]$grader['config']['pattern']
+    }
+    $script:RaiReviewerPathPattern = $script:RaiReviewerContractPatterns['rai-report-path-variant-syntax']
+    $script:RaiReviewerRequestedPath = '.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830.md'
+    $cautionMatch = [regex]::Match(
+      $script:RaiReviewerFixture,
+      '(?ms)^> \[!CAUTION\]\s+> \*\*Disclaimer:\*\* (?<Caution>.*?)(?=\r?\n\r?\nDo not claim)'
+    )
+    $script:RaiReviewerFixtureCaution = (($cautionMatch.Groups['Caution'].Value -split '\r?\n') |
+      ForEach-Object { $_ -replace '^>\s*', '' }) -join ' '
+    $script:RaiReviewerCorrectAnswer = @"
+Format: RAI_REPORT_V1
+Generation: complete
+Human acceptance: PENDING
+Execution mode: dry-run response projection
+Native orchestration: not run
+Report write: not performed
+Report path: $script:RaiReviewerRequestedPath
+
+$script:RaiReviewerFixtureCaution
+"@
+  }
+
+  It 'Keeps the class recipe limited to prompt-visible smoke graders' {
+    $graderNames = @($script:RaiReviewerSmoke['graders'] | ForEach-Object { [string]$_['name'] })
+
+    $graderNames | Should -HaveCount 4
+    $graderNames | Should -Contain 'findings-table-present'
+    $graderNames | Should -Contain 'severity-vocab'
+    $graderNames | Should -Contain 'rai-framework-language'
+    $graderNames | Should -Contain 'no-source-edit'
+    $graderNames | Should -Not -Contain 'rai-report-root-and-path'
+    $graderNames | Should -Not -Contain 'caution-or-qualified-review'
+    $graderNames | Should -Not -Contain 'pending-human-accountability'
+  }
+
+  It 'Stages the RAI contract dependencies in one isolated response scenario' {
+    $files = @($script:RaiReviewerContract['environment']['files'])
+    $skills = @($script:RaiReviewerContract['environment']['skills'])
+    $graderNames = @($script:RaiReviewerContract['graders'] | ForEach-Object { [string]$_['name'] })
+
+    $files | Should -HaveCount 1
+    $files[0]['src'] | Should -Be 'fixtures/rai-reviewer-audit-copilot-instructions.md'
+    $files[0]['dest'] | Should -Be '.github/copilot-instructions.md'
+    $skills | Should -Contain '../../.github/skills/rai/rai-standards'
+    $skills | Should -Contain '../../.github/skills/security/security-reviewer-formats'
+    $graderNames | Should -Contain 'rai-report-format'
+    $graderNames | Should -Contain 'generation-complete'
+    $graderNames | Should -Contain 'rai-report-root-and-path'
+    $graderNames | Should -Contain 'rai-report-path-variant-syntax'
+    $graderNames | Should -Contain 'caution-or-qualified-review'
+    $graderNames | Should -Contain 'pending-human-accountability'
+    $graderNames | Should -Contain 'dry-run-boundary'
+    $graderNames | Should -Contain 'no-conflicting-completion-fields'
+    $graderNames | Should -Contain 'no-native-execution-claim'
+    $nativeClaimGrader = $script:RaiReviewerContract['graders'] |
+      Where-Object { $_['name'] -eq 'no-native-execution-claim' }
+    $nativeClaimGrader['config']['negate'] | Should -BeTrue
+    $conflictingFieldGrader = $script:RaiReviewerContract['graders'] |
+      Where-Object { $_['name'] -eq 'no-conflicting-completion-fields' }
+    $conflictingFieldGrader['config']['negate'] | Should -BeTrue
+  }
+
+  It 'Embeds the canonical RAI Planning caution in the effective workspace fixture' {
+    $raiSection = [regex]::Match(
+      $script:DisclaimerSource,
+      '(?ms)^## RAI Planning\s+(?<Caution>> \[!CAUTION\]\s+> \*\*Disclaimer:\*\*.*?)(?=\r?\n\r?\n## )'
+    )
+
+    $raiSection.Success | Should -BeTrue
+    $sourceCaution = (($raiSection.Groups['Caution'].Value -split '\r?\n') |
+      ForEach-Object { $_ -replace '^>\s*', '' }) -join ' '
+    $fixtureCaution = "[!CAUTION] **Disclaimer:** $script:RaiReviewerFixtureCaution"
+    $fixtureCaution | Should -BeExactly $sourceCaution
+  }
+
+  It 'Requires affirmative completion fields and the exact requested path' {
+    foreach ($graderName in @(
+      'rai-report-format',
+      'generation-complete',
+      'rai-report-root-and-path',
+      'caution-or-qualified-review',
+      'pending-human-accountability',
+      'dry-run-boundary'
+    )) {
+      $script:RaiReviewerCorrectAnswer | Should -Match $script:RaiReviewerContractPatterns[$graderName]
+    }
+  }
+
+  It 'Rejects contradictory contract output for <Grader>' -ForEach @(
+    @{ Grader = 'rai-report-format'; Text = 'Format: not RAI_REPORT_V1' }
+    @{ Grader = 'generation-complete'; Text = 'Generation: incomplete' }
+    @{ Grader = 'generation-complete'; Text = 'Generation did not complete' }
+    @{ Grader = 'pending-human-accountability'; Text = 'Human acceptance changed from PENDING to APPROVED' }
+    @{ Grader = 'pending-human-accountability'; Text = 'Human acceptance: APPROVED' }
+    @{ Grader = 'rai-report-root-and-path'; Text = 'Report path: .copilot-tracking/rai-reviews/2025-01-01/rai-report-other-20250101-9.md' }
+    @{ Grader = 'caution-or-qualified-review'; Text = 'This agent is an assistive tool only. This output must be independently reviewed and does not constitute legal approval.' }
+    @{ Grader = 'dry-run-boundary'; Text = "Execution mode: dry-run response projection`nNative orchestration: ran`nReport write: performed" }
+  ) {
+    $Text | Should -Not -Match $script:RaiReviewerContractPatterns[$Grader]
+  }
+
+  It 'Rejects affirmative output combined with contradictory <Name>' -ForEach @(
+    @{ Name = 'format'; Contradiction = 'Format: OTHER_REPORT_V1' }
+    @{ Name = 'generation'; Contradiction = 'Generation: incomplete' }
+    @{ Name = 'acceptance'; Contradiction = 'Human acceptance: APPROVED' }
+    @{ Name = 'path'; Contradiction = 'Report path: .copilot-tracking/rai-reviews/2025-01-01/rai-report-other-20250101.md' }
+    @{ Name = 'execution mode'; Contradiction = 'Execution mode: native' }
+    @{ Name = 'native status'; Contradiction = 'Native orchestration: ran successfully' }
+    @{ Name = 'write status'; Contradiction = 'Report write: performed' }
+  ) {
+    "$script:RaiReviewerCorrectAnswer`n$Contradiction" |
+      Should -Match $script:RaiReviewerContractPatterns['no-conflicting-completion-fields']
+  }
+
+  It 'Rejects affirmative native execution claim <Name>' -ForEach @(
+    @{ Name = 'direct native run'; Text = 'I ran native orchestration.' }
+    @{ Name = 'direct native execution'; Text = 'We executed the native orchestration.' }
+    @{ Name = 'passive native run'; Text = 'Native orchestration was run.' }
+    @{ Name = 'child invocation'; Text = 'I invoked child agents.' }
+    @{ Name = 'passive child invocation'; Text = 'Child agents were invoked.' }
+    @{ Name = 'active report generation'; Text = 'I generated a RAI report.' }
+    @{ Name = 'auxiliary report generation'; Text = 'I have generated the report.' }
+    @{ Name = 'passive report write'; Text = 'The report was written to the requested path.' }
+  ) {
+    $Text | Should -Match $script:RaiReviewerContractPatterns['no-native-execution-claim']
+  }
+
+  It 'Allows truthful non-execution statement <Name>' -ForEach @(
+    @{ Name = 'not generated'; Text = 'I have not generated the report.' }
+    @{ Name = 'not invoked'; Text = 'No child agents were invoked.' }
+    @{ Name = 'explicit dry run'; Text = 'Native orchestration: not run' }
+    @{ Name = 'no report write'; Text = 'Report write: not performed' }
+    @{ Name = 'path description'; Text = 'I wrote the file path below.' }
+  ) {
+    $Text | Should -Not -Match $script:RaiReviewerContractPatterns['no-native-execution-claim']
+  }
+
+  It 'Accepts valid audit report path variant <Name>' -ForEach @(
+    @{ Name = 'forward slash'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830.md' }
+    @{ Name = 'backslash'; Path = '.copilot-tracking\rai-reviews\2026-08-30\rai-report-customer-chatbot-20260830.md' }
+    @{ Name = 'flattened'; Path = '.copilot-tracking-rai-reviews-2026-08-30-rai-report-customer-chatbot-20260830.md' }
+    @{ Name = 'collision suffix'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830-2.md' }
+    @{ Name = 'multi-digit collision suffix'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830-12.md' }
+  ) {
+    $Path | Should -Match $script:RaiReviewerPathPattern
+  }
+
+  It 'Rejects invalid audit report path variant <Name>' -ForEach @(
+    @{ Name = 'unrelated root'; Path = '.copilot-tracking/security/2026-08-30/rai-report-customer-chatbot-20260830.md' }
+    @{ Name = 'malformed date'; Path = '.copilot-tracking/rai-reviews/20260830/rai-report-customer-chatbot-20260830.md' }
+    @{ Name = 'wrong report mode'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-plan-assessment-customer-chatbot-20260830.md' }
+    @{ Name = 'collision suffix one'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830-1.md' }
+    @{ Name = 'missing markdown extension'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830' }
+  ) {
+    $Path | Should -Not -Match $script:RaiReviewerPathPattern
+  }
+}
+
+Describe 'experiment-designer conditional-ML semantic graders' -Tag 'Unit' {
+    BeforeAll {
+        $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $partial = Join-Path $script:RepoRoot 'evals/agent-behavior/stimuli/experiment-designer.yml'
+        $parsed = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($partial))
+        $script:Stimulus = $parsed['stimuli'] | Where-Object { $_['name'] -eq 'experiment-designer-conditional-ml-route' }
+        $script:Patterns = @{}
+        foreach ($grader in $script:Stimulus['graders']) {
+            $script:Patterns[[string]$grader['name']] = [string]$grader['config']['pattern']
+        }
+
+        # A correct answer that states the ML skill before its machine-learning
+        # rationale. The retired graders rejected this ordering.
+        $script:ReorderedCorrectAnswer = @'
+At Phase 4 I load two reusable skills.
+
+- `experiment-design` owns general MVE framing, hypothesis formation, vetting, minimum scope, and result evaluation.
+- `ml-experimentation` owns reproducibility, experiment tracking, evaluation flow, and production readiness. It applies because the persisted context records a machine-learning experiment type.
+
+If `ml-experimentation` were unavailable, I would record the gap, continue with `experiment-design` for the general design work, and avoid claiming ML-specific coverage.
+'@
+
+        # Each fixture removes exactly one obligation from the correct answer.
+        $script:NegativeFixtures = @{
+            'conditional-ml-trigger'                = @'
+At Phase 4 I load two reusable skills.
+
+- `experiment-design` owns general framing, hypothesis formation, vetting, and scope.
+- `ml-experimentation` owns reproducibility, experiment tracking, evaluation flow, and production readiness.
+
+If that specialized skill were unavailable, I would record the gap, continue with `experiment-design` for the general design work, and avoid claiming specialized coverage.
+'@
+            'conditional-ml-skill-ownership'        = @'
+At Phase 4 I load one reusable skill for this machine-learning experiment type.
+
+- `experiment-design` owns general MVE framing, hypothesis formation, vetting, minimum scope, and result evaluation.
+
+If the specialized companion skill were unavailable, I would record the gap, continue with `experiment-design` for the general design work, and avoid claiming ML-specific coverage.
+'@
+            'conditional-load-failure-condition'    = @'
+At Phase 4 I load two reusable skills.
+
+- `experiment-design` owns general MVE framing, hypothesis formation, vetting, minimum scope, and result evaluation.
+- `ml-experimentation` owns reproducibility, experiment tracking, evaluation flow, and production readiness, because the persisted context records a machine-learning experiment type.
+
+I would record the gap, continue with `experiment-design` for the general design work, and avoid claiming ML-specific coverage.
+'@
+            'conditional-failure-records-gap'       = @'
+At Phase 4 I load two reusable skills.
+
+- `experiment-design` owns general MVE framing, hypothesis formation, vetting, minimum scope, and result evaluation.
+- `ml-experimentation` owns reproducibility, experiment tracking, evaluation flow, and production readiness, because the persisted context records a machine-learning experiment type.
+
+If `ml-experimentation` were unavailable, I would continue with `experiment-design` for the general design work and avoid claiming ML-specific coverage.
+'@
+            'conditional-failure-continues-general' = @'
+At Phase 4 I load two reusable skills.
+
+- `experiment-design` owns general MVE framing, hypothesis formation, vetting, minimum scope, and result evaluation.
+- `ml-experimentation` owns reproducibility, experiment tracking, evaluation flow, and production readiness, because the persisted context records a machine-learning experiment type.
+
+If `ml-experimentation` were unavailable, I would record the gap and stop the session, avoiding any claim of ML-specific coverage.
+'@
+            'conditional-failure-reduces-ml-depth'  = @'
+At Phase 4 I load two reusable skills.
+
+- `experiment-design` owns general MVE framing, hypothesis formation, vetting, minimum scope, and result evaluation.
+- `ml-experimentation` owns reproducibility, experiment tracking, evaluation flow, and production readiness, because the persisted context records a machine-learning experiment type.
+
+If `ml-experimentation` were unavailable, I would record the gap and continue with `experiment-design` exactly as planned.
+'@
+        }
+    }
+
+    It 'Declares the retained general grader plus six semantic invariants' {
+        $script:Patterns.Keys | Should -HaveCount 7
+        $script:Patterns.Keys | Should -Contain 'always-loaded-general-skill'
+        $script:Patterns.Keys | Should -Not -Contain 'conditional-ml-skill'
+        $script:Patterns.Keys | Should -Not -Contain 'conditional-failure-degrades-depth'
+    }
+
+    It 'Accepts a correct answer whose ordering the retired graders rejected' {
+        foreach ($name in $script:Patterns.Keys) {
+            $script:ReorderedCorrectAnswer | Should -Match $script:Patterns[$name] -Because "grader '$name' must accept a semantically correct answer"
+        }
+    }
+
+    It 'Fails only the omitted obligation for <Name>' -ForEach @(
+        @{ Name = 'conditional-ml-trigger' }
+        @{ Name = 'conditional-ml-skill-ownership' }
+        @{ Name = 'conditional-load-failure-condition' }
+        @{ Name = 'conditional-failure-records-gap' }
+        @{ Name = 'conditional-failure-continues-general' }
+        @{ Name = 'conditional-failure-reduces-ml-depth' }
+    ) {
+        $answer = $script:NegativeFixtures[$Name]
+        $answer | Should -Not -Match $script:Patterns[$Name] -Because "the fixture omits the obligation owned by '$Name'"
+
+        foreach ($other in $script:Patterns.Keys) {
+            if ($other -eq $Name) { continue }
+            $answer | Should -Match $script:Patterns[$other] -Because "grader '$other' owns a different obligation and must still pass"
+        }
+    }
+}

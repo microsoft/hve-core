@@ -1,1 +1,0 @@
-../../../../.github/agents/accessibility/accessibility-planner.agent.md

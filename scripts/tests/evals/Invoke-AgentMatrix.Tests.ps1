@@ -78,7 +78,7 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
     Context 'Changed mode with explicit slugs' {
         BeforeEach {
             & $script:ScriptPath `
-                -Changed @('task-researcher', 'task-planner') `
+                -Changed @('rpi-agent', 'documentation') `
                 -Tier pr `
                 -RepoRoot $script:RepoRoot `
                 -OutputDir $script:OutputDir `
@@ -97,8 +97,8 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
         It 'Enumerates only the requested known slugs' {
             $script:Summary.agentCount | Should -Be 2
             $slugs = @($script:Summary.results | ForEach-Object { $_.slug })
-            $slugs | Should -Contain 'task-researcher'
-            $slugs | Should -Contain 'task-planner'
+            $slugs | Should -Contain 'rpi-agent'
+            $slugs | Should -Contain 'documentation'
         }
     }
 
@@ -169,7 +169,7 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
         }
 
         It 'Rejects combining -All and -Changed' {
-            { & $script:ScriptPath -All -Changed @('task-researcher') -RepoRoot $script:RepoRoot -OutputDir $script:OutputDir -WhatIf } |
+            { & $script:ScriptPath -All -Changed @('rpi-agent') -RepoRoot $script:RepoRoot -OutputDir $script:OutputDir -WhatIf } |
                 Should -Throw
         }
     }
@@ -217,7 +217,7 @@ Describe 'Invoke-AgentMatrix helper functions' -Tag 'Unit' {
 
     Context 'New-AgentSummary' {
         BeforeEach {
-            $script:Entry = @{ slug = 'task-researcher'; class = 'research-writer'; cost_tier = 'light' }
+            $script:Entry = @{ slug = 'sample-agent'; class = 'research-writer'; cost_tier = 'light' }
             $script:Graders = [System.Collections.Generic.List[hashtable]]::new()
             $script:Graders.Add(@{ name = 'header-present'; status = 'pass' })
         }
@@ -225,7 +225,7 @@ Describe 'Invoke-AgentMatrix helper functions' -Tag 'Unit' {
         It 'Reports overall=pass when ExitCode=0 and no failing graders' {
             $summary = New-AgentSummary -AgentEntry $script:Entry -ExitCode 0 -Graders $script:Graders -LogPath 'x.log'
             $summary.overall | Should -Be 'pass'
-            $summary.slug | Should -Be 'task-researcher'
+            $summary.slug | Should -Be 'sample-agent'
             $summary.class | Should -Be 'research-writer'
             $summary.cost_tier | Should -Be 'light'
             $summary.logPath | Should -Be 'x.log'
@@ -288,8 +288,8 @@ Describe 'Invoke-AgentMatrix helper functions' -Tag 'Unit' {
         }
 
         It 'Filters Changed inputs to known slugs' {
-            $slugs = Resolve-SlugSet -RepoRoot $script:RepoRoot -Inventory $script:Inventory -ParameterSet 'Changed' -Changed @('task-researcher', 'definitely-not-an-agent')
-            $slugs | Should -Contain 'task-researcher'
+            $slugs = Resolve-SlugSet -RepoRoot $script:RepoRoot -Inventory $script:Inventory -ParameterSet 'Changed' -Changed @('rpi-agent', 'definitely-not-an-agent')
+            $slugs | Should -Contain 'rpi-agent'
             $slugs | Should -Not -Contain 'definitely-not-an-agent'
         }
 

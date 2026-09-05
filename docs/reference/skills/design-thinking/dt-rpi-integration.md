@@ -1,8 +1,14 @@
 ---
 title: dt-rpi-integration
-description: "Design Thinking to RPI handoff knowledge covering the DT-to-RPI handoff contract, DT-aware research/planning/implement/review contexts, subagent handoff workflow, and Method 5 image prompt generation"
+description: "Design Thinking handoff knowledge for research-ready rpi-research inputs and DT-aware rpi-plan, rpi-implement, and rpi-review context"
 sidebar_position: 4
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - design-thinking
+  - dt-rpi-integration
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,7 +23,7 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Design Thinking to RPI handoff knowledge covering the DT-to-RPI handoff contract, DT-aware research/planning/implement/review contexts, subagent handoff workflow, and Method 5 image prompt generation
+Design Thinking handoff knowledge for research-ready rpi-research inputs and DT-aware rpi-plan, rpi-implement, and rpi-review context
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

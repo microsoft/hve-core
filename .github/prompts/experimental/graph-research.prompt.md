@@ -1,12 +1,11 @@
 ---
-description: "Research a codebase using an existing graphify knowledge graph, with audit-tagged evidence reporting"
-agent: Task Researcher
+description: "Research a codebase through rpi-research using an existing graphify knowledge graph, with audit-tagged evidence reporting"
 argument-hint: "topic=... [chat={true|false}]"
 ---
 
 # Graph Research
 
-Use the [Task Researcher](../../agents/hve-core/task-researcher.agent.md) workflow to investigate a structural question against a pre-built [graphify](https://github.com/safishamsi/graphify) knowledge graph. This prompt complements `task-research` for questions where typed graph queries are sharper than codebase search.
+Activate `rpi-research` to investigate a structural question against a pre-built [graphify](https://github.com/safishamsi/graphify) knowledge graph. This prompt adds graph-specific evidence rules for questions where typed graph queries are sharper than codebase search.
 
 This prompt **never triggers a graph build**. Graph builds have cost, time, and upload implications and are user-initiated. The prompt assumes `graphify-out/graph.json` already exists in the workspace and the `graphify` MCP server is already registered (typically by running `graphify vscode install` from the upstream CLI). Read the [graphify output conventions](../../instructions/experimental/graphify.instructions.md) for the canonical rules; they auto-apply when Copilot reads any file under `graphify-out/`.
 
@@ -65,7 +64,7 @@ Reserve `query_graph` for genuine exploration; prefer typed tools when the quest
 
 ## Tool Routing — Grep Beats Graph When…
 
-Fall back to direct codebase search (the default `Researcher Subagent` toolset) when the question is lexical or specific:
+Fall back to direct codebase search through `rpi-research` when the question is lexical or specific:
 
 * "Where is the string `TODO(perf)` used?"
 * "Which files import `requests`?"
@@ -73,7 +72,7 @@ Fall back to direct codebase search (the default `Researcher Subagent` toolset) 
 * The graph is missing the file types in scope (e.g., docs not included in the build).
 * An `INFERRED` edge contradicts a deterministic grep hit — trust grep.
 
-If the question is lexical, decline the graph route gracefully and hand off to the standard `task-research` flow.
+If the question is lexical, decline the graph route gracefully and continue through the standard `rpi-research` flow.
 
 ## Reporting Discipline
 
@@ -107,7 +106,7 @@ This prompt itself never builds the graph; the fallback applies only when the us
 ## Requirements
 
 1. Verify the graph and MCP server are available before answering (Prerequisites above).
-2. Route the question to the smallest sufficient MCP tool, or decline to the standard `task-research` flow when grep would answer faster.
-3. Run research through the `Task Researcher` agent so findings consolidate into `.copilot-tracking/research/{{YYYY-MM-DD}}/{{topic}}-research.md` alongside any non-graph evidence.
+2. Route the question to the smallest sufficient MCP tool, or continue through the standard `rpi-research` flow when grep would answer faster.
+3. Activate `rpi-research` so findings consolidate into `.copilot-tracking/research/{{YYYY-MM-DD}}/{{topic}}-research.md` alongside any non-graph evidence.
 4. Tag every load-bearing edge in the research document and chat response with its audit tag and confidence score.
 5. Never trigger a graph rebuild from inside this prompt. Surface a rebuild recommendation to the user when staleness materially affects the answer, and let the user run it.

@@ -92,7 +92,7 @@ function Test-EvalSpecCompliance {
 
     .DESCRIPTION
     Checks required top-level keys, executor whitelist, per-stimulus required keys
-    (name, prompt, graders), and per-stimulus backlink tags (skill/agent/prompt/instruction)
+    (name, prompt or turns, graders), and per-stimulus backlink tags (skill/agent/prompt/instruction)
     when present. Returns a list of errors with `path` and `message` for each violation.
 
     .PARAMETER Spec
@@ -186,7 +186,16 @@ function Test-EvalSpecCompliance {
                 $entryIndex = -1
                 foreach ($rawPath in $entryPaths) {
                     $entryIndex++
-                    $pathString = [string]$rawPath
+                    # `environment.files` accepts both a bare path and a `src`/`dest`
+                    # mapping. Coercing the mapping with [string] yields the type name
+                    # rather than the path, so a valid seeded spec would be reported as
+                    # an unresolvable 'System.Collections.Hashtable' path.
+                    $pathString = if ($rawPath -is [System.Collections.IDictionary]) {
+                        if ($rawPath.Contains('src')) { [string]$rawPath['src'] } else { '' }
+                    }
+                    else {
+                        [string]$rawPath
+                    }
                     if ([string]::IsNullOrWhiteSpace($pathString)) {
                         $errors.Add(@{ path = $SpecPath; field = "environment.$entryKey[$entryIndex]"; message = "Empty environment.$entryKey path" })
                         continue
@@ -231,7 +240,18 @@ function Test-EvalSpecCompliance {
         }
 
         if (-not $stimulus.ContainsKey('prompt') -or [string]::IsNullOrWhiteSpace([string]$stimulus['prompt'])) {
-            $errors.Add(@{ path = $SpecPath; field = "$stimulusLabel.prompt"; message = 'Stimulus missing required key: prompt' })
+            $hasTurns = $false
+            if ($stimulus.ContainsKey('turns')) {
+                $turnsValue = $stimulus['turns']
+                if ($turnsValue -is [System.Collections.IEnumerable] -and -not ($turnsValue -is [string])) {
+                    foreach ($turn in $turnsValue) {
+                        if (-not [string]::IsNullOrWhiteSpace([string]$turn)) { $hasTurns = $true; break }
+                    }
+                }
+            }
+            if (-not $hasTurns) {
+                $errors.Add(@{ path = $SpecPath; field = "$stimulusLabel.prompt"; message = 'Stimulus missing required key: prompt or turns' })
+            }
         }
 
         $graders = if ($stimulus.ContainsKey('graders')) { $stimulus['graders'] } else { $null }

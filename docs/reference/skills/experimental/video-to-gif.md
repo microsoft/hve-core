@@ -1,17 +1,23 @@
 ---
 title: video-to-gif
 description: Video-to-GIF conversion with FFmpeg two-pass optimization
-sidebar_position: 6
-ms.date: 2026-07-03
+sidebar_position: 8
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - experimental
+  - video-to-gif
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                      |
-|-------------|--------------------------------------------|
-| Kind        | skill                                      |
-| Source      | `.github/skills/experimental/video-to-gif` |
-| Invocation  | Loaded on demand by referencing agents     |
-| Interactive | No                                         |
+| Field       | Value                                                                          |
+|-------------|--------------------------------------------------------------------------------|
+| Kind        | skill                                                                          |
+| Source      | `.github/skills/experimental/video-to-gif`                                     |
+| Invocation  | Invoked directly as `/video-to-gif`, or loaded on demand by referencing agents |
+| Interactive | No                                                                             |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

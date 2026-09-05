@@ -20,8 +20,9 @@
     3. Sync        - generated regions match a fresh render (under -CheckSync).
     4. Structure   - required H2 sections and generated-region markers present
                      (How to use only required for interactive assets).
-    5. Authored    - human sections differ from stubs (warning by default,
-                     error under -RequireAuthoredContent).
+    5. Authored    - human sections differ from stubs (warning by default;
+                     required-section stubs are errors for kinds selected by
+                     -RequireAuthoredContent).
 
     Reference index pages (README.md) are excluded from coverage, sync,
     structure, and authored checks and are never treated as orphans.
@@ -38,8 +39,10 @@
     drift as errors.
 
 .PARAMETER RequireAuthoredContent
-    Treat pages whose human-authored sections still contain stub placeholders
-    as errors instead of warnings.
+    One or more asset kinds whose Required human-authored sections must not
+    contain stub placeholders. Supported values are agent, prompt, instruction,
+    and skill. Separate multiple command-line values with commas. Optional-
+    section stubs remain warnings.
 
 .PARAMETER ChangedFilesOnly
     Validate only assets and documentation pages affected by changed files.
@@ -60,9 +63,14 @@
     ./Validate-AssetDocs.ps1 -FailOnMissing -CheckSync
     Hard-fails on missing pages, orphans, sync drift, and structure problems.
 
+.EXAMPLE
+    ./Validate-AssetDocs.ps1 -FailOnMissing -CheckSync -RequireAuthoredContent instruction
+    Also hard-fails when an instruction page has a stubbed Required human
+    section. Optional instruction examples remain advisory.
+
 .NOTES
     Runs via: npm run lint:asset-docs
-    Dependencies: DocsHelpers, CollectionHelpers, and CIHelpers modules.
+    Dependencies: DocsHelpers, and CIHelpers modules.
 #>
 
 [CmdletBinding()]
@@ -77,7 +85,15 @@ param(
     [switch]$CheckSync,
 
     [Parameter(Mandatory = $false)]
-    [switch]$RequireAuthoredContent,
+    [ValidateScript({
+            $values = @(($_ -split ',') | ForEach-Object { $_.Trim() })
+            $invalid = @($values | Where-Object { [string]::IsNullOrWhiteSpace($_) -or $_ -notin @('agent', 'prompt', 'instruction', 'skill') })
+            if ($invalid.Count -gt 0) {
+                throw "Unsupported asset kind: $($invalid -join ', '). Supported values are agent, prompt, instruction, and skill."
+            }
+            return $true
+        })]
+    [string[]]$RequireAuthoredContent = @(),
 
     [Parameter(Mandatory = $false)]
     [switch]$ChangedFilesOnly,
@@ -92,14 +108,24 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+$normalizedAuthoredKinds = [System.Collections.Generic.List[string]]::new()
+foreach ($value in $RequireAuthoredContent) {
+    foreach ($kind in ($value -split ',')) {
+        $normalizedKind = $kind.Trim().ToLowerInvariant()
+        if (-not $normalizedAuthoredKinds.Contains($normalizedKind)) {
+            $normalizedAuthoredKinds.Add($normalizedKind)
+        }
+    }
+}
+$RequireAuthoredContent = $normalizedAuthoredKinds.ToArray()
+
 # Import the modules this script calls directly, highest-level first and
 # lowest-level last, so each -Force re-import re-scopes shared dependencies in
-# dependency order and every command used here (DocsHelpers, CollectionHelpers,
-# CIHelpers) resolves in this script's scope. DocsHelpers exposes the shared
+# dependency order and every command used here resolves in this script's scope.
+# DocsHelpers exposes the shared
 # render helpers (New-AssetPageModel, New-AssetMetadataBlock, New-AssetOverviewBody)
 # so the sync check renders exactly what the generator produces.
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../docs/Modules/DocsHelpers.psm1') -Force
-Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../collections/Modules/CollectionHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
@@ -373,7 +399,14 @@ function Test-AssetDocOrphan {
 function Test-AssetDocStructure {
     <#
     .SYNOPSIS
-        Verifies required headings and generated-region markers on a page.
+        Verifies required headings, canonical section order, and generated-region
+        markers on a page.
+    .DESCRIPTION
+        Reports duplicate contract headings, a missing Required section, an
+        applicable section that appears out of the contract's canonical order,
+        and a damaged generated-region marker pair. Optional sections are only
+        order-checked when the page includes them. NotApplicable sections are
+        checked for duplicates but excluded from presence and order checks.
     .PARAMETER Model
         Page model from New-AssetPageModel.
     .PARAMETER Content
@@ -390,14 +423,34 @@ function Test-AssetDocStructure {
 
     $findings = @()
 
-    $required = @('## What it does', '## When to use it', '## Example usage')
-    if ($Model.Interactive) {
-        $required += '## How to use it'
+    $present = [System.Collections.Generic.List[PSCustomObject]]::new()
+    foreach ($section in (Get-AssetDocSectionContract)) {
+        $status = Resolve-AssetDocSectionStatus -Section $section -Kind $Model.Kind -Interactive $Model.Interactive
+        $heading = $section.Heading
+        $headingMatches = [regex]::Matches($Content, '(?m)^' + [regex]::Escape($heading) + '\s*$')
+        if ($headingMatches.Count -gt 1) {
+            $findings += New-AssetDocFinding -Level 'Error' -Category 'Structure' -Path $Model.DocRel -Message "Duplicate section '$heading' appears $($headingMatches.Count) times; contract headings must be unique."
+        }
+
+        if ($status -eq 'NotApplicable') {
+            continue
+        }
+
+        if ($headingMatches.Count -eq 0) {
+            if ($status -eq 'Required') {
+                $findings += New-AssetDocFinding -Level 'Error' -Category 'Structure' -Path $Model.DocRel -Message "Missing required section '$heading'."
+            }
+            continue
+        }
+
+        $present.Add([PSCustomObject]@{ Heading = $heading; Index = $headingMatches[0].Index })
     }
-    foreach ($heading in $required) {
-        $pattern = '(?m)^' + [regex]::Escape($heading) + '\s*$'
-        if ($Content -notmatch $pattern) {
-            $findings += New-AssetDocFinding -Level 'Error' -Category 'Structure' -Path $Model.DocRel -Message "Missing required section '$heading'."
+
+    # The contract declares canonical order, so a page that carries every heading
+    # in the wrong sequence must fail rather than pass an existence-only check.
+    for ($i = 1; $i -lt $present.Count; $i++) {
+        if ($present[$i].Index -lt $present[$i - 1].Index) {
+            $findings += New-AssetDocFinding -Level 'Error' -Category 'Structure' -Path $Model.DocRel -Message "Section '$($present[$i].Heading)' must appear after '$($present[$i - 1].Heading)' in canonical contract order."
         }
     }
 
@@ -444,12 +497,49 @@ function Test-AssetDocRegionSync {
             # Missing markers are reported by the structure check.
             continue
         }
-        if (-not [string]::Equals($split.Body, $region.Fresh, [System.StringComparison]::Ordinal)) {
+        # Normalize line endings before comparison. Committed pages check out as
+        # CRLF on Windows (git autocrlf) while the renderer emits LF, so an ordinal
+        # compare would report false drift. Line endings are a platform concern,
+        # not generated-content drift.
+        $actualBody = $split.Body -replace '\r\n', "`n" -replace '\r', "`n"
+        $expectedBody = $region.Fresh -replace '\r\n', "`n" -replace '\r', "`n"
+        if (-not [string]::Equals($actualBody, $expectedBody, [System.StringComparison]::Ordinal)) {
             $findings += New-AssetDocFinding -Level 'Error' -Category 'Sync' -Path $Model.DocRel -Message "Generated '$($region.Name)' region is out of sync; run npm run docs:generate."
         }
     }
 
     return $findings
+}
+
+function Get-AssetDocSectionBody {
+    <#
+    .SYNOPSIS
+        Extracts the body of a named H2 section.
+    .DESCRIPTION
+        Returns the content after an exact H2 heading through the next H2 or
+        end of content. Returns null when the heading is absent. Structure
+        validation remains responsible for required-heading presence.
+    .PARAMETER Content
+        Full page content.
+    .PARAMETER Heading
+        Exact H2 heading from the shared asset-documentation contract.
+    .OUTPUTS
+        [string] Section body, or null when the heading is absent.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][string]$Content,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Heading
+    )
+
+    $pattern = '(?ms)^' + [regex]::Escape($Heading) + '[ \t]*\r?\n(?<Body>.*?)(?=^##(?:[ \t]|$)|\z)'
+    $match = [regex]::Match($Content, $pattern)
+    if (-not $match.Success) {
+        return $null
+    }
+
+    return $match.Groups['Body'].Value.Trim("`r", "`n")
 }
 
 function Test-AssetDocAuthored {
@@ -461,7 +551,7 @@ function Test-AssetDocAuthored {
     .PARAMETER Content
         Page file content.
     .PARAMETER RequireAuthoredContent
-        Emit an error instead of a warning when stubs remain.
+        Asset kinds whose Required section stubs produce an error.
     .OUTPUTS
         [PSCustomObject[]] Findings.
     #>
@@ -470,12 +560,37 @@ function Test-AssetDocAuthored {
     param(
         [Parameter(Mandatory = $true)][PSCustomObject]$Model,
         [Parameter(Mandatory = $true)][string]$Content,
-        [Parameter(Mandatory = $false)][switch]$RequireAuthoredContent
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('agent', 'prompt', 'instruction', 'skill')]
+        [string[]]$RequireAuthoredContent = @()
     )
 
-    if (Test-AssetDocStub -Content $Content) {
-        $level = if ($RequireAuthoredContent) { 'Error' } else { 'Warning' }
-        return @(New-AssetDocFinding -Level $level -Category 'Authored' -Path $Model.DocRel -Message 'Human-authored sections still contain unwritten stub placeholders.')
+    $stubbedSections = [System.Collections.Generic.List[PSCustomObject]]::new()
+    foreach ($section in (Get-AssetDocSectionContract)) {
+        if ([string]::IsNullOrWhiteSpace($section.TemplateRegion)) {
+            continue
+        }
+
+        $status = Resolve-AssetDocSectionStatus -Section $section -Kind $Model.Kind -Interactive $Model.Interactive
+        if ($status -eq 'NotApplicable') {
+            continue
+        }
+
+        $body = Get-AssetDocSectionBody -Content $Content -Heading $section.Heading
+        if ($null -ne $body -and (Test-AssetDocStub -Content $body)) {
+            $stubbedSections.Add([PSCustomObject]@{
+                    Heading = $section.Heading
+                    Status  = $status
+                })
+        }
+    }
+
+    if ($stubbedSections.Count -gt 0) {
+        $hasRequiredStub = @($stubbedSections | Where-Object Status -EQ 'Required').Count -gt 0
+        $kindIsRequired = $RequireAuthoredContent -contains $Model.Kind
+        $level = if ($kindIsRequired -and $hasRequiredStub) { 'Error' } else { 'Warning' }
+        $headings = @($stubbedSections | ForEach-Object { "'$($_.Heading)'" }) -join ', '
+        return @(New-AssetDocFinding -Level $level -Category 'Authored' -Path $Model.DocRel -Message "Human-authored sections still contain unwritten stub placeholders: $headings.")
     }
     return @()
 }
@@ -575,7 +690,7 @@ function Invoke-AssetDocsValidation {
     .PARAMETER CheckSync
         Enable the generated-region sync check.
     .PARAMETER RequireAuthoredContent
-        Treat remaining stub sections as errors.
+        Asset kinds whose Required section stubs produce errors.
     .PARAMETER ChangedFilesOnly
         Validate only assets and pages affected by changed files.
     .PARAMETER BaseBranch
@@ -591,7 +706,9 @@ function Invoke-AssetDocsValidation {
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot,
         [Parameter(Mandatory = $false)][switch]$FailOnMissing,
         [Parameter(Mandatory = $false)][switch]$CheckSync,
-        [Parameter(Mandatory = $false)][switch]$RequireAuthoredContent,
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('agent', 'prompt', 'instruction', 'skill')]
+        [string[]]$RequireAuthoredContent = @(),
         [Parameter(Mandatory = $false)][switch]$ChangedFilesOnly,
         [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$BaseBranch = 'origin/main',
         [Parameter(Mandatory = $false)][string]$OutputPath = 'logs/asset-docs-validation-results.json'
@@ -627,7 +744,7 @@ function Invoke-AssetDocsValidation {
             $content = Get-Content -LiteralPath $full -Raw
 
             foreach ($f in @(Test-AssetDocStructure -Model $model -Content $content)) { $findings.Add($f) }
-            foreach ($f in @(Test-AssetDocAuthored -Model $model -Content $content -RequireAuthoredContent:$RequireAuthoredContent)) { $findings.Add($f) }
+            foreach ($f in @(Test-AssetDocAuthored -Model $model -Content $content -RequireAuthoredContent $RequireAuthoredContent)) { $findings.Add($f) }
             if ($CheckSync) {
                 foreach ($f in @(Test-AssetDocRegionSync -Model $model -Content $content)) { $findings.Add($f) }
             }
@@ -636,7 +753,7 @@ function Invoke-AssetDocsValidation {
         $options = [ordered]@{
             failOnMissing          = [bool]$FailOnMissing
             checkSync              = [bool]$CheckSync
-            requireAuthoredContent = [bool]$RequireAuthoredContent
+            requireAuthoredContent = @($RequireAuthoredContent)
             changedFilesOnly       = [bool]$ChangedFilesOnly
             baseBranch             = $BaseBranch
         }
@@ -664,7 +781,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         -RepoRoot $RepoRoot `
         -FailOnMissing:$FailOnMissing `
         -CheckSync:$CheckSync `
-        -RequireAuthoredContent:$RequireAuthoredContent `
+        -RequireAuthoredContent $RequireAuthoredContent `
         -ChangedFilesOnly:$ChangedFilesOnly `
         -BaseBranch $BaseBranch `
         -OutputPath $OutputPath

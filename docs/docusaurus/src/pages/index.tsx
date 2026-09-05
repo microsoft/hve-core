@@ -1,27 +1,20 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
-import React, { useMemo } from 'react';
+import React from 'react';
 import Layout from '@theme/Layout';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import HeroSection from '../components/HeroSection';
 import { IconCard, BoxCard, CardGrid } from '../components/Cards';
-import CollectionCard from '../components/CollectionCards';
+import PackageCard from '../components/PackageCards';
 import { iconCards, boxCards } from '../data/hubCards';
-import { resolveCollectionCards } from '../data/collectionCards';
+import type { PackageCardData } from '../data/packageCards';
 import { labelRegistry } from '../data/labelRegistry';
 import styles from './styles.module.css';
 
 export default function Home(): React.ReactElement {
   const { siteConfig } = useDocusaurusContext();
-  const counts = (siteConfig.customFields?.collectionCounts ?? {}) as Record<
-    string,
-    number
-  >;
-
-  const collectionCards = useMemo(
-    () => resolveCollectionCards(counts),
-    [counts],
-  );
+  const packageCards = (siteConfig.customFields?.packageCards
+    ?? []) as PackageCardData[];
 
   return (
     <Layout
@@ -38,8 +31,8 @@ export default function Home(): React.ReactElement {
             primary: true,
           },
           {
-            label: "Browse Collections",
-            href: "/docs/getting-started/collections",
+            label: "Browse Marketplace Packages",
+            href: "/docs/getting-started/packages",
           },
         ]}
       />
@@ -88,16 +81,17 @@ export default function Home(): React.ReactElement {
           </CardGrid>
         </section>
 
-        <section className={styles.section} aria-labelledby="collections-title">
-          <h2 id="collections-title" className={styles.sectionTitle}>
-            {labelRegistry.collections}
+        <section className={styles.section} aria-labelledby="packages-title">
+          <h2 id="packages-title" className={styles.sectionTitle}>
+            {labelRegistry.packages}
           </h2>
           <p className={styles.sectionDescription}>
-            Browse domain-specific artifact bundles.
+            Browse the HVE Core plugin and extension packages and pick the
+            focused or full choice that fits your team.
           </p>
           <CardGrid>
-            {collectionCards.map((card) => (
-              <CollectionCard key={card.name} {...card} />
+            {packageCards.map((card) => (
+              <PackageCard key={card.name} {...card} />
             ))}
           </CardGrid>
         </section>

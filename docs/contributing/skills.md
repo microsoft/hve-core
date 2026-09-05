@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - skills
@@ -53,11 +53,12 @@ The following skill types will likely be rejected:
 
 ### Location
 
-Skill files are typically organized in a collection subdirectory by convention:
+Skill files are typically organized in a package subdirectory by convention:
 
 ```text
-.github/skills/{collection-id}/<skill-name>/
+.github/skills/{package-id}/<skill-name>/
 ├── SKILL.md                    # Main skill definition (required)
+├── SECURITY.md                 # STRIDE model (required for executable runtimes)
 ├── scripts/                    # Executable scripts or Python package entry points (optional)
 │   ├── <pkg>/                  # Python package directory (optional for Python skills)
 │   │   └── __init__.py
@@ -75,10 +76,21 @@ Skill files are typically organized in a collection subdirectory by convention:
 ```
 
 > [!NOTE]
-> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
-> accepts any valid repo-relative path regardless of the artifact's parent directory.
+> Tracked skills beneath a `.github/skills/<package>/` subdirectory are included automatically when `npm run plugin:sync` derives root `plugin.json`, unless the skill's top-level license has a noncommercial qualifier.
 
 The `scripts/` directory is **optional**. When present, it **MUST** contain at least one PowerShell script for PowerShell or cross-platform skills, and it **SHOULD** contain at least one `.sh` file when a bash implementation is also provided. Python skills may instead package executable modules under `scripts/<package>/__init__.py` and still satisfy the scripts requirement. Skills without scripts are valid and function as documentation-driven knowledge packages.
+
+### Skill Security Model
+
+A skill that ships an executable runtime **MUST** include `SECURITY.md` next to
+`SKILL.md` when it performs network egress, handles credentials, starts subprocesses,
+or parses untrusted documents or content. Purely instructional skills and local
+validation scripts without an external runtime surface do not require a dedicated model.
+
+Follow the [skill security model guidance](https://github.com/microsoft/hve-core/blob/main/.github/instructions/skill-security-model.instructions.md)
+and start from the [skill security model template](../templates/skill-security-model-template).
+The repository security model lists existing examples and the complete inclusion rule
+under [Skill Security Models](../security/security-model#skill-security-models).
 
 ### Naming Convention
 
@@ -101,11 +113,11 @@ The `scripts/` directory is **optional**. When present, it **MUST** contain at l
 
 **`description`** (string, MANDATORY)
 
-| Property | Value                                                                                             |
-|----------|---------------------------------------------------------------------------------------------------|
-| Purpose  | Concise explanation of skill functionality                                                        |
-| Format   | Single sentence describing the skill; no attribution suffix (added automatically at distribution) |
-| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization'`                               |
+| Property | Value                                                               |
+|----------|---------------------------------------------------------------------|
+| Purpose  | Concise explanation of skill functionality                          |
+| Format   | Single sentence describing the skill; no attribution suffix         |
+| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization'` |
 
 ### Frontmatter Example
 
@@ -224,35 +236,11 @@ metadata:
 
 This example demonstrates a skill incorporating third-party content with provenance tracking. Skills referencing external frameworks should include `license` to identify the content license and `metadata` to track source attribution.
 
-## Collection Entry Requirements
+## Plugin Manifest Registration
 
-All skills must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control distribution and maturity.
+Distributable skills must use the canonical path `.github/skills/<package>/<skill>/SKILL.md`, and the directory name must equal the skill `name`. Skills whose top-level license contains a noncommercial qualifier are not distributed.
 
-### Adding Your Skill to a Collection
-
-After creating your skill package, add an `items[]` entry in each target collection manifest:
-
-```yaml
-items:
-  # path can reference artifacts from any subfolder
-  - path: .github/skills/{collection-id}/my-skill
-    kind: skill
-    maturity: stable
-```
-
-### Selecting Collections for Skills
-
-Choose collections based on who uses the skill's utilities:
-
-| Skill Type           | Recommended Collections            |
-|----------------------|------------------------------------|
-| Media processing     | `hve-core-all`                     |
-| Documentation tools  | `hve-core-all`, `hve-core`         |
-| Data processing      | `hve-core-all`, `data-science`     |
-| Infrastructure tools | `hve-core-all`, `coding-standards` |
-| Code generation      | `hve-core-all`, `coding-standards` |
-
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
+Run `npm run plugin:sync` to add the repository-relative `.github/...` skill directory to the `skills` array in root `plugin.json`. Update `docs/plugins/hve-core.md` when the user-visible skill surface changes, then run `npm run plugin:validate`, `npm run validate:skills`, and `npm run docs:generate:check`.
 
 ## SKILL.md Content Structure
 
@@ -436,6 +424,32 @@ Python skill scripts require pytest:
 * Commit `uv.lock` alongside `pyproject.toml` at the skill root so Dependabot can resolve and patch Python dependencies under `.github/skills/**`
 * `npm run validate:skills` warns when `pyproject.toml` is present without `uv.lock`, and it fails when the validation run is executed with `-WarningsAsErrors`
 
+<!-- cspell:ignore conftest mktemp -->
+Do not commit opaque binary test fixtures such as `.pptx` or `.xlsx` files. Binary
+fixtures can conceal macros, OLE objects, or other content that is difficult to audit. Generate them
+from reviewable Python code in `conftest.py` and write them to pytest's temporary
+directory at test time:
+
+```python
+from pathlib import Path
+
+import pytest
+
+from tests.fixture_factory import generate_minimal_fixture
+
+
+@pytest.fixture(scope="session")
+def minimal_fixture(tmp_path_factory: pytest.TempPathFactory) -> Path:
+  fixture_path = tmp_path_factory.mktemp("fixtures") / "minimal.pptx"
+  generate_minimal_fixture(fixture_path)
+  return fixture_path
+```
+
+Keep the generator deterministic and minimal so reviewers can audit every element it
+creates. If generation depends on library internals, such as bundled layout names,
+declare a compatible lower-bound dependency version and explain that fixture dependency
+in the dependency manifest.
+
 ### Fuzz Harness (Python Skills)
 
 Python skills with a `tests/` directory **MUST** include a fuzz harness for OSSF Scorecard Fuzzing compliance:
@@ -484,15 +498,15 @@ Skill packages are self-contained and relocatable. The skill root directory vari
 
 | Context            | Skill Root Example                                                 |
 |--------------------|--------------------------------------------------------------------|
-| In-repo            | `.github/skills/<collection>/<skill>/`                             |
+| In-repo            | `.github/skills/<package>/<skill>/`                                |
 | Copilot CLI plugin | `~/.copilot/installed-plugins/_direct/<plugin>/skills/<skill>/`    |
 | VS Code extension  | `~/.vscode/extensions/<publisher>.<ext>-<version>/skills/<skill>/` |
-| Plugin output      | `plugins/<collection>/skills/<skill>/`                             |
+| Plugin output      | `plugins/<package>/skills/<skill>/`                                |
 
 The `.github/` directory does not exist in any distributed context. All file references and script paths within a skill must be relative to the skill root, never repo-root-relative.
 
-* Use `./scripts/<script-name>.sh` instead of `./.github/skills/<collection>/<skill>/scripts/<script-name>.sh`
-* Use `references/<reference-name>.md` instead of `.github/skills/<collection>/<skill>/references/<reference-name>.md`
+* Use `./scripts/<script-name>.sh` instead of `./.github/skills/<package>/<skill>/scripts/<script-name>.sh`
+* Use `references/<reference-name>.md` instead of `.github/skills/<package>/<skill>/references/<reference-name>.md`
 * From files in subdirectories (such as `references/`), use `../scripts/` to reach sibling directories
 
 This rule applies to all files in the skill: SKILL.md, reference documents, assets, and code examples in documentation. Repo-root-relative paths break portability and will fail validation.
@@ -588,7 +602,13 @@ npm run lint:md               # Validate markdown formatting
 npm run validate:skills       # Validate skill directory structure
 npm run test:ps               # Run PowerShell unit tests
 npm run docs:test             # Validate Docusaurus artifact counts
+npm run docs:generate         # Scaffold reference page under docs/reference/skills/ (new skills)
+npm run lint:asset-docs       # Validate asset reference pages and AUTO-GENERATED regions
 ```
+
+When a skill contains `SECURITY.md`, `npm run validate:skills` also enforces its
+canonical heading structure: trust buckets use `## Bucket Bn` headings, and STRIDE
+categories plus Risk Rating use H3 headings.
 
 All checks **MUST** pass before merge.
 

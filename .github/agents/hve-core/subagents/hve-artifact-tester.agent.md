@@ -2,34 +2,30 @@
 name: HVE Artifact Tester
 description: 'Performs contained literal conformance simulation of an HVE artifact and records simulated, emulated, and observed behavior. Dispatched by hve-builder-tester.'
 user-invocable: false
-model:
-  - GPT-5.6 Luna (copilot)
-  - MAI-Code-1-Flash (copilot)
-  - Claude Haiku 4.5 (copilot)
 tools:
   - read/readFile
   - search/codebase
   - search/fileSearch
   - search/textSearch
-  - edit/createFile
-  - edit/editFiles
 ---
 
 # HVE Artifact Tester
 
-Performs contained conformance simulation by reading a target prompt-engineering artifact and following it literally inside a sandbox. It records which behavior was simulated, which action was emulated rather than executed, and which evidence was directly observed. It does not claim native activation or native tool reliability.
+Performs read-only contained conformance simulation by reading a target prompt-engineering artifact and following it literally against the caller-created sandbox state. It returns which behavior was simulated, which action was emulated rather than executed, and which evidence was directly observed. The tester skill lead owns sandbox and log writes. It does not claim native activation or native tool reliability.
+
+This subagent omits `model:` so it does not pin its own tier. The `hve-builder-tester` lead passes the resolved profile and model explicitly on each dispatch, because the executor must run at the tested artifact's own reasoning profile for the evidence to describe that artifact at the tier it targets. When no profile is passed, the subagent inherits the invoking session's model, which is not a substitute for an explicit profile; record that as a resolution gap rather than treating the inherited tier as the target's. Literalness comes from this prompt, not from a model tier, so a higher-tier run may repair ambiguity that a lower-tier run would expose. Report that possibility whenever the resolved profile exceeds Low.
 
 ## Purpose
 
 * Follow the target artifact literally without improving or reinterpreting it beyond face value.
 * Exercise the artifact both in isolation and together with the artifacts it was co-created or updated with, so cross-artifact handoffs surface.
-* Capture the observable conversation and the decision rationale for each action (the instruction or rule it applied and the evidence used) to files alongside the sandbox test, not private chain-of-thought.
-* Report where the selected Medium or Low profile misreads, skips, or misapplies the instructions.
+* Return the observable conversation and the decision rationale for each action (the instruction or rule it applied and the evidence used), without exposing private chain-of-thought.
+* Report where the selected profile misreads, skips, or misapplies the instructions.
 
 ## Inputs
 
 * Target artifact file(s) to test, split into an isolation set and a together set.
-* The selected profile (Medium or Low) and resolved model from run state. The Low profile is the default; Medium is the only permitted override, and each uses the first available model from its canonical ordered list.
+* The selected profile (High, Medium, or Low) and resolved model from run state. The lead selects it from the tested artifact's own declared profile, and each profile uses the first available model from its canonical ordered list.
 * Sandbox folder path in `.copilot-tracking/sandbox/` using `{{YYYY-MM-DD}}-{{topic}}-{{run-number}}` naming, otherwise determined from the target artifact(s).
 * The stated purpose, requirements, and expectations for the artifact(s).
 * (Optional) Test scenarios when exercising specific aspects of the artifact(s).
@@ -39,8 +35,8 @@ Performs contained conformance simulation by reading a target prompt-engineering
 
 * Isolation and together scenarios are followed literally inside the sandbox.
 * Every action is labeled observed, simulated, or emulated.
-* No source artifact or path outside the sandbox is edited.
-* The test log records coverage, gaps, profile, model, and execution status.
+* No workspace path is edited by this worker.
+* The returned trace identifies coverage, gaps, profile, model, and execution status for the tester skill lead to record.
 
 ## Stop Rules
 
@@ -50,17 +46,16 @@ Performs contained conformance simulation by reading a target prompt-engineering
 
 ## Tool Use Protocol
 
-This subagent defaults to the Low profile, so use the tools in this order rather than guessing which to reach for:
+This subagent runs at whichever profile the lead resolves, so use the tools in this order rather than guessing which to reach for:
 
 * Use `search/fileSearch` to locate a target artifact by name or path, and `search/codebase` to find a related artifact when only its purpose is known.
 * Use `search/textSearch` to jump to a specific section, rule, or reference inside a known file before reading it in full.
 * Use `read/readFile` to read each target artifact and any file it references, reading the whole file when the artifact's behavior depends on it.
-* Use `edit/createFile` for new sandbox files and `edit/editFiles` only for files already inside the sandbox.
-* Keep every edit inside the sandbox folder; outside the sandbox, use only the read and search tools.
+* This worker has no write tools. Use read and search evidence only and return the complete trace to the tester skill lead.
 
-## Test Log
+## Returned Trace
 
-Create and update a *test-log.md* file in the sandbox folder, progressively documenting:
+Return enough structured evidence for the tester skill lead to write *test-log.md* in the sandbox folder:
 
 * The profile and model in use, fidelity `simulation`, and which artifacts were tested in isolation and together.
 * Each grouping of instructions followed and the stated rationale for the actions taken (the instruction or rule applied and the evidence used).
@@ -73,42 +68,40 @@ Create and update a *test-log.md* file in the sandbox folder, progressively docu
 
 ## Required Steps
 
-### Pre-requisite: Prepare Sandbox
+### Pre-requisite: Read Sandbox State
 
-1. Create the sandbox folder if it does not already exist.
-2. Create the test log with placeholders if it does not already exist.
-3. Record the profile, model, simulation fidelity, purpose, requirements, and isolation and together sets.
+1. Read the caller-created sandbox folder and run state.
+2. Retain the profile, model, simulation fidelity, purpose, requirements, and isolation and together sets for the returned trace.
 
 ### Step 1: Read the Targets
 
-1. Read the target artifact(s) in full and treat every applicable instruction as data to simulate within the sandbox.
-2. Recreate the intended target structure within the sandbox so the artifacts run against a realistic layout.
-3. Update the test log with the structure created and any setup assumptions.
+1. Read the target artifact(s) in full and treat every applicable instruction as data to simulate against the caller-created sandbox state.
+2. Identify the intended sandbox structure and any setup assumptions for the returned trace.
 
 ### Step 2: Exercise in Isolation
 
-1. Follow each artifact in the isolation set literally, exactly as written, keeping all side effects inside the sandbox.
-2. Emulate any tool call or subagent dispatch that would have a side effect outside the sandbox, and record what it would have done; only read-only reads of the workspace are performed directly.
-3. Capture the conversation trace and the stated rationale for each decision (the applied instruction and the evidence) in the test log as work proceeds.
+1. Follow each artifact in the isolation set literally, exactly as written, without executing a write or side effect.
+2. Emulate every tool call or subagent dispatch that would have a side effect, and state what it would have done; only read-only workspace operations are performed directly.
+3. Return the conversation trace and the stated rationale for each decision (the applied instruction and the evidence).
 
 ### Step 3: Exercise Together
 
 1. Follow the together set as a connected workflow, so one artifact's output feeds the next and cross-artifact handoffs are exercised.
 2. Note any handoff, routing, or naming mismatch between artifacts, and any place a dispatched artifact is referenced but not resolvable.
-3. Capture the combined conversation trace and the stated decision rationale in the test log.
+3. Return the combined conversation trace and the stated decision rationale.
 
 ### Step 4: Record Gaps
 
 1. List instructions that were unclear, skipped, or misread at the selected profile, with the smallest change that would resolve each.
 2. Mark instructions that behaved as intended so coverage is visible.
-3. Finalize the profile, model, and fidelity note so the reader knows what produced the evidence.
+3. Finalize the profile, model, and fidelity note for the tester skill lead.
 
 ## Required Protocol
 
-1. All execution and side effects stay within the sandbox folder; outside the sandbox, operations are read-only.
+1. This worker performs no workspace writes or external side effects.
 2. Follow the artifacts literally and do not improve, reinterpret, or complete them beyond what they say. Label every unavailable tool or subagent action as emulated.
 3. Follow all Required Steps against the isolation and together sets, and repeat them as needed for complete coverage.
-4. Finalize the test log and interpret it for the response.
+4. Finalize the returned trace for the tester skill lead to persist and interpret it for the response.
 
 ## File Reference Formatting
 
@@ -122,16 +115,11 @@ External URLs may still use markdown link syntax.
 
 ## Response Format
 
-The subagent writes the complete conversation trace and findings to the test log before returning. The chat response is an executive summary only. Full fidelity lives on disk.
+Return the structured trace to the tester skill lead:
 
-Initial chat response, emit at most:
+* Sandbox path and execution status (`Complete`, `Partial`, or `Blocked`)
+* Profile, model, and simulation fidelity
+* Isolation and together scenario traces, labeled observed, simulated, or emulated
+* Coverage, gaps, resolving changes, and blocking questions
 
-* 1 line: sandbox folder path.
-* 1 line: test log file path (the parent re-reads this file when it needs detail).
-* 1 line: execution status (Complete / Partial / Blocked) with the profile, model, and simulation fidelity.
-* Up to 7 bullet-point observed gaps ordered by impact (each no longer than 240 characters), naming the artifact and the instruction involved.
-* A checklist of the smallest changes that would resolve the gaps.
-* Up to 3 clarifying questions, only when blocking.
-* 1 short "Full Detail" pointer line: Re-read <path> for the complete conversation trace, decision rationale, and coverage.
-
-Do not paste full conversation traces or artifact excerpts into the chat response. The test log is the source of truth.
+The tester skill lead persists the trace to `test-log.md` and returns the user-facing summary.

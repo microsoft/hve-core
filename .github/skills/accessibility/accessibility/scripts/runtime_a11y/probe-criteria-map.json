@@ -272,6 +272,27 @@
         { "criterionId": "2.4.2", "framework": "wcag-22", "states": ["default"] },
         { "criterionId": "3.1.1", "framework": "wcag-22", "states": ["default"] }
       ]
+    },
+    {
+      "probeId": "probe-virtual-sr",
+      "decides": [
+        { "criterionId": "4.1.2", "framework": "wcag-22", "states": ["default", "focus", "open", "error", "empty"] }
+      ],
+      "informs": [
+        { "criterionId": "1.3.1", "framework": "wcag-22", "states": ["default", "focus", "open", "error", "empty"] },
+        { "criterionId": "APG:widget-semantics", "framework": "aria-apg", "states": ["default", "focus", "open", "error", "empty"] }
+      ]
+    },
+    {
+      "probeId": "probe-real-sr",
+      "decides": [
+        { "criterionId": "4.1.2", "framework": "wcag-22", "states": ["default", "focus", "open", "error", "empty"] },
+        { "criterionId": "4.1.3", "framework": "wcag-22", "states": ["default", "error", "open"] }
+      ],
+      "informs": [
+        { "criterionId": "1.3.1", "framework": "wcag-22", "states": ["default", "focus", "open", "error", "empty"] },
+        { "criterionId": "APG:widget-semantics", "framework": "aria-apg", "states": ["default", "focus", "open", "error", "empty"] }
+      ]
     }
   ]
 }

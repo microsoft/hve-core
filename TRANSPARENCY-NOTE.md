@@ -1,8 +1,8 @@
 ---
-title: "Transparency Note: HVE Core (May 2026)"
+title: "Transparency Note: HVE Core"
 description: "Public Transparency Note for HVE Core, a prompt-engineering and agentic-customization framework distributed by microsoft/hve-core."
 author: HVE Core Maintainers
-ms.date: 2026-07-09
+ms.date: 2026-08-19
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -20,7 +20,7 @@ This note covers HVE Core: the files in the `microsoft/hve-core` repository. It 
 
 ## The basics of HVE Core
 
-HVE Core is a collection of text files and supporting tools that shape how GitHub Copilot behaves. It ships custom agents, prompts, instructions, skills, collections, PowerShell scripts, GitHub Actions workflows, and a Visual Studio Code extension. The point is to give engineering teams a ready-made, review-friendly starting point for AI-assisted software work.
+HVE Core is a collection of text files and supporting tools that shape how GitHub Copilot behaves. It ships custom agents, prompts, instructions, skills, PowerShell scripts, GitHub Actions workflows, and one complete Visual Studio Code extension and Copilot plugin identity. The point is to give engineering teams a ready-made, review-friendly starting point for AI-assisted software work.
 
 HVE Core does not run any AI model itself. It does not train models, host inference, call external services while you use it, or process personal data on its own. All of the AI work happens on the host platform (Copilot Chat or the Copilot CLI). That leaves three areas where HVE Core still carries Responsible AI weight:
 
@@ -34,12 +34,12 @@ The appendices at the end add detail for the agents that most influence downstre
 
 | Term                 | Meaning in HVE Core                                                                                                                                                      |
 |----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Artifact             | A file HVE Core ships: an agent, prompt, instruction, skill, collection, script, or workflow. Other tools read these files; the files do not run on their own.           |
+| Artifact             | A file HVE Core ships: an agent, prompt, instruction, skill, script, or workflow. Other tools read these files; the files do not run on their own.                       |
 | Custom agent         | A persona (`*.agent.md`) that Copilot Chat can take on to run a specialized workflow. An agent can call subagents and use instructions, prompts, and skills.             |
 | Prompt               | A reusable user-message template (`*.prompt.md`) you load into a Copilot Chat or CLI session.                                                                            |
 | Instructions         | Guidance (`*.instructions.md`) that shapes how the model responds for a given file type, language, or workflow.                                                          |
 | Skill                | A self-contained capability package (`SKILL.md` plus optional scripts and references) that documents a reusable task.                                                    |
-| Collection           | A bundle of files (`*.collection.yml` plus a description) that you can install as one unit.                                                                              |
+| Marketplace identity | The complete `hve-core` bundle declared in `.github/plugin/marketplace.json` and distributed as one plugin or extension identity.                                        |
 | Subagent             | An agent that another agent calls for a focused task, such as a read-only researcher or a single implementation step.                                                    |
 | Distribution channel | One of the ways HVE Core files reach you: the VS Code extension, the GitHub plugin marketplace, a direct git clone, or a copy placed in a customer repository.           |
 | Host platform        | The Copilot surface that runs the model: GitHub Copilot Chat in Visual Studio Code, or the GitHub Copilot CLI. HVE Core does not include or replace it.                  |
@@ -56,14 +56,27 @@ HVE Core ships text files and supporting tools. When you load an HVE Core file i
 2. You work with the host's model, now shaped by the file's instructions.
 3. The model's replies come back through the normal Copilot surface.
 
-HVE Core has no model, no API, and no network calls while you author or install it. It ships one optional local telemetry hook that is disabled by default and, when you turn it on, records Copilot session lifecycle events to plaintext files on your own disk with no network egress.
-The processed event stream stores derived signals (such as tool-input key names and a truncated prompt preview) rather than full payloads; a separate, explicit opt-in is required before any verbatim prompt or tool input is captured. See the [Local Telemetry guide](docs/customization/local-telemetry.md) for exactly what is captured and how to disable or remove it.
+HVE Core has no model, no API, and no network calls while you author or install it. It ships no telemetry collector that runs on your machine by default. Optional OpenTelemetry export is a Copilot Chat feature you configure yourself, and the `copilot-otel-metrics` skill only generates the settings, local stack, and infrastructure templates you choose to apply. Nothing is collected until you enable that export and run a receiver you control.
 Validation tools (linters, frontmatter checks, Pester tests, plugin generation) run in CI on pull requests. Nothing runs on your machine unless you install the VS Code extension or run a packaged script yourself.
+
+#### If you used the retired telemetry hook
+
+HVE Core previously shipped a session hook that wrote local telemetry on your machine. It has been removed, and the opt-in `copilot-otel-metrics` skill replaces it. Removing the hook stops new writes; it does not delete anything already written, and nothing in HVE Core will delete it for you. Four kinds of artifact are left behind, and you decide what happens to each.
+
+| What was left behind        | Where it is                                                                                                                          | What to do                                                                                                                                                                                         |
+|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Per-project telemetry store | `<repo>/.copilot-tracking/telemetry`, or the directory named by `HVE_TELEMETRY_DIR`                                                  | Holds `sessions-*.jsonl`, `.stacks/`, and `report.generated.html`. Delete the directory when you no longer want the history. It is gitignored, so it was never published, but it is still on disk. |
+| Raw captures                | `raw-input.jsonl` in that same directory                                                                                             | This is the unprocessed capture and the most sensitive of the four. Delete it first if you are triaging.                                                                                           |
+| Cross-project registry      | `~/.hve/telemetry-dirs`, or `$HVE_HOME/telemetry-dirs`; older installs also have `telemetry-dirs.txt`                                | A list of every project directory the hook wrote to. Read it to find stores you have forgotten, then delete it.                                                                                    |
+| Generated launchers         | `~/.hve/generate-report.sh`, `generate-report.ps1`, `clean-telemetry.sh`, `clean-telemetry.ps1`, plus `~/.hve/report.generated.html` | The hook regenerated these each session and will no longer do so. They now point at scripts that are gone, so they fail rather than run. Delete them.                                              |
+
+The cleanup scripts that used to remove these were part of the hook and were removed with it. If you want the registry-driven sweep, take a copy of `.github/hooks/shared/telemetry/` from a tag before the retirement, run it once, and then discard it. Otherwise delete the paths above by hand; they are ordinary files and directories.
 
 Most skills are pure authoring or validation helpers with no independent Responsible AI surface and are not called out individually. A few skills warrant specific mention because they assemble media outputs or depend on external services:
 
 * The **Customer Card Render** skill assembles synthetic-persona slides from authored Design Thinking content through a template-driven PowerPoint pipeline; HVE Core has no image-generation model. When concept imagery is needed, the workflow emits prompts the operator runs on an external platform such as M365 Copilot, where the host's Responsible AI layers apply. The cards stay low-fidelity and carry disclosure, redaction, and stereotyping-review controls. See Appendix 5.
-* The **PowerPoint Builder** and **TTS Voice-over** experimental skills turn authored YAML into slides and audio. They do not create likenesses of people or claim to be a real speaker; they assemble content that was written elsewhere. The TTS Voice-over skill depends on an external speech service (such as Azure Speech) that you provision and govern under its own subscription and terms.
+* The **PowerPoint**, **TTS Voice-over**, **Video to GIF**, and **VS Code Playwright** skills provide advanced media and rendering capabilities. They are included in the complete manifest on both Stable and PreRelease.
+  PowerPoint and TTS Voice-over turn authored YAML into slides and audio. They do not create likenesses of people or claim to be a real speaker; they assemble content that was written elsewhere. TTS Voice-over depends on an external speech service (such as Azure Speech) that you provision and govern under its own subscription and terms.
 
 #### Responsibility boundary
 
@@ -110,7 +123,7 @@ Legal and regulatory considerations. Organizations need to evaluate potential sp
 HVE Core is a set of files that depends on a downstream AI platform. That shapes its limits:
 
 * **Inherits the downstream model's inherent properties.** Every HVE Core output is produced by a host-platform model, so it inherits that model's inherent properties: the model will sometimes fail, is not neutral, and is not bias-free. HVE Core cannot detect or correct these properties and adds no safety layer of its own.
-* **No model of its own.** HVE Core cannot check what a model actually produces from its instructions. File quality is verified through linting, frontmatter checks, link checking, plugin-generation gates, and human pull-request review. Whether the output fits a given model and prompt depends on the host platform.
+* **No model of its own.** HVE Core cannot check what a model actually produces from its instructions. File quality is verified through linting, frontmatter checks, link checking, plugin-manifest gates, and human pull-request review. Whether the output fits a given model and prompt depends on the host platform.
 * **Behavior depends on the host.** Different Copilot Chat versions, model choices, and VS Code extensions can produce very different results from the same file. HVE Core does not pin the model and cannot guarantee the same behavior across hosts.
 * **No built-in safety filtering.** HVE Core relies entirely on the host platform's safety stack (input and output classifiers, jailbreak detection, content filters, abuse monitoring). It adds none of its own.
 * **Saved memory is controlled by the host.** Some agents write to the host's memory layer (user, session, or repository scope). HVE Core writes the notes; the host owns retention, scope isolation, redaction, and access. Follow the host's guidance to inspect and clear memory.
@@ -122,7 +135,7 @@ HVE Core is a set of files that depends on a downstream AI platform. That shapes
 
 Some prior gaps that are now being addressed:
 
-* **AI-disclosure.** A central disclaimer source (`.github/config/disclaimers.yml`) and a CI validation script now define and check the required disclaimer text for planner artifacts. Applying consistent AI-attribution markers across every artifact type is still being standardized.
+* **AI-disclosure.** A central disclaimer source (`.github/instructions/shared/disclaimer-language.instructions.md`) and a CI validation script now define and check the required disclaimer text for planner artifacts. Applying consistent AI-attribution markers across every artifact type is still being standardized.
 * **Accessibility.** Accessibility planning instructions are now part of the repository, giving teams a structured way to run accessibility assessments. A baseline accessibility audit of HVE Core's own documentation and rendered output is still pending.
 * **Telemetry.** A telemetry-foundations skill with a built-in PII denylist is now available to standardize how adopters instrument their own use. A published re-assessment cadence is still pending.
 * **Prompt injection.** The ADR Creator agent treats untrusted input (web content, templates, handoff payloads) as data rather than instructions and scans content before producing output. Extending this pattern across all agents is still in progress.
@@ -134,9 +147,9 @@ For a set of files, "performance" is not a model-accuracy score. It is how well 
 Quality rests on a few things:
 
 * **CI checks on every pull request.** Markdown linting, frontmatter validation, model-reference checks, link checking, PowerShell and Python linting, YAML validation, collection-metadata and marketplace validation, dependency-pinning and action-version checks, copyright-header checks, and skill-structure validation all run on each pull request and block merge on failure.
-* **Plugin-generation gate.** Collection manifests are regenerated from source on every change; a mismatch with the generated `plugins/` outputs blocks merge.
+* **Plugin-manifest gate.** The complete root `plugin.json` membership is derived from tracked distributable `.github` source paths; missing or untracked root metadata, drift, invalid locator metadata, or escaping or absent component paths block merge.
 * **Human review.** Every file change needs human review. Supply-chain and dependency checks surface to reviewers.
-* **Phase-gated releases.** Artifacts move through experimental, prerelease, and stable maturity stages, giving natural points for deeper human review before broad adoption. Releases follow `release-please` conventional-commit rules with a CHANGELOG, and the VS Code extension carries version metadata you can pin against.
+* **Manifest parity and release review.** Stable and PreRelease ship the same complete plugin manifest. Stable release review happens through promotion of a reviewed PreRelease tree into `release/stable`; channel selection changes release cadence and assurance rather than component membership.
 * **Feedback channel.** GitHub issues on `microsoft/hve-core` are the main place for bugs, requests, and concerns.
 
 HVE Core does not measure performance against a specific model. If you need reproducible behavior, pin both the file version and the host configuration.
@@ -144,7 +157,7 @@ HVE Core does not measure performance against a specific model. If you need repr
 ### Getting the best results
 
 * **Pin to a release tag.** Treat the main branch as a moving target. For anything production-relevant, pin to a release tag and review changes before upgrading.
-* **Adopt one collection at a time.** HVE Core ships several collections (see the `collections/` manifests for the current set), and most teams do not need all of them. Start with the one closest to your work and grow from there.
+* **Choose a managed or selective footprint.** The extension and plugin contain the same complete distributable component set. Teams that need fewer repository-owned files can use the included installer skill's complete or custom selection across agents, prompts, instructions, and whole skill directories. The installer preserves repository-relative paths and records schema version 2.
 * **Read an agent's description before loading it.** Each agent file documents its purpose, inputs, outputs, and limits. Skipping this is the most common cause of surprises.
 * **Treat decision-shaping output as a draft.** Planning agents, code-review agents that gate pull requests, and customer-handoff agents produce drafts. Do not turn a draft into a binding decision without qualified human review.
 * **Check saved memory before sharing a workspace.** Agents that write to the memory layer carry context across sessions. Inspect and clear it through the host's controls before sharing a workspace, screenshot, or recording.
@@ -173,7 +186,7 @@ Fairness and representational considerations:
 
 HVE Core is engineering tooling, not a managed service. At integration time, three things are still the responsibility of the HVE Core user:
 
-* **Pick the right scope.** Coding-standards collections suit day-to-day engineering work. Planning collections (RAI, Security, SSSC) support governance work but still need qualified human reviewers. The experimental collection ships features that are deliberately less mature.
+* **Pick the right capabilities.** Coding instructions support day-to-day engineering work. RAI, Security, and SSSC planning tools support governance work but still need qualified human reviewers. Components labeled `experimental` are included for transparent evaluation and may change significantly; their presence in Stable is not a claim of fitness for a specific use.
 * **Check the host platform.** Current GitHub Copilot Chat in VS Code or the GitHub Copilot CLI are the supported hosts. Other clients are not characterized.
 * **Set up your own oversight.** Agents do not commit code, file work items, or send messages on their own without operator confirmation. Keep that confirmation step, and keep code-review gates on any agent-authored change to source, configuration, infrastructure, or workflows.
 
@@ -286,9 +299,9 @@ Outputs from HVE Core agents and skills are advisory. They do not constitute leg
 |---------------|-------------------------------|
 | System        | HVE Core (microsoft/hve-core) |
 | Document type | Transparency Note             |
-| Cycle         | May 2026                      |
+| Cycle         | August 2026                   |
 | Published     | 2026-06-11                    |
-| Last updated  | 2026-06-11                    |
+| Last updated  | 2026-08-02                    |
 
 © 2026 Microsoft Corporation. All rights reserved. This document is provided "as-is" and for informational purposes only. Information and views expressed in this document, including URL and other Internet Web site references, may change without notice. You bear the risk of using it. Some examples are for illustration only and are fictitious. No real association is intended or inferred.
 
@@ -296,7 +309,7 @@ This document is not intended to be, and should not be construed as providing, l
 
 Consult a legal specialist if you are uncertain about laws or regulations that might apply to your system, especially if you think those might impact these recommendations. Be aware that not all of these recommendations and resources will be appropriate for every scenario, and conversely, these recommendations and resources may be insufficient for some scenarios.
 
-Published: 2026-06-11
+Published: 2026-06-11; last updated: 2026-08-02
 
 Last updated: 2026-06-11
 

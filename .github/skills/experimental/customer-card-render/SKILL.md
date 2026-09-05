@@ -6,7 +6,7 @@ compatibility: 'Requires Python 3.11+, uv, and the experimental powerpoint skill
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-04-21"
+  last_updated: "2026-08-10"
 ---
 
 # Customer Card Render Skill
@@ -20,10 +20,10 @@ This skill is a sibling to the experimental powerpoint skill. It handles the Des
 Keeping these concerns separate means:
 
 * Customer-card mapping logic stays independent from general PowerPoint capabilities.
-* The skill can be included in collections independently.
+* The skill can be included in packages independently.
 * Layout primitives, `Invoke-PptxPipeline.ps1`, theming, and validation behavior are not reimplemented here.
 
-For full PowerPoint pipeline documentation, see [powerpoint/SKILL.md](../powerpoint/SKILL.md).
+For full PowerPoint pipeline documentation, activate the `powerpoint` skill by name. When it does not resolve, warn the user that the pipeline documentation and build behavior are unavailable and stop rather than reimplementing them here.
 
 ## Prerequisites
 
@@ -41,7 +41,7 @@ For full PowerPoint pipeline documentation, see [powerpoint/SKILL.md](../powerpo
   pip install uv
   ```
 
-* The experimental `powerpoint` skill at `.github/skills/experimental/powerpoint/` for the `Invoke-PptxPipeline.ps1` build step
+* The experimental `powerpoint` skill, activated by name, for the `Invoke-PptxPipeline.ps1` build step. When it does not resolve, warn the user that the build step is unavailable and stop.
 
 ## Directory Structure
 
@@ -77,15 +77,16 @@ For full PowerPoint pipeline documentation, see [powerpoint/SKILL.md](../powerpo
 | Use Case          | **4 slides** (see below) |
 | Persona           | Single slide             |
 
-### Use Case 3-Slide Layout
+### Use Case 4-Slide Layout
 
-Each Use Case expands into 3 consecutive slides with distinct sections:
+Each Use Case expands into 4 consecutive slides with distinct sections:
 
-| Slide       | Content                                                                                |
-|-------------|----------------------------------------------------------------------------------------|
-| **Slide 1** | Use Case Description, Use Case Overview, Business Value, Primary User                  |
-| **Slide 2** | Secondary User, Preconditions, Steps, Data Requirements                                |
-| **Slide 3** | Equipment Requirements, Operating Environment, Success Criteria, Pain Points, Evidence |
+| Slide       | Content                                                                      |
+|-------------|------------------------------------------------------------------------------|
+| **Slide 1** | Use Case Description, Use Case Overview, Business Value, Primary User        |
+| **Slide 2** | Secondary User, Preconditions, Steps, Data Requirements                      |
+| **Slide 3** | Equipment Requirements, Operating Environment, Success Criteria, Pain Points |
+| **Slide 4** | Extensions, Evidence                                                         |
 
 Cards are ordered by artifact type (Vision → Problem → Scenario → Use Case → Persona), then alphabetically by title within each type. Use Cases appear with all 4 slides consecutive (Slide N, N+1, N+2, N+3).
 
@@ -107,20 +108,19 @@ python .github/skills/experimental/customer-card-render/scripts/generate_cards.p
 | `--output-dir`    | No       | `<skill-root>/scripts/content` | Directory to write generated `content.yaml` files |
 | `-v`, `--verbose` | No       | —                              | Enable debug-level logging                        |
 
-The script reads each markdown file in `--canonical-dir`, detects the artifact type from frontmatter, extracts required sections, and generates `content.yaml` files. Vision, Problem, Scenario, and Persona artifacts produce one slide each. Use Case artifacts produce 3 consecutive slides per use case.
+The script reads each markdown file in `--canonical-dir`, detects the artifact type from frontmatter, extracts required sections, and generates `content.yaml` files. Vision, Problem, Scenario, and Persona artifacts produce one slide each. Use Case artifacts produce 4 consecutive slides per use case.
 
-For the section-to-field mapping contract and Use Case 3-slide layout details, see [references/mapping-spec.md](references/mapping-spec.md).
+For the section-to-field mapping contract and Use Case 4-slide layout details, see [references/mapping-spec.md](references/mapping-spec.md).
 
 ### Step 2: Build PPTX using the PowerPoint skill pipeline
 
-```powershell
-./.github/skills/experimental/powerpoint/scripts/Invoke-PptxPipeline.ps1 -Action Build `
-  -ContentDir .copilot-tracking/dt/<project-slug>/render/content `
-  -StylePath .copilot-tracking/dt/<project-slug>/render/content/global/style.yaml `
-  -OutputPath .copilot-tracking/dt/<project-slug>/render/output/customer-cards.pptx
-```
+Activate the `powerpoint` skill by name and hand it the build, supplying these three inputs:
 
-The PowerShell orchestrator manages virtual environment setup and dependency installation automatically via `uv sync`. See [powerpoint/SKILL.md](../powerpoint/SKILL.md) for the full `Invoke-PptxPipeline.ps1` parameter reference, template usage, validation, and export options.
+* Content directory: `.copilot-tracking/dt/<project-slug>/render/content`
+* Style path: `.copilot-tracking/dt/<project-slug>/render/content/global/style.yaml`
+* Output path: `.copilot-tracking/dt/<project-slug>/render/output/customer-cards.pptx`
+
+The `powerpoint` skill owns the `Invoke-PptxPipeline.ps1` orchestrator, its parameter reference, template usage, validation, and export options, and it manages virtual environment setup and dependency installation automatically via `uv sync`. When that skill is unavailable, warn the user that the build step cannot run and stop rather than invoking the pipeline from a guessed location.
 
 ## DT Coach Integration
 
@@ -152,11 +152,11 @@ For complete mapping details, see [references/mapping-spec.md](references/mappin
 
 ## Troubleshooting
 
-| Issue                           | Cause                                      | Solution                                                                                 |
-|---------------------------------|--------------------------------------------|------------------------------------------------------------------------------------------|
-| `uv` not found                  | uv not installed                           | Run `curl -LsSf https://astral.sh/uv/install.sh \| sh` (macOS/Linux) or `pip install uv` |
-| Python not found by uv          | No Python 3.11+ on PATH                    | Run `uv python install 3.11`                                                             |
-| Template not found              | `--canonical-dir` contains unknown type    | Check frontmatter `type:` field against supported artifact types                         |
-| Empty output directory          | No canonical markdown files found          | Confirm `--canonical-dir` path and that files have `---` frontmatter                     |
-| PPTX build fails after generate | PowerPoint skill missing or path incorrect | Confirm `powerpoint/` skill exists at `.github/skills/experimental/powerpoint/`          |
+| Issue                           | Cause                                     | Solution                                                                                                                 |
+|---------------------------------|-------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| `uv` not found                  | uv not installed                          | Run `curl -LsSf https://astral.sh/uv/install.sh \| sh` (macOS/Linux) or `pip install uv`                                 |
+| Python not found by uv          | No Python 3.11+ on PATH                   | Run `uv python install 3.11`                                                                                             |
+| Template not found              | `--canonical-dir` contains unknown type   | Check frontmatter `type:` field against supported artifact types                                                         |
+| Empty output directory          | No canonical markdown files found         | Confirm `--canonical-dir` path and that files have `---` frontmatter                                                     |
+| PPTX build fails after generate | PowerPoint skill missing or not activated | Activate the `powerpoint` skill by name. When its content does not arrive, stop and report the build step as unavailable |
 

@@ -1,23 +1,29 @@
 ---
 title: hve-core-installer
-description: "Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and agent customization"
+description: "Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and selective component installation"
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - installer
+  - hve-core-installer
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                         |
-|-------------|-----------------------------------------------|
-| Kind        | skill                                         |
-| Source      | `.github/skills/installer/hve-core-installer` |
-| Invocation  | Loaded on demand by referencing agents        |
-| Interactive | No                                            |
+| Field       | Value                                                                                |
+|-------------|--------------------------------------------------------------------------------------|
+| Kind        | skill                                                                                |
+| Source      | `.github/skills/installer/hve-core-installer`                                        |
+| Invocation  | Invoked directly as `/hve-core-installer`, or loaded on demand by referencing agents |
+| Interactive | No                                                                                   |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and agent customization
+Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and selective component installation
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

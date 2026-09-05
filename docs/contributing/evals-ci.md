@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-06-29
+ms.date: 2026-08-21
 ms.topic: how-to
 keywords:
   - evals
@@ -38,7 +38,9 @@ The `@github/copilot` CLI accepts the following token prefixes. Classic personal
 | `ghp_`         | Classic personal access token      | Rejected at runtime. The probe fails fast      |
 | `GITHUB_TOKEN` | Actions-issued token               | Scope-limited. Not sufficient for `vally eval` |
 
-For hve-core, the recommended pattern is a GitHub App with Copilot SDK scopes that mints an installation token in CI and exports it as `COPILOT_GITHUB_TOKEN`.
+A GitHub App that mints an installation token in CI is the preferred target state, because a leaked installation token expires in about an hour rather than remaining valid until someone notices.
+
+hve-core has not adopted that pattern for this credential. `COPILOT_GITHUB_TOKEN` is currently a fine-grained personal access token held as a repository secret, which the table above rates as acceptable where a GitHub App is not feasible. Adopting a GitHub App here requires first confirming that an App can carry the Copilot SDK scopes the CLI needs.
 
 ### Probe Behavior
 
@@ -80,6 +82,21 @@ The `eval-execute` job is also skipped for non-eval-relevant PRs (those that cha
 
 The `eval-presence` and `eval-lint` jobs do run on fork PRs because they require no secrets. Structural problems with eval specs (missing coverage, schema violations, profanity in stimulus text) surface immediately. Eval execution itself runs only after a maintainer merges the fork branch into a trusted topic branch on the upstream repository.
 
+## Published Artifacts and the Transcript Boundary
+
+Workflow artifacts on a public repository are readable by anyone, and an agent transcript records whatever the agent printed. An agent asked to inspect the workspace can print the job environment, and the eval jobs export `COPILOT_GITHUB_TOKEN` into that environment. Nothing in the pipeline redacts transcripts.
+
+Eval artifacts therefore publish aggregate results only. These paths are deliberately withheld:
+
+| Withheld path                    | Reason                                             |
+|----------------------------------|----------------------------------------------------|
+| `evals/results/**/results.jsonl` | Per-trial trajectories, including raw model output |
+| `logs/vally-compare-*.log`       | Raw judge-run output                               |
+
+What is still published covers the summaries that drive the gate and the per-artifact debugging payloads: `logs/eval-summary.json`, `logs/eval-results-*.json`, `logs/baseline-equivalence-*.json`, and the changed-artifact and stimulus-presence manifests. None of these embed model output.
+
+The cost is that inspecting what an agent actually said during a failed run means re-running it rather than downloading the artifact. Do not re-add the withheld paths to make debugging easier.
+
 ## Adding a New Eval Spec
 
 When you add or modify an AI artifact under `.github/agents/`, `.github/prompts/`, `.github/instructions/`, or `.github/skills/`, the `eval-presence` job fails the PR until a matching eval spec exists.
@@ -87,7 +104,7 @@ When you add or modify an AI artifact under `.github/agents/`, `.github/prompts/
 Steps to add coverage:
 
 1. Create an eval spec under `evals/` that follows the structure documented in `evals/README.md`.
-2. Add a `stimuli[].tags.<kind>` backlink whose value is the artifact slug, where `<kind>` is one of `agent`, `prompt`, `instruction`, or `skill`, and the slug is the artifact basename minus its `.agent.md`, `.prompt.md`, `.instructions.md`, or `SKILL.md` suffix (for example, `tags: {agent: researcher-subagent}` for `.github/agents/coding-standards/researcher-subagent.agent.md`).
+2. Add a `stimuli[].tags.<kind>` backlink whose value is the artifact slug, where `<kind>` is one of `agent`, `prompt`, `instruction`, or `skill`, and the slug is the artifact basename minus its `.agent.md`, `.prompt.md`, `.instructions.md`, or `SKILL.md` suffix (for example, `tags: {agent: code-review-functional}` for `.github/agents/coding-standards/subagents/code-review-functional.agent.md`).
 3. Ensure the spec declares an executor compatible with the `vally` CLI (typically the `CopilotSdkExecutor` with a `model:` hint).
 4. Run the presence check locally to confirm the artifact is covered:
 
@@ -99,11 +116,23 @@ Steps to add coverage:
 5. Run the eval locally (requires `COPILOT_GITHUB_TOKEN` in your shell environment):
 
    ```pwsh
+   pwsh scripts/evals/Get-ChangedSpecStimulus.ps1 `
+     -BaseRef origin/main `
+     -HeadRef HEAD `
+     -OutFile logs/changed-spec-stimuli.json
    pwsh scripts/evals/Test-CopilotToken.ps1 -SmokeTest
-   pwsh scripts/evals/Invoke-VallyEvals.ps1 -ManifestPath logs/changed-ai-artifacts.json
+   pwsh scripts/evals/Invoke-VallyEvals.ps1 `
+     -ManifestPath logs/changed-ai-artifacts.json `
+     -ChangedSpecManifestPath logs/changed-spec-stimuli.json
    ```
 
 Commit the new spec alongside the artifact change. The PR comment summary in `eval-execute` reports per-artifact pass/fail with links to the captured `logs/eval-results-<artifact-id>.json` payloads.
+
+`Get-ChangedSpecStimulus.ps1` emits a synthetic artifact for every added or modified
+stimulus in a changed eval spec. `Invoke-VallyEvals.ps1` unions those entries with the
+changed AI artifact manifest and deduplicates them by `kind:artifactId`. This ensures a
+changed stimulus runs even when its referenced agent, prompt, instruction, or skill did
+not change in the same diff.
 
 A single spec can be shared by multiple artifacts: add one `stimuli[].tags.<kind>` backlink
 per artifact that the spec covers. When more than one artifact backlinks the same spec,
@@ -150,7 +179,7 @@ moderation:
   threshold: 0.7
 ```
 
-The validator accepts numeric values in `[0.0, 1.0]`; out-of-range or non-numeric values emit `ModerationThresholdOutOfRange` / `ModerationThresholdType` diagnostics during `eval:lint:schema`. The default is `0.5` when the field is omitted.
+The validator accepts numeric values in `[0.0, 1.0]`; out-of-range or non-numeric values emit `ModerationThresholdOutOfRange` / `ModerationThresholdType` diagnostics during `ci:eval:lint:schema`. The default is `0.5` when the field is omitted.
 
 `Invoke-VallyEvals.ps1 -ModerationThreshold <value>` overrides every spec's threshold for a run. CLI override wins over the per-spec value, which wins over the default.
 
@@ -176,19 +205,22 @@ uv sync --locked --project scripts/evals/moderation
 pwsh scripts/evals/Invoke-CorpusModeration.ps1 -SpecGlob 'evals/**/*.yaml'
 ```
 
-Without the Python dependencies installed, `Invoke-ContentModeration.ps1` exits 2 with a setup error rather than silently passing. The markdown-corpus lane (`Test-EvalSpecText.ps1`) requires only Node and runs in `lint:all` without any opt-in.
+Without the Python dependencies installed, `Invoke-ContentModeration.ps1` exits 2 with a setup error rather than silently passing. The markdown-corpus lane (`Test-EvalSpecText.ps1`) requires only Node and runs as the CI-owned `ci:eval:lint:text` lane without any moderation-environment opt-in.
 
 ## Eval Lint Scripts
 
-Three eval-lint commands run in `lint:all`:
+The CI-owned eval-validation workflow runs the static eval-lint lanes. They are
+not part of `validate:local`; see [Validation Commands and CI-Owned Lanes](validation)
+for local reproduction prerequisites and output handling.
 
-| Script             | Tool                       | Purpose                                                          |
-|--------------------|----------------------------|------------------------------------------------------------------|
-| `eval:lint:vally`  | `vally lint --eval evals/` | Spec validation via the upstream CLI                             |
-| `eval:lint:schema` | `Test-EvalSpec.ps1`        | hve-core schema lint (graders, executor, `moderation.threshold`) |
-| `eval:lint:text`   | `Test-EvalSpecText.ps1`    | retext-profanities + alex.js gate on the AI-artifact corpus      |
+| Script                | Tool                            | Purpose                                                             |
+|-----------------------|---------------------------------|---------------------------------------------------------------------|
+| `ci:eval:lint:vally`  | `vally lint --eval-spec evals/` | Spec validation via the upstream CLI                                |
+| `ci:eval:lint:schema` | `Test-EvalSpec.ps1`             | Schema lint, agent-behavior coverage, and orphaned-tag reachability |
+| `ci:eval:lint:text`   | `Test-EvalSpecText.ps1`         | retext-profanities + alex.js gate on the AI-artifact corpus         |
+| `ci:eval:lint:safety` | `Test-VallyTestSafety.ps1`      | Safety validation for eval stimuli                                  |
 
-`eval:lint:text` scans `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md`. By default `retext-profanities` findings flip the exit code (errors) and `alex` findings emit `::warning` annotations only. Pass `-FailOnAlex` to promote alex findings to errors for local hardening:
+`ci:eval:lint:text` scans `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md`. By default `retext-profanities` findings flip the exit code (errors) and `alex` findings emit `::warning` annotations only. Pass `-FailOnAlex` to promote alex findings to errors for local hardening:
 
 ```pwsh
 pwsh scripts/evals/Test-EvalSpecText.ps1 -FailOnAlex
@@ -204,17 +236,66 @@ False-positive lexical matches (e.g., `penetration test`, `attack surface`, `tok
 | 1    | At least one `retext-profanities` finding, or any alex.js finding when `-FailOnAlex` is set. |
 | 2    | Setup failure (corpus expansion failed, Node shim missing, or `node` not on PATH).           |
 
-### Baseline-equivalence specs
+### Schema lint, coverage, and reachability
 
-`eval:lint:vally` runs `vally lint --eval evals/`, which validates the eval YAML files immediately under `evals/` but does not recurse into nested subdirectories. The baseline-equivalence suite under [evals/baseline-equivalence/](pathname://../../evals/baseline-equivalence/README.md) ships nested specs (`baseline/eval.yaml`, `customized/eval.yaml`, and `compare.eval.yml`) that need explicit per-file lint invocations:
+`ci:eval:lint:schema` runs three checks in a single pass, and any one of them can fail the lane:
+
+* Schema validation of every spec under `evals/`, covering required keys, the executor whitelist, `moderation.threshold`, and stimulus backlink tags.
+* Agent-behavior coverage. Every parent (user-invocable) agent under `.github/agents/` must have a stimulus partial at `evals/agent-behavior/stimuli/<slug>.yml`.
+* Orphaned-tag reachability. Every `agent=` and `scenario=` tag in `evals/agent-behavior/eval.yaml` must resolve to a slug present in the agent inventory. Unresolvable tags emit `::error` annotations and hard-fail the lane.
+
+`Test-EvalSpec.ps1` exit codes:
+
+| Exit | Meaning                                                                                                                         |
+|------|---------------------------------------------------------------------------------------------------------------------------------|
+| 0    | Every spec is valid, every parent agent is covered, and no tag is orphaned.                                                     |
+| 1    | A spec failed schema validation, a parent agent lacked a stimulus partial, the inventory was unreadable, or a tag was orphaned. |
+| 2    | Setup failure (the `powershell-yaml` module is not installed).                                                                  |
+
+Use `-SkipAgentCoverage` for fixture-only runs, or `-NewAgentsOnly` with `-BaseRef` to enforce coverage incrementally on newly added agents.
+
+### Agent inventory
+
+`evals/agent-behavior/AGENTS.yml` is the source of truth for the orphaned-tag gate. It is generated rather than hand-edited:
 
 ```pwsh
-vally lint --eval evals/baseline-equivalence/baseline/eval.yaml
-vally lint --eval evals/baseline-equivalence/customized/eval.yaml
-vally lint --eval evals/baseline-equivalence/compare.eval.yml
+pwsh scripts/evals/Build-AgentInventory.ps1 -Force
 ```
 
-[scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) runs all three implicitly during `npm run eval:run:equivalence`. See [evals/baseline-equivalence/README.md](pathname://../../evals/baseline-equivalence/README.md) for the suite operator guide and driver-output contract.
+Enrollment follows two rules:
+
+* Parent agents are always inventoried. An agent file with no `user-invocable` key is treated as a parent.
+* Subagents (`user-invocable: false`) are inventoried only when a matching stimulus partial exists at `evals/agent-behavior/stimuli/<slug>.yml`.
+
+When the lane reports an orphaned tag, either the tag is misspelled or the agent it names is not enrolled. Add the agent's stimulus partial when the agent is a subagent, regenerate the inventory, and commit the regenerated `AGENTS.yml` alongside the change.
+
+### Baseline-equivalence specs
+
+`ci:eval:lint:vally` runs `vally lint --eval-spec evals/`, which scans recursively to a maximum depth of ten directory levels. The baseline-equivalence suite under [evals/baseline-equivalence/](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md) ships its paired specs one level down (`baseline/eval.yaml` and `customized/eval.yaml`), so both are discovered by that sweep. Lint either one on its own when iterating on a single spec:
+
+```pwsh
+vally lint --eval-spec evals/baseline-equivalence/baseline/eval.yaml
+vally lint --eval-spec evals/baseline-equivalence/customized/eval.yaml
+```
+
+[scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) runs during `npm run ci:eval:equivalence` and owns environment materialization, seeding, baseline caching, the pinned comparison invocation, and summary generation. It is the only path that materializes the customization surface, so the customized spec must be run through it rather than invoked directly.
+See [evals/baseline-equivalence/README.md](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md) for the suite operator guide and driver-output contract.
+
+## Matrix, Moderation, and Dashboard Scripts
+
+Beyond the lint lanes, `scripts/evals/` holds the scripts that scope runs, moderate artifacts, and render results.
+
+| Script                                    | Invoked by                                        | Purpose                                                                                     |
+|-------------------------------------------|---------------------------------------------------|---------------------------------------------------------------------------------------------|
+| `Invoke-ArtifactModeration.ps1`           | `ci:eval:moderate:artifacts`                      | Moderates all eval specs plus changed AI artifacts from the changed-artifact manifest       |
+| `New-AgentMatrixDashboard.ps1`            | `ci:eval:agent:dashboard`, `ci:eval:agent:report` | Renders a self-contained HTML matrix dashboard, one row per inventory agent                 |
+| `New-EquivalenceDashboard.ps1`            | `ci:eval:dashboard`                               | Renders a self-contained HTML dashboard for a baseline-equivalence run                      |
+| `Get-AgentDependencyMap.ps1`              | Run directly                                      | Builds a JSON map of agent dependencies for the baseline-equivalence dispatcher             |
+| `Update-AgentMatrixSummariesFromLogs.ps1` | Run directly                                      | Rebuilds per-agent matrix summaries from existing vally logs without re-running `npx vally` |
+
+`Invoke-ArtifactModeration.ps1` and `Invoke-CorpusModeration.ps1` are distinct lanes over the same changed-artifact manifest. Corpus moderation scores stimulus text inside eval specs; artifact moderation covers the specs plus the changed AI artifacts themselves, writing to a separate output file.
+
+`ci:eval:agent:report` is the end-to-end convenience command: it runs `ci:eval:agent:matrix` and then `ci:eval:agent:dashboard`.
 
 ## Running Pester Tests Locally
 
@@ -243,11 +324,28 @@ This is the only viable mock boundary for cross-process invocation. Apply the sa
 
 ### Test authoring patterns
 
-When authoring new Pester suites for the evals scripts, three patterns recur often enough to call out:
+When authoring new Pester suites for the evals scripts, four patterns recur often enough to call out:
 
 * Define helper functions inside `BeforeAll { function ... }` so Pester promotes them to the containing `Describe` scope for all `It` blocks. Functions defined directly inside `Describe` (outside `BeforeAll`) do not survive the fresh runspaces Pester uses for each `It`.
+* When a production script exposes an `Invoke-*Core` function behind an `$MyInvocation.InvocationName -ne '.'` guard, dot-source the script in `BeforeAll` and call the core function directly. This avoids a fresh `pwsh` startup for every case and lets Pester mocks intercept calls made inside the function.
 * When the command under test is invoked through `pwsh -File` or `Start-Process` (so the parent runspace cannot install a `Mock`), declare a bare function at file scope in the test (or in a fixture script the child loads). The PATH-shim pattern above is one instance of this; the [scripts/tests/evals/fixtures/stub-vally.ps1](../../scripts/tests/evals/fixtures/stub-vally.ps1) fixture is another.
 * When a stub or script under test needs to signal a non-zero exit while `$ErrorActionPreference = 'Stop'` is in effect, write the diagnostic with `[Console]::Error.WriteLine(...)` and then call `exit <code>` explicitly. `throw` short-circuits the runspace before the intended exit code is set, which causes the parent process to observe exit 1 instead of the contract code.
+
+```powershell
+BeforeAll {
+  $script:ScriptPath = Join-Path $PSScriptRoot '../../evals/Build-AgentBehaviorSpec.ps1'
+  . $script:ScriptPath
+}
+
+It 'reports drift without starting a child pwsh process' {
+  $result = Invoke-AgentBehaviorSpecCore -Check
+  $result.Outcome | Should -Be 'Drift'
+}
+```
+
+The core function returns a `PSCustomObject` with an `Outcome` field. Test that result
+directly; leave exit-code mapping to the guarded main block. Use a child process only
+when the process boundary itself is part of the behavior under test.
 
 The stub-vally fixture demonstrates the third pattern in practice.
 [scripts/tests/evals/Invoke-VallyEvals.Tests.ps1](../../scripts/tests/evals/Invoke-VallyEvals.Tests.ps1)

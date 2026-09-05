@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/ds-catalog/ds-catalog-v1.schema.json",
+  "title": "DS_CATALOG_V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["catalog_version", "engagement", "generated_at", "last_enriched", "entities", "relationships", "coverage"],
+  "properties": {
+    "catalog_version": {"const": "DS_CATALOG_V1"},
+    "engagement": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "last_enriched": {"type": "string", "format": "date-time"},
+    "entities": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/entity"}
+    },
+    "relationships": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/relationship"}
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entities_catalogued", "entities_access_confirmed", "entities_classified", "relationships_confirmed", "relationships_inferred"],
+      "properties": {
+        "entities_catalogued": {"type": "integer", "minimum": 0},
+        "entities_access_confirmed": {"type": "integer", "minimum": 0},
+        "entities_classified": {"type": "integer", "minimum": 0},
+        "relationships_confirmed": {"type": "integer", "minimum": 0},
+        "relationships_inferred": {"type": "integer", "minimum": 0}
+      }
+    }
+  },
+  "$defs": {
+    "nullableString": {"type": ["string", "null"]},
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "description", "source", "tier", "grain", "volume", "profile_ref", "classification", "lineage", "open_questions"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
+        "name": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["system", "location", "format", "access_confirmed"],
+          "properties": {
+            "system": {"type": "string", "minLength": 1},
+            "location": {"type": "string", "minLength": 1},
+            "format": {"enum": ["csv", "parquet", "jsonl", "table", "api", "other"]},
+            "access_confirmed": {"type": "boolean"}
+          }
+        },
+        "tier": {"enum": ["bronze", "silver", "gold", "malformed", "sandbox"]},
+        "grain": {"type": "string", "minLength": 1},
+        "volume": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["row_estimate", "period_covered", "update_frequency"],
+          "properties": {
+            "row_estimate": {"type": ["integer", "null"], "minimum": 0},
+            "period_covered": {"$ref": "#/$defs/nullableString"},
+            "update_frequency": {"type": "string", "minLength": 1}
+          }
+        },
+        "profile_ref": {"$ref": "#/$defs/nullableString"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "lineage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["derived_from", "transform_ref"],
+          "properties": {
+            "derived_from": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+            "transform_ref": {"$ref": "#/$defs/nullableString"}
+          }
+        },
+        "open_questions": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sensitivity", "contains_personal_data", "data_categories", "gdpr_article", "ccpa_section", "nist_pf_category", "nistir8062_objective", "owasp_privacy_id", "dpia_ref"],
+      "properties": {
+        "sensitivity": {"enum": ["none", "internal", "confidential", "restricted"]},
+        "contains_personal_data": {"type": "boolean"},
+        "data_categories": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "gdpr_article": {"$ref": "#/$defs/nullableString"},
+        "ccpa_section": {"$ref": "#/$defs/nullableString"},
+        "nist_pf_category": {"$ref": "#/$defs/nullableString"},
+        "nistir8062_objective": {"$ref": "#/$defs/nullableString"},
+        "owasp_privacy_id": {"$ref": "#/$defs/nullableString"},
+        "dpia_ref": {"$ref": "#/$defs/nullableString"}
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "from", "to", "cardinality", "from_minimum", "to_minimum", "join_keys", "confidence", "basis"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^rel-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "from": {"type": "string", "minLength": 1},
+        "to": {"type": "string", "minLength": 1},
+        "cardinality": {"enum": ["one-to-one", "one-to-many", "many-to-many"]},
+        "from_minimum": {"enum": ["zero", "one"]},
+        "to_minimum": {"enum": ["zero", "one"]},
+        "join_keys": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["from_field", "to_field"],
+              "properties": {
+                "from_field": {"type": "string", "minLength": 1},
+                "to_field": {"type": "string", "minLength": 1}
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["from_field", "to_field"],
+              "properties": {
+                "from_field": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+                "to_field": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+              }
+            }
+          ]
+        },
+        "confidence": {"enum": ["confirmed", "inferred", "assumed"]},
+        "basis": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

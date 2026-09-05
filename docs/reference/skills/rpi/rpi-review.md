@@ -1,23 +1,29 @@
 ---
 title: rpi-review
-description: "Review-only RPI playbook that validates implementation evidence, checks phase completion, and closes the loop with explicit next steps. Use when the user needs review coverage or acceptance evidence."
-sidebar_position: 5
-ms.date: 2026-07-03
+description: "Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review."
+sidebar_position: 7
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - rpi
+  - rpi-review
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/rpi/rpi-review`        |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                        |
+|-------------|------------------------------------------------------------------------------|
+| Kind        | skill                                                                        |
+| Source      | `.github/skills/rpi/rpi-review`                                              |
+| Invocation  | Invoked directly as `/rpi-review`, or loaded on demand by referencing agents |
+| Interactive | No                                                                           |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Review-only RPI playbook that validates implementation evidence, checks phase completion, and closes the loop with explicit next steps. Use when the user needs review coverage or acceptance evidence.
+Compare RPI planning and implementation evidence, record review findings, and route follow-up work. Use when an implementation needs acceptance review.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

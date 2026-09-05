@@ -1,33 +1,20 @@
 ---
-description: "Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks"
+description: "Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow"
 agent: RPI Agent
-argument-hint: "task=... [continue={1|2|3|all}] [suggest]"
+argument-hint: "task=... [continue=...] [followUp=...]"
 ---
 
 # RPI
 
 ## Inputs
 
-These inputs provide explicit signals to the agent. When not provided, the agent infers intent from conversation context.
-
-* ${input:task}: (Required) Task description from user prompt or conversation context.
-* ${input:continue}: (Optional) Continue with suggested work items. Accepts a number (1, 2, 3), multiple numbers (1,2), or "all".
-* ${input:suggest}: (Optional) Trigger Phase 5 to discover and suggest next work items.
+* ${input:task}: (Required) Task description or target outcome.
+* ${input:continue}: (Optional) Resume the active task from its durable RPI artifacts.
+* ${input:followUp}: (Optional) Select a distinct follow-up item from a prior review.
 
 ## Requirements
 
-1. When `${input:task}` is provided, use it as the primary task description. When absent, infer the task from conversation context, attached files, or the currently open file.
-2. When `${input:continue}` is provided, proceed directly to Phase 1 with the referenced suggested work items from the prior Phase 5 output.
-3. When `${input:suggest}` is provided, proceed directly to Phase 5 to discover and present next work items.
-4. Summarize completion with phases completed, iteration count, artifacts created, and final validation status.
-
-## Conversation History Summarization and Compaction Requirements
-
-The following must be included in the response from summarization and compaction.
-
-* Make sure summarization includes that all state is managed through the .copilot-tracking folder files.
-* Always include file paths for all of the Tracking Artifacts for this session.
-* Indicate percent complete for each of the artifacts.
-* Include the last Phase before compaction, steps of phase completed, in-progress step of phase, remaining steps of phase.
-* Be sure to include executive details for each of the most recent findings from `Phase 4: Review`, assume these details are not stored anywhere.
-* Must include all of the most recent follow up work items and their numbered order from `Phase 5: Discover`, assume these details are not stored anywhere.
+1. Use `${input:task}` as the primary task context and start with research readiness.
+2. Sequence `rpi-research`, `rpi-plan`, `rpi-implement`, and `rpi-review` as needed. Planning owns independent critique, implementation owns amendments and divergence records, and review owns outcome routing.
+3. For `${input:continue}`, resume the active task at the earliest stage affected by existing evidence. For `${input:followUp}`, route the selected item to research, planning, implementation, or a distinct new task.
+4. Summarize current lifecycle stage, artifact paths, validation evidence, review execution status and outcome, and the routed follow-up.

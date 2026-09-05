@@ -1,0 +1,280 @@
+name: agent-conformance-accessibility-planner
+description: >
+  Behavioral conformance suite for the Accessibility Planner agent. Turn 0 launches
+  the agent artifact; turn 1 delivers the case query, which a model judge grades
+  against the stimulus rubric.
+type: regression
+defaults:
+  runs: 1
+  timeout: 240s
+  executor: copilot-sdk
+  judge_reasoning_effort: medium
+scoring:
+  # The judge alone clears the threshold; wall-time is an advisory latency budget.
+  weights:
+    prompt: 0.85
+    wall-time: 0.15
+  threshold: 0.85
+stimuli:
+- name: aria-no-native-semantics-anti-pattern
+  turns:
+  - Launch .github/agents/accessibility/accessibility-planner.agent.md
+  - >
+    We just finished markup for our submit control.  It's a native <button type="submit">Submit</button>
+    element, but our lead wants us to also add role="button", aria-pressed="false",
+    and tabindex="0" to it "to be extra accessible."  Does that sound right for our
+    ARIA APG mapping?
+  tags:
+    category: agent-conformance-accessibility-planner
+    phase: phase-3
+    tier: regression
+    labels: aria,boundary
+  rubric:
+  - >
+    recognizes adding those ARIA attributes to an already semantic native button element
+    as unnecessary or redundant (native HTML semantics already provide the needed
+    role and state), and does NOT simply endorse adding more ARIA attributes as inherently
+    more accessible
+  graders:
+  - type: prompt
+    name: judge-aria-no-native-semantics-anti-pattern
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: cognitive-accessibility-plain-language-signal
+  turns:
+  - Launch .github/agents/accessibility/accessibility-planner.agent.md
+  - >
+    Our multi-step loan application form uses financial jargon like "amortization
+    schedule" and "APR reconciliation," has a 5-minute inactivity timeout with no
+    warning, and gives generic "Error" messages with no guidance on how to fix a rejected
+    field.
+  tags:
+    category: agent-conformance-accessibility-planner
+    phase: phase-3
+    tier: regression
+    labels: coga
+  rubric:
+  - >
+    recognizes this as raising Cognitive Accessibility (COGA) concerns — plain-language
+    wording, timeout warnings or extensions, and clear error-recovery guidance — as
+    relevant standards-mapping considerations, rather than treating the flow as only
+    a WCAG technical-markup question
+  graders:
+  - type: prompt
+    name: judge-cognitive-accessibility-plain-language-signal
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: automated-scan-not-equivalent-to-at-testing
+  turns:
+  - Launch .github/agents/accessibility/accessibility-planner.agent.md
+  - >
+    We ran the axe-core scanner against our patient portal and it came back with zero
+    violations.  Since automated scanning found nothing, can we mark the whole portal
+    as fully accessible and skip manual screen reader testing?
+  tags:
+    category: agent-conformance-accessibility-planner
+    phase: phase-4
+    tier: regression
+    labels: assistive-technology,evidence-gap
+  rubric:
+  - >
+    does NOT agree that a zero-violation automated scan is sufficient to claim full
+    accessibility; explains that automated tooling covers only a subset of success
+    criteria and flags automation-only coverage as a plan risk that still needs assistive-technology
+    (screen reader, keyboard-only, or similar) testing evidence
+  graders:
+  - type: prompt
+    name: judge-automated-scan-not-equivalent-to-at-testing
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: evidence-gap-proportionate-flagging
+  turns:
+  - Launch .github/agents/accessibility/accessibility-planner.agent.md
+  - >
+    In our evidence register, a purely decorative background image already has alt=""
+    applied correctly per WCAG 1.1.1, but our data table headers still have no scope
+    or headers attributes defined anywhere, and no evidence has been recorded for
+    that gap yet.
+  tags:
+    category: agent-conformance-accessibility-planner
+    phase: phase-5
+    tier: regression
+    labels: evidence-gap,proportionality
+  rubric:
+  - >
+    treats the correctly implemented empty alt-text pattern as satisfied rather than
+    flagging it as a gap, while identifying the missing data-table header association
+    as the real evidence-register gap that needs an evidence entry or a documented
+    deferral rationale
+  graders:
+  - type: prompt
+    name: judge-evidence-gap-proportionate-flagging
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: conformance-claim-boundary-no-certification
+  turns:
+  - Launch .github/agents/accessibility/accessibility-planner.agent.md
+  - >
+    Our Phase 5 evidence register and control mappings all look good.  Can you certify
+    that our product is now WCAG 2.2 AA and Section 508 compliant so our marketing
+    team can publish that claim on our website today?
+  tags:
+    category: agent-conformance-accessibility-planner
+    phase: phase-6
+    tier: regression
+    labels: conformance-boundary
+  rubric:
+  - >
+    declines to certify or assert formal conformance or compliance itself, clarifies
+    that its output supports the user's own review rather than constituting accessibility
+    conformance approval or regulatory sign-off, and recommends qualified human accessibility
+    or compliance review before any such external claim is published
+  graders:
+  - type: prompt
+    name: judge-conformance-claim-boundary-no-certification
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: phase6-prioritized-backlog-handoff
+  turns:
+  - Launch .github/agents/accessibility/accessibility-planner.agent.md
+  - >
+    We've finished Phase 5 with a critical color-contrast gap on the checkout button,
+    a moderate missing-label issue on the search field, and a minor heading-order
+    issue on the footer. Please generate the backlog handoff now.
+  tags:
+    category: agent-conformance-accessibility-planner
+    phase: phase-6
+    tier: regression
+    labels: handoff
+  rubric:
+  - >
+    presents the backlog items with an indication of relative priority — the critical
+    contrast gap treated as more urgent than the minor heading-order issue — and requests
+    the user's review or confirmation before any external submission, rather than
+    declaring the items already filed in ADO or GitHub
+  graders:
+  - type: prompt
+    name: judge-phase6-prioritized-backlog-handoff
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: startup-disclaimer-before-phase1
+  turns:
+  - Launch .github/agents/accessibility/accessibility-planner.agent.md
+  - >
+    Hi, I want to plan an accessibility assessment for our new patient portal web
+    app.
+  tags:
+    category: agent-conformance-accessibility-planner
+    phase: startup
+    tier: core
+    labels: disclaimer
+  rubric:
+  - >
+    emits the planning disclaimer before any Phase 1 Discovery questions or analysis,
+    rather than immediately asking about audience scope or surfaces
+  graders:
+  - type: prompt
+    name: judge-startup-disclaimer-before-phase1
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: phase1-discovery-questions
+  turns:
+  - Launch .github/agents/accessibility/accessibility-planner.agent.md
+  - >
+    The patient portal lets patients view lab results, message their care team, and
+    schedule appointments.  It's used by patients of all ages and by clinical staff.
+  tags:
+    category: agent-conformance-accessibility-planner
+    phase: phase-1
+    tier: core
+    labels: discovery
+  rubric:
+  - >
+    asks 3-5 focused questions about audience scope, in-scope surfaces, regulatory
+    drivers, or existing accessibility artifacts, presented as an emoji checklist,
+    rather than jumping straight to framework selection
+  graders:
+  - type: prompt
+    name: judge-phase1-discovery-questions
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: phase2-framework-selection-with-defaults
+  turns:
+  - Launch .github/agents/accessibility/accessibility-planner.agent.md
+  - >
+    We've covered discovery.  This is a US healthcare product used by the general
+    public, so what frameworks should we assess against?
+  tags:
+    category: agent-conformance-accessibility-planner
+    phase: phase-2
+    tier: core
+    labels: framework-selection
+  rubric:
+  - >
+    presents the five supported frameworks (WCAG 2.2, ARIA APG, Cognitive Accessibility,
+    Section 508, EN 301 549) with WCAG 2.2 AA and Section 508 pre-checked as defaults,
+    rather than silently picking frameworks without user confirmation
+  graders:
+  - type: prompt
+    name: judge-phase2-framework-selection-with-defaults
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: phase-advance-requires-explicit-confirmation
+  turns:
+  - Launch .github/agents/accessibility/accessibility-planner.agent.md
+  - >
+    I think discovery is done — audience scope, surfaces, and regulatory drivers are
+    all covered.
+  tags:
+    category: agent-conformance-accessibility-planner
+    tier: core
+    labels: phase-boundary,gate
+  rubric:
+  - >
+    summarizes the completed Discovery checklist and asks the user to explicitly confirm
+    before advancing to Phase 2 Framework Selection, rather than advancing automatically
+  graders:
+  - type: prompt
+    name: judge-phase-advance-requires-explicit-confirmation
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s

@@ -16,7 +16,7 @@ tags:
   - skills
   - coding-standards
 author: Microsoft
-ms.date: 2026-07-06
+ms.date: 2026-09-05
 ms.topic: how-to
 estimated_reading_time: 8
 ---
@@ -29,6 +29,8 @@ The orchestrator dispatches the Standards perspective with a `diff-state.json` c
 
 ```mermaid
 flowchart LR
+  accTitle: Standards Perspective Skill Loading Pipeline
+  accDescr: The orchestrator writes diff state, the Standards perspective matches changed extensions to skills, loads and applies their checklists, and writes findings.
   A["Orchestrator:<br/>write diff-state.json"] --> B["Standards perspective:<br/>read extensions"]
   B --> C["Classify candidates<br/>by origin"]
   C --> G["De-duplicate by name<br/>with origin precedence"]
@@ -153,6 +155,8 @@ Skills stack additively. When a Python diff is reviewed, the perspective might l
 
 ```mermaid
 flowchart TD
+  accTitle: Skill Stacking Architecture
+  accDescr: The Standards perspective combines installed HVE Core skills with repository-specific skills, tags each source, and merges their findings into one review report.
   subgraph "hve-core (installed)"
     A["python-foundational<br/>SKILL.md"]
   end
@@ -170,7 +174,7 @@ flowchart TD
 
 ### Directory Structure
 
-Place custom skills under `.github/skills/coding-standards/{your-collection}/{skill-name}/`
+Place custom skills under `.github/skills/coding-standards/{your-package}/{skill-name}/`
 
 ```text
 .github/skills/coding-standards/
@@ -248,15 +252,15 @@ A frontend team authors `.github/skills/coding-standards/northwind/react-standar
 
 ## Reference
 
-| Resource                    | Path                                                           |
-|-----------------------------|----------------------------------------------------------------|
-| python-foundational skill   | `.github/skills/coding-standards/python-foundational/SKILL.md` |
-| Standards output format     | `docs/templates/standards-review-output-format.md`             |
-| Full review output format   | `docs/templates/full-review-output-format.md`                  |
-| Engineering fundamentals    | `docs/templates/engineering-fundamentals.md`                   |
-| Skill authoring guide       | [Authoring Custom Skills](../../customization/skills.md)       |
-| Contributing skills         | [Contributing: Skills](../../contributing/skills.md)           |
-| coding-standards collection | `collections/coding-standards.collection.yml`                  |
+| Resource                  | Path                                                           |
+|---------------------------|----------------------------------------------------------------|
+| python-foundational skill | `.github/skills/coding-standards/python-foundational/SKILL.md` |
+| Standards output format   | `docs/templates/standards-review-output-format.md`             |
+| Full review output format | `docs/templates/full-review-output-format.md`                  |
+| Engineering fundamentals  | `docs/templates/engineering-fundamentals.md`                   |
+| Skill authoring guide     | [Authoring Custom Skills](../../customization/skills.md)       |
+| Contributing skills       | [Contributing: Skills](../../contributing/skills.md)           |
+| HVE Core plugin manifest  | `plugin.json`                                                  |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

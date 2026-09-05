@@ -6,7 +6,7 @@ compatibility: 'Requires Python 3.11+ and a Mural OAuth app'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-04-24"
+  last_updated: "2026-08-13"
 ---
 
 # Mural Skill
@@ -38,7 +38,8 @@ The skill depends on a small set of third-party Python packages (`shapely>=2.0`,
 | `MURAL_REDIRECT_URI`       | Optional            | Override the default `http://localhost:8765/callback` loopback                     |
 | `MURAL_PROFILE`            | Optional            | Select a named profile in the multi-profile token store                            |
 | `MURAL_SCOPES`             | Optional            | Override the default scope list requested at login (space-separated)               |
-| `MURAL_BASE_URL`           | Optional            | Override the default `https://app.mural.co/api/public/v1`                          |
+| `MURAL_BASE_URL`           | Optional            | Canonical production base or explicitly enabled HTTP loopback test endpoint        |
+| `MURAL_ALLOW_INSECURE_API` | Optional            | Set to `1` only for an explicit HTTP loopback API endpoint with a port             |
 | `MURAL_TOKEN_STORE`        | Optional            | Override the default token-store path                                              |
 | `MURAL_ENV_FILE`           | Optional            | Explicit credential-file path; bypasses XDG resolution                             |
 | `MURAL_ENV_FILE_RELAXED`   | Optional            | Set `1` to skip mode-0600 enforcement on the credential file (CI use only)         |
@@ -50,6 +51,14 @@ The skill depends on a small set of third-party Python packages (`shapely>=2.0`,
 Tokens are persisted to `%LOCALAPPDATA%\hve-core\mural-token.json` on Windows and `$XDG_DATA_HOME/hve-core/mural-token.json` (falling back to `~/.local/share/hve-core/mural-token.json`) on POSIX, with file mode `0600`.
 
 ## OAuth app setup
+
+`MURAL_BASE_URL` no longer permits arbitrary remote origins. Production calls
+target only `https://app.mural.co/api/public/v1`. Local API testing accepts
+`http://localhost:<port>/api/public/v1`,
+`http://127.0.0.1:<port>/api/public/v1`, or
+`http://[::1]:<port>/api/public/v1` only when
+`MURAL_ALLOW_INSECURE_API=1`. Authenticated API, OAuth token, and asset-upload
+requests refuse redirects.
 
 Register a Mural OAuth app in the Mural developer portal before running `auth login`. The app's Redirect URL must exactly match the loopback URI the skill listens on:
 
@@ -100,7 +109,7 @@ Devcontainer decision tree:
 * **Remote-SSH**: set `MURAL_CREDENTIAL_BACKEND=file` unless a SecretService daemon is configured on the remote host.
 * **WSL2**: leave `MURAL_CREDENTIAL_BACKEND=auto` when WSLg + SecretService is installed; otherwise set `MURAL_CREDENTIAL_BACKEND=file`.
 
-See [Mural Credentials guide](../../../../docs/agents/mural/credentials.md) for backend selection rules, the bootstrap walkthrough, devcontainer recipes, troubleshooting, migration, and the security model.
+See the Mural Credentials guide for backend selection rules, the bootstrap walkthrough, devcontainer recipes, troubleshooting, migration, and the security model. In this repository that guide is at `docs/agents/mural/credentials.md`; that path is repository-only and does not resolve in a plugin or extension install. When the guide is unavailable, say so and fall back to the backend-selection rules stated above rather than guessing at bootstrap steps.
 
 ## Authentication
 
@@ -409,4 +418,4 @@ The following items were intentionally deferred from the v1 full-scope delivery 
 | Lineage prefix field placement (`title` vs `text`) | Stakeholder confirmation that `[dt:method=N section=NAME run=ID]` belongs on widget `title` (current v1 spec literal) versus the primary `text` field rendered by most widget types | Planning log PD-6.1 / ID-01  || DT section-map geometry refinement                 | Refine the default section geometry and add canonical sub-sections per method in `assets/dt-sections.default.yml`                                                                  | Mural skill code review      |
 ## License
 
-This skill is distributed under the MIT License. See the repository [LICENSE](../../../../LICENSE) file for the full text.
+This skill is distributed under the MIT License. See the `LICENSE` file at the repository root for the full text. When that file is unavailable, rely on the `license: MIT` field in this skill's frontmatter as the authoritative identifier and say that the full text could not be shown.

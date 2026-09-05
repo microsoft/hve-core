@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import { buildProbeResults, emitProbeResult, runProbeWithPage } from './_shared.mjs';
 import { computeTrapFromSequence } from './_core.mjs';
 

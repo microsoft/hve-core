@@ -48,9 +48,10 @@ jobs:
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_MAX_AGE_DAYS: ${{ inputs.max-age-days }}
         run: |
-          $thresholdDays = if ('${{ inputs.max-age-days }}') { 
-            [int]'${{ inputs.max-age-days }}' 
+          $thresholdDays = if ($env:INPUT_MAX_AGE_DAYS) { 
+            [int]$env:INPUT_MAX_AGE_DAYS 
           } else { 
             30 
           }

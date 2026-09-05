@@ -1,0 +1,719 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Release VSIX Publish
+
+# Release-please creates the immutable tag and draft release. This workflow is
+# the sole post-tag producer for both release channels.
+on:
+  push:
+    tags:
+      - "v*"
+      - "prerelease-v*"
+
+concurrency:
+  group: release-vsix-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate-release:
+    name: Validate Tag and Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: read
+    outputs:
+      channel: ${{ steps.identity.outputs.channel }}
+      version: ${{ steps.identity.outputs.version }}
+      tag-name: ${{ steps.identity.outputs.tag-name }}
+      source-sha: ${{ steps.identity.outputs.source-sha }}
+      release-id: ${{ steps.release.outputs.release-id }}
+      release-state: ${{ steps.release.outputs.release-state }}
+    steps:
+      - name: Validate tag event identity
+        id: identity
+        shell: bash
+        env:
+          EVENT_ACTOR: ${{ github.actor }}
+          EVENT_ACTOR_ID: ${{ github.actor_id }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_REF: ${{ github.ref }}
+          EVENT_REF_NAME: ${{ github.ref_name }}
+          EVENT_REF_PROTECTED: ${{ github.ref_protected }}
+          EVENT_REF_TYPE: ${{ github.ref_type }}
+          EVENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          readonly EXPECTED_ACTOR='hve-core-release-please[bot]'
+          readonly EXPECTED_ACTOR_ID='254602402'
+          if [ "$EVENT_NAME" != 'push' ] || [ "$EVENT_REF_TYPE" != 'tag' ]; then
+            echo "::error::Release producer requires a push event for a tag"
+            exit 1
+          fi
+          if [ "$EVENT_ACTOR" != "$EXPECTED_ACTOR" ] || [ "$EVENT_ACTOR_ID" != "$EXPECTED_ACTOR_ID" ]; then
+            echo "::error::Release tag push was not created by the expected Release App principal"
+            exit 1
+          fi
+          if [ "$EVENT_REF" != "refs/tags/$EVENT_REF_NAME" ]; then
+            echo "::error::Release ref $EVENT_REF is not the exact tag ref for $EVENT_REF_NAME"
+            exit 1
+          fi
+          if [ "$EVENT_REF_PROTECTED" != 'true' ]; then
+            echo "::error::Release tag $EVENT_REF_NAME is not protected by an active ruleset"
+            exit 1
+          fi
+          if [[ "$EVENT_REF_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            CHANNEL='Stable'
+            VERSION=${BASH_REMATCH[1]}
+          elif [[ "$EVENT_REF_NAME" =~ ^prerelease-v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            CHANNEL='PreRelease'
+            VERSION=${BASH_REMATCH[1]}
+          else
+            echo "::error::Release tag $EVENT_REF_NAME does not use canonical vMAJOR.MINOR.PATCH or prerelease-vMAJOR.MINOR.PATCH grammar"
+            exit 1
+          fi
+          if [[ ! "$EVENT_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Tag event carries an invalid source commit"
+            exit 1
+          fi
+          MINOR=${VERSION#*.}
+          MINOR=${MINOR%%.*}
+          if [ "$CHANNEL" = 'Stable' ] && (( 10#$MINOR % 2 != 0 )); then
+            echo "::error::Stable version $VERSION has an odd minor"
+            exit 1
+          fi
+          if [ "$CHANNEL" = 'PreRelease' ] && (( 10#$MINOR % 2 == 0 )); then
+            echo "::error::PreRelease version $VERSION has an even minor"
+            exit 1
+          fi
+          {
+            echo "channel=$CHANNEL"
+            echo "version=$VERSION"
+            echo "tag-name=$EVENT_REF_NAME"
+            echo "source-sha=$EVENT_SHA"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout channel history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.identity.outputs.channel == 'Stable' && 'release/stable' || 'release/prerelease' }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate tag source and committed release state
+        shell: bash
+        env:
+          CHANNEL: ${{ steps.identity.outputs.channel }}
+          EVENT_SHA: ${{ github.sha }}
+          RELEASE_TAG: ${{ steps.identity.outputs.tag-name }}
+          RELEASE_VERSION: ${{ steps.identity.outputs.version }}
+        run: |
+          set -euo pipefail
+          if ! git fetch --no-tags origin "+refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"; then
+            echo "::error::Unable to fetch exact release tag $RELEASE_TAG"
+            exit 1
+          fi
+          if ! TAG_SHA=$(git rev-parse --verify --end-of-options "refs/tags/$RELEASE_TAG^{commit}" 2>/dev/null); then
+            echo "::error::$RELEASE_TAG does not peel to a commit"
+            exit 1
+          fi
+          if [ "$TAG_SHA" != "$EVENT_SHA" ]; then
+            echo "::error::$RELEASE_TAG peels to $TAG_SHA instead of tag event commit $EVENT_SHA"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$EVENT_SHA" HEAD; then
+            echo "::error::Release commit $EVENT_SHA is not contained in the expected $CHANNEL channel branch"
+            exit 1
+          fi
+          git checkout --detach "$EVENT_SHA"
+
+          MANIFEST='.release-please-manifest.json'
+          CONFIG='release-please-config.json'
+          if [ "$CHANNEL" = 'PreRelease' ]; then
+            MANIFEST='.release-please-prerelease-manifest.json'
+            CONFIG='release-please-prerelease-config.json'
+          fi
+          for entry in "package.json:.version" "package-lock.json:.version" "$MANIFEST:.\".\"" "extension/templates/package.template.json:.version" "plugin.json:.version" ".github/plugin/marketplace.json:.metadata.version" ".github/plugin/marketplace.json:.plugins[0].version"; do
+            file=${entry%%:*}
+            path=${entry#*:}
+            actual=$(jq -r "$path" "$file")
+            if [ "$actual" != "$RELEASE_VERSION" ]; then
+              echo "::error::$file $path is $actual but the tag declares $RELEASE_VERSION"
+              exit 1
+            fi
+          done
+          if ! grep -Eq "^## \[${RELEASE_VERSION}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no release entry for $RELEASE_VERSION"
+            exit 1
+          fi
+          STALE_INTENT=$(jq -r '.packages["."]["release-as"] // ""' "$CONFIG")
+          if [ -n "$STALE_INTENT" ]; then
+            echo "::error::$CONFIG still carries stale release-as $STALE_INTENT"
+            exit 1
+          fi
+
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Discover exact release
+        id: release
+        shell: bash
+        env:
+          EXPECTED_CHANNEL: ${{ steps.identity.outputs.channel }}
+          EXPECTED_SHA: ${{ github.sha }}
+          EXPECTED_TAG: ${{ steps.identity.outputs.tag-name }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          MATCHED_RELEASES=''
+          for attempt in $(seq 1 12); do
+            RESPONSE_FILE="$RUNNER_TEMP/releases-$attempt.json"
+            if ! gh api --paginate --slurp "/repos/$REPOSITORY/releases?per_page=100" > "$RESPONSE_FILE"; then
+              echo "::error::Release discovery API failed on attempt $attempt"
+              exit 1
+            fi
+            if ! jq -e 'type == "array" and length > 0 and all(.[]; type == "array")' "$RESPONSE_FILE" >/dev/null; then
+              echo "::error::Release discovery returned a malformed response on attempt $attempt"
+              exit 1
+            fi
+            if ! MATCHED_RELEASES=$(jq --arg tag "$EXPECTED_TAG" '[.[][] | select(.tag_name == $tag)]' "$RESPONSE_FILE"); then
+              echo "::error::Unable to parse release discovery response on attempt $attempt"
+              exit 1
+            fi
+            MATCH_COUNT=$(printf '%s' "$MATCHED_RELEASES" | jq -r 'length')
+            if [ "$MATCH_COUNT" -gt 1 ]; then
+              echo "::error::$EXPECTED_TAG matches $MATCH_COUNT GitHub releases"
+              exit 1
+            fi
+            if [ "$MATCH_COUNT" -eq 1 ]; then
+              break
+            fi
+            if [ "$attempt" -lt 12 ]; then
+              sleep 10
+            fi
+          done
+          MATCH_COUNT=$(printf '%s' "$MATCHED_RELEASES" | jq -r 'length')
+          if [ "$MATCH_COUNT" -ne 1 ]; then
+            echo "::error::$EXPECTED_TAG was absent after exactly 12 release discovery attempts"
+            exit 1
+          fi
+
+          RELEASE_ID=$(printf '%s' "$MATCHED_RELEASES" | jq -er '.[0].id | select(type == "number")') || {
+            echo "::error::$EXPECTED_TAG has an invalid release id"
+            exit 1
+          }
+          TARGET=$(printf '%s' "$MATCHED_RELEASES" | jq -er '.[0].target_commitish | select(type == "string")') || {
+            echo "::error::$EXPECTED_TAG has an invalid target commit"
+            exit 1
+          }
+          DRAFT=$(printf '%s' "$MATCHED_RELEASES" | jq -er '.[0].draft | select(type == "boolean") | tostring') || {
+            echo "::error::$EXPECTED_TAG has an invalid draft state"
+            exit 1
+          }
+          PRERELEASE=$(printf '%s' "$MATCHED_RELEASES" | jq -er '.[0].prerelease | select(type == "boolean") | tostring') || {
+            echo "::error::$EXPECTED_TAG has an invalid prerelease state"
+            exit 1
+          }
+          if [ "$TARGET" != "$EXPECTED_SHA" ]; then
+            echo "::error::$EXPECTED_TAG release target $TARGET does not match tag event commit $EXPECTED_SHA"
+            exit 1
+          fi
+          if [ "$EXPECTED_CHANNEL" = 'Stable' ] && [ "$PRERELEASE" != 'false' ]; then
+            echo "::error::$EXPECTED_TAG prerelease state $PRERELEASE does not match Stable"
+            exit 1
+          fi
+          if [ "$EXPECTED_CHANNEL" = 'PreRelease' ] && [ "$DRAFT" != 'true' ] && [ "$PRERELEASE" != 'true' ]; then
+            echo "::error::Published $EXPECTED_TAG prerelease state $PRERELEASE does not match PreRelease"
+            exit 1
+          fi
+          RELEASE_STATE='draft'
+          if [ "$DRAFT" != 'true' ]; then
+            RELEASE_STATE='published'
+          fi
+          {
+            echo "release-id=$RELEASE_ID"
+            echo "release-state=$RELEASE_STATE"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Setup PowerShell modules for published verification
+        if: ${{ steps.release.outputs.release-state == 'published' }}
+        uses: ./.github/actions/setup-ps-modules
+
+      - name: Verify published release assets
+        if: ${{ steps.release.outputs.release-state == 'published' }}
+        shell: bash
+        env:
+          CHANNEL: ${{ steps.identity.outputs.channel }}
+          EXPECTED_SHA: ${{ steps.identity.outputs.source-sha }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ID: ${{ steps.release.outputs.release-id }}
+          RELEASE_TAG: ${{ steps.identity.outputs.tag-name }}
+          RELEASE_VERSION: ${{ steps.identity.outputs.version }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          ASSET_INDEX="$RUNNER_TEMP/published-assets.tsv"
+          gh api --paginate "/repos/$REPOSITORY/releases/$RELEASE_ID/assets?per_page=100" \
+            --jq '.[] | [.id, .name] | @tsv' > "$ASSET_INDEX"
+          if [ ! -s "$ASSET_INDEX" ]; then
+            echo "::error::Published $RELEASE_TAG carries no release assets"
+            exit 1
+          fi
+          ASSET_NAMES="$RUNNER_TEMP/published-asset-names.txt"
+          cut -f2 "$ASSET_INDEX" > "$ASSET_NAMES"
+          REQUIRED_LIST="$RUNNER_TEMP/published-required-assets.txt"
+          printf '%s\n' 'dependencies.spdx.json' > "$REQUIRED_LIST"
+          ARGUMENTS=(
+            -AssetNamePath "$ASSET_NAMES"
+            -RequiredAssetPath "$REQUIRED_LIST"
+            -Version "$RELEASE_VERSION"
+            -ReleaseTag "$RELEASE_TAG"
+          )
+          if [ "$CHANNEL" = 'Stable' ]; then
+            printf '%s\n' 'hve-core.openvex.json' >> "$REQUIRED_LIST"
+            OPTIONAL_LIST="$RUNNER_TEMP/published-optional-assets.txt"
+            printf '%s\n' 'dependency-diff.md' > "$OPTIONAL_LIST"
+            ARGUMENTS+=( -OptionalAssetPath "$OPTIONAL_LIST" )
+          fi
+          pwsh -NoProfile -File ./scripts/release/Assert-ReleaseAssetSet.ps1 "${ARGUMENTS[@]}"
+
+          ARTIFACT_DIRECTORY="$RUNNER_TEMP/published-artifacts"
+          mkdir -p "$ARTIFACT_DIRECTORY"
+          VSIX_NAME="hve-core-$RELEASE_VERSION.vsix"
+          for asset in "$VSIX_NAME" "$VSIX_NAME.spdx.json" "$VSIX_NAME.sigstore.json" \
+            "$VSIX_NAME.intoto.jsonl" 'dependencies.spdx.json'; do
+            gh release download "$RELEASE_TAG" -R "$REPOSITORY" -p "$asset" -D "$ARTIFACT_DIRECTORY"
+          done
+          if [ "$CHANNEL" = 'Stable' ]; then
+            gh release download "$RELEASE_TAG" -R "$REPOSITORY" \
+              -p 'hve-core.openvex.json' -D "$ARTIFACT_DIRECTORY"
+          fi
+          pwsh -NoProfile -File ./scripts/release/Invoke-ProvenanceVerification.ps1 \
+            -ArtifactDirectory "$ARTIFACT_DIRECTORY" \
+            -Repository "$REPOSITORY" \
+            -ExpectedSourceSha "$EXPECTED_SHA" \
+            -ExpectedSignerSha "3a09401536cef0c4559db1aa64b7d1010638fd67" \
+            -ReleaseTag "$RELEASE_TAG"
+
+  extension-provenance:
+    name: Package and Attest VS Code Extension
+    needs: [validate-release]
+    if: ${{ needs.validate-release.outputs.release-state == 'draft' }}
+    uses: microsoft/hve-core/.github/workflows/extension-provenance-signer.yml@3a09401536cef0c4559db1aa64b7d1010638fd67 # PR #2823 squash
+    with:
+      source-ref: ${{ github.sha }}
+      version: ${{ needs.validate-release.outputs.version }}
+      channel: ${{ needs.validate-release.outputs.channel }}
+      release-tag: ${{ needs.validate-release.outputs.tag-name }}
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+
+  vex-attest:
+    name: Attest and Upload Stable VEX
+    needs: [validate-release, extension-provenance]
+    if: ${{ needs.validate-release.outputs.release-state == 'draft' && needs.validate-release.outputs.channel == 'Stable' }}
+    uses: ./.github/workflows/vex-attest.yml
+    with:
+      version: ${{ needs.validate-release.outputs.tag-name }}
+      sbom-artifact: sbom-dependencies
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+
+  verify-provenance:
+    name: Verify Provenance
+    needs: [validate-release, extension-provenance, vex-attest]
+    if: ${{ always() && !cancelled() && !failure() && needs.validate-release.outputs.release-state == 'draft' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: read
+    steps:
+      - name: Checkout verification script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Download release artifacts
+        shell: bash
+        env:
+          CHANNEL: ${{ needs.validate-release.outputs.channel }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.validate-release.outputs.tag-name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p ./artifacts
+          if [ "$CHANNEL" = 'Stable' ]; then
+            gh release download "$RELEASE_TAG" -R "$REPOSITORY" -p 'hve-core.openvex.json' -D ./artifacts
+          fi
+      - name: Download attested extension artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: extension-attested
+          path: ./artifacts
+          digest-mismatch: error
+      - name: Verify build provenance
+        shell: pwsh
+        env:
+          ARTIFACT_DIRECTORY: ./artifacts
+          EXPECTED_SOURCE_SHA: ${{ needs.validate-release.outputs.source-sha }}
+          EXPECTED_SIGNER_SHA: 3a09401536cef0c4559db1aa64b7d1010638fd67
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.validate-release.outputs.tag-name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          & ./scripts/release/Invoke-ProvenanceVerification.ps1 `
+            -ArtifactDirectory $env:ARTIFACT_DIRECTORY `
+            -Repository $env:REPOSITORY `
+            -ExpectedSourceSha $env:EXPECTED_SOURCE_SHA `
+            -ExpectedSignerSha $env:EXPECTED_SIGNER_SHA `
+            -ReleaseTag $env:RELEASE_TAG
+
+  sbom-diff:
+    name: Stable SBOM Dependency Diff
+    needs: [validate-release, extension-provenance]
+    if: ${{ needs.validate-release.outputs.release-state == 'draft' && needs.validate-release.outputs.channel == 'Stable' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: write
+    steps:
+      - name: Download current dependency SBOM
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: sbom-dependencies
+          path: ./current
+          digest-mismatch: error
+      - name: Verify current dependency SBOM
+        run: test -f current/dependencies.spdx.json
+      - name: Download previous release dependency SBOM
+        id: previous
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          PREV_TAG=$(gh api "/repos/$REPOSITORY/releases/latest" --jq '.tag_name' 2>/dev/null || echo '')
+          if [ -z "$PREV_TAG" ]; then
+            echo 'found=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mkdir -p previous
+          if gh release download "$PREV_TAG" -R "$REPOSITORY" -p dependencies.spdx.json -D previous 2>/dev/null; then
+            echo 'found=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'found=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Generate dependency diff
+        if: ${{ steps.previous.outputs.found == 'true' }}
+        run: |
+          python3 <<'PYTHON'
+          import json
+          import pathlib
+
+          def load_packages(path):
+              with open(path, encoding="utf-8") as handle:
+                  data = json.load(handle)
+              root_ids = set(data.get("documentDescribes", []))
+              return {
+                  package.get("name", "unknown"): package.get("versionInfo", "unknown")
+                  for package in data.get("packages", [])
+                  if package.get("SPDXID", "") not in root_ids
+              }
+
+          current = load_packages("current/dependencies.spdx.json")
+          previous = load_packages("previous/dependencies.spdx.json")
+          added = {key: value for key, value in current.items() if key not in previous}
+          removed = {key: value for key, value in previous.items() if key not in current}
+          changed = {
+              key: (previous[key], current[key])
+              for key in current
+              if key in previous and current[key] != previous[key]
+          }
+          lines = ["# Dependency SBOM Diff", ""]
+          if not added and not removed and not changed:
+              lines.append("No dependency changes detected.")
+          else:
+              if added:
+                  lines.extend(["## Added", "", "| Package | Version |", "|---------|---------|"])
+                  lines.extend(f"| {name} | {added[name]} |" for name in sorted(added))
+                  lines.append("")
+              if removed:
+                  lines.extend(["## Removed", "", "| Package | Version |", "|---------|---------|"])
+                  lines.extend(f"| {name} | {removed[name]} |" for name in sorted(removed))
+                  lines.append("")
+              if changed:
+                  lines.extend(["## Version Changes", "", "| Package | Previous | Current |", "|---------|----------|---------|"])
+                  lines.extend(f"| {name} | {changed[name][0]} | {changed[name][1]} |" for name in sorted(changed))
+                  lines.append("")
+          lines.extend(["", "_Generated from SPDX JSON dependency SBOMs._", ""])
+          pathlib.Path("dependency-diff.md").write_text("\n".join(lines), encoding="utf-8")
+          PYTHON
+      - name: Upload diff to GitHub Release
+        if: ${{ steps.previous.outputs.found == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TAG: ${{ needs.validate-release.outputs.tag-name }}
+        run: gh release upload "$TAG" dependency-diff.md --clobber -R "$REPOSITORY"
+
+  append-verification-notes:
+    name: Append Stable Verification Instructions
+    needs: [validate-release, extension-provenance, verify-provenance]
+    if: ${{ needs.validate-release.outputs.release-state == 'draft' && needs.validate-release.outputs.channel == 'Stable' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Append verification section to release notes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TAG: ${{ needs.validate-release.outputs.tag-name }}
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" --json body --jq '.body' -R "$REPOSITORY" > notes.current.md
+          cat > verification-block.md <<'EOF'
+          <!-- hve-core:verification:start -->
+          ## Verifying Downloads
+
+          All release assets include [Sigstore](https://www.sigstore.dev/) build-provenance
+          attestations generated by GitHub Actions. Verify any downloaded asset with the
+          GitHub CLI:
+
+          ```bash
+          gh attestation verify <file>.vsix --repo microsoft/hve-core
+          ```
+
+          ## VEX (Vulnerability Exploitability eXchange)
+
+          This release includes a foundational [OpenVEX](https://openvex.dev/) document
+          (`hve-core.openvex.json`). It establishes the signed, attested VEX artifact that future
+          releases populate with per-CVE exploitability statements. Until statements are added, the
+          document carries no vulnerability assessments and is not authoritative triage. Once
+          populated, use it alongside the SBOM to filter false positives in vulnerability scanners:
+
+          ```bash
+          # Verify VEX attestation
+          gh attestation verify hve-core.openvex.json --repo microsoft/hve-core
+          ```
+
+          See [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md)
+          for full supply-chain verification details including SBOM and VEX validation.
+          <!-- hve-core:verification:end -->
+          EOF
+          python3 <<'PYTHON'
+          import pathlib
+          import re
+          import sys
+
+          start = '<!-- hve-core:verification:start -->'
+          end = '<!-- hve-core:verification:end -->'
+          current = pathlib.Path('notes.current.md').read_text(encoding='utf-8')
+          block = pathlib.Path('verification-block.md').read_text(encoding='utf-8').rstrip('\n')
+          owned_markers = re.findall(r'<!-- hve-core:verification:[^>]*-->', current)
+          if any(marker not in {start, end} for marker in owned_markers):
+            print('::error::Stable release notes contain an unknown verification marker')
+            sys.exit(1)
+          start_count = current.count(start)
+          end_count = current.count(end)
+          if start_count == 0 and end_count == 0:
+            separator = '' if not current else ('' if current.endswith('\n\n') else ('\n' if current.endswith('\n') else '\n\n'))
+            updated = current + separator + block + '\n'
+          elif start_count == 1 and end_count == 1:
+            start_index = current.index(start)
+            end_index = current.index(end)
+            if end_index < start_index:
+              print('::error::Stable release-note verification markers are reversed')
+              sys.exit(1)
+            end_index += len(end)
+            updated = current[:start_index] + block + current[end_index:]
+          else:
+            print(f'::error::Stable release-note verification markers are malformed: start={start_count}, end={end_count}')
+            sys.exit(1)
+          pathlib.Path('notes.md').write_text(updated, encoding='utf-8')
+          PYTHON
+          gh release edit "$TAG" --notes-file notes.md -R "$REPOSITORY"
+
+  publish-release:
+    name: Publish GitHub Release
+    needs:
+      - validate-release
+      - extension-provenance
+      - vex-attest
+      - verify-provenance
+      - sbom-diff
+      - append-verification-notes
+    if: ${{ always() && !cancelled() && !failure() && needs.validate-release.outputs.release-state == 'draft' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download verified extension artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: extension-attested
+          path: ./extension-release
+          digest-mismatch: error
+      - name: Verify local artifacts and current draft occupancy
+        id: occupancy
+        shell: bash
+        env:
+          CHANNEL: ${{ needs.validate-release.outputs.channel }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ID: ${{ needs.validate-release.outputs.release-id }}
+          RELEASE_TAG: ${{ needs.validate-release.outputs.tag-name }}
+          RELEASE_VERSION: ${{ needs.validate-release.outputs.version }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          VSIX="hve-core-$RELEASE_VERSION.vsix"
+          EXTENSION_ASSETS=("$VSIX" "$VSIX.spdx.json" "$VSIX.sigstore.json" "$VSIX.intoto.jsonl")
+          UPLOAD_ASSETS=(dependencies.spdx.json "${EXTENSION_ASSETS[@]}")
+          mapfile -t LOCAL_ASSETS < <(find extension-release -mindepth 1 -maxdepth 1 -type f -printf '%f\n' | sort)
+          mapfile -t EXPECTED_UPLOAD < <(printf '%s\n' "${UPLOAD_ASSETS[@]}" | sort)
+          if [ "${LOCAL_ASSETS[*]}" != "${EXPECTED_UPLOAD[*]}" ]; then
+            echo "::error::Verified extension artifact does not contain the exact fixed release file set"
+            exit 1
+          fi
+
+          RELEASE_FILE="$RUNNER_TEMP/current-draft.json"
+          gh api "/repos/$REPOSITORY/releases/$RELEASE_ID" > "$RELEASE_FILE"
+          if ! jq -e --arg tag "$RELEASE_TAG" --arg sha "${{ github.sha }}" \
+            '.tag_name == $tag and .target_commitish == $sha and .draft == true' "$RELEASE_FILE" >/dev/null; then
+            echo "::error::Release identity or draft state changed before extension upload"
+            exit 1
+          fi
+          REMOTE_ASSETS="$RUNNER_TEMP/current-draft-assets.txt"
+          jq -r '.assets[].name' "$RELEASE_FILE" | sort > "$REMOTE_ASSETS"
+          ALLOWED_BASE=()
+          if [ "$CHANNEL" = 'Stable' ]; then
+            ALLOWED_BASE+=(hve-core.openvex.json)
+            if grep -Fxq 'dependency-diff.md' "$REMOTE_ASSETS"; then
+              ALLOWED_BASE+=(dependency-diff.md)
+            fi
+          fi
+          mapfile -t BASE_SORTED < <(printf '%s\n' "${ALLOWED_BASE[@]}" | sort)
+          mapfile -t PRESENT_UPLOAD < <(comm -12 "$REMOTE_ASSETS" <(printf '%s\n' "${EXPECTED_UPLOAD[@]}"))
+          EXPECTED_REMOTE=("${BASE_SORTED[@]}" "${PRESENT_UPLOAD[@]}")
+          mapfile -t EXPECTED_REMOTE < <(printf '%s\n' "${EXPECTED_REMOTE[@]}" | sort)
+          if [ "$(cat "$REMOTE_ASSETS")" != "$(printf '%s\n' "${EXPECTED_REMOTE[@]}")" ]; then
+            echo "::error::Draft $RELEASE_TAG contains missing or unexpected pre-publication assets"
+            exit 1
+          fi
+          if [ "${#PRESENT_UPLOAD[@]}" -gt 0 ]; then
+            EXISTING="$RUNNER_TEMP/existing-upload"
+            mkdir -p "$EXISTING"
+            for asset in "${PRESENT_UPLOAD[@]}"; do
+              gh release download "$RELEASE_TAG" -R "$REPOSITORY" -p "$asset" -D "$EXISTING"
+              cmp -- "extension-release/$asset" "$EXISTING/$asset" || {
+                echo "::error::Existing draft asset $asset differs from the verified artifact"
+                exit 1
+              }
+            done
+          fi
+          mapfile -t MISSING_UPLOAD < <(comm -23 <(printf '%s\n' "${EXPECTED_UPLOAD[@]}") "$REMOTE_ASSETS")
+          MISSING_JSON=$(jq -cn '$ARGS.positional' --args "${MISSING_UPLOAD[@]}")
+          echo "missing-json=$MISSING_JSON" >> "$GITHUB_OUTPUT"
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          CHANNEL: ${{ needs.validate-release.outputs.channel }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_ID: ${{ needs.validate-release.outputs.release-id }}
+          REPOSITORY: ${{ github.repository }}
+          SOURCE_SHA: ${{ needs.validate-release.outputs.source-sha }}
+          TAG: ${{ needs.validate-release.outputs.tag-name }}
+          MISSING_JSON: ${{ steps.occupancy.outputs.missing-json }}
+          VERSION: ${{ needs.validate-release.outputs.version }}
+        run: |
+          set -euo pipefail
+          VSIX="hve-core-$VERSION.vsix"
+          EXTENSION_ASSETS=("$VSIX" "$VSIX.spdx.json" "$VSIX.sigstore.json" "$VSIX.intoto.jsonl")
+          if ! jq -e 'type == "array" and all(.[]; type == "string")' <<< "$MISSING_JSON" >/dev/null; then
+            echo '::error::Managed upload decision is invalid'
+            exit 1
+          fi
+          mapfile -t MISSING_ASSETS < <(jq -r '.[]' <<< "$MISSING_JSON")
+
+          CURRENT_RELEASE="$RUNNER_TEMP/pre-publication-release.json"
+          gh api "/repos/$REPOSITORY/releases/$RELEASE_ID" > "$CURRENT_RELEASE"
+          if ! jq -e --arg tag "$TAG" --arg sha "$SOURCE_SHA" --arg channel "$CHANNEL" '
+            .tag_name == $tag and .target_commitish == $sha and .draft == true
+            and (($channel == "Stable" and .prerelease == false)
+              or ($channel == "PreRelease" and .prerelease == true))
+          ' "$CURRENT_RELEASE" >/dev/null; then
+            echo '::error::Release identity or draft state changed before publication mutation'
+            exit 1
+          fi
+          if [ "${#MISSING_ASSETS[@]}" -gt 0 ]; then
+            UPLOAD_PATHS=()
+            for asset in "${MISSING_ASSETS[@]}"; do
+              UPLOAD_PATHS+=("extension-release/$asset")
+            done
+            gh release upload "$TAG" "${UPLOAD_PATHS[@]}" -R "$REPOSITORY"
+          fi
+
+          REMOTE_ASSETS="$RUNNER_TEMP/final-draft-assets.txt"
+          gh api --paginate "/repos/$REPOSITORY/releases/${{ needs.validate-release.outputs.release-id }}/assets?per_page=100" \
+            --jq '.[].name' | sort > "$REMOTE_ASSETS"
+          EXPECTED=(dependencies.spdx.json "${EXTENSION_ASSETS[@]}")
+          if [ "$CHANNEL" = 'Stable' ]; then
+            EXPECTED+=(hve-core.openvex.json)
+            if grep -Fxq 'dependency-diff.md' "$REMOTE_ASSETS"; then
+              EXPECTED+=(dependency-diff.md)
+            fi
+          fi
+          mapfile -t EXPECTED < <(printf '%s\n' "${EXPECTED[@]}" | sort)
+          if [ "$(cat "$REMOTE_ASSETS")" != "$(printf '%s\n' "${EXPECTED[@]}")" ]; then
+            echo "::error::Draft $TAG does not contain the exact final release asset set"
+            exit 1
+          fi
+          if [ "$CHANNEL" = 'PreRelease' ]; then
+            gh release edit "$TAG" --prerelease --draft=false -R "$REPOSITORY"
+          else
+            gh release edit "$TAG" --draft=false -R "$REPOSITORY"
+          fi
+
+  close-milestone:
+    name: Close Release Milestone
+    needs: [validate-release, publish-release]
+    if: >
+      always()
+      && !cancelled()
+      && needs.validate-release.result == 'success'
+      && (
+        needs.publish-release.result == 'success'
+        || (
+          needs.publish-release.result == 'skipped'
+          && needs.validate-release.outputs.release-state == 'published'
+        )
+      )
+    uses: ./.github/workflows/release-close-milestone.yml
+    with:
+      version: ${{ needs.validate-release.outputs.version }}
+    permissions:
+      issues: write

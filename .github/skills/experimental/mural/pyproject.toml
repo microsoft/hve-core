@@ -6,6 +6,11 @@ dependencies = [
     "shapely>=2.0",
     "networkx>=3.0",
     "keyring>=24.0",
+    # transitive via keyring/secretstorage on Linux; CVE-2026-69247 (Bleichenbacher oracle
+    # in PKCS7 decrypt) fixed in 50.0.0. Marker matches keyring's own
+    # sys_platform == 'linux' condition for secretstorage/jeepney.
+    # Update policy: re-check NVD + OSV advisories quarterly and on any pip-audit alert.
+    "cryptography>=50.0.0,<51.0; sys_platform == 'linux'",
 ]
 
 [dependency-groups]

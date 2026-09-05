@@ -83,7 +83,6 @@ checkout:
     security/vex/
     scripts/
     extension/
-    collections/
     package.json
     package-lock.json
     pyproject.toml

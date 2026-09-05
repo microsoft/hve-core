@@ -64,6 +64,11 @@ jobs:
       - name: Run Dependency Pinning Validation
         id: pinning
         shell: pwsh
+        env:
+          INPUT_SOFT_FAIL: ${{ inputs.soft-fail }}
+          INPUT_DEPENDENCY_TYPES: ${{ inputs.dependency-types }}
+          INPUT_THRESHOLD: ${{ inputs.threshold }}
+          INPUT_UPLOAD_SARIF: ${{ inputs.upload-sarif }}
         run: |
           Write-Host "Validating dependency SHA pinning compliance..."
           
@@ -78,18 +83,18 @@ jobs:
           }
           
           # Enable failure on threshold violations unless soft-fail is requested
-          if ('${{ inputs.soft-fail }}' -ne 'true') {
+          if ($env:INPUT_SOFT_FAIL -ne 'true') {
             $params['FailOnUnpinned'] = $true
           }
           
           # Pass dependency types filter to script
-          if ('${{ inputs.dependency-types }}') {
-            $params['IncludeTypes'] = '${{ inputs.dependency-types }}'
+          if ($env:INPUT_DEPENDENCY_TYPES) {
+            $params['IncludeTypes'] = $env:INPUT_DEPENDENCY_TYPES
           }
           
           # Pass compliance threshold to script (script handles enforcement)
-          if ('${{ inputs.threshold }}') {
-            $params['Threshold'] = [int]'${{ inputs.threshold }}'
+          if ($env:INPUT_THRESHOLD) {
+            $params['Threshold'] = [int]$env:INPUT_THRESHOLD
           }
           
           # Run validation script (JSON format)
@@ -97,7 +102,7 @@ jobs:
           $jsonExitCode = $LASTEXITCODE
           
           # Generate SARIF format if requested
-          if ('${{ inputs.upload-sarif }}' -eq 'true') {
+          if ($env:INPUT_UPLOAD_SARIF -eq 'true') {
             Write-Host "Generating SARIF format for Security tab..."
             $params['Format'] = 'sarif'
             $params['OutputPath'] = 'logs/dependency-pinning-results.sarif'
