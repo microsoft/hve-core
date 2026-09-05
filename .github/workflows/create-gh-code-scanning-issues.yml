@@ -10,10 +10,16 @@ on:
         required: false
         type: string
         default: gh-code-scanning-alerts
+      reconcile-mode:
+        description: 'Reconciliation behavior: dry-run logs candidates; enforce closes them'
+        required: false
+        type: string
+        default: dry-run
 
 permissions:
   issues: write
   actions: read
+  security-events: read
 
 jobs:
   create-gh-code-scanning-issues:
@@ -22,27 +28,143 @@ jobs:
     permissions:
       issues: write
       actions: read
+      security-events: read
     env:
       GH_TOKEN: ${{ github.token }}
       OWNER: ${{ github.repository_owner }}
       REPO: ${{ github.event.repository.name }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       GITHUB_SERVER_URL: ${{ github.server_url }}
       GITHUB_REPOSITORY: ${{ github.repository }}
       GITHUB_RUN_ID: ${{ github.run_id }}
+      RECONCILE_MODE: ${{ inputs.reconcile-mode }}
     steps:
       - name: Download alerts artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ${{ inputs.artifact-name }}
 
-      - name: Create backlog issues for new findings
+      - name: Evaluate CodeQL analysis health
+        id: scan-health
         shell: bash
         run: |
+          set -uo pipefail
+          verdict="probe-failed"
+          failing_analysis=""
+          scan_ref="refs/heads/${DEFAULT_BRANCH}"
+          cutoff=$(date -u -d '10 days ago' '+%Y-%m-%dT%H:%M:%SZ')
+
+          if ! analyses=$(gh api --paginate --slurp "repos/${OWNER}/${REPO}/code-scanning/analyses?ref=${scan_ref}&tool_name=CodeQL&per_page=100"); then
+            echo "::warning::Unable to query CodeQL analyses. Reconciliation will be skipped."
+          elif ! jq -e 'type == "array"' <<< "${analyses}" > /dev/null; then
+            echo "::warning::The CodeQL analyses response was not a JSON array. Reconciliation will be skipped."
+          elif ! latest=$(jq --arg cutoff "${cutoff}" '
+              [.[][] | select(.created_at >= $cutoff)]
+              | sort_by([.category, .created_at])
+              | group_by(.category)
+              | map(max_by(.created_at))
+            ' <<< "${analyses}"); then
+            echo "::warning::Unable to classify recent CodeQL analyses. Reconciliation will be skipped."
+          else
+            if [[ $(jq 'length' <<< "${latest}") -eq 0 ]]; then
+              verdict="no-analysis-in-window"
+            elif jq -e 'any(.[]; (.error // "") != "")' <<< "${latest}" > /dev/null; then
+              verdict="analysis-error"
+              failing_analysis=$(jq -r '
+                [.[] | select((.error // "") != "") | (.id | tostring)]
+                | join(", ")
+              ' <<< "${latest}")
+            else
+              verdict="healthy"
+            fi
+          fi
+
+          echo "verdict=${verdict}" >> "${GITHUB_OUTPUT}"
+          echo "failing-analysis=${failing_analysis}" >> "${GITHUB_OUTPUT}"
+          echo "CodeQL analysis health for ${scan_ref}: ${verdict}"
+
+      - name: Build code scanning issue index
+        id: issue-index
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate_limit=200
+          gh issue list \
+            --repo "${OWNER}/${REPO}" \
+            --search '"automation:security-scan:" in:body' \
+            --state all \
+            --limit "${candidate_limit}" \
+            --json number,state,body,author,labels > issue-candidates.json
+
+          candidate_count=$(jq 'length' issue-candidates.json)
+          truncated=false
+          if [[ "${candidate_count}" -ge "${candidate_limit}" ]]; then
+            truncated=true
+            echo "::warning::The code scanning issue candidate query reached its ${candidate_limit}-issue limit. Issue mutation and reconciliation will be skipped."
+          fi
+
+          jq '[
+            .[]
+            | select(.body | test("^<!--[ \\t]*automation:security-scan:[A-Za-z0-9._:/-]{1,256}[ \\t]*-->(?:\\r?\\n|$)"))
+            | select(.author.login? == "app/github-actions")
+            | select(([.labels[]?.name] | index("automated")) != null)
+            | select(([.labels[]?.name] | index("security")) != null)
+            | {
+                number,
+                state: (.state | ascii_downcase),
+                rule: (.body | capture("^<!--[ \\t]*automation:security-scan:(?<rule>[A-Za-z0-9._:/-]{1,256})[ \\t]*-->(?:\\r?\\n|$)").rule)
+              }
+          ]' issue-candidates.json > issue-index.json
+
+          echo "truncated=${truncated}" >> "${GITHUB_OUTPUT}"
+          echo "Indexed $(jq 'length' issue-index.json) verified code scanning issues from ${candidate_count} candidates."
+
+      - name: Create backlog issues for new findings
+        shell: bash
+        env:
+          INDEX_TRUNCATED: ${{ steps.issue-index.outputs.truncated }}
+        run: |
             set -euo pipefail
-            # Fail at the boundary on a malformed artifact rather than mid-loop.
+            # Fail at the boundary on malformed records rather than after a partial mutation batch.
             # An empty array is valid and yields no work.
-            if ! jq -e 'type == "array"' alerts.json > /dev/null; then
-              echo "::error::alerts.json is not a JSON array. The alert fetch step produced a malformed artifact; no issues were processed."
+            if ! jq -e '
+              type == "array"
+              and all(.[];
+                type == "object"
+                and (.RuleId | type == "string" and test("^[A-Za-z0-9._:/-]{1,256}$"))
+                and (.RuleDescription | type == "string" and length > 0)
+                and (.Tool | type == "string" and length > 0)
+                and (.Count | type == "number" and floor == . and . >= 1)
+                and (.HasFilePaths | type == "boolean")
+                and (.AffectedPaths | type == "array" and all(.[]; type == "string"))
+                and (if .HasFilePaths then (.AffectedPaths | length > 0) else (.AffectedPaths | length == 0) end)
+                and ((.SecuritySeverity == null) or (.SecuritySeverity | type == "string"))
+                and ((.Severity == null) or (.Severity | type == "string"))
+                and ((.AlertUrl == null) or (.AlertUrl | type == "string"))
+                and ((.FindingDescription == null) or (.FindingDescription | type == "string"))
+              )
+              and (([.[].RuleId] | length) == ([.[].RuleId] | unique | length))
+            ' alerts.json > /dev/null; then
+              echo "::error::alerts.json does not match the grouped alert schema or contains duplicate rule IDs; no issues were processed."
+              exit 1
+            fi
+            if [[ "${INDEX_TRUNCATED}" == "true" ]]; then
+              echo "Code scanning issue updates skipped because the issue index may be truncated."
+              exit 0
+            fi
+
+            jq '[.[].RuleId] | unique' alerts.json > live-rule-ids.json
+
+            ambiguous_rules=$(jq -n \
+              --slurpfile live live-rule-ids.json \
+              --slurpfile issues issue-index.json \
+              '[
+                $live[0][] as $rule
+                | select(([$issues[0][] | select(.rule == $rule)] | length) > 1)
+                | $rule
+              ]')
+            if [[ $(jq 'length' <<< "${ambiguous_rules}") -gt 0 ]]; then
+              echo "::error::Multiple verified tracking issues exist for live rule(s): $(jq -r 'join(", ")' <<< "${ambiguous_rules}"). No issues were processed."
               exit 1
             fi
 
@@ -64,7 +186,7 @@ jobs:
             OCCURRENCE_WORD="$([ "$COUNT" = "1" ] && echo "occurrence" || echo "occurrences")"
             DETECTION_DATE=$(date -u '+%Y-%m-%d')
             RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            REPO_BASE="https://github.com/${OWNER}/${REPO}/blob/main"
+            REPO_BASE="${GITHUB_SERVER_URL}/${OWNER}/${REPO}/blob/${DEFAULT_BRANCH}"
 
             if [[ "$HAS_FILE_PATHS" == "true" ]]; then
               AFFECTED_LIST=$(echo "$alert" | jq -r --arg base "$REPO_BASE" '.AffectedPaths[] | "- [\(.)](\($base + "/" + .))"')
@@ -73,10 +195,12 @@ jobs:
               PATHS_SECTION=$'### Repository configuration finding\n\nThis alert refers to a repository-level configuration setting with no associated source file.'
             fi
 
-            existing=$(gh issue list \
-              --repo "${OWNER}/${REPO}" \
-              --search "\"${MARKER}\" in:body" \
-              --state open --json number --jq '.[0].number // empty')
+            existing_record=$(jq -c --arg rule "${RULE_ID}" '
+              [.[] | select(.rule == $rule)]
+              | .[0] // empty
+            ' issue-index.json)
+            existing=$(jq -r '.number // empty' <<< "${existing_record}")
+            existing_state=$(jq -r '.state // empty' <<< "${existing_record}")
 
             ISSUE_BODY=$(cat <<EOF
             <!-- ${MARKER} -->
@@ -111,13 +235,93 @@ jobs:
                 --label "security,automated,needs-triage" \
                 --body "${ISSUE_BODY}"
             else
-              gh issue edit "${existing}" \
-                --repo "${OWNER}/${REPO}" \
-                --title "${ISSUE_TITLE}" \
-                --body "${ISSUE_BODY}" \
-                --add-label "automated,needs-triage"
+              if [[ "${existing_state}" == "closed" ]]; then
+                gh issue reopen "${existing}" \
+                  --repo "${OWNER}/${REPO}" \
+                  --comment "Reopened automatically because rule \`${RULE_ID}\` is present in the latest code scanning results."
+                gh issue edit "${existing}" \
+                  --repo "${OWNER}/${REPO}" \
+                  --add-label "needs-triage"
+              fi
               gh issue comment "${existing}" \
                 --repo "${OWNER}/${REPO}" \
                 --body "Weekly scan update: ${COUNT} ${OCCURRENCE_WORD} as of ${DETECTION_DATE}."
             fi
             done < <(jq -c '.[]' alerts.json)
+
+      - name: Reconcile code scanning issues
+        shell: bash
+        env:
+          FAILING_ANALYSIS: ${{ steps.scan-health.outputs.failing-analysis }}
+          INDEX_TRUNCATED: ${{ steps.issue-index.outputs.truncated }}
+          SCAN_HEALTH_VERDICT: ${{ steps.scan-health.outputs.verdict }}
+        run: |
+          set -euo pipefail
+          if ! jq -e 'type == "array"' alerts.json > /dev/null; then
+            echo "::error::alerts.json is not a JSON array. No issues were closed."
+            exit 1
+          fi
+
+          case "${SCAN_HEALTH_VERDICT}" in
+            healthy)
+              ;;
+            analysis-error)
+              echo "::error::The most recent in-window CodeQL analysis reports an error in analysis ID(s): ${FAILING_ANALYSIS}"
+              exit 1
+              ;;
+            no-analysis-in-window)
+              echo "::warning::No CodeQL analysis was found in the 10-day health window. Reconciliation skipped."
+              exit 0
+              ;;
+            probe-failed)
+              echo "::warning::CodeQL analysis health could not be determined. Reconciliation skipped."
+              exit 0
+              ;;
+            *)
+              echo "::warning::Unknown CodeQL analysis health verdict. Reconciliation skipped."
+              exit 0
+              ;;
+          esac
+
+          if [[ "${INDEX_TRUNCATED}" == "true" ]]; then
+            echo "::warning::Reconciliation skipped because the issue index may be truncated."
+            exit 0
+          fi
+          if ! jq -e 'type == "array"' issue-index.json > /dev/null ||
+             ! jq -e 'type == "array"' live-rule-ids.json > /dev/null; then
+            echo "::error::Reconciliation inputs are malformed. No issues were closed."
+            exit 1
+          fi
+
+          case "${RECONCILE_MODE}" in
+            dry-run|enforce)
+              ;;
+            *)
+              echo "::error::Unsupported reconcile-mode '${RECONCILE_MODE}'. Expected dry-run or enforce."
+              exit 1
+              ;;
+          esac
+
+          # cspell:ignore slurpfile
+          jq -n \
+            --slurpfile issues issue-index.json \
+            --slurpfile live live-rule-ids.json \
+            '[
+              $issues[0][]
+              | select(.state == "open")
+              | select(.rule as $rule | $live[0] | index($rule) | not)
+            ]' > close-set.json
+
+          while IFS= read -r issue; do
+            issue_number=$(jq -r '.number' <<< "${issue}")
+            rule_id=$(jq -r '.rule' <<< "${issue}")
+            if [[ "${RECONCILE_MODE}" == "dry-run" ]]; then
+              echo "Dry run: would close issue #${issue_number} because rule '${rule_id}' is no longer open."
+            else
+              gh issue close "${issue_number}" \
+                --repo "${OWNER}/${REPO}" \
+                --comment "Closed automatically because rule \`${rule_id}\` is no longer open. Observed by workflow run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
+            fi
+          done < <(jq -c '.[]' close-set.json)
+
+          echo "Reconciliation ${RECONCILE_MODE} completed for $(jq 'length' close-set.json) issue(s)."
