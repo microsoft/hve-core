@@ -8,7 +8,7 @@ BeforeAll {
     $script:Repository = 'microsoft/hve-core'
     $script:SourceSha = '0123456789abcdef0123456789abcdef01234567'
     $script:SignerSha = 'abcdef0123456789abcdef0123456789abcdef01'
-    $script:ReleaseTag = 'v3.4.0'
+    $script:ReleaseTag = 'prerelease-v3.3.0'
 
     function New-VerifiedResultFixture {
         <#
@@ -354,25 +354,84 @@ Describe 'Invoke-ProvenanceVerification' -Tag 'Unit' {
         } | Should -Throw $Error
     }
 
-    It 'Retains ZIP and OpenVEX cryptographic verification without parsing sidecars' {
+    It 'Retains ZIP verification without parsing unrelated metadata' {
         $ZipPath = Join-Path $script:tempDir 'hve-core-plugin.zip'
-        $VexPath = Join-Path $script:tempDir 'hve-core.openvex.json'
         $UnrelatedPath = Join-Path $script:tempDir 'unrelated.metadata.json'
         Set-Content -LiteralPath $ZipPath -Value 'zip bytes'
-        Set-Content -LiteralPath $VexPath -Value '{"sanitized":true}'
         Set-Content -LiteralPath $UnrelatedPath -Value '{not-trusted}'
 
         {
             Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
         } | Should -Not -Throw
 
-        Should -Invoke Invoke-ExternalCommand -Times 3 -Exactly
+        Should -Invoke Invoke-ExternalCommand -Times 2 -Exactly
         Should -Invoke Invoke-ExternalCommand -Times 1 -Exactly -ParameterFilter {
             $Command -eq 'gh' -and $Arguments[2] -eq [System.IO.Path]::GetFullPath($ZipPath) -and
             ($Arguments -join ' ') -eq "attestation verify $([System.IO.Path]::GetFullPath($ZipPath)) --repo $script:Repository"
         }
+    }
+
+    It 'Rejects an OpenVEX document in a PreRelease artifact set' {
+        Set-Content -LiteralPath (Join-Path $script:tempDir 'hve-core.openvex.json') -Value '{"sanitized":true}'
+
+        {
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
+        } | Should -Throw '*PreRelease artifacts must not contain an OpenVEX document*'
+        Should -Invoke Invoke-ExternalCommand -Times 0 -Exactly
+    }
+
+    It 'Rejects a Stable artifact set missing <Missing>' -ForEach @(
+        @{ Missing = 'OpenVEX document'; Add = 'dependencies.spdx.json' }
+        @{ Missing = 'dependency SBOM'; Add = 'hve-core.openvex.json' }
+    ) {
+        Set-Content -LiteralPath (Join-Path $script:tempDir $Add) -Value '{"sanitized":true}'
+
+        {
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag 'v3.4.0'
+        } | Should -Throw "*$Missing*"
+        Should -Invoke Invoke-ExternalCommand -Times 0 -Exactly
+    }
+
+    It 'Rejects a Stable artifact set with a duplicate or noncanonical <Subject>' -ForEach @(
+        @{ Subject = 'OpenVEX document'; Canonical = 'hve-core.openvex.json'; Variant = 'HVE-Core.OpenVEX.json' }
+        @{ Subject = 'dependency SBOM'; Canonical = 'dependencies.spdx.json'; Variant = 'Dependencies.SPDX.json' }
+    ) {
+        Set-Content -LiteralPath (Join-Path $script:tempDir 'hve-core.openvex.json') -Value '{"sanitized":true}'
+        Set-Content -LiteralPath (Join-Path $script:tempDir 'dependencies.spdx.json') -Value '{"spdxVersion":"SPDX-2.3"}'
+        Rename-Item -LiteralPath (Join-Path $script:tempDir $Canonical) -NewName $Variant
+
+        {
+            Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag 'v3.4.0'
+        } | Should -Throw "*exactly one $Subject*"
+        Should -Invoke Invoke-ExternalCommand -Times 0 -Exactly
+    }
+
+    It 'Verifies Stable VEX provenance and OpenVEX over the dependency SBOM separately' {
+        $VexPath = Join-Path $script:tempDir 'hve-core.openvex.json'
+        $DependencySbomPath = Join-Path $script:tempDir 'dependencies.spdx.json'
+        Set-Content -LiteralPath $VexPath -Value '{"sanitized":true}'
+        Set-Content -LiteralPath $DependencySbomPath -Value '{"spdxVersion":"SPDX-2.3"}'
+
+        $script:ReleaseTag = 'v3.4.0'
+        $script:Fixture = New-VerifiedResultFixture -VsixPath $script:vsixPath
+        $script:VerificationJson = ConvertTo-Json -InputObject @($script:Fixture) -Depth 30 -Compress
+        $script:Fixture.attestation | ConvertTo-Json -Depth 30 -Compress |
+            Set-Content -LiteralPath $script:SigstorePath -Encoding utf8NoBOM
+        $script:Fixture.attestation.dsseEnvelope | ConvertTo-Json -Depth 30 -Compress |
+            Set-Content -LiteralPath $script:IntotoPath -Encoding utf8NoBOM
+
+        Invoke-ProvenanceVerification -ArtifactDirectory $script:tempDir -Repository $script:Repository -ExpectedSourceSha $script:SourceSha -ExpectedSignerSha $script:SignerSha -ReleaseTag $script:ReleaseTag
+
+        Should -Invoke Invoke-ExternalCommand -Times 3 -Exactly
         Should -Invoke Invoke-ExternalCommand -Times 1 -Exactly -ParameterFilter {
             $Command -eq 'gh' -and $Arguments[2] -eq [System.IO.Path]::GetFullPath($VexPath) -and
+            $Arguments -contains "$script:Repository/.github/workflows/vex-attest.yml" -and
+            $Arguments -contains 'https://slsa.dev/provenance/v1' -and
+            $Arguments -contains $script:SourceSha -and
+            $Arguments -contains "refs/tags/$script:ReleaseTag"
+        }
+        Should -Invoke Invoke-ExternalCommand -Times 1 -Exactly -ParameterFilter {
+            $Command -eq 'gh' -and $Arguments[2] -eq [System.IO.Path]::GetFullPath($DependencySbomPath) -and
             $Arguments -contains "$script:Repository/.github/workflows/vex-attest.yml" -and
             $Arguments -contains 'https://openvex.dev/ns/v0.2.0'
         }

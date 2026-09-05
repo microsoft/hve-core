@@ -460,6 +460,21 @@ function Invoke-ProvenanceVerification {
         throw 'Provenance invariant failed: release artifacts must contain exactly one VSIX'
     }
 
+    $IsStable = $ReleaseTag.StartsWith('v', [System.StringComparison]::Ordinal)
+    $VexArtifacts = @($artifacts | Where-Object { $_.Name -ieq 'hve-core.openvex.json' })
+    $DependencySbomArtifacts = @($artifacts | Where-Object { $_.Name -ieq 'dependencies.spdx.json' })
+    if ($IsStable) {
+        if ($VexArtifacts.Count -ne 1 -or $VexArtifacts[0].Name -cne 'hve-core.openvex.json') {
+            throw 'Provenance invariant failed: Stable release artifacts must contain exactly one OpenVEX document'
+        }
+        if ($DependencySbomArtifacts.Count -ne 1 -or $DependencySbomArtifacts[0].Name -cne 'dependencies.spdx.json') {
+            throw 'Provenance invariant failed: Stable release artifacts must contain exactly one dependency SBOM'
+        }
+    }
+    elseif ($VexArtifacts.Count -ne 0) {
+        throw 'Provenance invariant failed: PreRelease artifacts must not contain an OpenVEX document'
+    }
+
     $VsixArtifact = $VsixArtifacts[0]
     $SigstorePath = "$($VsixArtifact.FullName).sigstore.json"
     $IntotoPath = "$($VsixArtifact.FullName).intoto.jsonl"
@@ -492,8 +507,29 @@ function Invoke-ProvenanceVerification {
         elseif ($artifact.Name -like '*.zip') {
             $null = Invoke-ExternalCommand -Command 'gh' -Arguments @('attestation', 'verify', $fullPath, '--repo', $Repository)
         }
-        elseif ($artifact.Name -eq 'hve-core.openvex.json') {
-            $null = Invoke-ExternalCommand -Command 'gh' -Arguments @('attestation', 'verify', $fullPath, '--repo', $Repository, '--signer-workflow', "$Repository/.github/workflows/vex-attest.yml", '--predicate-type', 'https://openvex.dev/ns/v0.2.0')
+        elseif ($artifact.Name -ceq 'hve-core.openvex.json') {
+            $null = Invoke-ExternalCommand -Command 'gh' -Arguments @(
+                'attestation', 'verify', $fullPath,
+                '--repo', $Repository,
+                '--signer-workflow', "$Repository/.github/workflows/vex-attest.yml",
+                '--signer-digest', $ExpectedSourceSha,
+                '--source-digest', $ExpectedSourceSha,
+                '--source-ref', "refs/tags/$ReleaseTag",
+                '--predicate-type', 'https://slsa.dev/provenance/v1',
+                '--deny-self-hosted-runners'
+            )
+        }
+        elseif ($IsStable -and $artifact.Name -ceq 'dependencies.spdx.json') {
+            $null = Invoke-ExternalCommand -Command 'gh' -Arguments @(
+                'attestation', 'verify', $fullPath,
+                '--repo', $Repository,
+                '--signer-workflow', "$Repository/.github/workflows/vex-attest.yml",
+                '--signer-digest', $ExpectedSourceSha,
+                '--source-digest', $ExpectedSourceSha,
+                '--source-ref', "refs/tags/$ReleaseTag",
+                '--predicate-type', 'https://openvex.dev/ns/v0.2.0',
+                '--deny-self-hosted-runners'
+            )
         }
     }
 }
