@@ -4,25 +4,59 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import type { PackageCardData } from './packageCards';
+import type {
+  PackageCardData,
+  PackageContentKind,
+  PackageContentSummary,
+} from './packageCards';
 import { labelRegistry } from './labelRegistry';
 
-const componentFields = ['agents', 'commands', 'rules', 'skills'];
+interface ComponentDefinition {
+  field: string;
+  kind: PackageContentKind;
+  label: string;
+  href: string;
+}
+
+const componentDefinitions: ComponentDefinition[] = [
+  { field: 'agents', kind: 'agents', label: 'Agents', href: '/docs/reference/agents' },
+  { field: 'commands', kind: 'prompts', label: 'Prompts', href: '/docs/reference/prompts' },
+  { field: 'rules', kind: 'instructions', label: 'Instructions', href: '/docs/reference/instructions' },
+  { field: 'skills', kind: 'skills', label: 'Skills', href: '/docs/reference/skills' },
+];
 const errorPrefix = '[pluginManifestCards]';
+
+function countComponents(value: unknown): number {
+  if (typeof value === 'string') {
+    return 1;
+  }
+  if (Array.isArray(value)) {
+    return value.length;
+  }
+  return 0;
+}
 
 export function countPluginComponents(
   entry: Record<string, unknown>,
 ): number {
-  return componentFields.reduce((count, field) => {
-    const value = entry[field];
-    if (typeof value === 'string') {
-      return count + 1;
-    }
-    if (Array.isArray(value)) {
-      return count + value.length;
-    }
-    return count;
-  }, 0);
+  return componentDefinitions.reduce(
+    (count, definition) => count + countComponents(entry[definition.field]),
+    0,
+  );
+}
+
+export function summarizePluginComponents(
+  entry: Record<string, unknown>,
+): PackageContentSummary[] {
+  return componentDefinitions.flatMap((definition) => {
+    const count = countComponents(entry[definition.field]);
+    return count === 0 ? [] : [{
+      kind: definition.kind,
+      label: definition.label,
+      count,
+      href: definition.href,
+    }];
+  });
 }
 
 function requireText(value: unknown, field: string, context: string): string {
@@ -116,6 +150,7 @@ export function loadPackageCards(pluginLocatorPath: string): PackageCardData[] {
     title: labelRegistry.hveCore,
     description: requireText(manifest.description, 'manifest.description', name),
     artifacts: countPluginComponents(manifest),
+    contents: summarizePluginComponents(manifest),
     maturity: labelRegistry.stable,
     href: `/docs/plugins/${name}`,
   }];
