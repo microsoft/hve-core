@@ -289,7 +289,9 @@ The agent works with any programming language. Standards and accessibility enfor
 
 ## Extending with Custom Skills
 
-The Standards perspective discovers coding-standards skills dynamically at review time. You extend coverage by adding `SKILL.md` files under a supported repository skill root without modifying the agent itself. See [Language Skills](language-skills.md) for the full guide on built-in skills, skill stacking, same-name precedence, and authoring enterprise-specific standards.
+The Standards perspective discovers coding-standards skills dynamically at review time. You extend its coverage by adding `SKILL.md` files under a supported repository skill root without modifying the agent itself.
+
+The Accessibility perspective loads skills from its fixed named catalog, so extending its coverage requires updating that catalog. See [Language Skills](language-skills.md) for the full guide on built-in standards skills, skill stacking, same-name precedence, and authoring enterprise-specific standards.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
