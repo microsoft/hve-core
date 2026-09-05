@@ -3,7 +3,7 @@ title: Coding Standards/Powershell/Powershell
 description: PowerShell scripting conventions
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ PowerShell scripting conventions
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these conventions when creating or modifying PowerShell scripts,
+modules, or data files. They govern structure, help, parameter validation,
+error handling, and repository logging; `.Tests.ps1` files additionally use
+the Pester-specific instructions.
 
 ## Example usage
 

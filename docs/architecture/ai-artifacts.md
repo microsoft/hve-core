@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-08-20
 ms.topic: concept
 keywords:
   - ai artifacts
@@ -152,6 +152,8 @@ The artifact system follows a hierarchical delegation model. User requests flow 
 
 ```mermaid
 graph LR
+    accTitle: AI Artifact Delegation Flow
+    accDescr: User requests flow through prompts to agents, which apply instructions and invoke skills for specialized execution.
     USER[User Request] --> PROMPT[Prompt]
     PROMPT --> AGENT[Agent]
     AGENT --> INSTR[Instructions]

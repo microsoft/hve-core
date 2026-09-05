@@ -1,7 +1,7 @@
 ---
 title: Code Review Output Formats
 description: Report structure, findings schema, and persistence rules for review orchestrators and skill-backed subagents.
-ms.date: 2026-08-10
+ms.date: 2026-08-31
 ---
 
 ## Output contract
@@ -51,6 +51,21 @@ Review findings should be expressed as structured data first, then rendered into
       "action": "<handoff or guidance note>"
     }
   ],
+  "security_plan_drift": {
+    "baseline": {
+      "state_file": "<path>",
+      "plan_file": "<path>",
+      "status": "complete|incomplete"
+    },
+    "filtered_findings": 0,
+    "control_drift": [],
+    "residual_planned_risks": [],
+    "newly_introduced_threats": [],
+    "insufficient_evidence": {
+      "validated_controls": "diff-scoped evidence",
+      "obsolete_plan_items": "diff-scoped evidence"
+    }
+  },
   "risk_assessment": "<risk level and explanation>",
   "acceptance_criteria_coverage": [
     { "ac": "<AC text>", "status": "Implemented|Partial|Not found", "notes": "<explanation>" }
@@ -58,7 +73,7 @@ Review findings should be expressed as structured data first, then rendered into
 }
 ```
 
-Fields that do not apply may be omitted or set to `null` or an empty array. The `recommended_specialist_reviews` field is present only when specialist signals fired. The `acceptance_criteria_coverage` field is present only when the review had story or acceptance-criteria context. The `pr_comment_draft` object is present only when the review scope targets a pull request or merge request; its `approved_for_posting` flag stays `false` until the human checks the posting box in `review.md`.
+Fields that do not apply may be omitted or set to `null` or an empty array. The `recommended_specialist_reviews` field is present only when specialist signals fired. The `security_plan_drift` field is present only when a confirmed Security Planner baseline was correlated through the `security-planning` skill's drift capability; an executed drift result is not also added to `recommended_specialist_reviews`. The `acceptance_criteria_coverage` field is present only when the review had story or acceptance-criteria context. The `pr_comment_draft` object is present only when the review scope targets a pull request or merge request; its `approved_for_posting` flag stays `false` until the human checks the posting box in `review.md`.
 
 ## Report skeleton
 
@@ -67,15 +82,26 @@ Structure the merged report in this order:
 1. Metadata header with reviewer name, branch, date, aggregate severity counts, and a concise description.
 2. Changed Files Overview with a unified table of reviewed files, risk levels, and issue counts.
 3. Merged Findings with all issues renumbered and tagged by source perspective.
-4. Acceptance Criteria Coverage when story context was provided.
-5. Positive Changes and Testing Recommendations.
-6. Recommended Actions and Out-of-scope Observations.
-7. Recommended specialist follow-up reviews when specialist signals fired, with Sustainability pointing to <https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-get-started> and the dated directional caveat from the [Cross-Skill Forks](cross-skill-forks.md) registry.
-8. Risk Assessment and the final verdict.
-9. PR Comment Draft, present only when the review scope targets a pull request or merge request (see the PR comment draft section below).
-10. Disclaimer and human-review sign-off, always present as the final section (see the disclaimer and human-review sign-off section below).
+4. Security Plan Drift when confirmed plan context was correlated after the findings merge.
+5. Acceptance Criteria Coverage when story context was provided.
+6. Positive Changes and Testing Recommendations.
+7. Recommended Actions and Out-of-scope Observations.
+8. Recommended specialist follow-up reviews when specialist signals fired, with Sustainability pointing to <https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-get-started> and the dated directional caveat from the [Cross-Skill Forks](cross-skill-forks.md) registry.
+9. Risk Assessment and the final verdict.
+10. PR Comment Draft, present only when the review scope targets a pull request or merge request (see the PR comment draft section below).
+11. Disclaimer and human-review sign-off, always present as the final section (see the disclaimer and human-review sign-off section below).
 
-Omit sections that only apply to perspectives that were skipped. The disclaimer and human-review sign-off section (item 10) is never omitted.
+Omit sections that only apply to perspectives or optional extensions that were skipped. The disclaimer and human-review sign-off section (item 11) is never omitted.
+
+## Security plan drift section
+
+Render this section only when Code Review resolved and confirmed a Security Planner baseline, ran the security perspective, and correlated the merged security findings through the `security-planning` skill's drift capability.
+
+* Include the baseline status, filtered-finding count, non-empty control drift, residual planned risk, and newly introduced threat entries.
+* State that validated controls and obsolete plan items have insufficient evidence because Code Review findings are diff-scoped.
+* Include a one-line pointer to the skill's Security Planning CAUTION disclaimer and default exclusions.
+* Carry the same data in `security_plan_drift`; do not require downstream consumers to parse the rendered prose.
+* Do not add the executed extension to `recommended_specialist_reviews`.
 
 ## PR comment draft
 

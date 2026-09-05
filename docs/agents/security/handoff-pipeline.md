@@ -12,7 +12,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -23,6 +23,8 @@ The Security Planner's final two phases convert analysis artifacts into actionab
 
 ```mermaid
 flowchart TD
+  accTitle: Security Backlog Generation Pipeline
+  accDescr: The threat catalog and standards map feed work-item generation and autonomy-tier assignment, producing Azure DevOps work items and GitHub issues.
   T["Threat Catalog<br/>(Phase 4)"] --> WI["Work Item<br/>Generation"]
   S["Standards Map<br/>(Phase 3)"] --> WI
   WI --> AT["Autonomy Tier<br/>Assignment"]
@@ -97,6 +99,8 @@ The RAI Planner's `from-security-plan` entry mode consumes:
 
 ```mermaid
 flowchart LR
+  accTitle: Security to RAI Planner Handoff
+  accDescr: Security Planner Phase 6 passes session state and AI context into RAI Planner Phase 1, which continues through the remaining RAI analysis phases.
   SP["Security Planner<br/>Phase 6"] -->|"state.json<br/>AI/ML context"| RP["RAI Planner<br/>Phase 1"]
   RP --> RP2["RAI Analysis<br/>Phases 2-6"]
 ```

@@ -3,7 +3,7 @@ title: TPM Guide
 description: HVE Core support for technical program managers driving requirements, backlog management, and delivery coordination
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-12
 ms.topic: how-to
 keywords:
   - TPM
@@ -70,6 +70,8 @@ Focus on the self-service registration flow with acceptance criteria for
 each user story, non-functional requirements for sub-200ms API responses,
 and a data migration plan from the legacy system.
 ```
+
+When coordinating an RFI, RFP, tender, bid, or questionnaire, either builder can run the full `analyze`, `contribute`, `draft` sequence, with the domain binding applying to contributions only. Use `proposal-response` directly when you want the skill outside a builder session. Human owners retain disclosure, commitment, approval, submission, and release decisions. See the [proposal response workflow](../../agents/project-planning/brd-prd-builders#proposal-response-workflow).
 
 ```text
 /backlog-plan discover

@@ -3,7 +3,7 @@ title: AI-Assisted Project Lifecycle Overview
 description: Navigate the full AI-assisted engineering lifecycle from setup through operations with HVE Core tooling
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-20
 ms.topic: concept
 keywords:
   - ai-assisted project lifecycle
@@ -52,6 +52,8 @@ Use this navigator to jump directly to the stage matching your current need.
 
 ```mermaid
 flowchart LR
+  accTitle: Project Lifecycle Flow and Feedback Loops
+  accDescr: Nine stages progress from setup through operations, with feedback from review, delivery, and operations returning work to implementation.
     S1["Setup"] --> S2["Discovery"]
     S2 --> S3["Product Definition"]
     S3 --> S4["Decomposition"]

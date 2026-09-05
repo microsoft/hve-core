@@ -3,7 +3,7 @@ title: Privacy/Privacy Identity
 description: "Privacy Planner identity, six-phase orchestration, state management, and session recovery protocols"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Privacy Planner identity, six-phase orchestration, state management, and session
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these instructions when a Privacy Planner session creates, resumes, or
+updates privacy-plan state and artifacts. They govern the six phases, DPIA
+threshold gate, cross-planner links, and professional-review cadence; use the
+privacy standards skill for current regulatory and control guidance.
 
 ## Example usage
 

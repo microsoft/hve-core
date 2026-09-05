@@ -13,7 +13,7 @@ tags:
   - concepts
   - handoff
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-08-26
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -25,6 +25,8 @@ The Security Planner and RAI Planner form a connected assessment pipeline. When 
 <!-- cspell:ignore nrai -->
 ```mermaid
 flowchart LR
+  accTitle: Security Planner to RAI Planner Pipeline
+  accDescr: Security planning detects AI components and passes project context, component details, and threat counts from its handoff into RAI system scoping.
   subgraph SP ["Security Planner"]
     SP1["Phase 1\nScoping"]
     SP6["Phase 6\nHandoff"]
@@ -66,6 +68,8 @@ Phase 6 produces a review summary covering observations across six dimensions. T
 
 ```mermaid
 flowchart TD
+  accTitle: RAI Review Summary Synthesis
+  accDescr: RAI planning Phases 1 through 5 feed six review dimensions: standards alignment, threat completeness, control effectiveness, evidence quality, risk classification, and tradeoff resolution. All six dimensions feed the final review summary.
   P1["Phase 1\nAI System Scoping"] --> D1["Standards\nAlignment"]
   P2["Phase 2\nRisk Classification"] --> D6["Risk\nClassification"]
   P3["Phase 3\nStandards Mapping"] --> D1
