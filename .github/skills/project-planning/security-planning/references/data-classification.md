@@ -1,7 +1,7 @@
 ---
 title: Data Classification and Retention Guidance
 description: Public-safe taxonomy hints for asset classification, sensitivity, and retention metadata in threat-model specs.
-ms.date: 2026-08-05
+ms.date: 2026-08-24
 ms.topic: reference
 ---
 
@@ -80,8 +80,11 @@ copying internal taxonomies. In particular:
 
 - Microsoft Purview default sensitivity labels use a public ladder such as
   Personal, Public, General, Confidential, and Highly Confidential.
-- Public Microsoft material also uses broad categories such as Customer Data,
-  EUII, EUPI, OII, and System or Organizational data.
+- Microsoft's public service-assurance taxonomy documents a classification
+  framework whose levels are Public, General, Confidential, and Highly
+  Confidential, and records that the level formerly named Internal is now
+  General. The asset-role category names above are this reference's own
+  vendor-neutral vocabulary and are not drawn from that page.
 
 A team can map its local labels onto the generic hints above while preserving a
 review-friendly, public-safe schema.
@@ -89,7 +92,7 @@ review-friendly, public-safe schema.
 Sources:
 
 * Microsoft Purview sensitivity labels: <https://learn.microsoft.com/purview/sensitivity-labels>
-* Microsoft data classification categories (Customer Data, EUII, EUPI, OII): <https://learn.microsoft.com/compliance/assurance/assurance-data-classification>
+* Microsoft data classification and sensitivity label taxonomy: <https://learn.microsoft.com/compliance/assurance/assurance-data-classification-and-labels>
 
 ## Private overlay for internal taxonomies
 
