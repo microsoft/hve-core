@@ -130,8 +130,9 @@ When validating changed or added slides, always pass a `-Slides` range that incl
    * Continue iterating until validation passes.
 3. After five iterations without passing all checks, report progress and ask the user whether to continue or accept the current state.
 4. When validation passes:
-   * Copy the final PPTX to a target location if the user specified one.
-   * Open the generated PPTX for the user using `open` (macOS), `xdg-open` (Linux), or `start` (Windows).
+    * Keep the generated PPTX in the working root as the canonical artifact. Make at most one final delivery copy only when the user explicitly specifies its inside- or outside-root destination. Do not copy when no destination is specified or when a delivery copy was already made.
+    * When the specified delivery destination exists, request explicit overwrite confirmation before replacing it. Do not replace it when confirmation is absent or declined.
+    * Open only the generated working-root PPTX, and only when the user explicitly requests it. Otherwise, report its path.
    * Report results and ask whether to continue refining or finalize.
 
 ## Required Protocol
@@ -140,7 +141,7 @@ When validating changed or added slides, always pass a `-Slides` range that incl
 2. Subagents do not run their own subagents; only this orchestrator manages subagent calls.
 3. Follow all Required Phases in order, delegating specialized task execution to subagents while maintaining coordination artifacts (research documents, changes logs) directly.
 4. Phases repeat as needed based on validation findings or user feedback. The iteration limit for Phase 3 validation is five cycles.
-5. All side effects (file creation, script execution, PPTX generation) stay within the working directory under `.copilot-tracking/ppt/`.
+5. All workflow artifacts, scripts, generation, validation evidence, and the canonical generated PPTX stay within the working directory under `.copilot-tracking/ppt/`. The sole exception is one final delivery copy after validation passes to an explicitly user-specified inside- or outside-root destination, subject to the delivery and overwrite gates in Phase 3.
 6. Read subagent output artifacts after each delegation and integrate findings before proceeding.
 7. Create the working directory structure in Phase 1's pre-requisite step before delegating any subagent work.
 8. **Handle subagent clarifying questions**: When a subagent returns clarifying questions, either surface them to the user for decision or make explicit default decisions with documented rationale in the changes log. Do not silently proceed without addressing them.

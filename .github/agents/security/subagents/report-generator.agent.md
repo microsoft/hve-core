@@ -17,11 +17,12 @@ Collate verified findings from all skill assessments into a single vulnerability
 ## Purpose
 
 * Compute summary counts for total checks, statuses, severities, and verification verdicts (audit/diff) or risk classifications (plan).
-* Format findings using VULN_REPORT_V1 for audit and diff modes or PLAN_REPORT_V1 for plan mode.
+* Format findings using VULN_REPORT_V1 for audit and diff modes or PLAN_REPORT_V1 for plan mode, except when `Domain=rai`, which uses RAI_REPORT_V1 in every mode.
 * Sort detailed remediation or mitigation guidance by severity: CRITICAL, HIGH, MEDIUM, LOW.
 * Write the report to the reports directory using the mode-appropriate date-stamped filename pattern.
 * Group findings by skill and security framework.
 * For accessibility-domain reports, include the canonical accessibility disclaimer and a review artifact inventory near the report header.
+* For RAI-domain reports, validate the parent-resolved RAI path, include the canonical RAI Planning caution, and preserve pending human acceptance.
 
 ## Inputs
 
@@ -30,7 +31,8 @@ Collate verified findings from all skill assessments into a single vulnerability
 * Report date in ISO 8601 format (YYYY-MM-DD).
 * Comma-separated list of skill names assessed.
 * (Optional) Mode: `audit`, `diff`, or `plan`. Determines report format and filename pattern. Defaults to `audit`.
-* (Optional) Domain: `security` or `accessibility`. Determines report directory, filename pattern, and report format. Defaults to `security`.
+* (Optional) Domain: `security`, `accessibility`, or `rai`. Determines report directory, filename pattern, and report format. Defaults to `security`. Supply-chain workflows should use `security` as the domain and keep the report body focused on supply-chain terminology.
+* For `Domain=rai`: Mode, repository, report date, non-empty frameworks, the named RAI findings collection, resolved report path, the RAI Planning caution source and verbatim block, and `Human acceptance=PENDING` are required. Changed files are required only for diff; plan source is required only for plan.
 * (Optional) Repository slug used in accessibility filenames (lowercase repository name with non-alphanumeric characters replaced by hyphens). Required when Domain is `accessibility`.
 * (Optional) Changed files list with change types (added, modified, renamed) for diff mode reporting. Included as an appendix in the generated report.
 * (Optional) Plan document reference path or identifier for plan mode reporting. Recorded in the report header.
@@ -42,6 +44,8 @@ Collate verified findings from all skill assessments into a single vulnerability
 Report directory (security domain): `.copilot-tracking/security`
 
 Report directory (accessibility domain): `.copilot-tracking/accessibility`
+
+Report directory (RAI domain): `.copilot-tracking/rai-reviews`
 
 Report filename pattern (security, audit): `security-report-{{NNN}}.md`
 
@@ -67,6 +71,12 @@ Report path pattern (accessibility, diff): `.copilot-tracking/accessibility/{{YY
 
 Report path pattern (accessibility, plan): `.copilot-tracking/accessibility/{{YYYY-MM-DD}}/accessibility-plan-assessment-{{REPO}}-{{YYYYMMDD}}.md`
 
+Report path pattern (RAI, audit): `.copilot-tracking/rai-reviews/{{YYYY-MM-DD}}/rai-report-{{REPO}}-{{YYYYMMDD}}.md`
+
+Report path pattern (RAI, diff): `.copilot-tracking/rai-reviews/{{YYYY-MM-DD}}/rai-report-diff-{{REPO}}-{{YYYYMMDD}}.md`
+
+Report path pattern (RAI, plan): `.copilot-tracking/rai-reviews/{{YYYY-MM-DD}}/rai-plan-assessment-{{REPO}}-{{YYYYMMDD}}.md`
+
 Where `{{NNN}}` is a zero-padded three-digit sequence number starting at `001`, incremented based on existing reports for the same date and mode (security domain only). `{{REPO}}` is the repository slug. `{{YYYYMMDD}}` is the report date with hyphens removed.
 
 ## Report Formats
@@ -76,15 +86,18 @@ Read the `security-reviewer-formats` skill for full format specifications before
 * Report Formats (`references/report-formats.md`) — VULN_REPORT_V1 template (audit and diff modes), diff mode qualifiers, and PLAN_REPORT_V1 template (plan mode).
 * Finding Formats (`references/finding-formats.md`) — Verified Findings Collection Format describing the input structure.
 * Completion Formats (`references/completion-formats.md`) — Scan Completion Format used by the orchestrator after report delivery.
+* Use the RAI request, findings, report, response, and terminal error formats in those same references when `Domain=rai`.
 
 ## Required Steps
 
 ### Pre-requisite: Setup
 
-1. Resolve the report directory based on Domain: `.copilot-tracking/security` when Domain is `security`, `.copilot-tracking/accessibility` when Domain is `accessibility`. Create the directory if it does not exist.
-2. Do not include secrets, credentials, or sensitive environment values in the report.
-3. When Domain is `accessibility`, read the accessibility disclaimer source and extract the canonical CAUTION block verbatim before assembling the report. Do not substitute the shared planning disclaimer.
-4. When Domain is `accessibility`, normalize the review artifact inventory into table rows. Use `N/A` for optional inputs that were not supplied and `None` for empty changed-files or excluded-files lists.
+1. Validate Domain before resolving or creating a report directory. Accept only `security`, `accessibility`, or `rai`; when an explicit value is unsupported, return `UNSUPPORTED_DOMAIN` with `Retryable=false` and write no report.
+2. Resolve the report directory based on Domain: `.copilot-tracking/security` when Domain is `security`, `.copilot-tracking/accessibility` when Domain is `accessibility`, or `.copilot-tracking/rai-reviews` when Domain is `rai`. Create the directory if it does not exist.
+3. When Domain is `rai`, validate the request against the RAI formats in `security-reviewer-formats`. Accept only the active-mode base path or that base path with `-[2-9][0-9]*` immediately before `.md`, as defined by the Report Formats collision rule. The caution must be the RAI Planning caution from `disclaimer-language.instructions.md`, and human acceptance must be `PENDING`. Return the terminal error envelope and write no report on failure. Set Retryable only from the canonical Completion Formats code-to-Retryable mapping.
+4. Do not include secrets, credentials, or sensitive environment values in the report.
+5. When Domain is `accessibility`, read the accessibility disclaimer source and extract the canonical CAUTION block verbatim before assembling the report. Do not substitute the shared planning disclaimer.
+6. When Domain is `accessibility`, normalize the review artifact inventory into table rows. Use `N/A` for optional inputs that were not supplied and `None` for empty changed-files or excluded-files lists.
 
 ### Step 1: Determine Sequence Number
 
@@ -156,7 +169,8 @@ Applies to security domain only. Accessibility-domain filenames embed the reposi
    * When Domain is `accessibility` and mode is `audit`: assemble the report following VULN_REPORT_V1 with accessibility terminology (success criteria, conformance levels, assistive-technology impacts) and write to `.copilot-tracking/accessibility/{REPORT_DATE}/accessibility-report-{REPO}-{YYYYMMDD}.md`.
    * When Domain is `accessibility` and mode is `diff`: assemble the report following VULN_REPORT_V1 with accessibility terminology and diff mode qualifiers and write to `.copilot-tracking/accessibility/{REPORT_DATE}/accessibility-report-diff-{REPO}-{YYYYMMDD}.md`.
    * When Domain is `accessibility` and mode is `plan`: assemble the report following PLAN_REPORT_V1 with accessibility terminology and write to `.copilot-tracking/accessibility/{REPORT_DATE}/accessibility-plan-assessment-{REPO}-{YYYYMMDD}.md`.
-2. Write the assembled report to the resolved path where `{REPORT_DATE}` is the resolved date, `{NNN}` is the resolved sequence number (security domain only), `{REPO}` is the repository slug (accessibility domain only), and `{YYYYMMDD}` is the report date with hyphens removed (accessibility domain only).
+    * When Domain is `rai`: assemble RAI_REPORT_V1 and write only to the validated parent-resolved RAI path for the active mode. Never overwrite an occupied path; return `REPORT_WRITE_FAILED` using the canonical Completion Formats mapping.
+2. Write the assembled report to the resolved path where `{REPORT_DATE}` is the resolved date, `{NNN}` is the resolved sequence number (security domain only), `{REPO}` is the repository slug (accessibility and RAI domains), and `{YYYYMMDD}` is the report date with hyphens removed (accessibility and RAI domains).
 3. When Domain is `accessibility`, add the resolved report path to the `## Review Artifacts` table before writing the file.
 4. Print a one-line confirmation: "Report saved → {resolved_report_path}".
 
@@ -172,3 +186,4 @@ Return structured findings including:
 * Summary counts: pass, fail, partial, and not-assessed for audit and diff modes; risk, caution, covered, and not-applicable for plan mode.
 * Verification counts: confirmed, disproved, and downgraded totals. Included for audit and diff modes only.
 * Clarifying questions when inputs are ambiguous or missing.
+* When Domain is `rai`, return the RAI generator response from `security-reviewer-formats` Completion Formats. Fail closed with its terminal error envelope for unsupported domains, invalid modes or payloads, path mismatch, missing caution, human-acceptance violation, malformed verdicts, and report-write failures. Set Retryable only from the canonical Completion Formats code-to-Retryable mapping.

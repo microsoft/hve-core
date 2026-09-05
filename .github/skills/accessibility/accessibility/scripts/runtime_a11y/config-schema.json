@@ -10,7 +10,8 @@
     "schemaVersion": { "type": "string" },
     "baseUrl": {
       "type": "string",
-      "description": "Canonical origin the harness probes. Must be loopback or explicitly allowlisted; enforced by the SSRF guard at runtime."
+      "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://",
+      "description": "Absolute HTTP(S) origin the harness probes. Must be loopback or explicitly allowlisted; enforced by the SSRF guard at runtime."
     },
     "serveMode": {
       "type": "string",
@@ -35,7 +36,7 @@
         "properties": {
           "path": { "type": "string" },
           "title": { "type": "string" },
-          "surfaceIds": { "type": "array", "items": { "type": "string" } }
+          "surfaceIds": { "type": "array", "items": { "$ref": "#/$defs/artifactId" } }
         },
         "additionalProperties": true
       }
@@ -46,7 +47,7 @@
         "type": "object",
         "required": ["id"],
         "properties": {
-          "id": { "type": "string" },
+          "id": { "$ref": "#/$defs/artifactId" },
           "type": {
             "type": "string",
             "enum": ["page", "component", "widget", "content-type", "global-chrome"]
@@ -69,9 +70,9 @@
         "type": "object",
         "required": ["probe"],
         "properties": {
-          "probe": { "type": "string" },
-          "surfaces": { "type": "array", "items": { "type": "string" } },
-          "states": { "type": "array", "items": { "type": "string" } }
+          "probe": { "$ref": "#/$defs/artifactId" },
+          "surfaces": { "type": "array", "items": { "$ref": "#/$defs/artifactId" } },
+          "states": { "type": "array", "items": { "$ref": "#/$defs/artifactId" } }
         },
         "additionalProperties": true
       }
@@ -128,11 +129,12 @@
             "type": "object",
             "required": ["id"],
             "properties": {
-              "id": { "type": "string" },
+              "id": { "$ref": "#/$defs/artifactId" },
+              "journeyId": { "$ref": "#/$defs/artifactId" },
               "title": { "type": "string" },
               "route": { "type": "string" },
-              "surfaceId": { "type": "string" },
-              "state": { "type": "string" },
+              "surfaceId": { "$ref": "#/$defs/artifactId" },
+              "state": { "$ref": "#/$defs/artifactId" },
               "trigger": { "$ref": "#/$defs/trigger" },
               "triggerSequence": {
                 "type": "array",
@@ -154,7 +156,7 @@
               },
               "visualStates": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": { "$ref": "#/$defs/artifactId" }
               }
             },
             "additionalProperties": true
@@ -162,7 +164,7 @@
         },
         "visualStates": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "$ref": "#/$defs/artifactId" }
         }
       },
       "additionalProperties": true
@@ -193,15 +195,15 @@
             "required": ["path"],
             "properties": {
               "path": { "type": "string" },
-              "state": { "type": "string" },
-              "surfaceId": { "type": "string" }
+              "state": { "$ref": "#/$defs/artifactId" },
+              "surfaceId": { "$ref": "#/$defs/artifactId" }
             },
             "additionalProperties": true
           }
         },
         "states": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "$ref": "#/$defs/artifactId" }
         }
       },
       "additionalProperties": true
@@ -209,6 +211,11 @@
   },
   "additionalProperties": true,
   "$defs": {
+    "artifactId": {
+      "type": "string",
+      "description": "Portable identifier used as an evidence path segment. Excludes trailing dots and Windows reserved device names, which Win32 would collide or fail on.",
+      "pattern": "^(?![Cc][Oo][Nn](\\.|$))(?![Pp][Rr][Nn](\\.|$))(?![Aa][Uu][Xx](\\.|$))(?![Nn][Uu][Ll](\\.|$))(?![Cc][Oo][Mm][1-9](\\.|$))(?![Ll][Pp][Tt][1-9](\\.|$))(?!.*\\.$)[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
     "selector": {
       "oneOf": [
         { "type": "string" },
@@ -247,7 +254,7 @@
       "type": "object",
       "required": ["state"],
       "properties": {
-        "state": { "type": "string" },
+        "state": { "$ref": "#/$defs/artifactId" },
         "trigger": { "$ref": "#/$defs/trigger" },
         "ariaAt": { "$ref": "#/$defs/ariaAtOverride" },
         "realScreenReader": { "$ref": "#/$defs/realScreenReader" }
