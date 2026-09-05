@@ -52,7 +52,6 @@ JIRA_ENV_KEYS = frozenset(
         "JIRA_BASE_URL",
         "JIRA_CLOUD_ID",
         "JIRA_CLOUD_TOKEN_MODE",
-        "JIRA_CONFIRM_WRITES",
         "JIRA_PAT",
         "JIRA_USER_EMAIL",
     }
@@ -1281,8 +1280,6 @@ def main() -> int:
         global _AUDIT_OP
         _AUDIT_OP = command
 
-        _load_jira_env_file()
-
         if command in {"create", "update", "transition", "comment"}:
             confirmed = bool(args.confirm) or (
                 os.environ.get("JIRA_CONFIRM_WRITES", "").strip() == "1"
@@ -1294,6 +1291,7 @@ def main() -> int:
                     EXIT_USAGE,
                 )
 
+        _load_jira_env_file()
         client = JiraClient.from_environment()
         result = args.handler(client, args)
         _print_result(result, args.fields)

@@ -152,7 +152,7 @@ def test_main_allows_confirmed_write_operations_via_environment(
     assert seen == [(sentinel_client, "create", False)]
 
 
-def test_main_loads_file_confirmation_before_write_gate(
+def test_main_refuses_unconfirmed_write_before_loading_file(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     seen: list[str] = []
@@ -163,19 +163,19 @@ def test_main_loads_file_confirmation_before_write_gate(
                 fields=None,
                 command="create",
                 confirm=False,
-                handler=lambda *_args: seen.append("handled") or {},
+                handler=lambda *_args: {},
             )
 
-    def load_confirmation() -> None:
-        monkeypatch.setenv("JIRA_CONFIRM_WRITES", "1")
-
     monkeypatch.setattr(jira, "create_parser", FakeParser)
-    monkeypatch.setattr(jira, "_load_jira_env_file", load_confirmation)
+    monkeypatch.setattr(
+        jira,
+        "_load_jira_env_file",
+        lambda: seen.append("loaded"),
+    )
     monkeypatch.setattr(jira.JiraClient, "from_environment", object)
-    monkeypatch.setattr(jira, "_print_result", lambda _result, _fields: None)
 
-    assert jira.main() == jira.EXIT_SUCCESS
-    assert seen == ["handled"]
+    assert jira.main() == jira.EXIT_USAGE
+    assert seen == []
 
 
 def test_main_returns_script_error_exit_code(

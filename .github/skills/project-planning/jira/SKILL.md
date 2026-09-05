@@ -98,7 +98,7 @@ step 4.
 | `JIRA_AUDIT_ACTOR`    | Optional      | Overrides the recorded actor identity (for example, a CI service principal).            |
 | `JIRA_DEBUG`          | Optional      | Inherited environment only. Set to `1` to print a redacted traceback on failure. Never disables redaction. |
 | `JIRA_ALLOW_INSECURE` | Optional      | Set to `1` to permit explicit loopback HTTP development endpoints only.                 |
-| `JIRA_CONFIRM_WRITES` | Optional      | Set to `1` to satisfy the write confirmation gate without `--confirm` or `--yes`.       |
+| `JIRA_CONFIRM_WRITES` | Optional      | Inherited environment only. Set to `1` to satisfy the write confirmation gate without `--confirm` or `--yes`. |
 
 ### Audit Logging
 
@@ -145,7 +145,7 @@ These rules are not adjustable by autonomy mode or user request.
 
 The agent's terminal and the user's terminal are separate sessions, so an `export` in one is invisible to the other. The CLI loads supported Jira variables from `~/.jira.env` in-process before it creates a client. It treats every value as data, never evaluates the file as shell code, and does not overwrite a variable already inherited by the terminal.
 
-`JIRA_DEBUG` is inherited-environment-only because it must already be available when file-loading errors are handled. `JIRA_CONFIRM_WRITES` may be loaded from the file because loading completes before the write-confirmation gate runs.
+`JIRA_DEBUG` and `JIRA_CONFIRM_WRITES` are inherited-environment-only control variables. An unconfirmed write is rejected before the credential file is read, so that file cannot grant mutation authority.
 
 On POSIX platforms, the CLI requires the file to be owned by the current user and accessible only by that owner. It opens the path without following symlinks and in non-blocking mode, then rejects non-regular files, oversized files, malformed assignments, and files with group or other permissions before loading values. Windows does not expose equivalent owner and mode checks through this path; protect the file with user-only ACLs. Errors name the configuration problem without printing credential values.
 
