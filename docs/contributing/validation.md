@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-08-21
+ms.date: 2026-09-06
 ms.topic: how-to
 keywords:
   - validation
@@ -307,12 +307,32 @@ clean moderation result.
 | Agent matrix dry run | `npm run ci:eval:agent:matrix:dryrun`                           | No model invocation; writes a dry-run matrix summary                                                                    |
 | Changed-agent matrix | `npm run ci:eval:agent:changed`                                 | Requires a suitable git comparison base and model access                                                                |
 
-Devloop-tier equivalence results are advisory while CI-tier results are
-authoritative. These tiers name the baseline-equivalence exit policy and are
-distinct from the unchanged `pr` and `nightly` vocabulary of the separate
-agent-matrix commands above. Read the lane's generated JSON verdict and the
-hosted workflow status together. Do not infer a hosted CI policy from a direct
-local invocation.
+PR eval execution runs the changed-artifact checks without baseline calibration
+and has a 30-minute limit per shard. Full calibration is a separate, manually
+dispatched [Baseline Calibration workflow](../../.github/workflows/baseline-calibration.yml).
+Select a branch in GitHub Actions and run that workflow when a two-model
+baseline-versus-RPI comparison is needed. It requires the repository's
+`COPILOT_GITHUB_TOKEN` secret, has a two-hour job limit, and uploads only the
+aggregate summary, not raw trajectories or judge logs.
+
+To run the same calibration locally with model access already configured:
+
+```bash
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier calibration
+```
+
+Each comparison streams output and emits an elapsed-time heartbeat every 30
+seconds. Its default 30-minute deadline includes judge startup and cleanup;
+override it with `-ComparisonTimeoutSeconds <seconds>` when deliberately
+running a larger comparison. A timed-out comparison stops its process tree
+and records a run-health failure rather than passing without evidence.
+
+Devloop-tier execution is advisory. Calibration and CI tiers keep deterministic
+and structural failures authoritative, while comparative scores and divergence
+guards remain report-only. These tiers are distinct from the `pr` and `nightly`
+vocabulary of the separate agent-matrix commands above. Read the generated JSON
+verdict and workflow status together; a direct local invocation does not change
+hosted CI policy.
 
 ### Dashboards and reports
 

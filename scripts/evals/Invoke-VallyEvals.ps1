@@ -67,15 +67,14 @@
     Defaults to `devloop`. `calibration` runs the fixed two-model set while keeping
     comparison and divergence evidence report-only; deterministic and structural
     failures remain authoritative.
-    Applies only when `-EnableBaselineEquivalence` is set. Per DD-01, `devloop`
-    equivalence dispatch is advisory: failures surface in summary JSON but do
-    not increment `failedSpecs` or change exit code. This ValidateSet must stay in
-    step with the driver's accepted tiers, which reject the retired `pr` and
-    `nightly` names outright rather than aliasing them.
+    Applies only when `-EnableBaselineEquivalence` is set. Devloop verdicts are
+    advisory; a missing or incompatible summary still fails. Keep the accepted
+    values aligned with the driver, which rejects retired `pr` and `nightly` names.
 
 .PARAMETER EnableBaselineEquivalence
-    Enables Tier 2 baseline-equivalence dispatch for changed or affected agents.
-    Disabled by default for PR-time eval execution.
+    Enables baseline-equivalence dispatch for supported changed or affected agents.
+    Disabled by default and not enabled by PR validation; hosted calibration uses
+    the separate manually dispatched Baseline Calibration workflow.
 
 .PARAMETER FailFast
     Stop after the first spec invocation that returns a non-zero exit code or
@@ -778,16 +777,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         }
     }
     else {
-        # Per DD-01, baseline-equivalence is advisory at PR tier: equivalence
-        # signal surfaces in the run summary but never gates merge. Its stimuli
-        # corpus is tag-resolved into this authoritative path and runs at a
-        # perfect-score threshold (1.0) against a small model, so a single grader
-        # miss on a file-reading prompt would otherwise hard-fail the spec and
-        # block the build. Treat any baseline-equivalence spec as advisory so the
-        # tag-resolved path honors the same advisory posture as the dedicated
-        # equivalence dispatch.
-        $specIsEquivalence = $specRel -match '(^|/)baseline-equivalence/'
-        $isAdvisory = (Test-SpecIsAdvisory -SpecPath $specAbs) -or $specIsEquivalence
+        $isAdvisory = Test-SpecIsAdvisory -SpecPath $specAbs
         $result['isAdvisory'] = $isAdvisory
 
         # A zero vally exit means the spec met its aggregate threshold (the author's
@@ -905,8 +895,6 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
     }
 }
 
-# Equivalence dispatch (Tier 2 baseline-equivalence). Per DD-01, PR-tier failures
-# are advisory: they surface in summary but do not increment $failedSpecs.
 # Only the agent-owning shard dispatches equivalence so cross-kind promotions are
 # not duplicated across parallel per-kind shards.
 $equivalenceResults = [System.Collections.Generic.List[object]]::new()

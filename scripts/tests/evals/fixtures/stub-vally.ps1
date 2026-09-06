@@ -56,6 +56,16 @@ if ($args[0] -eq 'compare') {
         exit 65
     }
 
+    if ($env:STUB_VALLY_COMPARE_MODE -in @('stream', 'wait')) {
+        [Console]::Out.WriteLine('stub comparison stdout')
+        [Console]::Error.WriteLine('stub comparison stderr')
+        if ($env:STUB_VALLY_COMPARE_MODE -eq 'wait') {
+            Set-Content -LiteralPath $outputPath -Value $PID
+            [Console]::In.ReadLine() | Out-Null
+        }
+        exit 7
+    }
+
     if ($env:STUB_VALLY_COMPARE_MODE -eq 'fail-empty') {
         [System.IO.File]::WriteAllText($outputPath, '')
         exit 1

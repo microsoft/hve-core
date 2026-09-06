@@ -316,7 +316,7 @@ jobs:
   eval-execute:
     name: Eval Execute (${{ matrix.kind }})
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 30
     needs: [eval-validation, content-moderation]
     # Repository secrets are not exposed to fork PRs; clean-skip execution there.
     # Only run when eval-relevant paths changed (see eval-validation detect step).
@@ -415,7 +415,7 @@ jobs:
         if: env.EVAL_EXECUTE == 'true'
         shell: pwsh
         run: |
-          npm run ci:eval:execute -- -Kind ${{ matrix.kind }} -ChangedSpecManifestPath logs/changed-spec-stimuli.json -Model gpt-5.6-luna -SkipInputModeration -EnableBaselineEquivalence -EquivalenceTier calibration
+          npm run ci:eval:execute -- -Kind ${{ matrix.kind }} -ChangedSpecManifestPath logs/changed-spec-stimuli.json -Model gpt-5.6-luna -SkipInputModeration
           if ($LASTEXITCODE -ne 0) {
             'EVAL_EXECUTE_FAILED=true' >> $env:GITHUB_ENV
           }
@@ -435,7 +435,6 @@ jobs:
             logs/stimulus-presence.json
             logs/eval-summary.json
             logs/eval-results-*.json
-            logs/baseline-equivalence-*.json
           retention-days: 30
           if-no-files-found: ignore
 

@@ -7,6 +7,77 @@ BeforeAll {
     $script:RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '../../..') | Select-Object -ExpandProperty Path
 }
 
+Describe 'Invoke-VallyCommand exit status' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    It 'Returns only exit code <ExitCode> when Vally writes stdout' -ForEach @(
+        @{ ExitCode = 0 }
+        @{ ExitCode = 7 }
+    ) {
+        $script:VallyExitCode = $ExitCode
+        Mock vally {
+            Write-Output 'ordinary CLI output'
+            $global:LASTEXITCODE = $script:VallyExitCode
+        }
+        Mock Write-Host {}
+
+        $result = Invoke-VallyCommand -Arguments @('eval')
+
+        $result | Should -BeOfType [int]
+        $result | Should -Be $ExitCode
+        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {
+            $Object -eq 'ordinary CLI output'
+        }
+    }
+}
+
+Describe 'Invoke-VallyCommandWithCapture process bounds' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    BeforeEach {
+        $script:SavedCompareMode = $env:STUB_VALLY_COMPARE_MODE
+        Set-Alias -Name vally -Value (Join-Path $PSScriptRoot 'fixtures/stub-vally.ps1')
+        $script:CompareLog = Join-Path $TestDrive 'compare.log'
+        $script:CompareOutput = Join-Path $TestDrive 'compare.json'
+        Mock Write-Host {}
+    }
+
+    AfterEach {
+        Remove-Item Alias:vally -Force -ErrorAction SilentlyContinue
+        $env:STUB_VALLY_COMPARE_MODE = $script:SavedCompareMode
+    }
+
+    It 'Streams and saves both output streams while preserving the exit code' {
+        $env:STUB_VALLY_COMPARE_MODE = 'stream'
+
+        $result = Invoke-VallyCommandWithCapture -Arguments @('compare', '--output', $script:CompareOutput) -LogPath $script:CompareLog
+
+        $result.ExitCode | Should -Be 7
+        $result.TimedOut | Should -BeFalse
+        $result.Lines | Should -Contain 'stub comparison stdout'
+        $result.Lines | Should -Contain 'stub comparison stderr'
+        Get-Content -LiteralPath $script:CompareLog | Should -HaveCount 2
+        Should -Invoke Write-Host -ParameterFilter { $Object -eq 'stub comparison stdout' } -Times 1 -Exactly
+    }
+
+    It 'Reports progress and stops a stalled process at the deadline' {
+        $env:STUB_VALLY_COMPARE_MODE = 'wait'
+
+        $result = Invoke-VallyCommandWithCapture -Arguments @('compare', '--output', $script:CompareOutput) -LogPath $script:CompareLog -TimeoutSeconds 3 -HeartbeatSeconds 1
+
+        $result.ExitCode | Should -Be 124
+        $result.TimedOut | Should -BeTrue
+        Get-Content -LiteralPath $script:CompareLog -Raw | Should -Match 'timed out'
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*still running*' }
+        $childId = [int](Get-Content -LiteralPath $script:CompareOutput -Raw)
+        Get-Process -Id $childId -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
+    }
+}
+
 Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
     BeforeEach {
         $script:OutputPath = Join-Path $TestDrive "summary-$([Guid]::NewGuid()).json"
@@ -66,7 +137,7 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             $script:Summary.tier | Should -Be 'devloop'
         }
 
-        It 'Selects exactly one PR-tier model' {
+        It 'Selects exactly one devloop model' {
             $script:Summary.model | Should -Not -BeNullOrEmpty
             $script:Summary.plannedCommands.Count | Should -Be 3
         }
@@ -444,7 +515,7 @@ Describe 'Test-CustomizationCollapse' -Tag 'Unit' {
     }
 }
 
-Describe 'Invoke-BaselineEquivalence.ps1 (stubbed nightly run)' -Tag 'Unit' {
+Describe 'Invoke-BaselineEquivalence.ps1 (stubbed execution)' -Tag 'Unit' {
     BeforeEach {
         $script:StubRepoRoot = Join-Path $TestDrive 'repo'
         $baselineRoot = Join-Path $script:StubRepoRoot 'evals/baseline-equivalence'

@@ -16,9 +16,9 @@
     to `logs/baseline-equivalence-summary.json`.
 
     Exit policy by tier:
-    - `devloop` always exits 0. Failing gates surface as `verdict: warn` in the
-      summary JSON. Advisory only.
-    - `ci` exits non-zero (1) when `verdict == fail`. Source of truth.
+        - `devloop` exits 0 after writing a summary, even when its verdict is fail.
+        - `calibration` and `ci` exit 1 when authoritative evidence fails.
+        - Startup and execution exceptions exit 3 in every tier.
 
     `-WhatIf` (dry-run) mode prints the planned `vally` command lines, emits a summary
     JSON populated with zeros and `verdict: dry-run`, and exits 0 without invoking any
@@ -29,8 +29,9 @@
     `.github/agents/`. Defaults to `rpi-agent`.
 
 .PARAMETER Tier
-    The harness mode. `devloop` runs a single primary model and stays advisory; `ci`
-    runs a model array for broader coverage and is authoritative. Defaults to `devloop`.
+    The harness mode. `devloop` runs one model and stays advisory. `calibration` and
+    `ci` run two models, with authoritative deterministic and structural checks and
+    report-only comparative scores. Defaults to `devloop`.
     The former `pr` and `nightly` names are rejected with a migration message rather
     than aliased, so a stale caller fails loudly instead of silently selecting a
     different exit policy.
@@ -38,11 +39,15 @@
 .PARAMETER Model
     Optional explicit model id for the `devloop` tier. When supplied it overrides the
     agent's frontmatter `model:` hint and the built-in default, letting callers pin a
-    cheaper model for advisory runs. Ignored for the `ci` tier, which always runs its
-    fixed model array of `gpt-5.6-luna` and `claude-sonnet-4.6`.
+    cheaper model for advisory runs. Ignored for `calibration` and `ci`, which run
+    the fixed pair of `gpt-5.6-luna` and `claude-sonnet-4.6`.
 
 .PARAMETER ComparisonJudgeModel
     Model used as the `vally compare` judge. Defaults to `claude-haiku-4.5`.
+
+.PARAMETER ComparisonTimeoutSeconds
+    Maximum duration of each comparison command, including judge startup and cleanup.
+    Defaults to 1800 seconds. Timeout stops the process tree and fails the run.
 
 .PARAMETER ComparisonSpecPath
     Repository-relative path to the comparison-judging contract passed to
@@ -102,6 +107,10 @@ param(
     [Parameter(Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
     [string]$ComparisonJudgeModel = 'claude-haiku-4.5',
+
+    [Parameter(Mandatory = $false)]
+    [ValidateRange(1, 86400)]
+    [int]$ComparisonTimeoutSeconds = 1800,
 
     # Comparison judging reads the stimulus rubric. Without this spec, vally falls back
     # to the rubric embedded in the baseline trajectory and then to a general-purpose
@@ -329,12 +338,13 @@ function Test-CustomizationCollapse {
 
 function Invoke-VallyCommand {
     [CmdletBinding()]
+    [OutputType([int])]
     param(
         [Parameter(Mandatory)]
         [string[]]$Arguments
     )
 
-    & vally @Arguments
+    & vally @Arguments | ForEach-Object { Write-Host $_ }
     return $LASTEXITCODE
 }
 
@@ -344,31 +354,104 @@ function Invoke-VallyCommandWithCapture {
     param(
         [Parameter(Mandatory)]
         [string[]]$Arguments,
-        [string]$LogPath
+        [string]$LogPath,
+        [ValidateRange(1, 86400)]
+        [int]$TimeoutSeconds = 1800,
+        [ValidateRange(1, 3600)]
+        [int]$HeartbeatSeconds = 30
     )
 
-    $prev = [Console]::OutputEncoding
+    $command = Get-Command vally -ErrorAction Stop
+    if ($command -is [System.Management.Automation.AliasInfo]) {
+        $command = $command.ResolvedCommand
+    }
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $startInfo.RedirectStandardInput = $true
+    $startInfo.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+    $startInfo.StandardErrorEncoding = [System.Text.Encoding]::UTF8
+    $startInfo.WorkingDirectory = (Get-Location).ProviderPath
+    if ($command.CommandType -eq 'ExternalScript') {
+        $startInfo.FileName = (Get-Process -Id $PID).Path
+        foreach ($argument in @('-NoProfile', '-File', $command.Source)) {
+            $startInfo.ArgumentList.Add($argument)
+        }
+    }
+    else {
+        $startInfo.FileName = $command.Source
+    }
+    foreach ($argument in $Arguments) { $startInfo.ArgumentList.Add($argument) }
+
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $startInfo
+    $lines = [System.Collections.Generic.List[string]]::new()
+    $writer = $null
+    $timedOut = $false
+    $started = $false
     try {
-        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-        $raw = & vally @Arguments 2>&1
-        $code = $LASTEXITCODE
+        if ($LogPath) {
+            $fullLogPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($LogPath)
+            [System.IO.Directory]::CreateDirectory((Split-Path -Parent $fullLogPath)) | Out-Null
+            $writer = [System.IO.StreamWriter]::new($fullLogPath, $false, [System.Text.UTF8Encoding]::new($false))
+            $writer.AutoFlush = $true
+        }
+        Write-Host "Vally $($Arguments[0]) started (timeout: ${TimeoutSeconds}s)."
+        $started = $process.Start()
+        $clock = [System.Diagnostics.Stopwatch]::StartNew()
+        $nextHeartbeat = $HeartbeatSeconds
+        $readers = @{
+            stdout = $process.StandardOutput
+            stderr = $process.StandardError
+        }
+        $pending = @{
+            stdout = $readers.stdout.ReadLineAsync()
+            stderr = $readers.stderr.ReadLineAsync()
+        }
+        while ($pending.Count -gt 0 -or -not $process.HasExited) {
+            if ($clock.Elapsed.TotalSeconds -ge $TimeoutSeconds) {
+                $timedOut = $true
+                if (-not $process.HasExited) { $process.Kill($true) }
+                $message = "Vally $($Arguments[0]) timed out after ${TimeoutSeconds}s; stopped the process tree."
+                Write-Host $message
+                $lines.Add($message)
+                if ($writer) { $writer.WriteLine($message) }
+                break
+            }
+            foreach ($stream in @($pending.Keys)) {
+                if (-not $pending[$stream].IsCompleted) { continue }
+                $line = $pending[$stream].GetAwaiter().GetResult()
+                if ($null -eq $line) {
+                    $pending.Remove($stream)
+                    continue
+                }
+                $lines.Add($line)
+                if ($writer) { $writer.WriteLine($line) }
+                Write-Host $line
+                $pending[$stream] = $readers[$stream].ReadLineAsync()
+            }
+            if ($clock.Elapsed.TotalSeconds -ge $nextHeartbeat) {
+                Write-Host "Vally $($Arguments[0]) still running ($([int]$clock.Elapsed.TotalSeconds)s elapsed; limit ${TimeoutSeconds}s)."
+                $nextHeartbeat += $HeartbeatSeconds
+            }
+            if ($pending.Count -gt 0) {
+                [System.Threading.Tasks.Task]::WaitAny([System.Threading.Tasks.Task[]]@($pending.Values), 200) | Out-Null
+            }
+            elseif (-not $process.HasExited) {
+                $process.WaitForExit(200) | Out-Null
+            }
+        }
+        if ($timedOut) { $process.WaitForExit(5000) | Out-Null }
+        $code = if ($timedOut) { 124 } else { $process.ExitCode }
     }
     finally {
-        [Console]::OutputEncoding = $prev
+        if ($started -and -not $process.HasExited) { $process.Kill($true) }
+        $process.Dispose()
+        if ($writer) { $writer.Dispose() }
     }
 
-    $lines = @($raw | ForEach-Object { $_.ToString() })
-    foreach ($line in $lines) { Write-Host $line }
-
-    if ($LogPath) {
-        $dir = Split-Path -Parent $LogPath
-        if ($dir -and -not (Test-Path -LiteralPath $dir)) {
-            New-Item -ItemType Directory -Path $dir -Force | Out-Null
-        }
-        Set-Content -LiteralPath $LogPath -Value $lines -Encoding utf8NoBOM
-    }
-
-    return @{ ExitCode = $code; Lines = $lines }
+    return @{ ExitCode = $code; Lines = $lines.ToArray(); TimedOut = $timedOut }
 }
 
 function Get-CanonicalStimulusPolicy {
@@ -912,7 +995,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             # The customization-boundary guards assert that the customized run does not
             # claim it performed a prohibited write. They are declared inline per
             # stimulus and need no per-agent parameter. Resolve-AgentScopePattern is
-            # retained for the stage 2 subject-aware guard work rather than invoked here,
+            # retained for subject-aware guard work rather than invoked here,
             # because a parameter no spec consumes would report a guard that never ran.
             $evalBaseline = @(
                 'eval',
@@ -1130,7 +1213,8 @@ if ($MyInvocation.InvocationName -ne '.') {
                     '--output', $compareJsonlPath
                 )
                 $compareLog = Join-Path $resolvedRoot "logs/vally-compare-$model-$runId.log"
-                $resultC = Invoke-VallyCommandWithCapture -Arguments $compareArgs -LogPath $compareLog
+                Write-Host "Comparing baseline and customized responses for $model with judge $ComparisonJudgeModel."
+                $resultC = Invoke-VallyCommandWithCapture -Arguments $compareArgs -LogPath $compareLog -TimeoutSeconds $ComparisonTimeoutSeconds
                 $compareFailed = $resultC.ExitCode -ne 0
                 if ($compareFailed) { $runHealthFailures++ }
                 $compareLogs.Add($compareLog)

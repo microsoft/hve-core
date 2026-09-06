@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to measure nominal behavior preservation'
 author: HVE Core Team
-ms.date: 2026-08-21
+ms.date: 2026-09-06
 ---
 
 ## Purpose
@@ -47,7 +47,7 @@ The contract is validated deterministically before any model-backed run. A missi
 The PowerShell driver at [scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) is the single entry point. Invoke it through the npm wrapper:
 
 ```bash
-# devloop (default): single primary model, advisory verdict, always exits 0
+# devloop (default): single primary model, non-gating after summary generation
 npm run ci:eval:equivalence -- -Agent rpi-agent -Tier devloop
 
 # calibration: two-model sweep, report-only comparison, authoritative deterministic and structural evidence
@@ -60,9 +60,15 @@ npm run ci:eval:equivalence -- -Agent rpi-agent -Tier ci
 npm run ci:eval:equivalence -- -Agent rpi-agent -WhatIf
 ```
 
+PR eval execution does not invoke this suite. Use the manually dispatched
+[Baseline Calibration workflow](../../.github/workflows/baseline-calibration.yml)
+for hosted calibration on a selected branch. It requires the repository's
+`COPILOT_GITHUB_TOKEN` secret and uploads only the aggregate summary. Raw
+trajectories and judge logs are not published.
+
 The former `pr` and `nightly` tier names are rejected with a migration message rather than aliased, because they carried different exit policies and a silent alias would let a stale caller select the wrong one.
 
-`rpi-agent` is the only equivalence subject currently selected, because the customized launch target is fixed to that agent and the corpus guards encode that agent's contract. Other agents can be materialized by the driver, but they are not selected and are not meaningfully evaluated: scoring one against this corpus would fail for reasons unrelated to equivalence. Treat the shared-stimulus and scope-guard claims in this document as applying to `rpi-agent` only.
+`rpi-agent` is the only supported equivalence subject, because the customized launch target is fixed to that agent and the corpus guards encode that agent's contract. The driver rejects other agent slugs before execution. Treat the shared-stimulus and scope-guard claims in this document as applying to `rpi-agent` only.
 
 Corpus backlinks identify related artifacts for indexing; they do not select subjects. The corpus is excluded from generic tag-filtered dispatch, which previously produced partial and zero-stimulus
 runs that reported success without measuring anything. Extending coverage to the remaining agents requires per-subject conditional guards and is
@@ -70,7 +76,13 @@ deferred until one clean run under the restored comparison contract exists.
 
 The driver writes a machine-readable summary to `logs/baseline-equivalence-summary.json` and per-environment trajectories under `evals/results/`. The trajectory directories are gitignored. Both executable specs run three trials per stimulus. Three is a provisional inner-loop budget, not a calibrated power claim; the first valid post-launch run records dispersion and interval width before any future authoritative comparative policy is considered.
 
-Every stimulus also declares `constraints.max_agent_duration: 285s` beneath the 300-second hard timeout. Vally stops and aborts the active Copilot SDK request when that working-duration limit expires, while the outer CI shard stops after 240 minutes if process-level cleanup fails. A bounded trial may therefore report `agent_timeout`, but one unresolved request cannot hold the evaluation shard indefinitely.
+Every stimulus declares `constraints.max_agent_duration: 285s` beneath the
+300-second trial timeout. Each comparison has a separate 1800-second process
+deadline, configurable with `-ComparisonTimeoutSeconds`. The driver streams
+stdout and stderr to the console and the comparison log, and emits an
+elapsed-time heartbeat every 30 seconds even when Vally has no new output.
+A comparison timeout stops the process tree, returns status 124, and counts as
+a run-health failure. The standalone workflow also has a two-hour job limit.
 
 ### Driver output contract
 
