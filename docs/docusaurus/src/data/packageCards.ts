@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { labelRegistry } from './labelRegistry';
 
-export type PackageMaturity =
-  | typeof labelRegistry.stable
-  | typeof labelRegistry.preview
-  | typeof labelRegistry.experimental;
+export type PackageMaturity = string; 
 
 export type PackageContentKind =
   | 'agents'
@@ -26,6 +23,6 @@ export interface PackageCardData {
   description: string;
   artifacts: number;
   contents: PackageContentSummary[];
-  maturity: PackageMaturity;
+  maturity: string;
   href: string;
 }

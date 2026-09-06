@@ -1,0 +1,41 @@
+.maturityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  line-height: 16px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.maturityBadgeMd {
+  font-size: 14px;
+  padding: 4px 12px;
+  line-height: 20px;
+}
+
+.maturityIcon {
+  font-size: 1em;
+  line-height: 1;
+}
+
+.maturityStable {
+  background: #e6f6e6;
+  color: #006b00;
+}
+
+.maturityPreview {
+  background: #fff8e6;
+  color: #7a4f00;
+}
+
+.maturityExperimental {
+  background: #eef9fd;
+  color: #005f73;
+}

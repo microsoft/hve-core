@@ -3,19 +3,8 @@
 import React, { useId, useState } from 'react';
 import Link from '@docusaurus/Link';
 import type { PackageCardData } from '../../data/packageCards';
+import MaturityBadge from '../MaturityBadge';
 import styles from './styles.module.css';
-
-const maturityClass: Record<PackageCardData['maturity'], string> = {
-  Stable: styles.maturityStable,
-  Preview: styles.maturityPreview,
-  Experimental: styles.maturityExperimental,
-};
-
-const maturityGlossary: Record<PackageCardData['maturity'], string> = {
-  Stable: 'Stable means the package is broadly available and validated for everyday use.',
-  Preview: 'Preview means the package is available for early adoption and feedback.',
-  Experimental: 'Experimental means the package is early-stage and may change quickly.',
-};
 
 export default function PackageCard({
   name,
@@ -37,13 +26,7 @@ export default function PackageCard({
             {title}
           </Link>
         </h3>
-        <span
-          className={`${styles.maturityBadge} ${maturityClass[maturity]}`}
-          title={maturityGlossary[maturity]}
-          aria-label={`${maturity}: ${maturityGlossary[maturity]}`}
-        >
-          {maturity}
-        </span>
+        <MaturityBadge maturity={maturity} />
       </div>
       <p className={styles.packageDescription}>{description}</p>
       <p className={styles.artifactCount}>
