@@ -2914,6 +2914,21 @@ stimuli:
     name: lane-path-preflight
     config:
       pattern: (?i)^\s*(validate|preflight-check)\s+the\s+lane\s+path[.!]?\s*$
+- name: rpi-review-builder-default-depth
+  prompt: |
+    RPI Review Builder uses standard review depth unless the user explicitly
+    requests deep review. No deep review was requested. Do not call tools.
+    Return only the default review depth.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: rpi-review-builder
+  graders:
+  - type: output-contains
+    name: standard-review-depth
+    config:
+      substring: standard
+      case_sensitive: false
 - name: security-planner-class-recipe
   prompt: |
     Start a security planning session for a public REST API. List the six phases the planner will walk through. Write the planning state under `.copilot-tracking/security-plans/` and report the path.
