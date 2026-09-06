@@ -212,7 +212,7 @@ async function runEquality(text) {
 
 const profanityProcessor = unified()
     .use(retextEnglish)
-    .use(retextProfanities)
+    .use(retextProfanities, { sureness: 1 })
     .use(retextStringify);
 
 async function runProfanities(text) {

@@ -280,7 +280,10 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
         $exit | Should -Be $ExitCode
     }
 
-    It 'Treats a rating-zero profanity as an error while preserving its technical allowlist' {
+    It 'Excludes rating-zero matches without relabeling them as equality findings (FailOnAlex=<Strict>)' -ForEach @(
+        @{ Strict = $false }
+        @{ Strict = $true }
+    ) {
         if (-not ($script:NodeAvailable -and $script:DependenciesInstalled)) {
             Set-ItResult -Skipped -Because 'node or required npm packages are not available'
             return
@@ -292,21 +295,16 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
         Set-Content -LiteralPath $controlFile -Value "# Control`n`nAn attack occurred." -Encoding UTF8
         $globs = @((Join-Path $script:CorpusRoot 'docs/**/*.md'))
 
-        & $script:ScriptPath -CorpusGlob $globs -RepoRoot $script:RepoRoot -OutputPath $script:OutputPath *> $null
+        & $script:ScriptPath -CorpusGlob $globs -RepoRoot $script:RepoRoot -OutputPath $script:OutputPath -FailOnAlex:$Strict *> $null
         $exit = $LASTEXITCODE
 
         $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
-        $allowEntry = $report.results | Where-Object { $_.spec -like '*allow.md' }
-        $controlEntry = $report.results | Where-Object { $_.spec -like '*control.md' }
-
-        $allowEntry | Should -BeNullOrEmpty
-        @($controlEntry.messages) | Should -HaveCount 1
-        $controlEntry.messages[0].rule | Should -Be 'attack'
-        $controlEntry.messages[0].source | Should -Be 'retext-profanities'
+        $report.scanned | Should -Be 2
+        $report.results | Should -BeNullOrEmpty
         $report.warningCount | Should -Be 0
-        $report.errorCount | Should -Be 1
-        $report.flagged | Should -Be 1
-        $report.failOnAlex | Should -BeFalse
-        $exit | Should -Be 1
+        $report.errorCount | Should -Be 0
+        $report.flagged | Should -Be 0
+        $report.failOnAlex | Should -Be $Strict
+        $exit | Should -Be 0
     }
 }
