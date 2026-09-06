@@ -3,7 +3,7 @@ title: HVE Core
 description: Complete HVE Core plugin identity, distribution channels, membership policy, and capability inventory
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-08-24
 ms.topic: reference
 keywords:
   - package
@@ -18,7 +18,9 @@ HVE Core is the single plugin and extension identity for all distributable HVE C
 
 Root `plugin.json` owns complete membership. `.github/plugin/marketplace.json` contains one `hve-core` entry whose relative source is the repository root; it does not repeat component membership. The plugin details view resolves root `README.md` and `LICENSE`, while the VSIX retains its own generated README and license.
 
-Stable and PreRelease contain the same complete agents, prompts, instructions, skills, and telemetry hook. Channel selection changes source ownership, cadence, version, release assurance, and VS Code Marketplace behavior, not membership.
+Stable and PreRelease contain the same complete agents, prompts, instructions,
+and skills. Channel selection changes source ownership, cadence, version,
+release assurance, and VS Code Marketplace behavior, not membership.
 
 The channels differ in cadence, version, and source ownership. `main` provides ref-less development-tip delivery. PreRelease follows a reviewed promotion from `main` to `release/prerelease`. Stable follows a reviewed promotion from `release/prerelease` to `release/stable`.
 
@@ -55,14 +57,19 @@ The complete plugin includes:
 * Security, TM7 threat-model generation, supply-chain security, privacy, accessibility, and Responsible AI planning and review
 * Outcome hypotheses, business requirements, product requirements, architecture decisions, performance, proposal and RFP responses, and backlog workflows
 * Azure DevOps, GitHub, GitLab, and Jira integrations
+* Source-grounded engagement reporting, review, Council critique, and optional
+  Outlook draft creation
 * Design Thinking, UX, data science, experimentation, diagrams, PowerPoint, voice-over, and demo media tooling
-* Documentation authoring, release workflows, Git operations, and local telemetry foundations
+* Documentation authoring, release workflows, Git operations, and local
+  telemetry foundations
 
 ### Membership Policy
 
 `npm run plugin:sync` includes tracked package-scoped agents, prompts, and instructions that match their canonical suffixes. It includes a skill when `.github/skills/<package>/<skill>/SKILL.md` is tracked and its top-level license has no noncommercial qualifier.
 
-Repository-root artifacts without a package segment are repository-specific and excluded. The manifest is unique and ordinal-sorted, and the fixed telemetry hook remains present. `npm run plugin:validate` checks this membership without writing.
+Repository-root artifacts without a package segment are repository-specific
+and excluded. The manifest is unique and ordinal-sorted and declares no hooks.
+`npm run plugin:validate` checks this membership without writing.
 
 ---
 

@@ -112,6 +112,37 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result.perStimulus['missing-grade'].errored | Should -Be 1
         }
 
+        It 'Retains only safe failed and errored trial diagnostics' {
+            $runDir = Join-Path $script:WorkRoot 'run-diagnostics'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $failedRecord = @{
+                trajectory = @{ stimulus = @{ name = 'failed-stimulus' }; output = 'raw model output'; metrics = @{ wallTimeMs = 9 } }
+                gradeResult = @{ passed = $false; score = 0.4; graderDetail = 'raw grader detail' }
+            } | ConvertTo-Json -Depth 6 -Compress
+            $erroredRecord = @{
+                trajectory = @{ stimulus = @{ name = 'errored-stimulus' }; output = 'transient raw output' }
+            } | ConvertTo-Json -Depth 6 -Compress
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value @($failedRecord, $erroredRecord) -Encoding utf8
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir
+
+            $diagnostics = @($result.failedOrErroredTrials)
+            $diagnostics | Should -HaveCount 2
+            $diagnostics[0].ordinal | Should -Be 1
+            $diagnostics[0].outcome | Should -Be 'failed'
+            $diagnostics[0].stimulusName | Should -Be 'failed-stimulus'
+            $diagnostics[0].score | Should -Be 0.4
+            $diagnostics[0].passed | Should -BeFalse
+            $diagnostics[0].errorState | Should -BeNullOrEmpty
+            $diagnostics[1].ordinal | Should -Be 2
+            $diagnostics[1].outcome | Should -Be 'errored'
+            $diagnostics[1].passed | Should -BeNullOrEmpty
+            $diagnostics[1].errorState | Should -Be 'no-gradeable-verdict'
+            $diagnostics[0].PSObject.Properties.Name | Should -Not -Contain 'trajectory'
+            $diagnostics[0].PSObject.Properties.Name | Should -Not -Contain 'output'
+            $diagnostics[0].PSObject.Properties.Name | Should -Not -Contain 'graderDetail'
+        }
+
         It 'Ignores typed non-trial records while accepting typed trial results' {
             $runDir = Join-Path $script:WorkRoot 'run-typed-summary'
             New-Item -ItemType Directory -Path $runDir -Force | Out-Null
@@ -806,6 +837,50 @@ stimuli:
         $summary.totals.failedSpecs | Should -Be 1
         $summary.perArtifact[0].status | Should -Be 'fail'
         $summary.perArtifact[0].assertionsFailed | Should -Be 2
+        $summary.perArtifact[0].failedOrErroredTrials | Should -HaveCount 2
+
+        $perArtifactFile = Join-Path $fx.LogsDir 'eval-results-agent-sample-agent.json'
+        $detail = Get-Content -LiteralPath $perArtifactFile -Raw | ConvertFrom-Json
+        $detail.failedOrErroredTrials | Should -HaveCount 2
+        $detail.specs[0].failedOrErroredTrials | Should -HaveCount 2
+        $detail.failedOrErroredTrials[0].PSObject.Properties.Name | Should -Not -Contain 'output'
+        $detail.failedOrErroredTrials[0].PSObject.Properties.Name | Should -Not -Contain 'trajectory'
+    }
+
+    It 'Fails closed when Vally exits nonzero without a results file' {
+        $spec = @'
+name: advisory-cover
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+      instruction: sample-instruction
+      advisory: true
+'@
+        $artifacts = @(
+            @{ kind = 'instruction'; artifactId = 'sample-instruction'; path = '.github/instructions/hve-core/sample.instructions.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'instruction-sample.yaml'; Yaml = $spec })
+        $noResultsCommand = Join-Path $fx.Root 'no-results.ps1'
+        "param([Parameter(ValueFromRemainingArguments=`$true)]`$Arguments)`nexit 1" | Set-Content -LiteralPath $noResultsCommand -Encoding utf8
+
+        & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath `
+            -EvalRoot $fx.EvalRoot `
+            -LogsDir $fx.LogsDir `
+            -RepoRoot $fx.Root `
+            -VallyCommand $noResultsCommand `
+            -SkipInputModeration `
+            -SkipOutputModeration *> $null
+        $LASTEXITCODE | Should -Be 1
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be 1
+        $summary.perSpec[0].status | Should -Be 'evaluator-error'
+        $summary.perArtifact[0].status | Should -Be 'evaluator-error'
+        $detail = Get-Content -LiteralPath (Join-Path $fx.LogsDir 'eval-results-instruction-sample-instruction.json') -Raw | ConvertFrom-Json
+        $detail.specs[0].status | Should -Be 'evaluator-error'
+        $detail.status | Should -Be 'evaluator-error'
     }
 
     It 'Exits 2 when a non-deleted artifact has no covering spec' {
@@ -1113,6 +1188,534 @@ exit 9
 
         $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
         @($summary.equivalence).Count | Should -Be 0
+    }
+
+    It 'Reads the 2.0.0 equivalence contract and reports authoritative and advisory evidence separately' {
+        $spec = @'
+name: agent-spec
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+        agent: sample-agent
+'@
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent.yaml'; Yaml = $spec })
+
+        $driverPath = Join-Path $fx.Root 'v2-equivalence.ps1'
+        $driver = @'
+[CmdletBinding()]
+param([string]$Agent, [string]$Tier, [string]$Model, [string]$RepoRoot, [string]$OutputPath)
+
+$summary = [ordered]@{
+    schemaVersion            = '2.0.0'
+    runs                     = 12
+    invariantFailures        = 0
+    runHealthFailures        = 0
+    divergenceGuardFailures  = 2
+    dataQualityViolations    = 0
+    equivalenceGate          = 'pass'
+    documentedDivergenceGate = 'fail'
+    verdict                  = 'fail'
+}
+$dir = Split-Path -Parent $OutputPath
+if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+$summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutputPath -Encoding utf8
+exit 0
+'@
+        Set-Content -LiteralPath $driverPath -Value $driver -Encoding utf8
+
+        $env:STUB_VALLY_MODE = 'pass'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath `
+                -EquivalenceDriverPath $driverPath `
+                -EnableBaselineEquivalence `
+                -EquivalenceSubject 'sample-agent' `
+                -SkipInputModeration `
+                -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        }
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $entry = @($summary.equivalence)[0]
+        $entry.trials | Should -Be 12
+        $entry.verdict | Should -Be 'fail'
+        $entry.equivalenceGate | Should -Be 'pass'
+        $entry.documentedDivergenceGate | Should -Be 'fail'
+        $entry.divergenceGuardFailures | Should -Be 2
+        $entry.assertionsFailed | Should -Be 0
+        $entry.advisoryAssertionsFailed | Should -Be 2
+    }
+
+    It 'Fails loudly on an unsupported equivalence contract version' {
+        # The previous reader guarded every field against null over zero defaults, so a
+        # renamed field silently produced runs=0 and verdict=unknown: a successful run
+        # reported as an empty one. A version mismatch must be visible, not absorbed.
+        $spec = @'
+name: agent-spec
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+        agent: sample-agent
+'@
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent.yaml'; Yaml = $spec })
+
+        $driverPath = Join-Path $fx.Root 'v1-equivalence.ps1'
+        $driver = @'
+[CmdletBinding()]
+param([string]$Agent, [string]$Tier, [string]$Model, [string]$RepoRoot, [string]$OutputPath)
+
+$summary = [ordered]@{
+    runs               = 40
+    aWins              = 1
+    bWins              = 2
+    invariantFailures  = 0
+    divergenceFailures = 0
+    verdict            = 'pass'
+}
+$dir = Split-Path -Parent $OutputPath
+if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+$summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutputPath -Encoding utf8
+exit 0
+'@
+        Set-Content -LiteralPath $driverPath -Value $driver -Encoding utf8
+
+        $env:STUB_VALLY_MODE = 'pass'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath `
+                -EquivalenceDriverPath $driverPath `
+                -EnableBaselineEquivalence `
+                -EquivalenceSubject 'sample-agent' `
+                -SkipInputModeration `
+                -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        }
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $entry = @($summary.equivalence)[0]
+        # A legacy summary must not read as a healthy run.
+        $entry.verdict | Should -Be 'fail'
+        $entry.trials | Should -Be 0
+        # Reporting the failure is not enough: it has to count toward the job result,
+        # otherwise the lane reports a contract mismatch and still exits green.
+        $summary.totals.failedSpecs | Should -Be 1
+    }
+
+    It 'Counts a failing assertion toward failedSpecs even when the driver exits 0' {
+        # The driver can complete cleanly while its own gates fail. Reading only the
+        # exit code would let a failed equivalence gate pass the lane.
+        $spec = @'
+name: agent-spec
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+        agent: sample-agent
+'@
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent.yaml'; Yaml = $spec })
+
+        $driverPath = Join-Path $fx.Root 'assertfail-equivalence.ps1'
+        $driver = @'
+[CmdletBinding()]
+param([string]$Agent, [string]$Tier, [string]$Model, [string]$RepoRoot, [string]$OutputPath)
+
+$summary = [ordered]@{
+    schemaVersion            = '2.0.0'
+    runs                     = 10
+    invariantFailures        = 3
+    runHealthFailures        = 0
+    divergenceGuardFailures  = 0
+    dataQualityViolations    = 0
+    equivalenceGate          = 'fail'
+    documentedDivergenceGate = 'pass'
+    verdict                  = 'fail'
+}
+$dir = Split-Path -Parent $OutputPath
+if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+$summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutputPath -Encoding utf8
+exit 0
+'@
+        Set-Content -LiteralPath $driverPath -Value $driver -Encoding utf8
+
+        $env:STUB_VALLY_MODE = 'pass'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath `
+                -EquivalenceDriverPath $driverPath `
+                -EnableBaselineEquivalence `
+                -EquivalenceSubject 'sample-agent' `
+                -EquivalenceTier ci `
+                -SkipInputModeration `
+                -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        }
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        @($summary.equivalence)[0].assertionsFailed | Should -Be 3
+        $summary.totals.failedSpecs | Should -Be 1
+    }
+
+    It 'Counts a nonzero driver exit toward failedSpecs even when no assertion failed' {
+        # The mirror of the previous case: the driver can die before it measures
+        # anything, reporting zero failures. Reading only assertion counts would let a
+        # crashed run pass the lane.
+        $spec = @'
+name: agent-spec
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+        agent: sample-agent
+'@
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent.yaml'; Yaml = $spec })
+
+        $driverPath = Join-Path $fx.Root 'crash-equivalence.ps1'
+        $driver = @'
+[CmdletBinding()]
+param([string]$Agent, [string]$Tier, [string]$Model, [string]$RepoRoot, [string]$OutputPath)
+
+$summary = [ordered]@{
+    schemaVersion            = '2.0.0'
+    runs                     = 10
+    invariantFailures        = 0
+    runHealthFailures        = 0
+    divergenceGuardFailures  = 0
+    dataQualityViolations    = 0
+    equivalenceGate          = 'pass'
+    documentedDivergenceGate = 'pass'
+    verdict                  = 'pass'
+}
+$dir = Split-Path -Parent $OutputPath
+if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+$summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutputPath -Encoding utf8
+exit 3
+'@
+        Set-Content -LiteralPath $driverPath -Value $driver -Encoding utf8
+
+        $env:STUB_VALLY_MODE = 'pass'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath `
+                -EquivalenceDriverPath $driverPath `
+                -EnableBaselineEquivalence `
+                -EquivalenceSubject 'sample-agent' `
+                -EquivalenceTier ci `
+                -SkipInputModeration `
+                -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        }
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        @($summary.equivalence)[0].assertionsFailed | Should -Be 0
+        @($summary.equivalence)[0].exitCode | Should -Be 3
+        $summary.totals.failedSpecs | Should -Be 1
+    }
+
+    It 'Forwards calibration tier and keeps comparative guard failures advisory' {
+        $spec = @'
+name: agent-spec
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+        agent: sample-agent
+'@
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent.yaml'; Yaml = $spec })
+
+        $driverPath = Join-Path $fx.Root 'calibration-equivalence.ps1'
+        $driver = @'
+[CmdletBinding()]
+param([string]$Agent, [string]$Tier, [string]$Model, [string]$RepoRoot, [string]$OutputPath)
+
+$summary = [ordered]@{
+    schemaVersion            = '2.0.0'
+    runs                     = 120
+    invariantFailures        = 0
+    runHealthFailures        = 0
+    divergenceGuardFailures  = 7
+    dataQualityViolations    = 0
+    equivalenceGate          = 'pass'
+    documentedDivergenceGate = 'report-only'
+    verdict                  = 'pass'
+    receivedTier             = $Tier
+}
+$dir = Split-Path -Parent $OutputPath
+if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+$summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutputPath -Encoding utf8
+exit 0
+'@
+        Set-Content -LiteralPath $driverPath -Value $driver -Encoding utf8
+
+        $env:STUB_VALLY_MODE = 'pass'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath `
+                -EquivalenceDriverPath $driverPath `
+                -EnableBaselineEquivalence `
+                -EquivalenceSubject 'sample-agent' `
+                -EquivalenceTier calibration `
+                -SkipInputModeration `
+                -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        }
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $entry = @($summary.equivalence)[0]
+        $entry.tier | Should -Be 'calibration'
+        $entry.assertionsFailed | Should -Be 0
+        $entry.advisoryAssertionsFailed | Should -Be 7
+        $summary.totals.failedSpecs | Should -Be 0
+    }
+
+    It 'Forwards the devloop tier and keeps a failing verdict advisory' {
+        # This is the posture eval-validation.yml enables: the dispatch runs on every
+        # eligible PR but must not gate, so a failing verdict is reported without
+        # incrementing failedSpecs. The stub echoes its received tier so the
+        # workflow argument is proven to reach the driver rather than assumed.
+        $spec = @'
+name: agent-spec
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+        agent: sample-agent
+'@
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent.yaml'; Yaml = $spec })
+
+        $driverPath = Join-Path $fx.Root 'devloop-equivalence.ps1'
+        $driver = @'
+[CmdletBinding()]
+param([string]$Agent, [string]$Tier, [string]$Model, [string]$RepoRoot, [string]$OutputPath)
+
+$summary = [ordered]@{
+    schemaVersion            = '2.0.0'
+    runs                     = 10
+    invariantFailures        = 2
+    runHealthFailures        = 0
+    divergenceGuardFailures  = 0
+    dataQualityViolations    = 0
+    equivalenceGate          = 'warn'
+    documentedDivergenceGate = 'pass'
+    verdict                  = 'warn'
+    receivedTier             = $Tier
+}
+$dir = Split-Path -Parent $OutputPath
+if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+$summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutputPath -Encoding utf8
+exit 0
+'@
+        Set-Content -LiteralPath $driverPath -Value $driver -Encoding utf8
+
+        $env:STUB_VALLY_MODE = 'pass'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath `
+                -EquivalenceDriverPath $driverPath `
+                -EnableBaselineEquivalence `
+                -EquivalenceSubject 'sample-agent' `
+                -EquivalenceTier devloop `
+                -SkipInputModeration `
+                -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        }
+
+        $equivPath = Join-Path $fx.LogsDir 'baseline-equivalence-sample-agent.json'
+        (Get-Content -LiteralPath $equivPath -Raw | ConvertFrom-Json).receivedTier | Should -Be 'devloop'
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $entry = @($summary.equivalence)[0]
+        $entry.tier | Should -Be 'devloop'
+        $entry.assertionsFailed | Should -Be 2
+        $summary.totals.failedSpecs | Should -Be 0
+    }
+
+    It 'Preserves a data-quality-only failure instead of reporting every trial passed' {
+        # A structurally broken run can report dataQualityViolations as its only
+        # nonzero counter. The dispatcher previously never read the field, so the
+        # advisory tier summarized verdict fail alongside assertionsFailed 0 and all
+        # ten trials counted as passed, which is unreadable exactly where the summary
+        # is the only output the lane produces.
+        $spec = @'
+name: agent-spec
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+        agent: sample-agent
+'@
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent.yaml'; Yaml = $spec })
+
+        $driverPath = Join-Path $fx.Root 'dataquality-equivalence.ps1'
+        $driver = @'
+[CmdletBinding()]
+param([string]$Agent, [string]$Tier, [string]$Model, [string]$RepoRoot, [string]$OutputPath)
+
+$summary = [ordered]@{
+    schemaVersion            = '2.0.0'
+    runs                     = 10
+    invariantFailures        = 0
+    runHealthFailures        = 0
+    divergenceGuardFailures  = 0
+    dataQualityViolations    = 4
+    equivalenceGate          = 'fail'
+    documentedDivergenceGate = 'pass'
+    verdict                  = 'fail'
+}
+$dir = Split-Path -Parent $OutputPath
+if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+$summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutputPath -Encoding utf8
+exit 0
+'@
+        Set-Content -LiteralPath $driverPath -Value $driver -Encoding utf8
+
+        $env:STUB_VALLY_MODE = 'pass'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath `
+                -EquivalenceDriverPath $driverPath `
+                -EnableBaselineEquivalence `
+                -EquivalenceSubject 'sample-agent' `
+                -EquivalenceTier devloop `
+                -SkipInputModeration `
+                -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        }
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $entry = @($summary.equivalence)[0]
+        $entry.dataQualityViolations | Should -Be 4
+        $entry.assertionsFailed | Should -Be 4
+        $entry.assertionsPassed | Should -Be 6
+        $entry.verdict | Should -Be 'fail'
+    }
+
+    It 'Rejects a 2.x summary that omits dataQualityViolations' {
+        # Absence must not read as zero. A summary claiming the 2.x contract while
+        # dropping the field would hide the only evidence a structurally failed run
+        # produces, which is the same silent-degradation defect the version check exists
+        # to prevent.
+        $spec = @'
+name: agent-spec
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+        agent: sample-agent
+'@
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent.yaml'; Yaml = $spec })
+
+        $driverPath = Join-Path $fx.Root 'missingfield-equivalence.ps1'
+        $driver = @'
+[CmdletBinding()]
+param([string]$Agent, [string]$Tier, [string]$Model, [string]$RepoRoot, [string]$OutputPath)
+
+$summary = [ordered]@{
+    schemaVersion            = '2.0.0'
+    runs                     = 10
+    invariantFailures        = 0
+    runHealthFailures        = 0
+    divergenceGuardFailures  = 0
+    equivalenceGate          = 'pass'
+    documentedDivergenceGate = 'pass'
+    verdict                  = 'pass'
+}
+$dir = Split-Path -Parent $OutputPath
+if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+$summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutputPath -Encoding utf8
+exit 0
+'@
+        Set-Content -LiteralPath $driverPath -Value $driver -Encoding utf8
+
+        $env:STUB_VALLY_MODE = 'pass'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath `
+                -EquivalenceDriverPath $driverPath `
+                -EnableBaselineEquivalence `
+                -EquivalenceSubject 'sample-agent' `
+                -EquivalenceTier devloop `
+                -SkipInputModeration `
+                -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        }
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        @($summary.equivalence)[0].verdict | Should -Be 'fail'
+        $summary.totals.failedSpecs | Should -Be 1
     }
 }
 
@@ -1707,11 +2310,13 @@ stimuli:
         $summary.perArtifact[0].status | Should -Be 'advisory-fail'
     }
 
-    It 'Treats a tag-resolved baseline-equivalence spec as advisory even on a hard vally failure' {
-        # Per DD-01 the equivalence corpus is advisory at PR tier. Its stimuli are
-        # tag-resolved into the authoritative path and run at a perfect-score
-        # threshold against a small model, so a hard vally failure (exit 1) on a
-        # single grader must surface as advisory rather than gate the build.
+    It 'Excludes a baseline-equivalence spec from the generic run plan' {
+        # Stage 1 measures the equivalence corpus only through the dedicated harness,
+        # which runs the full canonical population against a materialized customization
+        # surface. Generic dispatch previously re-ran the same specs under a tag filter,
+        # producing partial and zero-stimulus runs that reported success but could not
+        # evidence equivalence. The spec must now be skipped entirely rather than run
+        # and downgraded to advisory.
         $spec = @'
 name: baseline-equivalence-stimuli
 stimuli:
@@ -1735,14 +2340,13 @@ stimuli:
             -VallyCommand $script:StubPath `
             -SkipInputModeration `
             -SkipOutputModeration *> $null
-        $LASTEXITCODE | Should -Be 0
 
         $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
         $summary.totals.failedSpecs | Should -Be 0
-        $summary.perSpec[0].status | Should -Be 'advisory-fail'
-        $summary.perSpec[0].isAdvisory | Should -BeTrue
-        $summary.perArtifact[0].status | Should -Be 'advisory-fail'
-        $summary.perArtifact[0].isAdvisory | Should -BeTrue
+        # The artifact still counts as covered, so the run does not fail for missing
+        # coverage. It simply performs no generic baseline-equivalence execution.
+        @($summary.perSpec | Where-Object { $_.specPath -match 'baseline-equivalence' }) | Should -BeNullOrEmpty
+        $summary.totals.specs | Should -Be 0
     }
 }
 
@@ -1786,6 +2390,66 @@ stimuli:
     It 'Falls back to the full set when the tag filter matches no stimulus' {
         $map = Get-SpecStimulusAdvisoryMap -SpecPath $script:MixedSpec -TagFilter 'agent=does-not-exist'
         $map.Keys.Count | Should -Be 3
+    }
+}
+
+Describe 'Stage 1 equivalence dispatch boundary' -Tag 'Unit' {
+    # The dispatcher schedules the dedicated baseline-equivalence harness and also
+    # builds the generic Vally run plan. Both paths previously consumed backlinks
+    # directly: the harness treated every backlinked agent as an equivalence subject,
+    # and the generic plan re-ran the same specs as tag-filtered advisory evals. With
+    # list-form backlinks now expanding correctly, an unbounded dispatcher would
+    # schedule nine subjects against a corpus whose guards encode one agent's contract.
+    BeforeAll {
+        $script:DispatcherSource = Get-Content -LiteralPath (Resolve-Path (Join-Path $PSScriptRoot '../../evals/Invoke-VallyEvals.ps1')).Path -Raw
+    }
+
+    It 'Declares an explicit stage 1 equivalence subject default' {
+        $script:DispatcherSource | Should -Match "EquivalenceSubject\s*=\s*@\(\s*'rpi-agent'\s*\)"
+    }
+
+    It 'Gates changed-artifact equivalence dispatch on the subject list' {
+        $script:DispatcherSource | Should -Match 'EquivalenceSubjects -contains \$artifactId'
+    }
+
+    It 'Gates dependency-promoted equivalence dispatch on the subject list' {
+        # Instruction, skill, and subagent changes promote parent agents through the
+        # manifest. Without this gate the promotion path would reintroduce every
+        # backlinked agent as an equivalence subject.
+        $script:DispatcherSource | Should -Match 'EquivalenceSubjects -notcontains \$slug'
+    }
+
+    It 'Excludes baseline-equivalence specs from the generic run plan' {
+        $script:DispatcherSource | Should -Match 'equivalenceRunKeys'
+        $script:DispatcherSource | Should -Match "match '\(\^\|/\)baseline-equivalence/"
+    }
+}
+
+Describe 'Stage 1 equivalence subject selection' -Tag 'Unit' {
+    # Exercises the selection rule itself rather than the script text, so a future
+    # refactor that keeps the constant but drops the filter still fails.
+    BeforeAll {
+        $script:Subjects = @('rpi-agent')
+        $script:Backlinked = @(
+            'backlog-manager', 'brd-builder', 'code-review', 'documentation',
+            'issue-triage', 'prd-builder', 'rpi-agent'
+        )
+    }
+
+    It 'Selects exactly one subject from the full backlinked set' {
+        $selected = @($script:Backlinked | Where-Object { $script:Subjects -contains $_ })
+        $selected.Count | Should -Be 1
+        $selected[0] | Should -Be 'rpi-agent'
+    }
+
+    It 'Rejects a compound slug that a regressed parser could produce' {
+        # 'documentation rpi-agent' was the observed corruption. It must not match the
+        # subject list even though it contains the subject name as a substring.
+        $script:Subjects -contains 'documentation rpi-agent' | Should -BeFalse
+    }
+
+    It 'Preserves every backlink record for stage 2 indexing' {
+        $script:Backlinked.Count | Should -Be 7
     }
 }
 

@@ -3,7 +3,7 @@ title: Vally Test Write
 description: "Authors Vally conformance test stimuli for an existing prompt, instructions, agent, or skill artifact"
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Authors Vally conformance test stimuli for an existing prompt, instructions, age
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to add benign Vally conformance stimuli for an existing prompt, instruction, agent, or skill. Use corpus import when approved stimuli already exist in a supported CSV or XLSX file.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the target `files`, artifact `kind`, and optional authoring `mode`. The prompt checks safety, rejects harmful or sensitive stimuli, deduplicates by content hash, and appends only valid tests to the routed suite.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/vally-test-write files=.github/prompts/hve-core/rpi.prompt.md kind=prompt
+```
+
+The prompt drafts a benign conformance stimulus for the RPI prompt and reports whether it was appended or skipped.

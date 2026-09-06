@@ -3,7 +3,7 @@ title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-08-25
+ms.date: 2026-09-01
 ms.topic: overview
 keywords:
   - reference
@@ -32,6 +32,9 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Coding Standards/Terraform/Terraform](coding-standards/terraform/terraform.md)                   | Terraform infrastructure-as-code authoring conventions                                                                                                                                                                                                                                |
 | [Coding Standards/Uv Projects](coding-standards/uv-projects.md)                                   | Create and manage Python virtual environments using uv commands                                                                                                                                                                                                                       |
 | [Design Thinking/Dt Coach Telemetry](design-thinking/dt-coach-telemetry.md)                       | Applies Design Thinking telemetry expectations to DT session artifacts                                                                                                                                                                                                                |
+| [Engagement Reporting/Data Handling](engagement-reporting/data-handling.md)                       | Protects sensitive engagement sources, working files, reports, transcripts, and configuration.                                                                                                                                                                                        |
+| [Engagement Reporting/Style Guide](engagement-reporting/style-guide.md)                           | Formatting, tone, and language rules for engagement reports                                                                                                                                                                                                                           |
+| [Engagement Reporting/Terminology](engagement-reporting/terminology.md)                           | Correct spellings and naming conventions for people, products, and teams                                                                                                                                                                                                              |
 | [Experimental/Experiment Designer](experimental/experiment-designer.md)                           | MVE tracking-artifact conventions for session directories, artifact names, and file hygiene; routes MVE methodology to the experiment-design skill                                                                                                                                    |
 | [Experimental/Graphify](experimental/graphify.md)                                                 | Conventions for consuming graphify-out/ knowledge-graph evidence inside the RPI workflow                                                                                                                                                                                              |
 | [Experimental/Mural/Mural Bootstrap](experimental/mural/mural-bootstrap.md)                       | Fresh-session Mural bootstrap requirements for doctor checks, credential backend selection, and safe escalation before Mural tool use.                                                                                                                                                |

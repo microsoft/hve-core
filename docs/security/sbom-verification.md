@@ -3,7 +3,7 @@ title: SBOM Verification
 description: Verify, download, and inspect the Software Bill of Materials published with each HVE Core release
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-09-04
 ms.topic: how-to
 keywords:
   - SBOM
@@ -19,7 +19,9 @@ estimated_reading_time: 5
 Stable and PreRelease HVE Core releases publish Software Bill of Materials
 (SBOM) files in SPDX 2.3 JSON format. The per-artifact SBOM describes the VSIX.
 `dependencies.spdx.json` describes the dependency tree used during
-the build.
+the build. `release-vsix-publish.yml` produces these assets only after an exact
+protected tag push passes channel, source, branch, committed-state, and draft
+release validation.
 
 ## What Gets Published
 
@@ -64,12 +66,14 @@ Verify SPDX predicates through their primary artifact subjects:
 ```bash
 # Stable VSIX
 gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
-  --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance.yml \
+  --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
+  --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67 \
   --predicate-type https://spdx.dev/Document/v2.3
 
 # PreRelease VSIX
 gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
-  --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance.yml \
+  --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
+  --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67 \
   --predicate-type https://spdx.dev/Document/v2.3
 
 ```
@@ -87,6 +91,33 @@ A successful verification confirms:
 * An SPDX predicate was attached to the selected primary artifact
 * The predicate was produced by the specified channel workflow
 * The attestation has not been modified since signing
+
+The release gate verifies build provenance in two stages. It first uses the
+GitHub CLI to authenticate the attestation, exact subject digest, signer
+workflow and signer revision, source ref and source revision, and hosted-runner
+constraint. It then applies fail-closed semantic policy to the authenticated
+statement. The policy requires exactly one matching subject and digest, SLSA
+provenance v1, GitHub Actions `workflow/v1`, the `push` event, a GitHub-hosted
+runner, the expected external parameters, one resolved source dependency, and
+the expected builder identity. Missing, additional, or mismatched policy fields
+fail verification.
+
+The signer is `extension-provenance-signer.yml`. Its `contents: read` package job
+installs and packages; its separate privileged attestation job receives the
+VSIX and dependency SBOM through fixed-name, digest-checked artifact transfers.
+No job both installs or packages dependencies and signs the result.
+
+> [!IMPORTANT]
+> These controls do not establish SLSA Build Level 3. Future Stable and
+> PreRelease releases still require successful runtime evidence, proof that the
+> required tag governance is active, platform assurance mapping, and qualified
+> human review before making that claim.
+
+The required tag governance is not yet active or proven. The intended
+`release-tags-creation-by-release-app` ruleset restricts tag creation and gives
+the Release App its only bypass. The separate `release-tags-immutable` ruleset
+restricts update, deletion, and force pushes with no bypass. Their names in
+documentation are not evidence that either ruleset is installed.
 
 > [!TIP]
 > Build provenance and SPDX predicates are independent attestations. Omit
