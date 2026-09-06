@@ -1,0 +1,62 @@
+name: Baseline Calibration
+
+on:
+    workflow_dispatch:
+
+concurrency:
+    group: baseline-calibration-${{ github.ref }}
+    cancel-in-progress: false
+
+permissions:
+    contents: read
+
+jobs:
+    calibrate:
+        name: RPI Baseline Calibration
+        runs-on: ubuntu-latest
+        timeout-minutes: 120
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Setup Node.js
+              uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+              with:
+                  node-version: "24"
+                  cache: npm
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Setup PowerShell modules
+              uses: ./.github/actions/setup-ps-modules
+
+            - name: Configure Copilot environment
+              shell: pwsh
+              run: |
+                  "COPILOT_HOME=$env:RUNNER_TEMP/copilot-calibration" >> $env:GITHUB_ENV
+                  Join-Path $env:GITHUB_WORKSPACE 'node_modules/.bin' >> $env:GITHUB_PATH
+
+            - name: Probe Copilot token
+              shell: pwsh
+              env:
+                  COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+              run: ./scripts/evals/Test-CopilotToken.ps1 -SmokeTest
+
+            - name: Run full calibration
+              env:
+                  COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+              run: npm run ci:eval:equivalence -- -Agent rpi-agent -Tier calibration
+
+            - name: Upload calibration summary
+              if: always()
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+              with:
+                  name: baseline-calibration-summary
+                  path: logs/baseline-equivalence-summary.json
+                  retention-days: 30
+                  if-no-files-found: ignore
