@@ -191,6 +191,9 @@ jobs:
       working-directory: ${{ matrix.directory }}
       soft-fail: false
       changed-files-only: true
+      # Telemetry's static tests inspect IaC and configuration as well as Python.
+      # Other projects receive '' and keep pytest-tests.yml's Python-only default.
+      changed-paths-pattern: ${{ matrix.directory == '.github/skills/experimental/copilot-otel-metrics' && '^\.github/skills/experimental/copilot-otel-metrics/(.*\.py|uv\.lock|pyproject\.toml|examples/(otel-collector-local\.yaml|compose\.yaml|dashboards/copilot-otel\.json|azure/(main\.bicep|(main|variables|outputs)\.tf|otel-collector-config\.yaml|agent-host-relay/(otel-collector-config|compose)\.yaml))|references/org-distribution\.md)$' || '' }}
     strategy:
       fail-fast: false
       matrix:
