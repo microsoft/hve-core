@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for prompts, instructions, and skill behavior'
 author: HVE Core Team
-ms.date: 2026-08-01
+ms.date: 2026-09-05
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -22,23 +22,42 @@ Each tier shares the same advisory contract, the same `output-matches` grader fa
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
 | `prompts.eval.yaml`        | 3p   | Advisory | 51      | `behavior-conformance` | Active (Phase 9)  |
-| `instructions.eval.yaml`   | 3i   | Advisory | 62      | `behavior-conformance` | Active (Phase 11) |
+| `instructions.eval.yaml`   | 3i   | Advisory | 69      | `behavior-conformance` | Active (Phase 11) |
 | `skill-behavior.eval.yaml` | 3s   | Advisory | 219     | `behavior-conformance` | Active (Phase 13) |
 
 The maintained `prompts.eval.yaml` inventory contains 51 stimuli across 48 prompt subjects. Coverage includes RPI orchestration, security review and planning, Design Thinking, Git and pull request operations, evaluation authoring, and VEX workflows. Backlog and work-item coverage moved to `skill-behavior.eval.yaml` when those workflows became skills.
 
-The maintained `instructions.eval.yaml` inventory contains 62 stimuli across 46 instruction subjects. Coverage spans:
+The maintained `instructions.eval.yaml` inventory contains 69 stimuli across 50 instruction subjects. Coverage spans:
 
 * Delivery workflows: `ado-create-pull-request`, `ado-get-build-info`, `pull-request`.
 * HVE-Core authoring: `commit-message`, `copilot-tracking`, `hve-builder`, `markdown`, `pull-request`, and `writing-style`.
 * RAI, Accessibility, and Security planning: `accessibility-identity`, `rai-identity`, `rai-risk-classification`, `backlog-handoff`, `sssc-assessment`, and `standards-mapping`.
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, `disclaimer-language`.
+* Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation.
 
 The maintained `skill-behavior.eval.yaml` inventory contains 219 stimuli across 57 skill subjects. It covers RPI and HVE Builder workflows, including the HVE Builder bounded-read, research-bridge, unavailable-bridge, and read-only-review decisions plus direct `rpi-challenger` and `rpi-plan-critique` contracts.
 
 The `backlog-plan` and `backlog-execute` workflow commands carry knowledge coverage plus a read-only boundary assertion and a mutation-safety assertion respectively. The retained `prompt-analyze`, `prompt-builder`, and `prompt-refactor` compatibility routes and other installed skill domains remain in advisory mode.
 
 The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation, and regex-only `output-matches` graders check contract vocabulary and routing signals rather than full semantic correctness.
+
+### Rust HTTP unit-test evidence boundary
+
+The Rust HTTP unit-test isolation stimulus is a recall-and-cite check. Its
+positive regex graders detect instruction routing, source-file unit-test
+placement, local mock-server vocabulary, and explicit DNS or non-loopback
+refusal language. A passing advisory result does not establish that generated
+Rust code follows the contract. Generation-shaped semantic grading remains
+deferred to the custom-grader work tracked under WI-16.
+
+Native evidence is separate. The operator-invoked
+`npm run ci:test:rust-network-isolation -- <arguments>` command accepts a
+prepared disposable crate and records source endpoint literals plus bounded
+resolver and socket evidence under an attested, digest-pinned Docker
+containment lifecycle. Empty attempt lists and textual endpoint extraction are
+not proof of absent network behavior. Non-attesting test seams cannot report
+`Passed`. The command has no owning workflow and never runs as part of this
+advisory suite.
 
 ## Pipeline integration
 
