@@ -1,9 +1,9 @@
 ---
 title: hve-builder
-description: "Author, review, or validate Copilot prompt-engineering artifacts through independent review, behavior testing, and host checks."
+description: "Create, improve, refactor, replace, review, or validate prompts, instructions, agents, subagents, and skills, and build or extend HVE workflows. Use when authoring or cleaning up Copilot customizations, deciding which instructions to keep or retire, or connecting an HVE workflow to project-specific knowledge, tools, or conventions."
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-17
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - skill
@@ -23,15 +23,25 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Author, review, or validate Copilot prompt-engineering artifacts through independent review, behavior testing, and host checks.
+Create, improve, refactor, replace, review, or validate prompts, instructions, agents, subagents, and skills, and build or extend HVE workflows. Use when authoring or cleaning up Copilot customizations, deciding which instructions to keep or retire, or connecting an HVE workflow to project-specific knowledge, tools, or conventions.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use `hve-builder` whenever a prompt, instruction file, agent, subagent, or skill is being created, upgraded from a draft or ad hoc instruction set, refactored, replaced, reviewed, or validated. Authoring applies the instruction-quality requirements catalog, one independent static review, and a final behavior gate for Major changes.
+
+Modes combine and can be inferred. Unless you specify otherwise or your intent clearly differs, the skill uses `create,improve,refactor` together: create only what is needed, improve incomplete behavior, and simplify existing guidance within the requested scope. The combination runs one lifecycle, not one lifecycle per mode.
+
+For cleanup, it distinguishes required guidance from obsolete or redundant rules. Refactoring preserves behavior outside intended improvements; replacement or removal of required behavior needs an approved migration boundary. `review only` and `review,validate` remain read-only. `validate only` checks mechanical conformance without static review or behavior testing. Questions and explanations do not authorize edits.
+
+Use it also to build or extend HVE workflows. When a team wants `rpi-research` and `rpi-plan` to draw on internal knowledge, `hve-builder` reads those workflows' discovery and dispatch contracts and produces the skill or subagent that connects them.
+
+Use `hve-builder-tester` directly when an existing artifact needs a behavior test without any change. Use `vally-tests` for conformance-test authoring, and `rpi-research` for open-ended research that precedes a build decision.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask to add missing input-handling guidance and consolidate repeated rules in an existing skill. Without a mode argument, the skill can improve the current instructions, refactor duplication, and create a support reference only when needed. To request assessment without changes, use `mode=review,validate` or say "review and validate only; do not edit."
+
+Ask to make `rpi-research` and `rpi-plan` use an internal design-document corpus. The skill reads both workflows, notes that each selects helpers whose name or description marks them for research or planning, and creates a skill that documents where the corpus lives, how to run its indexing script, and how to cite results.
+
+When the corpus is large enough that indexing would crowd out the parent's context, it adds a research specialist subagent that runs the index in an isolated lane and returns cited evidence to `rpi-research`. It then runs local validation, one fresh-context static review, and, because the change is Major, one `hve-builder-tester` run before reporting the outcome with evidence links.

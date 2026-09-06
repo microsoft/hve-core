@@ -17,7 +17,7 @@ Resolve the walkthrough target before any review or explanation:
   * Code or feature: source files, a feature flow, or a library or API surface.
   * UI or UX: components, routes, state wiring, styles, and the user-facing flow that connects them.
   * Prompt-engineering artifact: a prompt, instructions, agent, or skill file under `.github/`.
-  * Artifact or document: a `.copilot-tracking` research, plan, details, changes, review, or log document, or another project document such as an architecture or planning record.
+  * Artifact or document: a `.copilot-tracking` research, plan, changes, review, or log document, or another project document such as an architecture or planning record.
 * Set `detail` to `brief`, `normal`, or `deep` (default `normal`). The user can change it at any segment boundary.
 * When no target can be formed, stop and ask. When several unrelated targets match, ask the user to choose one before proceeding.
 * When conversation context is unavailable, ask the user to identify the target and desired starting point. Do not treat a prior ledger as walkthrough progress or reconstruct pacing from it.

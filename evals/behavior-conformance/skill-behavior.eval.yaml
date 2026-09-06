@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 225
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 228
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -1523,6 +1523,78 @@ stimuli:
         name: review-runtime-route
         config:
           pattern: '(?i)^\s*[''"]?hve-builder-tester[''"]?[.!]?\s*$'
+  - name: skill-hve-builder-final-candidate-behavior-gate
+    prompt: |
+      An HVE Builder run is making a Major change. Choose one value from each
+      pair based on the skill's behavior:
+      `Timing:` `after-candidate-freeze` | `before-candidate-freeze`
+      `Invocations:` `repeat-until-pass` | `zero-or-one`
+      `Revise:` `stop-and-defer` | `correct-and-retest`
+      Return exactly three labeled lines without bullets in that order, using
+      only the selected value after each label and no explanation.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: final-candidate-decisions
+        config:
+          pattern: '(?i)^[ \t]*Timing:[ \t]*after-candidate-freeze[ \t]*\r?\n[ \t]*Invocations:[ \t]*zero-or-one[ \t]*\r?\n[ \t]*Revise:[ \t]*stop-and-defer[ \t]*(?:\r?\n)?(?![\s\S])'
+  - name: skill-pull-request-preflight-repair-commit
+    prompt: |
+      A pull request preflight found a spelling failure. The user asked you to
+      fix it, the affected checks now pass, and an unrelated file was already
+      modified before preflight. Repository instructions require Conventional
+      Commits. Choose one value from each pair based on the skill's behavior:
+      `Timing:` `after-checks-pass` | `before-checks-pass`
+      `Stage:` `repair-only` | `all-changes`
+      `Message:` `repository-convention` | `ad-hoc`
+      `After:` `recollect-context` | `reuse-old-context`
+      Return exactly four labeled lines without bullets in that order, using
+      only the selected value after each label and no explanation.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/pull-request
+    tags:
+      category: behavior-conformance
+      skill: pull-request
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: repair-commit-boundary
+        config:
+          pattern: '(?i)^[ \t]*Timing:[ \t]*after-checks-pass[ \t]*\r?\n[ \t]*Stage:[ \t]*repair-only[ \t]*\r?\n[ \t]*Message:[ \t]*repository-convention[ \t]*\r?\n[ \t]*After:[ \t]*recollect-context[ \t]*(?:\r?\n)?(?![\s\S])'
+  - name: skill-pull-request-workflow-component-checks
+    prompt: |
+      A pull request changes an eval spec and deletes the artifact referenced by
+      one of its backlink tags. The matching CI workflow calls a `ci:*` wrapper
+      composed of locally safe non-mutating schema, text, and safety checks, but
+      no equivalent local-safe package command exists. Choose one value from
+      each pair based on the skill's preflight behavior:
+      `Workflow:` `inspect-matching` | `ignore`
+      `Wrapper:` `skip-unless-requested` | `run-automatically`
+      `Components:` `run-locally-safe` | `skip-with-wrapper`
+      Return exactly three labeled lines without bullets in that order, using
+      only the selected value after each label and no explanation.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/pull-request
+    tags:
+      category: behavior-conformance
+      skill: pull-request
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: workflow-component-check-selection
+        config:
+          pattern: '(?i)^[ \t]*Workflow:[ \t]*inspect-matching[ \t]*\r?\n[ \t]*Wrapper:[ \t]*skip-unless-requested[ \t]*\r?\n[ \t]*Components:[ \t]*run-locally-safe[ \t]*(?:\r?\n)?(?![\s\S])'
   - name: skill-hve-builder-tester-knowledge
     prompt: |
       What fidelity labels unavailable side effects without claiming native

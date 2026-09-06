@@ -1,8 +1,4 @@
----
-description: "Challenge session record template for rpi-challenger"
----
 <!-- markdownlint-disable-file -->
-
 # Challenge Session: {{task_slug}}
 
 ## Session Details

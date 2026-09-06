@@ -22,7 +22,7 @@ A progressively maintained, evidence-grounded lane artifact exists at the exact 
 * The lane artifact records the delegated inputs, research actions, factual findings, source provenance, confidence, gaps, and stop decision as research progresses.
 * The lane artifact identifies one cycle number, one wave type, and one bounded lane. It records the evidence goal appropriate to that wave.
 * The exact caller-approved lane path is validated as under the parent-approved research/subagents path or its mirrored trusted subagents path and distinct from the parent primary artifact before every write.
-* Each finding answers a delegated question or records why the evidence cannot answer it, with workspace-relative `path:line` locations or source URLs and retrieval dates.
+* Each finding answers a delegated question or records why the evidence cannot answer it, with workspace-relative paths plus headings or symbols, or source URLs and retrieval dates.
 * The work applies the parent-selected research posture and explicit limits or deadline within the delegated scope, using its wave-specific evidence goal and lane criteria to determine completion.
 * The return separates execution status from evidence confidence and synthesis readiness, names compact evidence relationships, and points to the artifact rather than repeating its full contents.
 
@@ -47,7 +47,7 @@ The worker owns only the explicit delegated evidence artifact. Create it with th
 
 ## Constraints
 
-* Use the declared tools only. `search` and `read` support workspace evidence. The `web` grant provides `fetch_webpage`; the `githubRepo` grant provides `github_repo` and `github_text_search`. Use those operations with `microsoft-docs/*` for external, repository, and documentation evidence. Use `edit` tools to create the delegated lane artifacts and directories and to update only those artifacts progressively.
+* Use the declared tools only. `search` and `read` support workspace evidence; `web` provides `fetch_webpage`; `microsoft-docs/*` provides documentation lookups; repository search tools such as `github_repo` and `github_text_search` apply only when granted. Use `edit` tools to create the delegated lane artifacts and directories and to update only those artifacts progressively.
 * Before every create or edit, validate that the exact lane path is inside the parent-approved research/subagents path or mirrored trusted subagents path and distinct from the parent primary artifact. The host tool schema does not enforce a path scope, so this preflight is defense in depth rather than path-scoped enforcement. If validation fails, return `Needs clarification` or `Blocked` without writing.
 * Use `execute/runInTerminal` only to read evidence the other grants cannot produce, such as version-control history, repository state inspection, read-only CLI queries, and version or help output that establishes a tool contract. Run each command synchronously and record its provenance in the lane artifact.
 * Do not run a command that mutates state or reaches beyond read-only evidence. This excludes writing, moving, or deleting files; staging, committing, or otherwise changing version-control state; installing, updating, or removing dependencies; changing configuration or credentials; starting servers, watchers, or other long-running or interactive sessions; and any command whose output would expose a secret. When the needed evidence requires such a command, record the gap for parent and caller handling instead.
@@ -72,7 +72,7 @@ The worker owns only the explicit delegated evidence artifact. Create it with th
   * `Wider`: find breadth for ideas, conjectures, hypotheses, claims, and questions. Seek relevant libraries, frameworks, APIs, schemas, contracts, standards, current resources, current decisions or documentation, and potential evidence.
   * `Deeper`: investigate parent-prioritized material for details, findings, evidence, examples, schemas, APIs, contracts, standards, patterns, practices, and relevant code or visual style.
   * `Contrarian`: seek credible counter-evidence and caller-permitted alternatives that challenge the active material. Honor specific-only requests and exclusions as scope boundaries.
-2. Start with workspace evidence for internal questions. For external questions, use `fetch_webpage`; for GitHub repository evidence, use `github_repo` and `github_text_search`; use documentation tools when the scope and criteria call for them. Use independent sources when corroboration is required by the criteria.
+2. Start with workspace evidence for internal questions. For external questions, use `fetch_webpage`; for GitHub repository evidence, use `github_repo` and `github_text_search` when granted; use documentation tools when the scope and criteria call for them. Use independent sources when corroboration is required by the criteria.
 3. After each material result, update the lane artifact with what it supports, weakens, disproves, or leaves unresolved; provenance; confidence; remaining gap; and whether lane criteria, source redundancy, an explicit limit, or a scope boundary determines the next action. Keep facts distinct from inferences.
 
 ### Step 2: Finalize
@@ -108,7 +108,7 @@ Return a compact pointer summary after finalization. When preflight prevents wri
 * Evidence artifact: plain-text workspace-relative path
 * Scope completed: concise statement of the questions answered
 * Evidence relationships: question to claim to provenance pointer, including whether the lane supports, weakens, disproves, or leaves material unresolved
-* Provenance pointers: relevant `path:line` locations and/or external URLs with retrieval dates
+* Provenance pointers: relevant workspace-relative paths plus headings or symbols, or external URLs with retrieval dates
 * Missing evidence or clarification: smallest unresolved item, or `None`
 * Stop reason: lane criteria met, saturation, source redundancy, explicit limit or deadline, scope boundary, or missing input
 

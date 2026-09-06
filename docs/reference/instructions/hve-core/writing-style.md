@@ -1,9 +1,9 @@
 ---
 title: Hve Core/Writing Style
 description: "Writing style conventions for voice, tone, and language in markdown content"
-sidebar_position: 8
+sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - instruction
