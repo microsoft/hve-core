@@ -111,7 +111,7 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
         $report.failOnAlex | Should -BeTrue
     }
 
-    It 'Flags profanity via retext-profanities' {
+    It 'Reports a profanity occurrence once as an error without an alex warning' {
         if (-not ($script:NodeAvailable -and $script:DependenciesInstalled)) {
             Set-ItResult -Skipped -Because 'node or required npm packages are not available'
             return
@@ -126,9 +126,14 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
         $exit = $LASTEXITCODE
 
         $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
+        $entry = $report.results | Where-Object { $_.spec -like '*profane.md' }
         $exit | Should -Be 1
-        $report.errorCount | Should -BeGreaterOrEqual 1
-        @($report.results | Where-Object { $_.spec -like '*profane.md' }).Count | Should -BeGreaterOrEqual 1
+        $report.errorCount | Should -Be 1
+        $report.warningCount | Should -Be 0
+        $report.flagged | Should -Be 1
+        $report.failOnAlex | Should -BeFalse
+        @($entry.messages) | Should -HaveCount 1
+        $entry.messages[0].source | Should -Be 'retext-profanities'
     }
 
     It 'Does not include evals/ markdown when scanning the default corpus' {
@@ -171,7 +176,7 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
         $defaultText | Should -Not -Match "(^|['""])evals(['""/])"
     }
 
-    It 'Reports equality messages before profanity messages' {
+    It 'Reports equality warnings before profanity errors without mixing rule ownership' {
         if (-not ($script:NodeAvailable -and $script:DependenciesInstalled)) {
             Set-ItResult -Skipped -Because 'node or required npm packages are not available'
             return
@@ -181,20 +186,49 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
         Set-Content -LiteralPath $mixedFile -Value "# Mixed`n`nThis is crazy and fucking wrong." -Encoding UTF8
         $globs = @((Join-Path $script:CorpusRoot 'docs/**/*.md'))
 
-        & $script:ScriptPath -CorpusGlob $globs -RepoRoot $script:RepoRoot -OutputPath $script:OutputPath -FailOnAlex *> $null
+        & $script:ScriptPath -CorpusGlob $globs -RepoRoot $script:RepoRoot -OutputPath $script:OutputPath *> $null
+        $exit = $LASTEXITCODE
 
         $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
         $entry = $report.results | Where-Object { $_.spec -like '*mixed.md' }
         $sources = @($entry.messages | ForEach-Object { $_.source })
+        $equalityMessages = @($entry.messages | Where-Object { $_.source -eq 'alex' })
+        $profanityMessages = @($entry.messages | Where-Object { $_.source -eq 'retext-profanities' })
         $lastAlexIndex = [array]::LastIndexOf($sources, 'alex')
         $firstProfanityIndex = [array]::IndexOf($sources, 'retext-profanities')
 
+        $exit | Should -Be 1
+        $report.warningCount | Should -Be 1
+        $report.errorCount | Should -Be 1
+        $report.failOnAlex | Should -BeFalse
+        $equalityMessages | Should -HaveCount 1
+        $profanityMessages | Should -HaveCount 1
+        $equalityMessages[0].rule | Should -Not -Be $profanityMessages[0].rule
         $lastAlexIndex | Should -BeGreaterOrEqual 0
         $firstProfanityIndex | Should -BeGreaterOrEqual 0
         $lastAlexIndex | Should -BeLessThan $firstProfanityIndex
     }
 
-    It 'Suppresses an allowlisted phrase while a same-rule control emits a warning' {
+    It 'Suppresses an allowlisted <Rule> phrase while its control keeps source <Source>' -ForEach @(
+        @{
+            Rule = 'host-hostess'
+            AllowText = 'Use an HTTP host.'
+            ControlText = 'The host was ready.'
+            Source = 'alex'
+            WarningCount = 1
+            ErrorCount = 0
+            ExitCode = 0
+        }
+        @{
+            Rule = 'penetration'
+            AllowText = 'Run a penetration test to verify security.'
+            ControlText = 'The penetration level is high.'
+            Source = 'retext-profanities'
+            WarningCount = 0
+            ErrorCount = 1
+            ExitCode = 1
+        }
+    ) {
         if (-not ($script:NodeAvailable -and $script:DependenciesInstalled)) {
             Set-ItResult -Skipped -Because 'node or required npm packages are not available'
             return
@@ -202,8 +236,8 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
 
         $allowFile = Join-Path $script:CorpusRoot 'docs/allow.md'
         $controlFile = Join-Path $script:CorpusRoot 'docs/control.md'
-        Set-Content -LiteralPath $allowFile -Value "# Allowlisted`n`nRun a penetration test to verify security." -Encoding UTF8
-        Set-Content -LiteralPath $controlFile -Value "# Control`n`nThe penetration level is high." -Encoding UTF8
+        Set-Content -LiteralPath $allowFile -Value "# Allowlisted`n`n$AllowText" -Encoding UTF8
+        Set-Content -LiteralPath $controlFile -Value "# Control`n`n$ControlText" -Encoding UTF8
         $globs = @((Join-Path $script:CorpusRoot 'docs/**/*.md'))
 
         & $script:ScriptPath -CorpusGlob $globs -RepoRoot $script:RepoRoot -OutputPath $script:OutputPath *> $null
@@ -214,16 +248,48 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
         $controlEntry = $report.results | Where-Object { $_.spec -like '*control.md' }
         $controlMessage = @(
             $controlEntry.messages |
-                Where-Object { $_.rule -eq 'penetration' -and $_.source -eq 'alex' }
+                Where-Object { $_.rule -eq $Rule -and $_.source -eq $Source }
         )
 
         $allowEntry | Should -BeNullOrEmpty
+        @($controlEntry.messages) | Should -HaveCount 1
         $controlMessage | Should -HaveCount 1
         $controlMessage[0].message | Should -Not -BeNullOrEmpty
         $controlMessage[0].line | Should -Be 3
         $controlMessage[0].column | Should -Be 5
-        $report.warningCount | Should -Be 1
+        $report.warningCount | Should -Be $WarningCount
+        $report.errorCount | Should -Be $ErrorCount
+        $report.failOnAlex | Should -BeFalse
+        $exit | Should -Be $ExitCode
+    }
+
+    It 'Treats a rating-zero profanity as an error while preserving its technical allowlist' {
+        if (-not ($script:NodeAvailable -and $script:DependenciesInstalled)) {
+            Set-ItResult -Skipped -Because 'node or required npm packages are not available'
+            return
+        }
+
+        $allowFile = Join-Path $script:CorpusRoot 'docs/allow.md'
+        $controlFile = Join-Path $script:CorpusRoot 'docs/control.md'
+        Set-Content -LiteralPath $allowFile -Value "# Allowlisted`n`nMap the attack surface." -Encoding UTF8
+        Set-Content -LiteralPath $controlFile -Value "# Control`n`nAn attack occurred." -Encoding UTF8
+        $globs = @((Join-Path $script:CorpusRoot 'docs/**/*.md'))
+
+        & $script:ScriptPath -CorpusGlob $globs -RepoRoot $script:RepoRoot -OutputPath $script:OutputPath *> $null
+        $exit = $LASTEXITCODE
+
+        $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
+        $allowEntry = $report.results | Where-Object { $_.spec -like '*allow.md' }
+        $controlEntry = $report.results | Where-Object { $_.spec -like '*control.md' }
+
+        $allowEntry | Should -BeNullOrEmpty
+        @($controlEntry.messages) | Should -HaveCount 1
+        $controlEntry.messages[0].rule | Should -Be 'attack'
+        $controlEntry.messages[0].source | Should -Be 'retext-profanities'
+        $report.warningCount | Should -Be 0
         $report.errorCount | Should -Be 1
+        $report.flagged | Should -Be 1
+        $report.failOnAlex | Should -BeFalse
         $exit | Should -Be 1
     }
 }

@@ -11,7 +11,7 @@
 //   [{ "spec": "<rel-path>", "stimulus": "<name>", "text": "<prompt>" }, ...]
 //
 // Report schema:
-//   { "results": [ { spec, stimulus, source, messages: [{rule, message, line, column}] } ] }
+//   { "results": [ { spec, stimulus, messages: [{source, rule, message, line, column}] } ] }
 
 import { stdin as input, stdout as output, stderr } from 'node:process';
 import { unified } from 'unified';
@@ -198,7 +198,6 @@ function normalizeMessage(message, source) {
 const equalityProcessor = unified()
     .use(retextEnglish)
     .use(retextEquality)
-    .use(retextProfanities)
     .use(retextStringify);
 
 async function runEquality(text) {
@@ -211,7 +210,7 @@ async function runEquality(text) {
 
 const profanityProcessor = unified()
     .use(retextEnglish)
-    .use(retextProfanities, { sureness: 1 })
+    .use(retextProfanities)
     .use(retextStringify);
 
 async function runProfanities(text) {

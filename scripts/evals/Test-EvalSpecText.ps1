@@ -10,7 +10,8 @@
     Walks the markdown corpus under `.github/{agents,prompts,instructions,skills}/**/*.md`
     and `docs/**/*.md`, strips YAML frontmatter from each file, and pipes the
     bodies through a Node shim that runs retext-equality and retext-profanities. Writes
-    a JSON report and exits 1 when any rule fires. The intent is corpus
+    a JSON report and exits 1 on profanity findings, or on equality findings when
+    -FailOnAlex is supplied. The intent is corpus
     protection: keeping agents, instructions, prompts, skills, and docs free of
     insensitive or foul language. Eval stimulus YAML under `evals/` is
     intentionally out of scope.
@@ -238,7 +239,7 @@ function Invoke-RetextRunner {
         $previousLocation = Get-Location
         Set-Location -LiteralPath $RepoRoot
         try {
-            $proc = Start-Process -FilePath $NodePath -ArgumentList @($ShimPath) `
+            $proc = Start-Process -FilePath $NodePath -ArgumentList @("`"$ShimPath`"") `
                 -RedirectStandardInput $tempInput.FullName `
                 -RedirectStandardOutput $tempOutput.FullName `
                 -RedirectStandardError $tempError.FullName `
