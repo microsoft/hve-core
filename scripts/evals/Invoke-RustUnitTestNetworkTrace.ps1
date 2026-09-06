@@ -687,6 +687,24 @@ function Get-ContainerUser {
     return "$uid`:$gid"
 }
 
+function Resolve-TraceExecutable {
+    <#
+    .SYNOPSIS
+        Resolves one executable path in command-discovery order.
+    .OUTPUTS
+        System.String
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    $command = @(Get-Command -Name $Name -CommandType Application, ExternalScript -ErrorAction Stop)[0]
+    if (-not $command -or [string]::IsNullOrWhiteSpace([string]$command.Source)) {
+        throw "Executable did not resolve to a usable path: $Name"
+    }
+    return [string]$command.Source
+}
+
 function Limit-TraceText {
     <#
     .SYNOPSIS
@@ -770,12 +788,7 @@ function Invoke-RustUnitTestNetworkTrace {
     if (-not $Preview -and -not $NonAttesting -and -not $IsLinux) {
         throw 'Attesting execution requires a Linux host.'
     }
-    $resolvedDockerExecutable = if ($isDefaultDocker) {
-        (Get-Command -Name docker -CommandType Application -ErrorAction Stop).Source
-    }
-    else {
-        (Get-Command -Name $DockerExecutable -CommandType Application, ExternalScript -ErrorAction Stop).Source
-    }
+    $resolvedDockerExecutable = Resolve-TraceExecutable -Name $DockerExecutable
     $provenance = Read-TraceProvenance -Path $resolvedProvenance
     $resolvedContainerUser = Get-ContainerUser -Override $ContainerUser
     if (Test-Path -LiteralPath $OutputPath) {

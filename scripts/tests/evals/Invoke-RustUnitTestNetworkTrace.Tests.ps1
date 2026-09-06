@@ -501,6 +501,17 @@ Describe 'Invoke-RustUnitTestNetworkTrace.ps1' -Tag 'Unit' {
     }
 
     Context 'bounded process execution' {
+        It 'selects one executable when command discovery returns duplicate paths' {
+            Mock Get-Command {
+                @(
+                    [pscustomobject]@{ Source = '/usr/bin/pwsh' },
+                    [pscustomobject]@{ Source = '/bin/pwsh' }
+                )
+            } -ParameterFilter { $Name -eq 'pwsh' }
+
+            Resolve-TraceExecutable -Name 'pwsh' | Should -Be '/usr/bin/pwsh'
+        }
+
         It 'terminates a process that exceeds the timeout' {
             $result = Invoke-BoundedProcess `
                 -Executable 'pwsh' `
