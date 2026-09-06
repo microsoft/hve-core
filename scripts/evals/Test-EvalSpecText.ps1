@@ -4,16 +4,23 @@
 
 <#
 .SYNOPSIS
-    Runs alex.js and retext-profanities against the AI-artifact markdown corpus.
+    Runs retext-equality and retext-profanities against the AI-artifact markdown corpus.
 
 .DESCRIPTION
     Walks the markdown corpus under `.github/{agents,prompts,instructions,skills}/**/*.md`
     and `docs/**/*.md`, strips YAML frontmatter from each file, and pipes the
-    bodies through a Node shim that runs alex.js and retext-profanities. Writes
-    a JSON report and exits 1 when any rule fires. The intent is corpus
-    protection: keeping agents, instructions, prompts, skills, and docs free of
-    insensitive or foul language. Eval stimulus YAML under `evals/` is
-    intentionally out of scope.
+    bodies through separate retext-equality and retext-profanities processors.
+    The alex package is not a dependency; equality findings retain source alex
+    in the JSON report for compatibility. Profanity uses confidence threshold
+    sureness: 1, excluding rating-0 matches in both FailOnAlex modes. Each
+    non-allowlisted rating-1 or rating-2 finding is emitted once under source
+    retext-profanities and causes exit 1. Equality findings are warnings unless
+    -FailOnAlex is supplied.
+
+    Report fields and CLI names are retained, not the complete historical
+    finding set: profanity is no longer duplicated as alex, and rating-0
+    profanity matches are not reported. Eval stimulus YAML under `evals/`
+    is intentionally out of scope.
 
 .PARAMETER CorpusGlob
     Repository-relative globs to scan. Each glob is split on `**` into a base
@@ -38,11 +45,10 @@
     Path to the node executable. Defaults to 'node' on PATH.
 
 .PARAMETER FailOnAlex
-    Treat alex.js findings as errors (exit 1) instead of warnings. Off by
-    default: alex.js surface tone/style findings as `::warning` annotations
-    that do not flip the exit code, while every retext-profanities finding
-    remains a hard error. Enable when running a strict local sweep or when
-    a downstream gate wants alex parity with profanity.
+    Promote emitted retext-equality findings (source alex) from warnings to
+    errors (exit 1). The switch name is retained for compatibility. It does
+    not change the profanity confidence threshold or restore excluded
+    rating-0 matches; emitted retext-profanities findings remain errors.
 
 .EXAMPLE
     pwsh -File scripts/evals/Test-EvalSpecText.ps1
@@ -237,7 +243,7 @@ function Invoke-RetextRunner {
         $previousLocation = Get-Location
         Set-Location -LiteralPath $RepoRoot
         try {
-            $proc = Start-Process -FilePath $NodePath -ArgumentList @($ShimPath) `
+            $proc = Start-Process -FilePath $NodePath -ArgumentList @("`"$ShimPath`"") `
                 -RedirectStandardInput $tempInput.FullName `
                 -RedirectStandardOutput $tempOutput.FullName `
                 -RedirectStandardError $tempError.FullName `
