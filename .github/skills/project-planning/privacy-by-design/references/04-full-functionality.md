@@ -52,12 +52,12 @@ This principle rejects the notion that privacy must come at the cost of business
 
 ## Regulatory cross-references
 
-| Regulation | Reference | Relevance |
-|------------|-----------|-----------|
-| GDPR | Art. 7(4) | Consent must not be a condition for service where not necessary for performance |
-| GDPR | Art. 25(1) | Effective implementation of principles without undermining processing purposes |
-| APP | APP 3.3 | Collection must be by lawful and fair means |
-| CCPA/CPRA | §1798.125 | No discrimination against consumers exercising their rights |
+| Regulation | Reference  | Relevance                                                                       |
+|------------|------------|---------------------------------------------------------------------------------|
+| GDPR       | Art. 7(4)  | Consent must not be a condition for service where not necessary for performance |
+| GDPR       | Art. 25(1) | Effective implementation of principles without undermining processing purposes  |
+| APP        | APP 3.3    | Collection must be by lawful and fair means                                     |
+| CCPA/CPRA  | §1798.125  | No discrimination against consumers exercising their rights                     |
 
 ---
 

@@ -11,15 +11,15 @@ This reference expands PbD-05 (End-to-End Security) with detailed guidance on da
 
 A retention schedule must define for each personal data category:
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| Data category | Classification of the personal data | Customer contact details |
-| Processing purpose | Why the data is collected and used | Service delivery, billing |
-| Lawful basis | Legal ground for processing | Contract performance (GDPR Art. 6(1)(b)) |
-| Retention period | Duration the data is kept | 3 years post-contract termination |
+| Field                   | Description                             | Example                                     |
+|-------------------------|-----------------------------------------|---------------------------------------------|
+| Data category           | Classification of the personal data     | Customer contact details                    |
+| Processing purpose      | Why the data is collected and used      | Service delivery, billing                   |
+| Lawful basis            | Legal ground for processing             | Contract performance (GDPR Art. 6(1)(b))    |
+| Retention period        | Duration the data is kept               | 3 years post-contract termination           |
 | Retention justification | Why this period (not shorter or longer) | Statutory limitation period + 1 year buffer |
-| Disposal method | How data will be destroyed | Cryptographic erasure + backup purge |
-| Review trigger | When to reassess the schedule | Annual privacy review or regulation change |
+| Disposal method         | How data will be destroyed              | Cryptographic erasure + backup purge        |
+| Review trigger          | When to reassess the schedule           | Annual privacy review or regulation change  |
 
 ## Retention period determination
 
@@ -33,13 +33,13 @@ When determining appropriate retention periods:
 
 ## Disposal methods
 
-| Method | When to use | Verification |
-|--------|-------------|--------------|
-| Cryptographic erasure | Cloud-hosted data with managed encryption keys | Key destruction confirmed; data rendered unrecoverable |
-| Logical deletion with overwrite | On-premises database records | Overwrite verification; sector-level confirmation |
-| Physical destruction | Decommissioned storage media | Certificate of destruction from certified vendor |
-| De-identification | Data has ongoing analytical value; identity not required | Re-identification risk assessment passes threshold |
-| Anonymization | Statistical or research use cases | k-anonymity, l-diversity, or differential privacy verification |
+| Method                          | When to use                                              | Verification                                                   |
+|---------------------------------|----------------------------------------------------------|----------------------------------------------------------------|
+| Cryptographic erasure           | Cloud-hosted data with managed encryption keys           | Key destruction confirmed; data rendered unrecoverable         |
+| Logical deletion with overwrite | On-premises database records                             | Overwrite verification; sector-level confirmation              |
+| Physical destruction            | Decommissioned storage media                             | Certificate of destruction from certified vendor               |
+| De-identification               | Data has ongoing analytical value; identity not required | Re-identification risk assessment passes threshold             |
+| Anonymization                   | Statistical or research use cases                        | k-anonymity, l-diversity, or differential privacy verification |
 
 ## Backup and replica considerations
 
@@ -79,15 +79,15 @@ A legal hold suspends normal disposal when litigation, investigation, or regulat
 
 ## Regulatory mapping for retention and disposal
 
-| Regulation | Reference | Requirement |
-|------------|-----------|-------------|
-| GDPR | Art. 5(1)(e) | Storage limitation — no longer than necessary for purposes |
-| GDPR | Art. 17 | Right to erasure on request (subject to exemptions) |
-| GDPR | Art. 28(3)(g) | Processor must delete or return data at end of service |
-| APP | APP 4.2 | Destroy unsolicited information not reasonably necessary |
-| APP | APP 11.2 | Destroy or de-identify when no longer needed for any purpose |
-| CCPA/CPRA | §1798.100(e) | Disclose retention period or criteria for determining it |
-| CCPA/CPRA | §1798.105 | Right to deletion (subject to exemptions) |
+| Regulation | Reference     | Requirement                                                  |
+|------------|---------------|--------------------------------------------------------------|
+| GDPR       | Art. 5(1)(e)  | Storage limitation — no longer than necessary for purposes   |
+| GDPR       | Art. 17       | Right to erasure on request (subject to exemptions)          |
+| GDPR       | Art. 28(3)(g) | Processor must delete or return data at end of service       |
+| APP        | APP 4.2       | Destroy unsolicited information not reasonably necessary     |
+| APP        | APP 11.2      | Destroy or de-identify when no longer needed for any purpose |
+| CCPA/CPRA  | §1798.100(e)  | Disclose retention period or criteria for determining it     |
+| CCPA/CPRA  | §1798.105     | Right to deletion (subject to exemptions)                    |
 
 ## Citation fields for findings
 

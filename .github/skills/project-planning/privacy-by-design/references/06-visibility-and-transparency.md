@@ -56,18 +56,18 @@ Transparency builds trust. Organizations must be able to demonstrate that their 
 
 ## Regulatory cross-references
 
-| Regulation | Reference | Relevance |
-|------------|-----------|-----------|
-| GDPR | Art. 12 | Transparent, intelligible, easily accessible communication |
-| GDPR | Art. 13–14 | Information to be provided at collection and when obtained indirectly |
-| GDPR | Art. 15 | Right of access by the data subject |
-| GDPR | Art. 30 | Records of processing activities |
-| APP | APP 1.3–1.6 | APP privacy policy requirements |
-| APP | APP 5 | Notification of collection |
-| APP | APP 12 | Access to personal information |
-| CCPA/CPRA | §1798.100(a) | Right to know categories and purposes |
-| CCPA/CPRA | §1798.110 | Right to know specific pieces of information |
-| CCPA/CPRA | §1798.130 | Methods for submitting consumer requests |
+| Regulation | Reference    | Relevance                                                             |
+|------------|--------------|-----------------------------------------------------------------------|
+| GDPR       | Art. 12      | Transparent, intelligible, easily accessible communication            |
+| GDPR       | Art. 13–14   | Information to be provided at collection and when obtained indirectly |
+| GDPR       | Art. 15      | Right of access by the data subject                                   |
+| GDPR       | Art. 30      | Records of processing activities                                      |
+| APP        | APP 1.3–1.6  | APP privacy policy requirements                                       |
+| APP        | APP 5        | Notification of collection                                            |
+| APP        | APP 12       | Access to personal information                                        |
+| CCPA/CPRA  | §1798.100(a) | Right to know categories and purposes                                 |
+| CCPA/CPRA  | §1798.110    | Right to know specific pieces of information                          |
+| CCPA/CPRA  | §1798.130    | Methods for submitting consumer requests                              |
 
 ---
 

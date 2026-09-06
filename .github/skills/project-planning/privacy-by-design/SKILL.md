@@ -107,27 +107,27 @@ Use these fields when capturing a finding so the reviewer can assert a stable so
 
 ## Finding severity conventions
 
-| Severity | Meaning |
-|----------|---------|
-| HIGH | Principle is violated with direct risk to data subjects |
-| MEDIUM | Principle is partially met; gaps exist that could lead to non-compliance |
-| LOW | Minor gap; principle intent is largely met but documentation or controls could improve |
+| Severity | Meaning                                                                                |
+|----------|----------------------------------------------------------------------------------------|
+| HIGH     | Principle is violated with direct risk to data subjects                                |
+| MEDIUM   | Principle is partially met; gaps exist that could lead to non-compliance               |
+| LOW      | Minor gap; principle intent is largely met but documentation or controls could improve |
 
 ## Finding verdict conventions
 
-| Verdict | Meaning |
-|---------|---------|
-| PASS | Principle is fully satisfied with observable evidence |
-| PARTIAL | Some indicators met but gaps remain |
-| FAIL | Principle is not satisfied; corrective action required |
+| Verdict | Meaning                                                |
+|---------|--------------------------------------------------------|
+| PASS    | Principle is fully satisfied with observable evidence  |
+| PARTIAL | Some indicators met but gaps remain                    |
+| FAIL    | Principle is not satisfied; corrective action required |
 
 ## Overall assessment verdicts
 
-| Verdict | Condition |
-|---------|-----------|
-| COMPLIANT | All 7 principles are PASS |
+| Verdict             | Condition                                          |
+|---------------------|----------------------------------------------------|
+| COMPLIANT           | All 7 principles are PASS                          |
 | PARTIALLY_COMPLIANT | No principles are FAIL but one or more are PARTIAL |
-| NON_COMPLIANT | One or more principles are FAIL |
+| NON_COMPLIANT       | One or more principles are FAIL                    |
 
 ## Integration with Privacy Planner and Reviewer
 
@@ -140,12 +140,12 @@ No agent modification is required; the agent loads this skill on demand when PbD
 
 ## Interaction with other skills
 
-| Skill | Relationship |
-|-------|--------------|
-| `privacy-standards` | Provides data inventory, DPIA thresholds, and standards backbone; PbD builds on top |
-| `security-planning` | Security controls overlap with PbD-05; reference rather than duplicate |
-| `rai-planner` | RAI data-use concerns feed into PbD-04 (full functionality) and PbD-07 (user respect) |
-| `secure-by-design` | SBD-11 (Secure Deprecation) aligns with PbD-05 lifecycle; cross-reference for decommissioning |
+| Skill               | Relationship                                                                                  |
+|---------------------|-----------------------------------------------------------------------------------------------|
+| `privacy-standards` | Provides data inventory, DPIA thresholds, and standards backbone; PbD builds on top           |
+| `security-planning` | Security controls overlap with PbD-05; reference rather than duplicate                        |
+| `rai-planner`       | RAI data-use concerns feed into PbD-04 (full functionality) and PbD-07 (user respect)         |
+| `secure-by-design`  | SBD-11 (Secure Deprecation) aligns with PbD-05 lifecycle; cross-reference for decommissioning |
 
 ## Attribution and licensing posture
 

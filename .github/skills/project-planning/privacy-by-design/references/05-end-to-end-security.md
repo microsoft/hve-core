@@ -59,17 +59,17 @@ This principle addresses the full data lifecycle: ingestion, processing, storage
 
 ## Regulatory cross-references
 
-| Regulation | Reference | Relevance |
-|------------|-----------|-----------|
-| GDPR | Art. 5(1)(e) | Storage limitation — kept no longer than necessary |
-| GDPR | Art. 17 | Right to erasure (right to be forgotten) |
-| GDPR | Art. 25(1) | Appropriate measures including pseudonymization |
-| GDPR | Art. 32 | Security of processing — encryption, resilience, restoration |
-| APP | APP 4.2 | Destruction of unsolicited personal information not needed |
-| APP | APP 11.1 | Reasonable steps to protect from misuse, interference, loss |
-| APP | APP 11.2 | Destruction or de-identification when no longer needed |
-| CCPA/CPRA | §1798.100(e) | Disclose retention period or criteria for determining period |
-| CCPA/CPRA | §1798.105 | Consumer right to deletion |
+| Regulation | Reference    | Relevance                                                    |
+|------------|--------------|--------------------------------------------------------------|
+| GDPR       | Art. 5(1)(e) | Storage limitation — kept no longer than necessary           |
+| GDPR       | Art. 17      | Right to erasure (right to be forgotten)                     |
+| GDPR       | Art. 25(1)   | Appropriate measures including pseudonymization              |
+| GDPR       | Art. 32      | Security of processing — encryption, resilience, restoration |
+| APP        | APP 4.2      | Destruction of unsolicited personal information not needed   |
+| APP        | APP 11.1     | Reasonable steps to protect from misuse, interference, loss  |
+| APP        | APP 11.2     | Destruction or de-identification when no longer needed       |
+| CCPA/CPRA  | §1798.100(e) | Disclose retention period or criteria for determining period |
+| CCPA/CPRA  | §1798.105    | Consumer right to deletion                                   |
 
 ---
 

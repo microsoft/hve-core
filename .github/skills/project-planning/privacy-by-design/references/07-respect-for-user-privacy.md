@@ -58,21 +58,21 @@ This principle places the data subject at the center of system design. Individua
 
 ## Regulatory cross-references
 
-| Regulation | Reference | Relevance |
-|------------|-----------|-----------|
-| GDPR | Art. 7(3) | Right to withdraw consent at any time; withdrawal as easy as giving consent |
-| GDPR | Art. 15–16 | Right of access and rectification |
-| GDPR | Art. 17 | Right to erasure |
-| GDPR | Art. 20 | Right to data portability |
-| GDPR | Art. 21 | Right to object |
-| GDPR | Art. 22 | Automated individual decision-making including profiling |
-| APP | APP 6 | Use or disclosure limited to collected purpose or exceptions |
-| APP | APP 12 | Access to personal information on request |
-| APP | APP 13 | Correction of personal information |
-| CCPA/CPRA | §1798.105 | Right to deletion |
-| CCPA/CPRA | §1798.106 | Right to correction |
-| CCPA/CPRA | §1798.120 | Right to opt-out of sale or sharing |
-| CCPA/CPRA | §1798.185 | Right to limit use of sensitive personal information |
+| Regulation | Reference  | Relevance                                                                   |
+|------------|------------|-----------------------------------------------------------------------------|
+| GDPR       | Art. 7(3)  | Right to withdraw consent at any time; withdrawal as easy as giving consent |
+| GDPR       | Art. 15–16 | Right of access and rectification                                           |
+| GDPR       | Art. 17    | Right to erasure                                                            |
+| GDPR       | Art. 20    | Right to data portability                                                   |
+| GDPR       | Art. 21    | Right to object                                                             |
+| GDPR       | Art. 22    | Automated individual decision-making including profiling                    |
+| APP        | APP 6      | Use or disclosure limited to collected purpose or exceptions                |
+| APP        | APP 12     | Access to personal information on request                                   |
+| APP        | APP 13     | Correction of personal information                                          |
+| CCPA/CPRA  | §1798.105  | Right to deletion                                                           |
+| CCPA/CPRA  | §1798.106  | Right to correction                                                         |
+| CCPA/CPRA  | §1798.120  | Right to opt-out of sale or sharing                                         |
+| CCPA/CPRA  | §1798.185  | Right to limit use of sensitive personal information                        |
 
 ---
 

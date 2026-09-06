@@ -55,14 +55,14 @@ This principle mandates that only data necessary for the specific purpose is col
 
 ## Regulatory cross-references
 
-| Regulation | Reference | Relevance |
-|------------|-----------|-----------|
-| GDPR | Art. 25(2) | Only personal data necessary for each specific purpose is processed by default |
-| GDPR | Art. 5(1)(c) | Data minimization principle |
-| APP | APP 3.1–3.2 | Collection must be reasonably necessary for entity functions |
-| APP | APP 5 | Notification obligations at time of collection |
-| CCPA/CPRA | §1798.100(b) | No collection of additional categories beyond disclosed purposes |
-| CCPA/CPRA | §1798.135 | Right to opt-out of sale; opt-out link required |
+| Regulation | Reference    | Relevance                                                                      |
+|------------|--------------|--------------------------------------------------------------------------------|
+| GDPR       | Art. 25(2)   | Only personal data necessary for each specific purpose is processed by default |
+| GDPR       | Art. 5(1)(c) | Data minimization principle                                                    |
+| APP        | APP 3.1–3.2  | Collection must be reasonably necessary for entity functions                   |
+| APP        | APP 5        | Notification obligations at time of collection                                 |
+| CCPA/CPRA  | §1798.100(b) | No collection of additional categories beyond disclosed purposes               |
+| CCPA/CPRA  | §1798.135    | Right to opt-out of sale; opt-out link required                                |
 
 ---
 

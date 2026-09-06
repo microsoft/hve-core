@@ -80,13 +80,13 @@ FAIL: Endpoints return unbounded result sets with full user records
 
 ### Architecture patterns
 
-| Pattern | PbD alignment | What to look for |
-|---------|---------------|------------------|
-| Data classification in schema | PbD-03 | Column/field annotations marking PII, sensitive, public |
-| Purpose-binding at collection | PbD-03 | Data tagged with processing purpose at ingestion point |
-| Privacy boundaries in microservices | PbD-03 | Separate services for identity vs. analytics vs. business logic |
-| Tokenization/pseudonymization | PbD-03 | User identifiers replaced with tokens in analytics pipelines |
-| Field-level encryption | PbD-03 | Sensitive fields encrypted independently of storage encryption |
+| Pattern                             | PbD alignment | What to look for                                                |
+|-------------------------------------|---------------|-----------------------------------------------------------------|
+| Data classification in schema       | PbD-03        | Column/field annotations marking PII, sensitive, public         |
+| Purpose-binding at collection       | PbD-03        | Data tagged with processing purpose at ingestion point          |
+| Privacy boundaries in microservices | PbD-03        | Separate services for identity vs. analytics vs. business logic |
+| Tokenization/pseudonymization       | PbD-03        | User identifiers replaced with tokens in analytics pipelines    |
+| Field-level encryption              | PbD-03        | Sensitive fields encrypted independently of storage encryption  |
 
 ### Code-level indicators
 
@@ -136,12 +136,12 @@ FAIL: Higher quotas or premium features require accepting additional data collec
 
 ### Encryption verification
 
-| Check | Evidence |
-|-------|----------|
-| Encryption at rest | Storage configuration shows AES-256, managed keys, or customer-managed keys |
-| Encryption in transit | TLS 1.2+ enforced; HTTP redirected to HTTPS; HSTS headers present |
-| Key rotation | Key management policy shows rotation schedule (e.g., 90 days) |
-| Cryptographic erasure capability | Key management supports key deletion as a disposal method |
+| Check                            | Evidence                                                                    |
+|----------------------------------|-----------------------------------------------------------------------------|
+| Encryption at rest               | Storage configuration shows AES-256, managed keys, or customer-managed keys |
+| Encryption in transit            | TLS 1.2+ enforced; HTTP redirected to HTTPS; HSTS headers present           |
+| Key rotation                     | Key management policy shows rotation schedule (e.g., 90 days)               |
+| Cryptographic erasure capability | Key management supports key deletion as a disposal method                   |
 
 ### Retention enforcement patterns
 
@@ -237,13 +237,13 @@ Look for:
 
 ### CI/CD privacy checks
 
-| Check | Principle | What to verify |
-|-------|-----------|----------------|
-| PII scanner in pipeline | PbD-01, PbD-03 | Automated detection of new PII collection points |
-| Privacy test suite | PbD-02, PbD-05 | Tests verifying privacy defaults and data lifecycle |
-| Consent flow tests | PbD-02, PbD-07 | Automated verification of opt-in behavior |
-| Data classification linter | PbD-03 | Schema changes require classification annotation |
-| Retention policy validator | PbD-05 | New data stores require retention configuration |
+| Check                      | Principle      | What to verify                                      |
+|----------------------------|----------------|-----------------------------------------------------|
+| PII scanner in pipeline    | PbD-01, PbD-03 | Automated detection of new PII collection points    |
+| Privacy test suite         | PbD-02, PbD-05 | Tests verifying privacy defaults and data lifecycle |
+| Consent flow tests         | PbD-02, PbD-07 | Automated verification of opt-in behavior           |
+| Data classification linter | PbD-03         | Schema changes require classification annotation    |
+| Retention policy validator | PbD-05         | New data stores require retention configuration     |
 
 ### Infrastructure-as-code indicators
 

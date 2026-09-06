@@ -79,11 +79,11 @@ assessment_summary:
 
 ## Overall verdict rules
 
-| Overall verdict | Condition |
-|-----------------|-----------|
-| COMPLIANT | All 7 principles are PASS |
+| Overall verdict     | Condition                                          |
+|---------------------|----------------------------------------------------|
+| COMPLIANT           | All 7 principles are PASS                          |
 | PARTIALLY_COMPLIANT | No principles are FAIL but one or more are PARTIAL |
-| NON_COMPLIANT | One or more principles are FAIL |
+| NON_COMPLIANT       | One or more principles are FAIL                    |
 
 ## Finding ID conventions
 

@@ -72,19 +72,19 @@ When multiple jurisdictions apply:
 
 ## Verdict rules
 
-| Verdict | Condition |
-|---------|-----------|
-| PASS | All checklist items are MET and no anti-patterns are detected |
+| Verdict | Condition                                                                                                    |
+|---------|--------------------------------------------------------------------------------------------------------------|
+| PASS    | All checklist items are MET and no anti-patterns are detected                                                |
 | PARTIAL | Majority of checklist items are MET but gaps remain, OR anti-patterns are present with compensating controls |
-| FAIL | Majority of checklist items are NOT MET, OR critical anti-patterns are present without compensating controls |
+| FAIL    | Majority of checklist items are NOT MET, OR critical anti-patterns are present without compensating controls |
 
 ## Severity rules
 
-| Severity | Condition |
-|----------|-----------|
-| HIGH | Finding involves sensitive data, affects many data subjects, or creates direct regulatory non-compliance risk |
-| MEDIUM | Finding involves standard personal data, affects limited data subjects, or creates indirect compliance risk |
-| LOW | Finding is a documentation or process gap with no direct impact on data subjects |
+| Severity | Condition                                                                                                     |
+|----------|---------------------------------------------------------------------------------------------------------------|
+| HIGH     | Finding involves sensitive data, affects many data subjects, or creates direct regulatory non-compliance risk |
+| MEDIUM   | Finding involves standard personal data, affects limited data subjects, or creates indirect compliance risk   |
+| LOW      | Finding is a documentation or process gap with no direct impact on data subjects                              |
 
 ## Evidence expectations
 
@@ -101,11 +101,11 @@ Acceptable evidence for MET determinations:
 
 ## Interaction with other skills
 
-| Skill | Interaction |
-|-------|-------------|
+| Skill               | Interaction                                                                                    |
+|---------------------|------------------------------------------------------------------------------------------------|
 | `privacy-standards` | Provides data inventory, DPIA thresholds, and standards backbone; PbD assessment builds on top |
-| `security-planning` | Security controls overlap with PbD-05; reference security findings rather than duplicating |
-| `rai-planner` | RAI assessment may identify data use concerns that feed into PbD-04 and PbD-07 |
+| `security-planning` | Security controls overlap with PbD-05; reference security findings rather than duplicating     |
+| `rai-planner`       | RAI assessment may identify data use concerns that feed into PbD-04 and PbD-07                 |
 
 ## Stop rules
 

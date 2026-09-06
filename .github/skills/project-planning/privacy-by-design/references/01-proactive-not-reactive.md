@@ -52,12 +52,12 @@ This principle shifts the organizational mindset from reactive incident response
 
 ## Regulatory cross-references
 
-| Regulation | Reference | Relevance |
-|------------|-----------|-----------|
-| GDPR | Art. 25(1) | Requires implementing appropriate measures at the time of determination of means of processing |
-| GDPR | Art. 35 | DPIA required for high-risk processing before processing begins |
-| APP | APP 1.2 | Entities must take reasonable steps to implement practices that ensure compliance |
-| CCPA/CPRA | §1798.100 | Businesses must inform consumers at or before point of collection |
+| Regulation | Reference  | Relevance                                                                                      |
+|------------|------------|------------------------------------------------------------------------------------------------|
+| GDPR       | Art. 25(1) | Requires implementing appropriate measures at the time of determination of means of processing |
+| GDPR       | Art. 35    | DPIA required for high-risk processing before processing begins                                |
+| APP        | APP 1.2    | Entities must take reasonable steps to implement practices that ensure compliance              |
+| CCPA/CPRA  | §1798.100  | Businesses must inform consumers at or before point of collection                              |
 
 ---
 

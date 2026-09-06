@@ -54,13 +54,13 @@ This principle requires that privacy considerations are woven into the technical
 
 ## Regulatory cross-references
 
-| Regulation | Reference | Relevance |
-|------------|-----------|-----------|
-| GDPR | Art. 25(1) | Technical and organisational measures to implement data-protection principles effectively |
-| GDPR | Art. 5(1)(f) | Integrity and confidentiality — appropriate security of personal data |
-| APP | APP 1.2 | Reasonable steps to implement practices, procedures, and systems |
-| APP | APP 11.1 | Reasonable steps to protect personal information from misuse, interference, and loss |
-| CCPA/CPRA | §1798.100 | Reasonable security procedures and practices |
+| Regulation | Reference    | Relevance                                                                                 |
+|------------|--------------|-------------------------------------------------------------------------------------------|
+| GDPR       | Art. 25(1)   | Technical and organisational measures to implement data-protection principles effectively |
+| GDPR       | Art. 5(1)(f) | Integrity and confidentiality — appropriate security of personal data                     |
+| APP        | APP 1.2      | Reasonable steps to implement practices, procedures, and systems                          |
+| APP        | APP 11.1     | Reasonable steps to protect personal information from misuse, interference, and loss      |
+| CCPA/CPRA  | §1798.100    | Reasonable security procedures and practices                                              |
 
 ---
 

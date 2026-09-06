@@ -18,13 +18,13 @@ This reference maps the 7 PbD Foundation Principles to industry-specific context
 
 ### Principle emphasis
 
-| Principle | Industry priority | Rationale |
-|-----------|------------------|-----------|
-| PbD-01 Proactive | HIGH | Metadata retention laws require privacy planning before system design |
-| PbD-02 Default | CRITICAL | Location and communication data must be protected by default (ePrivacy) |
-| PbD-05 End-to-End | CRITICAL | CDR, location history, and content have mandated retention and disposal |
-| PbD-06 Transparency | HIGH | Subscribers must know what metadata is retained and for how long |
-| PbD-07 User-Centric | HIGH | Opt-in required for location-based services beyond network operation |
+| Principle           | Industry priority | Rationale                                                               |
+|---------------------|-------------------|-------------------------------------------------------------------------|
+| PbD-01 Proactive    | HIGH              | Metadata retention laws require privacy planning before system design   |
+| PbD-02 Default      | CRITICAL          | Location and communication data must be protected by default (ePrivacy) |
+| PbD-05 End-to-End   | CRITICAL          | CDR, location history, and content have mandated retention and disposal |
+| PbD-06 Transparency | HIGH              | Subscribers must know what metadata is retained and for how long        |
+| PbD-07 User-Centric | HIGH              | Opt-in required for location-based services beyond network operation    |
 
 ### Industry-specific checks
 
@@ -48,20 +48,20 @@ This reference maps the 7 PbD Foundation Principles to industry-specific context
 
 ### Principle emphasis
 
-| Principle | Industry priority | Rationale |
-|-----------|------------------|-----------|
-| PbD-02 Default | CRITICAL | Health data requires maximum protection by default (HIPAA minimum necessary) |
-| PbD-03 Embedded | CRITICAL | Privacy must be architectural (segmentation, de-identification, break-the-glass) |
-| PbD-04 Full Functionality | HIGH | Patients exercising rights must not lose care quality |
-| PbD-05 End-to-End | CRITICAL | Health records have complex retention (clinical vs. research vs. billing) |
-| PbD-07 User-Centric | HIGH | Patient access rights (21st Century Cures), correction, consent withdrawal |
+| Principle                 | Industry priority | Rationale                                                                        |
+|---------------------------|-------------------|----------------------------------------------------------------------------------|
+| PbD-02 Default            | CRITICAL          | Health data requires maximum protection by default (HIPAA minimum necessary)     |
+| PbD-03 Embedded           | CRITICAL          | Privacy must be architectural (segmentation, de-identification, break-the-glass) |
+| PbD-04 Full Functionality | HIGH              | Patients exercising rights must not lose care quality                            |
+| PbD-05 End-to-End         | CRITICAL          | Health records have complex retention (clinical vs. research vs. billing)        |
+| PbD-07 User-Centric       | HIGH              | Patient access rights (21st Century Cures), correction, consent withdrawal       |
 
 ### Industry-specific checks
 
 - Minimum necessary principle applied to all health data disclosures (PbD-02)
 - HIPAA de-identification method applied for research/analytics (Safe Harbor or Expert Determination) (PbD-03)
 - Break-the-glass mechanism exists with mandatory post-access audit (PbD-03)
-- 42 CFR Part 2 segmentation for substance abuse and mental health records (PbD-03)
+- 42 CFR Part 2 segmentation for substance use disorder and mental health records (PbD-03)
 - Patient portal provides electronic access to health records (PbD-07)
 - DICOM de-identification strips patient metadata from medical images (PbD-05)
 - Genetic data handled with GINA non-discrimination controls (PbD-04)
@@ -70,7 +70,7 @@ This reference maps the 7 PbD Foundation Principles to industry-specific context
 ### Key regulations
 
 - HIPAA Privacy and Security Rules (US) — minimum necessary, patient rights, safeguards
-- 42 CFR Part 2 (US) — substance abuse record consent requirements
+- 42 CFR Part 2 (US) — substance use disorder record consent requirements
 - My Health Records Act 2012 (AU) — digital health record controls
 - GDPR Art. 9 (EU) — health data as special category
 
@@ -80,13 +80,13 @@ This reference maps the 7 PbD Foundation Principles to industry-specific context
 
 ### Principle emphasis
 
-| Principle | Industry priority | Rationale |
-|-----------|------------------|-----------|
-| PbD-02 Default | HIGH | Default data minimization for KYC (collect only what regulation requires) |
-| PbD-03 Embedded | CRITICAL | PCI DSS requires privacy embedded in architecture (CDE isolation, tokenization) |
-| PbD-04 Full Functionality | HIGH | Customers opting out of profiling must retain full service access (PSD2, CCPA §1798.125) |
-| PbD-05 End-to-End | CRITICAL | Financial records have regulatory retention minimums AND deletion obligations |
-| PbD-06 Transparency | HIGH | Automated credit decisions require explainability (GDPR Art. 22, FCRA) |
+| Principle                 | Industry priority | Rationale                                                                                |
+|---------------------------|-------------------|------------------------------------------------------------------------------------------|
+| PbD-02 Default            | HIGH              | Default data minimization for KYC (collect only what regulation requires)                |
+| PbD-03 Embedded           | CRITICAL          | PCI DSS requires privacy embedded in architecture (CDE isolation, tokenization)          |
+| PbD-04 Full Functionality | HIGH              | Customers opting out of profiling must retain full service access (PSD2, CCPA §1798.125) |
+| PbD-05 End-to-End         | CRITICAL          | Financial records have regulatory retention minimums AND deletion obligations            |
+| PbD-06 Transparency       | HIGH              | Automated credit decisions require explainability (GDPR Art. 22, FCRA)                   |
 
 ### Industry-specific checks
 
@@ -160,30 +160,30 @@ Required. Activates the matching industry profile. Values: `telco`, `healthcare`
 
 Optional. Override the default priority for a principle within the selected industry.
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `principle` | Yes | PbD principle ID (e.g., `PbD-04`) |
-| `priority` | Yes | New priority: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` |
-| `justification` | Yes | Why this override exists |
+| Field           | Required | Description                                       |
+|-----------------|----------|---------------------------------------------------|
+| `principle`     | Yes      | PbD principle ID (e.g., `PbD-04`)                 |
+| `priority`      | Yes      | New priority: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` |
+| `justification` | Yes      | Why this override exists                          |
 
 ### `custom_checks`
 
 Optional. Add org-specific checks beyond the industry profile.
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `principle` | Yes | Which principle this check maps to |
-| `check` | Yes | Description of the check |
-| `severity` | Yes | Finding severity if check fails: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` |
+| Field       | Required | Description                                                          |
+|-------------|----------|----------------------------------------------------------------------|
+| `principle` | Yes      | Which principle this check maps to                                   |
+| `check`     | Yes      | Description of the check                                             |
+| `severity`  | Yes      | Finding severity if check fails: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` |
 
 ### `suppressions`
 
 Optional. Suppress checks that don't apply to this system.
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `check` | Yes | The check description or keyword to suppress |
-| `reason` | Yes | Why it doesn't apply |
+| Field    | Required | Description                                  |
+|----------|----------|----------------------------------------------|
+| `check`  | Yes      | The check description or keyword to suppress |
+| `reason` | Yes      | Why it doesn't apply                         |
 
 ## Assessment integration
 

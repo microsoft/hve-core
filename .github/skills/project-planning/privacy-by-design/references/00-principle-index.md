@@ -9,15 +9,15 @@ This document provides the index for the 7 Foundation Principles of Privacy by D
 
 ## Principle catalog
 
-| ID | Title | Category | GDPR Mapping | APP Mapping | CCPA/CPRA Mapping |
-|--------|-------------------------------|---------------------------|------------------------|-----------------|---------------------|
-| PbD-01 | Proactive Not Reactive | Prevention | Art. 25(1) | APP 1.2 | §1798.100 |
-| PbD-02 | Privacy as the Default | Default Settings | Art. 25(2) | APP 3, APP 5 | §1798.100(b) |
-| PbD-03 | Privacy Embedded into Design | Architecture | Art. 25(1) | APP 1.2 | §1798.100 |
-| PbD-04 | Full Functionality | Positive-Sum | Art. 25(1) | APP 1.2 | §1798.100 |
-| PbD-05 | End-to-End Security | Lifecycle Protection | Art. 25(1), Art. 32 | APP 11 | §1798.100(e) |
-| PbD-06 | Visibility and Transparency | Openness | Art. 12–14 | APP 1, APP 5 | §1798.100(a) |
-| PbD-07 | Respect for User Privacy | User-Centricity | Art. 12–22 | APP 6, APP 12 | §1798.120, §1798.185 |
+| ID     | Title                        | Category             | GDPR Mapping        | APP Mapping   | CCPA/CPRA Mapping    |
+|--------|------------------------------|----------------------|---------------------|---------------|----------------------|
+| PbD-01 | Proactive Not Reactive       | Prevention           | Art. 25(1)          | APP 1.2       | §1798.100            |
+| PbD-02 | Privacy as the Default       | Default Settings     | Art. 25(2)          | APP 3, APP 5  | §1798.100(b)         |
+| PbD-03 | Privacy Embedded into Design | Architecture         | Art. 25(1)          | APP 1.2       | §1798.100            |
+| PbD-04 | Full Functionality           | Positive-Sum         | Art. 25(1)          | APP 1.2       | §1798.100            |
+| PbD-05 | End-to-End Security          | Lifecycle Protection | Art. 25(1), Art. 32 | APP 11        | §1798.100(e)         |
+| PbD-06 | Visibility and Transparency  | Openness             | Art. 12–14          | APP 1, APP 5  | §1798.100(a)         |
+| PbD-07 | Respect for User Privacy     | User-Centricity      | Art. 12–22          | APP 6, APP 12 | §1798.120, §1798.185 |
 
 ## Cross-reference matrix
 
