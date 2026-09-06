@@ -1,75 +1,118 @@
 ---
 title: HVE Core Identity and Channels
-description: Choose HVE Core package identities and understand their lifecycle and release channels
+description: Understand the single HVE Core identity and its development, PreRelease, and Stable channels
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-19
 ms.topic: overview
+keywords:
+  - packages
+  - channels
+  - identity
 ---
 
-## Package Choices
+## One Product Identity
 
-`.github/plugin/marketplace.json` is the sole catalog authority. It defines ordinary active package entries, their memberships, maturity, documentation, and immutable plugin sources.
+HVE Core publishes one plugin named `hve-core` and one VS Code extension named `ise-hve-essentials.hve-core`.
 
-| Package choice             | Scope                                                    |
-|----------------------------|----------------------------------------------------------|
-| `hve-core`                 | Focused RPI, HVE Builder, Git, and code-review workflows |
-| `hve-core-all`             | All active content and the only starter profile          |
-| Domain or utility packages | Narrower capability sets listed by the active catalog    |
-
-Do not install `hve-core` and `hve-core-all` together because their content overlaps.
+Root `plugin.json` is the deterministic membership authority for both products. `.github/plugin/marketplace.json` contains one `hve-core` locator whose relative source is the repository root; it does not repeat component membership. Plugin clients resolve root README and LICENSE, while the VSIX packages `extension/README.md` and `extension/LICENSE`.
 
 ## Stable and PreRelease
 
-Stable and PreRelease contain the same active package-name set and the same active components and maturity for every package.
+Stable and PreRelease contain the same complete plugin and extension content. They differ in source ownership, cadence, version, and immutable release tag.
 
-| Channel    | Source ownership                                                  | Version and cadence                              |
-|------------|-------------------------------------------------------------------|--------------------------------------------------|
-| PreRelease | Packages directly from an explicit commit on `main`               | Odd minor runtime version; publishes more often  |
-| Stable     | Packages a reviewed `main` promotion merged into `release/stable` | Even minor release version; may lag newer `main` |
+| Channel    | Reviewed source path                              | Exact source tag        |
+|------------|---------------------------------------------------|-------------------------|
+| PreRelease | `main` promoted to `release/prerelease`           | `prerelease-v<version>` |
+| Stable     | `release/prerelease` promoted to `release/stable` | `v<version>`            |
 
-PreRelease packages directly from `main` and maintains no companion source branch. Stable promotion requires the promoted `main` tree and the merged `release/stable` tree to match before packaging.
+Ordinary PreRelease releases use odd minor versions and advance first.
+Ordinary Stable releases use even minor versions after reviewed promotion, so
+Stable can lag PreRelease and newer `main` content. This cadence describes
+repository release allocation and publication, not installed-client selection
+or update behavior.
 
-Each catalog entry has a deterministic plugin root and extension identity. `hve-core` remains the unsuffixed HVE Core extension, `ise-hve-essentials.hve-core`. Other active entries use package-specific generated identities. A single immutable `plugins-v<version>` snapshot contains every active package root and its projected catalog.
+Source moves in one direction through reviewed target-based promotion PRs:
+`main` to `release/prerelease` to `release/stable`. A promotion merge creates
+no tag. Release-please opens a separate managed PR on the target branch, and
+merging that PR creates the channel's exact tag and draft release.
 
-## Lifecycle Disclosure
+`main` is not a release-please target. It is a ref-less development-tip channel, so a marketplace refresh followed by a plugin update resolves current `main` content from the repository root. Release branches, tags, and published releases own release state and history; PreRelease publication does not synchronize versions or `CHANGELOG.md` state back into `main`.
 
-| Lifecycle label | Stable | PreRelease | Meaning                                             |
-|-----------------|--------|------------|-----------------------------------------------------|
-| `stable`        | Yes    | Yes        | Established component                               |
-| `preview`       | Yes    | Yes        | Usable component still receiving compatibility work |
-| `experimental`  | Yes    | Yes        | Early component that can change significantly       |
-| `deprecated`    | No     | No         | Scheduled for or undergoing retirement              |
-| `removed`       | No     | No         | Excluded while its policy tombstone may remain      |
+The plugin root remains the repository root on every branch and exact tag, with artifact discovery bounded to package-scoped `.github` paths. The extension identity remains `ise-hve-essentials.hve-core` on both Marketplace channels.
 
-Lifecycle labels are disclosure and governance metadata, not channel filters. They are also separate from maturity classifications used in Responsible AI assessments.
+Release branches are reviewed moving channels. Registering a branch resolves its current committed manifest and source, while an exact tag fixes both catalog selection and source content.
+
+A published channel release is the assurance boundary for its exact tag. The
+release workflow applies review and release gates, produces one VSIX plus
+SBOM and provenance sidecars, attaches attestations, verifies provenance, and uses the configured
+publication path. Ref-less main content intentionally has no published-release
+assurance.
+
+## Membership Parity
+
+| Content                | Stable | PreRelease |
+|------------------------|--------|------------|
+| Agents                 | Same   | Same       |
+| Prompts                | Same   | Same       |
+| Instructions           | Same   | Same       |
+| Distributable skills   | Same   | Same       |
+| Bundled telemetry hook | Same   | Same       |
+
+The sync policy includes tracked package-scoped artifacts that match canonical paths. Skills with a top-level noncommercial license qualifier are excluded from distribution. Channel selection never filters the manifest.
 
 ## Copilot Marketplace Registration
 
-Register the catalog ref selected by your organization or release instructions:
+Register the development tip without a ref:
 
 ```bash
-copilot plugin marketplace add microsoft/hve-core#<ref>
+copilot plugin marketplace add microsoft/hve-core
 ```
 
-The Git ref selects the catalog. Each selected entry's `source.ref` selects matching immutable `plugins-v<version>` bytes. Use the client to select the desired catalog package after registration.
+Register moving reviewed channels:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#release/prerelease
+copilot plugin marketplace add microsoft/hve-core#release/stable
+```
+
+Register immutable channel tags:
+
+```bash
+copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
+copilot plugin marketplace add microsoft/hve-core#v<version>
+```
+
+Refresh the marketplace before requesting an installed-plugin update:
+
+```bash
+copilot plugin marketplace update hve-core
+copilot plugin update hve-core@hve-core
+```
+
+Switching registrations can require removing and re-adding the marketplace.
+Do not rely on any unverified duplicate same-name registration behavior.
 
 ## Selective Clone Adoption
 
-`hve-core` and `hve-core-all` each declare the telemetry hook. VS Code has no declarative hook contribution point, so extension users configure hook locations manually.
+The `hve-core` plugin declares the telemetry hook. VS Code has no declarative hook contribution point, so extension users configure its location manually.
 
-For a smaller repository-owned footprint, use the installer with an exact `PackageName`. The starter profile belongs only to `hve-core-all`; custom component selection resolves within the chosen package. Schema version 2 records `selection.package`, does not assign package ownership to individual files, and never copies hooks. A package-less schema version 2 manifest emits `INSTALLED_PACKAGE=` and requires explicit package reselection before replay.
+For a smaller repository-owned footprint, use the installer to copy all manifest components or a selected subset. Schema version 2 records `selection.profile` and `selection.components`, does not assign package ownership, and never copies hooks.
 
 ## After Installation
 
-Once HVE Core is installed:
+With the VS Code extension installed:
 
 1. Agents appear in the Copilot Chat agent picker.
 2. Prompts are available as slash commands.
 3. Instructions apply to matching files through their `applyTo` patterns.
 4. Skills become available for semantic or explicit invocation.
 
-The focused `hve-core` package includes `RPI Agent` and the `/rpi`, `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` entry points.
+Copilot CLI plugins expose agents, commands, and skills, but plugin-contained
+instructions are not auto-applied. See [Copilot CLI Plugin](methods/cli-plugins#instructions-are-not-auto-applied-from-plugins)
+for the host-specific limitation.
+
+The `hve-core` plugin includes `RPI Agent` and the `/rpi`, `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` entry points.
 
 ---
 

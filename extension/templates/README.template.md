@@ -2,8 +2,6 @@
 
 > {{DESCRIPTION}}
 
-{{MATURITY_NOTICE}}
-
 {{BODY}}
 
 ## Included Artifacts
@@ -26,20 +24,20 @@ Some chat agents create workflow artifacts in your project directory. See the [i
 
 This extension contains the complete active HVE Core component set.
 
-Review channel ownership, lifecycle disclosure, and selective clone adoption:
+Review channel ownership, release assurance, and selective clone adoption:
 
 [HVE Core Identity and Channels](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/packages.md)
 
 ## Pre-release Channel
 
-HVE Core publishes the same artifacts on two release channels:
+HVE Core publishes the same complete component set on two release channels:
 
-| Channel     | Description                                         | Maturity Levels                     |
-|-------------|-----------------------------------------------------|-------------------------------------|
-| Stable      | Promoted release cadence                            | `stable`, `preview`, `experimental` |
-| Pre-release | Early access to changes ahead of the next promotion | `stable`, `preview`, `experimental` |
+| Channel     | Description                                         | Membership        |
+|-------------|-----------------------------------------------------|-------------------|
+| Stable      | Promoted release cadence                            | Complete manifest |
+| Pre-release | Early access to changes ahead of the next promotion | Complete manifest |
 
-Both channels ship identical content. The Included Artifacts tables above label each artifact's maturity so you can judge its stability before use.
+Both channels ship identical content. They differ in version, cadence, release source, and Marketplace channel behavior.
 
 To install the pre-release version, select **Install Pre-Release Version** from the extension page in VS Code.
 

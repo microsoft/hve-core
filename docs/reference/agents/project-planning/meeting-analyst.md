@@ -1,8 +1,14 @@
 ---
 title: Meeting Analyst
 description: Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp
-sidebar_position: 4
-ms.date: 2026-07-03
+sidebar_position: 5
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - project-planning
+  - meeting-analyst
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

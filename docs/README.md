@@ -3,7 +3,7 @@ title: HVE Core Documentation
 description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, prompts, instructions, and skills to your GitHub Copilot workflow
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-13
 ms.topic: overview
 keywords:
   - hve core
@@ -20,7 +20,7 @@ HVE Core gives your team production-ready agents, reusable prompts, coding instr
 
 | Option       | HVE Core Extension                                                                                  | Selective Clone                                                            |
 |--------------|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| What you get | Every active agent, prompt, instruction, and skill                                                  | Starter or custom agents, prompts, instructions, and complete skills       |
+| What you get | Every distributable agent, prompt, instruction, and skill                                           | Complete or custom agents, prompts, instructions, and distributable skills |
 | Best for     | Teams that want managed updates and the complete content set                                        | Teams that want repository-owned, reviewable component selection           |
 | Start        | [Install HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) | Use the included `hve-core-installer` skill with a pinned or cloned source |
 
@@ -34,7 +34,7 @@ Get up and running with installation, configuration, and your first AI-assisted 
 
 * [Install HVE Core](getting-started/install.md) covers three setup paths from marketplace extension to developer clone
 * [Run your first workflow](getting-started/first-workflow.md) walks through an end-to-end RPI example
-* [Understand the HVE Core identity](getting-started/packages.md) to compare channels and lifecycle labels
+* [Understand the HVE Core identity](getting-started/packages.md) to compare channels and release assurance
 
 ### Leading a Team?
 
@@ -81,7 +81,7 @@ Specialized agents are organized into functional groups that combine agents, pro
 
 * [RPI Orchestration](rpi/) separates complex tasks into research, planning, implementation, and review phases
 * [Project Planning](agents/project-planning/) creates ADRs, BRDs, PRDs, architecture diagrams, and security plans through guided AI workflows
-* [GitHub Backlog Manager](agents/github-backlog/) automates issue discovery, triage, sprint planning, and execution
+* [Backlog Management](agents/backlog/) automates work discovery, triage, sprint planning, and execution across Azure DevOps, GitHub, and Jira
 * Additional systems are documented in the [Agent Catalog](agents/)
 
 **[Browse the Agent Catalog →](agents/)**

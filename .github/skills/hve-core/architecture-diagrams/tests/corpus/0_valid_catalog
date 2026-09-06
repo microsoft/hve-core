@@ -1,0 +1,11 @@
+---
+entities:
+  - name: orders
+    fields:
+      - name: id
+        type: string
+relationships:
+  - from: orders
+    to: customers
+    kind: many-to-one
+---

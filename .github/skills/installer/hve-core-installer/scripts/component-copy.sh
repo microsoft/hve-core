@@ -8,8 +8,8 @@
 # manifest. Membership, path-safety, and manifest-schema checks all run before
 # the first write.
 #
-# Usage: component-copy.sh <hve_core_base_path> <target_root> <package_name> <selection_name> <component...>
-#   component: marketplace path such as agents/hve-core/rpi-agent.md or skills/rpi/rpi-plan
+# Usage: component-copy.sh <hve_core_base_path> <target_root> <selection_name> <component...>
+#   component: plugin manifest path such as agents/hve-core/rpi-agent.md or skills/rpi/rpi-plan
 # Environment:
 #   REPORT_ONLY=true      run preflight and report maturity and collisions without writing
 #   KEEP_EXISTING=true    leave components listed in COLLISIONS_FILE untouched
@@ -20,18 +20,20 @@ set -euo pipefail
 readonly SCHEMA_VERSION=2
 # Local environment, cache, and test directories are never distributed, matching
 # the extension skill-materialization exclusions.
-readonly EXCLUDED_SKILL_PATH='(^|/)(tests|\.venv|\.hypothesis|node_modules|__pycache__|\.ruff_cache|\.pytest_cache)(/|$)|\.pyc$'
+readonly EXCLUDED_SKILL_PATH='(^|/)(tests|\.venv|\.hypothesis|node_modules|__pycache__|\.ruff_cache|\.pytest_cache|\.git)(/|$)|(^|/)\.env(\..+)?$|(^|/)(\.DS_Store|Thumbs\.db)$|\.pyc$'
 
 entries_file=""
+plan_files_dir=""
 
 cleanup() {
   [[ -n "$entries_file" ]] && rm -f "$entries_file"
+  [[ -n "$plan_files_dir" ]] && rm -rf "$plan_files_dir"
   return 0
 }
 trap cleanup EXIT
 
 usage() {
-  echo "Usage: $0 <hve_core_base_path> <target_root> <package_name> <selection_name> <component...>" >&2
+  echo "Usage: $0 <hve_core_base_path> <target_root> <selection_name> <component...>" >&2
   exit 1
 }
 
@@ -48,6 +50,20 @@ sha256_of() {
   fi
 }
 
+is_excluded_skill_path() {
+  local skill_path="$1"
+  local restore_nocasematch=false
+  local matched=false
+
+  if ! shopt -q nocasematch; then
+    shopt -s nocasematch
+    restore_nocasematch=true
+  fi
+  [[ "$skill_path" =~ $EXCLUDED_SKILL_PATH ]] && matched=true
+  [[ "$restore_nocasematch" == "true" ]] && shopt -u nocasematch
+  [[ "$matched" == "true" ]]
+}
+
 # Containment is decided by resolved path and real filesystem state, never by the
 # shape of a joined string. Mirrors Assert-WithinTargetRoot in component-copy.ps1
 # and must stay behaviourally identical to it.
@@ -61,7 +77,9 @@ assert_within_target_root() {
 
   case "$relative" in
     /*) fail "Component '$component' resolves outside the target root." ;;
-    *..*) fail "Component '$component' resolves outside the target root." ;;
+  esac
+  case "/$relative/" in
+    */../*) fail "Component '$component' resolves outside the target root." ;;
   esac
 
   while [[ -n "$remainder" ]]; do
@@ -82,7 +100,7 @@ assert_within_target_root() {
   echo "$base/$relative"
 }
 
-# Maps a marketplace field to "<kind>|<source root>|<package suffix>|<source suffix>".
+# Maps a plugin manifest field to "<kind>|<source root>|<package suffix>|<source suffix>".
 field_descriptor() {
   case "$1" in
     agents) echo "agent|.github/agents|.md|.agent.md" ;;
@@ -91,6 +109,51 @@ field_descriptor() {
     skills) echo "skill|.github/skills||" ;;
     *) echo "" ;;
   esac
+}
+
+# Maps a canonical manifest root to "<field>|<source suffix>|<package suffix>".
+manifest_root_descriptor() {
+  case "$1" in
+    agents) echo "agents|.agent.md|.md" ;;
+    prompts) echo "commands|.prompt.md|.md" ;;
+    instructions) echo "rules|.instructions.md|.instructions.md" ;;
+    skills) echo "skills||" ;;
+    *) echo "" ;;
+  esac
+}
+
+# The plugin manifest stores repository-root-relative source identities while installer input and
+# manifests use package form. A path whose root is outside the four installable
+# fields, such as hooks/, carries through unprojected so manifest load never fails.
+to_package_component_path() {
+  local manifest_path="$1"
+  [[ "$manifest_path" == .github/* ]] || {
+    fail "Plugin manifest path '$manifest_path' must start with '.github/'."
+  }
+  manifest_path="${manifest_path#.github/}"
+  [[ "$manifest_path" == */* ]] || {
+    echo "$manifest_path"
+    return 0
+  }
+
+  local manifest_root="${manifest_path%%/*}"
+  local relative="${manifest_path#*/}"
+  local descriptor field source_suffix package_suffix
+  descriptor=$(manifest_root_descriptor "$manifest_root")
+  [[ -n "$descriptor" ]] || {
+    echo "$manifest_path"
+    return 0
+  }
+
+  IFS='|' read -r field source_suffix package_suffix <<<"$descriptor"
+  if [[ -n "$source_suffix" ]]; then
+    [[ "$relative" == *"$source_suffix" ]] || {
+      echo "$manifest_path"
+      return 0
+    }
+    relative="${relative%"$source_suffix"}$package_suffix"
+  fi
+  echo "$field/$relative"
 }
 
 # Trims and validates a component path, echoing the normalized value.
@@ -125,18 +188,16 @@ normalize_component_path() {
 }
 
 main() {
-  [[ $# -ge 5 ]] || usage
+  [[ $# -ge 4 ]] || usage
   command -v jq >/dev/null 2>&1 || fail "jq is required by the Bash installer scripts. Install jq or use the PowerShell scripts."
 
   local hve_core_base_path="$1"
   local target_root_arg="$2"
-  local package_name="$3"
-  local selection_name="$4"
-  shift 4
+  local selection_name="$3"
+  shift 3
 
   [[ -d "$hve_core_base_path" ]] || fail "HVE-Core base path not found: $hve_core_base_path"
   [[ -d "$target_root_arg" ]] || fail "Target root not found: $target_root_arg"
-  [[ -n "$package_name" ]] || fail "Package name must be a non-empty string."
   [[ -n "$selection_name" ]] || fail "Selection name must be a non-empty string."
 
   local source_root target_base
@@ -144,32 +205,19 @@ main() {
   target_base=$(cd "$target_root_arg" && pwd)
   local manifest_path="$target_base/.hve-tracking.json"
 
-  local catalog_path="$source_root/.github/plugin/marketplace.json"
-  [[ -f "$catalog_path" ]] || fail "Marketplace catalog not found: $catalog_path"
-
-  local entry_bundle entry_count entry_json
-  entry_bundle=$(jq -c --arg pkg "$package_name" '[.plugins[]? | select(.name == $pkg)]' "$catalog_path")
-  entry_count=$(jq -r 'length' <<<"$entry_bundle")
-  if [[ "$entry_count" == "0" ]]; then
-    fail "Marketplace catalog '$catalog_path' declares no package named '$package_name'."
-  fi
-  if [[ "$entry_count" != "1" ]]; then
-    fail "Marketplace catalog '$catalog_path' declares $entry_count packages named '$package_name'."
-  fi
-  entry_json=$(jq -c '.[0]' <<<"$entry_bundle")
+  local plugin_manifest_path="$source_root/plugin.json"
+  [[ -f "$plugin_manifest_path" ]] || fail "Plugin manifest not found: $plugin_manifest_path"
 
   local -A membership=()
   local package_path
   while IFS= read -r package_path; do
-    [[ -n "$package_path" ]] && membership["$package_path"]=1
-  done < <(jq -r '[(.agents // [])[], (.commands // [])[], (.rules // [])[], (.skills // [])[]] | .[]' <<<"$entry_json")
-  [[ ${#membership[@]} -gt 0 ]] || fail "Marketplace package '$package_name' in '$catalog_path' declares no installable components."
+    [[ -n "$package_path" ]] && membership["$(to_package_component_path "$package_path")"]=1
+  done < <(jq -r '[(.agents // [])[], (.commands // [])[], (.rules // [])[], (.skills // [])[]] | .[]' "$plugin_manifest_path")
+  [[ ${#membership[@]} -gt 0 ]] || fail "Plugin manifest '$plugin_manifest_path' declares no installable components."
 
-  local -A component_maturity=()
-  local maturity_key maturity_value
-  while IFS=$'\t' read -r maturity_key maturity_value; do
-    [[ -n "$maturity_key" ]] && component_maturity["$maturity_key"]="$maturity_value"
-  done < <(jq -r '."x-hve".componentMaturity // {} | to_entries[] | "\(.key)\t\(.value)"' <<<"$entry_json")
+  # One projected membership set backs both component validation and the manifest filter.
+  local membership_json
+  membership_json=$(printf '%s\n' "${!membership[@]}" | LC_ALL=C sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
 
   # An unsupported manifest must fail before the target is touched. Version 1 has
   # no upgrade path because it records flattened agent paths and package identity.
@@ -200,17 +248,19 @@ main() {
   fi
 
   # Preflight: normalize, bound, and resolve every component before any write.
+  plan_files_dir=$(mktemp -d)
   local -a plan_components=()
   local -A plan_kinds=() plan_maturities=() plan_targets=() plan_files=()
   local -A seen_targets=()
-  local raw candidate field descriptor kind root package_suffix source_suffix relative source_rel files
+  local raw candidate field descriptor kind root package_suffix source_suffix relative source_rel files file
+  local plan_index=0
   for raw in "$@"; do
     candidate=$(normalize_component_path "$raw")
 
     field="${candidate%%/*}"
     descriptor=$(field_descriptor "$field")
     [[ -n "$descriptor" ]] || fail "Component path '$candidate' must start with one of: agents, commands, rules, skills."
-    [[ -n "${membership[$candidate]+x}" ]] || fail "Component '$candidate' is not declared membership of the '$package_name' marketplace recipe."
+    [[ -n "${membership[$candidate]+x}" ]] || fail "Component '$candidate' is not declared in the plugin manifest."
     [[ -z "${plan_targets[$candidate]+x}" ]] || continue
 
     IFS='|' read -r kind root package_suffix source_suffix <<<"$descriptor"
@@ -223,18 +273,27 @@ main() {
     [[ -z "${seen_targets[$source_rel]+x}" ]] || fail "Component '$candidate' resolves to duplicate target '$source_rel'."
     seen_targets["$source_rel"]=1
 
+    files="$plan_files_dir/$plan_index"
+    ((plan_index += 1))
+    : >"$files"
     if [[ "$kind" == "skill" ]]; then
       [[ -d "$source_root/$source_rel" ]] || fail "Skill component '$candidate' has no source directory at '$source_rel'."
-      files=$(cd "$source_root" && find "$source_rel" -type f | grep -Eiv "$EXCLUDED_SKILL_PATH" | LC_ALL=C sort || true)
-      [[ -n "$files" ]] || fail "Skill component '$candidate' has no files at '$source_rel'."
+      while IFS= read -r -d '' file; do
+        if ! is_excluded_skill_path "$file"; then
+          printf '%s\0' "$file" >>"$files"
+        fi
+      done < <(cd "$source_root" && find "$source_rel" -type f -print0)
+      [[ -s "$files" ]] || fail "Skill component '$candidate' has no files at '$source_rel'."
     else
       [[ -f "$source_root/$source_rel" ]] || fail "Component '$candidate' has no source file at '$source_rel'."
-      files="$source_rel"
+      printf '%s\0' "$source_rel" >"$files"
     fi
 
     plan_components+=("$candidate")
     plan_kinds["$candidate"]="$kind"
-    plan_maturities["$candidate"]="${component_maturity[$candidate]:-stable}"
+    # The plugin manifest declares no per-component maturity, so tracking records
+    # the schema default that file-status-check and eject read back.
+    plan_maturities["$candidate"]="stable"
     plan_targets["$candidate"]="$source_rel"
     plan_files["$candidate"]="$files"
     assert_within_target_root "$target_base" "$source_rel" "$candidate" >/dev/null
@@ -290,16 +349,16 @@ main() {
     target="${plan_targets[$component]}"
 
     if [[ -n "${kept_components[$component]+x}" ]]; then
-      while IFS= read -r file; do
+      while IFS= read -r -d '' file; do
         if [[ -n "${existing_entry[$file]+x}" ]]; then
           jq -nc --arg path "$file" --argjson value "${existing_entry[$file]}" '{($path): $value}' >>"$entries_file"
         fi
-      done <<<"${plan_files[$component]}"
+      done <"${plan_files[$component]}"
       echo "⏭️ Kept existing: $component"
       continue
     fi
 
-    while IFS= read -r file; do
+    while IFS= read -r -d '' file; do
       if [[ "${existing_status[$file]:-}" == "ejected" ]]; then
         jq -nc --arg path "$file" --argjson value "${existing_entry[$file]}" '{($path): $value}' >>"$entries_file"
         echo "🔒 Skipped ejected: $file"
@@ -316,24 +375,23 @@ main() {
         --arg maturity "${plan_maturities[$component]}" --arg ver "$version" --arg sha "$hash" \
         '{($path): {component: $component, kind: $kind, maturity: $maturity, version: $ver, sha256: $sha, status: "managed"}}' \
         >>"$entries_file"
-    done <<<"${plan_files[$component]}"
+    done <"${plan_files[$component]}"
     echo "✅ Copied $component → $target"
   done
 
-  local files_json components_json recipe_components_json
+  local files_json components_json
   files_json=$(jq -s 'reduce .[] as $entry ({}; . * $entry) | to_entries | sort_by(.key) | from_entries' "$entries_file")
-  recipe_components_json=$(jq -c '[(.agents // [])[], (.commands // [])[], (.rules // [])[], (.skills // [])[]]' <<<"$entry_json")
-  components_json=$(jq -c --argjson recipe "$recipe_components_json" '
+  components_json=$(jq -c --argjson membership "$membership_json" '
     [to_entries[].value.component as $component
       | select($component | type == "string" and length > 0)
-      | select($recipe | index($component))
+      | select($membership | index($component))
       | $component] | unique | sort' <<<"$files_json")
 
   jq -n --argjson schema "$SCHEMA_VERSION" --arg src "microsoft/hve-core" --arg ver "$version" \
-    --arg inst "$installed" --arg package "$package_name" --arg profile "$selection_name" \
+    --arg inst "$installed" --arg profile "$selection_name" \
     --argjson components "$components_json" --argjson files "$files_json" \
     '{schemaVersion: $schema, source: $src, version: $ver, installed: $inst,
-      selection: {package: $package, profile: $profile, components: $components}, files: $files}' >"$manifest_path"
+      selection: {profile: $profile, components: $components}, files: $files}' >"$manifest_path"
   echo "✅ Created .hve-tracking.json"
 }
 

@@ -2,7 +2,13 @@
 title: mural
 description: "Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation."
 sidebar_position: 5
-ms.date: 2026-08-06
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - experimental
+  - mural
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,10 +28,19 @@ Mural workspace, room, mural, and widget workflows via the Mural REST API expose
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this skill when you need to authenticate to Mural, inspect workspaces and
+murals, or create and update widgets through the Mural REST API. Production API
+requests are restricted to Mural's public API origin and refuse redirects.
+
+Do not use this skill as a generic HTTP client or to target an arbitrary remote
+API origin. HTTP overrides are limited to explicitly enabled loopback testing.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Authenticate interactively, inspect the active profile, and list workspaces:
+
+```bash
+python -m mural auth login
+python -m mural auth status
+python -m mural workspace list
+```

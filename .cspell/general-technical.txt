@@ -20,6 +20,7 @@ activex
 acunetix
 adrm
 adrs
+agentics
 agentless
 alam
 alation
@@ -210,6 +211,7 @@ Huggingface
 Rekor
 sscp
 unforgeable
+unrequested
 hyperconverged
 hyperparameters
 hypervisor

@@ -70,6 +70,33 @@ Import-Module (Join-Path $PSScriptRoot 'Modules/DocsHelpers.psm1') -Force
 
 #region Pure Helpers
 
+function Test-DocContentEqual {
+    <#
+    .SYNOPSIS
+        Compares two page contents ignoring line-ending style.
+    .DESCRIPTION
+        Generated content always uses LF, but a Windows checkout with
+        core.autocrlf=true stores CRLF on disk. A raw ordinal comparison would
+        therefore report every page as changed, advancing ms.date and rewriting
+        files that have no real content difference. Normalizing CRLF to LF on
+        both sides keeps the generator idempotent across platforms.
+    .PARAMETER Left
+        First content string.
+    .PARAMETER Right
+        Second content string.
+    .OUTPUTS
+        [bool] True when the contents match apart from line endings.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][AllowNull()][string]$Left,
+        [Parameter(Mandatory = $true)][AllowEmptyString()][AllowNull()][string]$Right
+    )
+
+    return [string]::Equals(($Left -replace "`r`n", "`n"), ($Right -replace "`r`n", "`n"), [System.StringComparison]::Ordinal)
+}
+
 function New-DocFrontmatter {
     <#
     .SYNOPSIS
@@ -82,6 +109,12 @@ function New-DocFrontmatter {
         Stable sidebar position.
     .PARAMETER MsDate
         ISO 8601 last-modified date.
+    .PARAMETER Topic
+        Documentation topic type from the docs frontmatter schema enum.
+    .PARAMETER Keywords
+        Content categorization keywords emitted as a YAML block sequence.
+    .PARAMETER Author
+        Author or team responsible for the content.
     .OUTPUTS
         [string] The frontmatter block including the delimiting fences.
     #>
@@ -91,45 +124,129 @@ function New-DocFrontmatter {
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Title,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Description,
         [Parameter(Mandatory = $true)][int]$SidebarPosition,
-        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$MsDate
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$MsDate,
+        [Parameter(Mandatory = $true)][ValidateSet('overview', 'concept', 'tutorial', 'reference', 'how-to', 'troubleshooting', 'architecture')][string]$Topic,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string[]]$Keywords,
+        [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$Author = 'Microsoft'
     )
+
+    $keywordLines = foreach ($keyword in $Keywords) {
+        "  - $(Format-YamlScalar -Value $keyword)"
+    }
 
     return (@(
             '---'
             "title: $(Format-YamlScalar -Value $Title)"
             "description: $(Format-YamlScalar -Value $Description)"
             "sidebar_position: $SidebarPosition"
+            "author: $(Format-YamlScalar -Value $Author)"
             "ms.date: $MsDate"
+            "ms.topic: $Topic"
+            'keywords:'
+            $keywordLines
             '---'
         ) -join "`n")
+}
+
+function Get-AssetDocKeyword {
+    <#
+    .SYNOPSIS
+        Derives the frontmatter keywords for an asset reference page.
+    .DESCRIPTION
+        Combines the asset kind, its owning collection segment, and its artifact
+        key into a deduplicated, order-stable keyword list. The collection segment
+        is the directory immediately under docs/reference/<kindDir>/ and is omitted
+        for assets that sit directly in the kind directory.
+    .PARAMETER Model
+        Page model from New-AssetPageModel.
+    .OUTPUTS
+        [string[]] Deduplicated keyword list.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)][PSCustomObject]$Model
+    )
+
+    $candidates = [System.Collections.Generic.List[string]]::new()
+    $candidates.Add($Model.Kind)
+
+    $segments = @(($Model.DocRel -replace '^docs/reference/', '').Split('/'))
+    if ($segments.Count -gt 2) {
+        $candidates.Add($segments[1])
+    }
+
+    $candidates.Add($Model.Key)
+
+    $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $keywords = foreach ($candidate in $candidates) {
+        if (-not [string]::IsNullOrWhiteSpace($candidate) -and $seen.Add($candidate)) {
+            $candidate
+        }
+    }
+
+    return @($keywords)
+}
+
+function Get-AssetDocTemplateSectionBody {
+    <#
+    .SYNOPSIS
+        Extracts one named human-section body from the page template.
+    .DESCRIPTION
+        Template bodies use exact begin and end markers keyed by the section
+        contract's TemplateRegion value. Headings and order are deliberately
+        excluded from the template and come from Get-AssetDocSectionContract.
+    .PARAMETER Template
+        Full template content.
+    .PARAMETER Region
+        Named template body region.
+    .OUTPUTS
+        [string] The body between the named markers.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Template,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Region
+    )
+
+    $beginMarker = "<!-- BEGIN ASSET-DOC TEMPLATE: $Region -->"
+    $endMarker = "<!-- END ASSET-DOC TEMPLATE: $Region -->"
+    if ([regex]::Matches($Template, [regex]::Escape($beginMarker)).Count -ne 1 -or
+        [regex]::Matches($Template, [regex]::Escape($endMarker)).Count -ne 1) {
+        throw "Template section '$Region' must contain exactly one begin marker and one end marker."
+    }
+
+    $beginIndex = $Template.IndexOf($beginMarker, [System.StringComparison]::Ordinal)
+    $bodyStart = $beginIndex + $beginMarker.Length
+    $endIndex = $Template.IndexOf($endMarker, $bodyStart, [System.StringComparison]::Ordinal)
+    if ($endIndex -lt $bodyStart) {
+        throw "Template section '$Region' has invalid marker ordering."
+    }
+
+    return $Template.Substring($bodyStart, $endIndex - $bodyStart).Trim("`r", "`n")
 }
 
 function Remove-HowToUseSection {
     <#
     .SYNOPSIS
-        Removes the "How to use it" section from a human-section tail.
-    .DESCRIPTION
-        Non-interactive assets have no interactive usage flow, so the template's
-        "How to use it" section is dropped when scaffolding a new page for them.
-        Existing pages are never modified by this function.
-
-        The terminating lookahead matches either the next H2 heading or the end
-        of the string (\z), so the section is removed even when "How to use it"
-        is the last H2 on the page rather than being followed by another heading.
+        Removes the top-level How to use it section from a documentation tail.
     .PARAMETER Tail
-        The human-section tail beginning at the first section heading.
+        Human-authored page content after the generated overview region.
     .OUTPUTS
-        [string] The tail with the "How to use it" section removed.
+        [string] The tail with the How to use it section removed.
     #>
     [CmdletBinding()]
     [OutputType([string])]
     param(
-        [Parameter(Mandatory = $true)]
-        [AllowEmptyString()]
-        [string]$Tail
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Tail
     )
 
-    return ($Tail -replace '(?ms)\r?\n## How to use it\b.*?(?=\r?\n## |\z)', '')
+    return [regex]::Replace(
+        $Tail,
+        '(?ms)^## How to use it[^\S\r\n]*\r?\n.*?(?=^## |\z)',
+        ''
+    )
 }
 
 function Get-AssetDocPageRelPath {
@@ -169,14 +286,15 @@ function Test-AssetDocScaffoldOrphan {
         Determines whether an orphan page is an untouched generated scaffold.
     .DESCRIPTION
         Requires exactly one begin and end marker for both generated regions,
-        valid marker ordering, and a post-overview tail that is byte-identical
-        to either canonical interactive or non-interactive scaffold tail.
+        valid marker ordering, and a post-overview tail matching either the
+        canonical interactive or non-interactive scaffold tail. The tail
+        comparison ignores line-ending style so a CRLF checkout of the template
+        still matches an LF-generated page.
     .PARAMETER Content
         Full orphan page content.
-    .PARAMETER InteractiveTail
-        Canonical interactive template tail.
-    .PARAMETER NonInteractiveTail
-        Canonical non-interactive template tail.
+    .PARAMETER CanonicalTails
+        Contract-rendered scaffold tails for supported kind and interactivity
+        combinations.
     .OUTPUTS
         [bool] True only when automatic removal cannot discard authored prose.
     #>
@@ -184,8 +302,7 @@ function Test-AssetDocScaffoldOrphan {
     [OutputType([bool])]
     param(
         [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Content,
-        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$InteractiveTail,
-        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$NonInteractiveTail
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$CanonicalTails
     )
 
     foreach ($region in @('metadata', 'overview')) {
@@ -211,8 +328,12 @@ function Test-AssetDocScaffoldOrphan {
         return $false
     }
 
-    return [string]::Equals($overview.After, $InteractiveTail, [System.StringComparison]::Ordinal) -or
-        [string]::Equals($overview.After, $NonInteractiveTail, [System.StringComparison]::Ordinal)
+    foreach ($tail in $CanonicalTails) {
+        if (Test-DocContentEqual -Left $overview.After -Right $tail) {
+            return $true
+        }
+    }
+    return $false
 }
 
 #endregion Pure Helpers
@@ -225,9 +346,10 @@ function Get-TemplateHumanTail {
         Extracts the human-authored section tail from the page template.
     .PARAMETER TemplatePath
         Path to the asset documentation template.
+    .PARAMETER Kind
+        Asset kind used to resolve section status.
     .PARAMETER Interactive
-        Whether the target asset is interactive. When false, the "How to use it"
-        section is stripped from the returned tail.
+        Whether the target asset is interactive.
     .OUTPUTS
         [string] The template's human-authored tail (from the first section
         heading onward).
@@ -236,18 +358,78 @@ function Get-TemplateHumanTail {
     [OutputType([string])]
     param(
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$TemplatePath,
+        [Parameter(Mandatory = $true)][ValidateSet('agent', 'prompt', 'instruction', 'skill')][string]$Kind,
         [Parameter(Mandatory = $true)][bool]$Interactive
     )
 
     $template = Get-Content -LiteralPath $TemplatePath -Raw
-    $split = Split-AssetDocByMarkers -Content $template -Region 'overview'
-    $tail = $split.After
-
-    if (-not $Interactive) {
-        $tail = Remove-HowToUseSection -Tail $tail
+    $renderedSections = [System.Collections.Generic.List[string]]::new()
+    foreach ($section in (Get-AssetDocSectionContract)) {
+        if ($section.GeneratedRegion) {
+            continue
+        }
+        $status = Resolve-AssetDocSectionStatus -Section $section -Kind $Kind -Interactive $Interactive
+        if ($status -eq 'NotApplicable') {
+            continue
+        }
+        if ([string]::IsNullOrWhiteSpace($section.TemplateRegion)) {
+            throw "Section '$($section.Name)' has no generated region or template region."
+        }
+        $body = Get-AssetDocTemplateSectionBody -Template $template -Region $section.TemplateRegion
+        $renderedSections.Add("$($section.Heading)`n`n$body")
     }
 
-    return $tail
+    if ($renderedSections.Count -eq 0) {
+        return ''
+    }
+    return "`n`n$($renderedSections -join "`n`n")`n"
+}
+
+function New-AssetDocScaffoldSections {
+    <#
+    .SYNOPSIS
+        Renders all applicable new-page sections in contract order.
+    .PARAMETER Model
+        Page model from New-AssetPageModel.
+    .PARAMETER TemplatePath
+        Path to the asset documentation template.
+    .PARAMETER GeneratedRegions
+        Generated region bodies keyed by the contract's GeneratedRegion value.
+    .OUTPUTS
+        [string] Applicable headings and bodies in canonical order.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][PSCustomObject]$Model,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$TemplatePath,
+        [Parameter(Mandatory = $true)][hashtable]$GeneratedRegions
+    )
+
+    $template = Get-Content -LiteralPath $TemplatePath -Raw
+    $renderedSections = [System.Collections.Generic.List[string]]::new()
+    foreach ($section in (Get-AssetDocSectionContract)) {
+        $status = Resolve-AssetDocSectionStatus -Section $section -Kind $Model.Kind -Interactive $Model.Interactive
+        if ($status -eq 'NotApplicable') {
+            continue
+        }
+
+        $body = if ($section.GeneratedRegion) {
+            if (-not $GeneratedRegions.ContainsKey($section.GeneratedRegion)) {
+                throw "No generated content was supplied for section '$($section.Name)'."
+            }
+            $GeneratedRegions[$section.GeneratedRegion]
+        }
+        elseif ($section.TemplateRegion) {
+            Get-AssetDocTemplateSectionBody -Template $template -Region $section.TemplateRegion
+        }
+        else {
+            throw "Section '$($section.Name)' has no generated region or template region."
+        }
+        $renderedSections.Add("$($section.Heading)`n`n$body")
+    }
+
+    return $renderedSections -join "`n`n"
 }
 
 function New-AssetDocContent {
@@ -318,10 +500,15 @@ function New-AssetDocContent {
             throw "Overview markers missing in $($Model.DocRel); refusing to regenerate because doing so would discard human-authored sections. Restore the AUTO-GENERATED markers (or delete the page to re-scaffold) and re-run."
         }
         $humanTail = $split.After
+        if (-not $Model.Interactive) {
+            $howToUse = [regex]::Match($humanTail, '(?ms)^## How to use it\s*\r?\n(?<body>.*?)(?=^## |\z)')
+            if ($howToUse.Success -and $howToUse.Groups['body'].Value.Contains('<!-- asset-docs:stub -->')) {
+                $humanTail = Remove-HowToUseSection -Tail $humanTail
+            }
+        }
     }
     else {
         $msDate = $today
-        $humanTail = Get-TemplateHumanTail -TemplatePath $TemplatePath -Interactive $Model.Interactive
     }
 
     $descriptionMeta = if ([string]::IsNullOrWhiteSpace($Model.Description)) {
@@ -334,7 +521,25 @@ function New-AssetDocContent {
 
     $metadataRegion = New-AssetGeneratedRegion -Region 'metadata' -Body (New-AssetMetadataBlock -Kind $Model.Kind -SourcePath $Model.SourceRel -Invocation $Model.Invocation -Interactive $Model.Interactive)
     $overviewRegion = New-AssetGeneratedRegion -Region 'overview' -Body $overviewBody
-    $generatedTail = "`n`n$metadataRegion`n`n## What it does`n`n$overviewRegion" + $humanTail
+    if ($null -ne $existing) {
+        $overviewSections = @(Get-AssetDocSectionContract | Where-Object GeneratedRegion -EQ 'overview')
+        if ($overviewSections.Count -ne 1) {
+            throw "Asset documentation section contract must define exactly one overview region."
+        }
+        $generatedTail = "`n`n$metadataRegion`n`n$($overviewSections[0].Heading)`n`n$overviewRegion" + $humanTail
+    }
+    else {
+        $scaffoldSections = New-AssetDocScaffoldSections -Model $Model -TemplatePath $TemplatePath -GeneratedRegions @{ overview = $overviewRegion }
+        $generatedTail = "`n`n$metadataRegion`n`n$scaffoldSections"
+    }
+
+    $frontmatterArgs = @{
+        Title           = $Model.Title
+        Description     = $descriptionMeta
+        SidebarPosition = $SidebarPosition
+        Topic           = 'reference'
+        Keywords        = (Get-AssetDocKeyword -Model $Model)
+    }
 
     # Assemble with the preserved ms.date first, then advance it to today only
     # when the regenerated output differs from the existing page. This makes
@@ -342,11 +547,12 @@ function New-AssetDocContent {
     # rather than the first-scaffold date, while staying idempotent: rebuilding
     # with an unchanged date reproduces the file byte-for-byte, and preserved
     # human sections keep the output identical so human-only edits never advance
-    # the date.
-    $content = ((New-DocFrontmatter -Title $Model.Title -Description $descriptionMeta -SidebarPosition $SidebarPosition -MsDate $msDate) + $generatedTail).TrimEnd() + "`n"
+    # the date. The comparison ignores line endings so a CRLF checkout does not
+    # register as drift.
+    $content = ((New-DocFrontmatter @frontmatterArgs -MsDate $msDate) + $generatedTail).TrimEnd() + "`n"
 
-    if ($null -ne $existing -and -not [string]::Equals($content, $existing, [System.StringComparison]::Ordinal)) {
-        $content = ((New-DocFrontmatter -Title $Model.Title -Description $descriptionMeta -SidebarPosition $SidebarPosition -MsDate $today) + $generatedTail).TrimEnd() + "`n"
+    if ($null -ne $existing -and -not (Test-DocContentEqual -Left $content -Right $existing)) {
+        $content = ((New-DocFrontmatter @frontmatterArgs -MsDate $today) + $generatedTail).TrimEnd() + "`n"
     }
 
     return $content
@@ -389,7 +595,7 @@ function New-KindIndexContent {
     $table = Format-MarkdownTable -Header @('Asset', 'Description') -Rows $rows.ToArray()
     $body = "This page lists the generated reference documentation for HVE Core $KindDir.`n`n" + $table
     $description = "Reference documentation for HVE Core $KindDir."
-    return (New-IndexContent -Title $title -Description $description -SidebarPosition 0 -RegionBody $body -ExistingPath (Join-Path $RepoRoot $indexRel))
+    return (New-IndexContent -Title $title -Description $description -SidebarPosition 0 -RegionBody $body -Keywords @('reference', $KindDir) -ExistingPath (Join-Path $RepoRoot $indexRel))
 }
 
 function New-RootIndexContent {
@@ -418,7 +624,7 @@ function New-RootIndexContent {
 
     $table = Format-MarkdownTable -Header @('Category', 'Assets') -Rows $rows.ToArray()
     $body = "This page lists the generated reference documentation, grouped by asset kind.`n`n" + $table
-    return (New-IndexContent -Title 'Reference' -Description 'Generated reference documentation for HVE Core GenAI assets.' -SidebarPosition 0 -RegionBody $body -ExistingPath (Join-Path $RepoRoot 'docs/reference/README.md'))
+    return (New-IndexContent -Title 'Reference' -Description 'Generated reference documentation for HVE Core GenAI assets.' -SidebarPosition 0 -RegionBody $body -Keywords @('reference', 'assets') -ExistingPath (Join-Path $RepoRoot 'docs/reference/README.md'))
 }
 
 function New-IndexContent {
@@ -433,6 +639,8 @@ function New-IndexContent {
         Stable sidebar position.
     .PARAMETER RegionBody
         The generated index body placed inside the index region.
+    .PARAMETER Keywords
+        Content categorization keywords for the index page.
     .PARAMETER ExistingPath
         Path to an existing index page. Its ms.date is preserved when the
         regenerated content is identical, and advanced to today when the
@@ -447,6 +655,7 @@ function New-IndexContent {
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Description,
         [Parameter(Mandatory = $true)][int]$SidebarPosition,
         [Parameter(Mandatory = $true)][string]$RegionBody,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string[]]$Keywords,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$ExistingPath
     )
 
@@ -463,11 +672,19 @@ function New-IndexContent {
 
     $region = New-AssetGeneratedRegion -Region 'index' -Body $RegionBody
 
+    $frontmatterArgs = @{
+        Title           = $Title
+        Description     = $Description
+        SidebarPosition = $SidebarPosition
+        Topic           = 'overview'
+        Keywords        = $Keywords
+    }
+
     # Advance ms.date to today only when the regenerated index differs, so the
     # date reflects the last content change rather than the first-scaffold date.
-    $content = "$(New-DocFrontmatter -Title $Title -Description $Description -SidebarPosition $SidebarPosition -MsDate $msDate)`n`n$region`n"
-    if ($null -ne $existing -and -not [string]::Equals($content, $existing, [System.StringComparison]::Ordinal)) {
-        $content = "$(New-DocFrontmatter -Title $Title -Description $Description -SidebarPosition $SidebarPosition -MsDate $today)`n`n$region`n"
+    $content = "$(New-DocFrontmatter @frontmatterArgs -MsDate $msDate)`n`n$region`n"
+    if ($null -ne $existing -and -not (Test-DocContentEqual -Left $content -Right $existing)) {
+        $content = "$(New-DocFrontmatter @frontmatterArgs -MsDate $today)`n`n$region`n"
     }
 
     return $content
@@ -482,10 +699,10 @@ function Write-DocIfChanged {
     .SYNOPSIS
         Writes page content only when it differs, honoring -WhatIf.
     .DESCRIPTION
-        Compares the desired content against the current file using ordinal
-        comparison. Returns Unchanged when identical. Otherwise returns Created
-        or Updated; the write itself is gated by ShouldProcess so -WhatIf reports
-        drift without writing.
+        Compares the desired content against the current file, ignoring
+        line-ending style. Returns Unchanged when equivalent. Otherwise returns
+        Created or Updated; the write itself is gated by ShouldProcess so -WhatIf
+        reports drift without writing.
     .PARAMETER Path
         Absolute destination path.
     .PARAMETER Content
@@ -503,7 +720,7 @@ function Write-DocIfChanged {
     $exists = Test-Path -LiteralPath $Path
     if ($exists) {
         $current = Get-Content -LiteralPath $Path -Raw
-        if ([string]::Equals($current, $Content, [System.StringComparison]::Ordinal)) {
+        if (Test-DocContentEqual -Left $current -Right $Content) {
             return 'Unchanged'
         }
     }
@@ -611,8 +828,11 @@ function Invoke-AssetDocsGeneration {
         [void]$expectedPages.Add($page.DocRel)
         [void]$expectedPagesIgnoreCase.Add($page.DocRel)
     }
-    $interactiveTail = Get-TemplateHumanTail -TemplatePath $TemplatePath -Interactive $true
-    $nonInteractiveTail = Get-TemplateHumanTail -TemplatePath $TemplatePath -Interactive $false
+    $canonicalTails = @(foreach ($kind in @('agent', 'prompt', 'instruction', 'skill')) {
+            foreach ($interactive in @($false, $true)) {
+                Get-TemplateHumanTail -TemplatePath $TemplatePath -Kind $kind -Interactive $interactive
+            }
+        }) | Sort-Object -Unique
     foreach ($orphanRel in (Get-AssetDocPageRelPath -RepoRoot $RepoRoot)) {
         if ($expectedPages.Contains($orphanRel)) {
             continue
@@ -626,7 +846,7 @@ function Invoke-AssetDocsGeneration {
 
         $orphanFull = Join-Path $RepoRoot $orphanRel
         $orphanContent = Get-Content -LiteralPath $orphanFull -Raw
-        if (-not (Test-AssetDocScaffoldOrphan -Content $orphanContent -InteractiveTail $interactiveTail -NonInteractiveTail $nonInteractiveTail)) {
+        if (-not (Test-AssetDocScaffoldOrphan -Content $orphanContent -CanonicalTails $canonicalTails)) {
             Write-Warning "Orphaned page $orphanRel contains authored or ambiguous content; preserving it for manual disposition."
             $needsAttention.Add($orphanRel)
             continue

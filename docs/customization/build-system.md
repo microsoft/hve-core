@@ -1,41 +1,35 @@
 ---
 title: Build System and Validation
-description: Understand the plugin generation pipeline, schema validation system, npm scripts, and CI checks for customizing and extending HVE Core
+description: Understand plugin manifest synchronization, schema validation, npm scripts, and CI checks for customizing HVE Core
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - build system
-  - plugin generation
+  - plugin manifest
   - schema validation
   - linting
   - npm scripts
 estimated_reading_time: 8
 ---
 
-## Plugin Generation Pipeline
+## Plugin Manifest Synchronization
 
-The plugin generation pipeline transforms marketplace package recipes into distributable
-plugin output. The `plugin:generate` script runs two stages:
+Root `plugin.json` is the deterministic distribution manifest for the one `hve-core` plugin and VSIX. Its component paths are repository-relative, while discovery remains scoped to eligible package directories under `.github`.
 
-1. `Generate-Plugins.ps1` reads `.github/plugin/marketplace.json` and produces output files
-   under `plugins/`. Each package gets its own subdirectory, such as
-   `plugins/hve-core/` or `plugins/ado/`.
+`npm run plugin:sync` runs `Sync-PluginManifest.ps1`, which derives agents, prompts, instructions, and distributable skills from git-tracked package-scoped paths. It preserves plugin metadata, synchronizes the repository version, and retains the fixed telemetry hook.
 
-2. `plugin:postprocess` applies markdownlint auto-fixes (`markdownlint-cli2 --fix`) and
-   aligns Markdown table columns (`markdown-table-formatter`) for generated package
-   READMEs and `docs/plugins/*.md`. Materialized component files remain byte-identical to
-   their canonical sources and are validated there rather than as generated duplicates.
+`npm run plugin:validate` runs manifest check mode followed by hook validation. Check mode writes nothing and verifies deterministic membership, the one-entry `.github` locator, metadata parity, source containment, and declared component coverage.
 
-Run the full pipeline with a single command:
+Synchronize after a distributable artifact changes:
 
 ```bash
-npm run plugin:generate
+npm run plugin:sync
+npm run plugin:validate
 ```
 
 > [!IMPORTANT]
-> Files under `plugins/` are generated output. Do not edit them directly.
-> Changes made to plugin files are overwritten on the next generation run.
+> The Copilot plugin root is the repository root. Do not create a copied plugin tree or plugin ZIP; keep distributable artifacts in their canonical `.github` package directories.
 
 ## Schema Validation System
 
@@ -45,6 +39,8 @@ determine which schema applies to each file.
 
 ### Schema Files
 
+:::table{caption="Frontmatter schemas and the files they validate"}
+
 | Schema                                   | Applies To                        |
 |------------------------------------------|-----------------------------------|
 | `docs-frontmatter.schema.json`           | `docs/**/*.md`                    |
@@ -53,9 +49,10 @@ determine which schema applies to each file.
 | `prompt-frontmatter.schema.json`         | `.github/**/*.prompt.md`          |
 | `skill-frontmatter.schema.json`          | `.github/skills/**/SKILL.md`      |
 | `chatmode-frontmatter.schema.json`       | `.github/**/*.chatmode.md`        |
-| `marketplace-manifest.schema.json`       | `.github/plugin/marketplace.json` |
 | `root-community-frontmatter.schema.json` | Root files (README, CONTRIBUTING) |
 | `base-frontmatter.schema.json`           | Default fallback                  |
+
+:::
 
 ### Pattern Mapping
 
@@ -120,7 +117,7 @@ for the complete set.
 | `lint:frontmatter`         | `npm run lint:frontmatter`         | Frontmatter schema validation              |
 | `lint:json`                | `npm run lint:json`                | JSON syntax validation                     |
 | `lint:adr-consistency`     | `npm run lint:adr-consistency`     | ADR structure and consistency checks       |
-| `lint:marketplace`         | `npm run lint:marketplace`         | Marketplace manifest validation            |
+| `lint:plugin-manifest`     | `npm run lint:plugin-manifest`     | Plugin manifest and locator drift check    |
 | `lint:hooks`               | `npm run lint:hooks`               | Hook manifest validation                   |
 | `lint:version-consistency` | `npm run lint:version-consistency` | GitHub Action version consistency          |
 | `lint:permissions`         | `npm run lint:permissions`         | Workflow permissions validation            |
@@ -147,14 +144,14 @@ for the complete set.
 
 ### Plugin and Extension
 
-| Script                         | Command                                | Description                                        |
-|--------------------------------|----------------------------------------|----------------------------------------------------|
-| `plugin:generate`              | `npm run plugin:generate`              | Generate plugins, auto-fix markdown, format tables |
-| `plugin:validate`              | `npm run plugin:validate`              | Validate marketplace package metadata and closure  |
-| `extension:prepare`            | `npm run extension:prepare`            | Prepare VS Code extension for packaging            |
-| `extension:prepare:prerelease` | `npm run extension:prepare:prerelease` | Prepare extension for pre-release                  |
-| `extension:package`            | `npm run extension:package`            | Package VS Code extension                          |
-| `extension:package:prerelease` | `npm run extension:package:prerelease` | Package extension as pre-release                   |
+| Script                         | Command                                | Description                                  |
+|--------------------------------|----------------------------------------|----------------------------------------------|
+| `plugin:sync`                  | `npm run plugin:sync`                  | Synchronize deterministic plugin membership  |
+| `plugin:validate`              | `npm run plugin:validate`              | Check manifest, locator, coverage, and hooks |
+| `extension:prepare`            | `npm run extension:prepare`            | Prepare the Stable extension output          |
+| `extension:prepare:prerelease` | `npm run extension:prepare:prerelease` | Prepare the same content for PreRelease      |
+| `extension:package`            | `npm run extension:package`            | Package the Stable VSIX                      |
+| `extension:package:prerelease` | `npm run extension:package:prerelease` | Package the VSIX with the pre-release flag   |
 
 For local-safe defaults, CI-owned lanes, and package-root-specific setup, see
 [Validation Commands and CI-Owned Lanes](../contributing/validation).
@@ -163,30 +160,32 @@ For local-safe defaults, CI-owned lanes, and package-root-specific setup, see
 
 The `validate:local` script chains local-safe checks in a fixed sequence:
 
-1. `lint:tables` checks markdown table columns without modifying them
-2. `lint:md` checks markdown style rules (`.markdownlint.json`)
-3. `lint:ps` analyzes PowerShell scripts (`PSScriptAnalyzer.psd1`)
-4. `lint:yaml` validates YAML file syntax
-5. `lint:json` validates JSON syntax
-6. `lint:links` checks link text language patterns
-7. `lint:md-links` resolves markdown link targets
-8. `lint:frontmatter` validates YAML frontmatter against schemas
-9. `lint:adr-consistency` checks ADR structure and consistency rules
-10. `lint:marketplace` validates marketplace package metadata and closure
+1. `lint:plugin-manifest` checks deterministic membership and locator validity
+2. `lint:tables` checks markdown table columns without modifying them
+3. `lint:md` checks markdown style rules (`.markdownlint.json`)
+4. `lint:ps` analyzes PowerShell scripts (`PSScriptAnalyzer.psd1`)
+5. `lint:yaml` validates YAML file syntax
+6. `lint:json` validates JSON syntax
+7. `lint:links` checks link text language patterns
+8. `lint:md-links` resolves markdown link targets
+9. `lint:frontmatter` validates YAML frontmatter against schemas
+10. `lint:adr-consistency` checks ADR structure and consistency rules
 11. `lint:hooks` validates hook manifests
-12. `lint:version-consistency` checks GitHub Action version alignment
-13. `lint:permissions` validates workflow permissions
-14. `lint:dangerous-workflow` checks workflows for dangerous patterns
-15. `lint:dependency-pinning` checks dependencies are pinned to fixed versions
-16. `lint:public-dependency-feeds` confirms dependency sources use canonical public feeds
-17. `lint:pr-gate` validates the pull request validation gate
-18. `lint:ps-module-pins` checks PowerShell module versions are pinned
-19. `lint:py` lints Python scripts via `Invoke-PythonLint.ps1`
-20. `validate:skills` verifies skill directory structure
-21. `lint:ai-artifacts` validates planner AI artifacts
-22. `lint:asset-docs` confirms assets have documentation pages
-23. `lint:models` validates model references against the catalog
-24. `validate:devcontainer-lockfile` checks devcontainer lockfile integrity
+12. `lint:design-intent` validates design intent declarations
+13. `lint:version-consistency` checks GitHub Action version alignment
+14. `lint:permissions` validates workflow permissions
+15. `lint:dangerous-workflow` checks workflows for dangerous patterns
+16. `lint:dependency-pinning` checks dependencies are pinned to fixed versions
+17. `lint:public-dependency-feeds` confirms dependency sources use canonical public feeds
+18. `lint:pr-gate` validates the pull request validation gate
+19. `lint:ps-module-pins` checks PowerShell module versions are pinned
+20. `lint:extension-artifact-naming` validates the one extension artifact identity
+21. `lint:py` lints Python scripts via `Invoke-PythonLint.ps1`
+22. `validate:skills` verifies skill directory structure
+23. `lint:ai-artifacts` validates planner AI artifacts
+24. `lint:asset-docs` confirms assets have documentation pages
+25. `lint:models` validates model references against the catalog
+26. `validate:devcontainer-lockfile` checks devcontainer lockfile integrity
 
 Each linter outputs results to `logs/` for inspection. Run individual linters for faster
 feedback during development:

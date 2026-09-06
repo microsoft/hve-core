@@ -6,9 +6,11 @@
     ".": {
       "release-type": "node",
       "package-name": "hve-core",
+      "bootstrap-sha": "e69486a5f809ede45c63c0a31358c12912bd5168",
       "draft": true,
-      "force-tag-creation": false,
-      "include-component-in-tag": true,
+      "force-tag-creation": true,
+      "include-component-in-tag": false,
+      "versioning": "always-bump-patch",
       "changelog-path": "CHANGELOG.md",
       "changelog-sections": [
         {"type": "feat", "section": "✨ Features", "hidden": false},
@@ -27,13 +29,18 @@
         },
         {
           "type": "json",
+          "path": "plugin.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
           "path": ".github/plugin/marketplace.json",
           "jsonpath": "$.metadata.version"
         },
         {
           "type": "json",
           "path": ".github/plugin/marketplace.json",
-          "jsonpath": "$.plugins[*].version"
+          "jsonpath": "$.plugins[0].version"
         }
       ]
     }

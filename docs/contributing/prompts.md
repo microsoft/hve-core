@@ -3,8 +3,12 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-19
 ms.topic: how-to
+keywords:
+  - contributing
+  - prompts
+  - standards
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot prompt files (`.prompt.md`) to the hve-core library.
@@ -37,15 +41,14 @@ Prompt files are typically organized in a package subdirectory by convention:
 ```
 
 > [!NOTE]
-> Marketplace package recipes can reference artifacts from any canonical subfolder. Standard component paths
-> are declared in `.github/plugin/marketplace.json` and resolve to canonical source files.
+> Tracked prompts beneath a `.github/prompts/<package>/` subdirectory are included automatically when `npm run plugin:sync` derives root `plugin.json`.
 
 ### Naming Convention
 
 * Use lowercase kebab-case: `pull-request.prompt.md`
 * Be specific about workflow/task: `ado-create-pull-request.prompt.md`
 * Include domain prefix when relevant: `ado-`, `git-`, `github-`
-* Avoid generic names: `workflow.prompt.md` ❌ → `ado-process-my-work-items-for-task-planning.prompt.md` ✅
+* Avoid generic names: `workflow.prompt.md` ❌ → `security-plan-from-prd.prompt.md` ✅
 
 ### File Format
 
@@ -203,11 +206,23 @@ Begin by reading the current branch state and identifying open work items.
 
 Prompts that delegate to a custom agent via `agent:` typically omit the activation line because the agent's phases define execution order.
 
-## Marketplace Recipe Registration
+## Plugin Manifest Registration
 
-Distributable prompts must be declared under the `commands` field of the `hve-core` entry in `.github/plugin/marketplace.json`. Use the recipe-relative `commands/<subpath>/<name>.md` path and keep the canonical source under `.github/prompts/`.
+Distributable prompts must use the canonical path `.github/prompts/<package>/<subpath>/<name>.prompt.md`. `npm run plugin:sync` adds that repository-relative path to the `commands` array in root `plugin.json`.
 
-Add non-stable lifecycle disclosure only through `x-hve.componentMaturity`, update `docs/plugins/hve-core.md`, then run `npm run lint:marketplace` and `npm run plugin:generate`.
+Update `docs/plugins/hve-core.md` when the user-visible prompt surface changes, then run `npm run plugin:validate` and `npm run docs:generate:check`.
+
+## Path Portability
+
+Prompts are packaged and relocatable. The root directory varies by distribution context (in-repo, Copilot CLI plugin, VS Code extension). To ensure references to other artifacts remain portable and do not break across environments, follow these cross-artifact reference rules:
+
+* **Refer by name:** Refer to a skill, agent, subagent, or prompt by the `name:` value from its frontmatter, not by a hard-coded path.
+* **Instruction files:** Refer to an instruction file by its full `<name>.instructions.md` filename.
+* **Bundled resources:** Reserve file paths for a prompt's own bundled resources (relative to the prompt root only).
+* **No hard-coded paths:** Never hard-code a skill's `SKILL.md` path, an agent's file path, or a cross-artifact directory path.
+* **File inclusions:** Use `#file:` only when the prompt must pull in another file's full contents.
+
+Repo-root-relative paths (such as `.github/prompts/...` or `.github/skills/...`) break portability and should not be used for cross-artifact references.
 
 ## Prompt Content Structure Standards
 
@@ -507,7 +522,7 @@ Before submitting your prompt, verify:
 
 * [ ] Clear H1 title describing workflow
 * [ ] Overview/purpose section
-* [ ] Maturity set in marketplace package metadata (see [Common Standards - Maturity](ai-artifacts-common.md#marketplace-packages))
+* [ ] `npm run plugin:sync` and `npm run plugin:validate` completed for distributable prompt changes
 * [ ] Prerequisites or context section
 * [ ] Workflow steps with clear sequence
 * [ ] Success criteria defined

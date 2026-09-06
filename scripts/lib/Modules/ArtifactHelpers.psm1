@@ -12,6 +12,12 @@ Import-Module (Join-Path $PSScriptRoot 'CIHelpers.psm1') -Force
 $script:PackageDocBeginMarker = '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
 $script:PackageDocEndMarker = '<!-- END AUTO-GENERATED ARTIFACTS -->'
 
+# Anchored so only a real heading line matches, and case-insensitive through an
+# inline flag rather than a caller-supplied option. The PowerShell match operator
+# ignores case by default while [regex]::Match does not, so a pattern without the
+# flag would mean different things to different consumers.
+$script:PackageDocArtifactHeadingPattern = '(?im)^##\s+Included Artifacts\s*$'
+
 function Set-ContentIfChanged {
     <#
     .SYNOPSIS
@@ -73,6 +79,34 @@ function Test-DeprecatedPath {
     )
 
     return ($Path -match '[/\\]deprecated[/\\]')
+}
+
+function Test-BuildArtifactPath {
+    <#
+    .SYNOPSIS
+    Checks whether a file path sits inside a dependency or build artifact directory.
+
+    .DESCRIPTION
+    Returns true when the path contains a node_modules or .venv segment. A skill
+    may vendor its own runtime dependencies, and those packages can ship their
+    own agent, prompt, and skill files. Those belong to the dependency, not to
+    this repository, so they must never be treated as distributable artifacts.
+
+    .PARAMETER Path
+    File path to check (absolute or relative, any slash style).
+
+    .OUTPUTS
+    [bool] True when the path is inside a dependency or build artifact directory.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    return ($Path -match '[/\\](node_modules|\.venv)[/\\]')
 }
 
 function Test-HveCoreRepoSpecificPath {
@@ -250,6 +284,9 @@ function Get-ArtifactFiles {
             $suffix = $Matches['suffix'].ToLowerInvariant()
             $kind = if ($suffixToKind.ContainsKey($suffix)) { $suffixToKind[$suffix] } else { $suffix }
             $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
+            if (Test-BuildArtifactPath -Path $relativePath) {
+                continue
+            }
             if (Test-HveCoreRepoRelativePath -Path $relativePath) {
                 continue
             }
@@ -264,6 +301,9 @@ function Get-ArtifactFiles {
     if (Test-Path -Path $skillsDir) {
         foreach ($skillFile in Get-ChildItem -Path $skillsDir -Filter 'SKILL.md' -File -Recurse) {
             $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $skillFile.Directory.FullName) -replace '\\', '/'
+            if (Test-BuildArtifactPath -Path $relativePath) {
+                continue
+            }
             if (Test-DeprecatedPath -Path $relativePath) {
                 continue
             }
@@ -397,6 +437,27 @@ function Get-MaturityVocabulary {
     return , @('stable', 'preview', 'experimental', 'deprecated', 'removed')
 }
 
+function Get-PackageDocArtifactHeadingPattern {
+    <#
+    .SYNOPSIS
+    Returns the canonical package-document artifact heading pattern.
+
+    .DESCRIPTION
+    Every consumer that locates the artifact heading in a package document uses
+    this pattern, so the rule cannot drift between them. The pattern carries an
+    inline case-insensitivity flag and is therefore safe under both the
+    PowerShell match operator and [regex]::Match.
+
+    .OUTPUTS
+    [string] Regular expression matching the artifact heading line.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param()
+
+    return $script:PackageDocArtifactHeadingPattern
+}
+
 function Get-MaturityRank {
     <#
     .SYNOPSIS
@@ -487,29 +548,6 @@ function Resolve-StrictSafeMaturity {
     return $fallback
 }
 
-function Test-ArtifactDeprecated {
-    <#
-    .SYNOPSIS
-    Checks whether an artifact has deprecated maturity.
-
-    .PARAMETER Maturity
-    Optional artifact maturity value.
-
-    .OUTPUTS
-    [bool] True when the artifact is deprecated.
-    #>
-    [CmdletBinding()]
-    [OutputType([bool])]
-    param(
-        [Parameter()]
-        [AllowNull()]
-        [AllowEmptyString()]
-        [string]$Maturity
-    )
-
-    return ((Resolve-ArtifactMaturity -Maturity $Maturity) -eq 'deprecated')
-}
-
 Export-ModuleMember -Function @(
     'Get-ArtifactDescription',
     'Get-ArtifactFiles',
@@ -517,11 +555,11 @@ Export-ModuleMember -Function @(
     'Get-ArtifactKey',
     'Get-MaturityRank',
     'Get-MaturityVocabulary',
+    'Get-PackageDocArtifactHeadingPattern',
     'Resolve-ArtifactMaturity',
     'Resolve-StrictSafeMaturity',
     'Set-ContentIfChanged',
     'Split-PackageDocByMarkers',
-    'Test-ArtifactDeprecated',
     'Test-DeprecatedPath',
     'Test-HveCoreRepoRelativePath',
     'Test-HveCoreRepoSpecificPath'

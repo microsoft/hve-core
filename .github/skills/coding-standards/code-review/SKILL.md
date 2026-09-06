@@ -6,7 +6,7 @@ user-invocable: true
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-06-18"
+  last_updated: "2026-08-29"
 ---
 
 # Code Review — Skill Entry
@@ -29,7 +29,8 @@ Review work should stay anchored in evidence and should avoid premature conclusi
 6. [Walkthrough Protocol](references/walkthrough-protocol.md) — firm orientation floor, full-diff reading contract, and Register 1 narrative guidance.
 7. [Dispatch Loop](references/dispatch-loop.md) — human-steered dispatch board, manifest schema, and walk-back loop contract.
 8. [Emission Modes](references/emission-modes.md) — capability-gated dual-mode emission and persisted emission record.
-9. [Cross-Skill Forks](references/cross-skill-forks.md) — specialist review registry and package-aware gating for follow-up reviews.
+9. [Cross-Skill Forks](references/cross-skill-forks.md) — specialist review registry and collection-aware gating for follow-up reviews.
+10. [Change-Risk Evidence Checklist](references/change-risk-model.md) — advisory evidence categories for selecting review depth with human confirmation.
 
 ## Skill layout
 
@@ -44,3 +45,4 @@ Review work should stay anchored in evidence and should avoid premature conclusi
   * `dispatch-loop.md` — dispatch board, manifest schema, and walk-back loop.
   * `emission-modes.md` — native and canonical emission strategies.
   * `cross-skill-forks.md` — specialist review registry and gating rules.
+  * `change-risk-model.md` — advisory evidence checklist for selecting review depth with human confirmation.

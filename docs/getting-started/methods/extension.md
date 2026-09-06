@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE Core as a VS Code extension from the marketplace
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-13
 ms.topic: how-to
 keywords:
   - extension
@@ -110,9 +110,24 @@ The extension updates automatically through VS Code's extension system:
 
 * Extensions update automatically when new versions are released (default)
 * Open Extensions view → find "HVE Core" → click **Update** for manual updates
-* Right-click the extension → "Switch to Pre-Release Version" for newer content packaged from `main`
+* Right-click the extension → "Switch to Pre-Release Version" to select the PreRelease channel
 
-Stable is packaged only after reviewed `main` content is promoted into `release/stable`, so it may lag newer commits on `main`. Both channels include active components labeled `stable`, `preview`, and `experimental`.
+Source moves through reviewed promotions from `main` to `release/prerelease`
+to `release/stable`. PreRelease is packaged from `release/prerelease`; Stable
+is packaged from `release/stable` and may lag newer `main` content. Both
+channels include active components labeled `stable`, `preview`, and
+`experimental`.
+
+The corresponding Copilot CLI sources are ref-less `microsoft/hve-core` for
+current `main`, moving `microsoft/hve-core#release/prerelease` and
+`microsoft/hve-core#release/stable` registrations, and immutable
+`microsoft/hve-core#prerelease-v<version>` and
+`microsoft/hve-core#v<version>` registrations.
+
+Behavior when switching VS Code Marketplace channels or switching among
+same-name CLI marketplace registrations has not been observed in this
+documentation work. This guidance does not assert installed-client or
+duplicate-registration behavior.
 
 ## Comparison with Other Methods
 
@@ -186,7 +201,7 @@ Stable is packaged only after reviewed `main` content is promoted into `release/
 
 1. Start with the HVE Core extension for the complete managed component set
 2. When you need MCP configuration or selected repository-owned components, ask an agent to use the included `hve-core-installer` skill
-3. Choose the starter profile or a custom selection, review lifecycle labels and dependency closure, then copy to a [clone-based method](./)
+3. Choose the complete manifest or a custom selection, review component paths and collisions, then copy to a [clone-based method](./)
 
 ## Troubleshooting
 
@@ -244,8 +259,8 @@ If you have both extension and manual installation (like Peer Clone):
 The extension includes `hve-core-installer`. Ask an agent to invoke it when you need MCP guidance, installation-method selection, or a smaller clone-based component set.
 
 1. Ask an agent to use `hve-core-installer`.
-2. Choose the starter profile or custom selection for clone adoption.
-3. Review agents, prompts, instructions, complete skill directories, lifecycle labels, and closure additions before writes.
+2. Choose the complete manifest or a custom selection for clone adoption.
+3. Review agents, prompts, instructions, distributable skill directories, and collisions before writes.
 
 | Capability                   | HVE Core Extension | Installer Skill                       |
 |------------------------------|-------------------:|---------------------------------------|

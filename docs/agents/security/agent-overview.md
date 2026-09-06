@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-20
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -22,6 +22,8 @@ The Security Planner is a phase-based conversational agent that produces securit
 
 ```mermaid
 flowchart TD
+  accTitle: Security Planner Agent Architecture
+  accDescr: The Security Planner reads and writes session state, generates plan files, activates research for standards questions, and follows identity, standards-mapping, and shared planner guidance.
   subgraph Agent
     SP["Security Planner"]
     RR["rpi-research"]

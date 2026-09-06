@@ -1,8 +1,8 @@
 ---
 title: Extension Scripts
-description: PowerShell scripts for marketplace-driven VS Code extension preparation and packaging
+description: PowerShell scripts for manifest-driven VS Code extension preparation and packaging
 author: HVE Core Team
-ms.date: 2026-08-02
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - powershell
@@ -18,47 +18,41 @@ publishing the HVE Core VS Code extension.
 
 ## Architecture
 
-The extension packaging pipeline follows one marketplace projection:
+The extension packaging pipeline follows the one plugin manifest:
 
-1. `Get-MarketplacePackageMatrix.ps1` emits the one `hve-core` package ID
-2. `Modules/ExtensionIdentity.psm1` maps it to the HVE Core extension identity
-3. `Prepare-Extension.ps1` resolves the complete recipe through shared handoff closure
-4. `Package-Extension.ps1` stages tracked projection files and creates a `.vsix`
+1. `Prepare-Extension.ps1` maps root `plugin.json` to one extension manifest and README
+2. `Package-Extension.ps1` stages tracked contribution files and creates one `.vsix`
+3. `extension-provenance-signer.yml` packages in a `contents: read` job, then transfers
+  the VSIX to a separate privileged attestation job with digest checking
+4. `Resolve-VsixFile.ps1` requires exactly one VSIX for provenance workflows
+5. `Export-AttestationBundle.ps1` writes Sigstore and in-toto sidecars
 
-Marketplace metadata, membership, maturity, and display names come from
-`.github/plugin/marketplace.json`. No extension script reads a secondary package
-definition.
+Membership comes from root `plugin.json`. Stable and PreRelease preparation use the same component set. Repository-relative `.github/...` declarations become extension contribution paths without adding plugin-root README or license files.
 
 ## Scripts
 
 ### `Prepare-Extension.ps1`
 
-Prepares extension contents from one resolved marketplace package recipe.
+Prepares extension contents from root `plugin.json`.
 
 Purpose: Gather and filter artifacts for inclusion in the extension package.
 
 #### Features
 
-* Resolves agents, prompts, instructions, and skills from marketplace membership
-* Applies shared lifecycle policy and transitive agent handoff closure
-* Supports explicit `hve-core` package-ID preparation
+* Maps agents, prompts, instructions, and skills from plugin manifest membership
+* Writes the single `extension/package.json` and `extension/README.md`
+* Produces channel-neutral component membership before packaging
 * Dry-run mode for previewing changes
 
 #### Parameters
 
-* `-ChangelogPath` - Path to the changelog file
-* `-Channel` - Release channel: `Stable` or `PreRelease`
 * `-DryRun` (switch) - Preview changes without modifying files
-* `-PackageId` - Marketplace package ID for scoped preparation
 
 #### Usage
 
 ```powershell
-# Prepare stable channel
+# Prepare channel-neutral extension resources
 ./scripts/extension/Prepare-Extension.ps1
-
-# Prepare pre-release channel
-./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
 
 # Dry run to preview
 ./scripts/extension/Prepare-Extension.ps1 -DryRun
@@ -74,7 +68,7 @@ Purpose: Produce a distributable extension package from prepared contents.
 
 * Sets version from parameters or changelog
 * Supports pre-release and dev patch builds
-* One-identity marketplace packaging
+* One-identity extension packaging
 * Git-tracked path staging with explicit shared resources
 * Repository-pinned `vsce` only, with no installer fallback
 * Dry-run mode for validation
@@ -85,7 +79,6 @@ Purpose: Produce a distributable extension package from prepared contents.
 * `-DevPatchNumber` - Development patch number for dev builds
 * `-ChangelogPath` - Path to the changelog file
 * `-PreRelease` (switch) - Mark as pre-release build
-* `-PackageId` - Marketplace package ID for scoped packaging
 * `-DryRun` (switch) - Preview changes without producing a package
 
 #### Usage
@@ -96,45 +89,6 @@ Purpose: Produce a distributable extension package from prepared contents.
 
 # Package a pre-release build
 ./scripts/extension/Package-Extension.ps1 -PreRelease
-
-# Package a specific marketplace package
-./scripts/extension/Package-Extension.ps1 -PackageId hve-core
-```
-
-### `Get-MarketplacePackageMatrix.ps1`
-
-Builds a package matrix and package-name output from the marketplace catalog.
-
-Purpose: Emit the one HVE Core package for either release channel.
-
-#### Features
-
-* Reads `.github/plugin/marketplace.json`
-* Verifies the `hve-core` entry is eligible for the selected channel
-* Outputs sorted matrix rows containing only `id`
-* Outputs a sorted JSON `names` array for packaging workflows
-
-### `Modules/ExtensionIdentity.psm1`
-
-Maps marketplace package IDs to VS Code extension identities and exact VSIX
-asset patterns.
-
-Purpose: Keep package matrix, release download, and VSIX selection behavior on
-one `hve-core` identity contract.
-
-#### Parameters
-
-* `-Channel` - Release channel filter: `Stable` or `PreRelease`
-* `-CatalogPath` - Path to the marketplace catalog
-
-#### Usage
-
-```powershell
-# Discover stable packages
-./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel Stable
-
-# Discover pre-release packages
-./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel PreRelease
 ```
 
 ### `Resolve-VsixFile.ps1`
@@ -142,8 +96,8 @@ one `hve-core` identity contract.
 Resolves the single `.vsix` file within a directory.
 
 Purpose: Return the one VSIX path in a directory, failing when zero or multiple
-`.vsix` files are present. Used by the `extension-provenance.yml` reusable
-workflow to locate the built VSIX before signing and attestation.
+`.vsix` files are present. Used by the `extension-provenance-signer.yml` reusable
+workflow to locate the downloaded VSIX before signing and attestation.
 
 #### Parameters
 
@@ -154,26 +108,6 @@ workflow to locate the built VSIX before signing and attestation.
 ```powershell
 # Resolve the VSIX in a directory
 ./scripts/extension/Resolve-VsixFile.ps1 -DirectoryPath ./extension
-```
-
-### `Select-PackageVsix.ps1`
-
-Selects the package-specific VSIX from a set of candidate assets.
-
-Purpose: Pick the `.vsix` matching a package ID from a directory of release
-assets. Used by the `extension-marketplace-publish.yml` reusable workflow to
-choose the correct package artifact before publishing.
-
-#### Parameters
-
-* `-AssetDirectory` - Directory containing candidate assets (defaults to `$env:ASSET_DIRECTORY`)
-* `-PackageId` - Package ID to match (defaults to `$env:PACKAGE_ID`)
-
-#### Usage
-
-```powershell
-# Select the VSIX for a package
-./scripts/extension/Select-PackageVsix.ps1 -AssetDirectory ./dist -PackageId hve-core
 ```
 
 ### `Export-AttestationBundle.ps1`
@@ -199,22 +133,30 @@ for verification and release upload.
 
 ## npm Scripts
 
-| npm Script                     | Description                   |
-|--------------------------------|-------------------------------|
-| `extension:prepare`            | Prepare stable channel        |
-| `extension:prepare:prerelease` | Prepare pre-release channel   |
-| `extension:package`            | Package extension             |
-| `extension:package:prerelease` | Package pre-release extension |
-| `package:extension`            | Alias for `extension:package` |
+| npm Script                     | Description                                               |
+|--------------------------------|-----------------------------------------------------------|
+| `extension:prepare`            | Prepare channel-neutral resources                         |
+| `extension:prepare:prerelease` | Prepare the same resources for the PreRelease entry point |
+| `extension:package`            | Package extension                                         |
+| `extension:package:prerelease` | Package pre-release extension                             |
 
 ## GitHub Actions Integration
 
-The extension packaging workflow (`extension-package.yml`) orchestrates all
-three scripts:
+`release-vsix-publish.yml` is the sole post-tag release producer. A push of an
+exact `v<version>` or `prerelease-v<version>` tag invokes
+`extension-provenance-signer.yml` after the producer validates the protected tag,
+source commit, channel branch, committed versions, and exact draft release.
 
-1. `Get-MarketplacePackageMatrix.ps1` produces a one-row package-ID matrix
-2. `Prepare-Extension.ps1` projects the complete HVE Core contributions
-3. `Package-Extension.ps1` produces the one `.vsix` file
+The `extension-provenance-signer.yml` signer path has two separate jobs. Its
+`package` job checks out the immutable tag commit, installs dependencies,
+prepares the complete HVE Core contributions, and packages one `.vsix` with
+only `contents: read`. Its dependent `attest` job has the signing and release
+write scopes, downloads the VSIX and dependency SBOM through fixed-name,
+digest-checked artifact transfers, and never installs dependencies or packages
+the extension. No job both packages and signs.
+
+Marketplace workflows do not build another VSIX. They consume only the VSIX
+from the matching published GitHub release after provenance verification.
 
 See [Build Workflows](../../docs/architecture/workflows.md) for pipeline
 details.

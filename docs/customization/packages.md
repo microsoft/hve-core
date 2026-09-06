@@ -1,8 +1,8 @@
 ---
-title: Managing the Marketplace Recipe
-description: Maintain ordinary Copilot plugin and VSIX recipes through the marketplace catalog
+title: Managing the HVE Core Plugin Manifest
+description: Maintain the single HVE Core plugin and VSIX membership through the canonical manifest
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - marketplace
@@ -12,59 +12,51 @@ keywords:
 estimated_reading_time: 6
 ---
 
-## Recipe Authority
+## Manifest Authority
 
-`.github/plugin/marketplace.json` is the only operational distribution definition. Every active entry is an ordinary, self-contained recipe with standard fields for `agents`, `commands`, `rules`, `skills`, and optional `hooks`. `x-hve` holds entry metadata only: display name, lifecycle maturity, documentation path, and optional profiles. It never appears in generated `plugin.json` files.
+Root `plugin.json` is the operational distribution definition for the one `hve-core` plugin and VSIX. Its `agents`, `commands`, `rules`, and `skills` arrays are deterministic repository-relative outputs of tracked path and license classification under `.github`. The fixed `hooks` value includes the telemetry hook.
 
-| Package choice            | Use it for                                               |
-|---------------------------|----------------------------------------------------------|
-| `hve-core`                | Focused RPI, HVE Builder, Git, and code-review workflows |
-| `hve-core-all`            | All active content and the only starter profile          |
-| Domain or utility package | A narrower capability set defined by the active catalog  |
-
-Do not install `hve-core` and `hve-core-all` together. Both include overlapping content and the telemetry hook.
+`.github/plugin/marketplace.json` contains one `hve-core` entry with the relative source `.`. It owns locator metadata only and must not repeat component arrays or package policy.
 
 ## Add Or Change A Component
 
 1. Add canonical artifacts under `.github/<kind>/<package>/`.
-2. Add recipe-relative paths to one or more applicable catalog entries.
-3. Align lifecycle maturity for every declared membership.
-4. Update `docs/plugins/<name>.md` for each affected package.
-5. Run marketplace validation, plugin generation, extension preparation, and focused tests.
+2. Run `npm run plugin:sync` to derive root `plugin.json` from tracked `.github` paths.
+3. Update `docs/plugins/hve-core.md` when user-visible capabilities or identity guidance changed.
+4. Run the local-safe checks in
+  [Validation and Package Staging](#validation-and-package-staging).
 
-A recipe path maps deterministically to a canonical source path. Do not add a fallback reader, duplicate manifest, or manually copy generated output.
+A manifest path maps directly to canonical source beneath `.github`. Do not add a fallback reader, duplicate membership list, copied plugin tree, or package recipe.
 
 ## Closure And Channels
 
-`MarketplaceHelpers.psm1` resolves transitive agent handoffs from each catalog entry. Unresolved or ambiguous handoffs fail. The resolved source set feeds plugin and VSIX packaging before channel-specific destination mapping.
+Manifest synchronization discovers every convention-matching tracked artifact. Plugin validation checks deterministic ordering, locator parity and containment, declared component coverage, and hooks.
 
-Stable and PreRelease have the same active package names and the same active components and maturity map per package. They differ only in source ownership, cadence, and version. Packages have no dependencies, aggregate metadata, `extensionPack`, or `extensionDependencies`.
+Stable and PreRelease have the same complete components. They differ only in source ownership, cadence, version, and VS Code Marketplace channel behavior.
 
 ## Hooks
 
-Hooks are per-plugin declarations. `hve-core` and `hve-core-all` each include the telemetry hook. VS Code has no declarative hook contribution point, so extension users configure hook locations manually. Hooks are not copied during selective installation.
+The plugin manifest includes the telemetry hook. VS Code has no declarative hook contribution point, so extension users configure its location manually. Hooks are not copied during selective installation.
 
-## Generated Outputs
+## Validation and Package Staging
 
-Plugin generation writes ignored materialized packages under `plugins/`. Extension preparation writes `extension/package*.json` and `extension/README*.md`. Generators remove stale outputs when entries leave the active catalog. Generated outputs are never package-definition authority and are not edited by hand.
+Ordinary validation reads canonical `.github` sources and never creates a repository-root `plugins/` tree. Extension preparation refreshes the single `extension/package.json` and `extension/README.md`. Packaging creates one VSIX.
 
 Use these checks for package changes:
 
 ```bash
-npm run lint:marketplace
-npm run plugin:generate
-npm run plugin:evidence
-npm run extension:prepare
-npm run extension:prepare:prerelease
+npm run plugin:sync
+npm run plugin:validate
+npm run docs:generate:check
 npm run test:ps -- -TestPath scripts/tests/plugins/
 npm run test:ps -- -TestPath scripts/tests/extension/
 ```
 
 ## Selective Adoption
 
-The installer requires an exact `PackageName` before profile or component resolution. The `starter` profile is available only from `hve-core-all`; custom selection resolves against the selected entry.
+The installer resolves all components from root `plugin.json`. Users can copy the complete manifest or a custom selection; the installer converts repository-relative `.github/...` declarations to its selection form without changing canonical target paths.
 
-Schema version 2 records `selection.package`. A package-less schema version 2 manifest emits `INSTALLED_PACKAGE=` and requires explicit package reselection before upgrade replay. File records track selected components, not per-file package ownership. The installer copies agents, prompts, instructions, and complete skill directories while preserving source-relative paths.
+Schema version 2 records `selection.profile` and `selection.components`. File records track selected components without package identity. The installer copies agents, prompts, instructions, and complete distributable skill directories while preserving source-relative paths.
 
 ---
 

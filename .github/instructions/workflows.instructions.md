@@ -98,7 +98,15 @@ Workflows MUST NOT persist GitHub credentials by default. Credential persistence
 
 ## Runners
 
-Workflows MUST run on GitHub-hosted Ubuntu runners. Other runner types are not supported in hve-core.
+Workflows MUST run on GitHub-hosted Ubuntu runners. Windows, macOS, self-hosted, and other non-Ubuntu runner types are not supported in hve-core.
+
+**Allowed `runs-on` labels** (GitHub-hosted Ubuntu images only):
+
+* `ubuntu-latest`
+* `ubuntu-24.04`, `ubuntu-22.04` (and other GitHub-hosted Ubuntu version labels as they become available, including ARM variants such as `ubuntu-24.04-arm`)
+* `ubuntu-slim` (lightweight 1 vCPU GitHub-hosted runner; still Ubuntu, still GitHub-hosted)
+
+**Disallowed `runs-on` values:** `windows-*`, `macos-*`, `self-hosted`, and any custom or third-party runner label.
 
 **Required pattern:**
 
@@ -268,10 +276,19 @@ All workflows MUST pass the following validation checks:
 * **What it enforces:** Every workflow declares a top-level `permissions:` block, and every job declares its own block unless the workflow-level block is empty
 * **CI blocking:** Failures block CI when configured to enforce compliance
 
+### Runner Policy Validation
+
+* **Script:** `scripts/security/Test-WorkflowRunner.ps1`
+* **What it enforces:** Every job's `runs-on` value is a GitHub-hosted Ubuntu label (see § Runners for the allow list)
+* **CI blocking:** Failures block CI when configured to enforce compliance
+
 ## Security Requirements
 
 * Never expose secrets in logs or outputs
-* No personal access tokens (PATs) are used in workflows
+* Never publish agent transcripts or raw model output as workflow artifacts; artifacts on a public repository are world-readable and a transcript can contain job environment contents
+* Classic personal access tokens (`ghp_`) MUST NOT be used in workflows
+* Fine-grained personal access tokens (`github_pat_`) are permitted only as a documented exception where no alternative credential works. The sole current exception is `COPILOT_GITHUB_TOKEN`, which the `@github/copilot` CLI requires and which `GITHUB_TOKEN` cannot satisfy; see `docs/contributing/evals-ci.md`
+* Prefer a GitHub App installation token minted in-run over any stored long-lived credential
 * Use event guards for release-specific operations when needed
 * Enable security features like CodeQL and dependency scanning
 * All security workflows use explicit, minimal permissions
@@ -336,6 +353,7 @@ The following scripts enforce compliance:
 * `scripts/security/Test-DependencyPinning.ps1` - Validates dependency pinning
 * `scripts/security/Test-SHAStaleness.ps1` - Checks for stale dependencies
 * `scripts/security/Test-WorkflowPermissions.ps1` - Validates workflow permissions declarations
+* `scripts/security/Test-WorkflowRunner.ps1` - Validates `runs-on` values against the GitHub-hosted Ubuntu allow-list
 * `scripts/linting/Invoke-YamlLint.ps1` - Runs actionlint validation
 * `scripts/security/Test-PrValidationGate.ps1` - Validates the PR validation gate `needs:` completeness
 

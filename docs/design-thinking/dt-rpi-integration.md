@@ -3,7 +3,7 @@ title: DT to RPI Integration
 description: How Design Thinking outputs feed into the RPI workflow
 sidebar_position: 14
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-20
 ms.topic: how-to
 keywords:
   - design thinking
@@ -19,6 +19,8 @@ Design Thinking and RPI connect through structured handoff artifacts. When a DT 
 
 ```mermaid
 flowchart TD
+  accTitle: Design Thinking to RPI Handoff Pipeline
+  accDescr: Exit points from the problem, solution, and implementation spaces feed RPI research, planning, implementation, and review, with a return path for revising assumptions.
     DT["DT Coach Session"]
 
     subgraph problem["Problem Space"]
@@ -43,7 +45,7 @@ flowchart TD
     RR -.->|"return when DT assumptions need revision"| DT
 ```
 
-Each exit point produces a handoff artifact with the current contract fields: `exit_point`, `dt_method`, `dt_space`, `handoff_target`, `date`, `artifacts`, `constraints`, and `assumptions`. The coach keeps the session state in `.copilot-tracking/design-thinking-sessions/{project-slug}/`, while the handoff artifacts live alongside project artifacts in `docs/design-thinking/{project-slug}/`.
+Each exit point produces a handoff artifact with the current contract fields: `exit_point`, `dt_method`, `dt_space`, `handoff_target`, `date`, `artifacts`, `constraints`, and `assumptions`. The coach keeps the session state in `.copilot-tracking/dt/{project-slug}/`, and the handoff artifacts live alongside project artifacts in the same directory.
 
 ```yaml
 exit_point: "implementation-spec-ready"
@@ -53,7 +55,7 @@ handoff_target: "rpi-research"
 date: "2026-06-26"
 
 artifacts:
-  - path: "docs/design-thinking/{project-slug}/method-09-iteration-at-scale.md"
+  - path: ".copilot-tracking/dt/{project-slug}/method-09-iteration-at-scale.md"
     type: "iteration-summary"
     confidence: validated
 

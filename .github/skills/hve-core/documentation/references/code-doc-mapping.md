@@ -17,7 +17,8 @@ asset reference page before the broader conceptual and contributor documentation
 | `.github/skills/<path>/<skill>/**`                   | `docs/reference/skills/<path>/<skill>.md`      | `docs/contributing/skills.md`, `docs/customization/skills.md`                               |
 | `scripts/**`                                         | Not applicable                                 | `scripts/README.md`, `docs/architecture/workflows.md`                                       |
 | `extension/**`                                       | Not applicable                                 | `extension/PACKAGING.md`                                                                    |
-| `.github/plugin/marketplace.json`                    | Not applicable                                 | `docs/customization/packages.md`, `docs/plugins/`                                           |
+| `plugin.json`                                        | Not applicable                                 | `docs/customization/packages.md`, `docs/plugins/hve-core.md`                                |
+| `.github/plugin/marketplace.json`                    | Not applicable                                 | `docs/getting-started/packages.md`, `docs/plugins/hve-core.md`                              |
 | `.devcontainer/**`                                   | Not applicable                                 | `docs/getting-started/`, `docs/customization/environment.md`                                |
 | `.github/workflows/**`                               | Not applicable                                 | `docs/architecture/workflows.md`                                                            |
 

@@ -3,7 +3,7 @@ title: Using the DT Coach
 description: Guide to using the dt-coach agent for AI-assisted Design Thinking sessions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-06
 ms.topic: tutorial
 keywords:
   - dt-coach
@@ -38,24 +38,24 @@ Use the DT Coach when your project involves:
 
 ## Output Artifacts
 
-DT Coach creates session artifacts in two locations:
+DT Coach creates session artifacts in one location:
 
 ```text
-.copilot-tracking/design-thinking-sessions/{project-slug}/
+.copilot-tracking/dt/{project-slug}/
 ```
 
-This state directory contains:
+This project directory contains:
 
 * `coaching-state.md`: Session state with method progress, transition log, and recovery points
 * `transition_log`: Recorded handoff and method-transition history
 
-Project artifacts live in:
+Project artifacts live in the same directory:
 
 ```text
-docs/design-thinking/{project-slug}/
+.copilot-tracking/dt/{project-slug}/
 ```
 
-This artifacts directory contains:
+This directory also contains:
 
 * `method-{NN}-*/`: Per-method working artifacts (notes, themes, prototypes)
 * Handoff artifacts when transitioning to RPI
@@ -87,7 +87,9 @@ We've been asked to "build a digital dashboard" but I'm not sure that's
 the right solution.
 ```
 
-The coach responds with observations and a guiding question, never a solution. When a new project starts, the coach creates the state directory at `.copilot-tracking/design-thinking-sessions/{project-slug}/`, the artifact directory at `docs/design-thinking/{project-slug}/`, and initializes `coaching-state.md` before method-specific coaching begins. It also asks whether you want to enable the canonical deck and customer-card workflow before the first method-specific coaching step.
+The coach responds with observations and a guiding question, never a solution. When a new project starts, the coach creates the project directory at `.copilot-tracking/dt/{project-slug}/` for both state and artifacts, and initializes `coaching-state.md` before method-specific coaching begins.
+
+It does not ask about the canonical deck and customer-card workflow at that point. That offer arrives at the Method 3 and Method 5 exits, once the work has produced content worth capturing, and you can ask for it directly at any time.
 
 ### Navigating Methods
 
@@ -102,7 +104,7 @@ The coach tracks your progress through each method and signals when exit conditi
 
 ### Pausing and Resuming
 
-Session state persists in `.copilot-tracking/design-thinking-sessions/{project-slug}/coaching-state.md`. When you return to a project after clearing context or starting a new chat:
+Session state persists in `.copilot-tracking/dt/{project-slug}/coaching-state.md`. When you return to a project after clearing context or starting a new chat:
 
 1. Open the coaching state file in your editor
 2. Select DT Coach

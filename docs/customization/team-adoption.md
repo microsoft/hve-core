@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - governance
@@ -16,7 +16,7 @@ estimated_reading_time: 7
 ## Recommended Starting Point
 
 Start team adoption with the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the complete managed component set across all team members.
-When the team is ready for clone-based methods, ask an agent to use the included `hve-core-installer` skill. It evaluates the environment, recommends peer clone, submodule, git-ignored, or another method, guides MCP configuration, and supports a starter or custom selection across agents, prompts, instructions, and complete skill directories.
+When the team is ready for clone-based methods, ask an agent to use the included `hve-core-installer` skill. It evaluates the environment, recommends peer clone, submodule, git-ignored, or another method, guides MCP configuration, and supports a complete or custom selection across agents, prompts, instructions, and distributable skill directories.
 Move to direct clone setup only when artifact modification is required beyond what the installer provides.
 
 ## Adoption Strategy
@@ -40,8 +40,7 @@ outputs).
 
 ### Phase 3: Skills and Shared Distribution
 
-Package domain knowledge into skills for complex, multi-step workflows. Declare
-related artifacts in the `hve-core` marketplace recipe for managed distribution, or use selective cloning for a repository-owned subset.
+Package domain knowledge into skills for complex, multi-step workflows. Place related artifacts under package-scoped `.github` paths and synchronize root `plugin.json` for managed distribution, or use selective cloning for a repository-owned subset.
 
 ### Measuring Adoption Progress
 
@@ -59,13 +58,13 @@ glance. Follow kebab-case patterns throughout.
 
 ### File Naming Patterns
 
-| Artifact Type | Pattern                                          | Example                             |
-|---------------|--------------------------------------------------|-------------------------------------|
-| Instructions  | `{topic}.instructions.md`                        | `python-script.instructions.md`     |
-| Agents        | `{workflow}.agent.md`                            | `code-review.agent.md`              |
-| Prompts       | `{action}.prompt.md`                             | `generate-tests.prompt.md`          |
-| Skills        | `{skill-name}/SKILL.md`                          | `pr-reference/SKILL.md`             |
-| Recipe paths  | Marketplace entry and `docs/plugins/hve-core.md` | `agents/ado/ado-backlog-manager.md` |
+| Artifact Type  | Pattern                                        | Example                         |
+|----------------|------------------------------------------------|---------------------------------|
+| Instructions   | `{topic}.instructions.md`                      | `python-script.instructions.md` |
+| Agents         | `{workflow}.agent.md`                          | `code-review.agent.md`          |
+| Prompts        | `{action}.prompt.md`                           | `generate-tests.prompt.md`      |
+| Skills         | `{skill-name}/SKILL.md`                        | `pr-reference/SKILL.md`         |
+| Manifest paths | Plugin manifest and `docs/plugins/hve-core.md` | `agents/ado/example.agent.md`   |
 
 ### Namespace IDs
 
@@ -90,8 +89,7 @@ subdirectory:
 
 Artifacts at the root of `.github/agents/`, `.github/instructions/`,
 `.github/prompts/`, or `.github/skills/` (without a subdirectory) are treated
-as repo-specific and excluded from marketplace membership, plugin generation, and
-extension packaging.
+as repo-specific and excluded from plugin membership and extension packaging.
 
 ## Governance Model
 
@@ -99,7 +97,7 @@ extension packaging.
 
 Assign clear ownership for each artifact category:
 
-* A designated maintainer or team owns each component namespace within the `hve-core` recipe
+* A designated maintainer or team owns each component namespace within the `hve-core` plugin
 * Individual instructions files can have separate owners when they span
   multiple domains
 * The `copilot-instructions.md` file at the repository root reflects
@@ -112,7 +110,7 @@ Treat Copilot customization files with the same rigor as production code:
 * Require pull request review for changes to instructions, agents, and skills
 * Use CODEOWNERS to route reviews to artifact owners
 * Validate changes with `npm run validate:local` before merging
-* Run `npm run plugin:generate` after modifying marketplace recipes
+* Run `npm run plugin:sync` and `npm run plugin:validate` after changing distributable membership
 
 ### Handling Conflicting Instructions
 
@@ -168,8 +166,8 @@ Follow a structured process when adding new instructions, agents, or skills:
 2. Run `hve-builder` in create or improve mode with the relevant known references
 3. Resolve its static, behavior, and validation gates until the overall outcome passes
 4. Run `npm run validate:local` to validate local-safe checks, then reproduce any relevant CI-owned lane separately
-5. Update the `hve-core` marketplace recipe and `docs/plugins/hve-core.md`
-6. Run `npm run plugin:generate` to regenerate plugin outputs
+5. Run `npm run plugin:sync` and update `docs/plugins/hve-core.md` when the user-visible surface changes
+6. Run `npm run plugin:validate` and `npm run docs:generate:check`
 7. Submit a pull request with clear description of what the artifact does and
    why
 
@@ -183,23 +181,13 @@ Announce changes that affect team workflows:
 
 ### Deprecation Workflow
 
-HVE Core uses maturity levels to signal artifact lifecycle stage. Transition
-artifacts through these stages:
-
-| Level        | Meaning                                                                     |
-|--------------|-----------------------------------------------------------------------------|
-| experimental | Early-stage artifact; behavior may change without notice                    |
-| preview      | Functional but subject to refinement based on feedback                      |
-| stable       | Production-ready; changes follow semver-style considerations                |
-| deprecated   | Scheduled for removal; migration path documented                            |
-| removed      | Withdrawn from distribution; excluded from every channel and auto-discovery |
-
 To deprecate an artifact:
 
-1. Set the artifact path to `deprecated` in `x-hve.componentMaturity`
-2. Use `hve-builder` improve mode to add a deprecation notice pointing to the replacement
-3. Announce the deprecation and provide a migration timeline
-4. Remove the artifact after the agreed-upon transition period
+1. Use `hve-builder` improve mode to add a deprecation notice pointing to the replacement.
+2. Announce the deprecation and provide a migration timeline.
+3. Move the artifact under `.github/deprecated/` when it should leave managed distribution.
+4. Run `npm run plugin:sync` and `npm run plugin:validate`; the manifest change removes it from Stable and PreRelease together.
+5. Remove the archived artifact after the agreed transition period.
 
 ## Role-Based Adoption Paths
 
@@ -242,8 +230,7 @@ starting points and progression for each of the nine roles.
 
 1. Write instructions for runbook format and incident response
 2. Create an agent for infrastructure review workflows
-3. Build a package integrating monitoring, alerting, and
-  deployment tools
+3. Build a skill integrating monitoring, alerting, and deployment tools
 
 ### Business PM (Product Manager)
 

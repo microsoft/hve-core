@@ -3,7 +3,7 @@ title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -29,11 +29,10 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 
 ### Primary Agents
 
-| Tool                    | Type  | How to Invoke                            | Purpose                                    |
-|-------------------------|-------|------------------------------------------|--------------------------------------------|
-| RPI Agent               | Agent | Select **RPI Agent**                     | Coordinate the applicable RPI phase skills |
-| gen-jupyter-notebook    | Agent | Select **gen-jupyter-notebook** agent    | Create data analysis notebooks             |
-| gen-streamlit-dashboard | Agent | Select **gen-streamlit-dashboard** agent | Generate Streamlit dashboards              |
+| Tool                               | Type  | How to Invoke                                 | Purpose                                          |
+|------------------------------------|-------|-----------------------------------------------|--------------------------------------------------|
+| RPI Agent                          | Agent | Select **RPI Agent**                          | Coordinate the applicable RPI phase skills       |
+| Data Science and Engineering Coach | Agent | Select **Data Science and Engineering Coach** | Produce notebooks, dashboards, and pipeline code |
 
 ### Prompts
 
@@ -120,13 +119,13 @@ Execute the plan:
 with the event dispatcher component and implement the retry queue second.
 ```
 
-Select **gen-jupyter-notebook** agent:
+Select the **Data Science and Engineering Coach** agent and confirm the analysis job:
 
 ```text
 Create a data analysis notebook for the Q4 sales transactions dataset in
 data/sales-q4-2025.parquet. Include data quality assessment, revenue trend
 analysis by product category and region, and customer cohort segmentation
-using RFM scoring with matplotlib visualizations.
+using RFM scoring.
 ```
 
 After implementation, validate the changes:

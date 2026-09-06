@@ -2,7 +2,13 @@
 title: caveman
 description: "Ultra-compressed response style that reduces output token count while preserving technical accuracy, with intensity levels and auto-clarity safety rules"
 sidebar_position: 1
-ms.date: 2026-07-27
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - skill
+  - experimental
+  - caveman
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

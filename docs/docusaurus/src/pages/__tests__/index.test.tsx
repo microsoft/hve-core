@@ -6,7 +6,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Home from '../index';
 import type { PackageCardData } from '../../data/packageCards';
-import { loadPackageCards } from '../../data/marketplaceCounts';
+import { loadPackageCards } from '../../data/pluginManifestCards';
 import { labelRegistry } from '../../data/labelRegistry';
 import {
   __resetPackageCards,
@@ -24,6 +24,9 @@ function card(name: string, overrides: Partial<PackageCardData> = {}): PackageCa
     title: `HVE Core - ${name}`,
     description: `${name} description`,
     artifacts: 3,
+    contents: [
+      { kind: 'agents', label: 'Agents', count: 3, href: '/docs/reference/agents' },
+    ],
     maturity: 'Stable',
     href: `/docs/plugins/${name}`,
     ...overrides,

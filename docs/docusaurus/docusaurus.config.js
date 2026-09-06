@@ -3,9 +3,12 @@
 // @ts-check
 import { themes as prismThemes } from 'prism-react-renderer';
 import remarkGithubAlert from 'remark-github-blockquote-alert';
+import remarkDirective from 'remark-directive';
 import * as path from 'path';
 import { labelRegistry } from './src/data/labelRegistry';
-import { loadPackageCards } from './src/data/marketplaceCounts';
+import { loadPackageCards } from './src/data/pluginManifestCards';
+import remarkTableCaption from './plugins/remark-table-caption.mjs';
+import rehypeTableScope from './plugins/rehype-table-scope.mjs';
 
 const packageCards = loadPackageCards(
   path.resolve(__dirname, '../../.github/plugin/marketplace.json'),
@@ -50,6 +53,7 @@ const config = {
 
   markdown: {
     format: 'detect',
+    mermaid: true,
     hooks: {
       onBrokenMarkdownLinks: 'throw',
     },
@@ -80,7 +84,8 @@ const config = {
           showLastUpdateAuthor: true,
           editUrl: ({ docPath }) =>
             `https://github.com/microsoft/hve-core/tree/main/docs/${docPath}`,
-          remarkPlugins: [remarkGithubAlert],
+          remarkPlugins: [remarkGithubAlert, remarkDirective, remarkTableCaption],
+          rehypePlugins: [rehypeTableScope],
         },
         blog: false,
         theme: {
@@ -91,13 +96,20 @@ const config = {
   ],
 
   themes: [
+    '@docusaurus/theme-mermaid',
     [
       '@easyops-cn/docusaurus-search-local',
       /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
       ({
         hashed: true,
+        docsDir: '../',
+        indexBlog: false,
         language: ['en'],
-        highlightSearchTermsOnTargetPage: true,
+        // Disabled: highlighting search terms on the target page injects <mark>
+        // elements and auto-scrolls to them, which disrupts screen readers
+        // (spurious "highlight" announcements + focus/scroll jumps) with no
+        // keyboard affordance to dismiss it.
+        highlightSearchTermsOnTargetPage: false,
         explicitSearchResultPath: true,
       }),
     ],
@@ -109,6 +121,9 @@ const config = {
       image: 'img/microsoft-logo.svg',
       colorMode: {
         respectPrefersColorScheme: true,
+      },
+      mermaid: {
+        theme: { light: 'neutral', dark: 'dark' },
       },
       docs: {
         sidebar: {

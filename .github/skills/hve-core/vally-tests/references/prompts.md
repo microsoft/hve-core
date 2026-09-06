@@ -75,7 +75,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: when a protocol section is present, each step heading MUST take the form `### Step N: Short Summary` and each phase heading MUST take the form `### Phase N: Short Summary` with a descriptive summary after the colon.
 * Suggested stimulus: ask the assistant to list the step or phase headings of a named prompt in order.
 * Grader recommendation: `regex` with pattern `(?m)^###\s+(?:Step|Phase)\s+\d+:\s+\S.+`.
-* Evidence: `.github/prompts/ado/ado-add-work-item.prompt.md` demonstrates numbered step headings with descriptive summaries.
+* Evidence: `.github/prompts/experimental/cspell-config.prompt.md` demonstrates numbered step headings with descriptive summaries.
 
 ### Check 7: File References as Markdown Links
 

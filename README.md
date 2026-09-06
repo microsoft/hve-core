@@ -2,7 +2,7 @@
 title: HVE Core
 description: Hypervelocity Engineering prompt library for GitHub Copilot with convention-driven AI workflows and validated artifacts
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-13
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -52,14 +52,23 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 3. Select **RPI Agent** from the agent picker or run `/rpi`, then describe the task you want to complete.
 
 > [!TIP]
-> Using GitHub Copilot CLI? Install as a plugin instead:
+> Using GitHub Copilot CLI? Choose a marketplace source:
+>
+> * Ref-less current `main`: `microsoft/hve-core`
+> * Moving reviewed channels: `microsoft/hve-core#release/prerelease` and `microsoft/hve-core#release/stable`
+> * Immutable exact releases: `microsoft/hve-core#prerelease-v<version>` and `microsoft/hve-core#v<version>`
+>
+> For example, register the development tip and install the HVE Core plugin:
 >
 > ```bash
-> copilot plugin marketplace add microsoft/hve-core#<ref>
+> copilot plugin marketplace add microsoft/hve-core
 > copilot plugin install hve-core@hve-core
 > ```
 >
-> The marketplace ref selects the catalog, which pins matching immutable plugin bytes. Keep one Stable or PreRelease registration active at a time. See [CLI Plugins](docs/getting-started/methods/cli-plugins.md) for details.
+> Reviewed source moves from `main` to `release/prerelease` to `release/stable`.
+> Behavior when switching or duplicating same-name marketplace registrations
+> has not been observed. See [CLI Plugins](docs/getting-started/methods/cli-plugins.md)
+> for details.
 
 ## Choose Your Path
 
@@ -88,6 +97,7 @@ Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
 |------------------------------------------------------------------|--------------------------------------------------|
 | [Getting Started](docs/getting-started/README.md)                | Setup and first workflow tutorial                |
 | [HVE Core Identity](docs/getting-started/packages.md)            | Distribution channels and lifecycle disclosure   |
+| [Plugin Inventory](docs/plugins/hve-core.md)                     | One-plugin identity and included capabilities    |
 | [Package Migration](docs/getting-started/package-migration.md)   | Move from retired distribution identities        |
 | [RPI Workflow](docs/rpi/README.md)                               | Deep dive into Research, Plan, Implement, Review |
 | [Contributing](docs/contributing/README.md)                      | Create custom agents, instructions, and prompts  |
@@ -95,17 +105,6 @@ Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
 | [Instructions Reference](.github/instructions/README.md)         | All coding instructions                          |
 | [AI Artifacts Architecture](docs/architecture/ai-artifacts.md)   | Prompt engineering framework and artifact types  |
 | [Validation Standards](docs/contributing/ai-artifacts-common.md) | CI/CD validation pipeline and quality gates      |
-
-## Label Management
-
-Repository labels are declared in [`.github/labels.yml`](.github/labels.yml) and synced automatically by the [Label Sync](.github/workflows/label-sync.yml) workflow on push to `main` or via manual `workflow_dispatch`.
-
-| Task               | How                                                                                                                                                                                                 |
-|--------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Add a label**    | Add an entry with `name`, `color` (bare hex, no `#`), and `description` to `.github/labels.yml`, then push to `main`                                                                                |
-| **Update a label** | Edit the existing entry's `color` or `description`                                                                                                                                                  |
-| **Rename a label** | Add an `aliases` array under the new canonical name listing the old name; the sync migrates existing assignments automatically                                                                      |
-| **Delete a label** | Remove it manually in the [GitHub Labels UI](https://github.com/microsoft/hve-core/labels). Deleting an entry from the file does **not** delete it from GitHub (the workflow runs in additive mode) |
 
 ## Contributing
 

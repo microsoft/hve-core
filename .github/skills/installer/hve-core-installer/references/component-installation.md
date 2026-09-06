@@ -11,7 +11,7 @@ description: Phase 7 component installation and the Phase 7 upgrade mode for the
 
 After Phase 6 completes, offer users the option to copy HVE-Core components into their target repository. This phase ONLY applies to clone-based installation methods (1-6), NOT to extension installation.
 
-A component is one agent, prompt, instruction, or complete skill declared by exactly one package recipe in `.github/plugin/marketplace.json`. Every Phase 7 operation resolves against a single selected package, so the package is chosen before any profile or component. Component paths use marketplace form and map to canonical target paths without flattening:
+A component is one agent, prompt, instruction, or complete skill declared by root `plugin.json`. Every Phase 7 operation validates its component paths against that manifest before writing. The manifest uses repository-relative `.github/...` paths; component selections use installer form and map to canonical target paths without flattening:
 
 <!-- <component-kind-map> -->
 | Component path                           | Target path                                                          |
@@ -28,26 +28,6 @@ Hooks are never copied by this phase. Skills copy as complete directories, minus
 
 If user selected **Extension Quick Install** (Option 1) in Phase 2, skip Phase 7 entirely. Extension installation bundles all components automatically.
 
-### Package Selection
-
-Before any profile or component resolution, read `.github/plugin/marketplace.json` from the HVE-Core source at `$hveCoreBasePath` and present every `plugins[].name` with its `x-hve.displayName`. The user selects exactly one package name, recorded as `$selectedPackage`.
-
-<!-- <package-selection-prompt> -->
-```text
-📦 Package Selection (required)
-
-HVE-Core publishes several packages. Component installation resolves against one.
-
-  • hve-core-all — every package component, and the only package declaring the starter profile
-  • hve-core — the focused core package
-  • [remaining catalog package names with display names]
-
-Which package? (exact name)
-```
-<!-- </package-selection-prompt> -->
-
-Match the response against catalog names exactly. Reject a name that is absent from the catalog, matches more than one entry, or is a guess, and re-prompt; never substitute a default package. Reject a later component that is not declared membership of `$selectedPackage`, and offer either a different component or a package reselection. Both rejections happen before collision detection and before the first write, matching the same failures the copy scripts raise.
-
 ### Checkpoint 6: Component Selection
 
 Present the component selection prompt:
@@ -59,15 +39,9 @@ Present the component selection prompt:
 HVE-Core publishes agents, prompts, instructions, and skills.
 Copying them into your repository enables local customization and offline use.
 
-🔬 Starter profile (24 components, package hve-core-all)
-  • RPI Agent, Documentation, and the RPI and HVE Builder subagents
-  • RPI skills: research, plan, plan-critique, implement, review, walkthrough, quick, challenger
-  • HVE Builder skills: builder, builder-tester, prompt-analyze, prompt-builder, prompt-refactor, vally-tests
-  • Documentation skill, the /rpi prompt, and the tracking and builder instructions
-
 Options:
-  [1] Install the starter profile from hve-core-all (recommended)
-  [2] Choose components from [selected package]
+  [1] Install every component declared by the HVE Core plugin
+  [2] Choose components from the HVE Core plugin
   [3] Skip component installation
 
 Your choice? (1/2/3)
@@ -76,45 +50,53 @@ Your choice? (1/2/3)
 
 User input handling:
 
-* "1", "starter", "core", "recommended" → Set `$selectedPackage` to `hve-core-all` and resolve the `starter` profile
+* "1", "all", "complete" → Select every agent, prompt, instruction, and skill declared by root `plugin.json`; set the selection name to `all`
 * "2", "choose", "custom", "components" → Proceed to the Custom Selection sub-flow
 * "3", "skip", "none", "no" → Skip to the final success report
 * Unclear response → Ask for clarification
 
 ### Custom Selection Sub-Flow
 
-When the user selects option 2, read `.github/plugin/marketplace.json` from the HVE-Core source at `$hveCoreBasePath` and present the `$selectedPackage` entry's components grouped by kind. Show each component's `x-hve.componentMaturity` label from that entry, defaulting to `stable` when the entry declares none. Collect the user's component paths in marketplace form and reject any path outside that entry before resolution.
+When the user selects option 2, read root `plugin.json` from the HVE-Core source at `$hveCoreBasePath`. Present the declared components grouped by kind. Convert canonical repository-relative manifest paths to installer paths before passing them to collision detection or component copy.
 
 ### Selection Resolution
 
-Resolve the chosen profile or component list before any confirmation or write. Run the resolver from the HVE-Core clone:
+Resolve the chosen component list before any confirmation or write. Use these deterministic conversions:
 
-<!-- <selection-resolution> -->
-```powershell
-Import-Module "$hveCoreBasePath/scripts/lib/Modules/MarketplaceHelpers.psm1" -Force
-$catalog = Get-MarketplaceCatalog -Path "$hveCoreBasePath/.github/plugin/marketplace.json"
-$entry = @($catalog['plugins']) | Where-Object { $_['name'] -eq $selectedPackage }
-$agentIndex = Get-MarketplaceAgentIndex -Catalog $catalog -RepoRoot $hveCoreBasePath
+| Manifest declaration                                          | Installer component path                 |
+|---------------------------------------------------------------|------------------------------------------|
+| `agents/<subpath>/<name>.agent.md`                            | `agents/<subpath>/<name>.md`             |
+| `commands` entry `prompts/<subpath>/<name>.prompt.md`         | `commands/<subpath>/<name>.md`           |
+| `rules` entry `instructions/<subpath>/<name>.instructions.md` | `rules/<subpath>/<name>.instructions.md` |
+| `skills/<subpath>/<name>`                                     | `skills/<subpath>/<name>`                |
 
-# Only hve-core-all declares the starter profile; resolve it with $selectedPackage = 'hve-core-all'.
-$selection = Resolve-MarketplaceComponentSelection -Entry $entry -RepoRoot $hveCoreBasePath -AgentIndex $agentIndex -ProfileName 'starter'
+Reject a component that is absent from the converted manifest membership before collision detection and before the first write. The copy scripts repeat the same membership check during preflight.
 
-# Or an explicit selection
-$selection = Resolve-MarketplaceComponentSelection -Entry $entry -RepoRoot $hveCoreBasePath -AgentIndex $agentIndex -Component $chosenComponents
+### Upstream Source Verification
+
+For Methods 3 (Mounted) and 5 (Multi-Root), verify the pre-existing clone before collision detection or component copy. This is an advisory trust signal, not proof of repository integrity, and it must not silently reject an intentional fork or local development clone.
+
+Run the read-only check against the resolved HVE-Core source path:
+
+```bash
+git -C <HveCoreBasePath> remote get-url origin
 ```
-<!-- </selection-resolution> -->
 
-The resolver requires the `PowerShell-Yaml` module. If the import fails, tell the user to run `Install-Module PowerShell-Yaml -Scope CurrentUser` and retry.
+Treat these `github.com/microsoft/hve-core` forms as expected, with an optional `.git` suffix and optional trailing slash where the URL form permits it:
 
-Each resolved record carries `PackagePath`, `Kind`, `SourcePath`, `Maturity`, and `Origin`. `Origin` is `selected` for a chosen component and `dependency` for a component added by agent handoff closure or a literal `#file:` reference. The resolver fails when a selection is not membership of the selected package's recipe, when that package declares no such profile, or when a visible dependency does not resolve inside the same recipe.
+* `https://github.com/microsoft/hve-core.git`
+* `git@github.com:microsoft/hve-core.git`
+* `ssh://git@github.com/microsoft/hve-core.git`
+
+When `origin` is missing or does not match an expected HTTPS, SCP-like SSH, or `ssh://` form, display the observed value when available and warn that copied components may come from a fork or substituted local source. Ask `Continue using this HVE-Core source? (yes/no)`. Continue to collision detection only after an explicit `yes`; on `no` or an unclear answer, stop before any target-repository write.
 
 ### Collision Detection
 
-Run the pre-write check with the resolved component list. It validates every path, reports canonical maturity, and reports component-level collisions. A file component collides on its full target path; a skill component collides on its target directory. Nothing is written.
+Run the pre-write check with the resolved component list. It validates every path and reports component-level collisions. A file component collides on its full target path; a skill component collides on its target directory. Nothing is written.
 
-**PowerShell:** Run [scripts/collision-detection.ps1](../scripts/collision-detection.ps1) with `-HveCoreBasePath`, `-TargetRoot`, `-PackageName` (`$selectedPackage`), and `-Component`.
+**PowerShell:** Run [scripts/collision-detection.ps1](../scripts/collision-detection.ps1) with `-HveCoreBasePath`, `-TargetRoot`, and `-Component`.
 
-**Bash:** Run [scripts/collision-detection.sh](../scripts/collision-detection.sh) with the HVE-Core base path, target root, package name, and component paths as arguments, in that order.
+**Bash:** Run [scripts/collision-detection.sh](../scripts/collision-detection.sh) with the HVE-Core base path, target root, and component paths as arguments, in that order.
 
 Output lines:
 
@@ -129,19 +111,15 @@ COLLISION_TARGETS=<comma-separated target-relative paths>
 
 ### Confirmation Prompt
 
-Present every selected and dependency-added component with its maturity before any write. Call out non-stable components explicitly.
+Present every selected component before any write.
 
 <!-- <component-confirmation-prompt> -->
 ```text
 📋 Components to install
 
-| Component        | Kind   | Maturity   | Added by   |
-|------------------|--------|------------|------------|
-| [component path] | [kind] | [maturity] | selected   |
-| [component path] | [kind] | [maturity] | dependency |
-
-⚠️ [N] component(s) are labeled preview or experimental. They may change or be
-   removed without notice.
+| Component        | Kind   |
+|------------------|--------|
+| [component path] | [kind] |
 
 Proceed with installation? (yes/no)
 ```
@@ -191,9 +169,9 @@ Keeping a skill keeps its whole target directory.
 
 After confirmation and collision resolution, execute the copy.
 
-**PowerShell:** Run [scripts/component-copy.ps1](../scripts/component-copy.ps1) with `-HveCoreBasePath`, `-TargetRoot`, `-PackageName` (`$selectedPackage`), `-SelectionName` (`starter` or `custom`), and `-Component`. Add `-KeepExisting -Collisions <component paths>` for kept components.
+**PowerShell:** Run [scripts/component-copy.ps1](../scripts/component-copy.ps1) with `-HveCoreBasePath`, `-TargetRoot`, `-SelectionName` (`all` or `custom`), and `-Component`. Add `-KeepExisting -Collisions <component paths>` for kept components.
 
-**Bash:** Run [scripts/component-copy.sh](../scripts/component-copy.sh) with the HVE-Core base path, target root, package name, selection name, and component paths as arguments, in that order. Set `KEEP_EXISTING=true` and `COLLISIONS_FILE=<newline-delimited component paths>` for kept components.
+**Bash:** Run [scripts/component-copy.sh](../scripts/component-copy.sh) with the HVE-Core base path, target root, selection name, and component paths as arguments, in that order. Set `KEEP_EXISTING=true` and `COLLISIONS_FILE=<newline-delimited component paths>` for kept components.
 
 Both implementations validate membership, path safety, and the existing manifest schema before the first write, and produce equivalent paths, hashes, manifests, and output.
 
@@ -206,11 +184,10 @@ The copy writes `.hve-tracking.json` at the target root using schema version 2:
 {
   "schemaVersion": 2,
   "source": "microsoft/hve-core",
-  "version": "3.3.106",
-  "installed": "2026-08-02T00:00:00Z",
+  "version": "3.2.2",
+  "installed": "2026-08-13T00:00:00Z",
   "selection": {
-    "package": "hve-core-all",
-    "profile": "starter",
+    "profile": "custom",
     "components": ["agents/hve-core/rpi-agent.md", "skills/rpi/rpi-plan"]
   },
   "files": {
@@ -218,7 +195,7 @@ The copy writes `.hve-tracking.json` at the target root using schema version 2:
       "component": "agents/hve-core/rpi-agent.md",
       "kind": "agent",
       "maturity": "stable",
-      "version": "3.3.106",
+      "version": "3.2.2",
       "sha256": "<hash>",
       "status": "managed"
     }
@@ -227,7 +204,7 @@ The copy writes `.hve-tracking.json` at the target root using schema version 2:
 ```
 <!-- </tracking-manifest> -->
 
-Files are keyed by target-relative path. The manifest records the selected package once under `selection.package`; file entries carry component ownership only, and no absolute target root is stored. There is no version 1 compatibility layer: a missing or unsupported `schemaVersion` fails before any target change with clean-reinstall guidance.
+Files are keyed by target-relative path. The `selection` object records only the profile label and installed component paths; file entries carry component ownership, and no package identity or absolute target root is stored. There is no version 1 compatibility layer: a missing or unsupported `schemaVersion` fails before any target change with clean-reinstall guidance.
 
 ### Component Copy Success Report
 
@@ -264,9 +241,9 @@ At Phase 7 start, check for an existing manifest.
 
 **Bash:** Run [scripts/upgrade-detection.sh](../scripts/upgrade-detection.sh) with the HVE-Core base path and optional target root as arguments.
 
-Output keys: `UPGRADE_MODE`, and when a manifest exists, `INSTALLED_VERSION`, `SOURCE_VERSION`, `VERSION_CHANGED`, `INSTALLED_PACKAGE`, `INSTALLED_PROFILE`, and `INSTALLED_COMPONENTS`. `INSTALLED_PACKAGE` is the recorded `selection.package`, and is emitted as an empty value when a schema version 2 manifest records none. An unsupported `schemaVersion` fails with clean-reinstall guidance.
+Output keys: `UPGRADE_MODE`, and when a manifest exists, `INSTALLED_VERSION`, `SOURCE_VERSION`, `VERSION_CHANGED`, `INSTALLED_PROFILE`, and `INSTALLED_COMPONENTS`. An unsupported `schemaVersion` fails with clean-reinstall guidance.
 
-Replay the upgrade against `INSTALLED_PACKAGE`: pass it as `-PackageName` or the Bash package argument for collision detection and copy, and re-resolve `INSTALLED_COMPONENTS` through that package's entry so the upgrade reflects current dependency closure and maturity. When `INSTALLED_PACKAGE` is empty, stop and run Package Selection again so the user names one exact catalog package before any replay; infer nothing from the recorded profile or components.
+Replay `INSTALLED_COMPONENTS` after validating each recorded path against the current root `plugin.json` membership. Pass the recorded profile as `-SelectionName` or the Bash selection-name argument. If any recorded component is no longer declared, stop and ask the user to choose a current component set before writing.
 
 ### Upgrade Prompt
 
@@ -278,7 +255,6 @@ If upgrade mode with version change:
 
 Source: microsoft/hve-core v[SOURCE_VERSION]
 Installed: v[INSTALLED_VERSION]
-Package: [INSTALLED_PACKAGE]
 Selection: [INSTALLED_PROFILE]
 
 Checking file status...
@@ -398,4 +374,3 @@ Version: v[OLD] → v[NEW]
 Proceeding to final success report...
 ```
 <!-- </upgrade-success> -->
-

@@ -41,24 +41,8 @@ jobs:
       - name: Create logs directory
         run: mkdir -p logs
 
-      - name: Guard tracked plugin output and symbolic links
-        run: npm run lint:plugin-output
-      - name: Validate marketplace manifest
-        run: npm run lint:marketplace
+      - name: Validate plugin manifest and marketplace catalog
+        run: npm run lint:plugin-manifest
 
       - name: Validate hook manifests
         run: npm run lint:hooks
-
-      - name: Regenerate plugins from source
-        run: npm run plugin:generate
-
-      - name: Record deterministic generation evidence
-        run: npm run plugin:evidence
-
-      - name: Upload plugin release evidence
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: plugin-release-evidence
-          path: logs/plugin-release-evidence.json
-          if-no-files-found: warn

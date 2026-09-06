@@ -3,11 +3,15 @@ title: Project Planning Agents
 description: Agents for requirements gathering, architecture decisions, and security planning
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-29
+ms.date: 2026-08-12
 ms.topic: concept
+keywords:
+  - project planning
+  - agents
+  - requirements
 ---
 
-Four agents and **three** portable skills support structured project planning across requirements, architecture, security, **and performance**. Each agent follows a guided workflow to produce specific deliverables, from business requirements documents to security assessment plans and reliability targets.
+Nine agents and **four** portable skills support structured project planning across requirements, architecture, backlog management, security, proposal response work, **and performance**. Each agent follows a guided workflow to produce specific deliverables, from business requirements documents to security assessment plans and reliability targets.
 
 ## Why Use Project Planning Agents
 
@@ -24,12 +28,20 @@ These agents bring structure and consistency to activities that teams often hand
 
 ## Agent Overview
 
-| Agent                                     | Sub-Category | Workflow                    | Persistence | Key Output                     |
-|-------------------------------------------|--------------|-----------------------------|-------------|--------------------------------|
-| [BRD Builder](brd-prd-builders)           | Requirements | 3-phase Q&A                 | JSON state  | Business requirements document |
-| [PRD Builder](brd-prd-builders)           | Requirements | 7-phase Q&A                 | JSON state  | Product requirements document  |
-| [ADR Creator](adr-creation)               | Architecture | 3-phase Frame/Decide/Govern | JSON state  | Architecture decision record   |
-| [Security Planner](../security/README.md) | Security     | 6-phase STRIDE              | JSON state  | Security model and backlog     |
+| Agent                                                                                                   | Sub-Category | Workflow                    | Persistence    | Key Output                                      |
+|---------------------------------------------------------------------------------------------------------|--------------|-----------------------------|----------------|-------------------------------------------------|
+| [BRD Builder](brd-prd-builders)                                                                         | Requirements | 3-phase Q&A                 | JSON state     | Business requirements document                  |
+| [PRD Builder](brd-prd-builders)                                                                         | Requirements | 7-phase Q&A                 | JSON state     | Product requirements document                   |
+| [Meeting Analyst](../../reference/agents/project-planning/meeting-analyst.md)                           | Requirements | Transcript analysis         | Conversational | Extracted product requirements                  |
+| [UX UI Designer](../../reference/agents/project-planning/ux-ui-designer.md)                             | Requirements | JTBD and journey mapping    | Conversational | User journeys and accessibility requirements    |
+| [ADR Creator](adr-creation)                                                                             | Architecture | 3-phase Frame/Decide/Govern | JSON state     | Architecture decision record                    |
+| [System Architecture Reviewer](../../reference/agents/project-planning/system-architecture-reviewer.md) | Architecture | Design trade-off review     | Conversational | Architecture assessment                         |
+| [Network ISA-95 Planner](../../reference/agents/project-planning/network-isa95-planner.md)              | Architecture | Layered network planning    | Conversational | ISA-95 network plan                             |
+| [Backlog Manager](../backlog/README.md)                                                                 | Backlog      | Classify and dispatch       | Tracking files | Tracker operations across ADO, GitHub, and Jira |
+| [Functional Planner](../backlog/README.md)                                                              | Backlog      | PRD to hierarchy            | Tracking files | Reviewed work-item hierarchy handoff            |
+| [Security Planner](../security/README.md)                                                               | Security     | 6-phase STRIDE              | JSON state     | Security model and backlog                      |
+
+`Security Planner` is documented with the security agents and is listed here because it participates in project planning. The three backlog executor subagents are dispatched by `Backlog Manager` rather than invoked directly, so they are not listed as user-facing agents.
 
 ## Skills Overview
 
@@ -38,6 +50,7 @@ These agents bring structure and consistency to activities that teams often hand
 | [requirements-author](pathname://../../../.github/skills/project-planning/requirements-author/SKILL.md) | Requirements              | Drives the BRD/PRD Builder Q&A workflows                         |
 | [architecture-diagrams](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md)     | Architecture              | ASCII/Mermaid diagrams from IaC analysis                         |
 | [performance-slo-planner](../../reference/skills/project-planning/performance-slo-planner.md)           | Performance & Reliability | SLIs, SLOs, load models, test matrices, and reliability backlogs |
+| [proposal-response](../../reference/skills/project-planning/proposal-response.md)                       | Proposal Responses        | Traceable internal-review question, claim, evidence, and drafts  |
 
 ## Requirements
 
@@ -47,6 +60,8 @@ The BRD Builder follows a three-phase lifecycle (Discover, Define, Govern) and t
 > BRD and PRD builders share the same underlying workflow engine. Switching between them mid-project requires only a scope adjustment, not a restart.
 
 See the [BRD & PRD Builders](brd-prd-builders) guide for the shared workflow, feature comparison, and invocation details.
+
+For RFI, RFP, tender, bid, or questionnaire work, use `proposal-response` directly or run the full `analyze`, `contribute`, `draft` sequence inside BRD Builder or PRD Builder, naming the approved BRD or PRD as the source. The output always remains internal review material. See the [canonical proposal response workflow](brd-prd-builders#proposal-response-workflow) for operations, examples, and human review boundaries.
 
 ## Architecture
 
@@ -95,6 +110,7 @@ Select any agent using the agent picker in the Copilot Chat pane. Each agent sta
 | Visual documentation   | architecture-diagrams skill | Generate ASCII or Mermaid architecture diagrams for onboarding or reviews  |
 | Performance targets    | performance-slo-planner     | Define SLIs, SLOs, load models, and reliability backlogs before launch     |
 | Security review        | Security Planner            | Assess threats and plan mitigations after architecture decisions stabilize |
+| Proposal questionnaire | proposal-response           | Analyze questions or draft traceable internal-review response evidence     |
 
 ### Recommended Sequencing
 
@@ -108,8 +124,7 @@ For greenfield projects, follow this order to build artifacts that feed into eac
 ## Related Documentation
 
 * [RPI Documentation](../../rpi/README.md): Task research, planning, and implementation workflows
-* [GitHub Backlog Manager](../github-backlog/README.md): Issue lifecycle management for GitHub repositories
-* [ADO Backlog Manager](../ado-backlog/README.md): Work item management for Azure DevOps projects
+* [Backlog Management](../backlog/README.md): Work and issue lifecycle management across Azure DevOps, GitHub, and Jira
 
 ---
 

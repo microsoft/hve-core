@@ -17,7 +17,7 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 10
 ---
@@ -43,6 +43,8 @@ The code review system is a single human-gated agent that reviews your changes b
 
 ```mermaid
 flowchart TD
+  accTitle: Code Review Architecture and Perspective Subagents
+  accDescr: The orchestrator dispatches six review perspectives, uses interactive subagents and shared protocols, and combines code-review and domain skills into one review report.
   ORCH["Code Review<br/>(Orchestrator)"]
 
   subgraph Perspectives
@@ -100,6 +102,8 @@ Each subagent writes structured JSON findings to disk. The orchestrator reads ev
 
 A single user-invocable **Code Review** agent orchestrates the review. It owns the human-gated flow and dispatches one thin subagent per selected perspective. Perspective selection (which lanes run) and depth level (how deeply each lane verifies) are independent choices.
 
+:::table{caption="Review perspectives and the subagents that own each lane"}
+
 | Perspective     | Subagent                  | Lane focus                                                                                                                 |
 |-----------------|---------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | `functional`    | Code Review Functional    | Logic, edge cases, error handling, concurrency, contract correctness                                                       |
@@ -109,6 +113,8 @@ A single user-invocable **Code Review** agent orchestrates the review. It owns t
 | `pr`            | Code Review PR            | PR-level summary, scope hygiene, validation evidence, follow-up items                                                      |
 | `readiness`     | Code Review Readiness     | Non-code: PR description accuracy, linked-issue alignment, checkbox and mergeable readiness, changed-documentation content |
 | `full`          | all of the above          | Runs every perspective and synthesizes one merged assessment                                                               |
+
+:::
 
 The `security` and `accessibility` perspectives are self-contained and skill-backed. They source their review logic from the `code-review` and domain skills and do not call into the standalone Security Reviewer or Accessibility Reviewer agents. When a high-risk surface is in scope, the perspective surfaces a one-line note that a deeper standalone audit exists.
 
@@ -132,6 +138,8 @@ The agent runs a human-gated flow. Each step pauses for your input where the tab
 
 ```mermaid
 flowchart TD
+  accTitle: Code Review Seven-Step Workflow
+  accDescr: Review proceeds from context bootstrap through orientation, perspective and depth selection, dispatch preparation, a human-steered walk-back loop, parallel perspective dispatch, and merged persistence.
   S1["Step 1: Context Bootstrap<br/>compute diff, draft change brief, detect hotspots, resolve PR context"]
   S2["Step 2: Orientation Floor + Dispatch Board<br/>factual walkthrough, enumerated board (gate)"]
   S3["Step 3: Perspective + Depth Selection (gate)"]

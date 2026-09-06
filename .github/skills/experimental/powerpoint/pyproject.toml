@@ -10,7 +10,9 @@ dependencies = [
     "pyyaml",
     "ruamel.yaml",  # required by generate_themes.py for round-trip YAML fidelity
     "cairosvg",
-    "Pillow",
+    # CVE-2026-54058/54059/54060/55379/55798/59199/59205 fixed in 12.3.0.
+    # Update policy: re-check NVD + OSV advisories quarterly and on any pip-audit alert.
+    "pillow>=12.3.0,<13.0",
     # MuPDF C library — pin to track security fixes; review on every minor bump.
     # Update policy: re-check NVD + OSV advisories quarterly and on any pip-audit alert.
     "pymupdf>=1.27.1,<2.0",

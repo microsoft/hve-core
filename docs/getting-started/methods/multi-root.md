@@ -3,7 +3,7 @@ title: Multi-Root Workspace Installation
 description: Set up your enterprise fork of HVE Core using VS Code multi-root workspaces
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - multi-root workspace
@@ -131,9 +131,17 @@ Use the absolute clone path:
     },
     "chat.agentSkillsLocations": {
       "/workspaces/hve-core/.github/skills": true,
+      "/workspaces/hve-core/.github/skills/accessibility": true,
       "/workspaces/hve-core/.github/skills/shared": true,
       "/workspaces/hve-core/.github/skills/coding-standards": true,
+      "/workspaces/hve-core/.github/skills/data-science": true,
       "/workspaces/hve-core/.github/skills/design-thinking": true,
+      "/workspaces/hve-core/.github/skills/hve-core": true,
+      "/workspaces/hve-core/.github/skills/installer": true,
+      "/workspaces/hve-core/.github/skills/project-planning": true,
+      "/workspaces/hve-core/.github/skills/rai": true,
+      "/workspaces/hve-core/.github/skills/rpi": true,
+      "/workspaces/hve-core/.github/skills/security": true,
       "My Project/.github/skills": true
     }
   },
@@ -172,6 +180,20 @@ Use the relative clone path from the workspace file's directory:
     "chat.instructionsFilesLocations": {
       "../../hve-core/.github/instructions/hve-core": true,
       "../../hve-core/.github/instructions/shared": true
+    },
+    "chat.agentSkillsLocations": {
+      "../../hve-core/.github/skills": true,
+      "../../hve-core/.github/skills/accessibility": true,
+      "../../hve-core/.github/skills/coding-standards": true,
+      "../../hve-core/.github/skills/data-science": true,
+      "../../hve-core/.github/skills/design-thinking": true,
+      "../../hve-core/.github/skills/hve-core": true,
+      "../../hve-core/.github/skills/installer": true,
+      "../../hve-core/.github/skills/project-planning": true,
+      "../../hve-core/.github/skills/rai": true,
+      "../../hve-core/.github/skills/rpi": true,
+      "../../hve-core/.github/skills/security": true,
+      "../../hve-core/.github/skills/shared": true
     }
   }
 }

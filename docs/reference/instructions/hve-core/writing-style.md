@@ -2,7 +2,13 @@
 title: Hve Core/Writing Style
 description: "Writing style conventions for voice, tone, and language in markdown content"
 sidebar_position: 8
-ms.date: 2026-07-23
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - hve-core
+  - hve-core/writing-style
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,8 +28,10 @@ Writing style conventions for voice, tone, and language in markdown content
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply this guidance whenever authoring or revising Markdown prose so voice,
+tone, sentence structure, and vocabulary match the audience and purpose. Use
+the Markdown instructions for syntax and lint rules, and prefer any
+surface-specific community or Mural style when that narrower context applies.
 
 ## Example usage
 

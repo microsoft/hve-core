@@ -83,8 +83,111 @@ Every one of them requires values the agent must not invent. Ask for subscriptio
 * Subscription and tenant.
 * Region, which must be consistent across the resource group and the dashboard.
 * Resource naming, which usually follows an existing organizational convention.
+* The environment this deployment serves. It has no default, because the templates are deployed once per environment.
 * The RBAC principal that will hold `Monitoring Reader`, and `Monitoring Data Reader` when Prometheus data is involved.
-* Retention, which is a cost decision rather than a default.
+* Retention, which is a cost decision rather than a default, and which is also the deletion boundary.
+* The fleet ingest token and the TLS certificate and key paths for the collector, which come from the operator's secret store and are never generated here.
+
+### Separation is deployment topology, not an attribute
+
+The default is one collector endpoint, one ingest token, one Application Insights resource, and one Log Analytics workspace per environment.
+
+A resource attribute such as `service.namespace` or `deployment.environment.name` is a grouping key. It lets a reader filter; it does not stop a reader removing the filter. Anyone holding `Monitoring Reader` on a workspace can read everything in that workspace. Never describe an attribute as an isolation control, and scope each reader assignment to a single workspace rather than to the resource group or subscription.
+
+A shared workspace across environments is a legitimate cost trade-off, but say what it costs: every authorized reader gains fleet-wide visibility across all of them, and no attribute can take that back afterwards.
+
+This is environment separation, not customer multi-tenancy. Copilot's exporter sends the same static headers from every workstation, so nothing in the payload identifies a tenant in a way worth trusting for isolation.
+
+### The receiver is authenticated and encrypted by default
+
+The generated collector requires an active bearer authenticator and TLS material, both supplied from the environment. Neither is present as a commented-out suggestion, because a control that must be uncommented is a control that will not be.
+
+Be accurate about the token's limits when presenting it. Copilot sends a fixed header set, so a static shared token is the mechanism available: it authenticates the fleet rather than a person, cannot be rotated for one user, and is extractable from any workstation. It is still worth having, because the alternative is a receiver that accepts and bills spans from anything that can route to it.
+
+Where an ingress controller or load balancer terminates TLS, the `tls` blocks are removed and the terminating hop owns certificate lifecycle and cipher policy. Record that ownership rather than leaving it implied.
+
+One asymmetry to state plainly: this configuration governs the server. How Copilot's exporter validates the server certificate is the exporter's behavior, and nothing here changes it.
+
+### Mandatory authentication silently drops agent-host telemetry
+
+Raise this before an operator deploys, because it is a data-loss defect and its first symptom is an absence.
+
+Managed `telemetry.headers` are applied to the extension exporter directly rather than through environment variables. That is deliberate and correct: an environment variable is inherited by the tool subprocesses the agent spawns, so delivering the ingest token that way would put a fleet-wide write credential inside every model-directed subprocess. The consequence is a split. The extension's telemetry authenticates; the agent host's telemetry does not, and a receiver that requires authentication rejects it.
+
+A rejected OTLP export answers HTTP 401 or gRPC `UNAUTHENTICATED`. Neither is retryable under the OTLP specification, so the export is dropped rather than queued. Nothing is retried later and no partial data arrives. Whether VS Code surfaces the rejection to the developer is not established, so do not rely on someone reporting an error.
+
+Two fixes suggest themselves and both make the deployment less safe. Do not offer either:
+
+* **Putting the token in the environment** so the agent host inherits it. This is the exact path the extension-versus-agent-host split exists to prevent.
+* **Removing authentication from the receiver** so the agent host is accepted. This reopens ingestion to anything that can route to the endpoint, on a billed backend.
+
+#### The relay
+
+The carrier that does not require either concession is a per-workstation Collector between the agent host and the fleet endpoint.
+
+```text
+agent host ──unauthenticated──▶ local relay ──authenticated, TLS──▶ fleet receiver
+                (loopback)      (own config)
+```
+
+The agent host exports to `http://127.0.0.1:4318` with no credential, which it can already do. The relay holds the fleet credential in its own configuration and adds it on the upstream hop. The credential therefore lives in a file the relay reads, not in the environment VS Code hands to its children.
+
+Two conditions decide whether that property actually holds. State both when offering this:
+
+* The relay is launched **independently** of VS Code, as a service or a user daemon. A relay started from the same shell as VS Code, or as its child, may share the environment the split exists to keep clean.
+* The relay's credential is stored where the relay reads it and the editor does not, meaning its configuration file or a secret store, not an exported variable.
+
+The relay is the same Collector already used locally, so the fail-closed attribute allow-list applies to agent-host telemetry as well.
+
+#### What the relay does not do
+
+Be honest about what changed. The relay moves the exposure; it does not remove it.
+
+Its listener is unauthenticated by construction, so **any local process that can reach loopback can inject telemetry into the fleet backend** through it, carrying genuine service names. Binding to `127.0.0.1` is necessary and not sufficient: it keeps the listener off the network but says nothing about which local process connected. The relay authenticates the *workstation's relay* to the fleet endpoint. It does not authenticate the workstation, and it does not authenticate the developer. Any span arriving through it is attributable to the fleet credential and no further.
+
+The credential is also readable by whatever identity the relay runs as. That is a smaller blast radius than the environment of every agent-spawned subprocess, which is the point, but it is not zero.
+
+Tracked as `G-INF-7`.
+
+#### mTLS is preferred and not yet available
+
+The better answer is mutual TLS, where each workstation presents a client certificate and the receiver verifies it.
+
+The receiver half is settled. Supplying `tls.client_ca_file` alongside `cert_file` and `key_file` selects `RequireAndVerifyClientCert`, so the Collector rejects a connection with no client certificate or one signed by another authority, on both the gRPC and HTTP receivers:
+
+```yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+        tls:
+          cert_file: /etc/otel/server.crt
+          key_file: /etc/otel/server.key
+          # Presence of this field is what makes a client certificate
+          # mandatory rather than optional.
+          client_ca_file: /etc/otel/clients-ca.crt
+```
+
+The sender half is not settled. No primary source establishes that the VS Code agent host can present a client certificate, or that it reads an operating-system certificate store for one. Until that is known, this is a Collector capability rather than a reachable deployment, and offering it as available would be the same unbacked-claim pattern this skill has been correcting.
+
+The test that would settle it: stand up a receiver configured as above, point one workstation's agent host at it, and observe whether the handshake completes. A completed handshake settles it; a rejected one distinguishes "cannot present a certificate" from "presented the wrong certificate" in the Collector's own log.
+
+#### Make the failure detectable
+
+Do not let an operator infer success from an absence of errors. Verify positively that agent-host spans are arriving:
+
+1. Note which span categories only the agent host emits, so their absence is diagnostic rather than ambiguous.
+2. After a reload, query the backend for a span from that category within the last few minutes.
+3. If none arrives while extension telemetry does, the split is present and the relay is missing or misconfigured.
+
+The symptom to describe to an operator is a **whole category of spans missing while other telemetry looks healthy**, not an error in a log.
+
+### Lifecycle ownership
+
+Retention is the deletion policy. Data ages out at that boundary and not before, and the templates purge nothing on request. An erasure obligation for a named individual is an operator procedure run against the workspace; present it as owned work rather than implying the template handles it.
+
+Terraform state for these files contains the Application Insights connection string, a fleet-wide write credential. `sensitive = true` keeps it out of CLI display, not out of state. Say so, and recommend an encrypted remote backend with restricted access.
 
 Verify every API version and provider version against current documentation at generation time. Do not reuse a version because a template already contains it.
 

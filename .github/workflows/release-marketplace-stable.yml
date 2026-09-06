@@ -46,8 +46,7 @@ jobs:
           set -euo pipefail
           if [[ "$EVENT_NAME" == "release" ]]; then
             TAG="$EVENT_TAG"
-            VERSION="${TAG#hve-core-v}"
-            VERSION="${VERSION#v}"
+            VERSION="${TAG#v}"
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
             echo "tag=$TAG" >> "$GITHUB_OUTPUT"
             echo "Resolved version from release tag: $VERSION"
@@ -68,20 +67,19 @@ jobs:
           VERSION="$INPUT_VERSION"
           TAG="$INPUT_TAG"
 
-          # Strip leading 'v' and component prefix if present
+          # Strip the channel tag prefix if present
           VERSION="${VERSION#v}"
-          VERSION="${VERSION#hve-core-v}"
 
           # Auto-detect from latest release tag when no version specified
           if [ -z "$VERSION" ]; then
             TAG=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName -q '.[0].tagName' -R "$REPOSITORY")
-            VERSION="${TAG#hve-core-v}"
+            VERSION="${TAG#v}"
             echo "📦 Auto-detected version from latest release: $VERSION"
           fi
 
           if [ -z "$TAG" ] && [ -n "$VERSION" ]; then
             TAGS=$(gh release list --exclude-drafts --exclude-pre-releases --limit 100 --json tagName -q '.[].tagName' -R "$REPOSITORY")
-            TAG=$(printf '%s\n' "$TAGS" | grep -E "^hve-core-v?$VERSION$" | head -1)
+            TAG=$(printf '%s\n' "$TAGS" | grep -Fx "v$VERSION" | head -1)
           fi
 
           if [ -z "$TAG" ]; then
@@ -106,14 +104,13 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-  discover:
-    name: Discover Marketplace Packages
+  verify-catalog:
+    name: Verify Stable Catalog Version
     needs: [normalize-version]
     runs-on: ubuntu-latest
     permissions:
       contents: read
     outputs:
-      matrix: ${{ steps.discover.outputs.matrix }}
       version: ${{ steps.read-version.outputs.version }}
     steps:
       - name: Checkout code
@@ -121,9 +118,6 @@ jobs:
         with:
           ref: ${{ needs.normalize-version.outputs.tag }}
           persist-credentials: false
-
-      - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
 
       - name: Resolve effective version
         id: read-version
@@ -133,8 +127,8 @@ jobs:
         run: |
           set -euo pipefail
           version="$INPUT_VERSION"
-          # The released tag is the discovery source, so its catalog version and
-          # immutable plugin locator are what the marketplace publish resolves.
+          # The released tag is the publication source, so its catalog version
+          # is what the marketplace publish resolves.
           catalog_version=$(jq -r '.metadata.version' .github/plugin/marketplace.json)
           if [ "$catalog_version" != "$version" ]; then
             echo "::error::Catalog version $catalog_version at the release ref does not match $version"
@@ -142,22 +136,14 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      - name: Discover marketplace packages
-        id: discover
-        shell: pwsh
-        run: |
-          & ./scripts/extension/Get-MarketplacePackageMatrix.ps1 -Channel 'Stable'
-
   publish:
-    name: Publish Extensions
-    needs: [normalize-version, discover]
+    name: Publish Extension
+    needs: [normalize-version, verify-catalog]
     if: ${{ !inputs.dry-run }}
     uses: ./.github/workflows/extension-marketplace-publish.yml
     with:
-      packages-matrix: ${{ needs.discover.outputs.matrix }}
       tag: ${{ needs.normalize-version.outputs.tag }}
       pre-release: false
-      verify-attestation: true
     permissions:
       contents: read
       attestations: read

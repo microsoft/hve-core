@@ -51,7 +51,7 @@ For Bash: Use `set -euo pipefail`, `test -d` for existence checks, and `echo` fo
 
 After cloning, update `.vscode/settings.json` with entries for each package subdirectory. Replace `<PREFIX>` with the settings path prefix from the method table. Do not use `**` glob patterns in paths because `chat.*Locations` settings do not support them.
 
-Enumerate each package subdirectory under `.github/agents/`, `.github/prompts/`, `.github/instructions/`, and `.github/hooks/` from the cloned HVE-Core directory. Create one entry per subdirectory. For `.github/agents/`, also check each package folder for a `subagents/` subfolder and include it when present (e.g., `hve-core/subagents`). For `.github/skills/`, list only the package-level folders directly under `.github/skills/` (e.g., `shared`); do not enumerate deeper subfolders (individual skill directories like `shared/pr-reference/` are not listed). For `.github/hooks/`, list only the package-level folders directly under `.github/hooks/` (e.g., `shared`); the default `chat.hookFilesLocations` value only covers the workspace `.github/hooks`, so clone-based installs must add each package's hook folder explicitly. Exclude the `installer` package from `chat.agentSkillsLocations` because it is the installer skill itself and not intended for end-user settings.
+Enumerate each package subdirectory under `.github/agents/`, `.github/prompts/`, `.github/instructions/`, and `.github/hooks/` from the cloned HVE-Core directory. Create one entry per subdirectory. For `.github/agents/`, also check each package folder for a `subagents/` subfolder and include it when present (e.g., `hve-core/subagents`). For `.github/skills/`, list only the package-level folders directly under `.github/skills/` (e.g., `shared`); do not enumerate deeper subfolders (individual skill directories like `shared/pr-reference/` are not listed). Include the `installer` package so clone-based users can invoke the guided installer skill. For `.github/hooks/`, list only the package-level folders directly under `.github/hooks/` (e.g., `shared`); the default `chat.hookFilesLocations` value only covers the workspace `.github/hooks`, so clone-based installs must add each package's hook folder explicitly.
 
 Any folder named `experimental` under any artifact type (agents, prompts, instructions, or skills) must not be included without first asking the user whether they want experimental features. If the user opts in, add the `experimental` entries (and `experimental/subagents` for agents when that subfolder exists).
 
@@ -89,8 +89,12 @@ Any folder named `experimental` under any artifact type (agents, prompts, instru
   },
   "chat.agentSkillsLocations": {
     "<PREFIX>/.github/skills": true,
+    "<PREFIX>/.github/skills/accessibility": true,
     "<PREFIX>/.github/skills/coding-standards": true,
+    "<PREFIX>/.github/skills/data-science": true,
     "<PREFIX>/.github/skills/design-thinking": true,
+    "<PREFIX>/.github/skills/hve-core": true,
+    "<PREFIX>/.github/skills/installer": true,
     "<PREFIX>/.github/skills/project-planning": true,
     "<PREFIX>/.github/skills/rai": true,
     "<PREFIX>/.github/skills/rpi": true,
@@ -146,6 +150,8 @@ Clone hve-core on your HOST machine (not in container):
 
 **Step 3:** After rebuild, validate mount exists at `/workspaces/hve-core`
 
+**Step 4:** Treat `/workspaces/hve-core` as a pre-existing source. Before Phase 7 collision detection or component copy, apply the upstream-source verification in [component-installation.md](component-installation.md). A missing or unexpected `origin` warns and requires confirmation; it does not automatically reject an intentional fork or local clone.
+
 #### Method 4: postCreateCommand (Codespaces)
 
 Add to devcontainer.json:
@@ -188,8 +194,12 @@ Add to devcontainer.json:
         },
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
+          "/workspaces/hve-core/.github/skills/accessibility": true,
           "/workspaces/hve-core/.github/skills/coding-standards": true,
+          "/workspaces/hve-core/.github/skills/data-science": true,
           "/workspaces/hve-core/.github/skills/design-thinking": true,
+          "/workspaces/hve-core/.github/skills/hve-core": true,
+          "/workspaces/hve-core/.github/skills/installer": true,
           "/workspaces/hve-core/.github/skills/project-planning": true,
           "/workspaces/hve-core/.github/skills/rai": true,
           "/workspaces/hve-core/.github/skills/rpi": true,
@@ -234,6 +244,8 @@ Local VS Code: use a relative clone path from the workspace file's directory.
 
 User opens the `.code-workspace` file instead of the folder.
 
+Resolve the HVE-Core folder's actual clone path from the workspace file and treat it as a pre-existing source. Before Phase 7 collision detection or component copy, apply the upstream-source verification in [component-installation.md](component-installation.md). A missing or unexpected `origin` warns and requires confirmation; it does not automatically reject an intentional fork or local clone.
+
 #### Method 6: Submodule
 
 Use git submodule commands instead of clone:
@@ -257,4 +269,3 @@ Optional devcontainer.json for auto-initialization:
 }
 ```
 <!-- </method-6-devcontainer> -->
-

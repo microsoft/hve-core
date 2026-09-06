@@ -2,7 +2,13 @@
 title: RPI Researcher
 description: "Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads."
 sidebar_position: 3
-ms.date: 2026-07-23
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - hve-core
+  - rpi-researcher
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->

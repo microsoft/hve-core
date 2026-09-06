@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - skills
@@ -76,8 +76,7 @@ Skill files are typically organized in a package subdirectory by convention:
 ```
 
 > [!NOTE]
-> Marketplace package recipes can reference artifacts from any canonical subfolder. Standard component paths
-> are declared in `.github/plugin/marketplace.json` and resolve to canonical source files.
+> Tracked skills beneath a `.github/skills/<package>/` subdirectory are included automatically when `npm run plugin:sync` derives root `plugin.json`, unless the skill's top-level license has a noncommercial qualifier.
 
 The `scripts/` directory is **optional**. When present, it **MUST** contain at least one PowerShell script for PowerShell or cross-platform skills, and it **SHOULD** contain at least one `.sh` file when a bash implementation is also provided. Python skills may instead package executable modules under `scripts/<package>/__init__.py` and still satisfy the scripts requirement. Skills without scripts are valid and function as documentation-driven knowledge packages.
 
@@ -237,11 +236,11 @@ metadata:
 
 This example demonstrates a skill incorporating third-party content with provenance tracking. Skills referencing external frameworks should include `license` to identify the content license and `metadata` to track source attribution.
 
-## Marketplace Recipe Registration
+## Plugin Manifest Registration
 
-Distributable skills must be declared under the `skills` field of the `hve-core` entry in `.github/plugin/marketplace.json`. Declare the recipe-relative skill directory, not its `SKILL.md` file, and keep the directory name equal to the skill `name`.
+Distributable skills must use the canonical path `.github/skills/<package>/<skill>/SKILL.md`, and the directory name must equal the skill `name`. Skills whose top-level license contains a noncommercial qualifier are not distributed.
 
-Add non-stable lifecycle disclosure only through `x-hve.componentMaturity`, update `docs/plugins/hve-core.md`, then run `npm run lint:marketplace`, `npm run validate:skills`, and `npm run plugin:generate`.
+Run `npm run plugin:sync` to add the repository-relative `.github/...` skill directory to the `skills` array in root `plugin.json`. Update `docs/plugins/hve-core.md` when the user-visible skill surface changes, then run `npm run plugin:validate`, `npm run validate:skills`, and `npm run docs:generate:check`.
 
 ## SKILL.md Content Structure
 

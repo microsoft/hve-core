@@ -221,6 +221,32 @@ console.log('Canonical');
         $validFile.hasSpdx | Should -BeTrue
         $validFile.valid | Should -BeTrue
     }
+
+    It 'Supports double-slash comment prefixes for ES and CommonJS module extensions' {
+        # .mjs and .cjs previously fell through to the '#' default, so a correct
+        # // header was reported as missing. The check is only trustworthy if
+        # every extension it scans maps to the right comment prefix.
+        $canonicalContent = @"
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+export const value = 'Canonical';
+"@
+        foreach ($extension in @('mjs', 'cjs')) {
+            $fixture = "canonical.$extension"
+            Set-Content -Path (Join-Path $script:FixturesPath $fixture) -Value $canonicalContent
+
+            $outputPath = Join-Path $script:FixturesPath "results-canonical-$extension.json"
+            Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @($fixture) -OutputPath $outputPath
+
+            $results = Get-Content $outputPath | ConvertFrom-Json
+            $validFile = $results.results | Where-Object { $_.file -like "*$fixture" }
+
+            $validFile.hasCopyright | Should -BeTrue -Because "$extension uses // comments"
+            $validFile.hasSpdx | Should -BeTrue -Because "$extension uses // comments"
+            $validFile.valid | Should -BeTrue -Because "$extension uses // comments"
+        }
+    }
 }
 
 #endregion

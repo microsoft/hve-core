@@ -693,8 +693,8 @@ The parameter contract for `Sign-PlannerArtifacts.ps1` exposes two mutually excl
 On success, capture the manifest path returned by the script and update `state.json` field `signingManifestPath`. The `sssc-manifest.json` file (and, when cosign is used, the accompanying `.sig` and `.bundle` siblings) becomes the verifiable record covering every artifact under the SSSC session directory at handoff time.
 
 Present the user with next steps:
-* For ADO: invoke the ADO Backlog Manager to create work items from the handoff file
-* For GitHub: invoke the GitHub Backlog Manager to create issues from the handoff file
+* For ADO: invoke the Backlog Manager (targeting Azure DevOps) to create work items from the handoff file
+* For GitHub: invoke the Backlog Manager (targeting GitHub) to create issues from the handoff file
 * If cross-agent artifacts exist: note the links for continuity across security domains
 
 ### Completion Summary
@@ -716,8 +716,8 @@ As the final user-facing message of the workflow, present a completion summary t
 Follow the table with a `📊 Posture` one-line recap (current → projected Scorecard score, SLSA Build level, Best Practices Badge readiness) and the total backlog item count by risk level. Then present the `⚡ Ready for Backlog Creation` next steps:
 
 1. Review the consolidated plan at `.copilot-tracking/sssc-plans/{project-slug}/sssc-plan.md`.
-2. For ADO: invoke the ADO Backlog Manager against the ADO handoff file.
-3. For GitHub: invoke the GitHub Backlog Manager against the GitHub handoff file.
+2. For ADO: invoke the Backlog Manager (targeting Azure DevOps) against the ADO handoff file.
+3. For GitHub: invoke the Backlog Manager (targeting GitHub) against the GitHub handoff file.
 4. Verify the signed manifest before acting on any work item.
 
 The consolidated `sssc-plan.md` is the primary durable deliverable; this completion summary is the conversational pointer a reviewer follows to reach every artifact the session produced.
