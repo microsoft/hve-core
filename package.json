@@ -62,6 +62,7 @@
     "test:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonTests.ps1 -OutputPath logs/python-test-results.json",
     "test:node": "node --test",
     "ci:test:a11y:smoke": "node --test \".github/skills/accessibility/accessibility/tests/runtime_a11y/runner/probe-smoke/*.smoke.mjs\"",
+    "ci:test:rust-network-isolation": "pwsh -NoProfile -NonInteractive -File scripts/evals/Invoke-RustUnitTestNetworkTrace.ps1",
     "plugin:postprocess": "markdownlint-cli2 \"docs/plugins/*.md\" --fix && markdown-table-formatter \"docs/plugins/*.md\"",
     "plugin:sync": "pwsh -NoProfile -File scripts/plugins/Sync-PluginManifest.ps1",
     "plugin:validate": "npm run lint:plugin-manifest && npm run lint:hooks",

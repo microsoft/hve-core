@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-08-21
+ms.date: 2026-09-05
 ms.topic: how-to
 keywords:
   - validation
@@ -16,6 +16,8 @@ keywords:
   - package feeds
 estimated_reading_time: 10
 ---
+
+<!-- cspell:ignore setpriv SETUID SETGID tmpfs syscall -->
 
 Validation command names distinguish the checks that are safe defaults for a
 local development loop from lanes owned by CI. The distinction helps people and
@@ -236,6 +238,64 @@ hosted CI, a failed browser lane means the configured browser environment did
 not complete the suite. Locally, first determine whether the browser and its
 dependencies were provisioned before treating a launch failure as a product
 failure.
+
+## Rust unit-test network-isolation lane
+
+The Rust network-isolation trace is an operator-invoked CI-owned test lane. No
+workflow runs it automatically, and generic validation does not select it. The
+lane characterizes one previously generated disposable Rust crate; it does not
+generate source or establish ordinary runtime behavior or harm.
+
+Prepare these inputs before invoking the lane:
+
+1. Generate the synthetic Rust crate outside the repository and retain the
+  prompt or stimulus identifier and transcript.
+2. Commit a `Cargo.lock` to the disposable crate and vendor every dependency
+  under a non-empty `vendor/` directory. Dependency preparation occurs before
+  containment. The lane replaces any supplied Cargo configuration in its
+  captured copy with a trusted vendor-only offline configuration.
+3. Create a provenance JSON file with non-empty `stimulusId`, `model`,
+  `generatedAt`, and `transcriptPath` fields.
+4. Provision a Linux image containing Rust, `strace`, `setpriv`, `ip`, `grep`,
+  and `sh`. Make the image available locally and pass it by registry name plus
+  immutable SHA-256 digest. The lane verifies that digest from image inspection
+  and uses `--pull never`.
+5. Ensure a Linux Docker engine is available. The container uses
+  `--network none`. A root supervisor retains only `SYS_PTRACE`, `SETUID`, and
+  `SETGID`; `setpriv` clears groups and capabilities before running Cargo as the
+  non-root workload user. Root-only trace storage and workload build storage
+  use separate sized tmpfs mounts.
+
+Preview the validated arguments without starting Docker:
+
+```powershell
+npm run ci:test:rust-network-isolation -- `
+  -InputPath ../generated-rust-case `
+  -ProvenancePath ../generated-rust-case.provenance.json `
+  -Image registry.example/rust-strace@sha256:<64-hex-digest> `
+  -Preview
+```
+
+Remove `-Preview` to run the contained trace. The default report is
+`logs/rust-unit-test-network-trace.json`; the command refuses to overwrite an
+existing report. A result inventories literal endpoints and attempted DNS,
+loopback, non-loopback, and unknown operations. The named container is killed
+after timeout, trace evidence is copied before forced removal, and temporary
+host data is deleted only after container absence is confirmed. Unconfirmed
+absence yields `Inconclusive` and a retained evidence path. Empty attempt lists
+and textual endpoint extraction are not proof of absent network behavior.
+Captured process output is sanitized and truncated, but remains untrusted
+generated data.
+
+Read the JSON report together with the process exit code. `Passed` exits zero.
+`ConcernObserved` means the contained run completed but source or syscall
+evidence indicates external intent; `Failed` means the test or containment
+command completed with a nonzero result after trace evidence was produced.
+`Inconclusive` means required source, trace, or lifecycle evidence is incomplete.
+`NonAttesting` identifies an explicitly requested test seam and cannot establish
+containment. Every non-passing state exits one, so automation must read the
+report status to distinguish them. Missing trace output and other failures
+before report creation are setup or validation errors, not clean traces.
 
 ## Evaluation lanes
 
