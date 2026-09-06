@@ -176,14 +176,15 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
         $defaultText | Should -Not -Match "(^|['""])evals(['""/])"
     }
 
-    It 'Reports equality warnings before profanity errors without mixing rule ownership' {
+    It 'Sorts equality findings by position before the separate profanity block' {
         if (-not ($script:NodeAvailable -and $script:DependenciesInstalled)) {
             Set-ItResult -Skipped -Because 'node or required npm packages are not available'
             return
         }
 
         $mixedFile = Join-Path $script:CorpusRoot 'docs/mixed.md'
-        Set-Content -LiteralPath $mixedFile -Value "# Mixed`n`nThis is crazy and fucking wrong." -Encoding UTF8
+        # Repeated rules emit together, so the later host precedes crazy without sorting.
+        Set-Content -LiteralPath $mixedFile -Value "# Mixed`n`nThis is fucking wrong. The host was crazy, and the host was ready.`nThe host was crazy." -Encoding UTF8
         $globs = @((Join-Path $script:CorpusRoot 'docs/**/*.md'))
 
         & $script:ScriptPath -CorpusGlob $globs -RepoRoot $script:RepoRoot -OutputPath $script:OutputPath *> $null
@@ -198,12 +199,28 @@ Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Un
         $firstProfanityIndex = [array]::IndexOf($sources, 'retext-profanities')
 
         $exit | Should -Be 1
-        $report.warningCount | Should -Be 1
+        $report.warningCount | Should -Be 5
         $report.errorCount | Should -Be 1
         $report.failOnAlex | Should -BeFalse
-        $equalityMessages | Should -HaveCount 1
+
+        $expectedEquality = @(
+            @{ Rule = 'host-hostess'; Line = 3; Column = 28 }
+            @{ Rule = 'nuts'; Line = 3; Column = 37 }
+            @{ Rule = 'host-hostess'; Line = 3; Column = 52 }
+            @{ Rule = 'host-hostess'; Line = 4; Column = 5 }
+            @{ Rule = 'nuts'; Line = 4; Column = 14 }
+        )
+        $equalityMessages | Should -HaveCount $expectedEquality.Count
+        for ($index = 0; $index -lt $expectedEquality.Count; $index++) {
+            $equalityMessages[$index].rule | Should -Be $expectedEquality[$index].Rule
+            $equalityMessages[$index].line | Should -Be $expectedEquality[$index].Line
+            $equalityMessages[$index].column | Should -Be $expectedEquality[$index].Column
+        }
+
         $profanityMessages | Should -HaveCount 1
-        $equalityMessages[0].rule | Should -Not -Be $profanityMessages[0].rule
+        $profanityMessages[0].rule | Should -Be 'fucking'
+        $profanityMessages[0].line | Should -Be 3
+        $profanityMessages[0].column | Should -Be 9
         $lastAlexIndex | Should -BeGreaterOrEqual 0
         $firstProfanityIndex | Should -BeGreaterOrEqual 0
         $lastAlexIndex | Should -BeLessThan $firstProfanityIndex
