@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - governance
@@ -40,7 +40,7 @@ outputs).
 
 ### Phase 3: Skills and Shared Distribution
 
-Package domain knowledge into skills for complex, multi-step workflows. Place related artifacts under package-scoped `.github` paths and synchronize `.github/plugin.json` for managed distribution, or use selective cloning for a repository-owned subset.
+Package domain knowledge into skills for complex, multi-step workflows. Place related artifacts under package-scoped `.github` paths and synchronize root `plugin.json` for managed distribution, or use selective cloning for a repository-owned subset.
 
 ### Measuring Adoption Progress
 

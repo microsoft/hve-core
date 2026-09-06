@@ -50,6 +50,7 @@ Describe 'DocsHelpers module contract' -Tag 'Unit' {
             'Format-MarkdownTable'
             'Format-YamlScalar'
             'Get-AssetDocMarker'
+            'Get-AssetDocSectionContract'
             'Get-AssetDocsPath'
             'Get-AssetFrontmatter'
             'Get-AssetInvocation'
@@ -59,6 +60,7 @@ Describe 'DocsHelpers module contract' -Tag 'Unit' {
             'New-AssetMetadataBlock'
             'New-AssetOverviewBody'
             'New-AssetPageModel'
+            'Resolve-AssetDocSectionStatus'
             'Split-AssetDocByMarkers'
             'Test-AssetDocStub'
             'Test-AssetInteractive'
@@ -278,6 +280,12 @@ Describe 'Get-AssetInvocation' -Tag 'Unit' {
         (Get-AssetInvocation -Kind 'skill' -Name 'documentation' -Frontmatter @{ 'user-invocable' = 'false' }).Mechanism |
             Should -Be 'skill-load'
     }
+
+    It 'Classifies an explicitly non-user-invocable top-level agent as background' {
+        $result = Get-AssetInvocation -Kind 'agent' -Name 'backlog-grooming' -Frontmatter @{ name = 'Backlog Grooming'; 'user-invocable' = $false } -Path '.github/agents/github/backlog-grooming.agent.md'
+        $result.Mechanism | Should -Be 'background-agent'
+        Format-AssetInvocation -Invocation $result | Should -Match 'Background agent.*invoked by automation'
+    }
 }
 
 Describe 'Test-AssetInteractive' -Tag 'Unit' {
@@ -287,6 +295,10 @@ Describe 'Test-AssetInteractive' -Tag 'Unit' {
 
     It 'Treats a delegated subagent as non-interactive' {
         Test-AssetInteractive -Kind 'agent' -Path '.github/agents/hve-core/subagents/rpi-planner.agent.md' | Should -BeFalse
+    }
+
+    It 'Treats an explicitly non-user-invocable top-level agent as non-interactive' {
+        Test-AssetInteractive -Kind 'agent' -Frontmatter @{ 'user-invocable' = 'false' } -Path '.github/agents/github/backlog-grooming.agent.md' | Should -BeFalse
     }
 
     It 'Treats a prompt declaring an argument hint as interactive' {
@@ -304,6 +316,58 @@ Describe 'Test-AssetInteractive' -Tag 'Unit' {
     It 'Treats instructions and skills as non-interactive' {
         Test-AssetInteractive -Kind 'instruction' | Should -BeFalse
         Test-AssetInteractive -Kind 'skill' | Should -BeFalse
+    }
+}
+
+Describe 'Asset documentation section contract' -Tag 'Unit' {
+    BeforeAll {
+        $script:sections = @(Get-AssetDocSectionContract)
+    }
+
+    It 'Declares the canonical heading order once' {
+        $script:sections.Heading | Should -Be @(
+            '## What it does'
+            '## When to use it'
+            '## How to use it'
+            '## Example usage'
+        )
+    }
+
+    It 'Resolves How to use it from kind and interactivity' -ForEach @(
+        @{ Kind = 'agent'; Interactive = $true; Expected = 'Required' }
+        @{ Kind = 'agent'; Interactive = $false; Expected = 'NotApplicable' }
+        @{ Kind = 'prompt'; Interactive = $true; Expected = 'Required' }
+        @{ Kind = 'prompt'; Interactive = $false; Expected = 'NotApplicable' }
+        @{ Kind = 'instruction'; Interactive = $false; Expected = 'NotApplicable' }
+        @{ Kind = 'skill'; Interactive = $false; Expected = 'NotApplicable' }
+    ) {
+        $section = $script:sections | Where-Object Name -EQ 'how-to-use-it'
+
+        Resolve-AssetDocSectionStatus -Section $section -Kind $Kind -Interactive $Interactive |
+            Should -Be $Expected
+    }
+
+    It 'Resolves Example usage from the shared contract' -ForEach @(
+        @{ Kind = 'agent'; Interactive = $true; Expected = 'Required' }
+        @{ Kind = 'agent'; Interactive = $false; Expected = 'Required' }
+        @{ Kind = 'prompt'; Interactive = $true; Expected = 'Required' }
+        @{ Kind = 'skill'; Interactive = $false; Expected = 'Required' }
+        @{ Kind = 'instruction'; Interactive = $false; Expected = 'Optional' }
+    ) {
+        $section = $script:sections | Where-Object Name -EQ 'example-usage'
+
+        Resolve-AssetDocSectionStatus -Section $section -Kind $Kind -Interactive $Interactive |
+            Should -Be $Expected
+    }
+
+    It 'Rejects unsupported resolved statuses' {
+        $section = [PSCustomObject]@{
+            Name         = 'invalid-example'
+            Requirements = @{ instruction = 'Conditional' }
+        }
+
+        { Resolve-AssetDocSectionStatus -Section $section -Kind 'instruction' -Interactive $false } |
+            Should -Throw -ExpectedMessage "Section 'invalid-example' resolves to unsupported status 'Conditional'."
     }
 }
 

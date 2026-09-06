@@ -3,7 +3,7 @@ title: Migrate to the HVE Core Identity
 description: Move retired package installations to the single HVE Core plugin or extension
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-16
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - migration
@@ -15,7 +15,7 @@ keywords:
 estimated_reading_time: 8
 ---
 
-HVE Core now publishes one `hve-core` plugin and one `ise-hve-essentials.hve-core` extension. `.github/plugin.json` owns the complete distributable membership, and `.github/plugin/marketplace.json` contains one relative locator to `.github`.
+HVE Core now publishes one `hve-core` plugin and one `ise-hve-essentials.hve-core` extension. Root `plugin.json` owns the complete distributable membership, and `.github/plugin/marketplace.json` contains one relative locator to the repository root.
 
 Choose the migration path for your host. Neither GitHub Copilot nor VS Code provides a universal automatic migration between different published identities.
 

@@ -1,99 +1,97 @@
 ---
-description: 'Action categories, evidence-bounded findings, fidelity disclosure, report structure, and human-review requirement for behavior tests.'
+description: 'Behavior-test finding categories, evidence boundaries, report structure, and human-review requirements.'
 ---
 <!-- markdownlint-disable-file -->
 # HVE Artifact Test Report Format
 
-The `hve-builder-tester` lead merges generic evidence-grading findings into this durable report outside the sandbox. The report separates execution status, quality verdict, fidelity, and limitations so simulation evidence cannot be mistaken for native behavior.
+The HVE Builder Tester lead composes one durable report from the final design, execution log, and independent grade. Keep execution status, quality verdict, fidelity, and limitations separate.
 
-## Action-category taxonomy
+Fidelity describes how the target was exercised: `simulation` or `native`, or `Not applicable` for a supported skip. Evidence class describes an individual action or observation: `observed`, `simulated`, or `emulated`. An emulated action within a simulation is not a third execution fidelity and does not support a claim that the action ran.
 
-Every finding carries exactly one action category. These describe what the artifact's author should do in response to the behavior evidence:
+## Finding Categories
 
-| Category    | Meaning                                                                         |
-|-------------|---------------------------------------------------------------------------------|
-| improvement | The artifact worked, but a change would raise its behavior quality.             |
-| adjustment  | A rule or wording behaved differently than intended and should be tuned.        |
-| deletion    | An instruction fired but added no value or caused noise, and should be removed. |
-| correction  | The artifact produced incorrect behavior and must be fixed.                     |
-| miss        | The artifact failed to do something its contract required, a gap in coverage.   |
+| Category    | Meaning                                                                                          |
+|-------------|--------------------------------------------------------------------------------------------------|
+| improvement | The behavior passed, but an evidence-backed change would improve quality                         |
+| adjustment  | A rule behaved differently than intended and should be tuned                                     |
+| deletion    | Evidence supports retiring an obsolete or redundant instruction without losing required behavior |
+| correction  | The artifact produced incorrect behavior                                                         |
+| miss        | Required behavior was absent or untested                                                         |
 
-## Finding shape
+Every finding records one category, mapped requirement or review dimension, target, profile, fidelity, evidence class, durable evidence pointer, severity, and smallest resolving change. Mark each finding as a required correction or an advisory suggestion. A deletion recommendation follows the requirements catalog's maintenance decisions; one scenario that does not need a rule is not evidence that no supported use case needs it.
 
-Record each finding with a stable shape so the author can act on it directly:
+## Verdict Rules
 
-* Action category, from the taxonomy above.
-* The instruction-quality category or review-rubric dimension it maps to, so every finding is traceable to the standard `hve-builder` authors against.
-* The target artifact and tested profile.
-* Fidelity and evidence class: observed, simulated, or emulated.
-* An evidence pointer into the test log: the turn, observation, or dispatch that shows the behavior.
-* Severity: Critical, High, Medium, or Low, using the review-rubric scale.
-* The smallest concrete change that would resolve it.
+* Pass requires gradeable evidence, complete material coverage, and no required correction. Advisory improvements do not prevent Pass.
+* Revise means the evidence demonstrates a target defect or unmet acceptance criterion at any severity.
+* Untested material behavior is a coverage miss, not proof of a target defect. Record execution Partial when usable evidence is incomplete; the grader states whether the available evidence warrants Revise or is insufficient for a verdict, Blocked. Partial never supports overall Pass.
+* Blocked means independent grading cannot establish a credible verdict. If execution or grading never produced an independent grade, use verdict Not available with execution Deferred or Blocked and the exact reason.
 
-## Report structure
+## Report Structure
 
 ```markdown
 # HVE Artifact Test Report: {{artifact_or_set}}
 
-- Tested profile(s): {{High, Medium, or Low and model per target}}
-- Run type: full | correction
-- Behavior gate: Executed | Satisfied-and-skipped
-- Fidelity: simulation | native | Not applicable
-- Execution status: Complete | Partial | Deferred | Blocked | Not run
-- Verdict: Pass | Revise | Blocked | Not available | Not applicable
-- Sandbox: cleaned up | retained at {{path}}
+* Candidate revision: {{source_revision_or_equivalent_provenance}}
+* Tested profile and model: {{profile_requested_model_host_binding_evidence_and_actual_model_when_exposed}}
+* Behavior disposition: {{Executed_or_Satisfied-and-skipped}}
+* Fidelity: {{simulation_native_or_Not_applicable}}
+* Execution status: {{Complete_Partial_Deferred_Blocked_or_Not_run}}
+* Verdict: {{Pass_Revise_Blocked_Not_available_or_Not_applicable}}
+* Sandbox: {{cleaned_up_or_retained_path}}
 
 ## Summary
 
-{{One paragraph: what was exercised, at what fidelity, what was observed, and the headline findings.}}
+{{What ran, at which fidelity, and the headline result.}}
 
-## Fidelity and limitations
+## Fidelity and Limitations
 
-{{State which actions were observed, simulated, or emulated; identify proxy-model use; and list claims this run cannot support.}}
-
-{{When the executor ran above the Low profile, state that a higher-tier simulator may repair ambiguity a lower-tier run would expose, so conformance evidence from this run does not establish that the artifact reads unambiguously at lower tiers. This belongs in the durable report, not only in the sandbox log, because the log is removed at cleanup.}}
-
-## Reuse eligibility
-
-{{For a correction run, record the prior report status and verdict, open-finding state, design and scenario IDs, requirement mapping, prior and current target revisions, profile, model or proxy status, modality, fidelity, and changed-surface impact. State why each reused scenario is unaffected. For a full run, state Not applicable.}}
-
-| Scenario        | Requirement                   | Impact disposition                     | Evidence source                     | Grade provenance                |
-|-----------------|-------------------------------|----------------------------------------|-------------------------------------|---------------------------------|
-| {{scenario_id}} | {{requirement_id_or_summary}} | {{affected_unaffected_or_untraceable}} | {{fresh_execution_or_prior_report}} | {{fresh_grade_or_reused_grade}} |
+{{Observed, simulated, and emulated actions; proxy use; unsupported claims; and material gaps.}}
 
 ## Findings
 
-{{Ordered by severity, Critical and High first. One row per finding.}}
+{{Repeat the following block per finding, or write None.}}
 
-| # | Action | Mapped dimension | Artifact | Profile | Evidence class | Severity | Evidence | Resolving change |
-|---|--------|------------------|----------|---------|----------------|----------|----------|------------------|
+### {{finding_id}}: {{short_title}}
+
+* Action category: {{improvement_adjustment_deletion_correction_or_miss}}
+* Disposition: {{required_correction_or_advisory_suggestion}}
+* Mapped requirement or dimension: {{criterion}}
+* Artifact: {{target}}
+* Profile: {{profile}}
+* Fidelity: {{simulation_or_native}}
+* Evidence class: {{observed_simulated_or_emulated}}
+* Severity: {{Critical_High_Medium_or_Low}}
+* Evidence: {{durable_pointer_and_decisive_observation}}
+* Resolving change: {{smallest_supported_change}}
 
 ## Coverage
 
-{{Behaviors that ran as intended, and any contracted behavior left untested with the reason.}}
+{{Requirements and scenarios exercised, behavior that passed, and contracted behavior left untested.}}
+
+## Retained Evidence
+
+{{Scenario inputs, requirement-to-scenario map, decisive trace excerpts, and independent grading rationale, or pointers to durable companion evidence outside the sandbox.}}
 
 ## Containment
 
-{{Pre-run and post-run workspace status, enforced controls, and any unexpected side effect.}}
+{{Pre-run and post-run workspace state, enforced controls, and unexpected effects.}}
 
-## Satisfied-and-skipped
+## Satisfied-and-Skipped
 
-{{Any target recorded as having no runtime behavior to exercise, with the reason.}}
+{{No-runtime targets and evidence-backed reasons, or Not applicable.}}
 
-## Human review
+## Human Review
 
-- [ ] Reviewed and validated by a qualified human reviewer
+* [ ] Reviewed and validated by a qualified human reviewer
 ```
 
 ## Rules
 
-* Order findings by severity, Critical and High first.
-* Keep the finding set bounded and high-leverage; consolidate overlapping issues rather than padding the list.
-* Use the action categories above tagged with the mapped standard dimension; do not introduce a retired taxonomy.
-* Use `runtime` or `native` only for behavior observed through native fidelity. Use `simulation` for literal conformance execution and `emulated` for actions that did not run.
-* A proxy-model run cannot claim target-model equivalence. An unexpected out-of-sandbox write prevents Pass.
-* A correction run cannot reuse evidence unless every eligibility dimension is recorded. Untraceable scenarios are affected and require fresh execution and independent grading.
-* Use Not available only when execution is Deferred before independent grading. Pass, Revise, and Blocked require grading evidence.
-* Use `Satisfied-and-skipped` only for a target or change with no runtime behavior. Pair it with fidelity `Not applicable`, execution `Not run`, verdict `Not applicable`, and a reason.
-* Never check the human-review checkbox; only a human converts `[ ]` to `[x]`.
-* Cite `.copilot-tracking/` and sandbox log paths as plain text; use markdown links only for durable, human-facing files. The durable report is the source of truth for the behavior-test outcome.
+* Order findings by severity and consolidate overlapping issues.
+* Use `native` only for directly observed native execution and `simulation` for literal contained execution. Mark an action that did not run with evidence class `emulated`; retain the run's actual fidelity.
+* A proxy run cannot claim target-profile equivalence. An unexpected out-of-sandbox write prevents Pass.
+* Use Not available only when execution is Deferred or Blocked before independent grading. Pass, Revise, and Blocked verdicts require grading evidence.
+* Pair `Satisfied-and-skipped` with fidelity `Not applicable`, execution `Not run`, verdict `Not applicable`, and a reason.
+* Leave the human-review checkbox unchecked.
+* Cite tracking and sandbox paths as plain text. Use Markdown links only for durable human-facing files.

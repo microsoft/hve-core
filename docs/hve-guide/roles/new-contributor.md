@@ -3,7 +3,7 @@ title: New Contributor Guide
 description: Guided onboarding path from first install through autonomous AI-assisted engineering with HVE Core
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-09-04
 ms.topic: tutorial
 keywords:
   - onboarding
@@ -73,7 +73,7 @@ Use agents selectively and combine workflows for larger tasks.
 1. Use `/rpi` for end-to-end coordination on a multi-file change.
 2. Explore additional agents from the [Engineer Guide](engineer.md) or your role guide.
 3. Explore the complete extension inventory, or use the installer skill to make a custom multi-kind selection in a clone setup (see the [Role Overview](./#role-overview)).
-4. Resume longer workflows from their dated research, plan, details, changes, and review artifacts.
+4. Resume longer workflows from their dated research, task-centered plan, changes, and review artifacts.
 
 Checkpoint: You choose which agents and skills to use based on task needs.
 
@@ -112,8 +112,8 @@ Use `/rpi-implement`:
 
 ```text
 Implement the approved plan in .copilot-tracking/plans/ and use the
-matching phase details. Follow the implementation order specified in
-the plan and run tests after each component.
+Goals, Requirements, Details, References, and Dependencies blocks under
+each `Pxx-Txx` item. Run tests after each component.
 ```
 
 Use `/rpi-review` and reference the changes record:

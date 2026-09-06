@@ -56,12 +56,10 @@ BeforeAll {
         New-SkillFile -Path (Join-Path $github 'skills/beta/noncommercial-skill/SKILL.md') -Name 'noncommercial-skill' -License 'CC-BY-NC-SA-4.0'
         New-SkillFile -Path (Join-Path $github 'skills/root-only/SKILL.md') -Name 'root-only' -License 'MIT'
 
-        $hookPath = Join-Path $github 'hooks/shared/telemetry.json'
-        New-Item -ItemType Directory -Path (Split-Path $hookPath -Parent) -Force | Out-Null
-        Set-Content -LiteralPath $hookPath -Value '{ "version": 1, "hooks": {} }' -Encoding UTF8
-
         Set-Content -LiteralPath (Join-Path $Root 'package.json') `
             -Value ("{`n  `"name`": `"fixture`",`n  `"version`": `"$Version`"`n}`n") -Encoding UTF8
+        Set-Content -LiteralPath (Join-Path $Root 'README.md') -Value "# Fixture`n" -Encoding UTF8 -NoNewline
+        Set-Content -LiteralPath (Join-Path $Root 'LICENSE') -Value "MIT`n" -Encoding UTF8 -NoNewline
 
         $manifest = [ordered]@{
             name        = 'hve-core'
@@ -76,9 +74,8 @@ BeforeAll {
             commands    = @()
             rules       = @()
             skills      = @()
-            hooks       = 'hooks/shared/telemetry.json'
         }
-        Set-Content -LiteralPath (Join-Path $github 'plugin.json') `
+        Set-Content -LiteralPath (Join-Path $Root 'plugin.json') `
             -Value (ConvertTo-PluginManifestJson -Manifest $manifest) -Encoding UTF8 -NoNewline
 
         $catalogPath = Join-Path $github 'plugin/marketplace.json'
@@ -90,7 +87,7 @@ BeforeAll {
             plugins  = @(
                 [ordered]@{
                     name        = 'hve-core'
-                    source      = '.github'
+                    source      = '.'
                     description = 'Fixture plugin'
                     version     = $Version
                     author      = [ordered]@{ name = 'Microsoft'; url = 'https://www.microsoft.com' }
@@ -118,7 +115,7 @@ BeforeAll {
             [scriptblock]$Transform
         )
 
-        $path = Join-Path $Root '.github/plugin.json'
+        $path = Join-Path $Root 'plugin.json'
         $manifest = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json -AsHashtable
         $manifest = & $Transform $manifest
         Set-Content -LiteralPath $path -Value (ConvertTo-PluginManifestJson -Manifest $manifest) -Encoding UTF8 -NoNewline
@@ -207,23 +204,23 @@ Describe 'Get-PluginComponentSet' -Tag 'Unit' {
 
     It 'Includes package-scoped agents from nested directories' {
         $script:Components.agents | Should -Be @(
-            'agents/alpha/one.agent.md',
-            'agents/alpha/subagents/two.agent.md'
+            '.github/agents/alpha/one.agent.md',
+            '.github/agents/alpha/subagents/two.agent.md'
         )
     }
 
     It 'Includes package-scoped prompts as commands' {
-        $script:Components.commands | Should -Be @('prompts/alpha/one.prompt.md')
+        $script:Components.commands | Should -Be @('.github/prompts/alpha/one.prompt.md')
     }
 
     It 'Includes package-scoped instructions as rules' {
-        $script:Components.rules | Should -Be @('instructions/beta/one.instructions.md')
+        $script:Components.rules | Should -Be @('.github/instructions/beta/one.instructions.md')
     }
 
     It 'Includes skill roots whose license permits distribution' {
         $script:Components.skills | Should -Be @(
-            'skills/alpha/open-skill',
-            'skills/alpha/unlicensed-skill'
+            '.github/skills/alpha/open-skill',
+            '.github/skills/alpha/unlicensed-skill'
         )
     }
 
@@ -277,15 +274,15 @@ Describe 'New-PluginManifest' -Tag 'Unit' {
         $script:Manifest.license | Should -BeExactly 'MIT'
     }
 
-    It 'Declares the fixed hook manifest' {
-        $script:Manifest.hooks | Should -BeExactly 'hooks/shared/telemetry.json'
+    It 'Emits no hooks field' {
+        $script:Manifest.Contains('hooks') | Should -BeFalse
     }
 
     It 'Orders manifest keys deterministically' {
         @($script:Manifest.Keys) | Should -Be @(
             'name', 'description', 'version', 'author', 'homepage',
             'repository', 'license', 'keywords',
-            'agents', 'commands', 'rules', 'skills', 'hooks'
+            'agents', 'commands', 'rules', 'skills'
         )
     }
 
@@ -296,11 +293,58 @@ Describe 'New-PluginManifest' -Tag 'Unit' {
     }
 }
 
+Describe 'Get-PluginMetadataViolations' -Tag 'Unit' {
+    It 'Accepts tracked non-empty regular root metadata' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'metadata-valid')
+        Get-PluginMetadataViolations -RepoRoot $root | Should -HaveCount 0
+    }
+
+    It 'Rejects missing root metadata' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'metadata-missing')
+        Remove-Item -LiteralPath (Join-Path $root 'README.md') -Force
+        (Get-PluginMetadataViolations -RepoRoot $root) -join "`n" |
+            Should -Match 'missing or not a regular file: README\.md'
+    }
+
+    It 'Rejects untracked root metadata' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'metadata-untracked')
+        Set-Content -LiteralPath (Join-Path $root 'NOTICE') -Value 'notice' -Encoding UTF8
+        $original = $script:RequiredPluginMetadata
+        try {
+            $script:RequiredPluginMetadata = @('NOTICE')
+            (Get-PluginMetadataViolations -RepoRoot $root) -join "`n" |
+                Should -Match 'not tracked: NOTICE'
+        }
+        finally {
+            $script:RequiredPluginMetadata = $original
+        }
+    }
+
+    It 'Rejects empty root metadata' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'metadata-empty')
+        Set-Content -LiteralPath (Join-Path $root 'LICENSE') -Value '' -Encoding UTF8 -NoNewline
+        (Get-PluginMetadataViolations -RepoRoot $root) -join "`n" |
+            Should -Match 'empty: LICENSE'
+    }
+
+    It 'Rejects symbolic-link root metadata by git mode' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'metadata-symlink')
+        $targetPath = Join-Path $root 'license-target.txt'
+        Set-Content -LiteralPath $targetPath -Value 'MIT' -Encoding UTF8 -NoNewline
+        Remove-Item -LiteralPath (Join-Path $root 'LICENSE') -Force
+        New-Item -ItemType SymbolicLink -Path (Join-Path $root 'LICENSE') -Target $targetPath | Out-Null
+        & git -C $root add --all
+
+        (Get-PluginMetadataViolations -RepoRoot $root) -join "`n" |
+            Should -Match 'not a tracked regular file: LICENSE \(mode 120000\)'
+    }
+}
+
 Describe 'Invoke-PluginManifestSync write mode' -Tag 'Unit' {
     BeforeAll {
         $script:WriteRoot = New-PluginFixture -Root (Join-Path $TestDrive 'write')
         $script:WriteResult = Invoke-PluginManifestSync -RepoRoot $script:WriteRoot
-        $script:WrittenManifest = Get-Content -LiteralPath (Join-Path $script:WriteRoot '.github/plugin.json') -Raw | ConvertFrom-Json -AsHashtable
+        $script:WrittenManifest = Get-Content -LiteralPath (Join-Path $script:WriteRoot 'plugin.json') -Raw | ConvertFrom-Json -AsHashtable
     }
 
     It 'Reports the manifest as changed' {
@@ -317,20 +361,31 @@ Describe 'Invoke-PluginManifestSync write mode' -Tag 'Unit' {
     }
 
     It 'Makes no change on a second synchronization' {
-        $before = (Get-FileHash (Join-Path $script:WriteRoot '.github/plugin.json') -Algorithm SHA256).Hash
+        $before = (Get-FileHash (Join-Path $script:WriteRoot 'plugin.json') -Algorithm SHA256).Hash
         $second = Invoke-PluginManifestSync -RepoRoot $script:WriteRoot
         $second.Changed | Should -BeFalse
-        (Get-FileHash (Join-Path $script:WriteRoot '.github/plugin.json') -Algorithm SHA256).Hash | Should -BeExactly $before
+        (Get-FileHash (Join-Path $script:WriteRoot 'plugin.json') -Algorithm SHA256).Hash | Should -BeExactly $before
     }
 }
 
 Describe 'Invoke-PluginManifestSync failure atomicity' -Tag 'Unit' {
+    It 'Stops before manifest derivation when required root metadata is invalid' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'invalid-metadata')
+        Remove-Item -LiteralPath (Join-Path $root 'README.md') -Force
+
+        $result = Invoke-PluginManifestSync -RepoRoot $root
+
+        $result.Changed | Should -BeFalse
+        $result.Violations -join "`n" | Should -Match 'missing or not a regular file: README\.md'
+        $result.Manifest | Should -BeNullOrEmpty
+    }
+
     It 'Leaves a drifted manifest unchanged when catalog validation fails' {
         $root = New-PluginFixture -Root (Join-Path $TestDrive 'atomicity')
         Set-FixtureCatalog -Root $root -Transform {
             param($c) @($c['plugins'])[0]['description'] = 'Drifted description'; $c
         }
-        $manifestPath = Join-Path $root '.github/plugin.json'
+        $manifestPath = Join-Path $root 'plugin.json'
         $before = (Get-FileHash $manifestPath -Algorithm SHA256).Hash
 
         $result = Invoke-PluginManifestSync -RepoRoot $root
@@ -359,7 +414,22 @@ Describe 'Invoke-PluginManifestSync failure atomicity' -Tag 'Unit' {
 Describe 'Invoke-PluginManifestSync check mode' -Tag 'Unit' {
     BeforeAll {
         $script:CheckRoot = New-PluginFixture -Root (Join-Path $TestDrive 'check')
-        Invoke-PluginManifestSync -RepoRoot $script:CheckRoot | Out-Null
+        $script:CheckExpected = (Invoke-PluginManifestSync -RepoRoot $script:CheckRoot).Manifest
+        $script:CheckManifestPath = Join-Path $script:CheckRoot 'plugin.json'
+        $script:CheckManifestBytes = [System.IO.File]::ReadAllBytes($script:CheckManifestPath)
+
+        function New-CommittedManifest {
+            <#
+            .SYNOPSIS
+                Copies the derived manifest so a drift case can mutate one field.
+            #>
+            param([hashtable]$Override)
+
+            $committed = [ordered]@{}
+            foreach ($key in $script:CheckExpected.Keys) { $committed[$key] = $script:CheckExpected[$key] }
+            foreach ($key in $Override.Keys) { $committed[$key] = $Override[$key] }
+            return $committed
+        }
     }
 
     It 'Reports no violations for a synchronized manifest' {
@@ -370,50 +440,53 @@ Describe 'Invoke-PluginManifestSync check mode' -Tag 'Unit' {
         Set-FixtureManifest -Root $script:CheckRoot -Transform {
             param($m) $m['agents'] = @('agents/alpha/one.agent.md'); $m
         }
-        $before = (Get-FileHash (Join-Path $script:CheckRoot '.github/plugin.json') -Algorithm SHA256).Hash
+        $before = (Get-FileHash $script:CheckManifestPath -Algorithm SHA256).Hash
         Invoke-PluginManifestSync -RepoRoot $script:CheckRoot -Check | Out-Null
-        (Get-FileHash (Join-Path $script:CheckRoot '.github/plugin.json') -Algorithm SHA256).Hash | Should -BeExactly $before
+        (Get-FileHash $script:CheckManifestPath -Algorithm SHA256).Hash | Should -BeExactly $before
     }
 
     It 'Names components missing from the committed manifest' {
-        Set-FixtureManifest -Root $script:CheckRoot -Transform {
-            param($m) $m['agents'] = @('agents/alpha/one.agent.md'); $m
-        }
-        $violations = (Invoke-PluginManifestSync -RepoRoot $script:CheckRoot -Check).Violations
-        $violations -join "`n" | Should -Match 'agents missing 1: agents/alpha/subagents/two\.agent\.md'
+        $committed = New-CommittedManifest -Override @{ agents = @('.github/agents/alpha/one.agent.md') }
+        (Compare-PluginManifest -Committed $committed -Expected $script:CheckExpected) -join "`n" |
+            Should -Match 'agents missing 1: \.github/agents/alpha/subagents/two\.agent\.md'
     }
 
     It 'Names components the committed manifest adds' {
-        Set-FixtureManifest -Root $script:CheckRoot -Transform {
-            param($m) $m['skills'] = @($m['skills']) + 'skills/beta/noncommercial-skill'; $m
-        }
-        $violations = (Invoke-PluginManifestSync -RepoRoot $script:CheckRoot -Check).Violations
-        $violations -join "`n" | Should -Match 'skills unexpected 1: skills/beta/noncommercial-skill'
+        $committed = New-CommittedManifest -Override @{ skills = @($script:CheckExpected['skills']) + 'skills/beta/noncommercial-skill' }
+        (Compare-PluginManifest -Committed $committed -Expected $script:CheckExpected) -join "`n" |
+            Should -Match 'skills unexpected 1: skills/beta/noncommercial-skill'
     }
 
-    It 'Detects stale <Field> drift' -ForEach @(
-        @{ Field = 'version'; Value = '9.9.9'; Pattern = "version differs: committed '9\.9\.9'; expected '1\.2\.3'" }
-        @{ Field = 'hooks'; Value = 'hooks/other.json'; Pattern = "hooks differs: committed 'hooks/other\.json'; expected 'hooks/shared/telemetry\.json'" }
-    ) {
-        $field, $value = $Field, $Value
-        Set-FixtureManifest -Root $script:CheckRoot -Transform {
-            param($m) $m[$field] = $value; $m
-        }.GetNewClosure()
-        $violations = (Invoke-PluginManifestSync -RepoRoot $script:CheckRoot -Check).Violations
-        $violations -join "`n" | Should -Match $Pattern
+    It 'Detects stale version drift' {
+        $committed = New-CommittedManifest -Override @{ version = '9.9.9' }
+        (Compare-PluginManifest -Committed $committed -Expected $script:CheckExpected) -join "`n" |
+            Should -Match "version differs: committed '9\.9\.9'; expected '1\.2\.3'"
+    }
+
+    It 'Names an unsupported committed field rather than reporting drift without detail' {
+        $committed = New-CommittedManifest -Override @{ unknown = 'value' }
+        (Compare-PluginManifest -Committed $committed -Expected $script:CheckExpected) -join "`n" |
+            Should -Match 'unknown is declared but the manifest no longer supports it'
     }
 
     It 'Reports unsupported raw-only drift explicitly' {
-        Set-FixtureManifest -Root $script:CheckRoot -Transform { param($m) $m['unknown'] = 'value'; $m }
-        (Invoke-PluginManifestSync -RepoRoot $script:CheckRoot -Check).Violations -join "`n" | Should -Match 'no supported drift detail is available'
+        # Key order is the drift no field-level comparison can describe.
+        Set-FixtureManifest -Root $script:CheckRoot -Transform {
+            param($m)
+            $reordered = [ordered]@{}
+            foreach ($key in @($m.Keys) | Sort-Object) { $reordered[$key] = $m[$key] }
+            $reordered
+        }
+        (Invoke-PluginManifestSync -RepoRoot $script:CheckRoot -Check).Violations -join "`n" |
+            Should -Match 'no supported drift detail is available'
     }
 
     AfterEach {
-        Invoke-PluginManifestSync -RepoRoot $script:CheckRoot | Out-Null
+        [System.IO.File]::WriteAllBytes($script:CheckManifestPath, $script:CheckManifestBytes)
     }
 }
 
-Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
+Describe 'Plugin catalog validation' -Tag 'Unit' {
     BeforeAll {
         $script:CatalogRoot = New-PluginFixture -Root (Join-Path $TestDrive 'catalog')
         $script:CatalogManifest = (Invoke-PluginManifestSync -RepoRoot $script:CatalogRoot).Manifest
@@ -425,7 +498,7 @@ Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
             $c['plugins'] = @(
                 [ordered]@{
                     name        = 'hve-core'
-                    source      = '.github'
+                    source      = '.'
                     description = 'Fixture plugin'
                     version     = $c['metadata']['version']
                     author      = [ordered]@{ name = 'Microsoft'; url = 'https://www.microsoft.com' }
@@ -447,7 +520,7 @@ Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) $c['plugins'] = @($c['plugins']) + @([ordered]@{ name = 'extra'; source = '.github'; version = '1.2.3' }); $c
         }
-        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogMetadataViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest).Violations -join "`n" |
             Should -Match 'declares 2 entries'
     }
 
@@ -455,7 +528,7 @@ Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0]['name'] = 'other'; $c
         }
-        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogMetadataViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest).Violations -join "`n" |
             Should -Match "field 'name' does not match"
     }
 
@@ -463,7 +536,7 @@ Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0]['version'] = '9.9.9'; $c
         }
-        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogMetadataViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest).Violations -join "`n" |
             Should -Match "field 'version' does not match"
     }
 
@@ -471,7 +544,7 @@ Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) $c['metadata']['version'] = '9.9.9'; $c
         }
-        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogMetadataViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest).Violations -join "`n" |
             Should -Match 'metadata version'
 
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
@@ -492,7 +565,7 @@ Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0][$field] = $value; $c
         }.GetNewClosure()
-        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogMetadataViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest).Violations -join "`n" |
             Should -Match "field '$([regex]::Escape($Field))' does not match"
     }
 
@@ -509,7 +582,7 @@ Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0][$field] = $value; $c
         }.GetNewClosure()
-        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogMetadataViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest).Violations -join "`n" |
             Should -Match "retired package recipe field '$([regex]::Escape($Field))'"
     }
 
@@ -517,7 +590,7 @@ Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0]['source'] = [ordered]@{ source = 'github'; repo = 'microsoft/hve-core'; path = '.github' }; $c
         }
-        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogMetadataViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest).Violations -join "`n" |
             Should -Match 'must be a relative path string'
     }
 
@@ -525,7 +598,7 @@ Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0]['source'] = '../elsewhere'; $c
         }
-        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogMetadataViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest).Violations -join "`n" |
             Should -Match 'escapes the repository'
     }
 
@@ -533,14 +606,14 @@ Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
         Set-FixtureCatalog -Root $script:CatalogRoot -Transform {
             param($c) @($c['plugins'])[0]['source'] = 'missing'; $c
         }
-        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest) -join "`n" |
+        (Get-PluginCatalogMetadataViolations -RepoRoot $script:CatalogRoot -Manifest $script:CatalogManifest).Violations -join "`n" |
             Should -Match 'has no plugin manifest'
     }
 
     It 'Reports a declared component that does not exist' {
         $manifest = [ordered]@{}
         foreach ($key in $script:CatalogManifest.Keys) { $manifest[$key] = $script:CatalogManifest[$key] }
-        $manifest['agents'] = @('agents/alpha/absent.agent.md')
+        $manifest['agents'] = @('.github/agents/alpha/absent.agent.md')
 
         (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $manifest) -join "`n" |
             Should -Match 'agents path does not exist'
@@ -554,16 +627,86 @@ Describe 'Get-PluginCatalogViolations' -Tag 'Unit' {
         (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $manifest) -join "`n" |
             Should -Match 'skills path escapes the plugin root'
     }
+
+    It 'Reports a declared component whose <Scenario> link resolves outside the plugin root' -ForEach @(
+        @{ Scenario = 'leaf'; TargetName = 'outside-leaf.agent.md'; TargetIsDirectory = $false; LinkRelative = '.github/agents/alpha/outside.agent.md'; Component = '.github/agents/alpha/outside.agent.md' }
+        @{ Scenario = 'parent'; TargetName = 'outside-parent'; TargetIsDirectory = $true; LinkRelative = '.github/agents/gamma'; Component = '.github/agents/gamma/nested.agent.md' }
+    ) {
+        $target = Join-Path $TestDrive $TargetName
+        if ($TargetIsDirectory) {
+            New-Item -ItemType Directory -Path $target -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $target 'nested.agent.md') -Value 'outside' -Encoding UTF8
+        }
+        else {
+            Set-Content -LiteralPath $target -Value 'outside' -Encoding UTF8
+        }
+        New-Item -ItemType SymbolicLink -Path (Join-Path $script:CatalogRoot $LinkRelative) -Target $target | Out-Null
+
+        $manifest = [ordered]@{}
+        foreach ($key in $script:CatalogManifest.Keys) { $manifest[$key] = $script:CatalogManifest[$key] }
+        $manifest['agents'] = @($Component)
+
+        (Get-PluginCatalogViolations -RepoRoot $script:CatalogRoot -Manifest $manifest) -join "`n" |
+            Should -Match 'agents path resolves outside the plugin root'
+    }
+}
+
+Describe 'Retired hooks support' -Tag 'Unit' {
+    It 'Reports a committed hooks declaration as drift rather than preserving it' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'stray-hooks')
+        $manifestPath = Join-Path $root 'plugin.json'
+        $committed = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -AsHashtable
+        $committed['hooks'] = '.github/hooks/shared/telemetry.json'
+        Set-Content -LiteralPath $manifestPath `
+            -Value (ConvertTo-PluginManifestJson -Manifest $committed) -Encoding UTF8 -NoNewline
+
+        $result = Invoke-PluginManifestSync -RepoRoot $root -Check
+
+        $result.Violations -join "`n" | Should -Match 'hooks is declared but the manifest no longer supports it'
+        $result.Manifest.Contains('hooks') | Should -BeFalse
+    }
+
+    It 'Reports any other unsupported committed field as drift' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'stray-field')
+        $manifestPath = Join-Path $root 'plugin.json'
+        $committed = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -AsHashtable
+        $committed['x-hve'] = @{ displayName = 'HVE Core' }
+        Set-Content -LiteralPath $manifestPath `
+            -Value (ConvertTo-PluginManifestJson -Manifest $committed) -Encoding UTF8 -NoNewline
+
+        (Invoke-PluginManifestSync -RepoRoot $root -Check).Violations -join "`n" |
+            Should -Match 'x-hve is declared but the manifest no longer supports it'
+    }
+
+    It 'Drops a committed hooks declaration on write' {
+        $root = New-PluginFixture -Root (Join-Path $TestDrive 'drop-hooks')
+        $manifestPath = Join-Path $root 'plugin.json'
+        $committed = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -AsHashtable
+        $committed['hooks'] = '.github/hooks/shared/telemetry.json'
+        Set-Content -LiteralPath $manifestPath `
+            -Value (ConvertTo-PluginManifestJson -Manifest $committed) -Encoding UTF8 -NoNewline
+
+        Invoke-PluginManifestSync -RepoRoot $root | Out-Null
+
+        $written = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -AsHashtable
+        $written.Contains('hooks') | Should -BeFalse
+    }
 }
 
 Describe 'Committed repository manifest' -Tag 'Unit' {
-    It 'Passes check mode without drift or catalog violations' {
+    It 'Passes check mode without drift, catalog violations, or retired hooks' {
+        Test-Path -LiteralPath (Join-Path $script:RepositoryRoot '.github/hooks') | Should -BeFalse
+
+        $committed = Get-Content -LiteralPath (Join-Path $script:RepositoryRoot 'plugin.json') -Raw |
+            ConvertFrom-Json -AsHashtable
+        $committed.Contains('hooks') | Should -BeFalse
+
         $result = Invoke-PluginManifestSync -RepoRoot $script:RepositoryRoot -Check
         $result.Violations -join "`n" | Should -BeExactly ''
     }
 
     It 'Excludes the tracked noncommercial skill' {
         (Get-PluginComponentSet -RepoRoot $script:RepositoryRoot).skills |
-            Should -Not -Contain 'skills/security/owasp-docker'
+            Should -Not -Contain '.github/skills/security/owasp-docker'
     }
 }

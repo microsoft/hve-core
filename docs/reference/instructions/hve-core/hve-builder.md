@@ -1,9 +1,9 @@
 ---
 title: Hve Core/Hve Builder
-description: "Authoring standards for prompts, agents, subagents, instructions, and skills, grounded in the frontier-LLM instruction-quality research"
+description: "Core authoring conventions for prompts, agents, subagents, instructions, and skills"
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-31
 ms.topic: reference
 keywords:
   - instruction
@@ -23,13 +23,15 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Authoring standards for prompts, agents, subagents, instructions, and skills, grounded in the frontier-LLM instruction-quality research
+Core authoring conventions for prompts, agents, subagents, instructions, and skills
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these standards whenever prompts, agents, subagents, instruction files,
+or skills are created or revised. Use them to choose the right artifact type,
+load timing, delegation boundary, and validation evidence; route reusable
+workflow behavior through `hve-builder` rather than duplicating it in wrappers.
 
 ## Example usage
 

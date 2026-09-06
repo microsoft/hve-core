@@ -3,7 +3,7 @@ title: Copilot CLI Plugin
 description: Register an HVE Core catalog ref and install the complete hve-core plugin
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - copilot cli
@@ -41,7 +41,7 @@ copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
 copilot plugin marketplace add microsoft/hve-core#v<version>
 ```
 
-`main` is the development tip. `release/prerelease` and `release/stable` are moving registrations that resolve the current reviewed branch catalog and relative `.github` plugin root. Exact-tag registrations freeze the catalog, manifest, and plugin source together.
+`main` is the development tip. `release/prerelease` and `release/stable` are moving registrations that resolve the current reviewed branch catalog and repository-root plugin package. Exact-tag registrations freeze the catalog, root manifest, README, LICENSE, and plugin source together.
 
 A published channel release provides release assurance for its exact tag,
 including release gates, SBOMs, attestations, provenance verification, and the
@@ -90,7 +90,7 @@ Each plugin includes:
 | Skills       | Yes           | Self-contained skill packages                      |
 | Instructions | No            | Included for `#file:` references, not auto-applied |
 
-The one marketplace entry resolves the `.github` plugin root. `.github/plugin.json` declares the complete agents, commands, rules, skills, and hook membership that the client installs. No generated plugin tree or plugin ZIP participates in Git-source installation.
+The one marketplace entry resolves the repository root. Root `plugin.json` declares the complete agents, commands, rules, skills, and hook membership as repository-relative `.github/...` paths. The client resolves the root README and LICENSE; no generated plugin tree or plugin ZIP participates in Git-source installation.
 
 ## Limitations
 
@@ -128,21 +128,21 @@ After installing a plugin, agents and named commands are available in your CLI s
 
 CLI plugins provide two distinct interaction patterns:
 
-| Mode          | Command            | Behavior                                                     |
-|---------------|--------------------|--------------------------------------------------------------|
-| Named Command | `/git-commit`      | Executes a predefined workflow, then returns to default mode |
-| Skill         | `/rpi-research`    | Activates one reusable RPI phase capability                  |
-| Agent Mode    | `/agent RPI Agent` | Switches to the coordinated RPI lifecycle                    |
+| Mode          | Command                     | Behavior                                                     |
+|---------------|-----------------------------|--------------------------------------------------------------|
+| Named Command | `/git-commit`               | Executes a predefined workflow, then returns to default mode |
+| Skill         | `/rpi-research`             | Activates one reusable RPI phase capability                  |
+| Agent Mode    | `/agent hve-core:rpi-agent` | Switches to the coordinated RPI lifecycle                    |
 
 Named commands (prompts) run a specific workflow and produce structured output. Agent mode enables freeform conversation with a specialized agent until you exit.
 
 > [!IMPORTANT]
 > The CLI does not switch to a custom agent on behalf of an agent-bound
-> prompt. Select `RPI Agent` when you want lifecycle coordination, or invoke a
+> prompt. Select `hve-core:rpi-agent` when you want lifecycle coordination, or invoke a
 > direct phase skill such as `/rpi-research`:
 >
 > ```text
-> /agent RPI Agent
+> /agent hve-core:rpi-agent
 > Research API authentication patterns before deciding whether planning is ready.
 > ```
 >
@@ -169,10 +169,16 @@ Continue with follow-up questions in the same session:
 
 ### Available Agents
 
-After installing the hve-core plugin, these agents are available via `/agent <name>`:
+After installing the hve-core plugin, these agents are available via `/agent <qualified-name>`:
 
-* RPI Agent - coordinates Research, Plan, Implement, Review, and Follow-up
-* Documentation - audits, authors, and validates documentation
+* `hve-core:rpi-agent` coordinates Research, Plan, Implement, Review, and Follow-up
+* `hve-core:documentation` audits, authors, and validates documentation
+
+Start an interactive scripted invocation with the same qualified identifier:
+
+```bash
+copilot --agent hve-core:rpi-agent
+```
 
 For the complete list, run `/help` in a CLI session to see all available commands and agents.
 
@@ -180,7 +186,7 @@ For the complete list, run `/help` in a CLI session to see all available command
 
 * Use **named commands** (`/git-commit-message`, `/git-merge`) directly from default mode for workflows that do not require a custom agent.
 * Use direct skills (`/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`) for one bounded RPI responsibility.
-* Use **agent mode** with `/agent RPI Agent` for lifecycle coordination.
+* Use **agent mode** with `/agent hve-core:rpi-agent` for lifecycle coordination.
 * Stay in **agent mode** for exploratory conversations, follow-up questions, or tasks that don't fit a predefined prompt.
 
 ---

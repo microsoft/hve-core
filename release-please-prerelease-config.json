@@ -50,7 +50,7 @@
         },
         {
           "type": "json",
-          "path": ".github/plugin.json",
+          "path": "plugin.json",
           "jsonpath": "$.version"
         },
         {

@@ -5,11 +5,12 @@
 
 <#
 .SYNOPSIS
-    Synchronizes .github/plugin.json with the distributable tracked component set.
+    Synchronizes root plugin.json with the distributable tracked component set.
 
 .DESCRIPTION
-    Derives the sole plugin manifest from git-tracked files under the .github
-    plugin root. Inclusion is a closed path-and-license classification:
+    Derives the sole root plugin manifest from git-tracked files under the
+    .github artifact discovery root. Inclusion is a closed path-and-license
+    classification:
 
     - agents/<package>/**/*.agent.md
     - prompts/<package>/**/*.prompt.md
@@ -18,9 +19,10 @@
       carries a noncommercial qualifier
 
     Repository-root artifacts, which have no package segment, are excluded.
-    Paths are unique and ordinal-sorted, manifest metadata is preserved, the
-    version follows the root package.json, and the fixed hook declaration
-    remains present.
+    Paths are unique and ordinal-sorted, manifest metadata is preserved, and the
+    version follows the root package.json. The manifest declares no hooks: hooks
+    support was removed with the telemetry hook, so a committed hooks field is
+    reported as drift rather than preserved.
 
     Check mode writes nothing. It reports manifest drift and validates the
     one-entry marketplace catalog: exactly one entry, name and version parity,
@@ -54,13 +56,19 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$script:PluginRoot = '.github'
-$script:PluginManifestFile = '.github/plugin.json'
+$script:ArtifactRoot = '.github'
+$script:PluginManifestFile = 'plugin.json'
 $script:MarketplaceCatalogFile = '.github/plugin/marketplace.json'
-$script:FixedHookPath = 'hooks/shared/telemetry.json'
+$script:RequiredPluginMetadata = @('plugin.json', 'README.md', 'LICENSE')
 $script:ManifestMetadataKey = @('author', 'homepage', 'repository', 'license', 'keywords')
 $script:LocatorMetadataKey = @('name', 'description', 'version', 'author', 'homepage', 'repository', 'license', 'keywords')
+# Fields the marketplace locator must never declare. 'hooks' stays listed after
+# the manifest stopped supporting it, because a retired field is exactly what
+# this deny-list exists to reject.
 $script:RecipeField = @('agents', 'commands', 'rules', 'skills', 'hooks', 'x-hve')
+# Every field the derived manifest can produce. A committed field outside this
+# set is drift, which is what keeps a removed field from returning silently.
+$script:SupportedManifestField = @('name', 'description', 'version') + $script:ManifestMetadataKey + @('agents', 'commands', 'rules', 'skills')
 
 #region Discovery
 
@@ -69,12 +77,17 @@ function Get-TrackedPluginIndex {
     .SYNOPSIS
         Reads tracked plugin paths and rejects symbolic-link index entries.
 
+    .DESCRIPTION
+        One staged index read serves both component discovery and root metadata
+        validation. Mode maps every returned repository-relative path, including
+        the required root files, to its exact git index mode.
+
     .PARAMETER RepoRoot
         Root directory of the repository.
 
     .OUTPUTS
-        [System.Collections.Specialized.OrderedDictionary] Paths and violation
-        messages derived from the git index.
+        [System.Collections.Specialized.OrderedDictionary] Paths, violation
+        messages, and index modes derived from the git index.
     #>
     [CmdletBinding()]
     [OutputType([System.Collections.Specialized.OrderedDictionary])]
@@ -84,20 +97,22 @@ function Get-TrackedPluginIndex {
         [string]$RepoRoot
     )
 
-    $output = & git -C $RepoRoot ls-files -s -z --full-name -- $script:PluginRoot
+    $output = & git -C $RepoRoot ls-files -s -z --full-name -- $script:ArtifactRoot $script:RequiredPluginMetadata
     if ($LASTEXITCODE -ne 0) {
         throw "git ls-files failed with exit code $LASTEXITCODE in $RepoRoot"
     }
 
-    $prefix = "$script:PluginRoot/"
+    $prefix = "$script:ArtifactRoot/"
     $paths = @()
     $violations = @()
+    $mode = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::Ordinal)
     foreach ($entry in (($output -join '') -split "`0" | Where-Object { $_ })) {
         if ($entry -notmatch '^(?<Mode>\d{6}) [0-9a-f]+ \d+\t(?<Path>.+)$') {
             throw "Unexpected git ls-files entry: $entry"
         }
 
         $path = $Matches['Path']
+        $mode[$path] = $Matches['Mode']
         if (-not $path.StartsWith($prefix, [System.StringComparison]::Ordinal)) {
             continue
         }
@@ -113,19 +128,20 @@ function Get-TrackedPluginIndex {
     return [ordered]@{
         Paths      = @($paths)
         Violations = @($violations)
+        Mode       = $mode
     }
 }
 
 function Get-TrackedPluginFile {
     <#
     .SYNOPSIS
-        Lists git-tracked files under the plugin root.
+        Lists git-tracked files under the artifact discovery root.
 
     .PARAMETER RepoRoot
         Root directory of the repository.
 
     .OUTPUTS
-        [string[]] Plugin-root-relative forward-slash paths.
+        [string[]] Artifact-root-relative forward-slash paths.
     #>
     [CmdletBinding()]
     [OutputType([string[]])]
@@ -221,7 +237,7 @@ function Get-PluginComponentSet {
         Root directory of the repository.
 
     .PARAMETER TrackedPath
-        Prevalidated plugin-root-relative tracked paths.
+        Prevalidated artifact-root-relative tracked paths.
 
     .OUTPUTS
         [System.Collections.Specialized.OrderedDictionary] agents, commands,
@@ -254,9 +270,9 @@ function Get-PluginComponentSet {
             '^prompts/[^/]+/.+\.prompt\.md$' { [void]$commands.Add($path); continue }
             '^instructions/[^/]+/.+\.instructions\.md$' { [void]$rules.Add($path); continue }
             '^skills/[^/]+/[^/]+/SKILL\.md$' {
-                $license = Get-SkillLicense -Path (Join-Path $RepoRoot $script:PluginRoot $path)
+                $license = Get-SkillLicense -Path (Join-Path $RepoRoot $script:ArtifactRoot $path)
                 if (-not (Test-NoncommercialLicense -License $license)) {
-                    [void]$skills.Add(($path -replace '/SKILL\.md$', ''))
+                    [void]$skills.Add("$script:ArtifactRoot/$($path -replace '/SKILL\.md$', '')")
                 }
                 continue
             }
@@ -264,9 +280,9 @@ function Get-PluginComponentSet {
     }
 
     return [ordered]@{
-        agents   = @($agents)
-        commands = @($commands)
-        rules    = @($rules)
+        agents   = @($agents | ForEach-Object { "$script:ArtifactRoot/$_" })
+        commands = @($commands | ForEach-Object { "$script:ArtifactRoot/$_" })
+        rules    = @($rules | ForEach-Object { "$script:ArtifactRoot/$_" })
         skills   = @($skills)
     }
 }
@@ -314,8 +330,8 @@ function New-PluginManifest {
 
     .DESCRIPTION
         Metadata is preserved from the committed manifest, the version follows
-        the root package manifest, component arrays are derived, and the fixed
-        hook declaration is always emitted.
+        the root package manifest, and component arrays are derived. No hooks
+        declaration is emitted.
 
     .PARAMETER RepoRoot
         Root directory of the repository.
@@ -368,7 +384,6 @@ function New-PluginManifest {
     foreach ($kind in @('agents', 'commands', 'rules', 'skills')) {
         $manifest[$kind] = @($Component[$kind])
     }
-    $manifest['hooks'] = $script:FixedHookPath
 
     return $manifest
 }
@@ -421,10 +436,19 @@ function Compare-PluginManifest {
     )
 
     $differences = @()
-    foreach ($field in @('version', 'hooks')) {
+    foreach ($field in @('version')) {
         $committedValue = if ($null -ne $Committed -and $Committed.Contains($field)) { [string]$Committed[$field] } else { '<missing>' }
-        if ($committedValue -cne [string]$Expected[$field]) {
-            $differences += "$field differs: committed '$committedValue'; expected '$($Expected[$field])'"
+        $expectedValue = if ($Expected.Contains($field)) { [string]$Expected[$field] } else { '<missing>' }
+        if ($committedValue -cne $expectedValue) {
+            $differences += "$field differs: committed '$committedValue'; expected '$expectedValue'"
+        }
+    }
+
+    if ($null -ne $Committed) {
+        foreach ($field in @($Committed.Keys)) {
+            if ($script:SupportedManifestField -cnotcontains $field) {
+                $differences += "$field is declared but the manifest no longer supports it; remove it"
+            }
         }
     }
 
@@ -451,7 +475,98 @@ function Compare-PluginManifest {
 
 #endregion Manifest
 
+#region Package metadata
+
+function Get-PluginMetadataViolations {
+    <#
+    .SYNOPSIS
+        Validates required files at the plugin root.
+
+    .PARAMETER RepoRoot
+        Root directory of the repository.
+
+    .PARAMETER TrackedMode
+        Repository-relative path to git index mode map. Defaults to a fresh
+        index read so direct callers need no snapshot.
+
+    .OUTPUTS
+        [string[]] Violation messages.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [System.Collections.Generic.IDictionary[string, string]]$TrackedMode
+    )
+
+    if (-not $TrackedMode) {
+        $TrackedMode = (Get-TrackedPluginIndex -RepoRoot $RepoRoot).Mode
+    }
+
+    $violations = @()
+    foreach ($relativePath in $script:RequiredPluginMetadata) {
+        $path = Join-Path $RepoRoot $relativePath
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+            $violations += "Required plugin root file is missing or not a regular file: $relativePath"
+            continue
+        }
+
+        $mode = $null
+        if (-not $TrackedMode.TryGetValue($relativePath, [ref]$mode)) {
+            $violations += "Required plugin root file is not tracked: $relativePath"
+            continue
+        }
+        if ($mode -notin @('100644', '100755')) {
+            $violations += "Required plugin root file is not a tracked regular file: $relativePath (mode $mode)"
+            continue
+        }
+        if ((Get-Item -LiteralPath $path).Length -eq 0) {
+            $violations += "Required plugin root file is empty: $relativePath"
+        }
+    }
+    return $violations
+}
+
+#endregion Package metadata
+
 #region Catalog
+
+function Resolve-PluginPath {
+    <#
+    .SYNOPSIS
+        Resolves a path through symbolic links in every existing segment.
+
+    .PARAMETER Path
+        Existing file or directory path to resolve.
+
+    .OUTPUTS
+        [string] Canonical absolute path.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    $fullPath = [System.IO.Path]::GetFullPath($Path)
+    $pathRoot = [System.IO.Path]::GetPathRoot($fullPath)
+    $current = $pathRoot
+    $relative = $fullPath.Substring($pathRoot.Length)
+    foreach ($segment in $relative.Split([System.IO.Path]::DirectorySeparatorChar, [System.StringSplitOptions]::RemoveEmptyEntries)) {
+        $current = Join-Path $current $segment
+        $item = Get-Item -LiteralPath $current -Force
+        if ($item.LinkType) {
+            $current = $item.ResolveLinkTarget($true).FullName
+        }
+    }
+    return [System.IO.Path]::GetFullPath($current)
+}
 
 function Get-PluginComponentCoverageViolations {
     <#
@@ -486,7 +601,13 @@ function Get-PluginComponentCoverageViolations {
     )
 
     $violations = @()
-    $root = Join-Path $RepoRoot $SourcePath
+    $root = Resolve-PluginPath -Path (Join-Path $RepoRoot $SourcePath)
+    $rootPrefix = $root.TrimEnd([System.IO.Path]::DirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+
+    # Components share few immediate parents, so resolving each distinct parent
+    # once avoids repeating the whole segment walk per component. Ordinal keys on
+    # every platform preserve the script's case-sensitive path identity.
+    $parentCache = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::Ordinal)
 
     foreach ($kind in @('agents', 'commands', 'rules', 'skills')) {
         $type = if ($kind -eq 'skills') { 'Container' } else { 'Leaf' }
@@ -495,23 +616,46 @@ function Get-PluginComponentCoverageViolations {
                 $violations += "$kind path escapes the plugin root: $path"
                 continue
             }
-            if (-not (Test-Path -LiteralPath (Join-Path $root $path) -PathType $type)) {
+            $candidate = Join-Path $root $path
+            if (-not (Test-Path -LiteralPath $candidate -PathType $type)) {
                 $violations += "$kind path does not exist under $SourcePath : $path"
+                continue
+            }
+
+            $fullCandidate = [System.IO.Path]::GetFullPath($candidate)
+            $parent = [System.IO.Path]::GetDirectoryName($fullCandidate)
+            $resolvedParent = $null
+            if (-not $parentCache.TryGetValue($parent, [ref]$resolvedParent)) {
+                $resolvedParent = Resolve-PluginPath -Path $parent
+                $parentCache[$parent] = $resolvedParent
+            }
+
+            $resolved = Join-Path $resolvedParent ([System.IO.Path]::GetFileName($fullCandidate))
+            $item = Get-Item -LiteralPath $resolved -Force
+            if ($item.LinkType) {
+                $resolved = $item.ResolveLinkTarget($true).FullName
+            }
+            $resolved = [System.IO.Path]::GetFullPath($resolved)
+
+            if ($resolved -cne $root -and -not $resolved.StartsWith($rootPrefix, [System.StringComparison]::Ordinal)) {
+                $violations += "$kind path resolves outside the plugin root: $path"
             }
         }
-    }
-
-    if (-not (Test-Path -LiteralPath (Join-Path $root $Manifest['hooks']) -PathType Leaf)) {
-        $violations += "hooks path does not exist under $SourcePath : $($Manifest['hooks'])"
     }
 
     return $violations
 }
 
-function Get-PluginCatalogViolations {
+function Get-PluginCatalogMetadataViolations {
     <#
     .SYNOPSIS
-        Validates the one-entry marketplace catalog against the plugin manifest.
+        Validates catalog shape, manifest parity, and the source locator.
+
+    .DESCRIPTION
+        Owns every catalog check that needs no traversal of declared component
+        paths. CoverageSource carries the validated relative plugin root when
+        component coverage can still be meaningful, and $null when an earlier
+        violation already invalidates that traversal.
 
     .PARAMETER RepoRoot
         Root directory of the repository.
@@ -520,10 +664,11 @@ function Get-PluginCatalogViolations {
         Expected manifest content.
 
     .OUTPUTS
-        [string[]] Violation messages.
+        [System.Collections.Specialized.OrderedDictionary] Violation messages
+        and the coverage source, if any.
     #>
     [CmdletBinding()]
-    [OutputType([string[]])]
+    [OutputType([System.Collections.Specialized.OrderedDictionary])]
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
@@ -535,7 +680,10 @@ function Get-PluginCatalogViolations {
 
     $catalogPath = Join-Path $RepoRoot $script:MarketplaceCatalogFile
     if (-not (Test-Path -LiteralPath $catalogPath -PathType Leaf)) {
-        return @("Marketplace catalog not found: $script:MarketplaceCatalogFile")
+        return [ordered]@{
+            Violations     = @("Marketplace catalog not found: $script:MarketplaceCatalogFile")
+            CoverageSource = $null
+        }
     }
 
     $catalog = Get-Content -LiteralPath $catalogPath -Raw | ConvertFrom-Json -AsHashtable
@@ -543,7 +691,10 @@ function Get-PluginCatalogViolations {
 
     $entries = @($catalog['plugins'])
     if ($entries.Count -ne 1) {
-        return @("Marketplace catalog declares $($entries.Count) entries; exactly one is required")
+        return [ordered]@{
+            Violations     = @("Marketplace catalog declares $($entries.Count) entries; exactly one is required")
+            CoverageSource = $null
+        }
     }
 
     $entry = $entries[0]
@@ -575,19 +726,53 @@ function Get-PluginCatalogViolations {
     $source = $entry['source']
     if ($source -isnot [string]) {
         $violations += 'Catalog entry source must be a relative path string'
-        return $violations
+        return [ordered]@{ Violations = @($violations); CoverageSource = $null }
     }
     if ([System.IO.Path]::IsPathRooted($source) -or $source -match '\\' -or $source -match '(^|/)\.\.(/|$)') {
         $violations += "Catalog entry source escapes the repository: $source"
-        return $violations
+        return [ordered]@{ Violations = @($violations); CoverageSource = $null }
     }
 
     if (-not (Test-Path -LiteralPath (Join-Path $RepoRoot $source 'plugin.json') -PathType Leaf)) {
         $violations += "Catalog entry source has no plugin manifest: $source/plugin.json"
-        return $violations
+        return [ordered]@{ Violations = @($violations); CoverageSource = $null }
     }
 
-    return @($violations) + @(Get-PluginComponentCoverageViolations -RepoRoot $RepoRoot -SourcePath $source -Manifest $Manifest)
+    return [ordered]@{ Violations = @($violations); CoverageSource = $source }
+}
+
+function Get-PluginCatalogViolations {
+    <#
+    .SYNOPSIS
+        Validates the one-entry marketplace catalog against the plugin manifest.
+
+    .PARAMETER RepoRoot
+        Root directory of the repository.
+
+    .PARAMETER Manifest
+        Expected manifest content.
+
+    .OUTPUTS
+        [string[]] Violation messages.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Manifest
+    )
+
+    $metadata = Get-PluginCatalogMetadataViolations -RepoRoot $RepoRoot -Manifest $Manifest
+    if ($null -eq $metadata.CoverageSource) {
+        return @($metadata.Violations)
+    }
+
+    return @($metadata.Violations) +
+        @(Get-PluginComponentCoverageViolations -RepoRoot $RepoRoot -SourcePath $metadata.CoverageSource -Manifest $Manifest)
 }
 
 #endregion Catalog
@@ -621,6 +806,16 @@ function Invoke-PluginManifestSync {
     )
 
     $trackedIndex = Get-TrackedPluginIndex -RepoRoot $RepoRoot
+
+    $metadataViolations = @(Get-PluginMetadataViolations -RepoRoot $RepoRoot -TrackedMode $trackedIndex.Mode)
+    if ($metadataViolations.Count -gt 0) {
+        return [ordered]@{
+            Changed    = $false
+            Violations = $metadataViolations
+            Manifest   = $null
+        }
+    }
+
     $components = Get-PluginComponentSet -RepoRoot $RepoRoot -TrackedPath $trackedIndex.Paths
     $version = Get-RepositoryVersion -RepoRoot $RepoRoot
     $manifest = New-PluginManifest -RepoRoot $RepoRoot -Component $components -Version $version

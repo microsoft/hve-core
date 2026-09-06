@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-08-10
+ms.date: 2026-09-04
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -23,6 +23,8 @@ hve-core uses GitHub Agentic Workflows to support the journey from issue creatio
 
 ```mermaid
 flowchart TD
+    accTitle: Issue Triage and Pull Request Review Workflow
+    accDescr: Issue triage routes qualifying issues into implementation. Opened pull requests pass through automated review outcomes, revision loops when needed, and human review before merge.
     subgraph TRIGGER["Issue Created or Labeled"]
         A["New issue opened<br/>or labeled needs-triage"]
     end
@@ -172,16 +174,18 @@ Review workflow after a pull request opens:
 
 ```mermaid
 stateDiagram-v2
+    accTitle: Issue Lifecycle and Label State Machine
+    accDescr: Issues move from triage and classification into agent implementation, pull request review, revision or approval outcomes, and final merge.
     [*] --> needs_triage: Issue opened
     needs_triage --> classified: Triage removes needs-triage,<br/>adds type + component labels
     classified --> agent_ready: Triage adds agent-ready<br/>(if criteria met)
     classified --> human_review: Criteria not met,<br/>awaits human labeling
     agent_ready --> pr_opened: Implementation agent<br/>opens PR
     pr_opened --> review_requested: User with admin, maintainer,<br/>or write access invokes /review
-    review_requested --> review_passed: Checks pass;<br/>review-passed added
-    review_requested --> needs_revision: Blocking non-maintainer findings;<br/>needs-revision added
-    review_requested --> draft_revision: Five or more critical non-maintainer findings;<br/>draft + needs-revision
-    review_requested --> comment_only: Advisory or non-blocking findings;<br/>COMMENT only
+    review_requested --> review_passed: Checks pass,<br/>review-passed added
+    review_requested --> needs_revision: Blocking non-maintainer findings,<br/>needs-revision added
+    review_requested --> draft_revision: Five or more critical non-maintainer findings,<br/>draft + needs-revision
+    review_requested --> comment_only: Advisory or non-blocking findings,<br/>COMMENT only
     comment_only --> pr_opened: PR remains open
     needs_revision --> pr_opened: Author pushes fixes
     draft_revision --> pr_opened: Author pushes fixes
@@ -199,12 +203,12 @@ side of the development lifecycle.
 
 The [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/rpi-agent.agent.md) coordinates Research, Plan, Implement, Review, and Follow-up by activating four reusable phase skills:
 
-| Skill           | Responsibility                                                          |
-|-----------------|-------------------------------------------------------------------------|
-| `rpi-research`  | Closes demonstrated evidence gaps and produces research evidence        |
-| `rpi-plan`      | Creates marker-addressed plans, phase details, and independent critique |
-| `rpi-implement` | Executes approved work and records changes, amendments, and validation  |
-| `rpi-review`    | Reconciles evidence, records findings, and routes the next action       |
+| Skill           | Responsibility                                                         |
+|-----------------|------------------------------------------------------------------------|
+| `rpi-research`  | Closes demonstrated evidence gaps and produces research evidence       |
+| `rpi-plan`      | Creates a marker-addressed task-centered plan and independent critique |
+| `rpi-implement` | Executes approved work and records changes, amendments, and validation |
+| `rpi-review`    | Reconciles evidence, records findings, and routes the next action      |
 
 The skills coordinate through durable artifacts stored in `.copilot-tracking/`.
 
@@ -214,11 +218,11 @@ The `hve-builder` skill uses one lifecycle for agents, prompts, instructions, su
 
 1. Resolve mode, targets, write boundary, architecture, and applicable conventions
 2. Author or perform read-only review according to the selected mode
-3. Run fresh-context static review and one behavior gate with route-specific execution: Major mutations and behavior-bearing review targets execute testing, while eligible no-runtime review targets and Minor or Medium mutations are satisfied-and-skipped
+3. Complete all known edits, fresh-context static review, and local validation before freezing the candidate and resolving one final behavior gate. Major mutations and behavior-bearing review targets invoke HVE Builder Tester at most once; eligible no-runtime review targets and Minor or Medium mutations are satisfied-and-skipped. A behavior finding ends the current run and becomes input to a later invocation rather than a same-run edit and retest
 4. Keep known target files and caller-supplied canonical references as bounded lifecycle reads; activate `rpi-research` for open-ended exploration and decision-critical research
 5. Run non-mutating host validation and resolve one overall outcome
 
-HVE Builder selects a reasoning profile from each worker's responsibility. High uses Claude Opus 5, GPT-5.6 Sol, then GPT-5.5 for architecture and consequential decisions. Medium uses GPT-5.6 Terra, Claude Sonnet 5, then MAI-Code-1-Flash for semantic discovery, authoring, research, implementation, and review. Low uses GPT-5.6 Luna, MAI-Code-1-Flash, then Claude Haiku 4.5 for literal simulation and mechanical validation.
+HVE Builder selects a reasoning profile when it delegates isolated work. Fresh-context static review uses Medium. HVE Builder Tester executes the frozen target at its own profile and grades the evidence at the higher of Medium and that target profile. The lifecycle lead keeps bounded authoring and local validation in the current context rather than creating a worker turn for each stage.
 
 Each ordered list is an availability fallback within its selected profile. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills remain compatibility aliases that route legacy requests to this lifecycle.
 
@@ -256,6 +260,8 @@ Five agents support upstream planning activities:
 
 ```mermaid
 flowchart LR
+    accTitle: Hosted Workflows and Interactive Agent Integration
+    accDescr: Repository-hosted workflows coordinate through events and labels while interactive agents share instructions, skills, and tracking artifacts across the development lifecycle.
     subgraph HOSTED["Repository-Hosted Workflows"]
         direction TB
         TRIAGE["Issue Triage<br/><i>event-driven</i>"]

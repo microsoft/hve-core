@@ -1,7 +1,7 @@
 ---
 name: privacy-standards
 description: "Privacy planning reference for data-flow reasoning, standards mapping, and DPIA thresholds"
-license: mixed
+license: CC-BY-4.0 AND CC-BY-SA-3.0
 user-invocable: false
 metadata:
   authors: "NIST (Privacy Framework and NISTIR 8062); GDPR and CCPA/CPRA sources; OWASP (privacy risks); Microsoft (planning synthesis)"
@@ -19,9 +19,22 @@ This skill is the reusable privacy reference package for the Privacy Planner and
 
 ## Attribution and licensing posture
 
-- NIST Privacy Framework and NISTIR 8062 are U.S. Government documents and are referenced here with attribution as public-domain reference material.
-- GDPR and CCPA/CPRA content is paraphrased and attributed rather than quoted verbatim, consistent with the repository's open legal-text posture.
-- OWASP privacy-risk material is used as a planning reference and is attributed to the OWASP project.
+- NIST Privacy Framework and NISTIR 8062 are U.S. Government documents and are referenced here with attribution as public-domain reference material. Public-domain material carries no license obligation, so it adds no term to the package license expression.
+- GDPR and CCPA/CPRA content is paraphrased and attributed rather than quoted verbatim, consistent with the repository's open legal-text posture. The paraphrase is this repository's own expression.
+- OWASP privacy-risk material is adapted from the OWASP Top 10 Privacy Risks project, which is licensed CC BY-SA 3.0. ShareAlike propagates to that derivative, so it is the one file carrying a copyleft term.
+
+The frontmatter expression is the conjunction of every license present in the package. The table states which license governs each file.
+
+| Path                                       | License      | Origin                                                      |
+|--------------------------------------------|--------------|-------------------------------------------------------------|
+| `references/owasp-top-10-privacy-risks.md` | CC-BY-SA-3.0 | Adapted from OWASP Top 10 Privacy Risks v2.0 (CC BY-SA 3.0) |
+| `references/nist-privacy-framework.md`     | CC-BY-4.0    | Adapted from NIST Privacy Framework v1.0 (public domain)    |
+| `references/nistir-8062.md`                | CC-BY-4.0    | Adapted from NISTIR 8062 (public domain)                    |
+| `references/gdpr.md`                       | CC-BY-4.0    | Paraphrase of GDPR, not reproduced                          |
+| `references/ccpa-cpra.md`                  | CC-BY-4.0    | Paraphrase of CCPA/CPRA, not reproduced                     |
+| `references/dpia-thresholds.md`            | CC-BY-4.0    | Repository-original planning synthesis                      |
+| `references/data-governance-controls.md`   | CC-BY-4.0    | Repository-original planning synthesis                      |
+| `SKILL.md` and remaining package content   | CC-BY-4.0    | Repository-original                                         |
 
 ## Framework index
 

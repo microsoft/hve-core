@@ -2,7 +2,7 @@
 title: Forking and Extending HVE Core
 description: Fork HVE Core to create a fully customized prompt engineering framework with upstream sync and Copilot-assisted adaptation
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-08-19
 ms.topic: tutorial
 keywords:
   - forking
@@ -99,7 +99,7 @@ README, and marketplace presentation. See the
 
 Agent and prompt files live under `.github/agents/` and `.github/prompts/`. Restructure
 these directories to match your organization's team topology or domain boundaries. Run
-`npm run plugin:sync` to reflect eligible paths in `.github/plugin.json`.
+`npm run plugin:sync` to reflect eligible `.github` paths in root `plugin.json`.
 
 ### 3. MCP Servers
 
@@ -155,7 +155,7 @@ Conflicts typically occur in files you have customized. Common conflict points:
 
 * `package.json` (script modifications)
 * `.markdownlint.json` (rule adjustments)
-* `.github/plugin.json` membership after artifacts are added or removed
+* Root `plugin.json` membership after artifacts are added or removed
 * Workflow files (permission or job changes)
 
 For each conflict, evaluate whether to keep your change, accept the upstream change, or

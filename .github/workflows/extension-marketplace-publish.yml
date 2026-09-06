@@ -156,7 +156,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_DIGEST: ${{ needs.validate-inputs.outputs.release-digest }}
           REPOSITORY: ${{ github.repository }}
-          SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/extension-provenance.yml
+          SIGNER_SHA: 3a09401536cef0c4559db1aa64b7d1010638fd67
+          SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/extension-provenance-signer.yml
         run: |
           set -euo pipefail
           CHECKOUT_DIGEST=$(git rev-parse HEAD)
@@ -166,6 +167,7 @@ jobs:
           fi
           gh attestation verify "$VSIX_FILE" --repo "$REPOSITORY" \
             --signer-workflow "$SIGNER_WORKFLOW" \
+            --signer-digest "$SIGNER_SHA" \
             --source-digest "$RELEASE_DIGEST"
 
       # No conditional override: this artifact exists only after verification.
@@ -275,11 +277,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_DIGEST: ${{ needs.validate-inputs.outputs.release-digest }}
           REPOSITORY: ${{ github.repository }}
-          SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/extension-provenance.yml
+          SIGNER_SHA: 3a09401536cef0c4559db1aa64b7d1010638fd67
+          SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/extension-provenance-signer.yml
         run: |
           set -euo pipefail
           gh attestation verify "$VSIX_FILE" --repo "$REPOSITORY" \
             --signer-workflow "$SIGNER_WORKFLOW" \
+            --signer-digest "$SIGNER_SHA" \
             --source-digest "$RELEASE_DIGEST"
 
       - name: Download publisher toolchain

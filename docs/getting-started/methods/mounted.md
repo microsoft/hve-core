@@ -3,7 +3,7 @@ title: Mounted Directory Installation
 description: Advanced devcontainer setup mounting HVE Core from host filesystem
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-08-19
 ms.topic: how-to
 keywords:
   - mounted directory
@@ -182,9 +182,17 @@ After rebuild, update `.vscode/settings.json`:
   },
   "chat.agentSkillsLocations": {
     "/workspaces/hve-core/.github/skills": true,
+    "/workspaces/hve-core/.github/skills/accessibility": true,
     "/workspaces/hve-core/.github/skills/shared": true,
     "/workspaces/hve-core/.github/skills/coding-standards": true,
-    "/workspaces/hve-core/.github/skills/design-thinking": true
+    "/workspaces/hve-core/.github/skills/data-science": true,
+    "/workspaces/hve-core/.github/skills/design-thinking": true,
+    "/workspaces/hve-core/.github/skills/hve-core": true,
+    "/workspaces/hve-core/.github/skills/installer": true,
+    "/workspaces/hve-core/.github/skills/project-planning": true,
+    "/workspaces/hve-core/.github/skills/rai": true,
+    "/workspaces/hve-core/.github/skills/rpi": true,
+    "/workspaces/hve-core/.github/skills/security": true
   }
 }
 ```
@@ -222,9 +230,17 @@ After rebuild, update `.vscode/settings.json`:
         },
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
+          "/workspaces/hve-core/.github/skills/accessibility": true,
           "/workspaces/hve-core/.github/skills/shared": true,
           "/workspaces/hve-core/.github/skills/coding-standards": true,
-          "/workspaces/hve-core/.github/skills/design-thinking": true
+          "/workspaces/hve-core/.github/skills/data-science": true,
+          "/workspaces/hve-core/.github/skills/design-thinking": true,
+          "/workspaces/hve-core/.github/skills/hve-core": true,
+          "/workspaces/hve-core/.github/skills/installer": true,
+          "/workspaces/hve-core/.github/skills/project-planning": true,
+          "/workspaces/hve-core/.github/skills/rai": true,
+          "/workspaces/hve-core/.github/skills/rpi": true,
+          "/workspaces/hve-core/.github/skills/security": true
         }
       }
     }
@@ -284,9 +300,17 @@ ls /workspaces/hve-core/.github/agents
         },
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
+          "/workspaces/hve-core/.github/skills/accessibility": true,
           "/workspaces/hve-core/.github/skills/shared": true,
           "/workspaces/hve-core/.github/skills/coding-standards": true,
-          "/workspaces/hve-core/.github/skills/design-thinking": true
+          "/workspaces/hve-core/.github/skills/data-science": true,
+          "/workspaces/hve-core/.github/skills/design-thinking": true,
+          "/workspaces/hve-core/.github/skills/hve-core": true,
+          "/workspaces/hve-core/.github/skills/installer": true,
+          "/workspaces/hve-core/.github/skills/project-planning": true,
+          "/workspaces/hve-core/.github/skills/rai": true,
+          "/workspaces/hve-core/.github/skills/rpi": true,
+          "/workspaces/hve-core/.github/skills/security": true
         }
       }
     }

@@ -26,7 +26,7 @@ Move on when the answer has sufficiently clarified the current issue, the user r
 
 ## Record update protocol
 
-After scope confirmation, create or resume `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{task_slug}}-challenge.md` by copying the body of [../templates/challenge-session.md](../templates/challenge-session.md). Exclude the source-template YAML frontmatter so the generated record begins with `<!-- markdownlint-disable-file -->`.
+After scope confirmation, create or resume `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{task_slug}}-challenge.md` by copying [../templates/challenge-session.md](../templates/challenge-session.md).
 
 Update the record throughout the session:
 

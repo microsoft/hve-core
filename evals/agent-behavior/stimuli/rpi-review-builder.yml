@@ -1,0 +1,15 @@
+stimuli:
+  - name: rpi-review-builder-default-depth
+    prompt: |
+      RPI Review Builder uses standard review depth unless the user explicitly
+      requests deep review. No deep review was requested. Do not call tools.
+      Return only the default review depth.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-contains
+        name: standard-review-depth
+        config:
+          substring: standard
+          case_sensitive: false

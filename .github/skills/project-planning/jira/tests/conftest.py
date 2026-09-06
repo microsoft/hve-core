@@ -79,6 +79,8 @@ def reset_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("JIRA_PAT", raising=False)
     monkeypatch.delenv("JIRA_USER_EMAIL", raising=False)
     monkeypatch.delenv("JIRA_API_TOKEN", raising=False)
+    monkeypatch.delenv("JIRA_CLOUD_TOKEN_MODE", raising=False)
+    monkeypatch.delenv("JIRA_CLOUD_ID", raising=False)
 
 
 @pytest.fixture

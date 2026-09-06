@@ -3,7 +3,7 @@ title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-09-04
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -29,10 +29,10 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 
 ### Primary Agents
 
-| Tool                  | Type  | How to Invoke                    | Purpose                                          |
-|-----------------------|-------|----------------------------------|--------------------------------------------------|
-| RPI Agent             | Agent | Select **RPI Agent**             | Coordinate the applicable RPI phase skills       |
-| Data Workstream Coach | Agent | Select **Data Workstream Coach** | Produce notebooks, dashboards, and pipeline code |
+| Tool                               | Type  | How to Invoke                                 | Purpose                                          |
+|------------------------------------|-------|-----------------------------------------------|--------------------------------------------------|
+| RPI Agent                          | Agent | Select **RPI Agent**                          | Coordinate the applicable RPI phase skills       |
+| Data Science and Engineering Coach | Agent | Select **Data Science and Engineering Coach** | Produce notebooks, dashboards, and pipeline code |
 
 ### Prompts
 
@@ -64,7 +64,7 @@ All coding standard instructions activate automatically based on file type:
 | Tool          | How to Invoke      | Purpose                                                    |
 |---------------|--------------------|------------------------------------------------------------|
 | rpi-research  | `/rpi-research`    | Close a demonstrated evidence gap                          |
-| rpi-plan      | `/rpi-plan`        | Create a plan, phase details, and independent critique     |
+| rpi-plan      | `/rpi-plan`        | Create a task-centered plan and independent critique       |
 | rpi-implement | `/rpi-implement`   | Execute approved work and record change evidence           |
 | rpi-review    | `/rpi-review`      | Reconcile implementation evidence and route follow-up      |
 | hve-builder   | Use `hve-builder`  | Author or review prompts, instructions, agents, and skills |
@@ -113,13 +113,12 @@ research output.
 Execute the plan:
 
 ```text
-/rpi-implement Build the webhook delivery system following the plan in
-.copilot-tracking/plans/2026-07-13/webhook-delivery-plan.md and phase details in
-.copilot-tracking/details/2026-07-13/webhook-delivery-phase-details.md. Start
-with the event dispatcher component and implement the retry queue second.
+/rpi-implement Build the webhook delivery system following the task goals,
+targets, dependencies, and acceptance criteria in
+.copilot-tracking/plans/2026-07-13/webhook-delivery-plan.md. Start with P01.
 ```
 
-Select the **Data Workstream Coach** agent and confirm the analysis job:
+Select the **Data Science and Engineering Coach** agent and confirm the analysis job:
 
 ```text
 Create a data analysis notebook for the Q4 sales transactions dataset in

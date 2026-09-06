@@ -198,7 +198,7 @@ The HVE Core extension has been installed from the VS Code Marketplace.
 🔗 Marketplace: https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core
 
 🧪 Available Agents:
-• rpi-agent, documentation, github-backlog-manager, and adr-creation
+• rpi-agent, documentation, backlog-manager, and adr-creation
 • code-review, security-planner, ux-ui-designer, and more!
 
 🪝 Hooks (manual step): The Marketplace extension is declarative and does not
@@ -405,7 +405,7 @@ Method [N]: [Name] installed successfully.
 📖 Documentation: https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/[method-doc].md
 
 🧪 Available Agents:
-• rpi-agent, documentation, github-backlog-manager, and adr-creation
+• rpi-agent, documentation, backlog-manager, and adr-creation
 • code-review, security-planner, ux-ui-designer, and more!
 
 📋 Configuring optional settings...

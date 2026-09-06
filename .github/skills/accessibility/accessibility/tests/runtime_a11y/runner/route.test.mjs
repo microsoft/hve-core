@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { resolveTargetUrl } from '../../../scripts/runtime_a11y/runner/_shared.mjs';
-import { resolveRouteUrl } from '../../../scripts/runtime_a11y/runner/route.mjs';
+import { resolveDestinationUrl, resolveRouteUrl } from '../../../scripts/runtime_a11y/runner/route.mjs';
 import { resolveRouteUrl as visualReviewResolver } from '../../../scripts/runtime_a11y/runner/visual-review-executor.mjs';
 
 const BASE = 'http://127.0.0.1:3000';
@@ -37,4 +37,26 @@ test('ordinary relative routes still resolve', () => {
 
 test('a surface with no route keeps the base url', () => {
   assert.equal(resolveTargetUrl(BASE, {}), BASE);
+});
+
+test('trigger destinations accept relative and absolute same-origin HTTP URLs', () => {
+  assert.equal(resolveDestinationUrl('/next', BASE), 'http://127.0.0.1:3000/next');
+  assert.equal(
+    resolveDestinationUrl('http://127.0.0.1:3000/next', BASE),
+    'http://127.0.0.1:3000/next',
+  );
+});
+
+test('trigger destinations reject unsupported and off-origin values', () => {
+  for (const target of [
+    '//attacker.example/path',
+    'https://attacker.example/path',
+    'file:///tmp/page.html',
+    'javascript:alert(1)',
+    'http:ambiguous',
+    'https://user:password@127.0.0.1:3000/path',
+    '/bad path',
+  ]) {
+    assert.throws(() => resolveDestinationUrl(target, BASE), undefined, target);
+  }
 });
