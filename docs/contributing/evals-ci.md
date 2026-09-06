@@ -220,21 +220,27 @@ for local reproduction prerequisites and output handling.
 | `ci:eval:lint:text`   | `Test-EvalSpecText.ps1`         | retext-profanities + retext-equality gate on the AI-artifact corpus |
 | `ci:eval:lint:safety` | `Test-VallyTestSafety.ps1`      | Safety validation for eval stimuli                                  |
 
-`ci:eval:lint:text` scans `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md`. By default `retext-profanities` findings flip the exit code (errors) and retext-equality findings retain the `alex` source contract and emit `::warning` annotations only. Pass `-FailOnAlex` to promote those compatibility findings to errors for local hardening:
+`ci:eval:lint:text` scans `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` using separate `retext-equality` and `retext-profanities` processors. The `alex` package is no longer a dependency. Equality findings retain `source: alex` in the JSON report and emit `::warning` annotations by default; the source alias and `-FailOnAlex` name are retained for existing consumers.
+
+The profanity processor uses `sureness: 1`, a confidence threshold rather than a severity rating. Rating-0 profanity matches are excluded both with and without `-FailOnAlex`. Non-allowlisted rating-1 and rating-2 findings are emitted once with `source: retext-profanities` and cause exit code 1.
+
+Report fields and CLI names remain compatible, but the finding set is intentionally different from the former `alex.text()` pipeline: profanity findings are no longer duplicated under `source: alex`, and rating-0 profanity matches are no longer reported. Full historical output equivalence is not claimed.
+
+Pass `-FailOnAlex` to promote only emitted equality findings to errors. It does not change the profanity threshold or restore excluded matches:
 
 ```pwsh
 pwsh scripts/evals/Test-EvalSpecText.ps1 -FailOnAlex
 ```
 
-False-positive lexical matches (e.g., `penetration test`, `attack surface`, `token abuse`) are filtered by the phrase-aware allowlist in `scripts/evals/Modules/retext-runner.mjs` (`PHRASE_ALLOWLIST` keyed by retext rule id; ±60-character context window).
+Matches admitted by either processor are filtered by the phrase-aware allowlist in `scripts/evals/Modules/retext-runner.mjs` (`PHRASE_ALLOWLIST` keyed by retext rule id; ±60-character context window). For example, the allowlist suppresses the equality match in `HTTP host` and the profanity match in `penetration test`.
 
 `Test-EvalSpecText.ps1` exit codes:
 
-| Exit | Meaning                                                                                      |
-|------|----------------------------------------------------------------------------------------------|
-| 0    | No error-level findings (alex-compatible findings may still be reported as warnings).        |
-| 1    | At least one `retext-profanities` finding, or an alex-compatible finding with `-FailOnAlex`. |
-| 2    | Setup failure (corpus expansion failed, Node shim missing, or `node` not on PATH).           |
+| Exit | Meaning                                                                                                           |
+|------|-------------------------------------------------------------------------------------------------------------------|
+| 0    | No error-level findings; equality findings (`source: alex`) may still be reported as warnings.                    |
+| 1    | At least one emitted profanity finding (`source: retext-profanities`), or an equality finding with `-FailOnAlex`. |
+| 2    | Setup failure (corpus expansion failed, Node shim missing, or `node` not on PATH).                                |
 
 ### Schema lint, coverage, and reachability
 
