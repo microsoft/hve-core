@@ -205,6 +205,8 @@ async function runEquality(text) {
     return [...(file.messages ?? [])]
         .sort(compareMessage)
         .filter((m) => !isAllowedByPhrase(m, text))
+        // Preserve the legacy 'alex' report source; it is not a package dependency.
+        // Test-EvalSpecText.ps1 uses it for equality warnings, or errors with -FailOnAlex.
         .map((m) => normalizeMessage(m, 'alex'));
 }
 
