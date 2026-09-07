@@ -6,7 +6,7 @@ compatibility: 'Requires VS Code CLI (code or code-insiders), Playwright MCP too
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-03-18"
+  last_updated: "2026-08-11"
 ---
 
 # VS Code Playwright Screenshot Skill
@@ -20,12 +20,22 @@ This skill provides a complete workflow for capturing high-quality VS Code scree
 ## Prerequisites
 
 * VS Code or VS Code Insiders CLI (`code` or `code-insiders`)
-* Playwright MCP tools available (`mcp_microsoft_pla_browser_*`)
+* Genuine Playwright MCP browser tools (`mcp_playwright_browser_*`)
 * `curl` for server readiness checks
+
+Tool names in this skill use an `mcp_microsoft_pla_browser_*` prefix. The actual prefix is derived from the MCP server's registration name in your host, so it may differ, for example `mcp_playwright_browser_*`. Match the prefix your host exposes.
+
+## Verified Constraints
+
+These three constraints were confirmed against a running `serve-web` instance. Each one invalidates an approach that looks reasonable but does not work.
+
+* User settings live in the browser's IndexedDB, not on disk. Seeding `--server-data-dir/data/User/settings.json` has no effect on VS Code Web, so the theme, font size, and UI visibility cannot be set that way. Apply them through Command Palette commands after the workbench loads.
+* Markdown files open as a cross-origin preview webview rather than a Monaco editor. The webview DOM is unreachable from the page, so rendered text inside it cannot be inspected or measured. Capture a code or configuration file when the screenshot needs measurable editor text.
+* Confirm browser tooling by attempting a navigation rather than by matching tool names, because MCP tool prefixes vary by server registration. VS Code's built-in browser tools are a known case that loads the page but delivers neither keyboard nor mouse events to the VS Code Web workbench, so an attempt using them fails at the first command-palette step.
 
 ## Architecture
 
-The `serve-web` CLI is a Rust-based proxy ("server of servers") that downloads the VS Code Server release and proxies connections to the inner Node.js server. The outer CLI accepts a limited set of flags; `--server-data-dir` is the key flag that controls where all server data (settings, extensions, state) is stored.
+The `serve-web` CLI is a Rust-based proxy ("server of servers") that downloads the VS Code Server release and proxies connections to the inner Node.js server. The outer CLI accepts a limited set of flags; `--server-data-dir` is the key flag that controls where server-side data such as the downloaded server build, extensions, and machine state is stored. It does not control user settings, which the browser holds in IndexedDB.
 
 ## Quick Start
 
@@ -51,27 +61,17 @@ fi
 
 ### Step 2: Start the VS Code Web Server
 
-Create a temporary server data directory, pre-seed settings (including the color theme) to prevent state restoration, and launch `serve-web`. The `--server-data-dir` flag must receive a literal path — shell variables from other terminal sessions are not available in background terminals:
+Create a temporary server data directory and launch `serve-web`. The `--server-data-dir` flag must receive a literal path, because shell variables from other terminal sessions are not available in background terminals:
 
 ```bash
 VSCODE_SERVE_DIR=$(mktemp -d)
-mkdir -p "$VSCODE_SERVE_DIR/data/User"
-cat > "$VSCODE_SERVE_DIR/data/User/settings.json" <<'EOF'
-{
-  "window.restoreWindows": "none",
-  "workbench.editor.restoreEditors": false,
-  "workbench.startupEditor": "none",
-  "workbench.editor.restoreViewState": false,
-  "workbench.editor.sharedViewState": false,
-  "files.hotExit": "off",
-  "telemetry.telemetryLevel": "off",
-  "workbench.colorTheme": "Default Dark Modern",
-  "workbench.activityBar.location": "hidden"
-}
-EOF
 $VSCODE_CLI serve-web --port 8765 --without-connection-token \
   --accept-server-license-terms --server-data-dir "$VSCODE_SERVE_DIR"
 ```
+
+Do not write a `data/User/settings.json` file under that directory. VS Code Web keeps user settings in the browser's IndexedDB, so a seeded settings file changes nothing. Set the theme, close restored editors, and hide UI through Command Palette commands after the workbench loads (Step 5), and raise rendered text size with `document.body.style.zoom`.
+
+Do not try to edit the settings JSON editor by typing into a `textarea` selector either. VS Code Insiders uses the EditContext API instead of a `textarea`, so that element does not exist.
 
 The serve-web command and `mktemp` must execute in the **same terminal session** so the `$VSCODE_SERVE_DIR` variable resolves. If using a background terminal (`isBackground: true`), inline the entire block — do not reference variables set in a different terminal.
 
@@ -90,7 +90,7 @@ Resize the viewport to match the target placement ratio: `mcp_microsoft_pla_brow
 
 Calculate dimensions using `width_px = 1200` and `height_px = int(1200 / (target_width_inches / target_height_inches))`. For example, a 5.5" x 4.2" placeholder produces a 1200 x 916 viewport.
 
-Do NOT use 1920x1080 unless the screenshot fills the full 16:9 slide. Resize before cleanup so UI elements render at the target resolution.
+When the screenshot fills a full 16:9 slide, size the viewport to 1920x1080 instead of deriving it from the 1200 px width rule. Use the width rule for every other placement, and do not use 1920x1080 there. Resize before cleanup so UI elements render at the target resolution.
 
 ### Step 5: Clean Up the UI
 
@@ -103,7 +103,7 @@ Prepare the editor for clean screenshots using `mcp_microsoft_pla_browser_run_co
 5. Close Primary Side Bar: Command Palette -> `View: Close Primary Side Bar`.
 6. Close bottom panel: Take a `mcp_microsoft_pla_browser_snapshot` first. If the panel (Terminal, Problems, Output) is visible, run Command Palette -> `View: Close Panel`. Do not run this command blindly — it toggles visibility and opens a hidden panel.
 7. Close Secondary Side Bar: Take a `mcp_microsoft_pla_browser_snapshot` first. If the secondary side bar (Chat) is visible, run Command Palette -> `View: Close Secondary Side Bar`.
-8. Zoom in for readability: use `mcp_microsoft_pla_browser_run_code` with `await page.evaluate(() => { document.body.style.zoom = '1.5'; })` for full-UI zoom. Use 1.5x minimum; for placeholders under 5" wide, use 1.75x. Default font sizes become illegible (~7pt) when screenshots are shrunk to fit slide placeholders.
+8. Zoom in for readability: use `mcp_microsoft_pla_browser_run_code` with `await page.evaluate(() => { document.body.style.zoom = '1.75'; })` for full-UI zoom. Treat no single factor as sufficient: raise the zoom and re-measure the rendered text size until it clears the caller's readability floor. At a 14 px base editor font, 18 pt is 24 CSS pixels, so roughly 1.75x is a starting point rather than a guarantee, because the base font size varies. Default font sizes become illegible (~7pt) when screenshots are shrunk to fit slide placeholders.
 
 ### Step 6: Open Files and Capture
 
@@ -129,13 +129,13 @@ Set up the view: selectively open only the panels needed for this screenshot (sp
 
 Take the screenshot: `mcp_microsoft_pla_browser_take_screenshot` with `type: "png"` and a descriptive `filename`.
 
-Validate the screenshot fits the target placement. Compare the captured image's aspect ratio against the target placeholder ratio. If they diverge by more than 5%, retake with corrected viewport dimensions. If text appears too small for the placeholder width (below ~10pt effective size), retake with higher zoom. Iterate viewport and zoom adjustments until the screenshot matches the placement dimensions without distortion.
+Validate the screenshot fits the target placement. Compare the captured image's aspect ratio against the target placeholder ratio. If they diverge by more than 5%, retake with corrected viewport dimensions. If a measured rendered text size falls below the caller's readability floor, retake with higher zoom. Iterate viewport and zoom adjustments until the screenshot matches the placement dimensions without distortion.
 
 Repeat for additional screenshots. Close the current file's tab before opening the next (Command Palette -> `View: Close All Editors`).
 
 ### Step 7: Copilot Chat Screenshots
 
-For Copilot Chat screenshots: pre-seed `"workbench.activityBar.location": "default"` in settings.json (or omit it) so the Activity Bar is visible. Open the Chat panel via Activity Bar click using `mcp_microsoft_pla_browser_snapshot` -> `mcp_microsoft_pla_browser_click`, type the prompt via `mcp_microsoft_pla_browser_run_code` with `page.keyboard.type()`, then wait for the response via `mcp_microsoft_pla_browser_wait_for` before capturing.
+For Copilot Chat screenshots: the Activity Bar is visible by default and settings seeding cannot change that, so leave it in place during cleanup. Open the Chat panel via Activity Bar click using `mcp_microsoft_pla_browser_snapshot` -> `mcp_microsoft_pla_browser_click`, type the prompt via `mcp_microsoft_pla_browser_run_code` with `page.keyboard.type()`, then wait for the response via `mcp_microsoft_pla_browser_wait_for` before capturing.
 
 ### Step 8: Cleanup
 
@@ -177,14 +177,14 @@ Never use separate `mcp_microsoft_pla_browser_press_key` -> `mcp_microsoft_pla_b
 | Issue                                                        | Cause                                                            | Solution                                                                                                         |
 |--------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
 | `Ignoring option 'server-data-dir': Value must not be empty` | Shell variable resolved empty in background terminal             | Inline the full command with the literal temp directory path or run `mktemp` and `serve-web` in the same session |
-| Color Theme navigates to Marketplace themes                  | Fresh `server-data-dir` has no built-in theme set                | Pre-seed `"workbench.colorTheme": "Default Dark Modern"` in ephemeral `settings.json`                            |
+| Color Theme navigates to Marketplace themes                  | No theme selected yet, and settings seeding does not apply       | Run Command Palette -> `Preferences: Color Theme` after the workbench loads                                      |
 | Panel toggle opens hidden panel                              | `View: Toggle Panel Visibility` is a toggle                      | Use `View: Close Panel` only after confirming the panel is visible via snapshot                                  |
 | `?file=` parameter does not auto-open files                  | VS Code web only supports `?folder=`                             | Open files through Command Palette `Go to File` command after navigating                                         |
-| Text too small in screenshots                                | Default ~14px font becomes ~7pt when shrunk                      | Zoom in with `page.evaluate(() => { document.body.style.zoom = '1.5'; })` or higher                              |
+| Text too small in screenshots                                | Default ~14px font becomes ~7pt when shrunk                      | Raise `document.body.style.zoom` and re-measure until it clears the readability floor                            |
 | Screenshot aspect ratio distortion                           | Viewport ratio does not match placeholder ratio                  | Calculate viewport from placeholder: `width_px = 1200`, `height_px = int(1200 / (target_w / target_h))`          |
 | UI clutter at slide-embedded sizes                           | Explorer, minimap, tabs, toasts visible                          | Close all unnecessary UI elements before each capture                                                            |
 | `workbench.action.zoomIn` does not work                      | Electron-only command                                            | Use `editor.action.fontZoomIn` or CSS zoom via `page.evaluate()`                                                 |
-| Browser state restoration                                    | IndexedDB/localStorage restore previous files                    | Pre-seed settings to disable restore; use incognito mode when available                                          |
+| Browser state restoration                                    | IndexedDB/localStorage restore previous files                    | Close editors via Command Palette after load; use a fresh browser context or incognito when available            |
 | `Meta+P` triggers browser action                             | Keyboard shortcuts intercepted by browser                        | Use `page.keyboard.press('F1')` to open Command Palette                                                          |
 | Screenshot saved to wrong directory                          | `take_screenshot` saves relative to Playwright working directory | Copy screenshots to the target directory after capture                                                           |
 | Copilot Chat responses non-deterministic                     | Streaming token-by-token output                                  | Use `mcp_microsoft_pla_browser_wait_for` with expected text or time delay                                        |
