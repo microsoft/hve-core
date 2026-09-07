@@ -20,6 +20,7 @@ import argparse
 import ast
 import importlib.util
 import logging
+import math
 import re
 import sys
 from pathlib import Path
@@ -60,6 +61,14 @@ CONNECTOR_TYPE_MAP = {
 
 PNS = "http://schemas.openxmlformats.org/presentationml/2006/main"
 ANS = "http://schemas.openxmlformats.org/drawingml/2006/main"
+
+# Text auto-fit. Helvetica metrics understate Segoe UI, the deck default, so
+# measured widths are widened before comparison; calibrated against renders that
+# broke words mid-character and overlapped wrapped bullets.
+SEGOE_WIDTH_FACTOR = 1.15
+CHEVRON_MIN_FONT_PT = 9
+PPTX_DEFAULT_MARGIN_IN = 0.1
+CARD_BULLET_LINE_IN = 0.35
 
 # Stdlib modules blocked in content-extra.py scripts due to security risk.
 # content-extra.py may only import from pptx and safe standard-library modules.
@@ -523,25 +532,92 @@ def add_card_element(slide, elem, colors, typography):
         y_offset += 0.5
 
     # Content bullets
+    text_width = elem["width"] - 0.4 - 2 * PPTX_DEFAULT_MARGIN_IN
     for item in elem.get("content", []):
         bullet_text = (
             f"\u2022 {item['bullet']}" if "bullet" in item else item.get("text", "")
         )
         color = resolve_color(item.get("color", "#F8F8FC"))
+        font_size = item.get("size", 14)
+        # Advance by wrapped height: a fixed pitch overlaps multi-line bullets.
+        lines = wrapped_line_count(bullet_text, font_size, text_width)
+        block_height = CARD_BULLET_LINE_IN * lines
         add_textbox(
             slide,
             elem["left"] + 0.2,
             elem["top"] + y_offset,
             elem["width"] - 0.4,
-            0.35,
+            block_height,
             bullet_text,
             font_name="Segoe UI",
-            font_size=item.get("size", 14),
+            font_size=font_size,
             font_color=color,
         )
-        y_offset += 0.35
+        y_offset += block_height
 
     return shape
+
+
+def _longest_word_width_in(text, font_size_pt):
+    """Approximate the widest word's rendered width in inches.
+
+    Measures with PyMuPDF's Helvetica-Bold metrics and applies a widening factor
+    because Segoe UI Bold, the deck default, runs wider than the metric font.
+    Returns None when measurement is unavailable so callers keep the requested
+    size rather than guessing.
+    """
+    words = text.split()
+    if not words:
+        return None
+    try:
+        import fitz
+    except ImportError:
+        return None
+    widest = max(
+        fitz.get_text_length(word, fontname="hebo", fontsize=font_size_pt)
+        for word in words
+    )
+    return widest / 72 * SEGOE_WIDTH_FACTOR
+
+
+def wrapped_line_count(text, font_size_pt, available_width_in):
+    """Estimate how many lines `text` occupies at the given width.
+
+    Returns 1 when measurement is unavailable, preserving the previous
+    single-line layout rather than guessing a larger block.
+    """
+    if not text or available_width_in <= 0:
+        return 1
+    try:
+        import fitz
+    except ImportError:
+        return 1
+    width = (
+        fitz.get_text_length(text, fontname="helv", fontsize=font_size_pt)
+        / 72
+        * SEGOE_WIDTH_FACTOR
+    )
+    return max(1, math.ceil(width / available_width_in))
+
+
+def fit_chevron_font_size(label, item_width, height, margin, requested_size):
+    """Shrink a chevron label's font until its longest word fits on one line.
+
+    A chevron's notch and point consume roughly `height` of horizontal space, so
+    the usable text width is much narrower than the shape. When a single word
+    exceeds it, renderers break the word mid-character, so shrink instead. Only
+    ever reduces the requested size.
+    """
+    usable = item_width - height - 2 * margin
+    if usable <= 0:
+        return requested_size
+    size = requested_size
+    while size > CHEVRON_MIN_FONT_PT:
+        width = _longest_word_width_in(label, size)
+        if width is None or width <= usable:
+            break
+        size -= 1
+    return size
 
 
 def add_arrow_flow_element(slide, elem, colors, typography):
@@ -559,6 +635,25 @@ def add_arrow_flow_element(slide, elem, colors, typography):
     default_font = elem.get("font", "Segoe UI")
     default_size = elem.get("font_size", 14)
     default_color = elem.get("font_color", "#F8F8FC")
+
+    # One size across the flow: a per-item fit renders a visibly ragged row.
+    # An explicit per-item size is author intent and is never auto-fitted.
+    auto_items = [item for item in items if "size" not in item]
+    fitted_size = min(
+        (
+            fit_chevron_font_size(
+                item["label"],
+                item_width,
+                elem["height"],
+                item.get("label_margin", label_margin)
+                if item.get("label_margin", label_margin) is not None
+                else PPTX_DEFAULT_MARGIN_IN,
+                default_size,
+            )
+            for item in auto_items
+        ),
+        default=default_size,
+    )
 
     for item in items:
         shape = slide.shapes.add_shape(
@@ -582,7 +677,7 @@ def add_arrow_flow_element(slide, elem, colors, typography):
         p.alignment = ALIGNMENT_MAP["center"]
         run = p.runs[0]
         run.font.name = item.get("font", default_font)
-        run.font.size = Pt(item.get("size", default_size))
+        run.font.size = Pt(item.get("size", fitted_size))
         apply_color_to_font(
             run.font.color, resolve_color(item.get("color_text", default_color))
         )
