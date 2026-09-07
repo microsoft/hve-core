@@ -11,44 +11,44 @@ For each detected PII type, this reference defines the controls that must be pre
 
 ### Tier 1: Identifiers (PII-001 through PII-010)
 
-| Control | Required | Verification method |
-|---------|----------|-------------------|
-| Encryption at rest | Yes | Storage config shows AES-256, TDE, or managed encryption |
-| Encryption in transit | Yes | TLS 1.2+ enforced; HTTPS-only endpoints |
-| Access control | Yes | Role-based or attribute-based access on PII endpoints/tables |
-| Input validation | Yes | Validation present on PII input fields (format, length) |
-| Output masking in logs | Yes | Logging statements do not contain raw PII values |
-| Retention policy | Yes | TTL, lifecycle rule, or documented retention period |
-| Purpose documentation | Recommended | Collection point documents why PII is needed |
-| Consent mechanism | Conditional | Required if lawful basis is consent (not contract/legitimate interest) |
+| Control                | Required    | Verification method                                                    |
+|------------------------|-------------|------------------------------------------------------------------------|
+| Encryption at rest     | Yes         | Storage config shows AES-256, TDE, or managed encryption               |
+| Encryption in transit  | Yes         | TLS 1.2+ enforced; HTTPS-only endpoints                                |
+| Access control         | Yes         | Role-based or attribute-based access on PII endpoints/tables           |
+| Input validation       | Yes         | Validation present on PII input fields (format, length)                |
+| Output masking in logs | Yes         | Logging statements do not contain raw PII values                       |
+| Retention policy       | Yes         | TTL, lifecycle rule, or documented retention period                    |
+| Purpose documentation  | Recommended | Collection point documents why PII is needed                           |
+| Consent mechanism      | Conditional | Required if lawful basis is consent (not contract/legitimate interest) |
 
 ### Tier 2: Sensitive (PII-020 through PII-029)
 
 All Tier 1 controls plus:
 
-| Control | Required | Verification method |
-|---------|----------|-------------------|
-| Field-level encryption | Yes | Sensitive fields encrypted independently (not just disk encryption) |
-| Audit logging | Yes | Access to sensitive data produces audit trail entries |
-| Consent gate | Yes | Explicit consent collected before processing sensitive data |
-| Purpose binding | Yes | Data tagged with processing purpose; secondary use restricted |
-| Data minimization | Yes | Only minimum necessary fields collected |
-| Pseudonymization | Recommended | Identifiers replaced with tokens in analytics/reporting |
-| Breach notification | Yes | Incident response plan covers this data category |
+| Control                | Required    | Verification method                                                 |
+|------------------------|-------------|---------------------------------------------------------------------|
+| Field-level encryption | Yes         | Sensitive fields encrypted independently (not just disk encryption) |
+| Audit logging          | Yes         | Access to sensitive data produces audit trail entries               |
+| Consent gate           | Yes         | Explicit consent collected before processing sensitive data         |
+| Purpose binding        | Yes         | Data tagged with processing purpose; secondary use restricted       |
+| Data minimization      | Yes         | Only minimum necessary fields collected                             |
+| Pseudonymization       | Recommended | Identifiers replaced with tokens in analytics/reporting             |
+| Breach notification    | Yes         | Incident response plan covers this data category                    |
 
 ### Tier 3: Special Category (PII-040 through PII-047)
 
 All Tier 1 and Tier 2 controls plus:
 
-| Control | Required | Verification method |
-|---------|----------|-------------------|
-| Explicit consent | Yes | Granular, specific consent for this data category |
-| DPIA conducted | Yes | Data Protection Impact Assessment documented |
-| Access restriction | Yes | Need-to-know access beyond standard RBAC |
-| Processing register | Yes | Entry in Records of Processing Activities (ROPA) |
-| DPO notification | Recommended | Data Protection Officer aware of this processing |
-| Cross-border restriction | Conditional | Transfer mechanisms if data crosses jurisdictions |
-| Automated decision disclosure | Conditional | If used for profiling or automated decisions |
+| Control                       | Required    | Verification method                               |
+|-------------------------------|-------------|---------------------------------------------------|
+| Explicit consent              | Yes         | Granular, specific consent for this data category |
+| DPIA conducted                | Yes         | Data Protection Impact Assessment documented      |
+| Access restriction            | Yes         | Need-to-know access beyond standard RBAC          |
+| Processing register           | Yes         | Entry in Records of Processing Activities (ROPA)  |
+| DPO notification              | Recommended | Data Protection Officer aware of this processing  |
+| Cross-border restriction      | Conditional | Transfer mechanisms if data crosses jurisdictions |
+| Automated decision disclosure | Conditional | If used for profiling or automated decisions      |
 
 ## Control verification patterns
 
@@ -148,14 +148,14 @@ if (!user.hasConsent("analytics")) {
 
 When a required control is not found, the finding includes:
 
-| Field | Value |
-|-------|-------|
-| `pii_type` | The detected PII taxonomy ID |
-| `tier` | Sensitivity tier (T1/T2/T3) |
-| `missing_control` | Which control is absent |
-| `severity` | Mapped from tier: T1→MEDIUM, T2→HIGH, T3→CRITICAL |
-| `remediation` | Specific action to implement the control |
-| `evidence` | What was searched and not found |
+| Field             | Value                                             |
+|-------------------|---------------------------------------------------|
+| `pii_type`        | The detected PII taxonomy ID                      |
+| `tier`            | Sensitivity tier (T1/T2/T3)                       |
+| `missing_control` | Which control is absent                           |
+| `severity`        | Mapped from tier: T1→MEDIUM, T2→HIGH, T3→CRITICAL |
+| `remediation`     | Specific action to implement the control          |
+| `evidence`        | What was searched and not found                   |
 
 ## Control sufficiency rules
 
@@ -168,6 +168,11 @@ A control is PARTIAL when:
 - Implementation exists but does not cover all instances of the PII type
 - Documentation claims the control but code does not implement it
 - The control exists in production config but not in all environments
+
+## Official sources
+
+* [NIST SP 800-122](https://doi.org/10.6028/NIST.SP.800-122)
+* [General Data Protection Regulation](https://eur-lex.europa.eu/eli/reg/2016/679/oj)
 
 ---
 

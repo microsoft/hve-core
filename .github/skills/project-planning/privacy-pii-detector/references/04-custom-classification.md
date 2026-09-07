@@ -143,45 +143,45 @@ Optional. Activates the matching industry overlay. Values: `telco`, `healthcare`
 
 Optional. Array of organization-specific PII types not in the core taxonomy.
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `id` | Yes | Unique ID in format `PII-C<NNN>` (C prefix = custom) |
-| `name` | Yes | Human-readable name |
-| `description` | Yes | What this data type is |
-| `tier` | Yes | Sensitivity tier: `T1`, `T2`, or `T3` |
-| `detection_patterns` | Yes | Glob patterns for field/variable names (case-insensitive) |
-| `format_patterns` | No | Regex patterns for format validation detection |
-| `required_controls` | Yes | Controls from the control matrix that must be present |
+| Field                | Required | Description                                               |
+|----------------------|----------|-----------------------------------------------------------|
+| `id`                 | Yes      | Unique ID in format `PII-C<NNN>` (C prefix = custom)      |
+| `name`               | Yes      | Human-readable name                                       |
+| `description`        | Yes      | What this data type is                                    |
+| `tier`               | Yes      | Sensitivity tier: `T1`, `T2`, or `T3`                     |
+| `detection_patterns` | Yes      | Glob patterns for field/variable names (case-insensitive) |
+| `format_patterns`    | No       | Regex patterns for format validation detection            |
+| `required_controls`  | Yes      | Controls from the control matrix that must be present     |
 
 ### `tier_overrides`
 
 Optional. Override the default sensitivity tier for a built-in PII type.
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `pii_type` | Yes | PII taxonomy ID to override (e.g., `PII-002`) |
-| `new_tier` | Yes | New tier assignment: `T1`, `T2`, or `T3` |
-| `justification` | Yes | Why this override exists (documented for audit) |
+| Field           | Required | Description                                     |
+|-----------------|----------|-------------------------------------------------|
+| `pii_type`      | Yes      | PII taxonomy ID to override (e.g., `PII-002`)   |
+| `new_tier`      | Yes      | New tier assignment: `T1`, `T2`, or `T3`        |
+| `justification` | Yes      | Why this override exists (documented for audit) |
 
 ### `additional_controls`
 
 Optional. Add controls beyond the tier default for specific PII types.
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `pii_type` | Yes | PII taxonomy ID |
-| `controls` | Yes | Array of additional control names from the control matrix |
+| Field      | Required | Description                                               |
+|------------|----------|-----------------------------------------------------------|
+| `pii_type` | Yes      | PII taxonomy ID                                           |
+| `controls` | Yes      | Array of additional control names from the control matrix |
 
 ### `suppressions`
 
 Optional. Suppress known false positive detections.
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `pattern` | Yes | The detection pattern to suppress |
-| `context` | Yes | Why it's a false positive (e.g., `memory_address`, `test_fixtures`) |
-| `reason` | Yes | Human-readable justification |
-| `files` | No | Glob patterns limiting suppression scope. If omitted, applies globally |
+| Field     | Required | Description                                                            |
+|-----------|----------|------------------------------------------------------------------------|
+| `pattern` | Yes      | The detection pattern to suppress                                      |
+| `context` | Yes      | Why it's a false positive (e.g., `memory_address`, `test_fixtures`)    |
+| `reason`  | Yes      | Human-readable justification                                           |
+| `files`   | No       | Glob patterns limiting suppression scope. If omitted, applies globally |
 
 ### `catalog_import`
 
@@ -189,27 +189,27 @@ Optional. Import classification from external data catalogs.
 
 #### `purview`
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `enabled` | Yes | Whether to import from Microsoft Purview |
+| Field           | Required         | Description                                  |
+|-----------------|------------------|----------------------------------------------|
+| `enabled`       | Yes              | Whether to import from Microsoft Purview     |
 | `label_mapping` | Yes (if enabled) | Maps Purview sensitivity labels to PII tiers |
 
 #### `file_import`
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `enabled` | Yes | Whether to import from a local file |
-| `path` | Yes (if enabled) | Relative path to CSV or JSON classification file |
+| Field     | Required         | Description                                      |
+|-----------|------------------|--------------------------------------------------|
+| `enabled` | Yes              | Whether to import from a local file              |
+| `path`    | Yes (if enabled) | Relative path to CSV or JSON classification file |
 
 ### `retention_overrides`
 
 Optional. Override retention expectations for specific PII types.
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `pii_type` | Yes | PII taxonomy ID |
-| `retention_days` | Yes | Maximum retention in days |
-| `justification` | Yes | Why this retention period (regulatory reference or org policy) |
+| Field            | Required | Description                                                    |
+|------------------|----------|----------------------------------------------------------------|
+| `pii_type`       | Yes      | PII taxonomy ID                                                |
+| `retention_days` | Yes      | Maximum retention in days                                      |
+| `justification`  | Yes      | Why this retention period (regulatory reference or org policy) |
 
 ## Resolution order
 

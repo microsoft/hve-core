@@ -9,68 +9,68 @@ This reference defines the core Personal Information (PI) and Personally Identif
 
 ## Sensitivity tiers
 
-| Tier | Label | Risk level | Example | Regulatory trigger |
-|------|-------|------------|---------|-------------------|
-| T1 | Identifier | Medium | Email, phone, name | Standard GDPR/CCPA obligations |
-| T2 | Sensitive | High | Financial, health, biometric | Enhanced protections; DPIA likely |
-| T3 | Special Category | Critical | Racial origin, genetic, criminal | Explicit consent required; maximum restrictions |
+| Tier | Label            | Risk level | Example                          | Regulatory trigger                              |
+|------|------------------|------------|----------------------------------|-------------------------------------------------|
+| T1   | Identifier       | Medium     | Email, phone, name               | Standard GDPR/CCPA obligations                  |
+| T2   | Sensitive        | High       | Financial, health, biometric     | Enhanced protections; DPIA likely               |
+| T3   | Special Category | Critical   | Racial origin, genetic, criminal | Explicit consent required; maximum restrictions |
 
 ## Core PII catalog (all industries)
 
 ### Tier 1: Identifiers
 
-| ID | PII Type | Description | Regulatory anchor |
-|----|----------|-------------|-------------------|
-| PII-001 | Full name | Given name, surname, or combined | GDPR Art. 4(1), CCPA §1798.140(v) |
-| PII-002 | Email address | Personal or work email | GDPR Art. 4(1), APP 6 |
-| PII-003 | Phone number | Mobile, landline, or VoIP | GDPR Art. 4(1) |
-| PII-004 | Postal address | Street address, city, postcode | GDPR Art. 4(1) |
-| PII-005 | Date of birth | Full DOB or partial (year, month-year) | GDPR Art. 4(1) |
-| PII-006 | IP address | IPv4 or IPv6, static or dynamic | GDPR Recital 30, CCPA §1798.140(v) |
-| PII-007 | Device identifier | Cookie ID, advertising ID, browser fingerprint | GDPR Recital 30, ePrivacy |
-| PII-008 | Username | Login identifier or display name if linked to identity | Contextual |
-| PII-009 | Photo/avatar | Facial image or profile photo | GDPR Art. 4(14) when biometric |
-| PII-010 | Location data | GPS coordinates, geofence events | GDPR Art. 4(1), ePrivacy Art. 9 |
+| ID      | PII Type          | Description                                            | Regulatory anchor                  |
+|---------|-------------------|--------------------------------------------------------|------------------------------------|
+| PII-001 | Full name         | Given name, surname, or combined                       | GDPR Art. 4(1), CCPA §1798.140(v)  |
+| PII-002 | Email address     | Personal or work email                                 | GDPR Art. 4(1), APP 6              |
+| PII-003 | Phone number      | Mobile, landline, or VoIP                              | GDPR Art. 4(1)                     |
+| PII-004 | Postal address    | Street address, city, postcode                         | GDPR Art. 4(1)                     |
+| PII-005 | Date of birth     | Full DOB or partial (year, month-year)                 | GDPR Art. 4(1)                     |
+| PII-006 | IP address        | IPv4 or IPv6, static or dynamic                        | GDPR Recital 30, CCPA §1798.140(v) |
+| PII-007 | Device identifier | Cookie ID, advertising ID, browser fingerprint         | GDPR Recital 30, ePrivacy          |
+| PII-008 | Username          | Login identifier or display name if linked to identity | Contextual                         |
+| PII-009 | Photo/avatar      | Facial image or profile photo                          | GDPR Art. 4(14) when biometric     |
+| PII-010 | Location data     | GPS coordinates, geofence events                       | GDPR Art. 4(1), ePrivacy Art. 9    |
 
 ### Tier 2: Sensitive
 
-| ID | PII Type | Description | Regulatory anchor |
-|----|----------|-------------|-------------------|
-| PII-020 | National ID | SSN, TFN, Aadhaar, passport number | NIST SP 800-122, APP 9 |
-| PII-021 | Driver license | License number or document | Jurisdiction-specific |
-| PII-022 | Financial account | Bank account, IBAN, BSB | PCI DSS, CCPA |
-| PII-023 | Payment card | PAN, CVV, expiry | PCI DSS |
-| PII-024 | Income/salary | Compensation data | Employment privacy laws |
-| PII-025 | Health condition | Diagnosis, symptoms, treatment | HIPAA, GDPR Art. 9 |
-| PII-026 | Medication | Prescriptions, drug names | HIPAA |
-| PII-027 | Insurance ID | Policy number, member ID | HIPAA, jurisdiction-specific |
-| PII-028 | Biometric data | Fingerprint, iris, voiceprint | GDPR Art. 9, BIPA |
-| PII-029 | Authentication credential | Password hash, MFA secret, security question | NIST SP 800-63 |
+| ID      | PII Type                  | Description                                  | Regulatory anchor            |
+|---------|---------------------------|----------------------------------------------|------------------------------|
+| PII-020 | National ID               | SSN, TFN, Aadhaar, passport number           | NIST SP 800-122, APP 9       |
+| PII-021 | Driver license            | License number or document                   | Jurisdiction-specific        |
+| PII-022 | Financial account         | Bank account, IBAN, BSB                      | PCI DSS, CCPA                |
+| PII-023 | Payment card              | PAN, CVV, expiry                             | PCI DSS                      |
+| PII-024 | Income/salary             | Compensation data                            | Employment privacy laws      |
+| PII-025 | Health condition          | Diagnosis, symptoms, treatment               | HIPAA, GDPR Art. 9           |
+| PII-026 | Medication                | Prescriptions, medication names              | HIPAA                        |
+| PII-027 | Insurance ID              | Policy number, member ID                     | HIPAA, jurisdiction-specific |
+| PII-028 | Biometric data            | Fingerprint, iris, voiceprint                | GDPR Art. 9, BIPA            |
+| PII-029 | Authentication credential | Password hash, MFA secret, security question | NIST SP 800-63               |
 
 ### Tier 3: Special Category
 
-| ID | PII Type | Description | Regulatory anchor |
-|----|----------|-------------|-------------------|
-| PII-040 | Racial/ethnic origin | Self-identified or inferred | GDPR Art. 9(1) |
-| PII-041 | Political opinion | Party affiliation, voting record | GDPR Art. 9(1) |
-| PII-042 | Religious belief | Faith, congregation membership | GDPR Art. 9(1) |
-| PII-043 | Trade union membership | Union affiliation | GDPR Art. 9(1) |
-| PII-044 | Genetic data | DNA sequence, genetic markers | GDPR Art. 9(1), GINA |
-| PII-045 | Sexual orientation | Orientation or gender identity | GDPR Art. 9(1) |
-| PII-046 | Criminal record | Convictions, charges, proceedings | GDPR Art. 10 |
-| PII-047 | Child data | Data of individuals under 13/16 | COPPA, GDPR Art. 8 |
+| ID      | PII Type               | Description                       | Regulatory anchor    |
+|---------|------------------------|-----------------------------------|----------------------|
+| PII-040 | Racial/ethnic origin   | Self-identified or inferred       | GDPR Art. 9(1)       |
+| PII-041 | Political opinion      | Party affiliation, voting record  | GDPR Art. 9(1)       |
+| PII-042 | Religious belief       | Faith, congregation membership    | GDPR Art. 9(1)       |
+| PII-043 | Trade union membership | Union affiliation                 | GDPR Art. 9(1)       |
+| PII-044 | Genetic data           | DNA sequence, genetic markers     | GDPR Art. 9(1), GINA |
+| PII-045 | Sexual orientation     | Orientation or gender identity    | GDPR Art. 9(1)       |
+| PII-046 | Criminal record        | Convictions, charges, proceedings | GDPR Art. 10         |
+| PII-047 | Child data             | Data of individuals under 13/16   | COPPA, GDPR Art. 8   |
 
 ## Derived and inferred PII
 
 These are not directly collected but inferred from other data:
 
-| ID | PII Type | Derived from | Regulatory note |
-|----|----------|--------------|-----------------|
-| PII-060 | Behavioral profile | Clickstream, purchase history | GDPR Art. 4(4) profiling |
-| PII-061 | Location history | Repeated GPS/IP geolocation | Movement patterns = sensitive |
-| PII-062 | Social graph | Contact lists, interaction patterns | Contextual sensitivity |
-| PII-063 | Inferred health | Fitness data, purchase patterns | May trigger GDPR Art. 9 |
-| PII-064 | Credit score | Payment history, financial behavior | Automated decision-making |
+| ID      | PII Type           | Derived from                        | Regulatory note               |
+|---------|--------------------|-------------------------------------|-------------------------------|
+| PII-060 | Behavioral profile | Clickstream, purchase history       | GDPR Art. 4(4) profiling      |
+| PII-061 | Location history   | Repeated GPS/IP geolocation         | Movement patterns = sensitive |
+| PII-062 | Social graph       | Contact lists, interaction patterns | Contextual sensitivity        |
+| PII-063 | Inferred health    | Fitness data, purchase patterns     | May trigger GDPR Art. 9       |
+| PII-064 | Credit score       | Payment history, financial behavior | Automated decision-making     |
 
 ## Classification rules
 
@@ -91,6 +91,18 @@ The core catalog covers universal PII. Industry overlays add domain-specific typ
 - **Financial** → `12-industry-financial.md` adds PAN, account numbers, transaction data, KYC
 
 Each overlay defines additional PII types using IDs in the range `PII-1xx` (telco), `PII-2xx` (healthcare), `PII-3xx` (financial).
+
+## Official sources
+
+* [NIST SP 800-122](https://doi.org/10.6028/NIST.SP.800-122)
+* [General Data Protection Regulation](https://eur-lex.europa.eu/eli/reg/2016/679/oj)
+* [California Consumer Privacy Act](https://oag.ca.gov/privacy/ccpa)
+* [Australian Privacy Principles](https://www.oaic.gov.au/privacy/australian-privacy-principles)
+* [PCI Data Security Standard](https://www.pcisecuritystandards.org/standards/)
+* [HIPAA Privacy Rule](https://www.hhs.gov/hipaa/for-professionals/privacy/index.html)
+* [Illinois Biometric Information Privacy Act](https://www.ilga.gov/legislation/ilcs/ilcs3.asp?ActID=3004&ChapterID=57)
+* [Genetic Information Nondiscrimination Act](https://www.eeoc.gov/statutes/genetic-information-nondiscrimination-act-2008)
+* [Children's Online Privacy Protection Rule](https://www.ftc.gov/legal-library/browse/rules/childrens-online-privacy-protection-rule-coppa)
 
 ---
 

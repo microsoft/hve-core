@@ -52,14 +52,14 @@ finding:
 
 ## Severity mapping
 
-| Tier | Missing required control | Severity |
-|------|--------------------------|----------|
-| T3 (Special Category) | Any required control | CRITICAL |
-| T2 (Sensitive) | Encryption, consent, audit logging | HIGH |
-| T2 (Sensitive) | Other required controls | HIGH |
-| T1 (Identifier) | Encryption, access control | MEDIUM |
-| T1 (Identifier) | Logging masking, retention | MEDIUM |
-| Any | Recommended control missing | LOW |
+| Tier                  | Missing required control           | Severity |
+|-----------------------|------------------------------------|----------|
+| T3 (Special Category) | Any required control               | CRITICAL |
+| T2 (Sensitive)        | Encryption, consent, audit logging | HIGH     |
+| T2 (Sensitive)        | Other required controls            | HIGH     |
+| T1 (Identifier)       | Encryption, access control         | MEDIUM   |
+| T1 (Identifier)       | Logging masking, retention         | MEDIUM   |
+| Any                   | Recommended control missing        | LOW      |
 
 ## Assessment summary
 
@@ -100,10 +100,10 @@ pii_assessment:
 
 ## Overall verdict rules
 
-| Verdict | Condition |
-|---------|-----------|
-| PROTECTED | All detected PII has all required controls present |
-| GAPS_FOUND | Some controls are missing but no CRITICAL findings |
+| Verdict     | Condition                                                         |
+|-------------|-------------------------------------------------------------------|
+| PROTECTED   | All detected PII has all required controls present                |
+| GAPS_FOUND  | Some controls are missing but no CRITICAL findings                |
 | UNPROTECTED | One or more CRITICAL findings (T3 data without required controls) |
 
 ## Backlog item template

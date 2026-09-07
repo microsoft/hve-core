@@ -1,7 +1,7 @@
 ---
 name: privacy-pii-detector
 description: "Automated PII/PI detection and privacy control verification for codebases. Scans for personal information processing patterns, classifies by sensitivity tier and industry, verifies protective controls exist, and raises findings when controls are missing. Use when you need to detect PII in code without privacy expertise."
-license: mixed
+license: CC-BY-4.0
 user-invocable: true
 metadata:
   authors: "Microsoft (detection taxonomy and control framework); NIST (PII definition from SP 800-122); GDPR (personal data definition from Art. 4); OAIC (Australian PI definition from Privacy Act 1988)"
@@ -119,12 +119,12 @@ For each ABSENT or PARTIAL control:
 
 ## Integration with other skills
 
-| Skill | Relationship |
-|-------|--------------|
-| `privacy-by-design` | PII detector feeds into PbD assessment; detected PII informs principle evaluation |
-| `privacy-standards` | Standards skill provides regulatory context for detected PII types |
+| Skill               | Relationship                                                                         |
+|---------------------|--------------------------------------------------------------------------------------|
+| `privacy-by-design` | PII detector feeds into PbD assessment; detected PII informs principle evaluation    |
+| `privacy-standards` | Standards skill provides regulatory context for detected PII types                   |
 | `security-planning` | Security controls overlap with PII protection; cross-reference rather than duplicate |
-| `code-review` | PII detector can run as a perspective within code review workflow |
+| `code-review`       | PII detector can run as a perspective within code review workflow                    |
 
 ## Extensibility
 
