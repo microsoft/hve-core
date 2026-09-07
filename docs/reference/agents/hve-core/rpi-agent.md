@@ -38,7 +38,7 @@ It offers two modes:
 
 | Mode        | Behavior                                                                                                                                                                                                                                                                                                                       |
 |-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `manual`    | Stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. You own every material decision.                                                                                                                                                                                               |
+| `manual`    | Walks you through the active phase's artifacts and waits for an explicit next-phase request, a `/rpi-*` command, or a phase handoff. You own every material decision.                                                                                                                                                          |
 | `automatic` | An explicit automatic request or **Full Auto** selection starts automatic progression without another mode question. The agent makes ordinary decisions and runs required in-scope follow-ups through new RPI loops until the requested outcome is complete. Explicitly retained decisions and progression limits still apply. |
 
 Both modes stop for blockers, required human review, and destructive, hard-to-reverse, or externally visible actions.
@@ -72,10 +72,10 @@ With the stop-before-Implementation option, the agent completes Planning, includ
 ## Example usage
 
 ```text
-Research, plan, implement, and review adding Azure Blob Storage output to the pipeline writers.
+Work through each phase with me to add Azure Blob Storage output to the pipeline writers.
 ```
 
-In manual mode the agent runs Research and waits:
+The agent uses manual mode, walks you through the Research findings, and asks whether to refine them or advance:
 
 ```text
 * Mode: manual; session: n/a; phase: Research; task: blob-storage
@@ -88,7 +88,8 @@ In manual mode the agent runs Research and waits:
 
 ## Next Steps
 
-Run `/rpi-plan` or select the Plan handoff to continue.
+Would you like to refine the research or move to Planning? You can also enter a different next step.
+To continue, request Planning in your answer, run `/rpi-plan`, or select the Plan handoff.
 ```
 
 To delegate progression and ordinary decisions explicitly:

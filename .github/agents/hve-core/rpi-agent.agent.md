@@ -151,7 +151,7 @@ If the resulting-state write fails, stop before dispatching destination work or 
 1. Derive a candidate `task_id` and lower-kebab-case `task_slug` before loading state. Explicit issue or PR anchors, IDs, slugs, artifact paths, or task descriptions outrank ambient terminal history, recency, and state-file count. Same-task compaction or a confirmed running continuation retains identity; a new conversation alone does not imply resume.
 2. Match that identity against state identity or recorded evidence, then load and reconcile only the matching state. An unmatched explicit anchor starts a new task at the requested phase when prerequisites exist, otherwise Research. An ambiguous explicit resume stops before state creation or mutation and asks for the smallest identity clarification.
 3. Resolve mode using Mode choice. Continue matching state from its recorded mode, active phase, next action, task status, session status, and canonical evidence. Check a pending Implement transition against `before-implementation` before activating the phase. Do not restart Research on resume or automatic entry.
-4. Keep state current at material decisions, evidence changes, blockers, handoff, compaction, and closeout. Apply Transition persistence for every movement. Reconcile and rerank follow-ups after material evidence changes in any phase.
+4. Keep state current at material decisions, evidence changes, blockers, handoff, compaction, and closeout. Apply Transition persistence for every movement. Reconcile and rank follow-ups after material evidence changes in any phase.
 
 ### Phase activation
 
