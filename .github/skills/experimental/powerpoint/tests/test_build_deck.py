@@ -747,6 +747,39 @@ class TestAddArrowFlowElement:
             assert run.font.size == Pt(11)
             assert f"#{run.font.color.rgb}".lower() == "#112233"
 
+    def test_long_label_shrinks_to_avoid_mid_word_break(self, blank_slide):
+        # A chevron's notch and point consume about `height` of width, so a long
+        # word overflows and renderers split it mid-character.
+        elem = {
+            "left": 0.9,
+            "top": 2.0,
+            "width": 11.5,
+            "height": 1.1,
+            "items": [
+                {"label": "1. Setup and Exploration"},
+                {"label": "2. Guided Workflow"},
+                {"label": "3. Independent Workflow"},
+                {"label": "4. Autonomous Engineering"},
+            ],
+        }
+        add_arrow_flow_element(blank_slide, elem, {}, {})
+        shapes = [s for s in blank_slide.shapes if s.has_text_frame]
+        sizes = {s.text_frame.paragraphs[0].runs[0].font.size for s in shapes}
+        assert len(sizes) == 1, "flow must render one uniform size"
+        assert sizes.pop() < Pt(14), "long label must shrink below the default"
+
+    def test_short_labels_keep_requested_size(self, blank_slide):
+        elem = {
+            "left": 1.0,
+            "top": 2.0,
+            "width": 10.0,
+            "height": 1.5,
+            "items": [{"label": "Plan"}, {"label": "Ship"}],
+        }
+        add_arrow_flow_element(blank_slide, elem, {}, {})
+        for shape in [s for s in blank_slide.shapes if s.has_text_frame]:
+            assert shape.text_frame.paragraphs[0].runs[0].font.size == Pt(14)
+
     def test_per_item_overrides_take_precedence(self, blank_slide):
         elem = {
             "left": 1.0,

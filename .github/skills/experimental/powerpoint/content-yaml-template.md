@@ -129,7 +129,9 @@ elements:
     height: 1.5
     # Optional element defaults (per-item overrides supported): label_margin (in), gap (in), font, font_size, font_color
     # Per-item overrides: label_margin (in), font, size, color_text
-    # Example: tighten label side margins so labels fit on one line
+    # Labels auto-shrink to one uniform size when a word would otherwise break
+    # mid-character, because a chevron's notch and point consume about `height`
+    # of usable width. An explicit per-item `size` disables auto-fit for that item.
     items:
       - label: "Research"
         color: "#0078D4"
