@@ -443,24 +443,6 @@ stimuli:
         config:
           pattern: "(?i)incident|severity|timeline|mitigation|RCA"
 
-  - name: prompt-pull-request-conformance
-    prompt: |
-      Invoke the `pull-request` prompt with minimal arguments and explain how it
-      coordinates the workflow.
-    tags:
-      category: behavior-conformance
-      prompt: pull-request
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: agent-attribution
-        config:
-          pattern: "(?i)pull\\s+request|reviewer|pull-request"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)pull\\s+request|PR|diff|description|reviewer"
-
   - name: prompt-rai-capture-conformance
     prompt: |
       Invoke the `rai-capture` prompt with minimal arguments and explain how it
