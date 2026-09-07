@@ -1,6 +1,6 @@
 ---
 name: hve-builder
-description: 'Create, improve, refactor, replace, review, or validate prompts, instructions, agents, subagents, and skills, and build or extend HVE workflows. Use when authoring or cleaning up Copilot customizations, deciding which instructions to keep or retire, or connecting an HVE workflow to project-specific knowledge, tools, or conventions.'
+description: 'Create, improve, refactor, replace, review, or validate prompts, instructions, agents, subagents, and skills. Use for Copilot customization cleanup, extending HVE workflows with project-specific capabilities, and parent-owned correction of material review or behavior-test findings.'
 argument-hint: "[targets=...] [mode=create,improve,refactor] [requirements=...]"
 license: MIT
 user-invocable: true
@@ -35,9 +35,9 @@ Infer the active set from the request and honor explicit limits. Read-only revie
 2. For an existing target in a mutating mode, capture its current contract and non-tool capability surface, then apply the catalog's maintenance decisions. Record which required behaviors remain, change, move, or retire and why. Activate `rpi-research` only for open-ended exploration or a decision-critical evidence gap.
 3. Author the complete candidate directly within the approved boundary. Gather known requirements and findings first, then make coherent changes rather than serial micro-edits.
 4. Run applicable non-mutating local validation. Gather and close in-scope mechanical findings before independent review, and record unavailable CI evidence honestly.
-5. Use one fresh-context static review against the mechanically valid candidate. Apply its complete in-scope finding set as one correction batch, use targeted closure instead of another broad review, and rerun checks affected by the corrections.
-6. Freeze the assessed source boundary and classify the complete delta. Minor and Medium mutations use the canonical satisfied-and-skipped behavior result. A Major mutation or behavior-bearing review target invokes `hve-builder-tester` at most once.
-7. Treat the behavior report as terminal evidence for this run and resolve Pass, Revise, Deferred, or Blocked through the workflow contract.
+5. Use a fresh-context static review against the mechanically valid candidate. Apply its complete in-scope finding set as one correction batch, prefer targeted closure over another broad review, and rerun checks affected by the corrections.
+6. Freeze the assessed source boundary and classify the complete delta. Minor and Medium mutations use the canonical satisfied-and-skipped behavior result. A Major mutation or behavior-bearing review target invokes `hve-builder-tester` against that revision.
+7. Consume the report through the workflow contract. In an authorized mutating mode, the main agent may correct required in-scope findings, refresh affected checks and assessment, freeze the revised candidate, and invoke the tester again within the same run. Prefer the fewest evidence-backed correction cycles needed to meet the requirements; do not loop for advisory polish or without progress.
 
 ## Inputs
 
@@ -52,8 +52,8 @@ Infer the active set from the request and honor explicit limits. Read-only revie
 * Source changes stay inside the approved boundary, and read-only targets remain unchanged regardless of the active mode set.
 * Known changes and mechanical findings are complete before independent static review establishes the final candidate; checks affected by review corrections pass before freeze.
 * Required static review is Pass and required local validation is Pass.
-* A Major mutation or behavior-bearing review target has no more than one tester invocation for the frozen boundary. An eligible Minor or Medium mutation or no-runtime review target records a supported skip.
-* A required behavior verdict is Pass. Unavailable execution resolves to Deferred; required corrections resolve to Revise or Blocked without same-run correction. Advisory suggestions do not prevent Pass.
+* A Major mutation or behavior-bearing review target has passing behavior evidence for the delivered revision and complete material requirements. An eligible Minor or Medium mutation or no-runtime review target records a supported skip.
+* Required corrections are resolved within the approved write boundary when feasible. Each further cycle has a material purpose and an evidence-backed path to progress. Unavailable execution resolves to Deferred; unresolved required corrections resolve to Revise or Blocked. Advisory suggestions do not prevent Pass.
 * Acceptance criteria are met and every claim identifies its evidence or limitation.
 
 ## Constraints
@@ -67,18 +67,18 @@ Infer the active set from the request and honor explicit limits. Read-only revie
 ## Stop Rules
 
 * Stop Pass only when every applicable gate passes or has a supported skip.
-* Stop Revise when a required pre-test correction remains open or the final behavior report contains a demonstrated defect.
+* Stop Revise when required corrections remain and the convergence rules cannot support another productive in-scope correction cycle.
 * Stop Deferred when a required stage cannot run and name the exact rerun condition.
 * Stop Blocked when scope, target identity, safety, or required evidence cannot be resolved.
-* After the tester is invoked, stop with its mapped outcome. Do not edit source, repeat a lifecycle stage, or invoke the tester again; a later correction begins a new HVE Builder run from the supplied report.
+* Keep source unchanged while a tester invocation is running. After it returns, the parent owns correction and continuation under the workflow contract; the tester never gains source-write authority. Read-only routes return findings without entering a source-correction loop.
 
 ## Handoff
 
-`hve-builder-tester` is the sole behavior-testing entrypoint. Invoke it only after the source boundary is frozen and consume its report as final evidence.
+`hve-builder-tester` is the sole behavior-testing entrypoint. Invoke it only after the candidate boundary is frozen, preserve each report against its revision, and use the current candidate's evidence for the final outcome.
 
 ## Final Response Contract
 
-Return the active mode set, approved write boundary, changed source artifacts, static verdict, validation result, behavior disposition, fidelity and verdict, overall outcome, material limitations, evidence links, and next action.
+Return the active mode set, approved write boundary, changed source artifacts, static verdict, validation result, behavior disposition, fidelity and verdict, overall outcome, correction-cycle summary and stop reason, material limitations, evidence links, and next action.
 
 ## References
 

@@ -1,9 +1,9 @@
 ---
 title: hve-builder-tester
-description: "Run one complete black-box behavior test of a prompt, instruction, agent, subagent, or skill with explicit fidelity and independent grading. Use as the final behavior gate after hve-builder freezes a candidate, or directly to test an existing artifact without changing it."
+description: "Assess a frozen prompt, instruction, agent, subagent, or skill through black-box behavior testing with explicit fidelity and independent grading. Use for hve-builder candidate assessment and reassessment after corrections, or to test an existing artifact without editing it."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-07
 ms.topic: reference
 keywords:
   - skill
@@ -23,14 +23,14 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Run one complete black-box behavior test of a prompt, instruction, agent, subagent, or skill with explicit fidelity and independent grading. Use as the final behavior gate after hve-builder freezes a candidate, or directly to test an existing artifact without changing it.
+Assess a frozen prompt, instruction, agent, subagent, or skill through black-box behavior testing with explicit fidelity and independent grading. Use for hve-builder candidate assessment and reassessment after corrections, or to test an existing artifact without editing it.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
 Use `hve-builder-tester` when an artifact's behavior, not its formatting, needs evidence: after `hve-builder` freezes a Major change, or on its own to test an existing prompt, instruction, agent, subagent, or skill without editing it. It designs black-box scenarios, executes them once at the artifact's reasoning profile, has an independent grader assess the evidence, and writes a durable report that states fidelity and limitations.
 
-Use `hve-builder` when the artifact needs to change; the tester never edits a target or retests within the same run. Use mechanical validation such as `npm run validate:skills` for structure and frontmatter, which this skill does not replace.
+Use `hve-builder` when the artifact needs to change. Each tester invocation assesses one frozen candidate without editing it or starting a repair loop. The HVE Builder parent may use required findings to fix the artifact and request a fresh assessment within its ongoing run. Use mechanical validation such as `npm run validate:skills` for structure and frontmatter, which this skill does not replace.
 
 ## Example usage
 
