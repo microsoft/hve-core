@@ -1,29 +1,29 @@
 ---
-title: vscode-playwright
-description: VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation
-sidebar_position: 10
+title: hve-demo-material
+description: Create levelled demo decks and narrated MP4s for HVE Core or any named repository topic. Use when training or demo material is needed for L100 through L400 audiences.
+sidebar_position: 5
 author: Microsoft
 ms.date: 2026-09-07
 ms.topic: reference
 keywords:
   - skill
   - experimental
-  - vscode-playwright
+  - hve-demo-material
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
 | Field       | Value                                                                               |
 |-------------|-------------------------------------------------------------------------------------|
 | Kind        | skill                                                                               |
-| Source      | `.github/skills/experimental/vscode-playwright`                                     |
-| Invocation  | Invoked directly as `/vscode-playwright`, or loaded on demand by referencing agents |
+| Source      | `.github/skills/experimental/hve-demo-material`                                     |
+| Invocation  | Invoked directly as `/hve-demo-material`, or loaded on demand by referencing agents |
 | Interactive | No                                                                                  |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation
+Create levelled demo decks and narrated MP4s for HVE Core or any named repository topic. Use when training or demo material is needed for L100 through L400 audiences.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

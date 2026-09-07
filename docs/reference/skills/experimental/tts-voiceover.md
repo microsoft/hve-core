@@ -1,9 +1,9 @@
 ---
 title: tts-voiceover
 description: Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control
-sidebar_position: 7
+sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-07
 ms.topic: reference
 keywords:
   - skill

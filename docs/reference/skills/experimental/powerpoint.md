@@ -1,9 +1,9 @@
 ---
 title: powerpoint
 description: PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling
-sidebar_position: 6
+sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-07
 ms.topic: reference
 keywords:
   - skill

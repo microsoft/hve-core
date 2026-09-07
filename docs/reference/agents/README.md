@@ -3,7 +3,7 @@ title: Agents
 description: Reference documentation for HVE Core agents.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-07
 ms.topic: overview
 keywords:
   - reference
@@ -37,6 +37,7 @@ This page lists the generated reference documentation for HVE Core agents.
 | [Engagement Report Reviewer](engagement-reporting/subagents/engagement-report-reviewer.md)       | Reviews engagement report drafts for grounding, privacy, audience fit, style, terminology, and continuity.                                                                                                                                                                                                                      |
 | [Engagement Report Outlook Drafter](engagement-reporting/subagents/outlook-drafter.md)           | Creates one approved HTML Outlook draft through a constrained distribution-only workflow.                                                                                                                                                                                                                                       |
 | [Experiment Designer](experimental/experiment-designer.md)                                       | Coach for designing a Minimum Viable Experiment (MVE) with hypothesis formation, vetting, and experiment planning                                                                                                                                                                                                               |
+| [HVE Demo Material Builder](experimental/hve-demo-material.md)                                   | Orchestrates HVE Core training decks and narrated MP4 demos for L100 through L400 on any named topic, attended or unattended. Use when producing levelled repository demo material.                                                                                                                                             |
 | [PowerPoint Builder](experimental/pptx.md)                                                       | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                                                                                                                                                                                 |
 | [PowerPoint Subagent](experimental/subagents/pptx-subagent.md)                                   | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                                                                                                                                                                                          |
 | [Documentation](hve-core/documentation.md)                                                       | Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill                                                                                                                                                                                                                         |

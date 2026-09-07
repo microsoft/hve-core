@@ -1,0 +1,39 @@
+# Canonical deck style for HVE demo material. Copy this file to the level's
+# content/global/style.yaml and substitute only the four fields marked
+# "substitute" below. Every other value is fixed by references/house-style.md.
+
+dimensions:
+  width_inches: 13.333
+  height_inches: 7.5
+  format: "16:9"
+
+metadata:
+  title: "<deck title for this level and topic>" # substitute
+  author: "microsoft/hve-core"
+  subject: "<one line naming the level and its audience>" # substitute
+  keywords: "<comma separated keywords, ending with the level label>" # substitute
+  category: "Demo Material"
+
+defaults:
+  title_bar:
+    height_inches: 0.12
+    color: "#0078D4"
+    top_inches: 0
+  accent_bar:
+    height_inches: 0.04
+    color: "#00B4D8"
+  card:
+    fill: "#2D2D35"
+    corner_radius_inches: 0.06
+    border_color: "#3D3D45"
+    border_width_pt: 1
+  speaker_notes_required: true
+
+themes:
+  - name: "dark"
+    slides: [<every slide number in this deck>] # substitute
+    colors:
+      bg_dark: "#1B1B1F"
+      text_primary: "#F8F8FC"
+      text_secondary: "#C9CDD6"
+      bg_card: "#2D2D35"
