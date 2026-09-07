@@ -53,14 +53,21 @@ Reach for a different asset when:
 
 1. Select **RPI Agent** from the chat agent picker, or run the [/rpi](../../prompts/hve-core/rpi) prompt.
 2. Describe the task, or supply an issue or PR reference, a task slug, or an existing artifact path. An explicit anchor identifies the task; a new conversation alone does not resume earlier work.
-3. In manual mode, use the **Research**, **Plan**, **Implement**, and **Review** handoffs, or the matching `/rpi-*` commands, to advance one phase at a time.
-4. To switch to automatic mode, select **Full Auto** or ask the agent to automatically iterate through RPI until the work is finished. No second confirmation is needed. When intent is unspecified, the agent offers automatic progress, automatic progress with research and planning questions, automatic Research and Planning with questions and a stop before Implementation, or manual progress. Every question includes freeform input.
+3. In manual mode, the agent walks you through each phase's artifacts and asks whether to refine the work or advance. Request the next phase in your answer, use the **Research**, **Plan**, **Implement**, and **Review** handoffs, or invoke the matching `/rpi-*` command.
+4. To switch to automatic mode, select **Full Auto** or ask the agent to automatically iterate through RPI until the work is finished. No second confirmation is needed. When intent is unspecified, choose one of the four options below. Every question includes freeform input.
 5. When a retained decision or exceptional confirmation pauses the session, answer the question; the session resumes automatically.
-6. After Review, the agent selects required in-scope follow-ups and continues from Research in a child task. Each child has its own plan, implementation, and Review evidence. Optional improvements stay unselected. The session stops when acceptance criteria are met, or pauses when a blocker prevents progress.
+6. In automatic mode, the agent continues required in-scope follow-ups from Research in a child task, honoring your decision preferences. Each child has its own plan, implementation, and Review evidence. Optional improvements stay unselected. The session stops when acceptance criteria are met, or pauses when a blocker prevents progress.
 
-You can retain follow-up selection explicitly. In that case, use the ranked handoffs or answer the follow-up question; you can also stop or switch to manual mode at any time. Resuming automatic mode preserves explicitly retained decisions and a stop-before-Implementation boundary unless you change them.
+The opening question is "How would you like us to work on this?":
 
-With the stop-before-Implementation option, the agent completes Planning, including its required critique and decision gates, then returns to manual mode in Plan. It presents the plan and waits for an explicit `/rpi-implement` request. Resuming the conversation alone does not start Implementation.
+* Handle it end to end: the agent makes decisions and runs all RPI phases and needed follow-ups until your request is complete.
+* Keep going, but check with me: the agent progresses automatically and asks when decisions or direction need clarification throughout the workflow, including Review and follow-up selection.
+* Research and plan with me: the agent researches and plans with questions where needed, then explains the artifacts and stops before Implementation so you can refine the research and plan together.
+* Work through each phase with me: the agent asks about unclear decisions, explains each phase's artifacts, and waits for you to choose when to advance.
+
+You can retain follow-up selection through the second option or a custom answer. Use the ranked handoffs or answer the follow-up question; you can also stop or switch to manual mode at any time. Resuming automatic mode preserves explicitly retained decisions and a stop-before-Implementation boundary unless you change them.
+
+With the stop-before-Implementation option, the agent completes Planning, including its required critique and decision gates, then returns to manual mode in Plan. It walks you through the research and plan, including trade-offs and readiness, and offers refinement or an explicit Implementation request. Iteration preserves the task and consumed critique gate. Resuming the conversation alone does not start Implementation.
 
 ## Example usage
 

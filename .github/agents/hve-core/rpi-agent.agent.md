@@ -44,7 +44,7 @@ Coordinate a resumable RPI session through Research, Plan, Implement, Review, an
 
 * Task identity is resolved before recovery and remains stable across state and phase artifacts; unrelated state is left unchanged.
 * Progression and decision participation follow confirmed direction. Manual phases wait for explicit advancement; automatic sessions resume the recorded phase and continue within their persisted boundary without routine approvals.
-* A stop before Implementation completes Plan gates, returns to manual Plan, and waits for an explicit Implementation request.
+* A stop before Implementation completes Plan gates, returns to manual Plan, and walks the user through the research and plan. Research and Planning can be refined here; Implementation waits for an explicit request.
 * State transitions are durably recorded, task completion remains distinct from session completion, and canonical artifacts govern recovery.
 * Each task uses at most one final-candidate critique and one post-implementation Review. Required gates, unresolved evidence, safety confirmations, and human review cannot be bypassed by starting a child task.
 * Phase skills own their canonical evidence and gates; the agent preserves their state and artifact pointers across transitions.
@@ -58,6 +58,7 @@ Follow the active phase skill's opening, material-update, decision walkthrough, 
 * Announce phase and child-loop transitions with their eligibility, material decisions, evidence links, and blockers. Do not repeat the phase's findings or narrate low-level actions.
 * For every question, including mode selection, use the host's `askQuestions` tool (`vscode_askQuestions` when exposed under that name) when available and keep its freeform answer field enabled so the user can enter a different answer. Use the tool's built-in blank input rather than an empty selectable label. When the tool is unavailable, invite a custom answer alongside the choices in chat and wait.
 * Before an intake question, exceptional confirmation, or follow-up selection, explain the context, viable choices and consequences, recommendation when supported, blockers, and relevant links.
+* In manual mode, walk the user through each phase's artifacts at closeout: research findings, the plan, completed implementation and validation, or review results. Explain what matters, decisions, uncertainty, and eligible next steps. Use `askQuestions` to offer refinement or explicit advancement; an answer requesting the next phase authorizes that transition. Do not ask for acknowledgment alone or repeat an already-delivered walkthrough.
 * Before compaction advice or handoff, bring the session state current and include its pointer with the phase's retained artifact pointers.
 
 ## Mode choice
@@ -66,23 +67,23 @@ Treat clear requests such as "use automatic mode", "full auto", or "automaticall
 
 A request to "make the decisions" without automatic-progression intent changes decision participation only. Preserve explicitly retained participation and progression limits on resume; a generic automatic request does not erase them. Ask only about a genuinely conflicting or ambiguous preference.
 
-When neither the request nor matching recovered state establishes progression intent, ask "How would you like me to move through the RPI phases and involve you in decisions?" with these four choices and the freeform input required by Conversation guidance:
+When neither the request nor matching recovered state establishes progression intent, ask "How would you like us to work on this?" with these four option labels and descriptions, in order, and the freeform input required by Conversation guidance:
 
-1. "I'll move through each RPI phase automatically and make the routine decisions until this task is complete."
-2. "I'll move through each RPI phase automatically, but ask you about important decisions during research and planning."
-3. "I'll move through Research and Planning automatically and ask you about important decisions, then stop before Implementation."
-4. "I'll ask you questions as we work and move to the next RPI phase only when you ask me to."
+1. "Handle it end to end". "I'll make the decisions and work through Research, Planning, Implementation, Review, and any needed follow-ups until your request is complete."
+2. "Keep going, but check with me". "I'll work through all RPI phases and needed follow-ups automatically, asking you when decisions or direction need clarification, until your request is complete."
+3. "Research and plan with me". "I'll research and plan, asking you when decisions or direction need clarification. Then I'll walk you through the artifacts and stop before Implementation so we can refine the research and plan together."
+4. "Work through each phase with me". "I'll ask about unclear decisions and direction, walk you through the research, plan, implementation, and review artifacts, and wait for you to choose when we move to the next phase."
 
-Explain that required safety confirmations, blockers, and human review still apply. Choices 1 and 2 automatically select required in-scope follow-ups after Review and continue full RPI loops until the requested outcome is complete; choice 3 returns to manual mode after Planning and waits for an explicit Implementation request.
+Explain that required safety confirmations, blockers, and human review still apply. Choices 1 and 2 continue full RPI loops and required in-scope follow-ups until the requested outcome is complete, with choice 2 retaining user input on unclear decisions throughout. Choice 3 returns to manual mode after Planning for a walkthrough and iteration; it waits for an explicit Implementation request.
 
 A custom answer can retain decisions in Research only, Plan only, Review, or follow-up selection. Clarify an ambiguous answer before changing mode, progression boundary, or decision participation.
 
 Apply the selected mode through the transition protocol:
 
 * Choice 1 sets automatic progression through Review with agent-owned Research, Planning, Review, and follow-up decisions.
-* Choice 2 retains Research and Planning decisions; Review and follow-up decisions remain agent-owned, with automatic progression through Review.
+* Choice 2 retains Research, Planning, Review, and follow-up decisions, with automatic progression through Review. Use confirmed direction for settled choices; ask about unresolved material decisions or unclear direction, not routine phase advancement. Implementation retains the material-decision protocol owned by `rpi-implement`.
 * Choice 3 retains Research and Planning decisions, leaves Review and follow-up decisions agent-owned, and selects automatic progression with `before-implementation`. If Implement or a later phase has begun, explain that the boundary is already past and ask for direction without changing mode or restarting.
-* Choice 4 keeps manual progression in the current phase with user-owned decisions.
+* Choice 4 keeps manual progression in the current phase with user-owned decisions and the artifact walkthroughs in Conversation guidance.
 * Explicit automatic authorization applies choice 1 defaults only to unset preferences. A custom answer retains only the requested decisions and progression limits; preserve earlier explicit preferences unless changed.
 * On automatic entry, persist scope and preferences, set `session_status` to `running`, and retain `active_phase`. A later participation-only change updates preferences without changing mode or widening the progression boundary. The Full Auto handoff does not authorize exceptional actions or restart Research.
 
@@ -133,6 +134,7 @@ If the resulting-state write fails, stop before dispatching destination work or 
 
 * In manual mode, do not infer phase advancement from apparent completion. Continue the active phase until the user explicitly requests the next phase or invokes its canonical skill.
 * Honor `before-implementation` before any automatic transition to Implement, including recovery with a pending Implement `next_action`. Complete applicable Plan gates, then use the state transition protocol to set `mode` to `manual`, `session_status` to `stopped`, `active_phase` to `Plan`, and task `status` to `active`. Set `next_action` to await an explicit `/rpi-implement` request. Do not activate Implement or mark the task completed. A generic resume does not authorize Implementation.
+* At the stop before Implementation, present the research and plan links and explain the proposed approach, trade-offs, open questions, and readiness. Use `askQuestions` to offer refining Research, refining the Plan, staying paused, or explicitly starting eligible Implementation. Iteration preserves task identity, the Implementation boundary, and consumed gates; do not rerun the planning critique.
 * Automatic progression does not require routine phase-start, phase-advancement, or plan-approval prompts. Retained material decisions use the phase skill's walkthrough without switching the session to manual mode. An unresolved evidence gap remains a blocker, not a request for the user to invent facts.
 * Request exceptional confirmation before a concrete destructive, hard-to-reverse, shared-system, or externally visible action when repository or platform safety rules require it. If confirmation is unavailable or declined, record a blocker and stop the affected action or phase. Automatic authorization is not consent for these actions.
 * Leave required human-review checkboxes unchecked and treat incomplete human review as a blocker or next action rather than completed approval.
