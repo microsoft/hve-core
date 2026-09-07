@@ -3,7 +3,7 @@ title: RPI Agent
 description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-07
 ms.topic: reference
 keywords:
   - agent
@@ -32,12 +32,14 @@ Select `RPI Agent` when one task should move through Research, Plan, Implement, 
 
 It persists mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups in one JSON state record so a later conversation can resume from the recorded phase.
 
+Child tasks inherit your participation preferences and unresolved work, but own fresh phase artifacts and critique/Review execution records. If a state write fails, progression pauses; recovery reconciles the recorded transition before dispatching work, without creating a duplicate child.
+
 It offers two modes:
 
-| Mode        | Behavior                                                                                                                                                                                                                                                               |
-|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `manual`    | Default. Stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. You own every material decision.                                                                                                                              |
-| `automatic` | Entered only after you confirm the **Full Auto** request. Completes the remaining phases through Review without routine approval prompts, resolving ordinary Research and Plan decisions itself unless you chose to retain them, then offers ranked follow-up choices. |
+| Mode        | Behavior                                                                                                                                                                                                                                                                                                                       |
+|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `manual`    | Stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. You own every material decision.                                                                                                                                                                                               |
+| `automatic` | An explicit automatic request or **Full Auto** selection starts automatic progression without another mode question. The agent makes ordinary decisions and runs required in-scope follow-ups through new RPI loops until the requested outcome is complete. Explicitly retained decisions and progression limits still apply. |
 
 Both modes stop for blockers, required human review, and destructive, hard-to-reverse, or externally visible actions.
 
@@ -52,9 +54,13 @@ Reach for a different asset when:
 1. Select **RPI Agent** from the chat agent picker, or run the [/rpi](../../prompts/hve-core/rpi) prompt.
 2. Describe the task, or supply an issue or PR reference, a task slug, or an existing artifact path. An explicit anchor identifies the task; a new conversation alone does not resume earlier work.
 3. In manual mode, use the **Research**, **Plan**, **Implement**, and **Review** handoffs, or the matching `/rpi-*` commands, to advance one phase at a time.
-4. To switch modes, select **Full Auto** and answer the confirmation: enter automatic mode, retain research decisions, retain planning decisions, retain both, or remain in manual mode.
+4. To switch to automatic mode, select **Full Auto** or ask the agent to automatically iterate through RPI until the work is finished. No second confirmation is needed. When intent is unspecified, the agent offers automatic progress, automatic progress with research and planning questions, automatic Research and Planning with questions and a stop before Implementation, or manual progress. Every question includes freeform input.
 5. When a retained decision or exceptional confirmation pauses the session, answer the question; the session resumes automatically.
-6. After Review in automatic mode, choose a ranked follow-up (the **1️⃣**, **2️⃣**, and **3️⃣** handoffs), **Stop automatic session**, or **Switch to manual mode**. A selected follow-up starts a child task from Research.
+6. After Review, the agent selects required in-scope follow-ups and continues from Research in a child task. Each child has its own plan, implementation, and Review evidence. Optional improvements stay unselected. The session stops when acceptance criteria are met, or pauses when a blocker prevents progress.
+
+You can retain follow-up selection explicitly. In that case, use the ranked handoffs or answer the follow-up question; you can also stop or switch to manual mode at any time. Resuming automatic mode preserves explicitly retained decisions and a stop-before-Implementation boundary unless you change them.
+
+With the stop-before-Implementation option, the agent completes Planning, including its required critique and decision gates, then returns to manual mode in Plan. It presents the plan and waits for an explicit `/rpi-implement` request. Resuming the conversation alone does not start Implementation.
 
 ## Example usage
 
@@ -78,16 +84,23 @@ In manual mode the agent runs Research and waits:
 Run `/rpi-plan` or select the Plan handoff to continue.
 ```
 
-After **Full Auto** is confirmed with agent-owned decisions, the agent continues through Plan, Implement, and Review, then presents the follow-up checkpoint:
+To delegate progression and ordinary decisions explicitly:
+
+```text
+Use automatic mode. Make the decisions and keep iterating through full RPI loops until the storage output and its required tests are complete.
+```
+
+After Review identifies a required test gap, the agent records the decision and continues without a follow-up question:
 
 ```text
 * Mode: automatic; session: running; task blob-storage: completed; phase: Follow-up
 * Review: Complete; outcome Residual work; RV-001 routed to follow-up
 
-Ranked follow-ups:
-1. Add integration tests against the storage emulator (small, unblocks CI coverage)
-2. Extract the retry policy into a shared helper (reduces duplication across writers)
-3. Document the managed identity setup for operators
+Selected required follow-up:
+1. Add integration tests against the storage emulator (required by the acceptance criteria; RV-001).
 
-Choose 1, 2, or 3, Stop automatic session, or Switch to manual mode.
+Starting child task blob-storage-integration-tests from Research, reusing the existing storage findings.
+Optional retry-helper cleanup remains unselected.
 ```
+
+Once required work has passing validation and completed Review evidence applicable to the current implementation, the agent stops the automatic session and reports completion. A child's changes must account for affected earlier acceptance checks. A repeated unresolved finding without measurable progress or a materially different evidence-backed corrective approach pauses as a no-progress blocker; file changes alone do not justify another loop.
