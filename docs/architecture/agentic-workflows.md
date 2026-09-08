@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-09-04
+ms.date: 2026-09-07
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -218,9 +218,10 @@ The `hve-builder` skill uses one lifecycle for agents, prompts, instructions, su
 
 1. Resolve mode, targets, write boundary, architecture, and applicable conventions
 2. Author or perform read-only review according to the selected mode
-3. Complete all known edits, fresh-context static review, and local validation before freezing the candidate and resolving one final behavior gate. Major mutations and behavior-bearing review targets invoke HVE Builder Tester at most once; eligible no-runtime review targets and Minor or Medium mutations are satisfied-and-skipped. A behavior finding ends the current run and becomes input to a later invocation rather than a same-run edit and retest
-4. Keep known target files and caller-supplied canonical references as bounded lifecycle reads; activate `rpi-research` for open-ended exploration and decision-critical research
-5. Run non-mutating host validation and resolve one overall outcome
+3. Complete known edits, fresh-context static review, and local validation before freezing each candidate for behavior assessment. Major mutations and behavior-bearing review targets invoke HVE Builder Tester; eligible no-runtime review targets and Minor or Medium mutations are satisfied-and-skipped
+4. In a mutating mode, batch required in-scope corrections from the report in the main agent, refresh affected checks and assessment, and test the revised candidate when justified by progress. Preserve each report against its revision; stop on advisory-only polish or unsupported repetition
+5. Keep known target files and caller-supplied canonical references as bounded lifecycle reads; activate `rpi-research` for open-ended exploration and decision-critical research
+6. Resolve one overall outcome from the delivered candidate's validation and assessment evidence
 
 HVE Builder selects a reasoning profile when it delegates isolated work. Fresh-context static review uses Medium. HVE Builder Tester executes the frozen target at its own profile and grades the evidence at the higher of Medium and that target profile. The lifecycle lead keeps bounded authoring and local validation in the current context rather than creating a worker turn for each stage.
 
