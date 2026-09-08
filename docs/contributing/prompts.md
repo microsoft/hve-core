@@ -3,7 +3,7 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-08-31
 ms.topic: how-to
 keywords:
   - contributing
@@ -600,9 +600,12 @@ input. New work should name `hve-builder` and its mode directly.
 ### Behavior testing
 
 `hve-builder` delegates behavior testing to `hve-builder-tester`, which is the sole
-behavior-testing entrypoint. Behavior testing runs for major mutations and for
-behavior-bearing review targets, and is legitimately skipped for eligible minor and
-medium changes.
+behavior-testing entrypoint. HVE Builder first completes all known source changes,
+independent static review, and local validation, then freezes the candidate. Major
+mutations and behavior-bearing review targets invoke HVE Builder Tester at most once;
+eligible minor and medium changes are legitimately skipped. A behavior finding ends
+the current run and can seed a later HVE Builder invocation, so the tested candidate
+is never edited and retested inside the same run.
 
 ### Evidence
 

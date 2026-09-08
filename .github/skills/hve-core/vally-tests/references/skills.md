@@ -16,20 +16,20 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ## Contract Summary
 
-| Topic                         | Section in hve-builder.instructions.md                      |
-|-------------------------------|-------------------------------------------------------------|
-| Frontmatter and name          | Frontmatter Requirements; File Types > Skill Files          |
-| File location and portability | File Types > Skill Files                                    |
-| Optional subdirectories       | File Types > Skill Files                                    |
-| Content sections              | File Types > Skill Files                                    |
-| Progressive disclosure        | Load-Timing and Authority Routing; File Types > Skill Files |
-| Semantic invocation           | File Types > Skill Files; Choosing the Artifact Type        |
+| Topic                         | Section in hve-builder.instructions.md                          |
+|-------------------------------|-----------------------------------------------------------------|
+| Frontmatter and name          | Frontmatter and Portability                                     |
+| File location and portability | Frontmatter and Portability                                     |
+| Optional subdirectories       | Keep Context Focused                                            |
+| Content sections              | Outcome and Structure                                           |
+| Progressive disclosure        | Keep Context Focused                                            |
+| Semantic invocation           | Frontmatter and Portability; Choose Artifacts by Responsibility |
 
 ## Conformance Checks
 
 ### Check 1: Required Frontmatter Fields
 
-* Contract source: `hve-builder.instructions.md`, Frontmatter Requirements and File Types > Skill Files.
+* Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
 * Testable behavior: SKILL.md frontmatter MUST include a `name:` field in lowercase kebab-case AND a concise, non-empty `description:` field (aim near 120 characters; modest overage is acceptable when it improves routing clarity).
 * Suggested stimulus: ask the assistant to identify a named skill by its frontmatter `name:` and `description:` values.
 * Grader recommendation: `regex` with pattern `(?m)^name:\s*['"]?[a-z0-9][a-z0-9-]*['"]?` combined with `(?m)^description:\s*['"].{1,200}`.
@@ -37,7 +37,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 2: Name Matches Directory
 
-* Contract source: `hve-builder.instructions.md`, Frontmatter Requirements and File Types > Skill Files.
+* Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
 * Testable behavior: the `name:` frontmatter value MUST equal the skill's directory name in lowercase kebab-case (for example a skill at `.github/skills/hve-core/vally-tests/` MUST declare `name: vally-tests`).
 * Suggested stimulus: ask the assistant where on disk a named skill lives and to confirm that the directory matches the frontmatter name.
 * Grader recommendation: `semantic_similarity` with rubric "Does the skill's frontmatter name field equal the final segment of its directory path in lowercase kebab-case?".
@@ -45,7 +45,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 4: H1 Title Matches Skill Purpose
 
-* Contract source: `hve-builder.instructions.md`, File Types > Skill Files.
+* Contract source: `hve-builder.instructions.md`, Outcome and Structure.
 * Testable behavior: the SKILL.md H1 heading MUST state the skill's purpose clearly and SHOULD align in intent with the `description:` frontmatter.
 * Suggested stimulus: ask the assistant to summarize a named skill in one sentence and compare against the H1 heading.
 * Grader recommendation: `semantic_similarity` with rubric "Does the SKILL.md H1 heading describe the skill's purpose in a way that aligns with the description frontmatter?".
@@ -53,7 +53,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 5: Required Content Sections
 
-* Contract source: `hve-builder.instructions.md`, File Types > Skill Files.
+* Contract source: `hve-builder.instructions.md`, Outcome and Structure.
 * Testable behavior: a playbook-style skill that delegates execution to subagents MUST present its sections in the order Title (H1), Goal, Flow (or Execution), Inputs, Success criteria, Constraints, Stop rules, Handoff, and an optional response contract; a script-bearing skill MAY instead use the legacy script-oriented order (Overview, Prerequisites, Quick Start, or Architecture plus Workflow Steps, then Parameters Reference or Troubleshooting).
 * Suggested stimulus: ask the assistant to list the section headings of a named skill in order and confirm they follow the playbook shape for a delegating skill or the script-oriented shape for a script-bearing skill.
 * Grader recommendation: `semantic_similarity` with rubric "For a delegating playbook skill, do the section headings follow the playbook order (Goal, Flow, Inputs, Success criteria, Constraints, Stop rules, Handoff); for a script-bearing skill, do they follow the Overview/Prerequisites/Quick Start order?".
@@ -61,7 +61,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 6: Relative Path Portability
 
-* Contract source: `hve-builder.instructions.md`, File Types > Skill Files.
+* Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
 * Testable behavior: all file path references within SKILL.md MUST be relative to the skill root. Repo-root-relative paths starting with `.github/` and absolute paths (Unix `/` or Windows drive-letter) are non-conforming.
 * Suggested stimulus: ask the assistant to enumerate the file references inside a named skill's SKILL.md and confirm none are repo-root-relative.
 * Grader recommendation: `regex` with negate pattern `(?m)(?:\]\(|\s|^)(?:\.github/|/[a-z]|[A-Za-z]:[\\/])` evaluated over SKILL.md path references.
@@ -69,7 +69,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 7: Progressive Disclosure Structure
 
-* Contract source: `hve-builder.instructions.md`, Load-Timing and Authority Routing and File Types > Skill Files.
+* Contract source: `hve-builder.instructions.md`, Keep Context Focused.
 * Testable behavior: SKILL.md SHOULD respect progressive disclosure: frontmatter holds metadata of roughly 100 tokens, the body holds activation instructions of under 5000 tokens, and large or domain-specific resources live in `references/`, `scripts/`, or `assets/` subdirectories rather than inline.
 * Suggested stimulus: ask the assistant whether a named skill keeps its SKILL.md body within the activation budget and which subdirectories it uses for on-demand resources.
 * Grader recommendation: `semantic_similarity` with rubric "Does the skill follow progressive disclosure, with a focused SKILL.md body under the activation budget and large references moved to separate files?".
@@ -77,7 +77,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 8: Script Parity for Cross-Platform Helpers
 
-* Contract source: `hve-builder.instructions.md`, File Types > Skill Files.
+* Contract source: `hve-builder.instructions.md`, Keep Context Focused.
 * Testable behavior: when a skill ships executable helpers, the helpers SHOULD be provided in parity pairs of a bash (`.sh`) implementation and a PowerShell (`.ps1`) implementation, unless the workflow requires Python.
 * Suggested stimulus: ask the assistant which helper scripts a named skill ships and whether each non-Python script has both bash and PowerShell forms.
 * Grader recommendation: `semantic_similarity` with rubric "If the skill ships non-Python helpers, does each helper appear in both .sh and .ps1 forms for cross-platform parity?".
@@ -85,7 +85,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 9: Troubleshooting Section
 
-* Contract source: `hve-builder.instructions.md`, File Types > Skill Files.
+* Contract source: `hve-builder.instructions.md`, Outcome and Structure.
 * Testable behavior: SKILL.md SHOULD include a Troubleshooting section that documents common failure modes and their resolutions, or that explicitly states no common issues exist.
 * Suggested stimulus: ask the assistant which common issues a named skill calls out under Troubleshooting and what the recommended fix is for each.
 * Grader recommendation: `regex` with pattern `(?m)^##\s+Troubleshooting\b`.
@@ -93,7 +93,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 
 ### Check 10: Semantic Invocation Alignment
 
-* Contract source: `hve-builder.instructions.md`, File Types > Skill Files and Choosing the Artifact Type.
+* Contract source: `hve-builder.instructions.md`, Frontmatter and Portability and Choose Artifacts by Responsibility.
 * Testable behavior: the `description:` frontmatter MUST be domain-specific enough that natural-language task descriptions matching the skill's domain (for example "extract VS Code screenshots") semantically correlate with the declared description.
 * Suggested stimulus: present several phrasings of a task in the skill's domain and ask the assistant whether the named skill is the right choice for each, with justification.
 * Grader recommendation: `semantic_similarity` with rubric "Is the skill's description specific and domain-focused enough that natural-language task phrasings in the domain semantically match the description?".
