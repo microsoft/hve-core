@@ -138,12 +138,17 @@ safe-outputs:
   jobs:
     publish-backlog-grooming-result:
       description: "Validate and upload one immutable backlog grooming shard result"
+      max: 5
       runs-on: ubuntu-latest
       permissions: {}
       output: "Validated shard result uploaded as an immutable run-attempt artifact"
       inputs:
-        report-data:
-          description: "JSON report data containing exactly the final issue rows"
+        issue:
+          description: "Planned issue number bound to this candidate result"
+          required: true
+          type: number
+        row-data:
+          description: "JSON object containing exactly one final issue row"
           required: true
           type: string
         started-at:
@@ -179,11 +184,6 @@ safe-outputs:
                 (item) => item.type === "publish_backlog_grooming_result",
               );
 
-              if (requests.length !== 1) {
-                core.setFailed(`Expected one report publication request, found ${requests.length}`);
-                return;
-              }
-
               const exactKeys = (value, keys) =>
                 value &&
                 typeof value === "object" &&
@@ -208,15 +208,6 @@ safe-outputs:
                 return JSON.stringify(value);
               };
 
-              let payload;
-              try {
-                const reportData = String(requests[0]["report-data"] ?? "")
-                  .replaceAll("$\\{\\{", "$" + "{{");
-                payload = JSON.parse(reportData);
-              } catch {
-                core.setFailed("Report data is not valid JSON");
-                return;
-              }
               const rowKeys = ["issue", "title", "selection_reason", "activity_and_ownership_context", "acceptance_signals", "repository_evidence", "lineage_evidence", "similarity_outcome", "disposition", "grooming_finding", "recommended_next_step", "assessment_status", "deferral_reason"];
               const deferredReasonAliasKeys = rowKeys
                 .filter((key) => key !== "deferral_reason")
@@ -237,10 +228,6 @@ safe-outputs:
                 return original.length > 0 && replacement.length > 0 &&
                   replacement.some((item) => !original.includes(item));
               };
-              if (!exactKeys(payload, ["issues"]) || !Array.isArray(payload.issues)) {
-                core.setFailed("Report data does not match the canonical top-level schema");
-                return;
-              }
               let orderedCandidateIds;
               try {
                 orderedCandidateIds = JSON.parse(process.env.ORDERED_CANDIDATE_IDS);
@@ -257,6 +244,33 @@ safe-outputs:
               const candidateSet = new Set(orderedCandidateIds);
               if (candidateSet.size !== orderedCandidateIds.length) {
                 core.setFailed("Worker candidate IDs must be unique positive integers");
+                return;
+              }
+              if (requests.length !== orderedCandidateIds.length) {
+                core.setFailed(`Safe-output item count does not match planned candidates: expected ${orderedCandidateIds.length}, found ${requests.length}`);
+                return;
+              }
+              const requestsByIssue = new Map();
+              for (const request of requests) {
+                const issue = request.issue;
+                if (!Number.isInteger(issue) || issue <= 0 ||
+                    !candidateSet.has(issue) || requestsByIssue.has(issue)) {
+                  core.setFailed("Safe-output issue identities must exactly match planned shard candidates");
+                  return;
+                }
+                requestsByIssue.set(issue, request);
+              }
+              if (requestsByIssue.size !== candidateSet.size ||
+                  !orderedCandidateIds.every((issue) => requestsByIssue.has(issue))) {
+                core.setFailed("Safe-output issue identities must exactly match planned shard candidates");
+                return;
+              }
+              const startedAt = String(requests[0]?.["started-at"] ?? "");
+              const completedAt = String(requests[0]?.["completed-at"] ?? "");
+              if (requests.some((request) =>
+                String(request["started-at"] ?? "") !== startedAt ||
+                String(request["completed-at"] ?? "") !== completedAt)) {
+                core.setFailed("Safe-output shard timestamps must be identical strings");
                 return;
               }
               let priorityCandidateIds;
@@ -285,7 +299,7 @@ safe-outputs:
                 core.setFailed("Worker inventory or cohort context is invalid");
                 return;
               }
-              const normalizedRows = payload.issues.map((row) => {
+              const normalizeRow = (row) => {
                 let normalizedRow = row;
                 if (exactKeys(row, deferredReasonAliasKeys)) {
                   normalizedRow = { ...row, deferral_reason: row.deferred_reason };
@@ -305,19 +319,26 @@ safe-outputs:
                     }
                     : lineage,
                 };
-              });
-              const issueNumbers = new Set();
+              };
               const acceptedRows = [];
               const contractErrors = [];
               const normalizations = [];
-              for (let row of normalizedRows) {
-                let normalization = null;
-                if (!Number.isInteger(row?.issue) || row.issue <= 0 ||
-                    !candidateSet.has(row.issue) || issueNumbers.has(row.issue)) {
-                  core.setFailed("Report issue identity does not match a unique planned shard candidate");
-                  return;
+              for (const issue of orderedCandidateIds) {
+                const request = requestsByIssue.get(issue);
+                let row;
+                try {
+                  const rowData = String(request["row-data"] ?? "")
+                    .replaceAll("$\\{\\{", "$" + "{{");
+                  row = normalizeRow(JSON.parse(rowData));
+                } catch {
+                  contractErrors.push({ issue, code: "invalid_row_contract" });
+                  continue;
                 }
-                issueNumbers.add(row.issue);
+                let normalization = null;
+                if (row?.issue !== issue) {
+                  contractErrors.push({ issue, code: "invalid_row_contract" });
+                  continue;
+                }
                 if (row.similarity_outcome === "Superseded" && row.disposition === "Superseded" &&
                     hasValidSupersessionLineage(row)) {
                   row = { ...row, similarity_outcome: "Uncertain" };
@@ -361,16 +382,9 @@ safe-outputs:
                 acceptedRows.push(row);
                 if (normalization) normalizations.push(normalization);
               }
-              if (issueNumbers.size !== candidateSet.size ||
-                  ![...issueNumbers].every((issue) => candidateSet.has(issue))) {
-                core.setFailed("Report issue IDs do not match the planned shard candidates");
-                return;
-              }
               const assessedRows = acceptedRows.filter((row) => row.assessment_status === "Assessed").length;
               const deferredRows = acceptedRows.filter((row) => row.assessment_status === "Deferred").length;
 
-              const startedAt = String(requests[0]["started-at"] ?? "");
-              const completedAt = String(requests[0]["completed-at"] ?? "");
               const startedMillis = Date.parse(startedAt);
               const completedMillis = Date.parse(completedAt);
               if (!Number.isFinite(startedMillis) || !Number.isFinite(completedMillis) ||
@@ -513,25 +527,30 @@ fixed issue count as an eligibility exclusion.
 ## Output
 
 Assess only the issue numbers in `ordered_candidate_ids`. Do not locate, create,
-or update tracker state. After assessment, capture the UTC completion timestamp
-and call `publish-backlog-grooming-result` exactly once with:
+or update tracker state. Capture the UTC completion timestamp after every row is
+finalized, then call `publish-backlog-grooming-result` once per planned candidate
+with:
 
-* `report-data`: a JSON string containing exactly the final `issues` array and
-  no `run` object
-* `started-at`: the captured UTC assessment start timestamp
-* `completed-at`: the captured UTC assessment completion timestamp
+* `issue`: the candidate issue number
+* `row-data`: a JSON string containing exactly that candidate's final row object
+  and no envelope or `run` object
+* `started-at`: the captured UTC assessment start timestamp, repeated verbatim
+  for every candidate
+* `completed-at`: the captured UTC assessment completion timestamp, repeated
+  verbatim for every candidate
 
 The isolated result job validates row data, issue identity, caller provenance,
-and timestamp order. It derives canonical timestamp, inventory, cohort counts,
+complete candidate coverage, and timestamp agreement. It derives canonical
+timestamp, inventory, cohort counts,
 assessment counts, stop reason, and cursor from trusted inputs and final rows,
 then constructs the immutable artifact envelope, calculates its digest, and
 publishes it. Never include caller-controlled provenance or derived run state
-in `report-data`. After the safe output call succeeds, return only the canonical
+in `row-data`. After every safe output call succeeds, return only the canonical
 Backlog Grooming Report required by the imported agent.
 
 Before publication, finalize every selected issue row as `Assessed` or
-`Deferred` and verify the payload contains exactly those final rows before
-calling `publish-backlog-grooming-result`. Keep each `repository_evidence` and
+`Deferred` and verify there is exactly one call for each planned issue. Do not
+use call order to associate rows with candidates. Keep each `repository_evidence` and
 `lineage_evidence` item to at most 500 characters. Use concise stable paths,
 issue or pull-request numbers, commit or release identifiers, or summarized
 negative-search scopes instead of directory listings or extended prose.
