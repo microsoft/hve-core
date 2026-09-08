@@ -3,7 +3,7 @@ title: Prompts
 description: Reference documentation for HVE Core prompts.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-09-04
 ms.topic: overview
 keywords:
   - reference
@@ -43,7 +43,6 @@ This page lists the generated reference documentation for HVE Core prompts.
 | [Git Merge](hve-core/git-merge.md)                                                               | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling                                                                                          |
 | [Git Setup](hve-core/git-setup.md)                                                               | Interactive, verification-first Git configuration assistant (non-destructive)                                                                                             |
 | [Pr Review](hve-core/pr-review.md)                                                               | Review a pull request or local change set by routing to the consolidated Code Review agent                                                                                |
-| [Pull Request](hve-core/pull-request.md)                                                         | Generate pull request descriptions from branch diffs                                                                                                                      |
 | [Rpi](hve-core/rpi.md)                                                                           | Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow                                                                             |
 | [Vally Test Write](hve-core/vally-test-write.md)                                                 | Authors Vally conformance test stimuli for an existing prompt, instructions, agent, or skill artifact                                                                     |
 | [Rai Capture](rai-planning/rai-capture.md)                                                       | Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                                              |
