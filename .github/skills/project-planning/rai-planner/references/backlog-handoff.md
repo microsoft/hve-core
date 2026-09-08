@@ -39,18 +39,21 @@ Apply these rules to the artifacts table:
 * Keep one row per deliverable with columns for phase, artifact, and a concise description of the contents.
 * Replace bracketed placeholders with the values from session state; omit rows for artifacts the session did not produce.
 
-| Phase         | Artifact                                                                            | What it contains                                                                                            |
-|---------------|-------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| 1 — Scoping   | [rai-plan.md — System Definition]({slug}/rai-plan.md#system-definition)             | System boundary, components, data flows, and intended use                                                   |
-| 1 — Scoping   | [rai-plan.md — Stakeholder Impact]({slug}/rai-plan.md#stakeholder-impact)           | Affected stakeholders and how each is impacted                                                              |
-| 3 — Standards | [rai-plan.md — Standards Mapping]({slug}/rai-plan.md#standards-mapping)             | Framework mapping across the selected trustworthiness characteristics                                       |
-| 4 — Threats   | [rai-plan.md — Threat Addendum]({slug}/rai-plan.md#threat-addendum)                 | Identified threats with IDs and the high-concern subset                                                     |
-| 5 — Impact    | [rai-plan.md — Control Surface Catalog]({slug}/rai-plan.md#control-surface-catalog) | Controls and their coverage across the framework functions                                                  |
-| 5 — Impact    | [rai-plan.md — Evidence Register]({slug}/rai-plan.md#evidence-register)             | Evidence backing each control claim                                                                         |
-| 5 — Impact    | [rai-plan.md — Tradeoffs]({slug}/rai-plan.md#tradeoffs)                             | Tradeoffs needing human adjudication                                                                        |
-| 6 — Handoff   | [rai-plan.md — Review Summary]({slug}/rai-plan.md#review-summary)                   | Posture, gaps, and the human-review gate                                                                    |
-| 6 — Handoff   | [ado-backlog-handoff.md]({slug}/ado-backlog-handoff.md)                             | Drafted backlog items in ADO format (present when the target system includes ADO), ready after review       |
-| 6 — Handoff   | [github-backlog-handoff.md]({slug}/github-backlog-handoff.md)                       | Drafted backlog items in GitHub format (present when the target system includes GitHub), ready after review |
+| Phase         | Artifact                                                                                        | What it contains                                                                                            |
+|---------------|-------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| 1 — Scoping   | [assessment-content.md]({slug}/assessment-content.md)                                           | Required template-aligned content whenever a document or Mural template was supplied                        |
+| 1 — Scoping   | [rai-plan.md — System Definition]({slug}/rai-plan.md#system-definition)                         | System boundary, components, data flows, and intended use                                                   |
+| 1 — Scoping   | [rai-plan.md — Stakeholder Impact]({slug}/rai-plan.md#stakeholder-impact)                       | Affected stakeholders and how each is impacted                                                              |
+| 2 — Risk      | [rai-plan.md — Risk Classification Screening]({slug}/rai-plan.md#risk-classification-screening) | Risk indicators and confirmed assessment depth                                                              |
+| 3 — Standards | [rai-plan.md — Standards Mapping]({slug}/rai-plan.md#standards-mapping)                         | Framework mapping across the selected trustworthiness characteristics                                       |
+| 4 — Threats   | [rai-plan.md — Threat Addendum]({slug}/rai-plan.md#threat-addendum)                             | Identified threats with IDs and the high-concern subset                                                     |
+| 5 — Impact    | [rai-plan.md — Control Surface Catalog]({slug}/rai-plan.md#control-surface-catalog)             | Controls and their coverage across the framework functions                                                  |
+| 5 — Impact    | [rai-plan.md — Evidence Register]({slug}/rai-plan.md#evidence-register)                         | Evidence backing each control claim                                                                         |
+| 5 — Impact    | [rai-plan.md — Tradeoffs]({slug}/rai-plan.md#tradeoffs)                                         | Tradeoffs needing human adjudication                                                                        |
+| 6 — Handoff   | [rai-plan.md — Review Summary]({slug}/rai-plan.md#review-summary)                               | Posture, gaps, and the human-review gate                                                                    |
+| 6 — Handoff   | [ado-backlog-handoff.md]({slug}/ado-backlog-handoff.md)                                         | Drafted backlog items in ADO format (present when the target system includes ADO), ready after review       |
+| 6 — Handoff   | [github-backlog-handoff.md]({slug}/github-backlog-handoff.md)                                   | Drafted backlog items in GitHub format (present when the target system includes GitHub), ready after review |
+| 6 — Handoff   | [artifact-manifest.json]({slug}/artifact-manifest.json)                                         | SHA-256 artifact manifest (present when signing was accepted)                                               |
 
 ## Content Hygiene
 

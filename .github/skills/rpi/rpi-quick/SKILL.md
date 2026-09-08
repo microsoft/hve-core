@@ -1,12 +1,12 @@
 ---
 name: rpi-quick
 description: "Sequence Research, Plan, Implement, Review, and Follow-up for an RPI task. Use when one workflow should coordinate the full delivery lifecycle."
-argument-hint: "[task=...] [continue=...] [followUp=...]"
+argument-hint: "[task=...] [evidence=...] [continue=...] [followUp=...]"
 license: MIT
 user-invocable: true
 ---
 
-# RPI
+# RPI Quick
 
 ## Goal
 
@@ -15,13 +15,13 @@ Coordinate one task through evidence, planning, execution, review, and explicit 
 ## Flow
 
 1. Assess research readiness from caller-supplied research, task details, decisions, and plan inputs.
-	1. Activate `rpi-research` only when evidence is missing, stale, contradictory, insufficient for planning, or when complexity, uncertainty, dependencies, risk, or a decision-critical question warrants investigation. Record Research disposition `executed` and consume the primary artifact's Planning Readiness.
-	2. When evidence is adequate, record disposition `reused` or `satisfied-and-skipped` with the evidence that supports it.
-	3. Apply the `rpi-research` continuation contract. Continue to Plan without another stage-start command only when either an executed Research primary artifact records Planning Readiness `Ready`, or reused or satisfied-and-skipped evidence is adequate, and all applicable gates pass, blockers clear, and required confirmations are explicit.
-	4. When Research is `Blocked`, `Needs clarification`, or `Not ready`, or another transition requirement is not met, stop in Research and record the blocker or next action.
-2. Run `rpi-plan` to create or revise the ordinary Markdown plan and phase details. Its `rpi-plan-critique` gate is internal to planning and returns its disposition to the planning parent.
-3. Run `rpi-implement` for approved `Pxx` and `Pxx-Txx` work. Consume its return, including completed and remaining markers, validation coverage, blockers, plan and detail updates, follow-up items, and readiness or the reason work is awaiting a significant or divergent user decision.
-4. Run `rpi-review` once after Implementation returns and no affected work awaits a user decision. Compare the current plan, details, critique, descriptive changes record, and validation evidence. Record execution status separately from outcome.
+   1. Activate `rpi-research` only when evidence is missing, stale, contradictory, insufficient for planning, or when complexity, uncertainty, dependencies, risk, or a decision-critical question warrants investigation. Record Research disposition `executed` and consume the primary artifact's Planning Readiness.
+   2. When evidence is adequate, record disposition `reused` or `satisfied-and-skipped` with the evidence that supports it.
+   3. Apply the `rpi-research` continuation contract. Continue to Plan without another stage-start command only when either an executed Research primary artifact records Planning Readiness `Ready`, or reused or satisfied-and-skipped evidence is adequate, and all applicable gates pass, blockers clear, and required confirmations are explicit.
+   4. When Research is `Blocked`, `Needs clarification`, or `Not ready`, or another transition requirement is not met, stop in Research and record the blocker or next action.
+2. Run `rpi-plan` to create or revise the task-centered Markdown plan. Its `rpi-plan-critique` gate is internal to planning and returns its disposition to the planning parent.
+3. Run `rpi-implement` for approved `Pxx` and `Pxx-Txx` work. Consume its return, including completed and remaining markers, validation coverage, blockers, plan updates, follow-up items, and readiness or the reason work is awaiting a significant or divergent user decision.
+4. Run `rpi-review` once after Implementation returns and no affected work awaits a user decision. It uses one phase-and-task-matched review subagent, or an unnamed general-purpose subagent when no suitable specialist exists, to build the record from the current plan, critique, changes record, and validation evidence. Standard completely assesses the material acceptance boundary while minimizing elapsed work. The `rpi-quick` parent owns final outcome, route dispositions, and continuation. Use agent-owned Review decisions and skip item questions unless the user explicitly requested the Review Item Walkthrough. Record builder execution, final Review execution, outcome, and route decisions separately.
 5. Follow-up: route defects, decision gaps, research gaps, and residual work to their correct next destination.
 
 When Review finds open work, route it to the appropriate later stage or distinct follow-up item. Do not execute it or run Review again inside the current lifecycle.
@@ -29,9 +29,9 @@ When Review finds open work, route it to the appropriate later stage or distinct
 ## Delegation crosswalk
 
 * Research readiness -> assess existing evidence, then use `rpi-research` only for a demonstrated investigation need
-* Plan -> `rpi-plan`, which may use `RPI Planner` for one exact phase and `rpi-plan-critique` for an independent critique
+* Plan -> `rpi-plan`, which may use phase-and-task-matched or unnamed general-purpose planning subagents and `rpi-plan-critique` for an independent critique
 * Implement -> `rpi-implement`
-* Review -> `rpi-review`
+* Review -> `rpi-review`, which uses one phase-matched or unnamed general-purpose review worker for evidence comparison and document construction
 * Follow-up -> handled by the parent from the review record
 
 ## Inputs
@@ -46,9 +46,9 @@ When Review finds open work, route it to the appropriate later stage or distinct
 * One task identity, date, and task slug link any durable artifacts.
 * Research readiness records the `executed`, `reused`, or `satisfied-and-skipped` disposition, Planning Readiness or adequacy evidence, and the gates or confirmations that permit or stop continuation.
 * Each phase uses the matching RPI skill rather than duplicating its workflow.
-* Planning uses marker-addressed plain Markdown artifacts and exactly one independent critique. Confirmed user requests and answers remain authoritative over critique advice.
-* Implementation returns descriptive evidence, current plan and detail updates, validation coverage, blockers, and follow-up items. A significant or divergent change pauses affected work until the user decision and plan state are current; critique is not repeated.
-* Review separates execution status from outcome and routes every open item.
+* Planning uses marker-addressed plain Markdown artifacts and at most one independent critique invocation. Critique defaults to standard unless the user explicitly requests deep assessment, and confirmed user requests and answers remain authoritative over critique advice.
+* Implementation returns descriptive evidence, current plan updates, validation coverage, blockers, and follow-up items. A significant or divergent change pauses affected work until the user decision and plan state are current; critique is not repeated.
+* Review uses one standard-by-default builder, separates builder execution and final Review execution from outcome, and lets the parent decide every route.
 * Follow-up identifies whether work returns to research, planning, implementation, or a distinct future item.
 
 ## Constraints
