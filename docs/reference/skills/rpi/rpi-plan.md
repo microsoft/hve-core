@@ -3,7 +3,7 @@ title: rpi-plan
 description: "Create one evidence-based RPI implementation plan from supplied context, research, drafts, and decisions. Use when implementation planning is needed."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-07
 ms.topic: reference
 keywords:
   - skill
@@ -29,6 +29,8 @@ Create one evidence-based RPI implementation plan from supplied context, researc
 ## When to use it
 
 Use `rpi-plan` when adequate evidence exists and the work needs a sequenced, verifiable plan before implementation. The skill writes one plan under `.copilot-tracking/plans/` with a stable task ID, `Pxx` phases, and `Pxx-Txx` tasks. The plan leads with an executive summary and a diagrammed Phase Checklist; each task carries `Goals:`, `Requirements:`, `Details:`, `References:`, and `Dependencies:` blocks.
+
+The Phase Checklist opens with **Before** and **After** Mermaid diagrams comparing the evidence-backed starting state with the intended result of all phases. Each phase highlights its changes within the After view, including labeled removal context when needed. Diagrams inherit the renderer's light or dark theme, use readable sans-serif labels, and pair custom highlight fills with explicit contrasting text colors.
 
 Planning owns two internal gates. It activates [rpi-research](rpi-research) only for a demonstrated readiness gap, and it dispatches [rpi-plan-critique](rpi-plan-critique) at most once, after the planner judges the plan implementation-ready. Confirmed user direction outranks critique advice.
 
