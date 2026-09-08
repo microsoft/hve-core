@@ -20,6 +20,7 @@ The `ci:*` prefix communicates ownership and default agent behavior. It does not
 ## Selection and composition
 
 * Generic validation uses applicable local-safe commands such as `validate:local`, `validate:docs`, or targeted checks. It does not select `ci:*` commands.
+* Changed-area preflight may inspect a matching workflow's `ci:*` wrapper to identify and run its locally safe non-mutating child checks when no equivalent local-safe package command exists. This reproduces component checks, not the CI lane; do not infer browsers, services, credentials, moderation, or other lane-specific prerequisites.
 * A task that specifically asks to run or reproduce a named CI lane may invoke its ordinary `ci:*` command after its prerequisites and side effects are understood.
 * Keep `validate:*` aggregates free of `ci:*` commands, fixers, generators, installers, browser actions, and interactive children.
 * Keep report generation noninteractive. Use a separately named `:open` or `:ui` command for browser or interactive behavior.
