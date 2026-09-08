@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-08-31
+ms.date: 2026-09-07
 ms.topic: overview
 sidebar_position: 1
 keywords:
@@ -83,11 +83,14 @@ graph LR
 Use the `hve-builder` skill to create, improve, refactor, replace, review, or
 validate prompts, instructions, agents, subagents, and skills. It resolves the
 write boundary, completes known edits, independent static review, and local
-validation, then freezes the candidate before one final behavior decision. Major
-mutations and behavior-bearing review targets invoke HVE Builder Tester at most
-once; eligible no-runtime review targets and Minor or Medium mutations are
-satisfied-and-skipped. A behavior finding ends the current run instead of
-starting an edit-and-retest loop. Known target files and caller-supplied canonical
+validation, then freezes the candidate for behavior assessment. Major mutations
+and behavior-bearing review targets invoke HVE Builder Tester; eligible no-runtime
+review targets and Minor or Medium mutations are satisfied-and-skipped. In a
+mutating mode, the main agent can batch required fixes from the report, refresh
+affected checks, and test the revised candidate within the same run. It uses as
+few cycles as needed, stopping rather than repeating unchanged failures or chasing
+advisory polish. The tester remains read-only, and every report identifies its
+tested revision. Known target files and caller-supplied canonical
 references remain bounded lifecycle reads; open-ended exploration and
 decision-critical research activate `rpi-research`.
 

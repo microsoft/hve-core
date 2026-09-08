@@ -194,7 +194,7 @@ Review these against the current host, target model, required behavior, and main
 * Kitchen-sink instruction files, copied style guides, copied templates, and exhaustive edge-case lists.
 * Singular AGENT.md where the target host expects AGENTS.md. Migrate references; add compatibility support only when the caller requests it.
 * Unsourced length ceilings and invented universal caps.
-* Fixed iteration counts as quality theater; use evidence-backed completion gates and reserve a one-shot boundary for a final test that depends on a frozen candidate.
+* Fixed iteration counts as quality theater; use evidence-backed completion and progress gates. Keep each test tied to a frozen candidate without forbidding parent-owned correction of demonstrated defects.
 * Model names pinned for a High responsibility, copied from another artifact, or chosen without first selecting a responsibility-based profile.
 * Calling simulation or emulation native runtime validation.
 
