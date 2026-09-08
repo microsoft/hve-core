@@ -20,6 +20,8 @@ Fidelity describes how the target was exercised: `simulation` or `native`, or `N
 
 Every finding records one category, mapped requirement or review dimension, target, profile, fidelity, evidence class, durable evidence pointer, severity, and smallest resolving change. Mark each finding as a required correction or an advisory suggestion. A deletion recommendation follows the requirements catalog's maintenance decisions; one scenario that does not need a rule is not evidence that no supported use case needs it.
 
+Make required findings actionable by the parent: identify the demonstrated failure and smallest supported resolving change, or the missing prerequisite for a coverage gap. Advisory polish does not justify another correction cycle by itself. The report assesses this invocation; it does not authorize edits or impose a terminal outcome on the caller's task.
+
 ## Verdict Rules
 
 * Pass requires gradeable evidence, complete material coverage, and no required correction. Advisory improvements do not prevent Pass.
@@ -89,6 +91,7 @@ Every finding records one category, mapped requirement or review dimension, targ
 ## Rules
 
 * Order findings by severity and consolidate overlapping issues.
+* Preserve each report against its candidate revision. Write reassessment evidence to a unique path; the parent records correction and continuation decisions without rewriting earlier grades.
 * Use `native` only for directly observed native execution and `simulation` for literal contained execution. Mark an action that did not run with evidence class `emulated`; retain the run's actual fidelity.
 * A proxy run cannot claim target-profile equivalence. An unexpected out-of-sandbox write prevents Pass.
 * Use Not available only when execution is Deferred or Blocked before independent grading. Pass, Revise, and Blocked verdicts require grading evidence.
