@@ -4,7 +4,7 @@ description: 'The rpi-research bridge and independent static-review dispatch con
 <!-- markdownlint-disable-file -->
 # HVE Builder Stage Dispatch
 
-Use this reference only for work that benefits from an isolated context. HVE Builder authors bounded targets and runs known local validation directly. It delegates open-ended research to `rpi-research` and one complete candidate assessment to a generic static reviewer.
+Use this reference only for work that benefits from an isolated context. HVE Builder authors bounded targets and runs known local validation directly. It delegates open-ended research to `rpi-research` and independent candidate assessment to a generic static reviewer.
 
 ## Shared Contract
 
@@ -30,7 +30,7 @@ Dispatch one generic Medium-profile reviewer in fresh context after the complete
 
 Do not provide author reasoning or prior review conclusions. The reviewer does not explore outside supplied inputs, inspect agent or subagent `tools` configuration, or edit source. It writes one review log and returns `Pass`, `Revise`, or `Blocked` with severity-graded findings and the smallest resolving changes.
 
-For closure, give the reviewer only the original finding IDs, corrected targets, and acceptance evidence. Closure verifies those findings and does not become another full review.
+For closure, give the reviewer only the original finding IDs, corrected targets, and acceptance evidence. Closure verifies those findings and does not become another full review. After a behavior-driven correction, use the same targeted approach for affected static criteria. A materially changed assessment boundary needs a fresh-context review scoped to that change, not a routine repeat of the entire review.
 
 ## Evidence Shape
 

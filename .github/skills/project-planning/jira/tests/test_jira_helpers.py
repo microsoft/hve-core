@@ -8,7 +8,10 @@ import ast
 import io
 import json
 import logging
+import os
 import pathlib
+import stat
+from types import SimpleNamespace
 
 import jira
 import pytest
@@ -39,6 +42,226 @@ EXPECTED_REDACT_KEYS = (
     "api_token",
     "personal_access_token",
 )
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "$(touch should-not-exist)",
+        "`touch should-not-exist`",
+        "token; touch should-not-exist",
+        "token > should-not-exist",
+        "token < should-not-exist",
+    ],
+)
+def test_parse_env_file_preserves_shell_shaped_values(value: str) -> None:
+    parsed = jira._parse_env_file(f"JIRA_API_TOKEN={value}")
+
+    assert parsed == {"JIRA_API_TOKEN": value}
+
+
+def test_parse_env_file_preserves_embedded_newlines() -> None:
+    parsed = jira._parse_env_file('JIRA_API_TOKEN="first\nsecond"')
+
+    assert parsed == {"JIRA_API_TOKEN": "first\nsecond"}
+
+
+def test_parse_env_file_preserves_unicode_line_separator_as_data() -> None:
+    value = "first\u2028JIRA_PAT=second"
+
+    parsed = jira._parse_env_file(f"JIRA_API_TOKEN={value}")
+
+    assert parsed == {"JIRA_API_TOKEN": value}
+
+
+def test_parse_env_file_accepts_crlf_records() -> None:
+    parsed = jira._parse_env_file("JIRA_PAT=pat-value\r\nJIRA_BASE_URL=https://x\r\n")
+
+    assert parsed == {
+        "JIRA_PAT": "pat-value",
+        "JIRA_BASE_URL": "https://x",
+    }
+
+
+def test_parse_env_file_rejects_nul_without_value() -> None:
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira._parse_env_file("JIRA_PAT=secret\0value")
+
+    assert "secret" not in str(exc_info.value)
+    assert "NUL" in str(exc_info.value)
+
+
+def test_parse_env_file_rejects_unterminated_quote_without_value() -> None:
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira._parse_env_file('JIRA_PAT="secret-value')
+
+    assert "secret-value" not in str(exc_info.value)
+    assert "Unterminated" in str(exc_info.value)
+
+
+def test_parse_env_file_ignores_unsupported_keys() -> None:
+    parsed = jira._parse_env_file(
+        "PATH=untrusted-path\nJIRA_DEBUG=1\nJIRA_PAT=pat-value"
+    )
+
+    assert parsed == {"JIRA_PAT": "pat-value"}
+
+
+def test_load_jira_env_file_does_not_override_inherited_values(
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    env_path = tmp_path / ".jira.env"
+    env_path.write_text("JIRA_PAT=file-value\n", encoding="utf-8")
+    env_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+    monkeypatch.setenv("JIRA_PAT", "inherited-value")
+
+    jira._load_jira_env_file(env_path)
+
+    assert os.environ["JIRA_PAT"] == "inherited-value"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX permission bits required")
+def test_load_jira_env_file_rejects_non_owner_permissions(
+    tmp_path: pathlib.Path,
+) -> None:
+    env_path = tmp_path / ".jira.env"
+    env_path.write_text("JIRA_PAT=secret-value\n", encoding="utf-8")
+    env_path.chmod(0o640)
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira._load_jira_env_file(env_path)
+
+    assert "secret-value" not in str(exc_info.value)
+    assert "owner access only" in str(exc_info.value)
+
+
+def test_load_jira_env_file_rejects_different_owner(
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    env_path = tmp_path / ".jira.env"
+    env_path.write_text("JIRA_PAT=secret-value\n", encoding="utf-8")
+    env_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+    real_fstat = os.fstat
+
+    def fstat_with_different_owner(descriptor: int) -> SimpleNamespace:
+        file_stat = real_fstat(descriptor)
+        return SimpleNamespace(
+            st_mode=file_stat.st_mode,
+            st_size=file_stat.st_size,
+            st_uid=42,
+        )
+
+    monkeypatch.setattr(jira.os, "fstat", fstat_with_different_owner)
+    monkeypatch.setattr(jira.os, "getuid", lambda: 100, raising=False)
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira._load_jira_env_file(env_path)
+
+    assert "secret-value" not in str(exc_info.value)
+    assert "current user" in str(exc_info.value)
+
+
+def test_load_jira_env_file_rejects_non_regular_file_metadata(
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    env_path = tmp_path / ".jira.env"
+    env_path.write_text("JIRA_PAT=secret-value\n", encoding="utf-8")
+    real_fstat = os.fstat
+
+    def fstat_as_fifo(descriptor: int) -> SimpleNamespace:
+        file_stat = real_fstat(descriptor)
+        return SimpleNamespace(
+            st_mode=stat.S_IFIFO | stat.S_IRUSR,
+            st_size=file_stat.st_size,
+            st_uid=getattr(file_stat, "st_uid", 0),
+        )
+
+    monkeypatch.setattr(jira.os, "fstat", fstat_as_fifo)
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira._load_jira_env_file(env_path)
+
+    assert "secret-value" not in str(exc_info.value)
+    assert "regular file" in str(exc_info.value)
+
+
+def test_load_jira_env_file_uses_nonblocking_open_when_available(
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    env_path = tmp_path / ".jira.env"
+    env_path.write_text("JIRA_PAT=file-value\n", encoding="utf-8")
+    env_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+    real_open = os.open
+    observed_flags: list[int] = []
+
+    def recording_open(path: pathlib.Path, flags: int) -> int:
+        observed_flags.append(flags)
+        return real_open(path, flags)
+
+    monkeypatch.setattr(jira.os, "open", recording_open)
+    monkeypatch.delenv("JIRA_PAT", raising=False)
+
+    jira._load_jira_env_file(env_path)
+
+    assert observed_flags[0] & getattr(os, "O_NONBLOCK", 0) == getattr(
+        os, "O_NONBLOCK", 0
+    )
+    assert observed_flags[0] & getattr(os, "O_NOFOLLOW", 0) == getattr(
+        os, "O_NOFOLLOW", 0
+    )
+
+
+def test_load_jira_env_file_rejects_oversized_file_without_value(
+    tmp_path: pathlib.Path,
+) -> None:
+    env_path = tmp_path / ".jira.env"
+    env_path.write_text(
+        "JIRA_PAT=" + "s" * jira.MAX_ENV_FILE_BYTES,
+        encoding="utf-8",
+    )
+    env_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira._load_jira_env_file(env_path)
+
+    assert "ssss" not in str(exc_info.value)
+    assert "size limit" in str(exc_info.value)
+
+
+def test_load_jira_env_file_rejects_invalid_input_without_value(
+    tmp_path: pathlib.Path,
+) -> None:
+    env_path = tmp_path / ".jira.env"
+    env_path.write_text("secret-value-without-assignment\n", encoding="utf-8")
+    env_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira._load_jira_env_file(env_path)
+
+    assert "secret-value" not in str(exc_info.value)
+    assert "line 1" in str(exc_info.value)
+
+
+def test_load_jira_env_file_rejects_symlink(
+    tmp_path: pathlib.Path,
+) -> None:
+    target = tmp_path / "target.env"
+    target.write_text("JIRA_PAT=secret-value\n", encoding="utf-8")
+    env_path = tmp_path / ".jira.env"
+    try:
+        env_path.symlink_to(target)
+    except OSError:
+        pytest.skip("symlink creation is unavailable")
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira._load_jira_env_file(env_path)
+
+    assert "secret-value" not in str(exc_info.value)
+    assert "symlink" in str(exc_info.value)
 
 
 @pytest.mark.parametrize(
