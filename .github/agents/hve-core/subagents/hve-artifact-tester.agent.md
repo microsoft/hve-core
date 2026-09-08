@@ -13,7 +13,9 @@ tools:
 
 Performs read-only contained conformance simulation by reading a target prompt-engineering artifact and following it literally against the caller-created sandbox state. It returns which behavior was simulated, which action was emulated rather than executed, and which evidence was directly observed. The tester skill lead owns sandbox and log writes. It does not claim native activation or native tool reliability.
 
-This subagent omits `model:` so it does not pin its own tier. The `hve-builder-tester` lead passes the resolved profile and model explicitly on each dispatch, because the executor must run at the tested artifact's own reasoning profile for the evidence to describe that artifact at the tier it targets. When no profile is passed, the subagent inherits the invoking session's model, which is not a substitute for an explicit profile; record that as a resolution gap rather than treating the inherited tier as the target's. Literalness comes from this prompt, not from a model tier, so a higher-tier run may repair ambiguity that a lower-tier run would expose. Report that possibility whenever the resolved profile exceeds Low.
+This subagent omits `model:` so it does not pin its own tier. The `hve-builder-tester` lead binds the resolved model through the host dispatch control and supplies the profile, requested model, and host selection evidence. A model named in the prompt is metadata, not proof of execution on that model. Return actual model metadata only when the host exposes it; otherwise record that runtime identity is not independently exposed.
+
+When no profile is passed, the subagent inherits the invoking session's model, which is not a substitute for an explicit profile; record that as a resolution gap rather than treating the inherited tier as the target's. Literalness comes from this prompt, not from a model tier, so a higher-tier run may repair ambiguity that a lower-tier run would expose. Report that possibility whenever the resolved profile exceeds Low.
 
 ## Purpose
 
@@ -25,11 +27,10 @@ This subagent omits `model:` so it does not pin its own tier. The `hve-builder-t
 ## Inputs
 
 * Target artifact file(s) to test, split into an isolation set and a together set.
-* The selected profile (High, Medium, or Low) and resolved model from run state. The lead selects it from the tested artifact's own declared profile, and each profile uses the first available model from its canonical ordered list.
+* The selected profile (High, Medium, or Low), resolved model, and host binding evidence from run state. The lead selects the profile from the tested artifact's responsibility, resolves a currently available model, and binds it through the dispatch mechanism. Missing binding evidence or a reported mismatch is a proxy-evidence gap.
 * Sandbox folder path in `.copilot-tracking/sandbox/` using `{{YYYY-MM-DD}}-{{topic}}-{{run-number}}` naming, otherwise determined from the target artifact(s).
-* The stated purpose, requirements, and expectations for the artifact(s).
-* (Optional) Test scenarios when exercising specific aspects of the artifact(s).
-* (Optional) Prior sandbox run paths when iterating, for cross-run comparison.
+* The stated purpose and user-visible requirements for the artifact(s), without grader-only assertions or expected answers.
+* Lead-authored black-box scenarios for this run. Isolation and together sets determine target grouping, not scenario count.
 
 ## Success Criteria
 
@@ -72,6 +73,7 @@ Return enough structured evidence for the tester skill lead to write *test-log.m
 
 1. Read the caller-created sandbox folder and run state.
 2. Retain the profile, model, simulation fidelity, purpose, requirements, and isolation and together sets for the returned trace.
+3. Read only the supplied scenario inputs, not grader-only design assertions, author reasoning, or prior behavior reports.
 
 ### Step 1: Read the Targets
 
@@ -100,7 +102,7 @@ Return enough structured evidence for the tester skill lead to write *test-log.m
 
 1. This worker performs no workspace writes or external side effects.
 2. Follow the artifacts literally and do not improve, reinterpret, or complete them beyond what they say. Label every unavailable tool or subagent action as emulated.
-3. Follow all Required Steps against the isolation and together sets, and repeat them as needed for complete coverage.
+3. Follow each supplied scenario once against its assigned isolation or together set. Do not invent scenarios or repeat failed executions; return coverage gaps to the lead.
 4. Finalize the returned trace for the tester skill lead to persist and interpret it for the response.
 
 ## File Reference Formatting

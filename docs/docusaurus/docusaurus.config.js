@@ -17,12 +17,12 @@ const packageCards = loadPackageCards(
 const accessibleGithubPrismTheme = {
   ...prismThemes.github,
   styles: prismThemes.github.styles.map((entry) =>
-    entry.types.includes('comment')
+    entry.types.includes('comment') || entry.types.includes('url')
       ? {
           ...entry,
           style: {
             ...entry.style,
-            color: '#505050',
+            color: entry.types.includes('comment') ? '#505050' : '#00756f',
           },
         }
       : entry,

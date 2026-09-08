@@ -28,10 +28,37 @@ Executes one delegated internal, external, or hybrid RPI research lane and progr
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+`RPI Researcher` is dispatched by [rpi-research](../../../skills/rpi/rpi-research), not selected by a user. The parent delegates one bounded lane for one research cycle and wave (`Wider`, `Deeper`, or `Contrarian`) when isolating that investigation improves evidence quality, parallelism, or context control.
+
+The worker investigates only that lane, writes its evidence progressively to the exact lane path the parent approved under `.copilot-tracking/research/subagents/`, and returns compact evidence relationships.
+
+The parent keeps every decision: it assigns canonical `C#` and `W#` IDs, accepts or rejects material, records readiness, and talks to the user. The worker never edits the primary research artifact, source files, or configuration, and never speaks to the user.
+
+`rpi-research` selects this subagent because its name contains `research`; when it is unavailable, the skill dispatches an unnamed general-purpose subagent with the same lane contract, or investigates inline and records the fallback.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+A representative parent dispatch supplies the cycle, wave, lane, and paths:
+
+```text
+Cycle 1, wave Deeper, external lane.
+Topic: azure-storage-blob async upload behavior for files over 1 GB.
+Questions: Q2 chunk size and concurrency defaults; Q3 retry semantics on partial upload.
+Criteria: current official documentation or SDK source with retrieval dates.
+Posture: balanced. Limit: none.
+Lane path: .copilot-tracking/research/subagents/2026-09-04/blob-async-upload-subagent-research.md
+Primary artifact (do not edit): .copilot-tracking/research/2026-09-04/blob-storage-research.md
+```
+
+The worker returns a pointer summary rather than the evidence body:
+
+```text
+* Execution status: Complete
+* Cycle / wave: 1 / Deeper
+* Evidence confidence: High
+* Synthesis readiness: Ready
+* Evidence artifact: .copilot-tracking/research/subagents/2026-09-04/blob-async-upload-subagent-research.md
+* Evidence relationships: Q2 -> upload_blob chunks at max_block_size with max_concurrency workers (SDK reference, retrieved 2026-09-04) supports; Q3 -> partial uploads are not retried by default (SDK source) weakens the earlier claim
+* Missing evidence or clarification: None
+* Stop reason: lane criteria met
+```
