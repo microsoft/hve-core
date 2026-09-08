@@ -17,7 +17,7 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-08-31
 ms.topic: concept
 estimated_reading_time: 10
 ---
@@ -122,13 +122,17 @@ The `security` and `accessibility` perspectives are self-contained and skill-bac
 
 The review workflow lives in the `code-review` skill, not in the agent. The orchestrator and subagents read the skill entry and its references once and apply them verbatim:
 
-| Reference         | Provides                                                                   |
-|-------------------|----------------------------------------------------------------------------|
-| Context Bootstrap | Tier 0 procedure for proving the change surface and scoping hotspots       |
-| Depth Tiers       | Basic, standard, and comprehensive verification-rigor dials                |
-| Lens Checklists   | Per-perspective review questions                                           |
-| Severity Taxonomy | Severity levels, verdict normalization, and risk classification            |
-| Output Formats    | Reporting structure, merged report skeleton, and persisted artifact schema |
+| Reference                    | Provides                                                                   |
+|------------------------------|----------------------------------------------------------------------------|
+| Context Bootstrap            | Tier 0 procedure for proving the change surface and scoping hotspots       |
+| [Depth Tiers]                | Basic, standard, and comprehensive verification-rigor dials                |
+| [Change-Risk Evidence Model] | Advisory evidence checklist for recommending a depth tier                  |
+| Lens Checklists              | Per-perspective review questions                                           |
+| Severity Taxonomy            | Severity levels, verdict normalization, and risk classification            |
+| Output Formats               | Reporting structure, merged report skeleton, and persisted artifact schema |
+
+[Depth Tiers]: pathname://../../../.github/skills/coding-standards/code-review/references/depth-tiers.md
+[Change-Risk Evidence Model]: pathname://../../../.github/skills/coding-standards/code-review/references/change-risk-model.md
 
 The Standards perspective is language-agnostic: it scans the workspace for `**/SKILL.md` files, matches them against the languages in the diff, and loads the relevant `coding-standards` skills. See [Language Skills](language-skills.md) for details on the built-in skills and how to create your own.
 
@@ -155,7 +159,7 @@ flowchart TD
 |------|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 1    | Context Bootstrap                  | The `pr-reference` skill generates a structured XML diff; the agent drafts a change brief, auto-detects hotspot candidates, and resolves PR context when a pull request is targeted                                               |
 | 2    | Orientation Floor + Dispatch Board | The agent builds a factual Register 1 walkthrough (changed areas, control flow, data flow, blast radius) and presents an enumerated dispatch board; you confirm or edit the walkthrough and bookmark or reject board items (gate) |
-| 3    | Perspective + Depth Selection      | You pick which perspectives run and the depth tier; the agent pre-populates a recommended default derived from the scope (gate)                                                                                                   |
+| 3    | Perspective + Depth Selection      | You pick which perspectives run and the depth tier; the agent presents a six-category evidence checklist and an advisory depth recommendation for you to confirm or correct before selecting the final tier (gate)                |
 | 4    | Prepare Dispatch State             | The agent writes `diff-state.json` and a `dispatch-manifest.json` so every subagent operates on the same input                                                                                                                    |
 | 5    | Human-Steered Walk-Back Loop       | You bookmark a board item and ask a question; the agent routes factual questions to the Explainer (Register 1) and deep questions to the Walkback (Register 2), then walks each answer back onto its board item (gate)            |
 | 6    | Dispatch Perspectives              | Selected perspective subagents run concurrently, each writing structured JSON findings to disk                                                                                                                                    |
@@ -177,11 +181,16 @@ In non-interactive (workflow) mode, Steps 2, 3, and 5 are skipped and the board 
 
 Depth controls how deeply each selected perspective verifies the confirmed scope. It does not add or remove perspectives.
 
-| Tier | Depth           | When to use                                               |
-|------|-----------------|-----------------------------------------------------------|
-| 1    | `basic`         | Quick pass on small or low-risk changes                   |
-| 2    | `standard`      | Default rigor for most reviews                            |
-| 3    | `comprehensive` | Deep verification for high-risk surfaces or large changes |
+Before you select a tier, the agent records evidence for six categories: change scope, path criticality, history, test presence, coverage, and rollback. Each category uses one of three evidence states: `observed` for directly supported facts, `unavailable` when the required source is missing or too shallow, and `qualitative` for interpretation-dependent evidence.
+Automation-derived qualitative evidence remains proposed until you confirm or correct it, and missing evidence does not increase risk by itself. See the [Change-Risk Evidence Model] for the full checklist and interpretation safeguards.
+
+The checklist produces an advisory recommendation, not an automatic risk rating or final choice. You always confirm the evidence and select the final depth tier; the review persists your selection and the rationale for any difference from the recommendation.
+
+| Tier | Depth           | When it is recommended                                                                                                       |
+|------|-----------------|------------------------------------------------------------------------------------------------------------------------------|
+| 1    | `basic`         | Available evidence consistently supports a narrow, reversible, well-tested change with no critical-path concern              |
+| 2    | `standard`      | Most changes, including those with materially incomplete, unavailable, conflicting, or inconclusive evidence                 |
+| 3    | `comprehensive` | Evidence identifies critical paths, broad behavioral spread, weak detection for important logic, hard rollback, or ambiguity |
 
 ## Usage
 
@@ -199,6 +208,7 @@ The agent compares against `origin/main` by default. Supply a different base bra
 
 When the agent reaches the selection step, choose any combination of `functional`, `standards`, `accessibility`, `security`, `pr`, and `readiness`, or select `full` to run all six. Pick a depth tier (`basic`, `standard`, or `comprehensive`) independently.
 The agent pre-populates a recommended selection based on the confirmed change scope; for example, it proposes `accessibility` only when a UI, markup, or document surface is in scope, `security` when a hotspot touches auth, crypto, parsing, deserialization, secrets, or networking, and `readiness` when changed documentation is in scope or a PR/issue context was resolved in Step 1.
+For depth, the agent presents the change-risk evidence checklist and an advisory recommendation. You can correct the evidence before choosing the final tier.
 
 ## Review Output
 
