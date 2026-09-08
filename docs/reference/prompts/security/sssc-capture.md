@@ -3,7 +3,7 @@ title: Sssc Capture
 description: Start supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Start supply chain security planning from existing knowledge using the SSSC Plan
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to begin software supply chain security planning from existing notes or team knowledge. Use a BRD, PRD, or security-plan entry prompt when a confirmed source artifact is available.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide an approved or fictional `project-slug` and answer focused questions about dependencies, builds, registries, signing, and release controls. Keep sensitive infrastructure details out of examples and require qualified security review.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/sssc-capture project-slug=sample-api
+```
+
+The prompt starts capture-mode discovery and creates a draft supply chain security planning state.

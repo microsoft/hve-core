@@ -3,7 +3,7 @@ title: Git Merge
 description: "Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling"
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to coordinate a Git merge, rebase, or rebase-onto operation with explicit conflict handling. Use ordinary Git inspection when you only need to compare branches or view history.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Choose the `operation`, identify the branch and any upstream or onto target, and set `conflictStop=true` when conflicts must return control immediately. Review history-changing operations carefully; the prompt does not push automatically.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/git-merge operation=rebase branch=origin/main conflictStop=true
+```
+
+The prompt rebases the current work onto the named branch and stops for user-directed conflict resolution if needed.

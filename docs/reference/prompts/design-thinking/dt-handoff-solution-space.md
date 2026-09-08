@@ -3,7 +3,7 @@ title: Dt Handoff Solution Space
 description: Compiles DT Methods 4-6 into research-ready input for rpi-research at the Solution Space exit
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Compiles DT Methods 4-6 into research-ready input for rpi-research at the Soluti
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when Methods 4 through 6 have enough observed evidence to form a Solution Space handoff for RPI research. Continue concept or prototype work when key artifacts still contain gaps or hypothetical results.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the completed `project-slug`. The prompt checks the solution-space artifacts, preserves evidence labels and gap markers, and compiles a handoff without treating simulated results as validation.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/dt-handoff-solution-space project-slug=factory-floor-maintenance
+```
+
+The prompt produces a traceable Methods 4 through 6 handoff or identifies the evidence still needed.

@@ -3,7 +3,7 @@ title: Dt Method 06 Testing
 description: Hypothesis-driven testing and constraint validation for Design Thinking Method 6c
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Hypothesis-driven testing and constraint validation for Design Thinking Method 6
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt during Method 6c to plan and conduct hypothesis-driven prototype testing. Use the building prompt first when no testable low-fidelity prototype exists.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the `project-slug` and optionally describe the `testEnvironment`. The prompt frames observable hypotheses, guides evidence collection, and records constraints without treating planned or simulated observations as proof.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/dt-method-06-testing project-slug=factory-floor-maintenance testEnvironment="factory floor"
+```
+
+The prompt creates a test approach and observation record for the prototype in the named environment.

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import PackageCard from '../index';
@@ -13,6 +13,12 @@ const defaultProps = {
   title: 'HVE Core',
   description: 'RPI workflow, planning, and implementation',
   artifacts: 59,
+  contents: [
+    { kind: 'agents' as const, label: 'Agents', count: 20, href: '/docs/reference/agents' },
+    { kind: 'prompts' as const, label: 'Prompts', count: 15, href: '/docs/reference/prompts' },
+    { kind: 'instructions' as const, label: 'Instructions', count: 14, href: '/docs/reference/instructions' },
+    { kind: 'skills' as const, label: 'Skills', count: 10, href: '/docs/reference/skills' },
+  ],
   maturity: 'Stable' as const,
   href: '/docs/getting-started/packages',
 };
@@ -73,8 +79,76 @@ describe('PackageCard', () => {
     expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('HVE Core');
   });
 
-  it('has no accessibility violations', async () => {
+  it('associates a collapsed contents panel with the disclosure button', () => {
+    render(<PackageCard {...defaultProps} />);
+
+    const button = screen.getByRole('button', { name: 'Show package contents' });
+    const panel = document.getElementById(button.getAttribute('aria-controls') ?? '');
+
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    expect(panel).toHaveAttribute('hidden');
+  });
+
+  it('toggles package contents while retaining trigger focus', () => {
+    render(<PackageCard {...defaultProps} />);
+
+    const button = screen.getByRole('button', { name: 'Show package contents' });
+    const panel = document.getElementById(button.getAttribute('aria-controls') ?? '');
+    button.focus();
+    fireEvent.click(button);
+
+    expect(button).toHaveAccessibleName('Hide package contents');
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    expect(button).toHaveFocus();
+    expect(panel).not.toHaveAttribute('hidden');
+
+    fireEvent.click(button);
+    expect(button).toHaveAccessibleName('Show package contents');
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    expect(button).toHaveFocus();
+    expect(panel).toHaveAttribute('hidden');
+  });
+
+  it('links expanded summaries and the package overview', () => {
+    render(<PackageCard {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show package contents' }));
+
+    expect(screen.getByRole('link', { name: 'Agents' })).toHaveAttribute(
+      'href',
+      '/docs/reference/agents',
+    );
+    expect(screen.getByRole('link', { name: 'Prompts' })).toHaveAttribute(
+      'href',
+      '/docs/reference/prompts',
+    );
+    expect(screen.getByRole('link', { name: 'Instructions' })).toHaveAttribute(
+      'href',
+      '/docs/reference/instructions',
+    );
+    expect(screen.getByRole('link', { name: 'Skills' })).toHaveAttribute(
+      'href',
+      '/docs/reference/skills',
+    );
+    expect(screen.getByRole('link', { name: 'View package overview' })).toHaveAttribute(
+      'href',
+      '/docs/getting-started/packages',
+    );
+  });
+
+  it('has no accessibility violations when collapsed', async () => {
     const { container } = render(<PackageCard {...defaultProps} />);
+
+    const results = await axe(container, {
+      rules: { region: { enabled: false } },
+    });
+
+    expect(results).toHaveNoViolations();
+  });
+
+  it('has no accessibility violations when expanded', async () => {
+    const { container } = render(<PackageCard {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Show package contents' }));
 
     const results = await axe(container, {
       rules: { region: { enabled: false } },

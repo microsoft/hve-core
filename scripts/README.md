@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-08-13
+ms.date: 2026-08-21
 ms.topic: reference
 keywords:
   - powershell
@@ -115,7 +115,6 @@ The `evals/` directory contains PowerShell entry points for agent-behavior, base
 | `Invoke-CorpusModeration.ps1`             | Moderate changed AI corpus content from the changed-artifact manifest               |
 | `Invoke-VallyEvals.ps1`                   | Execute vally evals for changed AI artifacts                                        |
 | `New-AgentMatrixDashboard.ps1`            | Render a self-contained HTML dashboard for the per-agent behavior matrix            |
-| `New-AgentSurfaceSignatures.ps1`          | Generate a per-agent surface signature YAML for baseline equivalence runs           |
 | `New-EquivalenceDashboard.ps1`            | Render a self-contained HTML dashboard for a local baseline-equivalence run         |
 | `Test-CopilotToken.ps1`                   | Pre-flight probe for the `COPILOT_GITHUB_TOKEN` secret used by vally evals          |
 | `Test-EvalSpec.ps1`                       | Validate vally eval spec files against the embedded schema                          |
@@ -130,9 +129,9 @@ taxonomy and prerequisites, and [../evals/README.md](../evals/README.md) for the
 eval framework documentation.
 
 `Get-AgentDependencyMap.ps1`, `Get-ChangedAIArtifact.ps1`, `Get-ChangedSpecStimulus.ps1`,
-`New-AgentSurfaceSignatures.ps1`, `Test-CopilotToken.ps1`, and
-`Update-AgentMatrixSummariesFromLogs.ps1` have no package-script wrapper and are invoked
-directly by workflows or run ad hoc with `pwsh -NoProfile -File`.
+`Test-CopilotToken.ps1`, and `Update-AgentMatrixSummariesFromLogs.ps1` have no
+package-script wrapper and are invoked directly by workflows or run ad hoc with
+`pwsh -NoProfile -File`.
 
 ## Devcontainer Scripts
 

@@ -3,7 +3,7 @@ title: Sssc From Security Plan
 description: Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Extend a Security Planner assessment with supply chain coverage using the SSSC P
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to extend a completed security plan with dedicated software supply chain coverage. Use another entry mode when no current security plan exists.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide an approved or fictional `project-slug`. The SSSC Planner reads the security plan as source evidence, identifies unresolved supply-chain gaps, and asks for dependency, provenance, build, and release details as needed.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/sssc-from-security-plan project-slug=sample-api
+```
+
+The prompt traces reusable security evidence and adds a draft supply-chain assessment for qualified review.

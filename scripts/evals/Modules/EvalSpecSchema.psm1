@@ -186,7 +186,16 @@ function Test-EvalSpecCompliance {
                 $entryIndex = -1
                 foreach ($rawPath in $entryPaths) {
                     $entryIndex++
-                    $pathString = [string]$rawPath
+                    # `environment.files` accepts both a bare path and a `src`/`dest`
+                    # mapping. Coercing the mapping with [string] yields the type name
+                    # rather than the path, so a valid seeded spec would be reported as
+                    # an unresolvable 'System.Collections.Hashtable' path.
+                    $pathString = if ($rawPath -is [System.Collections.IDictionary]) {
+                        if ($rawPath.Contains('src')) { [string]$rawPath['src'] } else { '' }
+                    }
+                    else {
+                        [string]$rawPath
+                    }
                     if ([string]::IsNullOrWhiteSpace($pathString)) {
                         $errors.Add(@{ path = $SpecPath; field = "environment.$entryKey[$entryIndex]"; message = "Empty environment.$entryKey path" })
                         continue

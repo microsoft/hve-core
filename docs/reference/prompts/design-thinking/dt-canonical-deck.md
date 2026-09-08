@@ -3,7 +3,7 @@ title: Dt Canonical Deck
 description: "Canonical deck workflow: asset-ready offer, snapshot generation/refresh, and optional customer-card PowerPoint build"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Canonical deck workflow: asset-ready offer, snapshot generation/refresh, and opt
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when a Design Thinking project needs an asset-ready snapshot or an optional customer-card PowerPoint. Use a method-specific prompt when the underlying project evidence still needs coaching work.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the project slug when needed and choose an `action`, such as `offer`, before requesting a build. The prompt distinguishes a non-blocking offer from snapshot generation and PowerPoint creation, which require acceptance unless already requested.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/dt-canonical-deck project-slug=factory-floor-maintenance action=offer
+```
+
+The prompt offers the available snapshot and deck options without creating either artifact automatically.

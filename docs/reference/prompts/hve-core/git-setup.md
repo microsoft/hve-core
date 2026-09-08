@@ -3,7 +3,7 @@ title: Git Setup
 description: "Interactive, verification-first Git configuration assistant (non-destructive)"
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Interactive, verification-first Git configuration assistant (non-destructive)
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to audit Git identity, signing, defaults, and related configuration before proposing improvements. Use direct Git configuration commands when the exact approved change is already known.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Invoke the command in the target environment and answer only the relevant configuration questions. The prompt verifies current settings and requests confirmation before changing them; never provide private-key material.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/git-setup
+```
+
+The prompt audits the current Git configuration and presents verified, non-destructive recommendations for confirmation.
