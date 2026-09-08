@@ -12,6 +12,8 @@ A scenario exercises the target through its documented interface using a realist
 
 Design the smallest set that covers material requirements. Isolation describes which targets run together, not the number of scenarios. Use as many independent requests as needed to distinguish the target's material decisions, and add together scenarios when connected artifacts have integration behavior. Assign stable IDs, map requirements to observable signals, and record intentionally untested behavior. For maintenance changes, cover required behavior that must survive as well as the corrected decision; do not infer equivalence from a single successful example.
 
+For a parent-requested reassessment, preserve the original material requirements and exercise corrected decisions plus relevant regressions. Reuse a scenario's stable ID when its contract is unchanged; do not remove a failing requirement or narrow the scope merely to obtain Pass. Each invocation independently grades its current candidate. The parent owns cross-attempt progress and whether another invocation is justified.
+
 Before execution, confirm that each scenario:
 
 * Can be understood without target internals
