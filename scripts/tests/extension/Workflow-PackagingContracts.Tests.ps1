@@ -1537,11 +1537,19 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit', 'ReleaseReco
         [string[]]@($document['jobs']['publish-release']['needs']) | Should -Contain 'vex-attest'
     }
 
-    It 'Documents VSIX and VEX verification without a plugin ZIP instruction' {
+    It 'Documents source-bound subject-specific verification without a plugin ZIP instruction' {
         $notes = [string](Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'release-vsix-publish.yml') `
                 -JobName 'append-verification-notes' -StepName 'Append verification section to release notes')['run']
         $notes | Should -Match 'gh attestation verify <file>\.vsix'
         $notes | Should -Match 'gh attestation verify hve-core\.openvex\.json'
+        $notes | Should -Match 'gh attestation verify dependencies\.spdx\.json'
+        $notes | Should -Match 'SOURCE_SHA=\$\(gh api'
+        @([regex]::Matches($notes, '--source-digest')) | Should -HaveCount 3
+        @([regex]::Matches($notes, '--source-ref')) | Should -HaveCount 3
+        $notes | Should -Match 'extension-provenance-signer\.yml'
+        $notes | Should -Match '3a09401536cef0c4559db1aa64b7d1010638fd67'
+        $notes | Should -Match 'SBOMs are\s+predicate payloads'
+        $notes | Should -Not -Match 'All release assets include.*build-provenance'
         $notes | Should -Not -Match '<file>\.zip'
     }
 
