@@ -22,7 +22,7 @@ The plan is the user-facing source of truth, implementation handoff, and downstr
 
 1. `## Task Metadata`
 2. `## Executive Summary` with `### What You May Not Know`
-3. `## Phase Checklist` with the overall diagram, phases, phase diagrams, and tasks
+3. `## Phase Checklist` with Before and After overall diagrams, phases, phase diagrams, and tasks
 4. `## User Decisions and Requirements`
 5. `## Planning Readiness and Next Step`
 6. `## Goals`, `## Scope and Non-Goals`, `## Functional Requirements`, `## Non-Functional Requirements`, `## Risks and Open Questions`, `## Dependencies`, and `## Sources`, each included when it holds content
@@ -260,26 +260,49 @@ Treat examples and illustrative code as guidance unless a requirement or interfa
 
 Once the phases are stable and before critique dispatch, add Mermaid diagrams so a reader can see the shape of the change without reading every task.
 
-The overall diagram sits directly under the `## Phase Checklist` heading, before the first phase. It shows the components, files, contracts, tests, or behaviors the plan changes and how they relate through calls, data flow, or dependencies. Give every node a short stable ID and a readable label. Mark nodes that do not exist yet with a dashed `classDef` so new work is distinguishable from modified work. Include only nodes that help the user understand the change; a complex plan produces a complex diagram, and that is acceptable, but do not list every file.
+Place two overall diagrams under `## Phase Checklist`, before the first phase:
 
-Each phase diagram sits after the phase's `Dependencies:` block and before its first task. Copy the overall diagram's nodes and edges, apply a highlight `classDef` to the nodes the phase changes, and leave the rest unstyled so the reader can locate the phase within the whole. When the overall diagram is large, drop nodes that are far from the phase but keep the immediate neighbors. Reuse the overall diagram's node IDs exactly.
+* `### Before` shows the evidence-backed state before any planned work, including existing relationships and elements that will be modified or removed. Do not show proposed nodes or relationships as existing. For greenfield work, show the existing surrounding context or a clearly labeled absence of the planned capability. Label unknown state and record any decision-critical evidence gap rather than inventing a baseline.
+* `### After` shows the intended result of all phases, not an intermediate state or phase sequence. Include added and retained elements with their final relationships; omit removed elements and obsolete edges. Mark new nodes with a dashed `classDef` and an `Added:` label so they remain distinguishable without color.
+
+Use the same scope, orientation, and short stable node IDs for corresponding elements in both views; change labels and edges when the intended behavior changes. Include the components, files, contracts, tests, or behaviors needed to understand the change, without listing every file. Add a short prose explanation of the difference.
+
+Each phase diagram sits after the phase's `Dependencies:` block and before its first task. Copy the After diagram's nodes and edges, highlight the nodes the phase changes, and retain the default theme styling on other nodes. Identify the highlighted nodes in a short caption so color is not the only cue. Preserve new-node dashed borders when also highlighting them. For a removal, add the affected Before-only nodes as clearly labeled `Removed in Pxx:` context, with any obsolete edges dashed and labeled as removed, rather than implying they survive in After. Highlight endpoints for relationship-only changes.
+
+When the After diagram is large, drop nodes far from the phase but keep immediate neighbors. Reuse stable node IDs across all views. A phase diagram locates work within the final result; it is not a claim that later-phase work already exists.
+
+### Readable styling
+
+Apply this styling to the Before, After, phase, and any conversational decision diagrams:
+
+* Inherit the renderer's light or dark Mermaid theme for ordinary nodes, edges, arrowheads, edge labels, and subgraphs. Do not force a light-only theme or canvas background.
+* Use `Arial, Helvetica, sans-serif` with `16px` labels through Mermaid theme variables, as in the example. Keep labels short; split crowded diagrams instead of shrinking text.
+* Reuse the example's initialization line unchanged in each diagram. Before critique, check every emitted initialization object: `themeVariables.fontFamily` is the string `Arial, Helvetica, sans-serif` and `themeVariables.fontSize` is the string `16px`. Correct malformed or nested values in the generated plan, even when the template is correct.
+* Pair every custom fill with an explicit text color. For phase highlights use `fill:#fff3bf,color:#1f2328,stroke:#9a6700,stroke-width:2px`; the dark text stays readable on the pale fill in either surrounding theme. Do not inherit dark-mode light text onto a pale highlight.
+* Keep meaning in labels, captions, border patterns, and relationships rather than color alone. If the renderer ignores configuration, retain those cues and disclose the limitation.
+* Inspect rendered text, highlighted and ordinary nodes, edges, edge labels, and subgraphs in both light and dark modes when preview is available. Otherwise record that dual-theme rendering was not verified; source styling alone is not a rendering result.
+
+Illustrative phase view of an After diagram:
 
 ```mermaid
+%%{init: {"themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "16px"}}}%%
 flowchart LR
     sync["scripts/plugins/Sync-PluginManifest.ps1"]
-    summary["PluginSyncSummary class"]
+    summary["Added: PluginSyncSummary class"]
     tests["scripts/tests/plugins/Sync-PluginManifest.Tests.ps1"]
     manifest["plugin.json"]
     sync -->|builds| summary
     sync -->|writes| manifest
     tests -->|exercises| sync
     classDef new stroke-dasharray: 5 5
-    classDef phase fill:#fff3bf,stroke:#f08c00,stroke-width:2px
+    classDef phase fill:#fff3bf,color:#1f2328,stroke:#9a6700,stroke-width:2px
     class summary new
     class sync,summary phase
 ```
 
-Keep the diagrams current when phases or tasks are added, merged, split, or removed during planning or implementation.
+Highlighted work: update the sync script and add the summary class. The dashed border and `Added:` label identify new work.
+
+Keep After and phase diagrams current when phases or tasks change during planning or implementation. Preserve Before as the pre-change baseline; correct it only when evidence about that baseline or the approved comparison scope changes, not as tasks complete.
 
 ## Planning conversation and closeout
 

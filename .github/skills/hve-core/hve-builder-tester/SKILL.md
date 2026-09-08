@@ -1,6 +1,6 @@
 ---
 name: hve-builder-tester
-description: 'Run one complete black-box behavior test of a prompt, instruction, agent, subagent, or skill with explicit fidelity and independent grading. Use as the final behavior gate after hve-builder freezes a candidate, or directly to test an existing artifact without changing it.'
+description: 'Assess a frozen prompt, instruction, agent, subagent, or skill through black-box behavior testing with explicit fidelity and independent grading. Use for hve-builder candidate assessment and reassessment after corrections, or to test an existing artifact without editing it.'
 argument-hint: "[targets=...] [types=...] [profile={high|medium|low}] [fidelity={simulation|native}] [purpose=...] [retain-sandbox]"
 license: MIT
 user-invocable: true
@@ -10,19 +10,19 @@ user-invocable: true
 
 ## Goal
 
-Exercise a prompt, instruction, agent, subagent, or skill once through representative black-box scenarios and produce a durable report that states exactly what the evidence supports. The report is evidence for the caller; this skill never edits the target or prescribes a retest.
+Exercise one frozen candidate through representative black-box scenarios and produce a durable report that states exactly what the evidence supports. Each invocation is a complete assessment, not a repair loop. The caller may use its findings to revise artifacts and request another assessment; this skill never edits the target or decides whether the parent continues.
 
 This skill owns scope, scenario design, fidelity, sandbox state, execution evidence, independent grading, reporting, and cleanup. Read [references/test-methodology.md](references/test-methodology.md) for black-box design, fidelity, and containment decisions, [references/stage-dispatch.md](references/stage-dispatch.md) for independent grading, and [references/report-format.md](references/report-format.md) for the durable report.
 
 ## Use Cases
 
-* Run the final behavior gate for HVE Builder's frozen Major change or behavior-bearing review target.
+* Assess HVE Builder's frozen Major change or behavior-bearing review target, including a revised candidate after parent-owned corrections.
 * Test an existing artifact directly without editing it, using its documented inputs and expected outcomes.
 * Check a connected artifact set for handoff behavior, or assess whether required behavior survives instruction cleanup, relocation, or replacement.
 
 ## Flow
 
-1. Resolve targets, types, purpose, requirements, profile, requested fidelity, isolation and together sets, sandbox root, candidate revision, and report path. If no runtime behavior exists, write a supported skip report and return.
+1. Resolve targets, types, purpose, requirements, profile, requested fidelity, isolation and together sets, sandbox root, candidate revision, and a unique report path. For reassessment, retain the caller's original material requirements and identify changed behavior and regression coverage without replacing prior reports. If no runtime behavior exists, write a supported skip report and return.
 2. Select fidelity through the methodology preconditions. Default to simulation. When requested native execution is unsupported or unsafe, use simulation only with caller acceptance; otherwise return Deferred with the rerun condition.
 3. Capture pre-run workspace state and create a unique sandbox containing `run-state.md`. Record the candidate revision, profile and model, fidelity, groupings, purpose, requirements, containment controls, and requirement map.
 4. Design the smallest black-box scenario set that covers the documented contract. Assign stable scenario IDs, map requirements to observable outcomes, record intentional gaps, perform the black-box self-check, and write `test-design.md`. If credible design is unavailable, return Deferred without execution.
@@ -92,11 +92,11 @@ Bind executor and grader models through host dispatch controls, not prose. Recor
 * Return Partial when usable evidence exists but contracted coverage is incomplete.
 * Return Deferred with verdict Not available when fidelity, design, or execution cannot produce gradeable evidence; name the rerun condition.
 * Return Blocked when target identity, intent, safety, or grading cannot be resolved.
-* Do not retest within the caller's current run. A later invocation is a new full run against a newly supplied candidate.
+* Do not repeat scenarios, edit source, or initiate another assessment inside this invocation. Return the report to the caller; a parent may invoke the skill again after a justified correction or resolved execution prerequisite.
 
 ## Handoff
 
-Return the durable report to the direct caller or HVE Builder. When HVE Builder is the caller, Pass supports its final outcome; Revise, Deferred, or Blocked terminates that HVE Builder run and may inform a later invocation.
+Return the durable report to the direct caller or HVE Builder. Pass supports completion for the tested revision. Required findings give the authorized HVE Builder parent evidence for in-scope corrections and reassessment under its workflow contract. Deferred, Partial, or Blocked execution identifies the missing prerequisite, not permission to alter source or retry unchanged conditions. Standalone use returns findings without starting an authoring lifecycle.
 
 ## Final Response Contract
 
