@@ -227,8 +227,7 @@ jobs:
             existing=$(jq -r '.number // empty' <<< "${existing_record}")
             existing_state=$(jq -r '.state // empty' <<< "${existing_record}")
 
-            ISSUE_BODY=$(cat <<EOF
-            <!-- ${MARKER} -->
+            CURRENT_DETAILS=$(cat <<EOF
             ## Code Scanning Alert: ${RULE_DESC}
 
             **Rule:** \`${RULE_ID}\`
@@ -245,6 +244,12 @@ jobs:
             ---
             **Detection Date:** ${DETECTION_DATE}
             **Workflow Run:** ${RUN_URL}
+            EOF
+            )
+
+            ISSUE_BODY=$(cat <<EOF
+            <!-- ${MARKER} -->
+            ${CURRENT_DETAILS}
 
             ### Action Required
             - [ ] Review the alert and confirm it is not a false positive
@@ -270,7 +275,9 @@ jobs:
               fi
               gh issue comment "${existing}" \
                 --repo "${OWNER}/${REPO}" \
-                --body "Weekly scan update: ${COUNT} ${OCCURRENCE_WORD} as of ${DETECTION_DATE}."
+                --body "Weekly scan update: ${COUNT} ${OCCURRENCE_WORD} as of ${DETECTION_DATE}.
+
+            ${CURRENT_DETAILS}"
             fi
             done < <(jq -c '.[]' <<< "${validated_alerts}")
 

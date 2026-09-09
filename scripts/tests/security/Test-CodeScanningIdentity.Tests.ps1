@@ -115,7 +115,8 @@ readonly -f jq gh date
             [AllowEmptyString()] [string]$ArtifactTemplate = '{valid}',
             [switch]$MissingArtifact,
             [switch]$IncludeClosedTracker,
-            [switch]$ExpectRejection
+            [switch]$ExpectRejection,
+            [AllowEmptyCollection()] [object[]]$IssueCandidates
         )
 
         $Directory = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
@@ -151,6 +152,7 @@ readonly -f jq gh date
         if ($IncludeClosedTracker) {
             $Candidates += @{ number = 43; state = 'CLOSED'; body = '<!-- automation:security-scan:py/closed-rule -->'; author = @{ login = 'app/github-actions' }; labels = @(@{ name = 'automated' }, @{ name = 'security' }) }
         }
+        if ($PSBoundParameters.ContainsKey('IssueCandidates')) { $Candidates = $IssueCandidates }
         ConvertTo-Json -InputObject $Candidates -Depth 10 | Set-Content (Join-Path $Directory 'candidates.json') -Encoding utf8NoBOM
         $Output = ''
         $ExecutedSteps = 0
@@ -354,6 +356,152 @@ Describe 'Code scanning direct reconciliation document guard' -Tag 'Unit' {
         @(Get-Content (Join-Path $Directory 'gh-calls.jsonl')) | Should -HaveCount 0 -Because $Result.Output
         $Result.ExitCode | Should -Not -Be 0
         Test-Path (Join-Path $Directory 'close-set.json') | Should -BeFalse
+    }
+}
+
+Describe 'Current remediation context for <State> trackers in <Mode>' -Tag 'Unit' -ForEach @(
+    @{ State = 'OPEN'; Mode = 'enforce' }
+    @{ State = 'CLOSED'; Mode = 'enforce' }
+    @{ State = 'OPEN'; Mode = 'dry-run' }
+    @{ State = 'CLOSED'; Mode = 'dry-run' }
+) {
+    It 'publishes current <Details> without overwriting human content' -ForEach @(
+        @{ Details = 'security finding'; Security = 'high'; Severity = 'warning'; ExpectedSeverity = 'high'; NoPath = $false; Missing = $false }
+        @{ Details = 'quality finding'; Security = $null; Severity = 'warning'; ExpectedSeverity = 'warning'; NoPath = $false; Missing = $false }
+        @{ Details = 'configuration finding'; Security = 'medium'; Severity = 'error'; ExpectedSeverity = 'medium'; NoPath = $true; Missing = $false }
+        @{ Details = 'missing optional metadata'; Security = $null; Severity = $null; ExpectedSeverity = $null; NoPath = $false; Missing = $true }
+    ) {
+        $Alerts = @(
+            New-IdentityAlert -RuleId 'py/recurring-rule' -Number 501
+            New-IdentityAlert -RuleId 'py/recurring-rule' -Number 502
+        )
+        $Message = "Current `"quoted`" diagnostic`nPath \branch and literal `$value."
+        foreach ($Alert in $Alerts) {
+            $Alert.rule.description = 'Current recurrence description'
+            $Alert.rule.security_severity_level = $Security
+            $Alert.rule.severity = $Severity
+            $Alert.most_recent_instance.message.text = $(if ($Missing) { $null } else { $Message })
+            if ($Missing) { $Alert.html_url = $null }
+            if ($NoPath) {
+                $Alert.tool.name = 'Scorecard'
+                $Alert.most_recent_instance.location.path = 'no file associated with this alert'
+            }
+        }
+        $OldBody = @'
+<!-- automation:security-scan:py/recurring-rule -->
+Human remediation notes: preserve this explanation and completed checklist.
+- [x] Investigated the previous occurrence
+Old description; severity low; old finding text.
+https://example.invalid/alerts/90
+src/old-path.py
+'@
+        $Candidates = @(
+            @{ number = 42; state = $State; title = 'Human edited title'; body = $OldBody; author = @{ login = 'app/github-actions' }; labels = @(@{ name = 'automated' }, @{ name = 'security' }, @{ name = 'human-label' }) }
+            @{ number = 99; state = 'OPEN'; body = '<!-- automation:security-scan:py/absent-rule -->'; author = @{ login = 'app/github-actions' }; labels = @(@{ name = 'automated' }, @{ name = 'security' }) }
+        )
+        $Result = Invoke-IdentityScenario -Alerts $Alerts -Mode $Mode -IssueCandidates $Candidates
+        $Comments = @($Result.Calls | Where-Object { $_[1] -eq 'comment' })
+        $Comments | Should -HaveCount 1
+        $Comments[0][2] | Should -BeExactly '42'
+        $Body = $Comments[0][-1]
+        $Comments[0] | Should -BeExactly @('issue', 'comment', '42', '--repo', 'example/repo', '--body', $Body)
+        $Body | Should -Match '^Weekly scan update: 2 occurrences as of 2026-09-08\.'
+        $Body | Should -Match '## Code Scanning Alert: Current recurrence description'
+        $Body.Contains('**Rule:** `py/recurring-rule`') | Should -BeTrue
+        $Body.Contains('**Occurrences:** 2 occurrences') | Should -BeTrue
+        $Body.Contains('**Detection Date:** 2026-09-08') | Should -BeTrue
+        $Body.Contains('**Workflow Run:** https://example.invalid/example/repo/actions/runs/fixture') | Should -BeTrue
+        $Body | Should -Not -Match 'automation:security-scan:|### Action Required|old-path|alerts/90|old finding text|Human remediation notes'
+        if ($ExpectedSeverity) { $Body.Contains("**Severity:** $ExpectedSeverity") | Should -BeTrue }
+        else { $Body | Should -Not -Match '\*\*Severity:\*\*' }
+        if ($Missing) {
+            $Body | Should -Not -Match '\*\*Alert:\*\*|\bnull\b'
+            $Body.Contains('See the linked alert for details.') | Should -BeTrue
+        }
+        else {
+            $Body.Contains('**Alert:** https://example.invalid/alerts/501') | Should -BeTrue
+            $Body.Contains($Message) | Should -BeTrue
+        }
+        if ($NoPath) {
+            $Body.Contains('**Tool:** Scorecard') | Should -BeTrue
+            $Body.Contains('### Repository configuration finding') | Should -BeTrue
+            $Body.Contains('This alert refers to a repository-level configuration setting with no associated source file.') | Should -BeTrue
+            $Body | Should -Not -Match '### Affected paths|no file associated with this alert|/blob/'
+        }
+        else {
+            $Body.Contains('**Tool:** CodeQL') | Should -BeTrue
+            $Body.Contains('- [src/file501.py](https://example.invalid/example/repo/blob/main/src/file501.py)') | Should -BeTrue
+            $Body.Contains('- [src/file502.py](https://example.invalid/example/repo/blob/main/src/file502.py)') | Should -BeTrue
+        }
+        @($Result.Calls | Where-Object { $_[1] -eq 'create' }) | Should -HaveCount 0
+        $Reopens = @($Result.Calls | Where-Object { $_[1] -eq 'reopen' })
+        $Edits = @($Result.Calls | Where-Object { $_[1] -eq 'edit' })
+        if ($State -eq 'CLOSED') {
+            $Reopens | Should -HaveCount 1
+            $Reopens[0] | Should -BeExactly @('issue', 'reopen', '42', '--repo', 'example/repo', '--comment', 'Reopened automatically because rule `py/recurring-rule` is present in the latest code scanning results.')
+            $Edits | Should -HaveCount 1
+            $Edits[0] | Should -BeExactly @('issue', 'edit', '42', '--repo', 'example/repo', '--add-label', 'needs-triage')
+        }
+        else {
+            $Reopens | Should -HaveCount 0
+            $Edits | Should -HaveCount 0
+        }
+        $Result.CloseSet | Should -HaveCount 1
+        $Result.CloseSet[0].number | Should -Be 99
+        $Closes = @($Result.Calls | Where-Object { $_[1] -eq 'close' })
+        if ($Mode -eq 'enforce') {
+            $Closes | Should -HaveCount 1
+            $Closes[0][2] | Should -BeExactly '99'
+        }
+        else { $Closes | Should -HaveCount 0 }
+    }
+}
+
+Describe 'New issue rendering compatibility' -Tag 'Unit' {
+    It 'preserves the complete new body for <Kind>' -ForEach @(
+        @{ Kind = 'file finding'; NoPath = $false }
+        @{ Kind = 'configuration finding'; NoPath = $true }
+    ) {
+        $Alert = New-IdentityAlert -RuleId 'py/new-rule' -Number 501
+        $Alert.rule.description = 'Current finding'
+        $Alert.rule.security_severity_level = 'high'
+        $Alert.most_recent_instance.message.text = 'Current diagnostic.'
+        $ExpectedPaths = "### Affected paths`n`n- [src/file501.py](https://example.invalid/example/repo/blob/main/src/file501.py)"
+        if ($NoPath) {
+            $Alert.tool.name = 'Scorecard'
+            $Alert.most_recent_instance.location.path = 'no file associated with this alert'
+            $ExpectedPaths = "### Repository configuration finding`n`nThis alert refers to a repository-level configuration setting with no associated source file."
+        }
+        $ExpectedBody = @'
+<!-- automation:security-scan:py/new-rule -->
+## Code Scanning Alert: Current finding
+
+**Rule:** `py/new-rule`
+**Severity:** high
+**Tool:** TOOL_NAME
+**Occurrences:** 1 occurrence
+**Alert:** https://example.invalid/alerts/501
+
+### What was found
+Current diagnostic.
+
+PATHS_SECTION
+
+---
+**Detection Date:** 2026-09-08
+**Workflow Run:** https://example.invalid/example/repo/actions/runs/fixture
+
+### Action Required
+- [ ] Review the alert and confirm it is not a false positive
+- [ ] Remediate or dismiss the finding with a documented reason
+- [ ] Close this issue after the fix is merged
+'@
+        $ExpectedBody = $ExpectedBody.Replace("`r`n", "`n").Replace('TOOL_NAME', $Alert.tool.name).Replace('PATHS_SECTION', $ExpectedPaths)
+        $Result = Invoke-IdentityScenario -Alerts @($Alert) -Mode 'dry-run' -IssueCandidates @()
+
+        $Result.Calls | Should -HaveCount 2
+        $Result.Calls[1] | Should -BeExactly @('issue', 'create', '--repo', 'example/repo', '--title', '[Security][high] Current finding', '--label', 'security,automated,needs-triage', '--body', $ExpectedBody)
+        $Result.CloseSet | Should -HaveCount 0
     }
 }
 
