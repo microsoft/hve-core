@@ -48,9 +48,23 @@ Two properties make its output usable as evidence:
 * **A paired control run.** The same payloads run against a derivation with the content processors removed, and every marker must appear. Absence under policy only means something if the instrument would have shown the value had it survived; otherwise "dropped by policy" and "never rendered by the exporter" are indistinguishable.
 * **The map is asserted.** A configuration or image change that opens a carrier fails the suite rather than passing quietly.
 
-When a user asks what the filter protects, answer from that module. Its current result: attributes at every level and map-valued log bodies are governed; span status messages, span event names, trace state, the other log body shapes, severity text, and log event names are scrubbed; and span names, metric metadata, span links, metric exemplars, and the instrumentation scope and schema fields pass through — the first pair by choice because dashboards read them, the second pair because no processor in this distribution can reach them, and the last because they are expected to carry only library identity, which is an expectation rather than a control. `SECURITY.md` carries the same table with the gap identifiers.
+When a user asks what the filter protects, answer from that module. The pinned
+OTLP/HTTP carrier suite confirms that the dashboard-derived `invoke_agent.*`
+span-name family and metric names survive while nonmatching span names, metric
+descriptions, and metric units are replaced with `[redacted]`. It also confirms
+the established controls for attributes, log content, events, status, and trace
+state. Span links, metric exemplars, and instrumentation scope and schema fields
+remain passed through for the capability and expected-content reasons recorded
+in `SECURITY.md`. OTLP/gRPC remains unprobed, and this local run does not verify
+deployed Azure behavior.
 
-A skipped run is not a passing run. On a contributor machine with no container runtime the module skips with a stated reason, and that reason says the carrier map was not verified by that run. Where the result is read as evidence rather than as a contribution gate, the skip is not allowed: strict mode turns a missing runtime into a failure, and it is on by default whenever `CI` is set. `COPILOT_OTEL_STRICT_RUNTIME` overrides that in either direction, so a lane with no usable runtime opts out deliberately rather than by silence.
+A skipped run is not a passing run. On a contributor machine with no container
+runtime the module skips with a stated reason, and that reason says the carrier
+map was not verified by that run. Where the result is read as evidence rather
+than as a contribution gate, the skip is not allowed: strict mode turns a
+missing runtime into a failure, and it is on by default whenever `CI` is set.
+`COPILOT_OTEL_STRICT_RUNTIME` overrides that in either direction, so a lane with
+no usable runtime opts out deliberately rather than by silence.
 
 ## Four things that look like failure and are not
 
@@ -109,4 +123,3 @@ Work down this list before assuming something is broken.
 4. Is the backend actually up and listening on the endpoint the setting names?
 5. Has any Copilot activity occurred since the reload? An idle editor emits nothing.
 6. For traces only, has 30 seconds elapsed?
-
