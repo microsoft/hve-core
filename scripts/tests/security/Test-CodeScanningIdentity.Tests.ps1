@@ -84,7 +84,8 @@ BeforeAll {
     }
 
     $script:MockPrefix = @'
-jq() { "$TEST_JQ_PATH" "$@"; }
+# Native Windows jq must preserve the LF output used by the Ubuntu workflow.
+jq() { "$TEST_JQ_PATH" --binary "$@"; }
 gh() {
   jq -cn --args '$ARGS.positional' -- "$@" >> gh-calls.jsonl
   case "$1 $2" in
@@ -105,12 +106,16 @@ readonly -f jq gh date
 
     function Invoke-IdentityScenario {
         <# .SYNOPSIS
-        Feeds real collector output through indexing, updates and reconciliation without live calls.
+        Feeds collector output or a raw-artifact fixture through the workflow without live calls.
         #>
         param(
             [AllowEmptyCollection()] [object[]]$Alerts,
             [string]$Mode = 'enforce',
-            [string]$TrackedRule = 'js/rule-b'
+            [string]$TrackedRule = 'js/rule-b',
+            [AllowEmptyString()] [string]$ArtifactTemplate = '{valid}',
+            [switch]$MissingArtifact,
+            [switch]$IncludeClosedTracker,
+            [switch]$ExpectRejection
         )
 
         $Directory = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
@@ -132,25 +137,41 @@ readonly -f jq gh date
             $env:GH_PAGER = $Pager
             $global:LASTEXITCODE = $ExitCode
         }
-        $Json | Set-Content (Join-Path $Directory 'alerts.json') -Encoding utf8NoBOM
+        $Json = ($Json | Out-String).Trim()
+        $Groups = @($Json | ConvertFrom-Json)
+        $DuplicateJson = ConvertTo-Json -InputObject @($Groups + $Groups) -Depth 10
+        if (-not $MissingArtifact) {
+            $ArtifactTemplate.Replace('{valid}', $Json).Replace('{duplicate}', $DuplicateJson) |
+                Set-Content (Join-Path $Directory 'alerts.json') -Encoding utf8NoBOM
+        }
         $Candidates = @(
             @{ number = 42; state = 'OPEN'; body = "<!-- automation:security-scan:$TrackedRule -->`nHuman content"; author = @{ login = 'app/github-actions' }; labels = @(@{ name = 'automated' }, @{ name = 'security' }) }
             @{ number = 99; state = 'OPEN'; body = '<!-- automation:security-scan:py/absent-rule -->'; author = @{ login = 'app/github-actions' }; labels = @(@{ name = 'automated' }, @{ name = 'security' }) }
         )
+        if ($IncludeClosedTracker) {
+            $Candidates += @{ number = 43; state = 'CLOSED'; body = '<!-- automation:security-scan:py/closed-rule -->'; author = @{ login = 'app/github-actions' }; labels = @(@{ name = 'automated' }, @{ name = 'security' }) }
+        }
         ConvertTo-Json -InputObject $Candidates -Depth 10 | Set-Content (Join-Path $Directory 'candidates.json') -Encoding utf8NoBOM
         $Output = ''
+        $ExecutedSteps = 0
         foreach ($Step in @($script:IndexStep, $script:UpdateStep, $script:ReconcileStep)) {
             $Result = Invoke-IdentityStep -Body $Step.run -Directory $Directory -Mode $Mode
-            $Result.ExitCode | Should -Be 0 -Because $Result.Output
+            $ExecutedSteps++
             $Output += $Result.Output
+            if (-not $ExpectRejection -or $Step -eq $script:IndexStep) {
+                $Result.ExitCode | Should -Be 0 -Because $Result.Output
+            }
+            if ($Result.ExitCode -ne 0) { break }
         }
         Get-Content (Join-Path $Directory 'index-output.txt') | Should -Contain 'truncated=false'
         $Calls = @(Get-Content (Join-Path $Directory 'gh-calls.jsonl') | ForEach-Object { , (ConvertFrom-Json $_ -NoEnumerate) })
         return @{
-            Live = @(Get-Content (Join-Path $Directory 'live-rule-ids.json') -Raw | ConvertFrom-Json)
-            CloseSet = @(Get-Content (Join-Path $Directory 'close-set.json') -Raw | ConvertFrom-Json)
+            Live = $(if (-not $ExpectRejection) { @(Get-Content (Join-Path $Directory 'live-rule-ids.json') -Raw | ConvertFrom-Json) })
+            CloseSet = $(if (-not $ExpectRejection) { @(Get-Content (Join-Path $Directory 'close-set.json') -Raw | ConvertFrom-Json) })
             Calls = $Calls
             Output = $Output
+            ExitCode = $Result.ExitCode
+            ExecutedSteps = $ExecutedSteps
         }
     }
 }
@@ -225,6 +246,114 @@ Describe 'Code scanning live identity contract' -Tag 'Unit' {
         $Closes | Should -HaveCount 2
         $Closes[0][2] | Should -BeExactly '42'
         $Closes[1][2] | Should -BeExactly '99'
+    }
+}
+
+Describe 'Code scanning single-document boundary in <Mode>' -Tag 'Unit' -ForEach @(
+    @{ Mode = 'enforce' }
+    @{ Mode = 'dry-run' }
+) {
+    It 'rejects <Name> before any issue mutation' -ForEach @(
+        @{ Name = 'empty then live'; Template = '[] {valid}' }
+        @{ Name = 'live then empty'; Template = '{valid} []' }
+        @{ Name = 'two empty arrays'; Template = '[] []' }
+        @{ Name = 'object then valid array'; Template = '{} {valid}' }
+        @{ Name = 'invalid records then valid array'; Template = '[{}] {valid}' }
+        @{ Name = 'duplicates across documents'; Template = '{valid} {valid}' }
+        @{ Name = 'empty input'; Template = '' }
+        @{ Name = 'whitespace input'; Template = " `r`n`t" }
+        @{ Name = 'missing file'; Template = '{valid}'; Missing = $true }
+        @{ Name = 'invalid syntax'; Template = '[' }
+        @{ Name = 'valid prefix with malformed suffix'; Template = '{valid} [' }
+        @{ Name = 'object root'; Template = '{}' }
+        @{ Name = 'null root'; Template = 'null' }
+        @{ Name = 'nested array'; Template = '[[]]' }
+        @{ Name = 'duplicates within one array'; Template = '{duplicate}' }
+        @{ Name = 'valid array then null'; Template = '{valid} null' }
+        @{ Name = 'false then valid array'; Template = 'false {valid}' }
+    ) {
+        $Alerts = @(
+            New-IdentityAlert -RuleId 'js/rule-b' -Number 1
+            New-IdentityAlert -RuleId 'py/closed-rule' -Number 2
+            New-IdentityAlert -RuleId 'py/new-rule' -Number 3
+        )
+        $Result = Invoke-IdentityScenario -Alerts $Alerts -Mode $Mode -ArtifactTemplate $Template -MissingArtifact:([bool]$Missing) -IncludeClosedTracker -ExpectRejection
+
+        @($Result.Calls | Where-Object { $_[0] -eq 'issue' -and $_[1] -ne 'list' }) | Should -HaveCount 0 -Because $Result.Output
+        $Result.ExitCode | Should -Not -Be 0 -Because $Result.Output
+        $Result.ExecutedSteps | Should -Be 2
+        $Result.Output | Should -Match 'no issues were processed'
+    }
+
+    It 'preserves valid lifecycle operations and escaped strings with surrounding whitespace' {
+        $Alerts = @(
+            New-IdentityAlert -RuleId 'js/rule-b' -Number 1
+            New-IdentityAlert -RuleId 'py/closed-rule' -Number 2
+            New-IdentityAlert -RuleId 'py/new-rule' -Number 3
+        )
+        $Alerts[2].most_recent_instance.message.text = "First `"quoted`" line`nSecond line with \backslash"
+        $Result = Invoke-IdentityScenario -Alerts $Alerts -Mode $Mode -IncludeClosedTracker -ArtifactTemplate " `r`n{valid}`r`n`t"
+
+        $Result.ExitCode | Should -Be 0
+        $Result.Live | Should -BeExactly @('js/rule-b', 'py/closed-rule', 'py/new-rule')
+        $Creates = @($Result.Calls | Where-Object { $_[1] -eq 'create' })
+        $Creates | Should -HaveCount 1
+        $Creates[0][-1] | Should -Match 'automation:security-scan:py/new-rule'
+        $Creates[0][-1].Contains($Alerts[2].most_recent_instance.message.text) | Should -BeTrue
+        $Comments = @($Result.Calls | Where-Object { $_[1] -eq 'comment' })
+        $Comments | Should -HaveCount 2
+        @($Comments | ForEach-Object { $_[2] } | Sort-Object) | Should -Be @('42', '43')
+        $Reopens = @($Result.Calls | Where-Object { $_[1] -eq 'reopen' })
+        $Reopens | Should -HaveCount 1
+        $Reopens[0][2] | Should -BeExactly '43'
+        $Edits = @($Result.Calls | Where-Object { $_[1] -eq 'edit' })
+        $Edits | Should -HaveCount 1
+        $Edits[0] | Should -BeExactly @('issue', 'edit', '43', '--repo', 'example/repo', '--add-label', 'needs-triage')
+        $Result.CloseSet | Should -HaveCount 1
+        $Result.CloseSet[0].number | Should -Be 99
+        $Closes = @($Result.Calls | Where-Object { $_[1] -eq 'close' })
+        if ($Mode -eq 'enforce') {
+            $Closes | Should -HaveCount 1
+            $Closes[0][2] | Should -BeExactly '99'
+        }
+        else { $Closes | Should -HaveCount 0 }
+    }
+
+    It 'accepts one empty array with whitespace without creating or updating issues' {
+        $Result = Invoke-IdentityScenario -Alerts @() -Mode $Mode -ArtifactTemplate " `r`n[]`r`n"
+
+        $Result.ExitCode | Should -Be 0
+        $Result.Live | Should -HaveCount 0
+        $Result.CloseSet.number | Should -Be @(42, 99)
+        @($Result.Calls | Where-Object { $_[1] -in @('create', 'comment', 'reopen', 'edit') }) | Should -HaveCount 0
+        $Closes = @($Result.Calls | Where-Object { $_[1] -eq 'close' })
+        $Closes | Should -HaveCount $(if ($Mode -eq 'enforce') { 2 } else { 0 })
+    }
+}
+
+Describe 'Code scanning direct reconciliation document guard' -Tag 'Unit' {
+    It 'rejects <Name> even with valid derived inputs' -ForEach @(
+        @{ Name = 'two empty arrays'; Payload = '[] []' }
+        @{ Name = 'empty then nonempty'; Payload = '[] [{}]' }
+        @{ Name = 'nonempty then empty'; Payload = '[{}] []' }
+        @{ Name = 'object then array'; Payload = '{} []' }
+        @{ Name = 'empty input'; Payload = '' }
+        @{ Name = 'whitespace input'; Payload = " `n`t" }
+        @{ Name = 'missing file'; Payload = ''; Missing = $true }
+        @{ Name = 'malformed suffix'; Payload = '[] [' }
+    ) {
+        $Directory = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+        $null = New-Item -ItemType Directory -Path $Directory
+        if (-not $Missing) { $Payload | Set-Content (Join-Path $Directory 'alerts.json') -Encoding utf8NoBOM }
+        '[]' | Set-Content (Join-Path $Directory 'live-rule-ids.json') -Encoding utf8NoBOM
+        '[{"number":99,"state":"open","rule":"py/absent-rule"}]' | Set-Content (Join-Path $Directory 'issue-index.json') -Encoding utf8NoBOM
+        [System.IO.File]::WriteAllText((Join-Path $Directory 'gh-calls.jsonl'), '')
+
+        $Result = Invoke-IdentityStep -Body $script:ReconcileStep.run -Directory $Directory -Mode 'enforce'
+
+        @(Get-Content (Join-Path $Directory 'gh-calls.jsonl')) | Should -HaveCount 0 -Because $Result.Output
+        $Result.ExitCode | Should -Not -Be 0
+        Test-Path (Join-Path $Directory 'close-set.json') | Should -BeFalse
     }
 }
 

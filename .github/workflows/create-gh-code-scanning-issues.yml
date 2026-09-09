@@ -148,8 +148,10 @@ jobs:
         run: |
             set -euo pipefail
             # Fail at the boundary on malformed records rather than after a partial mutation batch.
-            # An empty array is valid and yields no work.
-            if ! jq -e '
+            # Capture one validated array for both consumers; an empty array is valid.
+            if ! validated_alerts=$(jq -ces '
+              if length == 1 then .[0] else error("Expected exactly one alerts document") end
+              | select(
               type == "array"
               and all(.[];
                 type == "object"
@@ -166,8 +168,9 @@ jobs:
                 and ((.FindingDescription == null) or (.FindingDescription | type == "string"))
               )
               and (([.[].RuleId] | length) == ([.[].RuleId] | unique | length))
-            ' alerts.json > /dev/null; then
-              echo "::error::alerts.json does not match the grouped alert schema or contains duplicate rule IDs; no issues were processed."
+              )
+            ' alerts.json); then
+              echo "::error::alerts.json must contain exactly one grouped alert array with valid records and unique rule IDs; no issues were processed."
               exit 1
             fi
             if [[ "${INDEX_TRUNCATED}" == "true" ]]; then
@@ -175,7 +178,7 @@ jobs:
               exit 0
             fi
 
-            jq '[.[].RuleId] | unique' alerts.json > live-rule-ids.json
+            jq '[.[].RuleId] | unique' <<< "${validated_alerts}" > live-rule-ids.json
 
             ambiguous_rules=$(jq -n \
               --slurpfile live live-rule-ids.json \
@@ -269,7 +272,7 @@ jobs:
                 --repo "${OWNER}/${REPO}" \
                 --body "Weekly scan update: ${COUNT} ${OCCURRENCE_WORD} as of ${DETECTION_DATE}."
             fi
-            done < <(jq -c '.[]' alerts.json)
+            done < <(jq -c '.[]' <<< "${validated_alerts}")
 
       - name: Reconcile code scanning issues
         shell: bash
@@ -279,8 +282,8 @@ jobs:
           SCAN_HEALTH_VERDICT: ${{ steps.scan-health.outputs.verdict }}
         run: |
           set -euo pipefail
-          if ! jq -e 'type == "array"' alerts.json > /dev/null; then
-            echo "::error::alerts.json is not a JSON array. No issues were closed."
+          if ! jq -es 'length == 1 and (.[0] | type == "array")' alerts.json > /dev/null; then
+            echo "::error::alerts.json must contain exactly one JSON array. No issues were closed."
             exit 1
           fi
 
