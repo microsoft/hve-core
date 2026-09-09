@@ -1305,7 +1305,7 @@ Structured-result sanitization, diagnostic redaction sinks, typed API errors, se
 |----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Category**               | Information Disclosure                                                                                                                                                                                                                 |
 | **Asset**                  | OAuth access/refresh tokens and explicit legacy PAT                                                                                                                                                                                    |
-| **Threat**                 | A raw exception, `die()` message, or diagnostic embedding the URL, headers, or upstream body could surface the token                                                                                                                   |
+| **Threat**                 | A raw exception, `GitLabError` message, or diagnostic embedding the URL, headers, or upstream body could surface the token                                                                                                             |
 | **Likelihood**             | Low                                                                                                                                                                                                                                    |
 | **Impact**                 | High                                                                                                                                                                                                                                   |
 | **Mitigations**            | Credentials are sent only through OAuth form exchanges, `Authorization: Bearer`, or explicit `PRIVATE-TOKEN` over TLS; all process-stream output routes through redacting sinks; typed `GitLabAPIError` renders controlled fields only |
@@ -1347,21 +1347,21 @@ Structured-result sanitization, diagnostic redaction sinks, typed API errors, se
 | **Trust Boundary Crossed** | GitLab Instance ↔ Skill Process ↔ Operator diagnostics                                                                                                                                                                                                                                                                                                           |
 | **Detection**              | Two-owner source-contract, REST/OAuth audit behavior, and job-log output tests                                                                                                                                                                                                                                                                                   |
 
-#### GL-4: `die()` Helper Printing Raw Upstream Body
+#### GL-4: `GitLabError` Printing Raw Upstream Body
 
-| Field                      | Value                                                                                                                                                                             |
-|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Category**               | Information Disclosure                                                                                                                                                            |
-| **Asset**                  | Diagnostic output integrity                                                                                                                                                       |
-| **Threat**                 | The `die()` helper prints an error string and exits; if callers pass a raw upstream body, secrets or sensitive content could leak                                                 |
-| **Likelihood**             | Low                                                                                                                                                                               |
-| **Impact**                 | Medium                                                                                                                                                                            |
-| **Mitigations**            | API failures use typed `GitLabAPIError`; local configuration failures use `die()`, which routes through `_emit`; all upstream body summaries pass through `_redact` and size caps |
-| **Residual Risk**          | Low                                                                                                                                                                               |
-| **Status**                 | Mitigated                                                                                                                                                                         |
-| **Source**                 | CWE-209                                                                                                                                                                           |
-| **Trust Boundary Crossed** | Skill Process ↔ Operator diagnostics                                                                                                                                              |
-| **Detection**              | Redaction and typed-error contract tests                                                                                                                                          |
+| Field                      | Value                                                                                                                                                                                   |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**               | Information Disclosure                                                                                                                                                                  |
+| **Asset**                  | Diagnostic output integrity                                                                                                                                                             |
+| **Threat**                 | The `GitLabError` exception carries a message printed by `_emit()`; if callers pass a raw upstream body, secrets or sensitive content could leak.                                       |
+| **Likelihood**             | Low                                                                                                                                                                                     |
+| **Impact**                 | Medium                                                                                                                                                                                  |
+| **Mitigations**            | API failures use typed `GitLabAPIError`; local configuration failures use `GitLabError`, which routes through `_emit`; all upstream body summaries pass through `_redact` and size caps |
+| **Residual Risk**          | Low                                                                                                                                                                                     |
+| **Status**                 | Mitigated                                                                                                                                                                               |
+| **Source**                 | CWE-209                                                                                                                                                                                 |
+| **Trust Boundary Crossed** | Skill Process ↔ Operator diagnostics                                                                                                                                                    |
+| **Detection**              | Redaction and typed-error contract tests                                                                                                                                                |
 
 #### GL-5: `GITLAB_URL` Substitution / SSRF
 
