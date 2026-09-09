@@ -12,6 +12,10 @@ BeforeAll {
     $script:IndexStep = @($Steps | Where-Object id -EQ 'issue-index')[0]
     $script:UpdateStep = @($Steps | Where-Object name -EQ 'Create backlog issues for new findings')[0]
     $script:ReconcileStep = @($Steps | Where-Object name -EQ 'Reconcile code scanning issues')[0]
+    $Skill = Get-Content (Join-Path $script:RepoRoot '.github/skills/security/gh-code-scanning/SKILL.md') -Raw
+    $Example = [regex]::Match($Skill, '(?s)### Dedup check before creation.*?```bash\r?\n(.*?)\r?\n```')
+    if (-not $Example.Success) { throw 'Skill deduplication example not found.' }
+    $script:SkillExample = $Example.Groups[1].Value.Replace('{owner}', 'example').Replace('{repo}', 'repo').Replace('rule_id="{rule_id}"', 'rule_id="js/rule-b"')
     $script:BashPath = if ($env:CODE_SCANNING_TEST_BASH) { $env:CODE_SCANNING_TEST_BASH } else { (Get-Command bash -ErrorAction Stop).Source }
     $script:JqPath = if ($env:CODE_SCANNING_TEST_JQ) { $env:CODE_SCANNING_TEST_JQ } else { (Get-Command jq -ErrorAction Stop).Source }
 
@@ -37,7 +41,7 @@ BeforeAll {
         <# .SYNOPSIS
         Executes an actual workflow run block with isolated, synthetic process state.
         #>
-        param([string]$Body, [string]$Directory, [string]$Mode)
+        param([string]$Body, [string]$Directory, [string]$Mode, [hashtable]$StepEnvironment = @{})
 
         $StartInfo = [System.Diagnostics.ProcessStartInfo]::new()
         $StartInfo.FileName = $script:BashPath
@@ -59,6 +63,7 @@ BeforeAll {
             INDEX_TRUNCATED = 'false'; SCAN_HEALTH_VERDICT = 'healthy'; FAILING_ANALYSIS = ''; RECONCILE_MODE = $Mode
         }
         foreach ($Name in $Environment.Keys) { $StartInfo.Environment[$Name] = [string]$Environment[$Name] }
+        foreach ($Name in $StepEnvironment.Keys) { $StartInfo.Environment[$Name] = [string]$StepEnvironment[$Name] }
         # Script-file execution preserves the original Bash/jq quoting on Windows.
         $ScriptPath = Join-Path $Directory 'step.sh'
         [System.IO.File]::WriteAllText($ScriptPath, ($script:MockPrefix + "`n" + $Body).Replace("`r`n", "`n") + "`n")
@@ -89,7 +94,32 @@ jq() { "$TEST_JQ_PATH" --binary "$@"; }
 gh() {
   jq -cn --args '$ARGS.positional' -- "$@" >> gh-calls.jsonl
   case "$1 $2" in
-    "issue list") cat candidates.json ;;
+        "issue list")
+            if [[ "${TEST_EMULATE_QUERY:-false}" != "true" ]]; then
+                cat candidates.json
+                return
+            fi
+            shift 2
+            local query='' limit=30 state=open
+            while [[ $# -gt 0 ]]; do
+                case "$1" in
+                    --search) query="$2"; shift 2 ;;
+                    --limit) limit="$2"; shift 2 ;;
+                    --state) state="$2"; shift 2 ;;
+                    --repo|--json) shift 2 ;;
+                    *) printf 'Unexpected list argument in offline test\n' >&2; return 97 ;;
+                esac
+            done
+            # Emulate only the documented fixture-query subset, not GitHub search ranking.
+            jq --arg query "$query" --arg state "$state" --argjson limit "$limit" '
+                def has_term($term): ($query | split(" ") | index($term)) != null;
+                map(select((.body // "") | contains("automation:security-scan:"))
+                    | select($state == "all" or (.state | ascii_downcase) == $state)
+                    | select((has_term("author:app/github-actions") | not) or .author.login == "app/github-actions")
+                    | select((has_term("label:automated") | not) or ([.labels[]?.name] | index("automated")) != null)
+                    | select((has_term("label:security") | not) or ([.labels[]?.name] | index("security")) != null))
+                | .[:$limit]
+            ' candidates.json ;;
     "issue create") printf '%s\n' 'https://example.invalid/issues/100' ;;
     "issue comment"|"issue close"|"issue reopen"|"issue edit") : ;;
     *) printf 'Unexpected gh call in offline test\n' >&2; return 97 ;;
@@ -116,7 +146,8 @@ readonly -f jq gh date
             [switch]$MissingArtifact,
             [switch]$IncludeClosedTracker,
             [switch]$ExpectRejection,
-            [AllowEmptyCollection()] [object[]]$IssueCandidates
+            [AllowEmptyCollection()] [object[]]$IssueCandidates,
+            [switch]$EmulateQuery
         )
 
         $Directory = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
@@ -156,25 +187,64 @@ readonly -f jq gh date
         ConvertTo-Json -InputObject $Candidates -Depth 10 | Set-Content (Join-Path $Directory 'candidates.json') -Encoding utf8NoBOM
         $Output = ''
         $ExecutedSteps = 0
+        $Truncated = 'false'
         foreach ($Step in @($script:IndexStep, $script:UpdateStep, $script:ReconcileStep)) {
-            $Result = Invoke-IdentityStep -Body $Step.run -Directory $Directory -Mode $Mode
+            $Result = Invoke-IdentityStep -Body $Step.run -Directory $Directory -Mode $Mode -StepEnvironment @{
+                INDEX_TRUNCATED = $Truncated
+                TEST_EMULATE_QUERY = $EmulateQuery.IsPresent.ToString().ToLowerInvariant()
+            }
             $ExecutedSteps++
             $Output += $Result.Output
             if (-not $ExpectRejection -or $Step -eq $script:IndexStep) {
                 $Result.ExitCode | Should -Be 0 -Because $Result.Output
             }
             if ($Result.ExitCode -ne 0) { break }
+            if ($Step -eq $script:IndexStep) {
+                $IndexOutput = Get-Content (Join-Path $Directory 'index-output.txt') -Raw | ConvertFrom-StringData
+                $Truncated = $IndexOutput.truncated
+                $Truncated | Should -BeIn @('false', 'true')
+            }
         }
-        Get-Content (Join-Path $Directory 'index-output.txt') | Should -Contain 'truncated=false'
         $Calls = @(Get-Content (Join-Path $Directory 'gh-calls.jsonl') | ForEach-Object { , (ConvertFrom-Json $_ -NoEnumerate) })
         return @{
-            Live = $(if (-not $ExpectRejection) { @(Get-Content (Join-Path $Directory 'live-rule-ids.json') -Raw | ConvertFrom-Json) })
-            CloseSet = $(if (-not $ExpectRejection) { @(Get-Content (Join-Path $Directory 'close-set.json') -Raw | ConvertFrom-Json) })
+            Live = $(if (-not $ExpectRejection -and $Truncated -eq 'false') { @(Get-Content (Join-Path $Directory 'live-rule-ids.json') -Raw | ConvertFrom-Json) })
+            CloseSet = $(if (-not $ExpectRejection -and $Truncated -eq 'false') { @(Get-Content (Join-Path $Directory 'close-set.json') -Raw | ConvertFrom-Json) })
+            Truncated = $Truncated
+            CandidateCount = @(Get-Content (Join-Path $Directory 'issue-candidates.json') -Raw | ConvertFrom-Json).Count
+            Index = @(Get-Content (Join-Path $Directory 'issue-index.json') -Raw | ConvertFrom-Json)
+            HasLiveFile = Test-Path (Join-Path $Directory 'live-rule-ids.json')
+            HasCloseSet = Test-Path (Join-Path $Directory 'close-set.json')
             Calls = $Calls
             Output = $Output
             ExitCode = $Result.ExitCode
             ExecutedSteps = $ExecutedSteps
         }
+    }
+
+    function New-QuotaIssue {
+        <# .SYNOPSIS
+        Creates a synthetic candidate for ownership and quota scenarios.
+        #>
+        param([int]$Number, [string]$Rule = 'py/filler', [string]$State = 'CLOSED', [string]$Author = 'app/github-actions', [string[]]$Labels = @('automated', 'security'))
+
+        return @{ number = $Number; state = $State; body = "<!-- automation:security-scan:$Rule -->"; author = @{ login = $Author }; labels = @($Labels | ForEach-Object { @{ name = $_ } }) }
+    }
+
+    function Invoke-SkillQuotaScenario {
+        <# .SYNOPSIS
+        Executes the actual skill example using only synthetic candidates and a mock ledger.
+        #>
+        param([AllowEmptyCollection()] [object[]]$Candidates, [switch]$RawResponse)
+
+        $Directory = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+        $null = New-Item -ItemType Directory -Path $Directory
+        ConvertTo-Json -InputObject $Candidates -Depth 10 | Set-Content (Join-Path $Directory 'candidates.json') -Encoding utf8NoBOM
+        [System.IO.File]::WriteAllText((Join-Path $Directory 'gh-calls.jsonl'), '')
+        $Result = Invoke-IdentityStep -Body $script:SkillExample -Directory $Directory -Mode 'dry-run' -StepEnvironment @{
+            TEST_EMULATE_QUERY = (-not $RawResponse).ToString().ToLowerInvariant()
+        }
+        $Result.Calls = @(Get-Content (Join-Path $Directory 'gh-calls.jsonl') | ForEach-Object { , (ConvertFrom-Json $_ -NoEnumerate) })
+        return $Result
     }
 }
 
@@ -502,6 +572,159 @@ PATHS_SECTION
         $Result.Calls | Should -HaveCount 2
         $Result.Calls[1] | Should -BeExactly @('issue', 'create', '--repo', 'example/repo', '--title', '[Security][high] Current finding', '--label', 'security,automated,needs-triage', '--body', $ExpectedBody)
         $Result.CloseSet | Should -HaveCount 0
+    }
+}
+
+Describe 'Ownership-filtered candidate quota in <Mode>' -Tag 'Unit' -ForEach @(
+    @{ Mode = 'enforce' }
+    @{ Mode = 'dry-run' }
+) {
+    BeforeEach {
+        $script:QuotaLiveAlerts = @(New-IdentityAlert -RuleId 'js/rule-b' -Number 1; New-IdentityAlert -RuleId 'py/closed-rule' -Number 2)
+        $script:QuotaOwned = @(
+            New-QuotaIssue -Number 42 -Rule 'js/rule-b' -State 'OPEN'
+            New-QuotaIssue -Number 43 -Rule 'py/closed-rule'
+            New-QuotaIssue -Number 99 -Rule 'py/absent-rule' -State 'OPEN'
+        )
+    }
+
+    It 'does not let 200 <Kind> issues crowd out owned trackers' -ForEach @(
+        @{ Kind = 'wrong-author'; Author = 'fixture-user'; Labels = @('automated', 'security') }
+        @{ Kind = 'missing-automated'; Author = 'app/github-actions'; Labels = @('security') }
+        @{ Kind = 'missing-security'; Author = 'app/github-actions'; Labels = @('automated') }
+    ) {
+        $Noise = @(1..200 | ForEach-Object { New-QuotaIssue -Number (1000 + $_) -Author $Author -Labels $Labels -State $(if ($_ % 2) { 'OPEN' } else { 'CLOSED' }) })
+        $Result = Invoke-IdentityScenario -Alerts $script:QuotaLiveAlerts -Mode $Mode -IssueCandidates ($Noise + $script:QuotaOwned) -EmulateQuery
+
+        $Result.Truncated | Should -BeExactly 'false'
+        $Result.CandidateCount | Should -Be 3
+        $Result.Index.number | Should -Be @(42, 43, 99)
+        @($Result.Calls | Where-Object { $_[1] -eq 'create' }) | Should -HaveCount 0
+        @($Result.Calls | Where-Object { $_[1] -eq 'comment' }) | Should -HaveCount 2
+        $Reopens = @($Result.Calls | Where-Object { $_[1] -eq 'reopen' })
+        $Reopens | Should -HaveCount 1
+        $Reopens[0][2] | Should -BeExactly '43'
+        $Result.CloseSet.number | Should -Be 99
+        $Closes = @($Result.Calls | Where-Object { $_[1] -eq 'close' })
+        if ($Mode -eq 'enforce') { $Closes | Should -HaveCount 1; $Closes[0][2] | Should -BeExactly '99' }
+        else { $Closes | Should -HaveCount 0 }
+    }
+
+    It 'handles <Count> eligible candidates conservatively' -ForEach @(
+        @{ Count = 199 }
+        @{ Count = 200 }
+        @{ Count = 201 }
+    ) {
+        $Candidates = $script:QuotaOwned + @(1..($Count - 3) | ForEach-Object { New-QuotaIssue -Number (1000 + $_) })
+        $Result = Invoke-IdentityScenario -Alerts $script:QuotaLiveAlerts -Mode $Mode -IssueCandidates $Candidates -EmulateQuery
+
+        $Result.CandidateCount | Should -Be ([math]::Min($Count, 200))
+        $Result.ExitCode | Should -Be 0
+        $Result.ExecutedSteps | Should -Be 3
+        if ($Count -ge 200) {
+            $Result.Truncated | Should -BeExactly 'true'
+            $Result.HasLiveFile | Should -BeFalse
+            $Result.HasCloseSet | Should -BeFalse
+            @($Result.Calls | Where-Object { $_[1] -ne 'list' }) | Should -HaveCount 0
+            $Result.Output | Should -Match 'updates skipped because the issue index may be truncated'
+            $Result.Output | Should -Match 'Reconciliation skipped because the issue index may be truncated'
+        }
+        else {
+            $Result.Truncated | Should -BeExactly 'false'
+            @($Result.Calls | Where-Object { $_[1] -eq 'comment' }) | Should -HaveCount 2
+            @($Result.Calls | Where-Object { $_[1] -eq 'reopen' }) | Should -HaveCount 1
+            $Result.CloseSet.number | Should -Be 99
+        }
+    }
+
+    It 'allows creation when only unowned candidates exist' {
+        $Noise = @(1..200 | ForEach-Object { New-QuotaIssue -Number (1000 + $_) -Author 'fixture-user' })
+        $Result = Invoke-IdentityScenario -Alerts @($script:QuotaLiveAlerts[0]) -Mode $Mode -IssueCandidates $Noise -EmulateQuery
+
+        $Result.Truncated | Should -BeExactly 'false'
+        $Result.CandidateCount | Should -Be 0
+        $Result.Calls | Should -HaveCount 2
+        $Result.Calls[1][1] | Should -BeExactly 'create'
+        $Result.CloseSet | Should -HaveCount 0
+    }
+}
+
+Describe 'Local ownership remains authoritative' -Tag 'Unit' {
+    It 'rejects unowned and malformed raw results even when the query is filtered' {
+        $BadMarker = New-QuotaIssue -Number 104 -Rule 'js/rule-b'
+        $BadMarker.body = "Prefixed text`n<!-- automation:security-scan:js/rule-b -->"
+        $BadId = New-QuotaIssue -Number 105 -Rule 'js/rule-b'
+        $BadId.body = '<!-- automation:security-scan:bad id -->'
+        $Candidates = @(
+            New-QuotaIssue -Number 101 -Rule 'js/rule-b' -Author 'fixture-user'
+            New-QuotaIssue -Number 102 -Rule 'js/rule-b' -Labels @('security')
+            New-QuotaIssue -Number 103 -Rule 'js/rule-b' -Labels @('automated')
+            $BadMarker; $BadId
+            New-QuotaIssue -Number 42 -Rule 'js/rule-b' -State 'OPEN'
+        )
+        $Result = Invoke-IdentityScenario -Alerts @(New-IdentityAlert -RuleId 'js/rule-b' -Number 1) -IssueCandidates $Candidates
+
+        $Result.CandidateCount | Should -Be 6
+        $Result.Index | Should -HaveCount 1
+        $Result.Index[0].number | Should -Be 42
+        $Result.Calls | Should -HaveCount 2
+        $Result.Calls[1][0..4] | Should -BeExactly @('issue', 'comment', '42', '--repo', 'example/repo')
+    }
+}
+
+Describe 'Skill and workflow candidate query contract' -Tag 'Unit' {
+    It 'uses the same exact owned all-state query before limiting on both surfaces' {
+        $WorkflowResult = Invoke-IdentityScenario -Alerts @() -Mode 'dry-run' -IssueCandidates @() -EmulateQuery
+        $SkillResult = Invoke-SkillQuotaScenario -Candidates @()
+        foreach ($Result in @($WorkflowResult, $SkillResult)) {
+            $Result.Calls[0] | Should -BeExactly @('issue', 'list', '--repo', 'example/repo', '--search', '"automation:security-scan:" in:body author:app/github-actions label:automated label:security', '--state', 'all', '--limit', '200', '--json', 'number,state,body,author,labels')
+        }
+    }
+
+    It 'finds an existing closed owner behind 200 unowned issues' {
+        $Noise = @(1..200 | ForEach-Object { New-QuotaIssue -Number (1000 + $_) -Author 'fixture-user' })
+        $Result = Invoke-SkillQuotaScenario -Candidates ($Noise + @(New-QuotaIssue -Number 42 -Rule 'js/rule-b'))
+
+        $Result.ExitCode | Should -Be 0 -Because $Result.Output
+        $Result.Calls | Should -HaveCount 1
+    }
+
+    It 'aborts before creation for <Count> eligible candidates' -ForEach @(
+        @{ Count = 200 }
+        @{ Count = 201 }
+    ) {
+        $Result = Invoke-SkillQuotaScenario -Candidates @(1..$Count | ForEach-Object { New-QuotaIssue -Number $_ })
+
+        $Result.ExitCode | Should -Not -Be 0
+        $Result.Calls | Should -HaveCount 1
+        $Result.Output | Should -Match 'Candidate query reached its limit'
+    }
+
+    It 'creates below quota when no verified match exists' {
+        $Result = Invoke-SkillQuotaScenario -Candidates @(1..199 | ForEach-Object { New-QuotaIssue -Number $_ })
+
+        $Result.ExitCode | Should -Be 0 -Because $Result.Output
+        $Result.Calls | Should -HaveCount 2
+        $Result.Calls[1][1] | Should -BeExactly 'create'
+    }
+
+    It 'rejects ambiguous raw verified owners' {
+        $Result = Invoke-SkillQuotaScenario -Candidates @(
+            New-QuotaIssue -Number 42 -Rule 'js/rule-b'
+            New-QuotaIssue -Number 43 -Rule 'js/rule-b'
+        ) -RawResponse
+
+        $Result.ExitCode | Should -Not -Be 0
+        $Result.Calls | Should -HaveCount 1
+        $Result.Output | Should -Match 'Multiple verified tracking issues'
+    }
+
+    It 'does not adopt unowned raw matches' {
+        $Result = Invoke-SkillQuotaScenario -Candidates @(New-QuotaIssue -Number 42 -Rule 'js/rule-b' -Author 'fixture-user') -RawResponse
+
+        $Result.ExitCode | Should -Be 0
+        $Result.Calls | Should -HaveCount 2
+        $Result.Calls[1][1] | Should -BeExactly 'create'
     }
 }
 

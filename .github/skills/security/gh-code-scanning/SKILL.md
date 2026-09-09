@@ -6,7 +6,7 @@ compatibility: 'Requires pwsh 7+ and gh CLI authenticated with the security_even
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-30"
+  last_updated: "2026-09-09"
 ---
 
 # GitHub Code Scanning Skill
@@ -197,7 +197,8 @@ gh api repos/{owner}/{repo}/code-scanning/analyses \
 
 ### Dedup check before creation
 
-Search all issue states for the embedded automation marker before creating a new issue. Treat the broad search as a candidate query, then verify the first-line marker, the immutable GitHub Actions app author, and the automation-owned labels.
+Search all issue states for the embedded automation marker, filtering by the GitHub Actions app author and both ownership labels before applying the candidate limit so unowned issues cannot exhaust the quota.
+Treat these results as candidates: still verify the first-line marker, the immutable GitHub Actions app author, and the automation-owned labels locally. Abort if the filtered query reaches its limit because eligible candidates may be missing.
 
 ```bash
 set -euo pipefail
@@ -209,7 +210,7 @@ if ! jq -en --arg rule "${rule_id}" '$rule | test("^[A-Za-z0-9._:/-]{1,256}$")' 
   exit 1
 fi
 if ! issues=$(gh issue list --repo "{owner}/{repo}" \
-  --search '"automation:security-scan:" in:body' \
+  --search '"automation:security-scan:" in:body author:app/github-actions label:automated label:security' \
   --state all --limit "${candidate_limit}" --json number,state,body,author,labels); then
   echo "Unable to list candidate tracking issues; aborting." >&2
   exit 1

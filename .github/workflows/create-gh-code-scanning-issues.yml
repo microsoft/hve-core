@@ -113,7 +113,7 @@ jobs:
           candidate_limit=200
           gh issue list \
             --repo "${OWNER}/${REPO}" \
-            --search '"automation:security-scan:" in:body' \
+            --search '"automation:security-scan:" in:body author:app/github-actions label:automated label:security' \
             --state all \
             --limit "${candidate_limit}" \
             --json number,state,body,author,labels > issue-candidates.json
