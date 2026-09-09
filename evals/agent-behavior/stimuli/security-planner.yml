@@ -67,7 +67,7 @@ stimuli:
       - type: output-matches
         name: existing-timestamp-preserved
         config:
-          pattern: '(?is)(2026-09-01T12:00:00Z|timestamp).{0,250}(unchanged|preserv|remain|not (?:change|update|overwrit))|(unchanged|preserv|remain|not (?:change|update|overwrit)).{0,250}(2026-09-01T12:00:00Z|timestamp)'
+          pattern: '(?is)(2026-09-01T12:00:00Z|timestamp).{0,250}(unchanged|preserv|remain|not (?:change|update|overwrite|overwritten))|(unchanged|preserv|remain|not (?:change|update|overwrite|overwritten)).{0,250}(2026-09-01T12:00:00Z|timestamp)'
       - type: output-matches
         name: no-duplicate-session-start-notice
         config:
