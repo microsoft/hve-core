@@ -9,8 +9,9 @@
 
 .DESCRIPTION
     Uses the gh CLI to fetch open code scanning alerts for a repository and branch,
-    suppressing the pager for non-interactive output. Results are grouped by rule
-    description and sorted by occurrence count descending.
+    suppressing the pager for non-interactive output. Results are grouped by
+    case-sensitive rule ID and sorted by occurrence count descending. Descriptions
+    are display metadata, so distinct live rule IDs remain separate.
 
     Requires gh CLI authenticated with security_events scope (or public_repo for public repos).
 
@@ -83,7 +84,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     $Alerts = @($Raw | ConvertFrom-Json)
 
     $Grouped = $Alerts |
-        Group-Object { $_.rule.description } |
+        Group-Object -Property { $_.rule.id } -CaseSensitive |
         ForEach-Object {
             $paths = @(
                 $_.Group |
@@ -92,7 +93,7 @@ if ($MyInvocation.InvocationName -ne '.') {
                 Sort-Object -Unique
             )
             [PSCustomObject]@{
-                RuleDescription    = $_.Name
+                RuleDescription    = $_.Group[0].rule.description
                 RuleId             = $_.Group[0].rule.id
                 Tool               = $_.Group[0].tool.name
                 SecuritySeverity   = $_.Group[0].rule.security_severity_level
