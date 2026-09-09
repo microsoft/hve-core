@@ -152,11 +152,11 @@ safe-outputs:
           required: true
           type: string
         started-at:
-          description: "UTC timestamp captured immediately before shard assessment"
+          description: "Shard-wide UTC start timestamp; use the identical literal for every candidate call"
           required: true
           type: string
         completed-at:
-          description: "UTC timestamp captured immediately after shard assessment"
+          description: "Shard-wide UTC completion timestamp; use the identical literal for every candidate call"
           required: true
           type: string
       steps:
@@ -527,9 +527,11 @@ fixed issue count as an eligibility exclusion.
 ## Output
 
 Assess only the issue numbers in `ordered_candidate_ids`. Do not locate, create,
-or update tracker state. Capture the UTC completion timestamp after every row is
-finalized, then call `publish-backlog-grooming-result` once per planned candidate
-with:
+or update tracker state. Finalize every row before making any safe output call.
+Capture the UTC completion timestamp exactly once after all rows are finalized,
+then reuse the same start and completion timestamp strings without modification
+in one `publish-backlog-grooming-result` call per planned candidate. Do not use
+candidate-specific, estimated, or incremented timestamps. Each call contains:
 
 * `issue`: the candidate issue number
 * `row-data`: a JSON string containing exactly that candidate's final row object

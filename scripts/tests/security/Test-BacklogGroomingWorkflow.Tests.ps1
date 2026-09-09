@@ -320,6 +320,10 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         foreach ($inputName in @('row-data', 'started-at', 'completed-at')) {
             $script:Source | Should -Match "(?ms)^        $([regex]::Escape($inputName)):.*?required: true\s+type: string"
         }
+        $script:Source | Should -Match 'Finalize every row before making any safe output call'
+        $script:Source | Should -Match 'Capture the UTC completion timestamp exactly once after all rows are finalized'
+        $script:Source | Should -Match 'reuse the same start and completion timestamp strings without modification'
+        $script:Source | Should -Match 'Do not use\s+candidate-specific, estimated, or incremented timestamps'
         $script:Source | Should -Not -Match '(?m)^\s+issues: write$'
         $script:Source | Should -Not -Match '(?m)^\s+target: "\*"$'
         $script:Source | Should -Match '(?m)^  report-failure-as-issue: false$'
@@ -350,7 +354,7 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
     }
 
     It 'emits one independently validated immutable shard result' {
-        $script:Source | Should -Match 'call `publish-backlog-grooming-result` once per planned candidate'
+        $script:Source | Should -Match 'one `publish-backlog-grooming-result` call per planned candidate'
         $script:Source | Should -Match 'const requests = agentOutput\.items\.filter'
         $script:Source | Should -Match 'item\.type === "publish_backlog_grooming_result"'
         $script:Source | Should -Match 'Safe-output item count does not match planned candidates: expected \$\{orderedCandidateIds\.length\}, found \$\{requests\.length\}'
