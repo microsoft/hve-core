@@ -3,7 +3,7 @@ title: Design Thinking Guide
 description: AI-assisted Design Thinking using the dt-coach agent
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-08-20
 ms.topic: concept
 keywords:
   - design thinking
@@ -33,6 +33,8 @@ Most projects fail not because the code is wrong, but because the team solved th
 
 ```mermaid
 flowchart LR
+    accTitle: Design Thinking Nine-Method Progression
+    accDescr: Nine methods progress through problem, solution, and implementation spaces, with three exit points into RPI research and a return path when assumptions need revision.
     subgraph problem["Problem Space (rough / exploratory)"]
         M1["1 · Scope<br/>Conversations"] --> M2["2 · Design<br/>Research"] --> M3["3 · Input<br/>Synthesis"]
     end

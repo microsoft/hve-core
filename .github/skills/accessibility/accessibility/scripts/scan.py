@@ -15,6 +15,11 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
+from urllib.request import url2pathname
+
+from runtime_a11y._config import assert_host_allowed
+from runtime_a11y._errors import ScriptError as RuntimeScriptError
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
@@ -40,6 +45,18 @@ def create_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="Path to write normalized JSON output (defaults to stdout)",
+    )
+    parser.add_argument(
+        "--allow-host",
+        action="append",
+        default=[],
+        metavar="HOST",
+        help="Authorize one non-loopback HTTP(S) host (repeatable)",
+    )
+    parser.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="Confirm intentional access to any non-loopback HTTP(S) host",
     )
     return parser
 
@@ -110,9 +127,112 @@ def normalize_results(raw_results: dict[str, Any], target: str) -> dict[str, Any
     return normalized
 
 
-def run_scan(target: str) -> dict[str, Any]:
+def _is_network_path(path: Path) -> bool:
+    """Return True for UNC or protocol-relative paths that would reach the network."""
+    return str(path).replace("\\", "/").startswith("//")
+
+
+def _canonical_local_file(path: Path) -> str:
+    """Return a canonical file URI for an existing regular local file."""
+    # Rejected before any probe so a UNC path never triggers an outbound SMB request.
+    if _is_network_path(path):
+        raise ScriptError(
+            "Network-share and protocol-relative scan targets are not supported",
+            EXIT_USAGE,
+        )
+    if not path.exists():
+        raise ScriptError("Local scan target does not exist", EXIT_USAGE)
+    if not path.is_file():
+        raise ScriptError("Local scan target must be a regular file", EXIT_USAGE)
+    return path.resolve().as_uri()
+
+
+def resolve_scan_target(
+    target: str,
+    allow_hosts: list[str] | None = None,
+    allow_external: bool = False,
+) -> str:
+    """Classify and authorize a URL or local-file scan target."""
+    if not isinstance(target, str) or not target:
+        raise ScriptError("Scan target must not be empty", EXIT_USAGE)
+    if target.startswith("-"):
+        raise ScriptError("Scan target must not begin with '-'", EXIT_USAGE)
+    if target.startswith(("\\\\", "//")):
+        raise ScriptError(
+            "Network-share and protocol-relative scan targets are not supported",
+            EXIT_USAGE,
+        )
+
+    local_path = Path(target).expanduser()
+    if local_path.exists() or (
+        len(target) >= 3 and target[0].isalpha() and target[1:3] in {":\\", ":/"}
+    ):
+        return _canonical_local_file(local_path)
+
+    if any(ord(character) <= 32 or ord(character) == 127 for character in target):
+        raise ScriptError(
+            "Remote scan target must not include whitespace or control characters",
+            EXIT_USAGE,
+        )
+
+    parsed = urlparse(target)
+    scheme = parsed.scheme.lower()
+    if scheme == "file":
+        if parsed.netloc and parsed.netloc.lower() != "localhost":
+            raise ScriptError("Remote file authorities are not supported", EXIT_USAGE)
+        return _canonical_local_file(Path(url2pathname(parsed.path)))
+
+    if scheme in {"http", "https"}:
+        if not parsed.hostname:
+            raise ScriptError(
+                "Remote scan target must be an absolute HTTP(S) URL with a host",
+                EXIT_USAGE,
+            )
+        if parsed.username is not None or parsed.password is not None:
+            raise ScriptError(
+                "Remote scan target must not include credentials", EXIT_USAGE
+            )
+        try:
+            parsed.port
+        except ValueError as exc:
+            raise ScriptError(
+                "Remote scan target includes an invalid port", EXIT_USAGE
+            ) from exc
+        try:
+            assert_host_allowed(
+                parsed.hostname,
+                allowlist=allow_hosts,
+                allow_external=allow_external,
+            )
+        except RuntimeScriptError as exc:
+            raise ScriptError(
+                f"Refusing to scan non-loopback host '{parsed.hostname}'. "
+                "Re-run with --allow-host HOST or --allow-external to confirm "
+                "intentional external access.",
+                exc.exit_code,
+            ) from exc
+        return target
+
+    if scheme:
+        raise ScriptError(
+            f"Unsupported scan target scheme '{scheme}'",
+            EXIT_USAGE,
+        )
+    raise ScriptError("Local scan target does not exist", EXIT_USAGE)
+
+
+def run_scan(
+    target: str,
+    allow_hosts: list[str] | None = None,
+    allow_external: bool = False,
+) -> dict[str, Any]:
     """Run the external axe-core scanner and normalize the output."""
-    command = ["npx", "--yes", "@axe-core/cli@4.12.1", target]
+    resolved_target = resolve_scan_target(
+        target,
+        allow_hosts=allow_hosts,
+        allow_external=allow_external,
+    )
+    command = ["npx", "--yes", "@axe-core/cli@4.12.1", "--", resolved_target]
     try:
         completed = subprocess.run(
             command,
@@ -138,7 +258,7 @@ def run_scan(target: str) -> dict[str, Any]:
     if not isinstance(raw_payload, dict):
         raise ScriptError("Scanner returned unexpected payload format", EXIT_FAILURE)
 
-    return normalize_results(raw_payload, target)
+    return normalize_results(raw_payload, resolved_target)
 
 
 def write_output(result: dict[str, Any], output_path: Path | None) -> None:
@@ -158,7 +278,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        result = run_scan(args.target)
+        result = run_scan(
+            args.target,
+            allow_hosts=args.allow_host,
+            allow_external=args.allow_external,
+        )
     except ScriptError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return exc.exit_code

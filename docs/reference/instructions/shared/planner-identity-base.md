@@ -3,7 +3,7 @@ title: Shared/Planner Identity Base
 description: "Shared identity scaffold for phase-based planning agents (SSSC, RAI, Security, Accessibility, Privacy) covering state-file convention, six-phase orchestration template, state protocol, resume protocol, question cadence mechanics, optional disclaimer cadence, and error handling"
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,11 @@ Shared identity scaffold for phase-based planning agents (SSSC, RAI, Security, A
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply this base whenever SSSC, RAI, Security, Accessibility, or Privacy planner
+state and artifacts are created, resumed, or recovered. It supplies shared
+state, phase, cadence, disclaimer, and error mechanics; the matching planner
+identity remains authoritative for concrete phases, schemas, gates, and
+cross-planner behavior.
 
 ## Example usage
 

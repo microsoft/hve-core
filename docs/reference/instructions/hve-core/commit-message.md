@@ -3,7 +3,7 @@ title: Hve Core/Commit Message
 description: Commit message format and conventions
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Commit message format and conventions
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these instructions when composing a commit message for repository changes.
+Choose the conventional type and directory-derived scope from the actual diff,
+write an imperative description within the byte limits, and reserve a body for
+larger changes rather than using this format for pull request prose.
 
 ## Example usage
 

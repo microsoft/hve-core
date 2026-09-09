@@ -170,10 +170,92 @@ Describe 'Test-ModulePresent' -Tag 'Unit' {
     }
 }
 
+Describe 'Register-DefaultPSGallery' -Tag 'Unit' {
+    It 'Uses only the PowerShellGet default parameter set' {
+        $command = (Get-Command Register-DefaultPSGallery).ScriptBlock.Ast.Find({
+                param($Ast)
+                $Ast -is [System.Management.Automation.Language.CommandAst] -and
+                $Ast.GetCommandName() -eq 'Register-PSRepository'
+            }, $true)
+
+        $command.Extent.Text | Should -BeExactly 'Register-PSRepository -Default -ErrorAction Stop'
+    }
+
+}
+
+Describe 'Initialize-Repository' -Tag 'Unit' {
+    Context 'when the repository is already registered' {
+        BeforeAll {
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
+        }
+
+        It 'Does not register the repository again' {
+            $result = Initialize-Repository -Name 'PSGallery'
+
+            $result | Should -BeExactly 'PSGallery'
+            Should -Invoke Register-PSRepository -Times 0 -Exactly
+        }
+    }
+
+    Context 'when PSGallery is missing' {
+        BeforeAll {
+            Mock Get-PSRepository { $null }
+            Mock Register-DefaultPSGallery { $true }
+        }
+
+        It 'Registers PSGallery with the default parameter set' {
+            $result = Initialize-Repository -Name 'PSGallery'
+
+            $result | Should -BeExactly 'PSGallery'
+            Should -Invoke Register-DefaultPSGallery -Times 1 -Exactly
+        }
+    }
+
+    Context 'when default PSGallery registration remains unavailable' {
+        BeforeAll {
+            Mock Get-PSRepository { $null }
+            Mock Register-DefaultPSGallery { $false }
+            Mock Register-PSRepository {}
+        }
+
+        It 'Returns a temporary repository at the canonical endpoint' {
+            $result = Initialize-Repository -Name 'PSGallery'
+
+            $result | Should -BeLike "HVEPSGallery-$PID-*"
+            Should -Invoke Register-PSRepository -Times 1 -Exactly -ParameterFilter {
+                $Name -like "HVEPSGallery-$PID-*" -and
+                $SourceLocation -eq 'https://www.powershellgallery.com/api/v2' -and
+                $InstallationPolicy -eq 'Untrusted'
+            }
+        }
+    }
+
+    Context 'when a non-PSGallery repository is missing' {
+        BeforeAll {
+            Mock Get-PSRepository { $null }
+            Mock Register-PSRepository {}
+        }
+
+        It 'Does not register an alternate repository automatically' {
+            $result = Initialize-Repository -Name 'CustomRepo'
+
+            $result | Should -BeExactly 'CustomRepo'
+            Should -Invoke Register-PSRepository -Times 0 -Exactly
+        }
+    }
+}
+
 Describe 'Install-SingleModule' -Tag 'Unit' {
     Context 'when Install-Module succeeds on first attempt' {
         BeforeAll {
             Mock Install-Module {}
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
         }
 
         It 'Calls Install-Module exactly once' {
@@ -191,6 +273,77 @@ Describe 'Install-SingleModule' -Tag 'Unit' {
         }
     }
 
+    Context 'when default registration requires a temporary repository' {
+        BeforeAll {
+            Mock Initialize-Repository { "HVEPSGallery-$PID-test" }
+            Mock Install-Module {}
+            Mock Unregister-PSRepository {}
+        }
+
+        It 'Installs from the temporary repository and removes it' {
+            Install-SingleModule -Name 'TestMod' -Version '1.0.0' -Scope 'CurrentUser' `
+                -Repository 'PSGallery' -MaxAttempts 3 -BaseDelaySeconds 10
+
+            Should -Invoke Install-Module -Times 1 -Exactly -ParameterFilter {
+                $Repository -eq "HVEPSGallery-$PID-test"
+            }
+            Should -Invoke Unregister-PSRepository -Times 1 -Exactly -ParameterFilter {
+                $Name -eq "HVEPSGallery-$PID-test"
+            }
+        }
+    }
+
+    Context 'when installation from a temporary repository fails' {
+        BeforeAll {
+            Mock Initialize-Repository { "HVEPSGallery-$PID-test" }
+            Mock Install-Module { throw 'installation failed' }
+            Mock Unregister-PSRepository {}
+        }
+
+        It 'Removes the temporary repository before propagating the failure' {
+            { Install-SingleModule -Name 'TestMod' -Version '1.0.0' -Scope 'CurrentUser' `
+                -Repository 'PSGallery' -MaxAttempts 1 -BaseDelaySeconds 1 } |
+                Should -Throw '*Failed to install TestMod*'
+
+            Should -Invoke Unregister-PSRepository -Times 1 -Exactly -ParameterFilter {
+                $Name -eq "HVEPSGallery-$PID-test"
+            }
+        }
+    }
+
+    Context 'when temporary repository cleanup also fails' {
+        BeforeAll {
+            Mock Initialize-Repository { "HVEPSGallery-$PID-test" }
+            Mock Install-Module { throw 'installation failed' }
+            Mock Unregister-PSRepository { throw 'cleanup failed' }
+            Mock Write-Warning {}
+        }
+
+        It 'Preserves the installation failure' {
+            { Install-SingleModule -Name 'TestMod' -Version '1.0.0' -Scope 'CurrentUser' `
+                -Repository 'PSGallery' -MaxAttempts 1 -BaseDelaySeconds 1 } |
+                Should -Throw '*Failed to install TestMod*'
+
+            Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter {
+                $Message -like 'Failed to remove temporary repository*'
+            }
+        }
+    }
+
+    Context 'when cleanup is the only failure' {
+        BeforeAll {
+            Mock Initialize-Repository { "HVEPSGallery-$PID-test" }
+            Mock Install-Module {}
+            Mock Unregister-PSRepository { throw 'cleanup failed' }
+        }
+
+        It 'Fails instead of reporting successful cleanup' {
+            { Install-SingleModule -Name 'TestMod' -Version '1.0.0' -Scope 'CurrentUser' `
+                -Repository 'PSGallery' -MaxAttempts 1 -BaseDelaySeconds 1 } |
+                Should -Throw '*Failed to remove temporary repository*'
+        }
+    }
+
     Context 'when Install-Module fails twice then succeeds' {
         BeforeAll {
             $script:CallCount = 0
@@ -200,6 +353,10 @@ Describe 'Install-SingleModule' -Tag 'Unit' {
                     throw "PSGallery transient failure"
                 }
             }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
         }
         BeforeEach {
             $script:CallCount = 0
@@ -230,6 +387,10 @@ Describe 'Install-SingleModule' -Tag 'Unit' {
     Context 'when Install-Module fails on all attempts' {
         BeforeAll {
             Mock Install-Module { throw "PSGallery is down" }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
         }
 
         It 'Throws after exhausting retries' {
@@ -251,6 +412,10 @@ Describe 'Install-SingleModule' -Tag 'Unit' {
     Context 'when running in GitHub Actions' {
         BeforeAll {
             Mock Install-Module { throw "network error" }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
         }
         BeforeEach {
             $script:OrigGA = $env:GITHUB_ACTIONS
@@ -295,6 +460,10 @@ Describe 'Invoke-PSModuleInstall end-to-end' -Tag 'Unit' {
                     'FakeModuleB' { [PSCustomObject]@{ Version = [version]'2.5.0' } }
                 }
             }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
             Mock Install-Module {}
             Mock Import-Module {}
         }
@@ -311,6 +480,10 @@ Describe 'Invoke-PSModuleInstall end-to-end' -Tag 'Unit' {
             Mock Get-Module {
                 [PSCustomObject]@{ Version = [version]'1.0.0' }
             }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
             Mock Install-Module {}
             Mock Import-Module {}
         }
@@ -331,6 +504,10 @@ Describe 'Invoke-PSModuleInstall end-to-end' -Tag 'Unit' {
                     'FakeModuleB' { [PSCustomObject]@{ Version = [version]'2.5.0' } }
                 }
             }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
             Mock Install-Module {}
             Mock Import-Module {}
         }
@@ -351,6 +528,10 @@ Describe 'Invoke-PSModuleInstall end-to-end' -Tag 'Unit' {
                     'FakeModuleB' { [PSCustomObject]@{ Version = [version]'2.5.0' } }
                 }
             }
+            Mock Get-PSRepository {
+                [PSCustomObject]@{ Name = 'PSGallery' }
+            }
+            Mock Register-PSRepository {}
             Mock Install-Module {}
             Mock Import-Module {}
         }

@@ -2082,7 +2082,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "run-at-plan":
             return _cmd_run_at_plan(args)
         config = load_validated_config(args.config, allow_external=args.allow_external)
-        base_url = args.base_url or config.get("baseUrl", "")
+        base_url = _resolve_guarded_base_url(
+            config, args.base_url, allow_external=args.allow_external
+        )
         probe_filter = getattr(args, "probe_id", None)
         document = run(
             config,

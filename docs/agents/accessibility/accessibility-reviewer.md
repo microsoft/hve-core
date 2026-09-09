@@ -13,7 +13,7 @@ tags:
   - agents
   - accessibility
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -55,6 +55,8 @@ Additional inputs accepted across modes include an optional path focus, a skills
 
 ```mermaid
 flowchart LR
+  accTitle: Accessibility Review Pipeline
+  accDescr: Review moves from setup through codebase profiling, applicable-skill assessment, finding verification, report generation, and summary computation.
   A["Setup"] --> B["Profile Codebase"]
   B --> C["Assess Applicable Skills"]
   C --> D["Verify Findings"]

@@ -3,7 +3,7 @@ title: Project Planning/Adr Identity
 description: "ADR Creator identity, three-phase state machine, six-step per-turn protocol, autonomy tiers, and canonical state.json schema for Architecture Decision Record authoring sessions"
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ ADR Creator identity, three-phase state machine, six-step per-turn protocol, aut
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these instructions throughout an ADR Creator session, from capture or
+planner handoff through Frame, Decide, and Govern, including template adoption.
+Preserve hard user decision gates and state on every turn; load `adr-author`
+for phase behavior rather than inventing options or choosing for the user.
 
 ## Example usage
 

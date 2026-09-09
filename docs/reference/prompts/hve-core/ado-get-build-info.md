@@ -3,7 +3,7 @@ title: Ado Get Build Info
 description: Retrieve Azure DevOps build status and logs for a pull request or build number
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Retrieve Azure DevOps build status and logs for a pull request or build number
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to inspect Azure DevOps build status or logs for a pull request or known build number. Use the pull-request creation prompt when the required pull request does not exist yet.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the project and either `pr` or `build`, then choose the requested `info` such as status or logs. Review log output for credentials, tokens, customer data, or internal identifiers before sharing it.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/ado-get-build-info project=hve-core pr=123 info=status
+```
+
+The prompt returns the current build state associated with the sample pull request number.

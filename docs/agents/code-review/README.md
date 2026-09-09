@@ -17,7 +17,7 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-08-25
+ms.date: 2026-09-08
 ms.topic: concept
 estimated_reading_time: 10
 ---
@@ -42,6 +42,8 @@ Use the **PR Review** prompt when a pull request is open, or select the **Code R
 ## Architecture
 
 ```mermaid
+accTitle: Code review architecture
+accDescr: The Code Review orchestrator uses shared protocols and skill references, then dispatches orientation, interactive investigation, and five findings perspectives.
 flowchart TD
   ORCH["Code Review<br/>(Orchestrator)"]
   AO["Code Review Orientation<br/>(Register 1 stage)"]
@@ -73,6 +75,7 @@ flowchart TD
     K4["Severity Taxonomy"]
     K5["Output Formats"]
     K6["Review Targets<br/>and Profiles"]
+    K7["Change-Risk<br/>Evidence"]
   end
 
   subgraph Skills
@@ -81,7 +84,7 @@ flowchart TD
     S3["Enterprise<br/>custom skills"]
   end
 
-  ORCH -->|"reads"| K1 & K2 & K3 & K4 & K5 & K6
+  ORCH -->|"reads"| K1 & K2 & K3 & K4 & K5 & K6 & K7
   ORCH -->|"Step 1"| D
   ORCH -->|"Step 1"| PR
   ORCH -->|"Step 2"| AO
@@ -145,6 +148,7 @@ The review workflow lives in the `code-review` skill, not in the agent. The orch
 | Severity Taxonomy | Severity levels, verdict normalization, and risk classification            |
 | Output Formats    | Reporting structure, merged report skeleton, and persisted artifact schema |
 | Review Targets    | Target resolution, profile expansion, task state, and emission identity    |
+| Change-Risk Model | Advisory evidence checklist and recommended review depth                    |
 
 The Standards perspective is language-agnostic: it scans the workspace for `**/SKILL.md` files, matches them against the languages in the diff, and loads the relevant `coding-standards` skills. See [Language Skills](language-skills.md) for details on the built-in skills and how to create your own.
 
@@ -153,6 +157,8 @@ The Standards perspective is language-agnostic: it scans the workspace for `**/S
 The agent runs a human-gated flow. Each step pauses for your input where the table notes a gate.
 
 ```mermaid
+accTitle: Code review workflow
+accDescr: Seven ordered steps move from target resolution and orientation through human selection, perspective dispatch, and persisted findings.
 flowchart TD
   S1["Step 1: Context Bootstrap<br/>resolve target/profile, compute diff, write orientation state"]
   S2["Step 2: Orientation Worker + Dispatch Board<br/>factual walkthrough, enumerated board (gate)"]
@@ -167,9 +173,9 @@ flowchart TD
 
 | Step | Stage                               | What happens                                                                                                                                                                                                                                                                        |
 |------|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1    | Context Bootstrap                   | The agent resolves the target and profile, verifies that the target head SHA matches checked-out `HEAD`, generates a structured XML diff from the exact target base, drafts a change brief, detects hotspots, resolves optional PR context, and writes serialized orientation state |
-| 2    | Orientation Worker + Dispatch Board | Code Review Orientation reads the serialized task, writes the factual Register 1 walkthrough, and seeds the dispatch board; you confirm or edit it and bookmark or reject board items (gate)                                                                                        |
-| 3    | Perspective + Depth Selection       | You adjust the profile's recommended findings perspectives and choose an independent depth tier (gate)                                                                                                                                                                              |
+| 1    | Context Bootstrap                   | The agent resolves the target and profile, verifies that the target head SHA matches checked-out `HEAD`, generates a structured XML diff from the exact target base, drafts a change brief, gathers change-risk evidence, detects hotspots, resolves optional PR and security-plan context, and writes serialized orientation state |
+| 2    | Orientation Worker + Dispatch Board | Code Review Orientation writes the factual Register 1 walkthrough and seeds the dispatch board; you confirm or edit the board, change-risk evidence, perspective recommendation, and advisory depth recommendation in one decision (gate)                                              |
+| 3    | Perspective + Depth Selection       | The agent resolves your confirmed perspective and depth choices, including any difference from the advisory recommendation (gate only when the Step 2 response was ambiguous)                                                                                                      |
 | 4    | Finalize Dispatch State             | The agent records exact per-perspective output paths in `diff-state.json` and writes `dispatch-manifest.json`                                                                                                                                                                       |
 | 5    | Human-Steered Walk-Back Loop        | You bookmark a board item and ask a question; the agent routes factual questions to the Explainer (Register 1) and deep questions to the Walkback (Register 2), then walks each answer back onto its board item (gate)                                                              |
 | 6    | Dispatch Perspectives               | Selected perspective subagents run concurrently, each writing structured JSON findings to disk                                                                                                                                                                                      |

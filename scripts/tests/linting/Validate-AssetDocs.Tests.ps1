@@ -9,7 +9,8 @@ BeforeAll {
     # command it uses (including Write-CIAnnotation) in this script's scope. The
     # generator also provides Invoke-AssetDocsGeneration for scaffolding fixtures.
     . (Join-Path $PSScriptRoot '../../docs/Generate-AssetDocs.ps1')
-    . (Join-Path $PSScriptRoot '../../linting/Validate-AssetDocs.ps1')
+    $script:ValidatorPath = (Resolve-Path (Join-Path $PSScriptRoot '../../linting/Validate-AssetDocs.ps1')).Path
+    . $script:ValidatorPath
     $script:TemplatePath = (Resolve-Path (Join-Path $PSScriptRoot '../../docs/templates/asset-doc.template.md')).Path
 
     $script:validatorFixtureCounter = 0
@@ -241,6 +242,25 @@ Describe 'Test-AssetDocStructure' -Tag 'Unit' {
         ($findings | Where-Object { $_.Category -eq 'Structure' -and $_.Message -match 'canonical contract order' }) | Should -Not -BeNullOrEmpty
     }
 
+    It 'Rejects a stubbed duplicate after an authored contract section' {
+        $content = $script:instrContent
+        foreach ($heading in @('## When to use it', '## Example usage')) {
+            $body = Get-AssetDocSectionBody -Content $content -Heading $heading
+            $content = $content.Replace($body, "Authored guidance for $heading.")
+        }
+        $content += "`n`n## When to use it`n`n<!-- asset-docs:stub -->`nDuplicate placeholder.`n"
+
+        Test-AssetDocAuthored -Model $script:instrModel -Content $content -RequireAuthoredContent instruction |
+            Should -BeNullOrEmpty
+
+        $findings = @(Test-AssetDocStructure -Model $script:instrModel -Content $content)
+        $duplicates = @($findings | Where-Object { $_.Category -eq 'Structure' -and $_.Message -match 'Duplicate section' })
+
+        $duplicates | Should -HaveCount 1
+        $duplicates[0].Level | Should -Be 'Error'
+        $duplicates[0].Message | Should -Match ([regex]::Escape('## When to use it'))
+    }
+
     It 'Order-checks an optional section the page includes' {
         $reordered = $script:instrContent -replace '## When to use it', '## __swap__' -replace '## Example usage', '## When to use it' -replace '## __swap__', '## Example usage'
         $findings = @(Test-AssetDocStructure -Model $script:instrModel -Content $reordered)
@@ -322,7 +342,9 @@ Describe 'Test-AssetDocAuthored' -Tag 'Unit' {
     BeforeAll {
         $script:repo = New-ValidatorFixture
         $script:agentModel = Get-FixtureModel -Repo $script:repo -Kind 'agent'
+        $script:instrModel = Get-FixtureModel -Repo $script:repo -Kind 'instruction'
         $script:agentContent = Get-Content -LiteralPath (Join-Path $script:repo $script:agentModel.DocRel) -Raw
+        $script:instrContent = Get-Content -LiteralPath (Join-Path $script:repo $script:instrModel.DocRel) -Raw
     }
 
     It 'Warns when stub placeholders remain by default' {
@@ -332,9 +354,56 @@ Describe 'Test-AssetDocAuthored' -Tag 'Unit' {
         $findings[0].Category | Should -Be 'Authored'
     }
 
-    It 'Errors on remaining stubs under -RequireAuthoredContent' {
-        $findings = @(Test-AssetDocAuthored -Model $script:agentModel -Content $script:agentContent -RequireAuthoredContent)
+    It 'Errors on Required stubs when the model kind is selected' {
+        $findings = @(Test-AssetDocAuthored -Model $script:agentModel -Content $script:agentContent -RequireAuthoredContent agent)
         $findings[0].Level | Should -Be 'Error'
+    }
+
+    It 'Leaves Required stubs as warnings when the model kind is not selected' {
+        $findings = @(Test-AssetDocAuthored -Model $script:agentModel -Content $script:agentContent -RequireAuthoredContent instruction)
+        $findings | Should -HaveCount 1
+        $findings[0].Level | Should -Be 'Warning'
+    }
+
+    It 'Treats an Optional-only instruction stub as a warning under strict instruction validation' {
+        $content = "## When to use it`n`nUse these instructions for the fixture.`n`n## Example usage`n`n<!-- asset-docs:stub -->`nExample placeholder.`n"
+        $findings = @(Test-AssetDocAuthored -Model $script:instrModel -Content $content -RequireAuthoredContent instruction)
+
+        $findings | Should -HaveCount 1
+        $findings[0].Level | Should -Be 'Warning'
+        $findings[0].Message | Should -Match ([regex]::Escape('## Example usage'))
+        $findings[0].Message | Should -Not -Match ([regex]::Escape('## When to use it'))
+    }
+
+    It 'Ignores a sentinel in a NotApplicable instruction section' {
+        $content = "## When to use it`n`nUse these instructions for the fixture.`n`n## How to use it`n`n<!-- asset-docs:stub -->`nNot applicable.`n"
+
+        Test-AssetDocAuthored -Model $script:instrModel -Content $content -RequireAuthoredContent instruction |
+            Should -BeNullOrEmpty
+    }
+
+    It 'Reports one Error naming every stubbed Required section' {
+        $findings = @(Test-AssetDocAuthored -Model $script:agentModel -Content $script:agentContent -RequireAuthoredContent agent)
+
+        $findings | Should -HaveCount 1
+        $findings[0].Level | Should -Be 'Error'
+        $findings[0].Message | Should -Match ([regex]::Escape('## When to use it'))
+        $findings[0].Message | Should -Match ([regex]::Escape('## How to use it'))
+        $findings[0].Message | Should -Match ([regex]::Escape('## Example usage'))
+    }
+
+    It 'Applies cumulative strict kinds' {
+        (Test-AssetDocAuthored -Model $script:agentModel -Content $script:agentContent -RequireAuthoredContent @('instruction', 'agent')).Level |
+            Should -Be 'Error'
+        (Test-AssetDocAuthored -Model $script:instrModel -Content $script:instrContent -RequireAuthoredContent @('instruction', 'agent')).Level |
+            Should -Be 'Error'
+    }
+
+    It 'Reports nothing when an Optional section is omitted' {
+        $content = "## When to use it`n`nUse these instructions for the fixture.`n"
+
+        Test-AssetDocAuthored -Model $script:instrModel -Content $content -RequireAuthoredContent instruction |
+            Should -BeNullOrEmpty
     }
 
     It 'Reports nothing when stubs are removed' {
@@ -344,11 +413,65 @@ Describe 'Test-AssetDocAuthored' -Tag 'Unit' {
 }
 
 Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
-    It 'Exposes ChangedFilesOnly and BaseBranch parameters' {
-        $command = Get-Command (Join-Path $PSScriptRoot '../../linting/Validate-AssetDocs.ps1')
+    It 'Sets the terminating error policy before top-level initialization' {
+        $tokens = $null
+        $parseErrors = $null
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+            $script:ValidatorPath,
+            [ref]$tokens,
+            [ref]$parseErrors
+        )
+
+        $parseErrors | Should -BeNullOrEmpty
+        $firstStatement = $ast.EndBlock.Statements[0]
+        $firstStatement | Should -BeOfType ([System.Management.Automation.Language.AssignmentStatementAst])
+        $firstStatement.Left.VariablePath.UserPath | Should -Be 'ErrorActionPreference'
+        $firstStatement.Right.Expression.Value | Should -Be 'Stop'
+    }
+
+    It 'Exposes the public validation parameters' {
+        $command = Get-Command $script:ValidatorPath
 
         $command.Parameters.Keys | Should -Contain 'ChangedFilesOnly'
         $command.Parameters.Keys | Should -Contain 'BaseBranch'
+        $command.Parameters.Keys | Should -Contain 'RequireAuthoredContent'
+        $command.Parameters['RequireAuthoredContent'].ParameterType | Should -Be ([string[]])
+    }
+
+    It 'Constrains orchestration to the four documentable kinds' {
+        $attribute = (Get-Command Invoke-AssetDocsValidation).Parameters['RequireAuthoredContent'].Attributes |
+            Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] }
+
+        $attribute.ValidValues | Should -Be @('agent', 'prompt', 'instruction', 'skill')
+        { Invoke-AssetDocsValidation -RepoRoot (New-ValidatorFixture) -RequireAuthoredContent unsupported } |
+            Should -Throw
+    }
+
+    It 'Binds single and comma-delimited cumulative kinds through a child pwsh process' {
+        $repo = New-ValidatorFixture
+        $singleOutput = Join-Path $TestDrive 'single-kind.json'
+        $cumulativeOutput = Join-Path $TestDrive 'cumulative-kinds.json'
+
+        & pwsh -NoProfile -File $script:ValidatorPath -RepoRoot $repo -RequireAuthoredContent instruction -OutputPath $singleOutput *> $null
+        $LASTEXITCODE | Should -Be 1
+        @((Get-Content -LiteralPath $singleOutput -Raw | ConvertFrom-Json).options.requireAuthoredContent) |
+            Should -Be @('instruction')
+
+        & pwsh -NoProfile -File $script:ValidatorPath -RepoRoot $repo -RequireAuthoredContent instruction,prompt -OutputPath $cumulativeOutput *> $null
+        $LASTEXITCODE | Should -Be 1
+        @((Get-Content -LiteralPath $cumulativeOutput -Raw | ConvertFrom-Json).options.requireAuthoredContent) |
+            Should -Be @('instruction', 'prompt')
+    }
+
+    It 'Rejects an unsupported kind through a child pwsh process' {
+        $repo = New-ValidatorFixture
+        $output = Join-Path $TestDrive 'invalid-kind.json'
+
+        $messages = @(& pwsh -NoProfile -File $script:ValidatorPath -RepoRoot $repo -RequireAuthoredContent unsupported -OutputPath $output 2>&1)
+
+        $LASTEXITCODE | Should -Be 1
+        Test-Path -LiteralPath $output | Should -BeFalse
+        $messages -join "`n" | Should -Match 'Unsupported asset kind'
     }
 
     It 'Exits 0 for a freshly generated tree with authored warnings only' {
@@ -359,7 +482,20 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
     It 'Writes a JSON results file' {
         $repo = New-ValidatorFixture
         Invoke-AssetDocsValidation -RepoRoot $repo | Out-Null
-        Test-Path -LiteralPath (Join-Path $repo 'logs/asset-docs-validation-results.json') | Should -BeTrue
+        $output = Join-Path $repo 'logs/asset-docs-validation-results.json'
+        Test-Path -LiteralPath $output | Should -BeTrue
+        @((Get-Content -LiteralPath $output -Raw | ConvertFrom-Json).options.requireAuthoredContent) |
+            Should -HaveCount 0
+    }
+
+    It 'Preserves selected kind order in the JSON results' {
+        $repo = New-ValidatorFixture
+        $output = Join-Path $repo 'logs/selected-kinds.json'
+
+        Invoke-AssetDocsValidation -RepoRoot $repo -RequireAuthoredContent @('skill', 'instruction') -OutputPath $output | Out-Null
+
+        @((Get-Content -LiteralPath $output -Raw | ConvertFrom-Json).options.requireAuthoredContent) |
+            Should -Be @('skill', 'instruction')
     }
 
     It 'Exits 1 when an orphan page is present' {

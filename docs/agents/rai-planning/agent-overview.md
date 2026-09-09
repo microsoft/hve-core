@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-08-20
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -22,6 +22,8 @@ estimated_reading_time: 7
 
 ```mermaid
 flowchart TD
+  accTitle: RAI Planner Agent Architecture
+  accDescr: The RAI Planner reads and writes session state, generates phase artifacts, activates research for framework questions, and follows its identity, licensing, planning, and standards guidance.
   subgraph Agent ["RAI Planner Agent"]
     RP["rai-planner.agent.md"]
     RR["rpi-research"]

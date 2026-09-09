@@ -227,6 +227,28 @@ function Get-AssetDocTemplateSectionBody {
     return $Template.Substring($bodyStart, $endIndex - $bodyStart).Trim("`r", "`n")
 }
 
+function Remove-HowToUseSection {
+    <#
+    .SYNOPSIS
+        Removes the top-level How to use it section from a documentation tail.
+    .PARAMETER Tail
+        Human-authored page content after the generated overview region.
+    .OUTPUTS
+        [string] The tail with the How to use it section removed.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Tail
+    )
+
+    return [regex]::Replace(
+        $Tail,
+        '(?ms)^## How to use it[^\S\r\n]*\r?\n.*?(?=^## |\z)',
+        ''
+    )
+}
+
 function Get-AssetDocPageRelPath {
     <#
     .SYNOPSIS
@@ -478,6 +500,12 @@ function New-AssetDocContent {
             throw "Overview markers missing in $($Model.DocRel); refusing to regenerate because doing so would discard human-authored sections. Restore the AUTO-GENERATED markers (or delete the page to re-scaffold) and re-run."
         }
         $humanTail = $split.After
+        if (-not $Model.Interactive) {
+            $howToUse = [regex]::Match($humanTail, '(?ms)^## How to use it\s*\r?\n(?<body>.*?)(?=^## |\z)')
+            if ($howToUse.Success -and $howToUse.Groups['body'].Value.Contains('<!-- asset-docs:stub -->')) {
+                $humanTail = Remove-HowToUseSection -Tail $humanTail
+            }
+        }
     }
     else {
         $msDate = $today

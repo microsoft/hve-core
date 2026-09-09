@@ -3,7 +3,7 @@ title: Security Plan From Prd
 description: Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Start security planning from PRD/BRD artifacts using the Security Planner agent 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when a confirmed PRD or BRD should seed security planning. Use capture mode when no current requirements artifact can be found or when it lacks enough system context.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide an approved or fictional `project-slug`. The Security Planner discovers the requirements artifact, extracts relevant evidence, asks for missing security context, and keeps the resulting plan subject to qualified review.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/security-plan-from-prd project-slug=sample-api
+```
+
+The prompt initializes a draft security plan from available requirements or falls back to focused capture questions.

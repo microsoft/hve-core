@@ -1,7 +1,7 @@
 ---
 title: Code Review Severity Taxonomy
 description: Severity levels, verdict normalization, and risk classification guidance for code review findings.
-ms.date: 2026-06-18
+ms.date: 2026-08-29
 ---
 
 ## Severity levels
@@ -28,6 +28,8 @@ Assign file-level risk using the component context:
 * `High` for files handling authentication, authorization, secrets, cryptography, parsing, deserialization, persistence, or financial logic.
 * `Medium` for core business logic, API boundaries, and shared utilities with broad impact.
 * `Low` for configuration, documentation, cosmetic changes, and isolated helper code.
+
+> **Note:** The path-based classification above supplies the `path-criticality` item in the [Change-Risk Evidence Checklist](change-risk-model.md). It informs an advisory depth recommendation but does not change finding severity, verdict normalization, or determine review depth on its own.
 
 ## Severity count convention
 

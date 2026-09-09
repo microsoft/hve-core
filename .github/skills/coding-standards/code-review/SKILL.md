@@ -6,7 +6,7 @@ user-invocable: true
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-25"
+  last_updated: "2026-09-08"
 ---
 
 # Code Review Skill Entry
@@ -31,6 +31,7 @@ Review work should stay anchored in evidence and should avoid premature conclusi
 8. [Emission Modes](references/emission-modes.md): capability-gated dual-mode emission and persisted emission record.
 9. [Cross-Skill Forks](references/cross-skill-forks.md): specialist review registry and package-aware gating for follow-up reviews.
 10. [Review Targets and Profiles](references/review-targets.md): target resolution, profile expansion, task serialization, and emission identity.
+11. [Change-Risk Evidence Checklist](references/change-risk-model.md): advisory evidence categories for selecting review depth with human confirmation.
 
 ## Skill layout
 
@@ -46,3 +47,4 @@ Review work should stay anchored in evidence and should avoid premature conclusi
   * `emission-modes.md`: native and canonical emission strategies.
   * `cross-skill-forks.md`: specialist review registry and gating rules.
   * `review-targets.md`: review target, profile, and task-state rules.
+  * `change-risk-model.md` — advisory evidence checklist for selecting review depth with human confirmation.

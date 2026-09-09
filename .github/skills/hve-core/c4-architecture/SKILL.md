@@ -1,7 +1,7 @@
 ---
 name: c4-architecture
 description: "Model and document existing or planned software architectures with the C4 model across System Context, Container, and Component levels plus deployment diagrams, then emit diagrams through a selected renderer. Use when an architect needs audience-appropriate software architecture documentation; use the 'architecture-diagrams' skill for infrastructure topology."
-license: mixed
+license: CC-BY-4.0 AND MIT
 user-invocable: true
 compatibility: "Generates Mermaid source in any chat context. Preview needs a Mermaid-capable Markdown host. CLI render validation needs Node.js, @mermaid-js/mermaid-cli (mmdc) on PATH plus a Chrome/Chromium runtime; install may need package-manager and network access."
 metadata:
@@ -72,3 +72,11 @@ Each source is paraphrased with attribution; none is reproduced verbatim.
 
 - C4 model concepts and abstractions (System Context, Container, Component, Code) are based on the [C4 Model](https://c4model.com/) by Simon Brown, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Mermaid syntax conventions in the [Mermaid renderer](references/renderer-mermaid.md) are derived from the [Mermaid documentation](https://mermaid.js.org/), licensed under [MIT](https://github.com/mermaid-js/mermaid/blob/develop/LICENSE).
+
+Derived and original material share files here, so the boundary is marked inline in each file rather than split by file. The frontmatter expression is the conjunction of every license present in the package.
+
+| Path                                      | License           | Origin                                                                                         |
+|-------------------------------------------|-------------------|------------------------------------------------------------------------------------------------|
+| `references/renderer-mermaid.md`          | CC-BY-4.0 AND MIT | Repository renderer rules, paraphrased C4 concepts, and MIT-derived Mermaid syntax conventions |
+| `references/c4-modelling-instructions.md` | CC-BY-4.0         | Repository modelling rules with paraphrased C4 concepts                                        |
+| `SKILL.md` and remaining package content  | CC-BY-4.0         | Repository-original with paraphrased C4 concepts                                               |

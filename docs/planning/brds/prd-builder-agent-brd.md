@@ -3,7 +3,7 @@ brd_id: "BRD-2026-Q2-PRD-BUILDER"
 title: "PRD Builder Agent Requirements"
 description: "Business Requirements Document for the PRD Builder agent, capturing business goals, requirements, and traceability for migrating PRD authoring onto the shared requirements-author skill."
 author: "HVE Core Maintainers"
-ms.date: "2026-08-01"
+ms.date: "2026-08-20"
 ms.topic: "reference"
 keywords:
   - prd builder
@@ -218,6 +218,8 @@ NFR-008: The PRD Builder operates across HVE-Core distribution contexts (reposit
 
 ```mermaid
 flowchart LR
+  accTitle: PRD Builder Seven-Phase Lifecycle
+  accDescr: Seven phases progress from assessment through finalization, consuming shared templates and traceability guidance and optionally starting from an approved BRD handoff.
     A[Assess] --> B[Discover]
     B --> C[Create]
     C --> D[Build]

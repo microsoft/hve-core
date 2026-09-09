@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-09-07
 ms.topic: overview
 sidebar_position: 1
 keywords:
@@ -38,6 +38,8 @@ HVE Core supports a range of customization depths. Start with the lightest optio
 
 ```mermaid
 graph LR
+  accTitle: HVE Core Customization Depth Spectrum
+  accDescr: Customization progresses from VS Code settings through instructions, agents and prompts, skills, the plugin manifest, build-system changes, and a full fork as complexity increases.
     A["VS Code Settings"] --> B["Instructions"]
     B --> C["Agents & Prompts"]
     C --> D["Skills"]
@@ -80,12 +82,17 @@ graph LR
 
 Use the `hve-builder` skill to create, improve, refactor, replace, review, or
 validate prompts, instructions, agents, subagents, and skills. It resolves the
-write boundary, runs independent static review, and applies one behavior gate
-with route-specific execution. Major mutations and behavior-bearing review
-targets execute testing, while eligible no-runtime review targets and Minor or
-Medium mutations are satisfied-and-skipped. Known target files and
-caller-supplied canonical references remain bounded lifecycle reads;
-open-ended exploration and decision-critical research activate `rpi-research`.
+write boundary, completes known edits, independent static review, and local
+validation, then freezes the candidate for behavior assessment. Major mutations
+and behavior-bearing review targets invoke HVE Builder Tester; eligible no-runtime
+review targets and Minor or Medium mutations are satisfied-and-skipped. In a
+mutating mode, the main agent can batch required fixes from the report, refresh
+affected checks, and test the revised candidate within the same run. It uses as
+few cycles as needed, stopping rather than repeating unchanged failures or chasing
+advisory polish. The tester remains read-only, and every report identifies its
+tested revision. Known target files and caller-supplied canonical
+references remain bounded lifecycle reads; open-ended exploration and
+decision-critical research activate `rpi-research`.
 
 The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills
 remain compatibility aliases for legacy requests. They route to `hve-builder`

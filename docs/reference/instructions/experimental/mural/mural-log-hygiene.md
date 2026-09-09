@@ -3,7 +3,7 @@ title: Experimental/Mural/Mural Log Hygiene
 description: "Operator log-hygiene contract for Mural customizations: never echo raw URLs, Azure SAS query strings, OAuth tokens, or Authorization headers; the skill _redact() is a defense-in-depth backstop, not a license to log."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,11 @@ Operator log-hygiene contract for Mural customizations: never echo raw URLs, Azu
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these rules whenever Mural commands, customizations, diagnostics, or
+network evidence could expose URLs, headers, tokens, authorization codes, or
+Azure SAS values. Use only redacted evidence outside the terminal and treat
+the skill's redaction helper as defense in depth, not permission to log raw
+traffic.
 
 ## Example usage
 

@@ -2,7 +2,7 @@
 title: SSSC Planner - Product Requirements Document
 description: Product requirements for an SSSC Planner that helps HVE-Core and downstream projects keep supply chain security planning consistent, auditable, and actionable.
 author: GitHub Copilot
-ms.date: 2026-08-02
+ms.date: 2026-08-26
 ms.topic: concept
 sidebar_position: 1
 keywords: [prd, sssc, supply chain security, planner, governance]
@@ -86,6 +86,8 @@ If the SSSC Planner remains underspecified as a product, users may receive incon
 
 ```mermaid
 journey
+  accTitle: SSSC Planner User Journey
+  accDescr: A user enters supply-chain planning, confirms boundaries, inventories and reviews capabilities, prioritizes gaps, and produces backlog and release handoff artifacts.
     title SSSC Planner User Journey
     section Start
       Choose entry mode: 5: User
@@ -160,6 +162,8 @@ The SSSC Planner helps teams create auditable, standards-aware supply chain secu
 
 ```mermaid
 graph LR
+  accTitle: SSSC Planner System Architecture
+  accDescr: Entry prompts invoke the planner, which combines instructions, session state, supply-chain standards, and research to produce reviewed assessment artifacts for backlog handoff.
     User["User or reviewer"] --> Entry["Entry prompt<br/>capture, from PRD, from BRD, from security plan"]
     Entry --> Agent["SSSC Planner agent"]
     Agent --> Instructions["SSSC planner instructions<br/>phase protocol and state rules"]
@@ -178,6 +182,8 @@ graph LR
 
 ```mermaid
 flowchart TD
+  accTitle: SSSC Planner Six-Phase Workflow
+  accDescr: Six phases move through scoping, assessment, standards mapping, gap analysis, backlog generation, and review handoff, with explicit gates and one artifact per phase.
     P1["Phase 1: Scoping<br/>hard gate"] --> P2["Phase 2: Supply Chain Assessment<br/>summary and advance"]
     P2 --> P3["Phase 3: Standards Mapping<br/>summary and advance"]
     P3 --> P4["Phase 4: Gap Analysis<br/>hard gate"]
@@ -206,7 +212,10 @@ flowchart TD
 
 ```mermaid
 erDiagram
+  accTitle: SSSC Session State and Artifact Model
+  accDescr: PRD state can optionally seed an SSSC session. The session persists its own state, produces phase artifacts, processes references, records notices, and generates handoff items.
     PRD ||--|| PRD_STATE : tracks
+    PRD_STATE o|--o{ SSSC_SESSION : optionally-seeds
     SSSC_SESSION ||--|| STATE_JSON : persists
     SSSC_SESSION ||--o{ PHASE_ARTIFACT : produces
     SSSC_SESSION ||--o{ REFERENCE : processes
@@ -258,6 +267,8 @@ erDiagram
 
 ```mermaid
 graph TD
+  accTitle: SSSC Planner Distribution Pipeline
+  accDescr: Agent, prompt, instruction, and skill sources feed the marketplace recipe, which generates plugin and extension outputs that are checked by the repository test suites.
     Source["Source artifacts"] --> AgentFile[".github/agents/security/sssc-planner.agent.md"]
     Source --> PromptFiles[".github/prompts/security/sssc-*.prompt.md"]
     Source --> InstructionFile[".github/instructions/security/sssc-planner.instructions.md"]

@@ -75,13 +75,22 @@ BeforeAll {
     function Set-AuthoredText {
         <#
         .SYNOPSIS
-            Applies a literal text substitution to the authored fixture.
+            Applies a regular expression substitution to the authored fixture.
+        .DESCRIPTION
+            Throws when the substitution leaves the fixture unchanged so that a pattern
+            which fails to match surfaces as a test failure instead of a silent no-op.
+            Multi-line patterns must use '\r?\n' because the fixture line endings depend
+            on the checkout.
         #>
         param([string]$Root, [string]$Pattern, [string]$Replacement)
 
         $path = Get-AuthoredPath -Root $Root
         $content = Get-Content -LiteralPath $path -Raw
-        [System.IO.File]::WriteAllText($path, ($content -replace $Pattern, $Replacement))
+        $mutated = $content -replace $Pattern, $Replacement
+        if ($mutated -ceq $content) {
+            throw "Fixture mutation produced no change; pattern did not match: $Pattern"
+        }
+        [System.IO.File]::WriteAllText($path, $mutated)
     }
 
     function Set-ArtifactProperty {
@@ -297,7 +306,7 @@ Describe 'Design Intent validator rejects authored violations' -Tag 'Unit' {
 
     It 'Rejects a deciding claim the probe does not support in the bound state' {
         $root = New-FixtureRoot -Name 'inadequate-deciding'
-        Set-AuthoredText -Root $root -Pattern '          - wcag-22:1\.4\.11\n        role: informs\n        blocking: false' -Replacement "          - wcag-22:1.4.11`n        role: decides`n        blocking: true"
+        Set-AuthoredText -Root $root -Pattern '          - wcag-22:1\.4\.11\r?\n        role: informs\r?\n        blocking: false' -Replacement "          - wcag-22:1.4.11`n        role: decides`n        blocking: true"
         (Invoke-Validator -Root $root).Codes | Should -Contain 'inadequate-deciding-claim'
     }
 
@@ -309,13 +318,13 @@ Describe 'Design Intent validator rejects authored violations' -Tag 'Unit' {
 
     It 'Rejects an informing expectation marked blocking' {
         $root = New-FixtureRoot -Name 'informing-blocker'
-        Set-AuthoredText -Root $root -Pattern 'role: informs\n        blocking: false' -Replacement "role: informs`n        blocking: true"
+        Set-AuthoredText -Root $root -Pattern 'role: informs\r?\n        blocking: false' -Replacement "role: informs`n        blocking: true"
         (Invoke-Validator -Root $root).Codes | Should -Contain 'schema-violation'
     }
 
     It 'Accepts a custom deciding expectation without a review for uncovered gating' {
         $root = New-FixtureRoot -Name 'custom-deciding'
-        Set-AuthoredText -Root $root -Pattern 'assert: custom\n        detail: A reviewer walks the summary aloud and confirms the reading order matches the visual grouping\.\n        criteria:\n          - wcag-22:1\.3\.2\n        role: informs\n        blocking: false' -Replacement "assert: custom`n        detail: A reviewer walks the summary aloud.`n        criteria:`n          - wcag-22:1.3.2`n        role: decides`n        blocking: true"
+        Set-AuthoredText -Root $root -Pattern 'assert: custom\r?\n        detail: A reviewer walks the summary aloud and confirms the reading order matches the visual grouping\.\r?\n        criteria:\r?\n          - wcag-22:1\.3\.2\r?\n        role: informs\r?\n        blocking: false' -Replacement "assert: custom`n        detail: A reviewer walks the summary aloud.`n        criteria:`n          - wcag-22:1.3.2`n        role: decides`n        blocking: true"
         (Invoke-Validator -Root $root).Codes | Should -Not -Contain 'schema-violation'
     }
 }

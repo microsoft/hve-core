@@ -3,7 +3,7 @@ title: Hve Core/Licensing Posture
 description: "Repository posture for licensing, reproduction, and attribution of third-party standards in skills and tracking artifacts"
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Repository posture for licensing, reproduction, and attribution of third-party s
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this posture when skills or tracking artifacts quote, paraphrase, or vendor
+third-party standards and guidance. Classify the source before authoring,
+prefer paraphrase with attribution, and use a domain overlay when one exists;
+restricted standards remain cite-only even for short excerpts.
 
 ## Example usage
 

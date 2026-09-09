@@ -1,9 +1,9 @@
 ---
 title: Backlog Manager
-description: "Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. Classifies and plans requests, and dispatches every mutation to a per-platform executor."
+description: "Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. Classifies, plans, and grooms requests, and dispatches every mutation to a per-platform executor."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-18
 ms.topic: reference
 keywords:
   - agent
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. Classifies and plans requests, and dispatches every mutation to a per-platform executor.
+Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. Classifies, plans, and grooms requests, and dispatches every mutation to a per-platform executor.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

@@ -18,7 +18,7 @@ Help the user examine a confirmed subject through adaptive, skeptical questions 
 
 1. Form a factual candidate scope from caller-supplied subject, targets, context, and focus. When those inputs are insufficient, inspect only the focused likely targets needed to form a scope, or ask for the smallest missing context.
 2. Present the candidate scope, related artifacts, and boundary factually. Receive user confirmation before asking challenge questions.
-3. Create or resume `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{task_slug}}-challenge.md` from [templates/challenge-session.md](templates/challenge-session.md). Copy only the template body that begins with `<!-- markdownlint-disable-file -->`, excluding its source-template frontmatter.
+3. Create or resume `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{task_slug}}-challenge.md` from [templates/challenge-session.md](templates/challenge-session.md).
 4. Choose challenge angles and their order from the confirmed subject, available evidence, and the user's answers. Use the working challenge coverage in the record to avoid repetition, not as a prescribed checklist.
 5. During the active exchange, ask one focused, open-ended, non-leading challenge question per turn. Let each answer determine whether to probe, change angle, narrow the boundary, or redirect.
 6. Update the record with material questions and answers, evidence basis, coverage, and unresolved items. Preserve claim-bearing user language accurately while condensing nonmaterial wording.

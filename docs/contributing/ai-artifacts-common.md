@@ -163,7 +163,7 @@ Root `plugin.json` is the distribution authority for the single `hve-core` plugi
 * Instructions under `.github/instructions/<package>/**/*.instructions.md`
 * Skills with `.github/skills/<package>/<skill>/SKILL.md` unless the skill's top-level license has a noncommercial qualifier
 
-Root-level repository-only artifacts are excluded. The manifest retains the fixed telemetry hook. `.github/plugin/marketplace.json` contains one `hve-core` locator to `.github` and no component recipe.
+Root-level repository-only artifacts are excluded. The manifest retains the fixed telemetry hook. `.github/plugin/marketplace.json` contains one `hve-core` entry with the relative source `.` and no component recipe.
 
 ## Extension Packaging
 

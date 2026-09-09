@@ -16,7 +16,7 @@ tags:
   - skills
   - coding-standards
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-08-20
 ms.topic: how-to
 estimated_reading_time: 8
 ---
@@ -29,6 +29,8 @@ The orchestrator dispatches the Standards perspective with a `diff-state.json` c
 
 ```mermaid
 flowchart LR
+  accTitle: Standards Perspective Skill Loading Pipeline
+  accDescr: The orchestrator writes diff state, the Standards perspective matches changed extensions to skills, loads and applies their checklists, and writes findings.
   A["Orchestrator:<br/>write diff-state.json"] --> B["Standards perspective:<br/>read extensions"]
   B --> C["Match skills via catalog<br/>and semantic filtering"]
   C --> D["Load matched skills"]
@@ -123,6 +125,8 @@ Skills stack additively. When a Python diff is reviewed, the perspective might l
 
 ```mermaid
 flowchart TD
+  accTitle: Skill Stacking Architecture
+  accDescr: The Standards perspective combines installed HVE Core skills with repository-specific skills, tags each source, and merges their findings into one review report.
   subgraph "hve-core (installed)"
     A["python-foundational<br/>SKILL.md"]
   end

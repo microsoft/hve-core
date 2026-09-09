@@ -123,7 +123,7 @@ def test_audit_fail_closed_blocks_request(
     _enable_audit(monkeypatch, log)
     opener = mocker.patch("gitlab._OPENER.open")
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabError):
         gitlab.request("GET", f"{TEST_API_URL}/projects/1/merge_requests/2")
 
     opener.assert_not_called()
@@ -214,7 +214,7 @@ def test_oauth_attempt_failure_blocks_egress(
     monkeypatch.setenv("GITLAB_AUDIT_LOG", str(tmp_path / "missing" / "audit.jsonl"))
     opener = mocker.MagicMock()
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(gitlab.GitLabError):
         gitlab.oauth.post_form(
             "https://gitlab.example.com",
             "/oauth/token",

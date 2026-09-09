@@ -3,7 +3,7 @@ title: Experimental/Mural/Mural Destinations
 description: "Open destination registry for Mural extractor writeback: registered adapters, intent axis, and per-destination loop-closure metrics."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Open destination registry for Mural extractor writeback: registered adapters, in
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these instructions when extracted Mural action items need a registered
+writeback destination, explicit intent, or loop-closure measure. Read the
+registry at invocation time and ask for intent when it is unclear; add adapters
+through the registry and target handoff rather than changing extractor core.
 
 ## Example usage
 

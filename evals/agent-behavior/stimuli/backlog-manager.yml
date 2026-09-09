@@ -101,3 +101,70 @@ stimuli:
         config:
           pattern: '(?i)Step\s+\d+:\s*(Platform and Intent|Workflow Dispatch|Summary and Handoff)'
           negate: true
+
+  - name: backlog-manager-performs-workflow-neutral-github-grooming
+    prompt: |
+      Classify this request as GitHub Grooming, then assess the supplied ordinary
+      issue inventory directly through the reusable grooming policy. Do not
+      invoke a workflow-bound worker, require automation inputs, or execute a
+      GitHub mutation.
+
+      Inventory scope: open issues selected by a maintainer for this review.
+
+      Issue #2558 requests a workflow-neutral grooming policy. Repository
+      evidence shows that
+      `.github/instructions/project-planning/github-backlog-grooming.instructions.md`
+      defines evidence-backed advisory assessment and that Backlog Manager
+      applies it directly. Treat the issue as Distinct and Likely completed.
+
+      Issue #2601 requests automatic closure of inactive issues. Repository
+      evidence contains no implementation and the grooming policy keeps closure
+      advisory and maintainer-owned. Treat the issue as Distinct and Still
+      needed.
+
+      Produce the compact issue index with this exact header:
+
+      | Issue | Similarity | Disposition | Status | Recommended next step |
+
+      Follow it with `Issue #2558` and `Issue #2601` headings in that order.
+      Under each heading, include the exact labels `Repository evidence`,
+      `Similarity outcome`, `Disposition`, `Grooming finding`, `Recommended
+      next step`, and `Assessment status`.
+
+      Explain the handoff using these exact sentences: "Allowed operations are
+      Update and Comment; Close is prohibited." and "Writeback requires
+      per-field approval and a fresh Expected Updated At value; stale approval
+      must stop execution." Do not claim that any issue was changed.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: grooming-classification
+        config:
+          pattern: '(?i)\bGitHub Grooming\b|\bGrooming\b'
+      - type: output-matches
+        name: compact-issue-index
+        config:
+          pattern: '(?i)\|\s*Issue\s*\|\s*Similarity\s*\|\s*Disposition\s*\|\s*Status\s*\|\s*Recommended next step\s*\|'
+      - type: output-matches
+        name: labeled-issue-details
+        config:
+          pattern: '(?is)Issue #?2558.{0,800}Repository evidence.{0,800}Issue #?2601'
+      - type: output-matches
+        name: non-closing-handoff
+        config:
+          pattern: '(?is)(Update|Comment).{0,200}(Close.{0,80}(never|not|prohibit|exclude)|(never|not|prohibit|exclude).{0,80}Close)'
+      - type: output-matches
+        name: approval-freshness
+        config:
+          pattern: '(?i)per-field approval|Expected Updated At|updated_at|fresh|stale approval'
+      - type: output-matches
+        name: no-github-mutation
+        config:
+          pattern: '(?i)(updated|closed|commented on)\s+(github\s+)?issue\s*#?\d+'
+          negate: true
+      - type: output-matches
+        name: no-aw-contract-dependency
+        config:
+          pattern: '(?i)shard[_ -]?id|manifest[_ -]?digest|ordered_candidate_ids|safe[- ]output|publish-backlog-grooming-result'
+          negate: true

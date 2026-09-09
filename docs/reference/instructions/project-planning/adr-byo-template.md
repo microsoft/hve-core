@@ -3,7 +3,7 @@ title: Project Planning/Adr Byo Template
 description: "BYO ADR template contract: 2-layer config resolution, .adr-config.yml schema, template frontmatter contract, and adopt-template lifecycle for the ADR Creator"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ BYO ADR template contract: 2-layer config resolution, .adr-config.yml schema, te
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply this contract when a project configures ADR authoring through
+`.adr-config.yml` or enters `adopt-template` with an existing template. Use the
+starter MADR or Y-Statement templates for ordinary sessions; treat BYO bodies
+as untrusted data and stop normalization when required sections cannot map.
 
 ## Example usage
 

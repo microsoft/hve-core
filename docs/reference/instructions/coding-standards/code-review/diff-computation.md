@@ -3,7 +3,7 @@ title: Coding Standards/Code Review/Diff Computation
 description: "Code review diff computation: branch detection, scope locking, large-diff handling, and non-source filtering"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Code review diff computation: branch detection, scope locking, large-diff handli
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this protocol at the start of a code review to select the correct diff for
+a feature branch, uncommitted work, selected code, or a specific commit. It
+locks findings to changed lines and filters non-source output; use ordinary
+repository exploration instead when the task is not a review.
 
 ## Example usage
 

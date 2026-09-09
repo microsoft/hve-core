@@ -3,7 +3,7 @@ title: Ado Create Pull Request
 description: "Create an Azure DevOps pull request with generated description, linked work items, and reviewers"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Create an Azure DevOps pull request with generated description, linked work item
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when a reviewed branch is ready for an Azure DevOps pull request with discovered work items and reviewers. Use the description-only workflow when you are not ready to create an external pull request.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide or confirm the Azure DevOps project, repository, source branch, and destination. Add draft status, work item IDs, or reviewer filters when needed; destination confirmation, sanitization, and human-review gates still apply before mutation.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/ado-create-pull-request adoProject=hve-core isDraft=true
+```
+
+After the required confirmations, the prompt creates a draft pull request with a generated description and eligible links.

@@ -3,7 +3,7 @@ prd_id: "PRD-2026-Q2-PRIVACY-PLANNER"
 title: "Privacy Planner PRD"
 description: "Product requirements for adding a first-class Privacy Planner, privacy-standards skill, and Privacy Reviewer to the hve-core planner family."
 author: "GitHub Copilot"
-ms.date: 2026-08-10
+ms.date: 2026-08-20
 ms.topic: concept
 sidebar_position: 2
 keywords: [prd, privacy, planner, privacy standards, data protection]
@@ -117,6 +117,8 @@ Out of scope:
 
 ```mermaid
 journey
+  accTitle: Privacy Planner User Journey
+  accDescr: A practitioner starts privacy planning, maps and classifies personal-data processing, follows a DPIA gate when required, and produces reviewed findings and backlog handoff.
     title Privacy Planner User Journey
     section Start
       Start privacy planning session: 5: Practitioner
@@ -222,6 +224,8 @@ NFR-009: Privacy Planner must support growth in standards mappings, handoff fiel
 
 ```mermaid
 flowchart LR
+  accTitle: Privacy Planner DPIA Threshold Gate
+  accDescr: Lifecycle mapping and risk classification either block for deeper DPIA assessment or continue normally before both paths produce cited findings, cross-planner references, and backlog handoff.
     A[Processing activity described] --> B[Map personal data lifecycle]
     B --> C[Phase 2 privacy risk classification]
     C --> D{DPIA threshold crossed?}
@@ -238,6 +242,8 @@ flowchart LR
 
 ```mermaid
 flowchart TB
+  accTitle: Privacy Planner Product Architecture
+  accDescr: The planner combines shared identity guidance, privacy standards, session state, cross-planner references, and backlog handoff while the reviewer applies the same standards to its report.
     A[Privacy Planner agent] --> B[planner-identity-base]
     A --> C[privacy-standards skill]
     C --> D[NIST PF / NISTIR 8062]

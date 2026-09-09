@@ -7,7 +7,7 @@ user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-11"
+  last_updated: "2026-08-26"
 ---
 
 # Accessibility — Skill Entry
@@ -106,16 +106,31 @@ The scanner CLI ([scripts/scan.py](scripts/scan.py)) wraps the Node-based axe-co
 ### Quick Start
 
 ```bash
-uv run scripts/scan.py https://example.com
+uv run scripts/scan.py https://example.com --allow-host example.com
 uv run scripts/scan.py ./page.html --output results.json
+uv run scripts/scan.py file:///path/to/page.html
 ```
+
+Loopback HTTP(S) targets need no additional option. Every other remote host
+requires either a matching, repeatable `--allow-host HOST` value or the broader
+`--allow-external` confirmation. Local paths and local `file:` URIs must resolve
+to existing regular files. Network shares, remote file authorities, directories,
+missing files, credentials, leading-dash targets, and non-HTTP(S) remote schemes
+are rejected before the axe CLI starts.
 
 ### Parameters Reference
 
-| Parameter  | Required | Default | Description                                |
-|------------|----------|---------|--------------------------------------------|
-| `target`   | Yes      | —       | URL or local file to scan.                 |
-| `--output` | No       | stdout  | Path to write the normalized JSON results. |
+| Parameter          | Required | Default | Description                                                    |
+|--------------------|----------|---------|----------------------------------------------------------------|
+| `target`           | Yes      | —       | Authorized HTTP(S) URL or existing regular local file to scan. |
+| `--output`         | No       | stdout  | Path to write the normalized JSON results.                     |
+| `--allow-host`     | No       | none    | Authorize one non-loopback HTTP(S) host; repeat as needed.     |
+| `--allow-external` | No       | false   | Confirm access to any non-loopback HTTP(S) host.               |
+
+Remote authorization applies to the initial scanner target only. It does not
+constrain browser redirects, DNS address changes, subresources, WebSockets,
+Service Workers, downloads, or other browser-derived requests. Run the scanner
+only from a workstation whose network reach matches the target's trust level.
 
 ### Script Reference
 
@@ -148,6 +163,8 @@ uv run scripts/scan.py ./page.html --output results.json
 |------------------------------------------|--------------------------------------------|------------------------------------------------------------------|-----------|
 | `scanner unavailable` error              | Node.js or `npx` not on PATH               | Install Node.js so `npx` resolves, then re-run.                  | `2`       |
 | Long pause or download on first run      | `npx` is fetching `@axe-core/cli`          | Allow network access on the first run; later runs use the cache. | —         |
+| `Refusing to probe non-loopback host`    | Remote host was not explicitly authorized  | Add `--allow-host HOST` or confirm with `--allow-external`.      | `2`       |
+| `Local scan target does not exist`       | Local path or file URI cannot be resolved  | Supply an existing regular local file, not a directory or share. | `2`       |
 | `scan failed or returned invalid output` | axe-core CLI errored or emitted non-JSON   | Confirm the target URL or file is reachable and well-formed.     | `1`       |
 | Empty `violations` but issues expected   | Page rendered after the scan, or rules N/A | Confirm the target fully loads; check `summary.inapplicable`.    | `0`       |
 

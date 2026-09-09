@@ -280,6 +280,12 @@ Describe 'Get-AssetInvocation' -Tag 'Unit' {
         (Get-AssetInvocation -Kind 'skill' -Name 'documentation' -Frontmatter @{ 'user-invocable' = 'false' }).Mechanism |
             Should -Be 'skill-load'
     }
+
+    It 'Classifies an explicitly non-user-invocable top-level agent as background' {
+        $result = Get-AssetInvocation -Kind 'agent' -Name 'backlog-grooming' -Frontmatter @{ name = 'Backlog Grooming'; 'user-invocable' = $false } -Path '.github/agents/github/backlog-grooming.agent.md'
+        $result.Mechanism | Should -Be 'background-agent'
+        Format-AssetInvocation -Invocation $result | Should -Match 'Background agent.*invoked by automation'
+    }
 }
 
 Describe 'Test-AssetInteractive' -Tag 'Unit' {
@@ -289,6 +295,10 @@ Describe 'Test-AssetInteractive' -Tag 'Unit' {
 
     It 'Treats a delegated subagent as non-interactive' {
         Test-AssetInteractive -Kind 'agent' -Path '.github/agents/hve-core/subagents/rpi-planner.agent.md' | Should -BeFalse
+    }
+
+    It 'Treats an explicitly non-user-invocable top-level agent as non-interactive' {
+        Test-AssetInteractive -Kind 'agent' -Frontmatter @{ 'user-invocable' = 'false' } -Path '.github/agents/github/backlog-grooming.agent.md' | Should -BeFalse
     }
 
     It 'Treats a prompt declaring an argument hint as interactive' {

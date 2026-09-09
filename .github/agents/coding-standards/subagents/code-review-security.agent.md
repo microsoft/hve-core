@@ -15,7 +15,7 @@ user-invocable: false
 
 Thin perspective subagent for the Code Review orchestrator. It evaluates a precomputed diff for security issues — authentication, authorization, input validation, secrets handling, injection, and unsafe serialization, parsing, or data-handling paths — and writes structured findings. All review logic comes from the `code-review` skill; this file only binds the security preset.
 
-This perspective is self-contained: it sources its review logic from the `code-review` skill and does not call the standalone Security Reviewer or Supply Chain Reviewer agents. When a high-risk surface is in scope, it may add a one-line note that a deeper standalone security audit exists.
+This perspective is self-contained: it sources its review logic from the `code-review` skill and does not call the standalone Security Reviewer or SSSC Reviewer agents. When a high-risk surface is in scope, it may add a one-line note that a deeper standalone security audit exists.
 
 ## Skill Reference Contract
 

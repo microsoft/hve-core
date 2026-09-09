@@ -3,7 +3,7 @@ title: Experimental/Mural/Mural Bootstrap
 description: "Fresh-session Mural bootstrap requirements for doctor checks, credential backend selection, and safe escalation before Mural tool use."
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Fresh-session Mural bootstrap requirements for doctor checks, credential backend
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this safety gate before the first Mural operation in a fresh session or
+after the workspace, credential backend, or working directory changes. Run
+`mural doctor` and proceed only on `ready`; setup, login, scope, directory, or
+dependency verdicts require the documented pause without exposing secrets.
 
 ## Example usage
 

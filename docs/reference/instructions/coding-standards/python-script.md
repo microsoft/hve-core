@@ -3,7 +3,7 @@ title: Coding Standards/Python Script
 description: Python scripting conventions
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Python scripting conventions
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these conventions to Python automation, tooling, and CLI code when
+choosing entry points, typing, logging, paths, subprocesses, and error
+handling. Use the uv environment instructions before executing or changing
+dependencies, and apply the Python test guidance to pytest code.
 
 ## Example usage
 

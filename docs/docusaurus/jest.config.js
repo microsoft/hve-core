@@ -22,7 +22,12 @@ module.exports = {
     '^@docusaurus/useDocusaurusContext$': '<rootDir>/src/__mocks__/@docusaurus/useDocusaurusContext',
     '^@theme/(.*)$': '<rootDir>/src/__mocks__/@theme/$1',
   },
-  testPathIgnorePatterns: ['/node_modules/', '/build/', '/e2e/'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/build/',
+    '/e2e/',
+    '/scripts/validate-mermaid-accessibility.test.mjs',
+  ],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',

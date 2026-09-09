@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-09-04
 ms.topic: reference
 ---
 
@@ -57,46 +57,71 @@ Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Scope CurrentUser
 
 The extension is automatically packaged and published through GitHub Actions:
 
-| Workflow                                               | Trigger                            | Purpose                                                     |
-|--------------------------------------------------------|------------------------------------|-------------------------------------------------------------|
-| `.github/workflows/extension-package.yml`              | Reusable workflow                  | Packages a source-explicit extension                        |
-| `.github/workflows/release-prerelease-prepare.yml`     | Merged PR to `main`; dispatch      | Opens the reviewed `main` to PreRelease promotion           |
-| `.github/workflows/release-prerelease.yml`             | Merged PR to `release/prerelease`  | Prepares or publishes the managed odd-minor PreRelease      |
-| `.github/workflows/release-stable.yml`                 | Published PreRelease; dispatch     | Opens the reviewed PreRelease to Stable promotion           |
-| `.github/workflows/release-stable-publish.yml`         | Merged PR to `release/stable`      | Prepares or publishes the managed even-minor Stable release |
-| `.github/workflows/release-marketplace-stable.yml`     | Published Stable release; dispatch | Publishes the Stable VSIX to VS Code Marketplace            |
-| `.github/workflows/release-marketplace-prerelease.yml` | Published PreRelease; dispatch     | Publishes the PreRelease VSIX to VS Code Marketplace        |
+| Workflow                                               | Trigger                            | Purpose                                                 |
+|--------------------------------------------------------|------------------------------------|---------------------------------------------------------|
+| `.github/workflows/release-prerelease-prepare.yml`     | Merged PR to `main`; dispatch      | Opens the reviewed `main` to PreRelease promotion       |
+| `.github/workflows/release-prerelease.yml`             | Merged PR to `release/prerelease`  | Prepares metadata or creates the exact tag and draft    |
+| `.github/workflows/release-stable.yml`                 | Published PreRelease; dispatch     | Opens the reviewed PreRelease to Stable promotion       |
+| `.github/workflows/release-stable-publish.yml`         | Merged PR to `release/stable`      | Prepares metadata or creates the exact tag and draft    |
+| `.github/workflows/release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`    | Produces and publishes the release assets from the tag  |
+| `.github/workflows/extension-provenance-signer.yml`    | Reusable workflow                  | Packages, transfers, and attests the VSIX in split jobs |
+| `.github/workflows/release-marketplace-stable.yml`     | Published Stable release; dispatch | Publishes the release VSIX to VS Code Marketplace       |
+| `.github/workflows/release-marketplace-prerelease.yml` | Published PreRelease; dispatch     | Publishes the release VSIX to VS Code Marketplace       |
 
 `release-prerelease-prepare.yml` opens the reviewed, target-based `main` to
 `release/prerelease` promotion. Its merge creates no tag and runs
 `release-prerelease.yml` in PR-only mode. Release-please owns the later managed
-PR. Merging that exact managed head selects tag-only mode and creates the draft
-odd-minor release at its merge commit.
+PR. Merging that exact managed head selects tag-only mode. Release-please
+creates the exact odd-minor tag and draft release at its merge commit.
 
-The PreRelease workflow verifies event, merge, release-please, and tag SHA
-equality plus `release/prerelease` ancestry. It packages one VSIX from the
-immutable release tag, attaches SPDX, Sigstore, and in-toto sidecars plus
+The resulting tag push starts `release-vsix-publish.yml`, the sole post-tag
+producer. It validates the protected exact tag, source commit, channel branch,
+and committed release state, then discovers the exact draft through at most 12
+attempts separated by 10 seconds. It packages one VSIX from the immutable tag,
+attaches SPDX, Sigstore, and in-toto sidecars plus
 `dependencies.spdx.json`, verifies provenance, and publishes the prerelease
-with a release GitHub App token. That event triggers PreRelease Marketplace
-publication. Release branches, tags, and published GitHub releases retain
-release state and history; publication does not update `main`.
+with a release GitHub App token. That published event triggers PreRelease
+Marketplace publication. Release branches, tags, and published GitHub releases
+retain release state and history; publication does not update `main`.
 
 `release-stable.yml` starts from the published PreRelease event or a recovery
 dispatch and opens the reviewed `release/prerelease` to `release/stable`
 promotion. Its merge creates no tag and runs `release-stable-publish.yml` in
-PR-only mode. Merging the later managed Stable PR creates the draft even-minor
-release at its merge commit.
+PR-only mode. Merging the later managed Stable PR lets release-please create the
+exact even-minor tag and draft at its merge commit. The tag push starts the same
+post-tag producer, which performs the shared validation, packaging, attestation,
+and publication path. Stable additionally retains OpenVEX, dependency-diff, and
+verification-note behavior. The published event triggers Stable Marketplace
+publication.
 
-Stable performs the same identity and ancestry checks on `release/stable`,
-packages one VSIX from the release tag, attaches the same VSIX assurance plus
-Stable OpenVEX, and publishes the release with an App token. The resulting
-event triggers Stable Marketplace publication.
+If a tag-triggered run fails, classify the tag and release state first. A
+matching draft or published release can use the original immutable tag-push
+workflow. A tag-only state first requires release-please to create the exact
+draft; a draft-only state first requires release-please to materialize the tag.
+Partial assets may be restored while the release remains draft, but publication
+waits for the complete dependency graph and provenance verification. Published
+recovery verifies exact assets and provenance without rebuilding. The producer
+has no default `workflow_dispatch` recovery path. Never move, delete, or
+recreate a release tag, create a replacement release identity, or convert a
+published release back to draft. Bounded discovery fails closed and does not
+guarantee draft visibility.
 
 Release branches and exact tags retain the repository-root plugin source from their selected snapshots. Their reviewed, immutable VSIX assets remain release-gated, SBOM-covered, and attested. The ref-less main catalog represents `main`, receives no post-release synchronization, and requires an explicit marketplace refresh and plugin update; its bytes have no release gate, SBOM, or attestation.
 
 The moving registrations are `microsoft/hve-core#release/prerelease` and
 `microsoft/hve-core#release/stable`; immutable registrations use
 `#prerelease-v<version>` and `#v<version>`.
+
+Tag governance is a mandatory activation prerequisite for this pipeline, but
+it is not yet active or proven. The intended configuration has two rulesets:
+
+* `release-tags-creation-by-release-app` restricts creation only and grants a
+    bypass to the Release App
+* `release-tags-immutable` restricts updates, deletion, and force pushes with
+    no bypass
+
+Do not treat repository configuration or this documentation as evidence that
+either ruleset is installed.
 
 For ordinary promotions, PreRelease reads `release/prerelease` and returns the
 same major, minor plus two, and patch zero. Stable reads the promoted
@@ -248,14 +273,27 @@ Production channel publication is workflow-owned. Do not bypass the release
 asset, attestation verification, or Azure OIDC path with a PAT-based direct
 publish.
 
-| Channel    | Release asset selector  | Attestation signer         | Marketplace mode                  |
-|------------|-------------------------|----------------------------|-----------------------------------|
-| PreRelease | `prerelease-v<version>` | `extension-provenance.yml` | `vsce --pre-release` through OIDC |
-| Stable     | `v<version>`            | `extension-provenance.yml` | Stable publication through OIDC   |
+| Channel    | Release asset selector  | Attestation signer                | Marketplace mode                  |
+|------------|-------------------------|-----------------------------------|-----------------------------------|
+| PreRelease | `prerelease-v<version>` | `extension-provenance-signer.yml` | `vsce --pre-release` through OIDC |
+| Stable     | `v<version>`            | `extension-provenance-signer.yml` | Stable publication through OIDC   |
 
 The generic publisher receives the exact channel tag, downloads the one matching
-VSIX release asset, verifies its provenance against `extension-provenance.yml`,
-and publishes it with `--azure-credential`.
+VSIX release asset, verifies its provenance against `extension-provenance-signer.yml`
+at signer revision `3a09401536cef0c4559db1aa64b7d1010638fd67`, and publishes it
+with `--azure-credential`.
+
+Release verification first authenticates the attestation cryptographically,
+then applies fail-closed semantic policy. The policy checks the exact subject
+name and digest, signer workflow and signer revision, source ref and revision,
+SLSA provenance v1, GitHub Actions `workflow/v1`, the `push` event, a
+GitHub-hosted runner, the complete external-parameter shape, the resolved
+dependency, and builder identity.
+
+This architecture does not establish SLSA Build Level 3. Future Stable and
+PreRelease releases still need successful runtime evidence, active tag
+governance evidence, platform assurance mapping, and qualified human review
+before making that claim.
 
 ## What Gets Included
 
@@ -375,14 +413,17 @@ Use the reviewed two-PR workflow for publishing pre-releases:
 4. Review the managed PR from
     `release-please--branches--release/prerelease`, including synchronized
     version fields, changelog, plugin manifest, and marketplace version parity.
-5. Merge the managed PR. Verify the draft `prerelease-v<version>` release
-    targets that merge commit and the workflow proves target-branch ancestry.
-6. Verify extension packaging uses the release tag and attaches one VSIX, its
+5. Merge the managed PR. Verify release-please creates the exact
+    `prerelease-v<version>` tag and draft release at that merge commit.
+6. Verify the tag push starts `release-vsix-publish.yml`, which proves the
+    protected tag identity, source commit, target-branch ancestry, committed
+    release state, and matching draft.
+7. Verify extension packaging uses the release tag and attaches one VSIX, its
     SPDX, Sigstore, and in-toto sidecars, and `dependencies.spdx.json` for the
     same release SHA.
-7. Verify the release GitHub App token publishes the prerelease. The
+8. Verify the release GitHub App token publishes the prerelease. The
     Marketplace workflow passes the validated tag and
-    `.github/workflows/extension-provenance.yml` signer to the generic
+    `.github/workflows/extension-provenance-signer.yml` signer to the generic
     publisher for release-asset verification and OIDC publication.
 
 ### Content Parity

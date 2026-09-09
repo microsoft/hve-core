@@ -1,0 +1,11 @@
+# gh-aw-metadata: {"schema_version":"v4","compiler_version":"v0.83.4"}
+name: Generated Action Lock
+on: workflow_call
+permissions: {}
+jobs:
+  generated:
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - uses: github/gh-aw-actions/setup@e89c65e17eb281bbd5ff2ff9e9199a03e96654c7
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3

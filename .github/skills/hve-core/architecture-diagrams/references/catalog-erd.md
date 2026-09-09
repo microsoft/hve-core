@@ -5,14 +5,14 @@ description: Input authority, cardinality mapping, confidence rendering, and com
 
 ## Input authority
 
-Use `ds-catalog`, the durable data-catalog skill for declared entities,
+Use `data-catalog`, the durable data-catalog skill for declared entities,
 relationships, identity, lineage, and model semantics, when a caller supplies a
 `DS_CATALOG_V1` Markdown catalog. Parsed YAML frontmatter is semantic authority.
 The renderer does not infer entities, endpoints, cardinalities, endpoint
 minimums, join keys, or confidence from SQL, ORM definitions, naming
 conventions, or prose.
 
-A catalog that passes `ds-catalog` validation is the expected input. The
+A catalog that passes `data-catalog` validation is the expected input. The
 renderer rejects an unsupported catalog version, a missing or non-string entity
 ID or name, a duplicate entity or relationship ID, an identifier collision, an
 unresolved endpoint, an unknown cardinality, a missing or invalid endpoint
@@ -101,7 +101,7 @@ not carry the catalog's declared evidence confidence and engagement semantics.
 Existing infrastructure-source workflows remain unchanged.
 
 The Feasibility Study Interchange Profile is a separate producer contract owned
-by `ds-feasibility`, the evidence-led feasibility-study skill. A future
+by `feasibility`, the evidence-led feasibility-study skill. A future
 Functional Planner workstream owns adoption of that profile, version
 negotiation, source-to-requirement mappings, and `FR-###` allocation. This skill
 does not parse feasibility studies, claim current Functional Planner

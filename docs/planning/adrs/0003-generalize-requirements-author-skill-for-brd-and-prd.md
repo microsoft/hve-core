@@ -3,7 +3,7 @@ id: "0003"
 title: "Generalize the requirements-author skill as the shared source of truth for BRD and PRD authoring"
 description: "Generalize the existing requirements-author skill (renamed from brd-author) in place into a references/_shared core plus per-type references/brd and references/prd overrides, so both the BRD Builder and PRD Builder agents and both quality reviewers bind to one skill while BRD and PRD content stays deliberately isolated."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-14"
+ms.date: "2026-08-20"
 ms.topic: "reference"
 status: "proposed"
 proposed_date: "2026-06-14"
@@ -227,6 +227,8 @@ the opposite type's subfolder.
 
 ```mermaid
 flowchart LR
+  accTitle: Requirements Skill Reference Routing
+  accDescr: BRD and PRD builders and reviewers share common requirements references while each consumes only its own type-specific reference scope.
     subgraph Skill["requirements-author skill"]
         shared["references/_shared/"]
         brd["references/brd/"]

@@ -43,6 +43,60 @@ def test_given_invalid_config_when_validate_then_raises_script_error(
         validate_config(config)
 
 
+@pytest.mark.parametrize("base_url", ["file:///tmp/page.html", "//example.com/path"])
+def test_given_unsupported_base_url_when_validate_then_raises_script_error(
+    config_path: Path,
+    base_url: str,
+) -> None:
+    config = load_config(config_path)
+    config["baseUrl"] = base_url
+
+    with pytest.raises(ScriptError, match="Invalid a11y-runtime config"):
+        validate_config(config)
+
+
+@pytest.mark.parametrize(
+    ("config_update", "invalid_value"),
+    [
+        ({"surfaces": [{"id": "bad/name", "type": "page"}]}, "bad/name"),
+        (
+            {
+                "surfaces": [
+                    {
+                        "id": "web",
+                        "type": "page",
+                        "states": [{"state": "bad state"}],
+                    }
+                ]
+            },
+            "bad state",
+        ),
+        ({"calibration": {"journeys": [{"id": "../journey"}]}}, "../journey"),
+        (
+            {
+                "calibration": {
+                    "journeys": [{"id": "safe", "journeyId": "../../escape"}]
+                }
+            },
+            "../../escape",
+        ),
+        ({"calibration": {"journeys": [{"id": "CON"}]}}, "CON"),
+        ({"calibration": {"journeys": [{"id": "nul.json"}]}}, "nul.json"),
+        ({"calibration": {"journeys": [{"id": "trailing."}]}}, "trailing."),
+    ],
+)
+def test_given_invalid_artifact_id_when_validate_then_raises_script_error(
+    config_path: Path,
+    config_update: dict[str, object],
+    invalid_value: str,
+) -> None:
+    config = load_config(config_path)
+    config.update(config_update)
+
+    with pytest.raises(ScriptError, match=invalid_value.replace(".", "\\.")):
+        validate_config(config)
+
+
 def test_given_invalid_calibration_profile_version_when_validate_then_raises_script_error(  # noqa: E501
     config_path: Path,
 ) -> None:
@@ -81,6 +135,24 @@ def test_given_allowed_target_when_assert_target_allowed_then_succeeds(
 def test_given_external_target_without_override_then_raises() -> None:
     with pytest.raises(ScriptError, match="Refusing to probe non-loopback host"):
         assert_target_allowed({"baseUrl": "https://example.com"})
+
+
+@pytest.mark.parametrize(
+    ("base_url", "message"),
+    [
+        ("file://localhost/tmp/page.html", "absolute HTTP\\(S\\) URL"),
+        ("//example.com/path", "absolute HTTP\\(S\\) URL"),
+        ("https://user:password@example.com", "must not include credentials"),
+        ("https://example.com:invalid", "invalid port"),
+        ("https://example.com/a b", "without whitespace"),
+    ],
+)
+def test_given_invalid_target_when_external_allowed_then_rejects_before_authorization(
+    base_url: str,
+    message: str,
+) -> None:
+    with pytest.raises(ScriptError, match=message):
+        assert_target_allowed({"baseUrl": base_url}, allow_external=True)
 
 
 def test_given_path_when_load_validated_config_then_returns_config(

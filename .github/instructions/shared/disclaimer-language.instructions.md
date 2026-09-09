@@ -10,6 +10,7 @@ Planning and review agents display a CAUTION disclaimer at startup or when prese
 <!--
 Authoring contract (parsed by scripts/linting/Validate-PlannerArtifacts.ps1):
 - Each planner or review family gets exactly one H2 section. The first whitespace-delimited word of the heading, lowercased, is the slug (e.g. "SSSC Planning" -> "sssc"; "Code-Review" -> "code-review").
+- A section may override the derived slug with exactly one `<!-- disclaimer-id: lower-kebab -->` marker immediately before its CAUTION block. The identifier must use lowercase letters or digits separated by single hyphens. Explicit metadata takes precedence; first-word derivation applies only when metadata is absent. Empty, malformed, misplaced, or repeated markers are invalid.
 - The slug derives: planner key `{slug}-planner`; disclaimer id `{slug}-full-disclaimer`; disclaimer label `{heading} Disclaimer`.
 - Each H2 must contain exactly one `> [!CAUTION]` blockquote; only the first is extracted.
 - The CAUTION prose should begin with `**Disclaimer:**` (trailing colon optional); the prefix is stripped before matching against artifact footers.
@@ -67,8 +68,9 @@ Authoring contract (parsed by scripts/linting/Validate-PlannerArtifacts.ps1):
 > [!CAUTION]
 > **Disclaimer:** This agent is an assistive coaching tool only. It does not conduct user research, observe stakeholders, or speak for the people whose problems you are designing for, and it does not replace primary research, direct stakeholder contact, design review, or product and strategy decision authority. Personas, problem statements, journey maps, empathy maps, concept tests, and other Design Thinking artifacts produced with this tool are scaffolding for your own research and synthesis — not substitutes for real stakeholder voice or observed behavior. Validate all AI-generated assumptions, personas, themes, and insights against actual stakeholders before treating any Design Thinking artifact as a basis for product, design, or strategy commitments. Outputs from this tool do not constitute validated research findings or design approval.
 
-## Data-Science Coaching
+## Data Science and Engineering Coaching
 
+<!-- disclaimer-id: data-science-engineering -->
 > [!CAUTION]
 > **Disclaimer:** This agent is an assistive data-science and data-engineering coaching tool only. It does not validate customer data, execute production pipelines, establish model fitness, or replace data owners, privacy and Responsible AI reviewers, engineering review, or business decision authority. Catalogs, feasibility findings, analyses, experiments, tests, and operational recommendations generated with this tool may be incomplete or inaccurate and must be independently reviewed against approved data sources, stakeholder evidence, and organizational controls before use. Outputs from this tool do not constitute data approval, feasibility sign-off, model approval, privacy or Responsible AI approval, or production readiness.
 

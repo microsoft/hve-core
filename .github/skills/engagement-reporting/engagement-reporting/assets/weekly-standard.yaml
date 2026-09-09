@@ -1,0 +1,186 @@
+# Weekly Standard Report Template
+
+# This template defines the structure, audience, and rules for a weekly
+# engagement status report, the most common report type.
+
+name: "Weekly Status Report"
+audience: "Internal Microsoft engagement stakeholders, Engineering Manager, Customer PM"
+tone: "Tactical, specific, progress-focused"
+detail_level: high
+strict_format: true
+execution:
+  mode: fast
+  max_source_tool_calls: 6
+  review_passes: 1
+  allow_subagents_by_default: false
+  allow_explicit_review_escalation: true
+  allow_repository_diagnostics: false
+
+template_variables:
+  customer: "engagement.customer"
+  engagement: "engagement.name"
+  week_number: "derived from the reporting period"
+  weekday: "derived from the report date"
+  month: "derived from the report date"
+  day: "derived from the report date"
+  status: "selected from status_values"
+
+layout:
+  title_format: "{customer} - {engagement} | ISE Engagement Status: Week {week_number}"
+  title_rules:
+    - "When customer and engagement resolve to the same text, render it once: {engagement} | ISE Engagement Status: Week {week_number}"
+  date_format: "{weekday}, {month} {day} | Status: {status}"
+  required_section_order:
+    - "Project Description"
+    - "Risks / Blockers"
+    - "Weekly Summary"
+    - "Last Week"
+    - "Next Steps"
+    - "Resources"
+  optional_section_placement:
+    "Risks and Support": "Immediately after Risks / Blockers"
+    "Recent and Upcoming Activities": "After Last Week and before Next Steps"
+    "Highlights": "After Next Steps and before Resources"
+  audience_note:
+    default: ""
+    internal: "For internal Microsoft audiences only."
+    rules:
+      - "Use the internal audience note only when the configured report audience is internal to Microsoft"
+      - "Omit the audience note for customer-facing or mixed-audience reports unless the user provides approved wording"
+  footer:
+    include_privacy_statement: true
+    include_microsoft_address: true
+    privacy_statement_url: "https://privacy.microsoft.com/PrivacyStatement"
+    microsoft_address: "Microsoft Corporation, One Microsoft Way, Redmond, WA 98052"
+
+status_values:
+  - "On Track"
+  - "At Risk"
+  - "Blocked"
+
+tables:
+  risks_blockers:
+    columns:
+      - "Severity"
+      - "Risk"
+      - "Impact"
+      - "Help Needed / Ask"
+      - "ETA"
+    rules:
+      - "Use this section for risks and blockers that materially affect scope, schedule, customer alignment, or delivery confidence"
+      - "Severity must be High, Medium, or Low"
+      - "Every High severity item must include a specific help needed or ask"
+      - "Use Unknown for ETA only when the team cannot credibly estimate timing"
+
+  recent_upcoming_activities:
+    columns:
+      - "Task Description"
+      - "Status"
+      - "ETC"
+      - "Blockers"
+      - "Comments"
+    rules:
+      - "Use this as a rolling view of activities that are in progress or completed"
+      - "Include completed activities that changed during the reporting period"
+      - "Include in-progress activities with concrete current state and expected completion timing"
+      - "Use n/a for blockers when no blocker exists"
+
+sections:
+  - name: "Project Description"
+    description: "One concise paragraph describing the engagement outcome, scope, and current focus"
+    source: engagement_config + manual_input
+    rules:
+      - "Use the customer name, project name, and business context the audience recognizes"
+      - "Keep the description stable unless the scope or framing changes"
+      - "Do not introduce unverified customer strategy or business claims"
+
+  - name: "Risks / Blockers"
+    description: "Material delivery risks and blockers in the standard risk table"
+    format: table
+    table: risks_blockers
+    source: blocked_items + risks + manual_input + transcripts
+    rules:
+      - "Lead with the highest severity items"
+      - "Distinguish active blockers from risks that may affect delivery"
+      - "Include impact, mitigation, and explicit ask for each material item"
+      - "Default to 'No material risks or blockers reported this period' only when research supports that conclusion"
+
+  - name: "Weekly Summary"
+    description: "Short bullet summary of what changed during the reporting period"
+    source: completed_items + manual_input + transcripts
+    rules:
+      - "Show progression from previous report"
+      - "Frame preparation work, not future events, as achievements"
+      - "Include specific deliverables, not vague activities"
+      - "Quantify where possible (PRs merged, % complete)"
+      - "Use bullets, not a table, unless the user asks otherwise"
+
+  - name: "Last Week"
+    description: "Brief continuity section describing the previous period's state and what carried forward"
+    source: previous_report + completed_items + manual_input
+    rules:
+      - "Tie prior Next Steps to current outcomes or explain why they remain open"
+      - "Avoid repeating previous report wording without naming what changed"
+
+  - name: "Recent and Upcoming Activities"
+    description: "Rolling view of activities that are either in progress or completed"
+    format: table
+    table: recent_upcoming_activities
+    source: completed_items + in_progress_items + upcoming_items + blocked_items + manual_input
+    rules:
+      - "Omit by default; include only when the user requests task-level tracking or engagement.yaml enables it"
+      - "Use the table when stakeholders need task-level tracking"
+      - "Keep comments factual and traceable to primary sources"
+
+  - name: "Next Steps"
+    description: "What is planned for the coming period"
+    source: upcoming_items + manual_input
+    rules:
+      - "Include dates for scheduled events"
+      - "Name specific deliverables"
+      - "Previous report's Next Steps should appear here as completed or acknowledged"
+      - "Use either bullets or a table depending on the amount of detail needed"
+
+  - name: "Highlights"
+    description: "Optional callouts for notable wins, decisions, or stakeholder alignment"
+    source: completed_items + decisions + manual_input
+    rules:
+      - "Omit by default"
+      - "Use only when there are meaningful highlights beyond the weekly summary"
+      - "Do not use TBD placeholders in final reports"
+
+  - name: "Risks and Support"
+    description: "Optional non-table risk/support summary for audiences that prefer narrative bullets"
+    source: risks + blocked_items + manual_input
+    rules:
+      - "Omit by default"
+      - "Use this only when the report needs a summary in addition to the Risks / Blockers table"
+      - "Do not duplicate table wording verbatim"
+
+  - name: "Resources"
+    description: "Links to sprint reviews, demos, boards, repositories, or proof-of-concept artifacts"
+    source: engagement_config + board_links + manual_input
+    rules:
+      - "Include links that help the audience verify or inspect current work"
+      - "Use descriptive link text"
+      - "Include sprint review and demo links as needed"
+
+output_rules:
+  - "Render the report as audience-ready Markdown without YAML frontmatter"
+  - "Use the title, date/status line, audience note, required sections, permitted optional-section placements, and footer in the exact configured order"
+  - "Do not replace required sections with Executive Summary, Achievements, In Progress, Recommended Next Steps, or Coverage Note"
+  - "Keep research coverage, source counts, confidence, and verification notes outside the audience-facing report unless the user explicitly requests them"
+  - "Do not mention Teams chats, emails, meeting notes, transcripts, OneNote, SharePoint, searches, or primary-source evidence merely to explain provenance"
+  - "When a fact is unresolved, express the business need as a blocker, ask, or next step instead of describing missing evidence"
+  - "Do not narrate linting, section scans, tool fallbacks, or review mechanics to the user"
+  - "Do not include TBD placeholders in final reports"
+  - "Do not include long-lived, tokenized image URLs from OneNote or SharePoint in generated reports"
+  - "Use a standard Microsoft privacy statement link and address in the footer when a footer is requested"
+  - "Preserve the standard section names unless the user asks for a customer-specific variant"
+
+continuity:
+  check_previous: true
+  next_steps_follow_through: true
+  flag_repeated_status: true
+
+council: optional # Off by default; explicit high-stakes or ambiguous runs may dispatch the Council subagents

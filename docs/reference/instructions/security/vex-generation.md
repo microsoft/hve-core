@@ -3,7 +3,7 @@ title: Security/Vex Generation
 description: "VEX generation rules: evidence requirements, confidence routing, forbidden transitions, report templates, and licensing posture for AI-assisted vulnerability triage - Brought to you by microsoft/hve-core"
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-14
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,11 @@ VEX generation rules: evidence requirements, confidence routing, forbidden trans
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these instructions when SSSC review or CVE analysis drafts VEX triage
+reports and OpenVEX statements. Resolve aliases across available advisory
+sources, route by evidence confidence, and keep uncertainty at
+`under_investigation`; use the `vex` skill as the canonical status-logic and
+schema reference.
 
 ## Example usage
 

@@ -175,7 +175,8 @@ Describe 'Ruff Lint Execution' -Tag 'Unit' {
 
     Context 'Lint passes' {
         BeforeEach {
-            Mock ruff { $global:LASTEXITCODE = 0; '' }
+            $script:RuffCalls = [System.Collections.Generic.List[string]]::new()
+            Mock ruff { $script:RuffCalls.Add(($args -join ' ')); $global:LASTEXITCODE = 0; '' }
         }
 
         It 'Returns success when ruff reports no issues' {
@@ -192,9 +193,28 @@ Describe 'Ruff Lint Execution' -Tag 'Unit' {
             $result = Invoke-PythonLint -RepoRoot $TestDrive
             $result.errors | Should -HaveCount 0
         }
+
+        It 'Records both zero exit codes in details' {
+            $result = Invoke-PythonLint -RepoRoot $TestDrive
+            $result.details[0].checkExitCode | Should -Be 0
+            $result.details[0].formatExitCode | Should -Be 0
+        }
+
+        It 'Invokes ruff check before the formatter check with exact arguments' {
+            Invoke-PythonLint -RepoRoot $TestDrive
+            $script:RuffCalls | Should -HaveCount 2
+            $script:RuffCalls[0] | Should -Be 'check .'
+            $script:RuffCalls[1] | Should -Be 'format --check .'
+        }
+
+        It 'Never invokes a mutating ruff operation in default mode' {
+            Invoke-PythonLint -RepoRoot $TestDrive
+            Should -Invoke ruff -ParameterFilter { $args -contains '--fix' } -Times 0 -Exactly
+            ($script:RuffCalls | Where-Object { $_ -like 'format*' -and $_ -notlike '*--check*' }) | Should -BeNullOrEmpty
+        }
     }
 
-    Context 'Lint fails' {
+    Context 'Lint and formatting both fail' {
         BeforeEach {
             Mock ruff { $global:LASTEXITCODE = 1; 'error: E501 line too long' }
         }
@@ -212,6 +232,78 @@ Describe 'Ruff Lint Execution' -Tag 'Unit' {
         It 'Marks skill as failed in details' {
             $result = Invoke-PythonLint -RepoRoot $TestDrive
             $result.details[0].passed | Should -BeFalse
+        }
+
+        It 'Records both nonzero exit codes as a single skill failure' {
+            $result = Invoke-PythonLint -RepoRoot $TestDrive
+            $result.details[0].checkExitCode | Should -Be 1
+            $result.details[0].formatExitCode | Should -Be 1
+            $result.errors | Should -HaveCount 1
+        }
+    }
+
+    Context 'Only lint fails' {
+        BeforeEach {
+            Mock ruff {
+                if ($args[0] -eq 'format') { $global:LASTEXITCODE = 0; '' }
+                else { $global:LASTEXITCODE = 1; 'error: E501 line too long' }
+            }
+            Mock Write-Host {}
+        }
+
+        It 'Fails with a lint-specific diagnostic while the formatter still runs' {
+            $result = Invoke-PythonLint -RepoRoot $TestDrive
+            $result.success | Should -BeFalse
+            $result.details[0].checkExitCode | Should -Be 1
+            $result.details[0].formatExitCode | Should -Be 0
+            Should -Invoke ruff -ParameterFilter { $args[0] -eq 'format' } -Times 1 -Exactly
+            Should -Invoke Write-Host -ParameterFilter { $Object -match 'Linting issues found' } -Times 1 -Exactly
+        }
+    }
+
+    Context 'Only formatting fails' {
+        BeforeEach {
+            Mock ruff {
+                if ($args[0] -eq 'format') { $global:LASTEXITCODE = 1; 'Would reformat: sample.py' }
+                else { $global:LASTEXITCODE = 0; '' }
+            }
+            Mock Write-Host {}
+        }
+
+        It 'Fails with a format-specific diagnostic and no mutating invocation' {
+            $result = Invoke-PythonLint -RepoRoot $TestDrive
+            $result.success | Should -BeFalse
+            $result.details[0].checkExitCode | Should -Be 0
+            $result.details[0].formatExitCode | Should -Be 1
+            $result.details[0].output | Should -Match 'Would reformat'
+            Should -Invoke ruff -ParameterFilter { $args -contains '--check' } -Times 1 -Exactly
+            Should -Invoke Write-Host -ParameterFilter { $Object -match 'Formatting issues found' } -Times 1 -Exactly
+        }
+    }
+
+    Context 'Locked ruff resolution fails' {
+        BeforeEach {
+            Mock ruff { $global:LASTEXITCODE = 0; '' }
+            Mock Resolve-ProjectRuff {
+                @{
+                    command = $null
+                    resolutionMode = 'locked'
+                    lockedVersion = '0.16.2'
+                    resolvedVersion = $null
+                    mismatches = @('ruff (0.15.4)')
+                    reason = "uv.lock requires ruff 0.16.2 but found ruff (0.15.4). Run 'uv sync --locked' in this project."
+                }
+            }
+            Mock Write-Host {}
+        }
+
+        It 'Fails the skill without invoking ruff and reports the setup action' {
+            $result = Invoke-PythonLint -RepoRoot $TestDrive
+            $result.success | Should -BeFalse
+            $result.skillsChecked | Should -Be 0
+            $result.errors | Should -Contain $script:SkillDir
+            Should -Invoke ruff -Times 0 -Exactly
+            Should -Invoke Write-Host -ParameterFilter { $Object -match 'uv sync --locked' } -Times 1 -Exactly
         }
     }
 
@@ -233,7 +325,8 @@ Describe 'Ruff Lint Execution' -Tag 'Unit' {
 
     Context 'Fix mode with -Fix switch' {
         BeforeEach {
-            Mock ruff { $global:LASTEXITCODE = 0; '' }
+            $script:RuffCalls = [System.Collections.Generic.List[string]]::new()
+            Mock ruff { $script:RuffCalls.Add(($args -join ' ')); $global:LASTEXITCODE = 0; '' }
         }
 
         It 'Invokes ruff with --fix argument' {
@@ -249,6 +342,13 @@ Describe 'Ruff Lint Execution' -Tag 'Unit' {
         It 'Invokes ruff with format subcommand' {
             Invoke-PythonLint -Fix -RepoRoot $TestDrive
             Should -Invoke ruff -ParameterFilter { $args -contains 'format' }
+        }
+
+        It 'Preserves the exact fix command sequence' {
+            Invoke-PythonLint -Fix -RepoRoot $TestDrive
+            $script:RuffCalls | Should -HaveCount 2
+            $script:RuffCalls[0] | Should -Be 'check . --fix'
+            $script:RuffCalls[1] | Should -Be 'format .'
         }
 
         It 'Records formatExitCode in skill detail' {
@@ -286,6 +386,15 @@ Describe 'Output Persistence' -Tag 'Unit' {
             $outputPath = Join-Path $TestDrive 'lint-results2.json'
             Invoke-PythonLint -RepoRoot $TestDrive -OutputPath $outputPath
             { Get-Content $outputPath -Raw | ConvertFrom-Json } | Should -Not -Throw
+        }
+
+        It 'Serializes per-phase exit codes and the resolution mode' {
+            $outputPath = Join-Path $TestDrive 'lint-results3.json'
+            Invoke-PythonLint -RepoRoot $TestDrive -OutputPath $outputPath
+            $serialized = Get-Content $outputPath -Raw | ConvertFrom-Json
+            $serialized.details[0].checkExitCode | Should -Be 0
+            $serialized.details[0].formatExitCode | Should -Be 0
+            $serialized.details[0].resolutionMode | Should -Be 'unlocked-fallback'
         }
     }
 

@@ -77,14 +77,14 @@ Include at least one leading and one lagging indicator. Limit the document to th
 
 * Measurement granularity: `<Aggregate | Cohort | Individual>`
 * Individual-level necessity and proportionality: `<Why aggregate or cohort-level measurement cannot answer the hypothesis, or Not applicable>`
-* Privacy Planner result: `<Completed result or evidence reference when individual-level measurement uses personal or sensitive data, or Not applicable>`
+* Privacy review result: `<Completed Privacy Planner result, or documented qualified-human review when Privacy Planner is unavailable, or Not applicable>`
 * Measurement method and source: `<system, query, or dashboard>`
 * Measurement owner: `<name or explicit owner resolution gap>`
 * Attribution approach: `<control, pre/post, counterfactual, or matched cohort>`
 * Leading checkpoints: `<dates or intervals and reviewer>`
 * Lagging checkpoints: `<dates or intervals and reviewer>`
 
-Default to aggregate or cohort-level indicators. Complete the individual-level justification only when that granularity is necessary and proportionate. If an individual-level measure uses personal or sensitive data, stop before drafting and invoke `Privacy Planner`; create or resume the draft only after its completed result is available.
+Default to aggregate or cohort-level indicators. Complete the individual-level justification only when that granularity is necessary and proportionate. If an individual-level measure uses personal or sensitive data, stop before drafting and invoke `Privacy Planner`; create or resume the draft only after its completed result is available. If `Privacy Planner` is unavailable, remain stopped until a documented review by a qualified privacy professional is supplied.
 
 ## Assumptions & Risks
 

@@ -1,0 +1,31 @@
+---
+title: "Outcome Hypothesis: Supplier onboarding cycle time"
+description: "Evidence-grounded outcome hypothesis for supplier onboarding."
+author: "Business Operations"
+ms.date: 2026-08-19
+ms.topic: concept
+---
+
+**Project / Initiative:** Supplier onboarding
+**Status:** `Committed`
+**Confidence:** `High`
+
+## Expected Outcomes
+
+**Due to** manual supplier onboarding handoffs,
+
+**We believe that** a guided onboarding workflow
+
+**Will result in** median onboarding time decreasing from 10 business days to 4 business days,
+
+**Observable by** supplier operations,
+
+**Within** 90 days after production launch.
+
+## Validation & Measurement
+
+### Indicator detail
+
+| Type    | Indicator                  | Definition                              | Baseline                           | Target          | Source                         | Owner               |
+|---------|----------------------------|-----------------------------------------|------------------------------------|-----------------|--------------------------------|---------------------|
+| Lagging | Median onboarding duration | Business days from intake to activation | 10 business days during 2026 Q2    | 4 business days | Operations cycle-time dashboard | Operations Director |

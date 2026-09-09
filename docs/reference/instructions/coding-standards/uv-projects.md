@@ -3,7 +3,7 @@ title: Coding Standards/Uv Projects
 description: Create and manage Python virtual environments using uv commands
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Create and manage Python virtual environments using uv commands
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these instructions before running Python files or notebooks and whenever
+their environment or dependencies change. Use uv with the project `.venv`,
+`pyproject.toml`, and lockfile; do not substitute direct `pip install` or run
+Python outside the selected virtual environment.
 
 ## Example usage
 

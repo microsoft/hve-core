@@ -3,7 +3,7 @@ title: Coding Standards/Python Tests
 description: Python test code authoring conventions
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Python test code authoring conventions
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these conventions when Python files define pytest tests, fixtures,
+parameterized cases, or mocks. They extend the general Python script rules
+with behavioral naming and Arrange/Act/Assert structure; prefer `pytest-mock`
+for new spy and patch behavior while retaining simple `monkeypatch` use.
 
 ## Example usage
 

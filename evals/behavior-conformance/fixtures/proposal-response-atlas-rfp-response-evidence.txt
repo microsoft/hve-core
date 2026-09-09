@@ -1,0 +1,41 @@
+schema: RESPONSE_EVIDENCE_V1
+operation: analyze
+response_status: internal_review_draft
+external_use_status: internal_review_only
+release_decision: outside_skill_scope
+source_questions:
+  - id: SQ-001
+    source_ref: rfp.docx#Q1
+    text: What availability target is supported?
+    classification: product
+    response_state: unresolved
+    claim_ids: [CLM-001]
+claims:
+  - id: CLM-001
+    owner_domain: product
+    statement: Availability evidence requires review.
+    source_question_ids: [SQ-001]
+    evidence_refs: []
+    evidence_review: unsupported
+    qualification: null
+responses: []
+unresolved_items:
+  - id: UNR-001
+    type: evidence
+    description: Approved availability evidence is missing.
+    source_question_ids: [SQ-001]
+    claim_ids: [CLM-001]
+    owner_domain: product
+    clearing_action: Supply the approved availability requirement.
+    status: open
+    cleared_by: null
+coverage:
+  question_count: 1
+  addressed_count: 0
+  qualified_count: 0
+  unresolved_count: 1
+  addressed_percent: 0.0
+structural_readiness:
+  status: not_ready
+  blocking_ids: [SQ-001, CLM-001]
+  advisory_only: true

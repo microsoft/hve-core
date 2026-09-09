@@ -1,0 +1,100 @@
+schema: RESPONSE_EVIDENCE_V1
+operation: draft
+response_status: internal_review_draft
+external_use_status: internal_review_only
+release_decision: outside_skill_scope
+approved_sources:
+  - id: SRC-001
+    origin: user_supplied
+    path: null
+    kind: prd
+    named_by: user
+    read_date: 2026-08-12
+    source_version: unknown
+    sections_used: [NFR-014, FR-022, CON-003]
+source_questions:
+  - id: SQ-001
+    source_ref: rfp.docx#Q1
+    text: What monthly availability does the service provide?
+    classification: product
+    response_state: addressed
+    claim_ids: [CLM-001]
+  - id: SQ-002
+    source_ref: rfp.docx#Q2
+    text: Which identity provider does the service federate with?
+    classification: product
+    response_state: addressed
+    claim_ids: [CLM-002]
+  - id: SQ-003
+    source_ref: rfp.docx#Q3
+    text: Where is customer data stored?
+    classification: product
+    response_state: addressed
+    claim_ids: [CLM-003]
+  - id: SQ-004
+    source_ref: rfp.docx#Q4
+    text: Do you accept unlimited liability for data loss?
+    classification: legal_or_commercial
+    response_state: unresolved
+    claim_ids: []
+claims:
+  - id: CLM-001
+    owner_domain: product
+    statement: The service targets 99.9% monthly availability.
+    source_question_ids: [SQ-001]
+    evidence_refs: [SRC-001#NFR-014]
+    evidence_review: supported
+    qualification: null
+  - id: CLM-002
+    owner_domain: product
+    statement: The service federates with Microsoft Entra ID.
+    source_question_ids: [SQ-002]
+    evidence_refs: [SRC-001#FR-022]
+    evidence_review: supported
+    qualification: null
+  - id: CLM-003
+    owner_domain: product
+    statement: Customer data stays within the contracted region.
+    source_question_ids: [SQ-003]
+    evidence_refs: [SRC-001#CON-003]
+    evidence_review: supported
+    qualification: null
+responses:
+  - id: RSP-001
+    source_question_id: SQ-001
+    text: The approved requirement defines a 99.9% monthly availability target.
+    claim_ids: [CLM-001]
+    qualifications: []
+    unresolved_item_ids: []
+  - id: RSP-002
+    source_question_id: SQ-002
+    text: The service federates with Microsoft Entra ID.
+    claim_ids: [CLM-002]
+    qualifications: []
+    unresolved_item_ids: []
+  - id: RSP-003
+    source_question_id: SQ-003
+    text: Customer data stays within the contracted region.
+    claim_ids: [CLM-003]
+    qualifications: []
+    unresolved_item_ids: []
+unresolved_items:
+  - id: UNR-003
+    type: decision
+    description: A commercial owner must decide whether unlimited liability is acceptable.
+    source_question_ids: [SQ-004]
+    claim_ids: []
+    owner_domain: legal_or_commercial
+    clearing_action: Obtain the commercial owner's decision and approved source record.
+    status: open
+    cleared_by: null
+coverage:
+  question_count: 4
+  addressed_count: 3
+  qualified_count: 0
+  unresolved_count: 1
+  addressed_percent: 75.0
+structural_readiness:
+  status: not_ready
+  blocking_ids: [SQ-004]
+  advisory_only: true

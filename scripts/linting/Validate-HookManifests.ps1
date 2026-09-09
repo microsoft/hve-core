@@ -49,9 +49,68 @@ $script:HookAllowedCommandProps = @('type', 'command', 'bash', 'powershell', 'wi
 $script:HookCommandProps = @('command', 'bash', 'powershell', 'windows', 'linux', 'osx')
 $script:HookSchemaRelativePath = 'scripts/linting/schemas/hook-manifest.schema.json'
 
+# Hosts may launch the 'powershell' branch with Windows PowerShell 5.1, which
+# fails at parse time on PowerShell 7 syntax. Token kinds are matched instead of
+# raw text so operators inside string literals are not flagged.
+$script:HookPowerShell7OnlyTokens = [ordered]@{
+    QuestionMark           = "ternary operator '? :'"
+    QuestionQuestion       = "null-coalescing operator '??'"
+    QuestionQuestionEquals = "null-coalescing assignment '??='"
+    QuestionDot            = "null-conditional member access '?.'"
+    QuestionLBracket       = "null-conditional index '?['"
+    AndAnd                 = "pipeline chain operator '&&'"
+    OrOr                   = "pipeline chain operator '||'"
+}
+
 #endregion Contract
 
 #region Validation Helpers
+
+function Get-HookPowerShellIncompatibility {
+    <#
+    .SYNOPSIS
+        Detects PowerShell 7-only syntax in a hook command string.
+
+    .DESCRIPTION
+        Tokenizes the command and reports constructs that Windows PowerShell 5.1
+        cannot parse. Hosts may launch the 'powershell' branch with 5.1, where
+        such a command fails before the hook script runs.
+
+    .PARAMETER Command
+        The hook command string to inspect.
+
+    .OUTPUTS
+        [string[]] Descriptions of PowerShell 7-only constructs. Empty when compatible.
+
+    .EXAMPLE
+        Get-HookPowerShellIncompatibility -Command "& (Join-Path ($a ? 'x' : 'y') 'z.ps1')"
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Command
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Command)) {
+        return @()
+    }
+
+    $tokens = $null
+    $parseErrors = $null
+    $null = [System.Management.Automation.Language.Parser]::ParseInput($Command, [ref]$tokens, [ref]$parseErrors)
+
+    $found = [System.Collections.Generic.List[string]]::new()
+    foreach ($token in $tokens) {
+        $kind = [string]$token.Kind
+        if ($script:HookPowerShell7OnlyTokens.Contains($kind) -and -not $found.Contains($script:HookPowerShell7OnlyTokens[$kind])) {
+            $found.Add($script:HookPowerShell7OnlyTokens[$kind])
+        }
+    }
+
+    return $found.ToArray()
+}
 
 function Test-HookManifest {
     <#
@@ -179,6 +238,12 @@ function Test-HookManifest {
                     else {
                         $hasCommand = $true
                     }
+                }
+            }
+
+            if ($entry.ContainsKey('powershell')) {
+                foreach ($construct in (Get-HookPowerShellIncompatibility -Command ([string]$entry['powershell']))) {
+                    $errors.Add("$label property 'powershell' uses PowerShell 7-only syntax ($construct); Windows PowerShell 5.1 hosts fail to parse it")
                 }
             }
 

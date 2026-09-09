@@ -6,7 +6,7 @@ user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.1"
-  last_updated: "2026-08-13"
+  last_updated: "2026-08-21"
 ---
 
 # Requirements Author Skill
@@ -36,6 +36,17 @@ PRD scope (`references/prd/`):
 * [Product Discovery](references/prd/product-discovery.md)
 * [EARS Acceptance](references/prd/ears-acceptance.md)
 * [PRD Quality Formats](references/prd/prd-quality-formats.md)
+
+## Handoff Transport Convention
+
+The producing workflow owns each handoff's canonical transport, and the
+consumer validates the complete payload regardless of transport. An outcome
+hypothesis returns `OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1` inline by default
+because it is a one-time seed derived from an already persisted source
+artifact; the user may instead supply a separately persisted payload path.
+BRD Govern persists `BRD_TO_PRD_HANDOFF_V1` and returns its path because that
+payload is a durable governance record consumed across agent sessions. This
+asymmetry is intentional and does not change payload authority or validation.
 
 ## BRD Lifecycle
 
@@ -147,6 +158,8 @@ Before emitting `BRD_TO_PRD_HANDOFF_V1`, the BRD Builder applies the coverage an
 * Signoff approvers, roles, decisions, approval timestamps, comments, and active waivers.
 * Waiver records for any accepted FR-to-AC threshold gap or FR-to-BG target gap.
 
+After validation succeeds, write the complete YAML payload to `.copilot-tracking/brd-sessions/<brd-name>.handoff.yml`, record that path in BRD session state, and return the path with a compact Govern summary. Do not rely on an inline chat payload as the downstream transport.
+
 ### Hard exit gate
 
 Govern exits only when:
@@ -203,7 +216,7 @@ The PRD Builder agent runs a seven-phase lifecycle. Each phase has its own secti
 
 * Determine whether enough product context exists to create PRD artifacts.
 * Identify the initiative, problem statement, and primary target users.
-* Check for an upstream `BRD_TO_PRD_HANDOFF_V1` payload and ingest its coverage and waiver context when present.
+* Check for an upstream `BRD_TO_PRD_HANDOFF_V1` artifact path and ingest its coverage and waiver context when present.
 * Check for an upstream feasibility-to-PRD handoff. Follow [Feasibility-to-PRD Handoff](references/prd/feasibility-to-prd-handoff.md) to recognize it by `kind`, verify required metadata, verdict field presence, and a readable workspace-relative study path. Treat feasibility as supplementary evidence and preserve approved BRD scope.
 * For a new session, carry the handoff kind, path, ingest timestamp, verdict, and study revision identifier in the Assess output until Create writes the state file. When state already exists, update its feasibility-specific metadata object directly. Keep raw candidate content in the handoff artifact.
 * Decide whether to gather more context or proceed to file creation.
@@ -214,7 +227,7 @@ Assess exits only when:
 
 * A meaningful kebab-case PRD name can be derived.
 * Problem framing and primary users are identified.
-* Any available BRD handoff payload has been validated and its coverage metrics recorded.
+* Any available BRD handoff artifact has been read, its payload validated, and its coverage metrics recorded.
 * Any available feasibility handoff is recognized by `kind`, has readable workspace-relative paths, a valid verdict shape, and normalized metadata ready for Create or persisted in existing state.
 
 ### Output artifacts

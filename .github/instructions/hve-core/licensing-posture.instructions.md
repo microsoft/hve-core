@@ -77,9 +77,15 @@ Requirements for any verbatim or lightly edited reproduction:
 
 ### Mixed-content packages
 
-A skill package that combines third-party-derived content with repository-original content declares a compound SPDX expression naming both, for example `MIT AND CC-BY-4.0`. Its attribution section states which files belong to which license. Declaring only one license misrepresents the other body of content.
+A skill package that combines third-party-derived content with repository-original content declares a compound SPDX expression naming every license present in the package, for example `Apache-2.0 AND CC-BY-4.0`, and allocates licenses per file in its attribution section. Declaring only one license misrepresents the other body of content. Never declare a non-SPDX placeholder such as `mixed`; the frontmatter field is an SPDX expression and a placeholder tells a consumer nothing.
 
-When both bodies carry the same license, declare that single license rather than a degenerate compound expression. The attribution section still identifies which content is third-party-derived: by file where the split is by file, and inline where derived and original material share a file.
+At package level, `AND` is the conjunction a redistributor faces: whoever redistributes the whole package complies with every named license. That is the correct reading for a mixed package. It is not a claim that every file carries every license, which is what the per-file allocation table exists to state. Use `OR` only for a genuine recipient choice.
+
+A license that imposes no obligation adds no term. Public-domain source material, including U.S. Government works, and paraphrase-only use of open legal text produce repository-original expression, so neither appears in the expression. A derivative of a copyleft source does appear, because ShareAlike propagates.
+
+Allocate by material class, following the per-file practice used by the [Linux kernel licensing rules](https://docs.kernel.org/process/license-rules.html) and the documentation-versus-code split published by [Kubernetes](https://kubernetes.io/docs/contribute/style/style-guide/). The attribution section names each file or directory and the license that governs it. Where derived and original material share one file, mark the boundary inline.
+
+When every body of content carries the same license, declare that single license rather than a degenerate compound expression. The attribution section still identifies which content is third-party-derived.
 
 ### Open legal text (statutes and regulations)
 
@@ -105,7 +111,7 @@ Verbatim restricted-standard text is a licensing violation and is reverted at re
 * Do not reproduce an entire upstream page, section, or document regardless of license. Treat a long or substantial excerpt as a gating license-risk finding, not an advisory one.
 * Verbatim text is forbidden for restricted standards (ISO, IEC, ETSI) under any circumstance, including short partial quotes, table rows, and figure captions.
 * A derivative of a CC BY-SA source carries the ShareAlike notice and its source attribution into this repository.
-* A skill package whose reference content spans more than one license declares `license: mixed` in its frontmatter rather than a single identifier that covers only part of the package.
+* A skill package whose reference content spans more than one license declares a compound SPDX expression naming every license present, plus a per-file allocation table, rather than a single identifier that covers only part of the package or a non-SPDX placeholder such as `mixed`.
 * When the licensing posture for a specific snippet is ambiguous, paraphrase rather than quote.
 * Preserve standards identifiers verbatim (clause numbers, control IDs, criterion IDs); identifiers are facts, not licensed prose.
 * Treat long or substantial excerpts as a license-risk finding during review.

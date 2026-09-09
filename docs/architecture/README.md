@@ -3,7 +3,7 @@ title: Architecture Overview
 description: HVE Core system design and component relationships
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-08-20
 ms.topic: concept
 keywords:
   - architecture
@@ -19,6 +19,8 @@ The following diagram illustrates the primary components and their relationships
 
 ```mermaid
 graph TD
+    accTitle: HVE Core System Component Architecture
+    accDescr: The extension connects to agents and prompts, scripts provide linting, security, and plugin tooling, and documentation organizes guides and architecture references.
     EXT[Extension] --> AGENTS[Agents]
     EXT --> PROMPTS[Prompts]
     EXT --> INSTRUCTIONS[Instructions]

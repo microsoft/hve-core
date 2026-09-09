@@ -8,7 +8,7 @@ description: 'PRD consumer rules for the feasibility-to-PRD handoff: Assess inge
 
 The feasibility-to-PRD handoff carries a confirmed feasibility verdict and evidence-backed candidates into PRD authoring. It supplements business context and never bypasses PRD Build. Candidates are not final requirements, and concern hints do not select a final NFR category or downstream planner.
 
-The producer contract is owned by `ds-feasibility`. This reference defines only PRD consumer behavior.
+The producer contract is owned by `feasibility`. This reference defines only PRD consumer behavior.
 
 ## Assess
 

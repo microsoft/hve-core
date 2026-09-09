@@ -34,7 +34,7 @@ stimuli:
           dest: .github/copilot-instructions.md
       skills:
         - ../../.github/skills/project-planning/experiment-design
-        - ../../.github/skills/data-science/ml-experimentation
+        - ../../.github/skills/data-science-engineering/ml-experimentation
     tags:
       category: agent-behavior
     graders:

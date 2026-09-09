@@ -3,7 +3,7 @@ title: Security/Vex Standards
 description: "VEX document standards: canonical rule reference, licensing posture, author-of-record contract, and document mutation contract for OpenVEX management - Brought to you by microsoft/hve-core"
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-14
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ VEX document standards: canonical rule reference, licensing posture, author-of-r
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these standards whenever files under `security/vex/` or its tracking root
+create, change, or review OpenVEX statements. Follow the canonical `vex` skill
+logic, source licensing, and human author-of-record contract; statement changes
+must also refresh rolling-document metadata and provenance.
 
 ## Example usage
 

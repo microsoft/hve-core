@@ -3,7 +3,7 @@ brd_id: "BRD-2026-Q2-PRIVACY-PLANNER"
 title: "Privacy Planner BRD"
 description: "Business requirements for adding a first-class Privacy Planner, privacy-standards skill, and Privacy Reviewer to the hve-core planner family."
 author: "HVE Core Maintainers"
-ms.date: 2026-08-01
+ms.date: 2026-08-20
 ms.topic: reference
 keywords:
   - privacy planner
@@ -261,6 +261,8 @@ Impact: Scope and delivery.
 
 ```mermaid
 flowchart LR
+  accTitle: Privacy Risk and DPIA Gate Flow
+  accDescr: Personal-data classification checks the DPIA threshold, routes qualifying work through deeper assessment, and converges on standards-cited findings and backlog handoff.
     A[Personal data identified] --> B[P2 classify processing by privacy risk]
     B --> C{DPIA threshold crossed?}
     C -->|Yes| D[P5 deeper impact assessment]

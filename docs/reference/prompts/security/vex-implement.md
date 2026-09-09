@@ -3,7 +3,7 @@ title: vex-implement
 description: "Plan the work to stand up VEX in a target project as a backlog for Task-* implementors - Brought to you by microsoft/hve-core"
 sidebar_position: 13
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Plan the work to stand up VEX in a target project as a backlog for Task-* implem
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to plan the backlog needed to establish VEX generation and management in a target project. Use vex-scan for an existing project that is ready to scan and draft a VEX document now.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Optionally provide the project `scope` and product package URL. The prompt plans and delegates implementation work; it does not publish VEX statements or replace the product's qualified author of record.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/vex-implement scope=packages/api product=pkg:npm/@example/sample-api
+```
+
+The prompt creates a reviewable backlog for adding VEX capabilities to the fictional package.

@@ -3,7 +3,7 @@ id: "0001"
 title: "Adopt phase-gated ADR Creator aligned with peer planners"
 description: "Adopt a phase-gated ADR Creator agent and supporting skills/instructions that align ADR authoring with peer planners (Security, RAI, SSSC) under MADR v4.0.0 plus hve-core extensions for IDs, lineage, and ASR triggers."
 author: "HVE Core Maintainers"
-ms.date: "2026-07-16"
+ms.date: "2026-08-20"
 ms.topic: "reference"
 status: "accepted"
 proposed_date: "2026-05-01"
@@ -208,6 +208,8 @@ Compliance with this decision is confirmed by four mechanisms:
 
 ```mermaid
 flowchart LR
+  accTitle: ADR Creator Entry, Phase, and Output Flow
+  accDescr: Three entry modes converge on the Frame, Decide, and Govern state machine, which produces MADR or Y-statement output plus configuration and ADR files.
     subgraph Entry["Entry Modes"]
         capture[capture]
         handoff[from-planner-handoff]

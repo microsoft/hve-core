@@ -3,7 +3,7 @@ title: security-review-sbd
 description: Run a Secure by Design principles assessment per UK and Australian government guidance
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Run a Secure by Design principles assessment per UK and Australian government gu
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt for a focused Secure by Design principles assessment when codebase profiling is unnecessary. Use the general security review when the applicable framework or system boundary still needs discovery.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Optionally provide the assessment `scope`. The prompt runs the fixed Secure by Design path and records evidence-backed observations for qualified security review rather than issuing a compliance certification.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/security-review-sbd scope=src/service
+```
+
+The prompt evaluates the sample service boundary and drafts Secure by Design findings for review.

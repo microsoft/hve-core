@@ -1,7 +1,7 @@
 ---
 name: rai-standards
 description: "Consolidated Responsible AI standards reference: NIST AI RMF 1.0, AI STRIDE threat-modeling overlay, EU AI Act risk tiers, and an open-standards catalog with phase mapping"
-license: mixed
+license: CC-BY-4.0
 user-invocable: false
 metadata:
   authors: "NIST (AI RMF, public domain); EU (AI Act, paraphrased with attribution); Microsoft (AI STRIDE overlay)"
@@ -16,9 +16,21 @@ This skill is the reusable standards package for the RAI Planner. It consolidate
 
 ## Attribution and licensing posture
 
-- NIST AI RMF 1.0 is a U.S. Government document and is reproduced here as public-domain reference material with attribution.
-- EU AI Act content in this skill is paraphrased and attributed rather than quoted verbatim, consistent with the open legal-text posture used in the repository.
+- NIST AI RMF 1.0 is a U.S. Government document and is reproduced here as public-domain reference material with attribution. Public-domain material carries no license obligation, so it adds no term to the package license expression.
+- EU AI Act content in this skill is paraphrased and attributed rather than quoted verbatim, consistent with the open legal-text posture used in the repository. The paraphrase is this repository's own expression.
 - The AI STRIDE overlay is Microsoft-authored reference material for threat-modeling reuse in the RAI workflow.
+
+Every file in this package is therefore governed by the repository-original license. The table records the source each file draws on.
+
+| Path                                     | License   | Origin                                            |
+|------------------------------------------|-----------|---------------------------------------------------|
+| `references/nist-ai-rmf-govern.md`       | CC-BY-4.0 | Adapted from NIST AI RMF 1.0 (public domain)      |
+| `references/nist-ai-rmf-map.md`          | CC-BY-4.0 | Adapted from NIST AI RMF 1.0 (public domain)      |
+| `references/nist-ai-rmf-measure.md`      | CC-BY-4.0 | Adapted from NIST AI RMF 1.0 (public domain)      |
+| `references/nist-ai-rmf-manage.md`       | CC-BY-4.0 | Adapted from NIST AI RMF 1.0 (public domain)      |
+| `references/eu-ai-act.md`                | CC-BY-4.0 | Paraphrase of EU AI Act 2024/1689, not reproduced |
+| `references/ai-stride-overlay.md`        | CC-BY-4.0 | Repository-original                               |
+| `SKILL.md` and remaining package content | CC-BY-4.0 | Repository-original                               |
 
 ## Framework index
 

@@ -3,7 +3,7 @@ title: Using DT Methods Together
 description: End-to-end walkthrough of a Design Thinking session across all nine methods
 sidebar_position: 16
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-08-20
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -22,6 +22,8 @@ This guide walks through a complete Design Thinking journey, showing how the nin
 
 ```mermaid
 flowchart LR
+    accTitle: Complete Design Thinking Journey
+    accDescr: Nine methods move through problem, solution, and implementation spaces, with explicit space transitions and three exits into RPI research.
     subgraph problem["Problem Space"]
         M1["Method 1<br/>Scope"] --> M2["Method 2<br/>Research"] --> M3["Method 3<br/>Synthesis"]
     end

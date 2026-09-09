@@ -3,7 +3,7 @@ title: Project Planning/Community Interaction
 description: "Community interaction voice, tone, and response templates for GitHub-facing agents and prompts"
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,11 @@ Community interaction voice, tone, and response templates for GitHub-facing agen
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these conventions when composing or posting contributor-visible GitHub
+issue, pull request, or discussion responses through the backlog workflow.
+Select the matching scenario, apply content-policy guards, and post the reason
+before a state change; escalate cases that require maintainer judgment rather
+than forcing a template.
 
 ## Example usage
 

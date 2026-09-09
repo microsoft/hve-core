@@ -3,7 +3,7 @@ title: Coding Standards/Bash/Bash
 description: Bash script authoring conventions
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,10 @@ Bash script authoring conventions
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply these conventions whenever you create or modify a Bash `.sh` script in
+the repository. They cover Bash structure, strict error handling, quoting,
+security, and ShellCheck expectations; use the language-specific guidance for
+PowerShell or Python scripts instead.
 
 ## Example usage
 

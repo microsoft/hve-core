@@ -3,7 +3,7 @@ title: architecture-diagrams
 description: Architecture diagram authoring for cloud infrastructure and declared data catalogs. Use when rendering Azure IaC or DS_CATALOG_V1 relationships as caller-selected ASCII or Mermaid diagrams.
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-19
 ms.topic: reference
 keywords:
   - skill
@@ -32,7 +32,7 @@ Use `architecture-diagrams` when infrastructure source files need a reviewable
 ASCII or Mermaid architecture view, or when a `DS_CATALOG_V1` catalog needs an
 entity relationship diagram generated from declared relationships.
 
-Use `ds-catalog` first when entity meaning, endpoints, cardinality, join keys,
+Use `data-catalog` first when entity meaning, endpoints, cardinality, join keys,
 or confidence have not been declared. The diagram skill renders those facts but
 does not infer them from SQL or ORM sources.
 

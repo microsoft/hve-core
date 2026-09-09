@@ -45,14 +45,14 @@ This guide is for you if you analyze data, build Jupyter notebooks, create dashb
 ## Stage Walkthrough
 
 1. Stage 2: Discovery. Use `/rpi-research` to investigate data sources, explore available datasets, and research analytical approaches.
-2. Stage 3: Product Definition. Select the **Data Workstream Coach** and confirm the catalog job to define entities, relationships, and dataset profiles as a durable catalog.
+2. Stage 3: Product Definition. Select the **Data Science and Engineering Coach** and confirm the catalog job to define entities, relationships, and dataset profiles as a durable catalog.
 3. Stage 6: Notebook Development. Confirm the analysis job to produce notebooks and dashboards, and the pipeline job to produce transformation and validation code.
 4. Stage 7: Validation. Confirm the testing job for dashboard and pipeline validation, and the evaluation job when an AI system needs an evaluation dataset.
 5. Stage 8: Delivery. Package notebooks, dashboards, and documentation for sharing with stakeholders and engineering teams.
 
 ## Starter Prompts
 
-Select the **Data Workstream Coach** agent and confirm the analysis job:
+Select the **Data Science and Engineering Coach** agent and confirm the analysis job:
 
 ```text
 Create a data analysis notebook for the Q4 sales transactions dataset in
@@ -61,7 +61,7 @@ analysis by product category and region, and customer cohort segmentation
 using RFM scoring.
 ```
 
-Select the **Data Workstream Coach** agent and confirm the catalog job:
+Select the **Data Science and Engineering Coach** agent and confirm the catalog job:
 
 ```text
 Catalog the customer event ingestion pipeline. Source is a Kafka topic with
@@ -70,7 +70,7 @@ sensitivity classification, and a dataset profile covering timestamp
 normalization and null-check quality rules.
 ```
 
-Select the **Data Workstream Coach** agent and confirm the analysis job for a dashboard:
+Select the **Data Science and Engineering Coach** agent and confirm the analysis job for a dashboard:
 
 ```text
 Build a dashboard for API latency and error rate metrics from the
@@ -79,7 +79,7 @@ error rate breakdown by endpoint (5xx vs 4xx), and a 30-day daily active
 users trend.
 ```
 
-Select the **Data Workstream Coach** agent and confirm the evaluation job:
+Select the **Data Science and Engineering Coach** agent and confirm the evaluation job:
 
 ```text
 Build an evaluation dataset for our grounded support assistant. It answers
@@ -98,15 +98,15 @@ granularity, and GDPR privacy constraints for EU customer data.
 
 ## Key Agents and Workflows
 
-| Agent or skill            | Purpose                                             | Docs                       |
-|---------------------------|-----------------------------------------------------|----------------------------|
-| **Data Workstream Coach** | Persistent data-workstream coaching and job routing | Agent file                 |
-| **ds-analysis-authoring** | Notebook and dashboard authoring and validation     | Skill file                 |
-| **ds-catalog**            | Catalog entities, relationships, and profiles       | Skill file                 |
-| **ds-dataops**            | Pipeline invariants, validation, and testing        | Skill file                 |
-| **ds-evaluation-design**  | AI-system evaluation dataset design                 | Skill file                 |
-| **rpi-research**          | Data source and pattern research                    | [RPI workflow](../../rpi/) |
-| **rpi-plan**              | Analytics pipeline planning                         | [RPI workflow](../../rpi/) |
+| Agent or skill                         | Purpose                                                          | Docs                       |
+|----------------------------------------|------------------------------------------------------------------|----------------------------|
+| **Data Science and Engineering Coach** | Persistent data science and engineering coaching and job routing | Agent file                 |
+| **analysis-authoring**                 | Notebook and dashboard authoring and validation                  | Skill file                 |
+| **data-catalog**                       | Catalog entities, relationships, and profiles                    | Skill file                 |
+| **dataops**                            | Pipeline invariants, validation, and testing                     | Skill file                 |
+| **evaluation-design**                  | AI-system evaluation dataset design                              | Skill file                 |
+| **rpi-research**                       | Data source and pattern research                                 | [RPI workflow](../../rpi/) |
+| **rpi-plan**                           | Analytics pipeline planning                                      | [RPI workflow](../../rpi/) |
 
 Prompts complement the agents for cross-cutting workflows:
 

@@ -3,7 +3,7 @@ title: Accessibility/Accessibility License Posture
 description: Accessibility-specific overlay mapping accessibility standards onto the repository licensing posture
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-27
 ms.topic: reference
 keywords:
   - instruction
@@ -28,8 +28,11 @@ Accessibility-specific overlay mapping accessibility standards onto the reposito
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply this overlay when accessibility skills or planning artifacts summarize,
+quote, or cite WCAG, ARIA APG, COGA, Section 508, or EN 301 549. Read it with
+the repository licensing posture; it adds accessibility-specific source
+classes and cite-only rules rather than replacing the general attribution
+contract.
 
 ## Example usage
 

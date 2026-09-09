@@ -117,8 +117,9 @@ function Import-DisclaimerSource {
     .DESCRIPTION
     Reads the markdown file, splits on H2 headings to identify planner sections,
     and extracts the verbatim disclaimer prose from each section's CAUTION blockquote.
-    The first word of each heading (lowercased) maps to the planner key and disclaimer id
-    convention: 'RAI Planning' -> 'rai-planner' / 'rai-full-disclaimer'.
+    An optional disclaimer-id marker immediately before the CAUTION block supplies the
+    slug. When metadata is absent, the first word of the heading (lowercased) maps to
+    the planner key and disclaimer id convention.
 
     .PARAMETER SourcePath
     Absolute path to the disclaimer-language.instructions.md markdown file.
@@ -151,6 +152,40 @@ function Import-DisclaimerSource {
         $heading = $match.Groups['heading'].Value.Trim()
         $sectionBody = $match.Groups['body'].Value
 
+        $sectionLines = @($sectionBody -split '\r?\n')
+        $disclaimerIdCandidateIndexes = @()
+        for ($lineIndex = 0; $lineIndex -lt $sectionLines.Count; $lineIndex++) {
+            $normalizedCommentStart = $sectionLines[$lineIndex].TrimStart() -replace '^<!--[ \t]*', '<!-- '
+            if ($normalizedCommentStart.StartsWith('<!-- disclaimer-id', [System.StringComparison]::OrdinalIgnoreCase)) {
+                $disclaimerIdCandidateIndexes += $lineIndex
+            }
+        }
+
+        if ($disclaimerIdCandidateIndexes.Count -gt 1) {
+            throw "Disclaimer section '$heading' contains multiple disclaimer-id markers"
+        }
+
+        $explicitSlug = $null
+        if ($disclaimerIdCandidateIndexes.Count -eq 1) {
+            $markerIndex = $disclaimerIdCandidateIndexes[0]
+            $markerText = $sectionLines[$markerIndex].Trim()
+            $markerPrefix = '<!-- disclaimer-id: '
+            $markerSuffix = ' -->'
+            if (-not $markerText.StartsWith($markerPrefix, [System.StringComparison]::Ordinal) -or
+                -not $markerText.EndsWith($markerSuffix, [System.StringComparison]::Ordinal)) {
+                throw "Disclaimer section '$heading' contains an invalid disclaimer-id marker"
+            }
+
+            $explicitSlug = $markerText.Substring($markerPrefix.Length, $markerText.Length - $markerPrefix.Length - $markerSuffix.Length)
+            if (-not [regex]::IsMatch($explicitSlug, '^[a-z0-9]+(?:-[a-z0-9]+)*$')) {
+                throw "Disclaimer section '$heading' contains an invalid disclaimer-id marker"
+            }
+
+            if ($markerIndex + 1 -ge $sectionLines.Count -or $sectionLines[$markerIndex + 1].Trim() -ne '> [!CAUTION]') {
+                throw "Disclaimer section '$heading' must place disclaimer-id immediately before its CAUTION block"
+            }
+        }
+
         $cautionMatch = $cautionRegex.Match($sectionBody)
         if (-not $cautionMatch.Success) { continue }
 
@@ -163,7 +198,12 @@ function Import-DisclaimerSource {
         $prose = $prefixRegex.Replace($prose, '', 1)
         if ([string]::IsNullOrWhiteSpace($prose)) { continue }
 
-        $slug = ($heading -split '\s+' | Select-Object -First 1).ToLowerInvariant()
+        $slug = if ($explicitSlug) {
+            $explicitSlug
+        }
+        else {
+            ($heading -split '\s+' | Select-Object -First 1).ToLowerInvariant()
+        }
         $key = "$slug-planner"
         $disclaimers[$key] = @{
             id    = "$slug-full-disclaimer"

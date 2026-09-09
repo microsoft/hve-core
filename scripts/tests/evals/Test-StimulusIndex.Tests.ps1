@@ -47,6 +47,39 @@ Describe 'Get-StimulusBacklink' -Tag 'Unit' {
         $links.Count | Should -Be 1
         $links[0].slug | Should -Be 'sample-prompt'
     }
+
+    It 'Expands a YAML list tag into one record per slug' {
+        # A parsed YAML list cast with [string] joins its elements with a space, which
+        # produced the compound slug 'code-review rpi-agent'. That value reached agent
+        # arguments and output paths, so a real stimulus resolved to a nonexistent agent.
+        $stim = @{ tags = @{ agent = @('code-review', 'rpi-agent') } }
+        $links = Get-StimulusBacklink -Stimulus $stim
+        $links.Count | Should -Be 2
+        ($links | ForEach-Object { $_.slug }) | Sort-Object | Should -Be @('code-review', 'rpi-agent')
+        foreach ($link in $links) { $link.slug | Should -Not -Match '\s' }
+    }
+
+    It 'Treats a single-element list like a scalar' {
+        $stim = @{ tags = @{ agent = @('rpi-agent') } }
+        $links = Get-StimulusBacklink -Stimulus $stim
+        $links.Count | Should -Be 1
+        $links[0].slug | Should -Be 'rpi-agent'
+    }
+
+    It 'Trims and drops empty entries within a list tag' {
+        $stim = @{ tags = @{ agent = @('  rpi-agent  ', '', '   ') } }
+        $links = Get-StimulusBacklink -Stimulus $stim
+        $links.Count | Should -Be 1
+        $links[0].slug | Should -Be 'rpi-agent'
+    }
+
+    It 'Expands the largest corpus backlink list without producing a compound slug' {
+        # The largest real tag in the baseline-equivalence corpus.
+        $stim = @{ tags = @{ agent = @('backlog-manager', 'brd-builder', 'issue-triage', 'prd-builder', 'rpi-agent') } }
+        $links = Get-StimulusBacklink -Stimulus $stim
+        $links.Count | Should -Be 5
+        ($links | Where-Object { $_.slug -match '\s' }) | Should -BeNullOrEmpty
+    }
 }
 
 Describe 'New-StimulusIndex' -Tag 'Unit' {

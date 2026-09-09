@@ -3,7 +3,7 @@ title: Dt Method 04 Ideation
 description: Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Divergent ideation for Design Thinking Method 4b with constraint-informed soluti
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt during Method 4b when the team needs broad, constraint-informed solution ideas. Use the convergence prompt after a sufficient divergent set exists and the team is ready to cluster it.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the `project-slug`, then optionally supply constraint context and a numeric divergent target. The prompt uses current project evidence to facilitate ideation without selecting a winner prematurely.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/dt-method-04-ideation project-slug=factory-floor-maintenance divergentTarget=15
+```
+
+The prompt facilitates at least 15 solution ideas informed by the project's recorded constraints.
