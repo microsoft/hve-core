@@ -23,26 +23,18 @@ Bicep MCP tools provide schema information and best practices:
 
 ## Project Structure
 
-Organize Bicep files in a dedicated folder (e.g., `infra/`, `deploy/`, or environment-specific names):
+Organize Bicep files in a dedicated folder (e.g., `infra/`, `deploy/`, or environment-specific names). `main.bicep` composes registry modules directly; local modules exist only for solution-specific reuse (see Azure Module Sourcing):
 
 <!-- <example-project-structure> -->
 ```text
-main.bicep                    # Main orchestration
+main.bicep                    # Registry module calls and remaining direct resources
 main.bicepparam               # Parameter values
 types.bicep                   # Shared type definitions
 README.md                     # Documentation
-modules/                      # Reusable sub-modules
-  networking.bicep
-  storage.bicep
-  compute.bicep
+modules/                      # Local modules, only where reuse justifies them
+  workload.bicep
 ```
 <!-- </example-project-structure> -->
-
-File organization:
-
-* `main.bicep` - Primary resource definitions and orchestration
-* `types.bicep` - Shared type definitions and default values
-* `modules/` - Reusable sub-modules for logical grouping
 
 ## Coding Standards
 
@@ -135,16 +127,21 @@ Resource names follow [Azure naming conventions](https://learn.microsoft.com/azu
 
 ### Azure Module Sourcing
 
-Azure solution modules compose reviewed modules before authoring resources directly. When implementing Azure infrastructure:
+Azure infrastructure composes [Azure Verified Modules](https://aka.ms/avm) before declaring resources directly. The `azure-iac-solution` skill owns the sourcing hierarchy, discovery procedure, and exception record; load it for any Azure implementation or review. In Bicep:
 
-1. Prefer an applicable [Azure Verified Modules](https://aka.ms/avm) pattern module.
-2. Otherwise compose AVM resource modules from the [Bicep public registry](https://github.com/Azure/bicep-registry-modules) (`br/public:avm/res/...` or `br/public:avm/ptn/...`).
-3. Use direct Bicep resource declarations only when no suitable AVM module exists, the published AVM module does not expose a required capability, a preview or new API is essential, or the caller has specified another implementation approach.
-4. Do not create a local wrapper around an AVM module unless the wrapper provides a documented organizational contract or substantial reusable composition.
-5. Pin module versions and review available upgrades separately from adoption.
-6. Record each direct-resource exception and its rationale in the implementation plan so reviewers can re-evaluate it later.
+* AVM modules live in the public registry as `br/public:avm/{ptn,res,utl}/<provider>/<type>:<tag>`.
+* Resolve paths and tags from the registry during the session, never from memory.
+* Pin the exact tag; Bicep has no version-range syntax.
 
-Resolve module references, versions, and availability from the registry at implementation time. Do not guess module names or versions from model knowledge. For AVM discovery, capability mapping, and exception handling, use the `azure-iac-solution` skill.
+```bicep
+module storageAccount 'br/public:avm/res/storage/storage-account:0.33.0' = {
+  name: 'storage-account'
+  params: {
+    name: storageAccountName
+    location: location
+  }
+}
+```
 
 ## Type System
 

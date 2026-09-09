@@ -11,18 +11,21 @@ These instructions define conventions for Terraform Infrastructure as Code (IaC)
 
 ## Project Structure
 
-Organize Terraform files following a modular architecture:
+The root module composes registry modules directly. Local modules exist only for solution-specific reuse (see Azure Module Sourcing):
 
 ```text
 terraform/
-├── modules/                      # Reusable modules for specific resource groupings
-│   ├── networking/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   ├── outputs.tf
-│   │   └── versions.tf
-│   ├── storage/
-│   └── compute/
+├── main.tf                       # Registry module calls and remaining direct resources
+├── variables.tf
+├── outputs.tf
+├── versions.tf
+├── backend.tf
+├── modules/                      # Local modules, only where reuse justifies them
+│   └── workload/
+│       ├── main.tf
+│       ├── variables.tf
+│       ├── outputs.tf
+│       └── versions.tf
 └── README.md
 ```
 
@@ -115,20 +118,26 @@ Child modules in `modules/{name}/` inherit providers and state from the calling 
 
 ### Azure Module Sourcing
 
-Azure solution modules compose reviewed modules before authoring resources directly. When implementing Azure infrastructure:
+Azure infrastructure composes [Azure Verified Modules](https://aka.ms/avm) before authoring `azurerm` or `azapi` resources directly. The `azure-iac-solution` skill owns the sourcing hierarchy, discovery procedure, and exception record; load it for any Azure implementation or review. In Terraform:
 
-1. Prefer an applicable [Azure Verified Modules](https://aka.ms/avm) pattern module.
-2. Otherwise compose AVM resource modules from the [Terraform AVM registry](https://registry.terraform.io/namespaces/Azure) (namespace `Azure`, names matching `avm-res-*` or `avm-ptn-*`).
-3. Use direct `azurerm` or `azapi` resources only when no suitable AVM module exists, the published AVM module does not expose a required capability, a preview or new API is essential, or the caller has specified another implementation approach.
-4. Do not create a local wrapper around an AVM module unless the wrapper provides a documented organizational contract or substantial reusable composition.
-5. Pin module versions with `version = "~> x.y"` and review available upgrades separately from adoption.
-6. Record each direct-resource exception and its rationale in the implementation plan so reviewers can re-evaluate it later.
+* AVM modules live in the `Azure` registry namespace as `Azure/avm-{ptn,res,utl}-*/azurerm`.
+* Resolve names and versions from the registry during the session, never from memory.
+* AVM Terraform modules are pre-1.0, so pin to the patch series (`version = "~> 0.10.0"`) or an exact version. A `~> 0.10` constraint admits breaking minor releases.
 
-Resolve module sources, versions, and availability from the registry at implementation time. Do not guess module names or versions from model knowledge. For AVM discovery, capability mapping, and exception handling, use the `azure-iac-solution` skill.
+```hcl
+module "storage_account" {
+  source  = "Azure/avm-res-storage-storageaccount/azurerm"
+  version = "~> 0.10.0"
+
+  name                = var.storage_account_name
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+}
+```
 
 ### Module Calls
 
-Prefer `for_each` with a map keyed by stable identifiers for conditional and repeated module deployment. `count` produces index-based addresses, so removing an element from the middle of a list re-addresses the remaining instances. A conditional single module uses `for_each = var.condition ? { this = {} } : {}` or a boolean-to-map conversion.
+Follow AVM [TFNFR7](https://azure.github.io/Azure-Verified-Modules/spec/TFNFR7/): use `count = var.condition ? 1 : 0` for conditional creation of a single instance, and `for_each` with a map keyed by stable identifiers for multiple instances. Never use `count` over a list, because removing an element re-addresses the remaining instances.
 
 ```hcl
 module "workload" {
@@ -183,9 +192,9 @@ Ternary operators remain appropriate for boolean conditions (`var.is_production 
 
 Use standard Terraform data source syntax for existing resource lookups (e.g., `data "azurerm_resource_group"`, `data "azurerm_client_config"`). Apply the same logical-name convention as resources: a singleton data source uses `"this"`, while multiple data sources of the same type use descriptive names or `for_each` keys.
 
-### Deferred Data Resources
+### Avoid Imperative Lookups
 
-Reserve `terraform_data` provisioners for values that cannot be obtained from a provider data source or an `azapi_resource_action` call. Imperative lookups via `local-exec` and the Azure CLI bypass state tracking, credential handling, and plan-time validation. For Azure lookups, prefer `azapi` data sources or resource actions:
+Do not use `terraform_data` with `local-exec` and the Azure CLI to read Azure state. Imperative lookups bypass state tracking, credential handling, and plan-time validation. Use a provider data source, or `azapi_resource` and `azapi_resource_action` when `azurerm` has no data source:
 
 ```hcl
 data "azapi_resource" "storage_account" {
@@ -275,7 +284,7 @@ Run `terraform fmt -recursive`, `terraform validate`, and `terraform plan` befor
 
 ### Linting Tools
 
-Use `terraform fmt` for formatting, `terraform validate` for configuration validation, and `tflint` for extended linting. For security scanning, define an expected policy baseline, severity threshold, and exception mechanism for the project before adopting a scanner; `checkov` and `tfsec` are not interchangeable defaults. Record scan suppressions with a rationale and an expiry or re-review trigger.
+Use `terraform fmt` for formatting, `terraform validate` for configuration validation, `tflint` for extended linting, and `trivy config` or `checkov` for security scanning (`tfsec` is archived and folded into Trivy). Record scan suppressions inline with a rationale and a re-review trigger.
 
 ## Lifecycle Management
 
