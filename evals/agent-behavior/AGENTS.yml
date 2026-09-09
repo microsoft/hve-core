@@ -215,6 +215,10 @@ agents:
     path: '.github/agents/hve-core/subagents/rpi-researcher.agent.md'
     class: unknown
     cost_tier: light
+  - slug: rpi-review-builder
+    path: '.github/agents/hve-core/subagents/rpi-review-builder.agent.md'
+    class: unknown
+    cost_tier: light
   - slug: security-planner
     path: '.github/agents/security/security-planner.agent.md'
     class: unknown

@@ -3,7 +3,7 @@ title: VEX Verification
 description: Download, verify, and interpret the OpenVEX vulnerability exploitability document published with Stable HVE Core releases
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-09
+ms.date: 2026-09-04
 ms.topic: how-to
 keywords:
   - VEX
@@ -63,11 +63,17 @@ gh release download v<version> -R microsoft/hve-core \
 
 A Stable release publishes two Sigstore attestations for the VEX document:
 
+```bash
+TAG='v<version>'
+SOURCE_SHA=$(gh api "repos/microsoft/hve-core/commits/$TAG" --jq '.sha')
+```
+
 1. **Provenance of the VEX document**, so you can confirm the file itself came from the official pipeline. Verify it against the dedicated reusable VEX attestation workflow:
 
    ```bash
    gh attestation verify hve-core.openvex.json -R microsoft/hve-core \
-     --signer-workflow microsoft/hve-core/.github/workflows/vex-attest.yml
+     --signer-workflow microsoft/hve-core/.github/workflows/vex-attest.yml \
+     --source-digest "$SOURCE_SHA" --source-ref "refs/tags/$TAG"
    ```
 
 2. **VEX bound to the dependency SBOM**, where the VEX document is the in-toto *predicate* over the SBOM *subject* (the OpenVEX "encapsulating format"). This lets VEX-aware tooling resolve the exploitability assessment for the product's component inventory:
@@ -75,6 +81,7 @@ A Stable release publishes two Sigstore attestations for the VEX document:
    ```bash
    gh attestation verify dependencies.spdx.json -R microsoft/hve-core \
      --signer-workflow microsoft/hve-core/.github/workflows/vex-attest.yml \
+     --source-digest "$SOURCE_SHA" --source-ref "refs/tags/$TAG" \
      --predicate-type https://openvex.dev/ns/v0.2.0
    ```
 

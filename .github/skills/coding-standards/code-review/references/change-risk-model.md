@@ -65,8 +65,8 @@ Explain the recommendation without converting the categories into a numeric scor
 
 The checklist paraphrases empirical findings as attention cues rather than portable prediction rules:
 
-* [Use of Relative Code Churn Measures to Predict System Defect Density](https://doi.org/10.1109/ICSE.2005.1553571)
-* [Predicting Faults Using the Complexity of Code Changes](https://doi.org/10.1109/ICSE.2009.5070510)
-* [A Large-Scale Empirical Study of Just-In-Time Quality Assurance](https://doi.org/10.1109/TSE.2012.70)
-* [Mining Version Histories to Guide Software Changes](https://doi.org/10.1109/TSE.2005.72)
-* [Coverage Is Not Strongly Correlated with Test Suite Effectiveness](https://doi.org/10.1145/2568225.2568271)
+* *Use of Relative Code Churn Measures to Predict System Defect Density*, DOI `10.1109/ICSE.2005.1553571`
+* *Predicting Faults Using the Complexity of Code Changes*, DOI `10.1109/ICSE.2009.5070510`
+* *A Large-Scale Empirical Study of Just-In-Time Quality Assurance*, DOI `10.1109/TSE.2012.70`
+* *Mining Version Histories to Guide Software Changes*, DOI `10.1109/TSE.2005.72`
+* *Coverage Is Not Strongly Correlated with Test Suite Effectiveness*, DOI `10.1145/2568225.2568271`

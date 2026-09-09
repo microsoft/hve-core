@@ -110,12 +110,11 @@
     "ci:eval:agent:report:dryrun": "npm run ci:eval:agent:matrix:dryrun && npm run ci:eval:agent:dashboard"
   },
   "devDependencies": {
-    "@cspell/cspell-json-reporter": "10.1.1",
-    "@microsoft/vally-cli": "0.14.0",
+    "@cspell/cspell-json-reporter": "10.2.2",
+    "@microsoft/vally-cli": "0.15.0",
     "@vscode/vsce": "3.9.2",
-    "alex": "11.0.1",
     "audit-ci": "7.1.0",
-    "cspell": "10.1.1",
+    "cspell": "10.2.2",
     "markdown-link-check": "3.15.0",
     "markdown-table-formatter": "1.7.0",
     "markdownlint-cli2": "0.23.2",
@@ -123,9 +122,11 @@
     "markdownlint-cli2-formatter-json": "0.0.9",
     "markdownlint-rule-search-replace": "1.2.0",
     "retext-english": "5.0.0",
+    "retext-equality": "6.6.0",
     "retext-profanities": "8.0.0",
     "retext-stringify": "4.0.0",
-    "unified": "11.0.5"
+    "unified": "11.0.5",
+    "vfile-sort": "4.0.0"
   },
   "overrides": {
     "@opentelemetry/core": "2.10.0",
@@ -135,7 +136,7 @@
     "fast-uri": "3.1.6",
     "form-data": "4.0.6",
     "ip-address": "10.4.0",
-    "js-yaml": "4.3.1",
+    "js-yaml": "4.3.2",
     "linkify-it": "5.0.2",
     "markdown-it": "14.2.0",
     "picomatch@^2": "2.3.2",

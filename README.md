@@ -66,9 +66,9 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 > ```
 >
 > Reviewed source moves from `main` to `release/prerelease` to `release/stable`.
-> Behavior when switching or duplicating same-name marketplace registrations
-> has not been observed. See [CLI Plugins](docs/getting-started/methods/cli-plugins.md)
-> for details.
+> Switching registrations can require removing and re-adding the marketplace.
+> Duplicate same-name registration behavior can vary by Copilot CLI version. See
+> [CLI Plugins](docs/getting-started/methods/cli-plugins.md) for details.
 
 ## Choose Your Path
 

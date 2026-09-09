@@ -1537,11 +1537,19 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit', 'ReleaseReco
         [string[]]@($document['jobs']['publish-release']['needs']) | Should -Contain 'vex-attest'
     }
 
-    It 'Documents VSIX and VEX verification without a plugin ZIP instruction' {
+    It 'Documents source-bound subject-specific verification without a plugin ZIP instruction' {
         $notes = [string](Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'release-vsix-publish.yml') `
                 -JobName 'append-verification-notes' -StepName 'Append verification section to release notes')['run']
         $notes | Should -Match 'gh attestation verify <file>\.vsix'
         $notes | Should -Match 'gh attestation verify hve-core\.openvex\.json'
+        $notes | Should -Match 'gh attestation verify dependencies\.spdx\.json'
+        $notes | Should -Match 'SOURCE_SHA=\$\(gh api'
+        @([regex]::Matches($notes, '--source-digest')) | Should -HaveCount 3
+        @([regex]::Matches($notes, '--source-ref')) | Should -HaveCount 3
+        $notes | Should -Match 'extension-provenance-signer\.yml'
+        $notes | Should -Match '3a09401536cef0c4559db1aa64b7d1010638fd67'
+        $notes | Should -Match 'SBOMs are\s+predicate payloads'
+        $notes | Should -Not -Match 'All release assets include.*build-provenance'
         $notes | Should -Not -Match '<file>\.zip'
     }
 
@@ -2277,6 +2285,63 @@ Describe 'Managed release identity postconditions' -Tag 'Unit' {
             }
         $result.ExitCode | Should -Not -Be 0
         $result.Output | Should -Match 'unexpected managed release identity'
+    }
+}
+
+Describe 'Copilot OTel static test selection' -Tag 'Unit' {
+    BeforeAll {
+        $script:PrValidation = Get-WorkflowDocument -Name 'pr-validation.yml'
+        $script:StaticSelection = [string]$script:PrValidation['jobs']['pytest']['with']['changed-paths-pattern']
+        $patternMatch = [regex]::Match($script:StaticSelection, "&& '([^']+)' \|\| ''")
+        if (-not $patternMatch.Success) {
+            throw 'Telemetry static changed-paths-pattern is not a conditional matrix expression'
+        }
+        $script:TelemetryStaticPattern = $patternMatch.Groups[1].Value
+    }
+
+    It 'Applies the custom pattern only to the telemetry matrix directory' {
+        $script:StaticSelection |
+            Should -Match "matrix\.directory == '\.github/skills/experimental/copilot-otel-metrics'"
+        $script:StaticSelection | Should -Match "\|\| ''"
+    }
+
+    It 'Selects the non-slow telemetry run for <Path>' -ForEach @(
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/baseline.py' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/tests/test_local_config.py' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/uv.lock' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/pyproject.toml' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/otel-collector-local.yaml' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/compose.yaml' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/dashboards/copilot-otel.json' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/azure/main.bicep' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/azure/main.tf' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/azure/variables.tf' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/azure/outputs.tf' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/azure/otel-collector-config.yaml' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/azure/agent-host-relay/otel-collector-config.yaml' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/azure/agent-host-relay/compose.yaml' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/references/org-distribution.md' }
+    ) {
+        $Path | Should -Match $script:TelemetryStaticPattern
+    }
+
+    It 'Does not select the non-slow telemetry run for <Path>' -ForEach @(
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/azure/versions.tf' }
+        @{ Path = '.github/skills/experimental/copilot-otel-metrics/examples/azure/deploy.sh' }
+        @{ Path = '.github/workflows/pytest-tests.yml' }
+        @{ Path = '.github/workflows/release-vsix-publish.yml' }
+    ) {
+        $Path | Should -Not -Match $script:TelemetryStaticPattern
+    }
+
+    It 'Leaves the strict runtime lane configuration unchanged' {
+        $runtime = $script:PrValidation['jobs']['copilot-otel-runtime-tests']['with']
+        $runtime['marker-expression'] | Should -Be 'slow'
+        $runtime['strict-runtime'] | Should -BeTrue
+        $runtime['artifact-suffix'] | Should -Be '-runtime'
+        $runtime['pre-pull-compose-file'] | Should -Be 'examples/compose.yaml'
+        $runtime['pre-pull-compose-service'] | Should -Be 'otel-collector'
+        $runtime['changed-paths-pattern'] | Should -Be '^\.github/skills/experimental/copilot-otel-metrics/(examples/.*\.(py|yaml)|examples/azure/agent-host-relay/.*\.yaml|tests/.*\.py|pyproject\.toml)$|^\.github/workflows/(pytest-tests|pr-validation)\.yml$'
     }
 }
 

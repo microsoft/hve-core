@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-08-21
+ms.date: 2026-09-05
 ms.topic: reference
 keywords:
   - powershell
@@ -118,7 +118,7 @@ The `evals/` directory contains PowerShell entry points for agent-behavior, base
 | `New-EquivalenceDashboard.ps1`            | Render a self-contained HTML dashboard for a local baseline-equivalence run         |
 | `Test-CopilotToken.ps1`                   | Pre-flight probe for the `COPILOT_GITHUB_TOKEN` secret used by vally evals          |
 | `Test-EvalSpec.ps1`                       | Validate vally eval spec files against the embedded schema                          |
-| `Test-EvalSpecText.ps1`                   | Run alex.js and retext-profanities against the AI-artifact markdown corpus          |
+| `Test-EvalSpecText.ps1`                   | Run retext-equality and retext-profanities against the AI-artifact markdown corpus  |
 | `Test-StimulusPresence.ps1`               | Verify every changed AI artifact has a matching eval-spec stimulus backlink         |
 | `Test-VallyTestSafety.ps1`                | Repo-wide safety lint flagging eval stimuli and corpora that need refusal coverage  |
 | `Update-AgentMatrixSummariesFromLogs.ps1` | Rebuild per-agent matrix JSON summaries from existing vally logs without re-running |
