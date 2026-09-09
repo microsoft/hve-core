@@ -5,14 +5,14 @@ description: >
   as the default implementation path. Covers intent extraction, AVM catalogue discovery,
   module selection evidence, exception handling, and review of Bicep and Terraform solutions.
   Use when a request involves designing or implementing Azure infrastructure, converting
-  architecture into Bicep or Terraform, reviewing Azure IaC, modernizing raw resources into
-  reusable modules, or selecting between Bicep, Terraform, AzureRM, and AzAPI.
+  architecture into Bicep or Terraform, reviewing Azure IaC, or modernizing raw resources
+  into reusable modules.
 license: MIT
 user-invocable: true
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-09-09"
+  last_updated: "2026-09-10"
 ---
 
 # Azure IaC Solution
@@ -20,14 +20,12 @@ metadata:
 ## Overview
 
 Azure Verified Modules (AVM) is Microsoft's Infrastructure as Code module strategy. AVM
-publishes resource and pattern modules for Bicep and Terraform through the public registries,
-codifying common Azure guidance and Well-Architected practices so solutions compose reviewed
-modules instead of recreating resources ad hoc.
+publishes resource, pattern, and utility modules for Bicep and Terraform through the public
+registries, codifying Azure guidance and Well-Architected practices so solutions compose
+reviewed modules instead of recreating resources ad hoc.
 
-This skill owns the architecture-to-module composition workflow. The `bicep` and `terraform`
-instruction files own language syntax, formatting, and safe expressions; they defer module
-sourcing decisions to this skill. Keep language guidance small and this skill focused on
-selection evidence, exceptions, and review.
+This skill owns the architecture-to-module composition policy. The `bicep` and `terraform`
+instruction files own language syntax and defer module sourcing to this skill.
 
 ## When to Use
 
@@ -35,68 +33,46 @@ selection evidence, exceptions, and review.
 * Converting an architecture description into Bicep or Terraform
 * Reviewing Azure IaC for module reuse and governance gaps
 * Modernizing handwritten Azure resources into reusable modules
-* Generating an Azure deployment plan
-* Selecting between Bicep, Terraform, AzureRM, and AzAPI
 
 ## Module Sourcing Hierarchy
 
-Apply this hierarchy in order. Stop at the first tier that satisfies the requirement.
+Apply this hierarchy per capability. Stop at the first tier that satisfies the requirement.
+AVM-first is not AVM-only: a native resource is not wrong, an unrecorded one is.
 
-1. Express and validate architectural intent: capture the required capabilities, security
-   posture, naming and tagging expectations, and operational requirements before writing code.
-2. Search for an applicable AVM pattern module (`avm-ptn-*` in Terraform, `br/public:avm/ptn/`
-   in Bicep).
-3. Compose available AVM resource modules (`avm-res-*` in Terraform, `br/public:avm/res/`
-   in Bicep).
-4. Use native AzureRM, AzAPI, or Bicep resources only for the remaining gaps.
-5. Create local modules only when there is genuine solution-specific reuse beyond a thin
-   wrapper.
-6. Record why AVM was not used for every direct-resource exception.
+| Tier | Source                                                                                                      | Use when                                                                                                                                                                                                                              |
+|------|-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1    | AVM pattern module (`Azure/avm-ptn-*/azurerm`, `br/public:avm/ptn/*`)                                       | The architecture closely matches the pattern topology, the module exposes the required security and operational controls, and it introduces no unwanted resources or coupling                                                         |
+| 2    | AVM resource modules (`Azure/avm-res-*/azurerm`, `br/public:avm/res/*`), plus utility modules (`avm-utl-*`) | The solution needs custom composition across several resources, or a pattern module is too opinionated for the workload                                                                                                               |
+| 3    | Native `azurerm`, `azapi`, or Bicep resources                                                               | No AVM module exists for the resource type, the published module lacks a required capability, a preview API is essential, import or brownfield constraints make module adoption impractical, or the caller requires low-level control |
+| 4    | Local module                                                                                                | Genuine solution-specific reuse exists beyond a thin wrapper around one AVM module                                                                                                                                                    |
 
-Public-registry consumption is the recommended default. Where organizational review is
-required, resolve the same modules through a synchronized private registry rather than
-maintaining internal copies or wrappers.
+Every tier 3 choice is recorded in the module decision record with its rationale.
 
-## Module Suitability Test
-
-AVM-first is not AVM-only. Choose the implementation tier per capability.
-
-Use an AVM pattern module when:
-
-* The architecture closely matches the pattern's intended topology
-* The module exposes the required security and operational controls
-* The pattern does not introduce unwanted resources or coupling
-* The organization accepts the pattern's lifecycle and interface
-
-Use AVM resource modules when:
-
-* The solution needs custom composition across several resources
-* A pattern module is too opinionated for the workload
-* Individual resource modules cover the required capabilities cleanly
-* Cross-resource dependencies remain understandable
-
-Use native resources when:
-
-* No AVM module exists for the resource type
-* Required functionality is unavailable in the published AVM version
-* A preview or new API is essential
-* Import or brownfield constraints make module adoption impractical
-* The caller explicitly requires low-level control
+Public-registry consumption is the default. Where organizational review is required, resolve
+the same modules through a synchronized private registry rather than maintaining internal
+copies or wrappers.
 
 ## Discovery Rules
 
-* Resolve module sources, versions, and lifecycle status from the registry at execution time.
-  Never guess module names or versions from model knowledge.
-* Inspect module status before adoption. AVM modules carry lifecycle states (available,
-  orphaned, deprecated); an entry in the catalogue is not automatically a production
-  dependency.
-* Pin module versions (`version = "~> x.y"` in Terraform, a tagged `br/public:` reference in
-  Bicep) and track available upgrades separately from adoption.
+* Resolve module names, versions, and lifecycle status from the AVM module index and the
+  registry at execution time using the procedure in
+  [module-discovery.md](references/module-discovery.md). Never guess names or versions from
+  model knowledge.
+* Adopt only modules whose index status is `Available`. `Proposed` modules are not yet
+  published; `Orphaned` modules have no maintainer; `Deprecated` modules are being retired.
+  Report any of these states to the user instead of adopting silently.
+* Pin the resolved version. AVM Terraform modules are pre-1.0, so a `~> MAJOR.MINOR` constraint
+  admits breaking minor releases; pin `~> 0.10.0` (patch-only) or the exact version. Bicep
+  references pin the tag: `br/public:avm/res/storage/storage-account:0.33.0`.
+* Track available upgrades separately from adoption.
 
 ## Module Decision Record
 
-Produce a decision record before implementation. Resolve every `<placeholder>` from the
-registry at execution time.
+Produce the decision record before generating code and confirm it with the user. AVM
+positions AI as an assistant: humans own the architecture decision, so do not proceed from
+record to implementation without that confirmation. Persist the record with the
+implementation plan, or at `infra/module-decisions.yaml` when no plan exists, so reviewers
+can re-evaluate exceptions later. Resolve every `<placeholder>` at execution time.
 
 <!-- <example-module-decision-record> -->
 ```yaml
@@ -105,8 +81,9 @@ capabilities:
     requirement: Private application hosting with central diagnostics
     implementation:
       kind: avm-resource-module
-      source: avm/res/app/managed-environment
+      source: Azure/avm-res-app-managedenvironment/azurerm
       version: "<resolved-version>"
+      status: Available
     rationale: Existing AVM module covers the required resource and extensions
 
   - name: unsupported-preview-feature
@@ -114,63 +91,46 @@ capabilities:
     implementation:
       kind: azapi-resource
       api_version: "<verified-api-version>"
-    rationale: No compatible AVM interface was found
+    rationale: No AVM module covers this resource type (index checked <date>)
     follow_up: Re-evaluate when AVM support becomes available
 ```
 <!-- </example-module-decision-record> -->
 
 ## Workflow
 
-1. Read repository and deployment context
-2. Extract architectural intent and non-functional requirements
-3. Identify required Azure capabilities
-4. Search the current AVM catalogue
-5. Select pattern modules where the fit is strong
-6. Select resource modules for remaining capabilities
-7. Identify gaps requiring native resources
-8. Produce the module decision record
-9. Generate Bicep or Terraform
-10. Validate code, module interfaces, and requirement coverage
-11. Report residual risks, preview dependencies, and exceptions
+1. Read repository and deployment context, then extract architectural intent and
+   non-functional requirements.
+2. Map intent to required Azure capabilities.
+3. For each capability, discover candidate modules and assign a tier using the hierarchy.
+4. Produce the module decision record and obtain user confirmation.
+5. Generate Bicep or Terraform.
+6. Validate code, module interfaces, and requirement coverage.
+7. Report residual risks, preview dependencies, and exceptions.
 
 ## Review Checklist
 
 When reviewing Azure IaC, flag:
 
-* Handwritten Azure resources where a suitable AVM module exists
-* Local modules that merely wrap one AVM module without adding a meaningful contract
-* Unpinned module references
-* Deprecated or orphaned AVM dependencies
-* Direct resources with no recorded implementation exception
+* Handwritten Azure resources where an `Available` AVM module exists
+* Local modules that wrap one AVM module without adding a meaningful contract
+* Unpinned or minor-floating module references
+* `Orphaned` or `Deprecated` AVM dependencies
+* Direct resources with no recorded exception, or an exception whose reason no longer holds
 * Missing decisions for managed identity, diagnostic settings, private networking, locks,
   RBAC, or telemetry
 * Differences between the agreed infrastructure specification and the generated code
-* Module upgrades that change interfaces or resource behavior
-
-Do not reject native resources outright. Require a reason and check whether that reason
-remains valid.
 
 ## References
 
-| File                                                  | Covers                               | Purpose                                                               |
-|-------------------------------------------------------|--------------------------------------|-----------------------------------------------------------------------|
-| [module-selection.md](references/module-selection.md) | Sourcing hierarchy, suitability test | Rationale and worked examples for pattern, resource, and native tiers |
+| File                                                  | Covers                                             | Purpose                                                        |
+|-------------------------------------------------------|----------------------------------------------------|----------------------------------------------------------------|
+| [module-discovery.md](references/module-discovery.md) | Module index, registry lookups, version resolution | Procedure for resolving names, status, and versions at runtime |
 
 ## Troubleshooting
 
-| Symptom                             | Check                                                                                                    |
-|-------------------------------------|----------------------------------------------------------------------------------------------------------|
-| AVM module not found                | Confirm the resource type has AVM coverage in the current catalogue; fall back to AzAPI for preview APIs |
-| Module version rejected by registry | Re-resolve the version from the registry; do not pin versions recalled from model knowledge              |
-| Pattern module too opinionated      | Drop to AVM resource modules and compose them in the solution root instead                               |
-| Review flags a deliberate exception | Verify the exception and its rationale appear in the module decision record; update the record if stale  |
-
-## Contributing
-
-Follow these conventions when extending this skill:
-
-* Keep the sourcing hierarchy and suitability test in SKILL.md as the authoritative policy.
-* Reference files under `references/` carry worked examples and rationale; update the
-  References table when adding one.
-* Keep registry-specific syntax (Terraform namespace, Bicep `br/public:` paths) accurate
-  against the current AVM documentation rather than freezing stale examples.
+| Symptom                             | Check                                                                                                   |
+|-------------------------------------|---------------------------------------------------------------------------------------------------------|
+| AVM module not found                | Search the index by resource type; if absent, record a tier 3 exception                                 |
+| Module version rejected by registry | Re-resolve the version from the registry; do not pin versions recalled from model knowledge             |
+| Pattern module too opinionated      | Drop to AVM resource modules and compose them in the solution root                                      |
+| Review flags a deliberate exception | Verify the exception and its rationale appear in the module decision record; update the record if stale |
