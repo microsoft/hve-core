@@ -47,6 +47,9 @@ jobs:
       - name: Evaluate CodeQL analysis health
         id: scan-health
         shell: bash
+        env:
+          # Keep aligned with codeql-analysis.yml; the health regression tests verify this contract.
+          EXPECTED_CODEQL_CATEGORIES: '["/language:actions", "/language:python", "/language:javascript-typescript"]'
         run: |
           set -uo pipefail
           verdict="probe-failed"
@@ -54,26 +57,45 @@ jobs:
           scan_ref="refs/heads/${DEFAULT_BRANCH}"
           cutoff=$(date -u -d '10 days ago' '+%Y-%m-%dT%H:%M:%SZ')
 
+          # cspell:ignore fromdateiso todateiso
           if ! analyses=$(gh api --paginate --slurp "repos/${OWNER}/${REPO}/code-scanning/analyses?ref=${scan_ref}&tool_name=CodeQL&per_page=100"); then
             echo "::warning::Unable to query CodeQL analyses. Reconciliation will be skipped."
-          elif ! jq -e 'type == "array"' <<< "${analyses}" > /dev/null; then
-            echo "::warning::The CodeQL analyses response was not a JSON array. Reconciliation will be skipped."
-          elif ! latest=$(jq --arg cutoff "${cutoff}" '
-              [.[][] | select(.created_at >= $cutoff)]
-              | sort_by([.category, .created_at])
+          elif ! latest=$(jq -ces --argjson expected "${EXPECTED_CODEQL_CATEGORIES}" '
+              def category_string: type == "string" and test("\\S");
+              if ($expected | type == "array" and length > 0
+                  and all(.[]; category_string) and length == (unique | length))
+              then . else error("Invalid expected CodeQL categories") end
+              | if length == 1 then .[0] else error("Expected one analyses document") end
+              | if type == "array" and all(.[]; type == "array")
+                then [.[][]] else error("Expected an array of analysis pages") end
+              | if all(.[];
+                  type == "object"
+                  and (.id | type == "number" and floor == . and . > 0)
+                  and (.category | category_string)
+                  and (.created_at | type == "string" and (fromdateiso8601 | todateiso8601) == .)
+                  and (.error | type == "string"))
+                then . else error("Unclassifiable CodeQL analysis metadata") end
+              | map(select(.category as $category | $expected | index($category) != null))
               | group_by(.category)
-              | map(max_by(.created_at))
+              | map(max_by(.created_at).created_at as $latest
+                  | .[] | select(.created_at == $latest))
             ' <<< "${analyses}"); then
-            echo "::warning::Unable to classify recent CodeQL analyses. Reconciliation will be skipped."
+            echo "::warning::Unable to classify CodeQL analyses. Reconciliation will be skipped."
           else
-            if [[ $(jq 'length' <<< "${latest}") -eq 0 ]]; then
+            if ! jq -e --arg cutoff "${cutoff}" 'any(.[]; .created_at >= $cutoff)' <<< "${latest}" > /dev/null; then
               verdict="no-analysis-in-window"
-            elif jq -e 'any(.[]; (.error // "") != "")' <<< "${latest}" > /dev/null; then
+            elif jq -e --arg cutoff "${cutoff}" 'any(.[]; .created_at >= $cutoff and .error != "")' <<< "${latest}" > /dev/null; then
               verdict="analysis-error"
-              failing_analysis=$(jq -r '
-                [.[] | select((.error // "") != "") | (.id | tostring)]
+              failing_analysis=$(jq -r --arg cutoff "${cutoff}" '
+                [.[] | select(.created_at >= $cutoff and .error != "") | (.id | tostring)]
                 | join(", ")
               ' <<< "${latest}")
+            elif ! jq -e --arg cutoff "${cutoff}" --argjson expected "${EXPECTED_CODEQL_CATEGORIES}" '
+                ([.[].category] | unique) as $observed
+                | (($expected - $observed) | length == 0)
+                  and all(.[]; .created_at >= $cutoff)
+              ' <<< "${latest}" > /dev/null; then
+              verdict="incomplete-analysis"
             else
               verdict="healthy"
             fi
@@ -271,6 +293,10 @@ jobs:
               ;;
             no-analysis-in-window)
               echo "::warning::No CodeQL analysis was found in the 10-day health window. Reconciliation skipped."
+              exit 0
+              ;;
+            incomplete-analysis)
+              echo "::warning::At least one configured CodeQL category has missing or stale analysis evidence. Reconciliation skipped."
               exit 0
               ;;
             probe-failed)
