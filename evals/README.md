@@ -2,7 +2,7 @@
 title: Evaluations
 description: 'Architecture overview and contributor guide for Vally evaluation specs'
 author: HVE Core Team
-ms.date: 2026-07-28
+ms.date: 2026-08-21
 ---
 
 This directory contains [Vally](https://www.npmjs.com/package/@microsoft/vally-cli) evaluation specs for hve-core.
@@ -55,8 +55,8 @@ npm run ci:eval:run:skills
 npm run ci:eval:run:scripts
 npm run ci:eval:run:conformance
 
-# Compare results against baseline
-npm run ci:eval:compare
+# Compare a customized agent against the empty baseline
+npm run ci:eval:equivalence -- -Agent rpi-agent -Tier devloop
 ```
 
 ## Adding New Evals

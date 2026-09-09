@@ -3,7 +3,7 @@ title: incident-response
 description: Run an incident response workflow for Azure operations scenarios
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Run an incident response workflow for Azure operations scenarios
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to assist with triage, diagnosis, mitigation planning, or root-cause analysis for an Azure operations incident. Follow the organization's emergency runbook directly when immediate human-led containment takes priority.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide a sanitized `incident-description`, then optionally set severity and phase. Keep resource identifiers and telemetry non-sensitive, and require qualified operations and security review before applying material mitigation actions.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/incident-response incident-description="sample API latency alert" severity=3 phase=triage
+```
+
+The prompt produces an assistive triage record for the fictional alert without changing Azure resources.

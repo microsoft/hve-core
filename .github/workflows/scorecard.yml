@@ -10,8 +10,7 @@ on:
       - main
   workflow_run:
     workflows:
-      - 'Stable Release Pipeline'
-      - 'Pre-Release Pipeline'
+      - 'Release VSIX Publish'
     types:
       - completed
   workflow_dispatch:

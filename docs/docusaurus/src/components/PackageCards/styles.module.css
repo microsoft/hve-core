@@ -88,9 +88,70 @@
 .artifactCount {
   font-size: 0.8rem;
   color: var(--ms-learn-text-subtle);
-  margin: 0;
+  margin: 0 0 0.75rem;
 }
 
 .artifactCount strong {
   color: var(--ifm-font-color-base);
+}
+
+.disclosure {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ifm-color-emphasis-300);
+}
+
+.disclosureButton {
+  min-height: 44px;
+  padding: 0.5rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--ifm-color-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+}
+
+.disclosureButton:focus-visible,
+.contentsPanel a:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.contentsPanel {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--ifm-color-emphasis-100);
+  border-radius: 2px;
+  color: var(--ifm-font-color-base);
+  font-size: 0.875rem;
+}
+
+.contentsHeading {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.contentsList {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.contentsList li + li {
+  margin-top: 0.25rem;
+}
+
+.contentsPanel a {
+  color: var(--ifm-link-color);
+  text-decoration: underline;
+}
+
+.packageOverviewLink {
+  display: inline-block;
 }

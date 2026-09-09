@@ -3,7 +3,7 @@ title: Graph Research
 description: "Research a codebase through rpi-research using an existing graphify knowledge graph, with audit-tagged evidence reporting"
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Research a codebase through rpi-research using an existing graphify knowledge gr
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt to investigate structural codebase questions when a graphify knowledge graph already exists. Use standard repository research when no graph is available or when the question does not depend on graph relationships.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the research `topic` and optionally enable conversational output with `chat=true`. If graph prerequisites are unavailable, choose an explicit fallback rather than assuming this prompt builds or uploads a graph.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/graph-research topic="what depends on auth_middleware.py" chat=true
+```
+
+The prompt returns graph-backed dependency evidence with audit tags for the named module.

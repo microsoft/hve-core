@@ -78,13 +78,12 @@ def _assert_usage_error(
     command: CommandFn,
     args: list[str],
     expected_message: str,
-    capsys: pytest.CaptureFixture[str],
 ) -> None:
-    with pytest.raises(SystemExit) as exc_info:
+    with pytest.raises(gitlab.GitLabError) as exc_info:
         command(args)
 
-    assert exc_info.value.code == gitlab.EXIT_USAGE
-    assert expected_message in capsys.readouterr().err
+    assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+    assert expected_message in str(exc_info.value)
 
 
 @pytest.mark.parametrize(
@@ -103,9 +102,8 @@ def test_commands_require_minimum_arguments(
     command: CommandFn,
     args: list[str],
     expected_message: str,
-    capsys: pytest.CaptureFixture[str],
 ) -> None:
-    _assert_usage_error(command, args, expected_message, capsys)
+    _assert_usage_error(command, args, expected_message)
 
 
 @pytest.mark.parametrize(
@@ -289,11 +287,10 @@ def test_write_commands_require_stdin_or_inline_content(
     command: CommandFn,
     args: list[str],
     usage_message: str,
-    capsys: pytest.CaptureFixture[str],
 ) -> None:
     stdin_factory("")
 
-    _assert_usage_error(command, args, usage_message, capsys)
+    _assert_usage_error(command, args, usage_message)
 
 
 def test_mr_notes_uses_default_max_results(
@@ -349,9 +346,9 @@ class TestCmdJobLog:
         assert "abc123" not in output
         assert "... [truncated]" in output
 
-    def test_requires_job_id(self, capsys: pytest.CaptureFixture[str]) -> None:
-        with pytest.raises(SystemExit) as exc_info:
+    def test_requires_job_id(self) -> None:
+        with pytest.raises(gitlab.GitLabError) as exc_info:
             gitlab.cmd_job_log([])
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert USAGE_JOB_LOG in capsys.readouterr().err
+        assert exc_info.value.exit_code == gitlab.EXIT_USAGE
+        assert USAGE_JOB_LOG in str(exc_info.value)

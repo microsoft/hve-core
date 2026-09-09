@@ -3,7 +3,7 @@ title: Dt Method 04 Convergence
 description: Theme discovery for Design Thinking Method 4c through philosophy-based clustering
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Theme discovery for Design Thinking Method 4c through philosophy-based clusterin
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt during Method 4c to discover themes in an existing divergent idea set. Return to ideation when the set is too small or narrow for meaningful clustering.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the `project-slug` and optionally the number of ideas to evaluate. The prompt groups ideas by shared philosophy and helps participants name themes without silently discarding outliers.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/dt-method-04-convergence project-slug=factory-floor-maintenance ideaCount=15
+```
+
+The prompt clusters the recorded ideas and returns candidate themes for team review.

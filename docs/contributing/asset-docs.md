@@ -3,7 +3,7 @@ title: Asset reference documentation
 description: How contributors generate, author, and validate reference pages for agents, prompts, instructions, and skills
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-09-04
 ms.topic: how-to
 keywords:
   - asset documentation
@@ -131,18 +131,19 @@ another model to rewrite generated regions.
 
 Local and pull request validation use the same validator at different scopes:
 
-| Context                   | Scope                | Enforcement                                                                                                                          |
-|---------------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, generated-region sync, and Required instruction guidance                                               |
-| Pull request validation   | Changed assets/pages | The same checks, limited to paths affected relative to the configured base; Required instruction guidance is blocking for this scope |
+| Context                   | Scope                | Enforcement                                                                                                                                     |
+|---------------------------|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, generated-region sync, and Required instruction and prompt guidance                                               |
+| Pull request validation   | Changed assets/pages | The same checks, limited to paths affected relative to the configured base; Required instruction and prompt guidance is blocking for this scope |
 
 The changed-files scope prevents unrelated pre-existing findings from blocking a
 pull request. It still catches a changed source with a missing or stale page, a
 changed page with no source, and renames or deletions that leave an orphan.
 
-The generator and CI gate do not author human judgment. Required instruction
-guidance is now blocking. Stubs for other asset kinds and Optional instruction
-examples remain warnings until their applicable rollout changes enforcement.
+The generator and CI gate do not author human judgment. Required instruction and
+prompt guidance is now blocking. Stubs for other asset kinds and Optional
+instruction examples remain warnings until their applicable rollout changes
+enforcement.
 
 ## Follow the completeness rollout
 
@@ -153,15 +154,15 @@ once:
 1. [Instructions (#2361)](https://github.com/microsoft/hve-core/issues/2361),
    enforced: require `When to use it`; `How to use it` is not applicable and
    `Example usage` is optional.
-2. [Prompts (#2362)](https://github.com/microsoft/hve-core/issues/2362): require
-   `When to use it`, `How to use it`, and `Example usage`.
+2. [Prompts (#2362)](https://github.com/microsoft/hve-core/issues/2362), enforced:
+   require `When to use it`, `How to use it`, and `Example usage`.
 3. [Skills (#2363)](https://github.com/microsoft/hve-core/issues/2363): require all
    applicable authored sections, with richer multi-mode examples where needed.
 4. [Agents (#2364)](https://github.com/microsoft/hve-core/issues/2364): require all
    applicable authored sections, including orchestration, delegation, and handoff
    behavior where relevant.
 
-Until enforcement is enabled for each remaining kind, the validator reports its
+Until enforcement is enabled for skills and agents, the validator reports their
 authored stubs as warnings. New and materially changed assets should still receive
 complete authored sections now; the rollout changes enforcement timing, not the
 documentation quality target.

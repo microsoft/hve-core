@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-08-10
+ms.date: 2026-08-27
 ---
 
 ## Purpose
@@ -11,7 +11,7 @@ This suite covers every user-invocable hve-core agent with at least one function
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
-The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 56 enrolled agents, including 26 subagents.
+The suite is organized around four behavioral classes (research-writer, code-reviewer, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The parent-agent table below is the authoritative class assignment; the maintained stimulus inventory contains 61 enrolled agents, including 30 subagents.
 
 ## Layout
 
@@ -21,7 +21,7 @@ evals/agent-behavior/
 ├── AGENTS.yml          # authoritative inventory (slug, path, class, cost_tier)
 ├── eval.yaml           # generated executable spec - do not edit by hand
 └── stimuli/
-  └── <agent-slug>.yml  # one partial per inventoried agent (62 files)
+  └── <agent-slug>.yml  # one partial per inventoried agent (61 files)
 ```
 
 The partials in [stimuli/](stimuli/) are the source of truth for stimuli. The top-level [eval.yaml](eval.yaml) is regenerated from those partials by [scripts/evals/Build-AgentBehaviorSpec.ps1](../../scripts/evals/Build-AgentBehaviorSpec.ps1). The inventory at [AGENTS.yml](AGENTS.yml) is regenerated from the agent frontmatter on disk by [scripts/evals/Build-AgentInventory.ps1](../../scripts/evals/Build-AgentInventory.ps1) and the agent-behavior generator only reads slugs whose partials exist in [stimuli/](stimuli/).
@@ -262,6 +262,7 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | documentation                  | planner-coach    | light     | [.github/agents/hve-core/documentation.agent.md](../../.github/agents/hve-core/documentation.agent.md)                                                                   |
 | dt-coach                       | planner-coach    | light     | [.github/agents/design-thinking/dt-coach.agent.md](../../.github/agents/design-thinking/dt-coach.agent.md)                                                               |
 | dt-learning-tutor              | planner-coach    | light     | [.github/agents/design-thinking/dt-learning-tutor.agent.md](../../.github/agents/design-thinking/dt-learning-tutor.agent.md)                                             |
+| engagement-report-generator    | research-writer  | light     | [.github/agents/engagement-reporting/engagement-report-generator.agent.md](../../.github/agents/engagement-reporting/engagement-report-generator.agent.md)               |
 | experiment-designer            | planner-coach    | light     | [.github/agents/experimental/experiment-designer.agent.md](../../.github/agents/experimental/experiment-designer.agent.md)                                               |
 | functional-planner             | workitem-manager | light     | [.github/agents/project-planning/functional-planner.agent.md](../../.github/agents/project-planning/functional-planner.agent.md)                                         |
 | issue-triage                   | workitem-manager | light     | [.github/agents/issue-triage.agent.md](../../.github/agents/issue-triage.agent.md)                                                                                       |
@@ -281,7 +282,12 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | system-architecture-reviewer   | research-writer  | light     | [.github/agents/project-planning/system-architecture-reviewer.agent.md](../../.github/agents/project-planning/system-architecture-reviewer.agent.md)                     |
 | ux-ui-designer                 | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                                                 |
 
-The maintained stimulus inventory totals 56 agents: 30 parent agents plus 26 enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/). Subagents without a matching stimulus partial remain excluded from the matrix run set and are documented separately in the inventory generator and related eval research. [AGENTS.yml](AGENTS.yml) remains generator-owned and is refreshed in the generation phase.
+The maintained stimulus inventory totals 61 agents: 31 parent agents plus 30
+enrolled subagents whose stimulus partials exist in [stimuli/](stimuli/).
+Subagents without a matching stimulus partial remain excluded from the matrix
+run set and are documented separately in the inventory generator and related
+eval research. [AGENTS.yml](AGENTS.yml) remains generator-owned and is refreshed
+in the generation phase.
 
 ## Related Suites
 

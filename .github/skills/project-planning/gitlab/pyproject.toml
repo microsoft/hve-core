@@ -20,6 +20,11 @@ fuzz = [
 testpaths = ["tests"]
 pythonpath = ["scripts"]
 python_files = ["test_*.py", "fuzz_harness.py"]
+addopts = "--cov --cov-report=term-missing --cov-fail-under=80"
+
+[tool.coverage.run]
+branch = true
+source = ["scripts"]
 
 [tool.ruff]
 line-length = 88

@@ -3,7 +3,7 @@ title: security-review-llm
 description: Run OWASP LLM and Agentic vulnerability assessments with codebase profiling
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Run OWASP LLM and Agentic vulnerability assessments with codebase profiling
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when an LLM or agentic application needs paired OWASP LLM and agentic security assessments. Use the general security review when AI-specific applicability has not been established.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Optionally provide the AI application `scope`. The prompt profiles the codebase, runs both assessment lenses, and produces evidence for qualified security review without exposing proprietary prompts, endpoints, or secrets.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/security-review-llm scope=src/assistant
+```
+
+The prompt evaluates the sample assistant boundary and drafts combined LLM and agentic security findings.

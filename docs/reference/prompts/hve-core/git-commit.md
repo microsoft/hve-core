@@ -3,7 +3,7 @@ title: Git Commit
 description: "Stage all changes, generate a conventional commit message, and commit"
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Stage all changes, generate a conventional commit message, and commit
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt when all intended working-tree changes are ready to be staged and committed together. Use git-commit-message when you want message guidance without changing repository history.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Review the working tree before invoking the command. The prompt checks ignored and sensitive paths, stages the intended changes, generates a Conventional Commit message, and creates the commit; it does not push it.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/git-commit
+```
+
+The prompt stages the reviewed repository changes and creates one local commit with a generated Conventional Commit message.

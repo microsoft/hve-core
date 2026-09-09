@@ -137,7 +137,6 @@ function Invoke-EvalSpecValidation {
     $specFiles = Get-ChildItem -LiteralPath $rootFull -Recurse -File -Include '*.yaml', '*.yml' -ErrorAction SilentlyContinue |
         Where-Object {
             $_.Name -notin @('variant.yaml', 'variant.yml', 'AGENTS.yml') -and
-            $_.FullName.Replace('\', '/') -notmatch '/surface-signatures/' -and
             $_.FullName.Replace('\', '/') -notmatch '/agent-behavior/stimuli/' -and
             $_.FullName.Replace('\', '/') -notmatch '/agent-behavior/expectations/'
         }
@@ -430,6 +429,471 @@ function Write-OrphanedStimulusTagAnnotations {
     }
 }
 
+function Get-EquivalenceGraderName {
+    <#
+    .SYNOPSIS
+        Returns the grader names declared by a stimulus entry.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        $Stimulus
+    )
+
+    if ($null -eq $Stimulus) { return @() }
+    if (-not $Stimulus.ContainsKey('graders') -or $null -eq $Stimulus.graders) { return @() }
+    return @($Stimulus.graders | Where-Object { $null -ne $_ } | ForEach-Object { [string]$_.name })
+}
+
+function Get-EquivalenceListField {
+    <#
+    .SYNOPSIS
+        Returns a named list field from a stimulus entry, or an empty array when absent.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        $Stimulus,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Field
+    )
+
+    if ($null -eq $Stimulus) { return @() }
+    if (-not $Stimulus.ContainsKey($Field) -or $null -eq $Stimulus.$Field) { return @() }
+    return @($Stimulus.$Field | ForEach-Object { [string]$_ })
+}
+
+function Get-EquivalenceQuestion {
+    <#
+    .SYNOPSIS
+        Returns the effective user question and validates the executable stimulus shape.
+    .DESCRIPTION
+        Baseline and canonical stimuli use a single `prompt`. The customized
+        baseline-equivalence spec uses exactly two turns: the established RPI Agent
+        launch directive followed by the canonical user question. Keeping this rule
+        here lets synchronization accept that intentional treatment while rejecting
+        extra turns or a drifted launch target.
+    .OUTPUTS
+        [hashtable] With keys Question and Error.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        $Stimulus,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('canonical', 'baseline', 'customized')]
+        [string]$Kind
+    )
+
+    if ($null -eq $Stimulus) { return @{ Question = ''; Error = 'Stimulus is missing.' } }
+
+    $hasPrompt = $Stimulus.ContainsKey('prompt') -and -not [string]::IsNullOrWhiteSpace([string]$Stimulus.prompt)
+    $turns = @(if ($Stimulus.ContainsKey('turns') -and $null -ne $Stimulus.turns) { $Stimulus.turns })
+
+    if ($Kind -ne 'customized') {
+        if (-not $hasPrompt -or $turns.Count -gt 0) {
+            return @{ Question = ''; Error = "$Kind stimuli must declare one prompt and no turns." }
+        }
+        return @{ Question = [string]$Stimulus.prompt; Error = $null }
+    }
+
+    if ($hasPrompt -or $turns.Count -ne 2) {
+        return @{ Question = ''; Error = 'Customized stimuli must declare exactly two turns and no prompt.' }
+    }
+
+    $expectedLaunch = 'Launch .github/agents/hve-core/rpi-agent.agent.md. Read the complete agent file before continuing; if a file view fails, use the shell to read it.'
+    if ([string]$turns[0] -ne $expectedLaunch) {
+        return @{ Question = ''; Error = "Customized stimulus launch turn must be '$expectedLaunch'." }
+    }
+
+    $question = [string]$turns[1]
+    if ([string]::IsNullOrWhiteSpace($question)) {
+        return @{ Question = ''; Error = 'Customized stimulus user question is empty.' }
+    }
+
+    return @{ Question = $question; Error = $null }
+}
+
+function ConvertTo-ComparableTagText {
+    <#
+    .SYNOPSIS
+        Renders a stimulus tag map as an order-independent comparable string.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        $Tags
+    )
+
+    if ($null -eq $Tags) { return '' }
+    $parts = foreach ($entry in ($Tags.GetEnumerator() | Sort-Object -Property Key)) {
+        $value = if ($entry.Value -is [System.Collections.IEnumerable] -and $entry.Value -isnot [string]) {
+            (@($entry.Value | ForEach-Object { [string]$_ }) | Sort-Object) -join '|'
+        }
+        else {
+            [string]$entry.Value
+        }
+        "$($entry.Key)=$value"
+    }
+    return ($parts -join ',')
+}
+
+function Test-EquivalenceStimulusSync {
+    <#
+    .SYNOPSIS
+        Validates that the canonical baseline-equivalence stimulus library and its two
+        executable specs agree on every comparable field.
+    .DESCRIPTION
+        `stimuli.yml` is the human-maintained source of truth. The baseline and
+        customized `eval.yaml` files mirror its name, prompt, and tags, and add
+        environment-specific guards. This check fails on any of the following:
+
+        * A stimulus present in one file and absent from another.
+        * A prompt or tag map that differs between canonical and either executable spec.
+        * A missing or drifted 285-second agent working-duration limit.
+        * A canonical grader that is missing from an executable spec.
+        * A declared invariant that is not enforced in canonical, baseline, and customized
+          alike, because an invariant must hold in both environments by definition.
+        * A `customized_required` or `customized_disallow` guard that is absent from the
+          customized spec or that has leaked into the baseline spec.
+        * A missing or unrecognized `policy` tag, a documented-divergence stimulus with
+          no `customized_required` guard, or an equivalent stimulus that declares one.
+
+        Extra graders in the customized spec are expected and are not reported, provided
+        each one is declared as a guard in the canonical library.
+
+        A repository with none of the three files present reports `suitePresent = $false`
+        and no violations, because an absent suite is not a broken suite. A partially
+        present suite is reported, since that indicates a lost or renamed file.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$CanonicalPath = 'evals/baseline-equivalence/stimuli.yml',
+
+        [Parameter(Mandatory = $false)]
+        [string]$BaselinePath = 'evals/baseline-equivalence/baseline/eval.yaml',
+
+        [Parameter(Mandatory = $false)]
+        [string]$CustomizedPath = 'evals/baseline-equivalence/customized/eval.yaml'
+    )
+
+    $violations = [System.Collections.Generic.List[hashtable]]::new()
+    $specs = @{}
+
+    $specEntries = @(
+        @{ Key = 'canonical'; Path = $CanonicalPath },
+        @{ Key = 'baseline'; Path = $BaselinePath },
+        @{ Key = 'customized'; Path = $CustomizedPath }
+    )
+
+    # A repository without a baseline-equivalence suite is not a failure. Only a
+    # partially present suite is, because that means a file was lost or renamed.
+    $presentCount = @($specEntries | Where-Object {
+            $candidate = if ([System.IO.Path]::IsPathRooted($_.Path)) { $_.Path } else { Join-Path -Path $RepoRoot -ChildPath $_.Path }
+            Test-Path -LiteralPath $candidate -PathType Leaf
+        }).Count
+
+    if ($presentCount -eq 0) {
+        return @{
+            canonicalPath = $CanonicalPath
+            checkedCount  = 0
+            violations    = @()
+            suitePresent  = $false
+        }
+    }
+
+    foreach ($entry in $specEntries) {
+        $full = if ([System.IO.Path]::IsPathRooted($entry.Path)) { $entry.Path } else { Join-Path -Path $RepoRoot -ChildPath $entry.Path }
+        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) {
+            $violations.Add(@{
+                    stimulusName = '<file>'
+                    field        = $entry.Key
+                    message      = "Baseline-equivalence spec not found at '$($entry.Path)'. The suite is partially present, so a file was likely moved, renamed, or deleted."
+                })
+            continue
+        }
+        try {
+            $parsed = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $full -Raw -ErrorAction Stop)
+        }
+        catch {
+            $violations.Add(@{
+                    stimulusName = '<file>'
+                    field        = $entry.Key
+                    message      = "YAML parse error in '$($entry.Path)': $($_.Exception.Message)"
+                })
+            continue
+        }
+        $map = @{}
+        foreach ($stimulus in @($parsed.stimuli)) {
+            if ($null -eq $stimulus) { continue }
+            $map[[string]$stimulus.name] = $stimulus
+        }
+        $specs[$entry.Key] = $map
+    }
+
+    if ($violations.Count -gt 0 -or $specs.Count -ne 3) {
+        return @{
+            canonicalPath = $CanonicalPath
+            checkedCount  = 0
+            violations    = @($violations)
+            suitePresent  = $true
+        }
+    }
+
+    $canonicalMap = $specs['canonical']
+    $expectedAgentDuration = '285s'
+    $executables = @(
+        @{ Label = 'baseline'; Path = $BaselinePath; Map = $specs['baseline'] },
+        @{ Label = 'customized'; Path = $CustomizedPath; Map = $specs['customized'] }
+    )
+
+    foreach ($executable in $executables) {
+        foreach ($name in ($executable.Map.Keys | Sort-Object)) {
+            if (-not $canonicalMap.ContainsKey($name)) {
+                $violations.Add(@{
+                        stimulusName = $name
+                        field        = 'name'
+                        message      = "Stimulus '$name' exists in $($executable.Path) but not in $CanonicalPath. Add it to the canonical library first."
+                    })
+            }
+        }
+    }
+
+    foreach ($name in ($canonicalMap.Keys | Sort-Object)) {
+        $canonicalStimulus = $canonicalMap[$name]
+        $canonicalGraders = Get-EquivalenceGraderName -Stimulus $canonicalStimulus
+        $canonicalTags = ConvertTo-ComparableTagText -Tags $canonicalStimulus.tags
+        $canonicalAgentDuration = if (
+            $canonicalStimulus.ContainsKey('constraints') -and
+            $null -ne $canonicalStimulus.constraints -and
+            $canonicalStimulus.constraints.ContainsKey('max_agent_duration')
+        ) {
+            [string]$canonicalStimulus.constraints.max_agent_duration
+        }
+        else {
+            ''
+        }
+        if ($canonicalAgentDuration -ne $expectedAgentDuration) {
+            $violations.Add(@{
+                    stimulusName = $name
+                    field        = 'constraints.max_agent_duration'
+                    message      = "Canonical stimulus '$name' must declare max_agent_duration '$expectedAgentDuration'; found '$canonicalAgentDuration'."
+                })
+        }
+        $canonicalQuestion = Get-EquivalenceQuestion -Stimulus $canonicalStimulus -Kind 'canonical'
+        if ($canonicalQuestion.Error) {
+            $violations.Add(@{
+                    stimulusName = $name
+                    field        = 'prompt'
+                    message      = "Canonical stimulus '$name' has an invalid question shape: $($canonicalQuestion.Error)"
+                })
+        }
+
+        $missingFromAny = $false
+        foreach ($executable in $executables) {
+            if (-not $executable.Map.ContainsKey($name)) {
+                $missingFromAny = $true
+                $violations.Add(@{
+                        stimulusName = $name
+                        field        = 'name'
+                        message      = "Stimulus '$name' is declared in $CanonicalPath but missing from $($executable.Path)."
+                    })
+                continue
+            }
+
+            $executableStimulus = $executable.Map[$name]
+
+            $executableQuestion = Get-EquivalenceQuestion -Stimulus $executableStimulus -Kind $executable.Label
+            if ($executableQuestion.Error) {
+                $violations.Add(@{
+                        stimulusName = $name
+                        field        = 'prompt'
+                        message      = "Stimulus '$name' in $($executable.Path) has an invalid question shape: $($executableQuestion.Error)"
+                    })
+            }
+            elseif ([string]$canonicalQuestion.Question -ne [string]$executableQuestion.Question) {
+                $violations.Add(@{
+                        stimulusName = $name
+                        field        = 'prompt'
+                        message      = "User question for '$name' differs between $CanonicalPath and $($executable.Path). Mirror the canonical question verbatim."
+                    })
+            }
+
+            $executableTags = ConvertTo-ComparableTagText -Tags $executableStimulus.tags
+            if ($canonicalTags -ne $executableTags) {
+                $violations.Add(@{
+                        stimulusName = $name
+                        field        = 'tags'
+                        message      = "Tags for '$name' differ between $CanonicalPath ('$canonicalTags') and $($executable.Path) ('$executableTags')."
+                    })
+            }
+
+            $executableAgentDuration = if (
+                $executableStimulus.ContainsKey('constraints') -and
+                $null -ne $executableStimulus.constraints -and
+                $executableStimulus.constraints.ContainsKey('max_agent_duration')
+            ) {
+                [string]$executableStimulus.constraints.max_agent_duration
+            }
+            else {
+                ''
+            }
+            if ($executableAgentDuration -ne $canonicalAgentDuration) {
+                $violations.Add(@{
+                        stimulusName = $name
+                        field        = 'constraints.max_agent_duration'
+                        message      = "Agent working-duration limit for '$name' differs between $CanonicalPath ('$canonicalAgentDuration') and $($executable.Path) ('$executableAgentDuration')."
+                    })
+            }
+
+            $executableGraders = Get-EquivalenceGraderName -Stimulus $executableStimulus
+            foreach ($grader in $canonicalGraders) {
+                if ($executableGraders -notcontains $grader) {
+                    $violations.Add(@{
+                            stimulusName = $name
+                            field        = 'graders'
+                            message      = "Canonical grader '$grader' for '$name' is missing from $($executable.Path)."
+                        })
+                }
+            }
+        }
+
+        if ($missingFromAny) { continue }
+
+        $baselineGraders = Get-EquivalenceGraderName -Stimulus $executables[0].Map[$name]
+        $customizedGraders = Get-EquivalenceGraderName -Stimulus $executables[1].Map[$name]
+
+        # Comparison policy decides whether a stimulus enters the equivalence
+        # denominator. It must be stated explicitly and must agree with the guards
+        # the stimulus declares, so an intentional divergence cannot be scored as an
+        # equivalence failure and an ordinary stimulus cannot be quietly exempted.
+        $policy = if ($null -ne $canonicalStimulus.tags -and $canonicalStimulus.tags.Contains('policy')) {
+            [string]$canonicalStimulus.tags['policy']
+        }
+        else {
+            ''
+        }
+        $hasRequiredGuard = @(Get-EquivalenceListField -Stimulus $canonicalStimulus -Field 'customized_required').Count -gt 0
+
+        if ($policy -notin @('equivalent', 'documented-divergence')) {
+            $violations.Add(@{
+                    stimulusName = $name
+                    field        = 'policy'
+                    message      = "Stimulus '$name' must carry exactly one comparison policy tag of 'equivalent' or 'documented-divergence'; found '$policy'."
+                })
+        }
+        elseif ($policy -eq 'documented-divergence' -and -not $hasRequiredGuard) {
+            $violations.Add(@{
+                    stimulusName = $name
+                    field        = 'policy'
+                    message      = "Stimulus '$name' is tagged documented-divergence but declares no customized_required guard. A divergence must be asserted by a guard that validates the allowed customized behavior, otherwise it is exempted from equivalence scoring without evidence."
+                })
+        }
+        elseif ($policy -eq 'equivalent' -and $hasRequiredGuard) {
+            $violations.Add(@{
+                    stimulusName = $name
+                    field        = 'policy'
+                    message      = "Stimulus '$name' declares a customized_required guard, which documents an expected divergence, but is tagged equivalent. Tag it documented-divergence so it does not count against the tie ratio."
+                })
+        }
+
+        foreach ($invariant in (Get-EquivalenceListField -Stimulus $canonicalStimulus -Field 'invariants')) {
+            $missingIn = @(
+                @(if ($canonicalGraders -notcontains $invariant) { $CanonicalPath })
+                @(if ($baselineGraders -notcontains $invariant) { $BaselinePath })
+                @(if ($customizedGraders -notcontains $invariant) { $CustomizedPath })
+            ) | Where-Object { $_ }
+            $missingIn = @($missingIn)
+            if ($missingIn.Count -gt 0) {
+                $violations.Add(@{
+                        stimulusName = $name
+                        field        = 'invariants'
+                        message      = "Invariant '$invariant' for '$name' must be enforced in every spec but is missing from: $($missingIn -join ', '). An invariant that only one environment can satisfy belongs in customized_required instead."
+                    })
+            }
+        }
+
+        foreach ($guardField in @('customized_required', 'customized_disallow')) {
+            foreach ($guard in (Get-EquivalenceListField -Stimulus $canonicalStimulus -Field $guardField)) {
+                if ($customizedGraders -notcontains $guard) {
+                    $violations.Add(@{
+                            stimulusName = $name
+                            field        = $guardField
+                            message      = "Guard '$guard' for '$name' is declared in $CanonicalPath but has no matching grader in $CustomizedPath."
+                        })
+                }
+                if ($baselineGraders -contains $guard) {
+                    $violations.Add(@{
+                            stimulusName = $name
+                            field        = $guardField
+                            message      = "Guard '$guard' for '$name' is customized-only but also appears in $BaselinePath."
+                        })
+                }
+            }
+        }
+
+        $declaredGuards = @(Get-EquivalenceListField -Stimulus $canonicalStimulus -Field 'customized_required') +
+            @(Get-EquivalenceListField -Stimulus $canonicalStimulus -Field 'customized_disallow')
+        foreach ($grader in $customizedGraders) {
+            if ($canonicalGraders -contains $grader) { continue }
+            if ($declaredGuards -contains $grader) { continue }
+            $violations.Add(@{
+                    stimulusName = $name
+                    field        = 'graders'
+                    message      = "Grader '$grader' for '$name' exists in $CustomizedPath but is not declared in $CanonicalPath as a grader, customized_required, or customized_disallow entry."
+                })
+        }
+    }
+
+    $policyCounts = @{ equivalent = 0; 'documented-divergence' = 0 }
+    foreach ($stimulus in $canonicalMap.Values) {
+        $value = if ($null -ne $stimulus.tags -and $stimulus.tags.Contains('policy')) { [string]$stimulus.tags['policy'] } else { '' }
+        if ($policyCounts.ContainsKey($value)) { $policyCounts[$value]++ }
+    }
+
+    return @{
+        canonicalPath = $CanonicalPath
+        checkedCount  = $canonicalMap.Count
+        violations    = @($violations)
+        suitePresent  = $true
+        equivalent    = $policyCounts['equivalent']
+        divergence    = $policyCounts['documented-divergence']
+    }
+}
+
+function Write-EquivalenceStimulusSyncAnnotations {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IEnumerable]$Violations,
+
+        [Parameter(Mandatory = $true)]
+        [string]$CanonicalPath
+    )
+
+    foreach ($entry in $Violations) {
+        $msg = "[$($entry.field)] $($entry.message)"
+        Write-Host "::error file=$CanonicalPath::$msg"
+    }
+}
+
 function Get-ParentAgentInventoryForCoverage {
     [CmdletBinding()]
     [OutputType([System.Collections.IList])]
@@ -647,6 +1111,15 @@ if ($MyInvocation.InvocationName -ne '.') {
     $orphanReport = Test-OrphanedStimulusTag -RepoRoot $resolvedRepoRoot -EvalSpecPath 'evals/agent-behavior/eval.yaml' -InventoryPath 'evals/agent-behavior/AGENTS.yml'
     Write-Host "Stimulus tag reachability: $($orphanReport.checkedCount) tag value(s) checked; $($orphanReport.orphanedTags.Count) orphaned."
 
+    $equivalenceSyncReport = Test-EquivalenceStimulusSync -RepoRoot $resolvedRepoRoot
+    $equivalenceViolations = @($equivalenceSyncReport.violations)
+    if (-not $equivalenceSyncReport.suitePresent) {
+        Write-Host "Baseline-equivalence sync: suite not present; skipped."
+    }
+    else {
+        Write-Host "Baseline-equivalence sync: $($equivalenceSyncReport.checkedCount) canonical stimulus/stimuli checked ($($equivalenceSyncReport.equivalent) equivalent, $($equivalenceSyncReport.divergence) documented-divergence); $($equivalenceViolations.Count) violation(s)."
+    }
+
     $coverageReport = $null
     if (-not $SkipAgentCoverage) {
         $restrictSlugs = $null
@@ -675,6 +1148,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             invalid      = $report.invalid
             orphanedTags = $orphanReport.orphanedTags
             inventoryError = $orphanReport.inventoryError
+            equivalenceSync = $equivalenceSyncReport
             coverage     = $coverageReport
         }
         $merged | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $resolvedOutput -Encoding UTF8
@@ -686,6 +1160,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             invalid      = $report.invalid
             orphanedTags = $orphanReport.orphanedTags
             inventoryError = $orphanReport.inventoryError
+            equivalenceSync = $equivalenceSyncReport
         }
         $merged | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $resolvedOutput -Encoding UTF8
     }
@@ -705,6 +1180,10 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
     elseif ($orphanReport.orphanedTags.Count -gt 0) {
         Write-OrphanedStimulusTagAnnotations -OrphanedTags $orphanReport.orphanedTags -EvalSpecPath $orphanReport.evalSpecPath
+        $exitCode = 1
+    }
+    if ($equivalenceViolations.Count -gt 0) {
+        Write-EquivalenceStimulusSyncAnnotations -Violations $equivalenceViolations -CanonicalPath $equivalenceSyncReport.canonicalPath
         $exitCode = 1
     }
 

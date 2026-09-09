@@ -3,7 +3,7 @@ title: Dt Method 06 Building
 description: Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Scrappy prototype building with fidelity enforcement for Design Thinking Method 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt during Method 6b to build a deliberately rough prototype that tests one important assumption. Use the planning prompt first when the concept, assumption, or prototype format is not settled.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Provide the `project-slug` and optionally choose `prototypeFormats`. The prompt creates only the fidelity needed for learning and avoids turning the exercise into production implementation.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/dt-method-06-building project-slug=factory-floor-maintenance prototypeFormats="paper, markdown stubs"
+```
+
+The prompt builds rough prototype materials for testing the selected assumption.

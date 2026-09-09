@@ -128,7 +128,7 @@ function Read-VallyResultsJsonl {
     Directory returned by `Resolve-VallyRunDir`.
 
     .OUTPUTS
-    [hashtable] `@{ assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus }`.
+    [hashtable] `@{ assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus; failedOrErroredTrials }`.
     `perStimulus` is an ordered map keyed by stimulus name with `@{ assertionsPassed; assertionsFailed; durationMs; trials }`.
     #>
     [CmdletBinding()]
@@ -149,6 +149,7 @@ function Read-VallyResultsJsonl {
         trials           = 0
         resultsPath      = $null
         perStimulus      = [ordered]@{}
+        failedOrErroredTrials = @()
     }
 
     if ([string]::IsNullOrWhiteSpace($RunDir) -or -not (Test-Path -LiteralPath $RunDir -PathType Container)) {
@@ -165,6 +166,7 @@ function Read-VallyResultsJsonl {
     $durationMs = 0
     $trials = 0
     $perStimulus = [ordered]@{}
+    $failedOrErroredTrials = [System.Collections.Generic.List[object]]::new()
 
     foreach ($line in Get-Content -LiteralPath $jsonl.FullName -Encoding utf8) {
         if ([string]::IsNullOrWhiteSpace($line)) { continue }
@@ -253,6 +255,17 @@ function Read-VallyResultsJsonl {
             else { $bucket.assertionsFailed++ }
             $bucket.durationMs += $trialWallMs
         }
+
+        if ($trialErrored -or -not $trialPassed) {
+            $failedOrErroredTrials.Add([ordered]@{
+                ordinal      = $trials
+                outcome      = if ($trialErrored) { 'errored' } else { 'failed' }
+                stimulusName = $stimulusName
+                score        = if ($hasScore) { $scoreValue } else { $null }
+                passed       = if ($hasPassed) { [bool]$gradeResult.passed } else { $null }
+                errorState   = if ($trialErrored) { 'no-gradeable-verdict' } else { $null }
+            }) | Out-Null
+        }
     }
 
     return @{
@@ -263,6 +276,7 @@ function Read-VallyResultsJsonl {
         trials           = $trials
         resultsPath      = $jsonl.FullName
         perStimulus      = $perStimulus
+        failedOrErroredTrials = @($failedOrErroredTrials)
     }
 }
 
@@ -300,7 +314,7 @@ function Invoke-VallySpec {
     its own stimuli.
 
     .OUTPUTS
-    [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus; tag }`.
+    [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus; failedOrErroredTrials; tag }`.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -403,6 +417,7 @@ function Invoke-VallySpec {
         trials           = $aggregate.trials
         resultsPath      = $aggregate.resultsPath
         perStimulus      = $aggregate.perStimulus
+        failedOrErroredTrials = $aggregate.failedOrErroredTrials
         tag              = $Tag
     }
 }

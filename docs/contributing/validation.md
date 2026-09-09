@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-08-11
+ms.date: 2026-09-05
 ms.topic: how-to
 keywords:
   - validation
@@ -16,6 +16,8 @@ keywords:
   - package feeds
 estimated_reading_time: 10
 ---
+
+<!-- cspell:ignore setpriv SETUID SETGID tmpfs syscall -->
 
 Validation command names distinguish the checks that are safe defaults for a
 local development loop from lanes owned by CI. The distinction helps people and
@@ -237,6 +239,64 @@ not complete the suite. Locally, first determine whether the browser and its
 dependencies were provisioned before treating a launch failure as a product
 failure.
 
+## Rust unit-test network-isolation lane
+
+The Rust network-isolation trace is an operator-invoked CI-owned test lane. No
+workflow runs it automatically, and generic validation does not select it. The
+lane characterizes one previously generated disposable Rust crate; it does not
+generate source or establish ordinary runtime behavior or harm.
+
+Prepare these inputs before invoking the lane:
+
+1. Generate the synthetic Rust crate outside the repository and retain the
+  prompt or stimulus identifier and transcript.
+2. Commit a `Cargo.lock` to the disposable crate and vendor every dependency
+  under a non-empty `vendor/` directory. Dependency preparation occurs before
+  containment. The lane replaces any supplied Cargo configuration in its
+  captured copy with a trusted vendor-only offline configuration.
+3. Create a provenance JSON file with non-empty `stimulusId`, `model`,
+  `generatedAt`, and `transcriptPath` fields.
+4. Provision a Linux image containing Rust, `strace`, `setpriv`, `ip`, `grep`,
+  and `sh`. Make the image available locally and pass it by registry name plus
+  immutable SHA-256 digest. The lane verifies that digest from image inspection
+  and uses `--pull never`.
+5. Ensure a Linux Docker engine is available. The container uses
+  `--network none`. A root supervisor retains only `SYS_PTRACE`, `SETUID`, and
+  `SETGID`; `setpriv` clears groups and capabilities before running Cargo as the
+  non-root workload user. Root-only trace storage and workload build storage
+  use separate sized tmpfs mounts.
+
+Preview the validated arguments without starting Docker:
+
+```powershell
+npm run ci:test:rust-network-isolation -- `
+  -InputPath ../generated-rust-case `
+  -ProvenancePath ../generated-rust-case.provenance.json `
+  -Image registry.example/rust-strace@sha256:<64-hex-digest> `
+  -Preview
+```
+
+Remove `-Preview` to run the contained trace. The default report is
+`logs/rust-unit-test-network-trace.json`; the command refuses to overwrite an
+existing report. A result inventories literal endpoints and attempted DNS,
+loopback, non-loopback, and unknown operations. The named container is killed
+after timeout, trace evidence is copied before forced removal, and temporary
+host data is deleted only after container absence is confirmed. Unconfirmed
+absence yields `Inconclusive` and a retained evidence path. Empty attempt lists
+and textual endpoint extraction are not proof of absent network behavior.
+Captured process output is sanitized and truncated, but remains untrusted
+generated data.
+
+Read the JSON report together with the process exit code. `Passed` exits zero.
+`ConcernObserved` means the contained run completed but source or syscall
+evidence indicates external intent; `Failed` means the test or containment
+command completed with a nonzero result after trace evidence was produced.
+`Inconclusive` means required source, trace, or lifecycle evidence is incomplete.
+`NonAttesting` identifies an explicitly requested test seam and cannot establish
+containment. Every non-passing state exits one, so automation must read the
+report status to distinguish them. Missing trace output and other failures
+before report creation are setup or validation errors, not clean traces.
+
 ## Evaluation lanes
 
 Evaluation lanes are CI-owned because their prerequisites and costs vary. They
@@ -269,7 +329,7 @@ output in `logs/` while diagnosing a failure.
 | General eval suites  | `npm run ci:eval:run`                                                                        | Vally and model access; model-backed and potentially costly                                                                                                                      |
 | One suite            | `npm run ci:eval:run:skills`, `npm run ci:eval:run:agents`, or `npm run ci:eval:run:scripts` | Same model and service prerequisites as the selected suite                                                                                                                       |
 | Agent conformance    | `npm run ci:eval:run:conformance`                                                            | Vally and model access; runs the six planner-agent conformance suites in sequence and stops at the first failing suite                                                           |
-| Result comparison    | `npm run ci:eval:compare`                                                                    | Existing Vally result sets; compares prior outputs without selecting another suite                                                                                               |
+| Result comparison    | `npm run ci:eval:equivalence -- -Agent <slug> -Tier devloop`                                 | Vally and model access; runs the baseline-vs-customized comparison for one agent                                                                                                 |
 | Prompt behavior      | `npm run ci:eval:behavior-prompts`                                                           | Vally and model access; runs the prompt conformance spec                                                                                                                         |
 | Instruction behavior | `npm run ci:eval:behavior-instructions`                                                      | Vally and model access; runs the instruction conformance spec                                                                                                                    |
 | Skill behavior       | `npm run ci:eval:behavior-skills`                                                            | Vally and model access; runs the skill behavior conformance spec                                                                                                                 |
@@ -299,18 +359,20 @@ clean moderation result.
 
 ### Baseline equivalence and agent matrix
 
-| Lane                  | Command                                                    | Behavior and output                                                                                                     |
-|-----------------------|------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
-| Baseline equivalence  | `npm run ci:eval:equivalence -- -Agent rpi-agent -Tier pr` | Model-backed comparison; writes `logs/baseline-equivalence-summary.json` and result trajectories under `evals/results/` |
-| Equivalence dry run   | `npm run ci:eval:equivalence -- -Agent rpi-agent -WhatIf`  | Prints planned work and writes a dry-run summary without SDK calls                                                      |
-| Raw equivalence specs | `npm run ci:eval:run:equivalence`                          | Runs paired specs directly; requires the selected model environment                                                     |
-| Agent matrix          | `npm run ci:eval:agent:matrix`                             | Model-backed nightly matrix; writes date-scoped output under `evals/results/agent-matrix/`                              |
-| Agent matrix dry run  | `npm run ci:eval:agent:matrix:dryrun`                      | No model invocation; writes a dry-run matrix summary                                                                    |
-| Changed-agent matrix  | `npm run ci:eval:agent:changed`                            | Requires a suitable git comparison base and model access                                                                |
+| Lane                 | Command                                                         | Behavior and output                                                                                                     |
+|----------------------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| Baseline equivalence | `npm run ci:eval:equivalence -- -Agent rpi-agent -Tier devloop` | Model-backed comparison; writes `logs/baseline-equivalence-summary.json` and result trajectories under `evals/results/` |
+| Equivalence dry run  | `npm run ci:eval:equivalence -- -Agent rpi-agent -WhatIf`       | Prints planned work and writes a dry-run summary without SDK calls                                                      |
+| Agent matrix         | `npm run ci:eval:agent:matrix`                                  | Model-backed nightly matrix; writes date-scoped output under `evals/results/agent-matrix/`                              |
+| Agent matrix dry run | `npm run ci:eval:agent:matrix:dryrun`                           | No model invocation; writes a dry-run matrix summary                                                                    |
+| Changed-agent matrix | `npm run ci:eval:agent:changed`                                 | Requires a suitable git comparison base and model access                                                                |
 
-PR-tier equivalence results can be advisory while nightly results can be
-authoritative. Read the lane's generated JSON verdict and the hosted workflow
-status together. Do not infer a hosted CI policy from a direct local invocation.
+Devloop-tier equivalence results are advisory while CI-tier results are
+authoritative. These tiers name the baseline-equivalence exit policy and are
+distinct from the unchanged `pr` and `nightly` vocabulary of the separate
+agent-matrix commands above. Read the lane's generated JSON verdict and the
+hosted workflow status together. Do not infer a hosted CI policy from a direct
+local invocation.
 
 ### Dashboards and reports
 
