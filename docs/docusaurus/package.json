@@ -100,9 +100,6 @@
     "serialize-javascript": "7.0.5",
     "shell-quote": "1.9.0",
     "svgo@^3": "3.3.5",
-    "test-exclude": {
-      "minimatch": "3.1.5"
-    },
     "undici": "8.9.0",
     "uuid": "14.0.0",
     "webpack-dev-server": "5.2.6"
