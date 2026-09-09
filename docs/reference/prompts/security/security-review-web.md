@@ -3,7 +3,7 @@ title: security-review-web
 description: Run an OWASP Top 10 web vulnerability assessment without codebase profiling
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-02
 ms.topic: reference
 keywords:
   - prompt
@@ -28,15 +28,16 @@ Run an OWASP Top 10 web vulnerability assessment without codebase profiling
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this prompt for a focused OWASP Top 10 web application assessment when codebase profiling is unnecessary. Use the general security review when the technology or applicable security framework is uncertain.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+Optionally provide the web application `scope`. The prompt runs the fixed web-assessment path and records evidence and findings for qualified security review; it does not certify the application as secure.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+```text
+/security-review-web scope=src/web
+```
+
+The prompt assesses the sample web source boundary against the OWASP Top 10 and drafts reviewable findings.

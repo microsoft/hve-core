@@ -285,7 +285,10 @@ All workflows MUST pass the following validation checks:
 ## Security Requirements
 
 * Never expose secrets in logs or outputs
-* No personal access tokens (PATs) are used in workflows
+* Never publish agent transcripts or raw model output as workflow artifacts; artifacts on a public repository are world-readable and a transcript can contain job environment contents
+* Classic personal access tokens (`ghp_`) MUST NOT be used in workflows
+* Fine-grained personal access tokens (`github_pat_`) are permitted only as a documented exception where no alternative credential works. The sole current exception is `COPILOT_GITHUB_TOKEN`, which the `@github/copilot` CLI requires and which `GITHUB_TOKEN` cannot satisfy; see `docs/contributing/evals-ci.md`
+* Prefer a GitHub App installation token minted in-run over any stored long-lived credential
 * Use event guards for release-specific operations when needed
 * Enable security features like CodeQL and dependency scanning
 * All security workflows use explicit, minimal permissions

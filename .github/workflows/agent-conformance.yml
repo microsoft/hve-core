@@ -59,5 +59,10 @@ jobs:
         if: always()
         with:
           name: ${{ matrix.suite }}-${{ github.run_id }}
-          path: evals/results/
+          # Raw agent transcripts are withheld because artifacts on a public repository
+          # are readable by anyone and a transcript can contain anything the agent
+          # printed, including job environment.
+          path: |
+            evals/results/
+            !evals/results/**/results.jsonl
           retention-days: 30

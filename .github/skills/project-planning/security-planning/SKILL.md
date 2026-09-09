@@ -1,6 +1,6 @@
 ---
 name: security-planning
-description: Security planning reference set for operational buckets, STRIDE analysis, standards mapping, NIST control families, backlog scaffolding, and deterministic TM7 (.tm7) plus markdown dual-output generation.
+description: Security planning and plan-drift analysis for STRIDE, standards, controls, backlog handoff, current findings, and TM7 generation.
 license: MIT
 compatibility: 'Generation requires Python 3.11+ and uv. The native TM7 feedback loop additionally requires Windows with an interactive desktop session and the pinned Microsoft Threat Modeling Tool 7.3.51110.1.'
 user-invocable: true
@@ -8,7 +8,7 @@ user-invocable: true
 
 # Security Planning
 
-This skill packages the durable security-planning reference material used by the Security Planner: operational bucket guidance, STRIDE analysis patterns, standards cross-references, NIST control-family references, and security-specific backlog formats.
+This skill packages durable security-planning and plan-drift analysis used by Security Planner, Security Reviewer, and Code Review: operational bucket guidance, STRIDE analysis patterns, standards cross-references, NIST control-family references, security-specific backlog formats, and correlation of a Security Planner baseline with current security findings.
 
 ## When to use
 
@@ -18,7 +18,30 @@ Use this skill when you need to:
 * Evaluate threats with STRIDE-based analysis, including AI-specific extensions when `raiEnabled` is true.
 * Map bucket findings to standards references and control families without re-embedding long standard tables.
 * Derive security-specific backlog priorities and RAI work item categories for Phase 5 handoff.
+* Correlate a Security Planner baseline with caller-supplied current findings to identify validated controls, control drift, residual planned risks, newly introduced threats, and obsolete plan items.
 * Generate a dual-output TM7 model plus markdown report from a YAML/JSON threat-model spec for human-reviewed audit workflows.
+
+### Security plan drift analysis
+
+Use the drift capability when a Security Planner baseline and current-state security findings already exist. It correlates supplied evidence only: it does not scan, profile, select security skills, verify findings, re-rate severity, invoke another agent, or modify source, plan, reviewer, backlog, or state artifacts.
+
+1. Resolve and extract the baseline through [drift-input-contracts.md](references/drift-input-contracts.md).
+2. Normalize caller-supplied audit, diff, or Code Review findings without treating plan-mode evidence as repository state.
+3. Filter default exclusions, then classify only conclusions supported by [drift-comparison-model.md](references/drift-comparison-model.md).
+4. Render the direct, Security Reviewer, Security Planner, or Code Review adaptation from [drift-report-contract.md](references/drift-report-contract.md).
+5. Use [drift-worked-examples.md](references/drift-worked-examples.md) for deterministic behavior scenarios and expected category suppression.
+
+Before full conversational or durable drift output, display the Security Planning CAUTION block in this skill verbatim. Report the default exclusions below in the canonical body's Current repository evidence section. A bounded Code Review section may point to these blocks because its containing review already carries the Code-Review disclaimer.
+
+> **Default exclusions in effect.** Planning and agent-customization artifacts are excluded from drift findings:
+> - Paths: `.copilot-tracking/**`, `docs/planning/**`, `docs/adrs/**`, `.github/agents/**`, `.github/prompts/**`, `.github/instructions/**`, `.github/skills/**`
+> - File globs: `*.prompt.md`, `*.agent.md`, `*.instructions.md`, `SKILL.md`
+>
+> To override, pass `scope=` explicitly. Overlapping user scope wins and is reported as a warning.
+
+A write-capable direct caller may create one sequence-safe report under `.copilot-tracking/security-audits/<project-slug>/`. Security Reviewer and Security Planner render in conversation. Code Review renders a bounded section and optional `security_plan_drift` field. Every destination keeps inputs read-only and recommends follow-up without dispatch.
+
+Stop the affected conclusion when a baseline is incomplete, a required fact is unresolved, evidence scope does not cover the claim, or input format drift prevents exclusions. Report suppressed categories as insufficient evidence rather than zero findings. Stop the entire correlation when no baseline resolves or no finding location is available to enforce exclusions.
 
 ### TM7 generation workflow
 
@@ -66,7 +89,7 @@ On the success path the published overlay addresses every captured surface, so a
 See [references/tm7-generation.md](references/tm7-generation.md) for the protocol, the request payload, the accepted rule fields, the coordinate translation, and the constraints that bound an agent-authored overlay.
 
 > [!CAUTION]
-> **Disclaimer:** This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice and does not replace professional security review boards, penetration testing teams, compliance auditors, legal counsel, or other qualified human reviewers. The output consists of suggested actions and considerations to support a user's own internal security review and decision-making. All security plans, threat models, security models, and mitigation recommendations generated by this tool must be independently reviewed and validated by appropriate security and compliance reviewers before use. Outputs from this tool do not constitute security approval, compliance certification, or regulatory sign-off.
+> **Disclaimer:** This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice and does not replace professional security review boards, penetration testing teams, compliance auditors, legal counsel, or other qualified human reviewers. The output consists of suggested actions and considerations to support a user's own internal security review and decision‑making. All security plans, threat models, security models, and mitigation recommendations generated by this tool must be independently reviewed and validated by appropriate security and compliance reviewers before use. Outputs from this tool do not constitute security approval, compliance certification, or regulatory sign‑off.
 
 The human-in-the-loop contract governing authorship confirmation, native feedback-loop operator safety, and layout overlay promotion is owned by `tm7-generation-workflow.instructions.md`. This skill owns the mechanics only.
 
@@ -84,6 +107,10 @@ Load the reference file that matches the phase or topic you need.
 | [references/backlog-formats.md](references/backlog-formats.md)                     | Security-specific prioritization and RAI work item categories                                                                                                       |
 | [references/data-classification.md](references/data-classification.md)             | Public-safe data-classification taxonomy, tiers/categories/retention, and schema mapping                                                                            |
 | [references/threat-model-review.md](references/threat-model-review.md)             | Threat-model completeness checklist, PASS/INCOMPLETE verdict, and gap list                                                                                          |
+| [references/drift-input-contracts.md](references/drift-input-contracts.md)         | Security Planner baseline extraction, normalized current-finding forms, evidence scope, and drift handling                                                          |
+| [references/drift-comparison-model.md](references/drift-comparison-model.md)       | Exclusions, evidence preconditions, five plan-drift categories, matching order, and recommendation-only handoffs                                                    |
+| [references/drift-report-contract.md](references/drift-report-contract.md)         | Canonical body and direct, Security Reviewer, Security Planner, and Code Review destination adaptations                                                             |
+| [references/drift-worked-examples.md](references/drift-worked-examples.md)         | Synthetic complete, incomplete, malformed, diff-scoped, exclusion, and caller-regression behavior scenarios                                                         |
 | [references/tm7-generation.md](references/tm7-generation.md)                       | TM7 input schema, dual-output generation contract, profile mapping, emission contract, native feedback loop, overlay and fingerprint contract, and operator runbook |
 
 Bundled executable and data resources:

@@ -1,10 +1,10 @@
 {
   "@context": "https://openvex.dev/ns/v0.2.0",
-  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-08-23",
+  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-09-08-v5",
   "author": "Microsoft HVE Core Maintainers",
-  "timestamp": "2026-08-23T00:00:00Z",
-  "last_updated": "2026-08-23T00:00:00Z",
-  "version": 3,
+  "timestamp": "2026-09-04T01:28:45Z",
+  "last_updated": "2026-09-08T15:17:45.003Z",
+  "version": 5,
   "tooling": "Maintained via the hve-core SSSC Reviewer VEX assessment capability (AI-assisted drafting) with human review and merge; published and Sigstore-attested by the microsoft/hve-core/.github/workflows/vex-attest.yml reusable workflow.",
   "statements": [
     {
@@ -63,6 +63,153 @@
       "impact_statement": "image-size resolves only as a transitive dependency of @docusaurus/mdx-loader 3.10.2, which measures documentation images while the site is built. The images it reads are the repository-controlled files committed under docs/, so a crafted buffer of the kind this advisory requires cannot be supplied. The published site is static output and performs no image parsing at request time. No patched release exists for any published version, so the finding is accepted rather than upgraded away.",
       "status_notes": "Dependency path: docs/docusaurus/package-lock.json pins image-size 2.0.2, required as image-size ^2.0.2 by @docusaurus/mdx-loader 3.10.2. The same acceptance is recorded as an allowlist entry in audit-ci.json and as an allowed-advisory entry in .github/workflows/dependency-review.yml. Revisit when upstream publishes a patched image-size release or Docusaurus relaxes the ^2.0.2 constraint.",
       "timestamp": "2026-08-23T00:00:00Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-5p2g-fcmc-qvqq",
+        "@id": "https://osv.dev/GHSA-5p2g-fcmc-qvqq",
+        "aliases": [
+          "CVE-2025-71329"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/image-size@2.0.2",
+              "identifiers": {
+                "purl": "pkg:npm/image-size@2.0.2"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "impact_statement": "The vulnerable image-size 2.0.2 component is not installed. The Docusaurus dependency slot named image-size resolves to the separately published image-size-next 2.1.1 package.",
+      "status_notes": "The current Docusaurus dependency tree resolves image-size to the image-size-next 2.1.1 tarball and contains no official image-size 2.0.2 node. The obsolete audit allowlist entry has been removed.",
+      "timestamp": "2026-09-04T01:28:45Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-w3rx-r6r6-pgpr",
+        "@id": "https://osv.dev/GHSA-w3rx-r6r6-pgpr"
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/image-size@2.0.2",
+              "identifiers": {
+                "purl": "pkg:npm/image-size@2.0.2"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "impact_statement": "The vulnerable image-size 2.0.2 component is not installed. The Docusaurus dependency slot named image-size resolves to the separately published image-size-next 2.1.1 package.",
+      "status_notes": "The current Docusaurus dependency tree resolves image-size to the image-size-next 2.1.1 tarball and contains no official image-size 2.0.2 node. The obsolete audit allowlist entry has been removed.",
+      "timestamp": "2026-09-04T01:28:45Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-69w3-r845-3855",
+        "@id": "https://osv.dev/GHSA-69w3-r845-3855",
+        "aliases": [
+          "CVE-2026-1839",
+          "PYSEC-2026-2288"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/transformers@5.16.1",
+              "identifiers": {
+                "purl": "pkg:pypi/transformers@5.16.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed moderation environment resolves Transformers 5.16.1, later than the 5.0.0rc3 release where this issue was fixed. The repository directly constrains Transformers to versions from 5.15.0 up to, but excluding, 6.0.0 and installs the committed uv.lock with locked resolution, preventing dependency resolution from selecting an affected release. The moderation implementation does not instantiate Trainer or load Trainer random-number-generator state. This environment is used by CI evaluation moderation and is not packaged in HVE Core release artifacts.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-69w3-r845-3855; upstream fix: https://github.com/huggingface/transformers/commit/03c8082ba4594c9b8d6fe190ca9bed0e5f8ca396. Pin evidence: scripts/evals/moderation/pyproject.toml requires transformers>=5.15.0,<6; scripts/evals/moderation/uv.lock resolves transformers 5.16.1. Reachability evidence: scripts/evals/moderation/moderate.py imports Detoxify and calls model.predict only; no repository moderation path uses the Trainer class.",
+      "timestamp": "2026-09-08T15:17:45.003Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-29pf-2h5f-8g72",
+        "@id": "https://osv.dev/GHSA-29pf-2h5f-8g72",
+        "aliases": [
+          "CVE-2026-4372",
+          "PYSEC-2026-2289"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/transformers@5.16.1",
+              "identifiers": {
+                "purl": "pkg:pypi/transformers@5.16.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed moderation environment resolves Transformers 5.16.1, later than the 5.3.0 release where this issue was fixed. The repository directly constrains Transformers to versions from 5.15.0 up to, but excluding, 6.0.0 and installs the committed uv.lock with locked resolution, preventing dependency resolution from selecting an affected release. The moderation interface accepts text records and a fixed Detoxify model choice; it does not accept an attacker-selected model repository or model configuration. This environment is used by CI evaluation moderation and is not packaged in HVE Core release artifacts.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-29pf-2h5f-8g72; upstream fix: https://github.com/huggingface/transformers/commit/a7f8e7ff37d87d1a1a0c8cf607971c607741452f. Pin evidence: scripts/evals/moderation/pyproject.toml requires transformers>=5.15.0,<6; scripts/evals/moderation/uv.lock resolves transformers 5.16.1. Reachability evidence: scripts/evals/moderation/moderate.py constructs Detoxify from a fixed model enumeration and passes text only to model.predict.",
+      "timestamp": "2026-09-08T15:17:45.003Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-fgcw-684q-jj6r",
+        "@id": "https://osv.dev/GHSA-fgcw-684q-jj6r",
+        "aliases": [
+          "CVE-2026-5241",
+          "PYSEC-2026-2290"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/transformers@5.16.1",
+              "identifiers": {
+                "purl": "pkg:pypi/transformers@5.16.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed moderation environment resolves Transformers 5.16.1, later than the 5.5.0 release where this issue was fixed. The repository directly constrains Transformers to versions from 5.15.0 up to, but excluding, 6.0.0 and installs the committed uv.lock with locked resolution, preventing dependency resolution from selecting an affected release. The moderation implementation uses Detoxify text classification and does not load LightGlue models or accept an attacker-selected model repository or model configuration. This environment is used by CI evaluation moderation and is not packaged in HVE Core release artifacts.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-fgcw-684q-jj6r; upstream fix: https://github.com/huggingface/transformers/commit/676559d5022b74aaa0cee1cee0842b7f27c5320e. Pin evidence: scripts/evals/moderation/pyproject.toml requires transformers>=5.15.0,<6; scripts/evals/moderation/uv.lock resolves transformers 5.16.1. Reachability evidence: scripts/evals/moderation/moderate.py constructs Detoxify from a fixed model enumeration and passes text only to model.predict; no moderation path loads a LightGlue model.",
+      "timestamp": "2026-09-08T15:17:45.003Z"
     }
   ]
 }

@@ -116,3 +116,48 @@ expectations:
     priority: medium
     stimulus_scoped: true
     contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"
+
+  - expectation_id: phase6-missing-evidence-is-explicit
+    summary: Phase 6 does not invent or dispatch for missing current-state evidence.
+    signal: Output states drift was not assessed, names a user-run Reviewer audit or diff, and continues completeness review.
+    pass_criteria: |
+      For `security-planner-phase6-no-drift-evidence`, the response identifies
+      unavailable current-state evidence, does not dispatch Security Reviewer,
+      and continues the ordinary threat-model completeness checklist.
+    failure_modes:
+      - Reports drift as clean without evidence.
+      - Dispatches Security Reviewer.
+      - Stops before the ordinary completeness review.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Phase 6 current-state evidence resolution"
+
+  - expectation_id: phase6-drift-preserves-plan-gates
+    summary: Confirmed evidence produces proposed updates without mutating plan state or gates.
+    signal: Drift categories are presented as proposals and the Phase 6 confirmation remains required.
+    pass_criteria: |
+      For `security-planner-phase6-with-drift-evidence`, the response correlates
+      the confirmed report, presents proposed plan updates, continues the
+      completeness review, and retains the existing Phase 6 human gate.
+    failure_modes:
+      - Applies drift findings directly to plan or state.
+      - Advances or confirms the Phase 6 gate automatically.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Phase 6 optional drift check"
+
+  - expectation_id: phase6-drift-caution-precedes-body
+    summary: Confirmed evidence displays the Security Planning CAUTION before drift output.
+    signal: The verbatim Security Planning disclaimer precedes the canonical drift body.
+    pass_criteria: |
+      For `security-planner-phase6-with-drift-evidence`, the response loads the
+      security-planning entrypoint with drift references and displays the
+      Security Planning CAUTION text before validated controls, control drift,
+      or another canonical drift-body heading.
+    failure_modes:
+      - A generic caution appears without the Security Planning disclaimer text.
+      - The Security Planning disclaimer appears after the drift body.
+      - Drift output omits the Security Planning disclaimer.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "agent §Phase 6 optional drift check"

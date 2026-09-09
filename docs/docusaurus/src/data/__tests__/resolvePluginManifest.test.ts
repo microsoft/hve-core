@@ -70,6 +70,11 @@ describe('loadPackageCards plugin manifest resolution', () => {
       title: 'HVE Core',
       description: 'HVE Core description',
       artifacts: 4,
+      contents: [
+        { kind: 'agents', label: 'Agents', count: 2, href: '/docs/reference/agents' },
+        { kind: 'prompts', label: 'Prompts', count: 1, href: '/docs/reference/prompts' },
+        { kind: 'skills', label: 'Skills', count: 1, href: '/docs/reference/skills' },
+      ],
       maturity: 'Stable',
       href: '/docs/plugins/hve-core',
     }]);

@@ -12,7 +12,7 @@ PKCE primitives (``_b64url_nopad``, ``_generate_pkce_pair``, ``_verify_pkce``)
 and the scope helpers (``_token_granted_scopes``, ``_require_scope``) now live
 in this module and are re-exported from the package ``__init__`` to preserve
 ``mural.<symbol>`` access.  Transport and credential helpers (``_TOKEN_OPENER``,
-``_read_capped``, ``_parse_token_response``, ``_read_response_body``, ``_emit``,
+``_read_capped``, ``_parse_token_response``, ``_emit``,
 ``_select_profile``, ``_load_token_store``, ``_resolve_token_store_path``) come
 from the package and are bound when this submodule is first imported by
 ``__init__.py`` (which happens after those helpers are defined).
@@ -25,7 +25,6 @@ import contextlib
 import errno
 import hashlib
 import http.server
-import json
 import logging
 import os
 import pathlib
@@ -48,7 +47,6 @@ from . import (  # noqa: E402 - package siblings defined before this import runs
     _load_token_store,
     _parse_token_response,
     _read_capped,
-    _read_response_body,
     _refresh_access_token,
     _resolve_token_store_path,
     _select_profile,
@@ -463,12 +461,17 @@ def _exchange_authorization_code(
             data = _parse_token_response(resp)
             status = getattr(resp, "status", 200)
     except urllib.error.HTTPError as exc:
-        text = _read_response_body(exc).decode("utf-8", errors="replace")
         raise MuralAPIError(
-            exc.code, "TOKEN_EXCHANGE_FAILED", text or "exchange failed"
+            exc.code,
+            "TOKEN_EXCHANGE_FAILED",
+            "authorization-code exchange failed",
         ) from exc
     if status >= 400:
-        raise MuralAPIError(status, "TOKEN_EXCHANGE_FAILED", json.dumps(data))
+        raise MuralAPIError(
+            status,
+            "TOKEN_EXCHANGE_FAILED",
+            "authorization-code exchange failed",
+        )
     if "access_token" not in data:
         raise MuralAPIError(
             status, "TOKEN_EXCHANGE_INVALID_PAYLOAD", "missing access_token"

@@ -20,11 +20,13 @@ import os
 import re
 import sys
 import traceback
+import urllib.parse
 from typing import Any
 
 from . import _state
-from ._constants import EXIT_SUCCESS
-from ._validation import _format_output
+from ._constants import _REDACT_KEYS, EXIT_SUCCESS
+from ._exceptions import MuralSecurityError
+from ._validation import _format_output, _validate_asset_url
 
 # Private (underscore-prefixed) globals defined here are consumed by sibling
 # modules via explicit ``from ._output import ...`` rather than within this
@@ -42,6 +44,8 @@ __all__ = [
     "_emit_record",
     "_emit",
     "_emit_json",
+    "_emit_json_error",
+    "_redact_payload",
     "_emit_debug_traceback",
     "_color_mode",
 ]
@@ -55,6 +59,11 @@ LOGGER.addHandler(logging.NullHandler())
 
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
 
+# Replacement text used when a mapping key is itself sensitive. Matches the
+# substitution the ``_REDACT_PATTERNS`` regexes emit, so masked output looks
+# the same regardless of which mechanism produced it.
+_MASK = "***"
+
 
 def _emit(message: str, *, level: int = logging.INFO) -> None:
     """Write a redacted message to stderr and the module logger."""
@@ -65,15 +74,102 @@ def _emit(message: str, *, level: int = logging.INFO) -> None:
 
 
 def _emit_json(payload: Any) -> None:
-    """Serialize ``payload`` as JSON, redact it, then write it to stdout.
+    """Redact ``payload``, serialize it, then write it to stdout.
 
     Machine-readable ``--json`` envelopes are written to stdout rather than
     through :func:`_emit`, so without this helper they would bypass the
     redaction barrier that every stderr message passes through. Envelopes can
     embed backend error text and credential key names, so routing them here
     keeps the redaction guarantee uniform across both output channels.
+
+    Redaction runs over the payload before serialization rather than over the
+    serialized text, for the same reasons documented on
+    :func:`_emit_json_error`: scrubbing the serialized form can consume the
+    closing quote and brace of a JSON string and emit output that no longer
+    parses. ``indent=2`` is preserved because pretty-printed ``--json`` output
+    is part of the operator-facing CLI contract.
     """
-    print(_pkg()._redact(json.dumps(payload, indent=2)))
+    print(json.dumps(_redact_payload(payload), indent=2))
+
+
+def _emit_json_error(payload: Any) -> None:
+    """Redact ``payload`` in place-safe fashion, serialize it, write it to stderr.
+
+    Terminal error envelopes are machine-readable and belong on stderr, so they
+    can use neither :func:`_emit` (which also writes a duplicate logger record
+    and reformats through the logging layer) nor :func:`_emit_json` (which
+    targets stdout). Without this helper each envelope would reach stderr via a
+    bare ``print(json.dumps(...))`` and bypass the redaction barrier that every
+    other output channel passes through.
+
+    Redaction runs over the payload's string *values* before serialization
+    rather than over the serialized text. Scrubbing the serialized form would
+    corrupt the envelope: the form-style pattern consumes every non-whitespace
+    character after ``key=``, which swallows the closing quote and brace when a
+    secret sits at the tail of a JSON string, and the JSON-style pattern fails
+    to match once ``json.dumps`` has escaped the inner quotes. Redacting values
+    first keeps the output parseable and the key set intact.
+    """
+    print(json.dumps(_redact_payload(payload)), file=sys.stderr)
+
+
+def _redact_payload(payload: Any) -> Any:
+    """Return a copy of ``payload`` with every string value redacted.
+
+    Recurses through dicts, lists, tuples, sets, and frozensets. Mapping keys
+    are left untouched so the envelope key set consumers parse cannot change;
+    envelope keys are fixed literals in the raising code and never carry
+    credential material.
+
+    Two behaviours are deliberate and easy to "improve" incorrectly:
+
+    * Sets are rebuilt as sets, never coerced to lists. ``json.dumps`` renders
+      a tuple as an array but cannot serialize a set at all, so coercing here
+      would change which payloads :func:`_emit_json_error` can serialize. That
+      is a serialization decision, not a redaction one, and it belongs at the
+      sink rather than inside this helper.
+    * Redaction is not injective, so rebuilding a set can collapse its
+      cardinality: ``{"code=A", "code=B"}`` reduces to a single member. That is
+      acceptable for an error envelope, but member counts are not preserved.
+
+    Tuples are rebuilt with ``tuple`` rather than ``type(payload)`` because a
+    namedtuple is a tuple subclass whose constructor takes positional fields.
+    Sets use the concrete ``set`` and ``frozenset`` constructors for the same
+    reason.
+
+    A mapping key whose lowercased form is an exact member of
+    ``_REDACT_KEYS`` has its value replaced wholesale, whatever that value's
+    type. This replaces what redacting the serialized text used to provide for
+    top-level pairs, and is stronger: it does not depend on quoting, escaping,
+    or serialization order, and it covers non-string values.
+
+    Key matching is exact after lowercasing, never by suffix or substring.
+    Env-style names such as ``MURAL_CLIENT_SECRET`` therefore do NOT match,
+    which is deliberate: the values recorded under those names are backend
+    error strings, and widening the match would change shipped
+    ``auth logout --json`` output. A future path that needs to carry an actual
+    credential value should not do so under an unmatched key name; add the key
+    to ``_REDACT_KEYS`` instead of loosening the comparison here.
+    """
+    if isinstance(payload, str):
+        return _pkg()._redact(payload)
+    if isinstance(payload, dict):
+        return {
+            key: (
+                _MASK
+                if isinstance(key, str) and key.lower() in _REDACT_KEYS
+                else _redact_payload(value)
+            )
+            for key, value in payload.items()
+        }
+    if isinstance(payload, list):
+        return [_redact_payload(item) for item in payload]
+    if isinstance(payload, tuple):
+        return tuple(_redact_payload(item) for item in payload)
+    if isinstance(payload, (set, frozenset)):
+        items = (_redact_payload(item) for item in payload)
+        return frozenset(items) if isinstance(payload, frozenset) else set(items)
+    return payload
 
 
 def _emit_debug_traceback(exc: BaseException) -> None:
@@ -170,22 +266,58 @@ def _apply_widget_text_coalesce(payload: Any) -> Any:
     return payload
 
 
+def _mask_record_transport_credentials(payload: Any) -> Any:
+    """Mask validated Azure Blob SAS URLs without changing record content."""
+    if isinstance(payload, str):
+        try:
+            _validate_asset_url(payload)
+        except MuralSecurityError:
+            return payload
+        query = urllib.parse.urlsplit(payload).query
+        if any(
+            key.lower() == "sig"
+            for key, _value in urllib.parse.parse_qsl(query, keep_blank_values=True)
+        ):
+            return _pkg()._redact(payload)
+        return payload
+    if isinstance(payload, dict):
+        return {
+            key: _mask_record_transport_credentials(value)
+            for key, value in payload.items()
+        }
+    if isinstance(payload, list):
+        return [_mask_record_transport_credentials(item) for item in payload]
+    if isinstance(payload, tuple):
+        return tuple(_mask_record_transport_credentials(item) for item in payload)
+    if isinstance(payload, (set, frozenset)):
+        items = (_mask_record_transport_credentials(item) for item in payload)
+        return frozenset(items) if isinstance(payload, frozenset) else set(items)
+    return payload
+
+
 def _emit_records(records: list[Any], args: argparse.Namespace) -> int:
+    """Write a record list to stdout, masking validated SAS URL values.
+
+    Successful records preserve Mural-authored content verbatim. Complete
+    Azure Blob SAS URL values are the exception because their ``sig`` query
+    parameter is a transport credential rather than authored record content.
+    """
     _apply_widget_text_coalesce(records)
     fields = _read_fields(args)
     fmt = (
         "json" if _state._CLI_FORCE_JSON else (getattr(args, "format", None) or "json")
     )
-    print(_format_output(records, fields, fmt))
+    print(_format_output(_mask_record_transport_credentials(records), fields, fmt))
     return EXIT_SUCCESS
 
 
 def _emit_record(record: Any, args: argparse.Namespace) -> int:
+    """Write one record to stdout. See :func:`_emit_records`."""
     record = _pkg()._unwrap_value_envelope(record)
     _apply_widget_text_coalesce(record)
     fields = _read_fields(args)
     fmt = (
         "json" if _state._CLI_FORCE_JSON else (getattr(args, "format", None) or "json")
     )
-    print(_format_output(record, fields, fmt))
+    print(_format_output(_mask_record_transport_credentials(record), fields, fmt))
     return EXIT_SUCCESS

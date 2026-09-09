@@ -953,3 +953,210 @@ def test_concurrent_proactive_refreshes_coalesce(
     assert all(result == {"ok": True} for result in results)
     rotated_calls = [auth for auth in api_calls if rotated_token in auth]
     assert len(rotated_calls) == n_threads
+
+
+# ---------------------------------------------------------------------------
+# Issue 2756: ordinary API exceptions carry a bounded, redacted excerpt
+# ---------------------------------------------------------------------------
+
+_EXCERPT_SECRET = "s3cr3t-VALUE.with-symbols_42"
+
+
+def test_error_excerpt_masks_token_shaped_body(mural_module: Any) -> None:
+    body = f'{{"refresh_token": "{_EXCERPT_SECRET}"}}'
+
+    result = mural_module._error_excerpt(body)
+
+    assert _EXCERPT_SECRET not in result
+    assert '"refresh_token": "***"' in result
+
+
+def test_error_excerpt_returns_empty_for_empty_body(mural_module: Any) -> None:
+    assert mural_module._error_excerpt("") == ""
+
+
+def test_error_excerpt_bounds_oversized_body(mural_module: Any) -> None:
+    limit = mural_module.MAX_ERROR_EXCERPT_CHARS
+    body = "A" * (limit * 4)
+
+    result = mural_module._error_excerpt(body)
+
+    assert result.endswith("... (truncated)")
+    assert len(result) == limit + len("... (truncated)")
+
+
+def test_error_excerpt_leaves_short_body_unmarked(mural_module: Any) -> None:
+    body = "upstream rejected the request"
+
+    assert mural_module._error_excerpt(body) == body
+
+
+# ---------------------------------------------------------------------------
+# _build_api_error applies the ordinary API diagnostic bound
+# ---------------------------------------------------------------------------
+
+
+def test_build_api_error_bounds_oversized_body(mural_module: Any) -> None:
+    """Ordinary non-2xx API responses flow through the bounded diagnostic path.
+
+    ``_read_capped`` allows up to ``MURAL_MAX_BODY_BYTES`` (16 MiB by default),
+    four orders of magnitude above the excerpt limit.
+    """
+    limit = mural_module.MAX_ERROR_EXCERPT_CHARS
+    body = ("A" * (limit * 8)).encode("utf-8")
+
+    exc = mural_module._build_api_error(500, body, None)
+
+    assert len(exc.message) == limit + len("... (truncated)")
+    assert exc.message.endswith("... (truncated)")
+
+
+def test_build_api_error_masks_token_in_message(mural_module: Any) -> None:
+    """A secret quoted in the upstream `message` field does not reach the exception."""
+    body = json.dumps(
+        {"code": "BAD_REQUEST", "message": f"rejected access_token={_EXCERPT_SECRET}"}
+    ).encode("utf-8")
+
+    exc = mural_module._build_api_error(400, body, None)
+
+    assert _EXCERPT_SECRET not in exc.message
+    assert exc.code == "BAD_REQUEST"
+
+
+def test_build_api_error_masks_token_in_non_json_body(mural_module: Any) -> None:
+    """The raw-decode fallback is bounded and redacted too."""
+    body = f"gateway failure refresh_token={_EXCERPT_SECRET}".encode("utf-8")
+
+    exc = mural_module._build_api_error(502, body, None)
+
+    assert _EXCERPT_SECRET not in exc.message
+
+
+def test_build_api_error_falls_back_to_status_for_empty_body(
+    mural_module: Any,
+) -> None:
+    """An empty body still yields a usable message rather than a blank string."""
+    exc = mural_module._build_api_error(503, b"", None)
+
+    assert exc.message == "HTTP 503"
+
+
+def test_refresh_http_error_excludes_raw_refresh_token(
+    mural_module: Any,
+    recorded_http: Any,
+    http_error_factory: Any,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A failing refresh must not carry the upstream body into the exception."""
+    recorded_http.responses.append(
+        http_error_factory(
+            f'{{"Access_Token":"{_EXCERPT_SECRET}"}}'.encode(),
+            code=400,
+        )
+    )
+
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._refresh_access_token(
+            _EXCERPT_SECRET,
+            client_id="client-abc",
+            _http=recorded_http,
+        )
+
+    assert excinfo.value.code == "REFRESH_FAILED"
+    assert excinfo.value.message == "token refresh failed"
+    assert _EXCERPT_SECRET not in str(excinfo.value)
+    assert _EXCERPT_SECRET not in capsys.readouterr().err
+
+
+def test_refresh_error_status_excludes_raw_payload(
+    mural_module: Any,
+    recorded_http: Any,
+    response_factory: Any,
+) -> None:
+    """A returned 4xx refresh payload never enters the typed error."""
+    recorded_http.responses.append(
+        response_factory(
+            f'{{"\\u0041ccess_Token":"{_EXCERPT_SECRET}"}}'.encode(),
+            status=400,
+            headers={"Content-Type": "application/json"},
+        )
+    )
+
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._refresh_access_token(
+            _EXCERPT_SECRET,
+            client_id="client-abc",
+            _http=recorded_http,
+        )
+
+    assert excinfo.value.code == "REFRESH_FAILED"
+    assert excinfo.value.message == "token refresh failed"
+    assert _EXCERPT_SECRET not in str(excinfo.value)
+
+
+def test_token_invalid_json_excludes_raw_body(
+    mural_module: Any,
+    response_factory: Any,
+) -> None:
+    """A malformed token response never enters the exception."""
+    resp = response_factory(
+        f'{{"Access_Token":"{_EXCERPT_SECRET}',
+        status=200,
+        headers={"Content-Type": "application/json"},
+    )
+
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._parse_token_response(resp)
+
+    assert excinfo.value.code == "TOKEN_INVALID_JSON"
+    assert excinfo.value.message == "token endpoint returned malformed JSON"
+    assert _EXCERPT_SECRET not in str(excinfo.value)
+
+
+def test_sas_error_status_excludes_response_body(
+    mural_module: Any, response_factory: Any
+) -> None:
+    response = response_factory(
+        f'{{"Access_Token":"{_EXCERPT_SECRET}"}}',
+        status=400,
+    )
+
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._upload_to_sas(
+            url="https://example.blob.core.windows.net/c/b?sig=fixture",
+            headers={},
+            body=b"fixture",
+            content_type="text/plain",
+            _http=lambda *_args, **_kwargs: response,
+        )
+
+    assert excinfo.value.status == 400
+    assert excinfo.value.code == "ASSET_UPLOAD_FAILED"
+    assert excinfo.value.message == "asset upload failed"
+    assert _EXCERPT_SECRET not in str(excinfo.value)
+
+
+def test_sas_http_error_excludes_response_body(
+    mural_module: Any, http_error_factory: Any
+) -> None:
+    error = http_error_factory(
+        f'{{"\\u0041ccess_Token":"{_EXCERPT_SECRET}"}}'.encode(),
+        code=403,
+    )
+
+    def _raise_error(*_args: Any, **_kwargs: Any) -> None:
+        raise error
+
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._upload_to_sas(
+            url="https://example.blob.core.windows.net/c/b?sig=fixture",
+            headers={},
+            body=b"fixture",
+            content_type="text/plain",
+            _http=_raise_error,
+        )
+
+    assert excinfo.value.status == 403
+    assert excinfo.value.code == "ASSET_UPLOAD_FAILED"
+    assert excinfo.value.message == "asset upload failed"
+    assert _EXCERPT_SECRET not in str(excinfo.value)

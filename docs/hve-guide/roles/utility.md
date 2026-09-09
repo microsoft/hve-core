@@ -3,7 +3,7 @@ title: Utility Reference
 description: Cross-cutting HVE Core utilities for documentation, media, Git workflows, durable workflow state, and diagnostics
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - utility
@@ -31,12 +31,12 @@ Use these cross-cutting utilities when your workflow spans multiple roles or lif
 
 ### Workflow Continuity
 
-Resume a workflow from the state and evidence files it owns. For RPI, reference the dated research, plan, phase details, changes, and review artifacts with the same stable task ID. Backlog managers and planning agents use their domain-specific state files and handoff records.
+Resume a workflow from the state and evidence files it owns. For RPI, reference the dated research, task-centered plan, changes, and review artifacts with the same stable task ID. Backlog managers and planning agents use their domain-specific state files and handoff records.
 
 ```text
 /rpi Continue task authentication-refactor from the latest dated plan,
-phase details, changes record, and review evidence. Resume the next
-incomplete task without repeating completed research.
+changes record, and review evidence. Resume the next incomplete task
+without repeating completed research.
 ```
 
 ### Documentation Operations

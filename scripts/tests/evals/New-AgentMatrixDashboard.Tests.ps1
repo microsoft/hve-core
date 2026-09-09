@@ -25,9 +25,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             @{ slug = 'example-agent'; class = 'research-writer'; cost_tier = 'light' },
             @{ slug = 'other-agent';   class = 'research-writer'; cost_tier = 'standard' }
         )
-        # Surface signatures: present for sample-agent, missing for the other fixtures.
-        Set-Content -LiteralPath (Join-Path $script:Fix.SurfaceRoot 'sample-agent.yml') `
-            -Value "required: []`ndisallowed: []`n" -Encoding utf8NoBOM
         $script:OutPath = Join-Path $TestDrive ("dash-" + [Guid]::NewGuid().ToString('N') + '.html')
     }
 
@@ -47,7 +44,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $script:Fix.InventoryPath `
                 -OutPath $script:OutPath *> $null
             $script:Html = Get-Content -LiteralPath $script:OutPath -Raw
@@ -104,11 +100,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             $script:Html | Should -Match '<td>2026-05-24</td>'
         }
 
-        It 'Marks surface signature presence per agent' {
-            $script:Html | Should -Match 'class="present">present</td>'
-            $script:Html | Should -Match 'class="missing">missing</td>'
-        }
-
         It 'Uses default class and cost tier labels for inventory rows without explicit values' {
             $inventoryPath = Join-Path $script:Fix.Root 'evals/agent-behavior/AGENTS.yml'
             Set-Content -LiteralPath $inventoryPath -Value @(
@@ -120,7 +111,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $inventoryPath `
                 -OutPath $script:OutPath *> $null
             $script:Html = Get-Content -LiteralPath $script:OutPath -Raw
@@ -144,7 +134,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $script:Fix.InventoryPath `
                 -SummaryPath $script:SummaryPath `
                 -OutPath $script:OutPath *> $null
@@ -169,7 +158,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $script:Fix.InventoryPath `
                 -OutPath $script:OutPath *> $null
             $script:Html = Get-Content -LiteralPath $script:OutPath -Raw
@@ -211,7 +199,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $script:Fix.InventoryPath `
                 -OutPath $script:OutPath *> $null
             $script:Html = Get-Content -LiteralPath $script:OutPath -Raw
@@ -269,7 +256,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $script:Fix.InventoryPath `
                 -OutPath $script:OutPath *> $null
             $script:Html = Get-Content -LiteralPath $script:OutPath -Raw
@@ -307,7 +293,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $script:Fix.InventoryPath `
                 -OutPath $script:OutPath *> $null
             $script:Html = Get-Content -LiteralPath $script:OutPath -Raw
@@ -335,7 +320,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $script:Fix.InventoryPath `
                 -OutPath $script:OutPath *> $null
             $script:Html = Get-Content -LiteralPath $script:OutPath -Raw
@@ -386,7 +370,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $script:Fix.InventoryPath `
                 -OutPath $script:OutPath *> $null
             $script:Html = Get-Content -LiteralPath $script:OutPath -Raw
@@ -436,7 +419,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $script:Fix.InventoryPath `
                 -OutPath $script:OutPath *> $null
             $html = Get-Content -LiteralPath $script:OutPath -Raw
@@ -449,7 +431,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             { & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $script:Fix.InventoryPath `
                 -OutPath $script:OutPath } | Should -Throw -ExpectedMessage '*No agent-matrix-summary.json found*'
         }
@@ -461,7 +442,6 @@ Describe 'New-AgentMatrixDashboard.ps1' -Tag 'Unit' {
             { & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $script:Fix.InventoryPath `
                 -SummaryPath (Join-Path $TestDrive 'does-not-exist.json') `
                 -OutPath $script:OutPath } | Should -Throw -ExpectedMessage '*Summary file not found*'
@@ -492,23 +472,17 @@ Describe 'New-AgentMatrixDashboard helpers' -Tag 'Unit' {
             $script:SummaryDir = Join-Path $TestDrive ("sumdir-" + [Guid]::NewGuid().ToString('N'))
             New-Item -ItemType Directory -Path $script:SummaryDir -Force | Out-Null
             Set-Content -LiteralPath (Join-Path $script:SummaryDir 'a.json') -Value '{}' -Encoding utf8NoBOM
-
-            $script:SurfaceDir = Join-Path $TestDrive ("surf-" + [Guid]::NewGuid().ToString('N'))
-            New-Item -ItemType Directory -Path $script:SurfaceDir -Force | Out-Null
-            Set-Content -LiteralPath (Join-Path $script:SurfaceDir 'a.yml') -Value 'required: []' -Encoding utf8NoBOM
         }
 
         It 'Returns one row per inventory agent regardless of summary coverage' {
-            $rows = ConvertTo-AgentMatrixRows -Inventory $script:Inventory -Summary $script:Summary -SummaryDir $script:SummaryDir -SurfaceSignaturesRoot $script:SurfaceDir -LastPassBySlug @{}
+            $rows = ConvertTo-AgentMatrixRows -Inventory $script:Inventory -Summary $script:Summary -SummaryDir $script:SummaryDir -LastPassBySlug @{}
             $rows.Count | Should -Be 2
             $rows[0].slug | Should -Be 'a'
             $rows[0].functional | Should -Be 'pass'
             $rows[0].perAgentHref | Should -Be 'a.json'
-            $rows[0].surface | Should -Be 'present'
             $rows[1].slug | Should -Be 'b'
             $rows[1].functional | Should -Be 'unknown'
             $rows[1].perAgentHref | Should -Be ''
-            $rows[1].surface | Should -Be 'missing'
         }
     }
 
@@ -520,14 +494,11 @@ Describe 'New-AgentMatrixDashboard helpers' -Tag 'Unit' {
 
             $script:NegSummaryDir = Join-Path $TestDrive ("negsumdir-" + [Guid]::NewGuid().ToString('N'))
             New-Item -ItemType Directory -Path $script:NegSummaryDir -Force | Out-Null
-
-            $script:NegSurfaceDir = Join-Path $TestDrive ("negsurf-" + [Guid]::NewGuid().ToString('N'))
-            New-Item -ItemType Directory -Path $script:NegSurfaceDir -Force | Out-Null
         }
 
         It 'Treats a summary without a results property as zero coverage' {
             $summary = [pscustomobject]@{ generatedAt = '2026-05-01T00:00:00Z' }
-            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -SurfaceSignaturesRoot $script:NegSurfaceDir -LastPassBySlug @{}
+            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -LastPassBySlug @{}
             $rows.Count | Should -Be 2
             $rows[0].functional | Should -Be 'unknown'
             $rows[1].functional | Should -Be 'unknown'
@@ -540,7 +511,7 @@ Describe 'New-AgentMatrixDashboard helpers' -Tag 'Unit' {
                     [pscustomobject]@{ slug = 'a'; overall = 'fail'; exitCode = 1 }
                 )
             }
-            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -SurfaceSignaturesRoot $script:NegSurfaceDir -LastPassBySlug @{}
+            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -LastPassBySlug @{}
             ($rows | Where-Object { $_.slug -eq 'a' }).functional | Should -Be 'fail'
             ($rows | Where-Object { $_.slug -eq 'b' }).functional | Should -Be 'unknown'
         }
@@ -549,7 +520,7 @@ Describe 'New-AgentMatrixDashboard helpers' -Tag 'Unit' {
             $summary = [pscustomobject]@{
                 results = @([pscustomobject]@{ slug = 'a'; overall = 'pass' })
             }
-            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -SurfaceSignaturesRoot $script:NegSurfaceDir -LastPassBySlug @{}
+            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -LastPassBySlug @{}
             ($rows | Where-Object { $_.slug -eq 'a' }).exitCode | Should -Be -1
         }
 
@@ -557,7 +528,7 @@ Describe 'New-AgentMatrixDashboard helpers' -Tag 'Unit' {
             $summary = [pscustomobject]@{
                 results = @([pscustomobject]@{ slug = 'a'; overall = 'pass'; exitCode = 0 })
             }
-            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -SurfaceSignaturesRoot $script:NegSurfaceDir -LastPassBySlug @{}
+            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -LastPassBySlug @{}
             $a = $rows | Where-Object { $_.slug -eq 'a' }
             $a.logPath      | Should -Be ''
             $a.perAgentHref | Should -Be ''
@@ -567,7 +538,7 @@ Describe 'New-AgentMatrixDashboard helpers' -Tag 'Unit' {
             $summary = [pscustomobject]@{
                 results = @([pscustomobject]@{ slug = 'a'; overall = 'pass'; exitCode = 0 })
             }
-            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -SurfaceSignaturesRoot $script:NegSurfaceDir -LastPassBySlug @{}
+            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -LastPassBySlug @{}
             $a = $rows | Where-Object { $_.slug -eq 'a' }
             ,$a.graders       | Should -BeOfType ([array])
             $a.graders.Count  | Should -Be 0
@@ -586,7 +557,7 @@ Describe 'New-AgentMatrixDashboard helpers' -Tag 'Unit' {
                     }
                 )
             }
-            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -SurfaceSignaturesRoot $script:NegSurfaceDir -LastPassBySlug @{}
+            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -LastPassBySlug @{}
             $a = $rows | Where-Object { $_.slug -eq 'a' }
             $a.graders.Count   | Should -Be 1
             $a.graders[0].name | Should -Be 'rubric'
@@ -598,7 +569,7 @@ Describe 'New-AgentMatrixDashboard helpers' -Tag 'Unit' {
             $summary = [pscustomobject]@{
                 results = @([pscustomobject]@{ slug = 'a'; overall = 'pass'; exitCode = 0 })
             }
-            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -SurfaceSignaturesRoot $script:NegSurfaceDir -LastPassBySlug @{ 'a' = '2026-05-01' }
+            $rows = ConvertTo-AgentMatrixRows -Inventory $script:NegInventory -Summary $summary -SummaryDir $script:NegSummaryDir -LastPassBySlug @{ 'a' = '2026-05-01' }
             ($rows | Where-Object { $_.slug -eq 'a' }).lastPass | Should -Be '2026-05-01'
             ($rows | Where-Object { $_.slug -eq 'b' }).lastPass | Should -Be ''
         }
@@ -641,7 +612,6 @@ Describe 'New-AgentMatrixDashboard helpers' -Tag 'Unit' {
             & $script:ScriptPath `
                 -RepoRoot $script:Fix.Root `
                 -AgentMatrixRoot $script:Fix.MatrixRoot `
-                -SurfaceSignaturesRoot $script:Fix.SurfaceRoot `
                 -InventoryPath $script:Fix.InventoryPath `
                 -OutPath $script:OutPath *> $null
             $script:Html = Get-Content -LiteralPath $script:OutPath -Raw

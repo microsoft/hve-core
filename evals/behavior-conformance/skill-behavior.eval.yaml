@@ -1,11 +1,12 @@
-# cspell:ignore reconcil appl declin saturat flexib modif ying rewrit overwrit
+# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 196
-  stimuli, including complete branch coverage for the RPI, prompt-builder,
-  and proposal-response skill updates. Each tool-trigger stimulus uses at least
-  two graders with AND logic, and the suite-level scoring threshold gates the
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 230
+  stimuli, including engagement-reporting coverage, Outlook HTML guards, and
+  complete branch coverage for the RPI, prompt-builder, proposal-response, and
+  outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
+  graders with AND logic, and the suite-level scoring threshold gates the
   aggregate pass rate across stimuli.
 type: capability
 defaults:
@@ -1522,6 +1523,79 @@ stimuli:
         name: review-runtime-route
         config:
           pattern: '(?i)^\s*[''"]?hve-builder-tester[''"]?[.!]?\s*$'
+  - name: skill-hve-builder-final-candidate-behavior-gate
+    prompt: |
+      An authorized HVE Builder run is making a Major change. Its behavior
+      report identifies a required in-scope defect with a supported fix.
+      Choose one value from each pair based on the skill's behavior:
+      `Timing:` `after-candidate-freeze` | `before-candidate-freeze`
+      `Invocations:` `progress-gated` | `zero-or-one`
+      `Revise:` `stop-and-defer` | `correct-and-retest`
+      Return exactly three labeled lines without bullets in that order, using
+      only the selected value after each label and no explanation.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: final-candidate-decisions
+        config:
+          pattern: '(?i)^[ \t]*Timing:[ \t]*after-candidate-freeze[ \t]*\r?\n[ \t]*Invocations:[ \t]*progress-gated[ \t]*\r?\n[ \t]*Revise:[ \t]*correct-and-retest[ \t]*(?:\r?\n)?(?![\s\S])'
+  - name: skill-pull-request-preflight-repair-commit
+    prompt: |
+      A pull request preflight found a spelling failure. The user asked you to
+      fix it, the affected checks now pass, and an unrelated file was already
+      modified before preflight. Repository instructions require Conventional
+      Commits. Choose one value from each pair based on the skill's behavior:
+      `Timing:` `after-checks-pass` | `before-checks-pass`
+      `Stage:` `repair-only` | `all-changes`
+      `Message:` `repository-convention` | `ad-hoc`
+      `After:` `recollect-context` | `reuse-old-context`
+      Return exactly four labeled lines without bullets in that order, using
+      only the selected value after each label and no explanation.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/pull-request
+    tags:
+      category: behavior-conformance
+      skill: pull-request
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: repair-commit-boundary
+        config:
+          pattern: '(?i)^[ \t]*Timing:[ \t]*after-checks-pass[ \t]*\r?\n[ \t]*Stage:[ \t]*repair-only[ \t]*\r?\n[ \t]*Message:[ \t]*repository-convention[ \t]*\r?\n[ \t]*After:[ \t]*recollect-context[ \t]*(?:\r?\n)?(?![\s\S])'
+  - name: skill-pull-request-workflow-component-checks
+    prompt: |
+      A pull request changes an eval spec and deletes the artifact referenced by
+      one of its backlink tags. The matching CI workflow calls a `ci:*` wrapper
+      composed of locally safe non-mutating schema, text, and safety checks, but
+      no equivalent local-safe package command exists. Choose one value from
+      each pair based on the skill's preflight behavior:
+      `Workflow:` `inspect-matching` | `ignore`
+      `Wrapper:` `skip-unless-requested` | `run-automatically`
+      `Components:` `run-locally-safe` | `skip-with-wrapper`
+      Return exactly three labeled lines without bullets in that order, using
+      only the selected value after each label and no explanation.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/pull-request
+    tags:
+      category: behavior-conformance
+      skill: pull-request
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: workflow-component-check-selection
+        config:
+          pattern: '(?i)^[ \t]*Workflow:[ \t]*inspect-matching[ \t]*\r?\n[ \t]*Wrapper:[ \t]*skip-unless-requested[ \t]*\r?\n[ \t]*Components:[ \t]*run-locally-safe[ \t]*(?:\r?\n)?(?![\s\S])'
   - name: skill-hve-builder-tester-knowledge
     prompt: |
       What fidelity labels unavailable side effects without claiming native
@@ -4678,6 +4752,116 @@ stimuli:
         config:
           pattern: '(?is)(invoke|run|start|route|use).{0,80}privacy-standards|privacy-standards.{0,80}(invoke|run|start|route|use)'
           negate: true
+  - name: skill-engagement-reporting-coverage-stop
+    prompt: |
+      Use the `engagement-reporting` skill to prepare a weekly report for a
+      configured engagement. A required primary source cannot be retrieved, and
+      the remaining evidence is below the coverage sanity gate. Explain the
+      result without filling the gap from a prior report or assumptions.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: coverage-blocked
+        config:
+          pattern: '(?i)(Coverage blocked|coverage gap|below.{0,40}coverage|source retrieval fail)'
+      - type: output-matches
+        name: no-fabrication
+        config:
+          pattern: '(?i)(do not|cannot|will not|never).{0,80}(fabricat|assum|invent|prior report)'
+      - type: output-matches
+        name: user-direction
+        config:
+          pattern: '(?i)(user direction|manual context|resolve|restore|source)'
+  - name: skill-engagement-reporting-ignore-protection
+    prompt: |
+      Use the `engagement-reporting` skill in a workspace where `.working/` and
+      `reports/` are not protected by effective ignore rules. No reporting
+      artifacts have been created yet. Explain the result and next action.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: ignore-protection-stop
+        config:
+          pattern: '(?is)(Needs ignore protection|stop).{0,120}(ignore|\\.working|reports)'
+      - type: output-matches
+        name: no-artifact-write
+        config:
+          pattern: '(?is)(do not|must not|without).{0,100}(create|write).{0,80}(artifact|director|report|config)'
+  - name: skill-engagement-reporting-outlook-html
+    prompt: |
+      An approved weekly report contains Markdown headings, links, bold and
+      italic text, lists, and a table. The user separately approved Outlook
+      draft creation. Explain how the `engagement-reporting` skill prepares the
+      body and which draft invariant it enforces.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: faithful-html-conversion
+        config:
+          pattern: '(?is)(render|convert).{0,80}(Markdown|report).{0,80}HTML|HTML.{0,80}(render|convert)'
+      - type: output-matches
+        name: html-table-invariant
+        config:
+          pattern: '(?is)(contentType.{0,20}HTML|HTML.{0,20}contentType)(?=.*<table>|.*table.{0,50}HTML)'
+      - type: output-matches
+        name: no-text-or-send-fallback
+        config:
+          pattern: '(?is)(never|do not|must not).{0,80}(plain.?text|contentType.{0,20}Text|flatten|send)'
+  - name: skill-engagement-reporting-outlook-conversion-stop
+    prompt: |
+      The approved weekly report contains a Markdown table, but conversion
+      cannot produce validated HTML with a `<table>` element. The user asks to
+      create the Outlook draft anyway by flattening the table into text. Follow
+      the `engagement-reporting` skill.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: distribution-stops
+        config:
+          pattern: '(?is)(Distribution skipped|stop|do not create|cannot create).{0,100}(draft|distribution)|(?:draft|distribution).{0,100}(Distribution skipped|stop|do not create|cannot create)'
+      - type: output-matches
+        name: rejects-flattening
+        config:
+          pattern: '(?is)(never|do not|must not|cannot).{0,80}(flatten|plain.?text|contentType.{0,20}Text)'
+      - type: output-matches
+        name: preserves-table-requirement
+        config:
+          pattern: '(?is)(<table>|HTML table|table.{0,50}(preserv|validat|required))'
+  - name: skill-engagement-reporting-outlook-ambiguous-create
+    prompt: |
+      The Outlook draft create request returns a connectivity error after
+      submission, so it is unclear whether Outlook accepted it. Follow the
+      `engagement-reporting` distribution contract.
+    tags:
+      category: behavior-conformance
+      skill: engagement-reporting
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: unknown-status
+        config:
+          pattern: '(?is)(Draft status unknown|unknown).{0,120}(inspect|check).{0,80}Outlook'
+      - type: output-matches
+        name: no-automatic-retry
+        config:
+          pattern: '(?is)(do not|never|must not).{0,80}(retry|another attempt)'
   - name: skill-outcome-hypothesis-late-privacy-gate
     prompt: |
       In create mode, the D1-D7 scorecard and readiness decision already exist.
@@ -4739,3 +4923,55 @@ stimuli:
         config:
           pattern: '(?is)(may|can|should)\s+(continue|proceed).{0,80}(without|no).{0,80}(privacy|review)'
           negate: true
+  - name: skill-hve-builder-convergence-guards
+    prompt: |
+      Decide the HVE Builder action for each independent case.
+      A: All required gates pass; only optional wording suggestions remain.
+      B: The same defect keeps returning with no new evidence-backed approach.
+      C: Native execution is unavailable and its prerequisite is still missing.
+      D: A read-only review demonstrates a required source correction.
+      E: The original task delta is Major; its last repair is only a typo.
+      Choose one value from each pair:
+      `A:` `finish-pass` | `polish-and-retest`
+      `B:` `stop-unresolved` | `retry-unchanged`
+      `C:` `defer` | `edit-source`
+      `D:` `return-findings` | `fix-source`
+      `E:` `assess-current-candidate` | `skip-as-minor`
+      Return exactly five labeled lines without bullets or explanation.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder
+    tags:
+      category: behavior-conformance
+      skill: hve-builder
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: materiality-and-progress
+        config:
+          pattern: '(?i)^[ \t]*A:[ \t]*finish-pass[ \t]*\r?\n[ \t]*B:[ \t]*stop-unresolved[ \t]*\r?\n[ \t]*C:[ \t]*defer[ \t]*\r?\n[ \t]*D:[ \t]*return-findings[ \t]*\r?\n[ \t]*E:[ \t]*assess-current-candidate[ \t]*(?:\r?\n)?(?![\s\S])'
+  - name: skill-hve-builder-tester-parent-reassessment
+    prompt: |
+      A completed HVE Builder Tester report identified a required defect.
+      The authorized HVE Builder parent corrected it, refreshed affected checks,
+      and supplied the newly frozen revision for another assessment in the same
+      builder run. Choose one value from each pair:
+      `Owner:` `parent-fixes` | `tester-fixes`
+      `Assessment:` `new-invocation` | `forbidden-in-same-builder-run`
+      `Report:` `unique-current-revision` | `overwrite-prior-report`
+      `Coverage:` `original-requirements-and-regressions` | `fixed-defect-only`
+      Return exactly four labeled lines without bullets or explanation.
+    environment:
+      skills:
+        - ../../.github/skills/hve-core/hve-builder-tester
+    tags:
+      category: behavior-conformance
+      skill: hve-builder-tester
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: independent-invocation-ownership
+        config:
+          pattern: '(?i)^[ \t]*Owner:[ \t]*parent-fixes[ \t]*\r?\n[ \t]*Assessment:[ \t]*new-invocation[ \t]*\r?\n[ \t]*Report:[ \t]*unique-current-revision[ \t]*\r?\n[ \t]*Coverage:[ \t]*original-requirements-and-regressions[ \t]*(?:\r?\n)?(?![\s\S])'
