@@ -20,9 +20,11 @@ from _config_support import (
     DIGEST_REFERENCE,
     RELAY_COLLECTOR_PATH,
     RELAY_COMPOSE_PATH,
+    intrinsic_dispositions,
     load_yaml_file,
     redaction_policy,
     scrub_statements,
+    shipped_consumers,
 )
 
 AZURE_DIR = pathlib.Path(__file__).resolve().parents[1] / "examples" / "azure"
@@ -325,6 +327,17 @@ class TestFleetPolicyParity:
     ) -> None:
         # Act & Assert
         assert scrub_statements(collector) == scrub_statements(local_collector)
+
+    def test_given_fleet_collector_when_comparing_intrinsic_policy_to_local_then_they_match(
+        self, collector: dict, local_collector: dict
+    ) -> None:
+        # Arrange
+        consumers = shipped_consumers()
+
+        # Act & Assert
+        assert intrinsic_dispositions(collector, consumers) == intrinsic_dispositions(
+            local_collector, consumers
+        )
 
     @pytest.mark.parametrize("signal", ["traces", "metrics", "logs"])
     def test_given_fleet_signal_pipeline_when_reading_processors_then_both_privacy_steps_present(
