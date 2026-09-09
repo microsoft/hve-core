@@ -2949,6 +2949,108 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: security-planner-disclaimer-null-state
+  prompt: |
+    Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-null/state.json`. Follow the startup contract, persist any required state change, then report the disclaimer and state effects before asking a Phase 1 question.
+  environment:
+    files:
+    - src: ../../.github/agents/security/security-planner.agent.md
+      dest: .github/copilot-instructions.md
+    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
+      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: fixtures/security-planner-disclaimer-null-state.json
+      dest: .copilot-tracking/security-plans/cadence-null/state.json
+  tags:
+    category: agent-behavior
+    scenario: disclaimer-null-state
+    agent: security-planner
+  graders:
+  - type: output-matches
+    name: disclaimer-before-phase-work
+    config:
+      pattern: (?is)(\[!CAUTION\]|\*\*Disclaimer:\*\*).{0,1800}(disclaimerShownAt|session-start-disclaimer).{0,1200}(Phase 1|scoping|question)
+  - type: output-matches
+    name: state-update-reported
+    config:
+      pattern: (?is)disclaimerShownAt.{0,200}(ISO|202[0-9]).{0,500}session-start-disclaimer
+- name: security-planner-disclaimer-shown-resume
+  prompt: |
+    Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-shown/state.json`. The full disclaimer was already shown. Continue normal Phase 1 work and report whether the timestamp or session-start notice count changed.
+  environment:
+    files:
+    - src: ../../.github/agents/security/security-planner.agent.md
+      dest: .github/copilot-instructions.md
+    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
+      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: fixtures/security-planner-disclaimer-shown-state.json
+      dest: .copilot-tracking/security-plans/cadence-shown/state.json
+  tags:
+    category: agent-behavior
+    scenario: disclaimer-shown-resume
+    agent: security-planner
+  graders:
+  - type: output-matches
+    name: normal-resume-suppresses-replay
+    config:
+      pattern: (?is)(not repeat|suppress|skip|already shown|no (?:automatic )?redisplay)
+  - type: output-matches
+    name: existing-timestamp-preserved
+    config:
+      pattern: (?is)(2026-09-01T12:00:00Z|timestamp).{0,250}(unchanged|preserv|remain|not (?:change|update|overwrit))|(unchanged|preserv|remain|not (?:change|update|overwrit)).{0,250}(2026-09-01T12:00:00Z|timestamp)
+  - type: output-matches
+    name: no-duplicate-session-start-notice
+    config:
+      pattern: (?is)(no duplicate|not add|unchanged|remain(?:s|ed)? (?:at )?(?:one|1)).{0,250}session-start-disclaimer|session-start-disclaimer.{0,250}(no duplicate|not add|unchanged|(?:one|1))
+  - type: output-matches
+    name: no-full-disclaimer-replay
+    config:
+      pattern: (?is)\*\*Disclaimer:\*\*\s*This agent is an assistive tool only
+      negate: true
+- name: security-planner-disclaimer-user-redisplay
+  prompt: |
+    Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-shown/state.json`. I explicitly ask to see the full Security Planning disclaimer again. Show it, persist the required state and notice history, and report the replay discriminator.
+  environment:
+    files:
+    - src: ../../.github/agents/security/security-planner.agent.md
+      dest: .github/copilot-instructions.md
+    - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
+      dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: fixtures/security-planner-disclaimer-shown-state.json
+      dest: .copilot-tracking/security-plans/cadence-shown/state.json
+  tags:
+    category: agent-behavior
+    scenario: disclaimer-user-redisplay
+    agent: security-planner
+  graders:
+  - type: output-matches
+    name: full-disclaimer-redisplayed
+    config:
+      pattern: (?is)(\[!CAUTION\]|\*\*Disclaimer:\*\*).*assistive tool only
+  - type: output-matches
+    name: redisplay-state-contract
+    config:
+      pattern: (?is)disclaimerShownAt.{0,300}(updated|current|new).{0,600}(reason.{0,80}user-requested-redisplay|user-requested-redisplay)
+- name: security-planner-disclaimer-source-missing
+  prompt: |
+    Start a new Security Planner project named `cadence-missing-source`. The required `disclaimer-language.instructions.md` file is unavailable. Follow the declared missing-source behavior and report what is blocked.
+  environment:
+    files:
+    - src: ../../.github/agents/security/security-planner.agent.md
+      dest: .github/copilot-instructions.md
+  tags:
+    category: agent-behavior
+    scenario: disclaimer-source-missing
+    agent: security-planner
+  graders:
+  - type: output-matches
+    name: missing-source-halts
+    config:
+      pattern: (?is)(cannot|unable|unavailable|missing).{0,300}disclaimer-language\.instructions\.md.{0,500}(halt|stop|blocked)
+  - type: output-matches
+    name: no-phase-work
+    config:
+      pattern: (?is)(Phase 1 question|technology stack\?|deployment model\?|what does the system do\?)
+      negate: true
 - name: security-planner-phase6-no-drift-evidence
   prompt: |
     Resume Phase 6 for sample-service. The plan is complete through Phase 5 and includes T-WEB-001 and T-IDENTITY-001, but no Security Reviewer audit or diff report was supplied or confirmed. Perform the Phase 6 review behavior without inventing current-state evidence or dispatching another agent.
