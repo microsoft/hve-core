@@ -396,6 +396,16 @@ jobs:
     secrets:
       copilot-github-token: ${{ secrets.COPILOT_GITHUB_TOKEN }}
 
+  security-planner-cadence-conformance:
+    name: Security Planner Cadence Conformance
+    uses: ./.github/workflows/agent-conformance.yml
+    permissions:
+      contents: read
+    with:
+      suites: '["agent-conformance-security-planner"]'
+    secrets:
+      copilot-github-token: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+
   link-lang-check:
     name: Link Language Check
     uses: ./.github/workflows/link-lang-check.yml
@@ -777,6 +787,7 @@ jobs:
       - plugin-validation
       - skill-validation
       - eval-validation
+      - security-planner-cadence-conformance
       - link-lang-check
       - markdown-link-check
       - dependency-pinning-check

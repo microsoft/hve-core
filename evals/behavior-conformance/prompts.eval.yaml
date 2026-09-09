@@ -550,6 +550,18 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)security|capture|threat|asset|stakeholder"
+      - type: output-matches
+        name: once-per-project-cadence
+        config:
+          pattern: '(?is)(state\.json does not exist|disclaimerShownAt.{0,80}null).{0,500}(display|CAUTION).{0,500}(persist|noticeLog)'
+      - type: output-matches
+        name: canonical-instruction-load
+        config:
+          pattern: '(?is)(locate|find).{0,120}disclaimer-language\.instructions\.md.{0,120}(read|load).{0,180}Security Planning'
+      - type: output-matches
+        name: missing-instruction-stops-startup
+        config:
+          pattern: '(?is)(cannot|unable|unavailable|missing).{0,250}(halt|stop|blocked).{0,250}(questions|analysis|state|phase)'
 
   - name: prompt-security-plan-from-prd-conformance
     prompt: |
@@ -568,6 +580,18 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)security|PRD|threat|STRIDE|bucket"
+      - type: output-matches
+        name: once-per-project-cadence
+        config:
+          pattern: '(?is)(state\.json does not exist|disclaimerShownAt.{0,80}null).{0,500}(display|CAUTION).{0,500}(persist|noticeLog)'
+      - type: output-matches
+        name: canonical-instruction-load
+        config:
+          pattern: '(?is)(locate|find).{0,120}disclaimer-language\.instructions\.md.{0,120}(read|load).{0,180}Security Planning'
+      - type: output-matches
+        name: missing-instruction-stops-startup
+        config:
+          pattern: '(?is)(cannot|unable|unavailable|missing).{0,250}(halt|stop|blocked).{0,250}(questions|analysis|state|phase)'
 
   - name: prompt-security-review-llm-conformance
     prompt: |
