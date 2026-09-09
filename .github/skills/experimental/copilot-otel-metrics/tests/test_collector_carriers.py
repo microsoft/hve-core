@@ -258,16 +258,15 @@ CARRIERS: tuple[Carrier, ...] = (
         CONTENT_SCRUB,
         masked_signature=f"EventName: {SCRUB}",
     ),
-    # --- Carriers a shipped consumer requires. Residual exposure, recorded. ---
+    # --- Intrinsics with explicit consumer and minimization dispositions. ---
     Carrier(
         "span name",
         "CARRIERMARKERSPANNAME",
-        PASSED_THROUGH,
-        NO_MECHANISM,
-        note="Deliberately preserved. Three dashboard TraceQL queries match on "
-        "span name and baseline.py reads Tempo rootTraceName. This is the "
-        "carrier most likely to hold prompt text, and it is a recorded gap "
-        "rather than a scrub, because scrubbing it breaks shipped panels.",
+        MASKED,
+        CONTENT_SCRUB,
+        masked_signature=f"Name           : {SCRUB}",
+        note="Names outside the dashboard-derived invoke_agent family are scrubbed; "
+        "the dashboard matchers remain unchanged.",
     ),
     Carrier(
         "metric name",
@@ -276,8 +275,20 @@ CARRIERS: tuple[Carrier, ...] = (
         NO_MECHANISM,
         note="Preserved: every Prometheus query in the shipped dashboard selects by metric name.",
     ),
-    Carrier("metric description", "CARRIERMARKERMETRICDESCRIPTION", PASSED_THROUGH, NO_MECHANISM),
-    Carrier("metric unit", "CARRIERMARKERMETRICUNIT", PASSED_THROUGH, NO_MECHANISM),
+    Carrier(
+        "metric description",
+        "CARRIERMARKERMETRICDESCRIPTION",
+        MASKED,
+        CONTENT_SCRUB,
+        masked_signature=f"-> Description: {SCRUB}",
+    ),
+    Carrier(
+        "metric unit",
+        "CARRIERMARKERMETRICUNIT",
+        MASKED,
+        CONTENT_SCRUB,
+        masked_signature=f"-> Unit: {SCRUB}",
+    ),
     # --- Library and schema identity. Normally not emitter content, and
     # unfiltered either way: the receiver is unauthenticated and no processor
     # reaches these fields, so what they carry is an expectation about a

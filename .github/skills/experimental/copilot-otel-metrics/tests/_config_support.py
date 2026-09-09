@@ -83,12 +83,8 @@ OBSERVED_CONTENT_ATTRIBUTES = frozenset(
     }
 )
 
-# Intrinsics a shipped consumer reads directly. `span.name` is here because
-# three TraceQL queries match on it; the metric intrinsics are here because
-# every Prometheus query selects by metric name.
-PROTECTED_INTRINSICS = frozenset({"span.name", "metric.name", "metric.description", "metric.unit"})
-
 ATTRIBUTE_TARGET = re.compile(r"attributes\[\"([^\"]+)\"\]")
+OTTL_SPAN_NAME_MATCHER = re.compile(r'IsMatch\(span\.name,\s*"([^"]+)"\)')
 
 
 class ConfigError(ValueError):
@@ -292,13 +288,39 @@ def overreaching_statements(
 ) -> list[tuple[str, str]]:
     """Statements whose write target is something a shipped consumer reads."""
     protected_keys = consumers.protected_attribute_keys()
+    required_span_matchers = set(consumers.span_name_matchers)
     findings: list[tuple[str, str]] = []
     for statement in statements:
         target = statement_target(statement)
-        if target in PROTECTED_INTRINSICS:
+        if target == "metric.name":
             findings.append((statement, target))
+            continue
+        if target == "span.name":
+            preserved_matchers = set(OTTL_SPAN_NAME_MATCHER.findall(statement))
+            if preserved_matchers != required_span_matchers or "where not " not in statement:
+                findings.append((statement, target))
             continue
         for key in ATTRIBUTE_TARGET.findall(target):
             if key in protected_keys:
                 findings.append((statement, key))
     return findings
+
+
+def intrinsic_dispositions(
+    collector: dict[str, Any], consumers: ShippedConsumers
+) -> dict[str, str]:
+    """Return the declared source-level policy for content-bearing intrinsics."""
+    statements = scrub_statements(collector)
+    targets = {statement_target(statement) for statement in statements}
+    span_writes = [
+        statement for statement in statements if statement_target(statement) == "span.name"
+    ]
+    span_disposition = "unaddressed"
+    if span_writes and not overreaching_statements(span_writes, consumers):
+        span_disposition = "consumer-conditional"
+    return {
+        "span.name": span_disposition,
+        "metric.name": "consumer-required" if "metric.name" not in targets else "overreaching",
+        "metric.description": ("normalized" if "metric.description" in targets else "unaddressed"),
+        "metric.unit": "normalized" if "metric.unit" in targets else "unaddressed",
+    }

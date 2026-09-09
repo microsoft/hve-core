@@ -109,11 +109,11 @@
     "ci:eval:agent:report:dryrun": "npm run ci:eval:agent:matrix:dryrun && npm run ci:eval:agent:dashboard"
   },
   "devDependencies": {
-    "@cspell/cspell-json-reporter": "10.1.1",
-    "@microsoft/vally-cli": "0.14.0",
+    "@cspell/cspell-json-reporter": "10.2.2",
+    "@microsoft/vally-cli": "0.15.0",
     "@vscode/vsce": "3.9.2",
     "audit-ci": "7.1.0",
-    "cspell": "10.1.1",
+    "cspell": "10.2.2",
     "markdown-link-check": "3.15.0",
     "markdown-table-formatter": "1.7.0",
     "markdownlint-cli2": "0.23.2",
@@ -135,7 +135,7 @@
     "fast-uri": "3.1.6",
     "form-data": "4.0.6",
     "ip-address": "10.4.0",
-    "js-yaml": "4.3.1",
+    "js-yaml": "4.3.2",
     "linkify-it": "5.0.2",
     "markdown-it": "14.2.0",
     "picomatch@^2": "2.3.2",
