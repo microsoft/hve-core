@@ -1,3 +1,4 @@
+# cspell:ignore bavm
 name: behavior-conformance-instructions
 description: >
   Advisory-tier behavior conformance evals for high-signal Markdown-applyTo
@@ -1471,3 +1472,64 @@ stimuli:
         name: source-preserved
         config:
           pattern: '(?i)(do not|not|leave|preserve).{0,60}(change|modify|source|record)'
+
+  - name: instruction-terraform-avm-sourcing-conformance
+    prompt: |
+      You are implementing Azure infrastructure in Terraform for a workload
+      that needs a storage account and a virtual network. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path),
+      and what module sourcing order does it require before writing direct
+      `azurerm` resource blocks?
+    tags:
+      category: behavior-conformance
+      instruction: terraform
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.tf|terraform\\.instructions\\.md|terraform/"
+      - type: output-matches
+        name: avm-first-ordering
+        config:
+          pattern: "(?is)(azure\\s+verified\\s+modules|\\bavm\\b).{0,300}(pattern|resource).{0,300}(module|registry)"
+
+  - name: instruction-terraform-avm-exception-conformance
+    prompt: |
+      A Terraform solution uses a direct `azapi_resource` because no AVM module
+      covers the required preview API. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path),
+      and what must be recorded for that direct-resource exception?
+    tags:
+      category: behavior-conformance
+      instruction: terraform
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.tf|terraform\\.instructions\\.md|terraform/"
+      - type: output-matches
+        name: exception-recorded
+        config:
+          pattern: "(?is)(rationale|reason|exception).{0,200}(record|implementation\\s+plan|document)"
+
+  - name: instruction-bicep-avm-sourcing-conformance
+    prompt: |
+      You are authoring Azure infrastructure in Bicep at `infra/main.bicep`.
+      Which `.github/instructions/**/*.instructions.md` file applies (cite its
+      path), and what registry references does it require you to prefer before
+      declaring raw Bicep resources?
+    tags:
+      category: behavior-conformance
+      instruction: bicep
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)bicep\\.instructions\\.md|bicep/|\\.bicep"
+      - type: output-matches
+        name: avm-registry-preference
+        config:
+          pattern: "(?is)(br/public:avm|azure\\s+verified\\s+modules|\\bavm\\b).{0,300}(ptn|res|pattern|resource)"

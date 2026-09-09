@@ -1,4 +1,4 @@
-# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit
+# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit bavm
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
@@ -4975,3 +4975,92 @@ stimuli:
         name: independent-invocation-ownership
         config:
           pattern: '(?i)^[ \t]*Owner:[ \t]*parent-fixes[ \t]*\r?\n[ \t]*Assessment:[ \t]*new-invocation[ \t]*\r?\n[ \t]*Report:[ \t]*unique-current-revision[ \t]*\r?\n[ \t]*Coverage:[ \t]*original-requirements-and-regressions[ \t]*(?:\r?\n)?(?![\s\S])'
+  - name: skill-azure-iac-solution-knowledge
+    prompt: |
+      Summarize the module sourcing hierarchy defined by the
+      `azure-iac-solution` skill for Azure infrastructure work. In what order
+      does it evaluate AVM pattern modules, AVM resource modules, and native
+      AzureRM, AzAPI, or Bicep resources?
+    environment:
+      skills:
+        - ../../.github/skills/coding-standards/azure-iac-solution
+    tags:
+      category: behavior-conformance
+      skill: azure-iac-solution
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: avm-first-ordering
+        config:
+          pattern: '(?is)pattern.{0,200}resource.{0,200}(native|azurerm|azapi|direct)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)azure\s+verified\s+modules|\bavm\b|bicep|terraform'
+  - name: skill-azure-iac-solution-tool-trigger
+    prompt: |
+      I am designing a new Azure Container Apps workload and need to generate
+      Terraform for it. Which skill under `.github/skills/**/SKILL.md` applies,
+      and what does it require before writing resource blocks?
+    environment:
+      skills:
+        - ../../.github/skills/coding-standards/azure-iac-solution
+    tags:
+      category: behavior-conformance
+      skill: azure-iac-solution
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)azure-iac-solution|azure\s+verified\s+modules|\bavm\b'
+      - type: output-matches
+        name: intent-before-code
+        config:
+          pattern: '(?is)(intent|architect|requirement|capabilit).{0,300}(module|decision|record|search|catalogue|catalog)'
+  - name: skill-azure-iac-solution-bleed-detection
+    prompt: |
+      I am writing an Azure Functions app in Python and need help with the
+      function code itself, not the infrastructure. Does the
+      `azure-iac-solution` skill apply here? Justify briefly.
+    environment:
+      skills:
+        - ../../.github/skills/coding-standards/azure-iac-solution
+    tags:
+      category: behavior-conformance
+      skill: azure-iac-solution
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|N\/A)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(infrastructure|iac|bicep|terraform|application\s+code|python)'
+  - name: skill-azure-iac-solution-exception-record
+    prompt: |
+      An Azure workload requires a capability available only through a preview
+      API with no AVM module coverage. According to the `azure-iac-solution`
+      skill, what implementation kind may be used and what must be recorded?
+    environment:
+      skills:
+        - ../../.github/skills/coding-standards/azure-iac-solution
+    tags:
+      category: behavior-conformance
+      skill: azure-iac-solution
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: azapi-or-native-permitted
+        config:
+          pattern: '(?i)azapi|native\s+resource'
+      - type: output-matches
+        name: rationale-recorded
+        config:
+          pattern: '(?is)(rationale|reason|exception).{0,200}(record|decision|plan|document)'
