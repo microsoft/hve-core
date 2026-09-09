@@ -42,9 +42,9 @@ Use the **PR Review** prompt when a pull request is open, or select the **Code R
 ## Architecture
 
 ```mermaid
-accTitle: Code review architecture
-accDescr: The Code Review orchestrator uses shared protocols and skill references, then dispatches orientation, interactive investigation, and five findings perspectives.
 flowchart TD
+  accTitle: Code review architecture
+  accDescr: The Code Review orchestrator uses shared protocols and skill references, then dispatches orientation, interactive investigation, and five findings perspectives.
   ORCH["Code Review<br/>(Orchestrator)"]
   AO["Code Review Orientation<br/>(Register 1 stage)"]
 
@@ -148,7 +148,7 @@ The review workflow lives in the `code-review` skill, not in the agent. The orch
 | Severity Taxonomy | Severity levels, verdict normalization, and risk classification            |
 | Output Formats    | Reporting structure, merged report skeleton, and persisted artifact schema |
 | Review Targets    | Target resolution, profile expansion, task state, and emission identity    |
-| Change-Risk Model | Advisory evidence checklist and recommended review depth                    |
+| Change-Risk Model | Advisory evidence checklist and recommended review depth                   |
 
 The Standards perspective is language-agnostic: it scans the workspace for `**/SKILL.md` files, matches them against the languages in the diff, and loads the relevant `coding-standards` skills. See [Language Skills](language-skills.md) for details on the built-in skills and how to create your own.
 
@@ -157,9 +157,9 @@ The Standards perspective is language-agnostic: it scans the workspace for `**/S
 The agent runs a human-gated flow. Each step pauses for your input where the table notes a gate.
 
 ```mermaid
-accTitle: Code review workflow
-accDescr: Seven ordered steps move from target resolution and orientation through human selection, perspective dispatch, and persisted findings.
 flowchart TD
+  accTitle: Code review workflow
+  accDescr: Seven ordered steps move from target resolution and orientation through human selection, perspective dispatch, and persisted findings.
   S1["Step 1: Context Bootstrap<br/>resolve target/profile, compute diff, write orientation state"]
   S2["Step 2: Orientation Worker + Dispatch Board<br/>factual walkthrough, enumerated board (gate)"]
   S3["Step 3: Perspective + Depth Selection (gate)"]
@@ -171,15 +171,15 @@ flowchart TD
   S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7
 ```
 
-| Step | Stage                               | What happens                                                                                                                                                                                                                                                                        |
-|------|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Step | Stage                               | What happens                                                                                                                                                                                                                                                                                                                        |
+|------|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 1    | Context Bootstrap                   | The agent resolves the target and profile, verifies that the target head SHA matches checked-out `HEAD`, generates a structured XML diff from the exact target base, drafts a change brief, gathers change-risk evidence, detects hotspots, resolves optional PR and security-plan context, and writes serialized orientation state |
-| 2    | Orientation Worker + Dispatch Board | Code Review Orientation writes the factual Register 1 walkthrough and seeds the dispatch board; you confirm or edit the board, change-risk evidence, perspective recommendation, and advisory depth recommendation in one decision (gate)                                              |
-| 3    | Perspective + Depth Selection       | The agent resolves your confirmed perspective and depth choices, including any difference from the advisory recommendation (gate only when the Step 2 response was ambiguous)                                                                                                      |
-| 4    | Finalize Dispatch State             | The agent records exact per-perspective output paths in `diff-state.json` and writes `dispatch-manifest.json`                                                                                                                                                                       |
-| 5    | Human-Steered Walk-Back Loop        | You bookmark a board item and ask a question; the agent routes factual questions to the Explainer (Register 1) and deep questions to the Walkback (Register 2), then walks each answer back onto its board item (gate)                                                              |
-| 6    | Dispatch Perspectives               | Selected perspective subagents run concurrently, each writing structured JSON findings to disk                                                                                                                                                                                      |
-| 7    | Merge, Walk Back + Persist          | Findings are deduplicated, severity-sorted, source-tagged, walked back onto the board, and written as `review.md` plus `metadata.json`                                                                                                                                              |
+| 2    | Orientation Worker + Dispatch Board | Code Review Orientation writes the factual Register 1 walkthrough and seeds the dispatch board; you confirm or edit the board, change-risk evidence, perspective recommendation, and advisory depth recommendation in one decision (gate)                                                                                           |
+| 3    | Perspective + Depth Selection       | The agent resolves your confirmed perspective and depth choices, including any difference from the advisory recommendation (gate only when the Step 2 response was ambiguous)                                                                                                                                                       |
+| 4    | Finalize Dispatch State             | The agent records exact per-perspective output paths in `diff-state.json` and writes `dispatch-manifest.json`                                                                                                                                                                                                                       |
+| 5    | Human-Steered Walk-Back Loop        | You bookmark a board item and ask a question; the agent routes factual questions to the Explainer (Register 1) and deep questions to the Walkback (Register 2), then walks each answer back onto its board item (gate)                                                                                                              |
+| 6    | Dispatch Perspectives               | Selected perspective subagents run concurrently, each writing structured JSON findings to disk                                                                                                                                                                                                                                      |
+| 7    | Merge, Walk Back + Persist          | Findings are deduplicated, severity-sorted, source-tagged, walked back onto the board, and written as `review.md` plus `metadata.json`                                                                                                                                                                                              |
 
 ### Orientation, Registers, and the Walk-Back Loop
 
