@@ -133,6 +133,19 @@ Resource names follow [Azure naming conventions](https://learn.microsoft.com/azu
 | References | Orchestrates sub-modules                                | Cannot reference other sub-modules directly |
 | Lookups    | Receive resource names for `existing` lookups (not IDs) | Inherit scope from parent                   |
 
+### Azure Module Sourcing
+
+Azure solution modules compose reviewed modules before authoring resources directly. When implementing Azure infrastructure:
+
+1. Prefer an applicable [Azure Verified Modules](https://aka.ms/avm) pattern module.
+2. Otherwise compose AVM resource modules from the [Bicep public registry](https://github.com/Azure/bicep-registry-modules) (`br/public:avm/res/...` or `br/public:avm/ptn/...`).
+3. Use direct Bicep resource declarations only when no suitable AVM module exists, the published AVM module does not expose a required capability, a preview or new API is essential, or the caller has specified another implementation approach.
+4. Do not create a local wrapper around an AVM module unless the wrapper provides a documented organizational contract or substantial reusable composition.
+5. Pin module versions and review available upgrades separately from adoption.
+6. Record each direct-resource exception and its rationale in the implementation plan so reviewers can re-evaluate it later.
+
+Resolve module references, versions, and availability from the registry at implementation time. Do not guess module names or versions from model knowledge. For AVM discovery, capability mapping, and exception handling, use the `azure-iac-solution` skill.
+
 ## Type System
 
 ### Shared Types
