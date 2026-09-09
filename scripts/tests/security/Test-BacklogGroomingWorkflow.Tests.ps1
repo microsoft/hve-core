@@ -176,26 +176,27 @@ BeforeAll {
 
     function New-GroomingSafeOutputItem {
         param(
-            [Parameter(Mandatory)] [object]$Issue,
-            [Parameter(Mandatory)] [string]$RowData,
+            [Parameter(Mandatory)] [AllowEmptyCollection()] [AllowEmptyString()] [string[]]$RowData,
             [string]$StartedAt = '2026-09-02T10:00:00Z',
             [string]$CompletedAt = '2026-09-02T10:01:00Z'
         )
 
-        return @{
+        $item = @{
             type = 'publish_backlog_grooming_result'
-            issue = $Issue
-            'row-data' = $RowData
             'started-at' = $StartedAt
             'completed-at' = $CompletedAt
         }
+        1..5 | ForEach-Object {
+            $item["row-$_"] = if ($_ -le $RowData.Count) { $RowData[$_ - 1] } else { '' }
+        }
+        return $item
     }
 
     function Invoke-GroomingResultJob {
         param(
             [hashtable]$ReportData,
             [AllowEmptyCollection()] [object[]]$SafeOutputItems,
-            [Parameter(Mandatory)] [int[]]$OrderedCandidateIds,
+            [Parameter(Mandatory)] [AllowEmptyCollection()] [int[]]$OrderedCandidateIds,
             [Parameter(Mandatory)] [AllowEmptyCollection()] [int[]]$PriorityCandidateIds,
             [Parameter(Mandatory)] [AllowEmptyCollection()] [int[]]$RoundRobinCandidateIds,
             [Parameter(Mandatory)] [int]$TotalOpenInventory,
@@ -220,19 +221,15 @@ BeforeAll {
             $items = @($SafeOutputItems)
         }
         else {
-            $items = @($ReportData.issues | ForEach-Object {
+            $rowData = @($ReportData.issues | ForEach-Object {
                 $rowData = $_ | ConvertTo-Json -Depth 12 -Compress
                 if ($ApplyTemplateTransportEscaping) {
                     $rowData = $rowData.Replace('${{', '$\{\{')
                 }
-                @{
-                    type = 'publish_backlog_grooming_result'
-                    issue = $_.issue
-                    'row-data' = $rowData
-                    'started-at' = $StartedAt
-                    'completed-at' = $CompletedAt
-                }
+                $rowData
             })
+            $items = @(New-GroomingSafeOutputItem -RowData $rowData `
+                -StartedAt $StartedAt -CompletedAt $CompletedAt)
         }
         @{ items = $items } | ConvertTo-Json -Depth 15 |
             Set-Content -LiteralPath $agentOutputPath -Encoding utf8NoBOM
@@ -315,15 +312,14 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Match '(?ms)^  noop:\s+max: 1\s+report-as-issue: false'
         $script:Source | Should -Match '(?m)^    publish-backlog-grooming-result:$'
         $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?permissions: \{\}'
-        $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?max: 5'
-        $script:Source | Should -Match '(?ms)^        issue:.*?required: true\s+type: number'
-        foreach ($inputName in @('row-data', 'started-at', 'completed-at')) {
+        $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?max: 1'
+        foreach ($inputName in @('row-1', 'row-2', 'row-3', 'row-4', 'row-5', 'started-at', 'completed-at')) {
             $script:Source | Should -Match "(?ms)^        $([regex]::Escape($inputName)):.*?required: true\s+type: string"
         }
         $script:Source | Should -Match 'Finalize every row before making any safe output call'
         $script:Source | Should -Match 'Capture the UTC completion timestamp exactly once after all rows are finalized'
-        $script:Source | Should -Match 'reuse the same start and completion timestamp strings without modification'
-        $script:Source | Should -Match 'Do not use\s+candidate-specific, estimated, or incremented timestamps'
+        $script:Source | Should -Match 'Include the captured start timestamp as `started-at` and the\s+captured completion timestamp as `completed-at`'
+        $script:Source | Should -Match '(?s)Do not use candidate-specific,\s+estimated, or incremented timestamps'
         $script:Source | Should -Not -Match '(?m)^\s+issues: write$'
         $script:Source | Should -Not -Match '(?m)^\s+target: "\*"$'
         $script:Source | Should -Match '(?m)^  report-failure-as-issue: false$'
@@ -344,8 +340,8 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Match 'emit one canonical `Deferred` row for that number'
         $script:Source | Should -Match '(?s)Do not omit the\s+row or call `noop` for an individual post-capture state change'
         $script:Source | Should -Match '(?s)Call `noop` only when shard input validation fails or a repository-wide access'
-        $script:Source | Should -Match 'Safe-output issue identities must exactly match planned shard candidates'
-        $script:Source | Should -Match 'Worker candidate IDs must be unique positive integers'
+        $script:Source | Should -Match 'Safe-output row slots must exactly match planned candidate positions'
+        $script:Source | Should -Match 'Worker candidate IDs must contain one to five unique positive integers'
         $script:Source | Should -Not -Match 'Worker candidate IDs must be unique positive integers in ascending order'
         $script:Source | Should -Match 'The orchestrator, not the worker,\s+owns inventory selection'
         $script:Source | Should -Match 'Keep each `repository_evidence` and\s+`lineage_evidence` item to at most 500 characters'
@@ -354,11 +350,11 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
     }
 
     It 'emits one independently validated immutable shard result' {
-        $script:Source | Should -Match 'one `publish-backlog-grooming-result` call per planned candidate'
+        $script:Source | Should -Match 'make exactly one `publish-backlog-grooming-result` call'
         $script:Source | Should -Match 'const requests = agentOutput\.items\.filter'
         $script:Source | Should -Match 'item\.type === "publish_backlog_grooming_result"'
-        $script:Source | Should -Match 'Safe-output item count does not match planned candidates: expected \$\{orderedCandidateIds\.length\}, found \$\{requests\.length\}'
-        $script:Source | Should -Match 'const requestsByIssue = new Map\(\)'
+        $script:Source | Should -Match 'Expected exactly one backlog grooming result, found \$\{requests\.length\}'
+        $script:Source | Should -Match 'const rowDataByPosition = \[1, 2, 3, 4, 5\]\.map'
         $script:Source | Should -Match 'fs\.writeFileSync\('
         $script:Source | Should -Match '(?m)^        - name: Upload immutable shard result$'
         $script:Source | Should -Match 'backlog-grooming-proof-\$\{\{ inputs\.orchestrator_run_id \}\}-\$\{\{ inputs\.orchestrator_attempt \}\}-\$\{\{ inputs\.shard_id \}\}'
@@ -366,8 +362,8 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
     }
 
     It 'validates structured report data and computes deterministic result provenance' {
-        $script:Source | Should -Match 'for \(const issue of orderedCandidateIds\)'
-        $script:Source | Should -Match 'const rowData = String\(request\["row-data"\]'
+        $script:Source | Should -Match 'for \(const \[index, issue\] of orderedCandidateIds\.entries\(\)\)'
+        $script:Source | Should -Match 'const rowData = rowDataByPosition\[index\]'
         $script:Source | Should -Match '\.replaceAll\("\$\\\\\{\\\\\{", "\$" \+ "\{\{"\)'
         $script:Source | Should -Match 'row = normalizeRow\(JSON\.parse\(rowData\)\)'
         $script:Source | Should -Match 'row\?\.issue !== issue'
@@ -488,6 +484,31 @@ Describe 'Rows-authoritative backlog grooming result construction' -Tag 'Unit' {
         $result.report_data.run.deferred | Should -Be 0
         $result.report_data.run.stop_reason | Should -Be 'Complete shard assessed'
         $result.report_data.run.next_cursor | Should -Be 9
+    }
+
+    It 'accepts each supported planned candidate count: <Count>' -ForEach @(
+        @{ Count = 1 }
+        @{ Count = 2 }
+        @{ Count = 3 }
+        @{ Count = 4 }
+        @{ Count = 5 }
+    ) {
+        $candidateIds = @(1..$Count)
+        $rows = @($candidateIds | ForEach-Object {
+            $row = $script:AssessedRow.Clone()
+            $row.issue = $_
+            $row
+        })
+
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = $rows } `
+            -OrderedCandidateIds $candidateIds -PriorityCandidateIds $candidateIds `
+            -RoundRobinCandidateIds @() -TotalOpenInventory $Count -PriorCursor 0 `
+            -StartedAt '2026-09-02T10:00:00Z' -CompletedAt '2026-09-02T10:01:00Z' `
+            -TestRoot $TestDrive
+
+        $result.report_data.issues.issue | Should -Be $candidateIds
+        $result.report_data.run.assessed | Should -Be $Count
+        $result.report_data.run.contract_errors | Should -Be 0
     }
 
     It 'decodes template-syntax transport escaping before parsing report data' {
@@ -631,7 +652,7 @@ Describe 'Rows-authoritative backlog grooming result construction' -Tag 'Unit' {
         $row = $script:AssessedRow.Clone()
         $rowData = @{ issues = @($row); run = @{ assessed = 1 } } |
             ConvertTo-Json -Depth 12 -Compress
-        $items = @(New-GroomingSafeOutputItem -Issue 1 -RowData $rowData)
+        $items = @(New-GroomingSafeOutputItem -RowData @($rowData))
         $result = Invoke-GroomingResultJob -SafeOutputItems $items `
             -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
             -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
@@ -642,23 +663,25 @@ Describe 'Rows-authoritative backlog grooming result construction' -Tag 'Unit' {
         $result.report_data.contract_errors[0].code | Should -Be 'invalid_row_contract'
     }
 
-    It 'rejects an unknown issue identity before advisory validation' {
+    It 'records an inner issue mismatch against the trusted slot identity' {
         $row = $script:AssessedRow.Clone()
         $row.issue = 2
-        {
-            Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
-                -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
-                -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
-                -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
-        } | Should -Throw '*Safe-output issue identities must exactly match planned shard candidates*'
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.issues | Should -HaveCount 0
+        $result.report_data.contract_errors[0].issue | Should -Be 1
+        $result.report_data.contract_errors[0].code | Should -Be 'invalid_row_contract'
     }
 
     It 'preserves a valid sibling when one known candidate emits malformed JSON' {
         $validRow = $script:AssessedRow.Clone()
-        $items = @(
-            New-GroomingSafeOutputItem -Issue 1 -RowData ($validRow | ConvertTo-Json -Depth 12 -Compress)
-            New-GroomingSafeOutputItem -Issue 2 -RowData '{"issue":2,"title":"unterminated}'
-        )
+        $items = @(New-GroomingSafeOutputItem -RowData @(
+                ($validRow | ConvertTo-Json -Depth 12 -Compress),
+                '{"issue":2,"title":"unterminated}'
+            ))
         $result = Invoke-GroomingResultJob -SafeOutputItems $items `
             -OrderedCandidateIds @(1, 2) -PriorityCandidateIds @(1, 2) -RoundRobinCandidateIds @() `
             -TotalOpenInventory 2 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
@@ -669,14 +692,14 @@ Describe 'Rows-authoritative backlog grooming result construction' -Tag 'Unit' {
         $result.report_data.contract_errors[0].code | Should -Be 'invalid_row_contract'
     }
 
-    It 'binds rows by outer identity and emits them in trusted candidate order' {
+    It 'binds rows by slot and emits them in trusted candidate order' {
         $firstRow = $script:AssessedRow.Clone()
         $secondRow = $script:AssessedRow.Clone()
         $secondRow.issue = 2
-        $items = @(
-            New-GroomingSafeOutputItem -Issue 2 -RowData ($secondRow | ConvertTo-Json -Depth 12 -Compress)
-            New-GroomingSafeOutputItem -Issue 1 -RowData ($firstRow | ConvertTo-Json -Depth 12 -Compress)
-        )
+        $items = @(New-GroomingSafeOutputItem -RowData @(
+                ($firstRow | ConvertTo-Json -Depth 12 -Compress),
+                ($secondRow | ConvertTo-Json -Depth 12 -Compress)
+            ))
         $result = Invoke-GroomingResultJob -SafeOutputItems $items `
             -OrderedCandidateIds @(1, 2) -PriorityCandidateIds @(1, 2) -RoundRobinCandidateIds @() `
             -TotalOpenInventory 2 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
@@ -685,10 +708,10 @@ Describe 'Rows-authoritative backlog grooming result construction' -Tag 'Unit' {
         $result.report_data.issues.issue | Should -Be @(1, 2)
     }
 
-    It 'records inner and outer issue mismatch against the trusted outer identity' {
+    It 'records an inner issue mismatch against the trusted slot identity' {
         $row = $script:AssessedRow.Clone()
         $row.issue = 2
-        $items = @(New-GroomingSafeOutputItem -Issue 1 -RowData (
+        $items = @(New-GroomingSafeOutputItem -RowData @(
                 $row | ConvertTo-Json -Depth 12 -Compress
             ))
         $result = Invoke-GroomingResultJob -SafeOutputItems $items `
@@ -700,16 +723,11 @@ Describe 'Rows-authoritative backlog grooming result construction' -Tag 'Unit' {
         $result.report_data.contract_errors[0].code | Should -Be 'invalid_row_contract'
     }
 
-    It 'rejects ambiguous or incomplete outer identity envelopes: <Name>' -ForEach @(
-        @{ Name = 'duplicate'; Ordered = @(1, 2); Issues = @(1, 1); Error = '*Safe-output issue identities must exactly match planned shard candidates*' }
-        @{ Name = 'unknown'; Ordered = @(1, 2); Issues = @(1, 3); Error = '*Safe-output issue identities must exactly match planned shard candidates*' }
-        @{ Name = 'invalid'; Ordered = @(1); Issues = @('one'); Error = '*Safe-output issue identities must exactly match planned shard candidates*' }
-        @{ Name = 'missing'; Ordered = @(1, 2); Issues = @(1); Error = '*Safe-output item count does not match planned candidates*' }
-        @{ Name = 'excess'; Ordered = @(1); Issues = @(1, 2); Error = '*Safe-output item count does not match planned candidates*' }
+    It 'rejects incomplete or excess slot envelopes: <Name>' -ForEach @(
+        @{ Name = 'missing planned row'; Ordered = @(1, 2); Rows = @('{}', ''); Error = '*Safe-output row slots must exactly match planned candidate positions*' }
+        @{ Name = 'populated unused row'; Ordered = @(1); Rows = @('{}', '{}'); Error = '*Safe-output row slots must exactly match planned candidate positions*' }
     ) {
-        $items = @($Issues | ForEach-Object {
-            New-GroomingSafeOutputItem -Issue $_ -RowData '{}'
-        })
+        $items = @(New-GroomingSafeOutputItem -RowData $Rows)
         {
             Invoke-GroomingResultJob -SafeOutputItems $items `
                 -OrderedCandidateIds $Ordered -PriorityCandidateIds $Ordered -RoundRobinCandidateIds @() `
@@ -718,22 +736,38 @@ Describe 'Rows-authoritative backlog grooming result construction' -Tag 'Unit' {
         } | Should -Throw $Error
     }
 
-    It 'rejects string-unequal timestamps even when they denote the same instant' {
-        $firstRow = $script:AssessedRow.Clone()
-        $secondRow = $script:AssessedRow.Clone()
-        $secondRow.issue = 2
+    It 'rejects zero or multiple result envelopes: <Name>' -ForEach @(
+        @{ Name = 'zero'; Count = 0 }
+        @{ Name = 'multiple'; Count = 2 }
+    ) {
+        $row = $script:AssessedRow | ConvertTo-Json -Depth 12 -Compress
+        $items = @(1..$Count | ForEach-Object {
+            New-GroomingSafeOutputItem -RowData @($row)
+        })
+        if ($Count -eq 0) {
+            $items = @()
+        }
+        {
+            Invoke-GroomingResultJob -SafeOutputItems $items `
+                -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+                -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+                -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+        } | Should -Throw "*Expected exactly one backlog grooming result, found $Count*"
+    }
+
+    It 'rejects candidate manifests outside the fixed slot bound: <Name>' -ForEach @(
+        @{ Name = 'empty'; Ordered = @() }
+        @{ Name = 'too wide'; Ordered = @(1, 2, 3, 4, 5, 6) }
+    ) {
         $items = @(
-            New-GroomingSafeOutputItem -Issue 1 -RowData ($firstRow | ConvertTo-Json -Depth 12 -Compress)
-            New-GroomingSafeOutputItem -Issue 2 `
-                -RowData ($secondRow | ConvertTo-Json -Depth 12 -Compress) `
-                -StartedAt '2026-09-02T10:00:00.000Z' -CompletedAt '2026-09-02T10:01:00.000Z'
+            New-GroomingSafeOutputItem -RowData @('{}')
         )
         {
             Invoke-GroomingResultJob -SafeOutputItems $items `
-                -OrderedCandidateIds @(1, 2) -PriorityCandidateIds @(1, 2) -RoundRobinCandidateIds @() `
-                -TotalOpenInventory 2 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+                -OrderedCandidateIds $Ordered -PriorityCandidateIds $Ordered -RoundRobinCandidateIds @() `
+                -TotalOpenInventory $Ordered.Count -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
                 -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
-        } | Should -Throw '*Safe-output shard timestamps must be identical strings*'
+        } | Should -Throw '*Worker candidate IDs must contain one to five unique positive integers*'
     }
 }
 
@@ -760,7 +794,7 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
 
     It 'uploads the validated result without issue-write or SARIF permissions' {
         $script:Lock | Should -Match '\.replaceAll\("\$\\\\\{\\\\\{", "\$" \+ "\{\{"\)'
-        $script:Lock | Should -Match 'const rowData = String\(request\["row-data"\]'
+        $script:Lock | Should -Match 'const rowData = rowDataByPosition\[index\]'
         $script:Lock | Should -Match 'row = normalizeRow\(JSON\.parse\(rowData\)\)'
         $script:Lock | Should -Match 'code: "invalid_row_contract"'
         $script:Lock | Should -Match 'schema_version: "backlog-grooming-shard-result/v2"'
@@ -804,16 +838,13 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
 }
 
 Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
-    It 'keeps the generated safe-output maximum equal to orchestrator shard width' {
+    It 'keeps the generated fixed row-slot count equal to orchestrator shard width' {
         $shardWidth = [regex]::Match($script:Orchestrator, '(?m)^  SWEEP_SHARD_WIDTH: (?<value>\d+)$')
-        $safeOutputMax = [regex]::Match(
-            $script:Lock,
-            '(?s)"publish-backlog-grooming-result":\{.*?"max":(?<value>\d+)'
-        )
+        $rowSlots = [regex]::Matches($script:Source, '(?m)^        row-[1-5]:$')
 
         $shardWidth.Success | Should -BeTrue
-        $safeOutputMax.Success | Should -BeTrue
-        [int]$safeOutputMax.Groups['value'].Value | Should -Be ([int]$shardWidth.Groups['value'].Value)
+        $rowSlots.Count | Should -Be ([int]$shardWidth.Groups['value'].Value)
+        $script:Lock | Should -Match '(?s)"publish-backlog-grooming-result":\{.*?"max":1'
     }
 
     It 'defines typed worker identity, manifest envelopes, and shard-specific generated concurrency' {
@@ -1097,7 +1128,7 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
         $script:Agent | Should -Match 'isolated result job derives all\s+structural run state from the validated final rows and trusted caller input'
         $script:Policy | Should -Match 'Calculate the assessed and deferred counts from those\s+final statuses'
         $script:Policy | Should -Match 'Derive the stop reason from the complete set of final deferred\s+rows and account for every distinct deferral reason'
-        $script:Source | Should -Match 'row-data`: a JSON string containing exactly that candidate''s final row object'
+        $script:Source | Should -Match 'Every populated row slot is\s+a JSON string containing exactly that candidate''s final row object'
         $script:Source | Should -Match 'derives canonical\s+timestamp, inventory, cohort counts,\s+assessment counts, stop reason, and cursor'
         $script:Agent | Should -Match 'put compared issue numbers in the finding rather than the\s+enum value'
         [regex]::Matches($script:Source, 'result_digest').Count | Should -Be 1

@@ -138,17 +138,29 @@ safe-outputs:
   jobs:
     publish-backlog-grooming-result:
       description: "Validate and upload one immutable backlog grooming shard result"
-      max: 5
+      max: 1
       runs-on: ubuntu-latest
       permissions: {}
       output: "Validated shard result uploaded as an immutable run-attempt artifact"
       inputs:
-        issue:
-          description: "Planned issue number bound to this candidate result"
+        row-1:
+          description: "JSON row for candidate position 1"
           required: true
-          type: number
-        row-data:
-          description: "JSON object containing exactly one final issue row"
+          type: string
+        row-2:
+          description: "JSON row for candidate position 2, or an empty string when unused"
+          required: true
+          type: string
+        row-3:
+          description: "JSON row for candidate position 3, or an empty string when unused"
+          required: true
+          type: string
+        row-4:
+          description: "JSON row for candidate position 4, or an empty string when unused"
+          required: true
+          type: string
+        row-5:
+          description: "JSON row for candidate position 5, or an empty string when unused"
           required: true
           type: string
         started-at:
@@ -183,6 +195,11 @@ safe-outputs:
               const requests = agentOutput.items.filter(
                 (item) => item.type === "publish_backlog_grooming_result",
               );
+              if (requests.length !== 1) {
+                core.setFailed(`Expected exactly one backlog grooming result, found ${requests.length}`);
+                return;
+              }
+              const request = requests[0];
 
               const exactKeys = (value, keys) =>
                 value &&
@@ -235,44 +252,28 @@ safe-outputs:
                 core.setFailed("Worker candidate IDs are not valid JSON");
                 return;
               }
-              if (!Array.isArray(orderedCandidateIds) || orderedCandidateIds.some(
+              if (!Array.isArray(orderedCandidateIds) || orderedCandidateIds.length === 0 ||
+                  orderedCandidateIds.length > 5 || orderedCandidateIds.some(
                 (issue) => !Number.isInteger(issue) || issue <= 0,
               )) {
-                core.setFailed("Worker candidate IDs must be unique positive integers");
+                core.setFailed("Worker candidate IDs must contain one to five unique positive integers");
                 return;
               }
               const candidateSet = new Set(orderedCandidateIds);
               if (candidateSet.size !== orderedCandidateIds.length) {
-                core.setFailed("Worker candidate IDs must be unique positive integers");
+                core.setFailed("Worker candidate IDs must contain one to five unique positive integers");
                 return;
               }
-              if (requests.length !== orderedCandidateIds.length) {
-                core.setFailed(`Safe-output item count does not match planned candidates: expected ${orderedCandidateIds.length}, found ${requests.length}`);
+              const rowDataByPosition = [1, 2, 3, 4, 5].map(
+                (position) => String(request[`row-${position}`] ?? ""),
+              );
+              if (rowDataByPosition.some((rowData, index) =>
+                index < orderedCandidateIds.length ? rowData.length === 0 : rowData.length !== 0)) {
+                core.setFailed("Safe-output row slots must exactly match planned candidate positions");
                 return;
               }
-              const requestsByIssue = new Map();
-              for (const request of requests) {
-                const issue = request.issue;
-                if (!Number.isInteger(issue) || issue <= 0 ||
-                    !candidateSet.has(issue) || requestsByIssue.has(issue)) {
-                  core.setFailed("Safe-output issue identities must exactly match planned shard candidates");
-                  return;
-                }
-                requestsByIssue.set(issue, request);
-              }
-              if (requestsByIssue.size !== candidateSet.size ||
-                  !orderedCandidateIds.every((issue) => requestsByIssue.has(issue))) {
-                core.setFailed("Safe-output issue identities must exactly match planned shard candidates");
-                return;
-              }
-              const startedAt = String(requests[0]?.["started-at"] ?? "");
-              const completedAt = String(requests[0]?.["completed-at"] ?? "");
-              if (requests.some((request) =>
-                String(request["started-at"] ?? "") !== startedAt ||
-                String(request["completed-at"] ?? "") !== completedAt)) {
-                core.setFailed("Safe-output shard timestamps must be identical strings");
-                return;
-              }
+              const startedAt = String(request["started-at"] ?? "");
+              const completedAt = String(request["completed-at"] ?? "");
               let priorityCandidateIds;
               let roundRobinCandidateIds;
               try {
@@ -323,11 +324,10 @@ safe-outputs:
               const acceptedRows = [];
               const contractErrors = [];
               const normalizations = [];
-              for (const issue of orderedCandidateIds) {
-                const request = requestsByIssue.get(issue);
+              for (const [index, issue] of orderedCandidateIds.entries()) {
                 let row;
                 try {
-                  const rowData = String(request["row-data"] ?? "")
+                  const rowData = rowDataByPosition[index]
                     .replaceAll("$\\{\\{", "$" + "{{");
                   row = normalizeRow(JSON.parse(rowData));
                 } catch {
@@ -529,17 +529,15 @@ fixed issue count as an eligibility exclusion.
 Assess only the issue numbers in `ordered_candidate_ids`. Do not locate, create,
 or update tracker state. Finalize every row before making any safe output call.
 Capture the UTC completion timestamp exactly once after all rows are finalized,
-then reuse the same start and completion timestamp strings without modification
-in one `publish-backlog-grooming-result` call per planned candidate. Do not use
-candidate-specific, estimated, or incremented timestamps. Each call contains:
-
-* `issue`: the candidate issue number
-* `row-data`: a JSON string containing exactly that candidate's final row object
-  and no envelope or `run` object
-* `started-at`: the captured UTC assessment start timestamp, repeated verbatim
-  for every candidate
-* `completed-at`: the captured UTC assessment completion timestamp, repeated
-  verbatim for every candidate
+then make exactly one `publish-backlog-grooming-result` call. Put each final row
+in the slot matching its zero-based position in `ordered_candidate_ids` plus
+one. For example, the first candidate uses `row-1`. Every populated row slot is
+a JSON string containing exactly that candidate's final row object and no
+envelope or `run` object. Set every trailing slot beyond the planned candidate
+count to the empty string. Never leave a planned slot empty or put data in an
+unused slot. Include the captured start timestamp as `started-at` and the
+captured completion timestamp as `completed-at`. Do not use candidate-specific,
+estimated, or incremented timestamps.
 
 The isolated result job validates row data, issue identity, caller provenance,
 complete candidate coverage, and timestamp agreement. It derives canonical
@@ -551,8 +549,8 @@ in `row-data`. After every safe output call succeeds, return only the canonical
 Backlog Grooming Report required by the imported agent.
 
 Before publication, finalize every selected issue row as `Assessed` or
-`Deferred` and verify there is exactly one call for each planned issue. Do not
-use call order to associate rows with candidates. Keep each `repository_evidence` and
+`Deferred` and verify there is exactly one populated slot for each planned
+issue in trusted candidate order. Keep each `repository_evidence` and
 `lineage_evidence` item to at most 500 characters. Use concise stable paths,
 issue or pull-request numbers, commit or release identifiers, or summarized
 negative-search scopes instead of directory listings or extended prose.
