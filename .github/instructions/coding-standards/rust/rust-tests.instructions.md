@@ -16,19 +16,31 @@ Place unit tests in `#[cfg(test)] mod tests` within the source file they exercis
 #[cfg(test)]
 mod tests {
     use super::*;
+    use wiremock::matchers::method;
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[test]
     fn given_valid_input_parse_returns_config() {
-        let json = r#"{"endpoint": "https://example.com"}"#;
+        let json = r#"{"endpoint": "http://127.0.0.1"}"#;
         let config: AppConfig = serde_json::from_str(json).unwrap();
         assert_eq!(config.polling_interval_secs, 10);
     }
 
     #[tokio::test]
     async fn when_endpoint_available_fetch_returns_data() {
-        let service = PollingService::new(AppConfig::from_env());
+        let mock_server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .respond_with(ResponseTemplate::new(200).set_body_bytes(b"data"))
+            .mount(&mock_server)
+            .await;
+
+        let config = AppConfig {
+            endpoint: mock_server.uri(),
+            polling_interval_secs: 10,
+        };
+        let service = PollingService::new(config);
         let result = service.fetch().await;
-        assert!(result.is_ok(), "fetch should succeed when endpoint is available");
+        assert!(result.is_ok(), "fetch should succeed when the mock endpoint is available");
     }
 }
 ```
@@ -53,6 +65,8 @@ Prefer one assertion per test. Related assertions validating the same behavior a
 | `mockall`  | Preferred for trait-based mocking                       |
 | `wiremock` | HTTP server mocking in async tests                      |
 | `mockito`  | Lightweight HTTP mocking for synchronous or async tests |
+
+Keep unit tests network-isolated. Unit tests must not perform DNS resolution or connect to non-loopback addresses. For HTTP behavior, inject a loopback endpoint supplied by `wiremock`, `mockito`, or an equivalent local test double. Tests that require a deployed service belong in a separately controlled integration-test environment.
 
 Use `mockall` to generate mock implementations from traits via `#[automock]`:
 
@@ -145,7 +159,7 @@ mod tests {
 
     fn sample_config() -> AppConfig {
         AppConfig {
-            endpoint: "https://example.com".into(),
+            endpoint: "http://127.0.0.1".into(),
             polling_interval_secs: 10,
         }
     }
@@ -196,18 +210,20 @@ Types referenced below (`AppConfig`, `ServiceError`, `Result` alias) are defined
 #[cfg(test)]
 mod tests {
     use super::*;
+    use wiremock::matchers::method;
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     // Fixture helper — see Test Data Patterns
-    fn sample_config() -> AppConfig {
+    fn sample_config(endpoint: String) -> AppConfig {
         AppConfig {
-            endpoint: "https://example.com".into(),
+            endpoint,
             polling_interval_secs: 10,
         }
     }
 
     #[test]
     fn given_defaults_config_has_ten_second_interval() {
-        let config = sample_config();
+        let config = sample_config("http://127.0.0.1".into());
         assert_eq!(config.polling_interval_secs, 10);
     }
 
@@ -218,11 +234,17 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn when_fetch_fails_error_contains_status() {
-        let config = sample_config();
+    async fn when_api_returns_service_unavailable_fetch_error_contains_status() {
+        let mock_server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .respond_with(ResponseTemplate::new(503))
+            .mount(&mock_server)
+            .await;
+
+        let config = sample_config(mock_server.uri());
         let service = PollingService::new(config);
-        let result = service.fetch().await;
-        assert!(result.is_err(), "fetch should fail with unreachable endpoint");
+        let error = service.fetch().await.expect_err("503 response should fail");
+        assert!(error.to_string().contains("HTTP 503"), "error should include status");
     }
 }
 ```

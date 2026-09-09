@@ -9,7 +9,7 @@ BeforeAll {
     $script:NodeAvailable = $null -ne (Get-Command node -ErrorAction SilentlyContinue)
     if ($script:NodeAvailable) {
         $script:DependenciesInstalled = $true
-        $pkgs = @('alex', 'unified', 'retext-english', 'retext-profanities', 'retext-stringify')
+        $pkgs = @('unified', 'retext-english', 'retext-equality', 'retext-profanities', 'retext-stringify', 'vfile-sort')
         foreach ($p in $pkgs) {
             & node -e "try{require.resolve('$p');process.exit(0)}catch(e){process.exit(1)}" 2>$null | Out-Null
             if ($LASTEXITCODE -ne 0) {
@@ -23,7 +23,7 @@ BeforeAll {
     }
 }
 
-Describe 'Test-EvalSpecText.ps1 (alex + retext-profanities)' -Tag 'Unit' {
+Describe 'Test-EvalSpecText.ps1 (retext-equality + retext-profanities)' -Tag 'Unit' {
     BeforeEach {
         $script:OutputPath = Join-Path $TestDrive "eval-spec-text-$([Guid]::NewGuid()).json"
         $script:CorpusRoot = Join-Path $TestDrive "corpus-$([Guid]::NewGuid())"
@@ -38,7 +38,7 @@ Describe 'Test-EvalSpecText.ps1 (alex + retext-profanities)' -Tag 'Unit' {
             Set-ItResult -Skipped -Because 'Dependencies are installed; this guard test is informational only'
             return
         }
-        Set-ItResult -Skipped -Because 'node or required npm packages (alex, retext-*) are not installed'
+        Set-ItResult -Skipped -Because 'node or required retext npm packages are not installed'
     }
 
     It 'Discovers markdown under .github/<kind>/ and docs/ when scoped to a corpus root' {
@@ -67,7 +67,7 @@ Describe 'Test-EvalSpecText.ps1 (alex + retext-profanities)' -Tag 'Unit' {
         $report.flagged | Should -Be 0
     }
 
-    It 'Treats alex.js findings as warnings by default (exit 0) and still records them in the report' {
+    It 'Treats alex-compatible findings as warnings by default and records them in the report' {
         if (-not ($script:NodeAvailable -and $script:DependenciesInstalled)) {
             Set-ItResult -Skipped -Because 'node or required npm packages are not available'
             return
@@ -91,7 +91,7 @@ Describe 'Test-EvalSpecText.ps1 (alex + retext-profanities)' -Tag 'Unit' {
         @($report.results | Where-Object { $_.spec -like '*flag.md' }).Count | Should -BeGreaterOrEqual 1
     }
 
-    It 'Exits 1 on alex.js findings when -FailOnAlex is supplied' {
+    It 'Exits 1 on alex-compatible findings when -FailOnAlex is supplied' {
         if (-not ($script:NodeAvailable -and $script:DependenciesInstalled)) {
             Set-ItResult -Skipped -Because 'node or required npm packages are not available'
             return
@@ -111,7 +111,7 @@ Describe 'Test-EvalSpecText.ps1 (alex + retext-profanities)' -Tag 'Unit' {
         $report.failOnAlex | Should -BeTrue
     }
 
-    It 'Flags profanity via retext-profanities' {
+    It 'Reports a profanity occurrence once as an error without an alex warning' {
         if (-not ($script:NodeAvailable -and $script:DependenciesInstalled)) {
             Set-ItResult -Skipped -Because 'node or required npm packages are not available'
             return
@@ -126,9 +126,14 @@ Describe 'Test-EvalSpecText.ps1 (alex + retext-profanities)' -Tag 'Unit' {
         $exit = $LASTEXITCODE
 
         $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
+        $entry = $report.results | Where-Object { $_.spec -like '*profane.md' }
         $exit | Should -Be 1
-        $report.errorCount | Should -BeGreaterOrEqual 1
-        @($report.results | Where-Object { $_.spec -like '*profane.md' }).Count | Should -BeGreaterOrEqual 1
+        $report.errorCount | Should -Be 1
+        $report.warningCount | Should -Be 0
+        $report.flagged | Should -Be 1
+        $report.failOnAlex | Should -BeFalse
+        @($entry.messages) | Should -HaveCount 1
+        $entry.messages[0].source | Should -Be 'retext-profanities'
     }
 
     It 'Does not include evals/ markdown when scanning the default corpus' {
@@ -169,5 +174,137 @@ Describe 'Test-EvalSpecText.ps1 (alex + retext-profanities)' -Tag 'Unit' {
         $defaultText | Should -Match "\.github/skills/\*\*/\*\.md"
         $defaultText | Should -Match "docs/\*\*/\*\.md"
         $defaultText | Should -Not -Match "(^|['""])evals(['""/])"
+    }
+
+    It 'Sorts equality findings by position before the separate profanity block' {
+        if (-not ($script:NodeAvailable -and $script:DependenciesInstalled)) {
+            Set-ItResult -Skipped -Because 'node or required npm packages are not available'
+            return
+        }
+
+        $mixedFile = Join-Path $script:CorpusRoot 'docs/mixed.md'
+        # Repeated rules emit together, so the later host precedes crazy without sorting.
+        Set-Content -LiteralPath $mixedFile -Value "# Mixed`n`nThis is fucking wrong. The host was crazy, and the host was ready.`nThe host was crazy." -Encoding UTF8
+        $globs = @((Join-Path $script:CorpusRoot 'docs/**/*.md'))
+
+        & $script:ScriptPath -CorpusGlob $globs -RepoRoot $script:RepoRoot -OutputPath $script:OutputPath *> $null
+        $exit = $LASTEXITCODE
+
+        $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
+        $entry = $report.results | Where-Object { $_.spec -like '*mixed.md' }
+        $sources = @($entry.messages | ForEach-Object { $_.source })
+        $equalityMessages = @($entry.messages | Where-Object { $_.source -eq 'alex' })
+        $profanityMessages = @($entry.messages | Where-Object { $_.source -eq 'retext-profanities' })
+        $lastAlexIndex = [array]::LastIndexOf($sources, 'alex')
+        $firstProfanityIndex = [array]::IndexOf($sources, 'retext-profanities')
+
+        $exit | Should -Be 1
+        $report.warningCount | Should -Be 5
+        $report.errorCount | Should -Be 1
+        $report.failOnAlex | Should -BeFalse
+
+        $expectedEquality = @(
+            @{ Rule = 'host-hostess'; Line = 3; Column = 28 }
+            @{ Rule = 'nuts'; Line = 3; Column = 37 }
+            @{ Rule = 'host-hostess'; Line = 3; Column = 52 }
+            @{ Rule = 'host-hostess'; Line = 4; Column = 5 }
+            @{ Rule = 'nuts'; Line = 4; Column = 14 }
+        )
+        $equalityMessages | Should -HaveCount $expectedEquality.Count
+        for ($index = 0; $index -lt $expectedEquality.Count; $index++) {
+            $equalityMessages[$index].rule | Should -Be $expectedEquality[$index].Rule
+            $equalityMessages[$index].line | Should -Be $expectedEquality[$index].Line
+            $equalityMessages[$index].column | Should -Be $expectedEquality[$index].Column
+        }
+
+        $profanityMessages | Should -HaveCount 1
+        $profanityMessages[0].rule | Should -Be 'fucking'
+        $profanityMessages[0].line | Should -Be 3
+        $profanityMessages[0].column | Should -Be 9
+        $lastAlexIndex | Should -BeGreaterOrEqual 0
+        $firstProfanityIndex | Should -BeGreaterOrEqual 0
+        $lastAlexIndex | Should -BeLessThan $firstProfanityIndex
+    }
+
+    It 'Suppresses an allowlisted <Rule> phrase while its control keeps source <Source>' -ForEach @(
+        @{
+            Rule = 'host-hostess'
+            AllowText = 'Use an HTTP host.'
+            ControlText = 'The host was ready.'
+            Source = 'alex'
+            WarningCount = 1
+            ErrorCount = 0
+            ExitCode = 0
+        }
+        @{
+            Rule = 'penetration'
+            AllowText = 'Run a penetration test to verify security.'
+            ControlText = 'The penetration level is high.'
+            Source = 'retext-profanities'
+            WarningCount = 0
+            ErrorCount = 1
+            ExitCode = 1
+        }
+    ) {
+        if (-not ($script:NodeAvailable -and $script:DependenciesInstalled)) {
+            Set-ItResult -Skipped -Because 'node or required npm packages are not available'
+            return
+        }
+
+        $allowFile = Join-Path $script:CorpusRoot 'docs/allow.md'
+        $controlFile = Join-Path $script:CorpusRoot 'docs/control.md'
+        Set-Content -LiteralPath $allowFile -Value "# Allowlisted`n`n$AllowText" -Encoding UTF8
+        Set-Content -LiteralPath $controlFile -Value "# Control`n`n$ControlText" -Encoding UTF8
+        $globs = @((Join-Path $script:CorpusRoot 'docs/**/*.md'))
+
+        & $script:ScriptPath -CorpusGlob $globs -RepoRoot $script:RepoRoot -OutputPath $script:OutputPath *> $null
+        $exit = $LASTEXITCODE
+
+        $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
+        $allowEntry = $report.results | Where-Object { $_.spec -like '*allow.md' }
+        $controlEntry = $report.results | Where-Object { $_.spec -like '*control.md' }
+        $controlMessage = @(
+            $controlEntry.messages |
+                Where-Object { $_.rule -eq $Rule -and $_.source -eq $Source }
+        )
+
+        $allowEntry | Should -BeNullOrEmpty
+        @($controlEntry.messages) | Should -HaveCount 1
+        $controlMessage | Should -HaveCount 1
+        $controlMessage[0].message | Should -Not -BeNullOrEmpty
+        $controlMessage[0].line | Should -Be 3
+        $controlMessage[0].column | Should -Be 5
+        $report.warningCount | Should -Be $WarningCount
+        $report.errorCount | Should -Be $ErrorCount
+        $report.failOnAlex | Should -BeFalse
+        $exit | Should -Be $ExitCode
+    }
+
+    It 'Excludes rating-zero matches without relabeling them as equality findings (FailOnAlex=<Strict>)' -ForEach @(
+        @{ Strict = $false }
+        @{ Strict = $true }
+    ) {
+        if (-not ($script:NodeAvailable -and $script:DependenciesInstalled)) {
+            Set-ItResult -Skipped -Because 'node or required npm packages are not available'
+            return
+        }
+
+        $allowFile = Join-Path $script:CorpusRoot 'docs/allow.md'
+        $controlFile = Join-Path $script:CorpusRoot 'docs/control.md'
+        Set-Content -LiteralPath $allowFile -Value "# Allowlisted`n`nMap the attack surface." -Encoding UTF8
+        Set-Content -LiteralPath $controlFile -Value "# Control`n`nAn attack occurred." -Encoding UTF8
+        $globs = @((Join-Path $script:CorpusRoot 'docs/**/*.md'))
+
+        & $script:ScriptPath -CorpusGlob $globs -RepoRoot $script:RepoRoot -OutputPath $script:OutputPath -FailOnAlex:$Strict *> $null
+        $exit = $LASTEXITCODE
+
+        $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
+        $report.scanned | Should -Be 2
+        $report.results | Should -BeNullOrEmpty
+        $report.warningCount | Should -Be 0
+        $report.errorCount | Should -Be 0
+        $report.flagged | Should -Be 0
+        $report.failOnAlex | Should -Be $Strict
+        $exit | Should -Be 0
     }
 }
