@@ -4,11 +4,23 @@ name: Agent Conformance
 
 on:
   workflow_call:
+    inputs:
+      suites:
+        description: "JSON array of Vally conformance suite names to run"
+        required: false
+        type: string
+        default: '["agent-conformance-accessibility-planner","agent-conformance-dt-coach","agent-conformance-privacy-planner","agent-conformance-rai-planner","agent-conformance-security-planner","agent-conformance-sssc-planner"]'
     secrets:
       copilot-github-token:
         description: "GitHub credential exported as COPILOT_GITHUB_TOKEN for the Copilot CLI used by vally eval"
         required: true
   workflow_dispatch:
+    inputs:
+      suites:
+        description: "JSON array of Vally conformance suite names to run"
+        required: false
+        type: string
+        default: '["agent-conformance-accessibility-planner","agent-conformance-dt-coach","agent-conformance-privacy-planner","agent-conformance-rai-planner","agent-conformance-security-planner","agent-conformance-sssc-planner"]'
 
 permissions:
   contents: read
@@ -27,13 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite:
-          - agent-conformance-accessibility-planner
-          - agent-conformance-dt-coach
-          - agent-conformance-privacy-planner
-          - agent-conformance-rai-planner
-          - agent-conformance-security-planner
-          - agent-conformance-sssc-planner
+        suite: ${{ fromJSON(inputs.suites) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

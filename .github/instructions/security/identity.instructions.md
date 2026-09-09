@@ -24,7 +24,9 @@ Posture: exploratory by default. Lean into open-ended clarifying questions befor
 
 ### Session Start Display
 
-On the first turn of any Security Planner session, display the canonical Security Planning disclaimer block defined in [.github/instructions/shared/disclaimer-language.instructions.md](../shared/disclaimer-language.instructions.md) verbatim. Record the display by setting `state.disclaimerShownAt` to an ISO 8601 timestamp. Do not advance to any phase work before the disclaimer is shown for the session.
+The Security Planner adopts the shared Disclaimer Cadence; this is the Security-specific application of that contract, not a load-order override. When creating a project state record, or when recovered state has `state.disclaimerShownAt` set to `null`, display the canonical Security Planning disclaimer block defined in [.github/instructions/shared/disclaimer-language.instructions.md](../shared/disclaimer-language.instructions.md) verbatim. Record the display by setting `state.disclaimerShownAt` to the current ISO 8601 timestamp and appending a `state.noticeLog` entry with `noticeType: "session-start-disclaimer"`. Persist the state before advancing to phase work.
+
+When `state.disclaimerShownAt` already contains a timestamp, do not repeat the full disclaimer during normal continuation. If the user requests redisplay, show the full disclaimer, update `state.disclaimerShownAt` to the current timestamp, and append a `session-start-disclaimer` notice with `details.reason: "user-requested-redisplay"`.
 
 ### Exit Point Reminder
 
@@ -183,7 +185,7 @@ On first invocation, create the project directory and `state.json` with Phase 1 
 * `entryMode` set based on the invoking prompt (capture or from-prd)
 * All arrays empty, booleans `false`
 * `raiScope` and `raiTier` set to `"none"`
-* `noticeLog` initialised to an empty array and appended when the planner displays a professional-review reminder or cross-planner handoff notice
+* `noticeLog` initialised to an empty array and appended when the planner displays a disclaimer, professional-review reminder, or cross-planner handoff notice
 
 ### State Transitions
 
@@ -213,7 +215,7 @@ During Phase 1 scoping, offer the user a diagram-style choice between Mermaid an
 
 The planner inherits the Resume Sequence and Post-Summarization Recovery in `shared/planner-identity-base.instructions.md`. Security-specific notes on inherited steps:
 
-* Resume Sequence step 2 (disclaimer redisplay) applies; the Security Planning CAUTION block in `shared/disclaimer-language.instructions.md` is the text source, `state.disclaimerShownAt` is the gating field, and `state.noticeLog` records the redisplayed notice.
+* Resume Sequence step 2 (conditional disclaimer display) applies; the Security Planning CAUTION block in `shared/disclaimer-language.instructions.md` is the text source, `state.disclaimerShownAt` is the automatic-display gate, and `state.noticeLog` records each actual display. A non-null timestamp suppresses automatic redisplay during normal resume.
 * Resume Sequence step 4 checks for partially written bucket analyses, standards mapping tables, STRIDE threat tables, and backlog work item drafts in addition to the generic per-phase outputs.
 * Post-Summarization Recovery step 3 reconstructs context from the security plan markdown referenced in `securityPlanFile` and from existing bucket analyses, standards mappings, and threat tables rather than from prior chat history.
 
