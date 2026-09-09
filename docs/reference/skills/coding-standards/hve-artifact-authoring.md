@@ -1,9 +1,9 @@
 ---
 title: hve-artifact-authoring
 description: "Create and validate HVE Core agents, prompts, instructions, and skills with current frontmatter, package membership, delegation, tracking, documentation, and validation conventions. Use when authoring a GitHub Copilot customization artifact in this repository."
-sidebar_position: 2
+sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-29
+ms.date: 2026-09-10
 ms.topic: reference
 keywords:
   - skill

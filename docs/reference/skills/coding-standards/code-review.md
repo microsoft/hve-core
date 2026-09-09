@@ -1,9 +1,9 @@
 ---
 title: code-review
 description: "Review code changes from multiple perspectives with context bootstrap, depth-tier rigor, and structured findings output."
-sidebar_position: 1
+sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-10
 ms.topic: reference
 keywords:
   - skill
