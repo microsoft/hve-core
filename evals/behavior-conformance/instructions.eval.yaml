@@ -1,4 +1,4 @@
-# cspell:ignore bavm
+# cspell:ignore bavm tfnfr
 name: behavior-conformance-instructions
 description: >
   Advisory-tier behavior conformance evals for high-signal Markdown-applyTo
@@ -1478,8 +1478,8 @@ stimuli:
       You are implementing Azure infrastructure in Terraform for a workload
       that needs a storage account and a virtual network. Which
       `.github/instructions/**/*.instructions.md` file applies (cite its path),
-      and what module sourcing order does it require before writing direct
-      `azurerm` resource blocks?
+      which skill does it hand module sourcing to, and how does it require AVM
+      module versions to be pinned?
     tags:
       category: behavior-conformance
       instruction: terraform
@@ -1488,18 +1488,46 @@ stimuli:
       - type: output-matches
         name: applyTo-evidence
         config:
-          pattern: "(?i)\\*\\.tf|terraform\\.instructions\\.md|terraform/"
+          pattern: "(?i)terraform\\.instructions\\.md"
       - type: output-matches
-        name: avm-first-ordering
+        name: skill-handoff
         config:
-          pattern: "(?is)(azure\\s+verified\\s+modules|\\bavm\\b).{0,300}(pattern|resource).{0,300}(module|registry)"
+          pattern: "(?i)azure-iac-solution"
+      - type: output-matches
+        name: patch-series-pin
+        config:
+          pattern: "(?i)~>\\s*0\\.\\d+\\.\\d+|exact\\s+version|patch"
+      - type: output-matches
+        name: no-minor-floating-pin
+        config:
+          pattern: "~>\\s*x\\.y\"|~>\\s*\\d+\\.\\d+\""
+          negate: true
+
+  - name: instruction-terraform-count-for-each-conformance
+    prompt: |
+      In Terraform for Azure, you need (a) a network security group created only
+      when `var.create_nsg` is true and (b) one subnet per entry in a map
+      variable. According to the applicable
+      `.github/instructions/**/*.instructions.md` file, which meta-argument does
+      each case use? Answer with exactly two lines: `a: <count|for_each>` and
+      `b: <count|for_each>`.
+    tags:
+      category: behavior-conformance
+      instruction: terraform
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: tfnfr7-alignment
+        config:
+          pattern: "(?i)^[ \\t]*a:[ \\t]*count[ \\t]*\\r?\\n[ \\t]*b:[ \\t]*for_each[ \\t]*(?:\\r?\\n)?(?![\\s\\S])"
 
   - name: instruction-terraform-avm-exception-conformance
     prompt: |
       A Terraform solution uses a direct `azapi_resource` because no AVM module
       covers the required preview API. Which
       `.github/instructions/**/*.instructions.md` file applies (cite its path),
-      and what must be recorded for that direct-resource exception?
+      and which skill defines what must be recorded for that direct-resource
+      exception?
     tags:
       category: behavior-conformance
       instruction: terraform
@@ -1508,18 +1536,18 @@ stimuli:
       - type: output-matches
         name: applyTo-evidence
         config:
-          pattern: "(?i)\\*\\.tf|terraform\\.instructions\\.md|terraform/"
+          pattern: "(?i)terraform\\.instructions\\.md"
       - type: output-matches
-        name: exception-recorded
+        name: skill-handoff
         config:
-          pattern: "(?is)(rationale|reason|exception).{0,200}(record|implementation\\s+plan|document)"
+          pattern: "(?i)azure-iac-solution"
 
   - name: instruction-bicep-avm-sourcing-conformance
     prompt: |
       You are authoring Azure infrastructure in Bicep at `infra/main.bicep`.
       Which `.github/instructions/**/*.instructions.md` file applies (cite its
-      path), and what registry references does it require you to prefer before
-      declaring raw Bicep resources?
+      path), what registry reference form does it require for AVM modules, and
+      how is the module version pinned?
     tags:
       category: behavior-conformance
       instruction: bicep
@@ -1528,8 +1556,12 @@ stimuli:
       - type: output-matches
         name: applyTo-evidence
         config:
-          pattern: "(?i)bicep\\.instructions\\.md|bicep/|\\.bicep"
+          pattern: "(?i)bicep\\.instructions\\.md"
       - type: output-matches
-        name: avm-registry-preference
+        name: avm-registry-reference
         config:
-          pattern: "(?is)(br/public:avm|azure\\s+verified\\s+modules|\\bavm\\b).{0,300}(ptn|res|pattern|resource)"
+          pattern: "br/public:avm/"
+      - type: output-matches
+        name: exact-tag-pin
+        config:
+          pattern: "(?i)(exact|specific|pinned?)\\s+(tag|version)|:\\d+\\.\\d+\\.\\d+"

@@ -4977,10 +4977,11 @@ stimuli:
           pattern: '(?i)^[ \t]*Owner:[ \t]*parent-fixes[ \t]*\r?\n[ \t]*Assessment:[ \t]*new-invocation[ \t]*\r?\n[ \t]*Report:[ \t]*unique-current-revision[ \t]*\r?\n[ \t]*Coverage:[ \t]*original-requirements-and-regressions[ \t]*(?:\r?\n)?(?![\s\S])'
   - name: skill-azure-iac-solution-knowledge
     prompt: |
-      Summarize the module sourcing hierarchy defined by the
-      `azure-iac-solution` skill for Azure infrastructure work. In what order
-      does it evaluate AVM pattern modules, AVM resource modules, and native
-      AzureRM, AzAPI, or Bicep resources?
+      Using the `azure-iac-solution` skill, list the module sourcing tiers for
+      Azure infrastructure in the order the skill evaluates them. Return exactly
+      one line per tier in the form `<n>: <tier>` where `<tier>` is one of
+      `pattern-module`, `resource-module`, `native-resource`, `local-module`.
+      No bullets or explanation.
     environment:
       skills:
         - ../../.github/skills/coding-standards/azure-iac-solution
@@ -4991,18 +4992,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: avm-first-ordering
+        name: tier-ordering
         config:
-          pattern: '(?is)pattern.{0,200}resource.{0,200}(native|azurerm|azapi|direct)'
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: '(?i)azure\s+verified\s+modules|\bavm\b|bicep|terraform'
+          pattern: '(?i)^[ \t]*1:[ \t]*pattern-module[ \t]*\r?\n[ \t]*2:[ \t]*resource-module[ \t]*\r?\n[ \t]*3:[ \t]*native-resource[ \t]*\r?\n[ \t]*4:[ \t]*local-module[ \t]*(?:\r?\n)?(?![\s\S])'
   - name: skill-azure-iac-solution-tool-trigger
     prompt: |
       I am designing a new Azure Container Apps workload and need to generate
       Terraform for it. Which skill under `.github/skills/**/SKILL.md` applies,
-      and what does it require before writing resource blocks?
+      and what must happen before you write module or resource blocks? Do not
+      write any HCL yet.
     environment:
       skills:
         - ../../.github/skills/coding-standards/azure-iac-solution
@@ -5013,13 +5011,18 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-domain-attribution
+        name: skill-attribution
         config:
-          pattern: '(?i)azure-iac-solution|azure\s+verified\s+modules|\bavm\b'
+          pattern: '(?i)azure-iac-solution'
       - type: output-matches
-        name: intent-before-code
+        name: decision-record-and-confirmation
         config:
-          pattern: '(?is)(intent|architect|requirement|capabilit).{0,300}(module|decision|record|search|catalogue|catalog)'
+          pattern: '(?is)decision\s+record.{0,400}(confirm|approv|agree|sign.?off)|(confirm|approv|agree|sign.?off).{0,400}decision\s+record'
+      - type: output-matches
+        name: no-fabricated-version
+        config:
+          pattern: 'version\s*=\s*"[^"]*\d+\.\d+|:\d+\.\d+\.\d+\b'
+          negate: true
   - name: skill-azure-iac-solution-bleed-detection
     prompt: |
       I am writing an Azure Functions app in Python and need help with the
@@ -5037,16 +5040,18 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|N\/A)'
+          pattern: '(?i)(not\s+apply|does\s*n.t|does\s+not|inapplicable|different\s+skill|N\/A)'
       - type: output-matches
-        name: scope-language
+        name: no-avm-guidance-bleed
         config:
-          pattern: '(?i)(infrastructure|iac|bicep|terraform|application\s+code|python)'
+          pattern: '(?i)br/public:avm|avm-(res|ptn)-'
+          negate: true
   - name: skill-azure-iac-solution-exception-record
     prompt: |
       An Azure workload requires a capability available only through a preview
       API with no AVM module coverage. According to the `azure-iac-solution`
-      skill, what implementation kind may be used and what must be recorded?
+      skill, what implementation kind may be used, what must be recorded, and
+      where is the record persisted?
     environment:
       skills:
         - ../../.github/skills/coding-standards/azure-iac-solution
@@ -5057,10 +5062,42 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: azapi-or-native-permitted
+        name: azapi-permitted
         config:
-          pattern: '(?i)azapi|native\s+resource'
+          pattern: '(?i)azapi'
       - type: output-matches
-        name: rationale-recorded
+        name: rationale-and-follow-up
         config:
-          pattern: '(?is)(rationale|reason|exception).{0,200}(record|decision|plan|document)'
+          pattern: '(?is)rationale.{0,300}(follow.?up|re-?evaluat)|(follow.?up|re-?evaluat).{0,300}rationale'
+      - type: output-matches
+        name: record-location
+        config:
+          pattern: '(?i)implementation\s+plan|module-decisions\.ya?ml'
+  - name: skill-azure-iac-solution-proposed-status
+    prompt: |
+      The AVM module index lists `avm-ptn-example-workload` for Terraform with
+      `ModuleStatus` = `Proposed`, and no other AVM module covers the capability.
+      According to the `azure-iac-solution` skill, may this module be adopted,
+      and how is the capability implemented and recorded?
+    environment:
+      skills:
+        - ../../.github/skills/coding-standards/azure-iac-solution
+    tags:
+      category: behavior-conformance
+      skill: azure-iac-solution
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: proposed-not-adopted
+        config:
+          pattern: '(?is)(not|cannot|should\s+not|do\s+not|isn.t|is\s+not).{0,60}(adopt|use|publish|available|exist)'
+      - type: output-matches
+        name: native-fallback-with-follow-up
+        config:
+          pattern: '(?is)(native|azapi|azurerm|direct|tier\s*3).{0,400}(follow.?up|re-?evaluat|pending)'
+      - type: output-matches
+        name: no-fabricated-version
+        config:
+          pattern: 'version\s*=\s*"[^"]*\d+\.\d+'
+          negate: true
