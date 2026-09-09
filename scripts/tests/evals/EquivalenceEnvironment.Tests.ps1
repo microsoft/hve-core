@@ -608,10 +608,24 @@ Describe 'Resolve-AgentScopePattern' -Tag 'Unit' {
         'Recorded under .copilot-tracking/security-plans/model.md' | Should -Not -Match $pattern
     }
 
-    It 'Resolves a real repository agent to its declared scope' {
-        $result = Resolve-AgentScopePattern -RepoRoot $script:RepoRoot -Agent 'rpi-agent'
-        $result.Exempt | Should -BeFalse
-        $result.Scope | Should -Not -BeNullOrEmpty
+    It 'Resolves repository agents with tracking directives to their declared scopes' {
+        $candidates = @(
+            Get-ChildItem -Path (Join-Path $script:RepoRoot '.github/agents') -Recurse -Filter '*.agent.md' -File |
+                Select-String -Pattern '\.copilot-tracking/([a-z0-9][a-z0-9-]*)' -List |
+                Select-Object -First 5
+        )
+        if ($candidates.Count -eq 0) {
+            Set-ItResult -Skipped -Because 'no repository agent currently declares a tracking scope'
+            return
+        }
+        foreach ($candidate in $candidates) {
+            $slug = [System.IO.Path]::GetFileNameWithoutExtension($candidate.Path) -replace '\.agent$', ''
+            $expectedScope = $candidate.Matches[0].Groups[1].Value
+            $result = Resolve-AgentScopePattern -RepoRoot $script:RepoRoot -Agent $slug
+            $result.Exempt | Should -BeFalse
+            $result.Scope | Should -Be $expectedScope
+            $result.Pattern | Should -Be "(?i)\.copilot-tracking/$([regex]::Escape($expectedScope))"
+        }
     }
 
     It 'Reports agents that declare no tracking scope as exempt' {

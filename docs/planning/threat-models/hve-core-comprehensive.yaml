@@ -2103,14 +2103,14 @@ threats:
     interaction_ref: flow-12
     category: information-disclosure
     title: PRIVATE-TOKEN exfiltration via traceback or error message
-    description: A raw exception or die() message embedding URL/headers/body could surface the token.
+    description: A raw exception or GitLabError message embedding URL/headers/body could surface the token.
     state: Partially Mitigated
     citations: { stride: [I], nist: [AU-9], mitre: [CWE-532] }
     mitigation_ids: [M-REDACT-GITLAB]
     properties:
       Priority: Low
       UserThreatDescription: >-
-        A raw exception or die() message embedding URL/headers/body could surface the token. Source:
+        A raw exception or GitLabError message embedding URL/headers/body could surface the token. Source:
         gitlab skill, bucket B1 (CLI to GitLab API). Gaps: G-REP-1, G-INF-1, G-EOP-1. See
         .github/skills/gitlab/gitlab/SECURITY.md.
         Data sensitivity: confidential (Jira and GitLab personal access tokens).
@@ -2158,15 +2158,15 @@ threats:
     target_ref: comp-gitlab
     interaction_ref: flow-12
     category: information-disclosure
-    title: die() helper printing raw upstream body
-    description: die() prints an error string; a raw upstream body could leak secrets.
+    title: GitLabError printing raw upstream body
+    description: GitLabError carries a message that _emit() prints; a raw upstream body could leak secrets.
     state: Partially Mitigated
     citations: { stride: [I], nist: [SI-11], mitre: [CWE-209] }
     mitigation_ids: [M-REDACT-GITLAB]
     properties:
       Priority: Low
       UserThreatDescription: >-
-        die() prints an error string; a raw upstream body could leak secrets. Source: gitlab skill,
+        GitLabError carries a message that _emit() prints; a raw upstream body could leak secrets. Source: gitlab skill,
         bucket B1 (CLI to GitLab API). Gaps: G-INF-1. See .github/skills/gitlab/gitlab/SECURITY.md.
         Data sensitivity: confidential (Jira and GitLab personal access tokens).
   - id: GL-5
