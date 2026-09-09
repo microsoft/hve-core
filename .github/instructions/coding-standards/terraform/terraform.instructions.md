@@ -11,18 +11,21 @@ These instructions define conventions for Terraform Infrastructure as Code (IaC)
 
 ## Project Structure
 
-Organize Terraform files following a modular architecture:
+The root module composes registry modules directly. Local modules exist only for solution-specific reuse (see Azure Module Sourcing):
 
 ```text
 terraform/
-├── modules/                      # Reusable modules for specific resource groupings
-│   ├── networking/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   ├── outputs.tf
-│   │   └── versions.tf
-│   ├── storage/
-│   └── compute/
+├── main.tf                       # Registry module calls and remaining direct resources
+├── variables.tf
+├── outputs.tf
+├── versions.tf
+├── backend.tf
+├── modules/                      # Local modules, only where reuse justifies them
+│   └── workload/
+│       ├── main.tf
+│       ├── variables.tf
+│       ├── outputs.tf
+│       └── versions.tf
 └── README.md
 ```
 
@@ -74,7 +77,7 @@ Variable conventions:
 * Sensitive variables include `sensitive = true`
 * Required variables omit the `default` attribute; optional variables include sensible defaults
 * Use `null` for optional defaults instead of empty strings
-* Avoid adding `validation` blocks unless explicitly requested
+* Add `validation` blocks for variables with known domain constraints, such as enumerations, name length limits, or allowed SKU values
 
 ```hcl
 variable "storage_account_tier" {
@@ -113,9 +116,28 @@ Section headers use visual separators for organization:
 
 Child modules in `modules/{name}/` inherit providers and state from the calling root module.
 
+### Azure Module Sourcing
+
+Azure infrastructure composes [Azure Verified Modules](https://aka.ms/avm) before authoring `azurerm` or `azapi` resources directly. The `azure-iac-solution` skill owns the sourcing hierarchy, discovery procedure, and exception record; load it for any Azure implementation or review. In Terraform:
+
+* AVM modules live in the `Azure` registry namespace as `Azure/avm-{ptn,res,utl}-*/azurerm`.
+* Resolve names and versions from the registry during the session, never from memory.
+* AVM Terraform modules are pre-1.0, so pin to the patch series (`version = "~> 0.10.0"`) or an exact version. A `~> 0.10` constraint admits breaking minor releases.
+
+```hcl
+module "storage_account" {
+  source  = "Azure/avm-res-storage-storageaccount/azurerm"
+  version = "~> 0.10.0"
+
+  name                = var.storage_account_name
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+}
+```
+
 ### Module Calls
 
-Use `count = var.condition ? 1 : 0` for conditional module deployment. Prefer `for_each` over `count` for multiple instances with stable resource addresses:
+Follow AVM [TFNFR7](https://azure.github.io/Azure-Verified-Modules/spec/TFNFR7/): use `count = var.condition ? 1 : 0` for conditional creation of a single instance, and `for_each` with a map keyed by stable identifiers for multiple instances. Never use `count` over a list, because removing an element re-addresses the remaining instances.
 
 ```hcl
 module "workload" {
@@ -170,18 +192,15 @@ Ternary operators remain appropriate for boolean conditions (`var.is_production 
 
 Use standard Terraform data source syntax for existing resource lookups (e.g., `data "azurerm_resource_group"`, `data "azurerm_client_config"`). Apply the same logical-name convention as resources: a singleton data source uses `"this"`, while multiple data sources of the same type use descriptive names or `for_each` keys.
 
-### Deferred Data Resources
+### Avoid Imperative Lookups
 
-Use `terraform_data` for values computed at apply time or CI compatibility:
+Do not use `terraform_data` with `local-exec` and the Azure CLI to read Azure state. Imperative lookups bypass state tracking, credential handling, and plan-time validation. Use a provider data source, or `azapi_resource` and `azapi_resource_action` when `azurerm` has no data source:
 
 ```hcl
-resource "terraform_data" "deployment_timestamp" {
-  triggers_replace = [var.storage_account_name]
-  input            = timestamp()
-
-  provisioner "local-exec" {
-    command = "az storage account show --name ${var.storage_account_name} --query id -o tsv"
-  }
+data "azapi_resource" "storage_account" {
+  type      = "Microsoft.Storage/storageAccounts@2023-05-01"
+  name      = var.storage_account_name
+  parent_id = azurerm_resource_group.this.id
 }
 ```
 
@@ -241,17 +260,16 @@ provider "azurerm" {
 
 ### Backend Configuration
 
-Root modules include explicit backend configuration:
+Root modules include explicit backend configuration. Keep environment-specific values out of the committed configuration: supply them at init time with `-backend-config` flags, partial configuration files, or environment variables.
 
 ```hcl
 terraform {
-  backend "azurerm" {
-    resource_group_name  = "tfstate-rg"
-    storage_account_name = "tfstateaccount"
-    container_name       = "tfstate"
-    key                  = "dev/terraform.tfstate"
-  }
+  backend "azurerm" {}
 }
+```
+
+```bash
+terraform init -backend-config=backend.dev.hcl
 ```
 
 ### State Management Practices
@@ -266,7 +284,7 @@ Run `terraform fmt -recursive`, `terraform validate`, and `terraform plan` befor
 
 ### Linting Tools
 
-Use `terraform fmt` for formatting, `terraform validate` for configuration validation, `tflint` for extended linting, and `checkov` or `tfsec` for security scanning.
+Use `terraform fmt` for formatting, `terraform validate` for configuration validation, `tflint` for extended linting, and `trivy config` or `checkov` for security scanning (`tfsec` is archived and folded into Trivy). Record scan suppressions inline with a rationale and a re-review trigger.
 
 ## Lifecycle Management
 
@@ -277,12 +295,13 @@ resource "azurerm_storage_account" "this" {
   // ...
 
   lifecycle {
-    prevent_destroy       = true   // Protect critical resources
-    create_before_destroy = true   // Zero-downtime replacement
-    ignore_changes        = [tags] // Ignore external tag changes
+    prevent_destroy       = true // Protect critical resources
+    create_before_destroy = true // Zero-downtime replacement
   }
 }
 ```
+
+Treat `ignore_changes` as a deliberate governance decision, not a convenience. Ignoring `tags` can conceal ownership, cost-center, or policy drift applied outside Terraform. When `ignore_changes` is required, scope it to the specific attributes an external system owns and record the owning system in a comment.
 
 ## Documentation Requirements
 

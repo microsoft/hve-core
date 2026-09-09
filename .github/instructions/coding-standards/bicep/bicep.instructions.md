@@ -23,26 +23,18 @@ Bicep MCP tools provide schema information and best practices:
 
 ## Project Structure
 
-Organize Bicep files in a dedicated folder (e.g., `infra/`, `deploy/`, or environment-specific names):
+Organize Bicep files in a dedicated folder (e.g., `infra/`, `deploy/`, or environment-specific names). `main.bicep` composes registry modules directly; local modules exist only for solution-specific reuse (see Azure Module Sourcing):
 
 <!-- <example-project-structure> -->
 ```text
-main.bicep                    # Main orchestration
+main.bicep                    # Registry module calls and remaining direct resources
 main.bicepparam               # Parameter values
 types.bicep                   # Shared type definitions
 README.md                     # Documentation
-modules/                      # Reusable sub-modules
-  networking.bicep
-  storage.bicep
-  compute.bicep
+modules/                      # Local modules, only where reuse justifies them
+  workload.bicep
 ```
 <!-- </example-project-structure> -->
-
-File organization:
-
-* `main.bicep` - Primary resource definitions and orchestration
-* `types.bicep` - Shared type definitions and default values
-* `modules/` - Reusable sub-modules for logical grouping
 
 ## Coding Standards
 
@@ -132,6 +124,24 @@ Resource names follow [Azure naming conventions](https://learn.microsoft.com/azu
 | Resources  | Defined in `main.bicep`                                 | Scoped to specific functionality            |
 | References | Orchestrates sub-modules                                | Cannot reference other sub-modules directly |
 | Lookups    | Receive resource names for `existing` lookups (not IDs) | Inherit scope from parent                   |
+
+### Azure Module Sourcing
+
+Azure infrastructure composes [Azure Verified Modules](https://aka.ms/avm) before declaring resources directly. The `azure-iac-solution` skill owns the sourcing hierarchy, discovery procedure, and exception record; load it for any Azure implementation or review. In Bicep:
+
+* AVM modules live in the public registry as `br/public:avm/{ptn,res,utl}/<provider>/<type>:<tag>`.
+* Resolve paths and tags from the registry during the session, never from memory.
+* Pin the exact tag; Bicep has no version-range syntax.
+
+```bicep
+module storageAccount 'br/public:avm/res/storage/storage-account:0.33.0' = {
+  name: 'storage-account'
+  params: {
+    name: storageAccountName
+    location: location
+  }
+}
+```
 
 ## Type System
 
