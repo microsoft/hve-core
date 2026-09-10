@@ -493,7 +493,7 @@ function ConvertTo-BoundedEvidenceText {
 
 <#
 .SYNOPSIS
-    Reconstructs one counted evidence list from numbered scalar fields.
+    Reconstructs evidence lists from numbered scalar fields.
 .PARAMETER Call
     Candidate call object.
 .PARAMETER Prefix
@@ -508,35 +508,36 @@ function ConvertFrom-CategorizedEvidence {
         [Parameter(Mandatory = $true)] [System.Text.Json.JsonElement]$Call
     )
 
-    $CountState = Get-JsonPropertyState -Element $Call -Name 'evidence-count'
-    $Count = -1L
-    $Valid = $CountState.Present -and
-        $CountState.Element.ValueKind -eq [System.Text.Json.JsonValueKind]::Number -and
-        $CountState.Element.TryGetInt64([ref]$Count) -and $Count -ge 1 -and $Count -le 5
+    $Valid = $true
     $Repository = [System.Collections.Generic.List[string]]::new()
     $OriginalDelivery = [System.Collections.Generic.List[string]]::new()
     $ReplacementOrRemoval = [System.Collections.Generic.List[string]]::new()
+    $ActualCount = 0
+    $ReachedEmptyPosition = $false
     foreach ($Position in 1..5) {
         $CategoryState = Get-JsonStringState -Element $Call -Name "evidence-$Position-category"
         $TextState = Get-JsonStringState -Element $Call -Name "evidence-$Position-text"
-        if ($Position -le $Count) {
-            if (-not $CategoryState.Present -or -not $CategoryState.IsString -or
-                -not $TextState.Present -or -not $TextState.IsString -or
-                [string]::IsNullOrWhiteSpace($TextState.Value)) {
-                $Valid = $false
-                continue
-            }
-            $BoundedText = ConvertTo-BoundedEvidenceText -Value $TextState.Value
-            switch -CaseSensitive ($CategoryState.Value) {
-                'Repository' { $Repository.Add($BoundedText) }
-                'Original delivery' { $OriginalDelivery.Add($BoundedText) }
-                'Replacement or removal' { $ReplacementOrRemoval.Add($BoundedText) }
-                default { $Valid = $false }
-            }
+        if (-not $CategoryState.Present -and -not $TextState.Present) {
+            $ReachedEmptyPosition = $true
+            continue
         }
-        elseif ($CategoryState.Present -or $TextState.Present) {
+        if ($ReachedEmptyPosition -or -not $CategoryState.IsString -or
+            -not $TextState.IsString -or [string]::IsNullOrWhiteSpace($TextState.Value)) {
             $Valid = $false
+            continue
         }
+        $ActualCount++
+        $BoundedText = ConvertTo-BoundedEvidenceText -Value $TextState.Value
+        $Repository.Add($BoundedText)
+        switch -CaseSensitive ($CategoryState.Value) {
+            'Repository' { }
+            'Original delivery' { $OriginalDelivery.Add($BoundedText) }
+            'Replacement or removal' { $ReplacementOrRemoval.Add($BoundedText) }
+            default { $Valid = $false }
+        }
+    }
+    if ($ActualCount -eq 0) {
+        $Valid = $false
     }
     return [pscustomobject]@{
         Valid = $Valid
@@ -609,15 +610,19 @@ function ConvertFrom-BacklogGroomingCandidateCall {
     }
 
     $DeferralReasonState = Get-JsonStringState -Element $Call -Name 'deferral-reason'
-    $DeferredReasonState = Get-JsonStringState -Element $Call -Name 'deferred-reason'
-    if ($DeferralReasonState.Present -eq $DeferredReasonState.Present) {
-        $Valid = $false
-        $DeferralReason = $null
+    $NormalizationCodes = [System.Collections.Generic.List[string]]::new()
+    if (-not $DeferralReasonState.Present) {
+        if ($ScalarValues.assessment_status -ceq 'Assessed') {
+            $DeferralReason = ''
+        }
+        else {
+            $Valid = $false
+            $DeferralReason = $null
+        }
     }
     else {
-        $SelectedDeferralState = if ($DeferralReasonState.Present) { $DeferralReasonState } else { $DeferredReasonState }
-        $DeferralReason = $SelectedDeferralState.Value
-        if (-not $SelectedDeferralState.IsString -or $DeferralReason.Length -gt 500) {
+        $DeferralReason = $DeferralReasonState.Value
+        if (-not $DeferralReasonState.IsString -or $DeferralReason.Length -gt 500) {
             $Valid = $false
         }
     }
@@ -627,7 +632,7 @@ function ConvertFrom-BacklogGroomingCandidateCall {
         $Valid = $false
     }
     if (-not $Valid) {
-        return [pscustomobject]@{ Valid = $false; Row = $null; Normalization = $null }
+        return [pscustomobject]@{ Valid = $false; Row = $null; Normalizations = @() }
     }
 
     $Row = [ordered]@{
@@ -648,17 +653,16 @@ function ConvertFrom-BacklogGroomingCandidateCall {
         assessment_status = $ScalarValues.assessment_status
         deferral_reason = $DeferralReason
     }
-    $Normalization = $null
     if ($Row.similarity_outcome -ceq 'Superseded' -and $Row.disposition -ceq 'Superseded' -and
         (Test-ValidSupersessionLineage -Row $Row)) {
         $Row.similarity_outcome = 'Uncertain'
-        $Normalization = [ordered]@{ issue = $IssueId; code = 'superseded_similarity_normalized' }
+        $NormalizationCodes.Add('superseded_similarity_normalized')
     }
 
     if ($Row.similarity_outcome -cnotin @('Match', 'Similar', 'Distinct', 'Uncertain') -or
         $Row.disposition -cnotin @('Still needed', 'Likely completed', 'Superseded', 'Possible duplicate', 'Needs correction', 'Uncertain') -or
         $Row.assessment_status -cnotin @('Assessed', 'Deferred')) {
-        return [pscustomobject]@{ Valid = $false; Row = $null; Normalization = $null }
+        return [pscustomobject]@{ Valid = $false; Row = $null; Normalizations = @() }
     }
     if ($Row.disposition -ceq 'Superseded' -and -not (Test-ValidSupersessionLineage -Row $Row)) {
         $Row.disposition = 'Uncertain'
@@ -669,17 +673,20 @@ function ConvertFrom-BacklogGroomingCandidateCall {
         $Row.similarity_outcome -cne 'Uncertain' -or $Row.disposition -cne 'Uncertain' -or
         $Row.lineage_evidence.original_delivery.Count -ne 0 -or
         $Row.lineage_evidence.replacement_or_removal.Count -ne 0)) {
-        return [pscustomobject]@{ Valid = $false; Row = $null; Normalization = $null }
+        return [pscustomobject]@{ Valid = $false; Row = $null; Normalizations = @() }
     }
     if ($Row.assessment_status -ceq 'Assessed' -and $Row.deferral_reason -cne '') {
-        return [pscustomobject]@{ Valid = $false; Row = $null; Normalization = $null }
+        return [pscustomobject]@{ Valid = $false; Row = $null; Normalizations = @() }
     }
     if ($Row.disposition -ceq 'Possible duplicate' -and
         $Row.similarity_outcome -cnotin @('Match', 'Similar')) {
-        return [pscustomobject]@{ Valid = $false; Row = $null; Normalization = $null }
+        return [pscustomobject]@{ Valid = $false; Row = $null; Normalizations = @() }
     }
 
-    return [pscustomobject]@{ Valid = $true; Row = $Row; Normalization = $Normalization }
+    $Normalizations = @($NormalizationCodes | ForEach-Object {
+            [ordered]@{ issue = $IssueId; code = $_ }
+        })
+    return [pscustomobject]@{ Valid = $true; Row = $Row; Normalizations = $Normalizations }
 }
 #endregion Candidate Calls
 
@@ -787,8 +794,8 @@ function ConvertTo-BacklogGroomingShardResult {
             continue
         }
         $AcceptedRows.Add($CandidateResult.Row)
-        if ($null -ne $CandidateResult.Normalization) {
-            $Normalizations.Add($CandidateResult.Normalization)
+        foreach ($Normalization in $CandidateResult.Normalizations) {
+            $Normalizations.Add($Normalization)
         }
     }
 

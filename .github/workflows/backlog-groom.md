@@ -164,10 +164,6 @@ safe-outputs:
           description: "Requested outcomes and acceptance signals"
           required: true
           type: string
-        evidence-count:
-          description: "Number of categorized evidence records populated below, from 1 through 5"
-          required: true
-          type: number
         evidence-1-category:
           description: "Evidence 1 category: Repository, Original delivery, or Replacement or removal"
           required: false
@@ -229,11 +225,7 @@ safe-outputs:
           required: true
           type: string
         deferral-reason:
-          description: "Preferred deferral reason field; empty for Assessed and non-empty for Deferred"
-          required: false
-          type: string
-        deferred-reason:
-          description: "Legacy alias for deferral-reason; never populate both fields"
+          description: "Reason for a Deferred assessment; omit for Assessed"
           required: false
           type: string
       steps:
@@ -329,20 +321,18 @@ The five-call limit is reserved for the final calls for this shard.
 
 Supply semantic values only. Do not serialize a row, lineage object, array,
 timestamp, count summary, cursor, provenance value, result envelope, digest, or
-output path. Set `evidence-count` to an integer from 1 through 5. Populate both
-the category and text for every numbered evidence position through that count,
-and leave every higher position absent. Use only `Repository`, `Original
-delivery`, or `Replacement or removal` as a category, with at least one
-`Repository` record. Deferred assessments use only `Repository` records.
-Keep each evidence text value to at most 500 characters. Use concise stable
-paths, issue or pull-request numbers, commit or release identifiers, or
-summarized negative-search scopes instead of directory listings or extended
-prose.
+output path. Populate one through five contiguous evidence positions beginning
+at position 1, with both category and text present at every populated position.
+Leave every higher position absent. Use only `Repository`, `Original delivery`,
+or `Replacement or removal` as a category. The isolated result job includes
+every evidence text in repository evidence and additionally partitions lineage
+evidence by category. Deferred assessments use only `Repository` records. Keep
+each evidence text value to at most 500 characters. Use concise stable paths,
+issue or pull-request numbers, commit or release identifiers, or summarized
+negative-search scopes instead of directory listings or extended prose.
 
-Use `deferral-reason` as the canonical field. The `deferred-reason` alias is
-accepted only for compatibility; never populate both. Use an empty deferral
-reason for `Assessed`. For `Deferred`, use a non-empty reason, `Uncertain`
-similarity and disposition, and zero original-delivery and
+Omit `deferral-reason` for `Assessed`. For `Deferred`, use a non-empty reason,
+`Uncertain` similarity and disposition, and zero original-delivery and
 replacement-or-removal evidence records.
 
 The isolated result job joins calls to trusted `ordered_candidate_ids`,

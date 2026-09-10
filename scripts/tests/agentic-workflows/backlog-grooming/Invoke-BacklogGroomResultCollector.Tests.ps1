@@ -18,7 +18,6 @@ BeforeAll {
                     'selection-reason' = 'priority'
                     'activity-and-ownership-context' = 'active'
                     'acceptance-signals' = 'requested behavior is present'
-                    'evidence-count' = 1
                     'evidence-1-category' = 'Repository'
                     'evidence-1-text' = 'src/example.ps1'
                     'similarity-outcome' = 'Distinct'

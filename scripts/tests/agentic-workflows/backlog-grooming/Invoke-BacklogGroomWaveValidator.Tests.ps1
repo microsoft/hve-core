@@ -267,6 +267,33 @@ Describe 'Backlog grooming wave validation' -Tag 'Unit' {
         $Aggregate.contract_errors[0].PSObject.Properties.Name | Should -Be @('issue', 'code')
         $Aggregate.contract_errors[0].issue | Should -Be 102
         $Aggregate.normalizations[0].issue | Should -Be 101
+        $Aggregate.normalizations.code | Should -Be @('superseded_similarity_normalized')
+    }
+
+    It 'rejects duplicate and unknown normalization codes <InvalidState>' -ForEach @(
+        @{
+            InvalidState = 'duplicate code'
+            Normalizations = @(
+                [ordered]@{ issue = 101; code = 'superseded_similarity_normalized' },
+                [ordered]@{ issue = 101; code = 'superseded_similarity_normalized' }
+            )
+        }
+        @{
+            InvalidState = 'unknown code'
+            Normalizations = @(
+                [ordered]@{ issue = 101; code = 'unbounded_repair' }
+            )
+        }
+    ) {
+        $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive "normalization-$InvalidState")
+        $Fixture.Result.report_data.normalizations = $Normalizations
+        Set-TestDigest -Value $Fixture.Result -DigestProperty 'result_digest'
+        Write-TestJson -Value $Fixture.Result -Path $Fixture.ResultPath
+
+        { Invoke-BacklogGroomWaveValidation -ManifestPath $Fixture.ManifestPath `
+                -ResultsDirectory $Fixture.ResultsDirectory -AggregateDirectory $Fixture.AggregateDirectory `
+                -ExpectedRunId '12345' -ExpectedAttempt 1 } |
+            Should -Throw '*Malformed, duplicate, or unbound normalization*'
     }
 
     It 'rejects overlap between accepted rows and contract errors' {

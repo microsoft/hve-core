@@ -536,6 +536,9 @@ function Invoke-BacklogGroomWaveValidation {
         'deferred', 'contract_errors', 'stop_reason', 'next_cursor'
     )
     $DiagnosticKeys = @('issue', 'code')
+    $NormalizationCodes = @(
+        'superseded_similarity_normalized'
+    )
     $RowKeys = @(
         'issue', 'title', 'selection_reason', 'activity_and_ownership_context', 'acceptance_signals',
         'repository_evidence', 'lineage_evidence', 'similarity_outcome', 'disposition', 'grooming_finding',
@@ -721,11 +724,18 @@ function Invoke-BacklogGroomWaveValidation {
                 $IssueElement.GetInt64()
             }
             else { -1 }
+            $Code = if ($HasCode -and $CodeElement.ValueKind -eq [System.Text.Json.JsonValueKind]::String) {
+                $CodeElement.GetString()
+            }
+            else { $null }
             if (-not (Test-ExactJsonKeys -Element $Normalization -Keys $DiagnosticKeys) -or
                 -not $HasCode -or $CodeElement.ValueKind -ne [System.Text.Json.JsonValueKind]::String -or
-                $CodeElement.GetString() -cne 'superseded_similarity_normalized' -or
+                $Code -cnotin $NormalizationCodes -or
                 -not $RowsByIssue.ContainsKey($IssueId) -or
-                @($Normalizations | Where-Object { $_.GetProperty('issue').GetInt64() -eq $IssueId }).Count -gt 0) {
+                @($Normalizations | Where-Object {
+                        $_.GetProperty('issue').GetInt64() -eq $IssueId -and
+                        $_.GetProperty('code').GetString() -ceq $Code
+                    }).Count -gt 0) {
                 throw "Malformed, duplicate, or unbound normalization $IssueId"
             }
             $Normalizations.Add($Normalization.Clone())

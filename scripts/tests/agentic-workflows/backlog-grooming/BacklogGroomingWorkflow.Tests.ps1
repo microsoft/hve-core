@@ -208,7 +208,6 @@ BeforeAll {
                 }
             }
         )
-        $Item['evidence-count'] = $EvidenceRecords.Count
         for ($Index = 0; $Index -lt $EvidenceRecords.Count; $Index++) {
             $Item["evidence-$($Index + 1)-category"] = $EvidenceRecords[$Index].Category
             $Item["evidence-$($Index + 1)-text"] = $EvidenceRecords[$Index].Text
@@ -269,23 +268,12 @@ BeforeAll {
             'recommended-next-step' = $Row.recommended_next_step
             'assessment-status' = $Row.assessment_status
         }
-        if ($Row.Contains('deferral_reason')) {
-            $Overrides['deferral-reason'] = $Row.deferral_reason
-        }
-        else {
-            $Overrides['deferred-reason'] = $Row.deferred_reason
-        }
+        $Overrides['deferral-reason'] = $Row.deferral_reason
         $Call = New-GroomingCandidateCall -IssueNumber $Row.issue `
             -RepositoryEvidence @($Row.repository_evidence) `
             -OriginalDelivery @($Row.lineage_evidence.original_delivery) `
             -ReplacementOrRemoval @($Row.lineage_evidence.replacement_or_removal) `
             -Overrides $Overrides
-        if ($Row.Contains('deferred_reason') -and -not $Row.Contains('deferral_reason')) {
-            $null = $Call.Remove('deferral-reason')
-        }
-        if ($Row.Contains('deferred_reason') -and $Row.Contains('deferral_reason')) {
-            $Call['deferred-reason'] = $Row.deferred_reason
-        }
         return $Call
     }
 
@@ -355,9 +343,7 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Match '(?m)^    publish-backlog-grooming-result:$'
         $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?max: 5'
         $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?permissions:\s+contents: read'
-        foreach ($inputName in @(
-                'issue-number', 'evidence-count'
-            )) {
+        foreach ($inputName in @('issue-number')) {
             $script:Source | Should -Match "(?ms)^        $([regex]::Escape($inputName)):.*?required: true\s+type: number"
         }
         foreach ($inputName in @(
@@ -375,8 +361,9 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
             $script:Source,
             '(?ms)^      inputs:\s*\n(?<inputs>.*?)^      steps:'
         ).Groups['inputs'].Value
-        @([regex]::Matches($InputBlock, '(?m)^        [a-z0-9-]+:$')).Count | Should -Be 23
-        $script:Source | Should -Match 'Use only `Repository`, `Original\s+delivery`, or `Replacement or removal` as a category'
+        @([regex]::Matches($InputBlock, '(?m)^        [a-z0-9-]+:$')).Count | Should -Be 21
+        $script:Source | Should -Not -Match '(?m)^        (evidence-count|deferred-reason):$'
+        $script:Source | Should -Match 'Use only `Repository`, `Original delivery`,\s+or `Replacement or removal` as a category'
         $script:Source | Should -Not -Match '(?m)^        (repository-evidence|original-delivery|replacement-or-removal)(-count|-[1-5]):$'
         $script:Source | Should -Not -Match '(?m)^        (row-[1-5]|started-at|completed-at|report-data):$'
         $script:Source | Should -Match 'make exactly one final `publish-backlog-grooming-result` call\s+for each candidate'
@@ -407,8 +394,8 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Module | Should -Match "ConvertFrom-TrustedIssueIdList -Name 'Worker candidate IDs'"
         $script:Source | Should -Not -Match 'Worker candidate IDs must be unique positive integers in ascending order'
         $script:Source | Should -Match 'The orchestrator, not the worker,\s+owns inventory selection'
-        $script:Source | Should -Match 'Keep each evidence text value to at most 500 characters'
-        $script:Source | Should -Match 'summarized negative-search scopes'
+        $script:Source | Should -Match 'Keep\s+each evidence text value to at most 500 characters'
+        $script:Source | Should -Match 'summarized\s+negative-search scopes'
         $script:Source | Should -Match 'directory listings or extended\s+prose'
         $script:Source | Should -Not -Match '<!-- gh-aw:backlog-grooming-tracker -->'
     }
@@ -560,20 +547,6 @@ Describe 'Candidate-addressed backlog grooming result construction' -Tag 'Unit' 
             Should -Be 'GH_AW_GITHUB_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}'
     }
 
-    It 'normalizes the exact deferred_reason key alias' {
-        $row = $script:AssessedRow.Clone()
-        $row.Remove('deferral_reason')
-        $row.deferred_reason = ''
-        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
-            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
-            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
-            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
-
-        $result.report_data.issues[0].Keys | Should -Contain 'deferral_reason'
-        $result.report_data.issues[0].Keys | Should -Not -Contain 'deferred_reason'
-        $result.report_data.issues[0].deferral_reason | Should -Be ''
-    }
-
     It 'bounds overlong repository and lineage evidence items' {
         $row = $script:AssessedRow.Clone()
         $row.repository_evidence = @((('R' * 642) -join ''))
@@ -592,18 +565,28 @@ Describe 'Candidate-addressed backlog grooming result construction' -Tag 'Unit' 
         $result.report_data.issues[0].lineage_evidence.replacement_or_removal[0].Length | Should -Be 500
     }
 
-    It 'records a trusted diagnostic for both deferral reason key spellings' {
-        $row = $script:AssessedRow.Clone()
-        $row.deferred_reason = ''
-        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
-            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
-            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
-            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+    It 'constructs an empty deferral reason when an assessed call omits it' {
+        $Call = New-GroomingCandidateCall -IssueNumber 1
+        $null = $Call.Remove('deferral-reason')
+
+        $result = Invoke-GroomingResult -Items @($Call) -OrderedCandidateIds @(1)
+
+        $result.report_data.issues[0].deferral_reason | Should -Be ''
+        $result.report_data.normalizations | Should -HaveCount 0
+    }
+
+    It 'does not default a missing deferred reason' {
+        $Call = New-GroomingCandidateCall -IssueNumber 1 -Overrides @{
+            'assessment-status' = 'Deferred'
+            'similarity-outcome' = 'Uncertain'
+            disposition = 'Uncertain'
+        }
+        $null = $Call.Remove('deferral-reason')
+
+        $result = Invoke-GroomingResult -Items @($Call) -OrderedCandidateIds @(1)
 
         $result.report_data.issues | Should -HaveCount 0
-        $result.report_data.contract_errors[0].Keys | Should -Be @('issue', 'code')
-        $result.report_data.contract_errors[0].issue | Should -Be 1
-        $result.report_data.contract_errors[0].code | Should -Be 'invalid_row_contract'
+        $result.report_data.contract_errors.issue | Should -Be @(1)
     }
 
     It 'preserves a valid row alongside a diagnosed malformed row' {
@@ -740,12 +723,13 @@ Describe 'Candidate-addressed backlog grooming result construction' -Tag 'Unit' 
 
         $result = Invoke-GroomingResult -Items @($Call) -OrderedCandidateIds @(1)
 
-        $result.report_data.issues[0].repository_evidence | Should -Be $RepositoryEvidence
+        $result.report_data.issues[0].repository_evidence |
+            Should -Be @($RepositoryEvidence + $OriginalDelivery + $ReplacementOrRemoval)
         $result.report_data.issues[0].lineage_evidence.original_delivery | Should -Be $OriginalDelivery
         $result.report_data.issues[0].lineage_evidence.replacement_or_removal | Should -Be $ReplacementOrRemoval
     }
 
-    It 'accepts zero lineage evidence positions and rejects zero repository evidence' {
+    It 'accepts zero lineage evidence positions and rejects zero evidence' {
         $validResult = Invoke-GroomingResult -Items @(
             (New-GroomingCandidateCall -IssueNumber 1)
         ) -OrderedCandidateIds @(1)
@@ -756,6 +740,33 @@ Describe 'Candidate-addressed backlog grooming result construction' -Tag 'Unit' 
         $validResult.report_data.issues[0].lineage_evidence.original_delivery | Should -HaveCount 0
         $validResult.report_data.issues[0].lineage_evidence.replacement_or_removal | Should -HaveCount 0
         $invalidResult.report_data.contract_errors.issue | Should -Be @(1)
+    }
+
+    It 'constructs repository evidence from every stable citation' {
+        $Call = New-GroomingCandidateCall -IssueNumber 1 -RepositoryEvidence @() `
+            -OriginalDelivery @('PR #2877 is open and implements the requested scope')
+
+        $result = Invoke-GroomingResult -Items @($Call) -OrderedCandidateIds @(1)
+
+        $result.report_data.issues[0].repository_evidence |
+            Should -Be @('PR #2877 is open and implements the requested scope')
+        $result.report_data.issues[0].lineage_evidence.original_delivery |
+            Should -Be @('PR #2877 is open and implements the requested scope')
+        $result.report_data.normalizations | Should -HaveCount 0
+    }
+
+    It 'rejects evidence gaps and partial pairs instead of inferring content' {
+        $GapCall = New-GroomingCandidateCall -IssueNumber 1
+        $GapCall['evidence-3-category'] = 'Repository'
+        $GapCall['evidence-3-text'] = 'gap'
+        $PartialCall = New-GroomingCandidateCall -IssueNumber 2
+        $PartialCall['evidence-2-category'] = 'Repository'
+
+        $result = Invoke-GroomingResult -Items @($GapCall, $PartialCall) `
+            -OrderedCandidateIds @(1, 2)
+
+        $result.report_data.issues | Should -HaveCount 0
+        $result.report_data.contract_errors.issue | Should -Be @(1, 2)
     }
 
     It 'rejects lineage evidence on a deferred row' {
@@ -775,40 +786,29 @@ Describe 'Candidate-addressed backlog grooming result construction' -Tag 'Unit' 
     }
 
     It 'isolates invalid categorized evidence <Mode>' -ForEach @(
-        @{ Mode = 'count below minimum' }
-        @{ Mode = 'count overflow' }
-        @{ Mode = 'fractional count' }
-        @{ Mode = 'string count' }
         @{ Mode = 'missing category' }
         @{ Mode = 'missing text' }
-        @{ Mode = 'populated unused category' }
-        @{ Mode = 'populated unused text' }
+        @{ Mode = 'noncontiguous pair' }
+        @{ Mode = 'partial category' }
+        @{ Mode = 'partial text' }
         @{ Mode = 'invalid category' }
     ) {
         $Call = New-GroomingCandidateCall -IssueNumber 1
         switch ($Mode) {
-            'count below minimum' {
-                $Call['evidence-count'] = 0
-            }
-            'count overflow' {
-                $Call['evidence-count'] = 6
-            }
-            'fractional count' {
-                $Call['evidence-count'] = 1.5
-            }
-            'string count' {
-                $Call['evidence-count'] = '1'
-            }
             'missing category' {
                 $null = $Call.Remove('evidence-1-category')
             }
             'missing text' {
                 $null = $Call.Remove('evidence-1-text')
             }
-            'populated unused category' {
+            'noncontiguous pair' {
+                $Call['evidence-3-category'] = 'Repository'
+                $Call['evidence-3-text'] = 'gap'
+            }
+            'partial category' {
                 $Call['evidence-2-category'] = 'Repository'
             }
-            'populated unused text' {
+            'partial text' {
                 $Call['evidence-2-text'] = 'unexpected evidence'
             }
             'invalid category' {
@@ -893,14 +893,14 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Lock | Should -Not -Match 'issues\.createComment'
     }
 
-    It 'compiles the exact 23-input categorized evidence schema' {
+    It 'compiles the exact 21-input semantic evidence schema' {
         $SchemaProperties = [regex]::Match(
             $script:Lock,
             '(?ms)^                    "properties": \{\s*\n(?<properties>.*?)^                    \},\s*\n                    "required": \['
         ).Groups['properties'].Value
         @([regex]::Matches($SchemaProperties, '(?m)^                      "[a-z0-9-]+": \{$')).Count |
-            Should -Be 23
-        $script:Lock | Should -Match '"evidence-count": \{'
+            Should -Be 21
+        $script:Lock | Should -Not -Match '"(evidence-count|deferred-reason)": \{'
         foreach ($position in 1..5) {
             $script:Lock | Should -Match "`"evidence-${position}-category`": \{"
             $script:Lock | Should -Match "`"evidence-${position}-text`": \{"

@@ -76,6 +76,22 @@ unchanged v2 artifacts before deterministic fan-in.
 | `backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1`                | Validate shard artifacts and produce an ordered wave aggregate |
 | `backlog-grooming/Modules/BacklogGrooming.psm1`                        | Reconstruct, validate, normalize, and digest shard results      |
 
+The agent supplies semantic fields and up to five contiguous categorized
+evidence citations. After parsing and binding the call to a planned issue, the
+collector owns its structural encoding:
+
+* Derive evidence cardinality from complete contiguous category-text pairs
+* Include every evidence citation in repository evidence
+* Partition original-delivery and replacement-or-removal lineage by category
+* Construct an empty deferral reason for `Assessed` and require a non-empty reason for `Deferred`
+* Construct canonical rows, counts, cursors, provenance, timestamps, envelopes, and digests
+
+The supported superseded-similarity conversion remains an explicit `{ issue,
+code }` record in `normalizations`. Malformed JSON, missing semantic fields,
+incomplete or noncontiguous evidence pairs, unsupported enum values, duplicate
+candidate calls, and missing deferred reasons remain candidate-local contract
+errors.
+
 ## Release
 
 The `release/` directory contains version normalization, promotion resolution, release-asset reconciliation, and provenance verification helpers used by release workflows.
