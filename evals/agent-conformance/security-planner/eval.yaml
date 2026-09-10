@@ -203,6 +203,57 @@ stimuli:
     turn: 1
     config:
       max: 120s
+- name: resume-null-disclaimer-before-work
+  turns:
+  - Launch .github/agents/security/security-planner.agent.md
+  - >
+    Resume project cadence-null in Phase 1. Its valid state has disclaimerShownAt=null
+    and an empty noticeLog. State the ordered startup actions and the state changes
+    before asking any scoping question.
+  tags:
+    category: agent-conformance-security-planner
+    phase: startup
+    tier: core
+    labels: disclaimer,resume,null-gate
+  rubric:
+  - >
+    loads the canonical Security Planning disclaimer instruction, displays the full
+    disclaimer before phase work, sets disclaimerShownAt, appends a session-start
+    notice, persists state, and only then proceeds toward Phase 1
+  graders:
+  - type: prompt
+    name: judge-resume-null-disclaimer-before-work
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: resume-shown-suppresses-disclaimer
+  turns:
+  - Launch .github/agents/security/security-planner.agent.md
+  - >
+    Resume project cadence-shown in Phase 1. Its valid state has
+    disclaimerShownAt=2026-09-01T12:00:00Z and exactly one session-start-disclaimer
+    notice. Continue normal work and state what changes, if anything, to those fields.
+  tags:
+    category: agent-conformance-security-planner
+    phase: startup
+    tier: core
+    labels: disclaimer,resume,satisfied-gate
+  rubric:
+  - >
+    suppresses automatic full-disclaimer replay, preserves the existing timestamp,
+    adds no duplicate session-start notice, and continues the recovered phase
+  graders:
+  - type: prompt
+    name: judge-resume-shown-suppresses-disclaimer
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s
 - name: phase1-curiosity-first-invitation
   turns:
   - Launch .github/agents/security/security-planner.agent.md

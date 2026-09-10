@@ -2345,6 +2345,19 @@ Describe 'Copilot OTel static test selection' -Tag 'Unit' {
     }
 }
 
+Describe 'PR validation hosted conformance boundary' -Tag 'Unit' {
+    BeforeAll {
+        $script:PrValidation = Get-WorkflowDocument -Name 'pr-validation.yml'
+        $script:ConformanceJobs = @($script:PrValidation['jobs'].GetEnumerator() | Where-Object {
+                [string]$_.Value['uses'] -eq './.github/workflows/agent-conformance.yml'
+            })
+    }
+
+    It 'Leaves planner conformance to the shared scheduled workflow' {
+        $script:ConformanceJobs | Should -BeNullOrEmpty
+    }
+}
+
 Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
     It 'Runs Scorecard after the consolidated post-tag producer' {
         $scorecard = Get-WorkflowDocument -Name 'scorecard.yml'

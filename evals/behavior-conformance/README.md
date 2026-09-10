@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for prompts, instructions, and skill behavior'
 author: HVE Core Team
-ms.date: 2026-09-04
+ms.date: 2026-09-09
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -22,23 +22,42 @@ Each tier shares the same advisory contract and manifest-driven gating model as 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
 | `prompts.eval.yaml`        | 3p   | Advisory | 53      | `behavior-conformance` | Active (Phase 9)  |
-| `instructions.eval.yaml`   | 3i   | Advisory | 64      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 228     | `behavior-conformance` | Active (Phase 13) |
+| `instructions.eval.yaml`   | 3i   | Advisory | 69      | `behavior-conformance` | Active (Phase 11) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 230     | `behavior-conformance` | Active (Phase 13) |
 
 The maintained `prompts.eval.yaml` inventory contains 53 stimuli across 48 prompt subjects. Coverage includes RPI orchestration, security review and planning, Design Thinking, Git operations, evaluation authoring, and VEX workflows. Backlog, work-item, and HVE Core pull request coverage moved to `skill-behavior.eval.yaml` when those workflows became skills.
 
-The maintained `instructions.eval.yaml` inventory contains 64 stimuli: 62 instruction-tagged stimuli across 46 instruction subjects, plus two `backlog-management` skill stimuli. Coverage spans:
+The maintained `instructions.eval.yaml` inventory contains 69 stimuli: 67 instruction-tagged stimuli across 50 instruction subjects, plus two `backlog-management` skill stimuli. Coverage spans:
 
 * Delivery workflows: `ado-create-pull-request`, `ado-get-build-info`, `pull-request`.
 * HVE-Core authoring: `commit-message`, `copilot-tracking`, `hve-builder`, `markdown`, `pull-request`, and `writing-style`.
 * RAI, Accessibility, and Security planning: `accessibility-identity`, `rai-identity`, `rai-risk-classification`, `backlog-handoff`, `sssc-assessment`, and `standards-mapping`.
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, `disclaimer-language`.
+* Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 228 stimuli across 73 skill subjects. It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge, unavailable-bridge, read-only-review, and final-candidate behavior-gate decisions plus direct `rpi-challenger`, `rpi-plan-critique`, and pull-request preflight contracts.
+The maintained `skill-behavior.eval.yaml` inventory contains 230 stimuli across 73 skill subjects. It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge, unavailable-bridge, read-only-review, and final-candidate behavior-gate decisions plus direct `rpi-challenger`, `rpi-plan-critique`, and pull-request preflight contracts.
 
 The `backlog-plan` and `backlog-execute` workflow commands carry knowledge coverage plus a read-only boundary assertion and a mutation-safety assertion respectively. The retained `prompt-analyze`, `prompt-builder`, and `prompt-refactor` compatibility routes and other installed skill domains remain in advisory mode.
 
 The current branch-specific calibration status is not yet established for gating. Pass-rate and false-positive measurements are collected from advisory CI runs before graduation. Most stimuli use `output-matches` to check contract vocabulary and routing signals, while one skill stimulus uses `prompt` to assess a semantic changes-record contract.
+
+### Rust HTTP unit-test evidence boundary
+
+The Rust HTTP unit-test isolation stimulus is a recall-and-cite check. Its
+positive regex graders detect instruction routing, source-file unit-test
+placement, local mock-server vocabulary, and explicit DNS or non-loopback
+refusal language. A passing advisory result does not establish that generated
+Rust code follows the contract. Generation-shaped semantic grading remains
+deferred to the custom-grader work tracked under WI-16.
+
+Native evidence is separate. The operator-invoked
+`npm run ci:test:rust-network-isolation -- <arguments>` command accepts a
+prepared disposable crate and records source endpoint literals plus bounded
+resolver and socket evidence under an attested, digest-pinned Docker
+containment lifecycle. Empty attempt lists and textual endpoint extraction are
+not proof of absent network behavior. Non-attesting test seams cannot report
+`Passed`. The command has no owning workflow and never runs as part of this
+advisory suite.
 
 ## Pipeline integration
 

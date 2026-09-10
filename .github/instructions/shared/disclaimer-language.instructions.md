@@ -5,7 +5,7 @@ applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/rai-reviews/**
 
 # Disclaimer Language
 
-Planning and review agents display a CAUTION disclaimer at startup or when presenting findings. Each H2 section below is the verbatim disclaimer for one planner or review family, loaded via `#file:`.
+Planning and review agents display a CAUTION disclaimer at startup or when presenting findings. Each H2 section below is the verbatim disclaimer for one planner or review family and is loaded by its consuming artifact before use.
 
 <!--
 Authoring contract (parsed by scripts/linting/Validate-PlannerArtifacts.ps1):
@@ -93,4 +93,4 @@ Authoring contract (parsed by scripts/linting/Validate-PlannerArtifacts.ps1):
 
 Planning and coaching agents that adopt this disclaimer protocol persist acknowledgment in their session state file (`state.json` for planners; `coaching-state.md` YAML for the DT Coach). The following field is required:
 
-- `disclaimerShownAt` — ISO 8601 timestamp recording when the disclaimer was shown to the user. Set to `null` until shown; once shown, set to the timestamp and never overwritten.
+- `disclaimerShownAt` — ISO 8601 timestamp recording the most recent time the full disclaimer was shown to the user. Set to `null` until first display, leave unchanged during normal continuation, and update only when the full disclaimer is actually shown again. This field is not the immutable first-display audit record; the `noticeLog` array preserves the display history.
