@@ -254,7 +254,7 @@ terraform {
 }
 ```
 
-### State Management PracticesR
+### State Management Practices
 
 State files can be stored locally or in remote backends. Do not commit state files to the repository. When using remote backends, enable state locking and protect sensitive values through backend encryption.
 
