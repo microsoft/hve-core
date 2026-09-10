@@ -565,9 +565,7 @@ def main() -> int:
         print(json.dumps(_summary(status, None, error.categories), sort_keys=True))
         return error.exit_code
     except Exception:
-        print(
-            json.dumps(_summary("error", None, ["unexpected-error"]), sort_keys=True)
-        )
+        print(json.dumps(_summary("error", None, ["unexpected-error"]), sort_keys=True))
         return EXIT_ERROR
 
 

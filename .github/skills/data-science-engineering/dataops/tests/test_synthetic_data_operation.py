@@ -78,9 +78,7 @@ def _preflight(*, replace: bool = False, subgroup: bool = True) -> dict:
             "subgroup_evaluation": _decision(
                 "rai-fairness-owner", "domain-owner", applicable=subgroup
             ),
-            "replacement_authority": _decision(
-                "data-owner", applicable=replace
-            ),
+            "replacement_authority": _decision("data-owner", applicable=replace),
         },
         "field_lineage": _lineage(),
         "activated_subgroups": ["group-1"] if subgroup else [],
@@ -507,9 +505,7 @@ def test_given_stale_target_when_cli_commit_then_reports_unchanged_original(
     result_path = tmp_path / "result.json"
     target = tmp_path / "source.csv"
     candidate = tmp_path / "candidate.csv"
-    preflight_path.write_text(
-        json.dumps(_preflight(replace=True)), encoding="utf-8"
-    )
+    preflight_path.write_text(json.dumps(_preflight(replace=True)), encoding="utf-8")
     result_path.write_text(json.dumps(_result(replace=True)), encoding="utf-8")
     target.write_bytes(b"stale")
     candidate.write_bytes(b"candidate")
@@ -555,8 +551,9 @@ def test_given_committed_result_without_evidence_when_validated_then_blocks() ->
     assert "schema-invalid" in errors
 
 
-def test_given_committed_result_without_evidence_when_schema_validated_then_fails(
-) -> None:
+def test_given_committed_result_without_evidence_when_schema_validated_then_fails() -> (
+    None
+):
     # Arrange
     result = _result(replace=True)
     result["previous_result_revision"] = "result-0"
@@ -722,6 +719,7 @@ def test_given_unexpected_error_when_main_then_returns_sanitized_json(
     monkeypatch.setattr(
         "sys.argv", ["synthetic_data_operation.py", "validate", "--preflight", "x"]
     )
+
     def raise_unexpected_error(arguments) -> int:
         raise RuntimeError("private-path")
 
