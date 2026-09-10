@@ -263,12 +263,14 @@ This bucket also covers the per-user credential file (`mural.{profile}.env`) cre
 
 `MURAL_CREDENTIAL_BACKEND` selects how A2 (refresh tokens) and A3 (client secrets) are persisted at rest. The four modes share the same wire-level behavior but have distinct at-rest threat surfaces:
 
-* **`auto` (default).** Prefers the OS keychain when the `keyring` package and a usable backend are present; falls back to the file backend otherwise. The chosen backend is reported by `mural auth status`.
+* **`auto` (default).** Prefers the OS keychain when the `keyring` package and a usable backend are present; falls back to the file backend when the keychain is unavailable, or when the keychain is reachable but holds no usable credentials while the file backend does. Either fallback emits a one-shot WARN per profile. The chosen backend is reported by `mural auth status`.
 * **`keyring`.** OS keychain only (macOS Keychain, Windows Credential Manager via DPAPI, freedesktop SecretService). Defends ADV-c (backup/sync exfiltration) and partially defends ADV-d (stolen device) when the keychain requires explicit unlock. Does **not** defend ADV-a.
 * **`file`.** Plaintext-at-rest under `0600` permissions, with the protections described below. Defends only ADV-d on encrypted-at-rest disks. Does not defend ADV-a or ADV-c.
 * **`env-only`.** Reads credentials only from process environment; never persists. Suitable for ephemeral CI runners. Removes ADV-c entirely; introduces a Repudiation gap (no `obtained_at` history is recorded).
 
 `mural auth migrate` round-trips credentials between backends and verifies the destination read before deleting the source (when `--cleanup --force` is passed).
+
+In `auto` mode the auth write flows (`mural auth login`, `mural auth bootstrap`) also promote file-backend credentials into a reachable-but-empty keyring automatically: each key is written and verified with a read-back before the file copy is removed, moving plaintext-at-rest material behind the keychain and restoring the ADV-c defense above. On any write or verification failure the keyring writes are rolled back and the file copy is kept. Promotion is skipped in non-interactive contexts (`MURAL_NONINTERACTIVE=1` or `CI=true`).
 
 Devcontainer, Codespaces, and WSL2 contexts inherit the host operator's trust; the keyring backend may be unavailable inside the container, in which case `auto` falls through to the file backend or env-only and the resulting backend is logged at startup.
 
