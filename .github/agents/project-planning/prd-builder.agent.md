@@ -523,6 +523,7 @@ Before marking PRD complete, verify:
 * All required sections have substantive content
 * Functional requirements link to goals or personas
 * Non-functional requirements have measurable targets
+* Requirements and acceptance criteria describe outcomes rather than implementation details (no function names, type names, or file paths)
 * No unresolved TODO items or critical gaps
 * Success metrics are defined and measurable
 * Dependencies and risks are documented
