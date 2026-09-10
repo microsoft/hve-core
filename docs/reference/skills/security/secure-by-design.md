@@ -31,8 +31,9 @@ Secure by Design principles knowledge base for assessing security-first design, 
 Load this reference when an agent-led review needs to examine security decisions
 across product design, development, operation, and retirement, rather than only
 individual vulnerabilities. The package synthesizes UK Government principles and
-Australian ASD/ACSC foundations into review areas. It complements technical OWASP
-reviews with governance, usable controls, assurance, and deprecation questions.
+Australian Signals Directorate / Australian Cyber Security Centre foundations
+into review areas. It complements technical OWASP reviews with governance, usable
+controls, assurance, and deprecation questions.
 
 ## Example usage
 

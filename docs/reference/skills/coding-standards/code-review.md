@@ -53,5 +53,5 @@ observations from conclusions, and identifies validation gaps and follow-up work
 For local changes, name staged or unstaged scope explicitly rather than implying
 a PR exists. A PR review additionally needs the provider-resolved reviewed head
 SHA; changed target identity blocks emission until refreshed. Success is a
-traceable review with honest coverage limits, not human approval or proof that
-unrun tests passed.
+traceable review with honest coverage limits, not human approval or a claim that
+tests passed without being run.

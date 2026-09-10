@@ -43,5 +43,5 @@ review is limited to these files and uses synthetic order identifiers.
 The expected result maps supported observations to applicable references, such as
 access control or exceptional-condition handling, and proposes concrete regression
 tests. Success means each finding identifies evidence and a corrective action;
-uninspected deployment controls remain unknown. No live requests, exploit execution,
-or claim of OWASP certification follows from loading the reference.
+deployment controls that were not inspected remain unknown. No live requests,
+exploit execution, or claim of OWASP certification follows from loading the reference.

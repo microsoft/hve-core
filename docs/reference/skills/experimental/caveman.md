@@ -28,6 +28,8 @@ Ultra-compressed response style that reduces output token count while preserving
 
 ## When to use it
 
+<!-- cspell:words wenyan -->
+
 Invoke Caveman explicitly when you want compressed assistant prose across the
 current conversation. `lite` keeps full sentences, `full` permits fragments,
 `ultra` is telegraphic, and `wenyan` adds a Classical Chinese register. A generic

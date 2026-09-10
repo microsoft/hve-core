@@ -137,10 +137,10 @@ another model to rewrite generated regions.
 
 Local and pull request validation use the same validator at different scopes:
 
-| Context                  | Scope                | Enforcement                                                                                                                                            |
-|--------------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, generated-region sync, and Required instruction, prompt, and skill guidance                                                 |
-| Pull request validation  | Changed assets/pages | The same checks, limited to paths affected relative to the configured base; Required instruction, prompt, and skill guidance is blocking for this scope |
+| Context                   | Scope                | Enforcement                                                                                                                                             |
+|---------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, generated-region sync, and Required instruction, prompt, and skill guidance                                               |
+| Pull request validation   | Changed assets/pages | The same checks, limited to paths affected relative to the configured base; Required instruction, prompt, and skill guidance is blocking for this scope |
 
 The changed-files scope prevents unrelated pre-existing findings from blocking a
 pull request. It still catches a changed source with a missing or stale page, a
