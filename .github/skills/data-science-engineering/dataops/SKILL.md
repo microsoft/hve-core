@@ -6,7 +6,7 @@ user-invocable: false
 metadata:
   authors: "Microsoft (Code With Engineering Playbook); Microsoft (planning synthesis)"
   spec_version: "1.0"
-  last_updated: "2026-08-01"
+  last_updated: "2026-09-09"
   content_based_on: "https://microsoft.github.io/code-with-engineering-playbook/design/design-patterns/data-heavy-design-guidance/; https://microsoft.github.io/code-with-engineering-playbook/ml-and-ai-projects/testing-data-science-and-mlops-code/; https://microsoft.github.io/code-with-engineering-playbook/ml-and-ai-projects/ml-model-checklist/; https://microsoft.github.io/code-with-engineering-playbook/observability/ml-observability/"
 ---
 
@@ -32,6 +32,7 @@ Read only the reference that matches the active concern.
 | [data-tiers-and-pipeline-invariants.md](references/data-tiers-and-pipeline-invariants.md) | Assigning tier meaning, placing validation, routing malformed records, or asserting replay, idempotency, testability, source-control, and configuration invariants |
 | [testing-data-science-and-mlops.md](references/testing-data-science-and-mlops.md)         | Writing or reviewing tests for data loading, transformation, model load or predict, data validation, or model robustness                                           |
 | [validation-drift-and-observability.md](references/validation-drift-and-observability.md) | Distinguishing data validation from drift detection, choosing remediation, or deciding which data and model signals matter                                         |
+| [synthetic-data-operation-contract.md](references/synthetic-data-operation-contract.md)   | Validating synthetic-data preflight authority, field lineage, conditional subgroup evidence, result linkage, or guarded local replacement                          |
 | [provenance.md](references/provenance.md)                                                 | Confirming what is upstream guidance, what is HVE Core derivation, and where upstream is silent                                                                    |
 
 ## Success criteria
@@ -41,6 +42,8 @@ Read only the reference that matches the active concern.
 * Test guidance names the operation category, its technique, and where mocking stops.
 * Validation and drift keep their distinct definitions and their distinct remediation paths.
 * Every claim traces to an attributed upstream source or is labelled as HVE Core guidance.
+* Synthetic-data generation stops before source access or writes unless its applicable
+  `SYNTHETIC_DATA_OPERATION_V1` preflight passes deterministic validation.
 
 ## Constraints
 
@@ -63,6 +66,13 @@ This skill decides *which* data and model signals matter. It does not own the vo
 No repository artifact currently owns the last two rows. When the caller supplies neither, state the gap rather than deciding tier assignment or feasibility here.
 
 This skill never decides what is sensitive. It reads a classification produced elsewhere.
+
+For synthetic-data operations, read
+[synthetic-data-operation-contract.md](references/synthetic-data-operation-contract.md)
+and validate records against
+[synthetic-data-operation-v1.schema.json](assets/synthetic-data-operation-v1.schema.json).
+The contract records qualified decisions by immutable reference; it does not store source
+values or replace the authority of data, privacy, Responsible AI, fairness, or domain owners.
 
 ## Stop rules
 
