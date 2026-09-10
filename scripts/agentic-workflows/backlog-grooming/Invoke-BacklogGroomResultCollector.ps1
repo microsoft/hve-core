@@ -158,7 +158,18 @@ function Invoke-BacklogGroomResultCollection {
 #region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        $WrittenPath = Invoke-BacklogGroomResultCollection @PSBoundParameters
+        $WrittenPath = Invoke-BacklogGroomResultCollection `
+            -AgentOutputPath $AgentOutputPath `
+            -ShardId $ShardId `
+            -ManifestDigest $ManifestDigest `
+            -OrderedCandidateIdsJson $OrderedCandidateIdsJson `
+            -PriorityCandidateIdsJson $PriorityCandidateIdsJson `
+            -RoundRobinCandidateIdsJson $RoundRobinCandidateIdsJson `
+            -TotalOpenInventoryText $TotalOpenInventoryText `
+            -PriorCursorText $PriorCursorText `
+            -OrchestratorRunId $OrchestratorRunId `
+            -OrchestratorAttemptText $OrchestratorAttemptText `
+            -OutputPath $OutputPath
         Write-Information "Backlog grooming shard result written to $WrittenPath" -InformationAction Continue
         exit 0
     }

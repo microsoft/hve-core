@@ -59,6 +59,53 @@ BeforeAll {
 }
 
 Describe 'Invoke-BacklogGroomResultCollector process boundary' -Tag 'Unit' {
+    It 'uses the workflow environment contract when no CLI arguments are supplied' {
+        $AgentOutputPath = Join-Path $TestDrive 'environment/agent-output.json'
+        $OutputPath = Join-Path $TestDrive 'result-output/shard-result.json'
+        $null = New-Item -ItemType Directory -Path (Split-Path -Parent $AgentOutputPath) -Force
+        New-CollectorAgentOutput -IssueNumber 42 | ConvertTo-Json -Depth 20 |
+            Set-Content -LiteralPath $AgentOutputPath -Encoding utf8NoBOM
+
+        $Environment = @{
+            GH_AW_AGENT_OUTPUT = $AgentOutputPath
+            SHARD_ID = 'shard-01'
+            MANIFEST_DIGEST = 'a' * 64
+            ORDERED_CANDIDATE_IDS = '[42]'
+            PRIORITY_CANDIDATE_IDS = '[42]'
+            ROUND_ROBIN_CANDIDATE_IDS = '[]'
+            TOTAL_OPEN_INVENTORY = '1'
+            PRIOR_CURSOR = '0'
+            ORCHESTRATOR_RUN_ID = '12345'
+            ORCHESTRATOR_ATTEMPT = '1'
+        }
+        $OriginalEnvironment = @{}
+        foreach ($Name in $Environment.Keys) {
+            $OriginalEnvironment[$Name] = [Environment]::GetEnvironmentVariable($Name)
+            [Environment]::SetEnvironmentVariable($Name, $Environment[$Name])
+        }
+        try {
+            Push-Location $TestDrive
+            try {
+                $ProcessOutput = & pwsh -NoProfile -File $script:CollectorPath 2>&1
+                $ExitCode = $LASTEXITCODE
+            }
+            finally {
+                Pop-Location
+            }
+        }
+        finally {
+            foreach ($Name in $OriginalEnvironment.Keys) {
+                [Environment]::SetEnvironmentVariable($Name, $OriginalEnvironment[$Name])
+            }
+        }
+
+        $ExitCode | Should -Be 0 -Because ($ProcessOutput -join "`n")
+        $OutputPath | Should -Exist
+        $Result = Get-Content -LiteralPath $OutputPath -Raw | ConvertFrom-Json
+        $Result.report_data.issues.issue | Should -Be @(42)
+        $Result.report_data.contract_errors | Should -HaveCount 0
+    }
+
     It 'reads normalized agent output and writes v2 to the requested output path' {
         $AgentOutputPath = Join-Path $TestDrive 'normalized/agent-output.json'
         $OutputPath = Join-Path $TestDrive 'custom/result/shard-result.json'
