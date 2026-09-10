@@ -3,7 +3,7 @@ title: Asset reference documentation
 description: How contributors generate, author, and validate reference pages for agents, prompts, instructions, and skills
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-09
 ms.topic: how-to
 keywords:
   - asset documentation
@@ -98,12 +98,18 @@ frontmatter alone:
 * `When to use it` identifies the right scenarios, prerequisites, and nearby
   alternatives.
 * `How to use it` explains invocation and the important steps for an interactive
-  agent, prompt, or skill.
+   agent or prompt. Skills use `Example usage` for invocation and workflow steps;
+   their `How to use it` section is not applicable under the shared contract.
 * `Example usage` shows representative input, the expected execution flow or
   output, and a clear success signal.
 
 Keep examples specific enough to test. Avoid repeating the generated description
 or promising behavior that the source artifact does not define.
+
+For skills, distinguish user-invocable commands from reference-only knowledge
+loaded by a consuming workflow. Do not invent a slash command for a load-only
+skill. Show materially different modes where needed, including inputs, outputs,
+prerequisites, and any confirmation or human-review boundary.
 
 ### Draft examples with HVE Builder
 
@@ -131,19 +137,19 @@ another model to rewrite generated regions.
 
 Local and pull request validation use the same validator at different scopes:
 
-| Context                   | Scope                | Enforcement                                                                                                                                     |
-|---------------------------|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, generated-region sync, and Required instruction and prompt guidance                                               |
-| Pull request validation   | Changed assets/pages | The same checks, limited to paths affected relative to the configured base; Required instruction and prompt guidance is blocking for this scope |
+| Context                  | Scope                | Enforcement                                                                                                                                            |
+|--------------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `npm run lint:asset-docs` | Full repository      | Coverage, orphans, structure, generated-region sync, and Required instruction, prompt, and skill guidance                                                 |
+| Pull request validation  | Changed assets/pages | The same checks, limited to paths affected relative to the configured base; Required instruction, prompt, and skill guidance is blocking for this scope |
 
 The changed-files scope prevents unrelated pre-existing findings from blocking a
 pull request. It still catches a changed source with a missing or stale page, a
 changed page with no source, and renames or deletions that leave an orphan.
 
-The generator and CI gate do not author human judgment. Required instruction and
-prompt guidance is now blocking. Stubs for other asset kinds and Optional
-instruction examples remain warnings until their applicable rollout changes
-enforcement.
+The generator and CI gate do not author human judgment. Both paths select
+`instruction,prompt,skill` for authored-content enforcement. Required guidance for
+these kinds is blocking. Agent stubs and Optional instruction examples remain
+warnings.
 
 ## Follow the completeness rollout
 
@@ -156,13 +162,14 @@ once:
    `Example usage` is optional.
 2. [Prompts (#2362)](https://github.com/microsoft/hve-core/issues/2362), enforced:
    require `When to use it`, `How to use it`, and `Example usage`.
-3. [Skills (#2363)](https://github.com/microsoft/hve-core/issues/2363): require all
-   applicable authored sections, with richer multi-mode examples where needed.
+3. [Skills (#2363)](https://github.com/microsoft/hve-core/issues/2363), enforced:
+   require `When to use it` and `Example usage`, with richer multi-mode examples
+   where needed; `How to use it` is not applicable.
 4. [Agents (#2364)](https://github.com/microsoft/hve-core/issues/2364): require all
    applicable authored sections, including orchestration, delegation, and handoff
    behavior where relevant.
 
-Until enforcement is enabled for skills and agents, the validator reports their
+Until enforcement is enabled for agents, the validator reports their
 authored stubs as warnings. New and materially changed assets should still receive
 complete authored sections now; the rollout changes enforcement timing, not the
 documentation quality target.

@@ -3,7 +3,7 @@ title: outcome-hypothesis
 description: "Create or assess an evidence-grounded, falsifiable outcome hypothesis: a testable prediction of what measurable business result will change, for whom, by when, and how leading and lagging indicators will prove or disprove it. Use when framing measurable outcomes, turning an MVP, POC, feature, or technical initiative into a beneficiary result, defining targets and indicators, or judging whether evidence is strong enough to invest. Also applies to business outcome hypotheses, value hypotheses, and outcome statements."
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-08-18
+ms.date: 2026-09-09
 ms.topic: reference
 keywords:
   - skill
@@ -33,6 +33,13 @@ Use this skill when an engagement idea, proposal, or existing outcome statement 
 
 Use `requirements-author` instead when the outcome is already understood and the task is to create or govern a BRD or PRD. Use `performance-slo-planner` for production SLOs, capacity, latency budgets, and load-test planning.
 
+Indicators default to aggregate or cohort-level measurement. Individual-level
+measurement needs a documented necessity and proportionality justification.
+When it uses personal or sensitive data, the workflow stops before scoring,
+drafting, or validation until a completed Privacy Planner result is available.
+If that planner is unavailable, a documented review by a qualified privacy
+professional is required before resuming.
+
 ## How to use it
 
 Invoke `/outcome-hypothesis` with the relevant evidence sources and choose create or assess mode. Create mode scores seven readiness dimensions before producing a Full Outcome Hypothesis, a Provisional Outcome Hypothesis with explicit gaps, or an Investigation response. Assess mode preserves the supplied statement, then reports the D1-D7 readiness decision and OH.0-OH.13 findings separately. Both modes identify critical failures that make a hypothesis not investable.
@@ -53,6 +60,13 @@ owner, and the accountable sponsor or decision owner before making commitments.
 Assessment does not revise or persist the supplied statement; request a revised
 draft separately when needed.
 
+If create-mode OH.13 first identifies the privacy condition after scoring, only
+the existing D1-D7 scorecard, readiness decision, stop reason, and required privacy
+route may be returned. The draft, validation findings, investability, Confidence,
+save offer, and handoff remain withheld until the privacy requirement is satisfied.
+Both modes also require the canonical Outcome-Hypothesis CAUTION before delivery;
+an unavailable disclaimer stops delivery rather than permitting a substitute.
+
 ## Example usage
 
 ```text
@@ -63,4 +77,10 @@ dashboard shows 42% activation for mid-market support administrators, and the
 approved target is 60% within 90 days of guided setup launch.
 ```
 
-The skill first presents the D1-D7 scorecard and readiness route. In create mode, it then returns a Full or Provisional Outcome Hypothesis when readiness permits, including measurable indicators, validation warnings, investability, confidence, and unresolved evidence gaps.
+With aggregate or cohort-level evidence and no unresolved privacy gate, the skill
+first presents the D1-D7 scorecard and readiness route. In create mode, it then
+returns a Full or Provisional Outcome Hypothesis when readiness permits, including
+measurable indicators, validation warnings, investability, confidence, and
+unresolved evidence gaps. If the example instead requires personal-data measures
+for individual administrators, the completed privacy review is a prerequisite,
+not a warning that can be deferred until after delivery.

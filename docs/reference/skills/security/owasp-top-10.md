@@ -3,7 +3,7 @@ title: owasp-top-10
 description: "OWASP Top 10 for Web Applications (2025) knowledge base for identifying, assessing, and remediating web application security risks."
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-09
 ms.topic: reference
 keywords:
   - skill
@@ -28,10 +28,20 @@ OWASP Top 10 for Web Applications (2025) knowledge base for identifying, assessi
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this load-only reference to guide a web-application security review against
+the OWASP Top 10 (2025). It helps organize evidence about access control,
+authentication, input handling, configuration, integrity, and exceptional
+conditions. For build-pipeline or host-management concerns, choose `owasp-cicd` or
+`owasp-infrastructure` instead of forcing them into an application-only review.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask a reviewing agent to load `owasp-top-10` and inspect a sample order API's route
+handlers, authorization middleware, error handling, and tests. Specify that the
+review is limited to these files and uses synthetic order identifiers.
+
+The expected result maps supported observations to applicable references, such as
+access control or exceptional-condition handling, and proposes concrete regression
+tests. Success means each finding identifies evidence and a corrective action;
+uninspected deployment controls remain unknown. No live requests, exploit execution,
+or claim of OWASP certification follows from loading the reference.

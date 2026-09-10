@@ -15,6 +15,8 @@ BeforeAll {
 
     $script:validatorFixtureCounter = 0
     function script:New-ValidatorFixture {
+        param([switch]$IncludeSkill, [switch]$IncludePrompt)
+
         $script:validatorFixtureCounter++
         $repo = Join-Path $TestDrive "validator-fixture-$($script:validatorFixtureCounter)"
         $gh = Join-Path $repo '.github'
@@ -22,6 +24,13 @@ BeforeAll {
         $fixtures = @{
             'agents/hve-core/demo-agent.agent.md'      = @('---', 'name: Demo Agent', 'description: A demo agent.', '---', '', '# Body')
             'instructions/shared/demo.instructions.md' = @('---', 'description: Demo instructions.', 'applyTo: "**/*.ps1"', '---', '', '# Body')
+        }
+        if ($IncludeSkill) {
+            $fixtures['skills/hve-core/demo/SKILL.md'] = @('---', 'name: demo', 'description: A demo skill.', 'user-invocable: true', '---', '', '# Body')
+            $fixtures['skills/hve-core/demo/references/usage.md'] = @('# Usage', '', 'Fixture supporting content.')
+        }
+        if ($IncludePrompt) {
+            $fixtures['prompts/hve-core/demo.prompt.md'] = @('---', 'description: A demo prompt.', '---', '', '# Body')
         }
         foreach ($rel in $fixtures.Keys) {
             $full = Join-Path $gh $rel
@@ -409,6 +418,170 @@ Describe 'Test-AssetDocAuthored' -Tag 'Unit' {
     It 'Reports nothing when stubs are removed' {
         $authored = $script:agentContent -replace '<!-- asset-docs:stub -->', ''
         Test-AssetDocAuthored -Model $script:agentModel -Content $authored | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Skill authored completeness rollout' -Tag 'Unit' {
+    BeforeAll {
+        $script:skillRepo = New-ValidatorFixture -IncludeSkill -IncludePrompt
+        $script:skillModel = Get-FixtureModel -Repo $script:skillRepo -Kind 'skill'
+        $script:skillContent = Get-Content -LiteralPath (Join-Path $script:skillRepo $script:skillModel.DocRel) -Raw
+        $script:strictKinds = @('instruction', 'prompt', 'skill')
+    }
+
+    It 'Rejects <Label> required skill stubs in one finding' -ForEach @(
+        @{ Label = 'When-only'; StubHeadings = @('## When to use it') }
+        @{ Label = 'Example-only'; StubHeadings = @('## Example usage') }
+        @{ Label = 'both'; StubHeadings = @('## When to use it', '## Example usage') }
+    ) {
+        $content = $script:skillContent
+        foreach ($heading in @('## When to use it', '## Example usage')) {
+            if ($heading -notin $StubHeadings) {
+                $body = Get-AssetDocSectionBody -Content $content -Heading $heading
+                $content = $content.Replace($body, "Authored guidance for $heading.")
+            }
+        }
+
+        $findings = @(Test-AssetDocAuthored -Model $script:skillModel -Content $content -RequireAuthoredContent $script:strictKinds)
+
+        $findings | Should -HaveCount 1
+        $findings[0].Level | Should -Be 'Error'
+        $findings[0].Category | Should -Be 'Authored'
+        $findings[0].Path | Should -BeExactly $script:skillModel.DocRel
+        foreach ($heading in @('## When to use it', '## Example usage')) {
+            if ($heading -in $StubHeadings) {
+                $findings[0].Message | Should -Match ([regex]::Escape($heading))
+            }
+            else {
+                $findings[0].Message | Should -Not -Match ([regex]::Escape($heading))
+            }
+        }
+        $findings[0].Message | Should -Not -Match 'How to use it'
+    }
+
+    It 'Accepts authored skill sections without a How section' {
+        $content = $script:skillContent
+        foreach ($heading in @('## When to use it', '## Example usage')) {
+            $body = Get-AssetDocSectionBody -Content $content -Heading $heading
+            $content = $content.Replace($body, "Authored guidance for $heading.")
+        }
+
+        $content | Should -Not -Match '(?m)^## How to use it'
+        Test-AssetDocStructure -Model $script:skillModel -Content $content | Should -BeNullOrEmpty
+        Test-AssetDocAuthored -Model $script:skillModel -Content $content -RequireAuthoredContent $script:strictKinds |
+            Should -BeNullOrEmpty
+    }
+
+    It 'Preserves strict <Kind> enforcement alongside skills' -ForEach @(
+        @{ Kind = 'instruction' }
+        @{ Kind = 'prompt' }
+    ) {
+        $model = Get-FixtureModel -Repo $script:skillRepo -Kind $Kind
+        $content = Get-Content -LiteralPath (Join-Path $script:skillRepo $model.DocRel) -Raw
+
+        (Test-AssetDocAuthored -Model $model -Content $content -RequireAuthoredContent $script:strictKinds).Level |
+            Should -Be 'Error'
+    }
+
+    It 'Keeps agent stubs advisory under cumulative enforcement' {
+        $model = Get-FixtureModel -Repo $script:skillRepo -Kind 'agent'
+        $content = Get-Content -LiteralPath (Join-Path $script:skillRepo $model.DocRel) -Raw
+        $findings = @(Test-AssetDocAuthored -Model $model -Content $content -RequireAuthoredContent $script:strictKinds)
+
+        $findings | Should -HaveCount 1
+        $findings[0].Level | Should -Be 'Warning'
+    }
+
+    It 'Keeps an optional instruction example advisory under cumulative enforcement' {
+        $model = Get-FixtureModel -Repo $script:skillRepo -Kind 'instruction'
+        $content = Get-Content -LiteralPath (Join-Path $script:skillRepo $model.DocRel) -Raw
+        $body = Get-AssetDocSectionBody -Content $content -Heading '## When to use it'
+        $content = $content.Replace($body, 'Use these instructions for fixture scripts.')
+        $findings = @(Test-AssetDocAuthored -Model $model -Content $content -RequireAuthoredContent $script:strictKinds)
+
+        $findings | Should -HaveCount 1
+        $findings[0].Level | Should -Be 'Warning'
+        $findings[0].Message | Should -Match 'Example usage'
+    }
+
+    It 'Ignores a sentinel in the NotApplicable skill How section' {
+        $content = "## When to use it`n`nUse the fixture skill.`n`n## How to use it`n`n<!-- asset-docs:stub -->`n`n## Example usage`n`nAsk for the fixture output.`n"
+
+        Test-AssetDocAuthored -Model $script:skillModel -Content $content -RequireAuthoredContent $script:strictKinds |
+            Should -BeNullOrEmpty
+    }
+
+    It 'Applies changed-file skill enforcement for <Label>' -ForEach @(
+        @{ Label = 'nested support content'; ChangedPath = '.github/skills/hve-core/demo/references/usage.md'; ExitCode = 1; Selected = 1 }
+        @{ Label = 'the skill page'; ChangedPath = 'docs/reference/skills/hve-core/demo.md'; ExitCode = 1; Selected = 1 }
+        @{ Label = 'an unrelated path'; ChangedPath = 'README.md'; ExitCode = 0; Selected = 0 }
+    ) {
+        Mock Get-ChangedFilesFromGit { @($ChangedPath) }
+        $output = Join-Path $TestDrive 'skill-changed-results.json'
+
+        Invoke-AssetDocsValidation -RepoRoot $script:skillRepo -ChangedFilesOnly -FailOnMissing -CheckSync -RequireAuthoredContent $script:strictKinds -OutputPath $output |
+            Should -Be $ExitCode
+
+        $result = Get-Content -LiteralPath $output -Raw | ConvertFrom-Json
+        $findings = @($result.findings | Where-Object { $_.Category -eq 'Authored' })
+        $findings | Should -HaveCount $Selected
+        if ($Selected) {
+            $findings[0].Path | Should -BeExactly $script:skillModel.DocRel
+            $findings[0].Level | Should -Be 'Error'
+        }
+    }
+
+    It 'Binds all three strict kinds through the CLI with skill stub <Stub>' -ForEach @(
+        @{ Stub = $true; ExitCode = 1 }
+        @{ Stub = $false; ExitCode = 0 }
+    ) {
+        $repo = New-ValidatorFixture -IncludeSkill -IncludePrompt
+        foreach ($model in (Get-FixtureModels -Repo $repo | Where-Object { $_.Kind -in $script:strictKinds })) {
+            $page = Join-Path $repo $model.DocRel
+            $content = Get-Content -LiteralPath $page -Raw
+            foreach ($section in (Get-AssetDocSectionContract | Where-Object { $_.TemplateRegion })) {
+                if ((Resolve-AssetDocSectionStatus -Section $section -Kind $model.Kind -Interactive $model.Interactive) -ne 'Required') {
+                    continue
+                }
+                if ($Stub -and $model.Kind -eq 'skill' -and $section.Heading -eq '## Example usage') {
+                    continue
+                }
+                $body = Get-AssetDocSectionBody -Content $content -Heading $section.Heading
+                $content = $content.Replace($body, "Authored guidance for $($section.Heading).")
+            }
+            Set-Content -LiteralPath $page -Value $content -Encoding utf8NoBOM -NoNewline
+        }
+        $output = Join-Path $repo 'logs/skill-cli.json'
+
+        & pwsh -NoProfile -File $script:ValidatorPath -RepoRoot $repo -FailOnMissing -CheckSync -RequireAuthoredContent instruction,prompt,skill -OutputPath $output *> $null
+
+        $LASTEXITCODE | Should -Be $ExitCode
+        $result = Get-Content -LiteralPath $output -Raw | ConvertFrom-Json
+        @($result.options.requireAuthoredContent) | Should -Be @('instruction', 'prompt', 'skill')
+        $errors = @($result.findings | Where-Object { $_.Level -eq 'Error' })
+        $errors | Should -HaveCount $ExitCode
+        if ($Stub) {
+            $errors[0].Category | Should -Be 'Authored'
+            $errors[0].Path | Should -BeExactly 'docs/reference/skills/hve-core/demo.md'
+            $errors[0].Message | Should -Match 'Example usage'
+        }
+    }
+
+    It 'Keeps the local and reusable CI rollout selectors aligned' {
+        $root = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $package = Get-Content -LiteralPath (Join-Path $root 'package.json') -Raw | ConvertFrom-Json
+        $local = [regex]::Match($package.scripts.'lint:asset-docs', '-RequireAuthoredContent\s+(\S+)')
+        $local.Success | Should -BeTrue
+
+        $workflow = Get-Content -LiteralPath (Join-Path $root '.github/workflows/asset-docs-validation.yml') -Raw | ConvertFrom-Yaml
+        $step = @($workflow.jobs.validate.steps | Where-Object { $_.name -eq 'Run asset documentation validation' })
+        $step | Should -HaveCount 1
+        $ci = [regex]::Match($step[0].run, 'RequireAuthoredContent\s*=\s*@\(([^)]*)\)')
+        $ci.Success | Should -BeTrue
+        $ciKinds = @([regex]::Matches($ci.Groups[1].Value, "'([^']+)'") | ForEach-Object { $_.Groups[1].Value })
+
+        @($local.Groups[1].Value -split ',') | Should -Be @('instruction', 'prompt', 'skill')
+        $ciKinds | Should -Be @('instruction', 'prompt', 'skill')
     }
 }
 
