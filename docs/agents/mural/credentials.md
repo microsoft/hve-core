@@ -28,7 +28,7 @@ Mural refresh tokens currently do not rotate on use, so a token leaked from a ba
 
 The skill selects a backend based on the value of `MURAL_CREDENTIAL_BACKEND`:
 
-* `auto` (default): prefer the `keyring` backend when an OS keychain is reachable; fall back to the `file` backend and emit a single WARN per process when the keychain is unavailable.
+* `auto` (default): prefer the `keyring` backend when an OS keychain is reachable; fall back to the `file` backend and emit a one-shot WARN per profile when the keychain is unavailable, or when the keychain is reachable but holds no usable credentials while the credential file does. The empty-keyring fallback warns `keyring backend available but empty for profile '<name>'; using file backend at <path>; credentials are eligible for promotion during auth write flows`.
 * `keyring`: require an OS keychain. If the keychain is unreachable (no SecretService daemon, locked Keychain that refuses to unlock, DPAPI failure), the skill fails closed rather than silently falling back.
 * `file`: use the existing 0600 credential file at `$XDG_CONFIG_HOME/hve-core/mural.{profile}.env`. Suitable for headless containers, CI, and any environment without a usable OS keychain.
 * `env-only`: read credentials only from process environment variables. Skips both the keyring and the credential file. Useful when an outer secret manager (Azure Key Vault, AWS Secrets Manager, HashiCorp Vault) injects credentials at process start.
@@ -60,6 +60,8 @@ Run `mural auth bootstrap` to onboard a new workstation and register Mural app c
 6. **Verify the write round-trips.** The skill reads the client ID back from the backend and confirms it matches what was just written, so a silent backend fault surfaces immediately.
 7. **Probe the credentials.** Unless `--no-test` is passed, the skill posts a `client_credentials` grant to the Mural token endpoint to confirm Mural accepts the pair. Bootstrap mints no access token, so this stage does not call `/me`.
 8. **Report next steps.** The walkthrough prints the profile and resolved backend, then directs the operator to run `mural auth status` to confirm the credentials resolve and `mural auth login --profile <name>` to obtain tokens.
+
+During `mural auth login` and `mural auth bootstrap` in `auto` mode, existing file credentials are promoted into the keyring when the keychain is reachable but empty for the profile: each key is copied and verified with a read-back before the file copy is removed, and any write or verification failure rolls back the keyring writes and keeps the file. Promotion is attempted once per profile per process and is skipped in non-interactive contexts (`MURAL_NONINTERACTIVE=1` or `CI=true`).
 
 When `MURAL_NONINTERACTIVE=1` is set, `mural auth bootstrap` refuses to prompt and exits with a hint that points at `mural auth setup`.
 
