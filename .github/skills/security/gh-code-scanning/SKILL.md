@@ -197,6 +197,11 @@ gh api repos/{owner}/{repo}/code-scanning/analyses \
 
 ### Dedup check before creation
 
+Run this issue-creation example only inside a GitHub Actions job for the target repository, with `GH_TOKEN` bound to that job's `GITHUB_TOKEN` and `issues: write` permission.
+The local `gh auth login` setup is for read-only alert triage, not this automation-owned creation procedure.
+Issues created with a personal identity are deliberately excluded from automated deduplication and reconciliation, even when their marker and labels match.
+Do not rerun this example under a personal token expecting deduplication; it can create another issue for the same rule, even when run inside GitHub Actions.
+
 Search all issue states for the embedded automation marker, filtering by the GitHub Actions app author and both ownership labels before applying the candidate limit so unowned issues cannot exhaust the quota.
 Treat these results as candidates: still verify the first-line marker, the immutable GitHub Actions app author, and the automation-owned labels locally. Abort if the filtered query reaches its limit because eligible candidates may be missing.
 
