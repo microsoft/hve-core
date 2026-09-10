@@ -749,7 +749,7 @@ jobs:
           EXPECTED_RUN_ID: ${{ github.run_id }}
           EXPECTED_ATTEMPT: ${{ github.run_attempt }}
         run: |
-          ./scripts/security/Invoke-BacklogGroomWaveValidator.ps1 `
+          ./scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1 `
             -ManifestPath $env:MANIFEST_PATH `
             -ResultsDirectory $env:RESULTS_DIRECTORY `
             -AggregateDirectory $env:AGGREGATE_DIRECTORY `

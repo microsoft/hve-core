@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-09-04
+ms.date: 2026-09-10
 ms.topic: reference
 keywords:
   - github actions
@@ -240,8 +240,8 @@ protocol; operators leave the continuation fields at their defaults when
 initiating a sweep. The coordinator passes only artifact identities, digests,
 run identities, the sweep identity, and the next wave number between runs.
 Candidate issue IDs remain inside retained artifacts. Production executes
-`scripts/security/Invoke-BacklogGroomWaveValidator.ps1` before checkpoint
-creation.
+`scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1`
+before checkpoint creation.
 
 ### Production inputs
 

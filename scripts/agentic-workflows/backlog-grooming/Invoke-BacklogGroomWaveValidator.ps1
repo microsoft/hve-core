@@ -20,7 +20,7 @@
 .PARAMETER ExpectedAttempt
     Producing orchestrator attempt.
 .EXAMPLE
-    ./scripts/security/Invoke-BacklogGroomWaveValidator.ps1 -ManifestPath wave-manifest/manifest.json -ResultsDirectory wave-results -AggregateDirectory wave-aggregate -ExpectedRunId 123 -ExpectedAttempt 1
+    ./scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1 -ManifestPath wave-manifest/manifest.json -ResultsDirectory wave-results -AggregateDirectory wave-aggregate -ExpectedRunId 123 -ExpectedAttempt 1
 .NOTES
     Called by .github/workflows/backlog-groom-orchestrator.yml.
 #>
@@ -816,7 +816,7 @@ function Read-JsonElementFromNode {
 #region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
+        Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
         $Validation = Invoke-BacklogGroomWaveValidation @PSBoundParameters
         Set-CIOutput -Name 'aggregate-digest' -Value $Validation.AggregateDigest
         Set-CIOutput -Name 'assessed-ids' -Value (New-JsonArray -Values @($Validation.AssessedIds)).ToJsonString()

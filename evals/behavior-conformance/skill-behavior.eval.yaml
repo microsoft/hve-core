@@ -1838,6 +1838,44 @@ stimuli:
         name: read-only-boundary
         config:
           pattern: '(?i)^\s*read-only[.!]?\s*$'
+  - name: skill-rpi-plan-critique-current-reservation
+    prompt: |
+      A planning parent persisted a `reserved` critique record and dispatched
+      `rpi-plan-critique` with a `current_reservation_id` that exactly matches
+      the reservation ID, candidate identity, depth, and output path. No
+      critique artifact exists. Should the worker assess or block? Return only
+      `assess` or `block`.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: decision
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: matching-current-reservation
+        config:
+          pattern: '(?i)^\s*assess[.!]?\s*$'
+  - name: skill-rpi-plan-critique-stranded-reservation
+    prompt: |
+      A plan contains a `reserved` critique record, but the caller supplies no
+      matching `current_reservation_id`. No critique artifact exists. Should
+      `rpi-plan-critique` assess or block? Return only `assess` or `block`.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: decision
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: stranded-reservation
+        config:
+          pattern: '(?i)^\s*block[.!]?\s*$'
   - name: skill-rpi-quick-knowledge
     prompt: |
       The core `rpi-quick` lifecycle from Research through Review is Research,

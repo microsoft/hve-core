@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
-    $script:ValidatorPath = Join-Path $PSScriptRoot '../../security/Invoke-BacklogGroomWaveValidator.ps1'
+    $script:ValidatorPath = Join-Path $PSScriptRoot '../../../agentic-workflows/backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1'
     . $script:ValidatorPath
 
     function ConvertTo-TestJsonNode {

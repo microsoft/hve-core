@@ -6,9 +6,10 @@
 * Task ID: {{task_id}}
 * Critique date: {{YYYY-MM-DD}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
-* Critique execution status: {{Complete, Partial, or Blocked}}
+* Critique execution status: {{started, Complete, Partial, or Blocked}}
 * Critique depth: {{standard_or_deep}}
 * Depth provenance: {{default_or_explicit_user_request}}
+* Reservation ID: {{matching_parent_reservation_id_or_not_applicable}}
 * Invocation consumed: yes
 
 ## Inputs and Criterion Boundary
@@ -17,6 +18,8 @@
 * Research and evidence considered: {{workspace_relative_evidence_paths}}
 * Decisions, dependencies, task Goals, and task Requirements considered: {{decision_dependency_goal_and_requirement_summary}}
 * Assessment boundary: {{what_the_critique_can_and_cannot_conclude_from_supplied_inputs}}
+
+<!-- While execution is started, end the artifact here. Finalize this same artifact in place with a terminal status and the remaining sections; never create a replacement critique. -->
 
 ## Coverage Assessment
 

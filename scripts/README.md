@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-09-05
+ms.date: 2026-09-10
 ms.topic: reference
 keywords:
   - powershell
@@ -19,6 +19,7 @@ This directory contains PowerShell scripts for automating linting, validation, a
 
 ```text
 scripts/
+├── agentic-workflows/ Runtime support for compiled Agentic Workflows
 ├── lib/             Shared artifact and CI helpers
 ├── agents/          Agent activation harness and baseline snapshots
 ├── evals/           Eval runner and moderation automation
@@ -61,6 +62,19 @@ The `agents/` directory contains the activation harness for Copilot agent cold-s
 | `activation-harness/baseline.json`                       | Snapshot of the current activation fingerprint baseline for the ADR creation agent   |
 
 See [activation-harness/README.md](agents/activation-harness/README.md) for the full harness contract and baseline workflow.
+
+## Agentic Workflows
+
+The `agentic-workflows/` directory contains trusted runtime support invoked by
+compiled Agentic Workflows. Backlog grooming uses these scripts to reconstruct
+candidate-addressed scalar calls, produce canonical shard results, and validate
+unchanged v2 artifacts before deterministic fan-in.
+
+| Script                                                                 | Purpose                                                        |
+|------------------------------------------------------------------------|----------------------------------------------------------------|
+| `backlog-grooming/Invoke-BacklogGroomResultCollector.ps1`              | Collect scalar candidate calls into one canonical shard result |
+| `backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1`                | Validate shard artifacts and produce an ordered wave aggregate |
+| `backlog-grooming/Modules/BacklogGrooming.psm1`                        | Reconstruct, validate, normalize, and digest shard results      |
 
 ## Release
 
@@ -220,16 +234,17 @@ Copilot CLI plugin manifest synchronization and validation.
 
 Pester test organization matching the scripts structure.
 
-| Directory       | Tests For                     |
-|-----------------|-------------------------------|
-| `lib/`          | Shared helper tests           |
-| `devcontainer/` | Devcontainer validation tests |
-| `extension/`    | Extension packaging tests     |
-| `plugins/`      | Plugin manifest sync tests    |
-| `linting/`      | Linting script tests          |
-| `security/`     | Security validation tests     |
-| `Fixtures/`     | Shared test fixtures          |
-| `Mocks/`        | Shared mock data              |
+| Directory             | Tests For                                |
+|-----------------------|------------------------------------------|
+| `agentic-workflows/`  | Compiled Agentic Workflow runtime support |
+| `lib/`                | Shared helper tests                      |
+| `devcontainer/`       | Devcontainer validation tests            |
+| `extension/`          | Extension packaging tests                |
+| `plugins/`            | Plugin manifest sync tests               |
+| `linting/`            | Linting script tests                     |
+| `security/`           | Security validation tests                |
+| `Fixtures/`           | Shared test fixtures                     |
+| `Mocks/`              | Shared mock data                         |
 
 Run all tests:
 

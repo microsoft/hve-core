@@ -137,44 +137,113 @@ safe-outputs:
     report-as-issue: false
   jobs:
     publish-backlog-grooming-result:
-      description: "Validate and upload one immutable backlog grooming shard result"
-      max: 1
+      description: "Publish one candidate-addressed semantic backlog grooming assessment"
+      max: 5
       runs-on: ubuntu-latest
-      permissions: {}
+      permissions:
+        contents: read
       output: "Validated shard result uploaded as an immutable run-attempt artifact"
       inputs:
-        row-1:
-          description: "JSON row for candidate position 1"
+        issue-number:
+          description: "Positive issue number for this assessment; this is the sole call identity"
+          required: true
+          type: number
+        title:
+          description: "Current issue title or factual unavailable-after-snapshot title"
           required: true
           type: string
-        row-2:
-          description: "JSON row for candidate position 2, or the literal empty string when unused; never null, a placeholder, or test content"
+        selection-reason:
+          description: "Why the trusted cohort selected this issue"
           required: true
           type: string
-        row-3:
-          description: "JSON row for candidate position 3, or the literal empty string when unused; never null, a placeholder, or test content"
+        activity-and-ownership-context:
+          description: "Relevant activity and ownership context"
           required: true
           type: string
-        row-4:
-          description: "JSON row for candidate position 4, or the literal empty string when unused; never null, a placeholder, or test content"
+        acceptance-signals:
+          description: "Requested outcomes and acceptance signals"
           required: true
           type: string
-        row-5:
-          description: "JSON row for candidate position 5, or the literal empty string when unused; never null, a placeholder, or test content"
+        evidence-count:
+          description: "Number of categorized evidence records populated below, from 1 through 5"
+          required: true
+          type: number
+        evidence-1-category:
+          description: "Evidence 1 category: Repository, Original delivery, or Replacement or removal"
+          required: false
+          type: string
+        evidence-1-text:
+          description: "Evidence position 1 text"
+          required: false
+          type: string
+        evidence-2-category:
+          description: "Evidence 2 category: Repository, Original delivery, or Replacement or removal"
+          required: false
+          type: string
+        evidence-2-text:
+          description: "Evidence position 2 text"
+          required: false
+          type: string
+        evidence-3-category:
+          description: "Evidence 3 category: Repository, Original delivery, or Replacement or removal"
+          required: false
+          type: string
+        evidence-3-text:
+          description: "Evidence position 3 text"
+          required: false
+          type: string
+        evidence-4-category:
+          description: "Evidence 4 category: Repository, Original delivery, or Replacement or removal"
+          required: false
+          type: string
+        evidence-4-text:
+          description: "Evidence position 4 text"
+          required: false
+          type: string
+        evidence-5-category:
+          description: "Evidence 5 category: Repository, Original delivery, or Replacement or removal"
+          required: false
+          type: string
+        evidence-5-text:
+          description: "Evidence position 5 text"
+          required: false
+          type: string
+        similarity-outcome:
+          description: "Match, Similar, Distinct, Uncertain, or the supported Superseded normalization input"
           required: true
           type: string
-        started-at:
-          description: "Shard-wide UTC start timestamp; use the identical literal for every candidate call"
+        disposition:
+          description: "Still needed, Likely completed, Superseded, Possible duplicate, Needs correction, or Uncertain"
           required: true
           type: string
-        completed-at:
-          description: "Shard-wide UTC completion timestamp; use the identical literal for every candidate call"
+        grooming-finding:
+          description: "Evidence-grounded grooming finding"
           required: true
+          type: string
+        recommended-next-step:
+          description: "Advisory next step"
+          required: true
+          type: string
+        assessment-status:
+          description: "Assessed or Deferred"
+          required: true
+          type: string
+        deferral-reason:
+          description: "Preferred deferral reason field; empty for Assessed and non-empty for Deferred"
+          required: false
+          type: string
+        deferred-reason:
+          description: "Legacy alias for deferral-reason; never populate both fields"
+          required: false
           type: string
       steps:
-        - name: Validate and write shard result
-          id: result
-          uses: actions/github-script@v9
+        - name: Check out the collector implementation
+          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          with:
+            ref: ${{ github.workflow_sha }}
+            persist-credentials: false
+        - name: Collect and write shard result
+          shell: pwsh
           env:
             SHARD_ID: ${{ inputs.shard_id }}
             MANIFEST_DIGEST: ${{ inputs.manifest_digest }}
@@ -185,285 +254,9 @@ safe-outputs:
             PRIOR_CURSOR: ${{ inputs.prior_cursor }}
             ORCHESTRATOR_RUN_ID: ${{ inputs.orchestrator_run_id }}
             ORCHESTRATOR_ATTEMPT: ${{ inputs.orchestrator_attempt }}
-          with:
-            script: |
-              const crypto = require("crypto");
-              const fs = require("fs");
-              const agentOutput = JSON.parse(
-                fs.readFileSync(process.env.GH_AW_AGENT_OUTPUT, "utf8"),
-              );
-              const requests = agentOutput.items.filter(
-                (item) => item.type === "publish_backlog_grooming_result",
-              );
-              if (requests.length !== 1) {
-                core.setFailed(`Expected exactly one backlog grooming result, found ${requests.length}`);
-                return;
-              }
-              const request = requests[0];
-
-              const exactKeys = (value, keys) =>
-                value &&
-                typeof value === "object" &&
-                !Array.isArray(value) &&
-                Object.keys(value).sort().join("|") === [...keys].sort().join("|");
-              const validText = (value, max = 2000) =>
-                typeof value === "string" && value.trim().length > 0 && value.length <= max;
-              const boundEvidenceItems = (value) => Array.isArray(value)
-                ? value.map((item) => typeof item === "string" && item.length > 500
-                  ? `${item.slice(0, 497).trimEnd()}...`
-                  : item)
-                : value;
-              const canonicalize = (value) => {
-                if (Array.isArray(value)) {
-                  return `[${value.map(canonicalize).join(",")}]`;
-                }
-                if (value && typeof value === "object") {
-                  return `{${Object.keys(value).sort().map(
-                    (key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`,
-                  ).join(",")}}`;
-                }
-                return JSON.stringify(value);
-              };
-
-              const rowKeys = ["issue", "title", "selection_reason", "activity_and_ownership_context", "acceptance_signals", "repository_evidence", "lineage_evidence", "similarity_outcome", "disposition", "grooming_finding", "recommended_next_step", "assessment_status", "deferral_reason"];
-              const deferredReasonAliasKeys = rowKeys
-                .filter((key) => key !== "deferral_reason")
-                .concat("deferred_reason");
-              const lineageKeys = ["original_delivery", "replacement_or_removal"];
-              const similarities = new Set(["Match", "Similar", "Distinct", "Uncertain"]);
-              const dispositions = new Set(["Still needed", "Likely completed", "Superseded", "Possible duplicate", "Needs correction", "Uncertain"]);
-              const statuses = new Set(["Assessed", "Deferred"]);
-              const hasValidSupersessionLineage = (row) => {
-                const lineage = row?.lineage_evidence;
-                if (!exactKeys(lineage, lineageKeys) ||
-                    !Array.isArray(lineage.original_delivery) ||
-                    !Array.isArray(lineage.replacement_or_removal)) {
-                  return false;
-                }
-                const original = lineage.original_delivery;
-                const replacement = lineage.replacement_or_removal;
-                return original.length > 0 && replacement.length > 0 &&
-                  replacement.some((item) => !original.includes(item));
-              };
-              let orderedCandidateIds;
-              try {
-                orderedCandidateIds = JSON.parse(process.env.ORDERED_CANDIDATE_IDS);
-              } catch {
-                core.setFailed("Worker candidate IDs are not valid JSON");
-                return;
-              }
-              if (!Array.isArray(orderedCandidateIds) || orderedCandidateIds.length === 0 ||
-                  orderedCandidateIds.length > 5 || orderedCandidateIds.some(
-                (issue) => !Number.isInteger(issue) || issue <= 0,
-              )) {
-                core.setFailed("Worker candidate IDs must contain one to five unique positive integers");
-                return;
-              }
-              const candidateSet = new Set(orderedCandidateIds);
-              if (candidateSet.size !== orderedCandidateIds.length) {
-                core.setFailed("Worker candidate IDs must contain one to five unique positive integers");
-                return;
-              }
-              const rowDataByPosition = [1, 2, 3, 4, 5].map(
-                (position) => String(request[`row-${position}`] ?? ""),
-              );
-              if (rowDataByPosition.some((rowData, index) =>
-                index < orderedCandidateIds.length ? rowData.length === 0 : rowData.length !== 0)) {
-                core.setFailed("Safe-output row slots must exactly match planned candidate positions");
-                return;
-              }
-              const startedAt = String(request["started-at"] ?? "");
-              const completedAt = String(request["completed-at"] ?? "");
-              let priorityCandidateIds;
-              let roundRobinCandidateIds;
-              try {
-                priorityCandidateIds = JSON.parse(process.env.PRIORITY_CANDIDATE_IDS);
-                roundRobinCandidateIds = JSON.parse(process.env.ROUND_ROBIN_CANDIDATE_IDS);
-              } catch {
-                core.setFailed("Worker cohort IDs are not valid JSON");
-                return;
-              }
-              const totalOpenInventory = Number(process.env.TOTAL_OPEN_INVENTORY);
-              const priorCursor = Number(process.env.PRIOR_CURSOR);
-              if (!Array.isArray(priorityCandidateIds) || !Array.isArray(roundRobinCandidateIds)) {
-                core.setFailed("Worker cohort IDs must be arrays");
-                return;
-              }
-              const cohortIds = [...priorityCandidateIds, ...roundRobinCandidateIds];
-              const cohortSet = new Set(cohortIds);
-              if (
-                  cohortSet.size !== candidateSet.size ||
-                  ![...cohortSet].every((issue) => candidateSet.has(issue)) ||
-                  cohortSet.size !== cohortIds.length ||
-                  !Number.isInteger(totalOpenInventory) || totalOpenInventory < orderedCandidateIds.length ||
-                  !Number.isInteger(priorCursor) || priorCursor < 0) {
-                core.setFailed("Worker inventory or cohort context is invalid");
-                return;
-              }
-              const normalizeRow = (row) => {
-                let normalizedRow = row;
-                if (exactKeys(row, deferredReasonAliasKeys)) {
-                  normalizedRow = { ...row, deferral_reason: row.deferred_reason };
-                  delete normalizedRow.deferred_reason;
-                }
-                if (!exactKeys(normalizedRow, rowKeys)) {
-                  return normalizedRow;
-                }
-                const lineage = normalizedRow.lineage_evidence;
-                return {
-                  ...normalizedRow,
-                  repository_evidence: boundEvidenceItems(normalizedRow.repository_evidence),
-                  lineage_evidence: exactKeys(lineage, lineageKeys)
-                    ? {
-                      original_delivery: boundEvidenceItems(lineage.original_delivery),
-                      replacement_or_removal: boundEvidenceItems(lineage.replacement_or_removal),
-                    }
-                    : lineage,
-                };
-              };
-              const acceptedRows = [];
-              const contractErrors = [];
-              const normalizations = [];
-              for (const [index, issue] of orderedCandidateIds.entries()) {
-                let row;
-                try {
-                  const rowData = rowDataByPosition[index]
-                    .replaceAll("$\\{\\{", "$" + "{{");
-                  row = normalizeRow(JSON.parse(rowData));
-                } catch {
-                  contractErrors.push({ issue, code: "invalid_row_contract" });
-                  continue;
-                }
-                let normalization = null;
-                if (row?.issue !== issue) {
-                  contractErrors.push({ issue, code: "invalid_row_contract" });
-                  continue;
-                }
-                if (row.similarity_outcome === "Superseded" && row.disposition === "Superseded" &&
-                    hasValidSupersessionLineage(row)) {
-                  row = { ...row, similarity_outcome: "Uncertain" };
-                  normalization = { issue: row.issue, code: "superseded_similarity_normalized" };
-                }
-                if (!exactKeys(row, rowKeys) || !validText(row.title, 500) || !validText(row.selection_reason, 200) ||
-                    !validText(row.activity_and_ownership_context) || !validText(row.acceptance_signals) ||
-                    !Array.isArray(row.repository_evidence) || row.repository_evidence.length === 0 ||
-                    !row.repository_evidence.every((item) => validText(item, 500)) ||
-                    !exactKeys(row.lineage_evidence, lineageKeys) ||
-                    !Array.isArray(row.lineage_evidence.original_delivery) ||
-                    !Array.isArray(row.lineage_evidence.replacement_or_removal) ||
-                    !row.lineage_evidence.original_delivery.every((item) => validText(item, 500)) ||
-                    !row.lineage_evidence.replacement_or_removal.every((item) => validText(item, 500)) ||
-                    !similarities.has(row.similarity_outcome) || !dispositions.has(row.disposition) ||
-                    !validText(row.grooming_finding) || !validText(row.recommended_next_step) ||
-                    !statuses.has(row.assessment_status) || typeof row.deferral_reason !== "string" ||
-                    row.deferral_reason.length > 500) {
-                  contractErrors.push({ issue: row.issue, code: "invalid_row_contract" });
-                  continue;
-                }
-                if (row.disposition === "Superseded" && !hasValidSupersessionLineage(row)) {
-                  row.disposition = "Uncertain";
-                  row.similarity_outcome = "Uncertain";
-                }
-                if (row.assessment_status === "Deferred" &&
-                    (!validText(row.deferral_reason, 500) || row.similarity_outcome !== "Uncertain" ||
-                     row.disposition !== "Uncertain" || row.lineage_evidence.original_delivery.length !== 0 ||
-                     row.lineage_evidence.replacement_or_removal.length !== 0)) {
-                  contractErrors.push({ issue: row.issue, code: "invalid_row_contract" });
-                  continue;
-                }
-                if (row.assessment_status === "Assessed" && row.deferral_reason !== "") {
-                  contractErrors.push({ issue: row.issue, code: "invalid_row_contract" });
-                  continue;
-                }
-                if ((row.disposition === "Possible duplicate") && !["Match", "Similar"].includes(row.similarity_outcome)) {
-                  contractErrors.push({ issue: row.issue, code: "invalid_row_contract" });
-                  continue;
-                }
-                acceptedRows.push(row);
-                if (normalization) normalizations.push(normalization);
-              }
-              const assessedRows = acceptedRows.filter((row) => row.assessment_status === "Assessed").length;
-              const deferredRows = acceptedRows.filter((row) => row.assessment_status === "Deferred").length;
-
-              const startedMillis = Date.parse(startedAt);
-              const completedMillis = Date.parse(completedAt);
-              if (!Number.isFinite(startedMillis) || !Number.isFinite(completedMillis) ||
-                  completedMillis < startedMillis) {
-                core.setFailed("Shard timestamps must be valid and completion cannot precede start");
-                return;
-              }
-              if (!/^[a-z0-9][a-z0-9-]{0,62}$/.test(process.env.SHARD_ID) ||
-                  !/^[a-f0-9]{64}$/.test(process.env.MANIFEST_DIGEST) ||
-                  !/^\d+$/.test(process.env.ORCHESTRATOR_RUN_ID)) {
-                core.setFailed("Shard identity or manifest provenance is invalid");
-                return;
-              }
-              const attempt = Number(process.env.ORCHESTRATOR_ATTEMPT);
-              if (!Number.isInteger(attempt) || attempt <= 0) {
-                core.setFailed("Orchestrator attempt must be a positive integer");
-                return;
-              }
-
-              const assessedIssueNumbers = new Set(
-                acceptedRows
-                  .filter((row) => row.assessment_status === "Assessed")
-                  .map((row) => row.issue),
-              );
-              const nextCursor = orderedCandidateIds
-                .filter((issue) => assessedIssueNumbers.has(issue))
-                .at(-1) ?? priorCursor;
-              const distinctDeferralReasons = new Set(
-                acceptedRows
-                  .filter((row) => row.assessment_status === "Deferred")
-                  .map((row) => row.deferral_reason.trim()),
-              ).size;
-              const run = {
-                timestamp: new Date(completedMillis).toISOString(),
-                total_open_inventory: totalOpenInventory,
-                assessed: assessedRows,
-                priority_cohort: priorityCandidateIds.length,
-                round_robin_cohort: roundRobinCandidateIds.length,
-                deferred: deferredRows,
-                contract_errors: contractErrors.length,
-                stop_reason: contractErrors.length > 0
-                  ? `Contract errors: ${contractErrors.length}`
-                  : deferredRows === 0
-                  ? "Complete shard assessed"
-                  : `Deferred rows: ${deferredRows}; distinct non-empty reasons: ${distinctDeferralReasons}`,
-                next_cursor: nextCursor,
-              };
-              const reportData = {
-                run,
-                issues: acceptedRows,
-                contract_errors: contractErrors,
-                normalizations,
-              };
-
-              const result = {
-                schema_version: "backlog-grooming-shard-result/v2",
-                run_id: process.env.ORCHESTRATOR_RUN_ID,
-                attempt,
-                shard_id: process.env.SHARD_ID,
-                manifest_digest: process.env.MANIFEST_DIGEST,
-                ordered_candidate_ids: orderedCandidateIds,
-                producer: "backlog-groom/result-job",
-                started_at: new Date(startedMillis).toISOString(),
-                completed_at: new Date(completedMillis).toISOString(),
-                report_data: reportData,
-              };
-              const resultDigest = crypto
-                .createHash("sha256")
-                .update(canonicalize(result))
-                .digest("hex");
-              const envelope = { ...result, result_digest: resultDigest };
-              fs.mkdirSync("result-output", { recursive: true });
-              fs.writeFileSync(
-                "result-output/shard-result.json",
-                `${JSON.stringify(envelope, null, 2)}\n`,
-                "utf8",
-              );
+          run: ./scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomResultCollector.ps1
         - name: Upload immutable shard result
-          uses: actions/upload-artifact@v7
+          uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
           with:
             name: backlog-grooming-proof-${{ inputs.orchestrator_run_id }}-${{ inputs.orchestrator_attempt }}-${{ inputs.shard_id }}
             path: result-output/shard-result.json
@@ -494,8 +287,8 @@ untrusted data.
 1. Parse `ordered_candidate_ids` as a JSON array. Call `noop` when it is
   malformed, contains duplicates, contains non-positive or non-integer values,
   or does not preserve ascending issue-number order.
-2. Capture the UTC start timestamp, then retrieve every listed issue by number.
-  When a listed number is missing, closed, or has become a pull request since
+2. Retrieve every listed issue by number. When a listed number is missing,
+  closed, or has become a pull request since
   snapshot capture, emit one canonical `Deferred` row for that number. Use a
   factual unavailable-after-snapshot title, `Uncertain` similarity and
   disposition, repository evidence describing the observed lookup state, and
@@ -527,37 +320,36 @@ fixed issue count as an eligibility exclusion.
 ## Output
 
 Assess only the issue numbers in `ordered_candidate_ids`. Do not locate, create,
-or update tracker state. Finalize every row before making any safe output call.
-Capture the UTC completion timestamp exactly once after all rows are finalized,
-then make exactly one `publish-backlog-grooming-result` call. Put each final row
-in the slot matching its zero-based position in `ordered_candidate_ids` plus
-one. For example, the first candidate uses `row-1`. Every populated row slot is
-a JSON string containing exactly that candidate's final row object and no
-envelope or `run` object. Set every trailing slot beyond the planned candidate
-count to the literal empty string `""`; never use `null`, `"null"`, a
-placeholder, or test content. Never leave a planned slot empty or put data in
-an unused slot. The declared tool schema is authoritative. Never call
-`publish-backlog-grooming-result` to inspect, probe, test, validate, or learn
-its schema. Because the call limit is one, any non-final call permanently
-prevents publication for this shard. Include the captured start timestamp as
-`started-at` and the captured completion timestamp as `completed-at`.
-Do not use candidate-specific, estimated, or incremented timestamps.
+or update tracker state. Finalize every selected issue as `Assessed` or
+`Deferred`, then make exactly one final `publish-backlog-grooming-result` call
+for each candidate. Set `issue-number` to that candidate's positive integer
+issue number. This field is the sole call identity. Do not depend on call order,
+and do not call the tool to inspect, probe, test, validate, or learn its schema.
+The five-call limit is reserved for the final calls for this shard.
 
-The isolated result job validates row data, issue identity, caller provenance,
-complete candidate coverage, and timestamp agreement. It derives canonical
-timestamp, inventory, cohort counts,
-assessment counts, stop reason, and cursor from trusted inputs and final rows,
-then constructs the immutable artifact envelope, calculates its digest, and
-publishes it. Never include caller-controlled provenance or derived run state
-in `row-data`. After every safe output call succeeds, return only the canonical
-Backlog Grooming Report required by the imported agent.
+Supply semantic values only. Do not serialize a row, lineage object, array,
+timestamp, count summary, cursor, provenance value, result envelope, digest, or
+output path. Set `evidence-count` to an integer from 1 through 5. Populate both
+the category and text for every numbered evidence position through that count,
+and leave every higher position absent. Use only `Repository`, `Original
+delivery`, or `Replacement or removal` as a category, with at least one
+`Repository` record. Deferred assessments use only `Repository` records.
+Keep each evidence text value to at most 500 characters. Use concise stable
+paths, issue or pull-request numbers, commit or release identifiers, or
+summarized negative-search scopes instead of directory listings or extended
+prose.
 
-Before publication, finalize every selected issue row as `Assessed` or
-`Deferred` and verify there is exactly one populated slot for each planned
-issue in trusted candidate order. Keep each `repository_evidence` and
-`lineage_evidence` item to at most 500 characters. Use concise stable paths,
-issue or pull-request numbers, commit or release identifiers, or summarized
-negative-search scopes instead of directory listings or extended prose.
+Use `deferral-reason` as the canonical field. The `deferred-reason` alias is
+accepted only for compatibility; never populate both. Use an empty deferral
+reason for `Assessed`. For `Deferred`, use a non-empty reason, `Uncertain`
+similarity and disposition, and zero original-delivery and
+replacement-or-removal evidence records.
+
+The isolated result job joins calls to trusted `ordered_candidate_ids`,
+validates candidate semantics and coverage, derives timestamps and run state,
+constructs the immutable v2 artifact, calculates its digest, and publishes it.
+After every final safe output call succeeds, return only the canonical Backlog
+Grooming Report required by the imported agent.
 
 Call `noop` only when shard input validation fails or a repository-wide access
 failure prevents production of a trustworthy result envelope. Individual
