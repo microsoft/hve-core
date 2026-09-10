@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/dataops/synthetic-data-operation-v1.schema.json",
+  "title": "SYNTHETIC_DATA_OPERATION_V1",
+  "oneOf": [
+    {"$ref": "#/$defs/preflight"},
+    {"$ref": "#/$defs/result"}
+  ],
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$"
+    },
+    "nonEmptyString": {"type": "string", "minLength": 1},
+    "nullableString": {"type": ["string", "null"], "minLength": 1},
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "nullableDigest": {
+      "oneOf": [
+        {"$ref": "#/$defs/digest"},
+        {"type": "null"}
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reference", "expected_digest", "tier"],
+      "properties": {
+        "reference": {"$ref": "#/$defs/nonEmptyString"},
+        "expected_digest": {"$ref": "#/$defs/nullableDigest"},
+        "tier": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "decisionReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "revision_id",
+        "owner_roles",
+        "provenance_refs",
+        "artifact_digest",
+        "review_state",
+        "review_reasons",
+        "applicability",
+        "status"
+      ],
+      "properties": {
+        "decision_id": {"$ref": "#/$defs/identifier"},
+        "revision_id": {"$ref": "#/$defs/identifier"},
+        "owner_roles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "data-owner",
+              "privacy-owner",
+              "rai-fairness-owner",
+              "domain-owner"
+            ]
+          }
+        },
+        "provenance_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/nonEmptyString"}
+        },
+        "artifact_digest": {"$ref": "#/$defs/digest"},
+        "review_state": {"enum": ["approved", "pending", "rejected"]},
+        "review_reasons": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        },
+        "applicability": {"enum": ["applicable", "not-applicable"]},
+        "status": {"enum": ["current", "superseded", "withdrawn"]}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"review_state": {"enum": ["pending", "rejected"]}},
+            "required": ["review_state"]
+          },
+          "then": {
+            "properties": {"review_reasons": {"minItems": 1}}
+          }
+        }
+      ]
+    },
+    "decisionReferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "protected_attributes",
+        "subgroup_evaluation",
+        "replacement_authority"
+      ],
+      "properties": {
+        "classification": {"$ref": "#/$defs/decisionReference"},
+        "protected_attributes": {"$ref": "#/$defs/decisionReference"},
+        "subgroup_evaluation": {"$ref": "#/$defs/decisionReference"},
+        "replacement_authority": {"$ref": "#/$defs/decisionReference"}
+      }
+    },
+    "lineageEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "output_field",
+        "source_or_generator_ref",
+        "disposition",
+        "transformation_ref"
+      ],
+      "properties": {
+        "output_field": {"$ref": "#/$defs/nonEmptyString"},
+        "source_or_generator_ref": {"$ref": "#/$defs/nonEmptyString"},
+        "disposition": {
+          "enum": ["copied", "transformed", "generated", "derived", "dropped"]
+        },
+        "transformation_ref": {"$ref": "#/$defs/nullableString"}
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "reasons"],
+      "properties": {
+        "state": {"enum": ["passed", "blocked"]},
+        "reasons": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"state": {"const": "blocked"}},
+            "required": ["state"]
+          },
+          "then": {"properties": {"reasons": {"minItems": 1}}}
+        }
+      ]
+    },
+    "preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "record_type",
+        "operation_id",
+        "record_revision",
+        "purpose",
+        "mode",
+        "source",
+        "decision_refs",
+        "field_lineage",
+        "activated_subgroups",
+        "gate"
+      ],
+      "properties": {
+        "contract_version": {"const": "SYNTHETIC_DATA_OPERATION_V1"},
+        "record_type": {"const": "preflight"},
+        "operation_id": {"$ref": "#/$defs/identifier"},
+        "record_revision": {"$ref": "#/$defs/identifier"},
+        "purpose": {"$ref": "#/$defs/nonEmptyString"},
+        "mode": {"enum": ["new-output", "replace-local"]},
+        "source": {"$ref": "#/$defs/source"},
+        "decision_refs": {"$ref": "#/$defs/decisionReferences"},
+        "field_lineage": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/lineageEntry"}
+        },
+        "activated_subgroups": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/nonEmptyString"}
+        },
+        "gate": {"$ref": "#/$defs/gate"}
+      }
+    },
+    "evidenceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reference", "state", "reason_categories"],
+      "properties": {
+        "reference": {"$ref": "#/$defs/nonEmptyString"},
+        "state": {
+          "enum": ["passed", "failed", "insufficient", "not-measured", "not-applicable"]
+        },
+        "reason_categories": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        }
+      }
+    },
+    "commit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "target_digest",
+        "predecessor_ref",
+        "predecessor_digest",
+        "evidence_state"
+      ],
+      "properties": {
+        "state": {"enum": ["not-attempted", "committed", "failed"]},
+        "target_digest": {"$ref": "#/$defs/nullableDigest"},
+        "predecessor_ref": {"$ref": "#/$defs/nullableString"},
+        "predecessor_digest": {"$ref": "#/$defs/nullableDigest"},
+        "evidence_state": {
+          "enum": [
+            "rollback-available",
+            "unchanged-original",
+            "external-change-preserved",
+            "committed-new-output",
+            "not-applicable"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"state": {"const": "committed"}},
+            "required": ["state"]
+          },
+          "then": {
+            "properties": {
+              "target_digest": {"$ref": "#/$defs/digest"},
+              "predecessor_ref": {"$ref": "#/$defs/nonEmptyString"},
+              "predecessor_digest": {"$ref": "#/$defs/digest"}
+            }
+          }
+        }
+      ]
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "record_type",
+        "operation_id",
+        "record_revision",
+        "previous_result_revision",
+        "preflight_revision",
+        "mode",
+        "source_reference",
+        "observed_source_digest",
+        "output_digest",
+        "field_lineage",
+        "subgroup_results",
+        "validation_evidence",
+        "commit"
+      ],
+      "properties": {
+        "contract_version": {"const": "SYNTHETIC_DATA_OPERATION_V1"},
+        "record_type": {"const": "result"},
+        "operation_id": {"$ref": "#/$defs/identifier"},
+        "record_revision": {"$ref": "#/$defs/identifier"},
+        "previous_result_revision": {"$ref": "#/$defs/nullableString"},
+        "preflight_revision": {"$ref": "#/$defs/identifier"},
+        "mode": {"enum": ["new-output", "replace-local"]},
+        "source_reference": {"$ref": "#/$defs/nonEmptyString"},
+        "observed_source_digest": {"$ref": "#/$defs/nullableDigest"},
+        "output_digest": {"$ref": "#/$defs/digest"},
+        "field_lineage": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/lineageEntry"}
+        },
+        "subgroup_results": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidenceEntry"}
+        },
+        "validation_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/evidenceEntry"}
+        },
+        "commit": {"$ref": "#/$defs/commit"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "commit": {
+                "properties": {"state": {"const": "committed"}},
+                "required": ["state"]
+              }
+            },
+            "required": ["commit"]
+          },
+          "then": {
+            "properties": {
+              "previous_result_revision": {"$ref": "#/$defs/identifier"}
+            }
+          }
+        }
+      ]
+    }
+  }
+}
