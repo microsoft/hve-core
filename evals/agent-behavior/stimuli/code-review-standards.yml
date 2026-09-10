@@ -6,11 +6,13 @@ stimuli:
       As the standards code-review perspective, review this snippet for coding
       standard and convention violations, and tie each finding to the rule it
       breaks.
+
       ```python
       def ProcessData( x ):
        result=x*2
        return result
       ```
+
     tags:
       category: agent-behavior
       advisory: "true"

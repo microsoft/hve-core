@@ -7,7 +7,9 @@ agent: security-planner
 
 ## Startup
 
-Display the Security Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
+Before startup behavior, require the Security Planner to locate the available instruction file named `disclaimer-language.instructions.md`, read `disclaimer-language.instructions.md` in full, and use its `Security Planning` section as the canonical disclaimer text. If the instruction cannot be found or loaded, halt before questions, analysis, state initialization, or phase work instead of improvising or omitting the disclaimer.
+
+Check the project `state.json`. If it does not exist or `disclaimerShownAt` is `null`, display the canonical Security Planning CAUTION block verbatim, set `disclaimerShownAt` to the current ISO 8601 timestamp, append the matching `noticeLog` entry, and persist state before continuing. If the field is non-null, suppress automatic redisplay during normal continuation. If the user requests redisplay, show the full disclaimer, update `disclaimerShownAt`, and append a notice with `details.reason: "user-requested-redisplay"`.
 
 After the disclaimer, display the framework attribution `OWASP ASVS • OWASP Top 10 • NIST SSDF`. Display both the disclaimer and the attribution before any questions or analysis.
 
