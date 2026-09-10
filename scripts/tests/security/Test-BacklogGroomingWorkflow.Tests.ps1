@@ -318,7 +318,11 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         }
         $script:Source | Should -Match 'Finalize every row before making any safe output call'
         $script:Source | Should -Match 'Capture the UTC completion timestamp exactly once after all rows are finalized'
-        $script:Source | Should -Match 'Include the captured start timestamp as `started-at` and the\s+captured completion timestamp as `completed-at`'
+        $script:Source | Should -Match '(?s)literal empty string `""`; never use `null`, `"null"`, a\s+placeholder, or test content'
+        $script:Source | Should -Match '(?s)Never call\s+`publish-backlog-grooming-result` to inspect, probe, test, validate, or learn\s+its schema'
+        $script:Source | Should -Match '(?s)Because the call limit is one, any non-final call permanently\s+prevents publication for this shard'
+        $script:Source | Should -Match 'Include the captured start timestamp as\s+`started-at`'
+        $script:Source | Should -Match 'captured completion timestamp as `completed-at`'
         $script:Source | Should -Match '(?s)Do not use candidate-specific,\s+estimated, or incremented timestamps'
         $script:Source | Should -Not -Match '(?m)^\s+issues: write$'
         $script:Source | Should -Not -Match '(?m)^\s+target: "\*"$'

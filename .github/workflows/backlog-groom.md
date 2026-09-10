@@ -148,19 +148,19 @@ safe-outputs:
           required: true
           type: string
         row-2:
-          description: "JSON row for candidate position 2, or an empty string when unused"
+          description: "JSON row for candidate position 2, or the literal empty string when unused; never null, a placeholder, or test content"
           required: true
           type: string
         row-3:
-          description: "JSON row for candidate position 3, or an empty string when unused"
+          description: "JSON row for candidate position 3, or the literal empty string when unused; never null, a placeholder, or test content"
           required: true
           type: string
         row-4:
-          description: "JSON row for candidate position 4, or an empty string when unused"
+          description: "JSON row for candidate position 4, or the literal empty string when unused; never null, a placeholder, or test content"
           required: true
           type: string
         row-5:
-          description: "JSON row for candidate position 5, or an empty string when unused"
+          description: "JSON row for candidate position 5, or the literal empty string when unused; never null, a placeholder, or test content"
           required: true
           type: string
         started-at:
@@ -534,10 +534,14 @@ in the slot matching its zero-based position in `ordered_candidate_ids` plus
 one. For example, the first candidate uses `row-1`. Every populated row slot is
 a JSON string containing exactly that candidate's final row object and no
 envelope or `run` object. Set every trailing slot beyond the planned candidate
-count to the empty string. Never leave a planned slot empty or put data in an
-unused slot. Include the captured start timestamp as `started-at` and the
-captured completion timestamp as `completed-at`. Do not use candidate-specific,
-estimated, or incremented timestamps.
+count to the literal empty string `""`; never use `null`, `"null"`, a
+placeholder, or test content. Never leave a planned slot empty or put data in
+an unused slot. The declared tool schema is authoritative. Never call
+`publish-backlog-grooming-result` to inspect, probe, test, validate, or learn
+its schema. Because the call limit is one, any non-final call permanently
+prevents publication for this shard. Include the captured start timestamp as
+`started-at` and the captured completion timestamp as `completed-at`.
+Do not use candidate-specific, estimated, or incremented timestamps.
 
 The isolated result job validates row data, issue identity, caller provenance,
 complete candidate coverage, and timestamp agreement. It derives canonical
