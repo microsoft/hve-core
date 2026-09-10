@@ -1,9 +1,9 @@
 ---
 title: Code Review Readiness
-description: "Thin skill-backed perspective subagent that reviews PR deliverable readiness and changed non-code documentation against a precomputed diff and PR context, and writes structured findings"
+description: "Reviews pull-request packaging, deliverable readiness, validation evidence, and changed documentation as structured findings"
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-08-25
 ms.topic: reference
 keywords:
   - agent
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Thin skill-backed perspective subagent that reviews PR deliverable readiness and changed non-code documentation against a precomputed diff and PR context, and writes structured findings
+Reviews pull-request packaging, deliverable readiness, validation evidence, and changed documentation as structured findings
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

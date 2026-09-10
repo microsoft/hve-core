@@ -774,6 +774,31 @@ stimuli:
         config:
           pattern: "(?i)#\\[cfg\\(test\\)\\]|#\\[test\\]|#\\[tokio::test\\]|mod\\s+tests|given_.*_when_.*_then_|integration"
 
+  - name: instruction-rust-http-unit-test-isolation-conformance
+    prompt: |
+      You are writing async HTTP unit tests inside
+      `crates/order-service/src/services.rs`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path), and what does it require for unit-test placement, local HTTP
+      mocks, DNS resolution, and non-loopback connections?
+    tags:
+      category: behavior-conformance
+      instruction: rust-tests
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.rs|rust-tests\\.instructions\\.md"
+      - type: output-matches
+        name: local-mock-language
+        config:
+          pattern: "(?i)#\\[cfg\\(test\\)\\]|mod\\s+tests|wiremock|mockito|loopback|local\\s+(mock|test\\s+double)"
+      - type: output-matches
+        name: network-boundary-language
+        config:
+          pattern: "(?i)(must\\s+not|do\\s+not|avoid|prohibit)[\\s\\S]{0,80}(DNS|non-loopback)|(DNS|non-loopback)[\\s\\S]{0,80}(must\\s+not|do\\s+not|avoid|prohibit)"
+
   - name: instruction-bash-script-structure-conformance
     prompt: |
       You are creating a new bash automation script at
