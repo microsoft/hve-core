@@ -51,33 +51,6 @@
   color: var(--ms-learn-visited-link);
 }
 
-.maturityBadge {
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 2px 8px;
-  border-radius: 2px;
-  line-height: 16px;
-  flex-shrink: 0;
-  margin-bottom: 14px;
-}
-
-.maturityStable {
-  background: #e6f6e6;
-  color: #006b00;
-}
-
-.maturityPreview {
-  background: #fff8e6;
-  color: #7a4f00;
-}
-
-.maturityExperimental {
-  background: #eef9fd;
-  color: #005f73;
-}
 
 .packageDescription {
   margin: 0 0 0.75rem;
