@@ -137,13 +137,27 @@ stimuli:
         config:
           pattern: "(?i)Figma|export|frame|prototype|asset"
 
-  - name: prompt-dt-handoff-implementation-space-conformance
+  - name: prompt-dt-handoff-implementation-space-approved-no-response
     prompt: |
-      Invoke the `dt-handoff-implementation-space` prompt with minimal arguments and explain how it
-      coordinates the workflow.
+      Follow the staged `dt-handoff-implementation-space` prompt for
+      project-slug=synthetic-handoff. The coaching state `session_log` records
+      that the team explicitly chose the lateral handoff. No response is
+      available to the later proceed-or-return question. Complete the contained
+      handoff using only the synthetic workspace files.
+    agent_environment:
+      skills:
+        - ../../.github/skills/design-thinking/dt-rpi-integration
+      files:
+        - src: ../../.github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
+          dest: .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
+        - src: fixtures/dt-handoff-approved/coaching-state.txt
+          dest: .copilot-tracking/dt/synthetic-handoff/coaching-state.md
+        - src: fixtures/dt-handoff-approved/method-07-implementation-evidence.txt
+          dest: .copilot-tracking/dt/synthetic-handoff/method-07-implementation-evidence.md
     tags:
       category: behavior-conformance
       prompt: dt-handoff-implementation-space
+      branch: approved
       advisory: "true"
     graders:
       - type: output-matches
@@ -154,6 +168,75 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)implementation\\s+space|handoff|RPI|spec"
+      - type: output-matches
+        name: transition-and-both-outputs-identified
+        config:
+          pattern: "(?is)(?=.*(?:transition|coaching\\s+state))(?=.*handoff-summary-implementation-space\\.md)(?=.*[a-z0-9-]+-research-topic\\.md)"
+      - type: file-exists
+        name: implementation-handoff-created
+        config:
+          path: ".copilot-tracking/dt/synthetic-handoff/handoff-summary-implementation-space.md"
+      - type: file-exists
+        name: research-topic-created
+        config:
+          path: ".copilot-tracking/research/synthetic-handoff-research-topic.md"
+      - type: file-matches
+        name: unknown-gap-preserved-in-research-topic
+        config:
+          path: ".copilot-tracking/research/synthetic-handoff-research-topic.md"
+          pattern: "(?is)Investigation Priorities.*unknown.*(?:integration|production)"
+      - type: file-matches
+        name: lateral-transition-recorded
+        config:
+          path: ".copilot-tracking/dt/synthetic-handoff/coaching-state.md"
+          pattern: "(?is)(?:type:\\s*lateral|to:\\s*['\"]?rpi-research)"
+
+  - name: prompt-dt-handoff-implementation-space-missing-approval
+    prompt: |
+      Act as the automatic readiness caller for project-slug=synthetic-handoff.
+      Read the staged `dt-handoff-implementation-space` prompt as the contract
+      and apply it through its handoff decision boundary. The caller requested
+      readiness assessment only, not handoff execution, and no coaching state
+      `session_log` entry records explicit lateral-handoff approval. No user
+      response is available. Follow the contract until it requires you to stop.
+    agent_environment:
+      skills:
+        - ../../.github/skills/design-thinking/dt-rpi-integration
+      files:
+        - src: ../../.github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
+          dest: .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
+        - src: fixtures/dt-handoff-missing-approval/coaching-state.txt
+          dest: .copilot-tracking/dt/synthetic-handoff/coaching-state.md
+        - src: fixtures/dt-handoff-missing-approval/method-07-implementation-evidence.txt
+          dest: .copilot-tracking/dt/synthetic-handoff/method-07-implementation-evidence.md
+    tags:
+      category: behavior-conformance
+      prompt: dt-handoff-implementation-space
+      branch: missing-approval
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|handoff"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)implementation\\s+space|handoff|RPI|spec"
+      - type: output-matches
+        name: missing-approval-requests-decision-and-stops
+        config:
+          pattern: "(?is)(?=.*(?:no.{0,120}(?:approval|handoff decision)|approval.{0,80}(?:missing|absent|unverified|cannot)))(?=.*(?:would you|do you want|should (?:I|we)|please (?:choose|confirm)).{0,240}(?:handoff|proceed))"
+      - type: diff-empty
+        name: missing-approval-workspace-unchanged
+      - type: file-not-exists
+        name: no-implementation-handoff-created
+        config:
+          path: ".copilot-tracking/dt/synthetic-handoff/handoff-summary-implementation-space.md"
+      - type: file-not-exists
+        name: no-research-topic-created
+        config:
+          path: ".copilot-tracking/research/synthetic-handoff-research-topic.md"
 
   - name: prompt-dt-handoff-problem-space-conformance
     prompt: |

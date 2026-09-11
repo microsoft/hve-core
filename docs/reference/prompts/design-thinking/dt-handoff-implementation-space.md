@@ -3,7 +3,7 @@ title: Dt Handoff Implementation Space
 description: Compiles DT Methods 7-9 into research-ready input for rpi-research at the Implementation Space exit
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-02
+ms.date: 2026-09-10
 ms.topic: reference
 keywords:
   - prompt
@@ -32,7 +32,9 @@ Use this prompt when Methods 7 through 9 and their earlier lineage are ready for
 
 ## How to use it
 
-Provide the `project-slug`. The prompt checks completion across the project lineage and compiles available implementation evidence; the resulting exit tier informs research but does not bypass it or certify production readiness.
+Provide the `project-slug` after choosing a lateral handoff. The prompt verifies that choice before changing coaching state or creating handoff files, then checks completion across the project lineage and compiles available implementation evidence.
+
+When critical gaps are found and the follow-up question receives no response, the prompt continues only if the earlier handoff choice was verified. Otherwise, its response includes the handoff decision question and stops without writing the transition or handoff files. Proceeding preserves every gap as an RPI Research priority; it does not certify production readiness.
 
 ## Example usage
 
@@ -40,4 +42,4 @@ Provide the `project-slug`. The prompt checks completion across the project line
 /dt-handoff-implementation-space project-slug=factory-floor-maintenance
 ```
 
-The prompt creates a research-ready implementation handoff with recorded gaps and lineage.
+The prompt creates a research-ready implementation handoff with recorded gaps and lineage only after handoff approval is established.
