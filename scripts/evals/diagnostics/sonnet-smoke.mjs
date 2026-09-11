@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-export const MODEL = 'claude-sonnet-4.6';
+export const MODEL = 'claude-sonnet-5';
 export const CLI = '1.0.80';
 export const BRANCH = 'refs/heads/diag/2894-sonnet-smoke-20260911';
 export const CELLS = Object.freeze({
