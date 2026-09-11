@@ -53,7 +53,7 @@ These skills are loaded by the Security Planner's Conditional Skill Map. Activat
 
 Provide `rpi-research` with the specific framework topic and mapping purpose; security authors, reviewers, control owners, and downstream consumers as the audience and intended use; explicit mapping questions and evidence criteria; component, bucket, technology, cloud, source, version, jurisdiction, and date scope plus non-goals; risk, licensing, privacy, deadline, phase-gate, and write-boundary constraints; supplied component, bucket, state, standards, control, and user evidence; requested outputs; and output mode (`analysis` or `comparison`).
 
-Explicitly identify `.copilot-tracking/security-plans/{project-slug}/` as a trusted alternate evidence root and require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath it. The skill owns the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and synthesis.
+Explicitly identify `.copilot-tracking/security-plans/{project-slug}/` as a trusted alternate evidence root.
 
 Read the completed primary research artifact and synthesize applicable Standards Coverage, Findings, and Recommendations into the component mapping. Treat `Blocked` and `Needs clarification` as unresolved evidence, not permission to infer a mapping. If `rpi-research` or a required lookup capability is unavailable, inform the user and stop the dependent mapping rather than synthesizing standards from training data. The skill decides whether independent questions warrant parallel research.
 

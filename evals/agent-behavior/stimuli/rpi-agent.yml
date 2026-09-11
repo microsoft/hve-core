@@ -4,8 +4,8 @@ stimuli:
   - name: rpi-agent-class-recipe
     prompt: |
       Research evidence for this task is sufficient. The current lifecycle
-      routes planning through the `rpi-plan` skill, not the `rpi-planner` phase
-      subagent. Do not call tools. Return exactly `rpi-plan`.
+      routes planning through the `rpi-plan` skill. Do not call tools. Return
+      exactly `rpi-plan`.
     tags:
       category: agent-behavior
       advisory: "true"

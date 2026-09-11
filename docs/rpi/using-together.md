@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-11
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -18,7 +18,7 @@ keywords:
 estimated_reading_time: 8
 ---
 
-This guide walks through an evidence-led RPI lifecycle for a complex task. `RPI Agent` is a user-selected lifecycle wrapper, and `/rpi-quick` is a skill-based full-flow entry point. They activate the same phase skills, use one task identity, and do not require an autonomous pipeline of specialized task workers.
+This guide walks through an evidence-led RPI lifecycle for a complex task. `RPI Agent` is a user-selected lifecycle wrapper. It activates the phase skills, uses one task identity, and does not require an autonomous pipeline of specialized task workers.
 
 ## The Complete Workflow
 
@@ -196,7 +196,7 @@ Dependencies:
 
 Use `Pxx` and `Pxx-Txx` IDs, headings, and markers to navigate the plan. They remain stable when surrounding text changes. Code, commands, and symbols use backticks, and existing files are Markdown links relative to the plan so you can open them from the editor.
 
-`/rpi-plan` owns the complete plan. Planning subagents default to `adaptive`: they are preferred for large, relatively independent phases. Set `delegation=never` to keep planning inline or `delegation=always` to require a bounded subagent assignment for every phase. `rpi-plan-critique` independently assesses the complete plan once.
+`/rpi-plan` owns the complete plan and drafts every phase itself. Skills and subagents whose descriptions say they are used during planning extend it as their descriptions direct; no subagent is required. `rpi-plan-critique` independently assesses the complete plan once.
 
 ### Implement
 
@@ -256,10 +256,10 @@ Ready for review.
 3. `/rpi-review` creates or updates one review record:
 
    * Locates research, the task-centered plan, plan critique, changes, and validation evidence
-   * Dispatches one selected review worker (a phase-matched subagent such as `RPI Review Builder`, or a general-purpose subagent) to compare each `Pxx` and `Pxx-Txx` item with completion and change evidence
+   * Compares each `Pxx` and `Pxx-Txx` item with completion and change evidence in one marker-driven pass; a helper such as `RPI Review Builder` may supply candidate findings that the review verifies before recording
    * Assesses implementation-time plan updates, critique dispositions, and plan follow-up items
    * Records severity-graded `RV-xxx` findings, separate execution status and outcome, validation evidence or `Unavailable`, and proposed routing
-   * Keeps final outcome and route decisions with the review parent in `## Parent Decision Record`; in a standalone review you walk through each actionable finding and choose its route
+   * Keeps final outcome and route decisions in `## Parent Decision Record`; in a standalone review you walk through each actionable finding and choose its route
 
 4. Review the findings:
 
@@ -297,7 +297,7 @@ Return RV-001 to a later `rpi-implement` invocation.
 
 ### Follow-up
 
-Review routes work rather than silently looping it through a generic worker chain:
+Review routes work rather than silently looping it through a generic chain:
 
 * Defects return to `rpi-implement`.
 * Decision gaps return to `rpi-plan`.
@@ -390,18 +390,17 @@ When `/rpi-review` identifies research or planning gaps:
 | Follow-up             | Routed from review | Earliest responsible stage or a distinct next item                    |
 
 > [!TIP]
-> `RPI Agent` and `/rpi-quick` are alternative lifecycle entry surfaces for the same phase skills. They use research readiness and do not require fresh research or every lifecycle concept in one conversation.
+> `RPI Agent` is a lifecycle entry surface for the phase skills. It uses research readiness and does not require fresh research or every lifecycle concept in one conversation.
 
 For a long lifecycle, resume with the stable task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers in the durable artifacts.
 
 ## RPI Entry Surfaces
 
-Choose the entry surface that best fits the task. Both `RPI Agent` and `/rpi-quick` activate the same phase skills.
+Choose the entry surface that best fits the task.
 
 | Entry surface       | Use it when                                  | Contract                                                                     |
 |---------------------|----------------------------------------------|------------------------------------------------------------------------------|
 | `RPI Agent`         | You want a user-selected lifecycle wrapper   | Activates applicable phase skills from research readiness; manual by default |
-| `/rpi-quick`        | You want a skill-based full-flow entry point | Same lifecycle contract and one task identity                                |
 | Direct phase skills | The next responsible action is already known | Bounded Research, Plan, Implement, or Review work                            |
 
 ### Manual and Automatic Mode in RPI Agent

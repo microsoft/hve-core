@@ -3357,8 +3357,8 @@ stimuli:
 - name: rpi-agent-class-recipe
   prompt: |
     Research evidence for this task is sufficient. The current lifecycle
-    routes planning through the `rpi-plan` skill, not the `rpi-planner` phase
-    subagent. Do not call tools. Return exactly `rpi-plan`.
+    routes planning through the `rpi-plan` skill. Do not call tools. Return
+    exactly `rpi-plan`.
   tags:
     category: agent-behavior
     advisory: "true"
@@ -3397,37 +3397,22 @@ stimuli:
     name: requested-task-selected
     config:
       pattern: ^\s*2607\s*$
-- name: rpi-planner-bounded-phase-revision
+- name: rpi-researcher-return-only-suggestions
   prompt: |
-    You are assigned only P02 in an existing plan. What should happen to P01
-    and P03 while you revise P02? Return exactly `Preserve P01 and P03
-    unchanged.`
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: rpi-planner
-  graders:
-  - type: output-matches
-    name: preserves-other-phases
-    config:
-      pattern: (?i)^\s*(preserve|leave)\s+(P01\s+(and|&)\s+P03|P01/P03)\s+unchanged[.!]?\s*$
-- name: rpi-researcher-lane-preflight-and-return
-  prompt: |
-    The approved lane path is
-    `.copilot-tracking/research/subagents/2026-07-17/cache-policy-subagent-research.md`
-    and the distinct parent artifact is
-    `.copilot-tracking/research/2026-07-17/cache-policy-research.md`.
-    The required pre-write action is lane-path validation. Do not call tools.
-    Return exactly `Validate the lane path.`
+    You found three documentation pages that answer the caller's bounded
+    question. The caller owns the research artifact at
+    `.copilot-tracking/research/2026-07-17/cache-policy-research.md`. You
+    may return suggestions only and write nothing. Do not call tools.
+    Return exactly `Return source pointers; write nothing.`
   tags:
     category: agent-behavior
     advisory: "true"
     agent: rpi-researcher
   graders:
   - type: output-matches
-    name: lane-path-preflight
+    name: return-only-no-write
     config:
-      pattern: (?i)^\s*(validate|preflight-check)\s+the\s+lane\s+path[.!]?\s*$
+      pattern: (?i)^\s*return\s+source\s+pointers;\s*write\s+nothing[.!]?\s*$
 - name: rpi-review-builder-default-depth
   prompt: |
     RPI Review Builder uses standard review depth unless the user explicitly

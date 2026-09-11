@@ -3,7 +3,7 @@ title: Understanding the RPI Workflow
 description: Learn how Research, Plan, Implement, Review, and Follow-up guide evidence-led delivery
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-11
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -37,7 +37,7 @@ RPI solves this through a counterintuitive insight: when AI knows it cannot impl
 > [!TIP]
 > See [Why the RPI Workflow Works](why-rpi) for the psychology, quality comparisons, and entry surfaces behind the lifecycle.
 
-RPI separates lifecycle concepts without requiring an autonomous chain of specialized task workers. Use `RPI Agent` as a user-selected lifecycle wrapper, `/rpi-quick` as a skill-based full-flow entry point, or a direct phase skill when you need focused work.
+RPI separates lifecycle concepts without requiring an autonomous chain of specialized task workers. Use `RPI Agent` as a user-selected lifecycle wrapper, or a direct phase skill when you need focused work.
 
 ## The Lifecycle Concepts
 
@@ -82,7 +82,7 @@ Completion checkboxes change only after evidence exists. If implementation needs
 
 ### ✅ Review with rpi-review
 
-Use `/rpi-review` when the implementation evidence is ready for acceptance review. Review does not modify the sources under review. One selected review worker compares requirements, acceptance criteria, plan and task completion, critique dispositions, implementation-time plan updates, changes, and validation evidence in one record, and the review parent records the final outcome and routing:
+Use `/rpi-review` when the implementation evidence is ready for acceptance review. Review does not modify the sources under review. It compares requirements, acceptance criteria, plan and task completion, critique dispositions, implementation-time plan updates, changes, and validation evidence in one record, and records the final outcome and routing:
 
 ```text
 .copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md
@@ -101,7 +101,6 @@ Choose the smallest entry surface that owns the next action:
 | Entry surface      | Use it when                                                   | Contract                                                                                            |
 |--------------------|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
 | `RPI Agent`        | You want a user-selected lifecycle wrapper                    | Activates the applicable RPI skills with one task identity; manual by default, Full Auto on request |
-| `/rpi-quick`       | You want a skill-based full-flow entry point                  | Coordinates research readiness, planning, implementation, review, and follow-up                     |
 | `/rpi-research`    | A demonstrated evidence gap blocks credible progress          | Produces research evidence without planning or implementation                                       |
 | `/rpi-plan`        | Adequate evidence needs an implementation strategy            | Produces the task-centered plan and critique disposition                                            |
 | `/rpi-implement`   | Approved work is ready to execute                             | Produces source changes, change evidence, and validation                                            |
@@ -109,7 +108,7 @@ Choose the smallest entry surface that owns the next action:
 | `/rpi-challenger`  | You want to expose assumptions before acting                  | Asks adaptive skeptical questions and records unresolved items                                      |
 | `/rpi-walkthrough` | You want to understand code or artifacts before changing them | Explains one segment at a time and captures requested changes when needed                           |
 
-Select `RPI Agent` when you want a user-selected lifecycle wrapper that activates these same skills. It runs in manual mode until you confirm an automatic session, which then completes the remaining phases through Review and offers ranked follow-up work. `RPI Agent` and `/rpi-quick` are alternative entry surfaces, not autonomous dispatchers of specialized task workers. See [Using RPI Together](using-together#manual-and-automatic-mode-in-rpi-agent) for the mode details.
+Select `RPI Agent` when you want a user-selected lifecycle wrapper that activates these same skills. It runs in manual mode until you confirm an automatic session, which then completes the remaining phases through Review and offers ranked follow-up work. `RPI Agent` is an entry surface, not an autonomous dispatcher of specialized task workers. See [Using RPI Together](using-together#manual-and-automatic-mode-in-rpi-agent) for the mode details.
 
 ## Managing Context Between Lifecycle Concepts
 
@@ -144,7 +143,7 @@ Use research when readiness identifies a gap. Otherwise, select the smallest lif
 5. Review with `/rpi-review`, then route defects, decisions, evidence gaps, or residual work through Follow-up.
 
 > [!TIP]
-> Use `/rpi-quick` or select `RPI Agent` when you want a lifecycle entry surface. Use a direct phase skill when the required next action is already clear.
+> Select `RPI Agent` when you want a lifecycle entry surface. Use a direct phase skill when the required next action is already clear.
 
 ## Next Steps
 

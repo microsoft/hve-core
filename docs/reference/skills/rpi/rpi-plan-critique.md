@@ -3,7 +3,7 @@ title: rpi-plan-critique
 description: Independently critique an RPI implementation plan once against supplied evidence without editing the plan. Use when planning credibility needs a read-only assessment.
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - skill
@@ -28,7 +28,7 @@ Independently critique an RPI implementation plan once against supplied evidence
 
 ## When to use it
 
-`rpi-plan-critique` is the one-time readiness gate inside planning. [rpi-plan](rpi-plan) dispatches it after the planner judges the plan implementation-ready, and the critique writes one artifact under `.copilot-tracking/reviews/plans/` without editing the plan. Any returned status (`Complete`, `Partial`, or `Blocked`) consumes the task's single invocation; the planner disposes every `PC-xxx` finding and finalizes without a second critique.
+`rpi-plan-critique` is the one-time readiness gate inside planning. [rpi-plan](rpi-plan) runs it after the planner judges the plan implementation-ready, and the critique writes one artifact under `.copilot-tracking/reviews/plans/` without editing the plan. Any returned status (`Complete`, `Partial`, or `Blocked`) consumes the task's single invocation; the planner disposes every `PC-xxx` finding and finalizes without a second critique.
 
 Invoke it directly only when you want an independent, evidence-bounded read of an existing plan and no critique has run for that task yet. A `Pass`, `Revise`, or `Blocked` verdict is advisory: confirmed user direction outranks critique advice, and a `Revise` verdict means the planner revises or asks for a decision, not that the critique loops.
 

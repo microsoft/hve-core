@@ -1,9 +1,9 @@
 ---
 title: RPI Review Builder
-description: Builds one complete RPI review record from a bounded planning and implementation evidence set. Use when rpi-review needs its canonical review document.
-sidebar_position: 4
+description: "Compares supplied RPI plan, changes, and validation evidence for one task boundary and returns candidate findings with evidence locations and suggested routes for the review parent to verify. Use during review when isolating the evidence comparison would help."
+sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-03
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - agent
@@ -23,42 +23,38 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Builds one complete RPI review record from a bounded planning and implementation evidence set. Use when rpi-review needs its canonical review document.
+Compares supplied RPI plan, changes, and validation evidence for one task boundary and returns candidate findings with evidence locations and suggested routes for the review parent to verify. Use during review when isolating the evidence comparison would help.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-`RPI Review Builder` is dispatched once by [rpi-review](../../../skills/rpi/rpi-review), not selected by a user. After the review parent initializes the record under `.copilot-tracking/reviews/logs/` and persists builder execution `started`, this worker compares the plan, critique, changes record, and validation evidence for the exact task boundary.
+`RPI Review Builder` is an optional helper that [rpi-review](../../../skills/rpi/rpi-review) may use, not a required step and not something a user selects. The review parent compares the evidence and writes the record itself; it asks this helper for candidate findings only when isolating the comparison for a large boundary, or gathering the exact evidence locations to read, would help.
 
-It writes the evidence body: acceptance coverage, one complete set of severity-graded `RV-xxx` findings, proposed execution status and outcome, and a proposed route for each finding.
+The helper compares the plan, changes record, critique dispositions, and validation evidence for the stated task boundary and returns candidate findings: the related marker or requirement, expected behavior, observed evidence with its location, why it may matter, and a suggested severity and route. It also returns coverage notes and the boundaries it could not assess.
 
-It never edits `## Parent Decision Record`, asks the user a question, runs validation, changes source, or dispatches another worker. Its findings are advisory; the parent records the final outcome and every route. Any returned status (`Complete`, `Partial`, or `Blocked`) consumes the task's single builder invocation.
-
-`rpi-review` selects this subagent because its name contains `review`; when it is unavailable, the skill uses an unnamed general-purpose subagent with the same write boundary, or stops Blocked if no subagent can be dispatched.
+The review parent reads each cited location, records an `RV-xxx` finding only when it confirms the candidate, and decides execution status, outcome, and every route in `## Parent Decision Record`. The helper writes no file, runs no validation, and never speaks to the user.
 
 ## Example usage
 
-A representative parent dispatch:
+A representative dispatch:
 
 ```text
 Task: blob-storage. Scope: full task. Depth: standard (default).
-Review record (write only here, leave Parent Decision Record unchanged):
-  .copilot-tracking/reviews/logs/2026-09-04/blob-storage-review.md
-Evidence: plan, critique, changes record, and research at their dated paths; validation results from the changes record.
+Plan, critique, changes record, and research at their dated .copilot-tracking paths.
 Acceptance basis: FR-001..FR-004, NFR-001..NFR-002, task Requirements blocks, confirmed decisions, PC-001 disposition.
-Return: compact pointer summary; no user questions, routing decisions, or destination invocation.
+Return: candidate findings with evidence locations; no RV IDs, no outcome, no record writes.
 ```
 
-The worker returns:
+The helper returns candidates for the parent to verify:
 
 ```text
-* Builder execution: Complete
-* Review depth and provenance: standard, default
-* Review record: .copilot-tracking/reviews/logs/2026-09-04/blob-storage-review.md
-* Proposed execution status and outcome: Complete; Defects found
-* Findings: 1 Medium (RV-001 upload_stream retry contract undocumented), 1 Low (RV-002 retry count not configurable)
-* Validation coverage: pytest passed; integration suite skipped with reason
-* Proposed routes: RV-001 -> rpi-implement; RV-002 -> follow-up
-* Parent decisions needed: accept or reroute RV-001 and RV-002
-* Boundary confirmation: review record was the only written artifact
+* Status: Complete
+* Scope compared: blob-storage, full task, standard
+* Candidate findings:
+  * P02-T01 / FR-003: expected a documented retry contract on upload_stream; observed the changes record cites tests but src/storage/blob_client.py has no docstring on upload_stream; may leave callers unaware partial uploads retry; suggested Medium, rpi-implement, confidence High
+  * NFR-002: expected a configurable retry count; observed a constant in blob_client.py; suggested Low, follow-up, confidence Medium
+* Coverage notes: FR-001, FR-002, FR-004, PC-001 disposition, and P01 markers consistent with the changes record
+* Not assessed: integration suite result (skipped in the changes record)
+* Validation evidence seen: pytest passed; integration suite skipped with reason
+* Verify before recording: upload_stream in src/storage/blob_client.py; "Add retry tests" heading in the changes record
 ```

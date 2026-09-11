@@ -3,7 +3,7 @@ title: rpi-plan
 description: "Create one evidence-based RPI implementation plan from supplied context, research, drafts, and decisions. Use when implementation planning is needed."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-07
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - skill
@@ -32,14 +32,15 @@ Use `rpi-plan` when adequate evidence exists and the work needs a sequenced, ver
 
 The Phase Checklist opens with **Before** and **After** Mermaid diagrams comparing the evidence-backed starting state with the intended result of all phases. Each phase highlights its changes within the After view, including labeled removal context when needed. Diagrams inherit the renderer's light or dark theme, use readable sans-serif labels, and pair custom highlight fills with explicit contrasting text colors.
 
-Planning owns two internal gates. It activates [rpi-research](rpi-research) only for a demonstrated readiness gap, and it dispatches [rpi-plan-critique](rpi-plan-critique) at most once, after the planner judges the plan implementation-ready. Confirmed user direction outranks critique advice.
+Planning owns two internal gates. It activates [rpi-research](rpi-research) only for a demonstrated readiness gap, and it runs [rpi-plan-critique](rpi-plan-critique) at most once, after the planner judges the plan implementation-ready. Confirmed user direction outranks critique advice.
 
-Two inputs shape how the work is done:
+The planner drafts every phase itself. Before drafting, it looks for skills and subagents whose descriptions say they are used during planning or with `rpi-plan` and follows each description's guidance on when and how to use it; no subagent is required.
 
-| Input        | Values                                  | Effect                                                                                                                                  |
-|--------------|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `delegation` | `adaptive` (default), `never`, `always` | Whether large, independent phases are drafted by a planning subagent such as [RPI Planner](../../agents/hve-core/subagents/rpi-planner) |
-| `critique`   | `standard` (default), `deep`            | How broadly the single critique traces evidence; `deep` requires an explicit request                                                    |
+One input shapes how the critique is done:
+
+| Input      | Values                       | Effect                                                                               |
+|------------|------------------------------|--------------------------------------------------------------------------------------|
+| `critique` | `standard` (default), `deep` | How broadly the single critique traces evidence; `deep` requires an explicit request |
 
 Reach for a different asset when:
 
@@ -50,16 +51,15 @@ Reach for a different asset when:
 ## Example usage
 
 ```text
-/rpi-plan task=blob-storage research=.copilot-tracking/research/2026-09-04/blob-storage-research.md delegation=adaptive
+/rpi-plan task=blob-storage research=.copilot-tracking/research/2026-09-04/blob-storage-research.md
 ```
 
-The skill sends one `RPI Plan` opening with the interpreted goal, starting evidence, and decision state, drafts the phases, adds the Phase Checklist diagrams, and dispatches the critique once the plan is ready. Its final response summarizes readiness rather than restating the plan:
+The skill sends one `RPI Plan` opening with the interpreted goal, starting evidence, and decision state, drafts the phases, adds the Phase Checklist diagrams, and runs the critique once the plan is ready. Its final response summarizes readiness rather than restating the plan:
 
 ```text
 * Planning execution: Complete; Planning Readiness: Ready
 * Critique: standard, verdict Pass; PC-001 (Medium) resolved by adding the retry test to P02-T02 Requirements
 * Decisions: managed identity for production confirmed; connection string limited to local development
-* Delegation: adaptive; P02 drafted by RPI Planner, P01 and P03 inline
 
 | Artifact                                                                                                                                             | Description          |
 |------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|

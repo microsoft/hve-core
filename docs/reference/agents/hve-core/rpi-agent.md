@@ -3,7 +3,7 @@ title: RPI Agent
 description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-07
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - agent
@@ -32,7 +32,7 @@ Select `RPI Agent` when one task should move through Research, Plan, Implement, 
 
 It persists mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups in one JSON state record so a later conversation can resume from the recorded phase.
 
-Child tasks inherit your participation preferences and unresolved work, but own fresh phase artifacts and critique/Review execution records. If a state write fails, progression pauses; recovery reconciles the recorded transition before dispatching work, without creating a duplicate child.
+Child tasks inherit your participation preferences and unresolved work, but own fresh phase artifacts and critique/Review execution records. If a state write fails, progression pauses; recovery reconciles the recorded transition before starting work, without creating a duplicate child.
 
 It offers two modes:
 
@@ -45,7 +45,6 @@ Both modes stop for blockers, required human review, and destructive, hard-to-re
 
 Reach for a different asset when:
 
-* You want a lighter, single-conversation pass with no persisted state. Use [rpi-quick](../../skills/rpi/rpi-quick).
 * The next action is already clear. Invoke the phase skill directly.
 * You want to understand or challenge something before committing to work. Use [rpi-walkthrough](../../skills/rpi/rpi-walkthrough) or [rpi-challenger](../../skills/rpi/rpi-challenger).
 
