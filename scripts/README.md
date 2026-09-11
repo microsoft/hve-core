@@ -70,11 +70,11 @@ compiled Agentic Workflows. Backlog grooming uses these scripts to reconstruct
 candidate-addressed scalar calls, produce canonical shard results, and validate
 unchanged v2 artifacts before deterministic fan-in.
 
-| Script                                                                 | Purpose                                                        |
-|------------------------------------------------------------------------|----------------------------------------------------------------|
-| `backlog-grooming/Invoke-BacklogGroomResultCollector.ps1`              | Collect scalar candidate calls into one canonical shard result |
-| `backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1`                | Validate shard artifacts and produce an ordered wave aggregate |
-| `backlog-grooming/Modules/BacklogGrooming.psm1`                        | Reconstruct, validate, normalize, and digest shard results      |
+| Script                                                    | Purpose                                                        |
+|-----------------------------------------------------------|----------------------------------------------------------------|
+| `backlog-grooming/Invoke-BacklogGroomResultCollector.ps1` | Collect scalar candidate calls into one canonical shard result |
+| `backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1`   | Validate shard artifacts and produce an ordered wave aggregate |
+| `backlog-grooming/Modules/BacklogGrooming.psm1`           | Reconstruct, validate, normalize, and digest shard results     |
 
 The agent supplies semantic fields and up to five contiguous categorized
 evidence citations. After parsing and binding the call to a planned issue, the
@@ -250,17 +250,17 @@ Copilot CLI plugin manifest synchronization and validation.
 
 Pester test organization matching the scripts structure.
 
-| Directory             | Tests For                                |
-|-----------------------|------------------------------------------|
-| `agentic-workflows/`  | Compiled Agentic Workflow runtime support |
-| `lib/`                | Shared helper tests                      |
-| `devcontainer/`       | Devcontainer validation tests            |
-| `extension/`          | Extension packaging tests                |
-| `plugins/`            | Plugin manifest sync tests               |
-| `linting/`            | Linting script tests                     |
-| `security/`           | Security validation tests                |
-| `Fixtures/`           | Shared test fixtures                     |
-| `Mocks/`              | Shared mock data                         |
+| Directory            | Tests For                                 |
+|----------------------|-------------------------------------------|
+| `agentic-workflows/` | Compiled Agentic Workflow runtime support |
+| `lib/`               | Shared helper tests                       |
+| `devcontainer/`      | Devcontainer validation tests             |
+| `extension/`         | Extension packaging tests                 |
+| `plugins/`           | Plugin manifest sync tests                |
+| `linting/`           | Linting script tests                      |
+| `security/`          | Security validation tests                 |
+| `Fixtures/`          | Shared test fixtures                      |
+| `Mocks/`             | Shared mock data                          |
 
 Run all tests:
 
