@@ -85,8 +85,23 @@ stimuli:
 
   - name: prompt-cspell-config-conformance
     prompt: |
-      Invoke the `cspell-config` prompt with minimal arguments and explain how it
-      coordinates the workflow.
+      Invoke the `cspell-config` prompt against the two synthetic workspaces
+      below. For each one, state the configuration or dictionary you would write
+      to and why, before proposing any edit.
+
+      Workspace A resolves from evidence. Its `package.json` declares the script
+      `spell-check` as `cspell "**/*.md" --config config/base.cspell.json`. The
+      workspace also contains a root `.cspell.json`, a `docs/.cspell.json`, and a
+      word list at `.cspell/terms.txt`. Only `config/base.cspell.json` declares a
+      `dictionaryDefinitions` entry named `terms`, and its `dictionaries` list
+      does not include that name. Explain which configuration the command loads,
+      which configuration applies to a file under `docs/`, whether the word list
+      at `.cspell/terms.txt` participates, which candidates you did not select,
+      and how you confirm the result.
+
+      Workspace B does not resolve. It has `cspell.json` and `.cspell.json`
+      beside each other at the root and no spell-check entry in any task runner.
+      State what you do in that case.
     tags:
       category: behavior-conformance
       prompt: cspell-config
@@ -97,9 +112,25 @@ stimuli:
         config:
           pattern: "(?i)cspell|spell"
       - type: output-matches
-        name: scope-language
+        name: command-and-search-resolution
         config:
-          pattern: "(?i)cspell|dictionary|word|spelling|config"
+          pattern: "(?i)no-config-search|config-search|nearest\\s+config|invocation\\s+(root|base|working)|project\\s+command|--config"
+      - type: output-matches
+        name: selected-and-unselected-candidates
+        config:
+          pattern: "(?i)not\\s+select|unselected|did\\s+not\\s+apply|rather\\s+than|instead\\s+of|candidate"
+      - type: output-matches
+        name: dictionary-activation
+        config:
+          pattern: "(?i)dictionaryDefinitions|dictionaries|not\\s+enabled|never\\s+loads|activated|activation"
+      - type: output-matches
+        name: same-command-validation
+        config:
+          pattern: "(?i)same\\s+command|re-?run|spell-check|validat"
+      - type: output-matches
+        name: ambiguity-handling
+        config:
+          pattern: "(?i)ambiguous|ambiguity|cannot\\s+determine|ask\\s+(the\\s+)?user|which\\s+config|stop\\b|clarif"
 
   - name: prompt-dt-canonical-deck-conformance
     prompt: |
