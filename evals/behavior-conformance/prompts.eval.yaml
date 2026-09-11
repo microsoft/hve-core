@@ -150,7 +150,7 @@ stimuli:
       files:
         - src: ../../.github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
           dest: .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
-        - src: fixtures/dt-handoff-approved/coaching-state.yaml
+        - src: fixtures/dt-handoff-approved/coaching-state.txt
           dest: .copilot-tracking/dt/synthetic-handoff/coaching-state.md
         - src: fixtures/dt-handoff-approved/method-07-implementation-evidence.txt
           dest: .copilot-tracking/dt/synthetic-handoff/method-07-implementation-evidence.md
@@ -205,7 +205,7 @@ stimuli:
       files:
         - src: ../../.github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
           dest: .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
-        - src: fixtures/dt-handoff-missing-approval/coaching-state.yaml
+        - src: fixtures/dt-handoff-missing-approval/coaching-state.txt
           dest: .copilot-tracking/dt/synthetic-handoff/coaching-state.md
         - src: fixtures/dt-handoff-missing-approval/method-07-implementation-evidence.txt
           dest: .copilot-tracking/dt/synthetic-handoff/method-07-implementation-evidence.md
