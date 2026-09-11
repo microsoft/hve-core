@@ -1,0 +1,83 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Sonnet Version Smoke
+
+on:
+  push:
+    branches: [diag/2894-sonnet-smoke-20260911]
+    paths:
+      - '.github/workflows/sonnet-smoke.yml'
+      - 'scripts/evals/diagnostics/sonnet-smoke.mjs'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: sonnet-version-smoke-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    if: github.repository == 'microsoft/hve-core' && github.ref == 'refs/heads/diag/2894-sonnet-smoke-20260911'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        cell: [historical, current, old-core-old-sdk, new-core-new-sdk]
+    env:
+      SMOKE_CELL: ${{ matrix.cell }}
+    steps:
+      - name: Checkout diagnostic revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Offline harness checks
+        run: node --test scripts/tests/evals/sonnet-smoke.test.mjs
+
+      - name: Prepare isolated dependencies without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/sonnet-smoke-$SMOKE_CELL"
+          node scripts/evals/diagnostics/sonnet-smoke.mjs prepare "$root" "$SMOKE_CELL"
+          # Capture install diagnostics privately; never upload the raw stream.
+          npm --prefix "$root" install --package-lock-only --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org/ > "$RUNNER_TEMP/sonnet-install.log" 2>&1
+          npm --prefix "$root" ci --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org/ >> "$RUNNER_TEMP/sonnet-install.log" 2>&1
+
+      - name: One tool-denied Sonnet turn
+        shell: bash
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          SMOKE_LIVE: '1'
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/sonnet-smoke-$SMOKE_CELL"
+          # The outer timeout also bounds startup and subprocess teardown.
+          timeout --signal=TERM --kill-after=5s 120s node scripts/evals/diagnostics/sonnet-smoke.mjs probe "$root" "$SMOKE_CELL" > "$RUNNER_TEMP/sonnet-runtime.log" 2>&1
+
+      - name: Reconstruct safe diagnostic result
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/sonnet-smoke-$SMOKE_CELL"
+          node scripts/evals/diagnostics/sonnet-smoke.mjs publish "$root" "$SMOKE_CELL" "sonnet-results/$SMOKE_CELL.json"
+
+      - name: Upload aggregate only
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sonnet-smoke-${{ matrix.cell }}
+          path: sonnet-results/${{ matrix.cell }}.json
+          if-no-files-found: error
+          retention-days: 7
