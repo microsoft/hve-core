@@ -285,6 +285,7 @@ function New-DryRunSummary {
         winRate                  = 0.0
         invariantFailures        = 0
         runHealthFailures        = 0
+        executionDiagnostics     = @()
         invocationEvidence       = @()
         invocationFailures       = 0
         comparisonCalibration    = @()
@@ -328,14 +329,127 @@ function Test-CustomizationCollapse {
 }
 
 function Invoke-VallyCommand {
+    <#
+    .SYNOPSIS
+        Returns the native exit code without emitting untrusted CLI output.
+    .PARAMETER Arguments
+        Arguments passed to Vally.
+    .OUTPUTS
+        [int] Exit code; trial diagnostics are read separately from results.jsonl.
+    #>
     [CmdletBinding()]
+    [OutputType([int])]
     param(
         [Parameter(Mandatory)]
         [string[]]$Arguments
     )
 
-    & vally @Arguments
-    return $LASTEXITCODE
+    # Grader failures use nonzero exits; raw streams can contain agent output or secrets.
+    $PSNativeCommandUseErrorActionPreference = $false
+    & vally @Arguments *> $null
+    return [int]$LASTEXITCODE
+}
+
+function Get-VallyExecutionDiagnostic {
+    <#
+    .SYNOPSIS
+        Summarizes one eval attempt without retaining raw executor errors.
+    .DESCRIPTION
+        Categories are bounded hints from error messages, not root-cause verdicts.
+        This evidence is diagnostic only; existing population and grading gates own
+        acceptance. Model and attempt identity come from the caller, not trial content.
+    .PARAMETER RunDir
+        Current attempt's run directory, or null when execution produced none.
+    .PARAMETER Model
+        Model selected by the driver.
+    .PARAMETER Variant
+        Baseline or customized execution.
+    .PARAMETER Attempt
+        Actual invocation ordinal for this variant.
+    .PARAMETER ExitCode
+        Numeric exit code from the invocation.
+    .OUTPUTS
+        [hashtable] Result availability, record counts and fixed error-category counts.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$RunDir,
+        [Parameter(Mandatory)]
+        [string]$Model,
+        [Parameter(Mandatory)]
+        [ValidateSet('baseline', 'customized')]
+        [string]$Variant,
+        [Parameter(Mandatory)]
+        [ValidateRange(1, 2)]
+        [int]$Attempt,
+        [Parameter(Mandatory)]
+        [int]$ExitCode
+    )
+
+    $result = @{
+        model = $Model
+        variant = $Variant
+        attempt = $Attempt
+        exitCode = $ExitCode
+        resultState = 'missing'
+        trialRecords = 0
+        malformedRecords = 0
+        erroredTrials = 0
+        errors = @()
+    }
+    if ([string]::IsNullOrWhiteSpace($RunDir)) { return $result }
+
+    $counts = @{}
+    try {
+        $path = Join-Path $RunDir 'results.jsonl'
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return $result }
+        foreach ($line in [System.IO.File]::ReadLines($path)) {
+            if ([string]::IsNullOrWhiteSpace($line)) { continue }
+            try {
+                $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 100 -ErrorAction Stop
+            }
+            catch {
+                $result.malformedRecords++
+                continue
+            }
+            if ($record -isnot [System.Collections.IDictionary]) {
+                $result.malformedRecords++
+                continue
+            }
+            if ($record.type -and $record.type -ne 'trial-result') { continue }
+            $result.trialRecords++
+            if ($record.status -ne 'error') { continue }
+            $result.erroredTrials++
+
+            # Emit only literal categories, never message fragments or arbitrary keys.
+            $message = if ($record.error -is [string]) { $record.error } else { '' }
+            $category = switch -Regex ($message) {
+                '(?i)\b(401|403|unauthorized|forbidden|authentication)\b' { 'authentication-or-authorization'; break }
+                '(?i)\bmodel\b[^\r\n]*(not supported|unsupported|not found|unavailable|not available|not enabled)' { 'model-unavailable'; break }
+                '(?i)\b(429|rate[ -]?limit|quota)\b' { 'rate-limited'; break }
+                '(?i)\b(timeout|timed out|ETIMEDOUT)\b' { 'timeout'; break }
+                '(?i)\b(ECONNRESET|ECONNREFUSED|ENOTFOUND|fetch failed)\b' { 'connection'; break }
+                default { 'unknown' }
+            }
+            if (-not $counts.ContainsKey($category)) { $counts[$category] = 0 }
+            $counts[$category]++
+        }
+        $result.resultState = 'read'
+    }
+    catch {
+        # File errors may include private paths; retain only the availability state.
+        $result.resultState = 'unreadable'
+    }
+    $result.errors = @(
+        foreach ($category in ($counts.Keys | Sort-Object)) {
+            @{ category = $category; count = $counts[$category] }
+        }
+    )
+    return $result
 }
 
 function Invoke-VallyCommandWithCapture {
@@ -790,6 +904,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         # The documented-divergence gate now reads per-guard conformance instead, so the
         # counter keeps its real meaning under an honest name.
         $runHealthFailures = 0
+        $executionDiagnostics = [System.Collections.Generic.List[object]]::new()
         $divergenceGuardFailures = 0
         $divergenceGuardsEvaluated = 0
         $divergenceHasSignal = $false
@@ -949,6 +1064,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             else {
                 $codeA = Invoke-VallyCommand -Arguments $evalBaseline
                 $baselineRunDir = Resolve-LatestRunDir -OutputDir $aDir
+                $executionDiagnostics.Add((Get-VallyExecutionDiagnostic -RunDir $baselineRunDir -Model $model -Variant baseline -Attempt 1 -ExitCode $codeA))
                 $baselineTally = Measure-DeclaredInvariantFailures -RunDir $baselineRunDir -InvariantNames $canonicalInvariants -ExpectedManifest $invariantManifest -ExpectedTrials $baselineTrials
                 if ($baselineTally.HasSignal) {
                     $invariantFailures += $baselineTally.Failed
@@ -990,6 +1106,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             $customizedAttempt = 1
             $codeB = Invoke-VallyCommand -Arguments $evalCustomized
             $bRunDir = Resolve-LatestRunDir -OutputDir $bDir
+            $executionDiagnostics.Add((Get-VallyExecutionDiagnostic -RunDir $bRunDir -Model $model -Variant customized -Attempt $customizedAttempt -ExitCode $codeB))
             $invocationTally = Measure-AgentInvocationEvidence `
                 -RunDir $bRunDir `
                 -StimulusNames @($canonicalPolicy.Keys) `
@@ -1027,6 +1144,7 @@ if ($MyInvocation.InvocationName -ne '.') {
                 else {
                     $null
                 }
+                $executionDiagnostics.Add((Get-VallyExecutionDiagnostic -RunDir $bRunDir -Model $model -Variant customized -Attempt $customizedAttempt -ExitCode $codeB))
                 $invocationTally = Measure-AgentInvocationEvidence `
                     -RunDir $bRunDir `
                     -StimulusNames @($canonicalPolicy.Keys) `
@@ -1238,6 +1356,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             winRate                  = [math]::Round($aggregateWinRate, 4)
             invariantFailures        = $invariantFailures
             runHealthFailures        = $runHealthFailures
+            executionDiagnostics     = @($executionDiagnostics)
             invocationEvidence       = @($invocationEvidence)
             invocationFailures       = $invocationFailures
             divergenceGuardFailures  = $divergenceGuardFailures

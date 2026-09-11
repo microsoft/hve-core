@@ -190,7 +190,12 @@ Record the latest critique findings, their disposition, and any explicitly accep
 * Critique candidate identity: {{task_id_and_plan_revision_or_hash}}
 * Critique depth and provenance: {{standard_or_deep}}; {{default_or_explicit_user_request}}
 * Critique execution: {{not_run_started_complete_partial_or_blocked}}
-* Single invocation consumed: {{yes_or_no}}
+* Initial attempt consumed: {{yes_or_no}}
+* Recovery attempt consumed: {{yes_or_no}}
+* Attempt provenance: {{task_attempt_id_kind_candidate_saved_hash_boundary_depth_output_and_current_dispatch_evidence}}
+* Recovery eligibility and consent: {{not_applicable_or_evidence_checks_worker_inactivity_candidate_reconciliation_and_explicit_task_specific_user_approval}}
+
+<!-- Preserve the original attempt and any recovery as separate records here. Mirror their pointers in the parent's single Planning critique execution entry when present. A current initial or recovery worker may consume its own just-authorized reservation; a later dispatch cannot replay it. Follow the planning reference's Interrupted critique recovery contract. -->
 
 | Critique run and finding | Disposition                                        | Action owner                   | Exact resolving evidence                | Decision route                                     | Plan response or residual risk |
 |--------------------------|----------------------------------------------------|--------------------------------|-----------------------------------------|----------------------------------------------------|--------------------------------|
@@ -210,7 +215,7 @@ Record the latest critique findings, their disposition, and any explicitly accep
 * [ ] Before reflects the evidence-backed pre-change baseline; After reflects the intended result of all phases. Corresponding elements and phase diagrams reuse stable node IDs, with added and removed work distinguishable without color.
 * [ ] Every emitted initialization object has the prescribed string values for themeVariables.fontFamily and themeVariables.fontSize. All diagrams use theme-aware styling, with explicit text colors on custom fills. Dual-theme rendering evidence or its preview limitation is recorded.
 * [ ] Risks, open questions, blockers, critique findings, and accepted residual risks have owners and next actions.
-* [ ] Critique depth and provenance are recorded; at most one invocation was dispatched, and all findings are disposed without a retry or closure critique.
+* [ ] Critique depth, attempt provenance and current-dispatch ownership are recorded; any single recovery follows the explicit interruption protocol, terminal results were not retried, and all findings are disposed without a closure critique.
 * [ ] Planning execution, readiness, continuation owner, gates, next action, and implementation paths are complete and consistent.
 * [ ] Follow-Up Items remain outside active plan completion and acceptance claims.
 * Checked sections: {{list_of_checked_sections}}
