@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 243
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 246
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -5246,3 +5246,73 @@ stimuli:
         name: no-implicit-recovery-approval
         config:
           pattern: '(?i)^\s*Cleared:[ \t]*no[ \t]*\r?\nApproval:[ \t]*required\s*$'
+  - name: skill-rpi-critique-standalone-without-planner
+    prompt: |
+      Only the complete rpi-plan-critique skill is installed. The rpi-plan skill
+      and its reference files are unavailable. This is standalone first use for
+      a task with unambiguous identity, a readable plan and supporting evidence,
+      a writable critique output, and no consumed attempt or terminal result.
+      Choose the next action: reserve-initial or require-planner. Return only
+      the chosen action.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 7484aa89df2b42aeffc73f3bb9ea7fe174cb8aa9f6829fbeb8eef677bbc2b483
+    graders:
+      - type: output-matches
+        name: standalone-reserves-without-planner
+        config:
+          pattern: '(?i)^\s*reserve-initial\s*$'
+  - name: skill-rpi-critique-parent-reference-unavailable
+    prompt: |
+      A planning parent dispatched a current initial critique with a saved
+      reservation and matching task, candidate and immediate dispatch provenance.
+      Its supplied canonical planning reference cannot be read, and the rpi-plan
+      skill is unavailable. Choose the worker action: report-missing-dependency
+      or start-standalone. Return only the chosen action.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 0952b407bc847a80bf4e2d196c20c63edda1cc6e556505a849f98c10bc9412f1
+    graders:
+      - type: output-matches
+        name: missing-parent-reference-stops-dispatch
+        config:
+          pattern: '(?i)^\s*report-missing-dependency\s*$'
+  - name: skill-rpi-critique-nonsibling-parent-reference
+    prompt: |
+      The critique worker has no sibling rpi-plan directory. Its planning parent
+      supplied a readable canonical reference pointer from the resolved rpi-plan
+      skill at a different installation root. The current recovery reservation,
+      task-specific approval, original-attempt provenance, candidate hash boundary,
+      depth and distinct output all verify. Immediate dispatch provenance matches;
+      no terminal result exists and this is not a replay. Choose the worker action:
+      verify-contract-and-assess or require-sibling-directory. Return only the
+      chosen action.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+      files:
+        - src: ../../.github/skills/rpi/rpi-plan/references/planning.md
+          dest: parent-contract/planning.md
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 37b43d1546fd0bc0878747aafc3057049b73c6dc32d27418adb7bd3bab2b3c68
+    graders:
+      - type: output-matches
+        name: resolved-reference-does-not-require-sibling
+        config:
+          pattern: '(?i)^\s*verify-contract-and-assess\s*$'

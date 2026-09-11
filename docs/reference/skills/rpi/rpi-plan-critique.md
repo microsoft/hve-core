@@ -34,6 +34,10 @@ The current worker may execute its own verified initial or recovery reservation.
 
 Invoke it directly only when you want an independent, evidence-bounded read of an existing plan and no critique has run for that task yet. A `Pass`, `Revise`, or `Blocked` verdict is advisory: confirmed user direction outranks critique advice, and a `Revise` verdict means the planner revises or asks for a decision, not that the critique loops.
 
+You can install only the complete `rpi-plan-critique` skill for standalone first use; it checks and saves its initial reservation without requiring planner files.
+
+Parent-dispatched critiques instead read the canonical planning reference supplied by the parent, or locate the available `rpi-plan` skill by name when no pointer is supplied. The skills need not be sibling directories. An unavailable parent reference stops that dispatch without a standalone fallback. An existing standalone reservation still requires planner reconciliation; installing only the critique skill does not permit a retry.
+
 | Depth      | When                       | Behavior                                                                                        |
 |------------|----------------------------|-------------------------------------------------------------------------------------------------|
 | `standard` | Default                    | Assesses the complete supplied boundary once, prioritizing blockers and omitting cosmetic notes |
