@@ -6,7 +6,7 @@ compatibility: 'Requires pwsh 7+ and gh CLI authenticated with the security_even
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-04-21"
+  last_updated: "2026-09-09"
 ---
 
 # GitHub Code Scanning Skill
@@ -197,20 +197,62 @@ gh api repos/{owner}/{repo}/code-scanning/analyses \
 
 ### Dedup check before creation
 
-Search for an existing issue using the title and an embedded automation marker before creating a new one.
+Run this issue-creation example only inside a GitHub Actions job for the target repository, with `GH_TOKEN` bound to that job's `GITHUB_TOKEN` and `issues: write` permission.
+The local `gh auth login` setup is for read-only alert triage, not this automation-owned creation procedure.
+Issues created with a personal identity are deliberately excluded from automated deduplication and reconciliation, even when their marker and labels match.
+Do not rerun this example under a personal token expecting deduplication; it can create another issue for the same rule, even when run inside GitHub Actions.
+
+Search all issue states for the embedded automation marker, filtering by the GitHub Actions app author and both ownership labels before applying the candidate limit so unowned issues cannot exhaust the quota.
+Treat these results as candidates: still verify the first-line marker, the immutable GitHub Actions app author, and the automation-owned labels locally. Abort if the filtered query reaches its limit because eligible candidates may be missing.
 
 ```bash
-existing=$(gh issue list --repo "{owner}/{repo}" \
-  --search "\"[Security] {rule_description}\" in:title" \
-  --state open --json number --jq '.[0].number // empty')
-if [[ -z "$existing" ]]; then
+set -euo pipefail
+rule_id="{rule_id}"
+candidate_limit=200
+
+if ! jq -en --arg rule "${rule_id}" '$rule | test("^[A-Za-z0-9._:/-]{1,256}$")' > /dev/null; then
+  echo "Rule ID does not match the automation marker grammar." >&2
+  exit 1
+fi
+if ! issues=$(gh issue list --repo "{owner}/{repo}" \
+  --search '"automation:security-scan:" in:body author:app/github-actions label:automated label:security' \
+  --state all --limit "${candidate_limit}" --json number,state,body,author,labels); then
+  echo "Unable to list candidate tracking issues; aborting." >&2
+  exit 1
+fi
+if ! jq -e 'type == "array"' <<< "${issues}" > /dev/null; then
+  echo "Candidate tracking issue response is not a JSON array; aborting." >&2
+  exit 1
+fi
+if [[ $(jq 'length' <<< "${issues}") -ge "${candidate_limit}" ]]; then
+  echo "Candidate query reached its limit; aborting rather than using a partial result." >&2
+  exit 1
+fi
+if ! existing=$(jq -c --arg rule "${rule_id}" '
+  [.[]
+    | select(.body | test("^<!--[ \\t]*automation:security-scan:[A-Za-z0-9._:/-]{1,256}[ \\t]*-->(?:\\r?\\n|$)"))
+    | select(.author.login? == "app/github-actions")
+    | select(([.labels[]?.name] | index("automated")) != null)
+    | select(([.labels[]?.name] | index("security")) != null)
+    | select(.body | capture("^<!--[ \\t]*automation:security-scan:(?<rule>[A-Za-z0-9._:/-]{1,256})[ \\t]*-->(?:\\r?\\n|$)").rule == $rule)]
+' <<< "${issues}"); then
+  echo "Unable to verify candidate tracking issues; aborting." >&2
+  exit 1
+fi
+match_count=$(jq 'length' <<< "${existing}")
+if [[ "${match_count}" -gt 1 ]]; then
+  echo "Multiple verified tracking issues match rule ${rule_id}; aborting." >&2
+  exit 1
+fi
+existing_number=$(jq -r '.[0].number // empty' <<< "${existing}")
+if [[ -z "${existing_number}" ]]; then
   gh issue create --repo "{owner}/{repo}" \
     --title "[Security] {rule_description}" \
-    --label "security" \
-    --body "<!-- automation:security-scan:{rule_id} -->
+    --label "security,automated,needs-triage" \
+    --body "<!-- automation:security-scan:${rule_id} -->
 ## Code Scanning Alert: {rule_description}
 
-**Rule:** \`{rule_id}\`
+**Rule:** \`${rule_id}\`
 $([ -n "{severity}" ] && echo "**Severity:** {severity}")
 **Tool:** {tool}
 **Affected files:** {count} occurrences
@@ -221,7 +263,7 @@ $([ -n "{severity}" ] && echo "**Severity:** {severity}")
 fi
 ```
 
-The automation marker `<!-- automation:security-scan:{rule_id} -->` is embedded in the issue body and serves as the deduplication anchor. Replace all `{placeholders}` with actual values from the alert-grouping JSON output.
+The automation marker `<!-- automation:security-scan:{rule_id} -->` occupies the first physical line of the issue body and serves as the rule anchor. Only horizontal whitespace may surround the marker content. Rule IDs use 1 through 256 ASCII letters, digits, dots, underscores, colons, slashes, or hyphens. Automated lookup and reconciliation also require the issue author to be `app/github-actions` and the labels to include both `automated` and `security`; this author is produced when the workflow creates the issue with `GITHUB_TOKEN`. Marker text alone is not ownership proof. Removing or moving the marker or removing either ownership label excludes the issue from automation. If candidate lookup, parsing, or completeness cannot be verified, abort before creation. If more than one verified issue matches a live rule, abort before mutation instead of selecting one silently. Replace all `{placeholders}` with actual values from the alert-grouping JSON output.
 
 ## Troubleshooting
 

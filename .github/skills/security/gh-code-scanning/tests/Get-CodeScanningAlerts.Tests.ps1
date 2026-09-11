@@ -76,6 +76,72 @@ Describe 'Get-CodeScanningAlerts' -Tag 'Unit' {
             $parsed[1].Count | Should -Be 1
         }
 
+        It 'Preserves colliding descriptions in <Format> with reversed order <Reverse>' -ForEach @(
+            @{ Format = 'Json'; Reverse = $false }
+            @{ Format = 'Json'; Reverse = $true }
+            @{ Format = 'GroupedJson'; Reverse = $false }
+            @{ Format = 'GroupedJson'; Reverse = $true }
+        ) {
+            $Alerts = $script:MockAlertJson | ConvertFrom-Json
+            foreach ($Alert in $Alerts) { $Alert.rule.description = 'Shared finding' }
+            if ($Reverse) { [array]::Reverse($Alerts) }
+            $Payload = ConvertTo-Json -InputObject $Alerts -Depth 10
+            ${Function:gh} = { $global:LASTEXITCODE = 0; return $Payload }.GetNewClosure()
+
+            $Parsed = & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat $Format | ConvertFrom-Json
+
+            $Parsed | Should -HaveCount 2
+            $Parsed[0].RuleId | Should -BeExactly 'js/sql-injection'
+            $Parsed[0].RuleDescription | Should -BeExactly 'Shared finding'
+            $Parsed[0].Count | Should -Be 2
+            $Parsed[0].AffectedPaths | Should -Be @('src/api.js', 'src/db.js')
+            $Parsed[0].Severity | Should -BeExactly 'error'
+            $FirstSqlAlert = @($Alerts | Where-Object { $_.rule.id -ceq 'js/sql-injection' })[0]
+            $Parsed[0].AlertUrl | Should -BeExactly $FirstSqlAlert.html_url
+            $Parsed[0].FindingDescription | Should -BeExactly $FirstSqlAlert.most_recent_instance.message.text
+            $Parsed[1].RuleId | Should -BeExactly 'js/xss'
+            $Parsed[1].RuleDescription | Should -BeExactly 'Shared finding'
+            $Parsed[1].Count | Should -Be 1
+            $Parsed[1].AffectedPaths | Should -Be @('src/render.js')
+            $Parsed[1].Severity | Should -BeExactly 'warning'
+            $Parsed[1].AlertUrl | Should -BeExactly 'https://github.com/owner/repo/security/code-scanning/3'
+        }
+
+        It 'Aggregates one ID across differing descriptions in <Format>' -ForEach @(
+            @{ Format = 'Json' }
+            @{ Format = 'GroupedJson' }
+        ) {
+            $Alerts = @($script:MockAlertJson | ConvertFrom-Json)[0..1]
+            $Alerts[1].rule.description = 'Updated description'
+            $Payload = ConvertTo-Json -InputObject $Alerts -Depth 10
+            ${Function:gh} = { $global:LASTEXITCODE = 0; return $Payload }.GetNewClosure()
+
+            $Parsed = @(& $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat $Format | ConvertFrom-Json)
+
+            $Parsed | Should -HaveCount 1
+            $Parsed[0].RuleId | Should -BeExactly 'js/sql-injection'
+            $Parsed[0].RuleDescription | Should -BeExactly $Alerts[0].rule.description
+            $Parsed[0].Count | Should -Be 2
+            $Parsed[0].AffectedPaths | Should -Be @('src/api.js', 'src/db.js')
+        }
+
+        It 'Keeps case-distinct rule IDs separate in <Format>' -ForEach @(
+            @{ Format = 'Json' }
+            @{ Format = 'GroupedJson' }
+        ) {
+            $Alerts = @($script:MockAlertJson | ConvertFrom-Json)[0..1]
+            $Alerts[1].rule.id = 'JS/SQL-INJECTION'
+            $Payload = ConvertTo-Json -InputObject $Alerts -Depth 10
+            ${Function:gh} = { $global:LASTEXITCODE = 0; return $Payload }.GetNewClosure()
+
+            $Parsed = & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat $Format | ConvertFrom-Json
+
+            $Parsed | Should -HaveCount 2
+            @($Parsed | Where-Object RuleId -CEQ 'js/sql-injection') | Should -HaveCount 1
+            @($Parsed | Where-Object RuleId -CEQ 'JS/SQL-INJECTION') | Should -HaveCount 1
+            @($Parsed | Where-Object Count -NE 1) | Should -HaveCount 0
+        }
+
         It 'Produces valid JSON array when OutputFormat is GroupedJson' {
             $result = & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat GroupedJson
 
