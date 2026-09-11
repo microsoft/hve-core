@@ -28,7 +28,7 @@ Create the working directory structure under `.copilot-tracking/ppt/{{YYYY-MM-DD
 
 When the user wants to build slides on a particular topic or add content on a specific subject, activate `rpi-research`. Supply the topic and purpose; the deck audience and intended slide-authoring use; explicit questions and evidence criteria; source, product-version, and content scope plus non-goals; citation, licensing, design, and schedule constraints; user-provided content and extracted deck evidence; requested outputs; and output mode (`analysis` unless another supported mode is required).
 
-Explicitly trust the deck working root `.copilot-tracking/ppt/{{YYYY-MM-DD}}/{{ppt-name}}/` as the alternate evidence root. Require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath it. The skill resolves its exact date, task slug, primary and delegated artifact paths, worker selection, lane contracts, budgets, and research synthesis.
+Explicitly trust the deck working root `.copilot-tracking/ppt/{{YYYY-MM-DD}}/{{ppt-name}}/` as the alternate evidence root.
 
 Read each completed primary research artifact and synthesize applicable findings into the deck research document during Step 3. Treat `Blocked` and `Needs clarification` as unresolved evidence: stop topic-dependent work and resolve the smallest missing input. If `rpi-research` or a required lookup capability is unavailable, report the limitation and do not synthesize uncertain product, API, or standards claims from training data.
 

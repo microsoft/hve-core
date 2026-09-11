@@ -38,7 +38,7 @@ Select from the **agent picker dropdown** in the Chat view:
 
 The RPI lifecycle keeps Research, Plan, Implement, Review, and Follow-up distinct for complex development tasks. It begins with research readiness: supplied or completed evidence is reused when adequate, and research runs only for a demonstrated requirements, acceptance, dependency, material-risk, complexity, uncertainty, or decision-critical gap.
 
-`RPI Agent` is a user-selected lifecycle wrapper that activates the matching RPI skills. It runs in manual mode by default and can switch to a confirmed automatic session that completes the remaining phases through Review. The `/rpi` prompt provides the same full-lifecycle entry point, and `/rpi-quick` is the skill-based equivalent. Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` when you need a direct phase entry point.
+`RPI Agent` is a user-selected lifecycle wrapper that activates the matching RPI skills. It runs in manual mode by default and can switch to a confirmed automatic session that completes the remaining phases through Review. The `/rpi` prompt provides the same full-lifecycle entry point. Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` when you need a direct phase entry point.
 
 Use the self-contained `rpi-challenger` skill to interrogate a confirmed subject through adaptive skeptical questions, and `rpi-walkthrough` to understand code or RPI artifacts one segment at a time. See the [RPI Documentation](../docs/rpi/README.md) for all surfaces.
 

@@ -1,9 +1,9 @@
 ---
 title: RPI Researcher
-description: "Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads."
-sidebar_position: 3
+description: "Gathers candidate sources for one bounded research question and returns source pointers, exact locations, contract excerpts, and brief relevance notes as suggestions for the calling agent to verify. Use during research when isolating source gathering would help."
+sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - agent
@@ -23,42 +23,42 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Executes one delegated internal, external, or hybrid RPI research lane and progressively writes owned evidence. Use for independent research threads.
+Gathers candidate sources for one bounded research question and returns source pointers, exact locations, contract excerpts, and brief relevance notes as suggestions for the calling agent to verify. Use during research when isolating source gathering would help.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-`RPI Researcher` is dispatched by [rpi-research](../../../skills/rpi/rpi-research), not selected by a user. The parent delegates one bounded lane for one research cycle and wave (`Wider`, `Deeper`, or `Contrarian`) when isolating that investigation improves evidence quality, parallelism, or context control.
+`RPI Researcher` is an optional helper that [rpi-research](../../../skills/rpi/rpi-research) may use, not a required step and not something a user selects. The research context decides whether isolating a bounded gathering task, such as collecting candidate sources for one question or retrieving an exact API, schema, or example, would improve evidence quality or protect its working context.
 
-The worker investigates only that lane, writes its evidence progressively to the exact lane path the parent approved under `.copilot-tracking/research/subagents/`, and returns compact evidence relationships.
+The helper gathers and returns; it does not conclude. Its return lists each suggested source with an exact location (a workspace-relative path and heading or symbol, or a URL with retrieval date), a line on what it appears to contain, a line on why it seems relevant, verbatim excerpts when a contract was requested, and a brief interpretation labeled as unverified.
 
-The parent keeps every decision: it assigns canonical `C#` and `W#` IDs, accepts or rejects material, records readiness, and talks to the user. The worker never edits the primary research artifact, source files, or configuration, and never speaks to the user.
-
-`rpi-research` selects this subagent because its name contains `research`; when it is unavailable, the skill dispatches an unnamed general-purpose subagent with the same lane contract, or investigates inline and records the fallback.
+The research context keeps every decision: it reads the sources it chooses, assigns `C#` and `W#` IDs, classifies evidence state, and records findings in the primary research artifact. The helper writes no file and never speaks to the user.
 
 ## Example usage
 
-A representative parent dispatch supplies the cycle, wave, lane, and paths:
+A representative dispatch supplies one bounded question and the return kind:
 
 ```text
-Cycle 1, wave Deeper, external lane.
-Topic: azure-storage-blob async upload behavior for files over 1 GB.
-Questions: Q2 chunk size and concurrency defaults; Q3 retry semantics on partial upload.
-Criteria: current official documentation or SDK source with retrieval dates.
-Posture: balanced. Limit: none.
-Lane path: .copilot-tracking/research/subagents/2026-09-04/blob-async-upload-subagent-research.md
-Primary artifact (do not edit): .copilot-tracking/research/2026-09-04/blob-storage-research.md
+Question: Q2 chunk size and concurrency defaults, Q3 retry semantics on partial upload,
+  for azure-storage-blob async uploads over 1 GB.
+Scope: current official documentation or SDK source; no third-party blogs.
+Return: source pointers plus the exact upload_blob signature.
+Limit: none.
 ```
 
-The worker returns a pointer summary rather than the evidence body:
+The helper returns suggestions rather than findings:
+
+<!-- cspell:ignore kwargs -->
 
 ```text
-* Execution status: Complete
-* Cycle / wave: 1 / Deeper
-* Evidence confidence: High
-* Synthesis readiness: Ready
-* Evidence artifact: .copilot-tracking/research/subagents/2026-09-04/blob-async-upload-subagent-research.md
-* Evidence relationships: Q2 -> upload_blob chunks at max_block_size with max_concurrency workers (SDK reference, retrieved 2026-09-04) supports; Q3 -> partial uploads are not retried by default (SDK source) weakens the earlier claim
-* Missing evidence or clarification: None
-* Stop reason: lane criteria met
+* Status: Complete
+* Question: Q2 and Q3 for azure-storage-blob async uploads over 1 GB
+* Suggested sources:
+  * https://learn.microsoft.com/python/api/azure-storage-blob/... (retrieved 2026-09-11): BlobClient.upload_blob reference; appears to define max_block_size and max_concurrency; relevance High for Q2
+  * https://github.com/Azure/azure-sdk-for-python/... _upload_helpers.py (retrieved 2026-09-11): chunk upload loop; appears to show no retry on a failed block; relevance Medium for Q3
+* Exact material: `upload_blob(data, blob_type=..., length=None, metadata=None, **kwargs)` from the reference page above
+* Interpretation (unverified): defaults look like 4 MiB blocks with one concurrent upload; Q3 may need the SDK source rather than the docs
+* Conflicts and gaps: the reference page does not state retry behavior
+* Suggested next look: the retry policy section of the SDK README
+* Stop reason: sources covered
 ```

@@ -2,7 +2,7 @@
 title: Creating Custom Agents
 description: Build specialized agents with tool restrictions, subagent delegation, and mode-based workflows for your team
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-11
 ms.topic: how-to
 keywords:
   - agents
@@ -46,32 +46,31 @@ Agent files live in `.github/agents/{package-id}/`. Subagents go in a `subagents
 
 ## Improving an Existing Agent
 
-Walk through improving the current RPI Planner subagent using `hve-builder`.
+Walk through improving the current RPI Researcher subagent using `hve-builder`.
 
 ### Step 1: Identify the target and requirements
 
 ```text
-RPI Planner target: .github/agents/hve-core/subagents/rpi-planner.agent.md
-Requirements: Preserve bounded phase ownership, marker-based addressing, and
-the structured response contract.
+RPI Researcher target: .github/agents/hve-core/subagents/rpi-researcher.agent.md
+Requirements: Preserve its read-only, return-only contract, the source-pointer
+return shape, and the structured response contract.
 ```
 
 ### Step 2: Run HVE Builder in improve mode
 
 ```text
 Use hve-builder with mode=improve and
-targets=.github/agents/hve-core/subagents/rpi-planner.agent.md. Preserve its
-existing capability-bearing frontmatter and the rpi-plan phase contract.
+targets=.github/agents/hve-core/subagents/rpi-researcher.agent.md. Preserve its
+existing capability-bearing frontmatter and the rpi-research extension contract.
 ```
 
 HVE Builder reads the known target and applicable conventions, confirms the
-write boundary, then authors within the current `rpi-plan` architecture.
+write boundary, then authors within the current `rpi-research` architecture.
 
 ### Step 3: Review the evidence
 
-Review HVE Builder's independent static verdict, behavior-test disposition,
-host validation result, and overall outcome. Address actionable findings before
-committing.
+Review HVE Builder's review verdict, host validation result, and overall
+outcome. Address actionable findings before committing.
 
 > [!TIP]
 > Use `hve-builder` review mode for read-only assessment. Use improve mode only
@@ -278,13 +277,13 @@ Declares subagent dependencies using their human-readable `name` values. Referen
 ```yaml
 agents:
   - Contoso Research Analyst
-  - RPI Planner
+  - RPI Researcher
 ```
 
 ```markdown
-Activate `rpi-research` for open-ended or decision-critical research. Dispatch
-the RPI Planner only from the canonical `rpi-plan` workflow when bounded phase
-authoring is required.
+Activate `rpi-research` for open-ended or decision-critical research. Ask the
+RPI Researcher for source pointers only when isolating that gathering would
+help, and verify each source before recording evidence.
 ```
 
 ### handoffs

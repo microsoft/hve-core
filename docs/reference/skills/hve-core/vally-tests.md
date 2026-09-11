@@ -1,9 +1,9 @@
 ---
 title: vally-tests
 description: "Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli"
-sidebar_position: 10
+sidebar_position: 9
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - skill

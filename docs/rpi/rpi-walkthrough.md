@@ -3,7 +3,7 @@ title: RPI Walkthrough
 description: Explore code, features, interfaces, or RPI artifacts through a guided, evidence-linked explanation
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-30
+ms.date: 2026-09-11
 ms.topic: how-to
 keywords:
   - rpi walkthrough
@@ -117,7 +117,6 @@ work:
 | A requested change needs a durable implementation strategy | `/rpi-plan`         |
 | A scoped, approved change is ready to apply                | `/rpi-implement`    |
 | Completed work needs acceptance review                     | `/rpi-review`       |
-| Several lifecycle stages need coordination                 | `/rpi-quick`        |
 
 When an active RPI parent workflow owns continuation, the walkthrough returns
 the ledger and evidence to that parent instead of selecting the next command.

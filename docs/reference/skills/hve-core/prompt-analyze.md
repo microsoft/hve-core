@@ -1,9 +1,9 @@
 ---
 title: prompt-analyze
-description: Compatibility alias for read-only prompt artifact review. Routes static and behavior analysis to hve-builder review mode.
-sidebar_position: 6
+description: Compatibility alias for read-only prompt artifact review. Routes review to hve-builder review mode.
+sidebar_position: 5
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Compatibility alias for read-only prompt artifact review. Routes static and behavior analysis to hve-builder review mode.
+Compatibility alias for read-only prompt artifact review. Routes review to hve-builder review mode.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
@@ -42,12 +42,10 @@ requirements=Check whether missing-source handling and evidence citations are
 clear. Keep the prompt unchanged.` The path is illustrative; supply an existing
 artifact and any expected-output contract.
 
-Expect HVE Builder's independent static findings and its behavior decision for the
-unchanged target. Behavior-bearing review requires evidence at the supported
-fidelity; a no-runtime target can carry a justified skip. Mechanical validation
-is `Not requested` unless you ask for it.
+Expect HVE Builder's review-pass findings for the unchanged target, graded by
+severity and marked as required corrections or advisory suggestions. Mechanical
+validation is `Not requested` unless you ask for it.
 
-Success is linked evidence with separate static verdict, behavior disposition,
-fidelity, and overall outcome. Simulation is not native execution, unavailable
-testing remains deferred, and findings do not grant edit authority. Request
-corrections separately after deciding which recommendations to accept.
+Success is linked review evidence with a review verdict and an overall outcome.
+Findings do not grant edit authority. Request corrections separately after
+deciding which recommendations to accept.

@@ -5,7 +5,7 @@ applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md'
 
 # HVE Builder Instructions
 
-Apply these durable conventions whenever prompt-engineering artifacts are created or changed. Use the `hve-builder` skill when the request needs its complete author, review, behavior-test, and host-validation lifecycle. Its on-demand references own detailed routing, model profiles, review criteria, and stale-pattern guidance.
+Apply these durable conventions whenever prompt-engineering artifacts are created or changed. Use the `hve-builder` skill when the request needs its complete author, review, and host-validation lifecycle. Its on-demand references own detailed routing, model profiles, review criteria, and stale-pattern guidance.
 
 ## Outcome and Structure
 
@@ -68,4 +68,4 @@ Select every type that has a distinct responsibility. Prefer the simplest viable
 
 ## Completion Check
 
-An artifact is ready when its purpose and success criteria are clear, responsibilities and authority are placed correctly, references are portable, delegation earns its cost, safety boundaries are explicit, and available validation supports the claimed outcome. When HVE Builder owns the lifecycle, its workflow contract determines final-candidate ordering and behavior-test cardinality; do not recreate that process in the authored artifact.
+An artifact is ready when its purpose and success criteria are clear, responsibilities and authority are placed correctly, references are portable, delegation earns its cost, safety boundaries are explicit, and available validation supports the claimed outcome. When HVE Builder owns the lifecycle, its workflow contract determines candidate ordering and review cadence; do not recreate that process in the authored artifact.

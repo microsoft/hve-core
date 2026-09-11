@@ -365,6 +365,4 @@ Every `rpi-research` activation supplies:
 * Requested outputs and output mode (`analysis`, `comparison`, or caller-requested `convergence`).
 * `.copilot-tracking/rai-plans/{project-slug}/` as a trusted alternate evidence root.
 
-Require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath the trusted root. The skill owns the exact date, task slug, primary and delegated artifact paths, worker selection, lane contracts, budgets, and synthesis.
-
 The RAI Planner reads the completed primary research artifact and synthesizes applicable findings into shared reference summaries, assessment artifacts, `state.json`, and phase outputs. Preserve all gates. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop evidence-dependent conclusions. If `rpi-research` or a required lookup capability is unavailable, do not synthesize uncertain standards, policy, or regulatory content from training data.

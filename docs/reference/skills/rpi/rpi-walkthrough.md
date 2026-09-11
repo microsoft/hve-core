@@ -1,9 +1,9 @@
 ---
 title: rpi-walkthrough
-description: "Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts with navigable evidence links, deep subagent review, and a reconciled decisions-and-changes ledger. Use when the user wants to understand how something works or why it was changed."
-sidebar_position: 8
+description: "Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts with navigable evidence links, a deep review before explaining, and a reconciled decisions-and-changes ledger. Use when the user wants to understand how something works or why it was changed."
+sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - skill
@@ -23,12 +23,12 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts with navigable evidence links, deep subagent review, and a reconciled decisions-and-changes ledger. Use when the user wants to understand how something works or why it was changed.
+Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts with navigable evidence links, a deep review before explaining, and a reconciled decisions-and-changes ledger. Use when the user wants to understand how something works or why it was changed.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Use `rpi-walkthrough` when you want to understand code, a feature flow, a UI or UX area, a prompt-engineering artifact, or a `.copilot-tracking` research, plan, changes, or review document before deciding what to change. The skill reviews the target with a subagent first, plans coherent segments, then explains one segment per turn with inline links, a reference table, and at most two questions.
+Use `rpi-walkthrough` when you want to understand code, a feature flow, a UI or UX area, a prompt-engineering artifact, or a `.copilot-tracking` research, plan, changes, or review document before deciding what to change. The skill reviews the target first, plans coherent segments, then explains one segment per turn with inline links, a reference table, and at most two questions.
 
 It is read-only by default. When you make a material decision or request a change during the walkthrough, it creates a decisions-and-changes ledger under `.copilot-tracking/walkthroughs/` and reconciles each entry with you as applied now, handed off to RPI work, deferred, or declined.
 

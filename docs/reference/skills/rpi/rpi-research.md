@@ -1,9 +1,9 @@
 ---
 title: rpi-research
 description: "Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first."
-sidebar_position: 6
+sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - skill
@@ -28,11 +28,13 @@ Research-only RPI playbook that gathers task evidence, writes dated research art
 
 ## When to use it
 
-Use `rpi-research` when a task needs evidence before anyone plans or edits: a codebase pattern is unknown, an external API, library, or standard must be verified, alternatives need comparison, or a decision-critical question is open. Research is read-only. It writes one dated primary artifact under `.copilot-tracking/research/` and, when it delegates a lane, one evidence file per lane under `.copilot-tracking/research/subagents/`.
+Use `rpi-research` when a task needs evidence before anyone plans or edits: a codebase pattern is unknown, an external API, library, or standard must be verified, alternatives need comparison, or a decision-critical question is open. Research is read-only. It writes one dated primary artifact under `.copilot-tracking/research/`, and that artifact is the only research artifact.
+
+A helper such as [RPI Researcher](../../agents/hve-core/subagents/rpi-researcher) may be asked for source pointers when isolating a gathering task helps; its return is a suggestion the research verifies at the source.
 
 Each executed cycle runs Wider, Deeper, and Contrarian waves, then synthesizes findings, records Planning Readiness, and resolves material decisions according to the participation mode: `user-owned` when invoked directly, `agent-owned` or `user-retained` inside an automatic [RPI Agent](../../agents/hve-core/rpi-agent) session.
 
-The research posture (`expansive`, `balanced`, or `focused`) controls how far it goes, and the output mode (`convergence`, `analysis`, `audit`, `comparison`, `research-only`, or `no-handoff`) controls whether a planning handoff is offered.
+The research posture controls how far it goes: `balanced` by default, `focused` to stay within the named targets, or `expansive` for a broad or materially unknown decision space. Pass `posture=` to change it. The output mode (`convergence`, `analysis`, `audit`, `comparison`, `research-only`, or `no-handoff`) controls whether a planning handoff is offered.
 
 Reach for a different asset when:
 
@@ -42,7 +44,7 @@ Reach for a different asset when:
 
 ## Example usage
 
-Invoke the skill with a topic. Add `chat` to let it refine scope from the current conversation.
+Invoke the skill with a topic. Add `chat` to let it refine scope from the current conversation, and `posture=focused` or `posture=expansive` to change the default `balanced` depth.
 
 ```text
 /rpi-research topic="Streaming uploads to Azure Blob Storage from the Python pipeline"
