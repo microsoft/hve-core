@@ -5289,7 +5289,7 @@ stimuli:
         name: missing-parent-reference-stops-dispatch
         config:
           pattern: '(?i)^\s*report-missing-dependency\s*$'
-  - name: skill-rpi-critique-nonsibling-parent-reference
+  - name: skill-rpi-critique-non-sibling-parent-reference
     prompt: |
       The critique worker has no sibling rpi-plan directory. Its planning parent
       supplied a readable canonical reference pointer from the resolved rpi-plan
