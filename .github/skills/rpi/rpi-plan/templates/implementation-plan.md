@@ -189,9 +189,7 @@ Record the latest critique findings, their disposition, and any explicitly accep
 
 * Critique candidate identity: {{task_id_and_plan_revision_or_hash}}
 * Critique depth and provenance: {{standard_or_deep}}; {{default_or_explicit_user_request}}
-* Critique execution: {{not_run_reserved_started_complete_partial_or_blocked}}
-* Critique reservation ID: {{opaque_id_for_the_current_initial_dispatch_or_not_applicable}}
-* Critique output path: {{workspace_relative_critique_output_path_or_not_applicable}}
+* Critique execution: {{not_run_started_complete_partial_or_blocked}}
 * Single invocation consumed: {{yes_or_no}}
 
 | Critique run and finding | Disposition                                        | Action owner                   | Exact resolving evidence                | Decision route                                     | Plan response or residual risk |
@@ -212,7 +210,7 @@ Record the latest critique findings, their disposition, and any explicitly accep
 * [ ] Before reflects the evidence-backed pre-change baseline; After reflects the intended result of all phases. Corresponding elements and phase diagrams reuse stable node IDs, with added and removed work distinguishable without color.
 * [ ] Every emitted initialization object has the prescribed string values for themeVariables.fontFamily and themeVariables.fontSize. All diagrams use theme-aware styling, with explicit text colors on custom fills. Dual-theme rendering evidence or its preview limitation is recorded.
 * [ ] Risks, open questions, blockers, critique findings, and accepted residual risks have owners and next actions.
-* [ ] Critique depth and provenance are recorded; a pre-dispatch reservation records its ID, candidate identity, depth, and output path together; at most one invocation was dispatched; and all findings are disposed without a retry or closure critique.
+* [ ] Critique depth and provenance are recorded; at most one invocation was dispatched, and all findings are disposed without a retry or closure critique.
 * [ ] Planning execution, readiness, continuation owner, gates, next action, and implementation paths are complete and consistent.
 * [ ] Follow-Up Items remain outside active plan completion and acceptance claims.
 * Checked sections: {{list_of_checked_sections}}

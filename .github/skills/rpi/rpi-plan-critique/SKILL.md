@@ -15,18 +15,14 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 ## Flow
 
 1. Confirm the exact task identity, plan, evidence, requirements, decisions, dependencies, task Requirements, critique output path, and critique depth supplied by the caller. Use `standard` when depth is omitted. Use `deep` only when the caller records explicit user direction; otherwise downgrade an unsupported deep request to standard and record the limitation.
-2. Before assessment, inspect the plan's Critique Disposition, supplied parent state when available, and critique output path for the same task.
-   * An existing critique artifact or a `started`, `Complete`, `Partial`, or `Blocked` execution record means the invocation was consumed. Return the existing execution status, verdict or limitation, path, depth, and provenance without writing or reassessing.
-   * A `reserved` record is the current initial dispatch only when the caller supplies `current_reservation_id` and it exactly matches the plan record's reservation ID, candidate identity, depth, and output path. Proceed with that matching reservation. Treat a missing or mismatched current reservation ID as a stranded reservation: return Blocked without assessment or replacement dispatch.
-   * When no execution record and no critique artifact exist, a standalone invocation may proceed without a reservation. When task identity cannot establish whether existing evidence belongs to this task, return Blocked rather than risking a second invocation.
-3. Before reading assessment evidence, create the critique artifact with the task identity, reservation ID or `not applicable`, depth and provenance, supplied boundary, and execution `started`. If this write fails, return Blocked without assessment. This worker-owned `started` artifact makes an interrupted assessment distinguishable from the parent's pre-dispatch reservation.
-4. Read the plan and directly relevant supplied evidence. Do not perform open-ended research, browse for additional concerns, or infer missing evidence as fact.
-5. Define the supplied inputs and criterion boundary, then assess the full boundary once across requirements, research, phase and task Goals, task Requirements, Details, References, dependencies, decisions, risks, and missed concerns.
+2. Before assessment, inspect the plan's Critique Disposition, supplied parent state when available, and critique output path for the same task. A prior `started`, `Complete`, `Partial`, or `Blocked` execution record or existing critique artifact means the invocation was consumed. Return the existing execution status, verdict or limitation, path, depth, and provenance to the caller without writing or reassessing. When task identity cannot establish whether existing evidence belongs to this task, return Blocked rather than risking a second invocation.
+3. Read the plan and directly relevant supplied evidence. Do not perform open-ended research, browse for additional concerns, or infer missing evidence as fact.
+4. Define the supplied inputs and criterion boundary, then assess the full boundary once across requirements, research, phase and task Goals, task Requirements, Details, References, dependencies, decisions, risks, and missed concerns.
    * In `standard`, assess the complete supplied boundary while prioritizing implementation blockers, contradictions, missing dependencies or acceptance coverage, unsupported scope or architecture, and material risks. Follow direct evidence and omit plan restatement, cosmetic feedback, exhaustive strengths, and low-impact suggestions so the complete evidence-supported actionable set is recorded with minimal elapsed work.
    * In `deep`, trace supplied evidence more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns. Deep remains one assessment and does not widen research authority.
    * In either depth, return one complete finding set rather than serializing findings across critique passes.
-6. Complete the critique using [templates/plan-critique.md](templates/plan-critique.md). Use severity-graded `PC-xxx` findings keyed to relevant requirement, research, phase, or task IDs. For each actionable finding, name the smallest useful change, action owner, exact resolving evidence, and whether it is a direct planner correction or needs a significant or divergent user decision.
-7. Record critique execution as Complete, Partial, or Blocked, separately from the Pass, Revise, or Blocked verdict. A passing critique may identify residual risks that the planning parent has explicitly accepted.
+5. Write the critique using [templates/plan-critique.md](templates/plan-critique.md). Use severity-graded `PC-xxx` findings keyed to relevant requirement, research, phase, or task IDs. For each actionable finding, name the smallest useful change, action owner, exact resolving evidence, and whether it is a direct planner correction or needs a significant or divergent user decision.
+6. Record critique execution as Complete, Partial, or Blocked, separately from the Pass, Revise, or Blocked verdict. A passing critique may identify residual risks that the planning parent has explicitly accepted.
 
 ## Inputs
 
@@ -36,14 +32,12 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 * Dependencies and task Requirements
 * One critique output path
 * Critique depth and provenance: `standard` by default or `deep` from explicit user direction
-* Optional `current_reservation_id` from an initial parent dispatch; never from recovery
 
 ## Success criteria
 
 * The critique distinguishes evidence-backed concerns from missing evidence.
 * Critique depth and provenance are recorded. Standard completely assesses the material supplied boundary while minimizing low-value work; deep occurs only from explicit user direction.
-* Re-entry preflight permits exactly one matching current reservation, returns existing same-task critique evidence without reassessing, and blocks stranded or mismatched reservations.
-* The worker persists its own `started` artifact before assessment so interrupted execution fails closed on recovery.
+* Re-entry preflight returns existing same-task critique evidence without writing or reassessing and blocks when task identity cannot safely distinguish it.
 * Findings identify substantive gaps rather than structure, formatting, or cosmetic preferences.
 * The critique records its inputs, criterion boundary, coverage assessment, and limitations.
 * Each actionable finding has a severity, related IDs, evidence, impact, and smallest useful change.
