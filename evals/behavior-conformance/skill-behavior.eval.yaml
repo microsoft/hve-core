@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 246
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 248
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -5316,3 +5316,51 @@ stimuli:
         name: resolved-reference-does-not-require-sibling
         config:
           pattern: '(?i)^\s*verify-contract-and-assess\s*$'
+  - name: skill-rpi-critique-global-requirements-and-test-omission
+    prompt: |
+      Using rpi-plan-critique, classify two concerns about a supplied plan.
+      The plan requirements specify a 200 ms default and an inclusive 1-5000 ms
+      range. An abbreviated implementation-task summary says to add optional
+      options and forward the timeout; the full task block is not supplied.
+      A supplied test-task block explicitly excludes the required out-of-range
+      rejection tests. Choose a disposition for each concern:
+      Restatement: require-task-repetition or no-restatement-only-finding
+      RejectionTests: report-missing-coverage or no-finding
+      Return exactly the two labeled lines without explanation.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: eb71c8d2f2cb2ee6fb8bf3120dee32f85ad53a1d9f4a16222d31fe684b7c419a
+    graders:
+      - type: output-matches
+        name: rejects-restatement-finding-retains-missing-tests
+        config:
+          pattern: '(?i)^\s*Restatement:[ \t]*no-restatement-only-finding[ \t]*\r?\nRejectionTests:[ \t]*report-missing-coverage\s*$'
+  - name: skill-rpi-critique-contradiction-versus-incomplete-evidence
+    prompt: |
+      Using rpi-plan-critique, classify two independent cases.
+      A: The plan requires rejection outside 1-5000 ms, but a supplied complete
+      task explicitly accepts 0 ms. Is this a contradiction or covered-globally?
+      B: Only a task summary is supplied and the relevant detailed evidence is
+      unavailable. It does not establish whether validation is implemented.
+      Is this an evidence-limitation or a confirmed-missing-implementation?
+      Return exactly two lines: A: your classification; B: your classification.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 51f129ae075f75fea5091c10c172a36767009b331fc38d80352b0e60a42fc680
+    graders:
+      - type: output-matches
+        name: retains-contradiction-without-inventing-omission
+        config:
+          pattern: '(?i)^\s*A:[ \t]*contradiction[ \t]*\r?\nB:[ \t]*evidence-limitation\s*$'
