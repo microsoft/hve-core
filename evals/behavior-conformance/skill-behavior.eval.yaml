@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 230
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 243
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -5032,3 +5032,217 @@ stimuli:
         name: independent-invocation-ownership
         config:
           pattern: '(?i)^[ \t]*Owner:[ \t]*parent-fixes[ \t]*\r?\n[ \t]*Assessment:[ \t]*new-invocation[ \t]*\r?\n[ \t]*Report:[ \t]*unique-current-revision[ \t]*\r?\n[ \t]*Coverage:[ \t]*original-requirements-and-regressions[ \t]*(?:\r?\n)?(?![\s\S])'
+  - name: skill-rpi-recovery-current-initial
+    prompt: |
+      A planner has verified and saved the first started reservation for task
+      sample, then immediately dispatched its matching initial worker in this
+      uninterrupted execution. The candidate, output and attempt identity agree
+      and no earlier result exists. May that current critique worker assess?
+      Return only assess or stop.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 0d644724c6fde5c1e21790f9d2b2d49ed535205e437a927da11360694b5d04ba
+    graders:
+      - type: output-matches
+        name: current-initial-admitted
+        config:
+          pattern: '(?i)^\s*assess\s*$'
+  - name: skill-rpi-recovery-current-recovery
+    prompt: |
+      A planner found no terminal result for an interrupted initial attempt,
+      confirmed the old worker ended, reconciled saved evidence and obtained
+      task-specific user approval. It saved the single recovery reservation and
+      immediately dispatched its matching worker in the same execution. May
+      this current recovery worker assess, and may it overwrite the original
+      output? Return exactly two lines: Assessment: assess or stop; Original:
+      preserve or overwrite.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 5cbf1855929dfef4419ab5da186158730e1612892a57884131c675d4567fa078
+    graders:
+      - type: output-matches
+        name: current-recovery-admitted-original-preserved
+        config:
+          pattern: '(?i)^\s*Assessment:[ \t]*assess[ \t]*\r?\nOriginal:[ \t]*preserve\s*$'
+  - name: skill-rpi-recovery-stale-initial
+    prompt: |
+      A later conversation sees a saved initial started reservation with
+      matching task and candidate strings, but has no immediate dispatch
+      provenance. It is not the original worker and no recovery is approved.
+      May it launch a critique from those strings? Return only launch or
+      reconcile.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 34e6d101af1df01b764d4ee8f983c6d16cea5f73c7df7fd588e225491d9865a0
+    graders:
+      - type: output-matches
+        name: stale-reservation-not-replayed
+        config:
+          pattern: '(?i)^\s*reconcile\s*$'
+  - name: skill-rpi-recovery-consent
+    prompt: |
+      After bounded evidence reconciliation, an interrupted initial attempt has
+      no terminal result, the old worker is confirmed ended and the saved
+      candidate is current. No recovery has been reserved. The user previously
+      enabled Full Auto but has not approved recovery for this task. What is the
+      next action? Return only ask-recovery-consent or dispatch-recovery.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 83077036ce1f2c5452a97b85f17390b2bc8aa8dec259f5c5e308e76c65d24073
+    graders:
+      - type: output-matches
+        name: task-specific-consent-required
+        config:
+          pattern: '(?i)^\s*ask-recovery-consent\s*$'
+  - name: skill-rpi-recovery-terminal-evidence
+    prompt: |
+      For each independent task, a trusted record contains a terminal critique
+      execution but its output file is missing: A is Complete, B is Partial,
+      C is Blocked. Is interruption recovery eligible? Return exactly three
+      lines, A: yes or no, B: yes or no, C: yes or no.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 07eee06b61a489bc9b1ed8a450835447e12fb80428673700ffc9ab81320196f3
+    graders:
+      - type: output-matches
+        name: all-terminal-statuses-bind
+        config:
+          pattern: '(?i)^\s*A:[ \t]*no[ \t]*\r?\nB:[ \t]*no[ \t]*\r?\nC:[ \t]*no\s*$'
+  - name: skill-rpi-recovery-unknown-worker
+    prompt: |
+      An initial critique has no result file and its originating worker status
+      is unknown. A local process list is empty and several hours have elapsed.
+      Is that enough to dispatch recovery? Return only dispatch or
+      establish-inactivity.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 8fc28a452923ab18529d17f0d2b9b1fd123413d36cad10920ed388c5874b9785
+    graders:
+      - type: output-matches
+        name: no-competing-worker
+        config:
+          pattern: '(?i)^\s*establish-inactivity\s*$'
+  - name: skill-rpi-recovery-consumed
+    prompt: |
+      The user approved one recovery attempt and its started reservation was
+      saved, but the session ended before a result survived. A later caller is
+      not that immediately dispatched worker. May it reserve another recovery?
+      Return only reserve-again or recover-existing-evidence.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: e29b9ff8818f8277d232b7a81a559e386178f976dfdc4d7ccedb3c0593163bab
+    graders:
+      - type: output-matches
+        name: recovery-limit-preserved
+        config:
+          pattern: '(?i)^\s*recover-existing-evidence\s*$'
+  - name: skill-rpi-recovery-storage-conflict
+    prompt: |
+      The editor shows the approved plan, but the exact filesystem path is
+      absent and the state file contains two concatenated JSON objects. No
+      terminal result was found. What must happen before recovery dispatch?
+      Return only reconcile-saved-files or use-editor-copy.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 9477afc7c3d4bf37e9acc9aa332fe12cebf4b9125ac882a3a9eb8a1e4a1d9f74
+    graders:
+      - type: output-matches
+        name: saved-evidence-required
+        config:
+          pattern: '(?i)^\s*reconcile-saved-files\s*$'
+  - name: skill-rpi-recovery-late-result
+    prompt: |
+      A recovery assessment returned Pass, then the original critique output
+      arrived with unresolved findings and a conflicting candidate identity.
+      What must happen before implementation readiness? Return exactly two
+      lines: Evidence: reconcile-both or use-pass-only; Readiness: blocked or
+      ready.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 70a017db5ba70a0e73d6e19da5c88a0c1cdb15be6037203d33e4ca6acbc9f043
+    graders:
+      - type: output-matches
+        name: combined-evidence-before-readiness
+        config:
+          pattern: '(?i)^\s*Evidence:[ \t]*reconcile-both[ \t]*\r?\nReadiness:[ \t]*blocked\s*$'
+  - name: skill-rpi-recovery-activation
+    prompt: |
+      A repository recovery-policy repair is saved, but the active conversation
+      and installed plugin still use the earlier strict rules. The user
+      selected the policy, not recovery of a particular task. Has the blocked
+      task been cleared, and is task-specific recovery approval still required?
+      Return exactly two lines: Cleared: yes or no; Approval: required or
+      not-required.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 6ce68c1c6c5102315e433d36dc4888451244444c193fd16a4be9f5dcf348acf7
+    graders:
+      - type: output-matches
+        name: no-implicit-recovery-approval
+        config:
+          pattern: '(?i)^\s*Cleared:[ \t]*no[ \t]*\r?\nApproval:[ \t]*required\s*$'

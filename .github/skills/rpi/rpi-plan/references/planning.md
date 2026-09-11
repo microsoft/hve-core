@@ -206,7 +206,7 @@ Independent, write-disjoint assignments may run in parallel. Related or dependen
 
 ## Independent critique
 
-Activate `rpi-plan-critique` at most once, only when the primary planner judges the plan to be implementation-ready. Do not critique an initial draft merely because it exists.
+Activate `rpi-plan-critique` only when the primary planner judges the plan implementation-ready. Allow one initial invocation and only the single explicitly confirmed interruption recovery defined below. Do not critique an initial draft merely because it exists, repeat a terminal assessment, or run a closure critique.
 
 Select one critique depth and record its provenance before dispatch:
 
@@ -217,11 +217,19 @@ Select one critique depth and record its provenance before dispatch:
 
 Do not infer deep mode from plan size, complexity, uncertainty, or risk. Standard optimizes prioritization and output for minimal elapsed work without reducing complete coverage of actionable material concerns in the supplied boundary.
 
-Before dispatch, inspect the plan's Critique Disposition, parent state when present, and the critique path. A `started`, `Complete`, `Partial`, or `Blocked` execution record or existing critique artifact consumes the task's single invocation. On resume, reconcile existing evidence instead of dispatching a replacement. Persist `started`, candidate identity, selected depth and provenance, and output path immediately before dispatch; do not dispatch if that write fails.
+Before dispatch, inspect Critique Disposition, parent state when present, and every recorded critique path for this task. A terminal `Complete`, `Partial`, or `Blocked` execution recorded in any trusted artifact or worker return consumes the gate, even if its output file is missing. An earlier `started` reservation consumes that attempt, not evidence of Pass. Reconcile it through Interrupted critique recovery rather than redispatching from a saved reservation.
+
+### Reservation and current-dispatch ownership
+
+Keep attempt records in the plan's Critique Disposition. Each records task identity, a unique attempt ID, kind (`initial` or `recovery`), candidate revision and saved-content hash, depth and provenance, output path, execution status, and dispatch provenance. Preserve earlier records. When parent state exists, keep its single `Planning critique execution` decision entry and mirror the original and current attempt pointers and status in its evidence; do not add top-level schema fields or replace the original provenance.
+
+Before reserving, verify the candidate and evidence at exact absolute paths under the resolved workspace. Hash the saved plan before adding reservation metadata and identify that boundary so a worker can distinguish metadata changes from candidate changes. Persist `started` in the plan and parent state, verify the saved records, then immediately dispatch the named attempt in the same uninterrupted parent execution. If persistence fails, do not dispatch. A saved reservation without the immediate dispatch remains consumed on resume.
+
+The dispatch gives its worker the task, attempt ID and kind, candidate identity/hash boundary, depth, plan and state paths, exact output, and current-dispatch provenance. Use the host invocation identifier when exposed; otherwise record the uninterrupted reservation-to-dispatch sequence. Matching strings in a saved file are not proof of a current dispatch. A worker may assess its own just-authorized initial or recovery reservation once; a later caller or replacement worker cannot replay it. Standalone critique requires an unconsumed task and reserves its initial attempt in its own output before assessing.
 
 Lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence. Dispatch one fresh generic critique worker with selected depth, exact task context, confirmed direction, resolved planning decisions, caller requirements, research, evidence, dependencies, task Requirements, plan path, and one critique output path. The critique worker reads the plan and directly relevant supplied evidence, writes only the critique artifact, and returns one complete actionable finding set.
 
-The critique is a one-time internal readiness gate. Its verdict returns to the planning parent, which owns revision, decision requests, and finalization. It is not a peer lifecycle transition and does not cause a standalone user to invoke another stage.
+The critique is an internal readiness gate. Its verdict returns to the planning parent, which owns revision, decision requests, and finalization. It is not a peer lifecycle transition and does not cause a standalone user to invoke another stage.
 
 Record the latest critique findings and their dispositions in the plan's standalone top-level `## Critique Disposition` section. Use the critique verdict to select the smallest next action:
 
@@ -233,6 +241,19 @@ Record the latest critique findings and their dispositions in the plan's standal
 * Finalize after direct corrections and required user decisions are resolved and any accepted residual risk is explicitly recorded.
 
 Any returned execution status consumes the invocation. Partial or Blocked critique evidence remains terminal for the gate. If its missing evidence or open findings cannot be resolved by the planning parent, stop Plan with the exact blocker rather than dispatching again.
+
+### Interrupted critique recovery
+
+This is the sole exception for an interrupted `started` attempt without a terminal result. It permits at most one additional, explicitly approved recovery attempt for the same task, not a gate waiver or a new critique after findings. Automatic mode, generic resume, plan approval, and approval of this policy are not task-specific recovery consent. Only the planning parent authorizes recovery; a standalone critique routes the caller to `rpi-plan` without reassessing.
+
+1. Reconcile the original plan, state, output and available worker return or host execution record using the recorded task and paths. Search only sources that could recover this attempt's evidence. Record the result and stop repeating searches or requests for a file the user already reported unavailable unless new evidence supplies a recovery lead. Preserve all surviving content and findings. A terminal result anywhere prohibits recovery; unresolved partial output is not discarded to obtain a new verdict.
+2. Establish that the original worker is no longer active from a host completion/cancellation record or explicit operator confirmation that the originating execution has ended. Absence of a result, elapsed time or an empty local process list alone is insufficient. If liveness remains unknown, wait for the originating execution's status or confirmation, without dispatching a competing worker.
+3. Reconcile saved-file availability before eligibility. Read the exact workspace paths from the filesystem, not only editor buffers, and parse state as one JSON object. If editor and disk disagree, stop and request saving or synchronizing the identified file, then verify its bytes. Do not overwrite conflicting content, fabricate the original assessment, or silently replace a missing candidate. A reconstructed or revised candidate needs an explicit current identity, supporting evidence and user approval; keep original pointers distinct and assess current readiness before recovery.
+4. Confirm no recovery was previously reserved or executed. Record an eligibility summary with original attempt, evidence searched, terminal-result check, worker inactivity basis, reconciled candidate and uncertainty. Present that summary and the distinct recovery output to the user. Ask whether to authorize this one recovery for this task and candidate, with decline/wait and freeform choices. Explain that the original assessment may have run without saving a result. If consent is absent or declined, leave Plan paused; do not call the missing result Pass.
+5. After consent, recheck eligibility and persisted evidence before dispatch. Reserve one `recovery` attempt with a new ID and the same depth unless explicitly changed, and use the task's critique path with `-recovery` before `.md`. Preserve original paths and output; if the recovery path or record already exists, reconcile it instead of overwriting. Persist the approval and new `started` reservation using Reservation and current-dispatch ownership. This consumes the recovery even if dispatch or result persistence is interrupted. Only its immediately dispatched current worker may assess; any later new or unproven dispatch stops. Never reserve another recovery or create a child to reset the limit.
+6. Read back the result from disk and reconcile it with the worker return before updating disposition or readiness. Preserve and qualify every finding by attempt and `PC-xxx` ID. If original output arrives late, retain both results and resolve their combined findings; conflicting candidate identity, coverage or verdict remains a blocker until supported resolution. Do not select the more favorable result or dispatch a third assessment. A terminal recovery result is consumed regardless of verdict; an interrupted recovery remains blocked pending recovery of its actual evidence.
+
+Finalize only from actual assessment evidence, closed findings and explicit residual-risk dispositions. Missing evidence never becomes Pass. Keep task identity, manual or before-Implementation boundaries, and required human review unchanged. Describe the specific clearing action when blocked rather than sending the user through an unqualified maintainer-escalation loop.
 
 ## Phase and task blocks
 
