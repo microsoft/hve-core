@@ -316,7 +316,6 @@ BeforeAll {
     $script:WaveValidator = Read-RepoFile 'scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1'
     $script:DeployDocs = Read-RepoFile '.github/workflows/deploy-docs.yml'
     $script:WorkflowReadme = Read-RepoFile '.github/workflows/README.md'
-    $script:ValidationPublisher = Get-WorkflowJobSection -WorkflowSource $script:Publisher -JobName 'validate-only'
     $script:CorePublisher = Get-WorkflowJobSection -WorkflowSource $script:Publisher -JobName 'publish'
     $script:HistoryPublisher = Get-WorkflowJobSection -WorkflowSource $script:Publisher -JobName 'publish-history'
     $script:Policy = Read-RepoFile '.github/instructions/project-planning/github-backlog-grooming.instructions.md'
@@ -1054,20 +1053,6 @@ Describe 'Backlog grooming deterministic fan-in behavior' -Tag 'Unit' {
 }
 
 Describe 'Backlog grooming production publisher' -Tag 'Unit' {
-    It 'isolates validation-only dispatch from every write-capable job' {
-        $script:Publisher | Should -Match '(?ms)^      validation-only:\s+description:.*?required: false\s+default: false\s+type: boolean'
-        $script:Publisher | Should -Match 'const validationOnly = manualReplay && process\.env\.VALIDATION_ONLY === "true"'
-        $script:Publisher | Should -Match '\(!validationOnly &&\s+\(run\.head_branch !== repository\.default_branch \|\| run\.head_sha !== defaultRef\.object\.sha\)\)'
-        $script:ValidationPublisher | Should -Match "if: \$\{\{ needs\.discover\.outputs\.terminal == 'true' && needs\.discover\.outputs\.validation-only == 'true' \}\}"
-        $script:ValidationPublisher | Should -Match '(?ms)permissions:\s+actions: read\s+contents: read'
-        $script:ValidationPublisher | Should -Not -Match 'issues: write|contents: write|github\.rest\.issues\.(create|update)'
-        $script:ValidationPublisher | Should -Match 'aggregate\.contract_errors !== 0'
-        $script:ValidationPublisher | Should -Match 'trackerDigest !== aggregate\.predecessor_aggregate_digest'
-        $script:ValidationPublisher | Should -Match 'No tracker issue or report history was written'
-        $script:CorePublisher | Should -Match "if: \$\{\{ needs\.discover\.outputs\.terminal == 'true' && needs\.discover\.outputs\.validation-only != 'true' \}\}"
-        $script:HistoryPublisher | Should -Match "if: \$\{\{ needs\.discover\.outputs\.validation-only != 'true' && vars\.BACKLOG_GROOM_PUBLISH_GH_PAGES == 'true' \}\}"
-    }
-
     It 'isolates the sole issue-write permission behind complete fan-in' {
         [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
         [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
@@ -1080,7 +1065,7 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:Publisher | Should -Match 'run\.head_sha !== defaultRef\.object\.sha'
         $script:Publisher | Should -Match 'Publication requires the current default-branch orchestrator revision'
         $script:Publisher | Should -Match 'Completed orchestrator run is nonterminal; publication is not required'
-        $script:Publisher | Should -Match "if: \$\{\{ needs\.discover\.outputs\.terminal == 'true' && needs\.discover\.outputs\.validation-only != 'true' \}\}"
+        $script:Publisher | Should -Match "if: \$\{\{ needs\.discover\.outputs\.terminal == 'true' \}\}"
         $script:Publisher | Should -Match '(?m)^          artifact-ids: \$\{\{ steps\.authenticate\.outputs\.final-artifact-id \}\}$'
         $script:Publisher | Should -Match 'run\.path !== "\.github/workflows/backlog-groom-orchestrator\.yml"'
         $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read\s+pull-requests: read'
@@ -1158,7 +1143,7 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
     It 'gates the complete non-blocking optional publication unit with an exact repository variable' {
         [regex]::Matches(
             $script:Publisher,
-            "(?m)^    if: \$\{\{ needs\.discover\.outputs\.validation-only != 'true' && vars\.BACKLOG_GROOM_PUBLISH_GH_PAGES == 'true' \}\}$"
+            "(?m)^    if: \$\{\{ vars\.BACKLOG_GROOM_PUBLISH_GH_PAGES == 'true' \}\}$"
         ).Count | Should -Be 1
         [regex]::Matches($script:Publisher, '(?m)^    continue-on-error: true$').Count | Should -Be 1
         $script:HistoryPublisher | Should -Match '(?ms)^  publish-history:.*?needs:\s+- discover\s+- publish'

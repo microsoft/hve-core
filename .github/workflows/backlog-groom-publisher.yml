@@ -34,11 +34,6 @@ on:
         description: Expected orchestrator source revision
         required: true
         type: string
-      validation-only:
-        description: Validate the exact aggregate without publishing tracker or history state
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.repository_id }}
@@ -60,7 +55,6 @@ jobs:
       final-artifact-id: ${{ steps.discover.outputs.final-artifact-id }}
       sweep-id: ${{ steps.discover.outputs.sweep-id }}
       source-sha: ${{ steps.discover.outputs.source-sha }}
-      validation-only: ${{ steps.discover.outputs.validation-only }}
     steps:
       - name: Resolve manual or completed-run input
         id: discover
@@ -70,7 +64,6 @@ jobs:
           FINAL_ARTIFACT_ID: ${{ inputs.final-artifact-id }}
           SWEEP_ID: ${{ inputs.sweep-id }}
           SOURCE_SHA: ${{ inputs.source-sha }}
-          VALIDATION_ONLY: ${{ inputs.validation-only }}
         with:
           script: |
             const parsePositiveInteger = (name, value) => {
@@ -80,7 +73,6 @@ jobs:
             };
             const automaticRunId = context.payload.workflow_run?.id;
             const manualReplay = !automaticRunId;
-            const validationOnly = manualReplay && process.env.VALIDATION_ONLY === "true";
             const finalRunId = manualReplay
               ? parsePositiveInteger("final-run-id", process.env.FINAL_RUN_ID)
               : parsePositiveInteger("final-run-id", String(automaticRunId));
@@ -91,11 +83,9 @@ jobs:
               ref: `heads/${repository.default_branch}`,
             });
             if (run.path !== ".github/workflows/backlog-groom-orchestrator.yml" ||
-                (!validationOnly &&
-                 (run.head_branch !== repository.default_branch || run.head_sha !== defaultRef.object.sha))) {
+                run.head_branch !== repository.default_branch || run.head_sha !== defaultRef.object.sha) {
               throw new Error("Publication requires the current default-branch orchestrator revision");
             }
-            core.setOutput("validation-only", String(validationOnly));
             if (manualReplay) {
               core.setOutput("terminal", "true");
               core.setOutput("final-run-id", String(finalRunId));
@@ -122,173 +112,10 @@ jobs:
             core.setOutput("sweep-id", finals[0].name.match(pattern)[1]);
             core.setOutput("source-sha", run.head_sha);
 
-  validate-only:
-    name: Revalidate compact trusted sweep state without publishing
-    needs: discover
-    if: ${{ needs.discover.outputs.terminal == 'true' && needs.discover.outputs.validation-only == 'true' }}
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-    steps:
-      - name: Authenticate exact final artifact metadata
-        id: authenticate
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          FINAL_RUN_ID: ${{ needs.discover.outputs.final-run-id }}
-          FINAL_ARTIFACT_ID: ${{ needs.discover.outputs.final-artifact-id }}
-          SWEEP_ID: ${{ needs.discover.outputs.sweep-id }}
-          SOURCE_SHA: ${{ needs.discover.outputs.source-sha }}
-        with:
-          script: |
-            const parsePositiveInteger = (name, value) => {
-              const parsed = Number(value);
-              if (!Number.isSafeInteger(parsed) || parsed <= 0) throw new Error(`${name} must be a positive safe integer`);
-              return parsed;
-            };
-            const finalRunId = parsePositiveInteger("final-run-id", process.env.FINAL_RUN_ID);
-            const { data: run } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: finalRunId });
-            const artifactId = parsePositiveInteger("final-artifact-id", process.env.FINAL_ARTIFACT_ID);
-            const sweepId = process.env.SWEEP_ID;
-            const sourceSha = process.env.SOURCE_SHA;
-            if (!/^[a-f0-9]{64}$/.test(sweepId) || !/^[a-f0-9]{40}$/.test(sourceSha)) {
-              throw new Error("sweep-id or source-sha has an invalid format");
-            }
-            const { data: artifact } = await github.rest.actions.getArtifact({ ...context.repo, artifact_id: artifactId });
-            if (artifact.expired || artifact.workflow_run?.id !== finalRunId ||
-                artifact.name !== `backlog-grooming-sweep-v1-${sweepId}-final-${finalRunId}` ||
-                run.path !== ".github/workflows/backlog-groom-orchestrator.yml" ||
-                run.head_sha !== sourceSha || run.conclusion !== "success") {
-              throw new Error("Final artifact metadata is not bound to the accepted successful orchestrator run");
-            }
-            core.setOutput("final-run-id", String(finalRunId));
-            core.setOutput("final-artifact-id", String(artifactId));
-            core.setOutput("sweep-id", sweepId);
-            core.setOutput("source-sha", sourceSha);
-      - name: Download exact final aggregate
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          artifact-ids: ${{ steps.authenticate.outputs.final-artifact-id }}
-          path: final-input
-          github-token: ${{ github.token }}
-          run-id: ${{ steps.authenticate.outputs.final-run-id }}
-      - name: Validate compact trusted tracker proposal
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          FINAL_RUN_ID: ${{ steps.authenticate.outputs.final-run-id }}
-          FINAL_DIGEST: ${{ inputs.final-digest }}
-          SWEEP_ID: ${{ steps.authenticate.outputs.sweep-id }}
-          SNAPSHOT_DIGEST: ${{ inputs.snapshot-digest }}
-          SOURCE_SHA: ${{ steps.authenticate.outputs.source-sha }}
-        with:
-          script: |
-            const crypto = require("crypto");
-            const fs = require("fs");
-            const canonicalize = (value) => {
-              if (Array.isArray(value)) return `[${value.map(canonicalize).join(",")}]`;
-              if (value !== null && typeof value === "object") return `{${Object.keys(value).sort().map(
-                (key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`,
-              ).join(",")}}`;
-              return JSON.stringify(value);
-            };
-            const digest = (value) => crypto.createHash("sha256").update(canonicalize(value)).digest("hex");
-            const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value) &&
-              Object.keys(value).sort().join("|") === [...keys].sort().join("|");
-            const aggregateKeys = [
-              "schema_version", "sweep_id", "snapshot_digest", "source_sha", "completed_at",
-              "predecessor_aggregate_digest",
-              "total_snapshot_count", "completed_waves", "assessed", "deferred", "contract_errors", "prior_cursor",
-              "next_cursor", "stop_reason", "planned_sweep_aic",
-              "checkpoint_digests", "rows", "contract_error_issue_ids", "contract_error_details",
-              "normalizations", "aggregate_digest",
-            ];
-            const aggregate = JSON.parse(fs.readFileSync("final-input/aggregate.json", "utf8"));
-            const { aggregate_digest: recordedDigest, ...material } = aggregate;
-            if (!/^[a-f0-9]{64}$/.test(process.env.SWEEP_ID) ||
-                !/^[a-f0-9]{64}$/.test(process.env.FINAL_DIGEST) ||
-                !/^[a-f0-9]{64}$/.test(process.env.SNAPSHOT_DIGEST) ||
-                !/^[a-f0-9]{40}$/.test(process.env.SOURCE_SHA)) {
-              throw new Error("Publisher digest or source revision input has an invalid format");
-            }
-            if (!exactKeys(aggregate, aggregateKeys) || digest(material) !== recordedDigest ||
-                recordedDigest !== process.env.FINAL_DIGEST ||
-                aggregate.schema_version !== "backlog-grooming-sweep-aggregate/v2" ||
-                aggregate.sweep_id !== process.env.SWEEP_ID ||
-                aggregate.snapshot_digest !== process.env.SNAPSHOT_DIGEST ||
-                aggregate.source_sha !== process.env.SOURCE_SHA ||
-                (aggregate.predecessor_aggregate_digest !== null &&
-                 !/^[a-f0-9]{64}$/.test(aggregate.predecessor_aggregate_digest)) ||
-                aggregate.assessed + aggregate.deferred + aggregate.contract_errors !== aggregate.total_snapshot_count ||
-                aggregate.contract_errors !== 0 ||
-                aggregate.checkpoint_digests.length !== aggregate.completed_waves ||
-                aggregate.rows.length !== aggregate.assessed + aggregate.deferred ||
-                aggregate.contract_error_issue_ids.length !== aggregate.contract_errors ||
-                aggregate.contract_error_details.length !== aggregate.contract_errors) {
-              throw new Error("Final sweep aggregate failed trusted publication validation");
-            }
-            const marker = "<!-- gh-aw:backlog-grooming-tracker -->";
-            const issues = await github.paginate(
-              github.rest.issues.listForRepo,
-              { ...context.repo, state: "all", per_page: 100 },
-            );
-            const trackers = issues.filter((issue) => !issue.pull_request && issue.body?.includes(marker) &&
-              issue.user?.login === "github-actions[bot]" && issue.user?.type === "Bot");
-            if (trackers.length > 1) throw new Error("Multiple trusted backlog grooming trackers are ambiguous");
-            let trackerDigest = null;
-            if (trackers.length === 1) {
-              const currentStateMatch = trackers[0].body.match(/<!-- gh-aw:backlog-grooming-state (\{.*\}) -->/);
-              if (!currentStateMatch) {
-                if (aggregate.predecessor_aggregate_digest !== null) {
-                  throw new Error("Trusted backlog grooming tracker state is malformed");
-                }
-                core.info("Trusted marker-only tracker accepted for initial publication");
-              } else {
-                const currentState = JSON.parse(currentStateMatch[1]);
-                if (!/^[a-f0-9]{64}$/.test(currentState.aggregate_digest)) {
-                  throw new Error("Trusted backlog grooming tracker aggregate digest is invalid");
-                }
-                trackerDigest = currentState.aggregate_digest;
-              }
-            }
-            if (trackerDigest !== aggregate.aggregate_digest &&
-                trackerDigest !== aggregate.predecessor_aggregate_digest) {
-              throw new Error("Trusted backlog grooming tracker changed after this sweep snapshot was captured");
-            }
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.FINAL_RUN_ID}`;
-            const state = JSON.stringify({
-              schema_version: aggregate.schema_version,
-              sweep_id: aggregate.sweep_id,
-              completed_at: aggregate.completed_at,
-              next_cursor: aggregate.next_cursor,
-              aggregate_digest: aggregate.aggregate_digest,
-            });
-            const report = [
-              "# Validation-only publisher proof",
-              "",
-              "No tracker issue or report history was written.",
-              "",
-              marker,
-              `<!-- gh-aw:backlog-grooming-state ${state} -->`,
-              "",
-              "## Proposed Backlog Grooming Sweep",
-              "",
-              `Sweep \`${aggregate.sweep_id}\` completed with immutable aggregate \`${aggregate.aggregate_digest}\` in orchestrator run ${process.env.FINAL_RUN_ID}.`,
-              "",
-              "| Completed | Snapshot issues | Waves | Assessed | Deferred | Prior cursor | Next cursor | Planned AIC | Stop reason |",
-              "|---|---|---|---|---|---|---|---|---|",
-              `| ${aggregate.completed_at} | ${aggregate.total_snapshot_count} | ${aggregate.completed_waves} | ${aggregate.assessed} | ${aggregate.deferred} | ${aggregate.prior_cursor} | ${aggregate.next_cursor} | ${aggregate.planned_sweep_aic} | ${aggregate.stop_reason} |`,
-              "",
-              `Inspect the [source workflow run](${runUrl}) for retained detailed evidence.`,
-              "",
-              "All findings are advisory for maintainer review.",
-            ].join("\n");
-            if (report.length > 65000) throw new Error("Compact trusted tracker exceeds 65,000 characters");
-            await core.summary.addRaw(report).write();
-
   publish:
     name: Revalidate and publish compact trusted sweep state
     needs: discover
-    if: ${{ needs.discover.outputs.terminal == 'true' && needs.discover.outputs.validation-only != 'true' }}
+    if: ${{ needs.discover.outputs.terminal == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -480,7 +307,7 @@ jobs:
     needs:
       - discover
       - publish
-    if: ${{ needs.discover.outputs.validation-only != 'true' && vars.BACKLOG_GROOM_PUBLISH_GH_PAGES == 'true' }}
+    if: ${{ vars.BACKLOG_GROOM_PUBLISH_GH_PAGES == 'true' }}
     continue-on-error: true
     runs-on: ubuntu-latest
     permissions:
