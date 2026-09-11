@@ -48,6 +48,8 @@ Limit: none.
 
 The helper returns suggestions rather than findings:
 
+<!-- cspell:ignore kwargs -->
+
 ```text
 * Status: Complete
 * Question: Q2 and Q3 for azure-storage-blob async uploads over 1 GB

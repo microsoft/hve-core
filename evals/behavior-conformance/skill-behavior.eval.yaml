@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 228
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 229
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -4918,7 +4918,7 @@ stimuli:
       D: A read-only review demonstrates a required source correction.
       E: The task changed a decision rule; its last repair is only a typo.
       Choose one value from each pair:
-      `A:` `finish-pass` | `polish-and-rereview`
+      `A:` `finish-pass` | `polish-and-review-again`
       `B:` `stop-unresolved` | `retry-unchanged`
       `C:` `defer` | `edit-source`
       `D:` `return-findings` | `fix-source`
@@ -4937,3 +4937,21 @@ stimuli:
         name: materiality-and-progress
         config:
           pattern: '(?i)^[ \t]*A:[ \t]*finish-pass[ \t]*\r?\n[ \t]*B:[ \t]*stop-unresolved[ \t]*\r?\n[ \t]*C:[ \t]*defer[ \t]*\r?\n[ \t]*D:[ \t]*return-findings[ \t]*\r?\n[ \t]*E:[ \t]*review-current-candidate[ \t]*(?:\r?\n)?(?![\s\S])'
+  - name: skill-hve-artifact-authoring-artifact-selection
+    prompt: |
+      According to hve-artifact-authoring, which artifact type should hold
+      a reusable workflow and domain knowledge? Reply with one word:
+      prompt, agent, instruction, or skill.
+    environment:
+      skills:
+        - ../../.github/skills/coding-standards/hve-artifact-authoring
+    tags:
+      category: behavior-conformance
+      skill: hve-artifact-authoring
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: reusable-behavior-belongs-in-skill
+        config:
+          pattern: '(?i)^\s*skill[.!]?\s*$'
