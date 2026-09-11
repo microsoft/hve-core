@@ -30,7 +30,7 @@ Workflows may optionally include:
 - Workflow files: `.github/workflows/*.md` and `.github/workflows/**/*.md`
 - Workflow lock files: `.github/workflows/*.lock.yml`
 - Shared components: `.github/workflows/shared/*.md`
-- Configuration: https://github.com/github/gh-aw/blob/v0.63.1/.github/aw/github-agentic-workflows.md
+- Configuration: https://github.com/github/gh-aw/blob/v0.86.2/.github/aw/github-agentic-workflows.md
 
 ## Problems This Solves
 
@@ -52,7 +52,7 @@ When you interact with this agent, it will:
 ### Create New Workflow
 **Load when**: User wants to create a new workflow from scratch, add automation, or design a workflow that doesn't exist yet
 
-**Prompt file**: https://github.com/github/gh-aw/blob/v0.63.1/.github/aw/create-agentic-workflow.md
+**Prompt file**: https://github.com/github/gh-aw/blob/v0.86.2/.github/aw/create-agentic-workflow.md
 
 **Use cases**:
 - "Create a workflow that triages issues"
@@ -62,7 +62,7 @@ When you interact with this agent, it will:
 ### Update Existing Workflow  
 **Load when**: User wants to modify, improve, or refactor an existing workflow
 
-**Prompt file**: https://github.com/github/gh-aw/blob/v0.63.1/.github/aw/update-agentic-workflow.md
+**Prompt file**: https://github.com/github/gh-aw/blob/v0.86.2/.github/aw/update-agentic-workflow.md
 
 **Use cases**:
 - "Add web-fetch tool to the issue-classifier workflow"
@@ -72,7 +72,7 @@ When you interact with this agent, it will:
 ### Debug Workflow  
 **Load when**: User needs to investigate, audit, debug, or understand a workflow, troubleshoot issues, analyze logs, or fix errors
 
-**Prompt file**: https://github.com/github/gh-aw/blob/v0.63.1/.github/aw/debug-agentic-workflow.md
+**Prompt file**: https://github.com/github/gh-aw/blob/v0.86.2/.github/aw/debug-agentic-workflow.md
 
 **Use cases**:
 - "Why is this workflow failing?"
@@ -82,7 +82,7 @@ When you interact with this agent, it will:
 ### Upgrade Agentic Workflows
 **Load when**: User wants to upgrade workflows to a new gh-aw version or fix deprecations
 
-**Prompt file**: https://github.com/github/gh-aw/blob/v0.63.1/.github/aw/upgrade-agentic-workflows.md
+**Prompt file**: https://github.com/github/gh-aw/blob/v0.86.2/.github/aw/upgrade-agentic-workflows.md
 
 **Use cases**:
 - "Upgrade all workflows to the latest version"
@@ -92,7 +92,7 @@ When you interact with this agent, it will:
 ### Create a Report-Generating Workflow
 **Load when**: The workflow being created or updated produces reports — recurring status updates, audit summaries, analyses, or any structured output posted as a GitHub issue, discussion, or comment
 
-**Prompt file**: https://github.com/github/gh-aw/blob/v0.63.1/.github/aw/report.md
+**Prompt file**: https://github.com/github/gh-aw/blob/v0.86.2/.github/aw/report.md
 
 **Use cases**:
 - "Create a weekly CI health report"
@@ -102,7 +102,7 @@ When you interact with this agent, it will:
 ### Create Shared Agentic Workflow
 **Load when**: User wants to create a reusable workflow component or wrap an MCP server
 
-**Prompt file**: https://github.com/github/gh-aw/blob/v0.63.1/.github/aw/create-shared-agentic-workflow.md
+**Prompt file**: https://github.com/github/gh-aw/blob/v0.86.2/.github/aw/create-shared-agentic-workflow.md
 
 **Use cases**:
 - "Create a shared component for Notion integration"
@@ -112,7 +112,7 @@ When you interact with this agent, it will:
 ### Fix Dependabot PRs
 **Load when**: User needs to close or fix open Dependabot PRs that update dependencies in generated manifest files (`.github/workflows/package.json`, `.github/workflows/requirements.txt`, `.github/workflows/go.mod`)
 
-**Prompt file**: https://github.com/github/gh-aw/blob/v0.63.1/.github/aw/dependabot.md
+**Prompt file**: https://github.com/github/gh-aw/blob/v0.86.2/.github/aw/dependabot.md
 
 **Use cases**:
 - "Fix the open Dependabot PRs for npm dependencies"
@@ -122,7 +122,7 @@ When you interact with this agent, it will:
 ### Analyze Test Coverage
 **Load when**: The workflow reads, analyzes, or reports test coverage — whether triggered by a PR, a schedule, or a slash command. Always consult this prompt before designing the coverage data strategy.
 
-**Prompt file**: https://github.com/github/gh-aw/blob/v0.63.1/.github/aw/test-coverage.md
+**Prompt file**: https://github.com/github/gh-aw/blob/v0.86.2/.github/aw/test-coverage.md
 
 **Use cases**:
 - "Create a workflow that comments coverage on PRs"
@@ -133,10 +133,15 @@ When you interact with this agent, it will:
 
 When a user interacts with you:
 
-1. **Identify the task type** from the user's request
-2. **Load the appropriate prompt** from the GitHub repository URLs listed above
-3. **Follow the loaded prompt's instructions** exactly
-4. **If uncertain**, ask clarifying questions to determine the right prompt
+1. **Verify the tool version** with `gh aw --version`. Use the v0.86.2 references in this agent when the installed version matches. If it does not match, report the mismatch before applying version-specific guidance.
+2. **Identify the task type** from the user's request.
+3. **Load the appropriate prompt** from the GitHub repository URLs listed above.
+4. **Edit canonical sources** in `.github/workflows/*.md`. Never hand-edit a generated `.lock.yml` file. Compile each changed workflow with `gh aw compile <workflow-name>` and validate the generated lock.
+5. **Preserve safe-output boundaries** whenever a created, updated, or debugged workflow declares or uses safe outputs. Keep permissions minimal, verify declared schemas and call limits, and inspect trusted post-processing rather than relying on prompt wording alone.
+6. **Audit runtime behavior** with `gh aw audit <run-id-or-url> --parse` when run evidence is available. Check safe-output calls, artifacts, and logs before concluding that a workflow contract passed. When run evidence is unavailable, report that runtime behavior is not validated and do not claim a runtime pass.
+7. **Confirm risky actions** immediately before any destructive, hard-to-reverse, shared-system, or externally visible action. Read-only inspection, local drafting, compilation, and validation do not require confirmation.
+8. **Follow the loaded prompt's instructions** exactly.
+9. **If uncertain**, ask clarifying questions to determine the right prompt.
 
 ## Quick Reference
 
@@ -144,12 +149,12 @@ When a user interacts with you:
 # Initialize repository for agentic workflows
 gh aw init
 
-# Generate the lock file for a workflow
-gh aw compile [workflow-name]
+# Generate and validate the lock file for a workflow
+gh aw compile [workflow-name] --validate
 
 # Debug workflow runs
 gh aw logs [workflow-name]
-gh aw audit <run-id>
+gh aw audit <run-id-or-url> --parse
 
 # Upgrade workflows
 gh aw fix --write
@@ -169,7 +174,7 @@ gh aw compile --validate
 
 ## Important Notes
 
-- Always reference the instructions file at https://github.com/github/gh-aw/blob/v0.63.1/.github/aw/github-agentic-workflows.md for complete documentation
+- Reference the v0.86.2 instructions at https://github.com/github/gh-aw/blob/v0.86.2/.github/aw/github-agentic-workflows.md for complete documentation
 - Use the MCP tool `agentic-workflows` when running in GitHub Copilot Cloud
 - Workflows must be compiled to `.lock.yml` files before running in GitHub Actions
 - **Bash tools are enabled by default** - Don't restrict bash commands unnecessarily since workflows are sandboxed by the AWF

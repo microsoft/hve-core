@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
-    $script:RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../../..')).Path
+    $script:RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../../../..')).Path
 
     function Read-RepoFile {
         param([Parameter(Mandatory)] [string]$Path)
@@ -123,48 +123,6 @@ BeforeAll {
         & $SummarySink $sanitizedReport
     }
 
-    function Merge-GroomingShardResults {
-        param(
-            [Parameter(Mandatory)] [int[]]$CandidateIds,
-            [Parameter(Mandatory)] [int]$PriorCursor,
-            [Parameter(Mandatory)] [object[]]$Results
-        )
-
-        $rowsByIssue = @{}
-        $inventoryCounts = [System.Collections.Generic.HashSet[int]]::new()
-        foreach ($shardId in @('shard-01', 'shard-02')) {
-            $shardResults = @($Results | Where-Object ShardId -EQ $shardId)
-            if ($shardResults.Count -ne 1) {
-                throw "$shardId expected exactly one result, found $($shardResults.Count)"
-            }
-            $null = $inventoryCounts.Add($shardResults[0].Inventory)
-            foreach ($row in $shardResults[0].Rows) {
-                if ($rowsByIssue.ContainsKey($row.Issue)) {
-                    throw "duplicate aggregate issue $($row.Issue)"
-                }
-                $rowsByIssue[$row.Issue] = $row
-            }
-        }
-        if ($inventoryCounts.Count -ne 1) {
-            throw 'shard inventory counts disagree'
-        }
-
-        $orderedRows = @($CandidateIds | ForEach-Object { $rowsByIssue[$_] })
-        if ($orderedRows.Count -ne $CandidateIds.Count -or @($orderedRows | Where-Object { $null -eq $_ }).Count -gt 0) {
-            throw 'aggregate issue coverage is incomplete'
-        }
-        $assessedRows = @($orderedRows | Where-Object Status -EQ 'Assessed')
-        $deferredRows = @($orderedRows | Where-Object Status -EQ 'Deferred')
-
-        return [ordered]@{
-            Inventory = @($inventoryCounts)[0]
-            Assessed = $assessedRows.Count
-            Deferred = $deferredRows.Count
-            NextCursor = if ($assessedRows.Count -gt 0) { $assessedRows[-1].Issue } else { $PriorCursor }
-            Issues = @($orderedRows.Issue)
-        }
-    }
-
     function Get-SweepSlices {
         param(
             [AllowNull()] [int[]]$IssueIds,
@@ -216,11 +174,146 @@ BeforeAll {
         return $Value -ceq 'true'
     }
 
+    function New-GroomingCandidateCall {
+        param(
+            [Parameter(Mandatory)] [long]$IssueNumber,
+            [string[]]$RepositoryEvidence = @('src/example.ps1'),
+            [string[]]$OriginalDelivery = @(),
+            [string[]]$ReplacementOrRemoval = @(),
+            [System.Collections.IDictionary]$Overrides = @{}
+        )
+
+        $Item = [ordered]@{
+            type = 'publish_backlog_grooming_result'
+            'issue-number' = $IssueNumber
+            title = "Issue $IssueNumber"
+            'selection-reason' = 'priority'
+            'activity-and-ownership-context' = 'active'
+            'acceptance-signals' = 'requested behavior is present'
+            'similarity-outcome' = 'Distinct'
+            disposition = 'Still needed'
+            'grooming-finding' = 'evidence supports assessment'
+            'recommended-next-step' = 'maintain the issue'
+            'assessment-status' = 'Assessed'
+            'deferral-reason' = ''
+        }
+        $EvidenceRecords = @(
+            foreach ($EvidenceList in @(
+                    @{ Category = 'Repository'; Values = $RepositoryEvidence },
+                    @{ Category = 'Original delivery'; Values = $OriginalDelivery },
+                    @{ Category = 'Replacement or removal'; Values = $ReplacementOrRemoval }
+                )) {
+                foreach ($Value in $EvidenceList.Values) {
+                    @{ Category = $EvidenceList.Category; Text = $Value }
+                }
+            }
+        )
+        for ($Index = 0; $Index -lt $EvidenceRecords.Count; $Index++) {
+            $Item["evidence-$($Index + 1)-category"] = $EvidenceRecords[$Index].Category
+            $Item["evidence-$($Index + 1)-text"] = $EvidenceRecords[$Index].Text
+        }
+        foreach ($Key in $Overrides.Keys) {
+            $Item[$Key] = $Overrides[$Key]
+        }
+        return $Item
+    }
+
+    function ConvertTo-AgentOutputElement {
+        param([Parameter(Mandatory)] [AllowEmptyCollection()] [object[]]$Items)
+
+        $Document = [System.Text.Json.JsonDocument]::Parse(
+            (@{ items = @($Items) } | ConvertTo-Json -Depth 20 -Compress)
+        )
+        try {
+            return $Document.RootElement.Clone()
+        }
+        finally {
+            $Document.Dispose()
+        }
+    }
+
+    function Invoke-GroomingResult {
+        [CmdletBinding()]
+        param(
+            [Parameter(Mandatory)] [AllowEmptyCollection()] [object[]]$Items,
+            [Parameter(Mandatory)] [AllowEmptyCollection()] [long[]]$OrderedCandidateIds,
+            [long[]]$PriorityCandidateIds = $OrderedCandidateIds,
+            [long[]]$RoundRobinCandidateIds = @(),
+            [long]$TotalOpenInventory = $OrderedCandidateIds.Count,
+            [long]$PriorCursor = 0,
+            [datetimeoffset]$StartedAt = [datetimeoffset]'2026-09-02T10:00:00Z'
+        )
+
+        $AgentOutput = ConvertTo-AgentOutputElement -Items $Items
+        return ConvertTo-BacklogGroomingShardResult -AgentOutput $AgentOutput `
+            -ShardId 'shard-01' -ManifestDigest ('a' * 64) `
+            -OrderedCandidateIdsJson (ConvertTo-Json -InputObject @($OrderedCandidateIds) -Compress) `
+            -PriorityCandidateIdsJson (ConvertTo-Json -InputObject @($PriorityCandidateIds) -Compress) `
+            -RoundRobinCandidateIdsJson (ConvertTo-Json -InputObject $RoundRobinCandidateIds -Compress) `
+            -TotalOpenInventoryText ([string]$TotalOpenInventory) -PriorCursorText ([string]$PriorCursor) `
+            -OrchestratorRunId '12345' -OrchestratorAttemptText '1' -StartedAt $StartedAt
+    }
+
+    function ConvertTo-GroomingCandidateCall {
+        param([Parameter(Mandatory)] [System.Collections.IDictionary]$Row)
+
+        $Overrides = [ordered]@{
+            title = $Row.title
+            'selection-reason' = $Row.selection_reason
+            'activity-and-ownership-context' = $Row.activity_and_ownership_context
+            'acceptance-signals' = $Row.acceptance_signals
+            'similarity-outcome' = $Row.similarity_outcome
+            disposition = $Row.disposition
+            'grooming-finding' = $Row.grooming_finding
+            'recommended-next-step' = $Row.recommended_next_step
+            'assessment-status' = $Row.assessment_status
+        }
+        $Overrides['deferral-reason'] = $Row.deferral_reason
+        $Call = New-GroomingCandidateCall -IssueNumber $Row.issue `
+            -RepositoryEvidence @($Row.repository_evidence) `
+            -OriginalDelivery @($Row.lineage_evidence.original_delivery) `
+            -ReplacementOrRemoval @($Row.lineage_evidence.replacement_or_removal) `
+            -Overrides $Overrides
+        return $Call
+    }
+
+    function Invoke-GroomingResultJob {
+        [CmdletBinding()]
+        param(
+            [System.Collections.IDictionary]$ReportData,
+            [AllowEmptyCollection()] [object[]]$SafeOutputItems,
+            [Parameter(Mandatory)] [AllowEmptyCollection()] [long[]]$OrderedCandidateIds,
+            [Parameter(Mandatory)] [AllowEmptyCollection()] [long[]]$PriorityCandidateIds,
+            [Parameter(Mandatory)] [AllowEmptyCollection()] [long[]]$RoundRobinCandidateIds,
+            [Parameter(Mandatory)] [long]$TotalOpenInventory,
+            [Parameter(Mandatory)] [long]$PriorCursor,
+            [Parameter(Mandatory)] [datetimeoffset]$StartedAt,
+            [Parameter(Mandatory)] [string]$CompletedAt,
+            [Parameter(Mandatory)] [string]$TestRoot,
+            [switch]$ApplyTemplateTransportEscaping
+        )
+
+        $null = $CompletedAt, $TestRoot, $ApplyTemplateTransportEscaping
+        $Items = if ($null -ne $SafeOutputItems) {
+            @($SafeOutputItems)
+        }
+        else {
+            @($ReportData.issues | ForEach-Object { ConvertTo-GroomingCandidateCall -Row $_ })
+        }
+        return Invoke-GroomingResult -Items $Items -OrderedCandidateIds $OrderedCandidateIds `
+            -PriorityCandidateIds $PriorityCandidateIds -RoundRobinCandidateIds $RoundRobinCandidateIds `
+            -TotalOpenInventory $TotalOpenInventory -PriorCursor $PriorCursor -StartedAt $StartedAt
+    }
+
+    $script:ModulePath = Join-Path $script:RepoRoot 'scripts/agentic-workflows/backlog-grooming/Modules/BacklogGrooming.psm1'
+    $script:BacklogGroomingModule = Import-Module $script:ModulePath -Force -PassThru
     $script:Source = Read-RepoFile '.github/workflows/backlog-groom.md'
+    $script:Module = Read-RepoFile 'scripts/agentic-workflows/backlog-grooming/Modules/BacklogGrooming.psm1'
+    $script:Collector = Read-RepoFile 'scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomResultCollector.ps1'
     $script:Lock = Read-RepoFile '.github/workflows/backlog-groom.lock.yml'
     $script:Orchestrator = Read-RepoFile '.github/workflows/backlog-groom-orchestrator.yml'
     $script:Publisher = Read-RepoFile '.github/workflows/backlog-groom-publisher.yml'
-    $script:WaveValidator = Read-RepoFile 'scripts/security/Invoke-BacklogGroomWaveValidator.ps1'
+    $script:WaveValidator = Read-RepoFile 'scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1'
     $script:DeployDocs = Read-RepoFile '.github/workflows/deploy-docs.yml'
     $script:WorkflowReadme = Read-RepoFile '.github/workflows/README.md'
     $script:CorePublisher = Get-WorkflowJobSection -WorkflowSource $script:Publisher -JobName 'publish'
@@ -242,10 +335,42 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
     }
 
     It 'keeps model permissions read-only and safe outputs bounded' {
-        $script:Source | Should -Match '(?ms)^permissions:\s+contents: read\s+issues: read$'
+        $script:Source | Should -Match '(?ms)^tools:\s+github:\s+toolsets: \[context, repos, issues, pull_requests\]\s+allowed-repos: public\s+min-integrity: unapproved$'
+        $script:Source | Should -Match '(?ms)^permissions:\s+contents: read\s+issues: read\s+pull-requests: read$'
+        $script:Lock | Should -Match '"GITHUB_TOOLSETS": "context,repos,issues,pull_requests"'
+        $script:Lock | Should -Match '"min-integrity": "unapproved"'
         $script:Source | Should -Match '(?ms)^  noop:\s+max: 1\s+report-as-issue: false'
         $script:Source | Should -Match '(?m)^    publish-backlog-grooming-result:$'
-        $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?permissions: \{\}'
+        $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?max: 5'
+        $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?permissions:\s+contents: read'
+        foreach ($inputName in @('issue-number')) {
+            $script:Source | Should -Match "(?ms)^        $([regex]::Escape($inputName)):.*?required: true\s+type: number"
+        }
+        foreach ($inputName in @(
+                'title', 'selection-reason', 'activity-and-ownership-context', 'acceptance-signals',
+                'similarity-outcome', 'disposition', 'grooming-finding', 'recommended-next-step',
+                'assessment-status'
+            )) {
+            $script:Source | Should -Match "(?ms)^        $([regex]::Escape($inputName)):.*?required: true\s+type: string"
+        }
+        foreach ($position in 1..5) {
+            $script:Source | Should -Match "(?ms)^        evidence-${position}-category:.*?required: false\s+type: string"
+            $script:Source | Should -Match "(?ms)^        evidence-${position}-text:.*?required: false\s+type: string"
+        }
+        $InputBlock = [regex]::Match(
+            $script:Source,
+            '(?ms)^      inputs:\s*\n(?<inputs>.*?)^      steps:'
+        ).Groups['inputs'].Value
+        @([regex]::Matches($InputBlock, '(?m)^        [a-z0-9-]+:$')).Count | Should -Be 21
+        $script:Source | Should -Not -Match '(?m)^        (evidence-count|deferred-reason):$'
+        $script:Source | Should -Match 'Use only `Repository`, `Original delivery`,\s+or `Replacement or removal` as a category'
+        $script:Source | Should -Not -Match '(?m)^        (repository-evidence|original-delivery|replacement-or-removal)(-count|-[1-5]):$'
+        $script:Source | Should -Not -Match '(?m)^        (row-[1-5]|started-at|completed-at|report-data):$'
+        $script:Source | Should -Match 'make exactly one final `publish-backlog-grooming-result` call\s+for each candidate'
+        $script:Source | Should -Match 'This field is the sole call identity'
+        $script:Source | Should -Match 'Supply semantic values only'
+        $script:Source | Should -Match 'Do not serialize a row, lineage object, array,\s+timestamp, count summary, cursor, provenance value, result envelope, digest, or\s+output path'
+        $script:Source | Should -Match 'The five-call limit is reserved for the final calls for this shard'
         $script:Source | Should -Not -Match '(?m)^\s+issues: write$'
         $script:Source | Should -Not -Match '(?m)^\s+target: "\*"$'
         $script:Source | Should -Match '(?m)^  report-failure-as-issue: false$'
@@ -266,60 +391,484 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Match 'emit one canonical `Deferred` row for that number'
         $script:Source | Should -Match '(?s)Do not omit the\s+row or call `noop` for an individual post-capture state change'
         $script:Source | Should -Match '(?s)Call `noop` only when shard input validation fails or a repository-wide access'
-        $script:Source | Should -Match 'Report issue IDs do not match the planned shard candidates'
-        $script:Source | Should -Match 'Worker candidate IDs must be unique positive integers'
+        $script:Module | Should -Match "ConvertFrom-TrustedIssueIdList -Name 'Worker candidate IDs'"
         $script:Source | Should -Not -Match 'Worker candidate IDs must be unique positive integers in ascending order'
         $script:Source | Should -Match 'The orchestrator, not the worker,\s+owns inventory selection'
+        $script:Source | Should -Match 'Keep\s+each evidence text value to at most 500 characters'
+        $script:Source | Should -Match 'summarized\s+negative-search scopes'
+        $script:Source | Should -Match 'directory listings or extended\s+prose'
         $script:Source | Should -Not -Match '<!-- gh-aw:backlog-grooming-tracker -->'
     }
 
     It 'emits one independently validated immutable shard result' {
-        $script:Source | Should -Match 'call `publish-backlog-grooming-result` exactly once'
-        $script:Source | Should -Match 'const requests = agentOutput\.items\.filter'
-        $script:Source | Should -Match 'item\.type === "publish_backlog_grooming_result"'
-        $script:Source | Should -Match 'Expected one report publication request, found \$\{requests\.length\}'
-        $script:Source | Should -Match 'fs\.writeFileSync\('
+        $script:Source | Should -Match '(?m)^        - name: Check out the collector implementation$'
+        $script:Source | Should -Match 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
+        $script:Source | Should -Match 'ref: \$\{\{ github\.workflow_sha \}\}'
+        $script:Source | Should -Match 'persist-credentials: false'
+        $script:Source | Should -Match '(?m)^          run: \./scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomResultCollector\.ps1$'
         $script:Source | Should -Match '(?m)^        - name: Upload immutable shard result$'
         $script:Source | Should -Match 'backlog-grooming-proof-\$\{\{ inputs\.orchestrator_run_id \}\}-\$\{\{ inputs\.orchestrator_attempt \}\}-\$\{\{ inputs\.shard_id \}\}'
         $script:Source | Should -Not -Match 'github\.rest\.issues\.(create|update|createComment)'
     }
 
     It 'validates structured report data and computes deterministic result provenance' {
-        $script:Source | Should -Match 'JSON\.parse\(String\(requests\[0\]\["report-data"\]'
-        $script:Source | Should -Match 'exactKeys\(payload, \["run", "issues"\]\)'
-        $script:Source | Should -Match 'const similarities = new Set\(\["Match", "Similar", "Distinct", "Uncertain"\]\)'
-        $script:Source | Should -Match 'const dispositions = new Set\(\["Still needed", "Likely completed", "Superseded", "Possible duplicate", "Needs correction", "Uncertain"\]\)'
-        $script:Source | Should -Match 'row\.acceptance_signals'
-        $script:Source | Should -Match 'const lineageKeys = \["original_delivery", "replacement_or_removal"\]'
-        $script:Source | Should -Match 'Superseded requires distinct original-delivery and replacement-or-removal evidence'
-        $script:Source | Should -Match 'assessedRows !== run\.assessed \|\| deferredRows !== run\.deferred'
-        $script:Source | Should -Match 'Report row statuses do not match the run counts'
-        $script:Source | Should -Match 'Deferred rows require a reason, Uncertain outcomes, and empty lineage evidence'
-        $script:Source | Should -Match 'Assessed rows cannot include a deferral reason'
-        $script:Source | Should -Match 'const canonicalize = \(value\) =>'
-        $script:Source | Should -Match '\.createHash\("sha256"\)'
-        $script:Source | Should -Match '\.update\(canonicalize\(result\)\)'
-        $script:Source | Should -Match 'result_digest: resultDigest'
-        $script:Source | Should -Match 'Shard timestamps must be valid and completion cannot precede start'
+        $script:Collector | Should -Match 'GH_AW_AGENT_OUTPUT'
+        $script:Collector | Should -Match 'ConvertTo-BacklogGroomingShardResult'
+        $script:Collector | Should -Match 'result-output/shard-result\.json'
+        $script:Module | Should -Match '\$CallsByIssue\[\$IssueId\]'
+        $script:Module | Should -Match 'code = ''invalid_row_contract'''
+        $script:Module | Should -Match 'schema_version = ''backlog-grooming-shard-result/v2'''
+        $script:Module | Should -Match 'producer = ''backlog-groom/result-job'''
+        $script:Module | Should -Match 'Get-CanonicalJsonDigest'
+        $script:Module | Should -Match '\$Envelope\.result_digest'
     }
 
-    It 'reads the hyphenated report-data field from the safe-output envelope' {
-        $agentOutput = @{
-            items = @(
-                @{
-                    type = 'publish_backlog_grooming_report'
-                    'report-data' = '{"run":{"timestamp":"2026-08-11T00:33:20Z"},"issues":[]}'
-                }
-            )
-        } | ConvertTo-Json -Depth 5 | ConvertFrom-Json
+    It 'keeps deterministic and provenance fields out of model-authored inputs' {
+        foreach ($field in @('started-at', 'completed-at', 'run-id', 'attempt', 'shard-id', 'manifest-digest', 'ordered-candidate-ids', 'producer', 'result-digest', 'output-path')) {
+            $script:Source | Should -Not -Match "(?m)^        $([regex]::Escape($field)):$"
+        }
+    }
+}
 
-        $request = $agentOutput.items | Where-Object type -EQ 'publish_backlog_grooming_report'
-        $payload = $request.'report-data' | ConvertFrom-Json
+Describe 'Candidate-addressed backlog grooming result construction' -Tag 'Unit' {
+    BeforeAll {
+        $script:AssessedRow = @{
+            issue = 1
+            title = 'Assessed issue'
+            selection_reason = 'Priority cohort'
+            activity_and_ownership_context = 'Recent maintainer activity'
+            acceptance_signals = 'Requested behavior is present'
+            repository_evidence = @('src/example.ps1')
+            lineage_evidence = [ordered]@{ original_delivery = @(); replacement_or_removal = @() }
+            similarity_outcome = 'Distinct'
+            disposition = 'Still needed'
+            grooming_finding = 'Evidence supports assessment'
+            recommended_next_step = 'Maintain the issue'
+            assessment_status = 'Assessed'
+            deferral_reason = ''
+        }
+        $script:DeferredRow = @{
+            issue = 1
+            title = 'Deferred issue'
+            selection_reason = 'Round-robin cohort'
+            activity_and_ownership_context = 'Issue could not be hydrated'
+            acceptance_signals = 'Requested behavior requires later assessment'
+            repository_evidence = @('Issue unavailable after snapshot')
+            lineage_evidence = [ordered]@{ original_delivery = @(); replacement_or_removal = @() }
+            similarity_outcome = 'Uncertain'
+            disposition = 'Uncertain'
+            grooming_finding = 'Evidence is incomplete'
+            recommended_next_step = 'Reassess in a later snapshot'
+            assessment_status = 'Deferred'
+            deferral_reason = 'Issue unavailable after snapshot'
+        }
+    }
 
-        $payload.run.timestamp.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') |
-            Should -Be '2026-08-11T00:33:20Z'
-        $payload.issues.Count | Should -Be 0
-        $script:Source | Should -Not -Match 'requests\[0\]\.report_data'
+    It 'constructs mixed status run state and preserves distinct row reasons' {
+        $rows = 1..5 | ForEach-Object {
+            $row = if ($_ -in 2, 5) { $script:DeferredRow.Clone() } else { $script:AssessedRow.Clone() }
+            $row.issue = $_
+            $row.title = "Issue $_"
+            if ($_ -eq 5) { $row.deferral_reason = 'Repository evidence unavailable' }
+            $row
+        }
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = $rows } `
+            -OrderedCandidateIds @(1, 2, 3, 4, 5) -PriorityCandidateIds @(1, 2) `
+            -RoundRobinCandidateIds @(3, 4, 5) -TotalOpenInventory 25 -PriorCursor 99 `
+            -StartedAt '2026-09-02T10:00:00Z' -CompletedAt '2026-09-02T10:05:00Z' -TestRoot $TestDrive
+
+        $result.started_at | Should -Be '2026-09-02T10:00:00.000Z'
+        $result.report_data.run.timestamp | Should -Be $result.completed_at
+        [datetimeoffset]$result.completed_at | Should -BeGreaterOrEqual ([datetimeoffset]$result.started_at)
+        $result.report_data.run.total_open_inventory | Should -Be 25
+        $result.report_data.run.assessed | Should -Be 3
+        $result.report_data.run.priority_cohort | Should -Be 2
+        $result.report_data.run.round_robin_cohort | Should -Be 3
+        $result.report_data.run.deferred | Should -Be 2
+        $result.report_data.run.contract_errors | Should -Be 0
+        $result.report_data.run.stop_reason | Should -Be 'Deferred rows: 2; distinct non-empty reasons: 2'
+        $result.report_data.run.next_cursor | Should -Be 4
+        $result.report_data.issues[1].deferral_reason | Should -Be 'Issue unavailable after snapshot'
+        $result.report_data.issues[4].deferral_reason | Should -Be 'Repository evidence unavailable'
+        $result.report_data.Keys | Should -Be @('run', 'issues', 'contract_errors', 'normalizations')
+    }
+
+    It 'constructs the complete result for all assessed rows' {
+        $rows = 7, 9 | ForEach-Object {
+            $row = $script:AssessedRow.Clone()
+            $row.issue = $_
+            $row
+        }
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = $rows } `
+            -OrderedCandidateIds @(7, 9) -PriorityCandidateIds @(7) -RoundRobinCandidateIds @(9) `
+            -TotalOpenInventory 10 -PriorCursor 4 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.run.assessed | Should -Be 2
+        $result.report_data.run.deferred | Should -Be 0
+        $result.report_data.run.stop_reason | Should -Be 'Complete shard assessed'
+        $result.report_data.run.next_cursor | Should -Be 9
+    }
+
+    It 'accepts each supported planned candidate count: <Count>' -ForEach @(
+        @{ Count = 1 }
+        @{ Count = 2 }
+        @{ Count = 3 }
+        @{ Count = 4 }
+        @{ Count = 5 }
+    ) {
+        $candidateIds = @(1..$Count)
+        $rows = @($candidateIds | ForEach-Object {
+            $row = $script:AssessedRow.Clone()
+            $row.issue = $_
+            $row
+        })
+
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = $rows } `
+            -OrderedCandidateIds $candidateIds -PriorityCandidateIds $candidateIds `
+            -RoundRobinCandidateIds @() -TotalOpenInventory $Count -PriorCursor 0 `
+            -StartedAt '2026-09-02T10:00:00Z' -CompletedAt '2026-09-02T10:01:00Z' `
+            -TestRoot $TestDrive
+
+        $result.report_data.issues.issue | Should -Be $candidateIds
+        $result.report_data.run.assessed | Should -Be $Count
+        $result.report_data.run.contract_errors | Should -Be 0
+    }
+
+    It 'decodes template-syntax transport escaping before parsing report data' {
+        $row = $script:AssessedRow.Clone()
+        $row.repository_evidence = @('GH_AW_GITHUB_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}')
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive -ApplyTemplateTransportEscaping
+
+        $result.report_data.issues[0].repository_evidence[0] |
+            Should -Be 'GH_AW_GITHUB_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN }}'
+    }
+
+    It 'bounds overlong repository and lineage evidence items' {
+        $row = $script:AssessedRow.Clone()
+        $row.repository_evidence = @((('R' * 642) -join ''))
+        $row.lineage_evidence = [ordered]@{
+            original_delivery = @(('O' * 510) -join '')
+            replacement_or_removal = @(('P' * 510) -join '')
+        }
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.issues[0].repository_evidence[0].Length | Should -Be 500
+        $result.report_data.issues[0].repository_evidence[0] | Should -Match '\.\.\.$'
+        $result.report_data.issues[0].lineage_evidence.original_delivery[0].Length | Should -Be 500
+        $result.report_data.issues[0].lineage_evidence.replacement_or_removal[0].Length | Should -Be 500
+    }
+
+    It 'constructs an empty deferral reason when an assessed call omits it' {
+        $Call = New-GroomingCandidateCall -IssueNumber 1
+        $null = $Call.Remove('deferral-reason')
+
+        $result = Invoke-GroomingResult -Items @($Call) -OrderedCandidateIds @(1)
+
+        $result.report_data.issues[0].deferral_reason | Should -Be ''
+        $result.report_data.normalizations | Should -HaveCount 0
+    }
+
+    It 'does not default a missing deferred reason' {
+        $Call = New-GroomingCandidateCall -IssueNumber 1 -Overrides @{
+            'assessment-status' = 'Deferred'
+            'similarity-outcome' = 'Uncertain'
+            disposition = 'Uncertain'
+        }
+        $null = $Call.Remove('deferral-reason')
+
+        $result = Invoke-GroomingResult -Items @($Call) -OrderedCandidateIds @(1)
+
+        $result.report_data.issues | Should -HaveCount 0
+        $result.report_data.contract_errors.issue | Should -Be @(1)
+    }
+
+    It 'preserves a valid row alongside a diagnosed malformed row' {
+        $validRow = $script:AssessedRow.Clone()
+        $invalidRow = $script:AssessedRow.Clone()
+        $invalidRow.issue = 2
+        $invalidRow.disposition = 'Superseded'
+        $invalidRow.similarity_outcome = 'Superseded'
+        $invalidRow.lineage_evidence = [ordered]@{
+            original_delivery = @('PR #100 delivered the original behavior')
+            replacement_or_removal = @('PR #200 replaced the original behavior')
+        }
+        $invalidRow.deferral_reason = 'Assessed rows cannot have a deferral reason'
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($validRow, $invalidRow) } `
+            -OrderedCandidateIds @(1, 2) -PriorityCandidateIds @(1, 2) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 2 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.issues.issue | Should -Be @(1)
+        $result.report_data.contract_errors[0].issue | Should -Be 2
+        $result.report_data.normalizations | Should -HaveCount 0
+        $result.report_data.run.assessed | Should -Be 1
+        $result.report_data.run.contract_errors | Should -Be 1
+        $result.report_data.run.stop_reason | Should -Be 'Contract errors: 1'
+    }
+
+    It 'downgrades unsupported supersession outcomes to uncertain' {
+        $row = $script:AssessedRow.Clone()
+        $row.disposition = 'Superseded'
+        $row.similarity_outcome = 'Distinct'
+        $row.grooming_finding = 'A later dependency upgrade may have superseded the request'
+        $row.recommended_next_step = 'Verify the upgrade before closing the issue'
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.issues[0].disposition | Should -Be 'Uncertain'
+        $result.report_data.issues[0].similarity_outcome | Should -Be 'Uncertain'
+        $result.report_data.issues[0].grooming_finding | Should -Be $row.grooming_finding
+        $result.report_data.issues[0].recommended_next_step | Should -Be $row.recommended_next_step
+        $result.report_data.issues[0].assessment_status | Should -Be 'Assessed'
+    }
+
+    It 'normalizes issue 1946 superseded similarity placement with distinct lineage' {
+        $row = $script:AssessedRow.Clone()
+        $row.issue = 1946
+        $row.disposition = 'Superseded'
+        $row.similarity_outcome = 'Superseded'
+        $row.lineage_evidence = [ordered]@{
+            original_delivery = @('PR #100 delivered the original behavior')
+            replacement_or_removal = @('PR #200 replaced the original behavior')
+        }
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+            -OrderedCandidateIds @(1946) -PriorityCandidateIds @(1946) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.issues[0].disposition | Should -Be 'Superseded'
+        $result.report_data.issues[0].similarity_outcome | Should -Be 'Uncertain'
+        $result.report_data.normalizations[0].issue | Should -Be 1946
+        $result.report_data.normalizations[0].code | Should -Be 'superseded_similarity_normalized'
+    }
+
+    It 'retains the prior cursor when every row is deferred' {
+        $rows = 11, 13 | ForEach-Object {
+            $row = $script:DeferredRow.Clone()
+            $row.issue = $_
+            $row
+        }
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = $rows } `
+            -OrderedCandidateIds @(11, 13) -PriorityCandidateIds @() -RoundRobinCandidateIds @(11, 13) `
+            -TotalOpenInventory 20 -PriorCursor 8 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:02:00Z' -TestRoot $TestDrive
+
+        $result.report_data.run.assessed | Should -Be 0
+        $result.report_data.run.deferred | Should -Be 2
+        $result.report_data.run.stop_reason | Should -Be 'Deferred rows: 2; distinct non-empty reasons: 1'
+        $result.report_data.run.next_cursor | Should -Be 8
+    }
+
+    It 'emits out-of-order calls in trusted candidate order' {
+        $result = Invoke-GroomingResult -Items @(
+            (New-GroomingCandidateCall -IssueNumber 30),
+            (New-GroomingCandidateCall -IssueNumber 10),
+            (New-GroomingCandidateCall -IssueNumber 20)
+        ) -OrderedCandidateIds @(10, 20, 30)
+
+        $result.report_data.issues.issue | Should -Be @(10, 20, 30)
+        $result.report_data.contract_errors | Should -HaveCount 0
+    }
+
+    It 'attributes missing and duplicate calls without losing a valid sibling' {
+        $result = Invoke-GroomingResult -Items @(
+            (New-GroomingCandidateCall -IssueNumber 10),
+            (New-GroomingCandidateCall -IssueNumber 10),
+            (New-GroomingCandidateCall -IssueNumber 30)
+        ) -OrderedCandidateIds @(10, 20, 30)
+
+        $result.report_data.issues.issue | Should -Be @(30)
+        $result.report_data.contract_errors.issue | Should -Be @(10, 20)
+        $result.report_data.contract_errors.code | Should -Be @('invalid_row_contract', 'invalid_row_contract')
+    }
+
+    It 'rejects a foreign call side-band beside a complete valid set' {
+        $result = Invoke-GroomingResult -Items @(
+            (New-GroomingCandidateCall -IssueNumber 99),
+            (New-GroomingCandidateCall -IssueNumber 20),
+            (New-GroomingCandidateCall -IssueNumber 10)
+        ) -OrderedCandidateIds @(10, 20) -InformationVariable Rejections
+
+        $result.report_data.issues.issue | Should -Be @(10, 20)
+        $result.report_data.contract_errors | Should -HaveCount 0
+        $Rejections.MessageData | Should -Contain 'Rejected foreign backlog grooming result call for issue #99'
+    }
+
+    It 'keeps a foreign replacement side-band and represents the planned candidate as missing' {
+        $result = Invoke-GroomingResult -Items @(
+            (New-GroomingCandidateCall -IssueNumber 10),
+            (New-GroomingCandidateCall -IssueNumber 99)
+        ) -OrderedCandidateIds @(10, 20) -InformationVariable Rejections
+
+        $result.report_data.issues.issue | Should -Be @(10)
+        $result.report_data.contract_errors.issue | Should -Be @(20)
+        $Rejections.MessageData | Should -Contain 'Rejected foreign backlog grooming result call for issue #99'
+    }
+
+    It 'accepts exactly five categorized evidence records across all evidence lists' {
+        $RepositoryEvidence = @('repo-1', 'repo-2')
+        $OriginalDelivery = @('original-1')
+        $ReplacementOrRemoval = @('replacement-1', 'replacement-2')
+        $Call = New-GroomingCandidateCall -IssueNumber 1 -RepositoryEvidence $RepositoryEvidence `
+            -OriginalDelivery $OriginalDelivery -ReplacementOrRemoval $ReplacementOrRemoval
+
+        $result = Invoke-GroomingResult -Items @($Call) -OrderedCandidateIds @(1)
+
+        $result.report_data.issues[0].repository_evidence |
+            Should -Be @($RepositoryEvidence + $OriginalDelivery + $ReplacementOrRemoval)
+        $result.report_data.issues[0].lineage_evidence.original_delivery | Should -Be $OriginalDelivery
+        $result.report_data.issues[0].lineage_evidence.replacement_or_removal | Should -Be $ReplacementOrRemoval
+    }
+
+    It 'accepts zero lineage evidence positions and rejects zero evidence' {
+        $validResult = Invoke-GroomingResult -Items @(
+            (New-GroomingCandidateCall -IssueNumber 1)
+        ) -OrderedCandidateIds @(1)
+        $invalidResult = Invoke-GroomingResult -Items @(
+            (New-GroomingCandidateCall -IssueNumber 1 -RepositoryEvidence @())
+        ) -OrderedCandidateIds @(1)
+
+        $validResult.report_data.issues[0].lineage_evidence.original_delivery | Should -HaveCount 0
+        $validResult.report_data.issues[0].lineage_evidence.replacement_or_removal | Should -HaveCount 0
+        $invalidResult.report_data.contract_errors.issue | Should -Be @(1)
+    }
+
+    It 'constructs repository evidence from every stable citation' {
+        $Call = New-GroomingCandidateCall -IssueNumber 1 -RepositoryEvidence @() `
+            -OriginalDelivery @('PR #2877 is open and implements the requested scope')
+
+        $result = Invoke-GroomingResult -Items @($Call) -OrderedCandidateIds @(1)
+
+        $result.report_data.issues[0].repository_evidence |
+            Should -Be @('PR #2877 is open and implements the requested scope')
+        $result.report_data.issues[0].lineage_evidence.original_delivery |
+            Should -Be @('PR #2877 is open and implements the requested scope')
+        $result.report_data.normalizations | Should -HaveCount 0
+    }
+
+    It 'rejects evidence gaps and partial pairs instead of inferring content' {
+        $GapCall = New-GroomingCandidateCall -IssueNumber 1
+        $GapCall['evidence-3-category'] = 'Repository'
+        $GapCall['evidence-3-text'] = 'gap'
+        $PartialCall = New-GroomingCandidateCall -IssueNumber 2
+        $PartialCall['evidence-2-category'] = 'Repository'
+
+        $result = Invoke-GroomingResult -Items @($GapCall, $PartialCall) `
+            -OrderedCandidateIds @(1, 2)
+
+        $result.report_data.issues | Should -HaveCount 0
+        $result.report_data.contract_errors.issue | Should -Be @(1, 2)
+    }
+
+    It 'rejects lineage evidence on a deferred row' {
+        $Row = $script:DeferredRow.Clone()
+        $Row.lineage_evidence = [ordered]@{
+            original_delivery = @('PR #100 delivered the original behavior')
+            replacement_or_removal = @()
+        }
+
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($Row) } `
+            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.issues | Should -HaveCount 0
+        $result.report_data.contract_errors.issue | Should -Be @(1)
+    }
+
+    It 'isolates invalid categorized evidence <Mode>' -ForEach @(
+        @{ Mode = 'missing category' }
+        @{ Mode = 'missing text' }
+        @{ Mode = 'noncontiguous pair' }
+        @{ Mode = 'partial category' }
+        @{ Mode = 'partial text' }
+        @{ Mode = 'invalid category' }
+    ) {
+        $Call = New-GroomingCandidateCall -IssueNumber 1
+        switch ($Mode) {
+            'missing category' {
+                $null = $Call.Remove('evidence-1-category')
+            }
+            'missing text' {
+                $null = $Call.Remove('evidence-1-text')
+            }
+            'noncontiguous pair' {
+                $Call['evidence-3-category'] = 'Repository'
+                $Call['evidence-3-text'] = 'gap'
+            }
+            'partial category' {
+                $Call['evidence-2-category'] = 'Repository'
+            }
+            'partial text' {
+                $Call['evidence-2-text'] = 'unexpected evidence'
+            }
+            'invalid category' {
+                $Call['evidence-1-category'] = 'Lineage'
+            }
+        }
+
+        $result = Invoke-GroomingResult -Items @(
+            $Call,
+            (New-GroomingCandidateCall -IssueNumber 2)
+        ) -OrderedCandidateIds @(1, 2)
+
+        $result.report_data.issues.issue | Should -Be @(2)
+        $result.report_data.contract_errors.issue | Should -Be @(1)
+    }
+
+    It 'emits the exact v2 envelope with trusted provenance and canonical digest' {
+        $result = Invoke-GroomingResult -Items @(
+            (New-GroomingCandidateCall -IssueNumber 7)
+        ) -OrderedCandidateIds @(7) -TotalOpenInventory 9 -PriorCursor 4
+
+        $result.Keys | Should -Be @(
+            'schema_version', 'run_id', 'attempt', 'shard_id', 'manifest_digest',
+            'ordered_candidate_ids', 'producer', 'started_at', 'completed_at',
+            'report_data', 'result_digest'
+        )
+        $result.schema_version | Should -BeExactly 'backlog-grooming-shard-result/v2'
+        $result.run_id | Should -BeExactly '12345'
+        $result.attempt | Should -Be 1
+        $result.shard_id | Should -BeExactly 'shard-01'
+        $result.manifest_digest | Should -BeExactly ('a' * 64)
+        $result.ordered_candidate_ids | Should -Be @(7)
+        $result.producer | Should -BeExactly 'backlog-groom/result-job'
+        $result.result_digest | Should -Match '^[a-f0-9]{64}$'
+
+        $Material = [ordered]@{}
+        foreach ($Key in $result.Keys) {
+            if ($Key -cne 'result_digest') {
+                $Material[$Key] = $result[$Key]
+            }
+        }
+        $ExpectedDigest = & $script:BacklogGroomingModule {
+            param([string]$Json)
+            $Element = ConvertFrom-JsonElementText -Json $Json
+            Get-CanonicalJsonDigest -Element $Element
+        } ($Material | ConvertTo-Json -Depth 20 -Compress)
+        $result.result_digest | Should -BeExactly $ExpectedDigest
+    }
+
+    It 'rejects candidate manifests outside the supported batch bound: <Name>' -ForEach @(
+        @{ Name = 'empty'; Ordered = @() }
+        @{ Name = 'too wide'; Ordered = @(1, 2, 3, 4, 5, 6) }
+    ) {
+        $items = @(New-GroomingCandidateCall -IssueNumber 1)
+        {
+            Invoke-GroomingResultJob -SafeOutputItems $items `
+                -OrderedCandidateIds $Ordered -PriorityCandidateIds $Ordered -RoundRobinCandidateIds @() `
+                -TotalOpenInventory $Ordered.Count -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+                -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+        } | Should -Throw '*Worker candidate IDs must contain 1 to 5 unique positive integers*'
     }
 }
 
@@ -337,17 +886,34 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Lock | Should -Match 'publish_backlog_grooming_result'
         $script:Lock | Should -Match '"noop":\{"max":1,"report-as-issue":"false"\}'
         $script:Lock | Should -Match 'Upload immutable shard result'
-        $script:Lock | Should -Match 'producer: "backlog-groom/result-job"'
+        $script:Lock | Should -Match 'Invoke-BacklogGroomResultCollector\.ps1'
         $script:Lock | Should -Not -Match '"add_comment"'
         $script:Lock | Should -Not -Match '"(create_issue|update_issue|close_issue|add_labels|remove_labels)"'
         $script:Lock | Should -Not -Match 'GH_AW_\w*CREATE_ISSUE'
         $script:Lock | Should -Not -Match 'issues\.createComment'
     }
 
+    It 'compiles the exact 21-input semantic evidence schema' {
+        $SchemaProperties = [regex]::Match(
+            $script:Lock,
+            '(?ms)^                    "properties": \{\s*\n(?<properties>.*?)^                    \},\s*\n                    "required": \['
+        ).Groups['properties'].Value
+        @([regex]::Matches($SchemaProperties, '(?m)^                      "[a-z0-9-]+": \{$')).Count |
+            Should -Be 21
+        $script:Lock | Should -Not -Match '"(evidence-count|deferred-reason)": \{'
+        foreach ($position in 1..5) {
+            $script:Lock | Should -Match "`"evidence-${position}-category`": \{"
+            $script:Lock | Should -Match "`"evidence-${position}-text`": \{"
+        }
+        $script:Lock | Should -Not -Match '"(repository-evidence|original-delivery|replacement-or-removal)-(count|[1-5])":'
+    }
+
     It 'uploads the validated result without issue-write or SARIF permissions' {
-        $script:Lock | Should -Match 'JSON\.parse\(String\(requests\[0\]\["report-data"\]'
-        $script:Lock | Should -Match 'Possible duplicate requires a Match or Similar outcome'
-        $script:Lock | Should -Match 'Superseded requires distinct original-delivery and replacement-or-removal evidence'
+        $script:Lock | Should -Match 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
+        $script:Lock | Should -Match 'ref: \$\{\{ github\.workflow_sha \}\}'
+        $script:Lock | Should -Match 'persist-credentials: false'
+        $script:Lock | Should -Match 'GH_AW_AGENT_OUTPUT'
+        $script:Lock | Should -Match 'Invoke-BacklogGroomResultCollector\.ps1'
         $script:Lock | Should -Match 'result-output/shard-result\.json'
         $script:Lock | Should -Match 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'
         $script:Lock | Should -Not -Match '(?m)^\s*issues: write$'
@@ -385,6 +951,19 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
 }
 
 Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
+    It 'keeps the repeated scalar-call limit equal to orchestrator shard width' {
+        $shardWidth = [regex]::Match($script:Orchestrator, '(?m)^  SWEEP_SHARD_WIDTH: (?<value>\d+)$')
+        $callLimit = [regex]::Match(
+            $script:Source,
+            '(?ms)^    publish-backlog-grooming-result:.*?^      max: (?<value>\d+)$'
+        )
+
+        $shardWidth.Success | Should -BeTrue
+        $callLimit.Success | Should -BeTrue
+        $callLimit.Groups['value'].Value | Should -Be $shardWidth.Groups['value'].Value
+        $script:Lock | Should -Match '(?s)"publish-backlog-grooming-result":\{.*?"max":5'
+    }
+
     It 'defines typed worker identity, manifest envelopes, and shard-specific generated concurrency' {
         foreach ($inputName in @('shard_id', 'manifest_digest', 'ordered_candidate_ids', 'orchestrator_run_id')) {
             $script:Source | Should -Match "(?ms)^      ${inputName}:\s+.*?required: true\s+type: string"
@@ -403,13 +982,10 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $script:Lock | Should -Match 'gh-aw-conclusion-backlog-groom-\$\{\{ inputs\.shard_id \|\| github\.run_id \}\}'
         $script:Lock | Should -Match '(?ms)^concurrency:\s+group: gh-aw-backlog-groom-\$\{\{ inputs\.shard_id \|\| github\.run_id \}\}'
 
-        foreach ($field in @(
-                'schema_version', 'run_id', 'attempt', 'shard_id', 'manifest_digest',
-                'ordered_candidate_ids', 'producer', 'started_at', 'completed_at'
-            )) {
-            $script:Source | Should -Match "(?m)^\s+${field}(?::|,)"
+        foreach ($field in @('schema_version', 'run_id', 'attempt', 'shard_id', 'manifest_digest', 'ordered_candidate_ids', 'producer', 'started_at', 'completed_at')) {
+            $script:Module | Should -Match "(?m)^\s+${field} ="
         }
-        $script:Source | Should -Match 'const envelope = \{ \.\.\.result, result_digest: resultDigest \}'
+        $script:Module | Should -Match '\$Envelope\.result_digest = Get-CanonicalJsonDigest'
         $script:Source | Should -Not -Match '`result_digest`'
         $script:Orchestrator | Should -Match 'schema_version: "backlog-grooming-sweep-snapshot/v1"'
         $script:Orchestrator | Should -Match 'schema_version: "backlog-grooming-wave-manifest/v1"'
@@ -428,7 +1004,7 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $script:Orchestrator | Should -Match 'shard_id: \$\{\{ matrix\.shard\.shard_id \}\}'
         $script:Orchestrator | Should -Match 'ordered_candidate_ids: \$\{\{ toJSON\(matrix\.shard\.ordered_candidate_ids\) \}\}'
         $script:Orchestrator | Should -Not -Match '(?ms)^  assess:.*?shard_id: shard-01'
-        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read'
+        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read\s+pull-requests: read'
         $script:Orchestrator | Should -Match '(?ms)^  assess:.*?secrets:\s+COPILOT_GITHUB_TOKEN: \$\{\{ secrets\.COPILOT_GITHUB_TOKEN \}\}\s+GH_AW_GITHUB_MCP_SERVER_TOKEN: \$\{\{ secrets\.GH_AW_GITHUB_MCP_SERVER_TOKEN \}\}\s+GH_AW_GITHUB_TOKEN: \$\{\{ secrets\.GH_AW_GITHUB_TOKEN \}\}'
         $script:Orchestrator | Should -Not -Match '(?ms)^  assess:.*?secrets: inherit'
         [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
@@ -451,7 +1027,7 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $script:Orchestrator | Should -Match 'AGGREGATE_DIRECTORY: wave-aggregate'
         $script:Orchestrator | Should -Match 'EXPECTED_RUN_ID: \$\{\{ github\.run_id \}\}'
         $script:Orchestrator | Should -Match 'EXPECTED_ATTEMPT: \$\{\{ github\.run_attempt \}\}'
-        $script:Orchestrator | Should -Match '\./scripts/security/Invoke-BacklogGroomWaveValidator\.ps1'
+        $script:Orchestrator | Should -Match '\./scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomWaveValidator\.ps1'
         $script:Orchestrator | Should -Not -Match 'uses: \./\.github/actions/backlog-groom-wave-validator'
         $script:WaveValidator | Should -Match 'Wave manifest digest mismatch'
         $script:WaveValidator | Should -Match 'Missing, duplicate, stale, unexpected, or manifest-mismatched shard result'
@@ -464,73 +1040,13 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
 }
 
 Describe 'Backlog grooming deterministic fan-in behavior' -Tag 'Unit' {
-    BeforeAll {
-        $script:ShardOne = [pscustomobject]@{
-            ShardId = 'shard-01'
-            Inventory = 50
-            Rows = @(
-                [pscustomobject]@{ Issue = 1; Status = 'Assessed' },
-                [pscustomobject]@{ Issue = 3; Status = 'Deferred' }
-            )
-        }
-        $script:ShardTwo = [pscustomobject]@{
-            ShardId = 'shard-02'
-            Inventory = 50
-            Rows = @(
-                [pscustomobject]@{ Issue = 2; Status = 'Assessed' },
-                [pscustomobject]@{ Issue = 4; Status = 'Assessed' }
-            )
-        }
-    }
-
-    It 'produces byte-equivalent normalized data for permuted result arrival' {
-        $forward = Merge-GroomingShardResults -CandidateIds @(1, 2, 3, 4) -PriorCursor 0 -Results @($script:ShardOne, $script:ShardTwo)
-        $reverse = Merge-GroomingShardResults -CandidateIds @(1, 2, 3, 4) -PriorCursor 0 -Results @($script:ShardTwo, $script:ShardOne)
-
-        ($forward | ConvertTo-Json -Compress) | Should -Be ($reverse | ConvertTo-Json -Compress)
-        $forward.Issues | Should -Be @(1, 2, 3, 4)
-    }
-
-    It 'reconciles global counts and advances to the final assessed issue' {
-        $aggregate = Merge-GroomingShardResults -CandidateIds @(1, 2, 3, 4) -PriorCursor 0 -Results @($script:ShardOne, $script:ShardTwo)
-
-        $aggregate.Assessed | Should -Be 3
-        $aggregate.Deferred | Should -Be 1
-        $aggregate.NextCursor | Should -Be 4
-    }
-
-    It 'retains the prior cursor when every planned issue is deferred' {
-        $deferredOne = [pscustomobject]@{ ShardId = 'shard-01'; Inventory = 50; Rows = @([pscustomobject]@{ Issue = 1; Status = 'Deferred' }) }
-        $deferredTwo = [pscustomobject]@{ ShardId = 'shard-02'; Inventory = 50; Rows = @([pscustomobject]@{ Issue = 2; Status = 'Deferred' }) }
-
-        $aggregate = Merge-GroomingShardResults -CandidateIds @(1, 2) -PriorCursor 19 -Results @($deferredOne, $deferredTwo)
-
-        $aggregate.NextCursor | Should -Be 19
-    }
-
-    It 'rejects a missing planned shard result' {
-        { Merge-GroomingShardResults -CandidateIds @(1, 3) -PriorCursor 0 -Results @($script:ShardOne) } |
-            Should -Throw '*shard-02 expected exactly one result, found 0*'
-    }
-
-    It 'rejects a second result for one planned shard' {
-        { Merge-GroomingShardResults -CandidateIds @(1, 2, 3, 4) -PriorCursor 0 -Results @($script:ShardOne, $script:ShardOne, $script:ShardTwo) } |
-            Should -Throw '*shard-01 expected exactly one result, found 2*'
-    }
-
-    It 'rejects inconsistent inventory snapshots' {
-        $mismatched = [pscustomobject]@{ ShardId = 'shard-02'; Inventory = 51; Rows = $script:ShardTwo.Rows }
-
-        { Merge-GroomingShardResults -CandidateIds @(1, 2, 3, 4) -PriorCursor 0 -Results @($script:ShardOne, $mismatched) } |
-            Should -Throw '*shard inventory counts disagree*'
-    }
-
     It 'enforces selected planner ceilings and aggregate construction after validation' {
         $script:Orchestrator | Should -Match '(?m)^  SWEEP_SHARD_COUNT: 2$'
         $script:Orchestrator | Should -Match '(?m)^  SWEEP_SHARD_WIDTH: 5$'
         $script:Orchestrator | Should -Match '(?m)^  SWEEP_MAX_PARALLEL: 2$'
         $script:Orchestrator | Should -Match '(?m)^  SWEEP_PER_WORKER_AIC: 1000$'
-        $script:Orchestrator | Should -Match 'schema_version: "backlog-grooming-sweep-aggregate/v1"'
+        $script:Orchestrator | Should -Match 'schema_version: "backlog-grooming-sweep-aggregate/v2"'
+        $script:Orchestrator | Should -Match 'contract_error_issue_ids: contractErrorIssueIds'
         $script:Orchestrator | Should -Match 'next_cursor: cursorRows\.length > 0 \? cursorRows\.at\(-1\)\.issue : snapshot\.prior_cursor'
         $script:Orchestrator | Should -Match 'Upload final detailed sweep evidence'
     }
@@ -552,7 +1068,7 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:Publisher | Should -Match "if: \$\{\{ needs\.discover\.outputs\.terminal == 'true' \}\}"
         $script:Publisher | Should -Match '(?m)^          artifact-ids: \$\{\{ steps\.authenticate\.outputs\.final-artifact-id \}\}$'
         $script:Publisher | Should -Match 'run\.path !== "\.github/workflows/backlog-groom-orchestrator\.yml"'
-        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read'
+        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read\s+pull-requests: read'
         $script:Source | Should -Not -Match '(?m)^\s+issues: write$'
         $script:Lock | Should -Not -Match '(?m)^\s+issues: write$'
     }
@@ -577,7 +1093,9 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
     It 'revalidates aggregate identity, digest, counts, and cursor before writing' {
         $script:Publisher | Should -Match 'Final sweep aggregate failed trusted publication validation'
         $script:Publisher | Should -Match 'digest\(material\) !== recordedDigest'
-        $script:Publisher | Should -Match 'aggregate\.assessed \+ aggregate\.deferred !== aggregate\.total_snapshot_count'
+        $script:Publisher | Should -Match 'aggregate\.assessed \+ aggregate\.deferred \+ aggregate\.contract_errors !== aggregate\.total_snapshot_count'
+        $script:CorePublisher | Should -Match 'aggregate\.contract_errors !== 0'
+        $script:HistoryPublisher | Should -Match 'aggregate\.contract_errors !== 0'
         $script:Publisher | Should -Match 'aggregate\.checkpoint_digests\.length !== aggregate\.completed_waves'
         $script:Publisher | Should -Match 'artifact\.workflow_run\?\.id !== finalRunId'
         $script:Orchestrator | Should -Match 'Final result set does not exactly equal the snapshot'
@@ -712,19 +1230,21 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
         }
     }
 
-    It 'gives the model the exact structured publisher contract' {
-        foreach ($key in @('timestamp', 'total_open_inventory', 'assessed', 'priority_cohort', 'round_robin_cohort', 'deferred', 'stop_reason', 'next_cursor')) {
-            $script:Agent | Should -Match ([regex]::Escape("`"$key`""))
-        }
+    It 'gives the model the exact semantic publisher contract' {
         foreach ($key in @('issue', 'title', 'selection_reason', 'activity_and_ownership_context', 'acceptance_signals', 'repository_evidence', 'lineage_evidence', 'original_delivery', 'replacement_or_removal', 'similarity_outcome', 'disposition', 'grooming_finding', 'recommended_next_step', 'assessment_status', 'deferral_reason')) {
             $script:Agent | Should -Match ([regex]::Escape("`"$key`""))
         }
-        $script:Agent | Should -Match 'Use integers without `#` or prose for `issue`, `next_cursor`, and every count'
+        $script:Agent | Should -Match 'Use an integer without `#` or prose for `issue`'
         $script:Agent | Should -Match 'Use exactly `Assessed` or `Deferred` for `assessment_status`'
         $script:Agent | Should -Match 'For `Deferred`, use a\s+non-empty `deferral_reason`, `Uncertain` similarity and disposition, and empty\s+lineage arrays'
+        $script:Agent | Should -Match 'isolated result job derives all\s+structural run state from the validated final rows and trusted caller input'
+        $script:Policy | Should -Match 'Calculate the assessed and deferred counts from those\s+final statuses'
+        $script:Policy | Should -Match 'Derive the stop reason from the complete set of final deferred\s+rows and account for every distinct deferral reason'
+        $script:Source | Should -Match 'Supply semantic values only'
+        $script:Source | Should -Match 'The isolated result job joins calls to trusted `ordered_candidate_ids`'
+        $script:Source | Should -Match 'derives timestamps and run state'
         $script:Agent | Should -Match 'put compared issue numbers in the finding rather than the\s+enum value'
-        [regex]::Matches($script:Source, 'result_digest').Count | Should -Be 1
-        $script:Source | Should -Match 'return only the canonical Backlog Grooming Report required by the\s+imported agent'
+        $script:Source | Should -Match 'return only the canonical Backlog\s+Grooming Report required by the imported agent'
     }
 
     It 'requires repository-grounded dispositions and evidence-backed maintainer actions' {
@@ -747,8 +1267,10 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
     }
 
     It 'requires complete legacy and replacement lineage for superseded work' {
-        $script:Agent | Should -Match 'For `Superseded`, record both the original surface''s delivery lineage and its\s+removal or replacement lineage when both are available'
-        $script:Policy | Should -Match 'cite the original\s+surface''s delivery issue or pull request and the later removal or replacement\s+issue or pull request'
+        $script:Agent | Should -Match 'Select `Superseded` only when both lineage\s+arrays can contain non-empty, distinct evidence; otherwise use `Uncertain`'
+        $script:Policy | Should -Match 'Select `Superseded` only when repository history establishes\s+both states: cite the original surface''s delivery issue or pull request and\s+the later removal or replacement issue or pull request'
+        $script:Policy | Should -Match 'If either state cannot\s+be established with distinct evidence, use `Uncertain`'
+        $script:Agent | Should -Not -Match 'when both are available'
         $script:Agent | Should -Match '`lineage_evidence` with exactly\s+`original_delivery` and `replacement_or_removal` arrays'
         $script:Agent | Should -Match 'For `Superseded`, both\s+arrays contain non-empty, distinct'
     }
@@ -1291,8 +1813,9 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
 Describe 'Backlog grooming sweep reduction publication and documentation contracts' -Tag 'Unit' {
     It 'S13 rejects missing duplicate and out-of-snapshot final rows' {
         $script:Orchestrator | Should -Match 'Duplicate or out-of-snapshot result \$\{row\.issue\}'
+        $script:Orchestrator | Should -Match 'Duplicate or out-of-snapshot contract error \$\{entry\.issue\}'
         $script:Orchestrator | Should -Match 'Final result set does not exactly equal the snapshot'
-        $script:Orchestrator | Should -Match 'rowsByIssue\.size !== snapshot\.total_snapshot_count'
+        $script:Orchestrator | Should -Match 'rowsByIssue\.size \+ contractErrorsByIssue\.size !== snapshot\.total_snapshot_count'
     }
 
     It 'S14 preserves report order and derives the cursor from full-snapshot cursor order' {
@@ -1302,7 +1825,9 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
             [pscustomobject]@{ Issue = 3; Status = 'Assessed' }
         )
         Get-SweepCursor -CursorCandidateIds @(3, 1, 2) -Rows $rows -PriorCursor 9 | Should -Be 1
-        $script:Orchestrator | Should -Match 'const rows = snapshot\.cursor_candidate_ids\.map'
+        $script:Orchestrator | Should -Match 'const rows = snapshot\.cursor_candidate_ids\.flatMap'
+        $script:Orchestrator | Should -Match 'const contractErrorIssueIds = snapshot\.cursor_candidate_ids\.filter'
+        $script:Orchestrator | Should -Match '\.filter\(\(row\) => row\?\.assessment_status === "Assessed"\)'
         [regex]::Matches($script:Orchestrator, '(?:candidateSnapshot|snapshot)\.cursor_candidate_ids\.slice').Count | Should -BeGreaterOrEqual 4
         $script:Orchestrator | Should -Not -Match 'snapshot\.ordered_issue_ids\.slice'
     }
