@@ -168,7 +168,7 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             foreach ($model in @('gpt-5.6-luna', 'claude-sonnet-4.6')) {
                 $line = @($customized | Where-Object { $_ -match "--model $([regex]::Escape($model)) " })
                 $line.Count | Should -Be 1
-                $line[0] | Should -Match "--skill-dir [^ ]*$([regex]::Escape($model))[\\/][^ ]*customized-skill-dir"
+                $line[0] | Should -Match ('--skill-dir "[^"]*{0}[\\/][^"]*customized-skill-dir"' -f [regex]::Escape($model))
             }
         }
 
@@ -295,6 +295,174 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             & $script:ScriptPath -Tier 'weekly' -RepoRoot $script:RepoRoot -OutputPath $script:OutputPath -WhatIf *> $null
             $LASTEXITCODE | Should -Be 3
         }
+    }
+}
+
+Describe 'Invoke-VallyCommand output isolation' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    BeforeEach {
+        $script:SavedVallyMode = $env:STUB_VALLY_MODE
+        Set-Alias -Name vally -Value (Join-Path $PSScriptRoot 'fixtures/stub-vally.ps1') -Scope Local
+    }
+
+    AfterEach {
+        $env:STUB_VALLY_MODE = $script:SavedVallyMode
+        Remove-Item Alias:vally -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Returns only numeric exit <Code> without leaking CLI streams' -ForEach @(
+        @{ Mode = 'chatty-pass'; Code = 0 }
+        @{ Mode = 'chatty-fail'; Code = 99 }
+    ) {
+        $env:STUB_VALLY_MODE = $Mode
+        $output = @(Invoke-VallyCommand -Arguments @('eval', '--output-dir', (Join-Path $TestDrive $Mode)) *>&1)
+
+        $output | Should -HaveCount 1
+        $output[0] | Should -BeOfType [int]
+        $output[0] | Should -Be $Code
+    }
+
+    It 'Isolates native streams and preserves nonzero exits under strict native error handling' {
+        $nativeHost = Join-Path $PSHOME $(if ($IsWindows) { 'pwsh.exe' } else { 'pwsh' })
+        Set-Alias -Name vally -Value $nativeHost -Scope Local
+        $PSNativeCommandUseErrorActionPreference = $true
+        $command = '[Console]::Out.WriteLine("synthetic-private-stdout"); [Console]::Error.WriteLine("synthetic-private-stderr"); exit 17'
+
+        $output = @(Invoke-VallyCommand -Arguments @('-NoProfile', '-NonInteractive', '-Command', $command) *>&1)
+
+        $output | Should -HaveCount 1
+        $output[0] | Should -BeOfType [int]
+        $output[0] | Should -Be 17
+        $PSNativeCommandUseErrorActionPreference | Should -BeTrue
+    }
+}
+
+Describe 'Get-VallyExecutionDiagnostic' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    BeforeEach {
+        $script:DiagnosticDir = Join-Path $TestDrive ([Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $script:DiagnosticDir | Out-Null
+        $script:DiagnosticArgs = @{
+            RunDir = $script:DiagnosticDir
+            Model = 'test-model'
+            Variant = 'baseline'
+            Attempt = 1
+            ExitCode = 1
+        }
+    }
+
+    It 'Classifies <Category> without exposing error text' -ForEach @(
+        @{ Message = 'HTTP 401 Unauthorized'; Category = 'authentication-or-authorization' }
+        @{ Message = 'HTTP 403 Forbidden'; Category = 'authentication-or-authorization' }
+        @{ Message = 'Model claude-test is not supported'; Category = 'model-unavailable' }
+        @{ Message = 'Rate limit exceeded (429)'; Category = 'rate-limited' }
+        @{ Message = 'ETIMEDOUT'; Category = 'timeout' }
+        @{ Message = 'ECONNRESET'; Category = 'connection' }
+        @{ Message = 'Unrecognized executor failure'; Category = 'unknown' }
+    ) {
+        $record = @{
+            type = 'trial-result'; status = 'error'; trajectory = $null
+            error = "$Message; Bearer synthetic-private-token; https://example.invalid/?sig=synthetic-private-signature"
+        }
+        $record | ConvertTo-Json -Compress | Set-Content (Join-Path $script:DiagnosticDir 'results.jsonl')
+
+        $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+
+        $result.resultState | Should -Be 'read'
+        $result.trialRecords | Should -Be 1
+        $result.erroredTrials | Should -Be 1
+        $result.errors | Should -HaveCount 1
+        $result.errors[0].category | Should -Be $Category
+        $result.errors[0].count | Should -Be 1
+        ($result | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private|example\.invalid|Bearer'
+    }
+
+    It 'Aggregates categories while ignoring summaries and graded failures' {
+        @(
+            '{"type":"run-summary","status":"error","error":"not a trial"}'
+            '{"type":"trial-result","status":"failed","gradeResult":{"passed":false}}'
+            '{"type":"trial-result","status":"error","error":"HTTP 401"}'
+            '{"type":"trial-result","status":"error","error":"Unauthorized"}'
+            '{"type":"trial-result","status":"error","error":null}'
+        ) | Set-Content (Join-Path $script:DiagnosticDir 'results.jsonl')
+
+        $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+
+        $result.trialRecords | Should -Be 4
+        $result.erroredTrials | Should -Be 3
+        $result.errors | Should -HaveCount 2
+        ($result.errors | Where-Object category -EQ 'authentication-or-authorization').count | Should -Be 2
+        ($result.errors | Where-Object category -EQ 'unknown').count | Should -Be 1
+    }
+
+    It 'Reports malformed evidence without losing valid error records' {
+        @('not-json', 'null', '[]', '{"type":"trial-result","status":"error"}') |
+            Set-Content (Join-Path $script:DiagnosticDir 'results.jsonl')
+
+        $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+
+        $result.malformedRecords | Should -Be 3
+        $result.trialRecords | Should -Be 1
+        $result.errors[0].category | Should -Be 'unknown'
+    }
+
+    It 'Reports absent results as missing, not as a successful execution' {
+        $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+
+        $result.resultState | Should -Be 'missing'
+        $result.exitCode | Should -Be 1
+        $result.trialRecords | Should -Be 0
+        $result.errors | Should -HaveCount 0
+    }
+
+    It 'Accepts a missing run directory' {
+        $script:DiagnosticArgs.RunDir = $null
+        (Get-VallyExecutionDiagnostic @script:DiagnosticArgs).resultState | Should -Be 'missing'
+    }
+
+    It 'Distinguishes an empty result file from a missing file' {
+        Set-Content (Join-Path $script:DiagnosticDir 'results.jsonl') -Value ''
+        $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+
+        $result.resultState | Should -Be 'read'
+        $result.trialRecords | Should -Be 0
+        $result.erroredTrials | Should -Be 0
+    }
+
+    It 'Reports an unreadable result without exposing the exception or path' {
+        $path = Join-Path $script:DiagnosticDir 'results.jsonl'
+        $lock = [System.IO.File]::Open($path, [System.IO.FileMode]::Create, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+        try {
+            $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+        }
+        finally {
+            $lock.Dispose()
+        }
+
+        $result.resultState | Should -Be 'unreadable'
+        $result.trialRecords | Should -Be 0
+        ($result | ConvertTo-Json -Depth 10) | Should -Not -Match ([regex]::Escape($script:DiagnosticDir))
+    }
+
+    It 'Treats non-string error payloads as unknown without serializing arbitrary fields' {
+        @{
+            type = 'trial-result'; status = 'error'
+            error = @{ message = 'synthetic-private-message' }
+            model = 'synthetic-private-model'; variant = 'synthetic-private-variant'
+        } | ConvertTo-Json -Compress | Set-Content (Join-Path $script:DiagnosticDir 'results.jsonl')
+
+        $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+
+        $result.errors[0].category | Should -Be 'unknown'
+        $result.model | Should -Be 'test-model'
+        $result.variant | Should -Be 'baseline'
+        ($result | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private'
     }
 }
 
@@ -533,6 +701,46 @@ defaults:
         $LASTEXITCODE | Should -Be 1
     }
 
+    It 'Caches a healthy baseline even when the CLI emits output' {
+        $env:STUB_VALLY_BASELINE_MODE = 'chatty-pass'
+        $env:STUB_VALLY_CUSTOMIZED_MODES = 'invocation-pass'
+        $env:STUB_VALLY_CALL_LOG = Join-Path $TestDrive 'cache-calls.jsonl'
+
+        foreach ($run in 1..2) {
+            & $script:ScriptPath -Tier 'ci' -RepoRoot $script:StubRepoRoot -OutputPath $script:StubOutputPath *> $null
+        }
+
+        $calls = @(Get-Content $env:STUB_VALLY_CALL_LOG | ForEach-Object { , ($_ | ConvertFrom-Json) })
+        @($calls | Where-Object { $_[0] -eq 'eval' -and $_[2] -match '[/\\]baseline[/\\]' }) | Should -HaveCount 2
+        $summary = Get-Content $script:StubOutputPath -Raw | ConvertFrom-Json
+        $summary.executionDiagnostics | Should -HaveCount 2
+        @($summary.executionDiagnostics | Where-Object variant -EQ 'baseline') | Should -HaveCount 0
+    }
+
+    It 'Publishes per-variant executor categories and retains the failing gate' {
+        $env:STUB_VALLY_BASELINE_MODE = 'executor-error'
+        $env:STUB_VALLY_CUSTOMIZED_MODES = 'executor-error'
+
+        & $script:ScriptPath -Tier 'calibration' -RepoRoot $script:StubRepoRoot -OutputPath $script:StubOutputPath -NoBaselineCache *> $null
+        $exitCode = $LASTEXITCODE
+        $text = Get-Content $script:StubOutputPath -Raw
+        $summary = $text | ConvertFrom-Json
+
+        $summary.executionDiagnostics | Should -HaveCount 4
+        foreach ($diagnostic in $summary.executionDiagnostics) {
+            $diagnostic.exitCode | Should -Be 1
+            $diagnostic.attempt | Should -Be 1
+            $diagnostic.erroredTrials | Should -Be 1
+            $diagnostic.errors[0].category | Should -Be 'model-unavailable'
+        }
+        @($summary.executionDiagnostics.model | Sort-Object -Unique) | Should -Be @('claude-sonnet-4.6', 'gpt-5.6-luna')
+        @($summary.executionDiagnostics.variant | Sort-Object -Unique) | Should -Be @('baseline', 'customized')
+        $text | Should -Not -Match 'synthetic-private|example\.invalid|Bearer'
+        $summary.invocationFailures | Should -BeGreaterThan 0
+        $summary.verdict | Should -Be 'fail'
+        $exitCode | Should -Be 1
+    }
+
     It 'Materializes the customization surface where the spec reads it' {
         # The surface must land in customized/surface/.github, because that is the
         # only path the customized spec copies into each trial. Writing it to the
@@ -589,6 +797,8 @@ defaults:
         $gptAttempts.Count | Should -Be 2
         $gptAttempts[0].reasonCode | Should -Be 'failed-tool-result'
         $gptAttempts[1].hasCompleteEvidence | Should -BeTrue
+        $executionAttempts = @($summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-5.6-luna' -and $_.variant -eq 'customized' })
+        $executionAttempts.attempt | Should -Be @(1, 2)
         $summary.invocationFailures | Should -Be 0
         $baselineCalls.Count | Should -Be 2
         $customizedCalls.Count | Should -Be 3
@@ -636,6 +846,10 @@ defaults:
         $gptAttempts[0].reasonCode | Should -Be 'failed-tool-result'
         $gptAttempts[1].observed | Should -Be 0
         $gptAttempts[1].failedKey | Should -BeNullOrEmpty
+        $retryDiagnostic = $summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-5.6-luna' -and $_.variant -eq 'customized' -and $_.attempt -eq 2 }
+        $retryDiagnostic.exitCode | Should -Be 99
+        $retryDiagnostic.resultState | Should -Be 'missing'
+        $retryDiagnostic.trialRecords | Should -Be 0
         $summary.invocationFailures | Should -BeGreaterThan 0
         $summary.runHealthFailures | Should -BeGreaterThan 0
         $summary.verdict | Should -Be 'fail'
