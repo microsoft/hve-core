@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to measure nominal behavior preservation'
 author: HVE Core Team
-ms.date: 2026-08-21
+ms.date: 2026-09-11
 ---
 
 ## Purpose
@@ -84,7 +84,7 @@ The compare invocation deliberately omits `--fail-on-regression`. Comparison is 
 | `schemaVersion`                                                      | string       | Reporting contract version. `2.1.0` is the current contract; consumers fail loudly on an unsupported major                                                                                      |
 | `agent`                                                              | string       | Agent slug under test (matches `-Agent`)                                                                                                                                                        |
 | `tier`                                                               | string       | `devloop` (one-model advisory), `calibration` (two-model report-only comparison), or `ci`; deterministic and structural evidence remains authoritative outside devloop                          |
-| `model`                                                              | string       | Primary model for the run: `devloop` resolves one model; `calibration` and `ci` run the fixed `gpt-5.6-luna` and `claude-sonnet-4.6` pair                                                       |
+| `model`                                                              | string       | Primary model for the run: `devloop` resolves one model; `calibration` and `ci` run the fixed `gpt-5.6-luna` and `claude-sonnet-5` pair                                                         |
 | `runs`                                                               | int          | Total non-errored comparison trials parsed across all `--output` JSONL files                                                                                                                    |
 | `ties`                                                               | int          | Trials with `winner: "tie"`; neither environment showed a clear preference                                                                                                                      |
 | `baselineWins`                                                       | int          | Trials with `winner: "baseline"`; the customization underperformed                                                                                                                              |
