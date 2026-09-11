@@ -13,7 +13,7 @@ tags:
   - rai-planning
   - how-to
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-09-10
 ms.topic: how-to
 estimated_reading_time: 5
 ---
@@ -25,10 +25,11 @@ Use capture mode when starting a Responsible AI assessment from scratch with no 
 ### How It Works
 
 1. Provide an optional project slug or let the agent derive one from your project name
-2. The agent creates `.copilot-tracking/rai-plans/{project-slug}/` and initializes `state.json` with `entryMode: "capture"` and `currentPhase: 1`
-3. Phase 1 begins with up to 7 questions covering: AI system purpose, technology stack, model types, stakeholder roles, data inputs and outputs, deployment model, and intended use context
-4. Answer questions conversationally; use "skip" or "n/a" for items that do not apply
-5. The agent summarizes findings and asks for confirmation before advancing to Phase 2
+2. The agent resolves attached-material pointers and output preferences
+3. The agent creates `.copilot-tracking/rai-plans/{project-slug}/` and initializes `state.json` with `entryMode: "capture"` and `currentPhase: 1`, then enters the Phase 1 preflight
+4. After preflight and reference discovery, Phase 1 begins with up to 7 questions covering: AI system purpose, technology stack, model types, stakeholder roles, data inputs and outputs, deployment model, and intended use context
+5. Answer questions conversationally; use "skip" or "n/a" for items that do not apply
+6. The agent summarizes findings and asks for confirmation before advancing to Phase 2
 
 Prompt file: `.github/prompts/rai-planning/rai-capture.prompt.md`
 
@@ -47,11 +48,10 @@ Use from-prd mode when product requirements documents or business requirements d
 
 ### How It Works
 
-1. The agent scans `.copilot-tracking/prd-sessions/` and `.copilot-tracking/brd-sessions/` for artifacts
-2. If the primary scan finds nothing, a secondary scan searches `.copilot-tracking/` for files matching PRD or BRD naming patterns
-3. Discovery results are presented for your confirmation with ✅ (valid) and ❌ (false positive) markers
-4. The agent extracts AI system scope, stakeholders, data classification, and technology stack from confirmed artifacts
-5. Phase 1 begins with pre-populated fields; the agent asks clarifying questions targeting gaps in the extracted information
+1. The agent resolves the PRD pointer and output preferences
+2. The agent creates `.copilot-tracking/rai-plans/{project-slug}/` and initializes `state.json` with `entryMode: "from-prd"` and `currentPhase: 1`, then enters the Phase 1 preflight
+3. During project-material discovery in the preflight, the agent reads the PRD and extracts AI system scope, technology stack, model types, deployment model, and stakeholders
+4. Phase 1 begins with pre-populated fields; the agent asks clarifying questions targeting gaps in the extracted information
 
 Prompt file: `.github/prompts/rai-planning/rai-plan-from-prd.prompt.md`
 
@@ -69,10 +69,11 @@ Use from-security-plan mode after completing a security plan with the Security P
 
 ### How It Works
 
-1. The agent reads the security plan `state.json` from the path specified in the prompt or from the most recent security plan in `.copilot-tracking/security-plans/`
-2. AI components from the security plan's `aiComponents` array are pre-populated into the RAI assessment scope
-3. Threat IDs start at the next sequence after the security plan's threat count, maintaining continuity across both assessments
-4. Phase 1 begins with pre-populated AI element inventory; the agent asks targeted questions about RAI-specific aspects not covered in the security plan
+1. The agent validates the security-plan pointer and resolves output preferences
+2. The agent creates `.copilot-tracking/rai-plans/{project-slug}/` and initializes `state.json` with `entryMode: "from-security-plan"` and `currentPhase: 1`, then enters the Phase 1 preflight
+3. During project-material discovery in the preflight, the agent reads the security plan `state.json` and extracts AI components from its `aiComponents` array
+4. Threat IDs start at the next sequence after the security plan's threat count, maintaining continuity across both assessments
+5. Phase 1 begins with pre-populated AI element inventory; the agent asks targeted questions about RAI-specific aspects not covered in the security plan
 
 Prompt file: `.github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md`
 
