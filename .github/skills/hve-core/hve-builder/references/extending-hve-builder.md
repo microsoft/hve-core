@@ -79,7 +79,7 @@ A team installs hve-builder as a library and wants every Terraform module they a
 
 1. They add `terraform.instructions.md` with `applyTo: "**/*.tf, **/*.tfvars"`. When hve-builder authors or edits a `.tf` file, that instruction auto-applies with no change to hve-builder.
 2. They add a `terraform-module-author` skill whose `description` names Terraform modules. When a request mentions Terraform modules, semantic skill activation loads the skill as an overlay.
-3. They add a `Terraform Module Reviewer` subagent with a routing description and a stable name, and register it in their parent agent's `agents:` list. hve-builder does not auto-load it; supplied metadata or an `rpi-research` extension survey identifies it, and the lifecycle dispatches it by name during the approved review stage alongside its generic static-review dispatch.
+3. They add a `Terraform Module Reviewer` subagent with a routing description and a stable name, and register it in their parent agent's `agents:` list. hve-builder does not auto-load it; supplied metadata or an `rpi-research` extension survey identifies it, and the lifecycle dispatches it by name during the review pass alongside its own review of the candidate.
 
 The instruction and skill become eligible through normal discovery; the subagent becomes reachable because its routing description and host registration expose it. The caller still decides whether each extension is in scope and what authority it receives. Bounded reads of known target instructions and supplied extension metadata remain lifecycle-stage work; only open-ended extension surveys enter `rpi-research`.
 

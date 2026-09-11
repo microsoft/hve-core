@@ -1,9 +1,9 @@
 ---
 title: prompt-builder
 description: Compatibility alias for legacy prompt-building requests. Routes creation and improvement to the hve-builder skill.
-sidebar_position: 7
+sidebar_position: 6
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - skill
@@ -36,7 +36,7 @@ to improve. Use HVE Builder directly for its full mode vocabulary.
 
 Choose `prompt-analyze` for read-only review or `prompt-refactor` for cleanup that
 must preserve behavior. A scoped explanation request authorizes neither source
-improvement nor behavior testing.
+improvement nor a review pass.
 
 ## Example usage
 
@@ -49,9 +49,8 @@ criteria.
 
 The alias should pass the target, requirements, reference context, and boundary to
 HVE Builder. Expect one shared lifecycle: capture existing behavior, author the
-candidate, validate, obtain independent static review, and resolve the final
-behavior gate. Current rules permit supported skips for Minor/Medium mutations;
-Major behavior changes require evidence for the delivered revision.
+candidate, validate, run the review pass, and resolve the overall outcome from
+the review verdict and validation result for the delivered revision.
 
 Success means the approved artifact meets its requirements and the returned
 verdicts identify evidence and limitations. The reference document remains

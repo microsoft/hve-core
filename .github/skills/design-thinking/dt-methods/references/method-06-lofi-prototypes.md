@@ -165,7 +165,7 @@ Scrappy principle: deliberately rough materials prevent feedback on aesthetics r
 
 AI prototype artifacts (markdown files) look identical to production artifacts. Enforcement relies on content completeness, tooling usage, and time invested rather than material roughness.
 
-Fidelity boundary: the `.copilot-tracking/sandbox/` environment with model invocation crosses into Method 7 territory. Human-simulated examples without model execution remain Method 6.
+Fidelity boundary: an environment with model invocation crosses into Method 7 territory. Human-simulated examples without model execution remain Method 6.
 
 ## Prototype Types
 

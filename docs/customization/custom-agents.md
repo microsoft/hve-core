@@ -69,9 +69,8 @@ write boundary, then authors within the current `rpi-research` architecture.
 
 ### Step 3: Review the evidence
 
-Review HVE Builder's independent static verdict, behavior-test disposition,
-host validation result, and overall outcome. Address actionable findings before
-committing.
+Review HVE Builder's review verdict, host validation result, and overall
+outcome. Address actionable findings before committing.
 
 > [!TIP]
 > Use `hve-builder` review mode for read-only assessment. Use improve mode only

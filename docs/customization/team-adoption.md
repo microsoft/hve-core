@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-09-11
 ms.topic: how-to
 keywords:
   - governance
@@ -143,8 +143,7 @@ exercise. A simple coding-style instruction works well:
    with minimal frontmatter (`description` and `applyTo` fields)
 2. Run `hve-builder` in create mode and supply an existing team instruction as
   a known reference
-3. Review HVE Builder's static verdict, behavior-test disposition, and host
-  validation result
+3. Review HVE Builder's review verdict and host validation result
 4. Continue the approved improve run if actionable findings require source
   changes
 5. Test by opening a Copilot chat and verifying the instructions influence

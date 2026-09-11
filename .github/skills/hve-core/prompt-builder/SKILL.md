@@ -10,14 +10,14 @@ user-invocable: true
 
 ## Goal
 
-Preserve legacy `prompt-builder` activation while routing all source changes, review, behavior testing, validation, and outcome resolution through the `hve-builder` skill.
+Preserve legacy `prompt-builder` activation while routing all source changes, review, validation, and outcome resolution through the `hve-builder` skill.
 
 ## Flow
 
 1. Translate `promptFiles` to `targets`. Treat `files` as reference context unless the caller explicitly includes them in the write boundary.
 2. Resolve `create` when an approved target is missing and `improve` when targets already exist. Route explicit cleanup to the `prompt-refactor` compatibility skill and read-only analysis to `prompt-analyze`.
 3. Activate `hve-builder` with the targets, selected mode, requirements, reference context, and any caller-owned evidence root.
-4. Return the `hve-builder` final response without adding a second author, test, or evaluation loop.
+4. Return the `hve-builder` final response without adding a second author, review, or evaluation loop.
 
 ## Inputs
 
@@ -35,7 +35,7 @@ Preserve legacy `prompt-builder` activation while routing all source changes, re
 ## Constraints
 
 * Do not dispatch retired named lifecycle workers.
-* Do not maintain a second sandbox, status vocabulary, or quality rubric.
+* Do not maintain a second status vocabulary or quality rubric.
 * Do not treat reference files as write targets without explicit approval.
 
 ## Stop Rules
@@ -49,4 +49,4 @@ Use `prompt-analyze` for a legacy read-only request and `prompt-refactor` for a 
 
 ## Final Response Contract
 
-Return the mode, targets, changed files, static verdict, behavior-test fidelity and verdict, validation result, overall outcome, evidence links, and next action.
+Return the mode, targets, changed files, review verdict, validation result, overall outcome, evidence links, and next action.

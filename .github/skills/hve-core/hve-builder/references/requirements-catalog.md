@@ -30,7 +30,7 @@ For an existing artifact, capture its current purpose, activation, inputs, outpu
 * Replace when wording changes cannot fix an unsuitable responsibility, activation mechanism, interface, or control-flow design. Confirm the replacement and migration boundary, preserve required capabilities in the new owner, and update callers and references before retiring the old owner.
 * Delete a rule when it is obsolete, contradicted by current evidence, redundant with an applicable canonical rule, or no longer serves a requirement. Identify what replaces it or why nothing must replace it. Check references, activation, and downstream consumers before deleting an artifact. Removing required behavior or changing architecture needs explicit approval; a cleanup request alone does not grant it.
 
-These decisions can apply together to different rules or targets. Deletion is an operation within an approved mutating boundary, not a separate lifecycle mode. In read-only review, recommend dispositions without changing source. The workflow contract owns the inferred `create,improve,refactor` default, explicit mode limits, write authority, delta classification, validation, and the final behavior gate.
+These decisions can apply together to different rules or targets. Deletion is an operation within an approved mutating boundary, not a separate lifecycle mode. In read-only review, recommend dispositions without changing source. The workflow contract owns the inferred `create,improve,refactor` default, explicit mode limits, write authority, validation, and the review pass.
 
 Before tuning wording, define the cheapest check that could reject the proposed change: a structure check for metadata, a consumer check for relocated guidance, or a representative behavioral scenario for a changed decision. Record the requirement, disposition, rationale, and evidence in the existing author or review record. Do not add process logs to the production artifact.
 
@@ -110,7 +110,7 @@ Treat delegation as an architecture decision. Delegate isolated, high-volume, or
 
 Canonical statement; other hve-builder surfaces reference it by name.
 
-Agent and subagent `tools:` configuration is a user-managed opaque boundary. HVE Builder does not inspect, compare, infer from, or use it in authoring, review, validation, change-classification, or behavior-testing decisions. When the caller supplies an exact configuration, reproduce it verbatim without assessing it.
+Agent and subagent `tools:` configuration is a user-managed opaque boundary. HVE Builder does not inspect, compare, infer from, or use it in authoring, review, or validation decisions. When the caller supplies an exact configuration, reproduce it verbatim without assessing it.
 
 The boundary covers only selection of an agent tool set. Generic tool API and schema design, structured output, native registration, untrusted-output handling, secret handling, and risky-action confirmation remain in scope.
 
@@ -194,7 +194,7 @@ Review these against the current host, target model, required behavior, and main
 * Kitchen-sink instruction files, copied style guides, copied templates, and exhaustive edge-case lists.
 * Singular AGENT.md where the target host expects AGENTS.md. Migrate references; add compatibility support only when the caller requests it.
 * Unsourced length ceilings and invented universal caps.
-* Fixed iteration counts as quality theater; use evidence-backed completion and progress gates. Keep each test tied to a frozen candidate without forbidding parent-owned correction of demonstrated defects.
+* Fixed iteration counts as quality theater; use evidence-backed completion and progress gates. Tie each review to an identified candidate revision without forbidding parent-owned correction of demonstrated defects.
 * Model names pinned for a High responsibility, copied from another artifact, or chosen without first selecting a responsibility-based profile.
 * Calling simulation or emulation native runtime validation.
 

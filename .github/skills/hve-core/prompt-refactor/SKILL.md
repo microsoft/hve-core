@@ -17,7 +17,7 @@ Preserve legacy `prompt-refactor` activation while simplifying approved prompt-e
 1. Translate `promptFiles` to existing `targets` and resolve the behavior that must remain unchanged.
 2. When requirements are omitted, use the HVE Builder baseline review to derive evidence-backed cleanup objectives.
 3. Activate `hve-builder` with `mode=refactor`, the approved write boundary, requirements, and any caller-owned evidence root.
-4. Return the HVE Builder static verdict, behavior-test fidelity and verdict, validation result, and overall outcome.
+4. Return the HVE Builder review verdict, validation result, and overall outcome.
 
 ## Inputs
 
@@ -28,14 +28,14 @@ Preserve legacy `prompt-refactor` activation while simplifying approved prompt-e
 ## Success Criteria
 
 * The approved targets are simpler without unintended behavior change.
-* Static review, behavior testing, and host validation pass.
+* The review pass and host validation pass.
 * Source changes stay inside the approved write boundary.
 * The returned overall outcome is unchanged from `hve-builder`.
 
 ## Constraints
 
 * Do not dispatch retired named lifecycle workers.
-* Do not create a second orchestration loop or sandbox contract.
+* Do not create a second orchestration loop or review contract.
 * Route a requested type change, artifact split, or new support artifact back through HVE Builder scope approval.
 
 ## Stop Rules
@@ -50,4 +50,4 @@ Use `prompt-analyze` for read-only follow-up review and `prompt-builder` when th
 
 ## Final Response Contract
 
-Return targets, changed files, refactor rationale, static verdict, behavior-test fidelity and verdict, validation result, overall outcome, evidence links, and next action.
+Return targets, changed files, refactor rationale, review verdict, validation result, overall outcome, evidence links, and next action.

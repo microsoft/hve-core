@@ -107,7 +107,7 @@ model: <resolved-low-profile-model> (copilot)
 
 The worker body defines its bounded input and structured summary without selecting a tool configuration or order.
 
-Parent-owned test step: classify the complete change after static findings and local validation are closed. The `hve-builder` skill records a supported skip for Minor and Medium changes. For a Major change, freeze the source boundary and invoke `hve-builder-tester`. The parent may fix required findings and assess a revised candidate under the workflow contract's convergence rules. The tester owns fidelity, execution, evidence integrity, independent grading, and cleanup; do not dispatch `HVE Artifact Tester` directly.
+Parent-owned review step: after local validation closes, run the review pass against the complete candidate. Review it yourself, or dispatch `HVE Builder Reviewer` when fresh context would help, then verify each finding at its cited location before recording it. The parent fixes required findings and reviews the revised candidate under the workflow contract's convergence rules; the reviewer never edits source or writes evidence.
 
 ## Placement heuristics
 

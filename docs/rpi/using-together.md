@@ -256,7 +256,7 @@ Ready for review.
 3. `/rpi-review` creates or updates one review record:
 
    * Locates research, the task-centered plan, plan critique, changes, and validation evidence
-   * Compares each `Pxx` and `Pxx-Txx` item with completion and change evidence in one marker-driven pass; a helper such as `RPI Review Builder` may supply candidate findings that the review verifies before recording
+   * Compares each `Pxx` and `Pxx-Txx` item with completion and change evidence in one marker-driven pass; a helper such as `RPI Reviewer` may take one context-heavy comparison and return candidate findings that the review verifies before recording
    * Assesses implementation-time plan updates, critique dispositions, and plan follow-up items
    * Records severity-graded `RV-xxx` findings, separate execution status and outcome, validation evidence or `Unavailable`, and proposed routing
    * Keeps final outcome and route decisions in `## Parent Decision Record`; in a standalone review you walk through each actionable finding and choose its route

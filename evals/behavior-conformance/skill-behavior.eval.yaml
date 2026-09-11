@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 230
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 228
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -1564,9 +1564,10 @@ stimuli:
           pattern: '(?i)^\s*Deferred[.!]?\s*$'
   - name: skill-hve-builder-read-only-review-behavior
     prompt: |
-      Which skill performs behavior testing for a read-only HVE Builder review
-      of an artifact that can change model actions? Your entire response must be
-      exactly `hve-builder-tester`, without Markdown or explanation.
+      A read-only HVE Builder review of an artifact finds a required source
+      correction. Does HVE Builder fix the source or return the finding? Your
+      entire response must be exactly `return-findings`, without Markdown or
+      explanation.
     environment:
       skills:
         - ../../.github/skills/hve-core/hve-builder
@@ -1577,17 +1578,17 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: review-runtime-route
+        name: review-read-only-route
         config:
-          pattern: '(?i)^\s*[''"]?hve-builder-tester[''"]?[.!]?\s*$'
-  - name: skill-hve-builder-final-candidate-behavior-gate
+          pattern: '(?i)^\s*[''"]?return-findings[''"]?[.!]?\s*$'
+  - name: skill-hve-builder-review-pass-ownership
     prompt: |
-      An authorized HVE Builder run is making a Major change. Its behavior
-      report identifies a required in-scope defect with a supported fix.
-      Choose one value from each pair based on the skill's behavior:
-      `Timing:` `after-candidate-freeze` | `before-candidate-freeze`
-      `Invocations:` `progress-gated` | `zero-or-one`
-      `Revise:` `stop-and-defer` | `correct-and-retest`
+      An authorized HVE Builder run dispatched `HVE Builder Reviewer`, which
+      returned a required finding with a supported fix. Choose one value from
+      each pair based on the skill's behavior:
+      `Findings:` `verify-then-record` | `record-as-returned`
+      `Corrections:` `parent-applies` | `reviewer-applies`
+      `Closure:` `targeted-re-review` | `full-review-repeat`
       Return exactly three labeled lines without bullets in that order, using
       only the selected value after each label and no explanation.
     environment:
@@ -1600,9 +1601,9 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: final-candidate-decisions
+        name: review-pass-decisions
         config:
-          pattern: '(?i)^[ \t]*Timing:[ \t]*after-candidate-freeze[ \t]*\r?\n[ \t]*Invocations:[ \t]*progress-gated[ \t]*\r?\n[ \t]*Revise:[ \t]*correct-and-retest[ \t]*(?:\r?\n)?(?![\s\S])'
+          pattern: '(?i)^[ \t]*Findings:[ \t]*verify-then-record[ \t]*\r?\n[ \t]*Corrections:[ \t]*parent-applies[ \t]*\r?\n[ \t]*Closure:[ \t]*targeted-re-review[ \t]*(?:\r?\n)?(?![\s\S])'
   - name: skill-pull-request-preflight-repair-commit
     prompt: |
       A pull request preflight found a spelling failure. The user asked you to
@@ -1653,24 +1654,6 @@ stimuli:
         name: workflow-component-check-selection
         config:
           pattern: '(?i)^[ \t]*Workflow:[ \t]*inspect-matching[ \t]*\r?\n[ \t]*Wrapper:[ \t]*skip-unless-requested[ \t]*\r?\n[ \t]*Components:[ \t]*run-locally-safe[ \t]*(?:\r?\n)?(?![\s\S])'
-  - name: skill-hve-builder-tester-knowledge
-    prompt: |
-      What fidelity labels unavailable side effects without claiming native
-      execution? Your entire response must be exactly `simulation`, without
-      Markdown or explanation.
-    environment:
-      skills:
-        - ../../.github/skills/hve-core/hve-builder-tester
-    tags:
-      category: behavior-conformance
-      skill: hve-builder-tester
-      shape: knowledge
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: simulation-fidelity
-        config:
-          pattern: '(?i)^\s*simulation[.!]?\s*$'
   - name: skill-prompt-builder-knowledge
     prompt: |
       Summarize the `prompt-builder` compatibility skill. Include legacy input
@@ -4931,15 +4914,15 @@ stimuli:
       Decide the HVE Builder action for each independent case.
       A: All required gates pass; only optional wording suggestions remain.
       B: The same defect keeps returning with no new evidence-backed approach.
-      C: Native execution is unavailable and its prerequisite is still missing.
+      C: A required check is unavailable and its prerequisite is still missing.
       D: A read-only review demonstrates a required source correction.
-      E: The original task delta is Major; its last repair is only a typo.
+      E: The task changed a decision rule; its last repair is only a typo.
       Choose one value from each pair:
-      `A:` `finish-pass` | `polish-and-retest`
+      `A:` `finish-pass` | `polish-and-rereview`
       `B:` `stop-unresolved` | `retry-unchanged`
       `C:` `defer` | `edit-source`
       `D:` `return-findings` | `fix-source`
-      `E:` `assess-current-candidate` | `skip-as-minor`
+      `E:` `review-current-candidate` | `skip-as-minor`
       Return exactly five labeled lines without bullets or explanation.
     environment:
       skills:
@@ -4953,28 +4936,4 @@ stimuli:
       - type: output-matches
         name: materiality-and-progress
         config:
-          pattern: '(?i)^[ \t]*A:[ \t]*finish-pass[ \t]*\r?\n[ \t]*B:[ \t]*stop-unresolved[ \t]*\r?\n[ \t]*C:[ \t]*defer[ \t]*\r?\n[ \t]*D:[ \t]*return-findings[ \t]*\r?\n[ \t]*E:[ \t]*assess-current-candidate[ \t]*(?:\r?\n)?(?![\s\S])'
-  - name: skill-hve-builder-tester-parent-reassessment
-    prompt: |
-      A completed HVE Builder Tester report identified a required defect.
-      The authorized HVE Builder parent corrected it, refreshed affected checks,
-      and supplied the newly frozen revision for another assessment in the same
-      builder run. Choose one value from each pair:
-      `Owner:` `parent-fixes` | `tester-fixes`
-      `Assessment:` `new-invocation` | `forbidden-in-same-builder-run`
-      `Report:` `unique-current-revision` | `overwrite-prior-report`
-      `Coverage:` `original-requirements-and-regressions` | `fixed-defect-only`
-      Return exactly four labeled lines without bullets or explanation.
-    environment:
-      skills:
-        - ../../.github/skills/hve-core/hve-builder-tester
-    tags:
-      category: behavior-conformance
-      skill: hve-builder-tester
-      shape: knowledge
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: independent-invocation-ownership
-        config:
-          pattern: '(?i)^[ \t]*Owner:[ \t]*parent-fixes[ \t]*\r?\n[ \t]*Assessment:[ \t]*new-invocation[ \t]*\r?\n[ \t]*Report:[ \t]*unique-current-revision[ \t]*\r?\n[ \t]*Coverage:[ \t]*original-requirements-and-regressions[ \t]*(?:\r?\n)?(?![\s\S])'
+          pattern: '(?i)^[ \t]*A:[ \t]*finish-pass[ \t]*\r?\n[ \t]*B:[ \t]*stop-unresolved[ \t]*\r?\n[ \t]*C:[ \t]*defer[ \t]*\r?\n[ \t]*D:[ \t]*return-findings[ \t]*\r?\n[ \t]*E:[ \t]*review-current-candidate[ \t]*(?:\r?\n)?(?![\s\S])'

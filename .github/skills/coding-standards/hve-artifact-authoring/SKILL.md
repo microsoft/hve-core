@@ -19,7 +19,7 @@ metadata:
 
 Create agents, prompts, instructions, and skills that follow HVE Core's current authoring,
 distribution, documentation, and validation contracts. Use the `hve-builder` skill when the work
-requires lifecycle-managed authoring, independent review, behavior testing, or host validation.
+requires lifecycle-managed authoring, a review pass, or host validation.
 
 ## Artifact Selection
 

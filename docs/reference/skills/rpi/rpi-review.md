@@ -30,7 +30,7 @@ Compare RPI planning and implementation evidence, record review findings, and ro
 
 Use `rpi-review` once, after implementation finishes, to compare the plan, critique, changes record, and validation evidence against the accepted requirements. The skill initializes one record under `.copilot-tracking/reviews/logs/`, compares the evidence in one marker-driven pass, and writes the findings itself.
 
-A helper such as [RPI Review Builder](../../agents/hve-core/subagents/rpi-review-builder) is optional: the review parent may ask it for candidate findings with evidence locations, then verifies each one before recording an `RV-xxx`. The review parent owns the final outcome and every route in `## Parent Decision Record`.
+A helper such as [RPI Reviewer](../../agents/hve-core/subagents/rpi-reviewer) is optional: the review parent may assign it one bounded, context-heavy comparison and receive candidate findings with evidence locations, then verifies each one, or investigates further itself, before recording an `RV-xxx`. The review parent owns the final outcome and every route in `## Parent Decision Record`.
 
 The record keeps execution status (`Complete`, `Partial`, `Blocked`) separate from outcome (`Conformant`, `Conformant with justified divergence`, `Defects found`, `Residual work`, `Not accepted`). Each accepted finding routes once: defects to a later `rpi-implement`, decision gaps to `rpi-plan`, evidence gaps to `rpi-research`, residual work to a distinct follow-up. A later fix does not trigger another review.
 
