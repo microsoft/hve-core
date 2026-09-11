@@ -67,6 +67,57 @@ expectations:
     priority: medium
     contract_ref: "agent §Security CAUTION (verbatim disclaimer block)"
 
+  - expectation_id: disclaimer-null-state-before-work
+    summary: New or recovered null state displays and persists the canonical disclaimer before phase work.
+    signal: Output orders the CAUTION block before state effects and Phase 1 work.
+    pass_criteria: |
+      The planner loads `disclaimer-language.instructions.md`, displays the
+      Security Planning disclaimer when `disclaimerShownAt` is null, persists
+      the timestamp and one session-start notice, then begins phase work.
+    failure_modes:
+      - Questions or analysis appear before the disclaimer and state write.
+      - The required instruction is unavailable and the planner improvises text.
+    priority: high
+    contract_ref: "agent §Startup Announcement"
+
+  - expectation_id: disclaimer-satisfied-gate-resume
+    summary: Normal resume suppresses automatic replay when the timestamp is non-null.
+    signal: The existing timestamp and session-start notice count remain unchanged.
+    pass_criteria: |
+      A normal resume with a non-null `disclaimerShownAt` does not repeat the
+      full disclaimer or append a duplicate session-start notice.
+    failure_modes:
+      - The full disclaimer is repeated without a user request.
+      - The timestamp or notice count changes during normal resume.
+    priority: high
+    contract_ref: "agent §Startup Announcement"
+
+  - expectation_id: disclaimer-user-requested-redisplay
+    summary: Explicit redisplay updates the latest-display timestamp and retains audit history.
+    signal: Output includes the full disclaimer and `details.reason=user-requested-redisplay`.
+    pass_criteria: |
+      When the user explicitly requests redisplay, the planner shows the full
+      disclaimer, updates `disclaimerShownAt`, and appends a notice whose
+      `details.reason` is `user-requested-redisplay`.
+    failure_modes:
+      - The timestamp is left unchanged after an actual redisplay.
+      - The appended notice lacks the fixed replay discriminator.
+    priority: high
+    contract_ref: "agent §Startup Announcement"
+
+  - expectation_id: disclaimer-source-required
+    summary: Missing canonical disclaimer instructions block startup.
+    signal: Output names the unavailable instruction and halts before phase work.
+    pass_criteria: |
+      If `disclaimer-language.instructions.md` cannot be found or loaded, the
+      planner reports the missing dependency and performs no questions,
+      analysis, state initialization, or phase work.
+    failure_modes:
+      - The planner paraphrases or invents disclaimer text.
+      - Phase work begins despite the missing instruction.
+    priority: high
+    contract_ref: "agent §Startup Announcement"
+
   - expectation_id: rai-handoff-for-ai-systems
     summary: ML/LLM/RAG systems set raiEnabled and trigger an RAI handoff.
     signal: Output sets `raiEnabled=true` and references an RAI handoff when the system involves ML/LLM/RAG.

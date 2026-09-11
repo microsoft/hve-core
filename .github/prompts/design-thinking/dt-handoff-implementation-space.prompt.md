@@ -109,9 +109,11 @@ Tag each readiness signal with a quality marker:
 | `unknown`     | Identified gap not yet investigated                      |
 | `conflicting` | Multiple sources disagree                                |
 
+Before continuing, verify explicit evidence that the user chose a lateral handoff. Accept either the current user request to run this handoff or a coaching state `session_log` entry that records the user's explicit handoff choice. Do not treat a `transition_log` entry, completed methods, available artifacts, or remembered conversation as approval. If prior approval cannot be established, present the readiness findings, include the question of whether to hand off in the response even when no answer is currently available, and stop before Step 4 without changing coaching state or creating handoff artifacts.
+
 Readiness note: all Implementation Space exits hand off to `rpi-research` regardless of tier or prototype maturity. The exit tier and readiness assessment shape the investigation scope. Higher tiers with more validated evidence typically narrow the research needed without bypassing it.
 
-If critical gaps exist (signals marked `unknown` or `conflicting`), present findings and ask whether to proceed with the handoff or return to address gaps first. If no user response is available, default to proceeding with the handoff and documenting gaps in the Investigation Targets section.
+If critical gaps exist (signals marked `unknown` or `conflicting`), present findings and ask whether to proceed with the handoff or return to address gaps first. If no response to this second question is available and prior handoff approval was verified, preserve the earlier choice, proceed with the handoff, and document every gap in the Investigation Priorities section. If prior approval was not verified, stop as described above. Never treat a missing response as initial handoff approval.
 
 ### Step 4: Produce Handoff Artifact
 

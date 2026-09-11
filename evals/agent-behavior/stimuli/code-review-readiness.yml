@@ -3,9 +3,11 @@
 stimuli:
   - name: code-review-readiness-lens
     prompt: |
-      As the readiness code-review perspective, assess whether this change is
-      ready to merge: validation evidence, test coverage, and rollout
-      considerations. The change adds a feature flag with no accompanying tests.
+      As the readiness perspective for a pull-request target, assess the change
+      package: scope hygiene, description accuracy, validation evidence,
+      follow-up items, and merge readiness. The PR adds a feature flag with no
+      tests and includes an unrelated formatting change that its description
+      does not mention.
     tags:
       category: agent-behavior
       advisory: "true"
@@ -13,7 +15,7 @@ stimuli:
       - type: output-matches
         name: readiness-vocabulary
         config:
-          pattern: '(?i)(readiness|ready|test|coverage|validation|evidence|rollout|missing|risk|recommend)'
+          pattern: '(?i)(readiness|ready|scope|description|test|coverage|validation|evidence|follow[- ]?up|unrelated|missing|risk|recommend)'
       - type: output-matches
         name: no-source-edit
         config:

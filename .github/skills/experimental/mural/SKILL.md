@@ -91,10 +91,12 @@ For the full STRIDE threat model (loopback, REST, and on-disk cache) see [Securi
 
 The skill resolves credentials through a three-tier `env → backend → file` lookup. The active backend is selected by `MURAL_CREDENTIAL_BACKEND`:
 
-* `auto` (default): prefer `keyring` when an OS keychain is reachable; otherwise fall back to `file` and emit a single WARN per process.
+* `auto` (default): prefer `keyring` when an OS keychain is reachable; fall back to `file`, with a one-shot WARN per profile, when the keychain is unavailable or when it is reachable but holds no usable credentials while the credential file does.
 * `keyring`: require an OS keychain (Keychain on macOS, DPAPI on Windows, SecretService on Linux desktop); fail closed when unreachable.
 * `file`: use the existing 0600 credential file at `$XDG_CONFIG_HOME/hve-core/mural.{profile}.env`.
 * `env-only`: read only from process environment variables; never touch the keyring or credential file.
+
+In `auto` mode, `mural auth login` and `mural auth bootstrap` promote file credentials into a reachable-but-empty keyring: each key is copied and verified with a read-back before the file copy is removed, any failure rolls back the keyring writes and keeps the file, and promotion is skipped when `MURAL_NONINTERACTIVE=1` or `CI=true` is set.
 
 Manage credentials with the `mural auth` subcommands:
 
