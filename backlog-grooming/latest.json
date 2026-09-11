@@ -1,0 +1,10 @@
+{
+  "slug": "2026-09-11-0ced9fe7",
+  "completed_at": "2026-09-11T03:15:22.517Z",
+  "sweep_id": "0ced9fe772c0958c0f239c293d012d0b059a220d73ff94473ba976158543f874",
+  "aggregate_digest": "fc6f14dc942d3d075ef179b7a6850356316cb5354a6263f9236d4ad01538208b",
+  "assessed": 146,
+  "deferred": 2,
+  "total_snapshot_count": 148,
+  "source_run_id": "34556917886"
+}
