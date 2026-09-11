@@ -25,6 +25,57 @@ $ErrorActionPreference = 'Stop'
 
 #region Functions
 
+function Invoke-UvEnvironmentSync {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [bool]$Locked
+    )
+
+    if (-not $Locked) {
+        $output = & uv sync --dev 2>&1
+        return @{
+            exitCode = $LASTEXITCODE
+            output = $output
+            useOfflineRun = $false
+        }
+    }
+
+    $defaultIndex = $env:UV_DEFAULT_INDEX ?? 'https://pypi.org/simple'
+    if ($defaultIndex.TrimEnd('/') -eq 'https://pypi.org/simple') {
+        $output = & uv sync --locked --dev 2>&1
+        return @{
+            exitCode = $LASTEXITCODE
+            output = $output
+            useOfflineRun = $false
+        }
+    }
+
+    $requirementsFile = New-TemporaryFile
+    $originalDefaultIndex = $env:UV_DEFAULT_INDEX
+    $originalIndexUrl = $env:UV_INDEX_URL
+    try {
+        Remove-Item Env:UV_DEFAULT_INDEX -ErrorAction SilentlyContinue
+        Remove-Item Env:UV_INDEX_URL -ErrorAction SilentlyContinue
+        $output = & uv export --locked --offline --no-emit-project --quiet --output-file $requirementsFile 2>&1
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $env:UV_DEFAULT_INDEX = $originalDefaultIndex
+        if ($null -eq $originalIndexUrl) {
+            Remove-Item Env:UV_INDEX_URL -ErrorAction SilentlyContinue
+        } else {
+            $env:UV_INDEX_URL = $originalIndexUrl
+        }
+        Remove-Item $requirementsFile -Force -ErrorAction SilentlyContinue
+    }
+
+    return @{
+        exitCode = $exitCode
+        output = $output
+        useOfflineRun = $true
+    }
+}
+
 function Invoke-PythonTests {
     [CmdletBinding()]
     param(
@@ -85,16 +136,17 @@ function Invoke-PythonTests {
                 # use uv if the command is available, regardless of whether uv.lock exists
                 if ($uvCommand) {
                     $runner = 'uv'
-                    
-                    if (Test-Path $uvLockPath) {
+                    $hasLock = Test-Path $uvLockPath
+
+                    if ($hasLock) {
                         Write-Host '  Using uv locked environment' -ForegroundColor Gray
-                        $syncOutput = & uv sync --locked --dev 2>&1
                     } else {
                         Write-Host '  Using uv environment (syncing dev dependencies)' -ForegroundColor Gray
-                        $syncOutput = & uv sync --dev 2>&1
                     }
 
-                    $syncExitCode = $LASTEXITCODE
+                    $syncResult = Invoke-UvEnvironmentSync -Locked $hasLock
+                    $syncOutput = $syncResult.output
+                    $syncExitCode = $syncResult.exitCode
                     Write-Host "$syncOutput"
 
                     if ($syncExitCode -ne 0) {
@@ -115,7 +167,11 @@ function Invoke-PythonTests {
                         continue
                     }
 
-                    $output = & uv run pytest tests/ $Verbosity --tb=short 2>&1
+                    if ($syncResult.useOfflineRun) {
+                        $output = & uv run --frozen --offline pytest tests/ $Verbosity --tb=short 2>&1
+                    } else {
+                        $output = & uv run pytest tests/ $Verbosity --tb=short 2>&1
+                    }
                     $exitCode = $LASTEXITCODE
                 } else {
                     # Resolve pytest: prefer skill venv, fall back to global

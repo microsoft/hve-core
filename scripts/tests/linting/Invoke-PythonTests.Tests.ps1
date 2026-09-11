@@ -227,6 +227,8 @@ Describe 'Pytest Execution' -Tag 'Unit' {
     }
 
     BeforeEach {
+        $script:OriginalUvDefaultIndex = $env:UV_DEFAULT_INDEX
+        $env:UV_DEFAULT_INDEX = 'https://pypi.org/simple'
         Mock Push-Location {}
         Mock Pop-Location {}
         Mock Get-Command { [PSCustomObject]@{ Source = 'pytest' } } -ParameterFilter { $Name -eq 'pytest' }
@@ -239,6 +241,10 @@ Describe 'Pytest Execution' -Tag 'Unit' {
         }
         Mock Test-Path { $true } -ParameterFilter { $Path -like '*tests' }
         Mock Test-Path { $false } -ParameterFilter { $Path -like '*uv.lock' }
+    }
+
+    AfterEach {
+        $env:UV_DEFAULT_INDEX = $script:OriginalUvDefaultIndex
     }
 
     Context 'Tests pass' {
@@ -411,6 +417,40 @@ Describe 'Pytest Execution' -Tag 'Unit' {
         It 'Does not run pytest after failed sync' {
             Invoke-PythonTests -RepoRoot $TestDrive
             Should -Invoke -CommandName uv -ParameterFilter { $args[0] -eq 'run' } -Times 0
+        }
+    }
+
+    Context 'Locked uv project with custom default index' {
+        BeforeEach {
+            $env:UV_DEFAULT_INDEX = 'https://mirror.example.com/pypi/simple'
+            Mock Get-Command { [PSCustomObject]@{ Source = 'uv' } } -ParameterFilter { $Name -eq 'uv' }
+            Mock Test-Path { $true } -ParameterFilter { $Path -like '*uv.lock' }
+            Mock uv {
+                $global:LASTEXITCODE = 0
+                if ($args[0] -eq 'export') {
+                    return 'lock validated'
+                }
+
+                return '3 passed'
+            }
+        }
+
+        It 'Validates the canonical lock and runs offline without syncing' {
+            $result = Invoke-PythonTests -RepoRoot $TestDrive
+
+            $result.success | Should -BeTrue
+            Should -Invoke -CommandName uv -ParameterFilter {
+                $args[0] -eq 'export' -and
+                $args[1] -eq '--locked' -and
+                $args[2] -eq '--offline'
+            } -Times 1
+            Should -Invoke -CommandName uv -ParameterFilter { $args[0] -eq 'sync' } -Times 0
+            Should -Invoke -CommandName uv -ParameterFilter {
+                $args[0] -eq 'run' -and
+                $args[1] -eq '--frozen' -and
+                $args[2] -eq '--offline' -and
+                $args[3] -eq 'pytest'
+            } -Times 1
         }
     }
 }
