@@ -48,15 +48,28 @@ BeforeAll {
             throw "The repository-pinned cspell CLI was not found at '$script:CSpellBin'. Run 'npm ci' at the repository root first."
         }
 
-        Push-Location -LiteralPath $Root
-        try {
-            $raw = & node $script:CSpellBin lint @CSpellArgs --no-progress --no-color 2>&1
-        }
-        finally {
-            Pop-Location
+        $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+        $startInfo.FileName = 'node'
+        $startInfo.WorkingDirectory = $Root
+        $startInfo.UseShellExecute = $false
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+
+        @($script:CSpellBin, 'lint') + $CSpellArgs + @('--no-progress', '--no-color') |
+            ForEach-Object { $null = $startInfo.ArgumentList.Add($_) }
+
+        $process = [System.Diagnostics.Process]::Start($startInfo)
+        if ($null -eq $process) {
+            throw 'Failed to start the repository-pinned cspell CLI through Node.'
         }
 
-        $lines = @($raw | ForEach-Object { $_.ToString() })
+        $standardOutput = $process.StandardOutput.ReadToEndAsync()
+        $standardError = $process.StandardError.ReadToEndAsync()
+        $process.WaitForExit()
+        $raw = @($standardOutput.Result, $standardError.Result) -join [Environment]::NewLine
+        $process.Dispose()
+
+        $lines = @($raw -split '\r?\n' | Where-Object { $_ })
 
         $issues = @(
             foreach ($line in $lines) {
