@@ -1060,6 +1060,9 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:Publisher | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Sweep\s+branches:\s+- main\s+types:\s+- completed'
         $script:Publisher | Should -Match 'context\.payload\.workflow_run\?\.id'
         $script:Publisher | Should -Match 'const manualReplay = !automaticRunId'
+        $script:Publisher | Should -Match '(?ms)^      allow-feature-branch-publication:\s+description:.*?required: false\s+default: false\s+type: boolean'
+        $script:Publisher | Should -Match 'const allowFeatureBranchPublication = manualReplay &&'
+        $script:Publisher | Should -Match 'const acceptedFeatureBranch = allowFeatureBranchPublication &&\s+run\.head_branch === dispatchBranch'
         $script:Publisher | Should -Match 'manualReplay\s+\? parsePositiveInteger\("final-run-id", process\.env\.FINAL_RUN_ID\)'
         $script:Publisher | Should -Match 'run\.head_branch !== repository\.default_branch'
         $script:Publisher | Should -Match 'run\.head_sha !== defaultRef\.object\.sha'
@@ -1192,14 +1195,18 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
 
     It 'stages reports only from immutable provenance bound to a successful publisher run' {
         $script:DeployDocs | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Publisher\s+branches:\s+- main\s+types:\s+- completed'
+        $script:DeployDocs | Should -Match '(?ms)^      publisher-run-id:\s+description:.*?required: false\s+type: string'
+        $script:DeployDocs | Should -Match '(?ms)^      allow-feature-branch-publication:\s+description:.*?required: false\s+default: false\s+type: boolean'
         $script:DeployDocs | Should -Match "github\.event_name == 'workflow_run' && github\.event\.workflow_run\.conclusion == 'success'"
+        $script:DeployDocs | Should -Match "inputs\.allow-feature-branch-publication && inputs\.publisher-run-id != ''"
+        $script:DeployDocs | Should -Match 'run\.head_branch !== process\.env\.DISPATCH_BRANCH \|\| run\.head_sha !== context\.sha'
         $script:DeployDocs | Should -Match 'run\.path !== "\.github/workflows/backlog-groom-publisher\.yml"'
         $script:DeployDocs | Should -Match 'github\.rest\.actions\.listWorkflowRunArtifacts'
         $script:DeployDocs | Should -Match 'Publisher run must contain exactly one immutable Pages provenance artifact'
         $script:DeployDocs | Should -Match 'artifact-ids: \$\{\{ steps\.reports\.outputs\.artifact-id \}\}'
-        $script:DeployDocs | Should -Match 'provenance\.publisher_run_id !== String\(run\.id\)'
-        $script:DeployDocs | Should -Match 'provenance\.publisher_run_attempt !== run\.run_attempt'
-        $script:DeployDocs | Should -Match 'provenance\.publisher_source_sha !== run\.head_sha'
+        $script:DeployDocs | Should -Match 'provenance\.publisher_run_id !== process\.env\.PUBLISHER_RUN_ID'
+        $script:DeployDocs | Should -Match 'provenance\.publisher_run_attempt !== Number\(process\.env\.PUBLISHER_RUN_ATTEMPT\)'
+        $script:DeployDocs | Should -Match 'provenance\.publisher_source_sha !== process\.env\.PUBLISHER_SOURCE_SHA'
         $script:DeployDocs | Should -Match 'recordedDigest !== computedDigest'
         $script:DeployDocs | Should -Match 'Pages provenance is not bound to the triggering publisher run'
         $script:DeployDocs | Should -Not -Match 'const reportsBranch = "backlog-grooming-reports"|requestedRef|report-ref'

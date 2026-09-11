@@ -34,6 +34,11 @@ on:
         description: Expected orchestrator source revision
         required: true
         type: string
+      allow-feature-branch-publication:
+        description: Temporarily allow publication from an orchestrator run on this dispatch branch
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.repository_id }}
@@ -64,6 +69,7 @@ jobs:
           FINAL_ARTIFACT_ID: ${{ inputs.final-artifact-id }}
           SWEEP_ID: ${{ inputs.sweep-id }}
           SOURCE_SHA: ${{ inputs.source-sha }}
+          ALLOW_FEATURE_BRANCH_PUBLICATION: ${{ inputs.allow-feature-branch-publication }}
         with:
           script: |
             const parsePositiveInteger = (name, value) => {
@@ -73,6 +79,8 @@ jobs:
             };
             const automaticRunId = context.payload.workflow_run?.id;
             const manualReplay = !automaticRunId;
+            const allowFeatureBranchPublication = manualReplay &&
+              process.env.ALLOW_FEATURE_BRANCH_PUBLICATION === "true";
             const finalRunId = manualReplay
               ? parsePositiveInteger("final-run-id", process.env.FINAL_RUN_ID)
               : parsePositiveInteger("final-run-id", String(automaticRunId));
@@ -82,8 +90,12 @@ jobs:
               ...context.repo,
               ref: `heads/${repository.default_branch}`,
             });
+            const dispatchBranch = context.ref.replace(/^refs\/heads\//, "");
+            const acceptedFeatureBranch = allowFeatureBranchPublication &&
+              run.head_branch === dispatchBranch;
             if (run.path !== ".github/workflows/backlog-groom-orchestrator.yml" ||
-                run.head_branch !== repository.default_branch || run.head_sha !== defaultRef.object.sha) {
+                (!acceptedFeatureBranch &&
+                 (run.head_branch !== repository.default_branch || run.head_sha !== defaultRef.object.sha))) {
               throw new Error("Publication requires the current default-branch orchestrator revision");
             }
             if (manualReplay) {
