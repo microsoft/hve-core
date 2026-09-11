@@ -1,9 +1,9 @@
 ---
 title: ux-artifacts
 description: "Produce evidence-labelled UX needs, journey, structure, inclusion, and engineering-handoff assets. Use when a practitioner needs a durable UX artifact rather than coaching."
-sidebar_position: 5
+sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - skill

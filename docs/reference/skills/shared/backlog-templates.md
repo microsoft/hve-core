@@ -3,7 +3,7 @@ title: backlog-templates
 description: "Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, Accessibility, and Privacy planners"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-09
 ms.topic: reference
 keywords:
   - skill
@@ -28,10 +28,26 @@ Shared work-item templates and conventions for ADO and GitHub backlog handoff ac
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this skill when a RAI, Security, SSSC, Accessibility, or Privacy planner needs
+consistent ADO and GitHub handoff formats. It supplies shared skeletons, identifier
+conventions, sanitization, and disclaimer placement. Domain fields, hierarchy,
+severity mappings, and reviewer roles remain the owning planner's responsibility.
+
+These are reference templates, not tracker access. Choose `backlog-execute` for
+an approved execution pass. The planner vocabulary distinguishes manual,
+supervised, and autonomous output; `coached` is not a selectable planner tier.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask: `/backlog-templates Prepare ADO and GitHub handoff drafts for the attached
+sample security control and its acceptance criteria. Use manual handoff only.`
+Supply the planner's threat reference, risk mapping, implementation evidence,
+and required ADO area path; do not supply credentials or real personal data.
+
+Expect an HTML description for ADO and metadata plus Markdown for GitHub, each
+retaining security-specific fields and the authoritative review disclaimer.
+Success means the two formats describe the same control, preserve standards
+identifiers, remove local-only paths, and leave human-review checkboxes unchecked.
+Temporary planning identifiers are resolved before later tracker creation. The
+drafts do not create work items or establish qualified review, even if every
+template field has been filled.

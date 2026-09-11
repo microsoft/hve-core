@@ -722,7 +722,7 @@ stimuli:
   - name: prompt-synth-data-generate-conformance
     prompt: |
       Invoke the `synth-data-generate` prompt with minimal arguments and explain how it
-      coordinates the workflow.
+      coordinates preflight, generation, result evidence, and any local replacement.
     tags:
       category: behavior-conformance
       prompt: synth-data-generate
@@ -731,11 +731,53 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)synthetic|data|generate"
+          pattern: "(?i)dataops|synthetic.data.operation|preflight"
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)synthetic|data|generate|schema|fixture"
+          pattern: "(?i)before.+(project|notebook|source|generation)|preflight.+before"
+      - type: output-matches
+        name: replacement-language
+        config:
+          pattern: "(?i)commit-local|candidate.+original|runtime.+confirm"
+
+  - name: prompt-synth-data-generate-missing-decisions
+    prompt: |
+      Invoke the `synth-data-generate` prompt for a bounded synthetic fixture when the
+      operation has no current qualified classification or subgroup decision records.
+      Explain the next action without creating files or inspecting a source.
+    tags:
+      category: behavior-conformance
+      prompt: synth-data-generate
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: fail-closed-before-writes
+        config:
+          pattern: "(?i)(stop|block|cannot proceed).+(before|without).+(write|project|notebook|source|generation)"
+      - type: output-matches
+        name: qualified-owner-action
+        config:
+          pattern: "(?i)qualified|data.owner|privacy|fairness|domain.owner|decision"
+
+  - name: prompt-synth-data-generate-stale-replacement
+    prompt: |
+      Invoke the `synth-data-generate` prompt for an authorized local replacement whose
+      target digest changed after preflight. Explain the commit outcome without writing
+      the target or reproducing any source values.
+    tags:
+      category: behavior-conformance
+      prompt: synth-data-generate
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: stale-source-refusal
+        config:
+          pattern: "(?i)(stale|digest.+mismatch|source.+changed).+(stop|refuse|block|not commit)"
+      - type: output-matches
+        name: unchanged-original-evidence
+        config:
+          pattern: "(?i)unchanged-original|original.+unchanged|preserve.+original"
 
   - name: prompt-graph-research-conformance
     prompt: |
