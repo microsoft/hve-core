@@ -1,18 +1,71 @@
-// Copyright (c) Microsoft Corporation. Licensed under the MIT License.
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { copyFile, mkdtemp, mkdir, readFile, writeFile, readdir, realpath, rm, symlink } from 'node:fs/promises';
+import { copyFile, mkdtemp, mkdir, open, readFile, writeFile, readdir, realpath, rename, rm, symlink } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { createDeck, parseArguments, templateFiles } from '../scripts/create-deck.mjs';
+import { createDeck, parseArguments, readTemplateFile, templateFiles } from '../scripts/create-deck.mjs';
 
 async function workspace(t) {
   const root = await mkdtemp(path.join(tmpdir(), 'hve-slide-starter-test-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   return realpath(root);
 }
+
+test('template reads reject directories and symbolic links', async t => {
+  const root = await workspace(t);
+  const source = path.join(root, 'template.txt');
+  await writeFile(source, 'Original template.');
+  assert.equal(await readTemplateFile(source), 'Original template.');
+  await assert.rejects(readTemplateFile(root), /regular file|EISDIR|EPERM/);
+  const link = path.join(root, 'linked.txt');
+  await symlink(source, link);
+  await assert.rejects(readTemplateFile(link), /regular file|ELOOP/);
+});
+
+test('template reads detect path replacement during validation and close the handle', async t => {
+  const root = await workspace(t);
+  const source = path.join(root, 'template.txt');
+  await writeFile(source, 'Original template.');
+  const probe = await open(source, 'r');
+  const prototype = Object.getPrototypeOf(probe);
+  const originalStat = prototype.stat;
+  await probe.close();
+  let checkedHandle;
+  t.mock.method(prototype, 'stat', async function (...args) {
+    checkedHandle = this;
+    const result = await Reflect.apply(originalStat, this, args);
+    await rename(source, path.join(root, 'original.txt'));
+    await writeFile(source, 'Replacement template.');
+    return result;
+  });
+  await assert.rejects(readTemplateFile(source), /stable regular file/);
+  assert.equal(checkedHandle.fd, -1);
+});
+
+test('template reads stay on the validated handle when the path changes before reading', async t => {
+  const root = await workspace(t);
+  const source = path.join(root, 'template.txt');
+  await writeFile(source, 'Original template.');
+  const probe = await open(source, 'r');
+  const prototype = Object.getPrototypeOf(probe);
+  const originalRead = prototype.readFile;
+  await probe.close();
+  let readHandle;
+  t.mock.method(prototype, 'readFile', async function (...args) {
+    readHandle = this;
+    await rename(source, path.join(root, 'original.txt'));
+    await writeFile(source, 'Replacement template.');
+    return Reflect.apply(originalRead, this, args);
+  });
+  assert.equal(await readTemplateFile(source), 'Original template.');
+  assert.equal(readHandle.fd, -1);
+  t.mock.restoreAll();
+  assert.equal(await readFile(source, 'utf8'), 'Replacement template.');
+});
 
 test('copies only the declared starter and personalizes metadata without installing', async t => {
   const root = await workspace(t);

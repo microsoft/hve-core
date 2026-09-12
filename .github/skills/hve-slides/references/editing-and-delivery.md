@@ -129,5 +129,5 @@ privacy limits with the chosen format.
 
 * [reveal.js installation](https://revealjs.com/installation/): basic local-file delivery;
   server requirements depend on the selected plugins and resources.
-* [OneDrive previews](https://support.microsoft.com/en-us/onedrive/file-types-supported-for-previewing-files-in-onedrive-sharepoint-and-teams):
+* [OneDrive previews](https://support.microsoft.com/onedrive/file-types-supported-for-previewing-files-in-onedrive-sharepoint-and-teams):
   file preview differs from hosting an interactive application.

@@ -94,7 +94,7 @@ user's decision unless they actually made it.
 
 ## Source References
 
-* [Microsoft Writing Style Guide](https://learn.microsoft.com/en-us/style-guide/brand-voice-above-all-simple-human):
+* [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/brand-voice-above-all-simple-human):
   direct, conversational and scannable technical language.
 * [Google Technical Writing](https://developers.google.com/tech-writing/one/short-sentences):
   single-idea sentences and removal of unnecessary words.

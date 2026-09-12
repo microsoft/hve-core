@@ -1,4 +1,5 @@
-// Copyright (c) Microsoft Corporation. Licensed under the MIT License.
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -100,6 +101,23 @@ test('bundler preserves script order after markup and rejects unsupported resour
   ]) {
     assert.throws(() => createStandaloneHtml(page.replace('</main>', `${inline}</main>`), assets, 'Fixture'), /Inline source styles/);
   }
+});
+
+test('validation masking does not join markup across comments or embedded styles', async () => {
+  const { createStandaloneHtml } = await import('./bundle.mjs');
+  const page = '<html><head><link rel="stylesheet" href="theme.css"><script defer src="deck.js"></script></head><body><main></main></body></html>';
+  const assets = new Map([['theme.css', 'body { color: white; }'], ['deck.js', 'globalThis.ready = true;']]);
+  for (const fragment of [
+    '<<!-- separator -->style>',
+    '<<!-- separator -->script>',
+    '<<link rel="stylesheet" href="theme.css">script>'
+  ]) {
+    assert.doesNotThrow(() => createStandaloneHtml(page.replace('<main>', `<main>${fragment}`), assets, 'Fixture notice'));
+  }
+  assert.throws(
+    () => createStandaloneHtml(page.replace('<main>', '<main><!-- separator --><img src="image.png">'), assets, 'Fixture notice'),
+    /unsupported resource markup/
+  );
 });
 
 test('complete bundle has current local assets, derived filename and full library notice', async () => {

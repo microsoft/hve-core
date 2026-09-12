@@ -25,6 +25,9 @@ executes package commands, installs a browser, starts a server or publishes anyt
 The npm alias calls `node .github/skills/hve-slides/scripts/create-deck.mjs`; direct
 Node invocation supports the same flags and does not depend on the caller's directory.
 
+Template reads validate and consume the same open file handle. A replacement detected
+between opening and validation fails; a later path replacement cannot redirect the read.
+
 If a filesystem error interrupts copying after the new directory is created, the script
 reports the partial destination and leaves it for inspection rather than deleting files
 that someone else might have added. Correct the cause and inspect that directory before

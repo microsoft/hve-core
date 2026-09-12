@@ -136,6 +136,10 @@ Preserve the implementation's failure checks:
 * Unsupported resource markup, such as images, media, frames or extra scripts, is rejected.
 * The HTML has one closing body tag, and the reveal.js notice is nonempty.
 
+Validation masks comments and already embedded styles with separators rather than
+joining adjacent markup. This masking is only for resource checks, not HTML sanitization;
+the deck source and inline code still require review before sharing.
+
 Inline SVG and already embedded CSS data resources fit the current contract. A data URL
 in an `img` tag still fails because `img` itself is unsupported. For a new asset type,
 either use an existing supported representation or implement explicit embedding and tests.

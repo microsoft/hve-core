@@ -1,5 +1,7 @@
-// Copyright (c) Microsoft Corporation. Licensed under the MIT License.
-import { lstat, mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
+import { constants } from 'node:fs';
+import { lstat, mkdir, open, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -18,6 +20,21 @@ async function inspect(file) {
   } catch (error) {
     if (error.code === 'ENOENT') return null;
     throw error;
+  }
+}
+
+export async function readTemplateFile(source) {
+  const handle = await open(source, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  try {
+    const opened = await handle.stat({ bigint: true });
+    const entry = await lstat(source, { bigint: true });
+    // Bind validation and reading to one handle, including where O_NOFOLLOW is unavailable.
+    if (!opened.isFile() || !entry.isFile() || opened.dev !== entry.dev || opened.ino !== entry.ino) {
+      throw new Error(`Template source must be a stable regular file: ${source}`);
+    }
+    return await handle.readFile('utf8');
+  } finally {
+    await handle.close();
   }
 }
 
@@ -54,9 +71,7 @@ export async function createDeck({ slug, title, repoRoot = defaultRepoRoot }) {
   const files = new Map();
   for (const file of templateFiles) {
     const source = path.join(templateDirectory, file);
-    const entry = await lstat(source);
-    if (!entry.isFile() || entry.isSymbolicLink()) throw new Error(`Template source must be a regular file: ${file}`);
-    files.set(file, await readFile(source, 'utf8'));
+    files.set(file, await readTemplateFile(source));
   }
   const manifest = JSON.parse(files.get('package.json'));
   const lock = JSON.parse(files.get('package-lock.json'));

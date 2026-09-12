@@ -1,4 +1,5 @@
-// Copyright (c) Microsoft Corporation. Licensed under the MIT License.
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,7 +20,8 @@ function localAssetPath(source) {
 }
 
 export function createStandaloneHtml(html, assets, license) {
-  const sourceMarkup = html.replace(/<!--[\s\S]*?-->/g, '');
+  // Mask ignored regions with separators so validation cannot join new markup tokens.
+  const sourceMarkup = html.replace(/<!--[\s\S]*?-->/g, ' ');
   if (/<style\b/i.test(sourceMarkup) || /<[^>]*\sstyle\s*=/i.test(sourceMarkup)) {
     throw new Error('Inline source styles are unsupported. Move styles into a declared local stylesheet before bundling.');
   }
@@ -57,7 +59,7 @@ export function createStandaloneHtml(html, assets, license) {
   });
   if (!styles.length || !scripts.length) throw new Error('The deck must declare local stylesheets and deferred scripts.');
 
-  const markup = document.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<!--[\s\S]*?-->/g, '');
+  const markup = document.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ');
   if (/<(?:link|script|base|iframe|object|embed|img|audio|video|source)\b/i.test(markup)
     || /\b(?:src|srcset|poster)\s*=/i.test(markup)) {
     throw new Error('The deck contains unsupported resource markup. Embed the resource before creating a single-file bundle.');
