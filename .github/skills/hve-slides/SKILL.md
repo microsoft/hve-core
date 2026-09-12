@@ -4,6 +4,7 @@ description: 'Create, update or review presentation-first HTML slide decks about
 argument-hint: '[deck=slides/<name>] [mode=create|update|review] [topic=...]'
 license: MIT AND CC-BY-4.0
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # HVE Slides
