@@ -1,4 +1,5 @@
 // Copyright (c) Microsoft Corporation. Licensed under the MIT License.
+// cspell:words noopener noreferrer contenteditable arrowright arrowleft slidechanged
 (async function () {
   'use strict';
   function showError(error) {

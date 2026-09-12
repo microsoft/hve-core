@@ -1,4 +1,5 @@
 // Copyright (c) Microsoft Corporation. Licensed under the MIT License.
+// cspell:words Bartosz Ciechanowski
 (function () {
   'use strict';
   const hve = 'https://github.com/microsoft/hve-core/blob/3e29a0b2422bd13c39a087c635638e6722859e73/';

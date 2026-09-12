@@ -1,4 +1,5 @@
 // Copyright (c) Microsoft Corporation. Licensed under the MIT License.
+// cspell:words titlebar
 (function () {
   'use strict';
   const { graphs, mermaidSource, diffStats } = globalThis.HVEContent;

@@ -23,14 +23,14 @@ The reference deck loads styles in this order:
 <link rel="stylesheet" href="components.css">
 ```
 
-| Owner | Put here | Keep elsewhere |
-|-------|----------|----------------|
-| `theme.css` tokens | Colors, type families, focus and reusable spacing | Topic-specific transcript text |
-| `theme.css` layouts | Slide padding, column grids, ordered flows, presenter controls | Copilot component internals |
-| `components.css` | Editor surfaces, composer rows, questions, diff lines | Slide order or step state |
-| `content.js` | Named example data and source references | HTML strings with inline styles |
-| `components.js` | Semantic DOM built from data, state classes and local controls | Repeated per-slide renderers |
-| `deck.js` | Navigation and rendering the selected step | Theme colors or copied component markup |
+| Owner               | Put here                                                       | Keep elsewhere                          |
+|---------------------|----------------------------------------------------------------|-----------------------------------------|
+| `theme.css` tokens  | Colors, type families, focus and reusable spacing              | Topic-specific transcript text          |
+| `theme.css` layouts | Slide padding, column grids, ordered flows, presenter controls | Copilot component internals             |
+| `components.css`    | Editor surfaces, composer rows, questions, diff lines          | Slide order or step state               |
+| `content.js`        | Named example data and source references                       | HTML strings with inline styles         |
+| `components.js`     | Semantic DOM built from data, state classes and local controls | Repeated per-slide renderers            |
+| `deck.js`           | Navigation and rendering the selected step                     | Theme colors or copied component markup |
 
 Use the cascade already present. Do not append a second theme or retrofit cascade layers
 into an existing deck just to follow an example. Keep page-level controls/dialogs separate

@@ -1,4 +1,5 @@
 // Copyright (c) Microsoft Corporation. Licensed under the MIT License.
+// cspell:words titlebar noopener noreferrer contenteditable arrowright arrowleft slidechanged
 (function () {
   'use strict';
   const startup = document.querySelector('#startup');

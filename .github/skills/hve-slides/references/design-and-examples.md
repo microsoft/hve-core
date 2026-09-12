@@ -62,14 +62,14 @@ Enlarge the relevant component instead of embedding a tiny full-desktop screensh
 Keep a visible "Reconstructed" or "Scripted example" label. Reuse the deck's component
 renderer and icon family rather than adding unrelated mockup styles.
 
-| Subject | Useful representation | Fidelity boundary |
-|---------|-----------------------|-------------------|
-| User request | Copilot composer with context chips, text, agent/model row and send glyph | No real message submission or model change |
-| User question | Numbered option rows, selected state, custom-answer line and footer | Show an answer state separately after the scripted response |
-| Research | Agent Debug Logs / Agent Flow Chart with typed nodes and directional edges | Fictional tool/subagent trace; do not fabricate live timings or tokens |
-| Plan | Current task structure and before/after diagram with source/preview parity | A fixed SVG preview is not a general Mermaid engine |
-| Implementation | Checked tasks, changes excerpt and readable inline or side-by-side diff | Compute visible addition/deletion counts from the depicted changes |
-| Installation | Chat gear, customization categories, Plugins page and top source input | Local presentation controls do not install or grant trust |
+| Subject        | Useful representation                                                      | Fidelity boundary                                                      |
+|----------------|----------------------------------------------------------------------------|------------------------------------------------------------------------|
+| User request   | Copilot composer with context chips, text, agent/model row and send glyph  | No real message submission or model change                             |
+| User question  | Numbered option rows, selected state, custom-answer line and footer        | Show an answer state separately after the scripted response            |
+| Research       | Agent Debug Logs / Agent Flow Chart with typed nodes and directional edges | Fictional tool/subagent trace; do not fabricate live timings or tokens |
+| Plan           | Current task structure and before/after diagram with source/preview parity | A fixed SVG preview is not a general Mermaid engine                    |
+| Implementation | Checked tasks, changes excerpt and readable inline or side-by-side diff    | Compute visible addition/deletion counts from the depicted changes     |
+| Installation   | Chat gear, customization categories, Plugins page and top source input     | Local presentation controls do not install or grant trust              |
 
 When teaching coordinated RPI in VS Code, include a dedicated agent-selection slide before
 the phase overview and concise "Switch the agent dropdown to RPI Agent" reminders where

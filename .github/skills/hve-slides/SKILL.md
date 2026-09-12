@@ -140,11 +140,11 @@ in the two recipe references are for selective adaptation, not wholesale replace
 an existing deck. The bundling guide names the source files to copy and modify for a new
 deck. Repository-relative pointers refer to this checkout; re-resolve them if the exemplar moves.
 
-| Material | License |
-|----------|---------|
-| `SKILL.md`, reference prose and `templates/deck/README.md` | CC-BY-4.0 |
-| Code examples in `references/style-recipes.md` and `references/bundling.md` | MIT |
-| `scripts/`, `tests/` and template code | MIT |
+| Material                                                                    | License   |
+|-----------------------------------------------------------------------------|-----------|
+| `SKILL.md`, reference prose and `templates/deck/README.md`                  | CC-BY-4.0 |
+| Code examples in `references/style-recipes.md` and `references/bundling.md` | MIT       |
+| `scripts/`, `tests/` and template code                                      | MIT       |
 
 The code examples are original or adapted Microsoft repository code under the
 [repository MIT license](../../../LICENSE). Referenced third-party software keeps its own

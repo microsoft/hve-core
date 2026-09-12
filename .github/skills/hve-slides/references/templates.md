@@ -52,14 +52,14 @@ does not inherit HVE history, a snack theme, plugin instructions or an RPI Agent
 Do not run `create-deck.mjs` over an existing deck or copy the entire starter onto it.
 Read the incumbent architecture and adapt only the required fragment, data and styles.
 
-| Fragment | Use |
-|----------|-----|
-| [split-evidence.html](../templates/fragments/split-evidence.html) | Explanation beside a code or evidence surface |
-| [workflow.html](../templates/fragments/workflow.html) | Four connected ordered steps |
-| [copilot-request.html](../templates/fragments/copilot-request.html) | Passive reconstructed request composer |
-| [question-answer.html](../templates/fragments/question-answer.html) | Scripted question and recorded answer side by side |
-| [implementation-diff.html](../templates/fragments/implementation-diff.html) | Checked tasks, changes excerpt and derived diff counts |
-| [walkthrough.html](../templates/fragments/walkthrough.html) | Presenter-stepped example with phase/state beside its content |
+| Fragment                                                                    | Use                                                           |
+|-----------------------------------------------------------------------------|---------------------------------------------------------------|
+| [split-evidence.html](../templates/fragments/split-evidence.html)           | Explanation beside a code or evidence surface                 |
+| [workflow.html](../templates/fragments/workflow.html)                       | Four connected ordered steps                                  |
+| [copilot-request.html](../templates/fragments/copilot-request.html)         | Passive reconstructed request composer                        |
+| [question-answer.html](../templates/fragments/question-answer.html)         | Scripted question and recorded answer side by side            |
+| [implementation-diff.html](../templates/fragments/implementation-diff.html) | Checked tasks, changes excerpt and derived diff counts        |
+| [walkthrough.html](../templates/fragments/walkthrough.html)                 | Presenter-stepped example with phase/state beside its content |
 
 These are source fragments to copy and adapt, not independent HTML pages or runtime
 includes. Insert a selected section inside `.slides`. Give it a unique ID, title and

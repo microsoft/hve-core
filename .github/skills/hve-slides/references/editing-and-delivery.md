@@ -12,18 +12,18 @@ These paths identify the implementation inspected when this skill was created; i
 move or disappear, locate the equivalent within the current repository or report the gap.
 Do not search a previous user's home directory for a replacement.
 
-| Source | Owns |
-|--------|------|
-| `index.html` | Slide order, stable IDs, headings, notes, source keys and component mount points |
-| `content.js` | Citation registry, example sequences, phase names, questions and graph data |
-| `components.js` | Original VS Code-style rendering, icons and local component interactions |
-| `theme.css` | Deck layout, type, colors, process diagrams and presenter chrome |
-| `components.css` | Composer, questions, diagrams, diffs, installation UI and agent selection |
-| `deck.js` | reveal.js startup, navigation, state, focus, dialogs and keyboard arbitration |
-| `build.mjs` | Local source/vendor file list and folder output |
-| `bundle.mjs` | Ordered inline styles/scripts and notices in the single-file output |
-| `deck.test.cjs` | Content, state, source, graph, bundle and topic-specific regression contracts |
-| `package.json`, lockfile, `.npmrc`, `.gitignore` | Local commands, reproducible dependencies and ignored output |
+| Source                                           | Owns                                                                             |
+|--------------------------------------------------|----------------------------------------------------------------------------------|
+| `index.html`                                     | Slide order, stable IDs, headings, notes, source keys and component mount points |
+| `content.js`                                     | Citation registry, example sequences, phase names, questions and graph data      |
+| `components.js`                                  | Original VS Code-style rendering, icons and local component interactions         |
+| `theme.css`                                      | Deck layout, type, colors, process diagrams and presenter chrome                 |
+| `components.css`                                 | Composer, questions, diagrams, diffs, installation UI and agent selection        |
+| `deck.js`                                        | reveal.js startup, navigation, state, focus, dialogs and keyboard arbitration    |
+| `build.mjs`                                      | Local source/vendor file list and folder output                                  |
+| `bundle.mjs`                                     | Ordered inline styles/scripts and notices in the single-file output              |
+| `deck.test.cjs`                                  | Content, state, source, graph, bundle and topic-specific regression contracts    |
+| `package.json`, lockfile, `.npmrc`, `.gitignore` | Local commands, reproducible dependencies and ignored output                     |
 
 Edit original source, then regenerate `dist/`. Do not patch `dist/index.html` or the one-file
 HTML as the source of truth. Keep required coupled changes in the same batch: a new example

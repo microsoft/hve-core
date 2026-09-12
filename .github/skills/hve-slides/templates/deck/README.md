@@ -24,17 +24,17 @@ it are display-only; only the presenter controls perform local actions.
 
 ## Source owners
 
-| File | Edit here |
-|------|-----------|
-| `deck.json` | Presentation title, description and source qualification |
-| `index.html` | Slide order, stable IDs, headings, notes, citation keys and example mounts |
-| `content.js` | Sources, examples, walkthrough steps and state/diff helpers |
-| `components.js`, `components.css` | Code, request, question/answer and implementation views |
-| `theme.css` | Presentation colors, typography, layouts and controls |
-| `deck.js` | Slide/step navigation, dialogs, focus and keyboard behavior |
-| `build.mjs` | Local asset list and generation of `dist/config.js` from `deck.json` |
-| `bundle.mjs` | Self-contained HTML packaging and resource checks |
-| `deck.test.cjs` | Source, state, configuration and bundling tests |
+| File                              | Edit here                                                                  |
+|-----------------------------------|----------------------------------------------------------------------------|
+| `deck.json`                       | Presentation title, description and source qualification                   |
+| `index.html`                      | Slide order, stable IDs, headings, notes, citation keys and example mounts |
+| `content.js`                      | Sources, examples, walkthrough steps and state/diff helpers                |
+| `components.js`, `components.css` | Code, request, question/answer and implementation views                    |
+| `theme.css`                       | Presentation colors, typography, layouts and controls                      |
+| `deck.js`                         | Slide/step navigation, dialogs, focus and keyboard behavior                |
+| `build.mjs`                       | Local asset list and generation of `dist/config.js` from `deck.json`       |
+| `bundle.mjs`                      | Self-contained HTML packaging and resource checks                          |
+| `deck.test.cjs`                   | Source, state, configuration and bundling tests                            |
 
 Keep source and generated files separate. Changes to `deck.json` require a rebuild;
 the browser reads its generated classic script, not a runtime JSON fetch.
@@ -54,18 +54,18 @@ blocks and `style` attributes are rejected by the bundler.
 
 ## Presenter controls
 
-| Control | Behavior |
-|---------|----------|
-| Left / Right, Page Up / Page Down | Previous / next slide |
-| Space / Shift+Space | Next / previous slide |
-| Home / End | First / last slide |
-| Back / Next step, \[ / \] | Previous / next walkthrough step |
-| Reset or R | Reset only the current walkthrough |
-| O / S / N / ? | Slide index / sources / notes / keyboard help |
-| F | Browser full screen when available |
-| Escape | Close an overlay and return focus |
-| Tab / Enter | Reach and activate controls |
-| Motion | Optional fades; reduced-motion preference takes priority |
+| Control                           | Behavior                                                 |
+|-----------------------------------|----------------------------------------------------------|
+| Left / Right, Page Up / Page Down | Previous / next slide                                    |
+| Space / Shift+Space               | Next / previous slide                                    |
+| Home / End                        | First / last slide                                       |
+| Back / Next step, \[ / \]         | Previous / next walkthrough step                         |
+| Reset or R                        | Reset only the current walkthrough                       |
+| O / S / N / ?                     | Slide index / sources / notes / keyboard help            |
+| F                                 | Browser full screen when available                       |
+| Escape                            | Close an overlay and return focus                        |
+| Tab / Enter                       | Reach and activate controls                              |
+| Motion                            | Optional fades; reduced-motion preference takes priority |
 
 Focused controls, editable fields, text selections and modifier shortcuts keep their
 normal behavior. Walkthroughs retain their step when revisiting slides. Reload restores

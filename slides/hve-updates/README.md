@@ -1,7 +1,7 @@
 ---
 title: HVE Core updates deck
 description: Interactive HTML presentation of HVE Core changes from April to September 2026.
-ms.date: 2026-09-11
+ms.date: 2026-09-12
 ---
 
 ## Build and present
@@ -37,6 +37,20 @@ and local sharing. It is not included in the HVE Core plugin.
 /hve-slides deck=slides/hve-updates mode=update
 /hve-slides mode=create topic="HVE Core security planning"
 ```
+
+To scaffold another deck from the repository root:
+
+```bash
+npm run slides:create -- --slug contributor-tour --title "Contributor tour"
+npm ci --prefix slides/contributor-tour
+npm run bundle --prefix slides/contributor-tour
+npm test --prefix slides/contributor-tour
+```
+
+`slides:create` creates only the named directory under `slides/` and refuses an
+existing destination. It does not build any deck. Each deck is an independent
+package: run its `build` or `bundle` command with `--prefix slides/<deck-slug>`.
+There is no build-all command. Replace the starter content before presenting.
 
 ## Share as one HTML file
 
@@ -77,23 +91,23 @@ after source edits to refresh the shared file.
 
 ## Presenter controls
 
-| Control | Behavior |
-|---------|----------|
-| Left / Right, Page Up / Page Down | Previous / next slide |
-| Space / Shift+Space | Next / previous slide |
-| Home / End | First / last slide |
-| Slides button or O | Slide index with chapter labels |
-| Back / Next step in a walkthrough | Move one demonstration step |
-| \[ / \] | Previous / next demonstration step |
-| Reset button or R | Reset only the current demonstration |
-| Sources or S | Current slide citations and all references |
-| Notes or N | Presenter notes for the current slide |
-| Keys or ? | Keyboard reference |
-| Full screen or F | Browser full screen, if supported |
-| Motion button | Optional slide fades, off by default |
-| Mermaid source / Diagram preview | Toggle the plan's diagram and its matching source |
-| Escape | Close a dialog and restore focus; exit browser full screen |
-| Tab / Enter | Reach and activate visible controls |
+| Control                           | Behavior                                                   |
+|-----------------------------------|------------------------------------------------------------|
+| Left / Right, Page Up / Page Down | Previous / next slide                                      |
+| Space / Shift+Space               | Next / previous slide                                      |
+| Home / End                        | First / last slide                                         |
+| Slides button or O                | Slide index with chapter labels                            |
+| Back / Next step in a walkthrough | Move one demonstration step                                |
+| \[ / \]                           | Previous / next demonstration step                         |
+| Reset button or R                 | Reset only the current demonstration                       |
+| Sources or S                      | Current slide citations and all references                 |
+| Notes or N                        | Presenter notes for the current slide                      |
+| Keys or ?                         | Keyboard reference                                         |
+| Full screen or F                  | Browser full screen, if supported                          |
+| Motion button                     | Optional slide fades, off by default                       |
+| Mermaid source / Diagram preview  | Toggle the plan's diagram and its matching source          |
+| Escape                            | Close a dialog and restore focus; exit browser full screen |
+| Tab / Enter                       | Reach and activate visible controls                        |
 
 Slide navigation and demonstration steps are deliberately separate.
 When a button, link or other interactive control has focus, normal keyboard
@@ -102,7 +116,7 @@ move focus away from the control to resume shortcuts.
 
 Demo steps persist while revisiting slides in the same page session.
 Reload restores the slide hash but resets all demonstrations to their first
-step. All sequences have finite boundaries. Nothing autoplays.
+step. All sequences have finite boundaries. Nothing plays automatically.
 The operating system's reduced-motion preference overrides the Motion
 button and disables transitions.
 
@@ -182,17 +196,17 @@ controls. A separate synchronized presenter window is not provided.
 
 ## Source layout
 
-| File | Responsibility |
-|------|----------------|
-| `index.html` | Slide narrative, static diagrams, artifact excerpts and notes |
-| `theme.css` | Original presentation and reconstructed UI styling |
-| `components.css` | Copilot, debug, diagram and diff component styling |
-| `content.js` | Public citations, walkthrough data, declared graphs and pure state helpers |
-| `components.js` | Reusable original UI reconstructions and source/diagram toggle |
-| `deck.js` | Slide controls, demo rendering, focus, dialogs and keyboard behavior |
-| `build.mjs` | Copy source and reveal.js assets into the portable local folder |
-| `bundle.mjs` | Call the shared template bundler to create `dist/hve-updates.html` |
-| `deck.test.cjs` | Built-in Node tests for transitions, content and bundle contracts |
+| File             | Responsibility                                                             |
+|------------------|----------------------------------------------------------------------------|
+| `index.html`     | Slide narrative, static diagrams, artifact excerpts and notes              |
+| `theme.css`      | Original presentation and reconstructed UI styling                         |
+| `components.css` | Copilot, debug, diagram and diff component styling                         |
+| `content.js`     | Public citations, walkthrough data, declared graphs and pure state helpers |
+| `components.js`  | Reusable original UI reconstructions and source/diagram toggle             |
+| `deck.js`        | Slide controls, demo rendering, focus, dialogs and keyboard behavior       |
+| `build.mjs`      | Copy source and reveal.js assets into the portable local folder            |
+| `bundle.mjs`     | Call the shared template bundler to create `dist/hve-updates.html`         |
+| `deck.test.cjs`  | Built-in Node tests for transitions, content and bundle contracts          |
 
 Run `npm run build` or `npm run bundle` after edits, then `npm test`.
 The tests check the generated folder and rebuild the one-file output.
@@ -202,3 +216,5 @@ when changing presentation behavior; Node tests do not substitute for it.
 The deck uses [reveal.js](https://revealjs.com/) 6.0.2 under the MIT license.
 The build preserves its upstream license in `dist/vendor/reveal-LICENSE.txt`.
 No font, image, editor or runtime service is downloaded by the presentation.
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
