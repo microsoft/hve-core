@@ -2,30 +2,30 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for prompts, instructions, and skill behavior'
 author: HVE Core Team
-ms.date: 2026-09-09
+ms.date: 2026-09-10
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
 
 ## Purpose
 
-Behavior conformance answers a focused question per stimulus: *does the asset under test produce output that conforms to its documented contract?* It exercises three asset families:
+Behavior conformance answers a focused question per stimulus: *does the asset under test behave according to its documented contract?* Most stimuli assess model output. A smaller set also stages synthetic files and uses deterministic workspace graders to assess contained file effects.
 
-* Prompt conformance: verifies prompts in `.github/prompts/**/*.prompt.md` invoke the correct subagent identity, scope language, and structural sections.
+* Prompt conformance: verifies prompts in `.github/prompts/**/*.prompt.md` invoke the correct subagent identity, scope language, structural sections, and selected contained file effects.
 * Instruction conformance: verifies that instructions in `.github/instructions/**/*.instructions.md` are interpreted by the model in line with their `applyTo` and content rules.
 * Skill behavior: verifies that skill invocation produces the canonical artifacts and section headers each `SKILL.md` advertises across three stimulus shapes (knowledge, tool-trigger, bleed-detection).
 
-Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. `skill-behavior.eval.yaml` also uses one `prompt` model-judge grader for a semantic contract that regex cannot credibly assess.
+Each tier shares the same advisory contract and manifest-driven gating model as the other Tier 1/2 suites. Most stimuli use deterministic `output-matches` graders. Selected prompt stimuli also use deterministic file and diff graders in isolated synthetic workspaces. `skill-behavior.eval.yaml` uses one `prompt` model-judge grader for a semantic contract that deterministic checks cannot credibly assess.
 
 ## Spec inventory
 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
-| `prompts.eval.yaml`        | 3p   | Advisory | 53      | `behavior-conformance` | Active (Phase 9)  |
+| `prompts.eval.yaml`        | 3p   | Advisory | 56      | `behavior-conformance` | Active (Phase 9)  |
 | `instructions.eval.yaml`   | 3i   | Advisory | 69      | `behavior-conformance` | Active (Phase 11) |
 | `skill-behavior.eval.yaml` | 3s   | Advisory | 230     | `behavior-conformance` | Active (Phase 13) |
 
-The maintained `prompts.eval.yaml` inventory contains 53 stimuli across 48 prompt subjects. Coverage includes RPI orchestration, security review and planning, Design Thinking, Git operations, evaluation authoring, and VEX workflows. Backlog, work-item, and HVE Core pull request coverage moved to `skill-behavior.eval.yaml` when those workflows became skills.
+The maintained `prompts.eval.yaml` inventory contains 56 stimuli across 48 prompt subjects. Coverage includes RPI orchestration, security review and planning, Design Thinking, Git operations, evaluation authoring, and VEX workflows. Backlog, work-item, and HVE Core pull request coverage moved to `skill-behavior.eval.yaml` when those workflows became skills.
 
 The maintained `instructions.eval.yaml` inventory contains 69 stimuli: 67 instruction-tagged stimuli across 50 instruction subjects, plus two `backlog-management` skill stimuli. Coverage spans:
 
@@ -93,9 +93,10 @@ Per **DD-23** and **DD-24**, most stimuli declare one or more `output-matches` g
 | Routing or attribution         | Per-stimulus regex        | Asserts the response selects or identifies the documented capability.        |
 | Scope or contract vocabulary   | Per-stimulus regex        | Asserts the response stays in scope and carries required contract terms.     |
 | Additional contract signal     | Per-stimulus regex        | Separately checks a material boundary, status, artifact, or handoff rule.    |
+| Contained workspace effect     | Per-stimulus file or diff | Checks expected files, content, or absence of workspace changes.             |
 | Model-judged semantic contract | Per-stimulus judge prompt | Assesses behavior that cannot be reduced credibly to deterministic patterns. |
 
-The behavior specs currently configure `output-matches` and one `prompt` grader. Vally's deterministic output family exposes `output-contains`, `output-not-contains`, `output-matches`, and `output-not-matches`. The CLI registers the LLM-backed `prompt` and `panel` graders on demand when a spec uses them. `orphan-files` and `valid-refs` are skill-hygiene checks run by `vally lint`; they are not eval grader types. This suite loads no custom grader plugin.
+The behavior specs configure deterministic output, file, and diff graders plus one `prompt` grader. The CLI registers LLM-backed graders on demand when a spec uses them. `orphan-files` and `valid-refs` are skill-hygiene checks run by `vally lint`; they are not eval grader types. This suite loads no custom grader plugin.
 
 ## Anti-patterns
 
