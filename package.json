@@ -61,6 +61,8 @@
     "lint:py:fix": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonLint.ps1 -Fix -OutputPath logs/python-lint-fix-results.json",
     "test:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonTests.ps1 -OutputPath logs/python-test-results.json",
     "test:node": "node --test",
+    "test:slides": "node --test .github/skills/hve-slides/tests/create-deck.test.mjs",
+    "slides:create": "node .github/skills/hve-slides/scripts/create-deck.mjs",
     "ci:test:a11y:smoke": "node --test \".github/skills/accessibility/accessibility/tests/runtime_a11y/runner/probe-smoke/*.smoke.mjs\"",
     "ci:test:rust-network-isolation": "pwsh -NoProfile -NonInteractive -File scripts/evals/Invoke-RustUnitTestNetworkTrace.ps1",
     "plugin:postprocess": "markdownlint-cli2 \"docs/plugins/*.md\" --fix && markdown-table-formatter \"docs/plugins/*.md\"",

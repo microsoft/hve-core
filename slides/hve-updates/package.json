@@ -1,0 +1,15 @@
+{
+  "name": "hve-updates-deck",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Presentation-first, source-grounded HVE Core updates deck",
+  "license": "MIT",
+  "scripts": {
+    "build": "node build.mjs",
+    "bundle": "node bundle.mjs",
+    "test": "node --test deck.test.cjs"
+  },
+  "dependencies": {
+    "reveal.js": "6.0.2"
+  }
+}

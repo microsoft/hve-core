@@ -1,0 +1,33 @@
+/* Copyright (c) Microsoft Corporation. Licensed under the MIT License. */
+.example-caption { color: var(--muted); font-size: 23px; margin-bottom: 14px; }
+.code-surface { background: var(--editor); border: 1px solid var(--line); border-radius: 8px; overflow: auto; }
+.file-header { padding: 13px 20px; background: var(--chrome); border-bottom: 1px solid var(--line); color: var(--muted); font-size: 23px; }
+.reveal .code-surface pre { width: auto; margin: 0; padding: 22px; box-shadow: none; white-space: pre-wrap; overflow-wrap: anywhere; font: 27px/1.5 var(--font-mono); color: var(--editor-text); }
+.reveal .code-surface code { max-height: none; padding: 0; background: transparent; white-space: pre-wrap; font: inherit; }
+.copilot-composer { background: #24262b; border: 1px solid #606978; border-radius: 12px; padding: 22px; }
+.context-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.context-chip { padding: 5px 10px; border: 1px solid #4a505d; border-radius: 5px; background: #30343c; color: #d9e0ea; font-size: 23px; }
+.composer-text { font-size: 29px; line-height: 1.5; color: #e4e6eb; white-space: pre-wrap; }
+.composer-toolbar { display: flex; align-items: center; gap: 16px; margin-top: 24px; color: #d0d5df; font-size: 23px; }
+.composer-send { margin-left: auto; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: white; background: #006dbf; }
+.copilot-question { background: #1b1b1b; border: 1px solid #6892a8; border-radius: 8px; padding: 22px; }
+.reveal .copilot-question h4 { margin: 0 0 18px; text-transform: none; color: var(--ink); font-size: 29px; }
+.reveal .question-options { list-style: none; padding: 0; margin: 0; }
+.question-options li { display: flex; gap: 14px; padding: 14px; font-size: 27px; border-radius: 5px; }
+.question-options .selected { background: #3a3a3a; }
+.question-index { font: 24px var(--font-mono); color: var(--muted); }
+.reveal .question-answer { font-size: 25px; color: var(--muted); margin-top: 18px; }
+.answer-summary { padding: 24px; border-left: 4px solid #a8d598; background: #1d2922; font-size: 29px; line-height: 1.5; }
+.implementation-scene { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 20px; }
+.implementation-scene > * { min-width: 0; }
+.reveal .task-list { padding: 18px; margin: 0; list-style: none; font-size: 25px; line-height: 1.5; }
+.reveal .implementation-scene .code-surface pre { font-size: 23px; padding: 16px; }
+.implementation-artifacts { display: grid; align-content: start; gap: 16px; }
+.diff-summary { display: flex; gap: 16px; justify-content: space-between; font-size: 23px; padding: 14px; background: #232831; border: 1px solid var(--line); }
+.diff-lines { background: var(--editor); border: 1px solid var(--line); border-top: 0; font: 25px/1.55 var(--font-mono); }
+.diff-row { display: grid; grid-template-columns: 25px minmax(0, 1fr); gap: 8px; padding: 5px 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.diff-row.add { color: #c6edbb; background: #213b27; }
+.diff-row.remove { color: #ffd0d0; background: #47272a; }
+.compact-composer { margin-top: 16px; padding: 14px; }
+.compact-composer .composer-text { font-size: 24px; color: var(--muted); }
+.compact-composer .composer-toolbar { font-size: 22px; margin-top: 12px; }
