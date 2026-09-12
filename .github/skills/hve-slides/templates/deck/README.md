@@ -14,13 +14,15 @@ npm test
 ```
 
 Restore dependencies only when needed. `bundle` builds the folder first, then writes
-`../<directory-name>.html` beside the deck directory. For a deck under `slides/my-deck/`,
-the bundle is `slides/my-deck.html`. Open that file directly in a desktop browser. Alternatively,
+`docs/slides/<directory-name>.html` at the repository root. For a deck under `slides/my-deck/`,
+the bundle is `docs/slides/my-deck.html`. Open that file directly in a desktop browser. Alternatively,
 `npm run build` writes `dist/index.html` with local sibling files. Open generated output,
 not the source HTML. No server, live agent or authentication is needed.
 
 Commit the regenerated bundle with its source updates. The intermediate `dist/` assets
 and `node_modules/` remain ignored. Edit source files rather than the generated HTML.
+The documentation site lists committed bundles on its Slides page after the next
+site build. Its links open the HTML directly, preserving the presentation controls.
 
 The default four slides are neutral layout examples, not researched HVE product claims.
 Change them before presenting. The walkthrough is scripted and all chat controls inside

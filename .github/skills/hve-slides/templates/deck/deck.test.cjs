@@ -138,14 +138,14 @@ test('complete bundle has current local assets, derived filename and full librar
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'hve-deck-bundle-'));
   t.after(() => fs.rmSync(temporary, { recursive: true, force: true }));
   const name = path.basename(__dirname);
-  const output = path.join(temporary, name, 'dist');
+  const output = path.join(temporary, 'slides', name, 'dist');
   const filename = await bundleDeck({
     build: async () => {
       fs.cpSync(await buildDeck(), output, { recursive: true });
       return output;
     }
   });
-  assert.equal(filename, path.join(temporary, `${name}.html`));
+  assert.equal(filename, path.join(temporary, 'docs/slides', `${name}.html`));
   const standalone = fs.readFileSync(filename, 'utf8');
   for (const file of sourceFiles) {
     assert.equal(fs.readFileSync(path.join(__dirname, file), 'utf8'), fs.readFileSync(path.join(output, file), 'utf8'));

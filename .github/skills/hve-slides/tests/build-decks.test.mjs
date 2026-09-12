@@ -37,7 +37,7 @@ test('bundles multiple scaffolded decks into independent named HTML files', asyn
   }
   await writeFile(path.join(root, 'slides/README.md'), 'Deck collection.');
   const outputs = await buildAllDecks({ repoRoot: root });
-  assert.deepEqual(outputs, ['hve-full', 'hve-updates'].map(slug => path.join(root, 'slides', `${slug}.html`)));
+  assert.deepEqual(outputs, ['hve-full', 'hve-updates'].map(slug => path.join(root, 'docs/slides', `${slug}.html`)));
   for (const [index, slug] of ['hve-full', 'hve-updates'].entries()) {
     const html = await readFile(outputs[index], 'utf8');
     assert.ok(html.includes(`${slug} presentation`));
@@ -47,7 +47,8 @@ test('bundles multiple scaffolded decks into independent named HTML files', asyn
     assert.ok((await readFile(path.join(root, 'slides', slug, 'dist/index.html'), 'utf8')).includes('<!doctype html>'));
     assert.ok(!(await readdir(path.join(root, 'slides', slug, 'dist'))).includes(`${slug}.html`));
   }
-  assert.deepEqual((await readdir(path.join(root, 'slides'))).sort(), ['README.md', 'hve-full', 'hve-full.html', 'hve-updates', 'hve-updates.html']);
+  assert.deepEqual((await readdir(path.join(root, 'slides'))).sort(), ['README.md', 'hve-full', 'hve-updates']);
+  assert.deepEqual((await readdir(path.join(root, 'docs/slides'))).sort(), ['hve-full.html', 'hve-updates.html']);
 
   const original = await Promise.all(outputs.map(output => readFile(output, 'utf8')));
   assert.deepEqual(await buildAllDecks({ repoRoot: root }), outputs);
@@ -92,12 +93,13 @@ test('requires the bundle export and verifies the declared output exists', async
     ['no-export', 'export const title = "Example";', /must export a bundleDeck function/],
     ['wrong-path', 'export async function bundleDeck() { return "combined.html"; }', /must return/],
     ['old-output', 'import { fileURLToPath } from "node:url"; export async function bundleDeck() { return fileURLToPath(new URL("./dist/old-output.html", import.meta.url)); }', /must return/],
-    ['missing-output', 'import { fileURLToPath } from "node:url"; export async function bundleDeck() { return fileURLToPath(new URL("../missing-output.html", import.meta.url)); }', /ENOENT/],
+    ['missing-output', 'import { fileURLToPath } from "node:url"; export async function bundleDeck() { return fileURLToPath(new URL("../../docs/slides/missing-output.html", import.meta.url)); }', /ENOENT/],
     ['empty-output', `
-      import { writeFile } from 'node:fs/promises';
+      import { mkdir, writeFile } from 'node:fs/promises';
       import { fileURLToPath } from 'node:url';
       export async function bundleDeck() {
-        const output = new URL('../empty-output.html', import.meta.url);
+        await mkdir(new URL('../../docs/slides/', import.meta.url), { recursive: true });
+        const output = new URL('../../docs/slides/empty-output.html', import.meta.url);
         await writeFile(output, '');
         return fileURLToPath(output);
       }
@@ -129,10 +131,11 @@ test('CLI locates decks beside its repository, reports failures and accepts only
   const script = path.join(scripts, 'build-decks.mjs');
   await copyFile(path.join(skillDirectory, 'scripts/build-decks.mjs'), script);
   await fixtureDeck(root, 'cli-demo', `
-    import { writeFile } from 'node:fs/promises';
+    import { mkdir, writeFile } from 'node:fs/promises';
     import { fileURLToPath } from 'node:url';
     export async function bundleDeck() {
-      const output = new URL('../cli-demo.html', import.meta.url);
+      await mkdir(new URL('../../docs/slides/', import.meta.url), { recursive: true });
+      const output = new URL('../../docs/slides/cli-demo.html', import.meta.url);
       await writeFile(output, '<html>CLI deck</html>');
       return fileURLToPath(output);
     }
@@ -140,7 +143,7 @@ test('CLI locates decks beside its repository, reports failures and accepts only
   const run = (...args) => spawnSync(process.execPath, [script, ...args], { cwd: tmpdir(), encoding: 'utf8' });
   const success = run();
   assert.equal(success.status, 0, success.stderr);
-  assert.ok(success.stdout.includes(path.join(root, 'slides/cli-demo.html')));
+  assert.ok(success.stdout.includes(path.join(root, 'docs/slides/cli-demo.html')));
   assert.match(success.stdout, /Bundled 1 deck/);
   assert.equal(run('--help').status, 0);
   const unknown = run('--install');

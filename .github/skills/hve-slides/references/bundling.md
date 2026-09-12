@@ -23,12 +23,12 @@ Deck source + locally installed reveal.js
                   |
              bundleDeck()
                   |
-         slides/<deck-slug>.html
+         docs/slides/<deck-slug>.html
 ```
 
 `build.mjs` owns copying source and installed vendor assets into `dist/`.
 `bundle.mjs` calls that build, reads its outputs and embeds them into one HTML file.
-The single-file bundle sits beside the deck's source directory, not inside `dist/`.
+The single-file bundle goes in the repository's `docs/slides/` directory, not inside `dist/`.
 The bundler is a build-time Node module, not a browser script or server.
 
 | Export                                        | Input/output                                                                         | Responsibility                                                           |
@@ -57,7 +57,7 @@ If either destination exists, read and adapt it rather than overwriting it.
 
 3. Keep the directory-derived output name. If the build returns
    `slides/contributor-tour/dist`, the bundle is
-   `slides/contributor-tour.html`; no hard-coded filename needs
+   `docs/slides/contributor-tour.html`; no hard-coded filename needs
    replacing. Copy the starter's `deck.json` too, or provide its required nonempty
    `title`, `description` and `sourceNote` strings. The build writes `dist/config.js`.
 
@@ -80,7 +80,7 @@ If either destination exists, read and adapt it rather than overwriting it.
    ```
 
 6. Update the new deck's README, tests and ignore rules for its actual output name.
-   Commit `slides/<deck-slug>.html` while ignoring `dist/` and `node_modules/`.
+   Commit `docs/slides/<deck-slug>.html` while ignoring `dist/` and `node_modules/`.
    Do not import `../hve-updates/build.mjs` from
    the new deck: that would build the old deck because the module resolves its own root.
 
@@ -209,16 +209,20 @@ under repository rules. A normal `bundle` invocation already builds the folder f
 an extra `build` call is unnecessary. If tests can regenerate output, their final result
 is the file to inspect. Rebuild after the last source edit.
 
-Open `slides/hve-updates.html`, or the new deck's corresponding output,
+Open `docs/slides/hve-updates.html`, or the new deck's corresponding output,
 directly in a browser. No server is needed for this architecture.
 Copy only that file into an empty temporary directory, rename it, disable network in the
 permitted browser context and exercise the selected slides, demos and dialogs. Confirm
 there are no runtime requests for sibling files or remote assets. Clean up only the test
 files you created.
 
-Rebuild after source updates and commit the resulting `slides/<deck-slug>.html`
+Rebuild after source updates and commit the resulting `docs/slides/<deck-slug>.html`
 with those updates. Do not hand-edit the generated bundle. Existing ignored files
 from an older `dist/` output are not the shareable artifact.
+
+The Docusaurus build stages these files as static assets under `/slides/`, preserving
+their bytes. Its Slides page uses base-path-aware native links so each deck opens as
+standalone HTML rather than an MDX or client-side application route.
 
 The final handoff includes the exact single-file path and its regeneration command.
 OneDrive can share it for download; recipients open the downloaded file in their browser.

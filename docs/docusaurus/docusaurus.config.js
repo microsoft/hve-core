@@ -9,6 +9,7 @@ import { labelRegistry } from './src/data/labelRegistry';
 import { loadPackageCards } from './src/data/pluginManifestCards';
 import remarkTableCaption from './plugins/remark-table-caption.mjs';
 import rehypeTableScope from './plugins/rehype-table-scope.mjs';
+import { loadSlideBundles } from './scripts/slide-bundles.cjs';
 
 const packageCards = loadPackageCards(
   path.resolve(__dirname, '../../.github/plugin/marketplace.json'),
@@ -49,6 +50,7 @@ const config = {
 
   customFields: {
     packageCards,
+    slideDecks: loadSlideBundles(),
   },
 
   markdown: {
@@ -155,6 +157,7 @@ const config = {
               { label: labelRegistry.rpiWorkflow, to: '/docs/rpi/' },
               { label: labelRegistry.customizeAndExtend, to: '/docs/customization/' },
               { label: labelRegistry.architecture, to: '/docs/architecture/' },
+              { label: labelRegistry.slides, to: '/slides/' },
             ],
           },
           {

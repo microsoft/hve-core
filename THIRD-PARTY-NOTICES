@@ -11,7 +11,7 @@ Copyright: (C) 2011-2026 Hakim El Hattab and reveal.js contributors
 License: MIT License
 License URI: <https://github.com/hakimel/reveal.js/blob/6.0.2/LICENSE>
 Source: <https://www.npmjs.com/package/reveal.js/v/6.0.2>
-Usage: Unmodified reveal.js JavaScript and CSS embedded in slides/hve-updates.html
+Usage: Unmodified reveal.js JavaScript and CSS embedded in docs/slides/hve-updates.html
 and in presentations built from the HVE Slides starter. The full upstream copyright
 and permission notice is retained in each HTML file's bundled-third-party-notices
 template. Presentation content and styling outside reveal.js are repository source.

@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
-    "start": "docusaurus start",
-    "build": "docusaurus build",
+    "start": "npm run slides:sync && docusaurus start",
+    "build": "npm run slides:sync && docusaurus build",
+    "slides:sync": "node scripts/slide-bundles.cjs",
     "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
+    "deploy": "npm run slides:sync && docusaurus deploy",
     "clear": "docusaurus clear",
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
@@ -19,7 +20,7 @@
     "lint:a11y": "eslint .",
     "lint:label-registry": "node scripts/check-label-registry.mjs",
     "serve:ci": "node e2e/static-server.mjs",
-    "serve:preview": "docusaurus build && node e2e/static-server.mjs",
+    "serve:preview": "npm run build && node e2e/static-server.mjs",
     "ci:test:e2e": "playwright test",
     "ci:test:e2e:fast": "playwright test --workers=4",
     "ci:test:e2e:ui": "playwright test --ui"

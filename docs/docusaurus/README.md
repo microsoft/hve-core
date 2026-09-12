@@ -2,7 +2,7 @@
 title: HVE Core Documentation Site
 description: Docusaurus 3 documentation site for HVE Core
 author: Microsoft
-ms.date: 2026-08-01
+ms.date: 2026-09-12
 ms.topic: reference
 keywords:
   - docusaurus
@@ -26,6 +26,31 @@ npm run build
 ```
 
 This command generates static content into the `build` directory.
+
+## Bundled slide presentations
+
+The Topics menu links to `/hve-core/slides/`, which lists the HTML bundles in
+`docs/slides/`. A presentation opens at `/hve-core/slides/<deck-name>.html`;
+the download link saves the same self-contained file.
+
+Deck source remains under `slides/<deck-name>/`. From the repository root,
+regenerate the committed bundles before building the site:
+
+```bash
+npm run slides:build
+npm run docs:build
+```
+
+Site `build`, `start`, and `deploy` commands run `slides:sync` first. That copies only deck
+HTML into the ignored `static/slides/` staging directory, removes stale staged
+decks, and leaves the originals unchanged. The catalog reads the same source
+directory. Ordinary HTML anchors use Docusaurus's configured base URL without
+client-side routing, so the presentation's own JavaScript and CSS take effect.
+The site build consumes committed bundles rather than rebuilding deck source.
+
+After changing, adding, or deleting a bundle during local development, restart
+`npm start` to refresh staging and the catalog. Commit bundles with their source
+changes, not the generated staging files or the site's `build/` output.
 
 ## Deployment
 

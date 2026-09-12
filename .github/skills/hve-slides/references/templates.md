@@ -41,7 +41,7 @@ npm run bundle --prefix slides/contributor-tour
 npm test --prefix slides/contributor-tour
 ```
 
-Open `slides/contributor-tour.html`. The filename follows the
+Open `docs/slides/contributor-tour.html`. The filename follows the
 directory name. Generated source includes its own build/bundle modules and needs no
 runtime imports from the skill or the HVE Updates deck.
 
@@ -61,11 +61,11 @@ npm run slides:build
 The [build-all script](../scripts/build-decks.mjs) discovers every immediate
 directory under `slides/`, sorted by name, and calls each deck's exported
 `bundleDeck()` function. Existing and newly scaffolded decks each retain their own
-`slides/<deck-slug>.html`; there is no combined presentation. Both the folder build
+`docs/slides/<deck-slug>.html`; there is no combined presentation. Both the folder build
 and single-file bundle are refreshed by the existing bundler.
 
 Each directory must contain a regular `bundle.mjs` that exports `bundleDeck()`
-and returns the absolute path of its nonempty `slides/<deck-slug>.html`. Plain files
+and returns the absolute path of its nonempty `docs/slides/<deck-slug>.html`. Plain files
 under `slides/`, including existing bundles, are ignored during deck discovery.
 Symbolic links and missing or incompatible bundlers
 fail explicitly. The command stops on the first failure, leaving any earlier
@@ -74,6 +74,10 @@ publishes. The template under this skill is not included in discovery.
 
 Commit the regenerated single-file HTML with the deck source updates. Keep each
 deck's intermediate `dist/` directory and `node_modules/` ignored.
+The Docusaurus site discovers the committed HTML files for its Slides page. Run
+`npm run docs:build` after bundling to refresh the site; no deck dependencies are
+needed for a site-only build. After adding or removing a bundle during local site
+development, restart the site so the static files and catalog are refreshed.
 
 ## Adapt an Existing Deck
 

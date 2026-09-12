@@ -41,7 +41,7 @@ not the source of a copied presentation narrative.
 
 Source writes stay in the selected `slides/<deck-slug>/` directory unless the user authorizes
 required support elsewhere. Its generated shareable bundle belongs at
-`slides/<deck-slug>.html` and is committed alongside source updates. Preserve unrelated changes.
+`docs/slides/<deck-slug>.html` and is committed alongside source updates. Preserve unrelated changes.
 Keep research, screenshots and work records in the host-provided evidence directory,
 or the repository's approved tracking area,
 rather than adding temporary notes to deck source.
@@ -129,7 +129,7 @@ The script creates `slides/contributor-tour/` and prints build instructions. It 
 existing destination and does not install dependencies, start a service or publish.
 The underlying command is `node .github/skills/hve-slides/scripts/create-deck.mjs`.
 
-To bundle every existing deck into its own `slides/<deck-slug>.html`:
+To bundle every existing deck into its own `docs/slides/<deck-slug>.html`:
 
 ```bash
 npm run slides:build
@@ -138,7 +138,8 @@ npm run slides:build
 Commit the regenerated HTML alongside its source updates; intermediate `dist/` assets
 and dependencies stay ignored. This command does not scaffold decks or install dependencies. The
 [template guide](references/templates.md#build-all-decks) defines its discovery
-and failure behavior.
+and failure behavior. The Docusaurus site publishes committed bundles through its
+Slides page; building the site does not rebuild the decks.
 
 ## Final Response
 

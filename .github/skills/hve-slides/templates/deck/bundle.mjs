@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDeck } from './build.mjs';
@@ -90,7 +90,9 @@ export async function bundleDeck({ build = buildDeck } = {}) {
   const license = await readFile(path.join(output, 'vendor/reveal-LICENSE.txt'), 'utf8');
   const standalone = createStandaloneHtml(html, assets, license);
   const deckDirectory = path.dirname(output);
-  const destination = path.join(path.dirname(deckDirectory), `${path.basename(deckDirectory)}.html`);
+  const destinationDirectory = path.resolve(deckDirectory, '../../docs/slides');
+  await mkdir(destinationDirectory, { recursive: true });
+  const destination = path.join(destinationDirectory, `${path.basename(deckDirectory)}.html`);
   await writeFile(destination, standalone, 'utf8');
   return destination;
 }

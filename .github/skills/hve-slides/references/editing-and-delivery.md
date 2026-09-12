@@ -25,7 +25,7 @@ Do not search a previous user's home directory for a replacement.
 | `deck.test.cjs`                                  | Content, state, source, graph, bundle and topic-specific regression contracts    |
 | `package.json`, lockfile, `.npmrc`, `.gitignore` | Local commands, reproducible dependencies and ignored output                     |
 
-Edit original source, then regenerate `dist/` and `slides/<deck-slug>.html`. Commit the
+Edit original source, then regenerate `dist/` and `docs/slides/<deck-slug>.html`. Commit the
 single-file HTML alongside its source changes; keep `dist/` ignored. Do not patch
 `dist/index.html` or the one-file HTML as the source of truth. Keep required coupled
 changes in the same batch: a new example kind needs its renderer, styles, data contract,
@@ -111,7 +111,7 @@ because a deck has its own package. Do not run restore repeatedly against a know
 installation.
 
 The folder build opens at `dist/index.html` and needs its local sibling files. The bundle
-command rebuilds it and writes `slides/hve-updates.html` at the collection root. Both can
+command rebuilds it and writes `docs/slides/hve-updates.html` for site publication. Both can
 run as local files; they do not require a server. Confirm the actual command and output
 for a newly adapted deck.
 

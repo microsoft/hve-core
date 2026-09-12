@@ -262,7 +262,7 @@ test('standalone renderer rejects nonembedded resources and paths outside the de
 test('standalone output contains the full current deck, vendor code and license', async () => {
   const { bundleDeck, createStandaloneHtml } = await standaloneModule;
   const destination = await bundleDeck();
-  assert.equal(destination, path.join(__dirname, '../hve-updates.html'));
+  assert.equal(destination, path.join(__dirname, '../../docs/slides/hve-updates.html'));
   const bundled = fs.readFileSync(destination, 'utf8');
   const styles = ['vendor/reveal.css', 'theme.css', 'components.css'];
   const scripts = ['vendor/reveal.js', 'content.js', 'components.js', 'deck.js'];

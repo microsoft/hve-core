@@ -103,7 +103,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       console.log('Usage: node .github/skills/hve-slides/scripts/create-deck.mjs --slug contributor-tour --title "Contributor tour"\nCreates a new slides/<slug> directory. Does not install, serve or publish.');
     } else {
       const destination = await createDeck(args);
-      console.log(`Created ${destination}\nNext: npm ci --prefix slides/${args.slug}\nThen: npm run bundle --prefix slides/${args.slug}\nOpen slides/${args.slug}.html after building. Replace the starter content before presenting.`);
+      console.log(`Created ${destination}\nNext: npm ci --prefix slides/${args.slug}\nThen: npm run bundle --prefix slides/${args.slug}\nOpen docs/slides/${args.slug}.html after building. Replace the starter content before presenting.`);
     }
   } catch (error) {
     console.error(error.message);

@@ -145,7 +145,7 @@ test('CLI resolves its repository from its location, not the caller working dire
     path.join(fixtureSkill, 'scripts/create-deck.mjs'), '--slug', 'cli-demo', '--title', 'CLI example'
   ], { cwd: tmpdir(), encoding: 'utf8' });
   assert.ok(output.includes(path.join(root, 'slides/cli-demo')));
-  assert.match(output, /Open slides\/cli-demo\.html after building/);
+  assert.match(output, /Open docs\/slides\/cli-demo\.html after building/);
   assert.equal(JSON.parse(await readFile(path.join(root, 'slides/cli-demo/deck.json'), 'utf8')).title, 'CLI example');
   assert.deepEqual((await readdir(path.join(root, 'slides/cli-demo'))).sort(), [...templateFiles].sort());
 });

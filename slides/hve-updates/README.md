@@ -6,7 +6,7 @@ ms.date: 2026-09-12
 
 ## Build and present
 
-Open the committed [single-file presentation](../hve-updates.html) directly in a
+Open the committed [single-file presentation](../../docs/slides/hve-updates.html) directly in a
 desktop browser, or download it from GitHub and open the downloaded HTML file.
 No build is required to present that version.
 
@@ -19,7 +19,7 @@ npm run bundle
 npm test
 ```
 
-Open `slides/hve-updates.html` in a desktop browser.
+Open `docs/slides/hve-updates.html` in a desktop browser.
 Open the generated file, not the source `hve-updates/index.html`.
 No server, live agent, editor extension or authentication is required.
 Dependency restore needs network access; after bundling, the one HTML file can
@@ -67,8 +67,8 @@ npm run slides:build
 
 The command discovers the immediate deck directories under `slides/` and calls
 each one's exported `bundleDeck()` function in alphabetical order. Each deck
-keeps its own output: `slides/hve-updates.html`,
-`slides/hve-full.html`, and so on. Decks are not combined, and new
+keeps its own output: `docs/slides/hve-updates.html`,
+`docs/slides/hve-full.html`, and so on. Decks are not combined, and new
 deck folders are included automatically.
 
 Every deck directory must contain a `bundle.mjs` exporting `bundleDeck()`, as the
@@ -88,8 +88,8 @@ npm run bundle
 ```
 
 If dependencies are already restored, only `npm run bundle` is needed.
-It rebuilds the deck and writes **`slides/hve-updates.html`** (one directory above
-the source package) with all CSS, JavaScript, SVG content and reveal.js assets embedded.
+It rebuilds the deck and writes **`docs/slides/hve-updates.html`** at the repository
+root with all CSS, JavaScript, SVG content and reveal.js assets embedded.
 The full reveal.js
 license is retained in an inert template inside the HTML. No new build
 dependency is required.
@@ -97,7 +97,7 @@ dependency is required.
 Commit this generated HTML alongside source updates so the repository always
 contains a downloadable presentation. The per-deck `dist/` and `node_modules/`
 directories remain ignored. Regenerate the HTML rather than editing it by hand.
-Old bundles left in `dist/` by earlier builds are not the maintained artifact.
+Old bundles left in `slides/` or `dist/` by earlier builds are not the maintained artifact.
 
 The source build uses the repository's canonical bundler under
 `.github/skills/hve-slides/templates/deck/`. Keep the checkout available when rebuilding;
@@ -120,6 +120,22 @@ scripts. It fails with an error if new markup or CSS introduces a resource
 that has not been embedded, rather than producing an incomplete one-file
 deck. It does not download external resources. Re-run `npm run bundle`
 after source edits to refresh the shared file.
+
+## View on the documentation site
+
+The Docusaurus Topics menu links to the Slides page. After the documentation
+deployment, the hosted paths are `/hve-core/slides/` for the catalog and
+`/hve-core/slides/hve-updates.html` for this presentation.
+
+To rebuild the site from the repository root after bundling:
+
+```bash
+npm run docs:build
+```
+
+The site publishes the checked-in HTML unchanged and does not require the deck's
+dependencies. A normal link loads the standalone presentation; use browser Back
+to return to the site. The Slides page also offers a download link for offline use.
 
 ## Presenter controls
 
@@ -237,7 +253,7 @@ controls. A separate synchronized presenter window is not provided.
 | `components.js`  | Reusable original UI reconstructions and source/diagram toggle             |
 | `deck.js`        | Slide controls, demo rendering, focus, dialogs and keyboard behavior       |
 | `build.mjs`      | Copy source and reveal.js assets into the portable local folder            |
-| `bundle.mjs`     | Call the shared template bundler to create `slides/hve-updates.html`       |
+| `bundle.mjs`     | Call the shared template bundler to create `docs/slides/hve-updates.html`  |
 | `deck.test.cjs`  | Built-in Node tests for transitions, content and bundle contracts          |
 
 Run `npm run build` or `npm run bundle` after edits, then `npm test`.
