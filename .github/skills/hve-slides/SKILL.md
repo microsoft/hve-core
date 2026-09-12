@@ -126,6 +126,16 @@ The script creates `slides/contributor-tour/` and prints build instructions. It 
 existing destination and does not install dependencies, start a service or publish.
 The underlying command is `node .github/skills/hve-slides/scripts/create-deck.mjs`.
 
+To bundle every existing deck into its own `slides/<deck-slug>/dist/<deck-slug>.html`:
+
+```bash
+npm run slides:build
+```
+
+This command does not scaffold decks or install dependencies. The
+[template guide](references/templates.md#build-all-decks) defines its discovery
+and failure behavior.
+
 ## Final Response
 
 Lead with the delivered result or the remaining blocker. Link the HTML entry and its source

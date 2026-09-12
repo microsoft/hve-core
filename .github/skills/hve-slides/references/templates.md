@@ -47,6 +47,27 @@ note in `deck.json`, the story and notes in `index.html`, and the examples/citat
 `content.js`. Add researched claims and appropriate sources before presenting. The starter
 does not inherit HVE history, a snack theme, plugin instructions or an RPI Agent requirement.
 
+## Build All Decks
+
+After restoring each deck's dependencies, run from the repository root:
+
+```bash
+npm run slides:build
+```
+
+The [build-all script](../scripts/build-decks.mjs) discovers every immediate
+directory under `slides/`, sorted by name, and calls each deck's exported
+`bundleDeck()` function. Existing and newly scaffolded decks each retain their own
+`dist/<deck-slug>.html`; there is no combined presentation. Both the folder build
+and single-file bundle are refreshed by the existing bundler.
+
+Each directory must contain a regular `bundle.mjs` that exports `bundleDeck()`
+and returns the absolute path of its nonempty `dist/<deck-slug>.html`. Plain files
+under `slides/` are ignored. Symbolic links and missing or incompatible bundlers
+fail explicitly. The command stops on the first failure, leaving any earlier
+successful outputs in place. It never installs dependencies, starts a server or
+publishes. The template under this skill is not included in discovery.
+
 ## Adapt an Existing Deck
 
 Do not run `create-deck.mjs` over an existing deck or copy the entire starter onto it.
@@ -88,7 +109,7 @@ Keep imported modules free of build side effects. Do not introduce cross-deck br
 imports, automatic template upgrades or an overwrite option to the scaffold script.
 
 The skill's `scripts/` and `tests/` are maintenance tooling, not copied into a new deck.
-Run the bounded checks after changing the starter or scaffold script:
+Run the bounded checks after changing the starter, scaffold script or build-all script:
 
 ```bash
 npm run test:slides
@@ -96,7 +117,8 @@ npm test --prefix .github/skills/hve-slides/templates/deck
 npm test --prefix slides/hve-updates
 ```
 
-The template package requires its own current dependency installation for its bundle test.
+The template package requires its own current dependency installation for its bundle test
+and the multi-deck integration test in `test:slides`.
 Use the existing deck test when changing the shared bundler. Add safety regressions to the
 scaffold-script tests and keep runtime/content tests in the copied `deck.test.cjs`.
 Refresh actual browser evidence for changed runtime behavior, as described in

@@ -50,7 +50,25 @@ npm test --prefix slides/contributor-tour
 `slides:create` creates only the named directory under `slides/` and refuses an
 existing destination. It does not build any deck. Each deck is an independent
 package: run its `build` or `bundle` command with `--prefix slides/<deck-slug>`.
-There is no build-all command. Replace the starter content before presenting.
+Replace the starter content before presenting.
+
+To rebuild every deck's single-file HTML from the repository root:
+
+```bash
+npm run slides:build
+```
+
+The command discovers the immediate deck directories under `slides/` and calls
+each one's exported `bundleDeck()` function in alphabetical order. Each deck
+keeps its own output: `slides/hve-updates/dist/hve-updates.html`,
+`slides/hve-full/dist/hve-full.html`, and so on. Decks are not combined, and new
+deck folders are included automatically.
+
+Every deck directory must contain a `bundle.mjs` exporting `bundleDeck()`, as the
+starter does. Files directly under `slides/` are ignored; symbolic-link entries
+are rejected. The command stops on the first failure and leaves any earlier
+successful outputs in place. It does not install dependencies, start a server,
+or publish. Restore dependencies in each new deck with its own `npm ci` first.
 
 ## Share as one HTML file
 
