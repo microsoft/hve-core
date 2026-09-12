@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 const vm = require('node:vm');
 const context = vm.createContext({});
 vm.runInContext(fs.readFileSync(path.join(__dirname, 'content.js'), 'utf8'), context);
@@ -103,6 +104,17 @@ test('bundler preserves script order after markup and rejects unsupported resour
   }
 });
 
+test('moving indented script tags does not leave trailing whitespace in generated HTML', async () => {
+  const { createStandaloneHtml } = await import('./bundle.mjs');
+  const page = '<html><head>\n  <link rel="stylesheet" href="theme.css">\n  <script defer src="deck.js"></script>\n</head><body></body></html>';
+  const assets = new Map([['theme.css', 'body { color: white; }'], ['deck.js', 'globalThis.ready = true;']]);
+  const result = createStandaloneHtml(page, assets, 'Fixture notice');
+  assert.doesNotMatch(result, /[ \t]+$/m);
+  const script = 'globalThis.text = `Keep spaces  \ninside this string`;';
+  const withSpaces = createStandaloneHtml(page, new Map([...assets, ['deck.js', script]]), 'Fixture notice');
+  assert.ok(withSpaces.includes(script));
+});
+
 test('validation masking does not join markup across comments or embedded styles', async () => {
   const { createStandaloneHtml } = await import('./bundle.mjs');
   const page = '<html><head><link rel="stylesheet" href="theme.css"><script defer src="deck.js"></script></head><body><main></main></body></html>';
@@ -120,18 +132,27 @@ test('validation masking does not join markup across comments or embedded styles
   );
 });
 
-test('complete bundle has current local assets, derived filename and full library notice', async () => {
+test('complete bundle has current local assets, derived filename and full library notice', async t => {
   const { bundleDeck } = await import('./bundle.mjs');
-  const { sourceFiles } = await import('./build.mjs');
-  const filename = await bundleDeck();
-  assert.equal(filename, path.join(__dirname, 'dist', `${path.basename(__dirname)}.html`));
+  const { buildDeck, sourceFiles } = await import('./build.mjs');
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'hve-deck-bundle-'));
+  t.after(() => fs.rmSync(temporary, { recursive: true, force: true }));
+  const name = path.basename(__dirname);
+  const output = path.join(temporary, name, 'dist');
+  const filename = await bundleDeck({
+    build: async () => {
+      fs.cpSync(await buildDeck(), output, { recursive: true });
+      return output;
+    }
+  });
+  assert.equal(filename, path.join(temporary, `${name}.html`));
   const standalone = fs.readFileSync(filename, 'utf8');
   for (const file of sourceFiles) {
-    assert.equal(fs.readFileSync(path.join(__dirname, file), 'utf8'), fs.readFileSync(path.join(__dirname, 'dist', file), 'utf8'));
+    assert.equal(fs.readFileSync(path.join(__dirname, file), 'utf8'), fs.readFileSync(path.join(output, file), 'utf8'));
   }
   for (const [, asset] of html.matchAll(/<(?:link|script)\b[^>]*(?:href|src)="([^"]+)"/g)) {
     assert.ok(!/^(?:https?:)?\/\//.test(asset));
-    assert.ok(standalone.includes(fs.readFileSync(path.join(__dirname, 'dist', asset), 'utf8')), asset);
+    assert.ok(standalone.includes(fs.readFileSync(path.join(output, asset), 'utf8')), asset);
   }
   assert.match(standalone, /Permission is hereby granted/);
   assert.doesNotMatch(standalone, /<script[^>]+\bsrc=|<link rel="stylesheet"/);

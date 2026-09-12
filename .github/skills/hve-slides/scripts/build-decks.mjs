@@ -31,7 +31,7 @@ export async function buildAllDecks({ repoRoot = defaultRepoRoot } = {}) {
       const { bundleDeck } = await import(pathToFileURL(script).href);
       if (typeof bundleDeck !== 'function') throw new Error('bundle.mjs must export a bundleDeck function.');
       const output = await bundleDeck();
-      const expected = path.join(directory, 'dist', `${name}.html`);
+      const expected = path.join(slides, `${name}.html`);
       if (output !== expected) throw new Error(`bundleDeck must return ${expected}.`);
       const file = await lstat(output);
       if (!file.isFile() || file.size === 0) throw new Error(`Expected a nonempty HTML file at ${output}.`);
@@ -47,7 +47,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   try {
     const args = process.argv.slice(2);
     if (args.length === 1 && args[0] === '--help') {
-      console.log('Usage: npm run slides:build\nBundles every deck under slides/ into its own dist/<deck-name>.html. Does not install, serve or publish.');
+      console.log('Usage: npm run slides:build\nBundles every deck under slides/ into slides/<deck-name>.html. Does not install, serve or publish.');
     } else {
       if (args.length) throw new Error('No arguments are supported. Use npm run slides:build to bundle all decks.');
       const outputs = await buildAllDecks();

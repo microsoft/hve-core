@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { buildDeck } from './build.mjs';
 
 const stylesheetTag = /<link rel="stylesheet" href="([^"]+)">/g;
-const scriptTag = /<script defer src="([^"]+)"><\/script>/g;
+const scriptTag = /(?:^[ \t]*)?<script defer src="([^"]+)"><\/script>/gm;
 
 function escapeHtml(text) {
   return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
@@ -89,7 +89,8 @@ export async function bundleDeck({ build = buildDeck } = {}) {
   ])));
   const license = await readFile(path.join(output, 'vendor/reveal-LICENSE.txt'), 'utf8');
   const standalone = createStandaloneHtml(html, assets, license);
-  const destination = path.join(output, `${path.basename(path.dirname(output))}.html`);
+  const deckDirectory = path.dirname(output);
+  const destination = path.join(path.dirname(deckDirectory), `${path.basename(deckDirectory)}.html`);
   await writeFile(destination, standalone, 'utf8');
   return destination;
 }

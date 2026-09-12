@@ -6,21 +6,28 @@ ms.date: 2026-09-12
 
 ## Build and present
 
-Use Node.js 24 or later. From the repository root:
+Open the committed [single-file presentation](../hve-updates.html) directly in a
+desktop browser, or download it from GitHub and open the downloaded HTML file.
+No build is required to present that version.
+
+To rebuild after editing, use Node.js 24 or later. From the repository root:
 
 ```bash
 cd slides/hve-updates
 npm ci
-npm run build
+npm run bundle
 npm test
 ```
 
-Open `slides/hve-updates/dist/index.html` in a desktop browser.
-Open the generated file, not the source `index.html`.
+Open `slides/hve-updates.html` in a desktop browser.
+Open the generated file, not the source `hve-updates/index.html`.
 No server, live agent, editor extension or authentication is required.
-Dependency restore needs network access; after building, the entire `dist/`
-folder can be copied and presented offline. Keep its files and `vendor/`
-directory together. Source links need a connection when opened.
+Dependency restore needs network access; after bundling, the one HTML file can
+be copied and presented offline. Source links need a connection when opened.
+
+`npm run build` still creates the intermediate folder at
+`slides/hve-updates/dist/`. To present `dist/index.html` instead, keep that
+folder's files and `vendor/` directory together.
 
 Use a landscape desktop display, ideally 1600 by 900 or larger, or browser
 full screen. The presentation also fits 1280 by 720. Compact screens keep
@@ -60,14 +67,15 @@ npm run slides:build
 
 The command discovers the immediate deck directories under `slides/` and calls
 each one's exported `bundleDeck()` function in alphabetical order. Each deck
-keeps its own output: `slides/hve-updates/dist/hve-updates.html`,
-`slides/hve-full/dist/hve-full.html`, and so on. Decks are not combined, and new
+keeps its own output: `slides/hve-updates.html`,
+`slides/hve-full.html`, and so on. Decks are not combined, and new
 deck folders are included automatically.
 
 Every deck directory must contain a `bundle.mjs` exporting `bundleDeck()`, as the
-starter does. Files directly under `slides/` are ignored; symbolic-link entries
-are rejected. The command stops on the first failure and leaves any earlier
-successful outputs in place. It does not install dependencies, start a server,
+starter does. Files directly under `slides/`, including existing bundles, are
+ignored during discovery; symbolic-link entries are rejected. The command stops
+on the first failure and leaves any earlier successful outputs in place.
+It does not install dependencies, start a server,
 or publish. Restore dependencies in each new deck with its own `npm ci` first.
 
 ## Share as one HTML file
@@ -80,10 +88,16 @@ npm run bundle
 ```
 
 If dependencies are already restored, only `npm run bundle` is needed.
-It rebuilds the deck and writes **`dist/hve-updates.html`** with all CSS,
-JavaScript, SVG content and reveal.js assets embedded. The full reveal.js
+It rebuilds the deck and writes **`slides/hve-updates.html`** (one directory above
+the source package) with all CSS, JavaScript, SVG content and reveal.js assets embedded.
+The full reveal.js
 license is retained in an inert template inside the HTML. No new build
 dependency is required.
+
+Commit this generated HTML alongside source updates so the repository always
+contains a downloadable presentation. The per-deck `dist/` and `node_modules/`
+directories remain ignored. Regenerate the HTML rather than editing it by hand.
+Old bundles left in `dist/` by earlier builds are not the maintained artifact.
 
 The source build uses the repository's canonical bundler under
 `.github/skills/hve-slides/templates/deck/`. Keep the checkout available when rebuilding;
@@ -223,7 +237,7 @@ controls. A separate synchronized presenter window is not provided.
 | `components.js`  | Reusable original UI reconstructions and source/diagram toggle             |
 | `deck.js`        | Slide controls, demo rendering, focus, dialogs and keyboard behavior       |
 | `build.mjs`      | Copy source and reveal.js assets into the portable local folder            |
-| `bundle.mjs`     | Call the shared template bundler to create `dist/hve-updates.html`         |
+| `bundle.mjs`     | Call the shared template bundler to create `slides/hve-updates.html`       |
 | `deck.test.cjs`  | Built-in Node tests for transitions, content and bundle contracts          |
 
 Run `npm run build` or `npm run bundle` after edits, then `npm test`.
