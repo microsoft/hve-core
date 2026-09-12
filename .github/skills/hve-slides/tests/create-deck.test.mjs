@@ -64,7 +64,7 @@ test('template reads stay on the validated handle when the path changes before r
   assert.equal(await readTemplateFile(source), 'Original template.');
   assert.equal(readHandle.fd, -1);
   t.mock.restoreAll();
-  assert.equal(await readFile(source, 'utf8'), 'Replacement template.');
+  assert.equal(await readTemplateFile(source), 'Replacement template.');
 });
 
 test('copies only the declared starter and personalizes metadata without installing', async t => {
