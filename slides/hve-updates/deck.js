@@ -113,6 +113,7 @@
     keyboard: false, overview: false, transition: 'none',
     transitionSpeed: 'fast', backgroundTransition: 'none',
     touch: true, loop: false, autoSlide: 0, help: false,
+    postMessage: false, postMessageEvents: false,
     disableLayout: false
   });
 

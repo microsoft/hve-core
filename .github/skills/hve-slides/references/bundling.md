@@ -31,11 +31,12 @@ Deck source + locally installed reveal.js
 The single-file bundle goes in the repository's `docs/slides/` directory, not inside `dist/`.
 The bundler is a build-time Node module, not a browser script or server.
 
-| Export                                        | Input/output                                                                         | Responsibility                                                           |
-|-----------------------------------------------|--------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
-| `buildDeck()`                                 | Returns the absolute `dist` path                                                     | Build the portable folder beside the selected deck's source              |
-| `createStandaloneHtml(html, assets, license)` | HTML string, `Map` of relative asset paths to source text, notice text; returns HTML | Pure transformation, resource validation and ordered embedding           |
-| `bundleDeck({ build } = {})`                  | Optional build function; returns the absolute standalone file path                   | Call the selected build, gather assets/notices and write the single file |
+| Export                                        | Input/output                                                                         | Responsibility                                                                 |
+|-----------------------------------------------|--------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| `buildDeck()`                                 | Returns the absolute `dist` path                                                     | Build the portable folder beside the selected deck's source                    |
+| `createStandaloneHtml(html, assets, license)` | HTML string, `Map` of relative asset paths to source text, notice text; returns HTML | Pure transformation, resource validation and ordered embedding                 |
+| `bundleDeck({ build } = {})`                  | Optional build function; returns the absolute standalone file path                   | Call the selected build, gather assets/notices and write the single file       |
+| `checkBundle({ build } = {})`                 | Optional build function; returns the absolute standalone file path                   | Rebuild intermediate assets and compare the existing HTML without rewriting it |
 
 ## Create the Modules for a New Deck
 
@@ -187,6 +188,9 @@ test('bundle keeps script order after document markup', async () => {
 Also exercise the complete `bundleDeck()` path, assert the expected output filename,
 compare embedded source against current files and preserve all rejection cases from the
 maintained tests. Do not mistake this small transformation test for browser execution.
+`checkBundle()` uses the same rendering path but only compares the committed output.
+The repository command `npm run slides:check` also rejects generated HTML with no
+corresponding source deck.
 
 ## Run and View
 

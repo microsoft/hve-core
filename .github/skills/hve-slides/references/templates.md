@@ -74,6 +74,10 @@ publishes. The template under this skill is not included in discovery.
 
 Commit the regenerated single-file HTML with the deck source updates. Keep each
 deck's intermediate `dist/` directory and `node_modules/` ignored.
+Run `npm run slides:check` to verify the committed bundles without rewriting them.
+This calls each module's exported `checkBundle()` function, rebuilds ignored intermediate
+assets, and rejects missing, stale, or orphaned HTML. Older copied bundlers need the
+current `checkBundle()` export before they can participate in this verification.
 The Docusaurus site discovers the committed HTML files for its Slides page. Run
 `npm run docs:build` after bundling to refresh the site; no deck dependencies are
 needed for a site-only build. After adding or removing a bundle during local site

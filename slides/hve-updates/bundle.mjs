@@ -3,12 +3,16 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDeck } from './build.mjs';
-import { bundleDeck as bundleDirectory, createStandaloneHtml } from '../../.github/skills/hve-slides/templates/deck/bundle.mjs';
+import { bundleDeck as bundleDirectory, checkBundle as checkDirectory, createStandaloneHtml } from '../../.github/skills/hve-slides/templates/deck/bundle.mjs';
 
 export { createStandaloneHtml };
 
 export function bundleDeck() {
   return bundleDirectory({ build: buildDeck });
+}
+
+export function checkBundle() {
+  return checkDirectory({ build: buildDeck });
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

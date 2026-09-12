@@ -38,8 +38,14 @@ regenerate the committed bundles before building the site:
 
 ```bash
 npm run slides:build
+npm run slides:check
 npm run docs:build
 ```
+
+The source-to-bundle check refreshes only ignored intermediate assets and rejects
+stale, missing, or orphaned HTML. CodeQL runs this check separately before analyzing
+authored source; only generated `docs/slides/*.html` is excluded from scanning to avoid
+duplicate findings in embedded third-party code. This is not an upstream dependency fix.
 
 Site `build`, `start`, and `deploy` commands run `slides:sync` first. That copies only deck
 HTML into the ignored `static/slides/` staging directory, removes stale staged

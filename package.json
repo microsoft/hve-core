@@ -63,6 +63,7 @@
     "test:node": "node --test",
     "test:slides": "node --test \".github/skills/hve-slides/tests/*.test.mjs\"",
     "slides:build": "node .github/skills/hve-slides/scripts/build-decks.mjs",
+    "slides:check": "node .github/skills/hve-slides/scripts/build-decks.mjs --check",
     "slides:create": "node .github/skills/hve-slides/scripts/create-deck.mjs",
     "ci:test:a11y:smoke": "node --test \".github/skills/accessibility/accessibility/tests/runtime_a11y/runner/probe-smoke/*.smoke.mjs\"",
     "ci:test:rust-network-isolation": "pwsh -NoProfile -NonInteractive -File scripts/evals/Invoke-RustUnitTestNetworkTrace.ps1",

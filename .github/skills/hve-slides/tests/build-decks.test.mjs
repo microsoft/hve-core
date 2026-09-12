@@ -51,13 +51,28 @@ test('bundles multiple scaffolded decks into independent named HTML files', asyn
   assert.deepEqual((await readdir(path.join(root, 'docs/slides'))).sort(), ['hve-full.html', 'hve-updates.html']);
 
   const original = await Promise.all(outputs.map(output => readFile(output, 'utf8')));
+  assert.deepEqual(await buildAllDecks({ repoRoot: root, check: true }), outputs);
+  const changed = `${original[0]}\n<!-- stale output -->`;
+  await writeFile(outputs[0], changed);
+  await assert.rejects(buildAllDecks({ repoRoot: root, check: true }), /Generated bundle is stale/);
+  assert.equal(await readFile(outputs[0], 'utf8'), changed);
+  await rm(outputs[0]);
+  await assert.rejects(buildAllDecks({ repoRoot: root, check: true }), /Generated bundle is missing/);
+  await assert.rejects(readFile(outputs[0]), { code: 'ENOENT' });
   assert.deepEqual(await buildAllDecks({ repoRoot: root }), outputs);
   assert.deepEqual(await Promise.all(outputs.map(output => readFile(output, 'utf8'))), original);
+
+  const orphan = path.join(root, 'docs/slides/orphan.html');
+  await writeFile(orphan, 'Unowned generated content');
+  await assert.rejects(buildAllDecks({ repoRoot: root, check: true }), /Unexpected generated slide bundle: orphan.html/);
+  await rm(orphan);
 
   const configPath = path.join(root, 'slides/hve-full/deck.json');
   const config = JSON.parse(await readFile(configPath, 'utf8'));
   config.title = 'Updated full presentation';
   await writeFile(configPath, JSON.stringify(config));
+  await assert.rejects(buildAllDecks({ repoRoot: root, check: true }), /Generated bundle is stale/);
+  assert.equal(await readFile(outputs[0], 'utf8'), original[0]);
   await buildAllDecks({ repoRoot: root });
   assert.match(await readFile(outputs[0], 'utf8'), /Updated full presentation/);
   assert.equal(await readFile(outputs[1], 'utf8'), original[1]);
@@ -148,7 +163,10 @@ test('CLI locates decks beside its repository, reports failures and accepts only
   assert.equal(run('--help').status, 0);
   const unknown = run('--install');
   assert.equal(unknown.status, 1);
-  assert.match(unknown.stderr, /No arguments are supported/);
+  assert.match(unknown.stderr, /Only --check or --help is supported/);
+  const missingCheck = run('--check');
+  assert.equal(missingCheck.status, 1);
+  assert.match(missingCheck.stderr, /must export a checkBundle function/);
   await fixtureDeck(root, 'a-failing', 'export async function bundleDeck() { throw new Error("Build failed"); }');
   const failure = run();
   assert.equal(failure.status, 1);

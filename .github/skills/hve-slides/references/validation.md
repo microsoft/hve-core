@@ -32,6 +32,24 @@ revision and scope still apply.
 A test can report that it rebuilt output; it cannot establish browser execution. Mechanical
 checks and screenshot inspection answer different questions.
 
+## Generated HTML and CodeQL
+
+Run `npm run slides:check` before changing or publishing the generated HTML. It rebuilds
+ignored intermediate assets, compares every bundle with its current source, and fails
+on missing, stale, or orphaned HTML without rewriting the committed bundles. Regenerate
+with `npm run slides:build` when the source changes.
+
+CodeQL excludes only `docs/slides/*.html`, which contains embedded copies of third-party
+code alongside generated first-party code. Authored JavaScript, TypeScript, and build
+scripts remain in scope. The CodeQL workflow requires the source-to-bundle check in a
+separate job before analysis, so generated intermediates do not enter the scan workspace.
+This avoids scanning vendored reveal.js again inside generated HTML; it does not establish
+that upstream library findings are fixed. Keep dependency audits and notice checks.
+
+The starter and HVE Updates disable reveal.js `postMessage` commands and events because
+they do not need cross-window control. Presenter buttons and local keyboard navigation
+remain the supported controls.
+
 ## Browser Workflow
 
 Use the host's permitted browser automation or browser canvas. A canvas opening alone is

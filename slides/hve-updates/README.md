@@ -98,6 +98,8 @@ Commit this generated HTML alongside source updates so the repository always
 contains a downloadable presentation. The per-deck `dist/` and `node_modules/`
 directories remain ignored. Regenerate the HTML rather than editing it by hand.
 Old bundles left in `slides/` or `dist/` by earlier builds are not the maintained artifact.
+Run `npm run slides:check` from the repository root to verify source-to-bundle parity
+without rewriting the committed HTML. It fails on missing, stale, or orphaned bundles.
 
 The source build uses the repository's canonical bundler under
 `.github/skills/hve-slides/templates/deck/`. Keep the checkout available when rebuilding;
@@ -165,6 +167,7 @@ move focus away from the control to resume shortcuts.
 Demo steps persist while revisiting slides in the same page session.
 Reload restores the slide hash but resets all demonstrations to their first
 step. All sequences have finite boundaries. Nothing plays automatically.
+The unused reveal.js cross-window `postMessage` API is disabled.
 The operating system's reduced-motion preference overrides the Motion
 button and disables transitions.
 

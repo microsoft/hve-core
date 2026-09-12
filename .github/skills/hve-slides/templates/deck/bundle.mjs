@@ -76,7 +76,7 @@ export function createStandaloneHtml(html, assets, license) {
   return document.replace(/<\/body>/i, () => `${notices}\n${scripts.join('\n')}\n</body>`);
 }
 
-export async function bundleDeck({ build = buildDeck } = {}) {
+async function renderBundle(build) {
   const output = await build();
   const html = await readFile(path.join(output, 'index.html'), 'utf8');
   const paths = new Set([
@@ -91,9 +91,29 @@ export async function bundleDeck({ build = buildDeck } = {}) {
   const standalone = createStandaloneHtml(html, assets, license);
   const deckDirectory = path.dirname(output);
   const destinationDirectory = path.resolve(deckDirectory, '../../docs/slides');
-  await mkdir(destinationDirectory, { recursive: true });
   const destination = path.join(destinationDirectory, `${path.basename(deckDirectory)}.html`);
+  return { destination, standalone };
+}
+
+export async function bundleDeck({ build = buildDeck } = {}) {
+  const { destination, standalone } = await renderBundle(build);
+  await mkdir(path.dirname(destination), { recursive: true });
   await writeFile(destination, standalone, 'utf8');
+  return destination;
+}
+
+export async function checkBundle({ build = buildDeck } = {}) {
+  const { destination, standalone } = await renderBundle(build);
+  let actual;
+  try {
+    actual = await readFile(destination, 'utf8');
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    throw new Error(`Generated bundle is missing: ${destination}. Run npm run slides:build.`, { cause: error });
+  }
+  if (actual !== standalone) {
+    throw new Error(`Generated bundle is stale: ${destination}. Run npm run slides:build.`);
+  }
   return destination;
 }
 

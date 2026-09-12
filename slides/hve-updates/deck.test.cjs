@@ -45,6 +45,12 @@ test('invalid state and unknown actions are surfaced', () => {
   assert.throws(() => moveStep(0, 'skip', 4), TypeError);
 });
 
+test('deck initialization disables the unused cross-window API', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  assert.match(source, /postMessage:\s*false/);
+  assert.match(source, /postMessageEvents:\s*false/);
+});
+
 test('every step has a known phase and a complete display contract', () => {
   for (const demo of Object.values(demos)) {
     assert.ok(demo.steps.length >= 4);

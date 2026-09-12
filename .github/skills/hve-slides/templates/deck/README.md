@@ -23,6 +23,8 @@ Commit the regenerated bundle with its source updates. The intermediate `dist/` 
 and `node_modules/` remain ignored. Edit source files rather than the generated HTML.
 The documentation site lists committed bundles on its Slides page after the next
 site build. Its links open the HTML directly, preserving the presentation controls.
+From the repository root, `npm run slides:check` verifies that every committed bundle
+matches source without rewriting it. The template exports `checkBundle()` for this check.
 
 The default four slides are neutral layout examples, not researched HVE product claims.
 Change them before presenting. The walkthrough is scripted and all chat controls inside
@@ -76,6 +78,7 @@ blocks and `style` attributes are rejected by the bundler.
 Focused controls, editable fields, text selections and modifier shortcuts keep their
 normal behavior. Walkthroughs retain their step when revisiting slides. Reload restores
 the slide hash but resets walkthroughs. Nothing advances automatically.
+The unused reveal.js cross-window `postMessage` API is disabled.
 
 The design canvas is 1600 by 900 and should also be checked at 1280 by 720.
 Compact screens retain controls but are not the intended projected format.

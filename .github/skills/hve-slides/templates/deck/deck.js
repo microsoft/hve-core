@@ -119,6 +119,7 @@
     });
 
     const deck = new Reveal({
+      postMessage: false, postMessageEvents: false,
       width: 1600, height: 900, margin: .015, center: false, controls: false,
       progress: false, hash: true, history: true, keyboard: false, overview: false,
       transition: 'none', backgroundTransition: 'none', autoSlide: 0, loop: false, help: false

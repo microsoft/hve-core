@@ -57,6 +57,12 @@ test('walkthrough boundaries clamp, reset and reject malformed state', () => {
   assert.equal(states.second, 1);
 });
 
+test('deck initialization disables the unused cross-window API', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  assert.match(source, /postMessage:\s*false/);
+  assert.match(source, /postMessageEvents:\s*false/);
+});
+
 test('displayed diff counts and question selections are consistent', () => {
   const stats = diffStats(examples.implementation.diff);
   assert.equal(stats.added, 2);
