@@ -1,10 +1,32 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
-const { copyFileSync, mkdirSync, readdirSync, unlinkSync } = require('node:fs');
+const { closeSync, constants, copyFileSync, fstatSync, mkdirSync, openSync, readFileSync, readdirSync, unlinkSync } = require('node:fs');
 const path = require('node:path');
 
 const defaultSource = path.resolve(__dirname, '../../slides');
 const defaultDestination = path.resolve(__dirname, '../static/slides');
+
+function readSlideMetadata(file) {
+  const descriptor = openSync(file, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  let html;
+  try {
+    if (!fstatSync(descriptor).isFile()) throw new Error(`Slide bundle must be a regular file: ${file}`);
+    html = readFileSync(descriptor, 'utf8');
+  } finally {
+    closeSync(descriptor);
+  }
+  const blocks = [...html.matchAll(/<script type="application\/json" id="hve-slide-metadata">([\s\S]*?)<\/script>/g)];
+  if (blocks.length !== 1) {
+    throw new Error(`Expected one generated slide metadata block in ${file}. Run npm run slides:build.`);
+  }
+  const metadata = JSON.parse(blocks[0][1]);
+  for (const key of ['title', 'description']) {
+    if (typeof metadata?.[key] !== 'string' || !metadata[key].trim()) {
+      throw new Error(`Slide metadata requires a nonempty ${key} in ${file}. Update deck.json and rebuild.`);
+    }
+  }
+  return { title: metadata.title.trim(), description: metadata.description.trim() };
+}
 
 function loadSlideBundles(source = defaultSource) {
   return readdirSync(source, { withFileTypes: true })
@@ -13,9 +35,9 @@ function loadSlideBundles(source = defaultSource) {
       if (!entry.isFile() || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*\.html$/.test(entry.name) || entry.name === 'index.html') {
         throw new Error(`Expected a regular, lower-kebab-case deck HTML file other than index.html: ${entry.name}`);
       }
-      return { slug: entry.name.slice(0, -5) };
+      return { slug: entry.name.slice(0, -5), ...readSlideMetadata(path.join(source, entry.name)) };
     })
-    .sort((left, right) => left.slug.localeCompare(right.slug));
+    .sort((left, right) => left.title.localeCompare(right.title) || left.slug.localeCompare(right.slug));
 }
 
 function syncSlideBundles(source = defaultSource, destination = defaultDestination) {

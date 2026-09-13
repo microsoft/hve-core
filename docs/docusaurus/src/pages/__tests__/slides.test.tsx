@@ -20,17 +20,25 @@ jest.mock('@docusaurus/useBaseUrl', () => ({
 
 beforeEach(() => {
   mockBaseUrl = '/hve-core';
-  mockDecks = [{ slug: 'hve-updates' }, { slug: 'hve-full' }];
+  mockDecks = [
+    { slug: 'hve-updates', title: 'HVE Core updates', description: 'Recent workflow changes.' },
+    { slug: 'hve-full', title: 'Full HVE overview', description: 'An introduction to every workflow.' },
+  ];
 });
 
 test('lists every deck with base-path-aware native navigation and download links', async () => {
   const { container } = render(<SlidesPage />);
   expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   expect(screen.getByRole('main')).toBeInTheDocument();
-  for (const slug of ['hve-updates', 'hve-full']) {
-    expect(screen.getByRole('link', { name: `Open ${slug} presentation` }))
+  for (const [slug, title, description] of [
+    ['hve-updates', 'HVE Core updates', 'Recent workflow changes.'],
+    ['hve-full', 'Full HVE overview', 'An introduction to every workflow.'],
+  ]) {
+    expect(screen.getByRole('heading', { name: title, level: 3 })).toBeInTheDocument();
+    expect(screen.getByText(description)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: `Open ${title}` }))
       .toHaveAttribute('href', `/hve-core/slides/${slug}.html`);
-    expect(screen.getByRole('link', { name: `Download ${slug} (HTML)` }))
+    expect(screen.getByRole('link', { name: `Download ${title} (HTML)` }))
       .toHaveAttribute('download');
   }
   expect((await axe(container)).violations).toEqual([]);
@@ -39,7 +47,7 @@ test('lists every deck with base-path-aware native navigation and download links
 test('also resolves links for a site hosted at the domain root', () => {
   mockBaseUrl = '';
   render(<SlidesPage />);
-  expect(screen.getByRole('link', { name: 'Open hve-updates presentation' }))
+  expect(screen.getByRole('link', { name: 'Open HVE Core updates' }))
     .toHaveAttribute('href', '/slides/hve-updates.html');
 });
 
@@ -54,6 +62,8 @@ test.each([
   { decks: undefined },
   { decks: [{ slug: '../outside' }] },
   { decks: [{ slug: 42 }] },
+  { decks: [{ slug: 'no-title', description: 'Description' }] },
+  { decks: [{ slug: 'no-description', title: 'Title', description: ' ' }] },
   { decks: [null] },
 ])(
   'rejects an invalid catalog rather than silently omitting it: $decks',
@@ -62,3 +72,12 @@ test.each([
     expect(() => render(<SlidesPage />)).toThrow('slide catalog is missing or invalid');
   },
 );
+
+test('renders generated labels as text and does not derive routes from titles', () => {
+  mockDecks = [{ slug: 'custom-guide', title: 'HVE <guide> & examples', description: 'Example "quotes".' }];
+  const { container } = render(<SlidesPage />);
+  expect(screen.getByRole('heading', { name: 'HVE <guide> & examples' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Open HVE <guide> & examples' }))
+    .toHaveAttribute('href', '/hve-core/slides/custom-guide.html');
+  expect(container.querySelector('guide')).toBeNull();
+});

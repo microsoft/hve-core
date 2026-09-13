@@ -23,6 +23,9 @@ Commit the regenerated bundle with its source updates. The intermediate `dist/` 
 and `node_modules/` remain ignored. Edit source files rather than the generated HTML.
 The documentation site lists committed bundles on its Slides page after the next
 site build. Its links open the HTML directly, preserving the presentation controls.
+The page displays the `title` and `description` from `deck.json`. Bundling embeds
+these fields as inert JSON in the HTML; adding or renaming a catalog entry requires
+only source metadata edits and a rebuild, not hand-editing the HTML or site.
 From the repository root, `npm run slides:check` verifies that every committed bundle
 matches source without rewriting it. The template exports `checkBundle()` for this check.
 

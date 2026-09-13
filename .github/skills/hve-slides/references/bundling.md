@@ -31,12 +31,12 @@ Deck source + locally installed reveal.js
 The single-file bundle goes in the repository's `docs/slides/` directory, not inside `dist/`.
 The bundler is a build-time Node module, not a browser script or server.
 
-| Export                                        | Input/output                                                                         | Responsibility                                                                 |
-|-----------------------------------------------|--------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| `buildDeck()`                                 | Returns the absolute `dist` path                                                     | Build the portable folder beside the selected deck's source                    |
-| `createStandaloneHtml(html, assets, license)` | HTML string, `Map` of relative asset paths to source text, notice text; returns HTML | Pure transformation, resource validation and ordered embedding                 |
-| `bundleDeck({ build } = {})`                  | Optional build function; returns the absolute standalone file path                   | Call the selected build, gather assets/notices and write the single file       |
-| `checkBundle({ build } = {})`                 | Optional build function; returns the absolute standalone file path                   | Rebuild intermediate assets and compare the existing HTML without rewriting it |
+| Export                                                  | Input/output                                                             | Responsibility                                                                 |
+|---------------------------------------------------------|--------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| `buildDeck()`                                           | Returns the absolute `dist` path                                         | Build the portable folder beside the selected deck's source                    |
+| `createStandaloneHtml(html, assets, license, metadata)` | HTML, asset map, notice text and optional catalog metadata; returns HTML | Pure transformation, resource validation and ordered embedding                 |
+| `bundleDeck({ build } = {})`                            | Optional build function; returns the absolute standalone file path       | Call the selected build, gather assets/notices and write the single file       |
+| `checkBundle({ build } = {})`                           | Optional build function; returns the absolute standalone file path       | Rebuild intermediate assets and compare the existing HTML without rewriting it |
 
 ## Create the Modules for a New Deck
 
@@ -61,6 +61,8 @@ If either destination exists, read and adapt it rather than overwriting it.
    `docs/slides/contributor-tour.html`; no hard-coded filename needs
    replacing. Copy the starter's `deck.json` too, or provide its required nonempty
    `title`, `description` and `sourceNote` strings. The build writes `dist/config.js`.
+   Copy `deck.json` into the intermediate build too. The bundler reads its title and
+   description to generate the Docusaurus catalog metadata.
 
 4. Keep `createStandaloneHtml` exported for tests. Keep the direct-execution guard at
    the bottom of both files: importing a module in a test must not silently rebuild or
@@ -227,6 +229,10 @@ from an older `dist/` output are not the shareable artifact.
 The Docusaurus build stages these files as static assets under `/slides/`, preserving
 their bytes. Its Slides page uses base-path-aware native links so each deck opens as
 standalone HTML rather than an MDX or client-side application route.
+The bundler embeds the `title` and `description` from `deck.json` in one
+`hve-slide-metadata` JSON script block. The text is escaped for HTML raw-text context
+and is not executable JavaScript. Docusaurus uses that block for the catalog's labels
+and summaries, while each filename remains the stable route identifier.
 
 The final handoff includes the exact single-file path and its regeneration command.
 OneDrive can share it for download; recipients open the downloaded file in their browser.

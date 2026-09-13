@@ -9,8 +9,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAllDecks } from '../scripts/build-decks.mjs';
 import { createDeck } from '../scripts/create-deck.mjs';
+import { createRequire } from 'node:module';
 
 const skillDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const { loadSlideBundles } = createRequire(import.meta.url)('../../../../docs/docusaurus/scripts/slide-bundles.cjs');
 
 async function workspace(t) {
   const root = await mkdtemp(path.join(tmpdir(), 'hve-slide-build-test-'));
@@ -49,6 +51,9 @@ test('bundles multiple scaffolded decks into independent named HTML files', asyn
   }
   assert.deepEqual((await readdir(path.join(root, 'slides'))).sort(), ['README.md', 'hve-full', 'hve-updates']);
   assert.deepEqual((await readdir(path.join(root, 'docs/slides'))).sort(), ['hve-full.html', 'hve-updates.html']);
+  assert.deepEqual(loadSlideBundles(path.join(root, 'docs/slides')).map(deck => [deck.slug, deck.title]), [
+    ['hve-full', 'hve-full presentation'], ['hve-updates', 'hve-updates presentation'],
+  ]);
 
   const original = await Promise.all(outputs.map(output => readFile(output, 'utf8')));
   assert.deepEqual(await buildAllDecks({ repoRoot: root, check: true }), outputs);
@@ -76,6 +81,7 @@ test('bundles multiple scaffolded decks into independent named HTML files', asyn
   await buildAllDecks({ repoRoot: root });
   assert.match(await readFile(outputs[0], 'utf8'), /Updated full presentation/);
   assert.equal(await readFile(outputs[1], 'utf8'), original[1]);
+  assert.equal(loadSlideBundles(path.join(root, 'docs/slides')).find(deck => deck.slug === 'hve-full').title, 'Updated full presentation');
 });
 
 test('reports empty collections and missing bundlers rather than skipping decks', async t => {

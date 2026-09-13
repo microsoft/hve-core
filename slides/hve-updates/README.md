@@ -138,6 +138,9 @@ npm run docs:build
 The site publishes the checked-in HTML unchanged and does not require the deck's
 dependencies. A normal link loads the standalone presentation; use browser Back
 to return to the site. The Slides page also offers a download link for offline use.
+Its label and summary come from `title` and `description` in this deck's `deck.json`.
+Edit those source fields and bundle again to update the catalog. Other deck folders
+use the same flow; no site-page or generated-HTML edits are needed.
 
 ## Presenter controls
 
@@ -250,6 +253,7 @@ controls. A separate synchronized presenter window is not provided.
 | File             | Responsibility                                                             |
 |------------------|----------------------------------------------------------------------------|
 | `index.html`     | Slide narrative, static diagrams, artifact excerpts and notes              |
+| `deck.json`      | Catalog title, description and source qualification                        |
 | `theme.css`      | Original presentation and reconstructed UI styling                         |
 | `components.css` | Copilot, debug, diagram and diff component styling                         |
 | `content.js`     | Public citations, walkthrough data, declared graphs and pure state helpers |

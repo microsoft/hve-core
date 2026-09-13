@@ -33,6 +33,23 @@ The Topics menu links to `/hve-core/slides/`, which lists the HTML bundles in
 `docs/slides/`. A presentation opens at `/hve-core/slides/<deck-name>.html`;
 the download link saves the same self-contained file.
 
+Each deck is listed with its generated title and description, sorted by title.
+These come from `slides/<deck-name>/deck.json`, not the filename. The bundler embeds
+them as inert JSON in the HTML, so a site-only build needs no separate catalog edits
+or deck dependencies. Missing or invalid generated metadata fails the site build
+with a rebuild instruction.
+
+To add another deck, run from the repository root:
+
+```bash
+npm run slides:create -- --slug hve-full --title "HVE Core overview"
+```
+
+Set its `description` in `slides/hve-full/deck.json`, restore that deck's dependencies,
+and run the build commands below. The new deck will appear automatically; changing
+its title later does not change the filename-derived URL. Do not edit the generated
+HTML or a site page to add or rename an entry.
+
 Deck source remains under `slides/<deck-name>/`. From the repository root,
 regenerate the committed bundles before building the site:
 

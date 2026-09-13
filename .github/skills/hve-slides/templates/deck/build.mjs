@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-export const sourceFiles = ['index.html', 'theme.css', 'components.css', 'content.js', 'components.js', 'deck.js'];
+export const sourceFiles = ['deck.json', 'index.html', 'theme.css', 'components.css', 'content.js', 'components.js', 'deck.js'];
 const vendor = [['dist/reveal.css', 'reveal.css'], ['dist/reveal.js', 'reveal.js'], ['LICENSE', 'reveal-LICENSE.txt']];
 
 export function configScript(config) {

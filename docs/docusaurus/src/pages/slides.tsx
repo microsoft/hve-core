@@ -6,21 +6,25 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { labelRegistry } from '../data/labelRegistry';
 
-type SlideDeck = { slug: string };
+type SlideDeck = { slug: string; title: string; description: string };
 
 function isSlideDeck(value: unknown): value is SlideDeck {
   return typeof value === 'object' && value !== null && 'slug' in value
-    && typeof value.slug === 'string' && /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(value.slug);
+    && typeof value.slug === 'string' && /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(value.slug)
+    && 'title' in value && typeof value.title === 'string' && value.title.trim().length > 0
+    && 'description' in value && typeof value.description === 'string' && value.description.trim().length > 0;
 }
 
-function SlideLinks({ slug }: SlideDeck): React.ReactElement {
+function SlideLinks({ slug, title, description }: SlideDeck): React.ReactElement {
   const href = useBaseUrl(`/slides/${slug}.html`);
   return (
     <li className="margin-bottom--md">
+      <h3>{title}</h3>
+      <p>{description}</p>
       <p>
-        <a href={href}>Open {slug} presentation</a>
+        <a href={href}>Open {title}</a>
         {' · '}
-        <a href={href} download>Download {slug} (HTML)</a>
+        <a href={href} download>Download {title} (HTML)</a>
       </p>
     </li>
   );
@@ -47,7 +51,7 @@ export default function SlidesPage(): React.ReactElement {
         </p>
         <h2>Available presentations</h2>
         {decks.length > 0
-          ? <ul>{decks.map(deck => <SlideLinks key={deck.slug} slug={deck.slug} />)}</ul>
+          ? <ul>{decks.map(deck => <SlideLinks key={deck.slug} {...deck} />)}</ul>
           : <p>No presentations have been published yet.</p>}
       </main>
     </Layout>

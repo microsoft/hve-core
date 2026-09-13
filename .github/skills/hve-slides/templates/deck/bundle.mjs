@@ -19,7 +19,7 @@ function localAssetPath(source) {
   return source;
 }
 
-export function createStandaloneHtml(html, assets, license) {
+export function createStandaloneHtml(html, assets, license, metadata) {
   // Mask ignored regions with separators so validation cannot join new markup tokens.
   const sourceMarkup = html.replace(/<!--[\s\S]*?-->/g, ' ');
   if (/<style\b/i.test(sourceMarkup) || /<[^>]*\sstyle\s*=/i.test(sourceMarkup)) {
@@ -72,8 +72,19 @@ export function createStandaloneHtml(html, assets, license) {
     '$1Loading the presentation. If it does not open, download the complete HTML file and open it in a browser with JavaScript enabled.$2'
   );
   const notices = `<template id="bundled-third-party-notices"><pre>${escapeHtml(license)}</pre></template>`;
+  let catalog = '';
+  if (metadata !== undefined) {
+    for (const key of ['title', 'description']) {
+      if (typeof metadata?.[key] !== 'string' || !metadata[key].trim()) {
+        throw new Error(`deck.json requires a nonempty ${key} for the slide catalog.`);
+      }
+    }
+    const json = JSON.stringify({ title: metadata.title.trim(), description: metadata.description.trim() })
+      .replaceAll('<', '\\u003c');
+    catalog = `<script type="application/json" id="hve-slide-metadata">${json}</script>\n`;
+  }
   // Inline classic scripts do not support defer; run in document order after the slide markup exists.
-  return document.replace(/<\/body>/i, () => `${notices}\n${scripts.join('\n')}\n</body>`);
+  return document.replace(/<\/body>/i, () => `${notices}\n${catalog}${scripts.join('\n')}\n</body>`);
 }
 
 async function renderBundle(build) {
@@ -88,7 +99,8 @@ async function renderBundle(build) {
     await readFile(path.join(output, localAssetPath(source)), 'utf8')
   ])));
   const license = await readFile(path.join(output, 'vendor/reveal-LICENSE.txt'), 'utf8');
-  const standalone = createStandaloneHtml(html, assets, license);
+  const metadata = JSON.parse(await readFile(path.join(output, 'deck.json'), 'utf8'));
+  const standalone = createStandaloneHtml(html, assets, license, metadata);
   const deckDirectory = path.dirname(output);
   const destinationDirectory = path.resolve(deckDirectory, '../../docs/slides');
   const destination = path.join(destinationDirectory, `${path.basename(deckDirectory)}.html`);

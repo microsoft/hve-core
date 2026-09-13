@@ -138,6 +138,20 @@ test('validation masking does not join markup across comments or embedded styles
   );
 });
 
+test('catalog metadata is validated and cannot terminate the inert JSON block', async () => {
+  const { createStandaloneHtml } = await import('./bundle.mjs');
+  const page = '<html><head><link rel="stylesheet" href="theme.css"><script defer src="deck.js"></script></head><body></body></html>';
+  const assets = new Map([['theme.css', 'body { color: white; }'], ['deck.js', 'globalThis.ready = true;']]);
+  const metadata = { title: 'Example </script> title', description: 'An <example> & "quotes".' };
+  const result = createStandaloneHtml(page, assets, 'Fixture notice', metadata);
+  const json = result.match(/<script type="application\/json" id="hve-slide-metadata">([\s\S]*?)<\/script>/)[1];
+  assert.deepEqual(JSON.parse(json), metadata);
+  assert.doesNotMatch(json, /</);
+  for (const invalid of [null, {}, { title: 'Title' }, { title: ' ', description: 'Description' }]) {
+    assert.throws(() => createStandaloneHtml(page, assets, 'Fixture notice', invalid), /deck.json requires/);
+  }
+});
+
 test('complete bundle has current local assets, derived filename and full library notice', async t => {
   const { bundleDeck } = await import('./bundle.mjs');
   const { buildDeck, sourceFiles } = await import('./build.mjs');
@@ -153,6 +167,9 @@ test('complete bundle has current local assets, derived filename and full librar
   });
   assert.equal(filename, path.join(temporary, 'docs/slides', `${name}.html`));
   const standalone = fs.readFileSync(filename, 'utf8');
+  const metadata = JSON.parse(fs.readFileSync(path.join(__dirname, 'deck.json'), 'utf8'));
+  const catalog = standalone.match(/<script type="application\/json" id="hve-slide-metadata">([\s\S]*?)<\/script>/)[1];
+  assert.deepEqual(JSON.parse(catalog), { title: metadata.title, description: metadata.description });
   for (const file of sourceFiles) {
     assert.equal(fs.readFileSync(path.join(__dirname, file), 'utf8'), fs.readFileSync(path.join(output, file), 'utf8'));
   }

@@ -274,7 +274,10 @@ test('standalone output contains the full current deck, vendor code and license'
   const scripts = ['vendor/reveal.js', 'content.js', 'components.js', 'deck.js'];
   const assets = new Map([...styles, ...scripts].map(name => [name, fs.readFileSync(path.join(__dirname, 'dist', name), 'utf8')]));
   const license = fs.readFileSync(path.join(__dirname, 'dist/vendor/reveal-LICENSE.txt'), 'utf8');
-  assert.equal(bundled, createStandaloneHtml(html, assets, license));
+  const metadata = JSON.parse(fs.readFileSync(path.join(__dirname, 'deck.json'), 'utf8'));
+  assert.equal(bundled, createStandaloneHtml(html, assets, license, metadata));
+  const catalog = bundled.match(/<script type="application\/json" id="hve-slide-metadata">([\s\S]*?)<\/script>/)[1];
+  assert.deepEqual(JSON.parse(catalog), { title: metadata.title, description: metadata.description });
   for (const name of [...styles, ...scripts]) assert.ok(bundled.includes(assets.get(name)), name);
   assert.equal((bundled.match(/<section\b/g) || []).length, 26);
   assert.equal((bundled.match(/<style data-bundled-source=/g) || []).length, 3);

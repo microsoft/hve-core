@@ -45,6 +45,10 @@ Open `docs/slides/contributor-tour.html`. The filename follows the
 directory name. Generated source includes its own build/bundle modules and needs no
 runtime imports from the skill or the HVE Updates deck.
 
+The scaffold's `--title` value becomes the catalog label. Set a concise description
+in `deck.json`, then bundle. Docusaurus reads the embedded title and description,
+lists every deck automatically, and keeps URLs tied to slugs rather than labels.
+
 Scaffolding is not completion of the presentation. Replace the title/description/source
 note in `deck.json`, the story and notes in `index.html`, and the examples/citations in
 `content.js`. Add researched claims and appropriate sources before presenting. The starter

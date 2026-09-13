@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-const files = ['index.html', 'theme.css', 'components.css', 'content.js', 'components.js', 'deck.js'];
+const files = ['deck.json', 'index.html', 'theme.css', 'components.css', 'content.js', 'components.js', 'deck.js'];
 const vendor = [
   ['dist/reveal.css', 'reveal.css'],
   ['dist/reveal.js', 'reveal.js'],
