@@ -165,10 +165,10 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             # did not build, so the comparison would not be attributable to the model.
             $customized = @($script:Summary.plannedCommands | Where-Object { $_ -match 'customized/eval\.yaml' })
             $customized.Count | Should -Be 2
-            foreach ($model in @('gpt-5.6-luna', 'claude-sonnet-4.6')) {
+            foreach ($model in @('gpt-5.6-luna', 'claude-sonnet-5')) {
                 $line = @($customized | Where-Object { $_ -match "--model $([regex]::Escape($model)) " })
                 $line.Count | Should -Be 1
-                $line[0] | Should -Match "--skill-dir [^ ]*$([regex]::Escape($model))[\\/][^ ]*customized-skill-dir"
+                $line[0] | Should -Match ('--skill-dir "[^"]*[/\\]' + [regex]::Escape($model) + '[/\\][^"/\\]+[/\\]customized-skill-dir"')
             }
         }
 
@@ -215,8 +215,10 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
         It 'Plans the fixed two-model population' {
             $script:Summary.tier | Should -Be 'calibration'
             $script:Summary.plannedCommands.Count | Should -Be 6
-            ($script:Summary.plannedCommands -join "`n") | Should -Match 'gpt-5\.6-luna'
-            ($script:Summary.plannedCommands -join "`n") | Should -Match 'claude-sonnet-4\.6'
+            $evalModels = @($script:Summary.plannedCommands |
+                    Where-Object { $_ -match '^vally eval ' } |
+                    ForEach-Object { [regex]::Match($_, '--model (\S+) ').Groups[1].Value })
+            ($evalModels -join ',') | Should -BeExactly 'gpt-5.6-luna,gpt-5.6-luna,claude-sonnet-5,claude-sonnet-5'
         }
     }
 
@@ -275,10 +277,13 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             ($summary.plannedCommands -join "`n") | Should -Match 'gpt-5-mini'
         }
 
-        It 'Ignores the override for the ci tier' {
+        It 'Ignores the override for the <SelectedTier> tier' -ForEach @(
+            @{ SelectedTier = 'calibration' }
+            @{ SelectedTier = 'ci' }
+        ) {
             & $script:ScriptPath `
                 -Agent 'rpi-agent' `
-                -Tier 'ci' `
+                -Tier $SelectedTier `
                 -Model 'gpt-5-mini' `
                 -RepoRoot $script:RepoRoot `
                 -OutputPath $script:OutputPath `
@@ -286,6 +291,11 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
 
             $summary = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
             $summary.model | Should -Be 'gpt-5.6-luna'
+            $summary.plannedCommands.Count | Should -Be 6
+            $evalModels = @($summary.plannedCommands |
+                    Where-Object { $_ -match '^vally eval ' } |
+                    ForEach-Object { [regex]::Match($_, '--model (\S+) ').Groups[1].Value })
+            ($evalModels -join ',') | Should -BeExactly 'gpt-5.6-luna,gpt-5.6-luna,claude-sonnet-5,claude-sonnet-5'
         }
     }
 
@@ -382,6 +392,30 @@ Describe 'Resolve-ModelList' -Tag 'Unit' {
         $models = Resolve-ModelList -Tier 'devloop' -Hint '' -ModelOverride ''
 
         $models | Should -Be @('gpt-5.6-luna')
+    }
+
+    It 'Selects the fixed pair for <SelectedTier> despite a hint and override' -ForEach @(
+        @{ SelectedTier = 'calibration' }
+        @{ SelectedTier = 'ci' }
+    ) {
+        $models = @(Resolve-ModelList -Tier $SelectedTier -Hint 'hint-model' -ModelOverride 'override-model')
+
+        $models | Should -HaveCount 2
+        ($models -join ',') | Should -BeExactly 'gpt-5.6-luna,claude-sonnet-5'
+    }
+
+    It 'Uses the hint when devloop has no override' {
+        $models = @(Resolve-ModelList -Tier 'devloop' -Hint 'hint-model' -ModelOverride '')
+
+        $models | Should -HaveCount 1
+        $models[0] | Should -BeExactly 'hint-model'
+    }
+
+    It 'Prefers the devloop override over the hint' {
+        $models = @(Resolve-ModelList -Tier 'devloop' -Hint 'hint-model' -ModelOverride 'override-model')
+
+        $models | Should -HaveCount 1
+        $models[0] | Should -BeExactly 'override-model'
     }
 }
 
@@ -519,18 +553,29 @@ defaults:
         Remove-Item Env:STUB_VALLY_COMPARE_MODE, Env:STUB_VALLY_BASELINE_MODE, Env:STUB_VALLY_CUSTOMIZED_MODES, Env:STUB_VALLY_CUSTOMIZED_COUNT_PATH, Env:STUB_VALLY_CALL_LOG -ErrorAction SilentlyContinue
     }
 
-    It 'Counts each failed empty compare once across ci models' {
+    It 'Counts each failed empty compare once across <SelectedTier> models' -ForEach @(
+        @{ SelectedTier = 'calibration' }
+        @{ SelectedTier = 'ci' }
+    ) {
+        $env:STUB_VALLY_CALL_LOG = Join-Path $TestDrive "model-calls-$SelectedTier.jsonl"
+
         & $script:ScriptPath `
             -Agent 'rpi-agent' `
-            -Tier 'ci' `
+            -Tier $SelectedTier `
             -RepoRoot $script:StubRepoRoot `
-            -OutputPath $script:StubOutputPath *> $null
+            -OutputPath $script:StubOutputPath `
+            -NoBaselineCache *> $null
 
         $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
         $summary.runHealthFailures | Should -Be 2
         $summary.runs | Should -Be 0
         $summary.verdict | Should -Be 'fail'
         $LASTEXITCODE | Should -Be 1
+
+        $calls = @(Get-Content -LiteralPath $env:STUB_VALLY_CALL_LOG | ForEach-Object { , ($_ | ConvertFrom-Json) })
+        $evalModels = @($calls | Where-Object { $_[0] -eq 'eval' } |
+                ForEach-Object { $_[([Array]::IndexOf([object[]]$_, '--model') + 1)] })
+        ($evalModels -join ',') | Should -BeExactly 'gpt-5.6-luna,gpt-5.6-luna,claude-sonnet-5,claude-sonnet-5'
     }
 
     It 'Materializes the customization surface where the spec reads it' {
