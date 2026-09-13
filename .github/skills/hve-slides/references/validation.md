@@ -64,7 +64,10 @@ Keep inspection batched:
    possible. Use the existing build rather than creating a second preview implementation.
 2. Inspect the rendered result at desktop presentation sizes. For the reference layout, use
    1600 by 900 and 1280 by 720; for a new layout, retain those targets or record an approved
-   alternative. Check a compact viewport for essential controls, not full-projector text.
+  alternative. Check 320px and 390px viewports for readable content and usable controls,
+  including every walkthrough state. Verify the unscaled reading layout, 200% browser
+  zoom and text-spacing overrides (1.5 line height, 2em paragraph spacing, .12em letter
+  spacing and .16em word spacing). Do not treat viewport resizing alone as zoom evidence.
 3. Read representative full-size frames and contact sheets for whole-deck composition.
    Compare text baselines, node/edge alignment, content density and bottom-control clearance.
    Computed overflow alone misses obscured elements, wrapping and poor visual hierarchy.
@@ -93,6 +96,35 @@ Use actual browser inputs, not only calls to internal transition functions.
   present where relevant. Check contrast on actual backgrounds, including code and hints.
 * Read the browser console and runtime requests. Distinguish local/data resources from
   network dependencies. Do not claim offline behavior from a cached online run.
+
+### Accessibility evidence
+
+Use the `accessibility` skill's method-adequacy guidance when available. Record the tested
+HTML revision, slide/step, viewport or zoom, method, expected result and observed result.
+
+* Run axe or an equivalent static scanner on the gallery, slides and distinct dialog/demo
+  states. Investigate contrast findings on the actual backgrounds and scaled text sizes.
+* Drive Tab, Shift+Tab, Enter, Space and Escape. Verify skip destinations, first/last
+  boundaries, index selection, dialog reopening, hidden-slide focus and component replacement.
+  Press character shortcuts both on and outside the focused presentation surface.
+* Inspect computed accessible names, roles, heading order, diagram equivalents and live
+  regions. Check that inactive slides and decorative chrome are absent and that slide/step
+  changes have one concise announcement. A manual screen-reader pass remains separate
+  from an accessibility-tree assertion; report it as unperformed when unavailable.
+* Inspect screenshots and geometry in both presentation and reading modes. Check clipping,
+  overlap, text spacing, keyboard focus clearance and target size, not only document width.
+  An exception for a genuinely two-dimensional diagram does not exempt its surrounding text.
+* Test the Docusaurus gallery in light and dark themes, including mobile navigation,
+  skip-to-content, descriptive open/download links and browser Back from a deck. Recheck
+  the regenerated standalone file, not just source or an older staged site bundle.
+
+Static scans can decide some structural defects; they do not decide keyboard behavior,
+announcement correctness or adaptive rendering. Preserve those evidence gaps in the handoff.
+Use the [WCAG resize-text](https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html),
+[reflow](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html),
+[text-spacing](https://www.w3.org/WAI/WCAG22/Understanding/text-spacing.html) and
+[character-shortcut](https://www.w3.org/WAI/WCAG22/Understanding/character-key-shortcuts.html)
+guidance when classifying findings.
 
 The [ARIA dialog pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/) and
 [reduced-motion guidance](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html)

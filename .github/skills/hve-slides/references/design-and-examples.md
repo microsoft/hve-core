@@ -120,6 +120,35 @@ All notes, embedded code, captions and data ship to recipients. A hidden dialog 
 private storage. Source links may open separately; the presentation itself should not make
 unnecessary remote requests.
 
+### Accessible slide content and controls
+
+Target [WCAG 2.2 Level AA](https://www.w3.org/TR/WCAG22/) for the deck and its entry page.
+These are authoring checks, not a certification:
+
+* Provide an unscaled reading layout that preserves all content and walkthrough actions.
+  At 320 CSS pixels, 200% zoom and increased text spacing, text wraps and controls remain
+  reachable without overlap. A scaled-down canvas is not a readable mobile alternative.
+* Keep one main landmark, logical heading levels, native controls and descriptive link names.
+  Passive editor reconstructions remain text or images, not fake interactive roles.
+  Preserve document reading semantics instead of wrapping the deck in `role="application"`.
+* Restrict single-character shortcuts to a focused presentation surface, or provide an
+  off/remap control. Native editing and control activation always take precedence.
+* Remove inactive slides from the accessibility tree and Tab order. When navigation hides
+  the focused element, move focus to a visible destination. Dialogs need a name, initial
+  focus, keyboard containment, Escape dismissal and focus restoration.
+* Use one concise live announcement for slide or step changes. Disable competing library
+  announcements and redundant live counters; do not announce an entire slide automatically.
+* Give diagrams a descriptive name and a text equivalent containing node labels, meanings
+  and relationships. Do not substitute internal IDs for the information in the picture.
+  Decorative icons stay hidden from assistive technology. Selected and diff states need
+  text or signs in addition to color.
+* Check 4.5:1 text contrast (3:1 for qualifying large text), 3:1 meaningful control/focus
+  contrast and at least 24 by 24 CSS-pixel targets or qualifying spacing. Measure rendered
+  sizes after scaling. Keep focus indicators visible and unobscured by presenter controls.
+
+Keep these contracts in the starter runtime and component templates as well as deck source.
+New layout classes need reading-view rules; copying a fragment does not validate its reflow.
+
 ## Official UI Sources
 
 * [VS Code source](https://github.com/microsoft/vscode): inspect the current relevant release

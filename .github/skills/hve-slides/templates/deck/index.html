@@ -20,14 +20,14 @@
   <div id="startup" role="status">Loading the presentation. Run npm ci and npm run build in the deck directory, then open dist/index.html.</div>
   <noscript>Enable JavaScript for the presentation controls. This deck does not run a live agent.</noscript>
   <div class="reveal">
-    <main class="slides" aria-label="Presentation">
+    <main class="slides" tabindex="0" aria-label="Presentation">
       <section id="opening" data-title="Welcome" data-chapter="Introduction" data-sources="framework">
         <div class="eyebrow">PRESENTATION STARTER</div>
         <h1 data-deck-title>HVE slide deck</h1>
         <p class="lead" data-deck-description>A local HTML presentation.</p>
         <div class="two-up">
-          <article class="panel"><h3>Write the story</h3><p>Replace these examples with your audience, claims and evidence.</p></article>
-          <article class="panel"><h3>Keep the controls</h3><p>Slides and walkthrough steps have separate navigation.</p></article>
+          <article class="panel"><h2>Write the story</h2><p>Replace these examples with your audience, claims and evidence.</p></article>
+          <article class="panel"><h2>Keep the controls</h2><p>Slides and walkthrough steps have separate navigation.</p></article>
         </div>
         <aside class="notes">Introduce the topic and audience. This starter contains fictional examples, not verified product claims.</aside>
       </section>
@@ -82,7 +82,7 @@
   <div id="announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <dialog id="detail-dialog" aria-labelledby="dialog-title">
     <div class="dialog-header"><h2 id="dialog-title"></h2><button type="button" id="close-dialog">Close <kbd>Esc</kbd></button></div>
-    <div id="dialog-content"></div>
+    <div id="dialog-content" tabindex="0"></div>
   </dialog>
 </body>
 </html>
