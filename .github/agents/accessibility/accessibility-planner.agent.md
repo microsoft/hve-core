@@ -145,8 +145,6 @@ Provide the skill with:
 * Requested outputs and output mode, using `analysis` unless the user requests another supported mode.
 * `.copilot-tracking/accessibility/{project-slug}/` as a trusted alternate evidence root.
 
-Require `rpi-research` to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath the trusted root. The skill resolves the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and research synthesis.
-
 After completion, read the returned primary research artifact and synthesize applicable findings into the active phase artifacts and `state.json`, preserving normative-source provenance and every existing confirmation gate. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop dependent mapping work. If `rpi-research` or a required lookup capability is unavailable, report the limitation rather than substituting training-data claims.
 
 ### Phase-Specific Delegation

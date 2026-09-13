@@ -3,7 +3,7 @@ title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-11
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -120,7 +120,7 @@ Use `hve-builder` review mode for an AI artifact:
 ```text
 Use hve-builder with mode=review and
 targets=.github/prompts/hve-core/rpi.prompt.md. Evaluate activation,
-lifecycle routing, behavior-test requirements, and host compatibility.
+lifecycle routing, review requirements, and host compatibility.
 ```
 
 ### Documentation Review

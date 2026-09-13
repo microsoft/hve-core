@@ -3,7 +3,7 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-07
+ms.date: 2026-09-11
 ms.topic: how-to
 keywords:
   - contributing
@@ -561,24 +561,24 @@ Before submitting your prompt, verify:
 ## Authoring with the HVE Builder Skill
 
 The `hve-builder` skill is the lifecycle entrypoint for prompts, instruction files,
-agents, subagents, and skills. It applies the standards on this page, dispatches
-independent review, runs behavior testing when a change warrants it, and resolves a
-single overall outcome. Prefer it over hand-editing when you are creating a new prompt
-or making a behavior-bearing change to an existing one.
+agents, subagents, and skills. It applies the standards on this page, runs a review
+pass against its requirements catalog and rubric, and resolves a single overall
+outcome. Prefer it over hand-editing when you are creating a new prompt or making a
+behavior-bearing change to an existing one.
 
 Activate it by asking for the work in natural language, optionally naming the mode.
 There is no slash command; `hve-builder` is a skill, not a prompt.
 
 ### Modes
 
-| Mode       | Write authority              | Use when                                                     |
-|------------|------------------------------|--------------------------------------------------------------|
-| `create`   | Creates new source artifacts | The target prompt does not exist yet                         |
-| `improve`  | Edits existing source        | An existing prompt needs new or corrected behavior           |
-| `refactor` | Edits existing source        | Cleanup must preserve current behavior                       |
-| `replace`  | Rewrites existing source     | The artifact needs wholesale replacement                     |
-| `review`   | Read-only; writes evidence   | You want static and behavior findings without source changes |
-| `validate` | Read-only; writes evidence   | You want host validation results only                        |
+| Mode       | Write authority              | Use when                                           |
+|------------|------------------------------|----------------------------------------------------|
+| `create`   | Creates new source artifacts | The target prompt does not exist yet               |
+| `improve`  | Edits existing source        | An existing prompt needs new or corrected behavior |
+| `refactor` | Edits existing source        | Cleanup must preserve current behavior             |
+| `replace`  | Rewrites existing source     | The artifact needs wholesale replacement           |
+| `review`   | Read-only; writes evidence   | You want review findings without source changes    |
+| `validate` | Read-only; writes evidence   | You want host validation results only              |
 
 The skill infers the narrowest safe mode when you do not name one, and asks only when
 plausible modes would grant materially different write authority.
@@ -586,7 +586,7 @@ plausible modes would grant materially different write authority.
 ### Compatibility aliases
 
 Three alias skills preserve legacy activation phrasing and route straight to
-`hve-builder`. They add no second author, test, or evaluation loop.
+`hve-builder`. They add no second author, review, or evaluation loop.
 
 | Alias skill       | Routes to                              |
 |-------------------|----------------------------------------|
@@ -597,27 +597,27 @@ Three alias skills preserve legacy activation phrasing and route straight to
 Each alias translates its legacy `promptFiles` input to the `hve-builder` `targets`
 input. New work should name `hve-builder` and its mode directly.
 
-### Behavior testing
+### Review pass
 
-`hve-builder` delegates behavior testing to `hve-builder-tester`, which is the sole
-behavior-testing entrypoint. HVE Builder first completes all known source changes,
-independent static review, and local validation, then freezes the candidate. Major
-mutations and behavior-bearing review targets invoke HVE Builder Tester;
-eligible minor and medium changes are legitimately skipped. When a report identifies
-required in-scope corrections, the main agent can apply them as a coherent batch,
-refresh affected validation and assessment, freeze the revised candidate, and test
-again. Each invocation keeps its candidate unchanged and produces its own report.
+`hve-builder` completes all known source changes and local validation, then runs a
+review pass against its requirements catalog and review rubric. The main agent
+reviews the candidate itself by default and may dispatch the `HVE Builder Reviewer`
+subagent for a fresh-context review when the change alters a decision rule, stage
+gate, write authority, or safety behavior, or when its own context is deep in the
+authoring. The reviewer returns severity-graded findings as suggestions; the main
+agent verifies each one at its cited location, applies the required corrections as
+one batch, reruns the checks those corrections affect, and records the review
+evidence against the reviewed revision.
 
-For example, a required handoff missing from a skill can be fixed by the parent
-and exercised again with related regression scenarios. Optional wording polish
-does not warrant another cycle. Repeated failures without a supported new approach
-stop with the unresolved findings; unavailable execution needs its prerequisite
-resolved, not speculative source edits. Read-only review and standalone testing
-do not gain source-write authority.
+For example, a required handoff missing from a skill is fixed by the main agent
+together with related findings, then closed with a targeted re-review of those
+finding IDs. Optional wording polish does not warrant another cycle. Repeated
+failures without a supported new approach stop with the unresolved findings.
+Read-only review returns findings without gaining source-write authority.
 
 ### Evidence
 
-Runs write author, review, behavior-test, and validation evidence under
+Runs write author, review, and validation evidence under
 `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/` unless you supply a different evidence
 root. Read-only modes change nothing else.
 

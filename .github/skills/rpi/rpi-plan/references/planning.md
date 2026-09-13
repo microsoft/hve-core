@@ -1,5 +1,5 @@
 ---
-description: "Reference protocol for evidence-based RPI planning, bounded phase authoring, and independent plan critique."
+description: "Reference protocol for evidence-based RPI planning, planning extensions, and independent plan critique."
 ---
 
 # RPI Plan Reference
@@ -78,12 +78,11 @@ When a decision-critical change remains unclear, apply the Planning Decision Wal
 
 Resolve decision participation before presenting unresolved material planning decisions.
 
-| Mode                                         | Decision owner | Behavior                                                                                                                                                  |
-|----------------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Standalone or manual RPI                     | User           | Walk through unresolved material decision groups and persist each answer before continuing.                                                               |
-| Automatic RPI Agent, default                 | Agent          | Resolve supported ordinary planning decisions and critique dispositions; stop on an unsupported material choice rather than asking or guessing.           |
-| Automatic RPI Agent, user-retained           | User           | Keep the session automatic, pause Plan for focused decision groups, then resume automatic progression after required answers and planning gates complete. |
-| Parent-owned orchestration such as RPI Quick | Parent         | Follow the parent-provided decision-participation and continuation contract.                                                                              |
+| Mode                               | Decision owner | Behavior                                                                                                                                                  |
+|------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Standalone or manual RPI           | User           | Walk through unresolved material decision groups and persist each answer before continuing.                                                               |
+| Automatic RPI Agent, default       | Agent          | Resolve supported ordinary planning decisions and critique dispositions; stop on an unsupported material choice rather than asking or guessing.           |
+| Automatic RPI Agent, user-retained | User           | Keep the session automatic, pause Plan for focused decision groups, then resume automatic progression after required answers and planning gates complete. |
 
 Build groups from unresolved rows in Planning Decisions and Feedback. Order them by dependency, blocker status, and effect on Planning Readiness. A group contains one decision by default. Combine decisions only when they share the same choice, evidence, and consequences or when answering one independently would be misleading.
 
@@ -99,7 +98,7 @@ When no unresolved material decision exists, record that no walkthrough is requi
 
 ## Planning opening and material updates
 
-Before substantive phase drafting or delegation, create or revise the plan, then persist canonical planning state in the sections that own it. Record task identity, interpreted planning goal, user decisions and requirements, planning delegation and provenance, goals, scope and non-goals, initial evidence and readiness assessment, active boundaries, unresolved decisions or blockers, and the resolved plan path. This persistence gives the opening and later updates a durable planning basis.
+Before substantive phase drafting, create or revise the plan, then persist canonical planning state in the sections that own it. Record task identity, interpreted planning goal, user decisions and requirements, goals, scope and non-goals, initial evidence and readiness assessment, active boundaries, unresolved decisions or blockers, and the resolved plan path. This persistence gives the opening and later updates a durable planning basis.
 
 After that persistence, send one concise canonical `RPI Plan` opening using this shape:
 
@@ -112,7 +111,6 @@ After that persistence, send one concise canonical `RPI Plan` opening using this
 * Initial phase direction: [first outcome or plan section to define]
 * Active boundaries: [scope, non-goals, constraints, or critique boundary]
 * Current decision state: [settled decisions, proposals, or unresolved items]
-* Planning delegation: [adaptive, never, or always with provenance]
 * Current blockers: [active blockers]
 * Relevant links: [Markdown links when available]
 
@@ -121,7 +119,7 @@ These are the starting planning state and may evolve only through the existing e
 
 Omit Current blockers when none are active. Omit Relevant links when no valid link is available. Do not invent state, links, or planning certainty.
 
-Before each potential continual update, persist the item in the canonical plan or critique disposition section that owns it. Chat is a concise projection of that state, not a second history or delivery audit. A continual update is warranted only when the item changes phase direction, a current decision or readiness state, a material result or artifact state, a blocker or decision need, validation state where applicable, handoff, or the user's likely understanding. Suppress low-level actions, routine tool calls, raw subagent returns, unchanged state, and minor rows or edits.
+Before each potential continual update, persist the item in the canonical plan or critique disposition section that owns it. Chat is a concise projection of that state, not a second history or delivery audit. A continual update is warranted only when the item changes phase direction, a current decision or readiness state, a material result or artifact state, a blocker or decision need, validation state where applicable, handoff, or the user's likely understanding. Suppress low-level actions, routine tool calls, raw extension returns, unchanged state, and minor rows or edits.
 
 Use this compact shape when a message is warranted:
 
@@ -141,7 +139,7 @@ Use `âœ…` only for an evidence-backed settled decision or achieved readiness, `â
 
 When `rpi-implement` updates the plan during implementation, update Confirmed User Direction and affected sections when the change affects current confirmed intent. Record unresolved choices in Planning Decisions and Feedback. Reconcile updated Goals, Requirements, Details, References, markers, dependencies, diagrams, and the executive summary. Remove superseded active content rather than retaining plan-state history. A significant or divergent discovery may require a user decision and plan update before affected work resumes, but the task's critique is not repeated.
 
-Implementation may also add a `Guidance:` block to a later task. It belongs immediately after that task's `Details:` and names something earlier work created that the later task needs and the plan did not already call out, such as a class, API, contract, helper, fixture, or path. Keep it short and concrete:
+Implementation may also add a `Guidance:` block to a later task. It belongs immediately after that task's `Details:` and names something earlier work created that the later task needs and the plan did not already call out, such as a class, API, contract, utility, fixture, or path. Keep it short and concrete:
 
 ```markdown
 Guidance:
@@ -179,36 +177,17 @@ Read and understand the supplied research before deciding whether to activate `r
 
 When none apply, plan from the supplied evidence. When one applies, ask `rpi-research` for the smallest evidence set that closes the gap, then resume planning.
 
-## Overall planning and bounded assignments
+## Overall planning and planning extensions
 
-The planning parent owns Confirmed User Direction, Planning Decisions and Feedback, phase and task blocks, diagrams, phase order, dependencies, follow-up items, critique disposition, the complete plan, and finalization. It may activate planning skills or dispatch subagents selected from their available stable names and descriptions for bounded planning assignments.
+The primary planner owns Confirmed User Direction, Planning Decisions and Feedback, phase and task blocks, diagrams, phase order, dependencies, follow-up items, critique disposition, the complete plan, and finalization. It drafts every phase itself.
 
-Select a skill or subagent only when its stable name contains `plan` or `planning`, or its description explicitly says it is used during planning, and its description fits the bounded assignment. Exclude `rpi-plan`, `rpi-plan-critique`, and other RPI lifecycle phase entrypoints. Activate selected skills as scoped guidance. When delegated work has no suitable planning subagent, dispatch an unnamed general-purpose subagent with the agent selection omitted.
-
-Resolve one planning delegation mode from caller or conversation direction and record its provenance:
-
-| Mode       | Behavior                                                                                                                                                                                                  |
-|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `adaptive` | Default. Prefer subagents when phases are large enough to benefit from isolated context and are relatively independent. Keep small or tightly related phases in the parent.                               |
-| `never`    | Do not dispatch planning subagents. The parent plans every phase directly.                                                                                                                                |
-| `always`   | Dispatch every phase as a bounded assignment. Run related or dependent phases sequentially and independent, write-disjoint phases in parallel. Stop if dispatch is unavailable instead of working inline. |
-
-Every planning-worker dispatch contains:
-
-* Exact plan path and assigned `Pxx` section
-* Relevant user decisions and requirements, caller requirements, and supplied evidence pointers
-* A bounded assignment to define or refine the phase's Goals and Dependencies and each task's Goals, Requirements, Details, References, or Dependencies, using the Phase and task blocks and Formatting conventions in this reference
-* An explicit write boundary limited to the assigned phase
-* An expected return that states findings, proposed or completed changes within the boundary, assumptions, unresolved items, and evidence
-* A prohibition on production source edits, implementation, Review, overall-plan decisions, nested delegation, and writes outside the assigned plan section
-
-Independent, write-disjoint assignments may run in parallel. Related or dependent assignments run sequentially. The worker does not perform unbounded research, implement production changes, critique the full plan, or redesign the overall plan. The primary planner evaluates every return and decides whether to add, update, delete, reorder, split, merge, or replace current plan content. A subagent return does not automatically become plan content.
+Skills and subagents whose descriptions say they are used during planning or with `rpi-plan` extend the planner. Read each description and follow its guidance on when and how to use it; the description is the contract. Exclude `rpi-plan`, `rpi-plan-critique`, and other RPI lifecycle phase entrypoints. An extension adds evidence, conventions, or proposals; verify what it returns against the evidence and write the plan yourself.
 
 ## Independent critique
 
 Activate `rpi-plan-critique` at most once, only when the primary planner judges the plan to be implementation-ready. Do not critique an initial draft merely because it exists.
 
-Select one critique depth and record its provenance before dispatch:
+Select one critique depth and record its provenance before the critique runs:
 
 | Depth      | Selection rule                           | Assessment behavior                                                                                                                                                                                                   |
 |------------|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -217,22 +196,21 @@ Select one critique depth and record its provenance before dispatch:
 
 Do not infer deep mode from plan size, complexity, uncertainty, or risk. Standard optimizes prioritization and output for minimal elapsed work without reducing complete coverage of actionable material concerns in the supplied boundary.
 
-Before dispatch, inspect the plan's Critique Disposition, parent state when present, and the critique path. A `started`, `Complete`, `Partial`, or `Blocked` execution record or existing critique artifact consumes the task's single invocation. On resume, reconcile existing evidence instead of dispatching a replacement. Persist `started`, candidate identity, selected depth and provenance, and output path immediately before dispatch; do not dispatch if that write fails.
+Before the critique runs, inspect the plan's Critique Disposition, parent state when present, and the critique path. A `started`, `Complete`, `Partial`, or `Blocked` execution record or existing critique artifact consumes the task's single invocation. On resume, reconcile existing evidence instead of running a replacement. Persist `started`, candidate identity, selected depth and provenance, and output path immediately before the critique runs; do not run it if that write fails.
 
-Lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence. Dispatch one fresh generic critique worker with selected depth, exact task context, confirmed direction, resolved planning decisions, caller requirements, research, evidence, dependencies, task Requirements, plan path, and one critique output path. The critique worker reads the plan and directly relevant supplied evidence, writes only the critique artifact, and returns one complete actionable finding set.
+Lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence. Activate `rpi-plan-critique` once with the selected depth, exact task context, confirmed direction, resolved planning decisions, caller requirements, research, evidence, dependencies, task Requirements, plan path, and one critique output path. Assess the plan against the supplied evidence with fresh eyes rather than the drafting reasoning; running the critique in a subagent is one way to obtain that separation and is not required. The critique reads the plan and directly relevant supplied evidence, writes only the critique artifact, and returns one complete actionable finding set.
 
 The critique is a one-time internal readiness gate. Its verdict returns to the planning parent, which owns revision, decision requests, and finalization. It is not a peer lifecycle transition and does not cause a standalone user to invoke another stage.
 
 Record the latest critique findings and their dispositions in the plan's standalone top-level `## Critique Disposition` section. Use the critique verdict to select the smallest next action:
 
-* Revise the plan directly for localized evidence-backed corrections, applying all planner-owned findings in one coherent batch.
-* Dispatch a phase-matched planning subagent, or an unnamed general-purpose subagent with the planning restrictions above, when deeper planning work is needed.
+* Revise the plan directly for evidence-backed corrections, applying all planner-owned findings in one coherent batch.
 * Preserve confirmed user requests and answers when critique advice conflicts with them. Reject conflicting advice without re-asking when current user direction already resolves it.
 * Route a significant or divergent finding not resolved by current user direction through the current Planning Decision Walkthrough when it affects requirements, scope, architecture, dependencies, or evidence boundary.
 * Close every `PC-xxx` with its declared owner, disposition, and exact resolving evidence, then finalize without a retry or closure critique.
 * Finalize after direct corrections and required user decisions are resolved and any accepted residual risk is explicitly recorded.
 
-Any returned execution status consumes the invocation. Partial or Blocked critique evidence remains terminal for the gate. If its missing evidence or open findings cannot be resolved by the planning parent, stop Plan with the exact blocker rather than dispatching again.
+Any returned execution status consumes the invocation. Partial or Blocked critique evidence remains terminal for the gate. If its missing evidence or open findings cannot be resolved by the planning parent, stop Plan with the exact blocker rather than running the critique again.
 
 ## Phase and task blocks
 
@@ -258,7 +236,7 @@ Treat examples and illustrative code as guidance unless a requirement or interfa
 
 ## Phase Checklist diagrams
 
-Once the phases are stable and before critique dispatch, add Mermaid diagrams so a reader can see the shape of the change without reading every task.
+Once the phases are stable and before the critique runs, add Mermaid diagrams so a reader can see the shape of the change without reading every task.
 
 Place two overall diagrams under `## Phase Checklist`, before the first phase:
 
@@ -312,10 +290,10 @@ At closeout, report planning execution status separately from readiness or decis
 
 For a standalone, implementation-ready plan, report planning execution status and readiness separately, then identify the latest critique disposition and current implementation context: plan, latest critique, relevant research, and the changes record's role as implementation evidence. Advise `/rpi-implement` without invoking it. Do not ask the user to attach artifacts.
 
-If the plan is not ready, state the stop or no-handoff reason. In `rpi-quick` or confirmed automatic RPI Agent mode, return that same context to the parent and state that it continues automatically when the gate and confirmation conditions are met. Do not give the parent attachment instructions.
+If the plan is not ready, state the stop or no-handoff reason. In confirmed automatic RPI Agent mode, return that same context to the parent and state that it continues automatically when the gate and confirmation conditions are met. Do not give the parent attachment instructions.
 
 For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## Final planning handoff
 
-The final plan identifies the implementation handoff with task IDs, markers, task-local context, and artifact paths. Its Planning Readiness and Next Step record identifies the plan, latest critique, relevant research, downstream changes-record role, decision participation, delegation mode, blockers, gates, and continuation. A standalone planning response advises `/rpi-implement` only when the plan is ready. The parent continues instead in `rpi-quick` or confirmed automatic RPI Agent mode. It does not create a separate details or legacy log artifact or require a line-based verification pass.
+The final plan identifies the implementation handoff with task IDs, markers, task-local context, and artifact paths. Its Planning Readiness and Next Step record identifies the plan, latest critique, relevant research, downstream changes-record role, decision participation, blockers, gates, and continuation. A standalone planning response advises `/rpi-implement` only when the plan is ready. The parent continues instead in confirmed automatic RPI Agent mode. It does not create a separate details or legacy log artifact or require a line-based verification pass.

@@ -23,7 +23,7 @@
 
 ## Phase Checklist
 
-<!-- Add both overall diagrams once the phases are stable and before critique. Follow references/planning.md for state comparison and styling; reuse IDs for corresponding elements across all views. -->
+<!-- Add both overall diagrams once the phases are stable and before the critique runs. Follow references/planning.md for state comparison and styling; reuse IDs for corresponding elements across all views. -->
 <!-- Reuse the initialization line unchanged in every diagram; before critique, check the emitted fontFamily and fontSize values and correct malformed or nested values to the prescribed strings. -->
 
 ### Before
@@ -122,13 +122,12 @@ Keep this as a concise freeform list. Preserve the user's meaning and add source
 |----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Planning execution and readiness | {{Complete/Partial/Blocked/Needs clarification and Ready/Not ready/Blocked with reason}}                                                                            |
 | Decision participation           | {{user-owned/agent-owned/user-retained with mode and provenance}}                                                                                                   |
-| Planning delegation              | {{adaptive/never/always with caller or default provenance}}                                                                                                         |
 | Blockers                         | {{none_or_current_blockers}}                                                                                                                                        |
 | Latest critique                  | [.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md](../../reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md) with {{verdict}} |
 | Relevant research                | {{research_link_or_not_applicable_with_reason}}                                                                                                                     |
 | Plan                             | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`                                                                                                      |
 | Changes-record role              | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` is implementation evidence                                                                      |
-| Continuation owner               | {{user/rpi-quick/manual RPI Agent/confirmed automatic RPI Agent}}                                                                                                   |
+| Continuation owner               | {{user/manual RPI Agent/confirmed automatic RPI Agent}}                                                                                                             |
 | Required gates or confirmations  | {{passed_pending_or_failed_gates}}                                                                                                                                  |
 | Next action                      | {{implementation_advisory_automatic_transition_waiting_decision_or_blocker_action}}                                                                                 |
 
@@ -201,7 +200,6 @@ Record the latest critique findings, their disposition, and any explicitly accep
 * [ ] Executive Summary, What You May Not Know, and the Phase Checklist come first and are understandable without reading the supporting sections.
 * [ ] Confirmed direction, grouped decisions, readiness, goals, scope, requirements, risks, and dependencies are current and consistent with the Phase Checklist.
 * [ ] Planning decision participation and provenance are recorded; user-owned and user-retained groups have persisted answers, while agent-owned groups have evidence-backed rationales or honest blockers.
-* [ ] Planning delegation and provenance are recorded; adaptive, never, or always behavior was followed without overriding phase boundaries.
 * [ ] Functional and non-functional requirements are current, and every `FR-nnn` and `NFR-nnn` is cited by at least one task's Requirements.
 * [ ] Every `Pxx` has Goals, Dependencies, and a phase diagram that highlights its part of After with any labeled removal context. Every `Pxx-Txx` has Goals, Requirements, Details, References, and Dependencies.
 * [ ] Task Goals describe observable behavior, capability, or state without prescribing unsupported implementation steps. Details and References ground the implementer; examples are illustrative unless a requirement or contract makes them binding.
@@ -210,7 +208,7 @@ Record the latest critique findings, their disposition, and any explicitly accep
 * [ ] Before reflects the evidence-backed pre-change baseline; After reflects the intended result of all phases. Corresponding elements and phase diagrams reuse stable node IDs, with added and removed work distinguishable without color.
 * [ ] Every emitted initialization object has the prescribed string values for themeVariables.fontFamily and themeVariables.fontSize. All diagrams use theme-aware styling, with explicit text colors on custom fills. Dual-theme rendering evidence or its preview limitation is recorded.
 * [ ] Risks, open questions, blockers, critique findings, and accepted residual risks have owners and next actions.
-* [ ] Critique depth and provenance are recorded; at most one invocation was dispatched, and all findings are disposed without a retry or closure critique.
+* [ ] Critique depth and provenance are recorded; at most one critique ran, and all findings are disposed without a retry or closure critique.
 * [ ] Planning execution, readiness, continuation owner, gates, next action, and implementation paths are complete and consistent.
 * [ ] Follow-Up Items remain outside active plan completion and acceptance claims.
 * Checked sections: {{list_of_checked_sections}}

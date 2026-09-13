@@ -2710,21 +2710,20 @@ stimuli:
     config:
       pattern: (?i)(this (test|check|eval) (proves|demonstrates|verifies))
       negate: true
-- name: hve-artifact-tester-read-only-simulation
-  prompt: In read-only simulation, unavailable file-creation side effects must be labeled `Emulated` or `Simulated`, not `Unavailable`. Do not call tools. Return exactly `Emulated.`
-  environment:
-    files:
-    - src: fixtures/hve-artifact-copilot-instructions.md
-      dest: .github/copilot-instructions.md
+- name: hve-builder-review-return-only-suggestions
+  prompt: |
+    HVE Builder Reviewer returns severity-graded findings as suggestions and
+    never edits the artifact it reviews. Which agent applies the corrections?
+    Do not call tools. Return exactly `parent`.
   tags:
     category: agent-behavior
     advisory: "true"
-    agent: hve-artifact-tester
+    agent: hve-builder-review
   graders:
   - type: output-matches
-    name: emulated-write
+    name: parent-owns-corrections
     config:
-      pattern: (?i)^\s*(emulated|simulated)[.!]?\s*$
+      pattern: (?i)^\s*['"`]?(?:the\s+)?(?:calling\s+|hve\s+builder\s+)?parent['"`]?[.!]?\s*$
 - name: issue-triage-class-recipe
   prompt: |
     Triage this new GitHub issue: "App is super slow on iPhone." Suggest labels, priority, and assignee. Write the triage record under `.copilot-tracking/github-issues/` and report the path along with the triage decision.
@@ -3357,8 +3356,8 @@ stimuli:
 - name: rpi-agent-class-recipe
   prompt: |
     Research evidence for this task is sufficient. The current lifecycle
-    routes planning through the `rpi-plan` skill, not the `rpi-planner` phase
-    subagent. Do not call tools. Return exactly `rpi-plan`.
+    routes planning through the `rpi-plan` skill. Do not call tools. Return
+    exactly `rpi-plan`.
   tags:
     category: agent-behavior
     advisory: "true"
@@ -3397,52 +3396,36 @@ stimuli:
     name: requested-task-selected
     config:
       pattern: ^\s*2607\s*$
-- name: rpi-planner-bounded-phase-revision
+- name: rpi-researcher-return-only-suggestions
   prompt: |
-    You are assigned only P02 in an existing plan. What should happen to P01
-    and P03 while you revise P02? Return exactly `Preserve P01 and P03
-    unchanged.`
-  tags:
-    category: agent-behavior
-    advisory: "true"
-    agent: rpi-planner
-  graders:
-  - type: output-matches
-    name: preserves-other-phases
-    config:
-      pattern: (?i)^\s*(preserve|leave)\s+(P01\s+(and|&)\s+P03|P01/P03)\s+unchanged[.!]?\s*$
-- name: rpi-researcher-lane-preflight-and-return
-  prompt: |
-    The approved lane path is
-    `.copilot-tracking/research/subagents/2026-07-17/cache-policy-subagent-research.md`
-    and the distinct parent artifact is
-    `.copilot-tracking/research/2026-07-17/cache-policy-research.md`.
-    The required pre-write action is lane-path validation. Do not call tools.
-    Return exactly `Validate the lane path.`
+    You found three documentation pages that answer the caller's bounded
+    question. The caller owns the research artifact at
+    `.copilot-tracking/research/2026-07-17/cache-policy-research.md`. You
+    may return suggestions only and write nothing. Do not call tools.
+    Return exactly `Return source pointers; write nothing.`
   tags:
     category: agent-behavior
     advisory: "true"
     agent: rpi-researcher
   graders:
   - type: output-matches
-    name: lane-path-preflight
+    name: return-only-no-write
     config:
-      pattern: (?i)^\s*(validate|preflight-check)\s+the\s+lane\s+path[.!]?\s*$
-- name: rpi-review-builder-default-depth
+      pattern: (?i)^\s*return\s+source\s+pointers;\s*write\s+nothing[.!]?\s*$
+- name: rpi-reviewer-return-only-suggestions
   prompt: |
-    RPI Review Builder uses standard review depth unless the user explicitly
-    requests deep review. No deep review was requested. Do not call tools.
-    Return only the default review depth.
+    RPI Reviewer returns candidate findings for the review parent to verify
+    and never assigns review IDs itself. Which agent assigns every `RV-xxx`
+    ID? Do not call tools. Return exactly `parent`.
   tags:
     category: agent-behavior
     advisory: "true"
-    agent: rpi-review-builder
+    agent: rpi-reviewer
   graders:
-  - type: output-contains
-    name: standard-review-depth
+  - type: output-matches
+    name: parent-owns-ids
     config:
-      substring: standard
-      case_sensitive: false
+      pattern: (?i)^\s*['"`]?(?:the\s+)?(?:review\s+)?parent['"`]?[.!]?\s*$
 - name: security-planner-class-recipe
   prompt: |
     Start a security planning session for a public REST API. List the six phases the planner will walk through. Write the planning state under `.copilot-tracking/security-plans/` and report the path.

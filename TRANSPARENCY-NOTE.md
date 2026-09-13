@@ -2,7 +2,7 @@
 title: "Transparency Note: HVE Core"
 description: "Public Transparency Note for HVE Core, a prompt-engineering and agentic-customization framework distributed by microsoft/hve-core."
 author: HVE Core Maintainers
-ms.date: 2026-08-19
+ms.date: 2026-09-11
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -172,7 +172,7 @@ Evaluation methods:
 
 * **Automated validation.** Every pull request runs the full CI suite: markdown and frontmatter linting, model-reference checks, link checking, PowerShell and Python linting, YAML validation, collection-metadata and marketplace checks, dependency-pinning and action-version checks, copyright-header checks, and skill-structure validation.
 * **Test suites.** Pester tests cover the PowerShell scripts and pytest covers the Python skill code. Results are written to the repository's logs directory and gate merge.
-* **Prompt-engineering evaluation.** HVE Builder uses independent static review, fidelity-labeled behavior testing, and non-mutating host validation. Reports distinguish contained simulation from native behavior and retain human review as the final gate.
+* **Prompt-engineering evaluation.** HVE Builder uses a review pass against its requirements catalog and review rubric, optionally in fresh context through a read-only reviewer subagent, together with non-mutating host validation. Review evidence names the revision it assessed and retains human review as the final gate.
 * **Human review.** A maintainer reviews every change. Supply-chain and dependency findings surface to that reviewer.
 
 Evaluation results: the CI suite and human review gate merge, so a file that fails any check does not ship. This verifies file quality (structure, links, conventions, pinned dependencies). It does not verify how a downstream model behaves on the file, which depends on the host platform and sits outside HVE Core's control.

@@ -371,7 +371,7 @@ Research topics (SHOULD include as applicable):
 Research protocol:
 
 1. MUST provide the topic and architecture decision purpose; network operators, security reviewers, and remediation owners as the audience and intended use; explicit questions and evidence criteria; site, technology, cloud, guidance-version, and source scope plus non-goals; intake-gate, safety, uptime, licensing, and deployment constraints; supplied intake, architecture, conduit, and assessment evidence; requested outputs; and output mode (`analysis` or `comparison`).
-2. MUST use the skill's default evidence root and let it resolve the date, task slug, primary and delegated artifact paths, worker selection, lane contracts, budgets, and synthesis.
+2. MUST use the skill's default evidence root.
 3. MUST read the completed primary research artifact before incorporating applicable findings into scenario-specific recommendations.
 4. MUST cite applicable findings in the assessment file as references used.
 5. MUST treat `Blocked` and `Needs clarification` as unresolved evidence. If `rpi-research` or a required lookup capability is unavailable, MUST state that limitation and stop Microsoft-guidance-dependent mapping. MUST NOT replace unavailable evidence with low-confidence standards claims synthesized from training data.

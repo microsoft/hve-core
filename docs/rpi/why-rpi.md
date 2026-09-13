@@ -3,7 +3,7 @@ title: Why the RPI Workflow Works
 description: The psychology and principles behind the evidence-led RPI lifecycle and its entry surfaces
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-11
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -49,7 +49,7 @@ RPI keeps Research, Plan, Implement, Review, and Follow-up distinct so a task us
 
 When a long lifecycle needs a fresh context, durable artifacts preserve the task identity, evidence, decisions, and next action. A reset can reduce accumulated context, but it does not require a new research stage or a fresh run of every lifecycle concept.
 
-Use `RPI Agent` as a user-selected wrapper that activates the applicable RPI skills. Use `/rpi-quick` as the skill-based full-flow entry point. They are alternative entry surfaces for the same phase skills, not autonomous dispatchers of specialized task workers.
+Use `RPI Agent` as a user-selected wrapper that activates the applicable RPI skills. It is an entry surface for the phase skills, not an autonomous dispatcher of specialized task workers.
 
 ### The Difference in Practice
 
@@ -76,7 +76,7 @@ When evidence is adequate, Research is reused or satisfied-and-skipped instead o
 
 ### Planning Phase: Sequencing, Not Improvising
 
-`/rpi-plan` synthesizes adequate evidence into an adaptable implementation strategy. It owns one checklist and can use bounded assistance according to the user's delegation preference. Planning focuses on:
+`/rpi-plan` synthesizes adequate evidence into an adaptable implementation strategy. It owns one checklist and drafts every phase itself. Planning focuses on:
 
 * Giving each phase a coherent outcome goal and each task an observable behavior or capability goal.
 * Identifying dependencies between changes.
@@ -100,8 +100,7 @@ The plan becomes a contract. When implementation begins, the AI follows the plan
 
 `/rpi-review` writes one record that reconciles implementation against documented evidence:
 
-* Compares the task-centered plan, critique, changes, and validation evidence.
-* Uses one selected review worker to build the record, while the review parent decides the outcome and every route.
+* Compares the task-centered plan, critique, changes, and validation evidence in one pass and writes the findings itself, then decides the outcome and every route.
 * Separates execution status from outcome and records validation as passed, failed, skipped, or unavailable.
 * Routes defects to implementation, decision gaps to planning, research gaps to research, and residual work to follow-up.
 
@@ -145,10 +144,6 @@ HVE Core provides alternative surfaces for the same RPI phase skills. Choose the
 
 Select `RPI Agent` when you want a user-selected lifecycle wrapper. It activates matching RPI skills, begins with research readiness, and preserves one task identity across any durable artifacts. It runs in manual mode by default and can switch to a confirmed automatic session that completes the remaining phases through Review and then offers ranked follow-up work.
 
-### rpi-quick
-
-Use `/rpi-quick` when you want the skill-based full-flow entry point. It follows the same research-readiness, planning, implementation, review, and follow-up contract as `RPI Agent`.
-
 ### Direct Phase Skills
 
 Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when the next responsible lifecycle action is known.
@@ -158,7 +153,6 @@ Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when the ne
 | Entry surface       | Use it when                                          | Lifecycle contract                                 |
 |---------------------|------------------------------------------------------|----------------------------------------------------|
 | `RPI Agent`         | You want a user-selected wrapper around phase skills | Research readiness and applicable phase activation |
-| `/rpi-quick`        | You want a skill-based full-flow entry point         | Same phase skills and durable task identity        |
 | Direct phase skills | The next responsible action is already known         | Bounded Research, Plan, Implement, or Review work  |
 
 ### Evidence-Driven Escalation

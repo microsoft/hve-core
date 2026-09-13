@@ -47,13 +47,13 @@ Treat delegation as a first-class architecture decision, not an afterthought. Du
 
 ## Extending an existing workflow
 
-When the request adds project-specific capability to a workflow such as `rpi-research`, `rpi-plan`, or `code-review`, extend it rather than fork it. Read the workflow's skill first and capture how it discovers helpers (name and description matching, registration) and what it passes on dispatch. Then choose the artifact by where the work should run:
+When the request adds project-specific capability to a workflow such as `rpi-research`, `rpi-plan`, or `code-review`, extend it rather than fork it. Read the workflow's skill first and capture how it discovers extensions (description matching, registration), whether an extension is required or optional, and what it passes when it uses one. For the RPI phases, the description is the whole contract: the phase reads it to decide when to call the extension, what to give it, and what to expect back. Then choose the artifact by where the work should run:
 
 * A skill when the knowledge should load into the workflow's own context and be applied while it works: source locations, indexing steps, query and citation conventions, and bundled scripts. The workflow stays in control and nothing is isolated.
-* A subagent when gathering is high-volume, parallelizable, or would crowd out the parent's working context: a lane worker that gathers and indexes, then returns a bounded summary and an evidence pointer.
-* Both when a skill holds the reusable corpus instructions and scripts and a thin subagent activates that skill for isolated lanes.
+* A subagent when gathering is high-volume, parallelizable, or would crowd out the parent's working context: a helper that gathers, then returns source pointers, excerpts, and brief notes that the workflow verifies before recording anything.
+* Both when a skill holds the reusable corpus instructions and scripts and a thin subagent activates that skill for isolated gathering.
 
-Example: a team wants `rpi-research` and `rpi-plan` to draw on an internal design-document corpus. A skill whose name or description marks it for use during research and planning documents where the corpus lives, how to run its indexing script, and how to cite results; both workflows discover it through their helper-selection rules. If the corpus is large enough that indexing would flood the parent's context, add a research specialist subagent that runs the index in an isolated lane and returns findings to `rpi-research`. [extending-hve-builder.md](extending-hve-builder.md) works this example through each workflow's contract.
+Example: a team wants `rpi-research` and `rpi-plan` to draw on an internal design-document corpus. A skill whose description marks it for use during research and planning documents where the corpus lives, how to run its indexing script, and how to cite results; both workflows activate it through their skill-selection rules. If the corpus is large enough that searching it would flood the research context, add a research helper subagent that searches the corpus for one bounded question and returns source pointers to `rpi-research`, which reads and records the evidence itself. [extending-hve-builder.md](extending-hve-builder.md) works this example through each workflow's contract.
 
 ## Choose the model profile
 
@@ -107,7 +107,7 @@ model: <resolved-low-profile-model> (copilot)
 
 The worker body defines its bounded input and structured summary without selecting a tool configuration or order.
 
-Parent-owned test step: classify the complete change after static findings and local validation are closed. The `hve-builder` skill records a supported skip for Minor and Medium changes. For a Major change, freeze the source boundary and invoke `hve-builder-tester`. The parent may fix required findings and assess a revised candidate under the workflow contract's convergence rules. The tester owns fidelity, execution, evidence integrity, independent grading, and cleanup; do not dispatch `HVE Artifact Tester` directly.
+Parent-owned review step: after local validation closes, run the review pass against the complete candidate. Review it yourself, or dispatch `HVE Builder Reviewer` when fresh context would help, then verify each finding at its cited location before recording it. The parent fixes required findings and reviews the revised candidate under the workflow contract's convergence rules; the reviewer never edits source or writes evidence.
 
 ## Placement heuristics
 
