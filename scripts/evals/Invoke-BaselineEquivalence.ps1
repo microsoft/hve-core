@@ -29,8 +29,9 @@
     `.github/agents/`. Defaults to `rpi-agent`.
 
 .PARAMETER Tier
-    The harness mode. `devloop` runs a single primary model and stays advisory; `ci`
-    runs a model array for broader coverage and is authoritative. Defaults to `devloop`.
+    The harness mode. `devloop` runs a single primary model and stays advisory;
+    `calibration` and `ci` run a fixed model pair with authoritative deterministic
+    and structural evidence. Defaults to `devloop`.
     The former `pr` and `nightly` names are rejected with a migration message rather
     than aliased, so a stale caller fails loudly instead of silently selecting a
     different exit policy.
@@ -38,8 +39,8 @@
 .PARAMETER Model
     Optional explicit model id for the `devloop` tier. When supplied it overrides the
     agent's frontmatter `model:` hint and the built-in default, letting callers pin a
-    cheaper model for advisory runs. Ignored for the `ci` tier, which always runs its
-    fixed model array of `gpt-5.6-luna` and `claude-sonnet-4.6`.
+    cheaper model for advisory runs. Ignored for the `calibration` and `ci` tiers,
+    which always run the fixed pair `gpt-5.6-luna` and `claude-sonnet-5`.
 
 .PARAMETER ComparisonJudgeModel
     Model used as the `vally compare` judge. Defaults to `claude-haiku-4.5`.
@@ -207,11 +208,9 @@ function Resolve-ModelList {
     )
 
     if ($Tier -in @('calibration', 'ci')) {
-        # Two standard-tier models rather than a premium sweep. `gpt-5.5` carried a
-        # 7.5x cost multiplier for no measured gain in cross-vendor signal, and
-        # `claude-sonnet-latest` produced no trajectories at all, so a floating alias
-        # is pinned to an explicit version that the suite has actually executed.
-        return @('gpt-5.6-luna', 'claude-sonnet-4.6')
+        # Keep cross-vendor coverage pinned to explicit model IDs rather than floating
+        # aliases. Hints and overrides apply only to advisory devloop runs.
+        return @('gpt-5.6-luna', 'claude-sonnet-5')
     }
 
     if ($ModelOverride) { return @($ModelOverride) }
