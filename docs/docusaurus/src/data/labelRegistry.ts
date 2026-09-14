@@ -12,6 +12,7 @@ export const labelRegistry = {
   deepDive: 'Deep dive',
   topics: 'Topics',
   resources: 'Resources',
+  slides: 'Slides',
   community: 'Community',
   accessibility: 'Accessibility',
   hveCore: 'HVE Core',
