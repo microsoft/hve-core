@@ -2,7 +2,7 @@
 title: Enterprise Artifact Hub
 description: Configure HVE Core to download tools, modules, and packages from internal mirrors or artifact proxies
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-09-11
 ms.topic: how-to
 keywords:
   - enterprise
@@ -147,16 +147,21 @@ DevContainer and for Codespaces, follow
 
 ### pip and uv
 
-HVE Core installs Python project dependencies with `uv sync`. Set
-`UV_DEFAULT_INDEX` to redirect those installs. `PIP_INDEX_URL` controls pip and uv's
-pip-compatible interface; it does not redirect `uv sync`. Set both variables
-when your workflows use both command families.
+Set `UV_DEFAULT_INDEX` to redirect DevContainer Python provisioning and direct
+uv commands. `PIP_INDEX_URL` controls pip-compatible commands. Set both
+variables when your workflows use both command families.
 
-Write `UV_DEFAULT_INDEX` with the exact index URL recorded in the tracked
-`uv.lock` files. uv treats `https://pypi.org/simple` and
-`https://pypi.org/simple/` as different lock inputs, so a trailing-slash
-mismatch makes `uv sync --locked` fail even when the resolved dependencies are
-identical.
+The DevContainer preserves the canonical public source identity in each
+committed `uv.lock`. With a custom `UV_DEFAULT_INDEX`, setup validates the lock
+offline, exports its exact versions and hashes, and installs those requirements
+through the mirror. Project-declared indexes remain available after the mirror
+for packages such as CPU-specific PyTorch builds. Every selected artifact must
+match a hash in the canonical lock.
+
+Direct uv commands behave differently. `uv sync --locked` treats a custom
+default index as a changed lock input, while `uv sync --frozen` follows the
+public artifact URLs already recorded in the lock. Do not run `uv lock` with an
+internal index and commit the result.
 
 Keep internal indexes out of tracked `pyproject.toml` and `uv.lock` files so
 committed dependency metadata remains reproducible for public contributors.
@@ -180,8 +185,9 @@ After configuring the variables, confirm the setup works:
   uv environment synchronization complete through the configured services.
 2. Run `npm config get registry` inside the container and confirm it returns the
   internal npm registry.
-3. Run `uv sync --frozen` from a skill directory and confirm package downloads
-  use the internal Python index.
+3. From the repository root, run
+  `source .devcontainer/scripts/on-create.sh && sync_python_project <project>`
+  for one Python project and confirm package downloads use the internal index.
 4. Run the required security scripts and confirm GitHub API calls complete
   without connection errors.
 5. When `HVE_PSGALLERY_SOURCE_URL` is set, check that `Register-PSRepository`

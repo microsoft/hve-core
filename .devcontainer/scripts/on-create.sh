@@ -7,6 +7,67 @@
 
 set -euo pipefail
 
+sync_python_project() {
+  local project_dir="$1"
+  local default_index="${UV_DEFAULT_INDEX:-https://pypi.org/simple}"
+
+  if [[ "${default_index%/}" == "https://pypi.org/simple" ]]; then
+    (cd "${project_dir}" && uv sync --locked)
+    return
+  fi
+
+  (
+    local -a index_args=(--default-index "${default_index}")
+    local -a project_index_args=()
+    local index_url
+    local requirements_file
+
+    cd "${project_dir}"
+    requirements_file="$(mktemp)"
+    trap 'rm -f "${requirements_file}"' EXIT
+
+    while IFS= read -r index_url; do
+      project_index_args+=(--index "${index_url}")
+    done < <(
+      python3 - <<'PY'
+import tomllib
+
+with open("pyproject.toml", "rb") as project_file:
+    project = tomllib.load(project_file)
+
+for index in project.get("tool", {}).get("uv", {}).get("index", []):
+    if url := index.get("url"):
+        print(url)
+PY
+    )
+
+    if (( ${#project_index_args[@]} > 0 )); then
+      # Required hashes constrain candidates when searching project indexes.
+      index_args+=(--index "${default_index}")
+      index_args+=("${project_index_args[@]}")
+      index_args+=(--index-strategy unsafe-first-match)
+    fi
+
+    env -u UV_DEFAULT_INDEX -u UV_INDEX_URL \
+      uv export \
+        --locked \
+        --offline \
+        --no-emit-project \
+        --quiet \
+        --output-file "${requirements_file}"
+
+    if [[ ! -x .venv/bin/python ]]; then
+      uv venv .venv
+    fi
+
+    uv pip sync \
+      --python .venv/bin/python \
+      --require-hashes \
+      "${index_args[@]}" \
+      "${requirements_file}"
+  )
+}
+
 sync_python_environments() {
   local repo_root
   local project_file
@@ -25,8 +86,8 @@ sync_python_environments() {
       continue
     fi
 
-    if ! (cd "${project_dir}" && uv sync --locked); then
-      echo "ERROR: uv sync --locked failed in ${project_dir}" >&2
+    if ! sync_python_project "${project_dir}"; then
+      echo "ERROR: Python environment sync failed in ${project_dir}" >&2
       failed=1
     fi
   done < <(
@@ -187,7 +248,7 @@ main() {
   fi
 
   echo "Syncing Python environment for moderation eval..."
-  (cd scripts/evals/moderation && uv sync --locked)
+  sync_python_project "scripts/evals/moderation"
 
   echo "System dependencies installed successfully"
 }

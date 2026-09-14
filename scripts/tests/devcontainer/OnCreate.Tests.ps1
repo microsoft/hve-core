@@ -28,11 +28,23 @@ BeforeAll {
             [string]$Path,
 
             [Parameter(Mandatory = $false)]
-            [switch]$WithoutLock
+            [switch]$WithoutLock,
+
+            [Parameter(Mandatory = $false)]
+            [string]$IndexUrl
         )
 
         New-Item -ItemType Directory -Path $Path -Force | Out-Null
-        Set-Content -Path (Join-Path $Path 'pyproject.toml') -Value '[project]'
+        $projectContent = @('[project]')
+        if ($IndexUrl) {
+            $projectContent += @(
+                '',
+                '[[tool.uv.index]]',
+                'name = "project-index"',
+                "url = `"$IndexUrl`""
+            )
+        }
+        Set-Content -Path (Join-Path $Path 'pyproject.toml') -Value $projectContent
         if (-not $WithoutLock) {
             Set-Content -Path (Join-Path $Path 'uv.lock') -Value 'version = 1'
         }
@@ -52,16 +64,21 @@ BeforeAll {
             [string]$CallLog,
 
             [Parameter(Mandatory = $false)]
-            [string]$FailDirectory
+            [string]$FailDirectory,
+
+            [Parameter(Mandatory = $false)]
+            [string]$DefaultIndex = 'https://pypi.org/simple'
         )
 
         $originalPath = $env:PATH
         $originalCallLog = $env:UV_CALL_LOG
         $originalFailDirectory = $env:UV_FAIL_DIR
+        $originalDefaultIndex = $env:UV_DEFAULT_INDEX
         try {
             $env:PATH = "$StubDirectory$([System.IO.Path]::PathSeparator)$originalPath"
             $env:UV_CALL_LOG = $CallLog
             $env:UV_FAIL_DIR = $FailDirectory
+            $env:UV_DEFAULT_INDEX = $DefaultIndex
             $command = "source $(ConvertTo-BashLiteral $script:OnCreatePath); sync_python_environments $(ConvertTo-BashLiteral $TestRepo)"
             & $script:BashCommand.Source -c $command | Out-Null
             $exitCode = $LASTEXITCODE
@@ -71,6 +88,7 @@ BeforeAll {
             $env:PATH = $originalPath
             $env:UV_CALL_LOG = $originalCallLog
             $env:UV_FAIL_DIR = $originalFailDirectory
+            $env:UV_DEFAULT_INDEX = $originalDefaultIndex
         }
     }
 
@@ -108,6 +126,8 @@ Describe 'on-create Python environment sync contract' -Tag 'Unit' {
 
             $content | Should -Match 'function sync_python_environments|sync_python_environments\(\)'
             $content | Should -Match 'BASH_SOURCE\[0\].*\$0'
+            $content | Should -Match 'sync_python_project "scripts/evals/moderation"'
+            $content | Should -Not -Match 'cd scripts/evals/moderation.*uv sync --locked'
         }
 
         It 'Makes the coding-agent setup call the shared sync function' {
@@ -152,6 +172,31 @@ Describe 'on-create Python environment sync contract' -Tag 'Unit' {
             ($calls -join "`n") | Should -Match 'sample skill\|sync --locked'
             ($calls -join "`n") | Should -Match 'hooks/shared/telemetry\|sync --locked'
             ($calls -join "`n") | Should -Not -Match 'moderation|plugins/generated|node_modules'
+        }
+
+        It 'Installs locked hashes through a custom default index without relocking' {
+            if ($IsWindows -or -not $script:BashCommand) {
+                Set-ItResult -Skipped -Because 'authoritative Bash execution runs on Ubuntu'
+                return
+            }
+
+            New-TestPythonProject `
+                -Path (Join-Path $script:TestRepo '.github/skills/mirrored-project') `
+                -IndexUrl 'https://project.example.com/simple'
+
+            $exitCode = Invoke-TestPythonSync `
+                -TestRepo $script:TestRepo `
+                -StubDirectory $script:StubDirectory `
+                -CallLog $script:CallLog `
+                -DefaultIndex 'https://mirror.example.com/pypi/simple'
+            $calls = @(Get-Content -Path $script:CallLog)
+
+            $exitCode | Should -Be 0
+            $calls | Should -HaveCount 3
+            $calls[0] | Should -Match 'mirrored-project\|export --locked --offline --no-emit-project --quiet --output-file '
+            $calls[1] | Should -Match 'mirrored-project\|venv \.venv'
+            $calls[2] | Should -Match 'mirrored-project\|pip sync --python \.venv/bin/python --require-hashes --default-index https://mirror\.example\.com/pypi/simple --index https://mirror\.example\.com/pypi/simple --index https://project\.example\.com/simple --index-strategy unsafe-first-match '
+            ($calls -join "`n") | Should -Not -Match 'sync --locked'
         }
 
         It 'Returns nonzero after a child sync fails and still processes other projects' {
