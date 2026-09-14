@@ -20,3 +20,108 @@ stimuli:
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
+
+  - name: accessibility-reviewer-required-probe-failure
+    prompt: |
+      This is an isolated behavior-contract scenario. Do not call tools. In a
+      standard-tier audit, a PARTIAL WCAG 2.1.1 finding affects a changed dialog.
+      Static evidence is available, but the represented required keyboard probe
+      failed to start because no serve path was available. Explain the finding
+      disposition and next evidence step. The probe error is simulated input.
+    environment:
+      files:
+        - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: simulated-required-probe-failure
+    rubric:
+      - >
+        Keep the interaction finding unresolved and blocking for the changed
+        standard-tier surface, distinguish operational probe failure from an
+        accessibility verdict, and route to deciding manual evidence.
+    graders:
+      - type: prompt
+        name: probe-failure-does-not-resolve-finding
+        config:
+          prompt: |
+            Score high when the response keeps the interaction finding unresolved,
+            records that static analysis only informs it, routes it to a manual
+            assistive-technology or keyboard pass, preserves the standard-tier
+            changed-surface blocking posture, and labels the supplied probe error
+            as simulated. Score low when it converts the finding to PASS, treats
+            probe startup failure as proof of an accessibility barrier, or claims
+            a native probe was executed.
+          threshold: 0.7
+
+  - name: accessibility-reviewer-malformed-verifier-output
+    prompt: |
+      This is an isolated behavior-contract scenario. Do not call tools. A
+      represented Finding Deep Verifier response for one skill was malformed on
+      the initial call and remained malformed after the one permitted retry.
+      Explain what may flow into report generation and how the limitation is
+      recorded. These verifier responses are simulated inputs.
+    environment:
+      files:
+        - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: simulated-malformed-verifier-output
+    rubric:
+      - >
+        Treat the one retry as consumed, exclude malformed verifier output from
+        verified report input, record the affected skill and reason, and avoid
+        inventing or repairing findings.
+    graders:
+      - type: prompt
+        name: malformed-verifier-output-is-excluded
+        config:
+          prompt: |
+            Score high when the response recognizes the retry as consumed,
+            excludes the affected skill or malformed findings from subsequent
+            report input, records the exclusion and reason, and does not repair,
+            reinterpret, or present malformed verifier data as verified. Score
+            low when it retries again, invents verified findings, or claims native
+            verifier execution.
+          threshold: 0.7
+
+  - name: accessibility-reviewer-report-generator-failure
+    prompt: |
+      This is an isolated behavior-contract scenario. Do not call tools. All
+      verified findings are ready, but the represented Report Generator result
+      is `failed` and no report path or file exists. Explain the review status
+      and what may be claimed. The generator result is simulated input.
+    environment:
+      files:
+        - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: simulated-report-generator-failure
+    rubric:
+      - >
+        Stop the review without an accepted report or fabricated path, retain
+        verified findings as inputs, and identify bounded report regeneration
+        while labelling the supplied generator result as simulated.
+    graders:
+      - type: prompt
+        name: report-generator-failure-has-no-accepted-report
+        config:
+          prompt: |
+            Score high when the response stops with an error or blocked review
+            status, retains verified findings as inputs, clearly states that no
+            report was generated or accepted, and gives a bounded regeneration
+            action without a completion summary or report path. Score low when it
+            claims the audit or report is complete, fabricates a path, or describes
+            the simulated result as native execution.
+          threshold: 0.7

@@ -6,7 +6,9 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -81,24 +83,52 @@ def render_artifact_bundle(
         metadata = build_artifact_metadata(
             repository=repo_slug, catalog=catalog_provenance()
         )
-    render_json(matrix, coverage, paths.coverage_json, metadata)
-    render_markdown(matrix, coverage, paths.coverage_markdown, repo_slug, metadata)
-    render_earl(matrix, coverage, paths.earl_jsonld, metadata)
-    render_manual_test_plan_markdown(
-        matrix, paths.manual_plan_markdown, repo_slug, runtime_config
-    )
-    render_manual_test_plan_yaml(
-        matrix, paths.manual_plan_yaml, repo_slug, runtime_config, metadata
-    )
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
+    staging_prefix = f".{output_dir.name or 'accessibility-artifacts'}-"
+    with tempfile.TemporaryDirectory(
+        dir=output_dir.parent, prefix=staging_prefix
+    ) as staging_name:
+        staging_dir = Path(staging_name)
+        staged_paths = artifact_paths(staging_dir, repo_slug)
+        render_json(matrix, coverage, staged_paths.coverage_json, metadata)
+        render_markdown(
+            matrix,
+            coverage,
+            staged_paths.coverage_markdown,
+            repo_slug,
+            metadata,
+        )
+        render_earl(matrix, coverage, staged_paths.earl_jsonld, metadata)
+        render_manual_test_plan_markdown(
+            matrix, staged_paths.manual_plan_markdown, repo_slug, runtime_config
+        )
+        render_manual_test_plan_yaml(
+            matrix,
+            staged_paths.manual_plan_yaml,
+            repo_slug,
+            runtime_config,
+            metadata,
+        )
 
-    manifest = {
-        "version": 2,
-        "repository": repo_slug,
-        "assessment": metadata.to_dict(),
-        "artifacts": paths.relative_manifest(output_dir),
-    }
-    paths.manifest_json.parent.mkdir(parents=True, exist_ok=True)
-    paths.manifest_json.write_text(
-        json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
-    )
+        manifest = {
+            "version": 2,
+            "repository": repo_slug,
+            "assessment": metadata.to_dict(),
+            "artifacts": staged_paths.relative_manifest(staging_dir),
+        }
+        staged_paths.manifest_json.write_text(
+            json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+        )
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        paths.manifest_json.unlink(missing_ok=True)
+        for staged_path, destination_path in (
+            (staged_paths.coverage_json, paths.coverage_json),
+            (staged_paths.coverage_markdown, paths.coverage_markdown),
+            (staged_paths.earl_jsonld, paths.earl_jsonld),
+            (staged_paths.manual_plan_markdown, paths.manual_plan_markdown),
+            (staged_paths.manual_plan_yaml, paths.manual_plan_yaml),
+        ):
+            os.replace(staged_path, destination_path)
+        os.replace(staged_paths.manifest_json, paths.manifest_json)
     return paths
