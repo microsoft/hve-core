@@ -2,7 +2,7 @@
 title: GitHub Copilot Prompts
 description: Coaching and guidance prompts for specific development tasks that provide step-by-step assistance and context-aware support
 author: Edge AI Team
-ms.date: 2026-08-01
+ms.date: 2026-09-11
 ms.topic: hub-page
 estimated_reading_time: 3
 keywords:
@@ -39,7 +39,7 @@ Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when you ne
 
 ### Source Control & Commit Quality
 
-* **[Git Commit (Stage + Commit)](./hve-core/git-commit.prompt.md)** - Stages all changes and creates a Conventional Commit automatically
+* **[Git Commit (Select + Commit)](./hve-core/git-commit.prompt.md)** - Stages selected whole paths and confirms the exact staged set before creating a Conventional Commit
 * **[Git Commit Message Generator](./hve-core/git-commit-message.prompt.md)** - Generates a compliant commit message for currently staged changes
 * **[Git Merge](./hve-core/git-merge.prompt.md)** - Git merge, rebase, and rebase --onto workflows with conflict handling
 * **[Git Setup](./hve-core/git-setup.prompt.md)** - Verification-first Git configuration assistant

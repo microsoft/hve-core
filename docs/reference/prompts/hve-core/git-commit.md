@@ -1,9 +1,9 @@
 ---
 title: Git Commit
-description: "Stage all changes, generate a conventional commit message, and commit"
+description: "Stage selected paths, confirm the staged set, and create a conventional commit"
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-09-02
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - prompt
@@ -23,16 +23,16 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Stage all changes, generate a conventional commit message, and commit
+Stage selected paths, confirm the staged set, and create a conventional commit
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Use this prompt when all intended working-tree changes are ready to be staged and committed together. Use git-commit-message when you want message guidance without changing repository history.
+Use this prompt when you want to select whole changed paths, inspect the exact staged set, and create one local commit. Use git-commit-message when you want message guidance without changing repository history.
 
 ## How to use it
 
-Review the working tree before invoking the command. The prompt checks ignored and sensitive paths, stages the intended changes, generates a Conventional Commit message, and creates the commit; it does not push it.
+Invoke the command, select the whole paths intended for the commit, and confirm the exact staged set. The prompt preserves pre-existing index intent, generates a Conventional Commit message, and creates one local commit; it does not push it.
 
 ## Example usage
 
@@ -40,4 +40,4 @@ Review the working tree before invoking the command. The prompt checks ignored a
 /git-commit
 ```
 
-The prompt stages the reviewed repository changes and creates one local commit with a generated Conventional Commit message.
+The prompt stages only the selected whole paths and creates one local commit after exact staged-set confirmation.

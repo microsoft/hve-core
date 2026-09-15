@@ -469,8 +469,16 @@ stimuli:
 
   - name: prompt-git-commit-conformance
     prompt: |
-      Invoke the `git-commit` prompt with minimal arguments and explain how it
-      coordinates the workflow.
+      Invoke the `git-commit` prompt using only this synthetic candidate-path
+      inventory. Do not inspect or mutate the actual workspace. No path
+      selection has been provided.
+
+      - `docs/intended.md`: tracked and modified, not staged
+      - `notes/local.txt`: tracked and modified, not staged and unrelated
+      - `.github/prompts/prior.prompt.md`: modified and initially staged
+      - `docs/old-name.md` -> `docs/new-name.md`: unstaged rename pair
+
+      Follow the prompt only until its first required user decision, then stop.
     tags:
       category: behavior-conformance
       prompt: git-commit
@@ -481,9 +489,25 @@ stimuli:
         config:
           pattern: "(?i)git|commit"
       - type: output-matches
-        name: scope-language
+        name: requests-whole-path-selection
         config:
-          pattern: "(?i)commit|stage|message|scope|conventional"
+          pattern: '(?is)(?:select|choose).{0,160}(?:whole\s+)?paths?.{0,160}(?:commit|stage)'
+      - type: output-matches
+        name: preserves-initial-index-intent
+        config:
+          pattern: '(?is)(?:prior\.prompt\.md|initially\s+staged).{0,200}(?:must|required|include|selected)'
+      - type: output-matches
+        name: keeps-rename-pair-atomic
+        config:
+          pattern: '(?is)(?:rename|old-name\.md).{0,200}(?:new-name\.md|both|pair)'
+      - type: output-matches
+        name: stops-before-mutation
+        config:
+          pattern: '(?is)(?:before|without|not).{0,120}(?:stag|commit)|(?:stag|commit).{0,120}(?:only\s+after|until|wait)'
+      - type: output-not-matches
+        name: does-not-claim-a-commit
+        config:
+          pattern: "(?i)commit (?:created|completed|succeeded) successfully"
 
   - name: prompt-git-commit-message-conformance
     prompt: |
