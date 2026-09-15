@@ -17,6 +17,7 @@ from validate_catalog import (
     _is_rfc3339_date_time,
     _reject_tagged_node,
     _sanitize_yaml_error,
+    _source_location_contains_secret,
     build_format_checker,
     create_parser,
     extract_frontmatter,
@@ -143,6 +144,50 @@ def test_given_unknown_and_self_lineage_when_validated_then_reports_errors() -> 
     # Assert
     assert any("unknown lineage source" in error for error in errors)
     assert any("cannot derive from itself" in error for error in errors)
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        "postgresql://analyst:synthetic-pass@example.invalid/database",
+        "https://example.invalid/data?access_token=synthetic-token",
+        "storage/path;AccountKey=synthetic-key",
+        "queue/path?SharedAccessSignature=synthetic-signature",
+    ],
+    ids=["uri-userinfo", "query-token", "connection-key", "shared-access-signature"],
+)
+def test_given_secret_bearing_location_when_validated_then_reports_safely(
+    location: str,
+) -> None:
+    # Arrange
+    data = _valid_catalog()
+    data["entities"][0]["source"]["location"] = location
+
+    # Act
+    errors = validate_catalog(data, load_schema(SKILL_ROOT))
+
+    # Assert
+    assert errors == [
+        "entity customer source.location contains embedded credentials or "
+        "secret material"
+    ]
+    assert location not in "\n".join(errors)
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        "connections/crm-readonly",
+        "https://example.invalid/data?format=csv",
+        "lake/silver/product",
+    ],
+    ids=["connection-reference", "ordinary-query", "storage-path"],
+)
+def test_given_safe_location_when_checked_then_is_not_secret_bearing(
+    location: str,
+) -> None:
+    # Act and assert
+    assert not _source_location_contains_secret(location)
 
 
 def test_given_unequal_composite_keys_when_validated_then_reports_error() -> None:

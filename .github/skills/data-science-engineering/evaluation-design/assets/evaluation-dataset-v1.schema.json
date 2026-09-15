@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/evaluation-design/evaluation-dataset-v1.schema.json",
+  "title": "Evaluation dataset version 1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["metadata", "evaluation_pairs"],
+  "properties": {
+    "metadata": {"$ref": "#/$defs/metadata"},
+    "evaluation_pairs": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/pair"}
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {"type": "string", "minLength": 1},
+    "stringList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/nonEmptyString"}
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system_name", "created_date", "version", "total_pairs", "distribution", "user_populations", "population_coverage", "approach", "evaluation_mode", "recommended_tooling", "review_state", "validation_status", "generation_method"],
+      "properties": {
+        "system_name": {"$ref": "#/$defs/nonEmptyString"},
+        "created_date": {"type": "string", "format": "date"},
+        "version": {"const": "1.0.0"},
+        "total_pairs": {"type": "integer", "minimum": 0},
+        "distribution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["easy", "grounding", "hard", "negative", "safety"],
+          "properties": {
+            "easy": {"type": "integer", "minimum": 0},
+            "grounding": {"type": "integer", "minimum": 0},
+            "hard": {"type": "integer", "minimum": 0},
+            "negative": {"type": "integer", "minimum": 0},
+            "safety": {"type": "integer", "minimum": 0}
+          }
+        },
+        "user_populations": {"$ref": "#/$defs/stringList"},
+        "population_coverage": {
+          "type": "object",
+          "additionalProperties": {"type": "integer", "minimum": 0}
+        },
+        "approach": {"enum": ["low-code", "pro-code"]},
+        "evaluation_mode": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["manual", "batch"]}
+        },
+        "recommended_tooling": {"$ref": "#/$defs/nonEmptyString"},
+        "review_state": {"enum": ["draft", "sampled", "confirmed"]},
+        "validation_status": {"enum": ["ai-generated", "expert-reviewed", "mixed"]},
+        "generation_method": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "query", "expected_response", "category", "difficulty", "populations", "tools_expected", "source_reference", "needs_sme_review", "notes"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"},
+        "query": {"$ref": "#/$defs/nonEmptyString"},
+        "expected_response": {"$ref": "#/$defs/nonEmptyString"},
+        "category": {"$ref": "#/$defs/nonEmptyString"},
+        "difficulty": {"enum": ["easy", "grounding", "hard", "negative", "safety"]},
+        "populations": {"$ref": "#/$defs/stringList"},
+        "tools_expected": {"$ref": "#/$defs/stringList"},
+        "source_reference": {
+          "oneOf": [
+            {"$ref": "#/$defs/nonEmptyString"},
+            {"type": "null"}
+          ]
+        },
+        "needs_sme_review": {"type": "boolean"},
+        "notes": {"type": "string"}
+      }
+    }
+  }
+}
