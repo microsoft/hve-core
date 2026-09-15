@@ -34,6 +34,7 @@ Reach for this skill when the work touches data movement, transformation, or the
 * Deciding where schema and quality validation belongs relative to a Bronze-to-Silver boundary, and why replayability constrains that placement.
 * Writing or reviewing pytest suites for data-science and MLOps code, including which outside calls to mock and which to leave real.
 * Distinguishing a data-validation failure from model or data drift, and routing each to its own remediation path.
+* Guarding synthetic-data generation or an authorized local replacement. Read the [synthetic-data-operation-contract.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/data-science-engineering/dataops/references/synthetic-data-operation-contract.md), require a current approved `SYNTHETIC_DATA_OPERATION_V1` preflight, and run its `validate` command before project setup, package installation, source access, or writes.
 
 Choose a different asset when:
 
@@ -53,3 +54,13 @@ and what does that imply for replay?
 The skill grounds the answer in its reference pack: validation runs at the Bronze-to-Silver boundary so Bronze retains the raw landed record, which preserves two distinct replay paths (replaying to exercise changed validation logic, and replaying to recover from a transformation defect).
 
 It also flags the notebook-extraction trigger when transformation logic outgrows an interactive cell, and separates transformation code from data-access code so the transformation is unit-testable without mocking storage.
+
+For synthetic-data work, validate the preflight record before any source access or write:
+
+```text
+python .github/skills/data-science-engineering/dataops/scripts/synthetic_data_operation.py validate --preflight preflight.json
+```
+
+Use `new-output` by default. For an authorized `replace-local` operation, create one
+candidate and result record, recheck the approved source digest, and route the final
+replacement through `commit-local`; do not overwrite the original from notebook code.
