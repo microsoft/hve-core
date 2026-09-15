@@ -10,6 +10,10 @@
 * Critique depth: {{standard_or_deep}}
 * Depth provenance: {{default_or_explicit_user_request}}
 * Invocation consumed: yes
+* Attempt ID and kind: {{unique_attempt_id_and_initial_or_recovery}}
+* Candidate identity and saved hash boundary: {{revision_hash_and_reservation_metadata_boundary}}
+* Current-dispatch provenance: {{immediate_parent_dispatch_or_standalone_initial_reservation}}
+* Original attempt and recovery approval: {{not_applicable_or_original_pointer_and_task_specific_consent}}
 
 ## Inputs and Criterion Boundary
 
