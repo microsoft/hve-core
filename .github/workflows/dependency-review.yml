@@ -35,7 +35,7 @@ jobs:
 
       - name: Submit uv.lock dependencies # Runs on push (base snapshots) and non-fork PRs
         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: advanced-security/component-detection-dependency-submission-action@31f25a8de68ae5ce2ca274bc28546a78683c15ce # v0.1.4
+        uses: advanced-security/component-detection-dependency-submission-action@b282c67b1008fde9b60da4bdfcd8849613e293b2 # v0.1.6
         with:
           detectorArgs: "UvLock=EnableIfDefaultOff"
 
