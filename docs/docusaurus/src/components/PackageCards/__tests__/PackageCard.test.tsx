@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
+import { describe, it, expect } from '@jest/globals';
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -58,18 +59,23 @@ describe('PackageCard', () => {
   });
 
   it.each([
-    ['Stable', 'maturityStable', 'Stable means the package is broadly available and validated for everyday use.'],
-    ['Preview', 'maturityPreview', 'Preview means the package is available for early adoption and feedback.'],
-    ['Experimental', 'maturityExperimental', 'Experimental means the package is early-stage and may change quickly.'],
+    ['Stable', 'maturityStable', 'Production-ready, fully supported, and generally available (GA) for everyday use.'],
+    ['Preview', 'maturityPreview', 'Available for early adoption and testing, but may contain breaking changes.'],
+    ['Experimental', 'maturityExperimental', 'Early-stage proof of concept. Not recommended for production environments.'],
   ] as const)(
     'renders the %s maturity badge with its own class and glossary text',
     (maturity, maturityClass, glossary) => {
       render(<PackageCard {...defaultProps} maturity={maturity} />);
 
-      const badge = screen.getByText(maturity);
-      expect(badge).toHaveClass('maturityBadge', maturityClass);
-      expect(badge).toHaveAttribute('title', glossary);
-      expect(badge).toHaveAttribute('aria-label', `${maturity}: ${glossary}`);
+      const badgeLink = screen.getByText(maturity);
+      expect(badgeLink).toBeInTheDocument();
+      
+      const wrapper = badgeLink.parentElement;
+      expect(wrapper).toHaveClass('badgeWrapper', maturityClass);
+      
+      const tooltip = screen.getByRole('tooltip');
+      expect(tooltip).toBeInTheDocument();
+      expect(tooltip).toHaveTextContent(glossary);
     },
   );
 
