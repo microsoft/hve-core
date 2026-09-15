@@ -20,6 +20,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       OWNER: ${{ github.repository_owner }}
       REPO: ${{ github.event.repository.name }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -32,6 +33,7 @@ jobs:
           $alerts = & .github/skills/security/gh-code-scanning/scripts/Get-CodeScanningAlerts.ps1 `
             -Owner $env:OWNER `
             -Repo $env:REPO `
+            -Branch $env:DEFAULT_BRANCH `
             -OutputFormat Json
           $alerts | Set-Content alerts.json -Encoding utf8
 
