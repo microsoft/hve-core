@@ -1,0 +1,8 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: HVE Core source analysis
+
+# Authored slide sources remain in scope. The workflow verifies generated HTML
+# against those sources before analysis; embedded third-party copies are excluded.
+paths-ignore:
+  - 'docs/slides/*.html'

@@ -1,8 +1,20 @@
 THIRD-PARTY-NOTICES
 
 This file contains third-party attribution notices for content embedded in hve-core
-instruction and skill files. These notices supplement inline attribution blocks within
+instruction and skill files and bundled presentations. These notices supplement inline attribution blocks within
 individual files.
+
+---
+
+reveal.js 6.0.2
+Copyright: (C) 2011-2026 Hakim El Hattab and reveal.js contributors
+License: MIT License
+License URI: <https://github.com/hakimel/reveal.js/blob/6.0.2/LICENSE>
+Source: <https://www.npmjs.com/package/reveal.js/v/6.0.2>
+Usage: Unmodified reveal.js JavaScript and CSS embedded in docs/slides/hve-updates.html
+and in presentations built from the HVE Slides starter. The full upstream copyright
+and permission notice is retained in each HTML file's bundled-third-party-notices
+template. Presentation content and styling outside reveal.js are repository source.
 
 ---
 

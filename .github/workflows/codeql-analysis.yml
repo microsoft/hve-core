@@ -12,8 +12,33 @@ permissions:
   contents: read
 
 jobs:
+  verify-slide-bundles:
+    name: Verify Slide Bundle Sources
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Restore slide build dependencies
+        env:
+          SEARCH_ROOT: slides
+        run: ./scripts/ci/install-skill-node-deps.sh
+
+      - name: Verify generated slide bundles against source
+        run: npm run slides:check
+
   analyze:
     name: CodeQL Analysis
+    needs: verify-slide-bundles
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,6 +64,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           queries: security-extended,security-and-quality
+          config-file: ./.github/codeql/config.yml
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
@@ -58,4 +84,3 @@ jobs:
             echo ""
             echo "📊 View results in the Security tab under Code Scanning"
           } >> "$GITHUB_STEP_SUMMARY"
-

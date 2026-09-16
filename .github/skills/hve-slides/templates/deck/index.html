@@ -1,0 +1,88 @@
+<!doctype html>
+<!-- Copyright (c) Microsoft Corporation. Licensed under the MIT License. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>HTML slide deck</title>
+  <link rel="stylesheet" href="vendor/reveal.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="components.css">
+  <script defer src="vendor/reveal.js"></script>
+  <script defer src="config.js"></script>
+  <script defer src="content.js"></script>
+  <script defer src="components.js"></script>
+  <script defer src="deck.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#presenter-controls">Skip to presentation controls</a>
+  <div id="startup" role="status">Loading the presentation. Run npm ci and npm run build in the deck directory, then open dist/index.html.</div>
+  <noscript>Enable JavaScript for the presentation controls. This deck does not run a live agent.</noscript>
+  <div class="reveal">
+    <main class="slides" aria-label="Presentation">
+      <section id="opening" data-title="Welcome" data-chapter="Introduction" data-sources="framework">
+        <div class="eyebrow">PRESENTATION STARTER</div>
+        <h1 data-deck-title>HVE slide deck</h1>
+        <p class="lead" data-deck-description>A local HTML presentation.</p>
+        <div class="two-up">
+          <article class="panel"><h3>Write the story</h3><p>Replace these examples with your audience, claims and evidence.</p></article>
+          <article class="panel"><h3>Keep the controls</h3><p>Slides and walkthrough steps have separate navigation.</p></article>
+        </div>
+        <aside class="notes">Introduce the topic and audience. This starter contains fictional examples, not verified product claims.</aside>
+      </section>
+
+      <section id="evidence" data-title="A point beside its evidence" data-chapter="Examples" data-sources="framework">
+        <div class="eyebrow">SOURCE AND EVIDENCE</div>
+        <h2>Keep the change and its check together</h2>
+        <div class="story-split">
+          <div class="story-note"><p>Make one point on the left. Show the relevant source or artifact on the right.</p></div>
+          <div data-example="source"></div>
+        </div>
+        <aside class="notes">The excerpt is illustrative. Add versioned references that support your real talk.</aside>
+      </section>
+
+      <section id="workflow" data-title="An ordered workflow" data-chapter="Examples" data-sources="framework">
+        <div class="eyebrow">WORKFLOW EXAMPLE</div>
+        <h2>Make the handoffs legible</h2>
+        <ol class="story-flow" aria-label="Example workflow">
+          <li><strong>1. Find the source</strong><span>Locate the owner.</span></li>
+          <li><strong>2. Read the contract</strong><span>Confirm the boundary.</span></li>
+          <li><strong>3. Make the change</strong><span>Keep it scoped.</span></li>
+          <li><strong>4. Check the result</strong><span>Inspect the output.</span></li>
+        </ol>
+        <p class="footnote">Use a graph for branching relationships instead of forcing them into a linear list.</p>
+        <aside class="notes">This is a layout example, not a mandatory HVE workflow. Keep labels appropriate to your topic.</aside>
+      </section>
+
+      <section id="walkthrough" class="demo-slide" data-title="Walk through one example" data-chapter="Walkthrough" data-sources="framework">
+        <div class="eyebrow">SCRIPTED WALKTHROUGH</div>
+        <h2>Show the decision before the result</h2>
+        <div class="demo" data-demo="example"></div>
+        <aside class="notes">Use Next step, Back and Reset. No message is sent and no source is edited. The conversation, question, answer and implementation result are scripted.</aside>
+      </section>
+    </main>
+  </div>
+  <nav id="presenter-controls" aria-label="Presentation controls">
+    <span id="chapter-label">Introduction</span>
+    <div class="utility-controls">
+      <button type="button" id="overview-button">Slides</button>
+      <button type="button" data-dialog="sources">Sources</button>
+      <button type="button" data-dialog="notes">Notes</button>
+      <button type="button" data-dialog="help">Keys</button>
+      <button type="button" id="motion-button" aria-pressed="false">Motion off</button>
+      <button type="button" id="fullscreen-button">Full screen</button>
+    </div>
+    <div class="slide-controls">
+      <button type="button" id="previous-slide" aria-label="Previous slide">&#8592;</button>
+      <output id="slide-count" aria-label="Current slide"></output>
+      <button type="button" id="next-slide" aria-label="Next slide">&#8594;</button>
+    </div>
+  </nav>
+  <div id="announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <dialog id="detail-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-header"><h2 id="dialog-title"></h2><button type="button" id="close-dialog">Close <kbd>Esc</kbd></button></div>
+    <div id="dialog-content"></div>
+  </dialog>
+</body>
+</html>

@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 229
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 244
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -4955,3 +4955,337 @@ stimuli:
         name: reusable-behavior-belongs-in-skill
         config:
           pattern: '(?i)^\s*skill[.!]?\s*$'
+  - name: skill-rpi-recovery-current-initial
+    prompt: |
+      A planner has verified and saved the first started reservation for task
+      sample, then immediately activated its matching initial critique run in
+      this uninterrupted execution. The candidate, output and attempt identity
+      agree and no earlier result exists. May that current critique run assess?
+      Return only assess or stop.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 71dc6feaf1b2aceab2bade46572f6338ff9a0d2af97cfba4dcb02fbc9bc15902
+    graders:
+      - type: output-matches
+        name: current-initial-admitted
+        config:
+          pattern: '(?i)^\s*assess\s*$'
+  - name: skill-rpi-recovery-current-recovery
+    prompt: |
+      A planner found no terminal result for an interrupted initial attempt,
+      confirmed the original critique run ended, reconciled saved evidence and
+      obtained task-specific user approval. It saved the single recovery
+      reservation and immediately started its matching critique run in the same
+      execution. May this current recovery run assess, and may it overwrite the
+      original output? Return exactly two lines: Assessment: assess or stop;
+      Original: preserve or overwrite.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: bed296ab9d5c32b1fac260657392c01892acee2d7e7fc99c2c94a550718de857
+    graders:
+      - type: output-matches
+        name: current-recovery-admitted-original-preserved
+        config:
+          pattern: '(?i)^\s*Assessment:[ \t]*assess[ \t]*\r?\nOriginal:[ \t]*preserve\s*$'
+  - name: skill-rpi-recovery-stale-initial
+    prompt: |
+      A later conversation sees a saved initial started reservation with
+      matching task and candidate strings, but has no immediate current-run
+      provenance. It is not the original critique run and no recovery is
+      approved. May it launch a critique from those strings? Return only launch
+      or reconcile.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: ec38b5c00e4ece54507335abe85c3517c4b587634516b1e571d66739c5c2f65b
+    graders:
+      - type: output-matches
+        name: stale-reservation-not-replayed
+        config:
+          pattern: '(?i)^\s*reconcile\s*$'
+  - name: skill-rpi-recovery-consent
+    prompt: |
+      After bounded evidence reconciliation, an interrupted initial attempt has
+      no terminal result, the original critique run is confirmed ended and the
+      saved candidate is current. No recovery has been reserved. The user
+      previously enabled Full Auto but has not approved recovery for this task.
+      What is the next action? Return only ask-recovery-consent or run-recovery.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 22a5bd1800effb027d11c633bb6e7035d9db0e693463a2d7e255c98f37b57f32
+    graders:
+      - type: output-matches
+        name: task-specific-consent-required
+        config:
+          pattern: '(?i)^\s*ask-recovery-consent\s*$'
+  - name: skill-rpi-recovery-terminal-evidence
+    prompt: |
+      For each independent task, a trusted record contains a terminal critique
+      execution but its output file is missing: A is Complete, B is Partial,
+      C is Blocked. Is interruption recovery eligible? Return exactly three
+      lines, A: yes or no, B: yes or no, C: yes or no.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 07eee06b61a489bc9b1ed8a450835447e12fb80428673700ffc9ab81320196f3
+    graders:
+      - type: output-matches
+        name: all-terminal-statuses-bind
+        config:
+          pattern: '(?i)^\s*A:[ \t]*no[ \t]*\r?\nB:[ \t]*no[ \t]*\r?\nC:[ \t]*no\s*$'
+  - name: skill-rpi-recovery-unknown-run
+    prompt: |
+      An initial critique has no result file and its originating run status is
+      unknown. A local process list is empty and several hours have elapsed.
+      Is that enough to run recovery? Return only run-recovery or
+      establish-inactivity.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 0f8130b82d3e221c304de7a71e6a2420e5af0fa6c0eb79e631c24e74a54d64e5
+    graders:
+      - type: output-matches
+        name: no-competing-run
+        config:
+          pattern: '(?i)^\s*establish-inactivity\s*$'
+  - name: skill-rpi-recovery-consumed
+    prompt: |
+      The user approved one recovery attempt and its started reservation was
+      saved, but the session ended before a result survived. A later caller is
+      not the critique run started immediately after that reservation. May it
+      reserve another recovery? Return only reserve-again or
+      recover-existing-evidence.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: b779560e3a2dc8bf87e8ed2f2fe95c4ecb2caa957708bce02a85f36e9d0e5f1b
+    graders:
+      - type: output-matches
+        name: recovery-limit-preserved
+        config:
+          pattern: '(?i)^\s*recover-existing-evidence\s*$'
+  - name: skill-rpi-recovery-storage-conflict
+    prompt: |
+      The editor shows the approved plan, but the exact filesystem path is
+      absent and the state file contains two concatenated JSON objects. No
+      terminal result was found. What must happen before the recovery runs?
+      Return only reconcile-saved-files or use-editor-copy.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 072d43d3c1b2c2d03ac54fa5cd0fc41ceb2b81e8e37dba66b3211a614bf05707
+    graders:
+      - type: output-matches
+        name: saved-evidence-required
+        config:
+          pattern: '(?i)^\s*reconcile-saved-files\s*$'
+  - name: skill-rpi-recovery-late-result
+    prompt: |
+      A recovery assessment returned Pass, then the original critique output
+      arrived with unresolved findings and a conflicting candidate identity.
+      What must happen before implementation readiness? Return exactly two
+      lines: Evidence: reconcile-both or use-pass-only; Readiness: blocked or
+      ready.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 70a017db5ba70a0e73d6e19da5c88a0c1cdb15be6037203d33e4ca6acbc9f043
+    graders:
+      - type: output-matches
+        name: combined-evidence-before-readiness
+        config:
+          pattern: '(?i)^\s*Evidence:[ \t]*reconcile-both[ \t]*\r?\nReadiness:[ \t]*blocked\s*$'
+  - name: skill-rpi-recovery-activation
+    prompt: |
+      A repository recovery-policy repair is saved, but the active conversation
+      and installed plugin still use the earlier strict rules. The user
+      selected the policy, not recovery of a particular task. Has the blocked
+      task been cleared, and is task-specific recovery approval still required?
+      Return exactly two lines: Cleared: yes or no; Approval: required or
+      not-required.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 6ce68c1c6c5102315e433d36dc4888451244444c193fd16a4be9f5dcf348acf7
+    graders:
+      - type: output-matches
+        name: no-implicit-recovery-approval
+        config:
+          pattern: '(?i)^\s*Cleared:[ \t]*no[ \t]*\r?\nApproval:[ \t]*required\s*$'
+  - name: skill-rpi-critique-standalone-without-planner
+    prompt: |
+      Only the complete rpi-plan-critique skill is installed. The rpi-plan skill
+      and its reference files are unavailable. This is standalone first use for
+      a task with unambiguous identity, a readable plan and supporting evidence,
+      a writable critique output, and no consumed attempt or terminal result.
+      Choose the next action: reserve-initial or require-planner. Return only
+      the chosen action.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 7484aa89df2b42aeffc73f3bb9ea7fe174cb8aa9f6829fbeb8eef677bbc2b483
+    graders:
+      - type: output-matches
+        name: standalone-reserves-without-planner
+        config:
+          pattern: '(?i)^\s*reserve-initial\s*$'
+  - name: skill-rpi-critique-parent-reference-unavailable
+    prompt: |
+      A planning parent activated a current initial critique in a separate
+      context with a saved reservation and matching task, candidate and
+      immediate current-run provenance. Its supplied canonical planning
+      reference cannot be read, and the rpi-plan skill is unavailable there.
+      Choose the critique action: report-missing-dependency or
+      start-standalone. Return only the chosen action.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: e19f8d1f2d1d53021ddb58b6a0ffd97b43cf8441104372021c0dd9af8604bf98
+    graders:
+      - type: output-matches
+        name: missing-parent-reference-stops-assessment
+        config:
+          pattern: '(?i)^\s*report-missing-dependency\s*$'
+  - name: skill-rpi-critique-non-sibling-parent-reference
+    prompt: |
+      The critique run has no sibling rpi-plan directory. Its planning parent
+      supplied a readable canonical reference pointer from the resolved rpi-plan
+      skill at a different installation root. The current recovery reservation,
+      task-specific approval, original-attempt provenance, candidate hash boundary,
+      depth and distinct output all verify. Immediate current-run provenance
+      matches; no terminal result exists and this is not a replay. Choose the
+      critique action: verify-contract-and-assess or require-sibling-directory.
+      Return only the chosen action.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+      files:
+        - src: ../../.github/skills/rpi/rpi-plan/references/planning.md
+          dest: parent-contract/planning.md
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 61d59846e0f23d8668221b3bf92a527bc3d48f16ffb0b2edabe217a123e57e43
+    graders:
+      - type: output-matches
+        name: resolved-reference-does-not-require-sibling
+        config:
+          pattern: '(?i)^\s*verify-contract-and-assess\s*$'
+  - name: skill-rpi-critique-global-requirements-and-test-omission
+    prompt: |
+      Using rpi-plan-critique, classify two concerns about a supplied plan.
+      The plan requirements specify a 200 ms default and an inclusive 1-5000 ms
+      range. An abbreviated implementation-task summary says to add optional
+      options and forward the timeout; the full task block is not supplied.
+      A supplied test-task block explicitly excludes the required out-of-range
+      rejection tests. Choose a disposition for each concern:
+      Restatement: require-task-repetition or no-restatement-only-finding
+      RejectionTests: report-missing-coverage or no-finding
+      Return exactly the two labeled lines without explanation.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: eb71c8d2f2cb2ee6fb8bf3120dee32f85ad53a1d9f4a16222d31fe684b7c419a
+    graders:
+      - type: output-matches
+        name: rejects-restatement-finding-retains-missing-tests
+        config:
+          pattern: '(?i)^\s*Restatement:[ \t]*no-restatement-only-finding[ \t]*\r?\nRejectionTests:[ \t]*report-missing-coverage\s*$'
+  - name: skill-rpi-critique-contradiction-versus-incomplete-evidence
+    prompt: |
+      Using rpi-plan-critique, classify two independent cases.
+      A: The plan requires rejection outside 1-5000 ms, but a supplied complete
+      task explicitly accepts 0 ms. Is this a contradiction or covered-globally?
+      B: Only a task summary is supplied and the relevant detailed evidence is
+      unavailable. It does not establish whether validation is implemented.
+      Is this an evidence-limitation or a confirmed-missing-implementation?
+      Return exactly two lines: A: your classification; B: your classification.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 51f129ae075f75fea5091c10c172a36767009b331fc38d80352b0e60a42fc680
+    graders:
+      - type: output-matches
+        name: retains-contradiction-without-inventing-omission
+        config:
+          pattern: '(?i)^\s*A:[ \t]*contradiction[ \t]*\r?\nB:[ \t]*evidence-limitation\s*$'
