@@ -46,7 +46,7 @@ When Review finds open work, route it to the appropriate later stage or distinct
 * One task identity, date, and task slug link any durable artifacts.
 * Research readiness records the `executed`, `reused`, or `satisfied-and-skipped` disposition, Planning Readiness or adequacy evidence, and the gates or confirmations that permit or stop continuation.
 * Each phase uses the matching RPI skill rather than duplicating its workflow.
-* Planning uses marker-addressed plain Markdown artifacts and at most one independent critique invocation. Critique defaults to standard unless the user explicitly requests deep assessment, and confirmed user requests and answers remain authoritative over critique advice.
+* Planning uses marker-addressed plain Markdown artifacts and one initial independent critique, with only the single user-confirmed interruption recovery owned by `rpi-plan`. Terminal assessments are not retried. Critique defaults to standard unless the user explicitly requests deep assessment, and confirmed user direction remains authoritative over critique advice.
 * Implementation returns descriptive evidence, current plan updates, validation coverage, blockers, and follow-up items. A significant or divergent change pauses affected work until the user decision and plan state are current; critique is not repeated.
 * Review uses one standard-by-default builder, separates builder execution and final Review execution from outcome, and lets the parent decide every route.
 * Follow-up identifies whether work returns to research, planning, implementation, or a distinct future item.

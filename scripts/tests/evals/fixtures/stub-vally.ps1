@@ -25,6 +25,8 @@
 #   empty  - no trials emitted, exit 0
 #   errored - two trials with no gradeResult (executor errored before grading), exit 1
 #   crash  - prints an error and exits 99 (does not write results.jsonl)
+#   chatty-pass / chatty-fail - emit private stdout/stderr, then invocation-pass or exit 99
+#   executor-error - typed error with a null trajectory and a synthetic sensitive message
 #   per-stim - emits one trial per entry of STUB_VALLY_STIM_RESULTS_JSON
 #              (JSON object {stimulusName: passedBool}); exit 1 only when
 #              any record failed AND STUB_VALLY_FAIL_ON_ANY=1.
@@ -134,6 +136,12 @@ else {
     'pass'
 }
 
+if ($mode -in @('chatty-pass', 'chatty-fail')) {
+    Write-Output 'synthetic-private-stdout'
+    Write-Error 'synthetic-private-stderr' -ErrorAction Continue
+    $mode = if ($mode -eq 'chatty-pass') { 'invocation-pass' } else { 'silent-crash' }
+}
+
 if ($mode -eq 'crash') {
     Write-Error "stub-vally: simulated crash"
     exit 99
@@ -237,6 +245,18 @@ $records = switch ($mode) {
     }
     'mixed' { @((New-StubRecord -Name 'stim-1' -Passed $true),  (New-StubRecord -Name 'stim-2' -Passed $false)) }
     'empty' { @() }
+    'executor-error' {
+        @([ordered]@{
+            type = 'trial-result'
+            stimulus = 'stub-stimulus'
+            model = $model
+            trialIndex = 0
+            status = 'error'
+            error = 'Model is not supported. Authorization: Bearer synthetic-private-token https://example.invalid/?sig=synthetic-private-signature'
+            durationMs = 5
+            trajectory = $null
+        })
+    }
     'errored' {
         # Trials whose trajectory errored before grading; no gradeResult is emitted,
         # so the runner classifies them as errored (transient) rather than failed.
@@ -306,6 +326,7 @@ Set-Content -LiteralPath (Join-Path $runDir 'eval-results.md') -Value "# stub ev
 if ($mode -eq 'fail') { exit 1 }
 if ($mode -eq 'fail-noname') { exit 1 }
 if ($mode -eq 'errored') { exit 1 }
+if ($mode -eq 'executor-error') { exit 1 }
 if ($mode -eq 'graded-nonzero') { exit 1 }
 if ($mode -eq 'per-stim' -and $env:STUB_VALLY_FAIL_ON_ANY -eq '1') {
     foreach ($r in $records) {

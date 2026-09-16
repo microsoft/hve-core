@@ -1,6 +1,6 @@
 ---
 name: rpi-plan-critique
-description: "Independently critique an RPI implementation plan once against supplied evidence without editing the plan. Use when planning credibility needs a read-only assessment."
+description: "Independently assess an RPI plan against supplied evidence without editing it. Use for a current initial or planner-authorized recovery critique dispatch."
 argument-hint: "[plan=...] [evidence=...] [output=...] [depth={standard|deep}]"
 license: MIT
 user-invocable: true
@@ -15,9 +15,18 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 ## Flow
 
 1. Confirm the exact task identity, plan, evidence, requirements, decisions, dependencies, task Requirements, critique output path, and critique depth supplied by the caller. Use `standard` when depth is omitted. Use `deep` only when the caller records explicit user direction; otherwise downgrade an unsupported deep request to standard and record the limitation.
-2. Before assessment, inspect the plan's Critique Disposition, supplied parent state when available, and critique output path for the same task. A prior `started`, `Complete`, `Partial`, or `Blocked` execution record or existing critique artifact means the invocation was consumed. Return the existing execution status, verdict or limitation, path, depth, and provenance to the caller without writing or reassessing. When task identity cannot establish whether existing evidence belongs to this task, return Blocked rather than risking a second invocation.
+2. Before assessment, inspect Critique Disposition, supplied parent state and recorded output paths for this task. Standalone first use follows the local preflight below and does not require the `rpi-plan` skill or its files.
+   * Return any prior terminal `Complete`, `Partial`, or `Blocked` execution and its verdict or limitation without reassessing, even when its file is missing. Ambiguous task identity blocks assessment.
+    * For a parent dispatch, read the Reservation and current-dispatch ownership and Interrupted critique recovery contracts from the planning parent's resolved canonical reference pointer. When no pointer is supplied, locate the available skill by its stable name `rpi-plan` and read `references/planning.md` relative to that skill's resolved root, not an assumed sibling directory.
+       If the reference cannot be resolved or read, return a missing-dependency preflight limitation to the parent without assessment, reservation changes or standalone fallback. Reading the contract does not authorize the worker to run its recovery procedure.
+   * For a parent dispatch, verify task, attempt ID/kind, candidate identity/hash boundary, depth, output and immediate current-dispatch provenance against the saved reservation. That worker may execute its own initial or approved recovery reservation once. Saved matching identifiers alone cannot authorize a replay; earlier `started` records route to the planning parent's recovery protocol without a new assessment.
+   * A recovery worker also verifies the saved task-specific approval, original-attempt provenance and distinct output. It cannot authorize recovery, reset its reservation or request another attempt. Any failure returns the preflight limitation; it does not claim a substantive assessment ran or overwrite an existing result.
+    * For standalone use with no consumed attempt, persist an initial `started` reservation in the specified output with task, unique attempt ID/kind, candidate identity and saved-content hash boundary, depth, output and uninterrupted reservation-to-assessment provenance before assessing. If it cannot be saved and read back, stop.
+       Existing standalone reservations route to the planning parent for reconciliation, not another standalone invocation. If `rpi-plan` is unavailable for that reconciliation, return the dependency limitation and preserve the existing evidence; do not reserve or reassess.
 3. Read the plan and directly relevant supplied evidence. Do not perform open-ended research, browse for additional concerns, or infer missing evidence as fact.
 4. Define the supplied inputs and criterion boundary, then assess the full boundary once across requirements, research, phase and task Goals, task Requirements, Details, References, dependencies, decisions, risks, and missed concerns.
+   * Assess coverage across the supplied plan and evidence as a whole. Do not require a task to repeat requirements already established elsewhere solely for restatement. A stated requirement alone does not prove implementation coverage; ground required changes in demonstrated omissions, contradictions, or material evidence gaps.
+   * Treat missing detail in an abbreviated task or excerpt as a limitation of the supplied evidence, not proof that the full plan omits it. Identify the evidence needed to resolve a decision-critical uncertainty; do not turn the same uncertainty into a separate requirement-restatement finding.
    * In `standard`, assess the complete supplied boundary while prioritizing implementation blockers, contradictions, missing dependencies or acceptance coverage, unsupported scope or architecture, and material risks. Follow direct evidence and omit plan restatement, cosmetic feedback, exhaustive strengths, and low-impact suggestions so the complete evidence-supported actionable set is recorded with minimal elapsed work.
    * In `deep`, trace supplied evidence more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns. Deep remains one assessment and does not widen research authority.
    * In either depth, return one complete finding set rather than serializing findings across critique passes.
@@ -31,19 +40,20 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 * Supplied research, evidence pointers, draft details, and decisions
 * Dependencies and task Requirements
 * One critique output path
+* For parent dispatch: current attempt ID/kind, reservation and dispatch provenance, candidate hash boundary, parent state when present, the parent's resolved canonical planning reference pointer or discoverable `rpi-plan` skill, and task-specific recovery approval when applicable
 * Critique depth and provenance: `standard` by default or `deep` from explicit user direction
 
 ## Success criteria
 
 * The critique distinguishes evidence-backed concerns from missing evidence.
 * Critique depth and provenance are recorded. Standard completely assesses the material supplied boundary while minimizing low-value work; deep occurs only from explicit user direction.
-* Re-entry preflight returns existing same-task critique evidence without writing or reassessing and blocks when task identity cannot safely distinguish it.
+* Preflight admits the verified current initial or approved recovery worker, but returns prior same-task evidence without reassessment on replay and blocks ambiguous identity or dispatch provenance. Standalone first use reserves before assessment without requiring another skill; missing parent-dispatch guidance never permits standalone fallback.
 * Findings identify substantive gaps rather than structure, formatting, or cosmetic preferences.
 * The critique records its inputs, criterion boundary, coverage assessment, and limitations.
 * Each actionable finding has a severity, related IDs, evidence, impact, and smallest useful change.
 * Each actionable finding identifies its action owner, exact resolving evidence, and whether it is a direct correction or requires a significant or divergent user decision.
 * The critique returns one complete actionable finding set for the supplied boundary; cosmetic preferences and separately withheld late findings do not create serial passes.
-* The invocation is terminal for its task: Complete, Partial, or Blocked consumes the one critique slot, and no retry or closure critique is requested.
+* Complete, Partial, or Blocked consumes the assessment regardless of verdict; no terminal result is retried and no closure critique is requested. Only the planning parent may authorize the single started-only interruption recovery defined in its reference.
 * The closeout identifies the highest-impact finding, action owner, smallest next action, and whether a user response is required.
 * The plan remains unchanged.
 
