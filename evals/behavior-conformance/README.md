@@ -23,7 +23,7 @@ Each tier shares the same advisory contract and manifest-driven gating model as 
 |----------------------------|------|----------|---------|------------------------|-------------------|
 | `prompts.eval.yaml`        | 3p   | Advisory | 56      | `behavior-conformance` | Active (Phase 9)  |
 | `instructions.eval.yaml`   | 3i   | Advisory | 69      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 230     | `behavior-conformance` | Active (Phase 13) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 236     | `behavior-conformance` | Active (Phase 13) |
 
 The maintained `prompts.eval.yaml` inventory contains 56 stimuli across 48 prompt subjects. Coverage includes RPI orchestration, security review and planning, Design Thinking, Git operations, evaluation authoring, and VEX workflows. Backlog, work-item, and HVE Core pull request coverage moved to `skill-behavior.eval.yaml` when those workflows became skills.
 
@@ -35,7 +35,7 @@ The maintained `instructions.eval.yaml` inventory contains 69 stimuli: 67 instru
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, `disclaimer-language`.
 * Language guidance: Rust test placement, naming, local HTTP mocks, and unit-test network isolation.
 
-The maintained `skill-behavior.eval.yaml` inventory contains 230 stimuli across 73 skill subjects. It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge, unavailable-bridge, read-only-review, and final-candidate behavior-gate decisions plus direct `rpi-challenger`, `rpi-plan-critique`, and pull-request preflight contracts.
+The maintained `skill-behavior.eval.yaml` inventory contains 236 stimuli across 73 skill subjects. It covers RPI and HVE Builder workflows, including HVE Builder bounded-read, research-bridge, unavailable-bridge, read-only-review, and final-candidate behavior-gate decisions plus direct `rpi-challenger`, `rpi-plan-critique`, and pull-request preflight contracts.
 
 The `backlog-plan` and `backlog-execute` workflow commands carry knowledge coverage plus a read-only boundary assertion and a mutation-safety assertion respectively. The retained `prompt-analyze`, `prompt-builder`, and `prompt-refactor` compatibility routes and other installed skill domains remain in advisory mode.
 

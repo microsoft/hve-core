@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import copy
 import time
+import uuid
 from pathlib import Path
 
 import pytest
@@ -24,13 +25,17 @@ from validate_feasibility import (
     build_format_checker,
     create_parser,
     extract_profile_yaml,
+    load_handoff_schema,
     load_schema,
     main,
     narrative_text,
+    parse_handoff,
     parse_profile,
+    read_handoff_text,
     read_study_text,
     requirement_allocation_errors,
     run,
+    validate_handoff,
     validate_profile,
 )
 
@@ -46,6 +51,40 @@ def _valid() -> tuple[dict, str]:
 def _block(body: str) -> str:
     """Wrap a YAML body in the one named interchange block."""
     return f"{BEGIN_MARKER}\n```yaml\n{body}```\n{END_MARKER}\n"
+
+
+def _valid_handoff(verdict: str = "proceed") -> dict:
+    """Build a valid handoff linked to the bundled study."""
+    data, _ = _valid()
+    handoff = {
+        "kind": "feasibility-to-prd-handoff",
+        "handoff_id": f"urn:uuid:{uuid.UUID('40000000-0000-4000-8000-000000000001')}",
+        "generated_at": "2026-09-14T12:00:00Z",
+        "study_path": data["study"]["location"],
+        "study_revision_id": data["study"]["study_revision_id"],
+        "verdict": verdict,
+        "recommendation": "Proceed with the bounded synthetic pilot.",
+        "evidence_sections": ["Recommendation", "Evidence and analysis"],
+        "constraints": [
+            {
+                "category": "technical",
+                "statement": "Use only the retained synthetic evidence window.",
+            }
+        ],
+        "gaps": ["The ranking threshold remains unconfirmed."],
+    }
+    if verdict in {"proceed", "proceed-with-scope-reduction"}:
+        handoff["functional_candidates"] = [
+            {
+                "candidate_id": "FC-01",
+                "study_item_id": data["items"][1]["item_id"],
+                "statement": "Rank synthetic recommendation candidates.",
+                "evidence_refs": ["FS-001"],
+                "concern_hint": "none",
+            }
+        ]
+        handoff["nfr_candidates"] = []
+    return handoff
 
 
 def test_given_valid_study_when_validated_then_has_no_errors() -> None:
@@ -518,6 +557,203 @@ def test_given_cli_arguments_when_parsed_then_study_path_is_returned() -> None:
 
     # Assert
     assert args.study == Path("study.md")
+    assert args.handoff is None
+
+
+@pytest.mark.parametrize(
+    "verdict",
+    [
+        "proceed",
+        "proceed-with-scope-reduction",
+        "do-not-proceed",
+        "insufficient-evidence",
+    ],
+)
+def test_given_supported_verdict_when_handoff_validated_then_has_no_errors(
+    verdict: str,
+) -> None:
+    # Arrange
+    study, markdown = _valid()
+    handoff = _valid_handoff(verdict)
+
+    # Act
+    errors = validate_handoff(handoff, study, markdown, load_handoff_schema(SKILL_ROOT))
+
+    # Assert
+    assert errors == []
+
+
+def test_given_stale_handoff_when_validated_then_reports_revision_error() -> None:
+    # Arrange
+    study, markdown = _valid()
+    handoff = _valid_handoff()
+    handoff["study_revision_id"] = "urn:uuid:40000000-0000-4000-8000-000000000002"
+
+    # Act
+    errors = validate_handoff(handoff, study, markdown, load_handoff_schema(SKILL_ROOT))
+
+    # Assert
+    assert errors == ["handoff.study_revision_id is stale"]
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "expected"),
+    [
+        (
+            "study_item_id",
+            "urn:uuid:40000000-0000-4000-8000-000000000003",
+            "unknown study_item_id",
+        ),
+        ("evidence_refs", ["FS-999"], "unknown evidence_refs alias"),
+    ],
+    ids=["item-uuid", "evidence-alias"],
+)
+def test_given_unknown_candidate_reference_when_validated_then_reports_error(
+    field: str, value: object, expected: str
+) -> None:
+    # Arrange
+    study, markdown = _valid()
+    handoff = _valid_handoff()
+    handoff["functional_candidates"][0][field] = value
+
+    # Act
+    errors = validate_handoff(handoff, study, markdown, load_handoff_schema(SKILL_ROOT))
+
+    # Assert
+    assert any(expected in error for error in errors)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("evidence_sections", ["Invented section"]),
+        ("constraints", [{"category": "privacy", "statement": "Synthetic limit"}]),
+    ],
+    ids=["evidence-section", "constraint-category"],
+)
+def test_given_invalid_handoff_vocabulary_when_validated_then_schema_fails(
+    field: str, value: object
+) -> None:
+    # Arrange
+    study, markdown = _valid()
+    handoff = _valid_handoff()
+    handoff[field] = value
+
+    # Act
+    errors = validate_handoff(handoff, study, markdown, load_handoff_schema(SKILL_ROOT))
+
+    # Assert
+    assert errors
+
+
+def test_given_negative_verdict_with_candidates_when_validated_then_schema_fails() -> (
+    None
+):
+    # Arrange
+    study, markdown = _valid()
+    handoff = _valid_handoff("do-not-proceed")
+    handoff["functional_candidates"] = []
+
+    # Act
+    errors = validate_handoff(handoff, study, markdown, load_handoff_schema(SKILL_ROOT))
+
+    # Assert
+    assert errors
+
+
+def test_given_mismatched_study_path_when_validated_then_reports_error() -> None:
+    # Arrange
+    study, markdown = _valid()
+    handoff = _valid_handoff()
+    handoff["study_path"] = "docs/data/other-study.md"
+
+    # Act
+    errors = validate_handoff(handoff, study, markdown, load_handoff_schema(SKILL_ROOT))
+
+    # Assert
+    assert errors == ["handoff.study_path does not match the authoritative study"]
+
+
+def test_given_duplicate_candidate_ids_when_validated_then_reports_error() -> None:
+    # Arrange
+    study, markdown = _valid()
+    handoff = _valid_handoff()
+    handoff["nfr_candidates"] = [copy.deepcopy(handoff["functional_candidates"][0])]
+
+    # Act
+    errors = validate_handoff(handoff, study, markdown, load_handoff_schema(SKILL_ROOT))
+
+    # Assert
+    assert errors == ["handoff candidate IDs must be unique"]
+
+
+def test_given_valid_handoff_file_when_run_then_returns_success(
+    tmp_path, capsys
+) -> None:
+    # Arrange
+    handoff_path = tmp_path / "handoff.yml"
+    handoff_path.write_text(yaml.safe_dump(_valid_handoff()), encoding="utf-8")
+
+    # Act
+    result = run(VALID_PATH, handoff_path, allowed_roots=(SKILL_ROOT, tmp_path))
+
+    # Assert
+    assert result == 0
+    assert '"valid": true' in capsys.readouterr().out
+
+
+def test_given_missing_handoff_file_when_run_then_reports_operational_error(
+    tmp_path, capsys
+) -> None:
+    # Act
+    result = run(
+        VALID_PATH,
+        tmp_path / "missing.yml",
+        allowed_roots=(SKILL_ROOT, tmp_path),
+    )
+
+    # Assert
+    captured = capsys.readouterr()
+    assert result == 2
+    assert captured.out == ""
+    assert "validate_feasibility:" in captured.err
+
+
+def test_given_malformed_handoff_when_run_then_diagnostic_is_sanitized(
+    tmp_path, capsys
+) -> None:
+    # Arrange
+    handoff_path = tmp_path / "handoff.yml"
+    handoff_path.write_text(
+        'kind: "unterminated\nsynthetic_secret: value\n', encoding="utf-8"
+    )
+
+    # Act
+    result = run(VALID_PATH, handoff_path, allowed_roots=(SKILL_ROOT, tmp_path))
+
+    # Assert
+    captured = capsys.readouterr()
+    assert result == 2
+    assert "synthetic_secret" not in captured.err
+
+
+def test_given_handoff_yaml_when_parsed_then_returns_object() -> None:
+    # Act
+    parsed = parse_handoff(yaml.safe_dump(_valid_handoff()))
+
+    # Assert
+    assert parsed["kind"] == "feasibility-to-prd-handoff"
+
+
+def test_given_oversized_handoff_when_read_then_raises(tmp_path, monkeypatch) -> None:
+    # Arrange
+    handoff_path = tmp_path / "handoff.yml"
+    handoff_path.write_text("kind: feasibility-to-prd-handoff\n", encoding="utf-8")
+    monkeypatch.setattr(validate_feasibility_module, "MAX_INPUT_BYTES", 4)
+
+    # Act and assert
+    with pytest.raises(FeasibilityValidationError, match="byte input limit"):
+        read_handoff_text(handoff_path, allowed_roots=(tmp_path,))
 
 
 def test_given_cli_invocation_when_main_runs_then_validates_the_example(

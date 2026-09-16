@@ -33,6 +33,8 @@ jobs:
   eval-validation:
     name: Eval Validation
     runs-on: ubuntu-latest
+    # Lint-only job; observed ~2 min. Without this it inherits the 6h default.
+    timeout-minutes: 20
     permissions:
       contents: read
     outputs:
@@ -216,6 +218,7 @@ jobs:
   content-moderation:
     name: Content Moderation
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: eval-validation
     permissions:
       contents: read
@@ -316,7 +319,8 @@ jobs:
   eval-execute:
     name: Eval Execute (${{ matrix.kind }})
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    # Heaviest leg observed at ~12 min. 240 was never sized against a measurement.
+    timeout-minutes: 60
     needs: [eval-validation, content-moderation]
     # Repository secrets are not exposed to fork PRs; clean-skip execution there.
     # Only run when eval-relevant paths changed (see eval-validation detect step).
@@ -448,6 +452,7 @@ jobs:
   eval-report:
     name: Eval Report
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [eval-execute]
     # Aggregate per-kind shard summaries into a single PR comment. Runs even when
     # individual shards fail so the consolidated result is always reported.

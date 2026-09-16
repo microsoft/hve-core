@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/feasibility/feasibility-to-prd-handoff.schema.json",
+  "title": "Feasibility-to-PRD handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "handoff_id", "generated_at", "study_path", "study_revision_id", "verdict", "recommendation", "evidence_sections", "constraints", "gaps"],
+  "properties": {
+    "kind": {"const": "feasibility-to-prd-handoff"},
+    "handoff_id": {"$ref": "#/$defs/uuidUrn"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "study_path": {"type": "string", "minLength": 1},
+    "study_revision_id": {"$ref": "#/$defs/uuidUrn"},
+    "verdict": {"enum": ["proceed", "proceed-with-scope-reduction", "do-not-proceed", "insufficient-evidence"]},
+    "recommendation": {"type": "string", "minLength": 1},
+    "evidence_sections": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["Recommendation", "Problem definition and desired outcome", "Evidence and analysis", "Item narratives", "Review notes"]}
+    },
+    "constraints": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/constraint"}
+    },
+    "gaps": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "functional_candidates": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/candidate"}
+    },
+    "nfr_candidates": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/candidate"}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"verdict": {"enum": ["proceed", "proceed-with-scope-reduction"]}}},
+      "then": {"required": ["functional_candidates", "nfr_candidates"]}
+    },
+    {
+      "if": {"properties": {"verdict": {"enum": ["do-not-proceed", "insufficient-evidence"]}}},
+      "then": {
+        "not": {
+          "anyOf": [
+            {"required": ["functional_candidates"]},
+            {"required": ["nfr_candidates"]}
+          ]
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "uuidUrn": {
+      "type": "string",
+      "pattern": "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "statement"],
+      "properties": {
+        "category": {"enum": ["regulatory", "contractual", "technical", "financial", "schedule", "organizational", "operational"]},
+        "statement": {"type": "string", "minLength": 1}
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "study_item_id", "statement", "evidence_refs", "concern_hint"],
+      "properties": {
+        "candidate_id": {"type": "string", "pattern": "^(?:FC|NC)-[0-9]{2,}$"},
+        "study_item_id": {"$ref": "#/$defs/uuidUrn"},
+        "statement": {"type": "string", "minLength": 1},
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^FS-[0-9]{3,}$"}
+        },
+        "concern_hint": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

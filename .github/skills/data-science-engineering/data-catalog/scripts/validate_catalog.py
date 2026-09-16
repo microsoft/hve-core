@@ -32,6 +32,13 @@ MERGE_TAG = "tag:yaml.org,2002:merge"
 RFC3339_DATE_TIME_PATTERN = re.compile(
     r"^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[Zz]|[+-]\d{2}:\d{2})$"
 )
+URI_USERINFO_PATTERN = re.compile(r"^[a-z][a-z0-9+.-]*://[^/?#\s]*@", re.IGNORECASE)
+SECRET_PARAMETER_PATTERN = re.compile(
+    r"(?:^|[?&;])(?:account[-_]?key|api[-_]?key|access[-_]?token|"
+    r"client[-_]?secret|password|passwd|pwd|secret|sig|signature|token|"
+    r"sharedaccesssignature)\s*=\s*[^&;\s]+",
+    re.IGNORECASE,
+)
 
 # Three-colour depth-first search states used for lineage cycle detection.
 _WHITE = 0
@@ -222,6 +229,14 @@ def load_schema(skill_root: Path) -> dict[str, Any]:
     return json.loads(schema_path.read_text(encoding="utf-8"))
 
 
+def _source_location_contains_secret(location: str) -> bool:
+    """Return True when a source location contains credential-shaped material."""
+    return bool(
+        URI_USERINFO_PATTERN.search(location)
+        or SECRET_PARAMETER_PATTERN.search(location)
+    )
+
+
 def lineage_cycle_ids(entities: list[dict[str, Any]]) -> list[str]:
     """Return entity IDs on a lineage cycle using a three-colour search.
 
@@ -280,6 +295,11 @@ def validate_catalog(data: dict[str, Any], schema: dict[str, Any]) -> list[str]:
 
     known_entities = set(entity_ids)
     for entity in entities:
+        if _source_location_contains_secret(entity["source"]["location"]):
+            errors.append(
+                f"entity {entity['id']} source.location contains embedded "
+                "credentials or secret material"
+            )
         for source_id in entity["lineage"]["derived_from"]:
             if source_id not in known_entities:
                 errors.append(

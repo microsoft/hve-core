@@ -7,6 +7,14 @@ description: Machine-readable JSON and CSV shapes for an AI evaluation dataset, 
 
 Copy these shapes when emitting an evaluation dataset. Produce both forms from the same source of truth so they cannot disagree. Confirm the destination with the caller rather than assuming one; suggest a project-appropriate location only when the caller has no convention.
 
+Validate the completed pair with:
+
+```bash
+uv run python scripts/validate_evaluation_dataset.py --json <dataset.json> --csv <dataset.csv>
+```
+
+The command exits `0` when both artifacts satisfy the contract, `1` for contract failures, and `2` for invocation, read, parse, schema-configuration, or path-containment errors. Diagnostics identify stable fields and categories without reproducing pair content.
+
 ## JSON shape
 
 The example below shows a thirty-pair dataset with three of its pairs written out.
