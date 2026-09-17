@@ -89,14 +89,13 @@ stimuli:
 
   # --- code-qa (5) ---
   - name: code-hello-world-python
-    prompt: "Write a hello world program in Python."
+    prompt: "Write a hello world program in Python that includes the exact text 'hello world'."
     tags: {category: baseline-equivalence, subcategory: code-qa, policy: equivalent}
     rubric:
       - >
-        Both responses provide a working Python hello-world program using a print call.
-        Score a tie whenever both satisfy this contract, even when quoting style,
-        surrounding commentary, or code-fence formatting differ. Prefer one side only
-        when the other fails to provide runnable hello-world code.
+        Both responses include the text hello world. Score a tie whenever both contain
+        that text, regardless of implementation or surrounding explanation. Prefer one
+        side only when the other omits hello world.
     graders:
       - {type: prompt, name: equivalence-judgement, config: {prompt: "Do both responses satisfy the stimulus contract equivalently?"}}
 

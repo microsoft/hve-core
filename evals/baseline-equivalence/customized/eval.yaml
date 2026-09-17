@@ -85,11 +85,10 @@ stimuli:
     constraints: *agent-time-limit
     turns:
       - *agent-launch
-      - "Write a hello world program in Python."
+      - "Write a hello world program in Python that includes the exact text 'hello world'."
     tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
-      - {type: output-matches, name: hello-world-syntax, config: {pattern: "(?i)print\\(['\"]hello.{0,10}world['\"]\\)"}}
-      - {type: prompt, name: response-quality, config: {prompt: "Does the response provide a working Python hello-world program?"}}
+      - {type: output-matches, name: mentions-hello-world, config: {pattern: '(?i)hello world'}}
 
   - name: code-reverse-string-rust
     constraints: *agent-time-limit

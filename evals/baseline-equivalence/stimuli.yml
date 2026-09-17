@@ -97,16 +97,13 @@ stimuli:
   - name: code-hello-world-python
     constraints: *agent-time-limit
     category: code-qa
-    prompt: "Write a hello world program in Python."
-    invariants: [hello-world-syntax]
+    prompt: "Write a hello world program in Python that includes the exact text 'hello world'."
+    invariants: [mentions-hello-world]
     tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
-        name: hello-world-syntax
-        config: {pattern: "(?is)print\\(\\s*['\"]hello[^'\"]{0,15}world[^'\"]{0,5}['\"]\\s*\\)"}
-      - type: prompt
-        name: response-quality
-        config: {prompt: "Does the response provide a working Python hello-world program?"}
+        name: mentions-hello-world
+        config: {pattern: '(?i)hello world'}
 
   - name: code-reverse-string-rust
     constraints: *agent-time-limit

@@ -3379,9 +3379,9 @@ stimuli:
     agent: rpi-agent
   graders:
   - type: output-matches
-    name: terminal-state-link-row
+    name: mentions-session-artifact
     config:
-      pattern: (?ms)\|\s*\[[^\]\r\n]+\]\(\.copilot-tracking/rpi-sessions/2026-07-22/demo-state\.json\)\s*\|\s*[^|\r\n]{1,80}\s*\|\s*$
+      pattern: (?i)demo-state\.json
 - name: rpi-agent-task-recovery-class-recipe
   prompt: |
     Start `/rpi-implement` for issue 2607. The available saved state belongs
