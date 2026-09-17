@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 244
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 246
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -1379,6 +1379,99 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(work\s+item|azure\s+devops|design\s+thinking|scope)'
+  - name: skill-dt-rpi-integration-tiered-context-continuity
+    prompt: |
+      Use the `dt-rpi-integration` skill to prepare a contained continuity
+      record from the staged synthetic Solution Space state and evidence. Show
+      how all three exit tiers still enter `rpi-research`, preserve the
+      observed, simulated, assumed, unknown, and conflicting labels, preserve
+      stakeholder and source authority, and explain that richer tiers narrow
+      research without skipping RPI phases. Persist the bounded record at
+      `.copilot-tracking/research/synthetic-dt-rpi-continuity.md`. Original DT
+      path presence is a diagnostic observation, not a conformance decision.
+    environment:
+      skills:
+        - ../../.github/skills/design-thinking/dt-rpi-integration
+      files:
+        - src: fixtures/dt-lifecycle/coaching-state-solution-ready.txt
+          dest: .copilot-tracking/dt/synthetic-solution-ready/coaching-state.md
+        - src: fixtures/dt-lifecycle/method-06-solution-evidence.txt
+          dest: .copilot-tracking/dt/synthetic-solution-ready/method-06-solution-evidence.md
+    tags:
+      category: behavior-conformance
+      skill: dt-rpi-integration
+      shape: continuity
+      advisory: "true"
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: output-matches
+        name: tier-and-rpi-continuity-reported
+        config:
+          pattern: '(?is)(?=.*problem-statement-complete|problem statement complete)(?=.*concept-validated|concept validated)(?=.*implementation-spec-ready|implementation spec ready)(?=.*rpi-research)(?=.*rpi-plan)(?=.*rpi-implement)(?=.*rpi-review)'
+      - type: file-exists
+        name: continuity-record-created
+        config:
+          path: .copilot-tracking/research/synthetic-dt-rpi-continuity.md
+      - type: file-matches
+        name: continuity-labels-preserved
+        config:
+          path: .copilot-tracking/research/synthetic-dt-rpi-continuity.md
+          pattern: '(?is)(?=.*observed)(?=.*simulated)(?=.*assumed)(?=.*unknown)(?=.*conflicting)'
+      - type: file-matches
+        name: stakeholder-and-source-authority-preserved
+        config:
+          path: .copilot-tracking/research/synthetic-dt-rpi-continuity.md
+          pattern: '(?is)(?=.*stakeholder)(?=.*source authority|source-authority)(?=.*rpi-research)'
+  - name: skill-dt-rpi-integration-validation-and-dispatch-failure
+    prompt: |
+      Use the `dt-rpi-integration` skill to validate the staged synthetic
+      Solution Space handoff context and attempt dispatch to `rpi-research`
+      through the `task` tool. Preserve evidence labels and source authority.
+      The configured dispatch fails: report the failure, do not claim Research
+      started or completed, and provide bounded return guidance without
+      changing the staged files. Treat any original DT path conflict as a
+      diagnostic observation rather than choosing a lineage policy.
+    environment:
+      skills:
+        - ../../.github/skills/design-thinking/dt-rpi-integration
+      files:
+        - src: fixtures/dt-lifecycle/coaching-state-solution-ready.txt
+          dest: .copilot-tracking/dt/synthetic-solution-ready/coaching-state.md
+        - src: fixtures/dt-lifecycle/method-06-solution-evidence.txt
+          dest: .copilot-tracking/dt/synthetic-solution-ready/method-06-solution-evidence.md
+    simulation:
+      tool_overrides:
+        task:
+          output: Synthetic rpi-research dispatch failure
+          is_error: true
+    tags:
+      category: behavior-conformance
+      skill: dt-rpi-integration
+      shape: dispatch-failure
+      advisory: "true"
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: output-matches
+        name: validation-and-dispatch-failure-reported
+        config:
+          pattern: '(?is)(?=.*validat)(?=.*(?:dispatch|rpi-research))(?=.*(?:fail|error|unable))(?=.*(?:return|resume|retry|manual))'
+      - type: output-matches
+        name: no-false-downstream-success
+        config:
+          pattern: '(?i)(rpi-research|research).{0,80}(started successfully|completed successfully|is complete)'
+          negate: true
+      - type: tool-calls
+        name: task-dispatch-failure-observed
+        config:
+          required:
+            - name: '^task$'
+              result: '(?i)Synthetic rpi-research dispatch failure'
+      - type: diff-empty
+        name: failed-dispatch-preserves-workspace
   - name: skill-dt-curriculum-knowledge
     prompt: |
       What does the `dt-curriculum` skill provide for teaching Design

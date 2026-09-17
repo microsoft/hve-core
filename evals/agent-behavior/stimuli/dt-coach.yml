@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore declin
 stimuli:
   - name: dt-coach-class-recipe
     prompt: |
@@ -160,3 +161,128 @@ stimuli:
         config:
           pattern: "(?i)(i'?ll (generate|build|create).{0,30}(deck|card)|generating the (deck|snapshot) now)"
           negate: true
+
+  - name: dt-coach-lifecycle-continuity
+    prompt: |
+      Resume the staged project `synthetic-agent-lifecycle`. Preserve its
+      observed, simulated, and conflicting evidence labels and its extension
+      block. The team explicitly chooses the documented backward transition
+      from Method 5 to Method 3 for re-synthesis. Record the transition in the
+      coaching state and continue with one Method 3 coaching question.
+    environment:
+      skills:
+        - '../../.github/skills/design-thinking/dt-coaching-foundation'
+        - '../../.github/skills/design-thinking/dt-methods'
+      files:
+        - src: ../../.github/agents/design-thinking/dt-coach.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/dt-lifecycle/coaching-state.txt
+          dest: .copilot-tracking/dt/synthetic-agent-lifecycle/coaching-state.md
+    tags:
+      category: agent-behavior
+      lifecycle: continuity
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: output-matches
+        name: backward-transition-and-coaching-question
+        config:
+          pattern: '(?is)(?=.*method\s*5)(?=.*method\s*3)(?=.*(?:backward|re-synthesis))(?=.*\?)'
+      - type: file-matches
+        name: coach-state-transitioned-to-method-three
+        config:
+          path: .copilot-tracking/dt/synthetic-agent-lifecycle/coaching-state.md
+          pattern: '(?is)current:.*method:\s*3.*space:\s*[\"]?problem.*transition_log:.*from_method:\s*5.*to_method:\s*3'
+      - type: file-matches
+        name: coach-extension-and-labels-preserved
+        config:
+          path: .copilot-tracking/dt/synthetic-agent-lifecycle/coaching-state.md
+          pattern: '(?is)synthetic_extension:.*board_intent:\s*[\"]?declined.*observed.*simulated.*conflicting.*preserve_on_update:\s*true'
+
+  - name: dt-coach-denied-board-intent
+    prompt: |
+      Resume the staged project `synthetic-agent-lifecycle`. The durable state
+      records that the team declined every Mural and Figma board destination.
+      Respect that decision, make no destination call or board file, and
+      continue the recorded Method 5 coaching conversation without changing
+      state.
+    environment:
+      skills:
+        - '../../.github/skills/design-thinking/dt-coaching-foundation'
+      files:
+        - src: ../../.github/agents/design-thinking/dt-coach.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/dt-lifecycle/coaching-state.txt
+          dest: .copilot-tracking/dt/synthetic-agent-lifecycle/coaching-state.md
+    tags:
+      category: agent-behavior
+      lifecycle: denied-board
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: output-matches
+        name: denied-board-decision-respected
+        config:
+          pattern: '(?i)(declin|respect|no board|without).{0,160}(Mural|Figma|board|destination)'
+      - type: tool-calls
+        name: no-destination-tool-call
+        config:
+          disallowed:
+            - name: '(?i)(mural|figma)'
+      - type: file-not-exists
+        name: no-board-artifact
+        config:
+          path: .copilot-tracking/dt/synthetic-agent-lifecycle/board-export.json
+      - type: diff-empty
+        name: denied-board-workspace-unchanged
+
+  - name: dt-coach-state-write-failure-recovery
+    prompt: |
+      Resume the staged project `synthetic-agent-lifecycle`. The team chooses a
+      backward transition from Method 5 to Method 3. Attempt the normal state
+      update. If the configured PowerShell write fails, report the failure,
+      preserve the last durable Method 5 state and unrelated extension data,
+      and explain that a later resume must start from that durable state.
+    environment:
+      skills:
+        - '../../.github/skills/design-thinking/dt-coaching-foundation'
+        - '../../.github/skills/design-thinking/dt-methods'
+      files:
+        - src: ../../.github/agents/design-thinking/dt-coach.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/dt-lifecycle/coaching-state.txt
+          dest: .copilot-tracking/dt/synthetic-agent-lifecycle/coaching-state.md
+    simulation:
+      tool_overrides:
+        powershell:
+          patterns:
+            - match: '(Set-Content|Out-File|WriteAllText)'
+              output: Synthetic DT Coach state write failure
+              is_error: true
+    tags:
+      category: agent-behavior
+      lifecycle: write-failure
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: output-matches
+        name: coach-write-failure-and-recovery-reported
+        config:
+          pattern: '(?is)(?=.*(?:fail|error|unable))(?=.*method\s*5|last durable)(?=.*resume)'
+      - type: tool-calls
+        name: coach-state-writer-failure-observed
+        config:
+          required:
+            - name: '^powershell$'
+              command: '(?is)(Set-Content|Out-File|WriteAllText)'
+              result: '(?i)Synthetic DT Coach state write failure'
+      - type: file-matches
+        name: coach-failure-preserves-durable-state
+        config:
+          path: .copilot-tracking/dt/synthetic-agent-lifecycle/coaching-state.md
+          pattern: '(?is)current:.*method:\s*5.*space:\s*[\"]?solution.*synthetic_extension:.*preserve_on_update:\s*true'
+      - type: diff-empty
+        name: coach-failed-write-workspace-unchanged
