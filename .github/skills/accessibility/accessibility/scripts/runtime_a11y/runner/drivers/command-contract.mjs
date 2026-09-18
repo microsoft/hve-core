@@ -29,6 +29,10 @@ export const ALLOWLISTED_PERFORM_VALUES = new Set([
   'toggleBetweenBrowseAndFocusMode',
   'moveToNextFormField',
   'performDefaultActionForItem',
+  'moveToPreviousColumn',
+  'moveToNextColumn',
+  'moveToPreviousRow',
+  'moveToNextRow',
 ]);
 
 export const ALLOWLISTED_NAVIGATE_VALUES = new Set([

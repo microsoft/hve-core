@@ -47,12 +47,29 @@ test('config schema command kinds and contract validation stay in parity', () =>
   }
 });
 
+test('config schema declares bounded real screen-reader operation timeouts', () => {
+  const schema = JSON.parse(readFileSync(schemaPath, 'utf8'));
+  const lifecycle = schema.$defs.screenReaderLifecycle;
+  assert.equal(schema.properties.realScreenReader.properties.lifecycle.$ref, '#/$defs/screenReaderLifecycle');
+  assert.equal(schema.$defs.realScreenReader.properties.lifecycle.$ref, '#/$defs/screenReaderLifecycle');
+  assert.equal(lifecycle.additionalProperties, false);
+  assert.equal(lifecycle.properties.commandTimeoutMs.maximum, 60000);
+  assert.equal(lifecycle.properties.captureTimeoutMs.maximum, 60000);
+  assert.equal(lifecycle.properties.logTimeoutMs.maximum, 30000);
+});
+
 test('validateScreenReaderCommand accepts named navigation and rejects unknown navigation', () => {
   assert.equal(validateScreenReaderCommand({ kind: 'navigate', value: 'nextLandmark' }), null);
   assert.match(
     validateScreenReaderCommand({ kind: 'navigate', value: 'openPreferences' }),
     /Unsupported navigate/,
   );
+});
+
+test('validateScreenReaderCommand accepts bounded table navigation commands', () => {
+  for (const value of ['moveToPreviousColumn', 'moveToNextColumn', 'moveToPreviousRow', 'moveToNextRow']) {
+    assert.equal(validateScreenReaderCommand({ kind: 'perform', value }), null);
+  }
 });
 
 test('validateScreenReaderCommand restricts typed text to printable characters', () => {

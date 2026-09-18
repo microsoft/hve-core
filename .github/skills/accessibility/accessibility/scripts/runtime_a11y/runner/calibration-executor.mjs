@@ -1,13 +1,30 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+import { spawnSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, realpathSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { createCalibrationCheckpoint, validateCalibrationCheckpoint } from './calibration-checkpoint.mjs';
+import { materializeExecutionJourneys, materializeMethodCells } from './case-catalog.mjs';
+
+async function runWithTimeout(operation, timeoutMs, label) {
+  let timer = null;
+  try {
+    return await Promise.race([
+      operation(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
+}
 import { processAtPlanCase } from './at-plan-executor.mjs';
 import { launchChrome } from './_shared.mjs';
 import { resolveRouteUrl } from './route.mjs';
@@ -247,10 +264,49 @@ function hasMeaningfulPhraseEvidence(evidence = {}) {
     && normalizedPhrases.some((entry) => typeof entry === 'string' && entry.trim().length > 0);
 }
 
+function hasRequiredEvidence(evidence, requiredAssertions) {
+  if (!Array.isArray(requiredAssertions) || requiredAssertions.length === 0) {
+    return hasMeaningfulPhraseEvidence(evidence);
+  }
+  return requiredAssertions.every((assertion) => {
+    const evidenceType = assertion?.evidenceType || 'speech';
+    if (evidenceType === 'accessibilityTree') {
+      const tree = evidence?.accessibilityTree;
+      return Boolean(tree && typeof tree === 'object'
+        && (Array.isArray(tree) ? tree.length > 0 : Object.keys(tree).length > 0));
+    }
+    if (evidenceType === 'browserState') {
+      return Boolean(evidence?.browserState && typeof evidence.browserState === 'object'
+        && Object.keys(evidence.browserState).length > 0);
+    }
+    if (evidenceType === 'actionSpeech') {
+      return Array.isArray(evidence?.actionRawPhrases)
+        && evidence.actionRawPhrases.some((entry) => typeof entry === 'string' && entry.trim().length > 0);
+    }
+    if (evidenceType === 'actionNormalizedSpeech') {
+      return Array.isArray(evidence?.actionNormalizedPhrases)
+        && evidence.actionNormalizedPhrases.some((entry) => typeof entry === 'string' && entry.trim().length > 0);
+    }
+    return hasMeaningfulPhraseEvidence(evidence);
+  });
+}
+
 function isRealAtDriver(result = {}, evidence = {}) {
   const driverName = String(result?.driver || evidence?.provenance?.driver || '').toLowerCase();
   const atName = String(result?.at || result?.capability?.at || evidence?.provenance?.at || '').toLowerCase();
-  return /guidepup/i.test(driverName) && atName === 'nvda';
+  if (atName !== 'nvda') {
+    return false;
+  }
+  if (/guidepup/i.test(driverName)) {
+    return true;
+  }
+  const provenance = evidence?.provenance || {};
+  return driverName === 'nvda'
+    && provenance.realAtPassAllowed === true
+    && typeof provenance.guidepupLibraryVersion === 'string'
+    && provenance.guidepupLibraryVersion.trim() !== ''
+    && typeof provenance.nvdaAssetVersion === 'string'
+    && provenance.nvdaAssetVersion.trim() !== '';
 }
 
 export function classifyAtCaseResult(result = {}, runRoot = null) {
@@ -276,11 +332,15 @@ export function classifyAtCaseResult(result = {}, runRoot = null) {
     return !matchingEntry || String(matchingEntry.status || '').toLowerCase() !== 'pass';
   });
 
-  const hasNonEmptyPhrases = hasMeaningfulPhraseEvidence(evidence);
+  const hasAdequateEvidence = hasRequiredEvidence(evidence, requiredAssertions);
   const hasPersistedArtifacts = hasMatchingArtifactHashes(result?.artifactHashes, runRoot);
   const capabilitySupported = result?.capability?.supported !== false;
   const isRealDriver = isRealAtDriver(result, evidence);
-  const isStrictPass = status === 'pass' && isRealDriver && capabilitySupported && !synthetic && !Boolean(evidence?.synthetic) && hasNonEmptyPhrases && hasPersistedArtifacts && !requiredAssertionFailure && !assertionFailure && !invalidAssertion;
+  // A started screen reader that cannot be proven stopped leaves the desktop under
+  // automation control, so its evidence cannot authorize a pass.
+  const cleanup = result?.cleanup || evidence?.cleanup || {};
+  const cleanupProven = cleanup?.driverStarted !== true || cleanup?.driverStopped === true;
+  const isStrictPass = status === 'pass' && isRealDriver && capabilitySupported && !synthetic && !Boolean(evidence?.synthetic) && hasAdequateEvidence && hasPersistedArtifacts && cleanupProven && !requiredAssertionFailure && !assertionFailure && !invalidAssertion;
 
   if (['candidate', 'unsupported', 'unavailable'].includes(status) || ['candidate', 'unsupported', 'unavailable'].includes(explicitClassification)) {
     return 'unavailable';
@@ -306,7 +366,7 @@ export function classifyAtCaseResult(result = {}, runRoot = null) {
   if (!isRealDriver) {
     return 'infrastructureFailure';
   }
-  if (!hasNonEmptyPhrases) {
+  if (!hasAdequateEvidence) {
     return 'infrastructureFailure';
   }
   if (!hasPersistedArtifacts) {
@@ -351,8 +411,19 @@ function normalizeJourney(config, journey, index) {
       throw new Error(`Unsupported calibration assertion evidence type: ${assertion.evidenceType}`);
     }
   }
+  const normalizedAssertions = assertions.map((assertion, assertionIndex) => ({
+    ...assertion,
+    id: assertArtifactId(
+      String(assertion?.id || `${journeyId}-assertion-${assertionIndex + 1}`),
+      'Assertion ID',
+    ),
+  }));
+  if (new Set(normalizedAssertions.map((assertion) => assertion.id)).size !== normalizedAssertions.length) {
+    throw new Error(`Duplicate assertion ID in calibration journey ${journeyId}.`);
+  }
   return {
     journeyId,
+    caseId: journey?.caseId || journey?.caseIds?.[0] || journeyId,
     title: journey?.title || `Calibration journey ${journeyId}`,
     route: journey?.route || '/',
     surfaceId: journey?.surfaceId || null,
@@ -365,9 +436,12 @@ function normalizeJourney(config, journey, index) {
     commands: Array.isArray(journey?.commands) && journey.commands.length > 0
       ? journey.commands
       : [{ kind: 'keyboard', value: 'Tab' }],
-    assertions,
+    assertions: normalizedAssertions,
     profileFingerprint: buildProfileFingerprint(config, journey),
-    metadata: journey?.metadata || {},
+    metadata: {
+      ...(journey?.metadata || {}),
+      ...(Array.isArray(journey?.caseIds) ? { caseIds: journey.caseIds } : {}),
+    },
     visualStates: Array.isArray(journey?.visualStates) && journey.visualStates.length > 0
       ? journey.visualStates
       : (Array.isArray(config?.calibration?.visualStates) ? config.calibration.visualStates : ['desktop']),
@@ -377,11 +451,49 @@ function normalizeJourney(config, journey, index) {
 // Journeys are defined entirely by the runtime config. There is no built-in
 // default set: a harness that invents journeys the operator did not configure
 // would report evidence about surfaces nobody asked it to exercise.
+function authoredCalibrationJourneys(config = {}) {
+  return Array.isArray(config?.calibration?.journeys) ? config.calibration.journeys : [];
+}
+
 export function resolveCalibrationCases(config = {}) {
-  const journeys = Array.isArray(config?.calibration?.journeys)
-    ? config.calibration.journeys
+  const authoredJourneys = authoredCalibrationJourneys(config);
+  const authoredIds = new Set(authoredJourneys.map((journey) => journey?.id || journey?.journeyId));
+  const boundJourneys = config?.resolvedCaseCatalog && config?.resolvedBindingProfile
+    ? materializeExecutionJourneys(config.resolvedCaseCatalog, config.resolvedBindingProfile)
+      .filter((journey) => !authoredIds.has(journey.id))
     : [];
+  if (config?.resolvedCaseCatalog && config?.resolvedBindingProfile) {
+    // Rejects unknown capabilities and ambiguous state mappings before startup.
+    materializeMethodCells(config.resolvedCaseCatalog, config.resolvedBindingProfile);
+  }
+  const journeys = [...authoredJourneys, ...boundJourneys];
   return journeys.map((journey, index) => normalizeJourney(config, journey, index));
+}
+
+export function selectCalibrationCases(config = {}, requestedJourneyIds = []) {
+  const journeys = resolveCalibrationCases(config);
+  if (!Array.isArray(requestedJourneyIds) || requestedJourneyIds.length === 0) {
+    // An omitted filter runs only the operator's authored journeys. Bound
+    // catalog executions run when the caller authorizes them by ID, so this
+    // path cannot widen live control beyond what was configured.
+    const authoredIds = new Set(
+      authoredCalibrationJourneys(config).map((journey) => journey?.id || journey?.journeyId),
+    );
+    return journeys.filter((journey) => authoredIds.has(journey.journeyId));
+  }
+  const normalizedIds = requestedJourneyIds.map((value) => String(value || '').trim());
+  if (normalizedIds.some((value) => !value)) {
+    throw new Error('Requested calibration journey IDs must be non-empty strings.');
+  }
+  if (new Set(normalizedIds).size !== normalizedIds.length) {
+    throw new Error('Requested calibration journey IDs must be unique.');
+  }
+  const byId = new Map(journeys.map((journey) => [journey.journeyId, journey]));
+  const unknownIds = normalizedIds.filter((journeyId) => !byId.has(journeyId));
+  if (unknownIds.length > 0) {
+    throw new Error(`Unknown calibration journey ID: ${unknownIds.join(', ')}`);
+  }
+  return normalizedIds.map((journeyId) => byId.get(journeyId));
 }
 
 export async function defaultRunAtCase({
@@ -406,7 +518,7 @@ export async function defaultRunAtCase({
     trigger: journey?.trigger || null,
   };
   const matrixCase = {
-    caseId: journey?.journeyId,
+    caseId: journey?.caseId || journey?.journeyId,
     mappingId: journey?.journeyId,
     state: journey?.state || 'desktop',
     surface: surface.id,
@@ -431,6 +543,7 @@ export async function defaultRunAtCase({
     sourceMatrixMetadata: {
       journeyId: journey?.journeyId,
       title: journey?.title,
+      ...(journey?.metadata || {}),
     },
     at: 'nvda',
     variant: {
@@ -496,7 +609,7 @@ export async function defaultRunAtCase({
     at: provenance.at,
     capability,
     classification: result?.classification || null,
-    requiredAssertions: (journey?.assertions || []).map((assertion) => ({ id: assertion?.id || assertion?.value || null, value: assertion?.value || null })),
+    requiredAssertions: (journey?.assertions || []).map((assertion) => ({ id: assertion?.id || assertion?.value || null, value: assertion?.value || null, evidenceType: assertion?.evidenceType || 'speech' })),
     artifactHashes: { [persisted.artifactReference]: persisted.artifactHash },
     evidence: {
       ...evidence,
@@ -918,12 +1031,14 @@ export async function runDefaultVisualPreflight({ config = {}, runRoot = null, c
 export async function runRealCalibrationSession({
   config = {},
   runRoot = null,
+  journeyIds = [],
+  teardownTimeoutMs = 10000,
   probePrerequisites: probePrerequisitesHandler = null,
   runVisualPreflight: runVisualPreflightHandler = null,
   runAtCase: runAtCaseHandler = null,
   launchBrowser = launchChrome,
 } = {}) {
-  const journeys = resolveCalibrationCases(config);
+  const journeys = selectCalibrationCases(config, journeyIds);
   const resolvedRunRoot = runRoot ? path.resolve(runRoot) : null;
   const checkpoints = [];
   const browserTeardown = {
@@ -977,6 +1092,9 @@ export async function runRealCalibrationSession({
     }
 
     for (const journey of journeys) {
+      if (sharedPage && typeof sharedPage.goto === 'function') {
+        await sharedPage.goto('about:blank', { waitUntil: 'domcontentloaded' });
+      }
       const executor = typeof runAtCaseHandler === 'function' ? runAtCaseHandler : defaultRunAtCase;
       const payload = await executor({
         journeyId: journey.journeyId,
@@ -1053,7 +1171,7 @@ export async function runRealCalibrationSession({
       evidence,
       provenance,
       outcome: payload?.outcome || {},
-      requiredAssertions: (journey?.assertions || []).map((assertion) => ({ id: assertion?.id || assertion?.value || null, value: assertion?.value || null })),
+      requiredAssertions: (journey?.assertions || []).map((assertion) => ({ id: assertion?.id || assertion?.value || null, value: assertion?.value || null, evidenceType: assertion?.evidenceType || 'speech' })),
     }, resolvedRunRoot);
 
       if (classification === 'pass' && hasValidEvidence) {
@@ -1075,7 +1193,7 @@ export async function runRealCalibrationSession({
   } finally {
     if (sharedPage && typeof sharedPage.close === 'function') {
       try {
-        await sharedPage.close();
+        await runWithTimeout(() => sharedPage.close(), teardownTimeoutMs, 'Page close');
         browserTeardown.pageCloseStatus = 'closed';
       } catch (error) {
         browserTeardown.pageCloseStatus = 'failed';
@@ -1084,7 +1202,7 @@ export async function runRealCalibrationSession({
     }
     if (sharedBrowser && typeof sharedBrowser.close === 'function') {
       try {
-        await sharedBrowser.close();
+        await runWithTimeout(() => sharedBrowser.close(), teardownTimeoutMs, 'Browser close');
         browserTeardown.browserCloseStatus = 'closed';
       } catch (error) {
         browserTeardown.browserCloseStatus = 'failed';
@@ -1100,9 +1218,22 @@ export async function runRealCalibrationSession({
     }
   }
 
+  const teardownProven = browserTeardown.pageCloseStatus !== 'failed'
+    && browserTeardown.browserCloseStatus !== 'failed'
+    && browserTeardown.browserConnectedAfterClose !== true;
+
+  let aggregateReason = 'Calibration completed for the requested journeys.';
+  if (visualPreflightStatus === 'fail') {
+    aggregateReason = 'Visual preflight did not complete successfully.';
+  } else if (checkpoints.length !== journeys.length) {
+    aggregateReason = 'Calibration did not complete successfully because some journeys lacked accepted evidence.';
+  } else if (!teardownProven) {
+    aggregateReason = 'Calibration could not prove browser teardown, so the run is not accepted.';
+  }
+
   const aggregate = {
-    status: visualPreflightStatus === 'fail' || checkpoints.length !== journeys.length ? 'unsuccessful' : 'successful',
-    reason: visualPreflightStatus === 'fail' ? 'Visual preflight did not complete successfully.' : (checkpoints.length === journeys.length ? 'Calibration completed for the requested journeys.' : 'Calibration did not complete successfully because some journeys lacked accepted evidence.'),
+    status: visualPreflightStatus === 'fail' || checkpoints.length !== journeys.length || !teardownProven ? 'unsuccessful' : 'successful',
+    reason: aggregateReason,
     completedCount: checkpoints.length,
   };
 
@@ -1137,9 +1268,16 @@ export async function main() {
   const runRoot = process.env.RUNTIME_A11Y_RUN_ROOT
     ? path.resolve(process.env.RUNTIME_A11Y_RUN_ROOT)
     : null;
+  const journeyIds = process.env.RUNTIME_A11Y_JOURNEYS
+    ? JSON.parse(process.env.RUNTIME_A11Y_JOURNEYS)
+    : [];
+  const methodCells = config?.resolvedCaseCatalog && config?.resolvedBindingProfile
+    ? materializeMethodCells(config.resolvedCaseCatalog, config.resolvedBindingProfile)
+    : null;
   const session = await runRealCalibrationSession({
     config,
     runRoot,
+    journeyIds,
   });
   const document = {
     tool: 'runtime_a11y',
@@ -1153,6 +1291,7 @@ export async function main() {
     checkpoints: session.checkpoints,
     state: session.state,
     browserTeardown: session.browserTeardown,
+    ...(methodCells ? { methodCells } : {}),
   };
   process.stdout.write(`${JSON.stringify(document, null, 2)}\n`);
   return document;

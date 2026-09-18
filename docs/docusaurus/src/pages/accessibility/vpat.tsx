@@ -11,9 +11,6 @@ export default function VpatPage(): React.ReactElement {
       title="VPAT 2.x accessibility conformance report"
       description="Accessibility conformance report for the HVE Core documentation site"
     >
-      <a className={styles.skipLink} href="#main-content">
-        Skip to main content
-      </a>
       <main id="main-content" className={styles.main}>
         <header className={styles.hero}>
           <p className={styles.eyebrow}>Accessibility</p>
@@ -22,7 +19,7 @@ export default function VpatPage(): React.ReactElement {
             This report summarizes the current conformance posture for the HVE Core documentation site and related public content.
           </p>
           <p className={styles.reviewNote}>
-            This VPAT is a self-assessment authored with AI assistance and validated by automated accessibility testing. It has not been independently audited; we welcome corrections and support in improving our accessibility standards.
+            This VPAT is a self-assessment authored with AI assistance and informed by configured automated accessibility testing. It has not been independently audited; we welcome corrections and support in improving our accessibility standards.
           </p>
         </header>
 
@@ -31,8 +28,8 @@ export default function VpatPage(): React.ReactElement {
           <ul>
             <li><strong>Product name:</strong> HVE Core documentation site and related public content</li>
             <li><strong>Conformance target:</strong> WCAG 2.2 Level AA</li>
-            <li><strong>Assessment date:</strong> 2026-07-03</li>
-            <li><strong>Assessment method:</strong> Automated accessibility testing (axe-core across the site) plus keyboard and screen-reader exploration tests in continuous integration, with AI-assisted review. This is not an independent third-party audit.</li>
+            <li><strong>Assessment currency:</strong> A date is published only with a current validation projection that identifies the tested revision, scope, methods, and limitations</li>
+            <li><strong>Assessment method:</strong> Automated accessibility testing (axe-core across the site), deterministic keyboard and accessibility-tree tests in continuous integration, and advisory local NVDA sampling with AI-assisted review. This is not an independent third-party audit.</li>
             <li><strong>Reporting format:</strong> VPAT 2.x (ACR)</li>
             <li><strong>Status:</strong> Self-assessment; not independently audited</li>
           </ul>
@@ -62,13 +59,13 @@ export default function VpatPage(): React.ReactElement {
                 <td>WCAG 2.2 A</td>
                 <td>A</td>
                 <td>Partially Supports</td>
-                <td>Automated WCAG 2.x checks pass site-wide and remediation is complete for identified issues. Because automated tooling does not cover every success criterion, a full manual audit is still pending.</td>
+                <td>The site is configured to run automated WCAG 2.x checks across the declared inventory on every release. Automated tooling does not cover every success criterion, and a full manual audit is still pending, so this is not a completed conformance result.</td>
               </tr>
               <tr>
                 <td>WCAG 2.2 AA</td>
                 <td>AA</td>
                 <td>Partially Supports</td>
-                <td>Target is WCAG 2.2 Level AA. Automated checks pass site-wide; because automated tooling does not cover every success criterion, a full manual audit is still pending.</td>
+                <td>Target is WCAG 2.2 Level AA. The site is configured for site-wide automated checks; because automated tooling does not cover every success criterion and manual review is incomplete, this is not a completed conformance result.</td>
               </tr>
             </tbody>
           </table>
@@ -78,6 +75,15 @@ export default function VpatPage(): React.ReactElement {
           <h2 id="limitations">Known limitations</h2>
           <p>
             The site continues to improve its accessibility posture. Some legacy examples, third-party content, or older documentation patterns may still present inconsistent interaction patterns or wording until additional remediation is completed.
+          </p>
+          <p>
+            This report is a self-assessment and is not an attestation, certification, or independent audit. It does not constitute a warranty of conformance.
+          </p>
+          <p>
+            Manual and assistive-technology review is incomplete. Screen-reader results come from an advisory sample of representative journeys on a prepared host, not from exhaustive coverage of the site, and advisory sampling is never promoted to a conformance outcome on its own.
+          </p>
+          <p>
+            Statuses in this report describe the capabilities the site is built and configured for, bound to the scope and methods named above. They are not a claim that every criterion has been verified on the current revision, and they are not bound to an assessment date unless a current validation projection publishing that date accompanies them.
           </p>
         </section>
 

@@ -47,6 +47,8 @@ const config = {
   projectName: 'hve-core',
 
   onBrokenLinks: 'throw',
+  // Defaults to 'warn', which let a broken in-page anchor reach a passing build.
+  onBrokenAnchors: 'throw',
 
   customFields: {
     packageCards,

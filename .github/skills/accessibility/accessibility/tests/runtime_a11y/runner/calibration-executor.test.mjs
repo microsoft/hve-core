@@ -19,7 +19,9 @@ import {
   resolveContainedArtifactPath,
   runDefaultVisualPreflight,
   runRealCalibrationSession,
+  selectCalibrationCases,
 } from '../../../scripts/runtime_a11y/runner/calibration-executor.mjs';
+import { catalogDigest } from '../../../scripts/runtime_a11y/runner/case-catalog.mjs';
 
 function computeArtifactHash(filePath) {
   return createHash('sha256').update(readFileSync(filePath)).digest('hex');
@@ -41,6 +43,64 @@ test('resolveCalibrationCases rejects a traversal-bearing journey identifier', (
   assert.throws(
     () => resolveCalibrationCases({ calibration: { journeys: [{ id: '../../escape' }] } }),
     /Journey ID/,
+  );
+});
+
+test('selectCalibrationCases preserves requested order and rejects invalid selections', () => {
+  const config = {
+    calibration: {
+      journeys: [{ id: 'first' }, { id: 'second' }],
+    },
+  };
+  assert.deepEqual(
+    selectCalibrationCases(config, ['second', 'first']).map((journey) => journey.journeyId),
+    ['second', 'first'],
+  );
+  assert.throws(() => selectCalibrationCases(config, ['missing']), /Unknown calibration journey ID/);
+  assert.throws(() => selectCalibrationCases(config, ['first', 'first']), /must be unique/);
+});
+
+test('selectCalibrationCases does not widen an omitted filter to bound catalog executions', () => {
+  const catalog = {
+    schemaVersion: '1.0.0',
+    catalogId: 'test-catalog',
+    cases: [{
+      caseId: 'CASE-1',
+      outcomeClass: 'speech',
+      requiredCapabilities: [],
+      targetRefs: ['target.one'],
+      states: ['desktop'],
+    }],
+  };
+  const binding = {
+    schemaVersion: '1.0.0',
+    catalogId: 'test-catalog',
+    catalogDigest: catalogDigest(catalog),
+    routes: { 'route.home': '/' },
+    targets: { 'target.one': { routeRef: 'route.home', selector: 'main' } },
+    caseBindings: {
+      'CASE-1': { targetRefs: ['target.one'], executions: [{ id: 'bound-only' }] },
+    },
+  };
+  const config = {
+    calibration: { journeys: [{ id: 'authored' }] },
+    resolvedCaseCatalog: catalog,
+    resolvedBindingProfile: binding,
+  };
+
+  // The bound execution stays resolvable by ID, but an omitted filter must not
+  // silently promote it into live control.
+  assert.deepEqual(
+    resolveCalibrationCases(config).map((journey) => journey.journeyId),
+    ['authored', 'bound-only'],
+  );
+  assert.deepEqual(
+    selectCalibrationCases(config, []).map((journey) => journey.journeyId),
+    ['authored'],
+  );
+  assert.deepEqual(
+    selectCalibrationCases(config, ['bound-only']).map((journey) => journey.journeyId),
+    ['bound-only'],
   );
 });
 
@@ -144,6 +204,35 @@ test('resolveCalibrationCases preserves the configured journeys and profile meta
   assert.equal(cases[0].profileFingerprint.locale, 'en-US');
   assert.equal(cases[0].triggerAfterDriverStart, true);
   assert.equal(cases[1].journeyId, 'search-status-announcement');
+});
+
+test('resolveCalibrationCases assigns stable unique assertion IDs and rejects duplicates', () => {
+  const [journey] = resolveCalibrationCases({
+    calibration: {
+      journeys: [{
+        id: 'tree-case',
+        assertions: [
+          { type: 'nodeMatches', evidenceType: 'accessibilityTree', expected: { role: 'main' } },
+          { type: 'nodeMatches', evidenceType: 'accessibilityTree', expected: { role: 'group' } },
+        ],
+      }],
+    },
+  });
+  assert.deepEqual(
+    journey.assertions.map((assertion) => assertion.id),
+    ['tree-case-assertion-1', 'tree-case-assertion-2'],
+  );
+  assert.throws(() => resolveCalibrationCases({
+    calibration: {
+      journeys: [{
+        id: 'duplicate-case',
+        assertions: [
+          { id: 'same', type: 'contains', value: 'one' },
+          { id: 'same', type: 'contains', value: 'two' },
+        ],
+      }],
+    },
+  }), /Duplicate assertion ID/);
 });
 
 test('defaultRunAtCase preserves trigger timing metadata for the AT executor', async () => {
@@ -471,10 +560,59 @@ test('runRealCalibrationSession records browser teardown failures without throwi
     assert.equal(session.browserTeardown.browserCloseStatus, 'failed');
     assert.equal(session.browserTeardown.browserCloseError, 'browser close failed');
     assert.equal(session.browserTeardown.browserConnectedAfterClose, false);
-    assert.equal(session.aggregate.status, 'successful');
+    // The journey itself produced accepted evidence, but an unproven teardown
+    // still withholds aggregate success.
+    assert.equal(session.checkpoints.length, 1);
+    assert.equal(session.aggregate.status, 'unsuccessful');
+    assert.match(session.aggregate.reason, /teardown/);
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }
+});
+
+test('runRealCalibrationSession bounds hung page and browser teardown', async () => {
+  const sharedPage = {
+    context() {
+      return {};
+    },
+    close: async () => new Promise(() => {}),
+  };
+  const sharedBrowser = {
+    async newPage() {
+      return sharedPage;
+    },
+    close: async () => new Promise(() => {}),
+    isConnected() {
+      return true;
+    },
+  };
+
+  const session = await runRealCalibrationSession({
+    config: {
+      calibration: {
+        journeys: [{
+          id: 'teardown-timeout',
+          route: '/',
+          surfaceId: 'homepage',
+          state: 'desktop',
+          trigger: { action: 'focus', target: 'body' },
+          commands: [{ kind: 'pause', durationMs: 0 }],
+          assertions: [{ id: 'speech', type: 'contains', value: 'test' }],
+        }],
+      },
+    },
+    probePrerequisites: async () => ({ nvdaAvailable: true, desktopUnlocked: true }),
+    runVisualPreflight: async () => ({ status: 'pass', summary: { classification: 'pass' } }),
+    launchBrowser: async () => sharedBrowser,
+    runAtCase: async () => ({ classification: 'infrastructureFailure' }),
+    teardownTimeoutMs: 5,
+  });
+
+  assert.equal(session.browserTeardown.pageCloseStatus, 'failed');
+  assert.match(session.browserTeardown.pageCloseError, /timed out/);
+  assert.equal(session.browserTeardown.browserCloseStatus, 'failed');
+  assert.match(session.browserTeardown.browserCloseError, /timed out/);
+  assert.equal(session.browserTeardown.browserConnectedAfterClose, true);
 });
 
 test('defaultRunAtCase handles circular evidence payloads without overflowing the stack', async () => {
@@ -641,9 +779,50 @@ test('classifyAtCaseResult enforces Gate B evidence and assertion gating', async
       { name: 'transcript drift cannot pass', mutate: (result) => { result.evidence.reason = 'baseline mismatch'; }, expected: 'transcriptDrift' },
       { name: 'infrastructure error cannot pass', mutate: (result) => { result.evidence.error = 'browser launch failed'; }, expected: 'infrastructureFailure' },
       { name: 'empty phrases', mutate: (result) => { result.evidence.rawPhrases = []; result.evidence.normalizedPhrases = []; }, expected: 'infrastructureFailure' },
+      {
+        name: 'tree-only assertion does not require speech',
+        mutate: (result) => {
+          result.requiredAssertions = [{ id: 'tree', evidenceType: 'accessibilityTree' }];
+          result.assertions = [{ id: 'tree', status: 'pass' }];
+          result.evidence.rawPhrases = [];
+          result.evidence.normalizedPhrases = [];
+          result.evidence.accessibilityTree = { nodes: [{ role: { value: 'main' } }] };
+        },
+        expected: 'pass',
+      },
+      {
+        name: 'tree-only assertion requires tree evidence',
+        mutate: (result) => {
+          result.requiredAssertions = [{ id: 'tree', evidenceType: 'accessibilityTree' }];
+          result.assertions = [{ id: 'tree', status: 'pass' }];
+          result.evidence.rawPhrases = [];
+          result.evidence.normalizedPhrases = [];
+          result.evidence.accessibilityTree = null;
+        },
+        expected: 'infrastructureFailure',
+      },
       { name: 'unpersisted evidence', mutate: (result) => { result.artifactHashes = {}; }, expected: 'infrastructureFailure' },
       { name: 'hash mismatch', mutate: (result) => { result.artifactHashes['artifacts/evidence.json'] = 'deadbeef'; }, expected: 'infrastructureFailure' },
       { name: 'valid real pass', mutate: () => {}, expected: 'pass' },
+      {
+        name: 'valid live adapter pass',
+        mutate: (result) => {
+          result.driver = 'nvda';
+          result.evidence.provenance.driver = 'nvda';
+          result.evidence.provenance.realAtPassAllowed = true;
+          result.evidence.provenance.guidepupLibraryVersion = '0.34.0';
+          result.evidence.provenance.nvdaAssetVersion = '0.2.0-2026.1.1';
+        },
+        expected: 'pass',
+      },
+      {
+        name: 'unproven nvda driver cannot pass',
+        mutate: (result) => {
+          result.driver = 'nvda';
+          result.evidence.provenance.driver = 'nvda';
+        },
+        expected: 'infrastructureFailure',
+      },
     ];
 
     for (const testCase of cases) {
@@ -877,6 +1056,51 @@ test('defaultRunAtCase classifies a fully persisted real-evidence result as pass
   }
 });
 
+test('defaultRunAtCase classifies a persisted tree-only real result as pass', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'calibration-tree-pass-'));
+  try {
+    const journey = {
+      journeyId: 'tree-pass',
+      route: '/',
+      surfaceId: 'presentation',
+      state: 'initial',
+      trigger: { action: 'focus', target: 'main' },
+      commands: [{ kind: 'pause', durationMs: 0 }],
+      assertions: [{ id: 'tree', type: 'nodeMatches', evidenceType: 'accessibilityTree', expected: { role: 'main' } }],
+    };
+
+    const result = await defaultRunAtCase({
+      journey,
+      config: { baseUrl: 'http://127.0.0.1:3000' },
+      runRoot: tempDir,
+      processAtPlanCaseImpl: async () => ({
+        status: 'pass',
+        driver: 'nvda',
+        at: 'nvda',
+        capability: { supported: true, synthetic: false, at: 'nvda' },
+        assertions: [{ id: 'tree', status: 'pass' }],
+        evidence: {
+          synthetic: false,
+          rawPhrases: [],
+          normalizedPhrases: [],
+          accessibilityTree: { nodes: [{ role: { value: 'main' } }] },
+          provenance: {
+            driver: 'nvda',
+            at: 'nvda',
+            realAtPassAllowed: true,
+            guidepupLibraryVersion: '0.34.0',
+            nvdaAssetVersion: '0.2.1-2026.2',
+          },
+        },
+      }),
+    });
+
+    assert.equal(result.classification, 'pass');
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('classifyAtCaseResult maps unsupported, assertion, product, infrastructure, and transcript drift consistently', async () => {
   const cases = [
     { name: 'unsupported', input: { status: 'unsupported', evidence: { synthetic: false } }, expected: 'unavailable' },
@@ -890,6 +1114,126 @@ test('classifyAtCaseResult maps unsupported, assertion, product, infrastructure,
     const { classifyAtCaseResult } = await import('../../../scripts/runtime_a11y/runner/calibration-executor.mjs');
     assert.equal(classifyAtCaseResult(testCase.input), testCase.expected, testCase.name);
   }
+});
+
+test('classifyAtCaseResult refuses to pass a result whose screen-reader stop is unproven', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'calibration-cleanup-'));
+  try {
+    const journey = {
+      journeyId: 'cleanup-gate',
+      route: '/',
+      surfaceId: 'presentation',
+      state: 'initial',
+      trigger: { action: 'focus', target: 'main' },
+      commands: [{ kind: 'pause', durationMs: 0 }],
+      assertions: [{ id: 'tree', type: 'nodeMatches', evidenceType: 'accessibilityTree', expected: { role: 'main' } }],
+    };
+    const passingPayload = (cleanup) => ({
+      status: 'pass',
+      driver: 'nvda',
+      at: 'nvda',
+      capability: { supported: true, synthetic: false, at: 'nvda' },
+      assertions: [{ id: 'tree', status: 'pass' }],
+      cleanup,
+      evidence: {
+        synthetic: false,
+        rawPhrases: [],
+        normalizedPhrases: [],
+        accessibilityTree: { nodes: [{ role: { value: 'main' } }] },
+        cleanup,
+        provenance: {
+          driver: 'nvda',
+          at: 'nvda',
+          realAtPassAllowed: true,
+          guidepupLibraryVersion: '0.34.0',
+          nvdaAssetVersion: '0.2.1-2026.2',
+        },
+      },
+    });
+
+    const stopped = await defaultRunAtCase({
+      journey,
+      config: { baseUrl: 'http://127.0.0.1:3000' },
+      runRoot: tempDir,
+      processAtPlanCaseImpl: async () => passingPayload({ driverStarted: true, driverStopped: true }),
+    });
+    assert.equal(stopped.classification, 'pass');
+
+    const unproven = await defaultRunAtCase({
+      journey,
+      config: { baseUrl: 'http://127.0.0.1:3000' },
+      runRoot: tempDir,
+      processAtPlanCaseImpl: async () => passingPayload({ driverStarted: true, driverStopped: false }),
+    });
+    assert.equal(unproven.classification, 'infrastructureFailure');
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('runRealCalibrationSession withholds checkpoints and success when cleanup or teardown is unproven', async () => {
+  const config = {
+    baseUrl: 'http://127.0.0.1:3000',
+    calibration: {
+      journeys: [{
+        id: 'cleanup-session',
+        route: '/',
+        surfaceId: 'presentation',
+        state: 'initial',
+        trigger: { action: 'focus', target: 'main' },
+        commands: [{ kind: 'pause', durationMs: 0 }],
+        assertions: [{ id: 'speech', type: 'contains', value: 'search' }],
+      }],
+    },
+  };
+
+  const unprovenStop = await runRealCalibrationSession({
+    config,
+    probePrerequisites: async () => ({ nvdaAvailable: true, desktopUnlocked: true }),
+    runVisualPreflight: async () => ({ status: 'pass', summary: { classification: 'pass' } }),
+    launchBrowser: async () => ({
+      newPage: async () => ({ goto: async () => {}, close: async () => {}, context: () => ({}) }),
+      close: async () => {},
+      isConnected: () => false,
+    }),
+    runAtCase: async () => ({
+      classification: 'pass',
+      driver: 'nvda',
+      at: 'nvda',
+      capability: { supported: true, synthetic: false, at: 'nvda' },
+      cleanup: { driverStarted: true, driverStopped: false },
+      provenance: { driver: 'nvda', at: 'nvda' },
+      evidence: { synthetic: false, cleanup: { driverStarted: true, driverStopped: false } },
+      outcome: { status: 'pass' },
+    }),
+  });
+
+  assert.equal(unprovenStop.checkpoints.length, 0);
+  assert.equal(unprovenStop.aggregate.status, 'unsuccessful');
+
+  const brokenTeardown = await runRealCalibrationSession({
+    config,
+    probePrerequisites: async () => ({ nvdaAvailable: true, desktopUnlocked: true }),
+    runVisualPreflight: async () => ({ status: 'pass', summary: { classification: 'pass' } }),
+    launchBrowser: async () => ({
+      newPage: async () => ({ goto: async () => {}, close: async () => {}, context: () => ({}) }),
+      close: async () => { throw new Error('browser close failed'); },
+      isConnected: () => true,
+    }),
+    runAtCase: async () => ({
+      classification: 'unavailable',
+      driver: 'nvda',
+      at: 'nvda',
+      capability: { supported: true, synthetic: false, at: 'nvda' },
+      cleanup: { driverStarted: true, driverStopped: true },
+      provenance: { driver: 'nvda', at: 'nvda' },
+      evidence: { synthetic: false },
+      outcome: { status: 'unavailable' },
+    }),
+  });
+
+  assert.equal(brokenTeardown.browserTeardown.browserCloseStatus, 'failed');
+  assert.equal(brokenTeardown.aggregate.status, 'unsuccessful');
 });
 
 test('detectGuidepupNvda keeps registry evidence diagnostic when the package and selected asset are absent', async () => {

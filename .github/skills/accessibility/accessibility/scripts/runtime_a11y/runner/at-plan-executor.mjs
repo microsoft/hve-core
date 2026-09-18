@@ -64,6 +64,11 @@ function resolveAssertions(matrixCase, variant) {
   return [];
 }
 
+function resolveExpectedAnnouncements(assertions) {
+  const structuredEvidenceTypes = new Set(['browserState', 'accessibilityTree']);
+  return assertions.filter((assertion) => !structuredEvidenceTypes.has(assertion?.evidenceType));
+}
+
 function resolveTriggerSequence(matrixCase, surface) {
   const fallbackTrigger = matrixCase?.trigger || surface?.trigger || null;
   if (Array.isArray(matrixCase?.triggerSequence) && matrixCase.triggerSequence.length > 0) {
@@ -483,6 +488,9 @@ async function buildProvenance({ capability, driver, runtimeConfig, browser, pla
     addOnPosture: approvedProfile?.addOnPosture || 'default',
   };
   const profileFingerprint = driver?.metadata?.profileFingerprint || configuredProfileFingerprint;
+  // Real-AT PASS depends on settings the driver actually observed, not on a
+  // fingerprint the harness recorded about itself.
+  const profileVerified = driver?.metadata?.profileVerified === true;
   const nvdaAssetVersion = driver?.metadata?.nvdaAssetVersion || driver?.metadata?.nvdaVersion || driver?.nvdaVersion || null;
   const guidepupLibraryVersion = driver?.metadata?.guidepupLibraryVersion || driver?.metadata?.guidepupVersion || driver?.guidepupVersion || null;
   const browserVersion = await resolveBrowserVersion(browser);
@@ -506,7 +514,8 @@ async function buildProvenance({ capability, driver, runtimeConfig, browser, pla
     maximizeWindow: maximizeWindow || null,
     cssViewport: cssViewport || null,
     synthetic: Boolean(capability?.synthetic),
-    realAtPassAllowed: Boolean(capability?.supported && !capability?.synthetic),
+    profileVerified,
+    realAtPassAllowed: Boolean(capability?.supported && !capability?.synthetic && profileVerified),
   };
 }
 
@@ -549,6 +558,7 @@ export async function processAtPlanCase({
   const variant = selectVariant(matrixCase);
   const commands = resolveCommands(matrixCase, variant);
   const assertions = resolveAssertions(matrixCase, variant);
+  const expectedAnnouncements = resolveExpectedAnnouncements(assertions);
   const sourceMatrixRef = matrixCase?.sourceMatrixRef || matrixCase?.sourceMatrixPath || null;
   const sourceMatrixMetadata = matrixCase?.sourceMatrixMetadata || null;
   const ariaAtReferences = Array.isArray(matrixCase?.ariaAtReferences) ? matrixCase.ariaAtReferences : [];
@@ -593,7 +603,7 @@ export async function processAtPlanCase({
     const validation = validateScreenReaderConfig({
       ...(matrixCase?.runtimeConfig || runtimeConfig || {}),
       commands,
-      expectedAnnouncements: assertions,
+      expectedAnnouncements,
       captureMode: captureModeResolution.error ? matrixCase?.captureMode : captureModeResolution.captureMode,
       triggerAfterDriverStart,
       hasActionTrigger: actionTriggers.length > 0,
@@ -607,7 +617,7 @@ export async function processAtPlanCase({
       config: {
         ...(matrixCase?.runtimeConfig || runtimeConfig || {}),
         commands,
-        expectedAnnouncements: assertions,
+        expectedAnnouncements,
         captureMode: captureModeResolution.captureMode,
         triggerAfterDriverStart,
         hasActionTrigger: actionTriggers.length > 0,
@@ -1039,7 +1049,7 @@ export async function processAtPlanCase({
       cleanup: cleanupState,
     });
   } finally {
-    if (driverStarted) {
+    if (driverStarted || (driver && !capability?.synthetic)) {
       try {
         await driver?.stop?.();
       } catch {

@@ -104,8 +104,8 @@ export function validateScreenReaderConfig(config = {}) {
       errors.push('Each expected announcement must be an object.');
       continue;
     }
-    if (!['contains', 'matches', 'orderedContains'].includes(assertion.type)) {
-      errors.push('Expected announcements support contains, matches, or orderedContains.');
+    if (!['contains', 'matches', 'orderedContains', 'notContains'].includes(assertion.type)) {
+      errors.push('Expected announcements support contains, matches, orderedContains, or notContains.');
     }
     if (typeof assertion.value !== 'string' || assertion.value.trim() === '') {
       errors.push('Expected announcements require a non-empty string value.');

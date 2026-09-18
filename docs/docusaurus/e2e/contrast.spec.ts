@@ -375,9 +375,8 @@ test.describe('Contrast measurement gates', () => {
         `${describeContrastCase('Selected search result', '[role="option"][aria-selected="true"]')} should meet SC 1.4.3 AA (4.5:1) in ${mode} mode`,
       ).toBeGreaterThanOrEqual(4.5);
 
-      // The matched term is a <mark> descendant that upstream paints in its own
-      // color. A container-only measurement misses it entirely, and the defect
-      // was the mark resolving to the option's own background.
+      // Measure the matched <mark> directly because its foreground and
+      // background can differ from the selected option container.
       const markCount = await page.locator('[role="option"][aria-selected="true"] mark').count();
       expect(markCount, 'the query should highlight a matched term inside the selected option').toBeGreaterThan(0);
 

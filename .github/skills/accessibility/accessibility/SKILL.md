@@ -220,6 +220,10 @@ uv run scripts/runtime_a11y/__main__.py run-calibration --config <path-to>/a11y-
 
 The preflight reports the skill-local library, manifest-selected NVDA asset, and any conflicting NVDA process independently. Do not start a personal NVDA instance before an automated run; the harness starts an isolated session and rejects an existing process.
 
+Product-neutral screen-reader cases live in `scripts/runtime_a11y/screen-reader-cases.json`. A downstream binding supplies named routes, targets, states, and explicit execution recipes. Catalog digest drift, missing target closure, duplicate identities, unsupported commands, secret-bearing binding keys, and inferred actions fail before browser startup.
+
+Use repeatable `run-calibration --journey <id>` arguments for an authorized live subset. Run the downstream integrity recipe before product cases and keep real NVDA advisory/manual. For deterministic evidence, use `run-all --probe <probe-id>` with surface/state filters or a reviewed `probeScoping` configuration; ordinary `run-all` must not be treated as permission to start a real screen reader.
+
 #### Invocation
 
 Run the harness through its script entrypoint. Invoke it from the skill root, which is the directory holding `pyproject.toml`, so uv resolves the skill's own environment. This matches the invocation convention used by `scan.py` and the other Python skills, and it needs no `PYTHONPATH`.
@@ -228,6 +232,7 @@ Run the harness through its script entrypoint. Invoke it from the skill root, wh
 uv run scripts/runtime_a11y/__main__.py run-all --config a11y-runtime.config.json --out results.json
 uv run scripts/runtime_a11y/__main__.py probe <probeId> --config a11y-runtime.config.json
 uv run scripts/runtime_a11y/__main__.py render-artifacts --matrix coverage-matrix-repo.json --output-dir .copilot-tracking/accessibility/coverage --repo-slug repo
+uv run scripts/runtime_a11y/__main__.py compose-evidence --help
 ```
 
 To run from any other working directory, pin the skill as the uv project and use the same script path:
@@ -242,6 +247,26 @@ uv run --project <skill-root> <skill-root>/scripts/runtime_a11y/__main__.py run-
 * `--trace` captures Playwright traces and screenshots.
 * `--allow-external` confirms intentional probing of a non-loopback host.
 * `render-artifacts` turns a rendered matrix JSON document into the complete coverage evidence bundle.
+
+#### Evidence bundle composition
+
+`compose-evidence` combines downstream-owned catalogs, cadence scope, run context, normalized source envelopes, state proofs, and optional qualified-reviewer supplements into one deterministic evidence bundle. It is separate from `render-artifacts`: rendering creates coverage, EARL, and manual-plan views from a matrix, while composition creates a revision-bound trust envelope across evidence producers.
+
+The command requires explicit input paths and never infers product scope, Git state, time, retention, branch policy, or a release verdict. A consuming project owns those decisions. The composer validates artifact bytes beneath `--artifact-root`, preserves conflicts and quarantined results, and always emits non-attestation metadata. Automation, reviewer evidence, and release evidence have separate completeness states.
+
+For pull requests, a valid initial bundle may report reviewer evidence as pending. A qualified reviewer can later provide a privacy-minimized, digest-bound supplement and registry snapshot for deterministic recomposition against the prior bundle. Recomposition supplies both `--prior-bundle` and its independently retained `--prior-bundle-digest`; omission or mutation of prior history fails closed. Missing required reviewer evidence blocks release completeness, not ordinary bundle production. Raw screen-reader phrases and restricted transcript paths are forbidden in ordinary bundles; only approved counts, redacted metadata, and digests cross this boundary.
+
+Use `--require-completeness automated`, `reviewer`, or `release` only when the downstream workflow intends that dimension to gate. Valid incomplete bundles are still written for diagnosis. The additional exits are:
+
+| Exit code | Meaning                                  |
+|-----------|------------------------------------------|
+| `5`       | Automated evidence is incomplete.        |
+| `6`       | Reviewer evidence is pending or invalid. |
+| `7`       | Release evidence is incomplete.          |
+
+Existing exits `0` through `4` retain their meanings. The JSON contracts live beside the runtime at `evidence-bundle.schema.json`, `evidence-source.schema.json`, `evidence-scope.schema.json`, `screen-reader-method-cell.schema.json`, and `qualified-human-result.schema.json`.
+
+For a complete adopter path from an inactive template to a first retained bundle and deterministic recomposition, including schema-valid examples for every authored input, read [references/evidence-composition-adoption.md](references/evidence-composition-adoption.md).
 
 #### Visual review capture
 

@@ -1555,6 +1555,70 @@ test('processAtPlanCase attributes action capture to post-start triggers and eva
   assert.equal(result.evidence.provenance.nvdaAssetVersion, '0.2.1-2026.2');
   assert.equal(result.evidence.provenance.profileFingerprint.digest, 'a'.repeat(64));
   assert.equal(result.evidence.provenance.approvedProfile.digest, undefined);
+  // The driver recorded a fingerprint but never verified it against the
+  // approved settings, so this result cannot be real-AT PASS evidence.
+  assert.equal(result.evidence.provenance.profileVerified, false);
+  assert.equal(result.evidence.provenance.realAtPassAllowed, false);
+});
+
+test('processAtPlanCase allows real-AT PASS only when the driver verified the profile', async () => {
+  const buildCase = async (profileVerified) => {
+    const page = createRealPageStub();
+    page.locator = () => ({
+      focus: async () => undefined,
+      click: async () => undefined,
+      waitFor: async () => undefined,
+    });
+    return processAtPlanCase({
+      matrixCase: {
+        caseId: 'case-profile-gate',
+        captureMode: 'action',
+        postCommandSettleMs: 0,
+        triggerAfterDriverStart: true,
+        trigger: { action: 'click', target: '#add-to-cart' },
+        commands: [{ kind: 'navigate', value: 'nextHeading' }],
+        assertions: [{ id: 'action-speech', type: 'contains', value: 'Added to cart', evidenceType: 'actionSpeech' }],
+      },
+      runtimeConfig: { baseUrl: 'http://127.0.0.1:3000' },
+      page,
+      driverFactory: async () => ({
+        supported: true,
+        status: 'ready',
+        driver: 'guidepup',
+        synthetic: false,
+        metadata: {
+          guidepupLibraryVersion: '0.34.0',
+          nvdaAssetVersion: '0.2.1-2026.2',
+          profileVerified,
+          profileFingerprint: { profileId: 'guidepup-nvda-isolated-v1', digest: 'b'.repeat(64) },
+        },
+        async start() {},
+        async stop() {},
+        async reset() {},
+        async captureAction(action) {
+          await action();
+          return { result: undefined, spokenPhrase: 'Added to cart', itemText: 'Added to cart' };
+        },
+        async executeCommand() {},
+        async captureLog() {
+          return { phrases: ['cumulative phrase'], assertions: [], synthetic: false, evidenceKind: 'real' };
+        },
+      }),
+      ensureWindowBinding: async () => ({
+        status: 'bound',
+        expectedIdentity: { pageTitle: 'Example Page' },
+        foregroundIdentity: { pageTitle: 'Example Page' },
+        reason: 'ok',
+      }),
+      verifyScreenReaderStopped: async () => ({ stopped: true, terminated: false, reason: null }),
+    });
+  };
+
+  const verified = await buildCase(true);
+  const unverified = await buildCase(false);
+
+  assert.equal(verified.evidence.provenance.realAtPassAllowed, true);
+  assert.equal(unverified.evidence.provenance.realAtPassAllowed, false);
 });
 
 test('processAtPlanCase fails after action capture when the automation window loses focus', async () => {

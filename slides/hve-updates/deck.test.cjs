@@ -38,6 +38,27 @@ test('every walkthrough can advance, reverse, clamp and reset without affecting 
   assert.equal(moveStep(3, 'next', demos.builder.steps.length), 4);
 });
 
+test('walkthrough step announcements coalesce after focus settles', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  // A step announcement written in the same task as the focus move is superseded
+  // before it is spoken, and a superseded step must not announce at all.
+  assert.match(source, /if \(pendingAnnouncement\) clearTimeout\(pendingAnnouncement\)/);
+  assert.match(source, /if \(states\.get\(name\) !== index\) return/);
+  assert.doesNotMatch(source, /if \(speak\) announce\(/);
+});
+
+test('fullscreen state and forced-colors behavior remain explicit', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  assert.match(html, /id="fullscreen-button" aria-pressed="false"/);
+  assert.match(source, /addEventListener\('fullscreenchange'/);
+  assert.match(source, /setAttribute\('aria-pressed', String\(active\)\)/);
+  assert.match(source, /fullscreenInitiator \|\| fullscreenButton/);
+  assert.match(theme, /@media \(forced-colors: active\)/);
+  assert.match(theme, /ButtonFace/);
+  assert.match(theme, /Highlight/);
+});
+
 test('invalid state and unknown actions are surfaced', () => {
   for (const args of [[-1, 'next', 4], [0, 'next', 0], [4, 'next', 4], [0.5, 'next', 4]]) {
     assert.throws(() => moveStep(...args), RangeError);
@@ -103,6 +124,13 @@ test('diagram source and preview share valid declared nodes and edges', () => {
   for (const [from, to] of graphs.plan.edges) assert.ok(source.includes(`${from} --> ${to}`));
   assert.ok(graphs.research.nodes.some(node => node.kind === 'tool'));
   assert.ok(graphs.research.nodes.some(node => node.kind === 'subagent'));
+});
+
+test('custom diagrams expose a named graphics-document role with image fallback', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'components.js'), 'utf8');
+  assert.match(source, /role: 'graphics-document img'/);
+  assert.match(source, /'aria-labelledby': titleId/);
+  assert.match(source, /svg\.append\(svgElement\('title', \{ id: titleId \}, graph\.title\)\)/);
 });
 
 test('implementation includes completion evidence and accurate diff counts', () => {

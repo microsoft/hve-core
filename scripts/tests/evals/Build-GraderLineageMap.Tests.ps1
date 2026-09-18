@@ -66,72 +66,77 @@ Describe 'Build-GraderLineageMap.ps1' -Tag 'Unit' {
             Should -Throw -ExpectedMessage '*Semantic grader change*'
     }
 
-    It 'Rejects unreachable revisions, non-ancestor revisions, and provenance drift' {
-        if ($null -eq (Get-Command git -ErrorAction SilentlyContinue)) {
-            Set-ItResult -Skipped -Because 'git executable not available in test environment'
-            return
+    It 'Rejects unreachable revisions and provenance drift' {
+        # Repository history cannot carry this contract: the revisions it would
+        # need stop being ancestors of HEAD once their branch is squash-merged.
+        $fixture = Join-Path ([System.IO.Path]::GetTempPath()) ((New-Guid).Guid)
+        $stimulus = Join-Path $fixture 'evals/agent-behavior/stimuli'
+        try {
+            New-Item -ItemType Directory -Path $stimulus -Force | Out-Null
+            & git -C $fixture -c init.defaultBranch=main init --quiet
+            & git -C $fixture config user.email 'lineage@example.invalid'
+            & git -C $fixture config user.name 'Lineage Fixture'
+
+            $seed = Join-Path $stimulus 'seed.yml'
+            Set-Content -LiteralPath $seed -Value 'graders: []' -Encoding utf8
+            & git -C $fixture add -A
+            & git -C $fixture commit --quiet -m 'provenance'
+            $provenance = (& git -C $fixture rev-parse HEAD).Trim()
+
+            Set-Content -LiteralPath $seed -Value 'graders: [drifted]' -Encoding utf8
+            & git -C $fixture add -A
+            & git -C $fixture commit --quiet -m 'source'
+            $source = (& git -C $fixture rev-parse HEAD).Trim()
+
+            Set-Content -LiteralPath $seed -Value 'graders: [target]' -Encoding utf8
+            & git -C $fixture add -A
+            & git -C $fixture commit --quiet -m 'target'
+            $target = (& git -C $fixture rev-parse HEAD).Trim()
+
+            # A revision that exists nowhere fails the object check first.
+            {
+                Assert-GraderLineageRevisions -RepoRoot $fixture `
+                    -SourceProvenanceRevision $provenance `
+                    -SourceRevision ('0' * 40) `
+                    -TargetRevision $target
+            } | Should -Throw -ExpectedMessage '*Git command failed*'
+
+            # A real commit on an unmerged side branch is not an ancestor of HEAD.
+            & git -C $fixture checkout --quiet -b side $provenance
+            Set-Content -LiteralPath $seed -Value 'graders: [side]' -Encoding utf8
+            & git -C $fixture add -A
+            & git -C $fixture commit --quiet -m 'side'
+            $side = (& git -C $fixture rev-parse HEAD).Trim()
+            & git -C $fixture checkout --quiet main
+
+            {
+                Assert-GraderLineageRevisions -RepoRoot $fixture `
+                    -SourceProvenanceRevision $provenance `
+                    -SourceRevision $side `
+                    -TargetRevision $target
+            } | Should -Throw -ExpectedMessage '*is not an ancestor of replacement head*'
+
+            # Reachable and correctly ordered, but the source drifted from provenance.
+            {
+                Assert-GraderLineageRevisions -RepoRoot $fixture `
+                    -SourceProvenanceRevision $provenance `
+                    -SourceRevision $source `
+                    -TargetRevision $target
+            } | Should -Throw -ExpectedMessage '*does not match provenance*'
+
+            # The same inputs pass once provenance matches the source revision.
+            {
+                Assert-GraderLineageRevisions -RepoRoot $fixture `
+                    -SourceProvenanceRevision $source `
+                    -SourceRevision $source `
+                    -TargetRevision $target
+            } | Should -Not -Throw
         }
-
-        # A disposable repository gives the assertion known ancestry. The committed map's
-        # revisions come from a squash-merged branch, so they are reachable by object ID
-        # but are never ancestors of the current HEAD and cannot exercise the drift path.
-        $repo = Join-Path $TestDrive ('lineage-' + [Guid]::NewGuid())
-        New-Item -ItemType Directory -Path $repo | Out-Null
-        $lineageFile = Join-Path $repo 'evals/baseline-equivalence/stimuli.yml'
-        New-Item -ItemType Directory -Path (Split-Path -Parent $lineageFile) -Force | Out-Null
-
-        & git -C $repo init --quiet --initial-branch=main 2>&1 | Out-Null
-        & git -C $repo config user.email 'test@example.com' 2>&1 | Out-Null
-        & git -C $repo config user.name 'Test User' 2>&1 | Out-Null
-        & git -C $repo config commit.gpgsign false 2>&1 | Out-Null
-
-        'stimuli: []' | Set-Content -LiteralPath $lineageFile
-        & git -C $repo add . 2>&1 | Out-Null
-        & git -C $repo commit --quiet -m 'provenance' 2>&1 | Out-Null
-        $provenance = (& git -C $repo rev-parse HEAD).Trim()
-
-        'stimuli: [renamed]' | Set-Content -LiteralPath $lineageFile
-        & git -C $repo commit --quiet -am 'lineage drift' 2>&1 | Out-Null
-        $drifted = (& git -C $repo rev-parse HEAD).Trim()
-
-        'unrelated' | Set-Content -LiteralPath (Join-Path $repo 'README.md')
-        & git -C $repo add . 2>&1 | Out-Null
-        & git -C $repo commit --quiet -m 'target' 2>&1 | Out-Null
-        $target = (& git -C $repo rev-parse HEAD).Trim()
-
-        & git -C $repo checkout --quiet -b side $provenance 2>&1 | Out-Null
-        'side' | Set-Content -LiteralPath (Join-Path $repo 'side.md')
-        & git -C $repo add . 2>&1 | Out-Null
-        & git -C $repo commit --quiet -m 'side' 2>&1 | Out-Null
-        $sideCommit = (& git -C $repo rev-parse HEAD).Trim()
-        & git -C $repo checkout --quiet main 2>&1 | Out-Null
-
-        {
-            Assert-GraderLineageRevisions -RepoRoot $repo `
-                -SourceProvenanceRevision $provenance `
-                -SourceRevision ('0' * 40) `
-                -TargetRevision $target
-        } | Should -Throw -ExpectedMessage '*Git command failed*'
-
-        {
-            Assert-GraderLineageRevisions -RepoRoot $repo `
-                -SourceProvenanceRevision $provenance `
-                -SourceRevision $sideCommit `
-                -TargetRevision $target
-        } | Should -Throw -ExpectedMessage '*is not an ancestor of replacement head*'
-
-        {
-            Assert-GraderLineageRevisions -RepoRoot $repo `
-                -SourceProvenanceRevision $drifted `
-                -SourceRevision $provenance `
-                -TargetRevision $target
-        } | Should -Throw -ExpectedMessage '*does not match provenance*'
-
-        {
-            Assert-GraderLineageRevisions -RepoRoot $repo `
-                -SourceProvenanceRevision $provenance `
-                -SourceRevision $provenance `
-                -TargetRevision $target
-        } | Should -Not -Throw
+        finally {
+            if (Test-Path $fixture) {
+                & git -C $fixture gc --quiet --prune=now 2>$null
+                Remove-Item -LiteralPath $fixture -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
     }
 }
