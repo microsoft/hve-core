@@ -353,16 +353,123 @@ test('createGuidepupDriverAdapter dispatches type commands through the NVDA targ
   assert.deepEqual(typed, ['agent']);
 });
 
+test('createGuidepupDriverAdapter dispatches allowlisted semantic navigation and rejects unknown navigation', async () => {
+  const navigated = [];
+  const adapter = await createGuidepupDriverAdapter({
+    platform: 'win32',
+    target: {
+      start: async () => undefined,
+      stop: async () => undefined,
+      nextHeading: async (options) => navigated.push({ value: 'nextHeading', options }),
+      spokenPhraseLog: async () => [],
+    },
+  });
+
+  await adapter.executeCommand({ kind: 'navigate', value: 'nextHeading' });
+
+  assert.deepEqual(navigated, [{ value: 'nextHeading', options: { capture: true } }]);
+  await assert.rejects(
+    adapter.executeCommand({ kind: 'navigate', value: 'openPreferences' }),
+    /Unsupported navigate/,
+  );
+});
+
+test('createGuidepupDriverAdapter captures a trusted external action without changing cumulative capture', async () => {
+  const adapter = await createGuidepupDriverAdapter({
+    platform: 'win32',
+    target: {
+      start: async () => undefined,
+      stop: async () => undefined,
+      capture: async (action, options) => ({ result: await action(), spokenPhrase: 'Added to cart', itemText: 'Added to cart', options }),
+      spokenPhraseLog: async () => ['cumulative phrase'],
+    },
+  });
+
+  const captured = await adapter.captureAction(async () => 'clicked');
+  const cumulative = await adapter.captureLog();
+
+  assert.deepEqual(captured, { result: 'clicked', spokenPhrase: 'Added to cart', itemText: 'Added to cart', options: { capture: true } });
+  assert.deepEqual(cumulative.phrases, ['cumulative phrase']);
+});
+
+test('createGuidepupDriverAdapter rejects action capture when the runtime target lacks capture support', async () => {
+  const adapter = await createGuidepupDriverAdapter({
+    platform: 'win32',
+    target: {
+      start: async () => undefined,
+      stop: async () => undefined,
+      spokenPhraseLog: async () => [],
+    },
+  });
+
+  await assert.rejects(adapter.captureAction(async () => undefined), /does not support action-scoped capture/);
+});
+
+test('createScreenReaderDriver rejects action capture for a synthetic driver', async () => {
+  const driver = await createScreenReaderDriver({
+    platform: 'win32',
+    driverName: 'synthetic',
+    config: {
+      captureMode: 'action',
+      triggerAfterDriverStart: true,
+      hasActionTrigger: true,
+      commands: [{ kind: 'navigate', value: 'nextHeading' }],
+      expectedAnnouncements: [{ type: 'contains', value: 'heading', evidenceType: 'actionSpeech' }],
+    },
+  });
+
+  assert.equal(driver.supported, false);
+  assert.equal(driver.status, 'invalid-config');
+  assert.match(driver.errors[0], /requires a real Guidepup/);
+});
+
+test('createGuidepupDriverAdapter derives profile identity from effective settings', async () => {
+  const createAdapterForDynamicContent = async (reportDynamicContentChanges) => createGuidepupDriverAdapter({
+    platform: 'win32',
+    target: {
+      version: '0.2.1-2026.2',
+      start: async () => undefined,
+      stop: async () => undefined,
+      getSettings: () => ({ presentation: { reportDynamicContentChanges } }),
+      spokenPhraseLog: async () => [],
+    },
+  });
+  const enabled = await createAdapterForDynamicContent(true);
+  const disabled = await createAdapterForDynamicContent(false);
+
+  await enabled.start();
+  await disabled.start();
+
+  assert.equal(enabled.metadata.guidepupLibraryVersion, '0.34.0');
+  assert.equal(enabled.metadata.nvdaAssetVersion, '0.2.1-2026.2');
+  assert.notEqual(enabled.metadata.guidepupLibraryVersion, enabled.metadata.nvdaAssetVersion);
+  assert.notEqual(enabled.metadata.profileFingerprint.digest, disabled.metadata.profileFingerprint.digest);
+  assert.deepEqual(Object.keys(enabled.metadata.profileFingerprint).sort(), ['digest', 'effectiveSettings', 'profileId']);
+
+  await enabled.stop();
+  await disabled.stop();
+});
+
 test('createGuidepupDriverAdapter tracks ownership and cleanup state for start/stop lifecycle', async () => {
   const stopCalls = [];
   const adapter = await createGuidepupDriverAdapter({
     platform: 'win32',
     target: {
-      start: async () => undefined,
+      start: async (options) => {
+        assert.equal(options.capture, true);
+        assert.equal(options.settings.presentation.reportDynamicContentChanges, true);
+      },
       stop: async () => {
         stopCalls.push('stopped');
       },
       press: async () => undefined,
+      version: '0.2.1-2026.2',
+      getSettings: () => ({
+        general: { language: 'Windows', saveConfigurationOnExit: false },
+        presentation: { reportDynamicContentChanges: true },
+        virtualBuffers: { autoSayAllOnPageLoad: false },
+        vision: { NVDAHighlighter: { enabled: false } },
+      }),
       spokenPhraseLog: async () => [],
     },
   });
@@ -373,6 +480,11 @@ test('createGuidepupDriverAdapter tracks ownership and cleanup state for start/s
   await adapter.start();
   assert.equal(adapter.cleanupState().startedByAdapter, true);
   assert.equal(adapter.cleanupState().started, true);
+  assert.equal(adapter.metadata.guidepupLibraryVersion, '0.34.0');
+  assert.equal(adapter.metadata.nvdaAssetVersion, '0.2.1-2026.2');
+  assert.equal(adapter.metadata.profileFingerprint.profileId, 'guidepup-nvda-isolated-v1');
+  assert.equal(adapter.metadata.profileFingerprint.digest.length, 64);
+  assert.equal('path' in adapter.metadata.profileFingerprint, false);
 
   await adapter.stop();
   assert.equal(stopCalls.length, 1);
@@ -406,6 +518,7 @@ test('createGuidepupDriverAdapter retries startup and settles after stop', async
           throw new Error('Timed out waiting for NVDA to be running');
         }
       },
+      getSettings: () => ({}),
       stop: async () => {
         stopCalls += 1;
       },
@@ -448,6 +561,7 @@ test('createGuidepupDriverAdapter times out a hung startup attempt and retries',
           return new Promise(() => {});
         }
       },
+      getSettings: () => ({}),
       stop: async () => {
         stopCalls += 1;
       },
@@ -477,6 +591,7 @@ test('createGuidepupDriverAdapter keeps ownership state when the stop fails and 
     sleep: async () => undefined,
     target: {
       start: async () => undefined,
+      getSettings: () => ({}),
       stop: async () => {
         stopCalls += 1;
         if (stopCalls === 1) {

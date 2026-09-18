@@ -7,7 +7,7 @@ user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-26"
+  last_updated: "2026-09-14"
 ---
 
 # Accessibility — Skill Entry
@@ -190,6 +190,7 @@ Complete these once before any runtime-harness command. They are separate from t
 * Python 3.11+ with [uv](https://docs.astral.sh/uv/) available on PATH.
 * Node.js available on PATH, plus system Google Chrome, because the probes target `channel: 'chrome'`.
 * Skill-local Node dependencies installed under [scripts/runtime_a11y](scripts/runtime_a11y). The CLI fails fast with an install hint when they are missing.
+* Automated Windows NVDA runs additionally require the manifest-selected Guidepup NVDA asset. Machine setup and asset installation are separate actions from `npm ci`.
 
 Install the harness dependencies from the `scripts/runtime_a11y` directory:
 
@@ -202,6 +203,22 @@ $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1'; npm ci
 ```
 
 `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` avoids downloading bundled browsers that the harness never uses.
+
+For automated NVDA runs, prepare the Windows machine once, then install the asset selected by the skill-local Guidepup package. Run the asset command again after updating Guidepup:
+
+```powershell
+npx --yes @guidepup/setup@0.25.3 setup
+Set-Location scripts/runtime_a11y
+npx --yes @guidepup/setup@0.25.3 install nvda
+```
+
+The commands configure the machine and write versioned assets to the Guidepup user cache. They are not part of ordinary dependency installation. Run the prerequisite-only probe before a calibration session:
+
+```bash
+uv run scripts/runtime_a11y/__main__.py run-calibration --config <path-to>/a11y-runtime.config.json --prerequisite-only
+```
+
+The preflight reports the skill-local library, manifest-selected NVDA asset, and any conflicting NVDA process independently. Do not start a personal NVDA instance before an automated run; the harness starts an isolated session and rejects an existing process.
 
 #### Invocation
 
@@ -261,6 +278,14 @@ The Docusaurus site in this repository is configured for `auto` at `http://127.0
 #### Config summary
 
 The harness loads [scripts/runtime_a11y/config-schema.json](scripts/runtime_a11y/config-schema.json) and expects a runtime config with fields such as `baseUrl`, `serveMode`, `allowlist`, `routes`, `surfaces`, and `probeScoping`. The config defines the surfaces and interaction states the probes execute. A runtime guard blocks non-loopback targets unless the host is allowlisted or the caller supplies `--allow-external`. `serveMode` controls server ownership for visual review capture, described under [Server modes](#server-modes).
+
+Real-NVDA journeys support three capture modes:
+
+* `single` reads the cumulative speech log after commands and the configured settle interval.
+* `clear-and-capture` clears earlier speech before the settle interval, then reads the cumulative log.
+* `action` wraps an existing post-start declarative trigger with Guidepup action capture. Assertions can select `actionSpeech` or `actionNormalizedSpeech` to evaluate only output attributed to that trigger.
+
+Action capture waits for Guidepup's one-second speech quiet window. It is appropriate for immediate interaction-driven announcements but does not extend to arbitrary delayed updates and cannot create speech that NVDA does not emit. Keep `single`, `clear-and-capture`, accessibility-tree evidence, and manual AT evidence available for those cases. Action mode fails closed when the journey lacks `triggerAfterDriverStart`, a declarative trigger, a real Guidepup driver, or action-capture support.
 
 #### Probe inventory and adequacy map
 
@@ -337,7 +362,7 @@ The two are separate because a failed check and an unrun check call for differen
 
 #### Runtime dependencies
 
-The harness resolves its Node dependencies from a skill-local package under [scripts/runtime_a11y](scripts/runtime_a11y) (`package.json` plus committed `package-lock.json`), pinning `playwright@1.61.1`, `@axe-core/playwright@4.12.1`, and `@guidepup/virtual-screen-reader@0.32.1`. Install them once as described under [Harness prerequisites](#harness-prerequisites). The probes then resolve their dependencies from the local `node_modules`; the CLI fails fast with an install hint when `node_modules` is absent, before it probes or starts any server.
+The harness resolves its Node dependencies from a skill-local package under [scripts/runtime_a11y](scripts/runtime_a11y) (`package.json` plus committed `package-lock.json`), pinning `playwright@1.61.1`, `@axe-core/playwright@4.12.1`, `@guidepup/virtual-screen-reader@0.32.1`, and optional real-AT integration through `@guidepup/guidepup@0.34.0`. Install the Node dependencies and the separately managed NVDA asset as described under [Harness prerequisites](#harness-prerequisites). The probes then resolve their dependencies from the local `node_modules`; the CLI fails fast with an install hint when `node_modules` is absent, before it probes or starts any server.
 
 #### Testing
 

@@ -18,7 +18,7 @@ stimuli:
         config:
           pattern: '(?i)(implication|stale|invalidate|consistency|correct|safe|risk|because|investigate|consider)'
       - type: output-matches
-        name: no-source-edit
+        name: code-review-walkback-investigation-no-source-edit
         config:
           pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

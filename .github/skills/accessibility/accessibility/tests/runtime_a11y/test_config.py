@@ -199,6 +199,48 @@ def test_given_type_command_when_validate_then_succeeds(tmp_path: Path) -> None:
     assert config["calibration"]["journeys"][0]["commands"][0]["kind"] == "type"
 
 
+def test_given_action_capture_when_validate_then_preserves_closed_contract(
+    tmp_path: Path,
+) -> None:
+    config_path = tmp_path / "a11y-runtime.config.json"
+    config_path.write_text(
+        '{"baseUrl": "http://127.0.0.1:3000", '
+        '"calibration": {"journeys": [{"id": "action-capture", '
+        '"captureMode": "action", "triggerAfterDriverStart": true, '
+        '"trigger": {"action": "click", "target": "#button"}, '
+        '"commands": [{"kind": "navigate", "value": "nextHeading"}], '
+        '"assertions": [{"id": "speech", "type": "contains", '
+        '"value": "heading", "evidenceType": "actionSpeech"}]}]}}',
+        encoding="utf-8",
+    )
+
+    config = load_validated_config(config_path)
+
+    journey = config["calibration"]["journeys"][0]
+    assert journey["captureMode"] == "action"
+    assert journey["commands"][0]["kind"] == "navigate"
+    assert journey["assertions"][0]["evidenceType"] == "actionSpeech"
+
+
+def test_given_unknown_action_evidence_type_when_validate_then_rejects(
+    tmp_path: Path,
+) -> None:
+    config_path = tmp_path / "a11y-runtime.config.json"
+    config_path.write_text(
+        '{"baseUrl": "http://127.0.0.1:3000", '
+        '"calibration": {"journeys": [{"id": "invalid-action-capture", '
+        '"captureMode": "action", "triggerAfterDriverStart": true, '
+        '"trigger": {"action": "click", "target": "#button"}, '
+        '"commands": [{"kind": "navigate", "value": "nextHeading"}], '
+        '"assertions": [{"type": "contains", "value": "heading", '
+        '"evidenceType": "actionTranscript"}]}]}}',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ScriptError, match="actionTranscript"):
+        load_validated_config(config_path)
+
+
 def test_validate_controlled_calibration_journeys_reach_targets_by_keyboard() -> None:
     config_path = (
         Path(__file__).resolve().parents[6]

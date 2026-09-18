@@ -35,7 +35,7 @@ BeforeAll {
                     tags       = @{ category = 'baseline-equivalence'; subcategory = 'factual-recall'; policy = 'equivalent' }
                     graders    = @(
                         @{ type = 'output-matches'; name = 'answers-four'; config = @{ pattern = '4' } }
-                        @{ type = 'prompt'; name = 'response-quality'; config = @{ prompt = 'Correct?' } }
+                        @{ type = 'prompt'; name = 'shared-basic-response-quality'; config = @{ prompt = 'Correct?' } }
                     )
                 },
                 @{
@@ -43,11 +43,11 @@ BeforeAll {
                     # sameness and stays in the equivalence denominator.
                     name                = 'bleed-guarded'
                     prompt              = 'Tell me a short joke.'
-                    invariants          = @('non-empty')
+                    invariants          = @('bleed-guarded-non-empty')
                     customized_disallow = @('agent-self-reference')
                     tags                = @{ category = 'baseline-equivalence'; subcategory = 'instruction-bleed'; policy = 'equivalent' }
                     graders             = @(
-                        @{ type = 'output-matches'; name = 'non-empty'; config = @{ pattern = '\S' } }
+                        @{ type = 'output-matches'; name = 'bleed-guarded-non-empty'; config = @{ pattern = '\S' } }
                     )
                 },
                 @{
@@ -55,11 +55,11 @@ BeforeAll {
                     # customized run, so this stimulus is excluded from equivalence.
                     name                = 'true-divergence'
                     prompt              = 'Edit the README.'
-                    invariants          = @('non-empty')
+                    invariants          = @('true-divergence-non-empty')
                     customized_required = @('routes-through-lifecycle')
                     tags                = @{ category = 'baseline-equivalence'; subcategory = 'customization-boundary'; policy = 'documented-divergence' }
                     graders             = @(
-                        @{ type = 'output-matches'; name = 'non-empty'; config = @{ pattern = '\S' } }
+                        @{ type = 'output-matches'; name = 'true-divergence-non-empty'; config = @{ pattern = '\S' } }
                     )
                 }
             )
@@ -75,7 +75,7 @@ BeforeAll {
                     tags    = @{ category = 'baseline-equivalence'; subcategory = 'factual-recall'; policy = 'equivalent' }
                     graders = @(
                         @{ type = 'output-matches'; name = 'answers-four'; config = @{ pattern = '4' } }
-                        @{ type = 'prompt'; name = 'response-quality'; config = @{ prompt = 'Correct?' } }
+                        @{ type = 'prompt'; name = 'shared-basic-response-quality'; config = @{ prompt = 'Correct?' } }
                     )
                 },
                 @{
@@ -83,7 +83,7 @@ BeforeAll {
                     prompt  = 'Tell me a short joke.'
                     tags    = @{ category = 'baseline-equivalence'; subcategory = 'instruction-bleed'; policy = 'equivalent' }
                     graders = @(
-                        @{ type = 'output-matches'; name = 'non-empty'; config = @{ pattern = '\S' } }
+                        @{ type = 'output-matches'; name = 'bleed-guarded-non-empty'; config = @{ pattern = '\S' } }
                     )
                 },
                 @{
@@ -91,7 +91,7 @@ BeforeAll {
                     prompt  = 'Edit the README.'
                     tags    = @{ category = 'baseline-equivalence'; subcategory = 'customization-boundary'; policy = 'documented-divergence' }
                     graders = @(
-                        @{ type = 'output-matches'; name = 'non-empty'; config = @{ pattern = '\S' } }
+                        @{ type = 'output-matches'; name = 'true-divergence-non-empty'; config = @{ pattern = '\S' } }
                     )
                 }
             )
@@ -107,7 +107,7 @@ BeforeAll {
                     tags    = @{ category = 'baseline-equivalence'; subcategory = 'factual-recall'; policy = 'equivalent' }
                     graders = @(
                         @{ type = 'output-matches'; name = 'answers-four'; config = @{ pattern = '4' } }
-                        @{ type = 'prompt'; name = 'response-quality'; config = @{ prompt = 'Correct?' } }
+                        @{ type = 'prompt'; name = 'shared-basic-response-quality'; config = @{ prompt = 'Correct?' } }
                     )
                 },
                 @{
@@ -115,7 +115,7 @@ BeforeAll {
                     turns   = @($launchTurn, 'Tell me a short joke.')
                     tags    = @{ category = 'baseline-equivalence'; subcategory = 'instruction-bleed'; policy = 'equivalent' }
                     graders = @(
-                        @{ type = 'output-matches'; name = 'non-empty'; config = @{ pattern = '\S' } }
+                        @{ type = 'output-matches'; name = 'bleed-guarded-non-empty'; config = @{ pattern = '\S' } }
                         @{ type = 'output-matches'; name = 'agent-self-reference'; config = @{ pattern = 'agent' } }
                     )
                 },
@@ -124,7 +124,7 @@ BeforeAll {
                     turns   = @($launchTurn, 'Edit the README.')
                     tags    = @{ category = 'baseline-equivalence'; subcategory = 'customization-boundary'; policy = 'documented-divergence' }
                     graders = @(
-                        @{ type = 'output-matches'; name = 'non-empty'; config = @{ pattern = '\S' } }
+                        @{ type = 'output-matches'; name = 'true-divergence-non-empty'; config = @{ pattern = '\S' } }
                         @{ type = 'output-matches'; name = 'routes-through-lifecycle'; config = @{ pattern = 'lifecycle' } }
                     )
                 }
@@ -424,7 +424,8 @@ Describe 'Test-EquivalenceStimulusSync' -Tag 'Unit' {
         }
 
         It 'Reports but does not gate on <Grader>' -ForEach @(
-            @{ Grader = 'asks-clarifying-question'; Reason = 'interaction-style preference of the underlying model' }
+            @{ Grader = 'ambiguous-spec-vague-feature-asks-clarifying-question'; Reason = 'interaction-style preference of the underlying model' }
+            @{ Grader = 'hello-world-syntax'; Reason = 'valid code-rendering choice of the underlying model' }
             @{ Grader = 'mentions-print-paren'; Reason = 'illustration choice that differs by model' }
         ) {
             $script:DeclaredGraders.Contains($Grader) | Should -BeTrue -Because "$Grader must keep running so $Reason stays visible in the run results"

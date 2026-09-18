@@ -15,15 +15,15 @@ stimuli:
       category: agent-behavior
     graders:
       - type: output-matches
-        name: phase-marker-present
+        name: dt-coach-class-recipe-phase-marker-present
         config:
           pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
       - type: output-matches
-        name: tracking-file-write
+        name: dt-coach-class-recipe-tracking-file-write
         config:
           pattern: '(?i)\.copilot-tracking[-/\\]dt[-/\\]'
       - type: output-matches
-        name: no-source-edit
+        name: dt-coach-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
@@ -68,7 +68,7 @@ stimuli:
         config:
           pattern: '(?i)(canonical deck|customer[- ]card|snapshot|missing|not yet available|no .{0,30}artifacts)'
       - type: output-matches
-        name: readiness-evidence-precedes-offer
+        name: dt-coach-asset-ready-deck-offer-readiness-evidence-afea0142
         config:
           pattern: '(?i)(persona|journey map|point[- ]of[- ]view|method 3 output|artifacts? (we|you) have|what.{0,20}(exists|available)|based on)'
 
@@ -89,7 +89,7 @@ stimuli:
         config:
           pattern: '(?i)(canonical deck|customer[- ]card|snapshot|refresh|missing|not yet)'
       - type: output-matches
-        name: readiness-evidence-precedes-offer
+        name: dt-coach-method-5-deck-offer-readiness-evidence-pre-1f8e8a50
         config:
           pattern: '(?i)(concept|three[- ]lens|evaluation|method 5 output|artifacts? (we|you) have|based on)'
 

@@ -173,6 +173,11 @@ jobs:
           # and Unlicense already appears in allow-licenses. It arrives
           # transitively through mermaid's d3 dependency graph and renders
           # documentation diagrams at build time.
+          # pkg:npm/elkjs is an EPL-2.0 runtime dependency of Mermaid 12 that
+          # lays out diagrams in the published documentation site. EPL-2.0
+          # does not relicense separately authored repository code. This
+          # package-scoped exception requires organizational approval before
+          # merge and does not allow EPL-2.0 repository-wide.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
@@ -198,6 +203,7 @@ jobs:
             pkg:pypi/pywin32,
             pkg:pypi/pyyaml,
             pkg:npm/dompurify,
+            pkg:npm/elkjs,
             pkg:npm/robust-predicates,
             pkg:npm/lunr-languages,
             pkg:npm/%40github/copilot,

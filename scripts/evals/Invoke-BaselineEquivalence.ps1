@@ -702,11 +702,11 @@ function Resolve-LatestRunDir {
 function Test-CustomizedInvocationRetryEligibility {
     <#
     .SYNOPSIS
-        Determines whether one complete customized GPT calibration retry is allowed.
+        Determines whether one complete customized calibration retry is allowed.
     .DESCRIPTION
-        The retry is limited to the first customized GPT calibration attempt when the
-        validated baseline is structurally complete and the only customized invocation
-        defect is one failed exact read represented by one failed and one missing count.
+        The retry is limited to the first customized calibration attempt for the fixed
+        model pair when the validated baseline is structurally complete and the customized
+        defect is either one failed exact read or a reconciled batch of typed executor errors.
         Every other invocation defect remains immediately authoritative.
     .OUTPUTS
         [bool] True only for the single approved retry condition.
@@ -730,24 +730,51 @@ function Test-CustomizedInvocationRetryEligibility {
         [int]$BaselineStructural,
 
         [Parameter(Mandatory = $true)]
-        [hashtable]$InvocationTally
+        [hashtable]$InvocationTally,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$ExecutionDiagnostic
     )
 
-    if ($Tier -ne 'calibration' -or $Model -ne 'gpt-5.6-luna' -or $Attempt -ne 1) { return $false }
+    if ($Tier -ne 'calibration' -or $Model -notin @('gpt-5.6-luna', 'claude-sonnet-5') -or $Attempt -ne 1) { return $false }
     if (-not $BaselineHasSignal -or $BaselineStructural -ne 0) { return $false }
-    if ($InvocationTally.Expected -le 0 -or $InvocationTally.Observed -ne ($InvocationTally.Expected - 1)) { return $false }
-    if ([string]::IsNullOrWhiteSpace([string]$InvocationTally.FailedKey) -or
-        $InvocationTally.ReasonCode -notin @(
+    if ($InvocationTally.Expected -le 0) { return $false }
+
+    $isolatedReadFailure = $InvocationTally.Observed -eq ($InvocationTally.Expected - 1) -and
+        -not [string]::IsNullOrWhiteSpace([string]$InvocationTally.FailedKey) -and
+        $InvocationTally.ReasonCode -in @(
             'failed-tool-result',
             'missing-correlated-result',
             'successful-result-without-agent-marker'
-        )) { return $false }
-
-    return [int]$InvocationTally.Failed -eq 1 -and
+        ) -and
+        [int]$InvocationTally.Failed -eq 1 -and
         [int]$InvocationTally.Missing -eq 1 -and
         [int]$InvocationTally.Duplicate -eq 0 -and
         [int]$InvocationTally.WrongPath -eq 0 -and
         [int]$InvocationTally.Malformed -eq 0
+    if ($isolatedReadFailure) { return $true }
+
+    $erroredTrials = [int]$ExecutionDiagnostic.ErroredTrials
+    if ($ExecutionDiagnostic.ResultState -ne 'read' -or
+        [int]$ExecutionDiagnostic.ExitCode -eq 0 -or
+        [int]$ExecutionDiagnostic.MalformedRecords -ne 0 -or
+        [int]$ExecutionDiagnostic.TrialRecords -ne [int]$InvocationTally.Expected -or
+        $erroredTrials -le 0) { return $false }
+
+    $diagnosedErrors = 0
+    foreach ($errorCategory in @($ExecutionDiagnostic.Errors)) {
+        if ([string]$errorCategory.category -notin @('rate-limited', 'timeout', 'connection', 'unknown') -or
+            [int]$errorCategory.count -le 0) { return $false }
+        $diagnosedErrors += [int]$errorCategory.count
+    }
+    if ($diagnosedErrors -ne $erroredTrials) { return $false }
+
+    return [int]$InvocationTally.Observed -eq ([int]$InvocationTally.Expected - $erroredTrials) -and
+        [int]$InvocationTally.Failed -eq 0 -and
+        [int]$InvocationTally.Missing -eq $erroredTrials -and
+        [int]$InvocationTally.Duplicate -eq 0 -and
+        [int]$InvocationTally.WrongPath -eq 0 -and
+        [int]$InvocationTally.Malformed -eq $erroredTrials
 }
 
 function Write-SummaryJson {
@@ -1105,7 +1132,8 @@ if ($MyInvocation.InvocationName -ne '.') {
             $customizedAttempt = 1
             $codeB = Invoke-VallyCommand -Arguments $evalCustomized
             $bRunDir = Resolve-LatestRunDir -OutputDir $bDir
-            $executionDiagnostics.Add((Get-VallyExecutionDiagnostic -RunDir $bRunDir -Model $model -Variant customized -Attempt $customizedAttempt -ExitCode $codeB))
+            $customizedDiagnostic = Get-VallyExecutionDiagnostic -RunDir $bRunDir -Model $model -Variant customized -Attempt $customizedAttempt -ExitCode $codeB
+            $executionDiagnostics.Add($customizedDiagnostic)
             $invocationTally = Measure-AgentInvocationEvidence `
                 -RunDir $bRunDir `
                 -StimulusNames @($canonicalPolicy.Keys) `
@@ -1131,8 +1159,9 @@ if ($MyInvocation.InvocationName -ne '.') {
                     -Attempt $customizedAttempt `
                     -BaselineHasSignal $baselineTally.HasSignal `
                     -BaselineStructural $baselineStructural `
-                    -InvocationTally $invocationTally) {
-                Write-Host '   Agent invocation: retrying one complete customized GPT calibration run after one isolated exact-read failure' -ForegroundColor Yellow
+                    -InvocationTally $invocationTally `
+                    -ExecutionDiagnostic $customizedDiagnostic) {
+                Write-Host "   Agent invocation: retrying one complete customized $model calibration run after eligible incomplete evidence" -ForegroundColor Yellow
                 $customizedAttempt++
                 $firstCustomizedRunDir = $bRunDir
                 $codeB = Invoke-VallyCommand -Arguments $evalCustomized

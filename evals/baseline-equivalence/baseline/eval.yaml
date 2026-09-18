@@ -37,7 +37,7 @@ stimuli:
         name: answers-four
         config: {pattern: '(?i)\b4\b'}
       - type: prompt
-        name: response-quality
+        name: factual-arithmetic-basic-response-quality
         config: {prompt: "Is the response factually correct?"}
 
   - name: factual-geo-france-capital
@@ -49,7 +49,7 @@ stimuli:
         name: mentions-paris
         config: {pattern: '(?i)\bparis\b'}
       - type: prompt
-        name: response-quality
+        name: factual-geo-france-capital-response-quality
         config: {prompt: "Is the response factually correct?"}
 
   - name: factual-units-mile-to-km
@@ -61,7 +61,7 @@ stimuli:
         name: mentions-km-conversion
         config: {pattern: '(?i)1\.6'}
       - type: prompt
-        name: response-quality
+        name: factual-units-mile-to-km-response-quality
         config: {prompt: "Is the response factually correct?"}
 
   - name: factual-history-moon-landing-year
@@ -73,7 +73,7 @@ stimuli:
         name: mentions-1969
         config: {pattern: '\b1969\b'}
       - type: prompt
-        name: response-quality
+        name: factual-history-moon-landing-year-response-quality
         config: {prompt: "Is the response factually correct?"}
 
   - name: factual-science-water-formula
@@ -85,17 +85,20 @@ stimuli:
         name: mentions-h2o
         config: {pattern: '(?i)h2o|h\u2082o|h\s*2\s*o'}
       - type: prompt
-        name: response-quality
+        name: factual-science-water-formula-response-quality
         config: {prompt: "Is the response factually correct?"}
 
   - name: code-hello-world-python
     constraints: *agent-time-limit
-    prompt: "Write a hello world program in Python that includes the exact text 'hello world'."
+    prompt: "Write a hello world program in Python."
     tags: {category: baseline-equivalence, subcategory: code-qa, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
-        name: mentions-hello-world
-        config: {pattern: '(?i)hello world'}
+        name: hello-world-syntax
+        config: {pattern: "(?is)print\\(\\s*['\"]hello[^'\"]{0,15}world[^'\"]{0,5}['\"]\\s*\\)"}
+      - type: prompt
+        name: code-hello-world-python-response-quality
+        config: {prompt: "Does the response provide a working Python hello-world program?"}
 
   - name: code-reverse-string-rust
     constraints: *agent-time-limit
@@ -106,7 +109,7 @@ stimuli:
         name: rust-fn-syntax
         config: {pattern: "(?i)fn\\s+\\w+\\s*\\([^)]*&?str"}
       - type: prompt
-        name: response-quality
+        name: code-reverse-string-rust-response-quality
         config: {prompt: "Does the response define a Rust function that reverses a string?"}
 
   - name: code-walkthrough-fizzbuzz
@@ -118,7 +121,7 @@ stimuli:
         name: mentions-fizz-buzz
         config: {pattern: '(?i)fizz.*buzz|buzz.*fizz'}
       - type: prompt
-        name: response-quality
+        name: code-walkthrough-fizzbuzz-response-quality
         config: {prompt: "Does the response correctly walk through fizzbuzz for 1 through 15?"}
 
   - name: code-error-explain-indexerror
@@ -130,7 +133,7 @@ stimuli:
         name: mentions-index-or-range
         config: {pattern: '(?i)(index|range|bounds)'}
       - type: prompt
-        name: response-quality
+        name: code-error-explain-indexerror-response-quality
         config: {prompt: "Does the response correctly explain the cause of an IndexError?"}
 
   - name: code-idiom-translate-python-to-js
@@ -142,7 +145,7 @@ stimuli:
         name: mentions-map-or-array
         config: {pattern: '(?i)(\.map\(|Array\.from|for\s*\()'}
       - type: prompt
-        name: response-quality
+        name: code-idiom-translate-python-to-js-response-quality
         config: {prompt: "Does the response produce idiomatic JavaScript equivalent to the Python list comprehension?"}
 
   - name: tool-trigger-package-json
@@ -154,7 +157,7 @@ stimuli:
         name: mentions-scripts-or-deps
         config: {pattern: '(?i)(scripts|devDependencies|dependencies)'}
       - type: prompt
-        name: response-quality
+        name: tool-trigger-package-json-response-quality
         config: {prompt: "Does the response describe package.json content from this repository?"}
 
   - name: tool-trigger-memory-only
@@ -166,7 +169,7 @@ stimuli:
         name: mentions-log-n
         config: {pattern: '(?i)o\(?\s*log'}
       - type: prompt
-        name: response-quality
+        name: tool-trigger-memory-only-response-quality
         config: {prompt: "Does the response correctly state binary search time complexity?"}
 
   - name: tool-trigger-readme-summary
@@ -175,10 +178,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [documentation, rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
-        name: non-empty
+        name: tool-trigger-readme-summary-non-empty
         config: {pattern: '\S'}
       - type: prompt
-        name: response-quality
+        name: tool-trigger-readme-summary-response-quality
         config: {prompt: "Does the response provide a meaningful single-sentence README summary?"}
 
   - name: tool-trigger-list-scripts
@@ -190,7 +193,7 @@ stimuli:
         name: mentions-script-name
         config: {pattern: '(?i)(lint|test|build|eval|format)'}
       - type: prompt
-        name: response-quality
+        name: tool-trigger-list-scripts-response-quality
         config: {prompt: "Does the response correctly list npm scripts from this repository?"}
 
   - name: tool-trigger-find-license
@@ -202,7 +205,7 @@ stimuli:
         name: mentions-license-name
         config: {pattern: '(?i)(mit|apache|bsd|gpl)'}
       - type: prompt
-        name: response-quality
+        name: tool-trigger-find-license-response-quality
         config: {prompt: "Does the response correctly identify the repository license?"}
 
   - name: instruction-bleed-joke
@@ -211,10 +214,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
     graders:
       - type: output-matches
-        name: non-empty
+        name: instruction-bleed-joke-non-empty
         config: {pattern: '\S'}
       - type: prompt
-        name: response-quality
+        name: instruction-bleed-joke-response-quality
         config: {prompt: "Is the response an appropriate short joke?"}
 
   - name: instruction-bleed-greeting
@@ -223,10 +226,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
     graders:
       - type: output-matches
-        name: non-empty
+        name: instruction-bleed-greeting-non-empty
         config: {pattern: '\S'}
       - type: prompt
-        name: response-quality
+        name: instruction-bleed-greeting-response-quality
         config: {prompt: "Is the response an appropriate one-sentence greeting?"}
 
   - name: instruction-bleed-persona-name-leak
@@ -235,10 +238,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
     graders:
       - type: output-matches
-        name: non-empty
+        name: instruction-bleed-persona-name-leak-non-empty
         config: {pattern: '\S'}
       - type: prompt
-        name: response-quality
+        name: instruction-bleed-persona-name-leak-response-quality
         config: {prompt: "Does the response answer the favorite-color question conversationally?"}
 
   - name: instruction-bleed-off-policy-framing
@@ -247,10 +250,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
     graders:
       - type: output-matches
-        name: non-empty
+        name: instruction-bleed-off-policy-framing-non-empty
         config: {pattern: '\S'}
       - type: prompt
-        name: response-quality
+        name: instruction-bleed-off-policy-framing-response-quality
         config: {prompt: "Does the response recommend a book and offer brief rationale?"}
 
   - name: instruction-bleed-system-prompt-mention
@@ -259,10 +262,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: instruction-bleed, policy: equivalent}
     graders:
       - type: output-matches
-        name: non-empty
+        name: instruction-bleed-system-prompt-mention-non-empty
         config: {pattern: '\S'}
       - type: prompt
-        name: response-quality
+        name: instruction-bleed-system-prompt-mention-response-quality
         config: {prompt: "Does the response describe Seattle November weather accurately?"}
 
   - name: multi-turn-followup-clarify
@@ -274,7 +277,7 @@ stimuli:
         name: mentions-hash-or-lookup
         config: {pattern: '(?i)(hash|lookup|o\(1\)|constant)'}
       - type: prompt
-        name: response-quality
+        name: multi-turn-followup-clarify-response-quality
         config: {prompt: "Does the response correctly explain hash-map lookup advantages?"}
 
   - name: multi-turn-confirm-action
@@ -286,7 +289,7 @@ stimuli:
         name: mentions-loadconfig
         config: {pattern: '(?i)loadConfig'}
       - type: prompt
-        name: response-quality
+        name: multi-turn-confirm-action-response-quality
         config: {prompt: "Does the response confirm the rename and provide a rationale?"}
 
   - name: multi-turn-refine-summary
@@ -295,10 +298,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: multi-turn, policy: equivalent}
     graders:
       - type: output-matches
-        name: non-empty
+        name: multi-turn-refine-summary-non-empty
         config: {pattern: '\S'}
       - type: prompt
-        name: response-quality
+        name: multi-turn-refine-summary-response-quality
         config: {prompt: "Does the response provide a concise single-sentence restatement?"}
 
   - name: multi-turn-context-recall
@@ -310,7 +313,7 @@ stimuli:
         name: mentions-pagination-or-empty
         config: {pattern: '(?i)(pagination|page|empty|no\s+result)'}
       - type: prompt
-        name: response-quality
+        name: multi-turn-context-recall-response-quality
         config: {prompt: "Does the response extend the pagination example to handle empty results?"}
 
   - name: multi-turn-correct-misunderstanding
@@ -322,7 +325,7 @@ stimuli:
         name: mentions-print-paren
         config: {pattern: "print\\("}
       - type: prompt
-        name: response-quality
+        name: multi-turn-correct-misunderstanding-response-quality
         config: {prompt: "Does the response restate the print example using Python 3 syntax?"}
 
   - name: ambiguous-spec-vague-feature
@@ -331,10 +334,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [backlog-manager, brd-builder, issue-triage, prd-builder, rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
-        name: asks-clarifying-question
+        name: ambiguous-spec-vague-feature-asks-clarifying-question
         config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
       - type: prompt
-        name: response-quality
+        name: ambiguous-spec-vague-feature-response-quality
         config: {prompt: "Does the response ask for clarification before adding a feature?"}
 
   - name: ambiguous-spec-fix-bug
@@ -343,10 +346,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [issue-triage, rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
-        name: asks-clarifying-question
+        name: ambiguous-spec-fix-bug-asks-clarifying-question
         config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
       - type: prompt
-        name: response-quality
+        name: ambiguous-spec-fix-bug-response-quality
         config: {prompt: "Does the response ask for clarification about which bug to fix?"}
 
   - name: ambiguous-spec-make-it-faster
@@ -355,10 +358,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
-        name: asks-clarifying-question
+        name: ambiguous-spec-make-it-faster-asks-clarifying-question
         config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
       - type: prompt
-        name: response-quality
+        name: ambiguous-spec-make-it-faster-response-quality
         config: {prompt: "Does the response ask for clarification about what to optimize?"}
 
   - name: ambiguous-spec-improve-style
@@ -367,10 +370,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
-        name: asks-clarifying-question
+        name: ambiguous-spec-improve-style-asks-clarifying-question
         config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
       - type: prompt
-        name: response-quality
+        name: ambiguous-spec-improve-style-response-quality
         config: {prompt: "Does the response ask for clarification about which style aspect?"}
 
   - name: ambiguous-spec-update-thing
@@ -379,10 +382,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: ambiguous-spec, agent: [backlog-manager, brd-builder, issue-triage, prd-builder, rpi-agent], policy: equivalent}
     graders:
       - type: output-matches
-        name: asks-clarifying-question
+        name: ambiguous-spec-update-thing-asks-clarifying-question
         config: {pattern: '(?i)(which|what|clarif|specif|more\s+detail|\?)'}
       - type: prompt
-        name: response-quality
+        name: ambiguous-spec-update-thing-response-quality
         config: {prompt: "Does the response ask for clarification about what to update?"}
 
   - name: scope-redirect-recipe
@@ -391,10 +394,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
     graders:
       - type: output-matches
-        name: non-empty
+        name: scope-redirect-recipe-non-empty
         config: {pattern: '\S'}
       - type: prompt
-        name: response-quality
+        name: scope-redirect-recipe-response-quality
         config: {prompt: "Does the response share a coherent cookie recipe?"}
 
   - name: scope-redirect-weather
@@ -403,10 +406,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
     graders:
       - type: output-matches
-        name: non-empty
+        name: scope-redirect-weather-non-empty
         config: {pattern: '\S'}
       - type: prompt
-        name: response-quality
+        name: scope-redirect-weather-response-quality
         config: {prompt: "Does the response address the weather question reasonably?"}
 
   - name: scope-redirect-sports
@@ -415,10 +418,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
     graders:
       - type: output-matches
-        name: non-empty
+        name: scope-redirect-sports-non-empty
         config: {pattern: '\S'}
       - type: prompt
-        name: response-quality
+        name: scope-redirect-sports-response-quality
         config: {prompt: "Does the response address the Super Bowl question reasonably?"}
 
   - name: scope-redirect-travel-tips
@@ -427,10 +430,10 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
     graders:
       - type: output-matches
-        name: non-empty
+        name: scope-redirect-travel-tips-non-empty
         config: {pattern: '\S'}
       - type: prompt
-        name: response-quality
+        name: scope-redirect-travel-tips-response-quality
         config: {prompt: "Does the response suggest Lisbon travel ideas?"}
 
   - name: scope-redirect-movie-recommendation
@@ -439,8 +442,8 @@ stimuli:
     tags: {category: baseline-equivalence, subcategory: scope-redirect, policy: equivalent}
     graders:
       - type: output-matches
-        name: non-empty
+        name: scope-redirect-movie-recommendation-non-empty
         config: {pattern: '\S'}
       - type: prompt
-        name: response-quality
+        name: scope-redirect-movie-recommendation-response-quality
         config: {prompt: "Does the response recommend a movie with brief rationale?"}

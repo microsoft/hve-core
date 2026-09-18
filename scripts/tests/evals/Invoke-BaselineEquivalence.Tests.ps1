@@ -476,6 +476,69 @@ Describe 'Get-VallyExecutionDiagnostic' -Tag 'Unit' {
     }
 }
 
+Describe 'Test-CustomizedInvocationRetryEligibility' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    BeforeEach {
+        $script:RetryArgs = @{
+            Tier = 'calibration'
+            Model = 'gpt-5.6-luna'
+            Attempt = 1
+            BaselineHasSignal = $true
+            BaselineStructural = 0
+            InvocationTally = @{
+                Expected = 105; Observed = 101; Failed = 0; Missing = 4
+                Duplicate = 0; WrongPath = 0; Malformed = 4
+                FailedKey = $null; ReasonCode = $null
+            }
+            ExecutionDiagnostic = @{
+                ResultState = 'read'; ExitCode = 1; TrialRecords = 105
+                MalformedRecords = 0; ErroredTrials = 4
+                Errors = @(@{ category = 'unknown'; count = 4 })
+            }
+        }
+    }
+
+    It 'Allows one retry for a reconciled typed executor-error batch' {
+        Test-CustomizedInvocationRetryEligibility @script:RetryArgs | Should -BeTrue
+    }
+
+    It 'Allows the same bounded retry for the fixed Claude calibration model' {
+        $script:RetryArgs.Model = 'claude-sonnet-5'
+
+        Test-CustomizedInvocationRetryEligibility @script:RetryArgs | Should -BeTrue
+    }
+
+    It 'Rejects a model outside the fixed calibration pair' {
+        $script:RetryArgs.Model = 'future-model'
+
+        Test-CustomizedInvocationRetryEligibility @script:RetryArgs | Should -BeFalse
+    }
+
+    It 'Rejects the deterministic <Category> executor category' -ForEach @(
+        @{ Category = 'authentication-or-authorization' }
+        @{ Category = 'model-unavailable' }
+    ) {
+        $script:RetryArgs.ExecutionDiagnostic.Errors = @(@{ category = $Category; count = 4 })
+
+        Test-CustomizedInvocationRetryEligibility @script:RetryArgs | Should -BeFalse
+    }
+
+    It 'Rejects an executor batch whose invocation counts do not reconcile' {
+        $script:RetryArgs.InvocationTally.Malformed = 3
+
+        Test-CustomizedInvocationRetryEligibility @script:RetryArgs | Should -BeFalse
+    }
+
+    It 'Rejects a second attempt' {
+        $script:RetryArgs.Attempt = 2
+
+        Test-CustomizedInvocationRetryEligibility @script:RetryArgs | Should -BeFalse
+    }
+}
+
 Describe 'Measure-InvariantFailures' -Tag 'Unit' {
     BeforeAll {
         . $script:ScriptPath
@@ -847,6 +910,32 @@ defaults:
         $summary.invocationFailures | Should -Be 0
         $baselineCalls.Count | Should -Be 2
         $customizedCalls.Count | Should -Be 3
+    }
+
+    It 'Retries an eligible customized GPT executor-error batch and makes the retry authoritative' {
+        $env:STUB_VALLY_BASELINE_MODE = 'invocation-pass'
+        $env:STUB_VALLY_CUSTOMIZED_MODES = 'executor-error-unknown,invocation-pass'
+        $env:STUB_VALLY_CUSTOMIZED_COUNT_PATH = Join-Path $TestDrive "customized-count-$([Guid]::NewGuid()).txt"
+        $env:STUB_VALLY_COMPARE_MODE = 'pass'
+
+        & $script:ScriptPath `
+            -Agent 'rpi-agent' `
+            -Tier 'calibration' `
+            -RepoRoot $script:StubRepoRoot `
+            -OutputPath $script:StubOutputPath `
+            -NoBaselineCache *> $null
+
+        $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
+        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-5.6-luna' })
+        $executionAttempts = @($summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-5.6-luna' -and $_.variant -eq 'customized' })
+
+        $gptAttempts.Count | Should -Be 2
+        $executionAttempts.attempt | Should -Be @(1, 2)
+        $executionAttempts[0].errors[0].category | Should -Be 'unknown'
+        $executionAttempts[1].exitCode | Should -Be 0
+        $executionAttempts[1].erroredTrials | Should -Be 0
+        $gptAttempts[1].hasCompleteEvidence | Should -BeTrue
+        $summary.invocationFailures | Should -Be 0
     }
 
     It 'Does not retry an ineligible missing exact read' {

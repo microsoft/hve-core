@@ -284,6 +284,33 @@ stimuli:
             { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw -ExpectedMessage '*Failed to parse partial*broken*'
         }
 
+        It 'Fails on a duplicate grader name declared across partials and identifies the first conflicting location' {
+            Write-Partial -Root $script:TestRoot -Slug 'alpha' -Content @"
+stimuli:
+  - name: alpha-case
+    prompt: Alpha prompt.
+    graders:
+      - type: output-matches
+        name: shared-grader
+        config:
+          pattern: '(?i)alpha'
+"@
+            Write-Partial -Root $script:TestRoot -Slug 'beta' -Content @"
+stimuli:
+  - name: beta-case
+    prompt: Beta prompt.
+    graders:
+      - type: output-matches
+        name: shared-grader
+        config:
+          pattern: '(?i)beta'
+"@
+
+            {
+                Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot
+            } | Should -Throw -ExpectedMessage "*Duplicate grader name 'shared-grader'*beta.yml' stimulus 'beta-case'*first declared in partial '*alpha.yml' stimulus 'alpha-case'*"
+        }
+
         It 'Fails when a stimulus is missing the name field' {
             Write-Partial -Root $script:TestRoot -Slug 'no-name' -Content @"
 stimuli:
@@ -306,6 +333,27 @@ stimuli:
             $result.Outcome | Should -Be 'Wrote'
             $spec = Read-OutputObject -Root $script:TestRoot
             ($null -eq $spec.stimuli -or $spec.stimuli.Count -eq 0) | Should -BeTrue
+        }
+
+        It 'Rejects invalid grader names for <Label>' -ForEach @(
+            @{ Label = 'malformed characters'; GraderName = 'Bad_Name'; ExpectedMessage = '*must contain only lowercase letters, digits, and hyphens*' }
+            @{ Label = 'overlength'; GraderName = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; ExpectedMessage = '*must be 60 characters or fewer*' }
+            @{ Label = 'grader-type collision'; GraderName = 'prompt'; ExpectedMessage = '*must not equal a registered grader type*' }
+        ) {
+            Write-Partial -Root $script:TestRoot -Slug 'invalid-grader' -Content @"
+stimuli:
+  - name: invalid-case
+    prompt: Invalid grader prompt.
+    graders:
+      - type: output-matches
+        name: $($GraderName)
+        config:
+          pattern: '(?i)invalid'
+"@
+
+            {
+                Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot
+            } | Should -Throw -ExpectedMessage $ExpectedMessage
         }
     }
 
@@ -466,10 +514,10 @@ $script:RaiReviewerFixtureCaution
     $graderNames = @($script:RaiReviewerSmoke['graders'] | ForEach-Object { [string]$_['name'] })
 
     $graderNames | Should -HaveCount 4
-    $graderNames | Should -Contain 'findings-table-present'
-    $graderNames | Should -Contain 'severity-vocab'
+    $graderNames | Should -Contain 'rai-reviewer-class-recipe-findings-table-present'
+    $graderNames | Should -Contain 'rai-reviewer-class-recipe-severity-vocab'
     $graderNames | Should -Contain 'rai-framework-language'
-    $graderNames | Should -Contain 'no-source-edit'
+    $graderNames | Should -Contain 'rai-reviewer-class-recipe-no-source-edit'
     $graderNames | Should -Not -Contain 'rai-report-root-and-path'
     $graderNames | Should -Not -Contain 'caution-or-qualified-review'
     $graderNames | Should -Not -Contain 'pending-human-accountability'

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { waitForHydration } from './_helpers/a11yInvariants';
 
 interface MermaidFence {
@@ -25,6 +25,65 @@ const routeCases = JSON.parse(execFileSync(
   { cwd: packageRoot, encoding: 'utf8' },
 )) as { name: string; path: string; diagramCount: number }[];
 const mermaidBrowserBundle = path.join(packageRoot, 'node_modules/mermaid/dist/mermaid.min.js');
+
+const ssscPlannerPath = '/hve-core/docs/planning/prds/sssc-planner';
+const ssscDiagramCount = 5;
+
+async function captureMermaidState(page: Page) {
+  const diagrams = page.locator('svg[role~="graphics-document"]');
+  await expect(diagrams).toHaveCount(ssscDiagramCount, { timeout: 15000 });
+  const session = await page.context().newCDPSession(page);
+  const fullTree = await session.send('Accessibility.getFullAXTree');
+  await session.detach();
+  const accessibilityTree = fullTree.nodes
+    .filter((node) => node.role?.value === 'graphics-document')
+    .map((node) => ({
+      description: node.description?.value ?? '',
+      name: node.name?.value ?? '',
+      role: node.role?.value ?? '',
+    }));
+  const geometry = await diagrams.evaluateAll((elements) => elements.map((element) => {
+    const svg = element as SVGSVGElement;
+    const container = svg.parentElement;
+    const rect = svg.getBoundingClientRect();
+    const containerRect = container?.getBoundingClientRect();
+    const labelledBy = svg.getAttribute('aria-labelledby');
+    const describedBy = svg.getAttribute('aria-describedby');
+    return {
+      description: describedBy ? svg.querySelector(`desc[id="${describedBy}"]`)?.textContent?.trim() ?? '' : '',
+      height: rect.height,
+      labelCount: Array.from(svg.querySelectorAll('text, foreignObject'))
+        .filter((label) => (label.textContent ?? '').trim().length > 0).length,
+      name: labelledBy ? svg.querySelector(`title[id="${labelledBy}"]`)?.textContent?.trim() ?? '' : '',
+      notClipped: Boolean(containerRect && rect.left >= containerRect.left - 1
+        && rect.right <= containerRect.right + 1 && rect.top >= containerRect.top - 1
+        && rect.bottom <= containerRect.bottom + 1),
+      width: rect.width,
+    };
+  }));
+  return {
+    accessibilityTree,
+    documentHeight: await page.evaluate(() => document.documentElement.scrollHeight),
+    geometry,
+    markup: await diagrams.evaluateAll((elements) => elements.map((element) => element.outerHTML).join('\n')),
+  };
+}
+
+async function reachThemeToggleByKeyboard(page: Page) {
+  for (let index = 0; index < 30; index += 1) {
+    await page.keyboard.press('Tab');
+    const activeName = await page.evaluate(() => {
+      const active = document.activeElement;
+      return active instanceof HTMLElement
+        ? `${active.getAttribute('aria-label') ?? ''} ${active.textContent ?? ''}`.trim()
+        : '';
+    });
+    if (/switch between dark and light mode/i.test(activeName)) {
+      return page.getByRole('button', { name: /switch between dark and light mode/i });
+    }
+  }
+  throw new Error('Theme toggle was not reachable through keyboard traversal.');
+}
 
 // The source inventory also drives deployed-route coverage so every Mermaid
 // fence passes through the production Docusaurus rendering pipeline.
@@ -174,4 +233,94 @@ test.describe('Mermaid accessibility', () => {
       }
     });
   }
+
+  test('preserves five accessible graphics throughout a keyboard theme transition', async ({ page }) => {
+    await page.goto(ssscPlannerPath, { waitUntil: 'domcontentloaded' });
+    await waitForHydration(page);
+    const before = await captureMermaidState(page);
+    expect(before.accessibilityTree).toHaveLength(ssscDiagramCount);
+    expect(before.accessibilityTree.map(({ name }) => name)).toEqual(before.geometry.map(({ name }) => name));
+    expect(before.geometry.every(({ height, name, description, width }) =>
+      height > 0 && width > 0 && name.length > 0 && description.length > 0)).toBe(true);
+
+    await page.evaluate(() => {
+      const samples = { diagramCounts: [] as number[], documentHeights: [] as number[], animationFrame: 0 };
+      const sample = () => {
+        samples.diagramCounts.push(document.querySelectorAll('svg[role~="graphics-document"]').length);
+        samples.documentHeights.push(document.documentElement.scrollHeight);
+        samples.animationFrame = requestAnimationFrame(sample);
+      };
+      sample();
+      (globalThis as typeof globalThis & { __mermaidTransition?: typeof samples }).__mermaidTransition = samples;
+    });
+
+    const toggle = await reachThemeToggleByKeyboard(page);
+    await expect(toggle).toBeFocused();
+    const initialTheme = await page.locator('html').getAttribute('data-theme');
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const titleBefore = await toggle.getAttribute('title');
+      await toggle.press('Enter');
+      await expect.poll(() => toggle.getAttribute('title')).not.toBe(titleBefore);
+      if (await page.locator('html').getAttribute('data-theme') !== initialTheme) {
+        break;
+      }
+    }
+    const during = await captureMermaidState(page);
+    expect(during.accessibilityTree).toHaveLength(ssscDiagramCount);
+    expect(during.accessibilityTree.map(({ name }) => name)).toEqual(during.geometry.map(({ name }) => name));
+    expect(during.geometry.map(({ name }) => name)).toEqual(before.geometry.map(({ name }) => name));
+    expect(during.geometry.map(({ description }) => description)).toEqual(before.geometry.map(({ description }) => description));
+
+    await expect.poll(() => page.locator('html').getAttribute('data-theme')).not.toBe(initialTheme);
+    await expect.poll(async () => page.locator('svg[role~="graphics-document"]').evaluateAll(
+      (elements) => elements.map((element) => element.outerHTML).join('\n'))).not.toBe(before.markup);
+    const after = await captureMermaidState(page);
+    await expect(toggle).toBeFocused();
+    expect(after.accessibilityTree).toHaveLength(ssscDiagramCount);
+    expect(after.accessibilityTree.map(({ name }) => name)).toEqual(after.geometry.map(({ name }) => name));
+    expect(after.geometry.map(({ name }) => name)).toEqual(before.geometry.map(({ name }) => name));
+    expect(after.geometry.map(({ description }) => description)).toEqual(before.geometry.map(({ description }) => description));
+
+    const transition = await page.evaluate(() => {
+      const state = (globalThis as typeof globalThis & { __mermaidTransition?: {
+        diagramCounts: number[]; documentHeights: number[]; animationFrame: number;
+      } }).__mermaidTransition;
+      if (state) {
+        cancelAnimationFrame(state.animationFrame);
+      }
+      return state ? { diagramCounts: state.diagramCounts, documentHeights: state.documentHeights } : null;
+    });
+    expect(transition).not.toBeNull();
+    expect(Math.min(...transition!.diagramCounts)).toBe(ssscDiagramCount);
+    expect(Math.min(...transition!.documentHeights)).toBeGreaterThanOrEqual(Math.floor(before.documentHeight * 0.9));
+  });
+
+  test('keeps the five-diagram route intact across Mermaid adaptive states', async ({ browser }) => {
+    const states = [
+      { name: '320 CSS pixels', viewport: { width: 320, height: 856 }, deviceScaleFactor: 1 },
+      { name: '200% browser zoom', viewport: { width: 640, height: 384 }, deviceScaleFactor: 2 },
+      { name: 'WCAG text spacing', viewport: { width: 1280, height: 768 }, deviceScaleFactor: 1, textSpacing: true },
+    ];
+    for (const state of states) {
+      const context = await browser.newContext({ viewport: state.viewport, deviceScaleFactor: state.deviceScaleFactor });
+      const page = await context.newPage();
+      try {
+        await page.goto(ssscPlannerPath, { waitUntil: 'domcontentloaded' });
+        await waitForHydration(page);
+        if (state.textSpacing) {
+          await page.addStyleTag({
+            content: '* { line-height: 1.5 !important; letter-spacing: 0.12em !important; word-spacing: 0.16em !important; } p { margin-bottom: 2em !important; }',
+          });
+        }
+        const captured = await captureMermaidState(page);
+        expect(captured.geometry.every(({ height, width }) => height > 0 && width > 0), state.name).toBe(true);
+        expect(captured.geometry.every(({ notClipped }) => notClipped), `${state.name} container clipping`).toBe(true);
+        expect(captured.geometry.every(({ labelCount }) => labelCount > 0), `${state.name} rendered labels`).toBe(true);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth
+          <= document.documentElement.clientWidth + 1), `${state.name} document-level horizontal scrolling`).toBe(true);
+      } finally {
+        await context.close();
+      }
+    }
+  });
 });

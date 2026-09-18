@@ -438,7 +438,7 @@ test('processAtPlanCase uses clear-and-capture ordering and records capture-mode
   assert.equal(result.evidence.provenance.speechLogClearedBeforeSettle, true);
 });
 
-test('processAtPlanCase falls back to single capture mode and skips clearing the log for invalid or synthetic values', async () => {
+test('processAtPlanCase rejects invalid capture modes before driver execution and skips clearing for synthetic runs', async () => {
   const invalidValueObserved = [];
   const invalidValueResult = await processAtPlanCase({
     matrixCase: {
@@ -477,11 +477,9 @@ test('processAtPlanCase falls back to single capture mode and skips clearing the
     }),
   });
 
-  assert.equal(invalidValueResult.status, 'pass');
-  assert.equal(invalidValueResult.evidence.provenance.captureModeApplied, 'single');
-  assert.equal(invalidValueResult.evidence.provenance.captureModeSource, 'default');
-  assert.equal(invalidValueResult.evidence.provenance.speechLogClearedBeforeSettle, false);
-  assert.deepEqual(invalidValueObserved, ['clearLog']);
+  assert.equal(invalidValueResult.status, 'error');
+  assert.match(invalidValueResult.evidence.error, /Unsupported capture mode: invalid-mode/);
+  assert.deepEqual(invalidValueObserved, []);
 
   const syntheticObserved = [];
   const syntheticResult = await processAtPlanCase({
@@ -1479,6 +1477,218 @@ test('processAtPlanCase runs ordered post-start trigger sequences before command
   assert.ok(fillIndex < waitIndex);
   assert.ok(waitIndex < commandIndex);
   assert.ok(commandIndex < captureIndex);
+});
+
+test('processAtPlanCase attributes action capture to post-start triggers and evaluates action-only speech', async () => {
+  const events = [];
+  const page = createRealPageStub();
+  page.locator = (selector) => ({
+    focus: async () => undefined,
+    click: async () => events.push(`click:${selector}`),
+    waitFor: async () => undefined,
+  });
+
+  const result = await processAtPlanCase({
+    matrixCase: {
+      caseId: 'case-action-capture',
+      captureMode: 'action',
+      postCommandSettleMs: 0,
+      triggerAfterDriverStart: true,
+      trigger: { action: 'click', target: '#add-to-cart' },
+      commands: [{ kind: 'navigate', value: 'nextHeading' }],
+      assertions: [{ id: 'action-speech', type: 'contains', value: 'Added to cart', evidenceType: 'actionSpeech' }],
+    },
+    runtimeConfig: { baseUrl: 'http://127.0.0.1:3000' },
+    page,
+    driverFactory: async () => ({
+      supported: true,
+      status: 'ready',
+      driver: 'guidepup',
+      synthetic: false,
+      metadata: {
+        guidepupLibraryVersion: '0.34.0',
+        nvdaAssetVersion: '0.2.1-2026.2',
+        profileFingerprint: {
+          profileId: 'guidepup-nvda-isolated-v1',
+          digest: 'a'.repeat(64),
+          effectiveSettings: { presentation: { reportDynamicContentChanges: true } },
+        },
+      },
+      async start() { events.push('driver:start'); },
+      async stop() { events.push('driver:stop'); },
+      async reset() { events.push('driver:reset'); },
+      async captureAction(action) {
+        events.push('action:start');
+        await action();
+        events.push('action:end');
+        return { result: undefined, spokenPhrase: 'Added to cart', itemText: 'Added to cart' };
+      },
+      async executeCommand(command) { events.push(`command:${command.kind}:${command.value}`); },
+      async captureLog() {
+        events.push('capture:log');
+        return { phrases: ['cumulative phrase'], assertions: [], synthetic: false, evidenceKind: 'real' };
+      },
+    }),
+    ensureWindowBinding: async () => ({
+      status: 'bound',
+      expectedIdentity: { pageTitle: 'Example Page' },
+      foregroundIdentity: { pageTitle: 'Example Page' },
+      reason: 'ok',
+    }),
+    verifyScreenReaderStopped: async () => ({ stopped: true, terminated: false, reason: null }),
+  });
+
+  assert.equal(result.status, 'pass');
+  assert.deepEqual(result.evidence.actionRawPhrases, ['Added to cart']);
+  assert.deepEqual(result.evidence.actionNormalizedPhrases, ['Added to cart']);
+  assert.deepEqual(events.slice(0, 6), [
+    'driver:start',
+    'driver:reset',
+    'action:start',
+    'click:#add-to-cart',
+    'action:end',
+    'command:navigate:nextHeading',
+  ]);
+  assert.equal(result.evidence.provenance.captureModeApplied, 'action');
+  assert.equal(result.evidence.provenance.actionCapture.capturedPhraseCount, 1);
+  assert.equal(result.evidence.provenance.guidepupLibraryVersion, '0.34.0');
+  assert.equal(result.evidence.provenance.nvdaAssetVersion, '0.2.1-2026.2');
+  assert.equal(result.evidence.provenance.profileFingerprint.digest, 'a'.repeat(64));
+  assert.equal(result.evidence.provenance.approvedProfile.digest, undefined);
+});
+
+test('processAtPlanCase fails after action capture when the automation window loses focus', async () => {
+  const events = [];
+  let bindingChecks = 0;
+  const page = createRealPageStub();
+  page.locator = () => ({ focus: async () => undefined, click: async () => events.push('click') });
+
+  const result = await processAtPlanCase({
+    matrixCase: {
+      caseId: 'case-action-binding-loss',
+      captureMode: 'action',
+      triggerAfterDriverStart: true,
+      trigger: { action: 'click', target: '#add-to-cart' },
+      commands: [{ kind: 'navigate', value: 'nextHeading' }],
+      assertions: [{ id: 'action-speech', type: 'contains', value: 'Added', evidenceType: 'actionSpeech' }],
+    },
+    runtimeConfig: { baseUrl: 'http://127.0.0.1:3000' },
+    page,
+    driverFactory: async () => ({
+      supported: true,
+      status: 'ready',
+      driver: 'guidepup',
+      synthetic: false,
+      async start() {},
+      async stop() {},
+      async reset() {},
+      async captureAction(action) {
+        await action();
+        return { spokenPhrase: 'Added', itemText: 'Added' };
+      },
+      async executeCommand() { events.push('command'); },
+      async captureLog() { events.push('capture'); return { phrases: [] }; },
+    }),
+    ensureWindowBinding: async () => {
+      bindingChecks += 1;
+      return {
+        status: bindingChecks === 1 ? 'bound' : 'unbound',
+        expectedIdentity: { pageTitle: 'Example Page' },
+        foregroundIdentity: { pageTitle: bindingChecks === 1 ? 'Example Page' : 'Other Page' },
+        reason: bindingChecks === 1 ? 'ok' : 'foreground-window-does-not-match-page-under-test',
+      };
+    },
+    verifyScreenReaderStopped: async () => ({ stopped: true, terminated: false, reason: null }),
+  });
+
+  assert.equal(result.status, 'error');
+  assert.match(result.evidence.error, /lost focus/i);
+  assert.deepEqual(events, ['click']);
+});
+
+test('processAtPlanCase rejects invalid action capture configurations before driver execution', async () => {
+  const cases = [
+    {
+      name: 'missing post-start trigger',
+      matrixCase: {
+        captureMode: 'action',
+        triggerAfterDriverStart: false,
+        trigger: { action: 'click', target: '#button' },
+        commands: [{ kind: 'navigate', value: 'nextHeading' }],
+        assertions: [{ type: 'contains', value: 'heading', evidenceType: 'actionSpeech' }],
+      },
+      expected: /triggerAfterDriverStart/,
+    },
+    {
+      name: 'missing declarative trigger',
+      matrixCase: {
+        captureMode: 'action',
+        triggerAfterDriverStart: true,
+        commands: [{ kind: 'navigate', value: 'nextHeading' }],
+        assertions: [{ type: 'contains', value: 'heading', evidenceType: 'actionSpeech' }],
+      },
+      expected: /declarative trigger/,
+    },
+    {
+      name: 'unknown action evidence type',
+      matrixCase: {
+        captureMode: 'action',
+        triggerAfterDriverStart: true,
+        trigger: { action: 'click', target: '#button' },
+        commands: [{ kind: 'navigate', value: 'nextHeading' }],
+        assertions: [{ type: 'contains', value: 'heading', evidenceType: 'actionTranscript' }],
+      },
+      expected: /Unsupported assertion evidence type/,
+    },
+  ];
+
+  for (const testCase of cases) {
+    let driverCreated = false;
+    const result = await processAtPlanCase({
+      matrixCase: { caseId: testCase.name, ...testCase.matrixCase },
+      runtimeConfig: { baseUrl: 'http://127.0.0.1:3000' },
+      driverFactory: async () => {
+        driverCreated = true;
+        return { supported: true, status: 'ready', driver: 'guidepup' };
+      },
+    });
+
+    assert.equal(result.status, 'error', testCase.name);
+    assert.match(result.evidence.error, testCase.expected, testCase.name);
+    assert.equal(driverCreated, false, testCase.name);
+  }
+});
+
+test('processAtPlanCase rejects synthetic and non-capturing drivers before action execution', async () => {
+  for (const testCase of [
+    { name: 'synthetic', synthetic: true, captureAction: async () => ({ spokenPhrase: 'unexpected' }) },
+    { name: 'missing captureAction', synthetic: false, captureAction: undefined },
+  ]) {
+    let started = false;
+    const result = await processAtPlanCase({
+      matrixCase: {
+        caseId: `case-action-${testCase.name}`,
+        captureMode: 'action',
+        triggerAfterDriverStart: true,
+        trigger: { action: 'click', target: '#button' },
+        commands: [{ kind: 'navigate', value: 'nextHeading' }],
+        assertions: [{ type: 'contains', value: 'heading', evidenceType: 'actionSpeech' }],
+      },
+      runtimeConfig: { baseUrl: 'http://127.0.0.1:3000' },
+      driverFactory: async () => ({
+        supported: true,
+        status: 'ready',
+        driver: testCase.synthetic ? 'synthetic' : 'guidepup',
+        synthetic: testCase.synthetic,
+        captureAction: testCase.captureAction,
+        async start() { started = true; },
+      }),
+    });
+
+    assert.equal(result.status, 'error', testCase.name);
+    assert.match(result.evidence.error, /requires a real Guidepup driver with captureAction support/, testCase.name);
+    assert.equal(started, false, testCase.name);
+  }
 });
 
 test('processAtPlanCase preserves click triggers and pause commands for calibration focus sequences', async () => {

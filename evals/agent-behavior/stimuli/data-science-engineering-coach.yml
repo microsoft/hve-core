@@ -123,7 +123,7 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: framing-routes-to-experiment-design
+        name: data-science-engineering-coach-problem-framing-miss-35836e87
         config:
           pattern: '(?is)problem-framing.*experiment-design.*episodic'
       - type: output-matches
@@ -131,7 +131,7 @@ stimuli:
         config:
           pattern: '(?is)(outcome[- ]definition|define the (business )?outcome).*?gap'
       - type: output-matches
-        name: gap-carries-answer-holder-and-coordinator
+        name: data-science-engineering-coach-problem-framing-miss-f89200c4
         config:
           pattern: '(?is)answer holder.*?coordinator'
       - type: output-matches
@@ -147,7 +147,7 @@ stimuli:
         config:
           pattern: '(?is)(does not|will not|rather than|instead of|no)\s+\w*\s*(start|become|becomes|treat|design|run|scope)[^.]{0,60}(MVE|minimum viable experiment|experiment)'
       - type: output-matches
-        name: user-confirmed-next-job
+        name: data-science-engineering-coach-problem-framing-miss-dd64f6da
         config:
           pattern: '(?is)(ask|offer|confirm|choose|would you like).*?(next|another).*?(job|feasibility|experiment)'
 
@@ -164,7 +164,7 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: framing-routes-to-experiment-design
+        name: data-science-engineering-coach-problem-framing-unre-fa40416c
         config:
           pattern: '(?is)problem-framing.*experiment-design.*episodic'
       - type: output-matches
@@ -172,7 +172,7 @@ stimuli:
         config:
           pattern: '(?is)unknown.*?(continue|proceed|remaining)'
       - type: output-matches
-        name: gap-carries-answer-holder-and-coordinator
+        name: data-science-engineering-coach-problem-framing-unre-303a9bf2
         config:
           pattern: '(?is)answer holder.*?coordinator'
       - type: output-matches
@@ -188,7 +188,7 @@ stimuli:
         config:
           pattern: '(?is)(episodic|completes|completion|completed).*?(invocation|job|work)'
       - type: output-matches
-        name: user-confirmed-next-job
+        name: data-science-engineering-coach-problem-framing-unre-cbad74c1
         config:
           pattern: '(?is)(ask|offer|confirm|choose|would you like).*?(next|another).*?(job|feasibility|experiment)'
 

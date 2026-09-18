@@ -5,7 +5,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, realpathSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { createCalibrationCheckpoint, validateCalibrationCheckpoint } from './calibration-checkpoint.mjs';
 import { processAtPlanCase } from './at-plan-executor.mjs';
@@ -333,6 +333,24 @@ function normalizeJourney(config, journey, index) {
     String(journey?.id || journey?.journeyId || `journey-${index + 1}`),
     'Journey ID',
   );
+  if (journey?.captureMode !== undefined && !['single', 'clear-and-capture', 'action'].includes(journey.captureMode)) {
+    throw new Error(`Unsupported calibration capture mode: ${journey.captureMode}`);
+  }
+  const triggerSequence = Array.isArray(journey?.triggerSequence) && journey.triggerSequence.length > 0
+    ? journey.triggerSequence
+    : undefined;
+  const hasTrigger = Boolean(journey?.trigger || triggerSequence?.length);
+  if (journey?.captureMode === 'action' && (!journey?.triggerAfterDriverStart || !hasTrigger)) {
+    throw new Error('Action capture calibration journeys require triggerAfterDriverStart and a declarative trigger.');
+  }
+  const assertions = Array.isArray(journey?.assertions) && journey.assertions.length > 0
+    ? journey.assertions
+    : [{ id: 'speech', type: 'contains', value: 'search' }];
+  for (const assertion of assertions) {
+    if (assertion?.evidenceType !== undefined && !['speech', 'normalizedSpeech', 'browserState', 'accessibilityTree', 'actionSpeech', 'actionNormalizedSpeech'].includes(assertion.evidenceType)) {
+      throw new Error(`Unsupported calibration assertion evidence type: ${assertion.evidenceType}`);
+    }
+  }
   return {
     journeyId,
     title: journey?.title || `Calibration journey ${journeyId}`,
@@ -340,18 +358,14 @@ function normalizeJourney(config, journey, index) {
     surfaceId: journey?.surfaceId || null,
     state: journey?.state || 'desktop',
     trigger: journey?.trigger || { action: 'focus', target: '#search' },
-    triggerSequence: Array.isArray(journey?.triggerSequence) && journey.triggerSequence.length > 0
-      ? journey.triggerSequence
-      : undefined,
+    triggerSequence,
     triggerAfterDriverStart: Boolean(journey?.triggerAfterDriverStart),
     postCommandSettleMs: journey?.postCommandSettleMs,
     captureMode: journey?.captureMode,
     commands: Array.isArray(journey?.commands) && journey.commands.length > 0
       ? journey.commands
       : [{ kind: 'keyboard', value: 'Tab' }],
-    assertions: Array.isArray(journey?.assertions) && journey.assertions.length > 0
-      ? journey.assertions
-      : [{ id: 'speech', type: 'contains', value: 'search' }],
+    assertions,
     profileFingerprint: buildProfileFingerprint(config, journey),
     metadata: journey?.metadata || {},
     visualStates: Array.isArray(journey?.visualStates) && journey.visualStates.length > 0
@@ -648,40 +662,35 @@ function resolveGuidepupRegistryVersion({ platform = 'linux', spawn }) {
   return version;
 }
 
-async function resolveGuidepupInstallationPath(moduleApi) {
-  if (!moduleApi || typeof moduleApi !== 'object') {
+function readGuidepupLibraryVersion() {
+  try {
+    const packagePath = fileURLToPath(new URL('../node_modules/@guidepup/guidepup/package.json', import.meta.url));
+    const packagePayload = JSON.parse(readFileSync(packagePath, 'utf8'));
+    return normalizeGuidepupVersion(packagePayload?.version);
+  } catch {
     return null;
   }
-  const candidates = [
-    moduleApi.getNVDAInstallationPath,
-    moduleApi.default?.getNVDAInstallationPath,
-    moduleApi.nvda?.getNVDAInstallationPath,
-    moduleApi.isNVDAInstalled,
-    moduleApi.default?.isNVDAInstalled,
-    moduleApi.nvda?.isNVDAInstalled,
-  ].filter((entry) => typeof entry === 'function');
-
-  for (const candidate of candidates) {
-    try {
-      const payload = await candidate();
-      if (typeof payload === 'string' && payload.trim().length > 0) {
-        return payload.trim();
-      }
-      if (typeof payload === 'boolean') {
-        return payload ? '' : null;
-      }
-    } catch {
-      // Ignore probe failures and fall back to registry-based detection.
-    }
-  }
-  return null;
 }
 
-export async function detectGuidepupNvda({ platform = 'linux', spawn, importGuidepup }) {
-  let guidepupRegistered = false;
+async function detectSelectedNvdaAsset(importGuidepupAssetProbe) {
+  try {
+    const probeModule = typeof importGuidepupAssetProbe === 'function'
+      ? await importGuidepupAssetProbe()
+      : await import('@guidepup/guidepup/lib/windows/NVDA/isNVDAInstalled.js');
+    const probe = probeModule?.isNVDAInstalled || probeModule?.default?.isNVDAInstalled;
+    return typeof probe === 'function' && Boolean(await probe());
+  } catch {
+    return false;
+  }
+}
+
+export async function detectGuidepupNvda({ platform = 'linux', spawn, importGuidepup, importGuidepupAssetProbe }) {
+  let libraryInstalled = false;
+  let selectedAssetInstalled = false;
   let guidepupCapabilities = [];
   let conflictingNvdaProcess = false;
-  let guidepupVersion = null;
+  let guidepupLibraryVersion = null;
+  let nvdaAssetVersion = null;
   try {
     const importedModule = typeof importGuidepup === 'function' ? await importGuidepup() : null;
     const moduleCandidates = [importedModule, importedModule?.default, importedModule?.nvda, importedModule?.default?.nvda].filter(Boolean);
@@ -720,22 +729,16 @@ export async function detectGuidepupNvda({ platform = 'linux', spawn, importGuid
       }
     }
     guidepupCapabilities = capabilities.map((entry) => String(entry)).filter(Boolean);
-    const capabilityMatch = guidepupCapabilities.some((entry) => String(entry).toLowerCase().includes('nvda'));
-    guidepupRegistered = Boolean(runtimeTarget || capabilityMatch);
-    const moduleApi = moduleCandidates.find((entry) => entry && typeof entry === 'object') || null;
-    const installationPath = await resolveGuidepupInstallationPath(moduleApi);
-    if (installationPath) {
-      const candidatePath = installationPath.endsWith('.exe') ? installationPath : path.join(installationPath, 'nvda.exe');
-      if (existsSync(candidatePath)) {
-        guidepupRegistered = true;
-      }
-    }
-    const versionValue = moduleApi?.version || moduleApi?.default?.version || moduleApi?.nvda?.version || moduleApi?.guidepupVersion || null;
-    guidepupVersion = normalizeGuidepupVersion(versionValue);
+    libraryInstalled = Boolean(runtimeTarget);
+    guidepupLibraryVersion = normalizeGuidepupVersion(importedModule?.guidepupVersion) || readGuidepupLibraryVersion();
+    nvdaAssetVersion = normalizeGuidepupVersion(runtimeTarget?.version);
+    selectedAssetInstalled = libraryInstalled && await detectSelectedNvdaAsset(importGuidepupAssetProbe);
   } catch {
-    guidepupRegistered = false;
+    libraryInstalled = false;
+    selectedAssetInstalled = false;
     guidepupCapabilities = [];
-    guidepupVersion = null;
+    guidepupLibraryVersion = null;
+    nvdaAssetVersion = null;
   }
 
   if (platform === 'win32') {
@@ -744,19 +747,16 @@ export async function detectGuidepupNvda({ platform = 'linux', spawn, importGuid
     conflictingNvdaProcess = output.toLowerCase().includes('nvda.exe');
   }
 
-  if (platform === 'win32' && (!guidepupRegistered || !guidepupVersion)) {
-    const registryVersion = resolveGuidepupRegistryVersion({ platform, spawn });
-    if (registryVersion) {
-      guidepupVersion = registryVersion;
-      guidepupRegistered = true;
-    }
-  }
+  const registryVersion = resolveGuidepupRegistryVersion({ platform, spawn });
 
   return {
-    guidepupRegistered,
+    libraryInstalled,
+    selectedAssetInstalled,
     guidepupCapabilities,
     conflictingNvdaProcess,
-    guidepupVersion,
+    guidepupLibraryVersion,
+    nvdaAssetVersion,
+    registryVersion,
   };
 }
 
@@ -773,7 +773,12 @@ export async function probePrerequisites(config = {}, runtime = null) {
   const chrome = await probePlaywrightChrome(
     executionRuntime?.dependencies?.launchBrowser || launchChrome,
   );
-  const nvda = await detectGuidepupNvda({ platform, spawn, importGuidepup: executionRuntime?.dependencies?.importGuidepup });
+  const nvda = await detectGuidepupNvda({
+    platform,
+    spawn,
+    importGuidepup: executionRuntime?.dependencies?.importGuidepup,
+    importGuidepupAssetProbe: executionRuntime?.dependencies?.importGuidepupAssetProbe,
+  });
   const reasons = [];
   if (!desktop.ok) {
     reasons.push('Interactive desktop was not available.');
@@ -781,22 +786,28 @@ export async function probePrerequisites(config = {}, runtime = null) {
   if (!chrome.executable || !chrome.version) {
     reasons.push(chrome.error || 'Chrome launch/version was not verified.');
   }
-  if (!nvda.guidepupRegistered) {
-    reasons.push('NVDA registration for isolated Guidepup execution was not verified.');
+  if (!nvda.libraryInstalled) {
+    reasons.push('The skill-local @guidepup/guidepup package was not available.');
+  }
+  if (!nvda.selectedAssetInstalled) {
+    reasons.push('The manifest-selected NVDA asset was not installed. From the skill-local runtime_a11y directory, run: npx --yes @guidepup/setup@0.25.3 install nvda');
   }
   if (nvda.conflictingNvdaProcess) {
     reasons.push('A conflicting normal NVDA process was detected.');
   }
 
-  const ok = Boolean(desktop.ok && chrome.executable && chrome.version && nvda.guidepupRegistered && !nvda.conflictingNvdaProcess);
+  const ok = Boolean(desktop.ok && chrome.executable && chrome.version && nvda.libraryInstalled && nvda.selectedAssetInstalled && !nvda.conflictingNvdaProcess);
   return {
     ok,
     desktopUnlocked: desktop.ok,
-    nvdaAvailable: Boolean(nvda.guidepupRegistered && !nvda.conflictingNvdaProcess),
+    nvdaAvailable: Boolean(nvda.libraryInstalled && nvda.selectedAssetInstalled && !nvda.conflictingNvdaProcess),
     chromeExecutable: chrome.executable,
     chromeVersion: chrome.version,
-    guidepupRegistered: nvda.guidepupRegistered,
-    guidepupVersion: nvda.guidepupVersion,
+    libraryInstalled: nvda.libraryInstalled,
+    selectedAssetInstalled: nvda.selectedAssetInstalled,
+    guidepupLibraryVersion: nvda.guidepupLibraryVersion,
+    nvdaAssetVersion: nvda.nvdaAssetVersion,
+    registryVersion: nvda.registryVersion,
     nvdaProcessActive: nvda.conflictingNvdaProcess,
     reasons,
     reason: reasons.length > 0 ? reasons.join(' ') : null,
@@ -805,7 +816,9 @@ export async function probePrerequisites(config = {}, runtime = null) {
       chromeExecutable: chrome.executable,
       chromeVersion: chrome.version,
       guidepupCapabilities: nvda.guidepupCapabilities,
-      guidepupVersion: nvda.guidepupVersion,
+      guidepupLibraryVersion: nvda.guidepupLibraryVersion,
+      nvdaAssetVersion: nvda.nvdaAssetVersion,
+      registryVersion: nvda.registryVersion,
       nvdaProcessActive: nvda.conflictingNvdaProcess,
       interactiveDesktopSignal: desktop.source,
     },

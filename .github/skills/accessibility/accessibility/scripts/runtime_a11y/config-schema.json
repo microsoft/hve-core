@@ -142,6 +142,10 @@
                 "items": { "$ref": "#/$defs/trigger" }
               },
               "triggerAfterDriverStart": { "type": "boolean" },
+              "captureMode": {
+                "type": "string",
+                "enum": ["single", "clear-and-capture", "action"]
+              },
               "commands": {
                 "type": "array",
                 "items": { "$ref": "#/$defs/screenReaderAction" }
@@ -267,7 +271,7 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["command", "pause", "keyboard", "key", "perform", "type", "waitFor"]
+          "enum": ["command", "navigate", "pause", "keyboard", "key", "perform", "type", "waitFor"]
         },
         "value": { "type": "string", "minLength": 1 },
         "durationMs": { "type": "integer", "minimum": 0 }
@@ -287,7 +291,11 @@
       "properties": {
         "id": { "type": "string" },
         "type": { "type": "string", "enum": ["contains", "matches", "orderedContains"] },
-        "value": { "type": "string" }
+        "value": { "type": "string" },
+        "evidenceType": {
+          "type": "string",
+          "enum": ["speech", "normalizedSpeech", "browserState", "accessibilityTree", "actionSpeech", "actionNormalizedSpeech"]
+        }
       },
       "additionalProperties": true
     },

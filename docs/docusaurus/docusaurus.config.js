@@ -188,6 +188,7 @@ const config = {
               { label: 'Contributing', to: '/docs/contributing/' },
               { label: labelRegistry.security, to: '/docs/security/' },
               { label: labelRegistry.templates, to: '/docs/templates/' },
+              { label: 'Third-party notices', href: 'https://github.com/microsoft/hve-core/blob/main/THIRD-PARTY-NOTICES' },
             ],
           },
           {

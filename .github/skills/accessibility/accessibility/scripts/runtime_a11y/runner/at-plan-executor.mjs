@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 
 import { evaluateAssertion, normalizeSpokenOutput } from './assertions.mjs';
 import { applyStateEmulation, applyTrigger, resolveTargetUrl, launchChrome, maximizeBrowserWindow, snapshotAccessibilityTree, ensureAutomationWindowFocused, ensureScreenReaderStopped } from './_shared.mjs';
-import { createScreenReaderDriver } from './drivers/driver-contract.mjs';
+import { createScreenReaderDriver, validateScreenReaderConfig } from './drivers/driver-contract.mjs';
 import { assertHttpUrl } from './validation.mjs';
 
 const ALLOWED_STATUSES = new Set(['pass', 'fail', 'candidate', 'unsupported', 'error']);
@@ -404,13 +404,17 @@ function resolveCaptureMode({ matrixCase, runtimeConfig } = {}) {
   ];
 
   for (const [index, candidate] of candidates.entries()) {
-    if (candidate === 'single' || candidate === 'clear-and-capture') {
-      const source = index === 0 ? 'case' : index === 1 ? 'calibration-default' : 'runtime-config';
-      return { captureMode: candidate, source };
+    if (candidate === null || candidate === undefined || candidate === '') {
+      continue;
     }
+    const source = index === 0 ? 'case' : index === 1 ? 'calibration-default' : 'runtime-config';
+    if (candidate === 'single' || candidate === 'clear-and-capture' || candidate === 'action') {
+      return { captureMode: candidate, source, error: null };
+    }
+    return { captureMode: null, source, error: `Unsupported capture mode: ${candidate}` };
   }
 
-  return { captureMode: 'single', source: 'default' };
+  return { captureMode: 'single', source: 'default', error: null };
 }
 
 function throwIfWindowBindingUnbound(windowBinding, stage) {
@@ -471,28 +475,33 @@ async function buildProvenance({ capability, driver, runtimeConfig, browser, pla
     speechMode: 'default',
     addOnPosture: 'default',
   };
-  const profileFingerprint = {
+  const configuredProfileFingerprint = {
     locale,
     verbosity: approvedProfile?.verbosity || 'default',
     punctuation: approvedProfile?.punctuation || 'preserve',
     speechMode: approvedProfile?.speechMode || 'default',
     addOnPosture: approvedProfile?.addOnPosture || 'default',
   };
+  const profileFingerprint = driver?.metadata?.profileFingerprint || configuredProfileFingerprint;
+  const nvdaAssetVersion = driver?.metadata?.nvdaAssetVersion || driver?.metadata?.nvdaVersion || driver?.nvdaVersion || null;
+  const guidepupLibraryVersion = driver?.metadata?.guidepupLibraryVersion || driver?.metadata?.guidepupVersion || driver?.guidepupVersion || null;
   const browserVersion = await resolveBrowserVersion(browser);
 
   return {
     at: variant?.at || matrixCase?.at || null,
     driver: capability?.driver || driver?.driver || null,
     driverStatus: capability?.status || driver?.status || null,
-    nvdaVersion: driver?.metadata?.nvdaVersion || driver?.nvdaVersion || null,
-    guidepupVersion: driver?.metadata?.guidepupVersion || driver?.guidepupVersion || null,
+    nvdaVersion: nvdaAssetVersion,
+    guidepupVersion: guidepupLibraryVersion,
+    nvdaAssetVersion,
+    guidepupLibraryVersion,
     guidepupCapabilities: Array.isArray(driver?.metadata?.guidepupCapabilities) ? driver.metadata.guidepupCapabilities : [],
     chromeVersion: browserVersion || null,
     browserVersion: browserVersion || null,
     os: platform || process.platform || null,
     locale,
     profileFingerprint,
-    approvedProfile,
+    approvedProfile: configuredProfileFingerprint,
     targetUrl: targetUrl || null,
     maximizeWindow: maximizeWindow || null,
     cssViewport: cssViewport || null,
@@ -566,6 +575,7 @@ export async function processAtPlanCase({
   const ensureWindowBindingImpl = ensureWindowBinding;
   let driverStopped = false;
   let speechLogClearedBeforeSettle = false;
+  let actionCapture = null;
   let cleanupState = {
     driverStarted: false,
     driverStopped: false,
@@ -578,6 +588,19 @@ export async function processAtPlanCase({
   try {
     // Asserted here so an unsupported target is rejected before any browser is obtained.
     assertHttpUrl(resolvedTarget, 'AT-plan target URL');
+    const captureModeResolution = resolveCaptureMode({ matrixCase, runtimeConfig });
+    const actionTriggers = resolveTriggerSequence(matrixCase, resolvedSurface);
+    const validation = validateScreenReaderConfig({
+      ...(matrixCase?.runtimeConfig || runtimeConfig || {}),
+      commands,
+      expectedAnnouncements: assertions,
+      captureMode: captureModeResolution.error ? matrixCase?.captureMode : captureModeResolution.captureMode,
+      triggerAfterDriverStart,
+      hasActionTrigger: actionTriggers.length > 0,
+    });
+    if (captureModeResolution.error || !validation.ok) {
+      throw new Error(captureModeResolution.error || validation.errors.join(' '));
+    }
     const driverInput = {
       platform: normalizedPlatform,
       driverName: effectiveDriverName,
@@ -585,6 +608,9 @@ export async function processAtPlanCase({
         ...(matrixCase?.runtimeConfig || runtimeConfig || {}),
         commands,
         expectedAnnouncements: assertions,
+        captureMode: captureModeResolution.captureMode,
+        triggerAfterDriverStart,
+        hasActionTrigger: actionTriggers.length > 0,
       },
       matrixCase,
       variant,
@@ -627,6 +653,10 @@ export async function processAtPlanCase({
           targetUrl: resolvedTarget,
         },
       });
+    }
+
+    if (captureModeResolution.captureMode === 'action' && (capability.synthetic || typeof driver.captureAction !== 'function')) {
+      throw new Error('Action-scoped capture requires a real Guidepup driver with captureAction support.');
     }
 
     if (variant?.at && !capability.synthetic && !isCompatiblePlatform(normalizedPlatform, variant.at)) {
@@ -691,8 +721,6 @@ export async function processAtPlanCase({
       || Boolean(resolvedPage)
       || typeof pageFactory === 'function';
     const settleResolution = resolvePostCommandSettleMs({ matrixCase, runtimeConfig, capability });
-    const captureModeResolution = resolveCaptureMode({ matrixCase, runtimeConfig });
-
     if (shouldPreparePage) {
       if (
         !capability.synthetic
@@ -768,12 +796,24 @@ export async function processAtPlanCase({
     }
 
     if (resolvedPage && triggerAfterDriverStart) {
-      const triggerSequence = resolveTriggerSequence(matrixCase, resolvedSurface);
-      for (const trigger of triggerSequence) {
-        await applyTrigger(resolvedPage, trigger, {
-          strict: true,
-          baseUrl: resolvedTarget,
+      const runTriggers = async () => {
+        for (const trigger of actionTriggers) {
+          await applyTrigger(resolvedPage, trigger, {
+            strict: true,
+            baseUrl: resolvedTarget,
+          });
+        }
+      };
+      if (captureModeResolution.captureMode === 'action') {
+        actionCapture = await driver.captureAction(runTriggers);
+        windowBinding = await ensureWindowBindingImpl({
+          page: resolvedPage,
+          browser: resolvedBrowser,
+          context: resolvedContext,
         });
+        throwIfWindowBindingUnbound(windowBinding, 'post-action');
+      } else {
+        await runTriggers();
       }
     }
 
@@ -832,6 +872,10 @@ export async function processAtPlanCase({
     const rawPhrases = Array.isArray(capture?.phrases) ? capture.phrases : [];
     const normalizationOptions = runtimeConfig?.speechNormalization || matrixCase?.speechNormalization || { punctuationMode: 'preserve', dedupeAdjacentPhrases: true };
     const normalizedPhrases = normalizeSpokenOutput(rawPhrases, normalizationOptions);
+    const actionRawPhrases = typeof actionCapture?.spokenPhrase === 'string' && actionCapture.spokenPhrase.trim()
+      ? [actionCapture.spokenPhrase]
+      : [];
+    const actionNormalizedPhrases = normalizeSpokenOutput(actionRawPhrases, normalizationOptions);
     if (rawPhrases.length > 0) {
       capturedPhrases.push(...rawPhrases);
     }
@@ -859,6 +903,10 @@ export async function processAtPlanCase({
     provenance.captureModeApplied = captureModeResolution.captureMode;
     provenance.captureModeSource = captureModeResolution.source;
     provenance.speechLogClearedBeforeSettle = speechLogClearedBeforeSettle;
+    provenance.actionCapture = {
+      attempted: captureModeResolution.captureMode === 'action',
+      capturedPhraseCount: actionRawPhrases.length,
+    };
     const provenanceWarnings = collectProvenanceWarnings({ rawPhrases, profileFingerprint: provenance?.profileFingerprint || {} });
     if (provenanceWarnings.length > 0) {
       provenance.warnings = provenanceWarnings;
@@ -869,12 +917,16 @@ export async function processAtPlanCase({
       { order: 2, evidenceType: 'normalizedPhrases', value: normalizedPhrases.slice() },
       { order: 3, evidenceType: 'browserState', value: browserState },
       { order: 4, evidenceType: 'accessibilityTree', value: accessibilityTree },
+      { order: 5, evidenceType: 'actionSpokenPhrases', value: actionRawPhrases.slice() },
+      { order: 6, evidenceType: 'actionNormalizedPhrases', value: actionNormalizedPhrases.slice() },
     ];
     const assertionEvidence = {
       speech: rawPhrases,
       normalizedSpeech: normalizedPhrases,
       browserState,
       accessibilityTree,
+      actionSpeech: actionRawPhrases,
+      actionNormalizedSpeech: actionNormalizedPhrases,
     };
 
     for (const assertion of assertions) {
@@ -934,6 +986,8 @@ export async function processAtPlanCase({
         reason: invalidConfigReason || (capability.synthetic ? 'Synthetic execution produced a non-pass result.' : null),
         rawPhrases: rawPhrases.slice(),
         normalizedPhrases: normalizedPhrases.slice(),
+        actionRawPhrases: actionRawPhrases.slice(),
+        actionNormalizedPhrases: actionNormalizedPhrases.slice(),
         phrases: capturedPhrases,
         assertions: assertionResults,
         commandSequence: commandsExecuted.slice(),

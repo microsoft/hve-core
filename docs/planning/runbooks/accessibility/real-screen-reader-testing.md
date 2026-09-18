@@ -2,7 +2,7 @@
 title: Real screen reader testing
 description: Shared guidance for human-led real assistive technology testing, evidence capture, and release gating.
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-09-16
 ms.topic: how-to
 keywords:
   - accessibility
@@ -51,14 +51,40 @@ Keep the case-specific commands and expected outcomes in the generated plan rath
 
 ## Windows + NVDA setup and execution
 
-### Setup
+### Automated harness setup
+
+Prepare the machine separately from installing repository dependencies. Run the first command once per Windows machine. Run the second command from the skill-local `scripts/runtime_a11y` directory after each Guidepup version update so the installed NVDA asset matches the package manifest.
+
+```powershell
+npx --yes @guidepup/setup@0.25.3 setup
+Set-Location scripts/runtime_a11y
+npx --yes @guidepup/setup@0.25.3 install nvda
+```
+
+The setup and install commands modify machine configuration and the Guidepup user cache. Do not infer or run them as part of ordinary validation.
+
+Before automated calibration, run the prerequisite-only probe from the accessibility skill root:
+
+```bash
+uv run scripts/runtime_a11y/__main__.py run-calibration --config <path-to>/a11y-runtime.config.json --prerequisite-only
+```
+
+The probe reports the skill-local Guidepup library, manifest-selected NVDA asset, and a conflicting NVDA process independently. Do not launch a personal NVDA instance before the automated run. The harness launches an isolated Guidepup session and fails closed when another NVDA process is active.
+
+### Automated action capture
+
+Use `captureMode: action` only with `triggerAfterDriverStart: true` and an existing declarative trigger. The harness wraps that trigger in Guidepup's `capture(action)` API and records `actionSpeech` and `actionNormalizedSpeech` separately from the cumulative transcript. Foreground browser-process binding is checked before and after the action.
+
+Guidepup action capture closes after one second without additional speech. Use it for immediate interaction-driven output such as focus changes and status updates that occur with the action. Keep delayed announcements on the existing settle-based or manual path unless prepared-host calibration establishes repeatable behavior.
+
+### Human-led setup
 
 * Use a Windows host with a supported browser installed.
 * Launch NVDA before opening the target surface.
 * Confirm the browser is focused and that the tester understands whether the test should be executed in browse mode or focus mode.
 * Record the NVDA version, browser, browser version, and the exact target URL or local test surface.
 
-### Execution
+### Human-led execution
 
 1. Review the generated plan entry and identify the surface, state, and expected user task.
 2. Start from a known baseline state and perform the steps described by the plan.

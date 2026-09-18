@@ -26,15 +26,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-named
+        name: skill-ado-create-pull-request-conformance-skill-named
         config:
           pattern: "(?i)backlog-management"
       - type: output-matches
-        name: preflight-required
+        name: skill-ado-create-pull-request-conformance-preflight-required
         config:
           pattern: "(?i)preflight|platform resolution|confirm.{0,30}destination|sanitiz"
       - type: output-matches
-        name: scope-language
+        name: skill-ado-create-pull-request-conformance-scope-language
         config:
           pattern: "(?i)work\\s+item|reviewer|pull\\s+request|automated\\s+linking"
 
@@ -49,11 +49,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-named
+        name: skill-ado-get-build-info-conformance-skill-named
         config:
           pattern: "(?i)backlog-management|build-info"
       - type: output-matches
-        name: scope-language
+        name: skill-ado-get-build-info-conformance-scope-language
         config:
           pattern: "(?i)azure\\s*devops|\\bado\\b|build|pull\\s*request|branch"
 
@@ -69,11 +69,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-docusaurus-edits-conformance-applyto-evidence
         config:
           pattern: "(?i)\\bdocs/\\b|^docs/|docs\\s*/"
       - type: output-matches
-        name: scope-language
+        name: instruction-docusaurus-edits-conformance-scope-language
         config:
           pattern: "(?i)docusaurus|frontmatter|admonition|internal\\s+link|mermaid"
 
@@ -89,11 +89,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-dt-coach-telemetry-conformance-applyto-evidence
         config:
           pattern: "(?i)dt-coach-telemetry\\.instructions\\.md|\\.copilot-tracking/dt/"
       - type: output-matches
-        name: scope-language
+        name: instruction-dt-coach-telemetry-conformance-scope-language
         config:
           pattern: "(?i)telemetry-foundations|trace|span|metric|UCUM|PII|cardinality"
 
@@ -110,11 +110,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-experiment-designer-conformance-applyto-evidence
         config:
           pattern: "(?i)\\.copilot-tracking/mve|/mve/"
       - type: output-matches
-        name: scope-language
+        name: instruction-experiment-designer-conformance-scope-language
         config:
           pattern: "(?is)(artifact|directory|file\\s+name).*(experiment-design).*(methodology|MVE|hypothes|vetting)"
 
@@ -131,11 +131,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-github-backlog-grooming-conformance-app-4b5ec347
         config:
           pattern: "(?i)github-issues/backlog|github-backlog-grooming"
       - type: output-matches
-        name: scope-language
+        name: instruction-github-backlog-grooming-conformance-sco-07fa2d74
         config:
           pattern: "(?i)all\\s+open|paginate|cursor|markdown|tracker|advisory|no\\s+(automatic\\s+)?clos"
 
@@ -152,11 +152,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-community-interaction-conformance-apply-0d4cbaa1
         config:
           pattern: "(?i)community-interaction\\.instructions\\.md|project-planning/community-interaction"
       - type: output-matches
-        name: scope-language
+        name: instruction-community-interaction-conformance-scope-language
         config:
           pattern: "(?i)thank|scope|door|concise|tone|voice|template"
 
@@ -173,15 +173,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-backlog-guardrails-conformance-applyto-evidence
         config:
           pattern: "(?i)backlog-guardrails\\.instructions\\.md|project-planning/backlog-guardrails"
       - type: output-matches
-        name: activation-required
+        name: instruction-backlog-guardrails-conformance-activati-33650f5c
         config:
           pattern: "(?i)backlog-management"
       - type: output-matches
-        name: stop-behavior
+        name: instruction-backlog-guardrails-conformance-stop-behavior
         config:
           pattern: "(?i)stop|halt|do not proceed|cannot proceed|before the mutation"
 
@@ -197,11 +197,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-markdown-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\*/\\*\\.md|\\.md\\b|all\\s+markdown\\s+files"
       - type: output-matches
-        name: scope-language
+        name: instruction-markdown-conformance-scope-language
         config:
           pattern: "(?i)markdownlint|heading|atx|list|frontmatter"
 
@@ -218,11 +218,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-hve-builder-conformance-applyto-evidence
         config:
           pattern: "(?i)\\.agent\\.md|\\.instructions\\.md|\\.prompt\\.md|SKILL\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-hve-builder-conformance-scope-language
         config:
           pattern: "(?i)prompt|agent|instruction|skill|frontmatter|authoring"
 
@@ -238,11 +238,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-copilot-tracking-conformance-applyto-evidence
         config:
           pattern: "(?i)\\.copilot-tracking/(research|plans|details|changes|reviews|sandbox|prompts)"
       - type: output-matches
-        name: scope-language
+        name: instruction-copilot-tracking-conformance-scope-language
         config:
           pattern: "(?i)tracking|artifact|research|plan|details|changes|review"
 
@@ -259,11 +259,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-pull-request-conformance-applyto-evidence
         config:
           pattern: "(?i)\\.copilot-tracking/pr/|/pr/"
       - type: output-matches
-        name: scope-language
+        name: instruction-pull-request-conformance-scope-language
         config:
           pattern: "(?i)pull\\s+request|diff|template|checkbox|pr-reference"
 
@@ -280,11 +280,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-writing-style-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\*/\\*\\.md|\\.md\\b|markdown\\s+content"
       - type: output-matches
-        name: scope-language
+        name: instruction-writing-style-conformance-scope-language
         config:
           pattern: "(?i)voice|tone|style|formal|instructional|professional"
 
@@ -301,11 +301,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-rai-identity-conformance-applyto-evidence
         config:
           pattern: "(?i)\\.copilot-tracking/rai-plans|rai-plans/"
       - type: output-matches
-        name: scope-language
+        name: instruction-rai-identity-conformance-scope-language
         config:
           pattern: "(?i)rai|nist|six[-\\s]phase|trustworthi|assessment"
 
@@ -322,11 +322,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-rai-risk-classification-conformance-app-e51daedd
         config:
           pattern: "(?i)\\.copilot-tracking/rai-plans|rai-plans/"
       - type: output-matches
-        name: scope-language
+        name: instruction-rai-risk-classification-conformance-sco-cb858f03
         config:
           pattern: "(?i)prohibited\\s+use|risk\\s+(indicator|classification)|depth\\s+tier|basic|standard|comprehensive"
 
@@ -343,11 +343,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-rai-license-posture-conformance-applyto-evidence
         config:
           pattern: "(?i)skills/rai|\\.copilot-tracking/rai-plans|rai-plans/"
       - type: output-matches
-        name: scope-language
+        name: instruction-rai-license-posture-conformance-scope-language
         config:
           pattern: "(?i)license|attribution|reproduce|standard|posture"
 
@@ -365,11 +365,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-data-science-licensing-posture-conforma-d604644a
         config:
           pattern: "(?i)skills/|\\.copilot-tracking/|licensing-posture"
       - type: output-matches
-        name: scope-language
+        name: instruction-data-science-licensing-posture-conforma-cdb9e7c1
         config:
           pattern: "(?i)paraphrase|minimum|attribution|reproduce|third-party|THIRD-PARTY-NOTICES"
 
@@ -387,11 +387,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-backlog-handoff-conformance-applyto-evidence
         config:
           pattern: "(?i)\\.copilot-tracking/security-plans|security-plans/"
       - type: output-matches
-        name: scope-language
+        name: instruction-backlog-handoff-conformance-scope-language
         config:
           pattern: "(?i)backlog|handoff|ado|github|wi-sec|work\\s+item|stride|mitigation"
 
@@ -407,11 +407,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-sssc-assessment-conformance-applyto-evidence
         config:
           pattern: "(?i)\\.copilot-tracking/sssc-plans|sssc-plans/"
       - type: output-matches
-        name: scope-language
+        name: instruction-sssc-assessment-conformance-scope-language
         config:
           pattern: "(?i)sssc|supply\\s+chain|capabilit|sbom|scorecard|slsa|sigstore"
 
@@ -428,11 +428,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-disclaimer-language-conformance-applyto-evidence
         config:
           pattern: "(?i)\\.copilot-tracking/(rai-plans|security-plans|sssc-plans)"
       - type: output-matches
-        name: scope-language
+        name: instruction-disclaimer-language-conformance-scope-language
         config:
           pattern: "(?i)disclaimer|caution|assistive\\s+tool|professional\\s+review|legal|compliance"
 
@@ -449,11 +449,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-powershell-script-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.ps1|\\*\\.psm1|\\*\\.psd1|powershell\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-powershell-script-conformance-scope-language
         config:
           pattern: "(?i)cmdletbinding|param\\b|erroractionpreference|comment-based\\s+help|synopsis|\\.ps1|pwsh"
 
@@ -470,11 +470,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-powershell-module-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.psm1|\\*\\.ps1|powershell\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-powershell-module-conformance-scope-language
         config:
           pattern: "(?i)export-modulemember|#requires|module|psm1|outputtype|using\\s+module"
 
@@ -490,11 +490,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-powershell-data-file-conformance-applyt-1c5f7350
         config:
           pattern: "(?i)\\*\\.psd1|\\*\\.psm1|\\*\\.ps1|powershell\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-powershell-data-file-conformance-scope-language
         config:
           pattern: "(?i)\\.psd1|manifest|module|powershell"
 
@@ -511,11 +511,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-powershell-comment-help-conformance-app-09491af2
         config:
           pattern: "(?i)\\*\\.ps1|powershell\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-powershell-comment-help-conformance-sco-5a285ebc
         config:
           pattern: "(?i)\\.synopsis|\\.description|\\.parameter|\\.example|\\.notes|comment-based\\s+help"
 
@@ -532,11 +532,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-powershell-error-handling-conformance-a-df3c5440
         config:
           pattern: "(?i)\\*\\.ps1|powershell\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-powershell-error-handling-conformance-s-c93baf64
         config:
           pattern: "(?i)erroractionpreference|try.*catch|lastexitcode|throw|invocation(name)?|exit\\s+1"
 
@@ -555,11 +555,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-pester-tests-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.Tests\\.ps1|pester\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-pester-tests-conformance-scope-language
         config:
           pattern: "(?i)pester|describe|context|\\bit\\b|should|beforeall|mock|-tag\\s+'?unit|\\.tests\\.ps1"
 
@@ -576,11 +576,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-python-script-cli-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.py|python-script\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-python-script-cli-conformance-scope-language
         config:
           pattern: "(?i)argparse|click|create_parser|def\\s+main|sys\\.exit|exit\\s+code|type\\s+hint"
 
@@ -596,11 +596,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-python-script-pathlib-conformance-apply-d42d4379
         config:
           pattern: "(?i)\\*\\.py|python-script\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-python-script-pathlib-conformance-scope-language
         config:
           pattern: "(?i)pathlib|\\bPath\\b|read_text|write_text|os\\.path"
 
@@ -617,11 +617,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-python-script-subprocess-conformance-ap-e70b5e89
         config:
           pattern: "(?i)\\*\\.py|python-script\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-python-script-subprocess-conformance-sc-932e61dc
         config:
           pattern: "(?i)subprocess|capture_output|check=true|calledprocesserror|filenotfounderror"
 
@@ -638,11 +638,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-python-tests-pytest-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.py|python-tests\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-python-tests-pytest-conformance-scope-language
         config:
           pattern: "(?i)pytest|mocker|monkeypatch|arrange|act|assert|parametrize|test_given_"
 
@@ -659,11 +659,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-python-uv-projects-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.py|\\*\\.ipynb|uv-projects\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-python-uv-projects-conformance-scope-language
         config:
           pattern: "(?i)\\buv\\s+(init|venv|add|sync|lock)|pyproject\\.toml|\\.venv|ipykernel|ruff"
 
@@ -680,11 +680,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-rust-cargo-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.rs|rust\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-rust-cargo-conformance-scope-language
         config:
           pattern: "(?i)cargo\\.toml|edition\\s*=\\s*\"?2021|\\[package\\]|\\[profile\\.release\\]|lto|codegen-units"
 
@@ -701,11 +701,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-rust-error-handling-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.rs|rust\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-rust-error-handling-conformance-scope-language
         config:
           pattern: "(?i)thiserror|anyhow|#\\[from\\]|unwrap|expect|Result<|ServiceError|\\?\\s+operator|error\\s+propagation"
 
@@ -723,11 +723,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-rust-naming-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.rs|rust\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-rust-naming-conformance-scope-language
         config:
           pattern: "(?i)pascalcase|snake_case|screaming_snake_case|kebab-case|\\*Error|\\*Config|\\*Builder"
 
@@ -744,11 +744,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-rust-async-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.rs|rust\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-rust-async-conformance-scope-language
         config:
           pattern: "(?i)tokio|#\\[tokio::main\\]|async\\s+fn|multi-threaded|runtime"
 
@@ -766,11 +766,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-rust-tests-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.rs|rust-tests\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-rust-tests-conformance-scope-language
         config:
           pattern: "(?i)#\\[cfg\\(test\\)\\]|#\\[test\\]|#\\[tokio::test\\]|mod\\s+tests|given_.*_when_.*_then_|integration"
 
@@ -787,15 +787,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-rust-http-unit-test-isolation-conforman-238e3d54
         config:
           pattern: "(?i)\\*\\.rs|rust-tests\\.instructions\\.md"
       - type: output-matches
-        name: local-mock-language
+        name: instruction-rust-http-unit-test-isolation-conforman-d9435421
         config:
           pattern: "(?i)#\\[cfg\\(test\\)\\]|mod\\s+tests|wiremock|mockito|loopback|local\\s+(mock|test\\s+double)"
       - type: output-matches
-        name: network-boundary-language
+        name: instruction-rust-http-unit-test-isolation-conforman-c2121eac
         config:
           pattern: "(?i)(must\\s+not|do\\s+not|avoid|prohibit)[\\s\\S]{0,80}(DNS|non-loopback)|(DNS|non-loopback)[\\s\\S]{0,80}(must\\s+not|do\\s+not|avoid|prohibit)"
 
@@ -812,11 +812,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-bash-script-structure-conformance-apply-09e3166f
         config:
           pattern: "(?i)\\*\\.sh|bash\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-bash-script-structure-conformance-scope-language
         config:
           pattern: "(?i)#!/usr/bin/env\\s+bash|set\\s+-euo\\s+pipefail|main\\(\\)|copyright|shellcheck"
 
@@ -833,11 +833,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-bash-naming-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.sh|bash\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-bash-naming-conformance-scope-language
         config:
           pattern: "(?i)upper_snake_case|lower_snake_case|readonly|\\blocal\\b|variable\\s+expansion|\\$\\{|braces"
 
@@ -854,11 +854,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-bash-error-handling-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.sh|bash\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-bash-error-handling-conformance-scope-language
         config:
           pattern: "(?i)set\\s+-euo\\s+pipefail|\\berr\\(\\)|exit\\s+1|stderr|>&2|shellcheck"
 
@@ -875,11 +875,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-terraform-naming-conformance-applyto-evidence
         config:
           pattern: "(?i)\\*\\.tf|terraform\\.instructions\\.md|terraform/"
       - type: output-matches
-        name: scope-language
+        name: instruction-terraform-naming-conformance-scope-language
         config:
           pattern: "(?i)\\bthis\\b|singleton|snake_case|logical\\s+name"
 
@@ -895,11 +895,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-terraform-module-structure-conformance--0aa20e00
         config:
           pattern: "(?i)\\*\\.tf|terraform\\.instructions\\.md|terraform/"
       - type: output-matches
-        name: scope-language
+        name: instruction-terraform-module-structure-conformance--2144620f
         config:
           pattern: "(?i)main\\.tf|variables\\.tf|outputs\\.tf|versions\\.tf|module|required_providers"
 
@@ -916,11 +916,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-terraform-data-source-conformance-apply-976c1e47
         config:
           pattern: "(?i)\\*\\.tf|terraform\\.instructions\\.md|terraform/"
       - type: output-matches
-        name: scope-language
+        name: instruction-terraform-data-source-conformance-scope-language
         config:
           pattern: "(?i)\\bthis\\b|data\\s+source|singleton|azurerm_client_config"
 
@@ -937,11 +937,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-pptx-conformance-applyto-evidence
         config:
           pattern: "(?i)\\.copilot-tracking/ppt/|/ppt/|pptx\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-pptx-conformance-scope-language
         config:
           pattern: "(?i)powerpoint|slide|deck|design\\s+rule|convention|skill"
 
@@ -959,11 +959,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-coaching-patterns-conformance-applyto-evidence
         config:
           pattern: "(?i)coaching-patterns\\.instructions\\.md|\\.copilot-tracking/.*-plans"
       - type: output-matches
-        name: scope-language
+        name: instruction-coaching-patterns-conformance-scope-language
         config:
           pattern: "(?i)think|speak|empower|exploration|coaching|discovery"
 
@@ -979,11 +979,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-privacy-identity-conformance-applyto-evidence
         config:
           pattern: "(?i)\\.copilot-tracking/privacy-plans|privacy-identity\\.instructions\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-privacy-identity-conformance-scope-language
         config:
           pattern: "(?i)privacy|dpia|data\\s+mapping|lawful\\s+basis|phase"
 
@@ -1000,11 +1000,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-planner-identity-base-conformance-apply-4fddcc0a
         config:
           pattern: "(?i)planner-identity-base\\.instructions\\.md|\\.copilot-tracking/.*-plans"
       - type: output-matches
-        name: scope-language
+        name: instruction-planner-identity-base-conformance-scope-language
         config:
           pattern: "(?i)phase|state\\.json|resume|orchestration|planner"
 
@@ -1021,11 +1021,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-telemetry-overlay-conformance-applyto-evidence
         config:
           pattern: "(?i)telemetry-overlay\\.instructions\\.md|\\.copilot-tracking/.*-plans"
       - type: output-matches
-        name: scope-language
+        name: instruction-telemetry-overlay-conformance-scope-language
         config:
           pattern: "(?i)telemetry|trace|metric|span|opentelemetry|pii"
 
@@ -1042,11 +1042,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-untrusted-content-boundary-conformance--881c7109
         config:
           pattern: "(?i)untrusted-content-boundary\\.instructions\\.md|\\.copilot-tracking/.*-plans"
       - type: output-matches
-        name: scope-language
+        name: instruction-untrusted-content-boundary-conformance--f0f25e86
         config:
           pattern: "(?i)untrusted|ingested|data\\s+not\\s+instructions|injection|boundary"
 
@@ -1063,19 +1063,19 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: neutral-reference-template
+        name: instruction-content-policy-citation-neutral-public--a8963995
         config:
           pattern: "(?i)may not align with our content policies"
       - type: output-matches
-        name: top-level-anchor-only
+        name: instruction-content-policy-citation-neutral-public--6442a70b
         config:
           pattern: 'https://learn\.microsoft\.com/legal/ai-code-of-conduct(?![#A-Za-z0-9/_-])'
       - type: output-matches
-        name: path-and-line-citation
+        name: instruction-content-policy-citation-neutral-public--b420e83c
         config:
           pattern: '(?i)foo\.py.*\b40\b'
       - type: output-matches
-        name: no-category-disclosure
+        name: instruction-content-policy-citation-neutral-public--1dce04b8
         config:
           pattern: '(?i)(hateful|category\s*[:=]|classification|quoted snippet)'
           negate: true
@@ -1093,11 +1093,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: top-level-anchor-only
+        name: instruction-content-policy-citation-no-deep-link-to-f0b34367
         config:
           pattern: 'https://learn\.microsoft\.com/legal/ai-code-of-conduct(?![#A-Za-z0-9/_-])'
       - type: output-matches
-        name: refuses-snippet-and-deeplink
+        name: instruction-content-policy-citation-no-deep-link-re-3b7ac4bf
         config:
           pattern: "(?i)(will not|cannot|do not|won't|decline|not include|without)"
 
@@ -1113,11 +1113,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-attribution
+        name: instruction-diff-computation-conformance-instructio-af86901d
         config:
           pattern: '(?i)(diff-computation|diff computation|base branch|merge-base|scope lock|large diff)'
       - type: output-matches
-        name: scope-language
+        name: instruction-diff-computation-conformance-scope-language
         config:
           pattern: '(?i)(diff|branch|changed files|non-source|review)'
 
@@ -1134,11 +1134,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-attribution
+        name: instruction-review-artifacts-conformance-instructio-d12c18db
         config:
           pattern: '(?i)(review-artifacts|review artifacts|metadata\.json|verdict|review\.md|findings folder)'
       - type: output-matches
-        name: scope-language
+        name: instruction-review-artifacts-conformance-scope-language
         config:
           pattern: '(?i)(\.copilot-tracking[-/\\]reviews|artifact|persist|schema|verdict)'
 
@@ -1152,11 +1152,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-attribution
+        name: instruction-adr-byo-template-conformance-instructio-3e6a3698
         config:
           pattern: '(?i)(adr|decision|template|byo)'
       - type: output-matches
-        name: scope-language
+        name: instruction-adr-byo-template-conformance-scope-language
         config:
           pattern: '(?i)(template|adr|decision|frontmatter)'
 
@@ -1170,11 +1170,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-attribution
+        name: instruction-adr-handoff-conformance-instruction-attribution
         config:
           pattern: '(?i)(adr|handoff|govern|summary)'
       - type: output-matches
-        name: scope-language
+        name: instruction-adr-handoff-conformance-scope-language
         config:
           pattern: '(?i)(handoff|summary|planning|implementation)'
 
@@ -1188,11 +1188,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-attribution
+        name: instruction-adr-identity-conformance-instruction-attribution
         config:
           pattern: '(?i)(adr|identity|state|session|phase)'
       - type: output-matches
-        name: scope-language
+        name: instruction-adr-identity-conformance-scope-language
         config:
           pattern: '(?i)(identity|session|state|phase|authoring)'
 
@@ -1206,11 +1206,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-attribution
+        name: instruction-adr-standards-conformance-instruction-a-78abaa12
         config:
           pattern: '(?i)(adr|standard|status|naming|template)'
       - type: output-matches
-        name: scope-language
+        name: instruction-adr-standards-conformance-scope-language
         config:
           pattern: '(?i)(standard|status|naming|adr|template)'
 
@@ -1224,11 +1224,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-attribution
+        name: instruction-graphify-conformance-instruction-attribution
         config:
           pattern: '(?i)(graphify|evidence|graph|knowledge)'
       - type: output-matches
-        name: scope-language
+        name: instruction-graphify-conformance-scope-language
         config:
           pattern: '(?i)(graph|evidence|knowledge|planning)'
 
@@ -1242,11 +1242,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-attribution
+        name: instruction-vex-generation-conformance-instruction--ef2c2a35
         config:
           pattern: '(?i)(vex|generation|evidence|confidence|triage)'
       - type: output-matches
-        name: scope-language
+        name: instruction-vex-generation-conformance-scope-language
         config:
           pattern: '(?i)(vex|generation|status|justification|evidence)'
 
@@ -1260,11 +1260,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-attribution
+        name: instruction-vex-standards-conformance-instruction-a-6813e604
         config:
           pattern: '(?i)(vex|standard|openvex|document|author)'
       - type: output-matches
-        name: scope-language
+        name: instruction-vex-standards-conformance-scope-language
         config:
           pattern: '(?i)(vex|openvex|standard|document|statement)'
 
@@ -1281,15 +1281,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-attribution
+        name: instruction-accessibility-identity-conformance-inst-9c44f3d2
         config:
           pattern: '(?i)(accessibility-identity|Accessibility Planner Identity|accessibility planning)'
       - type: output-matches
-        name: state-and-phase-contract
+        name: instruction-accessibility-identity-conformance-stat-8203ab0c
         config:
           pattern: '(?i)(six[-\s]phase|state\.json|resume|framework[-\s]selection|backlog[-\s]handoff)'
       - type: output-matches
-        name: research-boundary
+        name: instruction-accessibility-identity-conformance-rese-4544d54d
         config:
           pattern: '(?i)(rpi-research|bounded|standards|regulatory|blocked|needs clarification)'
 
@@ -1306,15 +1306,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-attribution
+        name: instruction-commit-message-conformance-instruction--be817187
         config:
           pattern: '(?i)(commit-message|Commit Message Guidelines|conventional commit)'
       - type: output-matches
-        name: format-contract
+        name: instruction-commit-message-conformance-format-contract
         config:
           pattern: '(?i)(imperative|type|scope|description|body|less than|bytes)'
       - type: output-matches
-        name: footer-contract
+        name: instruction-commit-message-conformance-footer-contract
         config:
           pattern: '(?i)(emoji|Generated by Copilot|footer)'
 
@@ -1331,15 +1331,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: instruction-attribution
+        name: instruction-standards-mapping-conformance-instructi-f3d127f9
         config:
           pattern: '(?i)(standards-mapping|Standards Mapping|security-planning)'
       - type: output-matches
-        name: durable-standard-boundary
+        name: instruction-standards-mapping-conformance-durable-s-8ef0b8eb
         config:
           pattern: '(?i)(OWASP|NIST|durable|standards-cross-reference|nist-control-families)'
       - type: output-matches
-        name: runtime-research-boundary
+        name: instruction-standards-mapping-conformance-runtime-r-fd89e84e
         config:
           pattern: '(?i)(rpi-research|WAF|CAF|MCSB|version[-\s]sensitive|runtime lookup)'
 
@@ -1358,11 +1358,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-mural-seeding-patterns-conformance-appl-60bd0669
         config:
           pattern: "(?i)dt-coach\\.agent\\.md|rai-planner\\.agent\\.md|ux-ui-designer\\.agent\\.md"
       - type: output-matches
-        name: scope-language
+        name: instruction-mural-seeding-patterns-conformance-scop-6a413577
         config:
           pattern: "(?i)duplicate-then-populate|anchor\\s+inheritance|probe-before-bulk|z-order"
 
@@ -1378,11 +1378,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-licensing-posture-conformance-applyto-evidence
         config:
           pattern: '(?i)(\*\*/skills/\*\*|\.github/skills/|\.copilot-tracking/)'
       - type: output-matches
-        name: scope-language
+        name: instruction-licensing-posture-conformance-scope-language
         config:
           pattern: '(?i)(paraphrase|verbatim|public[-\s]domain|W3C|CC0|attribution)'
   - name: instruction-tm7-generation-workflow-conformance
@@ -1399,11 +1399,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: applyTo-evidence
+        name: instruction-tm7-generation-workflow-conformance-app-701a0e11
         config:
           pattern: "(?i)security-planner\\.agent\\.md|security-reviewer\\.agent\\.md|tm7-generation-workflow"
       - type: output-matches
-        name: scope-language
+        name: instruction-tm7-generation-workflow-conformance-sco-c2362e1e
         config:
           pattern: "(?i)confirm|wait|operator|pending|not\\s+an?\\s+approval|promote"
 
@@ -1420,15 +1420,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: source-content-is-data
+        name: instruction-engagement-reporting-data-handling-conf-f6174179
         config:
           pattern: '(?i)(treat.{0,40}data|not instructions|untrusted|do not execute|do not follow)'
       - type: output-matches
-        name: data-minimization
+        name: instruction-engagement-reporting-data-handling-conf-8b1422c4
         config:
           pattern: '(?i)(minimize|minimization|omit|remove|unnecessary).{0,80}(PII|personal|contact|email)'
       - type: output-matches
-        name: draft-approval-boundary
+        name: instruction-engagement-reporting-data-handling-conf-cda6adc4
         config:
           pattern: '(?is)(separate|explicit).{0,80}(approval|confirm).{0,80}(draft|Outlook)'
 
@@ -1444,11 +1444,11 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: evidence-based-status
+        name: instruction-engagement-reporting-style-guide-confor-ad421ca6
         config:
           pattern: '(?is)(staging).{0,80}(complete).{0,120}(production).{0,100}(validation|prerequisite).{0,60}(in progress)'
       - type: output-matches
-        name: avoids-vague-progress
+        name: instruction-engagement-reporting-style-guide-confor-13932f03
         config:
           pattern: '(?i)(specific|evidence|completed|in progress|status)'
 
@@ -1464,10 +1464,10 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: canonical-term
+        name: instruction-engagement-reporting-terminology-confor-9bd602ca
         config:
           pattern: '(?i)(use|report).{0,60}North Star'
       - type: output-matches
-        name: source-preserved
+        name: instruction-engagement-reporting-terminology-confor-c0fa4f5c
         config:
           pattern: '(?i)(do not|not|leave|preserve).{0,60}(change|modify|source|record)'

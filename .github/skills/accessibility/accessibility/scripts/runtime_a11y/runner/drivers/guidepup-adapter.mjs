@@ -1,14 +1,37 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { ALLOWLISTED_PERFORM_VALUES, validateScreenReaderCommand } from './command-contract.mjs';
+import { ALLOWLISTED_NAVIGATE_VALUES, ALLOWLISTED_PERFORM_VALUES, validateScreenReaderCommand } from './command-contract.mjs';
 
 const DRIVER_DIR = path.dirname(fileURLToPath(import.meta.url));
 const GUIDEPUP_MODULE = path.resolve(DRIVER_DIR, '../../node_modules/@guidepup/guidepup');
+const RUNTIME_PACKAGE_PATH = path.resolve(DRIVER_DIR, '../../package.json');
+const PROFILE_ID = 'guidepup-nvda-isolated-v1';
+const APPROVED_NVDA_SETTINGS = Object.freeze({
+  general: {
+    language: 'Windows',
+    saveConfigurationOnExit: false,
+  },
+  presentation: {
+    reportDynamicContentChanges: true,
+  },
+  virtualBuffers: {
+    autoSayAllOnPageLoad: false,
+  },
+  vision: {
+    NVDAHighlighter: {
+      enabled: false,
+      highlightFocus: false,
+      highlightNavigator: false,
+      highlightBrowseMode: false,
+    },
+  },
+});
 
 function normalizePlatform(platform) {
   return String(platform || '').toLowerCase();
@@ -22,28 +45,60 @@ function selectDriver(platform) {
   return null;
 }
 
-function buildMetadata(target, config = {}, platform) {
-  const approvedProfile = config?.profileFingerprint || config?.approvedProfile || {
-    locale: config?.locale || 'en-US',
-    verbosity: 'default',
-    punctuation: 'preserve',
-    speechMode: 'default',
-    addOnPosture: 'default',
+function readGuidepupLibraryVersion() {
+  try {
+    return JSON.parse(readFileSync(RUNTIME_PACKAGE_PATH, 'utf8'))?.optionalDependencies?.['@guidepup/guidepup'] || null;
+  } catch {
+    return null;
+  }
+}
+
+function projectEffectiveSettings(settings = {}) {
+  return {
+    general: {
+      language: settings?.general?.language ?? null,
+      saveConfigurationOnExit: settings?.general?.saveConfigurationOnExit ?? null,
+    },
+    presentation: {
+      reportDynamicContentChanges: settings?.presentation?.reportDynamicContentChanges ?? null,
+    },
+    virtualBuffers: {
+      autoSayAllOnPageLoad: settings?.virtualBuffers?.autoSayAllOnPageLoad ?? null,
+    },
+    vision: {
+      highlighterEnabled: settings?.vision?.NVDAHighlighter?.enabled ?? null,
+    },
   };
+}
+
+function buildProfileFingerprint(settings) {
+  const effectiveSettings = projectEffectiveSettings(settings);
+  const digest = createHash('sha256').update(JSON.stringify(effectiveSettings)).digest('hex');
+  return {
+    profileId: PROFILE_ID,
+    digest,
+    effectiveSettings,
+  };
+}
+
+function buildMetadata(target, platform) {
+  const guidepupLibraryVersion = readGuidepupLibraryVersion();
+  const nvdaAssetVersion = target?.version || null;
 
   return {
     driver: 'nvda',
     platform,
-    nvdaVersion: target?.nvdaVersion || target?.version || null,
-    guidepupVersion: target?.guidepupVersion || target?.version || null,
-    guidepupCapabilities: Array.isArray(target?.capabilities) ? target.capabilities : [],
-    profileFingerprint: {
-      locale: approvedProfile?.locale || 'en-US',
-      verbosity: approvedProfile?.verbosity || 'default',
-      punctuation: approvedProfile?.punctuation || 'preserve',
-      speechMode: approvedProfile?.speechMode || 'default',
-      addOnPosture: approvedProfile?.addOnPosture || 'default',
-    },
+    nvdaVersion: nvdaAssetVersion,
+    guidepupVersion: guidepupLibraryVersion,
+    nvdaAssetVersion,
+    guidepupLibraryVersion,
+    guidepupCapabilities: [
+      'nvda',
+      ...(typeof target?.capture === 'function' ? ['action-capture'] : []),
+      ...(ALLOWLISTED_NAVIGATE_VALUES.size > 0 ? ['semantic-navigation'] : []),
+      ...(typeof target?.getSettings === 'function' ? ['isolated-settings'] : []),
+    ],
+    profileFingerprint: null,
   };
 }
 
@@ -123,7 +178,7 @@ export async function createGuidepupDriverAdapter({
     const expectedAnnouncements = Array.isArray(config?.expectedAnnouncements)
       ? config.expectedAnnouncements
       : [];
-    const metadata = buildMetadata(runtimeTarget, config, platform);
+    const metadata = buildMetadata(runtimeTarget, platform);
     const lifecycle = config?.lifecycle || {};
     const startAttempts = resolvePositiveInteger(lifecycle.startAttempts, 2);
     const startRetryDelayMs = resolveNonNegativeInteger(lifecycle.startRetryDelayMs, 2000);
@@ -147,10 +202,14 @@ export async function createGuidepupDriverAdapter({
         for (let attempt = 1; attempt <= startAttempts; attempt += 1) {
           try {
             await runWithTimeout(
-              () => runtimeTarget.start(),
+              () => runtimeTarget.start({ capture: true, settings: APPROVED_NVDA_SETTINGS }),
               startTimeoutMs,
               'Guidepup NVDA startup',
             );
+            if (typeof runtimeTarget.getSettings !== 'function') {
+              throw new Error('Guidepup NVDA target does not expose effective settings.');
+            }
+            metadata.profileFingerprint = buildProfileFingerprint(runtimeTarget.getSettings());
             startedByAdapter = true;
             started = true;
             return { driver, platform };
@@ -226,6 +285,14 @@ export async function createGuidepupDriverAdapter({
           }
           return { kind: 'command', value };
         }
+        if (command.kind === 'navigate') {
+          const value = String(command.value || '');
+          if (!ALLOWLISTED_NAVIGATE_VALUES.has(value) || typeof runtimeTarget[value] !== 'function') {
+            throw new Error(`Unsupported Guidepup navigate value: ${value}`);
+          }
+          await runtimeTarget[value]({ capture: true });
+          return { kind: 'navigate', value };
+        }
         if (command.kind === 'keyboard' || command.kind === 'key') {
           const value = String(command.value || '');
           await runtimeTarget.press(value);
@@ -258,6 +325,15 @@ export async function createGuidepupDriverAdapter({
           await runtimeTarget.clearSpokenPhraseLog();
         }
         return { driver, platform };
+      },
+      async captureAction(action) {
+        if (typeof action !== 'function') {
+          throw new Error('Action-scoped capture requires a trusted action callback.');
+        }
+        if (typeof runtimeTarget.capture !== 'function') {
+          throw new Error('Guidepup NVDA target does not support action-scoped capture.');
+        }
+        return runtimeTarget.capture(action, { capture: true });
       },
       async reset() {
         await this.clearLog();

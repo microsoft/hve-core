@@ -4,6 +4,16 @@
 import { createGuidepupDriverAdapter } from './guidepup-adapter.mjs';
 import { validateScreenReaderCommand } from './command-contract.mjs';
 
+const CAPTURE_MODES = new Set(['single', 'clear-and-capture', 'action']);
+const ASSERTION_EVIDENCE_TYPES = new Set([
+  'speech',
+  'normalizedSpeech',
+  'browserState',
+  'accessibilityTree',
+  'actionSpeech',
+  'actionNormalizedSpeech',
+]);
+
 function createSyntheticDriver({ platform, config = {}, matrixCase = null, variant = null, driverName = 'synthetic' } = {}) {
   const commands = Array.isArray(config?.commands) ? config.commands : [];
   const phrases = Array.isArray(config?.syntheticPhrases)
@@ -32,6 +42,9 @@ function createSyntheticDriver({ platform, config = {}, matrixCase = null, varia
       if (command.kind === 'command') {
         return { kind: 'command', value: command.value };
       }
+      if (command.kind === 'navigate') {
+        return { kind: 'navigate', value: command.value };
+      }
       if (command.kind === 'keyboard' || command.kind === 'key') {
         return { kind: 'key', value: command.value };
       }
@@ -54,6 +67,9 @@ function createSyntheticDriver({ platform, config = {}, matrixCase = null, varia
         evidenceKind: 'synthetic',
       };
     },
+    async captureAction() {
+      throw new Error('Action-scoped capture is unavailable for synthetic screen-reader drivers.');
+    },
   };
 }
 
@@ -63,6 +79,18 @@ export function validateScreenReaderConfig(config = {}) {
   const expectedAnnouncements = Array.isArray(config?.expectedAnnouncements)
     ? config.expectedAnnouncements
     : [];
+
+  if (config?.captureMode !== undefined && !CAPTURE_MODES.has(config.captureMode)) {
+    errors.push(`Unsupported capture mode: ${config.captureMode}`);
+  }
+  if (config?.captureMode === 'action') {
+    if (config?.triggerAfterDriverStart !== true) {
+      errors.push('Action capture requires triggerAfterDriverStart to be true.');
+    }
+    if (config?.hasActionTrigger !== true) {
+      errors.push('Action capture requires at least one declarative trigger.');
+    }
+  }
 
   for (const command of commands) {
     const validationError = validateScreenReaderCommand(command);
@@ -82,6 +110,9 @@ export function validateScreenReaderConfig(config = {}) {
     if (typeof assertion.value !== 'string' || assertion.value.trim() === '') {
       errors.push('Expected announcements require a non-empty string value.');
     }
+    if (assertion.evidenceType !== undefined && !ASSERTION_EVIDENCE_TYPES.has(assertion.evidenceType)) {
+      errors.push(`Unsupported assertion evidence type: ${assertion.evidenceType}`);
+    }
   }
 
   return { ok: errors.length === 0, errors };
@@ -96,6 +127,13 @@ export async function createScreenReaderDriver({ platform = process.platform, dr
         supported: false,
         status: 'invalid-config',
         errors: validation.errors,
+      };
+    }
+    if (config?.captureMode === 'action') {
+      return {
+        supported: false,
+        status: 'invalid-config',
+        errors: ['Action-scoped capture requires a real Guidepup screen-reader driver.'],
       };
     }
     return createSyntheticDriver({

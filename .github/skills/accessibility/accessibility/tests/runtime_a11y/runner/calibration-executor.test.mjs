@@ -362,6 +362,41 @@ test('resolveCalibrationCases preserves captureMode and defaultRunAtCase forward
   }
 });
 
+test('resolveCalibrationCases rejects invalid action capture combinations during normalization', () => {
+  assert.throws(
+    () => resolveCalibrationCases({
+      calibration: {
+        journeys: [{
+          id: 'missing-post-start-trigger',
+          captureMode: 'action',
+          trigger: { action: 'click', target: '#button' },
+        }],
+      },
+    }),
+    /triggerAfterDriverStart/,
+  );
+  assert.throws(
+    () => resolveCalibrationCases({
+      calibration: {
+        journeys: [{
+          id: 'invalid-evidence',
+          captureMode: 'action',
+          triggerAfterDriverStart: true,
+          trigger: { action: 'click', target: '#button' },
+          assertions: [{ type: 'contains', value: 'added', evidenceType: 'actionTranscript' }],
+        }],
+      },
+    }),
+    /Unsupported calibration assertion evidence type/,
+  );
+  assert.throws(
+    () => resolveCalibrationCases({
+      calibration: { journeys: [{ id: 'invalid-mode', captureMode: 'fallback' }] },
+    }),
+    /Unsupported calibration capture mode/,
+  );
+});
+
 test('runRealCalibrationSession records browser teardown failures without throwing', async () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'calibration-teardown-'));
   try {
@@ -857,7 +892,7 @@ test('classifyAtCaseResult maps unsupported, assertion, product, infrastructure,
   }
 });
 
-test('detectGuidepupNvda accepts registry-backed NVDA registration without persisting installation paths', async () => {
+test('detectGuidepupNvda keeps registry evidence diagnostic when the package and selected asset are absent', async () => {
   const result = await detectGuidepupNvda({
     platform: 'win32',
     spawn: (command, args) => {
@@ -872,8 +907,9 @@ test('detectGuidepupNvda accepts registry-backed NVDA registration without persi
     importGuidepup: async () => null,
   });
 
-  assert.equal(result.guidepupRegistered, true);
-  assert.equal(result.guidepupVersion, '0.2.0-2026.1.1');
+  assert.equal(result.libraryInstalled, false);
+  assert.equal(result.selectedAssetInstalled, false);
+  assert.equal(result.registryVersion, '0.2.0-2026.1.1');
 });
 
 test('probePrerequisites reports ready for interactive desktop, Chrome, and isolated Guidepup NVDA', async () => {
@@ -907,7 +943,9 @@ test('probePrerequisites reports ready for interactive desktop, Chrome, and isol
         },
       }),
       importGuidepup: async () => ({
+        guidepupVersion: '0.34.0',
         nvda: {
+          version: '0.2.1-2026.2',
           start: async () => {},
           stop: async () => {},
           press: async () => {},
@@ -915,6 +953,9 @@ test('probePrerequisites reports ready for interactive desktop, Chrome, and isol
           clearSpokenPhraseLog: async () => {},
           capabilities: ['nvda'],
         },
+      }),
+      importGuidepupAssetProbe: async () => ({
+        isNVDAInstalled: () => true,
       }),
     },
   };
@@ -924,7 +965,10 @@ test('probePrerequisites reports ready for interactive desktop, Chrome, and isol
   assert.equal(result.chromeExecutable, 'channel:chrome');
   assert.equal(result.chromeVersion, '150.0.7871.127');
   assert.equal(result.nvdaAvailable, true);
-  assert.equal(result.guidepupRegistered, true);
+  assert.equal(result.libraryInstalled, true);
+  assert.equal(result.selectedAssetInstalled, true);
+  assert.equal(result.guidepupLibraryVersion, '0.34.0');
+  assert.equal(result.nvdaAssetVersion, '0.2.1-2026.2');
   assert.equal(result.reason, null);
   assert.equal(result.metadata.chromeExecutable, 'channel:chrome');
   assert.equal(result.metadata.platform, 'win32');
@@ -959,10 +1003,48 @@ test('probePrerequisites reports the blocking reasons when Windows prerequisites
   assert.equal(result.chromeExecutable, null);
   assert.equal(result.chromeVersion, null);
   assert.equal(result.nvdaAvailable, false);
-  assert.equal(result.guidepupRegistered, false);
+  assert.equal(result.libraryInstalled, false);
+  assert.equal(result.selectedAssetInstalled, false);
+  assert.equal(result.nvdaProcessActive, true);
   assert.ok(result.reasons.includes('Interactive desktop was not available.'));
   assert.ok(result.reasons.includes('Chrome launch failed: system Chrome unavailable'));
-  assert.ok(result.reasons.includes('NVDA registration for isolated Guidepup execution was not verified.'));
+  assert.ok(result.reasons.includes('The skill-local @guidepup/guidepup package was not available.'));
+  assert.ok(result.reasons.some((reason) => reason.includes('@guidepup/setup@0.25.3 install nvda')));
+  assert.ok(result.reasons.includes('A conflicting normal NVDA process was detected.'));
+});
+
+test('probePrerequisites reports an installed library and absent selected asset independently', async () => {
+  const runtime = {
+    platform: 'win32',
+    env: { RUNTIME_A11Y_INTERACTIVE_DESKTOP: 'true' },
+    spawnSync: (command) => command === 'tasklist'
+      ? { stdout: '', stderr: '' }
+      : { stdout: '', stderr: '' },
+    dependencies: {
+      launchBrowser: async () => ({
+        version: () => '150.0.7871.127',
+        close: async () => {},
+      }),
+      importGuidepup: async () => ({
+        guidepupVersion: '0.34.0',
+        nvda: {
+          version: '0.2.1-2026.2',
+          start: async () => {},
+          stop: async () => {},
+        },
+      }),
+      importGuidepupAssetProbe: async () => ({
+        isNVDAInstalled: () => false,
+      }),
+    },
+  };
+
+  const result = await probePrerequisites({}, runtime);
+
+  assert.equal(result.ok, false);
+  assert.equal(result.libraryInstalled, true);
+  assert.equal(result.selectedAssetInstalled, false);
+  assert.ok(result.reasons.some((reason) => reason.includes('@guidepup/setup@0.25.3 install nvda')));
 });
 
 test('probePrerequisites fails when launched Chrome cannot be closed', async () => {

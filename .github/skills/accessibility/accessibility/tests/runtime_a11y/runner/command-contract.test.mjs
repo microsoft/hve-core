@@ -23,6 +23,7 @@ test('config schema command kinds and contract validation stay in parity', () =>
   const schemaKinds = new Set(schema?.$defs?.screenReaderAction?.properties?.kind?.enum || []);
   const representativePayloads = new Map([
     ['command', { kind: 'command', value: 'perform' }],
+    ['navigate', { kind: 'navigate', value: 'nextHeading' }],
     ['pause', { kind: 'pause', durationMs: 1 }],
     ['keyboard', { kind: 'keyboard', value: 'ArrowDown' }],
     ['key', { kind: 'key', value: 'Control+K' }],
@@ -44,6 +45,14 @@ test('config schema command kinds and contract validation stay in parity', () =>
   for (const kind of acceptedKinds) {
     assert.ok(schemaKinds.has(kind), `Expected ${kind} to appear in the config-schema enum`);
   }
+});
+
+test('validateScreenReaderCommand accepts named navigation and rejects unknown navigation', () => {
+  assert.equal(validateScreenReaderCommand({ kind: 'navigate', value: 'nextLandmark' }), null);
+  assert.match(
+    validateScreenReaderCommand({ kind: 'navigate', value: 'openPreferences' }),
+    /Unsupported navigate/,
+  );
 });
 
 test('validateScreenReaderCommand restricts typed text to printable characters', () => {
