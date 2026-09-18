@@ -34,7 +34,7 @@ stimuli:
   - name: factual-arithmetic-basic
     constraints: &agent-time-limit {max_agent_duration: 285s}
     turns:
-      - &agent-launch "Launch .github/agents/hve-core/rpi-agent.agent.md. Read the complete agent file before continuing; if a file view fails, use the shell to read it."
+      - &agent-launch "Launch .github/agents/hve-core/rpi-agent.agent.md. Read the complete agent file before continuing; if a file view fails or truncates, read it in line ranges or with the shell, and do not continue until a read returns the file content."
       - "What is 2 + 2?"
     tags: {category: baseline-equivalence, subcategory: factual-recall, policy: equivalent}
     graders:

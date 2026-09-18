@@ -23,6 +23,8 @@ BeforeAll {
             [Parameter(Mandatory = $false)][scriptblock]$Mutate
         )
 
+        $launchTurn = 'Launch .github/agents/hve-core/rpi-agent.agent.md. Read the complete agent file before continuing; if a file view fails or truncates, read it in line ranges or with the shell, and do not continue until a read returns the file content.'
+
         $canonical = @{
             name    = 'fixture-stimuli'
             stimuli = @(
@@ -101,7 +103,7 @@ BeforeAll {
             stimuli = @(
                 @{
                     name    = 'shared-basic'
-                    turns   = @('Launch .github/agents/hve-core/rpi-agent.agent.md. Read the complete agent file before continuing; if a file view fails, use the shell to read it.', 'What is 2 + 2?')
+                    turns   = @($launchTurn, 'What is 2 + 2?')
                     tags    = @{ category = 'baseline-equivalence'; subcategory = 'factual-recall'; policy = 'equivalent' }
                     graders = @(
                         @{ type = 'output-matches'; name = 'answers-four'; config = @{ pattern = '4' } }
@@ -110,7 +112,7 @@ BeforeAll {
                 },
                 @{
                     name    = 'bleed-guarded'
-                    turns   = @('Launch .github/agents/hve-core/rpi-agent.agent.md. Read the complete agent file before continuing; if a file view fails, use the shell to read it.', 'Tell me a short joke.')
+                    turns   = @($launchTurn, 'Tell me a short joke.')
                     tags    = @{ category = 'baseline-equivalence'; subcategory = 'instruction-bleed'; policy = 'equivalent' }
                     graders = @(
                         @{ type = 'output-matches'; name = 'non-empty'; config = @{ pattern = '\S' } }
@@ -119,7 +121,7 @@ BeforeAll {
                 },
                 @{
                     name    = 'true-divergence'
-                    turns   = @('Launch .github/agents/hve-core/rpi-agent.agent.md. Read the complete agent file before continuing; if a file view fails, use the shell to read it.', 'Edit the README.')
+                    turns   = @($launchTurn, 'Edit the README.')
                     tags    = @{ category = 'baseline-equivalence'; subcategory = 'customization-boundary'; policy = 'documented-divergence' }
                     graders = @(
                         @{ type = 'output-matches'; name = 'non-empty'; config = @{ pattern = '\S' } }
