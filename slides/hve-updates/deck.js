@@ -17,11 +17,18 @@
   const motionButton = document.querySelector('#motion-button');
   const previous = document.querySelector('#previous-slide');
   const next = document.querySelector('#next-slide');
+  const readingButton = document.createElement('button');
+  readingButton.type = 'button';
+  readingButton.id = 'reading-button';
+  readingButton.textContent = 'Reading view';
+  motionButton.before(readingButton);
+  const compactView = matchMedia('(max-width: 1100px), (max-height: 700px)');
+  let readingView = compactView.matches;
   let returnFocus = null;
   let ready = false;
   let motionEnabled = false;
 
-  document.querySelector('#participation-example').append(renderExample(participationQuestion));
+  document.querySelector('#participation-example').append(renderExample(participationQuestion, { headingLevel: 3 }));
   document.querySelector('#agent-selection-example').append(renderExample(rpiAgentSelection));
   document.querySelectorAll('section[data-rpi-agent]').forEach(section => {
     section.querySelector(':scope > .eyebrow').replaceWith(renderAgentCue(opener => showDialog('agent', opener)));
@@ -112,7 +119,7 @@
     controls: false, progress: false, hash: true, history: true,
     keyboard: false, overview: false, transition: 'none',
     transitionSpeed: 'fast', backgroundTransition: 'none',
-    touch: true, loop: false, autoSlide: 0, help: false,
+    touch: true, loop: false, autoSlide: 0, help: false, scrollActivationWidth: null,
     postMessage: false, postMessageEvents: false,
     disableLayout: false
   });
@@ -120,7 +127,12 @@
   function updateSlide() {
     const current = deck.getCurrentSlide();
     const index = sections.indexOf(current);
-    sections.forEach(section => { section.inert = section !== current; });
+    const focused = document.activeElement;
+    sections.forEach(section => {
+      section.inert = section !== current;
+      section.setAttribute('aria-hidden', String(section !== current));
+    });
+    if (focused instanceof Element && focused.closest('section[inert]')) document.querySelector('main.slides').focus();
     document.querySelector('#slide-count').textContent = `${index + 1} / ${sections.length}`;
     document.querySelector('#chapter-label').textContent = current.dataset.chapter;
     document.title = `${current.dataset.title} | HVE Core`;
@@ -129,7 +141,19 @@
     if (document.activeElement === previous && previous.disabled) next.focus();
     if (document.activeElement === next && next.disabled) previous.focus();
     announce(`Slide ${index + 1} of ${sections.length}. ${current.dataset.title}`);
+    if (readingView) window.scrollTo(0, 0);
   }
+
+  function updateReadingView() {
+    document.documentElement.dataset.readingView = String(readingView);
+    readingButton.setAttribute('aria-pressed', String(readingView));
+    deck.configure({ disableLayout: readingView, touch: !readingView });
+  }
+  readingButton.addEventListener('click', () => { readingView = !readingView; updateReadingView(); });
+  compactView.addEventListener('change', () => { readingView = compactView.matches; updateReadingView(); });
+  new ResizeObserver(([entry]) => {
+    document.documentElement.style.setProperty('--controls-height', `${entry.target.getBoundingClientRect().height}px`);
+  }).observe(document.querySelector('#presenter-controls'));
 
   function sourceList(ids) {
     const list = element('ol', 'source-list');
@@ -199,7 +223,7 @@
         ['Escape', 'Close a dialog and return focus; exits browser full screen.'],
         ['Tab / Enter', 'Reach and activate visible controls. Arrow/Space shortcuts do not hijack focused controls.']
       ].forEach(([key, description]) => grid.append(element('kbd', '', key), element('span', '', description)));
-      dialogContent.append(grid, element('p', 'source-note', 'Slides and demo steps are separate. Steps are preserved when revisiting a slide. Reload restores the slide URL but resets all demonstrations. Reduced-motion preference disables transitions. For presenting, use landscape desktop/full screen; compact screens retain navigation.'));
+      dialogContent.append(grid, element('p', 'source-note', 'Slides and demo steps are separate. Steps are preserved when revisiting a slide. Reload restores the slide URL but resets all demonstrations. Reduced-motion preference disables transitions. Character shortcuts work only when the presentation surface has focus. Reading view provides unscaled, scrollable content and starts automatically on compact screens.'));
     }
     if (!dialog.open) dialog.showModal();
     dialog.scrollTop = 0;
@@ -253,6 +277,7 @@
     if (target instanceof Element && target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]')) return;
     if (globalThis.getSelection()?.toString()) return;
     const key = event.key.toLowerCase();
+    if (key.length === 1 && target !== document.querySelector('main.slides')) return;
     const activeDemo = deck.getCurrentSlide().querySelector('[data-demo]');
     const handled = ['arrowright', 'pagedown', ' ', 'arrowleft', 'pageup', 'home', 'end', 'o', 's', 'n', '?', 'f'].includes(key)
       || (activeDemo && ['[', ']', 'r'].includes(key));
@@ -279,6 +304,10 @@
   deck.on('slidechanged', updateSlide);
   deck.initialize().then(() => {
     ready = true;
+    document.querySelector('.reveal').removeAttribute('role');
+    document.querySelector('.reveal .aria-status')?.remove();
+    document.querySelectorAll('output').forEach(output => output.setAttribute('aria-live', 'off'));
+    updateReadingView();
     updateMotion();
     startup.hidden = true;
     document.documentElement.dataset.deckReady = 'true';

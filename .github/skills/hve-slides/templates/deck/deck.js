@@ -49,6 +49,12 @@
     const next = required('#next-slide');
     const overview = required('#overview-button');
     const motionButton = required('#motion-button');
+    const readingButton = element('button', '', 'Reading view');
+    readingButton.type = 'button';
+    readingButton.id = 'reading-button';
+    motionButton.before(readingButton);
+    const compactView = matchMedia('(max-width: 1100px), (max-height: 700px)');
+    let readingView = compactView.matches;
     const dialog = required('#detail-dialog');
     const dialogContent = required('#dialog-content');
     const closeDialog = required('#close-dialog');
@@ -122,13 +128,17 @@
       postMessage: false, postMessageEvents: false,
       width: 1600, height: 900, margin: .015, center: false, controls: false,
       progress: false, hash: true, history: true, keyboard: false, overview: false,
-      transition: 'none', backgroundTransition: 'none', autoSlide: 0, loop: false, help: false
+      transition: 'none', backgroundTransition: 'none', autoSlide: 0, loop: false, help: false,
+      scrollActivationWidth: null
     });
     function updateSlide() {
       const current = deck.getCurrentSlide();
       const index = sections.indexOf(current);
       const focused = document.activeElement;
-      sections.forEach(section => { section.inert = section !== current; });
+      sections.forEach(section => {
+        section.inert = section !== current;
+        section.setAttribute('aria-hidden', String(section !== current));
+      });
       document.title = `${current.dataset.title} | ${config.title}`;
       required('#slide-count').textContent = `${index + 1} / ${sections.length}`;
       required('#chapter-label').textContent = current.dataset.chapter;
@@ -138,7 +148,18 @@
         (previous.disabled ? next.disabled ? overview : next : previous).focus();
       } else if (focused instanceof Element && focused.closest('section[inert]')) overview.focus();
       announce(`Slide ${index + 1} of ${sections.length}. ${current.dataset.title}`);
+      if (readingView) window.scrollTo(0, 0);
     }
+    function updateReadingView() {
+      document.documentElement.dataset.readingView = String(readingView);
+      readingButton.setAttribute('aria-pressed', String(readingView));
+      deck.configure({ disableLayout: readingView, touch: !readingView });
+    }
+    readingButton.addEventListener('click', () => { readingView = !readingView; updateReadingView(); });
+    compactView.addEventListener('change', () => { readingView = compactView.matches; updateReadingView(); });
+    new ResizeObserver(([entry]) => {
+      document.documentElement.style.setProperty('--controls-height', `${entry.target.getBoundingClientRect().height}px`);
+    }).observe(required('#presenter-controls'));
     function sourceList(ids) {
       const list = element('ol', 'source-list');
       ids.forEach(id => {
@@ -192,7 +213,7 @@
           ['Escape', 'Close an overlay and return focus.'],
           ['Tab / Enter', 'Reach and activate controls; focused controls keep their normal keys.']
         ]) grid.append(element('kbd', '', key), element('span', '', description));
-        dialogContent.append(grid, element('p', 'source-note', 'Walkthroughs keep their step on slide revisits. Reload preserves the slide hash but resets walkthroughs. Motion is optional and respects reduced motion.'));
+        dialogContent.append(grid, element('p', 'source-note', 'Walkthroughs keep their step on slide revisits. Reload preserves the slide hash but resets walkthroughs. Motion is optional and respects reduced motion. Character shortcuts work only when the presentation surface has focus. Reading view provides unscaled, scrollable content and starts automatically on compact screens.'));
       } else throw new Error(`Unknown dialog: ${kind}`);
       if (!dialog.open) dialog.showModal();
       dialogContent.scrollTop = 0;
@@ -236,6 +257,7 @@
       if (event.target instanceof Element && event.target.closest('button, a, input, textarea, select, summary, [contenteditable]')) return;
       if (globalThis.getSelection()?.toString()) return;
       const key = event.key.toLowerCase();
+      if (key.length === 1 && event.target !== required('main.slides')) return;
       const demo = deck.getCurrentSlide().querySelector('[data-demo]');
       if (!['arrowright', 'pagedown', ' ', 'arrowleft', 'pageup', 'home', 'end', 'o', 's', 'n', '?', 'f'].includes(key)
         && !(demo && ['[', ']', 'r'].includes(key))) return;
@@ -261,6 +283,10 @@
     deck.on('slidechanged', updateSlide);
     await deck.initialize();
     ready = true;
+    required('.reveal').removeAttribute('role');
+    document.querySelector('.reveal .aria-status')?.remove();
+    document.querySelectorAll('output').forEach(output => output.setAttribute('aria-live', 'off'));
+    updateReadingView();
     updateMotion();
     updateSlide();
     startup.hidden = true;

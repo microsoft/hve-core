@@ -292,6 +292,35 @@ kbd { display: inline-block; border: 1px solid #63748b; background: #2a3443; pad
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; overflow: auto; }
+[data-reading-view="true"] body { padding-top: calc(var(--controls-height, 150px) + 12px); }
+[data-reading-view="true"] .reveal { position: relative; inset: auto; height: auto; overflow: visible; font-size: 1.125rem; touch-action: auto; }
+[data-reading-view="true"] .reveal :is(button, a, summary, input, [tabindex]) { scroll-margin-top: calc(var(--controls-height, 150px) + 16px); }
+[data-reading-view="true"] .reveal .slides { position: static; width: 100% !important; height: auto !important; transform: none !important; zoom: 1 !important; perspective: none; }
+[data-reading-view="true"] .reveal .slides > section { position: relative; inset: auto; height: auto; min-height: 0; padding: 24px; max-width: 960px; margin: 0 auto; transform: none !important; }
+.reveal .slides > section[aria-hidden="true"] { display: none !important; }
+[data-reading-view="true"] .reveal .slides section * { min-width: 0; max-width: 100%; font-size: inherit; letter-spacing: 0; overflow-wrap: anywhere; }
+[data-reading-view="true"] .reveal .slides section :is(h1, h2) { font-size: 2rem; line-height: 1.2; margin: 20px 0; }
+[data-reading-view="true"] .reveal .slides section h3 { font-size: 1.4rem; line-height: 1.3; margin: 18px 0; }
+[data-reading-view="true"] .reveal .slides section :is(p, li) { line-height: 1.5; }
+[data-reading-view="true"] .reveal .slides section :is(.hero-grid, .compare, .timeline, .phase-spine, .split, .evidence-columns, .three-points, .revision-flow, .plugin-route, .two-points, .discovery-grid, .demo, .agent-setup-layout, .implementation-scene, .customization-shell) { grid-template-columns: minmax(0, 1fr); height: auto; gap: 24px; margin: 24px 0; }
+[data-reading-view="true"] .reveal .slides section :is(.loop-line, .builder-flow, .bridge, .closing-commands, .loop-return, .review-inputs, .legacy-node) { flex-direction: column; align-items: stretch; gap: 16px; margin: 24px 0; }
+[data-reading-view="true"] .reveal .slides section :is(.slide-bottom, .closing-footer, .chapter-slide .eyebrow, .source-quick-input, .source-trust-note, .chat-customizations-tooltip) { position: static; margin-top: 20px; }
+[data-reading-view="true"] .reveal .slides section :is(.slide-bottom, .closing-footer, .rpi-agent-cue, .demo-controls, .editor-bar, .file-header, .composer-toolbar, .question-header, .question-footer, .customization-titlebar, .plugin-section-title, .installed-plugin-row, .debug-breadcrumb, .graph-legend, .chat-launch-header, .chat-launch-toolbar) { flex-wrap: wrap; height: auto; }
+[data-reading-view="true"] .reveal .slides section :is(.demo-main, .demo-body, .plan-preview-content, .chat-launch-scene, .customization-window, .builder-flow > span, .phase-spine article) { height: auto; min-height: 0; overflow: visible; }
+[data-reading-view="true"] .reveal .slides section :is(.demo-body, .chat-launch-scene, .customization-content, .evidence-document-body, .copilot-composer, .copilot-scene, .answer-scene) { padding: 12px; }
+[data-reading-view="true"] .reveal .slides section :is(.agent-picker-menu, .customization-content, .question-options, .question-freeform, .answer-detail) { width: auto; margin-left: 0; margin-right: 0; }
+[data-reading-view="true"] .reveal .slides section :is(.composer-picker, .install-source-button, .legacy-node code) { white-space: normal; }
+[data-reading-view="true"] .reveal .slides section .handoff-column.current { border-left: 0; padding-left: 0; }
+[data-reading-view="true"] .reveal .slides section .demo-sidebar { border-right: 0; }
+[data-reading-view="true"] .reveal .slides section .package-mark { transform: none; }
+[data-reading-view="true"] #presenter-controls { top: 0; bottom: auto; height: auto; min-height: 64px; flex-wrap: wrap; padding: 10px; }
+[data-reading-view="true"] .utility-controls { flex-wrap: wrap; }
+[data-reading-view="true"] .brand { display: none; }
+[data-reading-view="true"] #presenter-controls button { min-height: 44px; }
+dialog { overflow-wrap: anywhere; }
+.dialog-header { flex-wrap: wrap; }
+.utility-controls { flex-wrap: wrap; }
 @media print {
   #presenter-controls, #startup, dialog, .skip-link { display: none !important; }
 }

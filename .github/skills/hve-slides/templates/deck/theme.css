@@ -92,3 +92,26 @@ dialog::backdrop { background: #000b; }
 @media (prefers-reduced-motion: reduce) {
   .reveal .slides, .reveal .slides section { transition: none !important; animation: none !important; }
 }
+html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; overflow: auto; }
+[data-reading-view="true"] body { padding-top: calc(var(--controls-height, 150px) + 12px); }
+[data-reading-view="true"] .reveal { position: relative; inset: auto; height: auto; overflow: visible; font-size: 1.125rem; touch-action: auto; }
+[data-reading-view="true"] .reveal :is(button, a, summary, input, [tabindex]) { scroll-margin-top: calc(var(--controls-height, 150px) + 16px); }
+[data-reading-view="true"] .reveal .slides { position: static; width: 100% !important; height: auto !important; transform: none !important; zoom: 1 !important; perspective: none; }
+[data-reading-view="true"] .reveal .slides > section { position: relative; inset: auto; height: auto; min-height: 0; padding: 24px; max-width: 960px; margin: 0 auto; transform: none !important; }
+.reveal .slides > section[aria-hidden="true"] { display: none !important; }
+[data-reading-view="true"] .reveal .slides section * { min-width: 0; max-width: 100%; font-size: inherit; letter-spacing: 0; overflow-wrap: anywhere; }
+[data-reading-view="true"] .reveal .slides section :is(h1, h2) { font-size: 2rem; line-height: 1.2; margin: 20px 0; }
+[data-reading-view="true"] .reveal .slides section h3 { font-size: 1.4rem; line-height: 1.3; margin: 18px 0; }
+[data-reading-view="true"] .reveal .slides section :is(p, li) { line-height: 1.5; }
+[data-reading-view="true"] .reveal .slides section :is(.two-up, .story-split, .story-flow, .demo, .implementation-scene) { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+[data-reading-view="true"] .reveal .slides section :is(.demo-header, .demo-controls, .composer-toolbar, .diff-summary) { flex-wrap: wrap; }
+[data-reading-view="true"] .reveal .slides section .demo-body { min-height: 0; }
+[data-reading-view="true"] .story-flow li::after { display: none; }
+[data-reading-view="true"] #presenter-controls { top: 0; bottom: auto; min-height: 68px; flex-wrap: wrap; padding: 10px; }
+[data-reading-view="true"] .utility-controls { flex-wrap: wrap; }
+[data-reading-view="true"] #chapter-label { display: none; }
+button { min-height: 44px; }
+dialog { overflow-wrap: anywhere; }
+.dialog-header { flex-wrap: wrap; }
+.utility-controls { flex-wrap: wrap; }
+.panel h2 { font-size: 34px; margin: 0 0 20px; }

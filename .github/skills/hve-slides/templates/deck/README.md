@@ -84,12 +84,18 @@ the slide hash but resets walkthroughs. Nothing advances automatically.
 The unused reveal.js cross-window `postMessage` API is disabled.
 
 The design canvas is 1600 by 900 and should also be checked at 1280 by 720.
-Compact screens retain controls but are not the intended projected format.
+Reading view switches to unscaled, scrollable content. It starts automatically on compact
+viewports and can be toggled at any size. Character shortcuts, including Space, work only
+while the presentation surface itself has focus; Tab reaches that surface and its controls.
+New layouts must preserve reading-view reflow as well as the projected layout.
 
 ## Verify and share
 
 After editing, run the scoped tests and inspect the actual browser result, including
 all changed slides and walkthrough states, keyboard/focus, dialogs and reduced motion.
+Check 320px reflow, 200% browser zoom, increased text spacing, contrast and accessible
+names/roles. Keep inactive slides out of the reading and focus order and preserve the
+single announcement channel. Test keyboard interactions separately from static scans.
 Node tests do not establish rendered quality or interaction correctness.
 
 Copy only the single HTML file to an empty temporary directory, rename it and open it
