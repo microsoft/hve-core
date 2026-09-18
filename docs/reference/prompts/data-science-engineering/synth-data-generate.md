@@ -28,11 +28,21 @@ Generate synthetic data for any subject with realistic patterns and relationship
 
 ## When to use it
 
-Use this prompt when you need a notebook that produces realistic fictional data for development, demonstrations, or data-science experiments. Use approved source data instead when the work requires actual observed records.
+Use this prompt when you need a notebook that produces realistic fictional data for development, demonstrations, or data-science experiments. Use approved source data instead when the work requires actual observed records. For either mode, the `dataops` synthetic-data operation contract is the preflight authority.
 
 ## How to use it
 
-Describe the subject and optionally provide an example schema or sample structure. Confirm before generating PII-like fields, keep values fictional, and review any proposed update to an existing data source.
+Describe the subject and optionally provide an example schema or sample structure. Before
+project setup, package installation, notebook creation, source access, or generation,
+provide or create the applicable `SYNTHETIC_DATA_OPERATION_V1` preflight and run the
+`dataops` `validate` command. The preflight must contain current approved qualified-owner
+decisions; this prompt does not decide whether data or fields are sensitive. If validation
+is blocked, it stops and reports stable reason categories without reading source values.
+
+New output is the default. For `replace-local`, use one approved regular local file and
+expected SHA-256 digest, generate one candidate, and route the separately confirmed
+replacement through the `dataops` `commit-local` command so a recoverable predecessor is
+created and the original is not written by notebook code.
 
 ## Example usage
 
