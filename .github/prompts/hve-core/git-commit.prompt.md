@@ -1,45 +1,63 @@
 ---
 agent: 'agent'
-description: 'Stage all changes, generate a conventional commit message, and commit'
+description: 'Stage selected paths, confirm the staged set, and create a conventional commit'
 model:
   - MAI-Code-1-Flash (copilot)
   - Claude Haiku 4.5 (copilot)
 ---
 
-# Stage, Generate, and Commit
+# Select, Stage, Confirm, and Commit
 
 Must follow all instructions provided by #file:../../instructions/hve-core/commit-message.instructions.md
 
 Protocol:
 
-1. **Pre-staging safety check**: Before staging, verify the repository has a `.gitignore` file. If `.gitignore` is missing or empty:
-   * Warn the user: "⚠️ No .gitignore detected. Using `git add -A` may stage sensitive files (.env, node_modules/, build/, etc.)."
-   * Offer two options: (a) proceed with `git add -u` (tracked files only, safer), or (b) proceed with `git add -A` if user explicitly confirms.
-   * Default to `git add -u` if user does not respond.
-2. Stage changes using the confirmed command (`git add -A` or `git add -u`).
-3. Use the `get_changed_files` tool and always specify "staged" for the sourceControlState to retrieve the now-staged changes, and "repositoryPath" with the full project path (DO NOT use git diff / show / status / log / fetch / pull / push).
-4. Analyze the staged changes and produce a clean Conventional Commit message (per the commit message instructions file referenced above). This message is authoritative once generated.
-5. Immediately commit the staged changes (without showing the message yet) using ONLY allowed git commands:
+1. **Inventory candidate paths**: Before changing the index, run `git status --porcelain=v1 -z --untracked-files=all` and `git rev-parse --verify HEAD` in the target repository.
+  * Record tracked, untracked, deleted, renamed, and initially staged paths. Treat a reported rename's old and new paths as one logical selection.
+  * If `HEAD` cannot be verified, STOP because this workflow cannot restore a rejected staging change safely.
+  * If any path has both staged and unstaged changes, STOP and ask the user to resolve its hunk-level intent outside this workflow. Do not restage a partially staged path.
+  * If there are no candidate changes, output `No changes to commit.` and STOP.
+2. **Confirm whole-path intent**: Present the candidate paths and their states without file contents, then ask the user to select the whole paths intended for this commit.
+  * Every initially staged path must be selected. If the user excludes one, STOP before changing the index; never unstage prior user work.
+  * A detected rename is selected only as its complete old-and-new path pair.
+  * If the selection is empty, ambiguous, unsafe to represent as shell arguments, or absent, STOP without staging or committing.
+3. **Stage only the selection**: Stage only selected paths with `git add -- <safely quoted selected paths>`. Never use an unscoped `git add -A` or `git add -u` path.
+  * Quote each path for the active shell and keep `--` before path arguments. If a path cannot be represented safely, STOP.
+  * Record only the selected paths that were not initially staged as this invocation's staging delta.
+  * If staging fails, report a concise error and STOP without retrying.
+4. **Inspect and confirm the staged set**: Use the `get_changed_files` tool with `sourceControlState` set to `staged` and `repositoryPath` set to the full project path.
+  * Verify that the exact staged path set contains every selected path, contains every initially staged path, and contains no unselected path. If it differs, restore this invocation's staging delta as described below and STOP.
+  * Present the exact staged paths without file contents or suspected sensitive values. Ask the user to confirm that these paths and their staged content are intended for the local commit.
+  * If the user rejects, does not respond, or gives an ambiguous answer, restore this invocation's staging delta and STOP without committing.
+5. **Generate and commit**: Analyze the staged changes and produce a clean Conventional Commit message according to the referenced commit-message instructions. The message is authoritative once generated. Commit once, without showing the message first, using only an allowed commit command:
 
    * Pipe the exact commit message (including body + footer emoji line) via STDIN: `echo "<full message>" | git commit -F -`.
    * Preserve newlines exactly; ensure the footer emoji line is the final line (file ends with a newline).
    * DO NOT run any other git commands (no push, pull, fetch, diff, show, status, log, branch, switch, merge, rebase, tag, etc.).
 
 6. After the commit succeeds, display to the user a success line followed by the full commit message in a fenced `markdown` code block.
-7. If the commit fails, output a concise error summary and STOP (do not retry).
+7. If the commit fails, output a concise error summary and STOP without retrying.
+
+Staging-delta restoration:
+
+* Restore only paths newly staged by this invocation with `git reset -- <safely quoted staging-delta paths>`. This resets their index entries to `HEAD` while preserving working-tree content and leaves initially staged paths unchanged.
+* Treat both paths of a selected rename as one restoration unit.
+* If restoration fails, report the affected path names and STOP. Do not retry or run another recovery command.
 
 Rules & Constraints:
 
-* Allowed git commands: `git add -A` or `git add -u` (based on safety check), `git commit -F -` (stdin) or `git commit -m` variants if single-line only (multi-line must use `-F -`), and conditionally `git reset --soft HEAD^` ONLY when performing an immediate post-commit message revision explicitly requested by the user right after showing the commit.
-* Never attempt to obtain diffs via git CLI; rely solely on `get_changed_files` tool output.
-* If there are NO staged changes after staging, output a short notice and STOP (do not create an empty commit).
+* Allowed Git commands during the normal flow: `git status --porcelain=v1 -z --untracked-files=all`, `git rev-parse --verify HEAD`, path-scoped `git add -- <paths>`, path-scoped `git reset -- <paths>` only for staging-delta restoration, and `git commit -F -` or single-line `git commit -m` variants. The optional adjustment flow may also use `git reset --soft HEAD^` as defined below.
+* Never use root `.gitignore` presence, absence, length, or completeness as staging authorization.
+* Never use Git CLI to obtain file contents or diffs. Use `git status` only for path and index-state metadata, and rely on `get_changed_files` for staged content.
+* Never add a pre-commit hook, require a secret-scanner dependency, or claim that this workflow performs deterministic secret detection. Repository-owned scanning remains a separate downstream control.
+* If there are no staged changes after staging, output `No changes to commit.` and STOP without creating an empty commit.
 * Commit message MUST:
   * Use an allowed type and optional allowed scope.
   * Be present tense.
   * Keep description under 4 specific change points (comma-separated concise phrases).
   * Include an optional body ONLY for large, wide-reaching changes (list bullet points starting each line with `-`) preceded by a blank line.
   * Include a footer line starting with a blank line, containing an emoji, a space, `- Generated by Copilot`.
-* Never wait for confirmation for any step in the Protocol.
+* Wait only for the two required user decisions: whole-path selection before staging and exact staged-set confirmation before commit. Never infer either decision from silence.
 
 Output Format:
 
