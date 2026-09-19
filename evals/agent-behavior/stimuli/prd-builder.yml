@@ -78,3 +78,63 @@ stimuli:
         config:
           pattern: '(?i)next_operation'
           negate: true
+
+  - name: prd-builder-research-receipt
+    prompt: |
+      The PRD has a named API compatibility gap that supplied references do not
+      answer. Research returned artifact
+      `.copilot-tracking/research/2026-09-18/atlas-api-research.md` with Q2 and
+      W1. Explain the state receipt, PRD disposition record, and authority boundary.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: prd-research-receipt
+    graders:
+      - type: output-matches
+        name: prd-research-receipt-state
+        config:
+          pattern: '(?is)(researchReceipts).*(artifactPath).*(questionIds|Q2).*(evidenceIds|W1).*(findingDispositions)'
+      - type: output-matches
+        name: prd-research-receipt-document
+        config:
+          pattern: '(?is)(Research Finding Dispositions).*(incorporated|revised|rejected|deferred|retained-assumption)'
+      - type: output-matches
+        name: prd-research-receipt-authority
+        config:
+          pattern: '(?is)(research artifact|Research).*(evidence|question).*(PRD).*(authoritative|authority|decision)'
+
+  - name: prd-builder-research-blocked
+    prompt: |
+      Integrate depends on a bounded comparable-product question, but Research
+      returned `Needs clarification`. Can that result clear the phase gate?
+      Explain the durable state and the smallest work that stops.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: prd-research-blocked
+    graders:
+      - type: output-matches
+        name: prd-research-blocked-no-gate
+        config:
+          pattern: '(?is)(Needs clarification|unresolved).*(cannot|does not|must not).*(phase|gate|exit)'
+      - type: output-matches
+        name: prd-research-blocked-gap
+        config:
+          pattern: '(?is)(open question|unvalidated assumption).*(dependent|evidence-dependent|affected).*(stop|pause|blocked)'
+      - type: output-matches
+        name: prd-research-blocked-no-gate-exit
+        config:
+          pattern: '(?i)(phase|gate|integrate)\s+(is|can be|may now be)\s+(complete|cleared|satisfied|exited)'
+          negate: true

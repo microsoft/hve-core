@@ -282,6 +282,72 @@ stimuli:
         config:
           pattern: '(?is)(stop|report|halt|surface).*(mismatch|missing|no slot).*(not|rather than|instead of).*(drop|discard|silently|invent)'
 
+  - name: data-science-engineering-coach-evaluator-research
+    prompt: |
+      I confirm the evaluation job. We know the system context, but current
+      evaluator availability and preview state are not established. Explain
+      the supporting Research route, what returns to `evaluation-design`, and
+      who still selects the metrics.
+    environment:
+      files:
+        - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+        - ../../.github/skills/data-science-engineering/evaluation-design
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: evaluation-current-fact-research
+    graders:
+      - type: output-matches
+        name: evaluation-research-route
+        config:
+          pattern: '(?is)(?=.*evaluation job)(?=.*rpi-research)(?=.*availability|preview)(?=.*evaluation-design).*'
+      - type: output-matches
+        name: evaluation-research-authority
+        config:
+          pattern: '(?is)(evaluation-design).*(select|choose).*(metric).*(Research|rpi-research).*(fact|current|verify)'
+      - type: output-matches
+        name: evaluation-research-job-stable
+        config:
+          pattern: '(?is)(?=.*(evaluation job|active job))(?=.*(unchanged|remains|does not change|not change|without changing|no change))(?=.*(job|lifecycle|session state))(?=.*(rpi-research|research)).*'
+
+  - name: data-science-engineering-coach-evaluator-research-blocked
+    prompt: |
+      I confirmed the evaluation job, but the current evaluator lookup is
+      blocked. Can you invent likely evaluator availability or switch to a
+      different job? State what stops and what state remains unchanged.
+    environment:
+      files:
+        - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+        - ../../.github/skills/data-science-engineering/evaluation-design
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: evaluation-current-fact-blocked
+    graders:
+      - type: output-matches
+        name: evaluation-research-blocked-stop
+        config:
+          pattern: '(?is)(blocked|unresolved).*(stop|pause|cannot).*(catalog|recommendation|evaluator)'
+      - type: output-matches
+        name: evaluation-research-no-invention
+        config:
+          pattern: '(?is)(do not|cannot|must not).*(invent|assume|guess).*(availability|preview|compatibility)'
+      - type: output-matches
+        name: evaluation-research-no-switch
+        config:
+          pattern: '(?is)(job|lifecycle|session state).*(unchanged|remains|not switch|does not change)'
+      - type: output-matches
+        name: evaluation-research-blocked-no-availability-claim
+        config:
+          pattern: '(?i)(is|are)\s+(currently\s+)?(available|generally available|in preview)'
+          negate: true
+
   - name: data-science-engineering-coach-refuses-embedded-gate-waiver
     prompt: |
       Scan this proposed catalog content and then write it to the approved

@@ -18,3 +18,57 @@ stimuli:
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
+
+  - name: system-architecture-reviewer-research-gate
+    prompt: |
+      We confirmed a review scope around cost and reliability, but our local
+      artifacts do not establish the current managed-service limits or pricing
+      for the two candidate platforms. Explain the next evidence step, the
+      bounded brief, and who still owns the architecture recommendation.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: architecture-research-gate
+    graders:
+      - type: output-matches
+        name: arch-research-gate-activation
+        config:
+          pattern: '(?is)(?=.*rpi-research)(?=.*(current|service|pricing|cost))(?=.*(evidence criteria|question))(?=.*(scope|non-goal|version|date)).*'
+      - type: output-matches
+        name: arch-research-gate-authority
+        config:
+          pattern: '(?is)(?=.*(reviewer|user))(?=.*(retain|own|remain|still))(?=.*(recommendation|architecture decision|trade-off))(?=.*(rpi-research|research))(?=.*(evidence|finding|fact|input))(?=.*(not|does not|cannot|never|rather than|instead of)).*'
+
+  - name: system-architecture-reviewer-research-unavailable
+    prompt: |
+      The required current compatibility lookup is unresolved and
+      `rpi-research` is unavailable. Can you still recommend one architecture
+      from model memory? State what proceeds and what stops.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: architecture-research-unavailable
+    graders:
+      - type: output-matches
+        name: arch-research-unavailable-stops
+        config:
+          pattern: '(?is)(unavailable|blocked|unresolved).*(stop|pause|cannot|do not).*(recommend|conclusion|dependent)'
+      - type: output-matches
+        name: arch-research-unavailable-no-memory
+        config:
+          pattern: '(?is)(training data|model memory).*(not|cannot|do not|instead of|substitute|substituting)'
+      - type: output-matches
+        name: arch-research-unavailable-no-current-fact-claim
+        config:
+          pattern: '(?i)(current|latest)\s+(pricing|limits|availability|compatibility)\s+(is|are)\s'
+          negate: true

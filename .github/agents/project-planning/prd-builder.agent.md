@@ -144,6 +144,7 @@ Maintain state in `.copilot-tracking/prd-sessions/<prd-name>.state.json`:
   "phaseSkillsLoaded": ["prd-author#assess", "prd-author#discover"],
   "extensionsLoaded": ["proposal-response#contribute:product"],
   "proposalResponseArtifacts": [".copilot-tracking/proposal-responses/northbridge-rfi/response-evidence.yml"],
+  "researchReceipts": [],
   "sourceBrdHandoff": ".copilot-tracking/brd-sessions/supplier-onboarding.handoff.yml",
   "questionsAsked": [
     "product-name", "target-users", "core-problem", "success-metrics"
@@ -180,7 +181,7 @@ Maintain state in `.copilot-tracking/prd-sessions/<prd-name>.state.json`:
 4. When processing references, update `referencesProcessed` status.
 5. At natural breakpoints, save current progress and next actions.
 6. Before quality checks, record validation status.
-7. Preserve unknown state fields and initialize missing `extensionsLoaded` and `proposalResponseArtifacts` arrays only when an optional extension is activated.
+7. Preserve unknown state fields. Initialize missing `extensionsLoaded` and `proposalResponseArtifacts` only when the proposal-response extension is activated, and initialize `researchReceipts` only when Research is first activated.
 8. When Assess validates a feasibility handoff before state exists, Create writes the normalized metadata atomically with the state skeleton. On resume, update the same feasibility-specific object directly. State written before this contract may carry `schemaVersion` instead of `kind`; read it without error and rewrite it to the current shape on the next feasibility metadata update.
 9. Build stops when feasibility ingestion was reported but `feasibilityHandoff` is absent or its path cannot be read. Candidate content remains in the handoff artifact, not state.
 
@@ -382,9 +383,9 @@ Use emojis to make questions visually distinct and easy to identify:
 
 ### Research Activation
 
-Activate `rpi-research` only for bounded market, product, regulatory, API, or comparable-solution questions that supplied references and the conversation do not answer. Provide the topic and product-decision purpose; product stakeholders, authors, and approvers as the audience and intended use; explicit questions and evidence criteria tied to a named PRD gap; audience, market, product-version, source, and date scope plus non-goals; regulatory, licensing, schedule, product-boundary, and user-confirmation constraints; supplied conversation, PRD, state, requirements, and reference evidence; requested outputs; and output mode (`analysis`, `comparison`, or caller-requested `convergence`). Use the skill's default evidence root.
+Load `requirements-author` reference `references/_shared/rpi-research-integration.md` and follow its activation, brief, return, receipt, disposition, and source-authority contract. Supply the PRD-specific topic and product-decision purpose; product stakeholders, authors, and approvers as the audience and intended use; explicit questions and evidence criteria tied to a named gap; audience, market, product-version, source, and date scope plus non-goals; regulatory, licensing, schedule, product-boundary, and user-confirmation constraints; and the current conversation, PRD, state, requirements, and reference evidence.
 
-Read the completed primary research artifact before integrating relevant findings into the PRD and session state. Preserve every existing lifecycle and user-confirmation gate. Treat `Blocked` and `Needs clarification` as unresolved evidence and record the smallest gap as an open question or unvalidated assumption. If `rpi-research` or a required lookup capability is unavailable, stop evidence-dependent conclusions rather than synthesizing uncertain external claims from training data.
+Record one state receipt per activation and one PRD-owned disposition per material finding. Project those dispositions into the PRD Research Finding Dispositions table. Preserve every lifecycle and user-confirmation gate; unresolved evidence remains an open question or unvalidated assumption and cannot authorize a phase exit.
 
 ### Adding References
 

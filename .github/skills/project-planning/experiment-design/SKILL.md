@@ -6,7 +6,7 @@ user-invocable: false
 metadata:
   authors: "Microsoft (MVE coaching synthesis); Microsoft (Code With Engineering Playbook); Google LLC (machine-learning problem framing)"
   spec_version: "1.1"
-  last_updated: "2026-08-21"
+  last_updated: "2026-09-18"
   content_based_on: "HVE Core original MVE coaching material; HVE Core original cross-paradigm routing; https://microsoft.github.io/code-with-engineering-playbook/design/design-reviews/recipes/engineering-feasibility-spikes/; https://microsoft.github.io/code-with-engineering-playbook/design/design-reviews/trade-studies/; https://developers.google.com/machine-learning/problem-framing/problem; https://developers.google.com/machine-learning/guides/rules-of-ml"
 ---
 
@@ -34,12 +34,13 @@ This pack is general purpose. It applies to data feasibility, architecture, LLM,
 
 Read only the reference that matches the active concern.
 
-| Reference                                                     | Read this when                                                                                                                                                                             |
-|---------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [problem-framing.md](references/problem-framing.md)           | Translating a stated business outcome into candidate data-science problem classes, applying per-paradigm entry tests, ordering discriminating questions, or recording assignable gaps      |
-| [mve-coaching.md](references/mve-coaching.md)                 | Framing an MVE, forming or sharpening hypotheses, applying vetting criteria and red flags, designing the experiment, evaluating results, or producing session and backlog-bridge artifacts |
-| [experiment-readiness.md](references/experiment-readiness.md) | Deciding which experiment to run at all: turning a risk landscape into candidates, prioritizing among competing unknowns, comparing options with evidence, or re-prioritizing mid-flight   |
-| [provenance.md](references/provenance.md)                     | Confirming what is upstream guidance, what is HVE Core derivation or repository convention, and where upstream is silent                                                                   |
+| Reference                                                             | Read this when                                                                                                                                                                             |
+|-----------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [problem-framing.md](references/problem-framing.md)                   | Translating a stated business outcome into candidate data-science problem classes, applying per-paradigm entry tests, ordering discriminating questions, or recording assignable gaps      |
+| [mve-coaching.md](references/mve-coaching.md)                         | Framing an MVE, forming or sharpening hypotheses, applying vetting criteria and red flags, designing the experiment, evaluating results, or producing session and backlog-bridge artifacts |
+| [experiment-readiness.md](references/experiment-readiness.md)         | Deciding which experiment to run at all: turning a risk landscape into candidates, prioritizing among competing unknowns, comparing options with evidence, or re-prioritizing mid-flight   |
+| [rpi-research-preparation.md](references/rpi-research-preparation.md) | Preparing an experiment with bounded prior-art or current-constraint Research while keeping validation and experiment verdicts with their current owners                                   |
+| [provenance.md](references/provenance.md)                             | Confirming what is upstream guidance, what is HVE Core derivation or repository convention, and where upstream is silent                                                                   |
 
 A confirmed problem-class framing request reads [problem-framing.md](references/problem-framing.md) only. Experiment requests read [mve-coaching.md](references/mve-coaching.md) or [experiment-readiness.md](references/experiment-readiness.md) by concern.
 

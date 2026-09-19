@@ -21,7 +21,7 @@ it does not duplicate the methods owned by a skill.
 | `feasibility`     | `bounded`    | `feasibility`: evidence-led feasibility studies with durable traceability                                            | None                                                                                                   | Caller-approved feasibility study                               |
 | `pipeline`        | `episodic`   | `dataops`: tier behavior, pipeline invariants, validation, tests, and drift                                          | None                                                                                                   | Transformation, validation, or pipeline code                    |
 | `analysis`        | `episodic`   | `analysis-authoring`: EDA notebook and analytical dashboard authoring and validation                                 | `data-catalog` for column semantics; `dataops` for derived-dataset persistence                         | Notebook, dashboard, or analysis deliverable                    |
-| `evaluation`      | `episodic`   | `evaluation-design`: AI-system evaluation dataset design, metrics, and tooling                                       | None                                                                                                   | Evaluation dataset with curation, metric, and tooling documents |
+| `evaluation`      | `episodic`   | `evaluation-design`: AI-system evaluation dataset design, metrics, and tooling                                       | `rpi-research` only for a demonstrated live evaluator-catalog fact gap                                 | Evaluation dataset with curation, metric, and tooling documents |
 | `experiment`      | `episodic`   | `experiment-design`: experiment selection, hypotheses, vetting, scope, and evaluation                                | `ml-experimentation`: ML reproducibility, tracking, evaluation, abstractions, and production readiness | Hypothesis, experiment assets, and result disposition           |
 | `testing`         | `episodic`   | `dataops`: DataOps and DS/MLOps test techniques                                                                      | `analysis-authoring` for dashboard validation technique                                                | Test code and assertions                                        |
 | `observability`   | `episodic`   | `dataops`: data/model signals and validation-versus-drift guidance                                                   | None                                                                                                   | Instrumentation code and signal recommendations                 |
@@ -121,6 +121,12 @@ A supporting route contributes within its own authority. The coach retains
 session identity, job selection, transition decisions, state mutation, pause and
 resume, durable-write gates, and completion choices. Loading a supporting skill
 never changes the active job without user confirmation.
+
+For the `evaluation` job, `rpi-research` may verify current evaluator names,
+availability, preview state, platform compatibility, and prerequisites under the
+`evaluation-design` Current Evaluator Research contract. It does not select
+metrics, generate the dataset, change the job, mutate session state, or decide
+completion. No other job gains a Research route from this registry entry.
 
 ## Provenance
 

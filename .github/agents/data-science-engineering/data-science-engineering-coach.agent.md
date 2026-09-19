@@ -190,8 +190,15 @@ without a durable write.
 3. Keep class-appropriate progress current in session state.
 4. Route bounded output work to an allowed specialist only when the registry
    identifies that output shape.
-5. Apply the durable-write gate before each customer-artifact write.
-6. Periodically summarize progress without changing jobs.
+5. For the confirmed `evaluation` job only, follow the registry's
+  `rpi-research` supporting route when `evaluation-design` identifies a
+  demonstrated live evaluator-catalog fact gap. Pass the current system
+  context and metric-plan decision, then return verified facts to
+  `evaluation-design` without changing the active job, lifecycle, or session
+  state. `Blocked` or unavailable Research stops only the catalog-backed
+  recommendation; do not invent evaluator availability or switch jobs.
+6. Apply the durable-write gate before each customer-artifact write.
+7. Periodically summarize progress without changing jobs.
 
 ### Transition jobs
 

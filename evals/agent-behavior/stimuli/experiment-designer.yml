@@ -66,3 +66,63 @@ stimuli:
         name: conditional-failure-reduces-ml-depth
         config:
           pattern: '(?is)(degrad|reduced depth|less depth|shallower|without ml|avoid (invent|assert|claim)|not (invent|assert|claim|substitut)|no ml-specific|missing ml-specific|ml-specific (guidance|coverage|detail|infrastructure|recommendation))'
+
+  - name: experiment-designer-research-preparation
+    prompt: |
+      Phase 1 identified a material unknown: we do not know whether a prior
+      internal trial already answered our proposed durability question. Before
+      Phase 2, explain the Research route, what returns to `context.md`, and
+      whether that result validates the hypothesis.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: experiment-research-preparation
+    graders:
+      - type: output-matches
+        name: experiment-research-prep-route
+        config:
+          pattern: '(?is)(?=.*rpi-research)(?=.*rpi-research-preparation|Research Preparation)(?=.*context\.md).*'
+      - type: output-matches
+        name: experiment-research-prep-status
+        config:
+          pattern: '(?is)(supported).*(contradicted).*(inconclusive)'
+      - type: output-matches
+        name: experiment-research-not-validation
+        config:
+          pattern: '(?is)(?=.*(rpi-research|research))(?=.*(cannot|does not|never|is not|not a))(?=.*(validate|validation|verdict|experiment result|success criteria))(?=.*(preparation|prepare|evidence|input)).*'
+
+  - name: experiment-designer-research-unavailable
+    prompt: |
+      A current platform constraint is required before one Phase 2 hypothesis
+      can be formed, but the Research capability is unavailable. Explain how
+      you record the gap and whether unrelated experiment framing continues.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: experiment-research-unavailable
+    graders:
+      - type: output-matches
+        name: experiment-research-gap-recorded
+        config:
+          pattern: '(?is)(unavailable|blocked).*(record|retain|mark).*(gap|unknown|inconclusive)'
+      - type: output-matches
+        name: experiment-research-dependent-stop
+        config:
+          pattern: '(?is)(stop|pause|cannot proceed).*(dependent|affected|hypothesis).*(continue|proceed|unrelated|other)'
+      - type: output-matches
+        name: experiment-research-unavailable-no-validated-claim
+        config:
+          pattern: '(?i)(hypothesis|assumption)\s+(is|has been|was)\s+(validated|confirmed|proven)'
+          negate: true

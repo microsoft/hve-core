@@ -68,6 +68,14 @@ Adjust depth based on scale and complexity:
 
 Confirm the review scope with the user before proceeding. Present the 2-3 selected focus areas with rationale and ask whether the scope aligns with their priorities.
 
+### Architecture Research Activation
+
+After scope confirmation and before an affected framework evaluation or trade-off recommendation, activate `rpi-research` only when a decision depends on a demonstrated current-service, framework, cost, licensing, compatibility, or cross-repository prior-art gap that local artifacts and confirmed user context do not answer. Adequate local evidence skips Research.
+
+Provide the architecture decision purpose; operators, reviewers, and decision-makers as the audience and intended use; explicit questions and evidence criteria; system, service, product-version, source, and date scope plus non-goals; cost, licensing, security, schedule, and user-confirmation constraints; and the current architecture, requirements, prior ADRs, candidate options, assumptions, and decision drivers. Use `analysis` or `comparison` mode and the default Research evidence root.
+
+Read the completed primary artifact before using its findings. Preserve scope confirmation and keep architecture recommendations, ADR decisions, and organizational trade-offs with this reviewer and the user. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop only the dependent recommendation. If `rpi-research` or a required lookup capability is unavailable, report the limitation instead of substituting training-data claims.
+
 ### Step 3: Evaluate Against Well-Architected Pillars
 
 Apply the Microsoft Well-Architected Framework pillars relevant to the system type identified in Step 1. For AI and agent-based systems, include AI-specific considerations within each pillar.

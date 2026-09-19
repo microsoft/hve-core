@@ -51,9 +51,9 @@ Discover exits only through the brd-author Discover hard gate: scope is bounded,
 
 ### Discover Research Activation
 
-Provide `rpi-research` with the topic and BRD decision purpose; business stakeholders, authors, and approvers as the audience and intended use; explicit questions and evidence criteria tied to a named BRD gap; market, jurisdiction, source, and date scope plus non-goals; regulatory, licensing, schedule, solution-neutrality, and Discover-gate constraints; supplied conversation, BRD, state, stakeholder, and reference evidence; requested outputs; and output mode (`analysis` unless comparison or convergence is explicitly requested). Use the skill's default evidence root.
+Load `requirements-author` reference `references/_shared/rpi-research-integration.md` and follow its activation, brief, return, receipt, disposition, and source-authority contract. Supply the BRD-specific topic and decision purpose; business stakeholders, authors, and approvers as the audience and intended use; explicit questions and evidence criteria tied to a named gap; market, jurisdiction, source, and date scope plus non-goals; regulatory, licensing, schedule, solution-neutrality, and Discover-gate constraints; and the current conversation, BRD, state, stakeholder, and reference evidence.
 
-Read the completed primary research artifact before evaluating sources or synthesizing findings into the BRD and session state. Preserve all Discover gates. Treat `Blocked` and `Needs clarification` as unresolved evidence and record the smallest gap as an unvalidated assumption or open question. If `rpi-research` or a required lookup capability is unavailable, stop the evidence-dependent conclusion rather than synthesizing uncertain market or regulatory claims from training data.
+Record one state receipt per activation and one BRD-owned disposition per material finding. Project those dispositions into the BRD Research Finding Dispositions table. Preserve all Discover gates; unresolved evidence remains an unvalidated assumption or open question and cannot authorize Discover exit.
 
 ### Define
 
@@ -120,6 +120,7 @@ Maintain state in `.copilot-tracking/brd-sessions/<brd-name>.state.json`:
   "phaseSkillsLoaded": ["brd-author#discover", "brd-author#define"],
   "extensionsLoaded": ["proposal-response#contribute:business"],
   "proposalResponseArtifacts": [".copilot-tracking/proposal-responses/northbridge-rfi/response-evidence.yml"],
+  "researchReceipts": [],
   "brdToPrdHandoff": ".copilot-tracking/brd-sessions/claims-automation.handoff.yml",
   "questionsAsked": ["business-goals", "primary-stakeholders"],
   "answeredQuestions": {
@@ -134,7 +135,7 @@ Maintain state in `.copilot-tracking/brd-sessions/<brd-name>.state.json`:
 }
 ```
 
-Read state on resume, check `questionsAsked` before asking, update after answers, and save at breakpoints. Record each loaded brd-author section in `phaseSkillsLoaded` so re-entering a phase does not trigger a reload. Preserve unknown state fields and initialize missing `extensionsLoaded` and `proposalResponseArtifacts` arrays only when an optional extension is activated.
+Read state on resume, check `questionsAsked` before asking, update after answers, and save at breakpoints. Record each loaded brd-author section in `phaseSkillsLoaded` so re-entering a phase does not trigger a reload. Preserve unknown state fields. Initialize missing `extensionsLoaded` and `proposalResponseArtifacts` only when the proposal-response extension is activated, and initialize `researchReceipts` only when Research is first activated.
 
 ### Resume and Recovery
 

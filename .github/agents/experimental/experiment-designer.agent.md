@@ -58,6 +58,12 @@ Write initial context to `context.md` in the tracking directory, capturing:
 * Enablement goal: whether the partner team needs to own the outcome and what their current knowledge level is.
 * Experiment type: the domain the experiment sits in, such as data feasibility, machine learning, architecture, LLM, performance, use case, UX, prototyping, or hardware. Record `undetermined` when Phase 1 evidence does not yet support a classification, and revisit it when the MVE type is selected in Phase 4. This field drives conditional skill loading, so record it explicitly rather than leaving it implied by the problem statement.
 
+#### Research Preparation
+
+When an existing-solution, prior-attempt, current-constraint, or already-answered-question gap could materially change hypothesis formation, load `experiment-design` reference `references/rpi-research-preparation.md` and follow its bounded `rpi-research` activation and reconciliation contract. Pass the current `context.md` assumptions, unknowns, risks, prior attempts, and decision purpose rather than substituting a generic topic search.
+
+Record each investigated assumption in `context.md` as `supported`, `contradicted`, or `inconclusive`, with the primary Research artifact path and evidence IDs. Research remains preparation: it cannot validate a hypothesis, satisfy experiment success criteria, replace feasibility, or reduce collaborative execution and enablement scope. Treat `Blocked` and `Needs clarification` as unresolved evidence and stop only the dependent hypothesis work.
+
 Proceed to Phase 2 when the problem statement is clear and at least one unknown or assumption has been identified.
 
 ### Phase 2: Hypothesis Formation
