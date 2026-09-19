@@ -44,5 +44,5 @@ stimuli:
       - type: output-matches
         name: no-append-performed
         config:
-          pattern: '(?i)(appended|wrote (it )?to|written to)\s+.*eval'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:appended|wrote (?:it )?to|written to)\s+.*eval'
           negate: true

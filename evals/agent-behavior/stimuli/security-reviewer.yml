@@ -24,7 +24,7 @@ stimuli:
       - type: output-matches
         name: security-reviewer-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
       - type: output-matches
         name: security-reviewer-class-recipe-no-unsolicited-plan-drift
@@ -61,5 +61,5 @@ stimuli:
       - type: output-matches
         name: conversational-only
         config:
-          pattern: '(?i)(created|wrote|saved).{0,80}security-audit-\d{4}-\d{2}-\d{2}-\d{3}\.md'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|saved)\b.{0,80}security-audit-\d{4}-\d{2}-\d{2}-\d{3}\.md'
           negate: true

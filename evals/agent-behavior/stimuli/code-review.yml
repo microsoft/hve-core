@@ -35,7 +35,7 @@ stimuli:
       - type: output-matches
         name: code-review-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
       - type: output-matches
         name: code-review-class-recipe-no-unsolicited-plan-drift
@@ -84,7 +84,7 @@ stimuli:
       - type: output-matches
         name: code-review-standards-merge-happy-no-conflict-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
   - name: code-review-standards-merge-name-collision
     prompt: |
@@ -247,7 +247,7 @@ stimuli:
       - type: output-matches
         name: code-review-standards-unknown-origin-dedup-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
   - name: code-review-standards-stacked-coverage
     prompt: |

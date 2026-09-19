@@ -25,7 +25,7 @@ stimuli:
       - type: output-matches
         name: sssc-reviewer-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)(?!\w)'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)(?!\w)'
           negate: true
 
   - name: sssc-reviewer-diff-fallback-retains-supply-chain-files

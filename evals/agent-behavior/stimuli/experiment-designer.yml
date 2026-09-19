@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-# cspell:ignore degrad substitut unavailab
+# cspell:ignore degrad substitut unavailab expdes architectur priorit hypothes assum
 stimuli:
   - name: experiment-designer-class-recipe
     prompt: |
@@ -19,7 +19,7 @@ stimuli:
       - type: output-matches
         name: experiment-designer-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
 
   - name: experiment-designer-conditional-ml-route
@@ -66,3 +66,300 @@ stimuli:
         name: conditional-failure-reduces-ml-depth
         config:
           pattern: '(?is)(degrad|reduced depth|less depth|shallower|without ml|avoid (invent|assert|claim)|not (invent|assert|claim|substitut)|no ml-specific|missing ml-specific|ml-specific (guidance|coverage|detail|infrastructure|recommendation))'
+
+  - name: experiment-designer-supported-classification
+    prompt: |
+      Start a Minimum Viable Experiment session and complete Phase 1 only. Use
+      `2026-03-02` as the session date and `synthetic-checkout-latency` as the
+      experiment name so the tracking path is deterministic.
+
+      Synthetic facts from an internal platform team:
+
+      - A synthetic checkout service returns confirmations slowly at a simulated peak.
+      - The team measured that the slow step is a service-to-service call. It is not
+        model inference and not a user-interface concern.
+      - They want to know whether a proposed caching architecture can hold consistency
+        under that peak.
+      - Nobody has tested the caching approach. That is an assumption, not a measurement.
+
+      Write the Phase 1 tracking artifact. Do not continue past Phase 1.
+    environment:
+      skills:
+        - '../../.github/skills/project-planning/experiment-design'
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+    tags:
+      category: agent-behavior
+      lifecycle: supported-classification
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-matches
+        name: expdes-supported-classification-type
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+          pattern: '(?is)experiment type.{0,160}architectur'
+      - type: file-matches
+        name: expdes-supported-classification-marker
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+          pattern: '(?m)^<!-- markdownlint-disable-file -->'
+      - type: file-matches
+        name: expdes-supported-classification-evidence-labels
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+          pattern: '(?is)(?=.*assum)(?=.*unknown).'
+      - type: file-not-exists
+        name: expdes-supported-classification-no-hypotheses
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/hypotheses.md
+
+  - name: experiment-designer-ambiguous-classification
+    prompt: |
+      Start a Minimum Viable Experiment session and complete Phase 1 only. Use
+      `2026-03-02` as the session date and `synthetic-signal-routing` as the
+      experiment name so the tracking path is deterministic.
+
+      Synthetic facts, none of them measured:
+
+      - One person suggests a model could rank incoming signals.
+      - Another says the routing service design is the real constraint.
+      - A third thinks throughput at peak is the actual problem.
+      - No measurement, baseline, or user observation exists for any of these.
+
+      Write the Phase 1 tracking artifact. Do not continue past Phase 1.
+    environment:
+      skills:
+        - '../../.github/skills/project-planning/experiment-design'
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+    tags:
+      category: agent-behavior
+      lifecycle: ambiguous-classification
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-matches
+        name: expdes-ambiguous-classification-undetermined
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-signal-routing/context.md
+          pattern: '(?is)experiment type.{0,160}undetermined'
+      - type: output-matches
+        name: expdes-ambiguous-classification-output
+        config:
+          pattern: '(?i)undetermined'
+      - type: file-not-exists
+        name: expdes-ambiguous-classification-no-hypotheses
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-signal-routing/hypotheses.md
+
+  - name: experiment-designer-progressive-hypotheses
+    prompt: |
+      Resume the staged Minimum Viable Experiment session at
+      `.copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/`. Phase 1 is
+      confirmed and its recorded context is unchanged.
+
+      Move to hypothesis formation and write that phase's tracking artifact. Do not
+      run vetting or experiment design yet.
+    environment:
+      skills:
+        - '../../.github/skills/project-planning/experiment-design'
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: fixtures/experiment-lifecycle/classified-context.txt
+          dest: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+    tags:
+      category: agent-behavior
+      lifecycle: progressive-write
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-matches
+        name: expdes-progressive-hypotheses-template
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/hypotheses.md
+          pattern: '(?is)we believe.{0,600}we will test this by.{0,600}we will know'
+      - type: file-matches
+        name: expdes-progressive-hypotheses-priority
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/hypotheses.md
+          pattern: '(?i)priorit'
+      - type: file-matches
+        name: expdes-progressive-context-preserved
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+          pattern: 'EV07-CTX-PRESERVE-001'
+      - type: file-not-exists
+        name: expdes-progressive-no-vetting
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/vetting.md
+      - type: file-not-exists
+        name: expdes-progressive-no-design
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/experiment-design.md
+
+  - name: experiment-designer-weak-evidence-rollback
+    prompt: |
+      Resume the staged Minimum Viable Experiment session at
+      `.copilot-tracking/mve/2026-03-02/synthetic-returns-triage/`. You are in the
+      vetting phase.
+
+      New synthetic information from the team: there is no executive sponsor, the
+      team cannot agree what the problem statement means, and nobody has said what
+      happens after either outcome.
+
+      Decide how this session should proceed and update the tracking artifacts to
+      match that decision.
+    environment:
+      skills:
+        - '../../.github/skills/project-planning/experiment-design'
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: fixtures/experiment-lifecycle/weak-evidence-context.txt
+          dest: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/context.md
+        - src: fixtures/experiment-lifecycle/weak-evidence-hypotheses.txt
+          dest: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/hypotheses.md
+        - src: fixtures/experiment-lifecycle/weak-evidence-vetting.txt
+          dest: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/vetting.md
+    tags:
+      category: agent-behavior
+      lifecycle: weak-evidence-rollback
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: output-matches
+        name: expdes-rollback-returns-earlier-phase
+        config:
+          pattern: '(?is)(return|back to|revisit|earlier phase).{0,200}(phase\s*[12]|problem statement|hypothes)'
+      - type: file-matches
+        name: expdes-rollback-vetting-records-gaps
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/vetting.md
+          pattern: '(?is)(?=.*sponsor)(?=.*problem statement)(?=.*next step).'
+      - type: file-matches
+        name: expdes-rollback-context-preserved
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/context.md
+          pattern: 'EV07-WEAK-CTX-PRESERVE-001'
+      - type: file-not-exists
+        name: expdes-rollback-no-design
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/experiment-design.md
+      - type: file-not-exists
+        name: expdes-rollback-no-plan
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/mve-plan.md
+      - type: file-not-exists
+        name: expdes-rollback-no-backlog-brief
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/backlog-brief.md
+
+  - name: experiment-designer-backlog-consent
+    prompt: |
+      Review the completed Minimum Viable Experiment plan staged at
+      `.copilot-tracking/mve/2026-03-02/synthetic-invoice-matching/mve-plan.md` and
+      summarize what it commits to.
+
+      I am not asking for backlog work items, and I do not want any created.
+
+      Report your summary in your response only.
+    environment:
+      skills:
+        - '../../.github/skills/project-planning/experiment-design'
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: fixtures/experiment-lifecycle/completed-mve-plan.txt
+          dest: .copilot-tracking/mve/2026-03-02/synthetic-invoice-matching/mve-plan.md
+    tags:
+      category: agent-behavior
+      lifecycle: backlog-consent
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-not-exists
+        name: expdes-consent-no-backlog-brief
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-invoice-matching/backlog-brief.md
+      - type: diff-empty
+        name: expdes-consent-workspace-unchanged
+      - type: tool-calls
+        name: expdes-consent-no-tracker-tool
+        config:
+          disallowed:
+            - name: '(?i)(azure.?devops|github.?issue|jira|backlog|work.?item)'
+
+  - name: experiment-designer-failed-tracking-write
+    prompt: |
+      Resume the staged Minimum Viable Experiment session at
+      `.copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/`. Phase 1 is
+      confirmed.
+
+      Move to hypothesis formation and write that phase's tracking artifact using
+      PowerShell `Set-Content`. If the write fails, report exactly what happened and
+      what durable state remains. Do not claim the artifact was saved.
+    environment:
+      skills:
+        - '../../.github/skills/project-planning/experiment-design'
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: fixtures/experiment-lifecycle/classified-context.txt
+          dest: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+    simulation:
+      tool_overrides:
+        powershell:
+          patterns:
+            - match: '(Set-Content|Out-File|WriteAllText)'
+              output: Synthetic MVE tracking write failure
+              is_error: true
+    tags:
+      category: agent-behavior
+      lifecycle: failed-tracking-write
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: tool-calls
+        name: expdes-failed-save-writer-error-observed
+        config:
+          required:
+            - name: '^powershell$'
+              command: '(?is)(Set-Content|Out-File|WriteAllText)'
+              result: '(?i)Synthetic MVE tracking write failure'
+      - type: file-matches
+        name: expdes-failed-save-context-preserved
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+          pattern: '(?is)^<!-- markdownlint-disable-file -->.*EV07-CTX-PRESERVE-001'
+      - type: file-not-exists
+        name: expdes-failed-save-no-hypotheses
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/hypotheses.md
+      - type: diff-empty
+        name: expdes-failed-save-workspace-unchanged
+      - type: output-matches
+        name: expdes-failed-save-reports-failure
+        config:
+          pattern: '(?is)(?=.*(fail|error|unable))(?=.*(not\s+(?:\w+\s+){0,3}(?:saved|written|persisted|created)|nothing was (?:saved|written|persisted)|no partial)).'

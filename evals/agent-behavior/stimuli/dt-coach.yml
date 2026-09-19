@@ -25,7 +25,7 @@ stimuli:
       - type: output-matches
         name: dt-coach-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
 
   - name: dt-coach-no-premature-deck-offer
@@ -316,7 +316,7 @@ stimuli:
       - type: output-matches
         name: dt-mural-scope-no-false-change
         config:
-          pattern: '(?i)(successfully|I (just )?(seeded|created|updated)|board (was|is) (seeded|updated))'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\bsuccessfully\b|\bI (?:just )?(?:seeded|created|updated)\b|\bboard (?:was|is)\s+(?!not\b)(?:seeded|updated)\b'
           negate: true
 
   - name: dt-coach-mural-declined-write-keeps-coaching
@@ -348,5 +348,5 @@ stimuli:
       - type: output-matches
         name: dt-mural-decline-no-false-publish
         config:
-          pattern: '(?i)(successfully|I (just )?(published|seeded|updated)|board (was|is) updated)'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\bsuccessfully\b|\bI (?:just )?(?:published|seeded|updated)\b|\bboard (?:was|is)\s+(?!not\b)updated\b'
           negate: true
