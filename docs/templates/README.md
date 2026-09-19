@@ -21,9 +21,9 @@ Standardized templates for common documentation tasks. Each template provides a 
 | Template                                                                 | Purpose                                                          |
 |--------------------------------------------------------------------------|------------------------------------------------------------------|
 | [ADR Template](adr-template-solutions.md)                                | Record architecture decisions with context, options, and outcome |
-| [Code Review Output Format](full-review-output-format.md)                 | Shared report structure and rules for code review orchestrators  |
+| [Code Review Output Format](full-review-output-format.md)                | Shared report structure and rules for code review orchestrators  |
 | [Code Review Standards Output Format](standards-review-output-format.md) | Report template and findings format for standards reviews        |
-| [Engineering Fundamentals](engineering-fundamentals.md)                 | Language-agnostic design principles applied to code reviews      |
+| [Engineering Fundamentals](engineering-fundamentals.md)                  | Language-agnostic design principles applied to code reviews      |
 | [RAI Assessment](rai-plan-template.md)                                   | RAI assessment output structure                                  |
 | [Root Cause Analysis](rca-template.md)                                   | Investigate incidents with timeline, analysis, and action items  |
 | [Security Plan](security-plan-template.md)                               | Define security controls, threat models, and compliance measures |
