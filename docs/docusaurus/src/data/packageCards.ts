@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { labelRegistry } from './labelRegistry';
 
-export type PackageMaturity =
+export type PackageMaturity = 
   | typeof labelRegistry.stable
   | typeof labelRegistry.preview
   | typeof labelRegistry.experimental;
