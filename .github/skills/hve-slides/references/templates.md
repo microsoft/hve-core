@@ -8,7 +8,8 @@ description: 'Create new decks safely and adapt reusable fragments without repla
 
 The [deck starter](../templates/deck/README.md) is a runnable, neutral reveal.js presentation
 with four example slides and a four-step scripted walkthrough. It includes local
-navigation, source/notes dialogs, keyboard and focus handling, reduced motion, build/bundle
+navigation, source/notes dialogs, keyboard and focus handling, unscaled reading view,
+reduced motion, build/bundle
 scripts, a pinned lockfile and Node tests.
 
 From the repository root:
@@ -115,6 +116,9 @@ The fragments use the starter's `data-example` and `data-demo` conventions:
 * Component data, not the fragment, owns requests, options, answers, tasks and diff rows.
 * The starter styles live in `theme.css` and `components.css`. Copy the required rules
   only when the destination has no suitable owner.
+* Preserve heading order, passive reconstruction semantics, text alternatives and the
+  reading-view rules when adapting fragments. Validate the resulting slide at 320px and
+  with enlarged or spaced text, not only on the presentation canvas.
 
 HVE Updates uses different globals and initialization. Adapt a fragment to that existing
 data/renderer contract; pasting a starter mount alone will not initialize it there.

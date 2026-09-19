@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-09-07
+ms.date: 2026-09-11
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -218,14 +218,14 @@ The `hve-builder` skill uses one lifecycle for agents, prompts, instructions, su
 
 1. Resolve mode, targets, write boundary, architecture, and applicable conventions
 2. Author or perform read-only review according to the selected mode
-3. Complete known edits, fresh-context static review, and local validation before freezing each candidate for behavior assessment. Major mutations and behavior-bearing review targets invoke HVE Builder Tester; eligible no-runtime review targets and Minor or Medium mutations are satisfied-and-skipped
-4. In a mutating mode, batch required in-scope corrections from the report in the main agent, refresh affected checks and assessment, and test the revised candidate when justified by progress. Preserve each report against its revision; stop on advisory-only polish or unsupported repetition
+3. Complete known edits and local validation, then run a review pass against the requirements catalog and review rubric
+4. In a mutating mode, batch required in-scope corrections in the main agent, rerun affected checks, and close the corrected findings with a targeted re-review; stop on advisory-only polish or unsupported repetition
 5. Keep known target files and caller-supplied canonical references as bounded lifecycle reads; activate `rpi-research` for open-ended exploration and decision-critical research
-6. Resolve one overall outcome from the delivered candidate's validation and assessment evidence
+6. Resolve one overall outcome from the delivered candidate's validation and review evidence
 
-HVE Builder selects a reasoning profile when it delegates isolated work. Fresh-context static review uses Medium. HVE Builder Tester executes the frozen target at its own profile and grades the evidence at the higher of Medium and that target profile. The lifecycle lead keeps bounded authoring and local validation in the current context rather than creating a worker turn for each stage.
+The main agent reviews the candidate itself by default. When fresh context would help, it dispatches the read-only `HVE Builder Reviewer` subagent, which returns severity-graded findings as suggestions for the main agent to verify before recording. The lifecycle lead keeps bounded authoring and local validation in the current context rather than creating a worker turn for each stage.
 
-Each ordered list is an availability fallback within its selected profile. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills remain compatibility aliases that route legacy requests to this lifecycle.
+The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills remain compatibility aliases that route legacy requests to this lifecycle.
 
 ### Security Review
 

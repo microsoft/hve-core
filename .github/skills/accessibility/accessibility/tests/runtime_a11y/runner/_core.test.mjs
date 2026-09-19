@@ -33,6 +33,23 @@ test('tagToCriterion maps wcag tags to dotted criteria', () => {
   assert.equal(tagToCriterion(''), null);
 });
 
+test('buildResultsFromEntry uses default criteria for the desktop baseline', () => {
+  const results = buildResultsFromEntry({
+    entry: {
+      decides: [{ criterionId: '1.3.1', framework: 'wcag-22', states: ['default'] }],
+      informs: [],
+    },
+    probeId: 'probe-axe',
+    surfaceId: 'homepage',
+    state: 'desktop',
+    evidence: 'http://127.0.0.1/',
+  });
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].state, 'desktop');
+  assert.equal(results[0].status, 'pass');
+});
+
 test('contrastProbeEvaluation distinguishes unavailable, clean, and violated analysis', () => {
   assert.deepEqual(
     contrastProbeEvaluation(null),

@@ -3,7 +3,7 @@ title: Asset reference documentation
 description: How contributors generate, author, and validate reference pages for agents, prompts, instructions, and skills
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-09-11
 ms.topic: how-to
 keywords:
   - asset documentation
@@ -116,8 +116,8 @@ prerequisites, and any confirmation or human-review boundary.
 For user-invocable agents and skills, use the
 [hve-builder](../reference/skills/hve-core/hve-builder.md) authoring path to
 develop and review a representative example while creating or improving the source
-artifact. HVE Builder applies an independent static review, a route-specific
-behavior gate, and host validation, so the example can reflect reviewed behavior
+artifact. HVE Builder applies a review pass against its requirements catalog and
+host validation, so the example can reflect reviewed behavior
 rather than an invented happy path.
 
 Invoke `hve-builder` from Copilot Chat with the target path, the paired reference

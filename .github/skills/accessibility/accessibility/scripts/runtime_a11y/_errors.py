@@ -17,6 +17,9 @@ EXIT_INTENT_DRIFT = 3
 # for different responses: the first is a regression, the second is missing
 # coverage that would otherwise pass silently.
 EXIT_INTENT_UNCOVERED = 4
+EXIT_AUTOMATED_INCOMPLETE = 5
+EXIT_REVIEWER_INCOMPLETE = 6
+EXIT_RELEASE_INCOMPLETE = 7
 
 
 class ScriptError(Exception):

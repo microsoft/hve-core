@@ -47,6 +47,8 @@ const config = {
   projectName: 'hve-core',
 
   onBrokenLinks: 'throw',
+  // Defaults to 'warn', which let a broken in-page anchor reach a passing build.
+  onBrokenAnchors: 'throw',
 
   customFields: {
     packageCards,
@@ -188,6 +190,7 @@ const config = {
               { label: 'Contributing', to: '/docs/contributing/' },
               { label: labelRegistry.security, to: '/docs/security/' },
               { label: labelRegistry.templates, to: '/docs/templates/' },
+              { label: 'Third-party notices', href: 'https://github.com/microsoft/hve-core/blob/main/THIRD-PARTY-NOTICES' },
             ],
           },
           {

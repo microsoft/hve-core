@@ -11,15 +11,15 @@ stimuli:
       category: agent-behavior
     graders:
       - type: output-matches
-        name: tracking-file-write
+        name: prd-builder-class-recipe-tracking-file-write
         config:
           pattern: '(?i)(docs[/\\]project-planning|\.copilot-tracking[/\\]prd-sessions)'
       - type: output-matches
-        name: topic-coverage
+        name: prd-builder-class-recipe-topic-coverage
         config:
           pattern: '(?i)(product|requirement|user story|success|notification|preference)'
       - type: output-matches
-        name: no-source-edit
+        name: prd-builder-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
@@ -37,7 +37,7 @@ stimuli:
         config:
           pattern: '(?i)(PRD|user stor|acceptance criteria|success metric|Build|Validate)'
       - type: output-matches
-        name: no-proposal-extension
+        name: prd-builder-ordinary-request-no-proposal-extension-a2fe656f
         config:
           pattern: '(?i)(proposal-response|RESPONSE_EVIDENCE_V1|extensionsLoaded)'
           negate: true
@@ -62,19 +62,19 @@ stimuli:
       scenario: prd-proposal-rejected
     graders:
       - type: output-matches
-        name: rejected-contract-reported
+        name: prd-builder-rejects-invalid-proposal-continuation-r-083c3206
         config:
           pattern: '(?i)schema:\s*RESPONSE_EVIDENCE_ERROR_V1'
       - type: output-matches
-        name: rejected-closeout-reported
+        name: prd-builder-rejects-invalid-proposal-continuation-r-fae43365
         config:
           pattern: '(?is)validation_error:\s*unknown_schema.*clearing_action:'
       - type: output-matches
-        name: rejected-path-not-added-to-state
+        name: prd-builder-rejects-invalid-proposal-continuation-r-899ec028
         config:
           pattern: '(?is)proposalResponseArtifacts.{0,100}(absent|not (?:created|added)|unchanged|\[\s*\])'
       - type: output-matches
-        name: no-next-operation-on-error
+        name: prd-builder-rejects-invalid-proposal-continuation-n-a66c65e7
         config:
           pattern: '(?i)next_operation'
           negate: true

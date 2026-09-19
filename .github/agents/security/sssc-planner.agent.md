@@ -272,8 +272,6 @@ Provide the skill with:
 * Requested outputs and output mode (`analysis`, `audit`, or `comparison`).
 * `.copilot-tracking/sssc-plans/{project-slug}/` as a trusted alternate evidence root.
 
-Require `rpi-research` to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath the trusted root. The skill resolves the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and research synthesis.
-
 Read the completed primary research artifact and synthesize applicable findings into standards mappings, gap analyses, plan artifacts, and `state.json`. Preserve every phase gate and user confirmation. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop dependent conclusions. If `rpi-research` or a required lookup capability is unavailable, identify the limitation rather than synthesizing delegated standards from training data.
 
 ### Phase-Specific Delegation

@@ -23,6 +23,7 @@ test('config schema command kinds and contract validation stay in parity', () =>
   const schemaKinds = new Set(schema?.$defs?.screenReaderAction?.properties?.kind?.enum || []);
   const representativePayloads = new Map([
     ['command', { kind: 'command', value: 'perform' }],
+    ['navigate', { kind: 'navigate', value: 'nextHeading' }],
     ['pause', { kind: 'pause', durationMs: 1 }],
     ['keyboard', { kind: 'keyboard', value: 'ArrowDown' }],
     ['key', { kind: 'key', value: 'Control+K' }],
@@ -43,6 +44,31 @@ test('config schema command kinds and contract validation stay in parity', () =>
 
   for (const kind of acceptedKinds) {
     assert.ok(schemaKinds.has(kind), `Expected ${kind} to appear in the config-schema enum`);
+  }
+});
+
+test('config schema declares bounded real screen-reader operation timeouts', () => {
+  const schema = JSON.parse(readFileSync(schemaPath, 'utf8'));
+  const lifecycle = schema.$defs.screenReaderLifecycle;
+  assert.equal(schema.properties.realScreenReader.properties.lifecycle.$ref, '#/$defs/screenReaderLifecycle');
+  assert.equal(schema.$defs.realScreenReader.properties.lifecycle.$ref, '#/$defs/screenReaderLifecycle');
+  assert.equal(lifecycle.additionalProperties, false);
+  assert.equal(lifecycle.properties.commandTimeoutMs.maximum, 60000);
+  assert.equal(lifecycle.properties.captureTimeoutMs.maximum, 60000);
+  assert.equal(lifecycle.properties.logTimeoutMs.maximum, 30000);
+});
+
+test('validateScreenReaderCommand accepts named navigation and rejects unknown navigation', () => {
+  assert.equal(validateScreenReaderCommand({ kind: 'navigate', value: 'nextLandmark' }), null);
+  assert.match(
+    validateScreenReaderCommand({ kind: 'navigate', value: 'openPreferences' }),
+    /Unsupported navigate/,
+  );
+});
+
+test('validateScreenReaderCommand accepts bounded table navigation commands', () => {
+  for (const value of ['moveToPreviousColumn', 'moveToNextColumn', 'moveToPreviousRow', 'moveToNextRow']) {
+    assert.equal(validateScreenReaderCommand({ kind: 'perform', value }), null);
   }
 });
 

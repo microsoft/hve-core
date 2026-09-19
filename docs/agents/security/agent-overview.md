@@ -79,8 +79,8 @@ The state file tracks 21 fields across scoping, analysis, and handoff concerns.
 | `context`                | object   | Tech stack, deployment model, data classification, compliance |
 | `referencesProcessed`    | string[] | Paths to PRD/BRD artifacts that were consumed                 |
 | `nextActions`            | string[] | Pending actions for the current or next phase                 |
-| `disclaimerShownAt`      | string   | ISO 8601 timestamp when the disclaimer was shown, or null     |
-| `noticeLog`              | object[] | Audit log of disclaimers, attributions, and review reminders  |
+| `disclaimerShownAt`      | string   | ISO 8601 time the full disclaimer was last shown, or null     |
+| `noticeLog`              | object[] | Immutable record of every disclaimer/attribution display      |
 | `userPreferences`        | object   | Autonomy preference: `guided`, `partial`, or `full`           |
 | `raiEnabled`             | boolean  | Whether AI/ML components were detected                        |
 | `raiScope`               | string   | `none`, `embedded`, or `delegated`                            |

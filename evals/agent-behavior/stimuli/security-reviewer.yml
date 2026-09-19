@@ -14,20 +14,20 @@ stimuli:
       category: agent-behavior
     graders:
       - type: output-matches
-        name: findings-table-present
+        name: security-reviewer-class-recipe-findings-table-present
         config:
           pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|vulnerab|remediation|mitigation|\brisk\b|report\s+saved|skills?\s+assessed|\bsummary\b|\*{2}\s*(?:critical|high|medium|low)\b|\b(?:exposure|disclosure|compromise)\b)'
       - type: output-matches
-        name: severity-vocab
+        name: security-reviewer-class-recipe-severity-vocab
         config:
           pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
       - type: output-matches
-        name: no-source-edit
+        name: security-reviewer-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
       - type: output-matches
-        name: no-unsolicited-plan-drift
+        name: security-reviewer-class-recipe-no-unsolicited-plan-drift
         config:
           pattern: '(?i)(#{1,6}\s*security[_ -]plan[_ -]drift|"?security_plan_drift"?\s*:|filtered findings:\s*\d+|baseline:\s*(complete|incomplete))'
           negate: true

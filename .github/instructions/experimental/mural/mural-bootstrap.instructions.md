@@ -5,9 +5,20 @@ applyTo: '**/.github/agents/design-thinking/dt-coach.agent.md, **/.github/agents
 
 ## Mural Bootstrap
 
-Before any Mural verb in a fresh session, call `mural doctor`. Act on the verdict before proceeding. A fresh session is any agent turn where no successful `mural doctor` or Mural command has already confirmed readiness for the current workspace, credential backend, and working directory.
+Before any Mural verb in a fresh session, call `mural doctor`. Add one repeatable `--require-scope <scope>` argument for every scope required by the intended verb sequence. No `--require-scope` argument means read-only readiness. Act on the verdict before proceeding. A fresh session is any agent turn where no successful `mural doctor` or Mural command has already confirmed readiness for the current workspace, credential backend, working directory, and intended scopes.
 
 The bootstrap check is an operator safety gate. It verifies that the agent is in the expected project context, that dependencies are available, and that the configured credential backend can support the requested Mural operation. It does not authorize logging secrets or bypassing host credential policy.
+
+Use the command scope policy exported by the Mural skill. Common sequences require:
+
+| Intended commands                                               | Doctor arguments                                              |
+|-----------------------------------------------------------------|---------------------------------------------------------------|
+| Read-only commands                                              | None                                                          |
+| Mural, widget, tag, area, layout, archive, and repair mutations | `--require-scope murals:write`                                |
+| Template instantiation                                          | `--require-scope templates:read --require-scope murals:write` |
+| Template creation                                               | `--require-scope murals:read --require-scope templates:write` |
+| Room creation                                                   | `--require-scope rooms:write`                                 |
+| DT board bootstrap                                              | `--require-scope rooms:write --require-scope murals:write`    |
 
 ## Credential Backend Defaults
 

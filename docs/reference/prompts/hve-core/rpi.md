@@ -3,7 +3,7 @@ title: Rpi
 description: "Coordinate one task through the Research, Plan, Implement, Review, and Follow-up RPI workflow"
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - prompt
@@ -32,7 +32,6 @@ Use `/rpi` to start or resume [RPI Agent](../../agents/hve-core/rpi-agent) from 
 
 Reach for a different asset when:
 
-* You want the skill-based sequencer without a persisted state record. Use [rpi-quick](../../skills/rpi/rpi-quick).
 * You want one phase only. Invoke `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` directly.
 
 ## How to use it

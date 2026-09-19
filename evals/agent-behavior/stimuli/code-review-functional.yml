@@ -20,7 +20,7 @@ stimuli:
         config:
           pattern: '(?i)(edge case|division by zero|b\s*==\s*0|error handling|exception|finding|issue|severity|risk)'
       - type: output-matches
-        name: no-source-edit
+        name: code-review-functional-lens-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

@@ -35,6 +35,6 @@ stimuli:
         config:
           pattern: '(?i)\.copilot-tracking[-/\\]security[-/\\]'
       - type: output-matches
-        name: plan-status-vocabulary
+        name: report-generator-plan-mode-plan-status-vocabulary
         config:
           pattern: '(?i)(RISK|CAUTION|COVERED|NOT_APPLICABLE|plan[-_]?report[-_]?v1)'

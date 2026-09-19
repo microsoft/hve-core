@@ -10,8 +10,9 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-import runtime_a11y.__main__ as cli
 from pytest_mock import MockerFixture
+
+import runtime_a11y.__main__ as cli
 from runtime_a11y import _intent as intent
 from runtime_a11y._errors import (
     EXIT_INTENT_DRIFT,

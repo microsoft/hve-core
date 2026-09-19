@@ -80,7 +80,7 @@ dialog[data-view="agent"] .source-note { margin-top: 22px; font-size: 17px; }
 .copilot-question { border: 1px solid #6892a8; border-radius: 9px; background: #1b1b1b; overflow: hidden; }
 .question-header { display: flex; align-items: center; gap: 16px; padding: 17px 22px; border-bottom: 1px solid #414141; color: #d2d2d2; }
 .question-header .ui-icon { width: 21px; height: 21px; flex-basis: 21px; color: #adadad; }
-.reveal .question-header h4 { margin: 0; font-size: 28px; line-height: 1.3; font-weight: 600; color: #dfdfdf; }
+.reveal .question-header :is(h3, h4) { margin: 0; font-size: 28px; line-height: 1.3; font-weight: 600; color: #dfdfdf; }
 .question-options { padding: 12px 0 0; margin: 0 18px; list-style: none; }
 .question-option { display: flex; align-items: start; gap: 14px; margin: 0; padding: 12px 15px; border-radius: 6px; }
 .question-option.selected-option { background: #3a3a3a; }
@@ -113,6 +113,9 @@ dialog[data-view="agent"] .source-note { margin-top: 22px; font-size: 17px; }
 .debug-breadcrumb { display: flex; align-items: center; gap: 11px; padding: 11px 16px; border-bottom: 1px solid #41464f; font-size: 21px; color: #c2cad5; background: #191a1d; }
 .preview-tag { font-size: 17px; padding: 3px 7px; margin-left: auto; color: #b2d3ff; border: 1px solid #4b6485; border-radius: 4px; }
 .component-graph { display: block; width: 100%; height: auto; }
+.graph-description { padding: 8px 18px; font-size: 20px; line-height: 1.5; max-height: 200px; overflow: auto; }
+.graph-description summary { cursor: pointer; }
+[data-reading-view="true"] .graph-description { max-height: none; }
 .graph-edge { fill: none; stroke: #a2a9b3; stroke-width: 2; stroke-linejoin: round; }
 .graph-node rect { fill: #22262c; stroke: #98a6b9; stroke-width: 2; }
 .graph-node.model rect { stroke: #78adf6; }

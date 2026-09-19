@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microsoft.github.io/hve-core/accessibility/composition-summary.schema.json",
+  "title": "Accessibility composition summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["classification", "bundleDigest", "runId", "scopeCompleteness", "nonAttestation"],
+  "properties": {
+    "classification": { "enum": ["complete", "incomplete"] },
+    "bundleDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "runId": { "type": "string", "minLength": 1 },
+    "scopeCompleteness": { "type": "object" },
+    "nonAttestation": { "type": "object" }
+  }
+}

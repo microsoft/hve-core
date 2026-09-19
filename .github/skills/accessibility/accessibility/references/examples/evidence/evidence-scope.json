@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "profileId": "scope-pr",
+  "cadenceClass": "pull-request",
+  "manualEvidencePolicy": "reviewer-required",
+  "selectors": {
+    "assetIds": ["asset-docs"],
+    "journeyIds": ["journey-read"],
+    "states": ["default"],
+    "methods": ["playwright", "screen-reader"],
+    "probes": ["project-playwright", "qualified-human"],
+    "fixtureIds": ["fixture-docs"]
+  }
+}

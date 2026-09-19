@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to measure nominal behavior preservation'
 author: HVE Core Team
-ms.date: 2026-09-11
+ms.date: 2026-09-18
 ---
 
 ## Purpose
@@ -140,7 +140,10 @@ Onboarding a new agent (for example `security-planner`) requires a subject-aware
 
 The driver resolves the agent's frontmatter `model:` hint automatically. No new PowerShell, no new stimulus library, and no new judge prompt are required unless the agent's domain materially differs from the existing corpus.
 
-Vally exposes no agent-selection flag. The repository-standard turn-0 `Launch` instruction causes the model to read the staged agent file before the user question. Invocation evidence is parsed from structured tool calls and results, never inferred from the response text.
+Vally exposes no agent-selection flag. The repository-standard turn-0 `Launch` instruction causes the model to read the staged agent file before the user question.
+The agent file exceeds the single-read limit of the `view` tool, so the launch turn directs the model to fall back to line-range or shell reads and to keep reading
+until content is returned; one trial that never completes a successful read is a data-quality violation that fails the gate closed. Invocation evidence is parsed
+from structured tool calls and results, never inferred from the response text.
 
 ## Agent Coverage
 

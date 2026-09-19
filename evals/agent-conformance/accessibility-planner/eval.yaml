@@ -40,7 +40,7 @@ stimuli:
     name: judge-aria-no-native-semantics-anti-pattern
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: aria-no-native-semantics-anti-pattern-completion-budget
     turn: 1
     config:
       max: 120s
@@ -68,7 +68,7 @@ stimuli:
     name: judge-cognitive-accessibility-plain-language-signal
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: cognitive-accessibility-plain-language-signal-compl-a5d0ffac
     turn: 1
     config:
       max: 120s
@@ -95,7 +95,7 @@ stimuli:
     name: judge-automated-scan-not-equivalent-to-at-testing
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: automated-scan-not-equivalent-to-at-testing-complet-3fda47ad
     turn: 1
     config:
       max: 120s
@@ -123,7 +123,7 @@ stimuli:
     name: judge-evidence-gap-proportionate-flagging
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: evidence-gap-proportionate-flagging-completion-budget
     turn: 1
     config:
       max: 120s
@@ -150,7 +150,7 @@ stimuli:
     name: judge-conformance-claim-boundary-no-certification
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: conformance-claim-boundary-no-certification-complet-7e301566
     turn: 1
     config:
       max: 120s
@@ -177,7 +177,7 @@ stimuli:
     name: judge-phase6-prioritized-backlog-handoff
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase6-prioritized-backlog-handoff-completion-budget
     turn: 1
     config:
       max: 120s
@@ -201,7 +201,7 @@ stimuli:
     name: judge-startup-disclaimer-before-phase1
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: startup-disclaimer-before-phase1-completion-budget
     turn: 1
     config:
       max: 120s
@@ -226,7 +226,7 @@ stimuli:
     name: judge-phase1-discovery-questions
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase1-discovery-questions-completion-budget
     turn: 1
     config:
       max: 120s
@@ -251,7 +251,7 @@ stimuli:
     name: judge-phase2-framework-selection-with-defaults
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase2-framework-selection-with-defaults-completion-budget
     turn: 1
     config:
       max: 120s
@@ -274,7 +274,7 @@ stimuli:
     name: judge-phase-advance-requires-explicit-confirmation
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase-advance-requires-explicit-confirmation-comple-61087717
     turn: 1
     config:
       max: 120s

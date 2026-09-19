@@ -1,7 +1,7 @@
 ---
 title: HVE Core updates deck
 description: Interactive HTML presentation of HVE Core changes from April to September 2026.
-ms.date: 2026-09-12
+ms.date: 2026-09-17
 ---
 
 ## Build and present
@@ -30,8 +30,9 @@ be copied and presented offline. Source links need a connection when opened.
 folder's files and `vendor/` directory together.
 
 Use a landscape desktop display, ideally 1600 by 900 or larger, or browser
-full screen. The presentation also fits 1280 by 720. Compact screens keep
-navigation available but are not the intended projected format.
+full screen. The presentation also fits 1280 by 720. Reading view provides unscaled,
+scrollable content on compact or zoomed viewports and can be toggled at any size.
+Diagram descriptions expose node meanings and relationships as text.
 
 ## Create or update decks
 
@@ -166,6 +167,8 @@ Slide navigation and demonstration steps are deliberately separate.
 When a button, link or other interactive control has focus, normal keyboard
 activation takes priority over slide shortcuts. Use visible navigation or
 move focus away from the control to resume shortcuts.
+Character shortcuts, including Space, run only when the presentation surface itself has
+focus. Tab reaches that surface. Arrow and Page keys remain available outside controls.
 
 Demo steps persist while revisiting slides in the same page session.
 Reload restores the slide hash but resets all demonstrations to their first

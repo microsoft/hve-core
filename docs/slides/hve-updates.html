@@ -306,6 +306,44 @@ kbd { display: inline-block; border: 1px solid #63748b; background: #2a3443; pad
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; overflow: auto; }
+[data-reading-view="true"] body { padding-top: calc(var(--controls-height, 150px) + 12px); }
+[data-reading-view="true"] .reveal { position: relative; inset: auto; height: auto; overflow: visible; font-size: 1.125rem; touch-action: auto; }
+[data-reading-view="true"] .reveal :is(button, a, summary, input, [tabindex]) { scroll-margin-top: calc(var(--controls-height, 150px) + 16px); }
+[data-reading-view="true"] .reveal .slides { position: static; width: 100% !important; height: auto !important; transform: none !important; zoom: 1 !important; perspective: none; }
+[data-reading-view="true"] .reveal .slides > section { position: relative; inset: auto; height: auto; min-height: 0; padding: 24px; max-width: 960px; margin: 0 auto; transform: none !important; }
+.reveal .slides > section[aria-hidden="true"] { display: none !important; }
+[data-reading-view="true"] .reveal .slides section * { min-width: 0; max-width: 100%; font-size: inherit; letter-spacing: 0; overflow-wrap: anywhere; }
+[data-reading-view="true"] .reveal .slides section :is(h1, h2) { font-size: 2rem; line-height: 1.2; margin: 20px 0; }
+[data-reading-view="true"] .reveal .slides section h3 { font-size: 1.4rem; line-height: 1.3; margin: 18px 0; }
+[data-reading-view="true"] .reveal .slides section :is(p, li) { line-height: 1.5; }
+[data-reading-view="true"] .reveal .slides section :is(.hero-grid, .compare, .timeline, .phase-spine, .split, .evidence-columns, .three-points, .revision-flow, .plugin-route, .two-points, .discovery-grid, .demo, .agent-setup-layout, .implementation-scene, .customization-shell) { grid-template-columns: minmax(0, 1fr); height: auto; gap: 24px; margin: 24px 0; }
+[data-reading-view="true"] .reveal .slides section :is(.loop-line, .builder-flow, .bridge, .closing-commands, .loop-return, .review-inputs, .legacy-node) { flex-direction: column; align-items: stretch; gap: 16px; margin: 24px 0; }
+[data-reading-view="true"] .reveal .slides section :is(.slide-bottom, .closing-footer, .chapter-slide .eyebrow, .source-quick-input, .source-trust-note, .chat-customizations-tooltip) { position: static; margin-top: 20px; }
+[data-reading-view="true"] .reveal .slides section :is(.slide-bottom, .closing-footer, .rpi-agent-cue, .demo-controls, .editor-bar, .file-header, .composer-toolbar, .question-header, .question-footer, .customization-titlebar, .plugin-section-title, .installed-plugin-row, .debug-breadcrumb, .graph-legend, .chat-launch-header, .chat-launch-toolbar) { flex-wrap: wrap; height: auto; }
+[data-reading-view="true"] .reveal .slides section :is(.demo-main, .demo-body, .plan-preview-content, .chat-launch-scene, .customization-window, .builder-flow > span, .phase-spine article) { height: auto; min-height: 0; overflow: visible; }
+[data-reading-view="true"] .reveal .slides section :is(.demo-body, .chat-launch-scene, .customization-content, .evidence-document-body, .copilot-composer, .copilot-scene, .answer-scene) { padding: 12px; }
+[data-reading-view="true"] .reveal .slides section :is(.agent-picker-menu, .customization-content, .question-options, .question-freeform, .answer-detail) { width: auto; margin-left: 0; margin-right: 0; }
+[data-reading-view="true"] .reveal .slides section :is(.composer-picker, .install-source-button, .legacy-node code) { white-space: normal; }
+[data-reading-view="true"] .reveal .slides section .handoff-column.current { border-left: 0; padding-left: 0; }
+[data-reading-view="true"] .reveal .slides section .demo-sidebar { border-right: 0; }
+[data-reading-view="true"] .reveal .slides section .package-mark { transform: none; }
+[data-reading-view="true"] #presenter-controls { top: 0; bottom: auto; height: auto; min-height: 64px; flex-wrap: wrap; padding: 10px; }
+[data-reading-view="true"] .utility-controls { flex-wrap: wrap; }
+[data-reading-view="true"] .brand { display: none; }
+[data-reading-view="true"] #presenter-controls button { min-height: 44px; }
+dialog { overflow-wrap: anywhere; }
+.dialog-header { flex-wrap: wrap; }
+.utility-controls { flex-wrap: wrap; }
+@media (forced-colors: active) {
+  :root { color-scheme: light dark; --canvas: Canvas; --ink: CanvasText; --muted: CanvasText; --faint: CanvasText; --line: CanvasText; --cyan: LinkText; --lime: CanvasText; --focus: Highlight; }
+  body, body.reveal-viewport, .reveal .slides > section, #presenter-controls, dialog, .dialog-header, #dialog-content { background: Canvas !important; color: CanvasText !important; }
+  .reveal *, #presenter-controls *, dialog * { color: CanvasText !important; border-color: CanvasText !important; box-shadow: none !important; }
+  a, .reveal a, dialog a { color: LinkText !important; }
+  button, #presenter-controls button, dialog button { background: ButtonFace !important; color: ButtonText !important; border-color: ButtonText !important; }
+  button:disabled { color: GrayText !important; border-color: GrayText !important; opacity: 1; }
+  :focus-visible { outline-color: Highlight !important; }
+}
 @media print {
   #presenter-controls, #startup, dialog, .skip-link { display: none !important; }
 }
@@ -394,7 +432,7 @@ dialog[data-view="agent"] .source-note { margin-top: 22px; font-size: 17px; }
 .copilot-question { border: 1px solid #6892a8; border-radius: 9px; background: #1b1b1b; overflow: hidden; }
 .question-header { display: flex; align-items: center; gap: 16px; padding: 17px 22px; border-bottom: 1px solid #414141; color: #d2d2d2; }
 .question-header .ui-icon { width: 21px; height: 21px; flex-basis: 21px; color: #adadad; }
-.reveal .question-header h4 { margin: 0; font-size: 28px; line-height: 1.3; font-weight: 600; color: #dfdfdf; }
+.reveal .question-header :is(h3, h4) { margin: 0; font-size: 28px; line-height: 1.3; font-weight: 600; color: #dfdfdf; }
 .question-options { padding: 12px 0 0; margin: 0 18px; list-style: none; }
 .question-option { display: flex; align-items: start; gap: 14px; margin: 0; padding: 12px 15px; border-radius: 6px; }
 .question-option.selected-option { background: #3a3a3a; }
@@ -427,6 +465,9 @@ dialog[data-view="agent"] .source-note { margin-top: 22px; font-size: 17px; }
 .debug-breadcrumb { display: flex; align-items: center; gap: 11px; padding: 11px 16px; border-bottom: 1px solid #41464f; font-size: 21px; color: #c2cad5; background: #191a1d; }
 .preview-tag { font-size: 17px; padding: 3px 7px; margin-left: auto; color: #b2d3ff; border: 1px solid #4b6485; border-radius: 4px; }
 .component-graph { display: block; width: 100%; height: auto; }
+.graph-description { padding: 8px 18px; font-size: 20px; line-height: 1.5; max-height: 200px; overflow: auto; }
+.graph-description summary { cursor: pointer; }
+[data-reading-view="true"] .graph-description { max-height: none; }
 .graph-edge { fill: none; stroke: #a2a9b3; stroke-width: 2; stroke-linejoin: round; }
 .graph-node rect { fill: #22262c; stroke: #98a6b9; stroke-width: 2; }
 .graph-node.model rect { stroke: #78adf6; }
@@ -559,7 +600,7 @@ dialog[data-view="agent"] .source-note { margin-top: 22px; font-size: 17px; }
   <div id="startup" role="status">Loading the presentation. If it does not open, download the complete HTML file and open it in a browser with JavaScript enabled.</div>
   <noscript>Enable JavaScript to use the presentation controls. The examples run locally without an agent or service.</noscript>
   <div class="reveal">
-    <main class="slides" aria-label="HVE Core updates presentation">
+    <main class="slides" tabindex="0" aria-label="HVE Core updates presentation">
 
       <section id="opening" data-title="HVE Core updates" data-chapter="Evolution" data-sources="baseline,skills,builder-introduction,loops">
         <div class="eyebrow">MICROSOFT / HVE CORE <span class="separator">/</span> SEPTEMBER 2026</div>
@@ -918,13 +959,13 @@ The primary assistant recommends next steps.</code></pre></div>
 
   <nav id="presenter-controls" aria-label="Presentation controls">
     <div class="brand"><span class="brand-dot"></span> HVE CORE <span id="chapter-label">Evolution</span></div>
-    <div class="utility-controls"><button type="button" id="overview-button">Slides</button><button type="button" data-dialog="sources">Sources</button><button type="button" data-dialog="notes">Notes</button><button type="button" data-dialog="help">Keys</button><button type="button" id="motion-button" aria-pressed="false">Motion off</button><button type="button" id="fullscreen-button">Full screen</button></div>
+    <div class="utility-controls"><button type="button" id="overview-button">Slides</button><button type="button" data-dialog="sources">Sources</button><button type="button" data-dialog="notes">Notes</button><button type="button" data-dialog="help">Keys</button><button type="button" id="motion-button" aria-pressed="false">Motion off</button><button type="button" id="fullscreen-button" aria-pressed="false">Full screen</button></div>
     <div class="slide-controls"><button type="button" id="previous-slide" aria-label="Previous slide">&#8592;</button><output id="slide-count" aria-label="Current slide"></output><button type="button" id="next-slide" aria-label="Next slide">&#8594;</button></div>
   </nav>
   <div id="announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <dialog id="detail-dialog" aria-labelledby="dialog-title">
     <div class="dialog-header"><h2 id="dialog-title"></h2><button type="button" id="close-dialog" aria-label="Close dialog">Close <kbd>Esc</kbd></button></div>
-    <div id="dialog-content"></div>
+    <div id="dialog-content" tabindex="0"></div>
   </dialog>
 <template id="bundled-third-party-notices"><pre>Copyright (C) 2011-2026 Hakim El Hattab, http://hakim.se, and reveal.js contributors
 
@@ -1324,13 +1365,13 @@ THE SOFTWARE.</pre></template>
     return cue;
   }
 
-  function renderQuestion(step) {
+  function renderQuestion(step, { headingLevel = 4 } = {}) {
     const scene = element('div', 'question-scene');
     const card = element('div', 'copilot-question');
     card.setAttribute('role', 'group');
     card.setAttribute('aria-label', 'Example Copilot question');
     const header = element('div', 'question-header');
-    header.append(element('h4', '', step.body), element('span', 'toolbar-space'), icon('close'), icon('chevron'));
+    header.append(element(`h${headingLevel}`, '', step.body), element('span', 'toolbar-space'), icon('close'), icon('chevron'));
     card.append(header);
     const options = element('ol', 'question-options');
     const selected = step.selected ?? step.options.findIndex(option => option.recommended);
@@ -1389,8 +1430,8 @@ THE SOFTWARE.</pre></template>
   function graphSVG(graph, type) {
     const marker = `diagram-arrow-${++graphSerial}`;
     const titleId = `${marker}-title`;
-    const svg = svgElement('svg', { viewBox: `0 0 1130 ${type === 'plan' ? 335 : 340}`, class: `component-graph ${type}-graph`, role: 'img', 'aria-labelledby': titleId });
-    svg.append(svgElement('title', { id: titleId }, `${graph.title}. ${graph.edges.map(([from, to]) => `${from} to ${to}`).join('; ')}.`));
+    const svg = svgElement('svg', { viewBox: `0 0 1130 ${type === 'plan' ? 335 : 340}`, class: `component-graph ${type}-graph`, role: 'graphics-document img', 'aria-labelledby': titleId });
+    svg.append(svgElement('title', { id: titleId }, graph.title));
     const defs = svgElement('defs');
     const arrow = svgElement('marker', { id: marker, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' });
     arrow.append(svgElement('path', { d: 'M 1 1 L 9 5 L 1 9', fill: 'none', stroke: '#a2a9b3', 'stroke-width': 1.4 }));
@@ -1414,6 +1455,18 @@ THE SOFTWARE.</pre></template>
     return svg;
   }
 
+  function graphDescription(graph) {
+    const description = element('details', 'graph-description');
+    description.append(element('summary', '', 'Diagram description'));
+    const nodes = element('ul');
+    const labels = new Map(graph.nodes.map(node => [node.id, node.label]));
+    graph.nodes.forEach(node => nodes.append(element('li', '', `${node.label}: ${node.detail}`)));
+    const relationships = element('ul');
+    graph.edges.forEach(([from, to]) => relationships.append(element('li', '', `${labels.get(from)} to ${labels.get(to)}`)));
+    description.append(nodes, relationships);
+    return description;
+  }
+
   function renderDebug(step) {
     const surface = element('div', 'debug-surface');
     const breadcrumb = element('div', 'debug-breadcrumb');
@@ -1422,7 +1475,7 @@ THE SOFTWARE.</pre></template>
     for (const [kind, label] of [['model', 'Model turn'], ['tool', 'Tool call'], ['subagent', 'Subagent']]) {
       legend.append(element('span', `legend-${kind}`, label));
     }
-    surface.append(breadcrumb, graphSVG(graphs[step.graph], 'research'), legend);
+    surface.append(breadcrumb, graphSVG(graphs[step.graph], 'research'), legend, graphDescription(graphs[step.graph]));
     return surface;
   }
 
@@ -1442,7 +1495,7 @@ THE SOFTWARE.</pre></template>
       content.replaceChildren(showSource ? codeBlock(mermaidSource(graph)) : graphSVG(graph, 'plan'));
     });
     header.append(toggle);
-    surface.append(header, element('div', 'plan-preview-heading', graph.title), content);
+    surface.append(header, element('div', 'plan-preview-heading', graph.title), content, graphDescription(graph));
     return surface;
   }
 
@@ -1663,11 +1716,25 @@ THE SOFTWARE.</pre></template>
   const motionButton = document.querySelector('#motion-button');
   const previous = document.querySelector('#previous-slide');
   const next = document.querySelector('#next-slide');
+  const readingButton = document.createElement('button');
+  readingButton.type = 'button';
+  readingButton.id = 'reading-button';
+  readingButton.textContent = 'Reading view';
+  motionButton.before(readingButton);
+  const compactView = matchMedia('(max-width: 1100px), (max-height: 700px)');
+  let readingView = compactView.matches;
   let returnFocus = null;
   let ready = false;
   let motionEnabled = false;
 
-  document.querySelector('#participation-example').append(renderExample(participationQuestion));
+  document.querySelector('main.slides').setAttribute('aria-roledescription', 'presentation');
+  sections.forEach((section, index) => {
+    section.setAttribute('role', 'group');
+    section.setAttribute('aria-roledescription', 'slide');
+    section.setAttribute('aria-label', `${section.dataset.title}, ${index + 1} of ${sections.length}`);
+  });
+
+  document.querySelector('#participation-example').append(renderExample(participationQuestion, { headingLevel: 3 }));
   document.querySelector('#agent-selection-example').append(renderExample(rpiAgentSelection));
   document.querySelectorAll('section[data-rpi-agent]').forEach(section => {
     section.querySelector(':scope > .eyebrow').replaceWith(renderAgentCue(opener => showDialog('agent', opener)));
@@ -1675,6 +1742,22 @@ THE SOFTWARE.</pre></template>
 
   function announce(text) {
     document.querySelector('#announcement').textContent = text;
+  }
+
+  // Replacing the demo body moves focus, and a screen reader speaks that focus
+  // change immediately. A polite region updated in the same task is superseded
+  // before it is spoken, so the step announcement waits for focus to settle.
+  const ANNOUNCE_SETTLE_MS = 150;
+  let pendingAnnouncement = null;
+
+  function announceStepAfterFocusSettles(name, index, text) {
+    if (pendingAnnouncement) clearTimeout(pendingAnnouncement);
+    pendingAnnouncement = setTimeout(() => {
+      pendingAnnouncement = null;
+      // A faster action may have moved the walkthrough on before this fires.
+      if (states.get(name) !== index) return;
+      announce(text);
+    }, ANNOUNCE_SETTLE_MS);
   }
 
   function renderDemo(host, speak = false) {
@@ -1713,7 +1796,7 @@ THE SOFTWARE.</pre></template>
       if (target) target.focus();
       else (forward.disabled ? back : forward).focus();
     }
-    if (speak) announce(`${demo.label}, step ${index + 1} of ${demo.steps.length}. ${step.phase}: ${step.title}. ${step.state}.`);
+    if (speak) announceStepAfterFocusSettles(name, index, `${demo.label}, step ${index + 1} of ${demo.steps.length}. ${step.phase}: ${step.title}. ${step.state}.`);
   }
 
   function performStep(host, action) {
@@ -1758,7 +1841,7 @@ THE SOFTWARE.</pre></template>
     controls: false, progress: false, hash: true, history: true,
     keyboard: false, overview: false, transition: 'none',
     transitionSpeed: 'fast', backgroundTransition: 'none',
-    touch: true, loop: false, autoSlide: 0, help: false,
+    touch: true, loop: false, autoSlide: 0, help: false, scrollActivationWidth: null,
     postMessage: false, postMessageEvents: false,
     disableLayout: false
   });
@@ -1766,7 +1849,14 @@ THE SOFTWARE.</pre></template>
   function updateSlide() {
     const current = deck.getCurrentSlide();
     const index = sections.indexOf(current);
-    sections.forEach(section => { section.inert = section !== current; });
+    const focused = document.activeElement;
+    sections.forEach(section => {
+      section.inert = section !== current;
+      section.setAttribute('aria-hidden', String(section !== current));
+      if (section === current) section.setAttribute('aria-current', 'page');
+      else section.removeAttribute('aria-current');
+    });
+    if (focused instanceof Element && focused.closest('section[inert]')) document.querySelector('main.slides').focus();
     document.querySelector('#slide-count').textContent = `${index + 1} / ${sections.length}`;
     document.querySelector('#chapter-label').textContent = current.dataset.chapter;
     document.title = `${current.dataset.title} | HVE Core`;
@@ -1775,7 +1865,19 @@ THE SOFTWARE.</pre></template>
     if (document.activeElement === previous && previous.disabled) next.focus();
     if (document.activeElement === next && next.disabled) previous.focus();
     announce(`Slide ${index + 1} of ${sections.length}. ${current.dataset.title}`);
+    if (readingView) window.scrollTo(0, 0);
   }
+
+  function updateReadingView() {
+    document.documentElement.dataset.readingView = String(readingView);
+    readingButton.setAttribute('aria-pressed', String(readingView));
+    deck.configure({ disableLayout: readingView, touch: !readingView });
+  }
+  readingButton.addEventListener('click', () => { readingView = !readingView; updateReadingView(); });
+  compactView.addEventListener('change', () => { readingView = compactView.matches; updateReadingView(); });
+  new ResizeObserver(([entry]) => {
+    document.documentElement.style.setProperty('--controls-height', `${entry.target.getBoundingClientRect().height}px`);
+  }).observe(document.querySelector('#presenter-controls'));
 
   function sourceList(ids) {
     const list = element('ol', 'source-list');
@@ -1845,7 +1947,7 @@ THE SOFTWARE.</pre></template>
         ['Escape', 'Close a dialog and return focus; exits browser full screen.'],
         ['Tab / Enter', 'Reach and activate visible controls. Arrow/Space shortcuts do not hijack focused controls.']
       ].forEach(([key, description]) => grid.append(element('kbd', '', key), element('span', '', description)));
-      dialogContent.append(grid, element('p', 'source-note', 'Slides and demo steps are separate. Steps are preserved when revisiting a slide. Reload restores the slide URL but resets all demonstrations. Reduced-motion preference disables transitions. For presenting, use landscape desktop/full screen; compact screens retain navigation.'));
+      dialogContent.append(grid, element('p', 'source-note', 'Slides and demo steps are separate. Steps are preserved when revisiting a slide. Reload restores the slide URL but resets all demonstrations. Reduced-motion preference disables transitions. Character shortcuts work only when the presentation surface has focus. Reading view provides unscaled, scrollable content and starts automatically on compact screens.'));
     }
     if (!dialog.open) dialog.showModal();
     dialog.scrollTop = 0;
@@ -1864,7 +1966,11 @@ THE SOFTWARE.</pre></template>
   dialog.addEventListener('keydown', event => {
     if (event.key !== 'Tab') return;
     const focusable = [...dialog.querySelectorAll('button, a[href], summary, input, select, textarea, [tabindex]:not([tabindex="-1"])')]
-      .filter(node => !node.disabled && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden');
+      .filter(node => {
+        const closedDetails = node.closest('details:not([open])');
+        return !node.disabled && (!closedDetails || node === closedDetails.querySelector(':scope > summary'))
+          && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden';
+      });
     const first = focusable[0];
     const last = focusable.at(-1);
     if (event.shiftKey && document.activeElement === first) {
@@ -1891,7 +1997,23 @@ THE SOFTWARE.</pre></template>
       dialogContent.prepend(element('p', 'source-note', `Full screen could not start: ${error.message}`));
     }
   }
-  document.querySelector('#fullscreen-button').addEventListener('click', fullscreen);
+  const fullscreenButton = document.querySelector('#fullscreen-button');
+  let fullscreenInitiator = null;
+  fullscreenButton.addEventListener('click', () => {
+    fullscreenInitiator = fullscreenButton;
+    void fullscreen();
+  });
+  document.addEventListener('fullscreenchange', () => {
+    const active = Boolean(document.fullscreenElement);
+    fullscreenButton.setAttribute('aria-pressed', String(active));
+    fullscreenButton.textContent = active ? 'Exit full screen' : 'Full screen';
+    if (active) return;
+    // Returning focus to the toolbar would strand a user who entered full screen
+    // from the presentation surface and relies on its scoped shortcuts.
+    const restoreTarget = fullscreenInitiator || fullscreenButton;
+    fullscreenInitiator = null;
+    if (document.activeElement === document.body || document.activeElement === null) restoreTarget.focus();
+  });
 
   document.addEventListener('keydown', event => {
     if (!ready || dialog.open || event.altKey || event.ctrlKey || event.metaKey) return;
@@ -1899,6 +2021,7 @@ THE SOFTWARE.</pre></template>
     if (target instanceof Element && target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]')) return;
     if (globalThis.getSelection()?.toString()) return;
     const key = event.key.toLowerCase();
+    if (key.length === 1 && target !== document.querySelector('main.slides')) return;
     const activeDemo = deck.getCurrentSlide().querySelector('[data-demo]');
     const handled = ['arrowright', 'pagedown', ' ', 'arrowleft', 'pageup', 'home', 'end', 'o', 's', 'n', '?', 'f'].includes(key)
       || (activeDemo && ['[', ']', 'r'].includes(key));
@@ -1908,7 +2031,10 @@ THE SOFTWARE.</pre></template>
     else if (['arrowleft', 'pageup'].includes(key)) deck.prev();
     else if (key === 'home') deck.slide(0);
     else if (key === 'end') deck.slide(sections.length - 1);
-    else if (key === 'f') void fullscreen();
+    else if (key === 'f') {
+      fullscreenInitiator = document.querySelector('main.slides');
+      void fullscreen();
+    }
     else if (['o', 's', 'n', '?'].includes(key)) showDialog({ o: 'overview', s: 'sources', n: 'notes', '?': 'help' }[key]);
     else performStep(activeDemo, { '[': 'back', ']': 'next', r: 'reset' }[key]);
   });
@@ -1925,6 +2051,10 @@ THE SOFTWARE.</pre></template>
   deck.on('slidechanged', updateSlide);
   deck.initialize().then(() => {
     ready = true;
+    document.querySelector('.reveal').removeAttribute('role');
+    document.querySelector('.reveal .aria-status')?.remove();
+    document.querySelectorAll('output').forEach(output => output.setAttribute('aria-live', 'off'));
+    updateReadingView();
     updateMotion();
     startup.hidden = true;
     document.documentElement.dataset.deckReady = 'true';
