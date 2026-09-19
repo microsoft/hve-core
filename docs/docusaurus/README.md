@@ -90,6 +90,22 @@ Accessibility is validated by three tools across four layers that run in `.githu
 
 Layers 3 and 4 both run on Playwright, so the four layers are covered by three tools.
 
+### Custom Mermaid theme
+
+`src/theme/Mermaid` swizzles `@docusaurus/theme-mermaid` so diagrams stay accessible
+across re-renders. Renders are serialised through a module-level queue, so a rapid
+color-mode toggle cannot interleave two `mermaid.render` calls and leave a diagram
+blank; a failed render removes its orphaned node rather than leaving it in the DOM.
+
+Failures surface through an `ErrorBoundary` whose fallback is wrapped in a
+`role="alert"` container, and focus is moved deterministically after the user takes
+action: retrying focuses the retry button, and a retry that then succeeds focuses the
+rendered `svg[role~="graphics-document"]`, so keyboard users are not dropped at the
+top of the page.
+
+`__tests__/Mermaid.test.tsx` is the axe-checked coverage for this override and runs in
+layer 2 of the harness above.
+
 ### Browser E2E prerequisite
 
 The Playwright layer drives Google Chrome via the `chrome` channel, so a Chrome (or Chromium) install must be present. Provision Playwright's managed Chrome with:
