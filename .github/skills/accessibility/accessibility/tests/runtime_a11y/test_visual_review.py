@@ -11,6 +11,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+
 from runtime_a11y._errors import ScriptError
 from runtime_a11y.visual_review import (
     build_visual_review_manifest,

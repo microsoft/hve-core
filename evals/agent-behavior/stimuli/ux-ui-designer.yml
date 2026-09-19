@@ -7,7 +7,7 @@ stimuli:
 
       Before you begin, name which capability you are routing this to and the
       moment or mode token you would pass.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -35,7 +35,7 @@ stimuli:
 
       Before you begin, name which capability you are routing this to and the
       moment or mode token you would pass.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -63,7 +63,7 @@ stimuli:
 
       Before you begin, name which capability you are routing this to and the
       moment or mode token you would pass.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -318,4 +318,111 @@ stimuli:
         name: no-inline-conformance-values
         config:
           pattern: '(?i)(4\.5:1|3:1|7:1|contrast ratio of|\brole="?(status|alert)"?)'
+          negate: true
+
+  - name: ux-ui-designer-mural-environment-verdicts
+    prompt: |
+      A completed synthetic journey asset has an explicit Mural target and
+      facilitator mode. Explain the next action for each local readiness
+      result: `wrong_cwd` and `deps_missing`. Keep the outcomes separate. Do
+      not publish anything or run another Mural command.
+    environment:
+      skills:
+        - '../../.github/skills/design-thinking/ux-artifacts'
+        - '../../.github/skills/experimental/mural'
+      files:
+        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+      scenario: mural-environment-verdicts
+    graders:
+      - type: output-matches
+        name: ux-mural-cwd-remediation
+        config:
+          pattern: '(?is)wrong_cwd.*(?:repository root|skill directory|working directory).*(?:pause|stop|retry)'
+      - type: output-matches
+        name: ux-mural-dependency-remediation
+        config:
+          pattern: '(?is)deps_missing.*(?:dependency|dependencies|setup).*(?:pause|stop|retry)'
+      - type: tool-calls
+        name: ux-mural-readiness-no-call
+        config:
+          disallowed:
+            - name: '(?i)mural'
+      - type: output-matches
+        name: ux-mural-readiness-no-false-publish
+        config:
+          pattern: '(?i)(successfully|I (just )?(published|created|updated)|board (was|is) updated)'
+          negate: true
+
+  - name: ux-ui-designer-mural-explicit-routing-required
+    prompt: |
+      Publish the completed synthetic journey asset to Mural. The board target
+      is `Synthetic Renewal Board`, but no extractor or facilitator mode and no
+      create, mutate, append, or no-op action intent has been supplied. State
+      the missing decisions and stop before routing or writing.
+    agent_environment:
+      skills:
+        - '../../.github/skills/design-thinking/ux-artifacts'
+        - '../../.github/skills/experimental/mural'
+      files:
+        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+      scenario: mural-explicit-routing
+    graders:
+      - type: output-matches
+        name: ux-mural-routing-needs-intent
+        config:
+          pattern: '(?i)(extractor|facilitator).{0,180}(create|mutate|append|no-op)|(create|mutate|append|no-op).{0,180}(extractor|facilitator)'
+      - type: output-matches
+        name: ux-mural-routing-stops
+        config:
+          pattern: '(?i)(stop|cannot proceed|before.{0,40}(route|write|publish)|need.{0,40}(mode|intent))'
+      - type: tool-calls
+        name: ux-mural-routing-no-call
+        config:
+          disallowed:
+            - name: '(?i)mural'
+      - type: output-matches
+        name: ux-mural-routing-no-false-publish
+        config:
+          pattern: '(?i)(successfully|I (just )?(published|created|updated)|board (was|is) updated)'
+          negate: true
+
+  - name: ux-ui-designer-mural-extractor-metadata-boundary
+    prompt: |
+      The completed synthetic journey asset, `Synthetic Renewal Board` target,
+      `extractor` mode, and `append` action intent are confirmed. Describe the
+      exact existing-widget writeback boundary and the consent needed before
+      execution. Do not publish or claim a board change in this response.
+    agent_environment:
+      skills:
+        - '../../.github/skills/design-thinking/ux-artifacts'
+        - '../../.github/skills/experimental/mural'
+      files:
+        - src: ../../.github/agents/project-planning/ux-ui-designer.agent.md
+          dest: .github/copilot-instructions.md
+    tags:
+      category: agent-behavior
+      scenario: mural-extractor-writeback
+    graders:
+      - type: output-matches
+        name: ux-mural-extractor-mode
+        config:
+          pattern: '(?i)extractor.{0,160}append'
+      - type: output-matches
+        name: ux-mural-extractor-writeback-fields
+        config:
+          pattern: '(?is)(tags).*(hyperlink).*(parentId|parent id).*(never|no|not).{0,40}text'
+      - type: output-matches
+        name: ux-mural-extractor-needs-confirmation
+        config:
+          pattern: '(?i)(exact|target|intended).{0,160}(confirm|explicit confirmation|consent)'
+      - type: output-matches
+        name: ux-mural-extractor-no-false-publish
+        config:
+          pattern: '(?i)(successfully|I (just )?(published|created|updated)|board (was|is) updated)'
           negate: true

@@ -1,6 +1,6 @@
 ---
 name: rpi-plan-critique
-description: "Independently assess an RPI plan against supplied evidence without editing it. Use for a current initial or planner-authorized recovery critique dispatch."
+description: "Independently assess an RPI plan against supplied evidence without editing it. Use for a current initial or planner-authorized recovery critique run."
 argument-hint: "[plan=...] [evidence=...] [output=...] [depth={standard|deep}]"
 license: MIT
 user-invocable: true
@@ -10,19 +10,19 @@ user-invocable: true
 
 ## Goal
 
-Return one substantive, evidence-grounded credibility assessment of an RPI implementation plan. Complete the material assessment as quickly as the supplied evidence permits by default; broaden depth only when the user explicitly requests `deep`. The critique is read-only with respect to the plan and writes only the caller-specified critique artifact.
+Return one substantive, evidence-grounded credibility assessment of an RPI implementation plan. Assess the plan against the supplied evidence with fresh eyes rather than the drafting reasoning. Complete the material assessment as quickly as the supplied evidence permits by default; broaden depth only when the user explicitly requests `deep`. The critique is read-only with respect to the plan and writes only the caller-specified critique artifact.
 
 ## Flow
 
 1. Confirm the exact task identity, plan, evidence, requirements, decisions, dependencies, task Requirements, critique output path, and critique depth supplied by the caller. Use `standard` when depth is omitted. Use `deep` only when the caller records explicit user direction; otherwise downgrade an unsupported deep request to standard and record the limitation.
 2. Before assessment, inspect Critique Disposition, supplied parent state and recorded output paths for this task. Standalone first use follows the local preflight below and does not require the `rpi-plan` skill or its files.
    * Return any prior terminal `Complete`, `Partial`, or `Blocked` execution and its verdict or limitation without reassessing, even when its file is missing. Ambiguous task identity blocks assessment.
-    * For a parent dispatch, read the Reservation and current-dispatch ownership and Interrupted critique recovery contracts from the planning parent's resolved canonical reference pointer. When no pointer is supplied, locate the available skill by its stable name `rpi-plan` and read `references/planning.md` relative to that skill's resolved root, not an assumed sibling directory.
-       If the reference cannot be resolved or read, return a missing-dependency preflight limitation to the parent without assessment, reservation changes or standalone fallback. Reading the contract does not authorize the worker to run its recovery procedure.
-   * For a parent dispatch, verify task, attempt ID/kind, candidate identity/hash boundary, depth, output and immediate current-dispatch provenance against the saved reservation. That worker may execute its own initial or approved recovery reservation once. Saved matching identifiers alone cannot authorize a replay; earlier `started` records route to the planning parent's recovery protocol without a new assessment.
-   * A recovery worker also verifies the saved task-specific approval, original-attempt provenance and distinct output. It cannot authorize recovery, reset its reservation or request another attempt. Any failure returns the preflight limitation; it does not claim a substantive assessment ran or overwrite an existing result.
-    * For standalone use with no consumed attempt, persist an initial `started` reservation in the specified output with task, unique attempt ID/kind, candidate identity and saved-content hash boundary, depth, output and uninterrupted reservation-to-assessment provenance before assessing. If it cannot be saved and read back, stop.
-       Existing standalone reservations route to the planning parent for reconciliation, not another standalone invocation. If `rpi-plan` is unavailable for that reconciliation, return the dependency limitation and preserve the existing evidence; do not reserve or reassess.
+   * When run from `rpi-plan`, read the Reservation and current-run ownership and Interrupted critique recovery contracts from the planning parent's resolved canonical reference pointer. When no pointer is supplied, locate the available skill by its stable name `rpi-plan` and read `references/planning.md` relative to that skill's resolved root, not an assumed sibling directory.
+      If the reference cannot be resolved or read, return a missing-dependency preflight limitation to the parent without assessment, reservation changes or standalone fallback. Reading the contract does not authorize the critique to run the recovery procedure.
+   * When run from `rpi-plan`, verify task, attempt ID/kind, candidate identity/hash boundary, depth, output and immediate current-run provenance against the saved reservation. That run may execute its own initial or approved recovery reservation once. Saved matching identifiers alone cannot authorize a replay; earlier `started` records route to the planning parent's recovery protocol without a new assessment.
+   * A recovery run also verifies the saved task-specific approval, original-attempt provenance and distinct output. It cannot authorize recovery, reset its reservation or request another attempt. Any failure returns the preflight limitation; it does not claim a substantive assessment ran or overwrite an existing result.
+   * For standalone use with no consumed attempt, persist an initial `started` reservation in the specified output with task, unique attempt ID/kind, candidate identity and saved-content hash boundary, depth, output and uninterrupted reservation-to-assessment provenance before assessing. If it cannot be saved and read back, stop.
+      Existing standalone reservations route to the planning parent for reconciliation, not another standalone invocation. If `rpi-plan` is unavailable for that reconciliation, return the dependency limitation and preserve the existing evidence; do not reserve or reassess.
 3. Read the plan and directly relevant supplied evidence. Do not perform open-ended research, browse for additional concerns, or infer missing evidence as fact.
 4. Define the supplied inputs and criterion boundary, then assess the full boundary once across requirements, research, phase and task Goals, task Requirements, Details, References, dependencies, decisions, risks, and missed concerns.
    * Assess coverage across the supplied plan and evidence as a whole. Do not require a task to repeat requirements already established elsewhere solely for restatement. A stated requirement alone does not prove implementation coverage; ground required changes in demonstrated omissions, contradictions, or material evidence gaps.
@@ -40,14 +40,14 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 * Supplied research, evidence pointers, draft details, and decisions
 * Dependencies and task Requirements
 * One critique output path
-* For parent dispatch: current attempt ID/kind, reservation and dispatch provenance, candidate hash boundary, parent state when present, the parent's resolved canonical planning reference pointer or discoverable `rpi-plan` skill, and task-specific recovery approval when applicable
+* When run from `rpi-plan`: current attempt ID/kind, reservation and run provenance, candidate hash boundary, parent state when present, the parent's resolved canonical planning reference pointer or discoverable `rpi-plan` skill, and task-specific recovery approval when applicable
 * Critique depth and provenance: `standard` by default or `deep` from explicit user direction
 
 ## Success criteria
 
 * The critique distinguishes evidence-backed concerns from missing evidence.
 * Critique depth and provenance are recorded. Standard completely assesses the material supplied boundary while minimizing low-value work; deep occurs only from explicit user direction.
-* Preflight admits the verified current initial or approved recovery worker, but returns prior same-task evidence without reassessment on replay and blocks ambiguous identity or dispatch provenance. Standalone first use reserves before assessment without requiring another skill; missing parent-dispatch guidance never permits standalone fallback.
+* Preflight admits the verified current initial or approved recovery run, but returns prior same-task evidence without reassessment on replay and blocks ambiguous identity or run provenance. Standalone first use reserves before assessment without requiring another skill; missing planning-parent guidance never permits standalone fallback.
 * Findings identify substantive gaps rather than structure, formatting, or cosmetic preferences.
 * The critique records its inputs, criterion boundary, coverage assessment, and limitations.
 * Each actionable finding has a severity, related IDs, evidence, impact, and smallest useful change.
@@ -73,7 +73,7 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 * Use a small status marker such as ✅, ⚠️, or ⛔ only when it improves scanning, and pair it with text.
 * At closeout, separate critique execution status, Complete, Partial, or Blocked, from its Pass, Revise, or Blocked verdict. Identify the highest-impact finding, its action owner, the smallest next action, and whether a user response is required. A planner-owned revision does not require user input.
 * Advise `/compact` only when stale tool output or completed assessment detail outweighs useful current context and the plan and critique artifact are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
-* When dispatched by `rpi-plan`, return the verdict to the planning parent and do not ask the user to invoke planning again. In a standalone invocation, do not invoke a peer stage. State `/rpi-plan` only when a revision needs the planning parent. Otherwise state the explicit stop or no-handoff reason. In an active `rpi-quick` or confirmed automatic RPI Agent context, return the verdict to the parent so it can continue after gates and required confirmations pass.
+* When run from `rpi-plan`, return the verdict to the planning parent and do not ask the user to invoke planning again. In a standalone invocation, do not invoke a peer stage. State `/rpi-plan` only when a revision needs the planning parent. Otherwise state the explicit stop or no-handoff reason. In an active confirmed automatic RPI Agent context, return the verdict to the parent so it can continue after gates and required confirmations pass.
 * For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## Stop rules
@@ -85,7 +85,7 @@ Return one substantive, evidence-grounded credibility assessment of an RPI imple
 
 ## Handoff
 
-Return critique depth and provenance, execution status, verdict, output path, severity summary, highest-impact finding, action owner, smallest next action, and user-response status to the planning parent. When `rpi-plan` dispatched the critique, the parent revises directly, obtains a significant or divergent user decision when required, and finalizes without another critique. A standalone critique may advise `/rpi-plan` for needed revision but does not invoke it.
+Return critique depth and provenance, execution status, verdict, output path, severity summary, highest-impact finding, action owner, smallest next action, and user-response status to the planning parent. When `rpi-plan` ran the critique, the parent revises directly, obtains a significant or divergent user decision when required, and finalizes without another critique. A standalone critique may advise `/rpi-plan` for needed revision but does not invoke it.
 
 ## Final response contract
 

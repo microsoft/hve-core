@@ -8,6 +8,7 @@ import subprocess
 from types import SimpleNamespace
 
 import pytest
+
 import runtime_a11y.__main__ as cli
 from runtime_a11y._errors import ScriptError
 
@@ -50,6 +51,126 @@ def test_iter_runs_yields_scoped_combinations(monkeypatch) -> None:
     runs = list(cli._iter_runs(config))
 
     assert runs == [("probe-axe", "web", "default"), ("probe-axe", "web", "dark")]
+
+
+def test_resolve_probe_filter_accepts_canonical_and_unique_shorthand(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(cli, "_all_probe_ids", lambda: ["probe-axe", "probe-contrast"])
+
+    assert cli._resolve_probe_filter("probe-axe") == "probe-axe"
+    assert cli._resolve_probe_filter("axe") == "probe-axe"
+    assert cli._resolve_probe_filter("contrast") == "probe-contrast"
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("does-not-exist", "Unknown probe id"),
+        ("probe", "Ambiguous probe id"),
+    ],
+)
+def test_resolve_probe_filter_rejects_unknown_and_ambiguous(
+    monkeypatch, name: str, expected: str
+) -> None:
+    monkeypatch.setattr(cli, "_all_probe_ids", lambda: ["probe-axe", "probe-contrast"])
+
+    with pytest.raises(ScriptError) as excinfo:
+        cli._resolve_probe_filter(name)
+
+    assert expected in str(excinfo.value)
+    assert excinfo.value.exit_code == cli.EXIT_USAGE
+
+
+def test_run_rejects_an_explicit_scope_that_selects_no_runs(monkeypatch) -> None:
+    # An explicit filter that matches nothing must fail rather than emit a
+    # successful document that claims zero findings.
+    monkeypatch.setattr(cli, "_all_probe_ids", lambda: ["probe-axe"])
+    config = {
+        "surfaces": [{"id": "web", "states": [{"state": "default"}]}],
+    }
+
+    with pytest.raises(ScriptError) as excinfo:
+        cli.run(
+            config, "probe-axe", "http://127.0.0.1:3000", False, state_filter="dark"
+        )
+
+    assert "No probe runs match the requested scope" in str(excinfo.value)
+    assert "state=dark" in str(excinfo.value)
+    assert excinfo.value.exit_code == cli.EXIT_USAGE
+
+
+def test_run_all_with_shorthand_probe_selects_the_canonical_probe(
+    mocker, tmp_path
+) -> None:
+    mocker.patch.object(cli, "_all_probe_ids", lambda: ["probe-axe", "probe-contrast"])
+    executed: list[str] = []
+
+    def fake_run_probe(config, probe_id, surface_id, state, base_url, trace):
+        executed.append(probe_id)
+        return {"probeId": probe_id, "results": []}
+
+    mocker.patch.object(cli, "_run_probe", side_effect=fake_run_probe)
+    config_path = tmp_path / "runtime.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "baseUrl": "http://127.0.0.1:3000",
+                "surfaces": [{"id": "web", "states": [{"state": "default"}]}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(
+        [
+            "run-all",
+            "--config",
+            str(config_path),
+            "--probe",
+            "axe",
+            "--out",
+            str(tmp_path / "out.json"),
+        ]
+    )
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert executed == ["probe-axe"]
+
+
+def test_run_all_with_unknown_probe_fails_before_execution(
+    mocker, tmp_path, capsys
+) -> None:
+    mocker.patch.object(cli, "_all_probe_ids", lambda: ["probe-axe"])
+    run_probe = mocker.patch.object(cli, "_run_probe")
+    config_path = tmp_path / "runtime.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "baseUrl": "http://127.0.0.1:3000",
+                "surfaces": [{"id": "web", "states": [{"state": "default"}]}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out_path = tmp_path / "out.json"
+
+    exit_code = cli.main(
+        [
+            "run-all",
+            "--config",
+            str(config_path),
+            "--probe",
+            "nope",
+            "--out",
+            str(out_path),
+        ]
+    )
+
+    assert exit_code == cli.EXIT_USAGE
+    assert "Unknown probe id" in capsys.readouterr().err
+    run_probe.assert_not_called()
+    assert not out_path.exists()
 
 
 def test_run_probe_raises_when_a_failing_probe_produced_no_payload(mocker) -> None:

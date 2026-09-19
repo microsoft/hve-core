@@ -6,15 +6,15 @@ stimuli:
       category: agent-behavior
     graders:
       - type: output-matches
-        name: tracking-file-write
+        name: system-architecture-reviewer-class-recipe-tracking-b1e3b64f
         config:
           pattern: '(?i)\.copilot-tracking[-/\\]'
       - type: output-matches
-        name: topic-coverage
+        name: system-architecture-reviewer-class-recipe-topic-coverage
         config:
           pattern: '(?i)(architecture|monolith|sqlite|risk|strength|scalability|reliability)'
       - type: output-matches
-        name: no-source-edit
+        name: system-architecture-reviewer-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

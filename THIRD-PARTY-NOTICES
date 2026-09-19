@@ -1,8 +1,21 @@
 THIRD-PARTY-NOTICES
 
 This file contains third-party attribution notices for content embedded in hve-core
-instruction and skill files and bundled presentations. These notices supplement inline attribution blocks within
-individual files.
+instruction and skill files, bundled presentations, and the published documentation
+site. These notices supplement inline attribution blocks within individual files.
+
+---
+
+elkjs 0.9.3
+Copyright: (c) 2017 Kiel University and others
+Copyright: (c) 2019 TypeFox and others
+License: Eclipse Public License 2.0 (EPL-2.0)
+License URI: <https://www.eclipse.org/legal/epl-2.0/>
+Source: <https://www.npmjs.com/package/elkjs/v/0.9.3>
+Usage: Unmodified elkjs JavaScript distributed through Mermaid 12.0.0 as part of
+the built documentation site. The versioned source identified above is available
+under EPL-2.0. Repository-authored documentation and application code remain
+separate works under their existing licenses.
 
 ---
 

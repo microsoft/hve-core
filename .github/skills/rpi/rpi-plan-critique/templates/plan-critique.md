@@ -12,7 +12,7 @@
 * Invocation consumed: yes
 * Attempt ID and kind: {{unique_attempt_id_and_initial_or_recovery}}
 * Candidate identity and saved hash boundary: {{revision_hash_and_reservation_metadata_boundary}}
-* Current-dispatch provenance: {{immediate_parent_dispatch_or_standalone_initial_reservation}}
+* Current-run provenance: {{immediate_planner_activation_or_standalone_initial_reservation}}
 * Original attempt and recovery approval: {{not_applicable_or_original_pointer_and_task_specific_consent}}
 
 ## Inputs and Criterion Boundary
@@ -65,5 +65,5 @@
 
 * Highest-impact finding: {{PC_xxx_or_none}}
 * Action owner: {{planning_parent, user, or none}}
-* Smallest next action: {{direct_revision_one_phase_planner_dispatch_decision_question_or_finalization}}
+* Smallest next action: {{direct_revision_phase_revision_decision_question_or_finalization}}
 * User response required: {{yes_only_for_a_decision_critical_unresolved_choice, otherwise_no}}

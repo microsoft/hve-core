@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-05
+ms.date: 2026-09-18
 ms.topic: how-to
 keywords:
   - evals
@@ -65,6 +65,85 @@ env:
 ```
 
 This pattern keeps each eval job hermetic, prevents credential bleed-through between matrix legs, and avoids the deprecated `--config-dir` CLI flag.
+
+## Bounded Agent Execution
+
+Eval Validation creates `logs/agent-eval-plan.json` once before any model-backed
+agent work. The digest-covered plan records both changed-artifact manifest hashes,
+conditional baseline applicability, nonempty ordinary shards, artifact and run-key
+ownership, expected trial weights, and the complete producer set.
+
+Ordinary agent artifacts stay cohesive. Artifacts connected through one deduplicated
+run key remain in the same shard, and deterministic longest-first assignment balances
+at most four shards by selected stimuli multiplied by declared runs. Prompt,
+instruction, and skill work retain their existing per-kind producers.
+
+The execution matrix therefore contains three non-agent rows plus up to four ordinary
+agent rows. `max-parallel: 6` bounds that matrix. Baseline equivalence runs only when
+the canonical plan marks `baseline.required: true`; its fixed GPT and Claude producers
+use separate runner filesystems and a configurable maximum parallelism of two.
+
+Every producer validates the plan identity it consumes. Ordinary shards verify exact
+artifact and run-key ownership before invoking Vally. Baseline producers verify their
+model is present in the signed plan and stamp its digest into their evidence envelope.
+
+## Authoritative Fan-In
+
+The baseline fan-in validates one current-run envelope for each required fixed model
+and computes the combined verdict through the shared baseline aggregation function.
+The global fan-in then requires every planned ordinary and non-agent producer plus the
+combined baseline summary when applicable. Missing, duplicate, unexpected,
+digest-mismatched, incomplete, or unparseable evidence fails closed.
+
+`eval-report` is presentation-only. It downloads the single `eval-authoritative`
+artifact and renders its `eval-summary.json`; it does not concatenate partial summaries
+or decide whether evidence is complete.
+
+## Trusted Progress
+
+Vally stdout and stderr can contain prompts, responses, trajectories, arbitrary errors,
+or environment content. The process wrapper drains both streams asynchronously to
+withheld runner-local files and never replays raw lines to public workflow output.
+
+While a phase is active, logs expose only these bounded fields:
+
+* Event: `phase-start`, `heartbeat`, or `phase-complete`
+* Phase: one declared eval phase such as `ordinary-eval`, `baseline-eval`, or `compare`
+* Sanitized worker identifier
+* Attempt number
+* Elapsed seconds
+* Fixed exit category
+
+The default heartbeat interval is 60 seconds. Aggregate summaries carry diagnostic
+`phaseTimings`; timing does not affect evaluation verdicts.
+
+## Rollback Controls
+
+The reusable workflow inputs change scheduling without changing evidence semantics:
+
+| Input                   | Normal value | Rollback value | Effect                                                   |
+|-------------------------|--------------|----------------|----------------------------------------------------------|
+| `ordinary-shard-count`  | `4`          | `1`            | Uses the same planner and runner with one ordinary shard |
+| `baseline-max-parallel` | `2`          | `1`            | Serializes the same isolated baseline model producers    |
+
+The single-process fixed-pair baseline driver remains a deterministic aggregation
+oracle for local tests. It is not a second production rollback path.
+
+Run the deterministic and policy checks before changing the scheduling defaults:
+
+```pwsh
+npm run test:ps -- -TestPath scripts/tests/evals/
+npm run lint:ps
+npm run lint:yaml
+npm run lint:permissions
+npm run lint:workflow-runner
+npm run lint:dangerous-workflow
+npm run lint:dependency-pinning
+npm run lint:pr-gate
+```
+
+Model-backed canaries additionally require `COPILOT_GITHUB_TOKEN` and the CI-owned
+moderation environment. Record unavailable credential-backed checks as pending CI.
 
 ## Fork PR Policy
 

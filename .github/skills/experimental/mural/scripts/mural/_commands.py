@@ -1356,7 +1356,7 @@ def _bulk_update_widgets(
     updates: list[dict[str, Any]],
     *,
     atomic: bool = False,
-    require_author_tag: bool = False,
+    require_author_tag: bool = True,
     force_human: bool = False,
 ) -> dict[str, Any]:
     """PATCH a batch of widgets concurrently and return a result envelope.
@@ -1417,7 +1417,7 @@ def _cmd_widget_update_bulk(args: argparse.Namespace) -> int:
         mural_id,
         updates,
         atomic=bool(getattr(args, "atomic", False)),
-        require_author_tag=bool(getattr(args, "require_author_tag", False)),
+        require_author_tag=True,
         force_human=bool(getattr(args, "force_human", False)),
     )
     return _pkg()._emit_record(result, args)

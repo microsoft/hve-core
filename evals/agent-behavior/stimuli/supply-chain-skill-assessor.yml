@@ -21,7 +21,7 @@ stimuli:
         config:
           pattern: '(?i)(PASS|FAIL|PARTIAL|NOT_ASSESSED|critical|high|medium|low|severity|status)'
       - type: output-matches
-        name: no-source-edit
+        name: supply-chain-skill-assessor-posture-no-source-edit
         config:
           pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

@@ -10,15 +10,15 @@ stimuli:
       category: agent-behavior
     graders:
       - type: output-matches
-        name: tracking-file-write
+        name: brd-builder-class-recipe-tracking-file-write
         config:
           pattern: '(?i)(docs[/\\]project-planning|\.copilot-tracking[/\\]brd-sessions)'
       - type: output-matches
-        name: topic-coverage
+        name: brd-builder-class-recipe-topic-coverage
         config:
           pattern: '(?i)(business|requirement|scope|success|password|reset)'
       - type: output-matches
-        name: no-source-edit
+        name: brd-builder-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
@@ -35,7 +35,7 @@ stimuli:
         config:
           pattern: '(?i)(BRD|business goal|stakeholder|Discover|Define|Govern)'
       - type: output-matches
-        name: no-proposal-extension
+        name: brd-builder-ordinary-request-no-proposal-extension-283db964
         config:
           pattern: '(?i)(proposal-response|RESPONSE_EVIDENCE_V1|extensionsLoaded)'
           negate: true
@@ -60,19 +60,19 @@ stimuli:
       scenario: brd-proposal-rejected
     graders:
       - type: output-matches
-        name: rejected-contract-reported
+        name: brd-builder-rejects-invalid-proposal-continuation-r-3f24ffd8
         config:
           pattern: '(?i)schema:\s*RESPONSE_EVIDENCE_ERROR_V1'
       - type: output-matches
-        name: rejected-closeout-reported
+        name: brd-builder-rejects-invalid-proposal-continuation-r-a0b8c5d8
         config:
           pattern: '(?is)validation_error:\s*unknown_schema.*clearing_action:'
       - type: output-matches
-        name: rejected-path-not-added-to-state
+        name: brd-builder-rejects-invalid-proposal-continuation-r-31b6d88f
         config:
           pattern: '(?is)proposalResponseArtifacts.{0,100}(absent|not (?:created|added)|unchanged|\[\s*\])'
       - type: output-matches
-        name: no-next-operation-on-error
+        name: brd-builder-rejects-invalid-proposal-continuation-n-1cddfa96
         config:
           pattern: '(?i)next_operation'
           negate: true

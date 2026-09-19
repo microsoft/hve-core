@@ -17,11 +17,25 @@
   const motionButton = document.querySelector('#motion-button');
   const previous = document.querySelector('#previous-slide');
   const next = document.querySelector('#next-slide');
+  const readingButton = document.createElement('button');
+  readingButton.type = 'button';
+  readingButton.id = 'reading-button';
+  readingButton.textContent = 'Reading view';
+  motionButton.before(readingButton);
+  const compactView = matchMedia('(max-width: 1100px), (max-height: 700px)');
+  let readingView = compactView.matches;
   let returnFocus = null;
   let ready = false;
   let motionEnabled = false;
 
-  document.querySelector('#participation-example').append(renderExample(participationQuestion));
+  document.querySelector('main.slides').setAttribute('aria-roledescription', 'presentation');
+  sections.forEach((section, index) => {
+    section.setAttribute('role', 'group');
+    section.setAttribute('aria-roledescription', 'slide');
+    section.setAttribute('aria-label', `${section.dataset.title}, ${index + 1} of ${sections.length}`);
+  });
+
+  document.querySelector('#participation-example').append(renderExample(participationQuestion, { headingLevel: 3 }));
   document.querySelector('#agent-selection-example').append(renderExample(rpiAgentSelection));
   document.querySelectorAll('section[data-rpi-agent]').forEach(section => {
     section.querySelector(':scope > .eyebrow').replaceWith(renderAgentCue(opener => showDialog('agent', opener)));
@@ -29,6 +43,22 @@
 
   function announce(text) {
     document.querySelector('#announcement').textContent = text;
+  }
+
+  // Replacing the demo body moves focus, and a screen reader speaks that focus
+  // change immediately. A polite region updated in the same task is superseded
+  // before it is spoken, so the step announcement waits for focus to settle.
+  const ANNOUNCE_SETTLE_MS = 150;
+  let pendingAnnouncement = null;
+
+  function announceStepAfterFocusSettles(name, index, text) {
+    if (pendingAnnouncement) clearTimeout(pendingAnnouncement);
+    pendingAnnouncement = setTimeout(() => {
+      pendingAnnouncement = null;
+      // A faster action may have moved the walkthrough on before this fires.
+      if (states.get(name) !== index) return;
+      announce(text);
+    }, ANNOUNCE_SETTLE_MS);
   }
 
   function renderDemo(host, speak = false) {
@@ -67,7 +97,7 @@
       if (target) target.focus();
       else (forward.disabled ? back : forward).focus();
     }
-    if (speak) announce(`${demo.label}, step ${index + 1} of ${demo.steps.length}. ${step.phase}: ${step.title}. ${step.state}.`);
+    if (speak) announceStepAfterFocusSettles(name, index, `${demo.label}, step ${index + 1} of ${demo.steps.length}. ${step.phase}: ${step.title}. ${step.state}.`);
   }
 
   function performStep(host, action) {
@@ -112,7 +142,7 @@
     controls: false, progress: false, hash: true, history: true,
     keyboard: false, overview: false, transition: 'none',
     transitionSpeed: 'fast', backgroundTransition: 'none',
-    touch: true, loop: false, autoSlide: 0, help: false,
+    touch: true, loop: false, autoSlide: 0, help: false, scrollActivationWidth: null,
     postMessage: false, postMessageEvents: false,
     disableLayout: false
   });
@@ -120,7 +150,14 @@
   function updateSlide() {
     const current = deck.getCurrentSlide();
     const index = sections.indexOf(current);
-    sections.forEach(section => { section.inert = section !== current; });
+    const focused = document.activeElement;
+    sections.forEach(section => {
+      section.inert = section !== current;
+      section.setAttribute('aria-hidden', String(section !== current));
+      if (section === current) section.setAttribute('aria-current', 'page');
+      else section.removeAttribute('aria-current');
+    });
+    if (focused instanceof Element && focused.closest('section[inert]')) document.querySelector('main.slides').focus();
     document.querySelector('#slide-count').textContent = `${index + 1} / ${sections.length}`;
     document.querySelector('#chapter-label').textContent = current.dataset.chapter;
     document.title = `${current.dataset.title} | HVE Core`;
@@ -129,7 +166,19 @@
     if (document.activeElement === previous && previous.disabled) next.focus();
     if (document.activeElement === next && next.disabled) previous.focus();
     announce(`Slide ${index + 1} of ${sections.length}. ${current.dataset.title}`);
+    if (readingView) window.scrollTo(0, 0);
   }
+
+  function updateReadingView() {
+    document.documentElement.dataset.readingView = String(readingView);
+    readingButton.setAttribute('aria-pressed', String(readingView));
+    deck.configure({ disableLayout: readingView, touch: !readingView });
+  }
+  readingButton.addEventListener('click', () => { readingView = !readingView; updateReadingView(); });
+  compactView.addEventListener('change', () => { readingView = compactView.matches; updateReadingView(); });
+  new ResizeObserver(([entry]) => {
+    document.documentElement.style.setProperty('--controls-height', `${entry.target.getBoundingClientRect().height}px`);
+  }).observe(document.querySelector('#presenter-controls'));
 
   function sourceList(ids) {
     const list = element('ol', 'source-list');
@@ -199,7 +248,7 @@
         ['Escape', 'Close a dialog and return focus; exits browser full screen.'],
         ['Tab / Enter', 'Reach and activate visible controls. Arrow/Space shortcuts do not hijack focused controls.']
       ].forEach(([key, description]) => grid.append(element('kbd', '', key), element('span', '', description)));
-      dialogContent.append(grid, element('p', 'source-note', 'Slides and demo steps are separate. Steps are preserved when revisiting a slide. Reload restores the slide URL but resets all demonstrations. Reduced-motion preference disables transitions. For presenting, use landscape desktop/full screen; compact screens retain navigation.'));
+      dialogContent.append(grid, element('p', 'source-note', 'Slides and demo steps are separate. Steps are preserved when revisiting a slide. Reload restores the slide URL but resets all demonstrations. Reduced-motion preference disables transitions. Character shortcuts work only when the presentation surface has focus. Reading view provides unscaled, scrollable content and starts automatically on compact screens.'));
     }
     if (!dialog.open) dialog.showModal();
     dialog.scrollTop = 0;
@@ -218,7 +267,11 @@
   dialog.addEventListener('keydown', event => {
     if (event.key !== 'Tab') return;
     const focusable = [...dialog.querySelectorAll('button, a[href], summary, input, select, textarea, [tabindex]:not([tabindex="-1"])')]
-      .filter(node => !node.disabled && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden');
+      .filter(node => {
+        const closedDetails = node.closest('details:not([open])');
+        return !node.disabled && (!closedDetails || node === closedDetails.querySelector(':scope > summary'))
+          && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden';
+      });
     const first = focusable[0];
     const last = focusable.at(-1);
     if (event.shiftKey && document.activeElement === first) {
@@ -245,7 +298,23 @@
       dialogContent.prepend(element('p', 'source-note', `Full screen could not start: ${error.message}`));
     }
   }
-  document.querySelector('#fullscreen-button').addEventListener('click', fullscreen);
+  const fullscreenButton = document.querySelector('#fullscreen-button');
+  let fullscreenInitiator = null;
+  fullscreenButton.addEventListener('click', () => {
+    fullscreenInitiator = fullscreenButton;
+    void fullscreen();
+  });
+  document.addEventListener('fullscreenchange', () => {
+    const active = Boolean(document.fullscreenElement);
+    fullscreenButton.setAttribute('aria-pressed', String(active));
+    fullscreenButton.textContent = active ? 'Exit full screen' : 'Full screen';
+    if (active) return;
+    // Returning focus to the toolbar would strand a user who entered full screen
+    // from the presentation surface and relies on its scoped shortcuts.
+    const restoreTarget = fullscreenInitiator || fullscreenButton;
+    fullscreenInitiator = null;
+    if (document.activeElement === document.body || document.activeElement === null) restoreTarget.focus();
+  });
 
   document.addEventListener('keydown', event => {
     if (!ready || dialog.open || event.altKey || event.ctrlKey || event.metaKey) return;
@@ -253,6 +322,7 @@
     if (target instanceof Element && target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]')) return;
     if (globalThis.getSelection()?.toString()) return;
     const key = event.key.toLowerCase();
+    if (key.length === 1 && target !== document.querySelector('main.slides')) return;
     const activeDemo = deck.getCurrentSlide().querySelector('[data-demo]');
     const handled = ['arrowright', 'pagedown', ' ', 'arrowleft', 'pageup', 'home', 'end', 'o', 's', 'n', '?', 'f'].includes(key)
       || (activeDemo && ['[', ']', 'r'].includes(key));
@@ -262,7 +332,10 @@
     else if (['arrowleft', 'pageup'].includes(key)) deck.prev();
     else if (key === 'home') deck.slide(0);
     else if (key === 'end') deck.slide(sections.length - 1);
-    else if (key === 'f') void fullscreen();
+    else if (key === 'f') {
+      fullscreenInitiator = document.querySelector('main.slides');
+      void fullscreen();
+    }
     else if (['o', 's', 'n', '?'].includes(key)) showDialog({ o: 'overview', s: 'sources', n: 'notes', '?': 'help' }[key]);
     else performStep(activeDemo, { '[': 'back', ']': 'next', r: 'reset' }[key]);
   });
@@ -279,6 +352,10 @@
   deck.on('slidechanged', updateSlide);
   deck.initialize().then(() => {
     ready = true;
+    document.querySelector('.reveal').removeAttribute('role');
+    document.querySelector('.reveal .aria-status')?.remove();
+    document.querySelectorAll('output').forEach(output => output.setAttribute('aria-live', 'off'));
+    updateReadingView();
     updateMotion();
     startup.hidden = true;
     document.documentElement.dataset.deckReady = 'true';

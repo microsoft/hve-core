@@ -145,13 +145,13 @@
     return cue;
   }
 
-  function renderQuestion(step) {
+  function renderQuestion(step, { headingLevel = 4 } = {}) {
     const scene = element('div', 'question-scene');
     const card = element('div', 'copilot-question');
     card.setAttribute('role', 'group');
     card.setAttribute('aria-label', 'Example Copilot question');
     const header = element('div', 'question-header');
-    header.append(element('h4', '', step.body), element('span', 'toolbar-space'), icon('close'), icon('chevron'));
+    header.append(element(`h${headingLevel}`, '', step.body), element('span', 'toolbar-space'), icon('close'), icon('chevron'));
     card.append(header);
     const options = element('ol', 'question-options');
     const selected = step.selected ?? step.options.findIndex(option => option.recommended);
@@ -210,8 +210,8 @@
   function graphSVG(graph, type) {
     const marker = `diagram-arrow-${++graphSerial}`;
     const titleId = `${marker}-title`;
-    const svg = svgElement('svg', { viewBox: `0 0 1130 ${type === 'plan' ? 335 : 340}`, class: `component-graph ${type}-graph`, role: 'img', 'aria-labelledby': titleId });
-    svg.append(svgElement('title', { id: titleId }, `${graph.title}. ${graph.edges.map(([from, to]) => `${from} to ${to}`).join('; ')}.`));
+    const svg = svgElement('svg', { viewBox: `0 0 1130 ${type === 'plan' ? 335 : 340}`, class: `component-graph ${type}-graph`, role: 'graphics-document img', 'aria-labelledby': titleId });
+    svg.append(svgElement('title', { id: titleId }, graph.title));
     const defs = svgElement('defs');
     const arrow = svgElement('marker', { id: marker, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' });
     arrow.append(svgElement('path', { d: 'M 1 1 L 9 5 L 1 9', fill: 'none', stroke: '#a2a9b3', 'stroke-width': 1.4 }));
@@ -235,6 +235,18 @@
     return svg;
   }
 
+  function graphDescription(graph) {
+    const description = element('details', 'graph-description');
+    description.append(element('summary', '', 'Diagram description'));
+    const nodes = element('ul');
+    const labels = new Map(graph.nodes.map(node => [node.id, node.label]));
+    graph.nodes.forEach(node => nodes.append(element('li', '', `${node.label}: ${node.detail}`)));
+    const relationships = element('ul');
+    graph.edges.forEach(([from, to]) => relationships.append(element('li', '', `${labels.get(from)} to ${labels.get(to)}`)));
+    description.append(nodes, relationships);
+    return description;
+  }
+
   function renderDebug(step) {
     const surface = element('div', 'debug-surface');
     const breadcrumb = element('div', 'debug-breadcrumb');
@@ -243,7 +255,7 @@
     for (const [kind, label] of [['model', 'Model turn'], ['tool', 'Tool call'], ['subagent', 'Subagent']]) {
       legend.append(element('span', `legend-${kind}`, label));
     }
-    surface.append(breadcrumb, graphSVG(graphs[step.graph], 'research'), legend);
+    surface.append(breadcrumb, graphSVG(graphs[step.graph], 'research'), legend, graphDescription(graphs[step.graph]));
     return surface;
   }
 
@@ -263,7 +275,7 @@
       content.replaceChildren(showSource ? codeBlock(mermaidSource(graph)) : graphSVG(graph, 'plan'));
     });
     header.append(toggle);
-    surface.append(header, element('div', 'plan-preview-heading', graph.title), content);
+    surface.append(header, element('div', 'plan-preview-heading', graph.title), content, graphDescription(graph));
     return surface;
   }
 

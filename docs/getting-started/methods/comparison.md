@@ -102,7 +102,7 @@ These methods are for HVE Core contributors or advanced scenarios:
 
 ## Still Not Sure?
 
-Start with the [Marketplace Install](../install#marketplace-install) for the fastest path. If you outgrow it later, any clone-based method can be adopted alongside or instead of the extension.
+Start with the [Managed Installation](../install#managed-installation) for the fastest path. If you outgrow it later, any clone-based method can be adopted alongside or instead of the extension.
 
 For detailed documentation on each method, see the [Setup Methods Overview](.).
 

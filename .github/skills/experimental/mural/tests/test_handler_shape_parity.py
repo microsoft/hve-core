@@ -33,6 +33,7 @@ ALLOWED_CLI_ONLY: frozenset[str] = frozenset(
         "auth_use",
         "auth_logout",
         "auth_migrate",
+        "doctor",
         "widget_diff",
         "spatial_not_implemented",
     }

@@ -11,8 +11,17 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+
 import runtime_a11y.__main__ as cli
-from runtime_a11y._errors import EXIT_FAILURE, EXIT_SUCCESS, EXIT_USAGE
+from runtime_a11y._errors import (
+    EXIT_AUTOMATED_INCOMPLETE,
+    EXIT_FAILURE,
+    EXIT_RELEASE_INCOMPLETE,
+    EXIT_REVIEWER_INCOMPLETE,
+    EXIT_SUCCESS,
+    EXIT_USAGE,
+    ScriptError,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -51,6 +60,232 @@ def _allowed_run_path(tmp_path: Path, name: str) -> Path:
     )
     run_root.mkdir(parents=True, exist_ok=True)
     return run_root
+
+
+@pytest.mark.parametrize(
+    ("dimension", "completeness", "expected_exit"),
+    [
+        (
+            "automated",
+            {
+                "automatedCollection": "incomplete",
+                "reviewerEvidence": "not-required",
+                "releaseEvidence": "not-applicable",
+                "reasons": ["Automated evidence is incomplete"],
+            },
+            EXIT_AUTOMATED_INCOMPLETE,
+        ),
+        (
+            "reviewer",
+            {
+                "automatedCollection": "complete",
+                "reviewerEvidence": "pending",
+                "releaseEvidence": "not-applicable",
+                "reasons": ["Reviewer evidence is pending"],
+            },
+            EXIT_REVIEWER_INCOMPLETE,
+        ),
+        (
+            "release",
+            {
+                "automatedCollection": "complete",
+                "reviewerEvidence": "pending",
+                "releaseEvidence": "incomplete",
+                "reasons": ["Reviewer evidence is pending"],
+            },
+            EXIT_RELEASE_INCOMPLETE,
+        ),
+    ],
+)
+def test_given_incomplete_dimension_when_composing_then_writes_bundle_and_exits(
+    tmp_path: Path,
+    mocker,
+    dimension: str,
+    completeness: dict[str, object],
+    expected_exit: int,
+) -> None:
+    # Arrange
+    paths = {}
+    for name, payload in {
+        "assets.json": {},
+        "requirements.json": {},
+        "scope.json": {},
+        "run.json": {},
+        "proofs.json": [],
+    }.items():
+        path = tmp_path / name
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        paths[name] = path
+    output = tmp_path / "bundle.json"
+    mocker.patch.object(
+        cli,
+        "compose_evidence",
+        return_value={
+            "bundleManifest": {"artifacts": []},
+            "scopeCompleteness": completeness,
+        },
+    )
+
+    # Act
+    result = cli.main(
+        [
+            "compose-evidence",
+            "--asset-catalog",
+            str(paths["assets.json"]),
+            "--requirement-catalog",
+            str(paths["requirements.json"]),
+            "--scope",
+            str(paths["scope.json"]),
+            "--run-context",
+            str(paths["run.json"]),
+            "--state-proofs",
+            str(paths["proofs.json"]),
+            "--artifact-root",
+            str(tmp_path),
+            "--out",
+            str(output),
+            "--require-completeness",
+            dimension,
+        ]
+    )
+
+    # Assert
+    assert result == expected_exit
+    assert json.loads(output.read_text(encoding="utf-8"))["scopeCompleteness"] == (
+        completeness
+    )
+
+
+def test_given_compose_failure_when_cli_runs_then_existing_output_is_preserved(
+    tmp_path: Path,
+    mocker,
+) -> None:
+    # Arrange
+    paths = []
+    for name, payload in (
+        ("assets.json", {}),
+        ("requirements.json", {}),
+        ("scope.json", {}),
+        ("run.json", {}),
+        ("proofs.json", []),
+    ):
+        path = tmp_path / name
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        paths.append(path)
+    output = tmp_path / "bundle.json"
+    output.write_text("existing\n", encoding="utf-8")
+    mocker.patch.object(
+        cli,
+        "compose_evidence",
+        side_effect=cli.ScriptError("invalid evidence", EXIT_USAGE),
+    )
+
+    # Act
+    result = cli.main(
+        [
+            "compose-evidence",
+            "--asset-catalog",
+            str(paths[0]),
+            "--requirement-catalog",
+            str(paths[1]),
+            "--scope",
+            str(paths[2]),
+            "--run-context",
+            str(paths[3]),
+            "--state-proofs",
+            str(paths[4]),
+            "--artifact-root",
+            str(tmp_path),
+            "--out",
+            str(output),
+        ]
+    )
+
+    # Assert
+    assert (result, output.read_text(encoding="utf-8")) == (EXIT_USAGE, "existing\n")
+
+
+def test_given_validation_input_when_emitted_then_manifest_and_report_are_valid(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "validation-input.json"
+    output_path = tmp_path / "validation-manifest.json"
+    report_path = tmp_path / "schema-report.json"
+    input_path.write_text(
+        json.dumps(
+            {
+                "revision": {
+                    "sourceRevision": "a" * 40,
+                    "diffDigest": "b" * 64,
+                    "tracked": True,
+                },
+                "environment": {
+                    "operatingSystem": "test",
+                    "toolVersions": {"python": "3.11"},
+                },
+                "commands": [
+                    {
+                        "commandId": "runtime",
+                        "command": "npm test",
+                        "workingDirectory": ".",
+                        "status": "passed",
+                        "resultArtifactDigest": "c" * 64,
+                    }
+                ],
+                "generatedInventory": [],
+                "untrackedDeliverables": [],
+                "assistiveTechnologySample": {
+                    "advisory": True,
+                    "journeys": [],
+                    "boundary": "No real-AT sample in this fixture",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = cli.main(
+        [
+            "emit-validation-manifest",
+            "--input",
+            str(input_path),
+            "--out",
+            str(output_path),
+            "--schema-report",
+            str(report_path),
+        ]
+    )
+
+    assert result == EXIT_SUCCESS
+    assert len(json.loads(output_path.read_text())["manifestDigest"]) == 64
+    report = json.loads(report_path.read_text())
+    assert report["status"] == "valid"
+    assert report["documents"][0]["schema"] == "validation-manifest.schema.json"
+
+
+def test_given_incomplete_validation_input_when_emitted_then_outputs_are_absent(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "validation-input.json"
+    output_path = tmp_path / "validation-manifest.json"
+    report_path = tmp_path / "schema-report.json"
+    input_path.write_text("{}", encoding="utf-8")
+
+    result = cli.main(
+        [
+            "emit-validation-manifest",
+            "--input",
+            str(input_path),
+            "--out",
+            str(output_path),
+            "--schema-report",
+            str(report_path),
+        ]
+    )
+
+    assert result == EXIT_USAGE
+    assert not output_path.exists()
+    assert not report_path.exists()
 
 
 def test_resolve_repo_path_rejects_required_empty_and_uri_inputs() -> None:
@@ -446,6 +681,7 @@ def test_given_calibration_run_when_run_root_override_is_provided_then_subproces
                 {
                     "tool": "runtime_a11y",
                     "command": "run-calibration",
+                    "journeys": ["14399"],
                     "aggregate": {"status": "successful"},
                 }
             ),
@@ -458,7 +694,12 @@ def test_given_calibration_run_when_run_root_override_is_provided_then_subproces
     )
     config_path = tmp_path / "runtime.json"
     config_path.write_text(
-        json.dumps({"baseUrl": "http://127.0.0.1:3000"}),
+        json.dumps(
+            {
+                "baseUrl": "http://127.0.0.1:3000",
+                "calibration": {"journeys": [{"id": "14399"}]},
+            }
+        ),
         encoding="utf-8",
     )
     out_path = (
@@ -500,6 +741,7 @@ def test_calibration_run_passes_base_url_override(
                 {
                     "tool": "runtime_a11y",
                     "command": "run-calibration",
+                    "journeys": ["14399"],
                     "aggregate": {"status": "successful"},
                 }
             ),
@@ -543,6 +785,266 @@ def test_calibration_run_passes_base_url_override(
     payload = json.loads(captured["env"]["RUNTIME_A11Y_CONFIG"])
     assert payload["baseUrl"] == "http://127.0.0.1:3001"
     assert captured["env"]["RUNTIME_A11Y_BASE_URL"] == "http://127.0.0.1:3001"
+
+
+def test_given_journey_filters_when_calibration_runs_then_selection_is_forwarded(
+    mocker,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_run(command, capture_output, text, check, env, cwd):
+        captured["env"] = env
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "tool": "runtime_a11y",
+                    "command": "run-calibration",
+                    "journeys": [
+                        "search-status-announcement",
+                        "presentation-current-slide",
+                    ],
+                    "aggregate": {"status": "successful"},
+                }
+            ),
+            stderr="",
+        )
+
+    mocker.patch("runtime_a11y.__main__.subprocess.run", side_effect=fake_run)
+    mocker.patch.object(cli, "_NODE_MODULES", tmp_path)
+    config_path = tmp_path / "runtime.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "baseUrl": "http://127.0.0.1:3000",
+                "calibration": {
+                    "journeys": [
+                        {"id": "search-status-announcement"},
+                        {"id": "presentation-current-slide"},
+                    ]
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(
+        [
+            "run-calibration",
+            "--config",
+            str(config_path),
+            "--journey",
+            "search-status-announcement",
+            "--journey",
+            "presentation-current-slide",
+        ]
+    )
+
+    assert exit_code == EXIT_SUCCESS
+    assert json.loads(captured["env"]["RUNTIME_A11Y_JOURNEYS"]) == [
+        "search-status-announcement",
+        "presentation-current-slide",
+    ]
+
+
+def test_given_unfiltered_calibration_when_running_then_forwards_resolved_ids(
+    mocker,
+    tmp_path: Path,
+) -> None:
+    # An omitted filter must still send an explicit list so the announced,
+    # executed, and evidenced journeys cannot diverge in the Node child.
+    captured: dict[str, object] = {}
+
+    def fake_run(command, capture_output, text, check, env, cwd):
+        captured["env"] = env
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "tool": "runtime_a11y",
+                    "command": "run-calibration",
+                    "journeys": ["alpha", "beta"],
+                    "aggregate": {"status": "successful"},
+                }
+            ),
+            stderr="",
+        )
+
+    mocker.patch("runtime_a11y.__main__.subprocess.run", side_effect=fake_run)
+    mocker.patch.object(cli, "_NODE_MODULES", tmp_path)
+    config_path = tmp_path / "runtime.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "baseUrl": "http://127.0.0.1:3000",
+                "calibration": {"journeys": [{"id": "alpha"}, {"id": "beta"}]},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(["run-calibration", "--config", str(config_path)])
+
+    assert exit_code == EXIT_SUCCESS
+    assert json.loads(captured["env"]["RUNTIME_A11Y_JOURNEYS"]) == ["alpha", "beta"]
+
+
+@pytest.mark.parametrize(
+    ("journeys", "extra_args", "expected"),
+    [
+        ([{"id": "alpha"}], ["--journey", "missing"], "Unknown calibration journey"),
+        (
+            [{"id": "alpha"}],
+            ["--journey", "alpha", "--journey", "alpha"],
+            "must be unique",
+        ),
+        ([], [], "No calibration journeys are configured or bound"),
+    ],
+)
+def test_given_invalid_journey_selection_when_calibrating_then_fails_before_startup(
+    mocker,
+    tmp_path: Path,
+    capsys,
+    journeys: list[dict[str, str]],
+    extra_args: list[str],
+    expected: str,
+) -> None:
+    session = mocker.patch.object(cli, "_run_calibration_session")
+    notice = mocker.patch.object(cli, "_emit_live_test_start_notice")
+    server = mocker.patch.object(cli, "_ensure_visual_review_server")
+    config_path = tmp_path / "runtime.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "baseUrl": "http://127.0.0.1:3000",
+                "calibration": {"journeys": journeys},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(["run-calibration", "--config", str(config_path), *extra_args])
+
+    assert exit_code == EXIT_USAGE
+    assert expected in capsys.readouterr().err
+    session.assert_not_called()
+    notice.assert_not_called()
+    server.assert_not_called()
+
+
+def test_given_child_executes_other_journeys_then_calibration_fails(
+    mocker,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    # A child that widens the journey set must not produce a result document.
+    mocker.patch.object(
+        cli,
+        "_run_calibration_session",
+        return_value={
+            "aggregate": {"status": "successful"},
+            "journeys": ["alpha", "unauthorized"],
+        },
+    )
+    mocker.patch.object(cli, "_emit_live_test_start_notice")
+    mocker.patch.object(cli, "_emit_live_test_finish_notice")
+    run_root = _allowed_run_path(tmp_path, "widened")
+    config_path = tmp_path / "runtime.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "baseUrl": "http://127.0.0.1:3000",
+                "calibration": {"journeys": [{"id": "alpha"}]},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(
+        [
+            "run-calibration",
+            "--config",
+            str(config_path),
+            "--run-root",
+            str(run_root),
+        ]
+    )
+
+    assert exit_code != EXIT_SUCCESS
+    assert "differ from the authorized set" in capsys.readouterr().err
+    assert not (run_root / "calibration-output.json").exists()
+
+
+def _authorization_config(
+    authored: list[dict[str, str]],
+    bound: list[str],
+) -> dict[str, object]:
+    return {
+        "calibration": {"journeys": authored},
+        "resolvedCaseCatalog": {"cases": [{"caseId": "CASE-001"}]},
+        "resolvedBindingProfile": {
+            "caseBindings": {
+                "CASE-001": {"executions": [{"id": item} for item in bound]}
+            }
+        },
+    }
+
+
+def test_given_omitted_filter_when_bound_recipes_exist_then_only_authored() -> None:
+    # Bound recipes take live desktop control, so an unfiltered run must not reach them.
+    config = _authorization_config([{"id": "authored-one"}], ["bound-one", "bound-two"])
+
+    assert cli._resolve_calibration_journey_ids(config, []) == ["authored-one"]
+
+
+def test_given_omitted_filter_and_no_authored_then_bound_ids_requested() -> None:
+    config = _authorization_config([], ["bound-one", "bound-two"])
+
+    with pytest.raises(ScriptError) as error:
+        cli._resolve_calibration_journey_ids(config, [])
+
+    assert "opt-in" in str(error.value)
+    assert "bound-one" in str(error.value)
+    assert "bound-two" in str(error.value)
+
+
+def test_given_explicit_request_when_bound_recipe_named_then_it_is_authorized() -> None:
+    config = _authorization_config([{"id": "authored-one"}], ["bound-one"])
+
+    assert cli._resolve_calibration_journey_ids(config, ["bound-one"]) == ["bound-one"]
+
+
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [
+        ({}, "no executed journey identity"),
+        ({"journeys": []}, "no executed journey identity"),
+        ({"journeys": ["alpha", ""]}, "empty or non-string"),
+        ({"journeys": ["alpha", 7]}, "empty or non-string"),
+        ({"journeys": ["alpha", "alpha", "beta"]}, "duplicate"),
+        ({"journeys": ["alpha"]}, "Missing: beta"),
+        ({"journeys": ["alpha", "beta", "gamma"]}, "Unexpected: gamma"),
+        ({"journeys": ["beta", "alpha"]}, "does not match the authorized order"),
+    ],
+)
+def test_given_invalid_child_identity_then_calibration_identity_check_fails(
+    payload: dict[str, object],
+    expected: str,
+) -> None:
+    with pytest.raises(ScriptError) as error:
+        cli._assert_executed_journey_identity(payload, ["alpha", "beta"])
+
+    assert expected in str(error.value)
+
+
+def test_given_matching_child_identity_then_calibration_identity_check_passes() -> None:
+    payload = {"journeys": ["alpha", "beta"]}
+
+    assert cli._assert_executed_journey_identity(payload, ["alpha", "beta"]) == [
+        "alpha",
+        "beta",
+    ]
 
 
 def test_given_calibration_run_when_prerequisite_only_then_reports_readiness(
@@ -650,7 +1152,10 @@ def test_given_no_out_flag_when_running_calibration_then_writes_into_run_root(
     mocker.patch.object(
         cli,
         "_run_calibration_session",
-        return_value={"aggregate": {"status": "successful"}},
+        return_value={
+            "journeys": ["search-results"],
+            "aggregate": {"status": "successful"},
+        },
     )
     mocker.patch.object(cli, "_emit_live_test_start_notice")
     mocker.patch.object(cli, "_emit_live_test_finish_notice")
@@ -691,7 +1196,10 @@ def test_run_calibration_emits_start_and_finish_notices_for_live_execution(
     mocker.patch.object(
         cli,
         "_run_calibration_session",
-        return_value={"aggregate": {"status": "successful"}},
+        return_value={
+            "journeys": ["14399"],
+            "aggregate": {"status": "successful"},
+        },
     )
     mocker.patch.object(cli, "_ensure_visual_review_server", return_value=(None, False))
     mocker.patch.object(cli, "_stop_visual_review_server")
@@ -862,7 +1370,12 @@ def test_prerequisite_probe_invalid_json_falls_back_ready(
     )
     config_path = tmp_path / "runtime.json"
     config_path.write_text(
-        json.dumps({"baseUrl": "http://127.0.0.1:3000"}),
+        json.dumps(
+            {
+                "baseUrl": "http://127.0.0.1:3000",
+                "calibration": {"journeys": [{"id": "14399"}]},
+            }
+        ),
         encoding="utf-8",
     )
     out_path = (
@@ -902,7 +1415,12 @@ def test_calibration_session_no_output_reports_usage_error(
     mocker.patch.object(cli, "_NODE_MODULES", tmp_path)
     config_path = tmp_path / "runtime.json"
     config_path.write_text(
-        json.dumps({"baseUrl": "http://127.0.0.1:3000"}),
+        json.dumps(
+            {
+                "baseUrl": "http://127.0.0.1:3000",
+                "calibration": {"journeys": [{"id": "14399"}]},
+            }
+        ),
         encoding="utf-8",
     )
 
@@ -932,7 +1450,12 @@ def test_given_calibration_session_when_subprocess_errors_then_reports_failure(
     )
     config_path = tmp_path / "runtime.json"
     config_path.write_text(
-        json.dumps({"baseUrl": "http://127.0.0.1:3000"}),
+        json.dumps(
+            {
+                "baseUrl": "http://127.0.0.1:3000",
+                "calibration": {"journeys": [{"id": "14399"}]},
+            }
+        ),
         encoding="utf-8",
     )
 
@@ -1101,6 +1624,7 @@ def test_repo_relative_paths_dispatch_as_absolute(
                 {
                     "tool": "runtime_a11y",
                     "command": "run-calibration",
+                    "journeys": ["14399"],
                     "aggregate": {"status": "successful"},
                 }
             ),
@@ -1112,7 +1636,13 @@ def test_repo_relative_paths_dispatch_as_absolute(
     mocker.patch.object(cli, "_REPO_ROOT", tmp_path)
     config_path = tmp_path / "runtime.json"
     config_path.write_text(
-        json.dumps({"baseUrl": "http://127.0.0.1:3000"}), encoding="utf-8"
+        json.dumps(
+            {
+                "baseUrl": "http://127.0.0.1:3000",
+                "calibration": {"journeys": [{"id": "14399"}]},
+            }
+        ),
+        encoding="utf-8",
     )
     out_path = (
         tmp_path
@@ -1463,7 +1993,8 @@ def test_given_surface_and_state_filters_when_running_then_only_selected_runs_ex
 ) -> None:
     collected: list[tuple[str, str, str]] = []
 
-    def fake_run(command, capture_output, text, check, env, cwd):
+    def fake_run(command, capture_output, text, check, timeout, env, cwd):
+        assert timeout == cli._PROBE_TIMEOUT_SECONDS
         surface_id = env["RUNTIME_A11Y_SURFACE_ID"]
         state = env["RUNTIME_A11Y_STATE"]
         collected.append((surface_id, state, env["RUNTIME_A11Y_PROBE_ID"]))
@@ -1510,6 +2041,48 @@ def test_given_surface_and_state_filters_when_running_then_only_selected_runs_ex
 
     assert exit_code == EXIT_SUCCESS
     assert collected == [("search", "open", "probe-axe")]
+
+
+def test_given_probe_filter_when_running_all_then_only_selected_probe_executes(
+    mocker, tmp_path: Path
+) -> None:
+    collected: list[str] = []
+
+    def fake_run(command, **kwargs):
+        collected.append(kwargs["env"]["RUNTIME_A11Y_PROBE_ID"])
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps({"probeId": collected[-1], "results": []}),
+            stderr="",
+        )
+
+    mocker.patch("runtime_a11y.__main__.subprocess.run", side_effect=fake_run)
+    mocker.patch.object(cli, "_NODE_MODULES", tmp_path)
+    config_path = tmp_path / "a11y-runtime.config.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "baseUrl": "http://127.0.0.1:3000",
+                "surfaces": [
+                    {"id": "web", "route": "/", "states": [{"state": "default"}]}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    exit_code = cli.main(
+        [
+            "run-all",
+            "--config",
+            str(config_path),
+            "--probe",
+            "probe-axe",
+        ]
+    )
+
+    assert exit_code == EXIT_SUCCESS
+    assert collected == ["probe-axe"]
 
 
 def test_given_visual_review_capture_when_disabled_then_returns_usage_error(

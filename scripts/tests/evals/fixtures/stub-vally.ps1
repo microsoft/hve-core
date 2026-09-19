@@ -27,6 +27,7 @@
 #   crash  - prints an error and exits 99 (does not write results.jsonl)
 #   chatty-pass / chatty-fail - emit private stdout/stderr, then invocation-pass or exit 99
 #   executor-error - typed error with a null trajectory and a synthetic sensitive message
+#   executor-error-unknown - typed null-trajectory error with an uncategorized message
 #   per-stim - emits one trial per entry of STUB_VALLY_STIM_RESULTS_JSON
 #              (JSON object {stimulusName: passedBool}); exit 1 only when
 #              any record failed AND STUB_VALLY_FAIL_ON_ANY=1.
@@ -257,6 +258,18 @@ $records = switch ($mode) {
             trajectory = $null
         })
     }
+    'executor-error-unknown' {
+        @([ordered]@{
+            type = 'trial-result'
+            stimulus = 'stub-stimulus'
+            model = $model
+            trialIndex = 0
+            status = 'error'
+            error = 'Unrecognized executor failure'
+            durationMs = 5
+            trajectory = $null
+        })
+    }
     'errored' {
         # Trials whose trajectory errored before grading; no gradeResult is emitted,
         # so the runner classifies them as errored (transient) rather than failed.
@@ -327,6 +340,7 @@ if ($mode -eq 'fail') { exit 1 }
 if ($mode -eq 'fail-noname') { exit 1 }
 if ($mode -eq 'errored') { exit 1 }
 if ($mode -eq 'executor-error') { exit 1 }
+if ($mode -eq 'executor-error-unknown') { exit 1 }
 if ($mode -eq 'graded-nonzero') { exit 1 }
 if ($mode -eq 'per-stim' -and $env:STUB_VALLY_FAIL_ON_ANY -eq '1') {
     foreach ($r in $records) {

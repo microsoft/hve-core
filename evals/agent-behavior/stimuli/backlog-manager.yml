@@ -16,15 +16,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-human-readable-name
+        name: backlog-manager-frontmatter-name-and-description-re-0abf8590
         config:
           pattern: '(?i)\bBacklog Manager\b'
       - type: output-matches
-        name: reports-declared-description
+        name: backlog-manager-frontmatter-name-and-description-re-b84f6c83
         config:
           pattern: '(?i)read-only backlog orchestrator.{0,40}Azure DevOps.{0,20}GitHub.{0,20}Jira'
       - type: output-matches
-        name: does-not-substitute-filename-for-name
+        name: backlog-manager-frontmatter-name-and-description-do-951e3479
         config:
           pattern: '(?i)name\s*(is|:)\s*.{0,3}backlog-manager'
           negate: true
@@ -62,7 +62,7 @@ stimuli:
       advisory: "true"
     graders:
       - type: prompt
-        name: tool-restriction-appropriate-for-purpose
+        name: backlog-manager-tool-restriction-fit-tool-restricti-94768515
         config:
           prompt: |
             The response assesses whether an agent's declared tool set fits its
@@ -74,7 +74,7 @@ stimuli:
             that a tool grant enforces a boundary the host does not enforce.
           threshold: 0.6
       - type: output-matches
-        name: does-not-claim-runtime-enforcement-proof
+        name: backlog-manager-tool-restriction-fit-does-not-claim-1a3d8722
         config:
           pattern: '(?i)(this (test|check|eval) (proves|demonstrates|verifies))'
           negate: true
@@ -143,11 +143,11 @@ stimuli:
         config:
           pattern: '(?i)\bGitHub Grooming\b|\bGrooming\b'
       - type: output-matches
-        name: compact-issue-index
+        name: backlog-manager-performs-workflow-neutral-github-gr-3ee1f21a
         config:
           pattern: '(?i)\|\s*Issue\s*\|\s*Similarity\s*\|\s*Disposition\s*\|\s*Status\s*\|\s*Recommended next step\s*\|'
       - type: output-matches
-        name: labeled-issue-details
+        name: backlog-manager-performs-workflow-neutral-github-gr-9ddd19b7
         config:
           pattern: '(?is)Issue #?2558.{0,800}Repository evidence.{0,800}Issue #?2601'
       - type: output-matches

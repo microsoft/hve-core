@@ -1,9 +1,9 @@
 ---
 title: rpi-plan-critique
-description: Independently assess an RPI plan against supplied evidence without editing it. Use for a current initial or planner-authorized recovery critique dispatch.
+description: Independently assess an RPI plan against supplied evidence without editing it. Use for a current initial or planner-authorized recovery critique run.
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-10
+ms.date: 2026-09-16
 ms.topic: reference
 keywords:
   - skill
@@ -23,14 +23,14 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Independently assess an RPI plan against supplied evidence without editing it. Use for a current initial or planner-authorized recovery critique dispatch.
+Independently assess an RPI plan against supplied evidence without editing it. Use for a current initial or planner-authorized recovery critique run.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-`rpi-plan-critique` is the readiness gate inside planning. [rpi-plan](rpi-plan) dispatches it after the planner judges the plan implementation-ready, and the critique writes its assigned artifact under `.copilot-tracking/reviews/plans/` without editing the plan. Any terminal status (`Complete`, `Partial`, or `Blocked`) consumes the assessment; the planner disposes every `PC-xxx` finding without a closure critique.
+`rpi-plan-critique` is the readiness gate inside planning. [rpi-plan](rpi-plan) runs it after the planner judges the plan implementation-ready, and the critique writes its assigned artifact under `.copilot-tracking/reviews/plans/` without editing the plan. Any terminal status (`Complete`, `Partial`, or `Blocked`) consumes the assessment; the planner disposes every `PC-xxx` finding without a closure critique.
 
-The current worker may execute its own verified initial or recovery reservation. A saved `started` record alone does not authorize a replacement worker. Only `rpi-plan` can authorize one task-specific, user-confirmed recovery after an interruption without a terminal result; the critique worker cannot grant that exception or reset a consumed recovery.
+The current critique run may execute its own verified initial or recovery reservation. A saved `started` record alone does not authorize a replacement run. Only `rpi-plan` can authorize one task-specific, user-confirmed recovery after an interruption without a terminal result; the critique cannot grant that exception or reset a consumed recovery.
 
 Invoke it directly only when you want an independent, evidence-bounded read of an existing plan and no critique has run for that task yet. A `Pass`, `Revise`, or `Blocked` verdict is advisory: confirmed user direction outranks critique advice, and a `Revise` verdict means the planner revises or asks for a decision, not that the critique loops.
 
@@ -38,7 +38,7 @@ The critique considers requirements across the supplied plan. Tasks need not rep
 
 You can install only the complete `rpi-plan-critique` skill for standalone first use; it checks and saves its initial reservation without requiring planner files.
 
-Parent-dispatched critiques instead read the canonical planning reference supplied by the parent, or locate the available `rpi-plan` skill by name when no pointer is supplied. The skills need not be sibling directories. An unavailable parent reference stops that dispatch without a standalone fallback. An existing standalone reservation still requires planner reconciliation; installing only the critique skill does not permit a retry.
+Critiques run from `rpi-plan` instead read the canonical planning reference supplied by the parent, or locate the available `rpi-plan` skill by name when no pointer is supplied. The skills need not be sibling directories. An unavailable parent reference stops that run without a standalone fallback. An existing standalone reservation still requires planner reconciliation; installing only the critique skill does not permit a retry.
 
 | Depth      | When                       | Behavior                                                                                        |
 |------------|----------------------------|-------------------------------------------------------------------------------------------------|

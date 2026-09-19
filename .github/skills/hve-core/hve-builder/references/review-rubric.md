@@ -1,10 +1,10 @@
 ---
-description: 'Bounded review dimensions, severity scale, and verdict rules for hve-builder static review.'
+description: 'Bounded review dimensions, severity scale, and verdict rules for the hve-builder review pass.'
 ---
 <!-- markdownlint-disable-file -->
 # Instruction Artifact Review Rubric
 
-A generic fresh-context static-review subagent applies this rubric against a finished or draft artifact. The rubric turns the requirements catalog into checkable dimensions with a fixed severity scale and a bounded scope, so review stays diagnostic rather than open-ended.
+The review pass applies this rubric against a finished or draft artifact, whether the parent reviews the candidate itself or dispatches `HVE Builder Reviewer` in fresh context. The rubric turns the requirements catalog into checkable dimensions with a fixed severity scale and a bounded scope, so review stays diagnostic rather than open-ended.
 
 ## Scope discipline
 
@@ -21,7 +21,7 @@ A reviewer prompted to find gaps will find some, and over-fixing creates unneces
 
 Assess each dimension that applies to the artifact type. Mark a dimension not applicable rather than inventing a finding.
 
-Agent and subagent `tools:` configuration is outside static review. Do not inspect, infer, validate, grade, recommend, or judge it. When the caller directly supplies an exact configuration, reproduce it verbatim without assessing its appropriateness.
+Agent and subagent `tools:` configuration is outside the review pass. Do not inspect, infer, validate, grade, recommend, or judge it. When the caller directly supplies an exact configuration, reproduce it verbatim without assessing its appropriateness.
 
 ### Architecture fit
 

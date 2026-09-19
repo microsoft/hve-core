@@ -22,7 +22,7 @@ stimuli:
         config:
           pattern: '(?i)(standard|convention|naming|style|PEP\s?8|formatting|violation|finding|issue)'
       - type: output-matches
-        name: no-source-edit
+        name: code-review-standards-lens-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

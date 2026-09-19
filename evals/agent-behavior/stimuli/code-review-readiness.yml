@@ -17,7 +17,7 @@ stimuli:
         config:
           pattern: '(?i)(readiness|ready|scope|description|test|coverage|validation|evidence|follow[- ]?up|unrelated|missing|risk|recommend)'
       - type: output-matches
-        name: no-source-edit
+        name: code-review-readiness-lens-no-source-edit
         config:
           pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

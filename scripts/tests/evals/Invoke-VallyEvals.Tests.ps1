@@ -194,6 +194,9 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result.assertionsFailed | Should -Be 0
             $result.runDir | Should -Not -BeNullOrEmpty
             Test-Path -LiteralPath (Join-Path $result.runDir 'results.jsonl') | Should -BeTrue
+            @($result.phaseTimings) | Should -HaveCount 1
+            $result.phaseTimings[0].phase | Should -Be 'ordinary-eval'
+            $result.phaseTimings[0].exitCategory | Should -Be 'success'
         }
 
         It 'Propagates a non-zero exit code from the stub' {
@@ -272,6 +275,31 @@ Describe 'VallyRunner module' -Tag 'Unit' {
 
             $result.exitCode | Should -Be 0
             Test-Path -LiteralPath $logPath | Should -BeTrue
+        }
+
+        It 'withholds chatty child streams from public output' {
+            $outDir = Join-Path $script:WorkRoot 'spec-chatty'
+            $logPath = Join-Path $script:WorkRoot 'nested/log/chatty.log'
+            $env:STUB_VALLY_MODE = 'chatty-pass'
+            try {
+                $publicOutput = @(& {
+                        $script:ChattyResult = Invoke-VallySpec `
+                            -SpecPath (Join-Path $script:WorkRoot 'fake.yaml') `
+                            -OutputDir $outDir `
+                            -Model 'gpt-5.6-luna' `
+                            -VallyCommand $script:StubPath `
+                            -LogPath $logPath
+                    } 6>&1)
+            }
+            finally {
+                Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+            }
+
+            $script:ChattyResult.exitCode | Should -Be 0
+            ($publicOutput -join "`n") | Should -Not -Match 'synthetic-private-stdout|synthetic-private-stderr'
+            $withheld = Get-Content -LiteralPath $logPath -Raw
+            $withheld | Should -Match 'synthetic-private-stdout'
+            $withheld | Should -Match 'synthetic-private-stderr'
         }
 
         It 'Forwards -Tag to the vally CLI as --tag and echoes it in the result' {
@@ -722,12 +750,15 @@ Describe 'Invoke-VallyEvals.ps1 entry script' -Tag 'Integration' {
 
             $manifestPath = Join-Path $root 'manifest.json'
             @{ artifacts = $Artifacts } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding utf8
+            $changedSpecManifestPath = Join-Path $root 'changed-spec.json'
+            @{ artifacts = @() } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $changedSpecManifestPath -Encoding utf8
 
             return [pscustomobject]@{
                 Root         = $root
                 EvalRoot     = $evalRoot
                 LogsDir      = $logsDir
                 ManifestPath = $manifestPath
+                ChangedSpecManifestPath = $changedSpecManifestPath
                 SummaryPath  = Join-Path $logsDir 'eval-summary.json'
             }
         }
@@ -926,6 +957,118 @@ stimuli:
 
         $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
         $summary.totals.artifacts | Should -Be 0
+    }
+
+    It 'executes exactly one canonical ordinary shard and stamps producer identity' {
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'alpha'; path = '.github/agents/hve-core/alpha.agent.md'; status = 'M' }
+            @{ kind = 'agent'; artifactId = 'beta'; path = '.github/agents/hve-core/beta.agent.md'; status = 'M' }
+        )
+        $specAlpha = "name: alpha`ndefaults:`n  runs: 1`nstimuli:`n  - name: alpha`n    prompt: hi`n    tags:`n      agent: alpha"
+        $specBeta = "name: beta`ndefaults:`n  runs: 1`nstimuli:`n  - name: beta`n    prompt: hi`n    tags:`n      agent: beta"
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(
+            @{ Name = 'alpha.yaml'; Yaml = $specAlpha }
+            @{ Name = 'beta.yaml'; Yaml = $specBeta }
+        )
+        $planPath = Join-Path $fx.Root 'agent-eval-plan.json'
+        & pwsh -NoProfile -File (Join-Path $PSScriptRoot '../../evals/New-AgentEvalPlan.ps1') `
+            -ManifestPath $fx.ManifestPath `
+            -ChangedSpecManifestPath $fx.ChangedSpecManifestPath `
+            -EvalRoot $fx.EvalRoot `
+            -OutputPath $planPath `
+            -RepoRoot $fx.Root *> $null
+        $LASTEXITCODE | Should -Be 0
+        $plan = Get-Content -LiteralPath $planPath -Raw | ConvertFrom-Json -Depth 50
+        $shard = @($plan.ordinaryShards | Where-Object { @($_.artifacts) -contains 'agent:alpha' })[0]
+
+        $env:STUB_VALLY_MODE = 'pass'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -ChangedSpecManifestPath $fx.ChangedSpecManifestPath `
+                -PlanPath $planPath `
+                -ShardId $shard.id `
+                -Kind agent `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath `
+                -SkipInputModeration -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        }
+
+        $LASTEXITCODE | Should -Be 0
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.producer | Should -Be $shard.id
+        $summary.planDigest | Should -Be $plan.planDigest
+        @($summary.perArtifact) | Should -HaveCount 1
+        $summary.perArtifact[0].artifactId | Should -Be 'alpha'
+    }
+
+    It 'rejects manifest drift before canonical shard execution' {
+        $spec = "name: alpha`ndefaults:`n  runs: 1`nstimuli:`n  - name: alpha`n    prompt: hi`n    tags:`n      agent: alpha"
+        $fx = New-EvalFixture `
+            -Artifacts @(@{ kind = 'agent'; artifactId = 'alpha'; path = '.github/agents/hve-core/alpha.agent.md'; status = 'M' }) `
+            -Specs @(@{ Name = 'alpha.yaml'; Yaml = $spec })
+        $planPath = Join-Path $fx.Root 'agent-eval-plan.json'
+        & pwsh -NoProfile -File (Join-Path $PSScriptRoot '../../evals/New-AgentEvalPlan.ps1') `
+            -ManifestPath $fx.ManifestPath -ChangedSpecManifestPath $fx.ChangedSpecManifestPath `
+            -EvalRoot $fx.EvalRoot -OutputPath $planPath -RepoRoot $fx.Root *> $null
+        $plan = Get-Content -LiteralPath $planPath -Raw | ConvertFrom-Json -Depth 50
+        Add-Content -LiteralPath $fx.ManifestPath -Value ' ' -Encoding utf8
+
+        & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath -ChangedSpecManifestPath $fx.ChangedSpecManifestPath `
+            -PlanPath $planPath -ShardId $plan.ordinaryShards[0].id -Kind agent `
+            -EvalRoot $fx.EvalRoot -LogsDir $fx.LogsDir -RepoRoot $fx.Root `
+            -VallyCommand $script:StubPath -SkipInputModeration -SkipOutputModeration *> $null
+
+        $LASTEXITCODE | Should -Be 2
+    }
+
+    It 'rejects re-signed duplicate ownership before canonical shard execution' {
+        $spec = "name: alpha`ndefaults:`n  runs: 1`nstimuli:`n  - name: alpha`n    prompt: hi`n    tags:`n      agent: alpha"
+        $fx = New-EvalFixture `
+            -Artifacts @(@{ kind = 'agent'; artifactId = 'alpha'; path = '.github/agents/hve-core/alpha.agent.md'; status = 'M' }) `
+            -Specs @(@{ Name = 'alpha.yaml'; Yaml = $spec })
+        $planPath = Join-Path $fx.Root 'agent-eval-plan.json'
+        & pwsh -NoProfile -File (Join-Path $PSScriptRoot '../../evals/New-AgentEvalPlan.ps1') `
+            -ManifestPath $fx.ManifestPath -ChangedSpecManifestPath $fx.ChangedSpecManifestPath `
+            -EvalRoot $fx.EvalRoot -OutputPath $planPath -RepoRoot $fx.Root *> $null
+        $plan = Get-Content -LiteralPath $planPath -Raw | ConvertFrom-Json -Depth 50
+        $duplicate = [pscustomobject][ordered]@{
+            id = 'ordinary-02'
+            expectedTrialWeight = $plan.ordinaryShards[0].expectedTrialWeight
+            artifacts = @($plan.ordinaryShards[0].artifacts)
+            runKeys = @($plan.ordinaryShards[0].runKeys)
+        }
+        $plan.ordinaryShards = @($plan.ordinaryShards) + @($duplicate)
+        $payload = [ordered]@{
+            schemaVersion = $plan.schemaVersion
+            manifestDigests = [ordered]@{
+                changedArtifacts = $plan.manifestDigests.changedArtifacts
+                changedSpecs = $plan.manifestDigests.changedSpecs
+            }
+            baseline = [ordered]@{
+                required = [bool]$plan.baseline.required
+                reason = [string]$plan.baseline.reason
+                models = @($plan.baseline.models)
+            }
+            ordinaryShards = @($plan.ordinaryShards)
+            expectedProducers = @($plan.expectedProducers)
+        }
+        $plan.planDigest = Get-AgentEvalValueDigest -Value $payload
+        $plan | ConvertTo-Json -Depth 50 | Set-Content -LiteralPath $planPath -Encoding utf8NoBOM
+
+        & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath -ChangedSpecManifestPath $fx.ChangedSpecManifestPath `
+            -PlanPath $planPath -ShardId 'ordinary-01' -Kind agent `
+            -EvalRoot $fx.EvalRoot -LogsDir $fx.LogsDir -RepoRoot $fx.Root `
+            -VallyCommand $script:StubPath -SkipInputModeration -SkipOutputModeration *> $null
+
+        $LASTEXITCODE | Should -Be 2
     }
 
     It 'Runs a shared spec once per artifact with a tag filter when multiple artifacts map to it' {

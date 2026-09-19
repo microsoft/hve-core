@@ -166,11 +166,11 @@ stimuli:
         config:
           pattern: '(?is)Run timestamp.{0,500}Total open inventory.{0,500}Next cursor'
       - type: output-matches
-        name: compact-issue-index
+        name: backlog-grooming-assesses-large-inventory-advisory-33fcc738
         config:
           pattern: '(?i)\|\s*Issue\s*\|\s*Similarity\s*\|\s*Disposition\s*\|\s*Status\s*\|\s*Recommended next step\s*\|'
       - type: output-matches
-        name: labeled-issue-details
+        name: backlog-grooming-assesses-large-inventory-advisory-1f434e84
         config:
           pattern: '(?is)Issue #?105.{0,1500}Repository evidence.{0,1500}Assessment status'
       - type: output-matches

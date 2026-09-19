@@ -39,6 +39,14 @@
     artifact is unchanged (issue #2297). Resolved relative to the repository
     root when not absolute. Ignored when empty or missing.
 
+.PARAMETER PlanPath
+    Optional canonical agent eval plan. Must be supplied with ShardId. Agent
+    workers validate plan and manifest digests plus exact artifact and run-key
+    ownership before model-backed execution.
+
+.PARAMETER ShardId
+    Ordinary shard identifier from PlanPath. Must be supplied with PlanPath.
+
 .PARAMETER EvalRoot
     Filesystem path to the eval spec root. Defaults to `evals/`. Resolved
     relative to the repository root when not absolute.
@@ -109,6 +117,8 @@
 param(
     [string]$ManifestPath,
     [string]$ChangedSpecManifestPath,
+    [string]$PlanPath,
+    [string]$ShardId,
     [string]$EvalRoot,
     [string]$LogsDir,
     [ValidateSet('agent','prompt','instruction','skill')]
@@ -372,6 +382,7 @@ if ([string]::IsNullOrWhiteSpace($LogsDir))      { $LogsDir      = 'logs' }
 $resolvedManifest = Resolve-PathFromRoot -Path $ManifestPath -RepoRoot $resolvedRoot
 $resolvedEvalRoot = Resolve-PathFromRoot -Path $EvalRoot     -RepoRoot $resolvedRoot
 $resolvedLogsDir  = Resolve-PathFromRoot -Path $LogsDir      -RepoRoot $resolvedRoot
+$resolvedPlanPath = if ([string]::IsNullOrWhiteSpace($PlanPath)) { $null } else { Resolve-PathFromRoot -Path $PlanPath -RepoRoot $resolvedRoot }
 
 if (-not (Test-Path -LiteralPath $resolvedManifest -PathType Leaf)) {
     Write-Host "::error file=$ManifestPath::Manifest not found: $resolvedManifest"
@@ -383,6 +394,61 @@ if (-not (Test-Path -LiteralPath $resolvedEvalRoot -PathType Container)) {
 }
 if (-not (Test-Path -LiteralPath $resolvedLogsDir -PathType Container)) {
     New-Item -ItemType Directory -Path $resolvedLogsDir -Force | Out-Null
+}
+
+if ([string]::IsNullOrWhiteSpace($PlanPath) -xor [string]::IsNullOrWhiteSpace($ShardId)) {
+    Write-Host '::error::PlanPath and ShardId must be supplied together.'
+    exit 2
+}
+
+$canonicalPlan = $null
+$assignedShard = $null
+if ($resolvedPlanPath) {
+    if (-not (Test-Path -LiteralPath $resolvedPlanPath -PathType Leaf)) {
+        Write-Host "::error file=$PlanPath::Canonical agent eval plan not found."
+        exit 2
+    }
+    if ([string]::IsNullOrWhiteSpace($ChangedSpecManifestPath)) {
+        Write-Host '::error::ChangedSpecManifestPath is required for canonical shard validation.'
+        exit 2
+    }
+    $resolvedChangedSpecForPlan = Resolve-PathFromRoot -Path $ChangedSpecManifestPath -RepoRoot $resolvedRoot
+    if (-not (Test-Path -LiteralPath $resolvedChangedSpecForPlan -PathType Leaf)) {
+        Write-Host "::error file=$ChangedSpecManifestPath::Changed-spec manifest not found."
+        exit 2
+    }
+    try {
+        $canonicalPlan = Get-Content -LiteralPath $resolvedPlanPath -Raw -Encoding utf8 | ConvertFrom-Json -Depth 50 -ErrorAction Stop
+    }
+    catch {
+        Write-Host "::error file=$PlanPath::Canonical agent eval plan is unreadable."
+        exit 2
+    }
+    if (([string]$canonicalPlan.schemaVersion -split '\.')[0] -ne '1' -or -not (Test-AgentEvalPlanDigest -Plan $canonicalPlan)) {
+        Write-Host "::error file=$PlanPath::Canonical agent eval plan schema or digest is invalid."
+        exit 2
+    }
+    if ([string]$canonicalPlan.manifestDigests.changedArtifacts -cne (Get-AgentEvalFileDigest -Path $resolvedManifest) -or
+        [string]$canonicalPlan.manifestDigests.changedSpecs -cne (Get-AgentEvalFileDigest -Path $resolvedChangedSpecForPlan)) {
+        Write-Host '::error::Canonical agent eval plan manifest digests do not match worker inputs.'
+        exit 2
+    }
+    try {
+        Assert-AgentEvalOwnership `
+            -ExpectedArtifact @($canonicalPlan.ordinaryShards.artifacts | ForEach-Object { [string]$_ } | Sort-Object -Unique) `
+            -ExpectedRunKey @($canonicalPlan.ordinaryShards.runKeys | ForEach-Object { [string]$_ } | Sort-Object -Unique) `
+            -Shard @($canonicalPlan.ordinaryShards)
+    }
+    catch {
+        Write-Host "::error file=$PlanPath::Canonical agent eval plan ownership is invalid: $($_.Exception.Message)"
+        exit 2
+    }
+    $matchingShards = @($canonicalPlan.ordinaryShards | Where-Object { [string]$_.id -ceq $ShardId })
+    if ($matchingShards.Count -ne 1) {
+        Write-Host "::error::Canonical agent eval plan contains $($matchingShards.Count) matches for shard '$ShardId'."
+        exit 2
+    }
+    $assignedShard = $matchingShards[0]
 }
 
 $manifest = Get-Content -LiteralPath $resolvedManifest -Raw | ConvertFrom-Json
@@ -442,6 +508,19 @@ $shardOwnsEquivalence = ($kindFilter.Count -eq 0) -or ($kindFilter -contains 'ag
 if ($kindFilter.Count -gt 0) {
     $artifacts = @($artifacts | Where-Object { $kindFilter -contains [string]$_.kind })
 }
+if ($assignedShard) {
+    if ($kindFilter.Count -ne 1 -or $kindFilter[0] -ne 'agent') {
+        Write-Host '::error::Canonical ordinary shards require Kind agent.'
+        exit 2
+    }
+    $assignedArtifactKeys = @($assignedShard.artifacts | ForEach-Object { [string]$_ } | Sort-Object -Unique)
+    $artifacts = @($artifacts | Where-Object { "agent:$([string]$_.artifactId)" -in $assignedArtifactKeys })
+    $observedArtifactKeys = @($artifacts | ForEach-Object { "$([string]$_.kind):$([string]$_.artifactId)" } | Sort-Object -Unique)
+    if (@(Compare-Object -ReferenceObject $assignedArtifactKeys -DifferenceObject $observedArtifactKeys).Count -gt 0) {
+        Write-Host "::error::Worker artifact set does not match canonical shard '$ShardId'."
+        exit 2
+    }
+}
 
 $summaryPath = Join-Path -Path $resolvedLogsDir -ChildPath 'eval-summary.json'
 
@@ -456,6 +535,9 @@ $equivalenceWorkPending = $EnableBaselineEquivalence -and $shardOwnsEquivalence 
 
 if ($artifacts.Count -eq 0 -and -not $equivalenceWorkPending) {
     $emptySummary = [ordered]@{
+        producer     = if ($assignedShard) { $ShardId } elseif ($kindFilter.Count -gt 0) { $kindFilter -join '-' } else { 'all' }
+        planDigest   = if ($canonicalPlan) { $canonicalPlan.planDigest } else { $null }
+        manifestDigests = if ($canonicalPlan) { $canonicalPlan.manifestDigests } else { $null }
         manifestPath = $resolvedManifest
         evalRoot     = $resolvedEvalRoot
         model        = $Model
@@ -471,6 +553,7 @@ if ($artifacts.Count -eq 0 -and -not $equivalenceWorkPending) {
         perArtifact  = @()
         perSpec      = @()
         equivalence  = @()
+        phaseTimings = @()
     }
     Write-JsonFile -Value $emptySummary -Path $summaryPath
     Write-Host "No changed AI artifacts to evaluate. Summary written to $summaryPath"
@@ -538,6 +621,15 @@ foreach ($equivalenceRunKey in $equivalenceRunKeys) {
     $uniqueSpecRuns.Remove($equivalenceRunKey)
 }
 
+if ($assignedShard) {
+    $expectedRunKeys = @($assignedShard.runKeys | ForEach-Object { [string]$_ } | Sort-Object -Unique)
+    $observedRunKeys = @($uniqueSpecRuns.GetEnumerator() | ForEach-Object { [string]$_.Key } | Sort-Object -Unique)
+    if (@(Compare-Object -ReferenceObject $expectedRunKeys -DifferenceObject $observedRunKeys).Count -gt 0) {
+        Write-Host "::error::Worker run-key set does not match canonical shard '$ShardId'."
+        exit 2
+    }
+}
+
 if ($missingSpecs.Count -gt 0) {
     foreach ($m in $missingSpecs) {
         Write-Host "::error file=$($m.path)::No eval spec resolves $($m.kind):$($m.artifactId); run Test-StimulusPresence first."
@@ -556,6 +648,7 @@ $specResults = @{}
 $failedSpecs = 0
 $promotedRunKeys = @{}
 $outputModerationRuns = [System.Collections.Generic.List[hashtable]]::new()
+$phaseTimings = [System.Collections.Generic.List[object]]::new()
 
 foreach ($runKey in $uniqueSpecRuns.Keys) {
     $run     = $uniqueSpecRuns[$runKey]
@@ -632,9 +725,11 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         -Model $Model `
         -VallyCommand $VallyCommand `
         -LogPath $specLog `
-        -Tag $tag
+        -Tag $tag `
+        -Worker $(if ($assignedShard) { $ShardId } else { $specKey })
     $result['specRel'] = $specRel
     $result['tag'] = $tag
+    foreach ($timing in @($result.phaseTimings)) { $phaseTimings.Add($timing) }
 
     # Output moderation is deferred until all tag-filtered runs finish so the
     # shard pays the Detoxify model startup cost once.
@@ -829,12 +924,24 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
 if (-not $SkipOutputModeration -and $outputModerationRuns.Count -gt 0) {
     $batchId = if ($kindFilter.Count -gt 0) { $kindFilter -join '-' } else { 'all' }
     Write-Verbose "Post-eval content moderation for $($outputModerationRuns.Count) run(s) in shard: $batchId"
+    $moderationStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    Write-Host "Vally progress: event=phase-start phase=output-moderation worker=$batchId attempt=1 elapsedSeconds=0 exitCategory=unknown" -ForegroundColor DarkGray
     $batchModeration = Test-SpecOutputModerationBatch `
         -Run $outputModerationRuns.ToArray() `
         -BatchId (ConvertTo-SafeKey -Value $batchId) `
         -ModerationScript $moderationScript `
         -Threshold $ModerationThreshold `
         -RepoRoot $resolvedRoot
+    $moderationStopwatch.Stop()
+    $moderationExitCategory = if (@($batchModeration.byRun.Values | Where-Object { $_.error }).Count -gt 0) { 'unknown' } else { 'success' }
+    Write-Host "Vally progress: event=phase-complete phase=output-moderation worker=$batchId attempt=1 elapsedSeconds=$([math]::Floor($moderationStopwatch.Elapsed.TotalSeconds)) exitCategory=$moderationExitCategory" -ForegroundColor DarkGray
+    $phaseTimings.Add([ordered]@{
+            phase          = 'output-moderation'
+            worker         = $batchId
+            attempt        = 1
+            elapsedSeconds = [math]::Round($moderationStopwatch.Elapsed.TotalSeconds, 3)
+            exitCategory   = $moderationExitCategory
+        })
 
     foreach ($runKey in $batchModeration.byRun.Keys) {
         if (-not $specResults.ContainsKey($runKey)) { continue }
@@ -1178,6 +1285,9 @@ foreach ($s in $perSpec) {
 }
 
 $summary = [ordered]@{
+    producer     = if ($assignedShard) { $ShardId } elseif ($kindFilter.Count -gt 0) { $kindFilter -join '-' } else { 'all' }
+    planDigest   = if ($canonicalPlan) { $canonicalPlan.planDigest } else { $null }
+    manifestDigests = if ($canonicalPlan) { $canonicalPlan.manifestDigests } else { $null }
     manifestPath = $resolvedManifest
     evalRoot     = $resolvedEvalRoot
     model        = $Model
@@ -1193,6 +1303,7 @@ $summary = [ordered]@{
     perArtifact  = @($perArtifact)
     perSpec      = @($perSpec)
     equivalence  = @($equivalenceResults)
+    phaseTimings = @($phaseTimings)
 }
 
 Write-JsonFile -Value $summary -Path $summaryPath

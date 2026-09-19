@@ -117,14 +117,83 @@ function stringifyEvidenceValue(value) {
   return String(value);
 }
 
+function collectNodes(value, nodes = []) {
+  if (!value || typeof value !== 'object') return nodes;
+  const isAxValueWrapper = value.type !== undefined && value.value !== undefined;
+  const isAxProperty = value.name !== undefined && value.value !== undefined && value.role === undefined;
+  if (!Array.isArray(value) && !isAxValueWrapper && !isAxProperty && (value.role !== undefined || value.name !== undefined)) nodes.push(value);
+  for (const child of Array.isArray(value) ? value : Object.values(value)) {
+    if (child && typeof child === 'object') collectNodes(child, nodes);
+  }
+  return nodes;
+}
+
+function unwrapAxValue(value) {
+  if (value && typeof value === 'object' && value.value !== undefined) {
+    const valueType = String(value.type || '').toLowerCase();
+    if ((valueType.includes('boolean') || valueType === 'tristate') && (value.value === 'true' || value.value === 'false')) {
+      return value.value === 'true';
+    }
+    return value.value;
+  }
+  return value;
+}
+
+function readNodeValue(node, key) {
+  if (node?.[key] !== undefined) {
+    return unwrapAxValue(node[key]);
+  }
+  const property = Array.isArray(node?.properties)
+    ? node.properties.find((entry) => entry?.name === key)
+    : null;
+  return unwrapAxValue(property?.value);
+}
+
+function nodeMatches(node, expected) {
+  return Object.entries(expected).every(([key, expectedValue]) => {
+    const actualValue = readNodeValue(node, key);
+    if (key === 'nameContains') {
+      return normalizeText(readNodeValue(node, 'name')).toLowerCase().includes(normalizeText(expectedValue).toLowerCase());
+    }
+    if (Array.isArray(expectedValue)) {
+      return expectedValue.some((candidate) => String(candidate).toLowerCase() === String(actualValue).toLowerCase());
+    }
+    return typeof expectedValue === 'string'
+      ? String(actualValue ?? '').toLowerCase() === expectedValue.toLowerCase()
+      : actualValue === expectedValue;
+  });
+}
+
+function evaluateNodeAssertion(assertion, evidenceType, value) {
+  const expected = assertion.expected;
+  if (!expected || typeof expected !== 'object' || Array.isArray(expected)) {
+    return { status: 'invalid-config', detail: `${assertion.type} requires an expected object.`, evidenceType };
+  }
+  const matches = collectNodes(value).filter((node) => nodeMatches(node, expected));
+  if (assertion.type === 'nodeAbsent') {
+    return matches.length === 0
+      ? { status: 'pass', detail: `nodeAbsent matched the ${evidenceType} evidence`, evidenceType }
+      : { status: 'fail', detail: `nodeAbsent found ${matches.length} matching node(s)`, evidenceType };
+  }
+  const minimum = Number.isInteger(assertion.minCount) ? assertion.minCount : 1;
+  const maximum = Number.isInteger(assertion.maxCount) ? assertion.maxCount : Number.POSITIVE_INFINITY;
+  const maximumLabel = Number.isFinite(maximum) ? maximum : 'unbounded';
+  return matches.length >= minimum && matches.length <= maximum
+    ? { status: 'pass', detail: `nodeMatches found ${matches.length} matching node(s)`, evidenceType }
+    : { status: 'fail', detail: `nodeMatches found ${matches.length}; expected ${minimum}-${maximumLabel}`, evidenceType };
+}
+
 export function evaluateAssertion(assertion, evidence = [], options = {}) {
   if (!assertion || typeof assertion !== 'object') {
     return { status: 'invalid-config', detail: 'Assertion must be an object.' };
   }
 
   const assertionOptions = assertion?.normalization || options || {};
-  const normalizedValue = normalizeText(String(assertion.value ?? '').trim(), assertionOptions);
   const { evidenceType, value } = normalizeEvidencePayload(assertion, evidence, assertionOptions);
+  if (assertion.type === 'nodeMatches' || assertion.type === 'nodeAbsent') {
+    return evaluateNodeAssertion(assertion, evidenceType, value);
+  }
+  const normalizedValue = normalizeText(String(assertion.value ?? '').trim(), assertionOptions);
   const phraseText = stringifyEvidenceValue(value);
   const normalizedPhraseText = normalizeText(phraseText, assertionOptions);
   const loweredText = normalizedPhraseText.toLowerCase();
@@ -138,6 +207,12 @@ export function evaluateAssertion(assertion, evidence = [], options = {}) {
     return loweredText.includes(loweredValue)
       ? { status: 'pass', detail: `contains matched the ${evidenceType} evidence`, evidenceType }
       : { status: 'fail', detail: `contains did not match the ${evidenceType} evidence`, evidenceType };
+  }
+
+  if (assertion.type === 'notContains') {
+    return !loweredText.includes(loweredValue)
+      ? { status: 'pass', detail: `notContains matched the ${evidenceType} evidence`, evidenceType }
+      : { status: 'fail', detail: `notContains found prohibited ${evidenceType} evidence`, evidenceType };
   }
 
   if (assertion.type === 'orderedContains') {

@@ -1,0 +1,32 @@
+{
+  "fixture": {
+    "id": "synthetic-copilot-otel-baselines",
+    "fictional": true,
+    "evidenceCeiling": "These snapshots test provenance verdict language and do not represent a real extension or store."
+  },
+  "baseline": {
+    "captured_at_iso": "2026-09-17T00:00:00+0000",
+    "metric_names": [],
+    "service_versions": ["synthetic-1"],
+    "session_ids": [],
+    "tempo_trace_names": []
+  },
+  "confirmed": {
+    "metric_names": ["copilot_chat_tool_call_duration"],
+    "service_versions": ["synthetic-1"],
+    "session_ids": [],
+    "tempo_trace_names": []
+  },
+  "inconclusive": {
+    "metric_names": [],
+    "service_versions": ["synthetic-1"],
+    "session_ids": ["synthetic-session-001"],
+    "tempo_trace_names": []
+  },
+  "notConfirmed": {
+    "metric_names": [],
+    "service_versions": ["synthetic-1"],
+    "session_ids": [],
+    "tempo_trace_names": []
+  }
+}

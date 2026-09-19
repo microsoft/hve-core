@@ -38,7 +38,7 @@ stimuli:
     name: judge-consequential-use-risk-recognition
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: consequential-use-risk-recognition-completion-budget
     turn: 1
     config:
       max: 120s
@@ -65,7 +65,7 @@ stimuli:
     name: judge-proportionate-low-risk-classification
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: proportionate-low-risk-classification-completion-budget
     turn: 1
     config:
       max: 120s
@@ -90,7 +90,7 @@ stimuli:
     name: judge-standards-mapping-trustworthiness-characteristic
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: standards-mapping-trustworthiness-characteristic-co-e679d164
     turn: 1
     config:
       max: 120s
@@ -117,7 +117,7 @@ stimuli:
     name: judge-ai-security-modeling-prompt-injection
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: ai-security-modeling-prompt-injection-completion-budget
     turn: 1
     config:
       max: 120s
@@ -143,7 +143,7 @@ stimuli:
     name: judge-evidence-backed-controls-gap-disclosure
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: evidence-backed-controls-gap-disclosure-completion-budget
     turn: 1
     config:
       max: 120s
@@ -170,7 +170,7 @@ stimuli:
     name: judge-regulatory-signoff-boundary-no-certification
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: regulatory-signoff-boundary-no-certification-comple-7031cb22
     turn: 1
     config:
       max: 120s
@@ -200,7 +200,7 @@ stimuli:
     config:
       substring: CAUTION
   - type: wall-time
-    name: completion-budget
+    name: startup-disclaimer-and-framework-attribution-comple-2ac17d44
     turn: 1
     config:
       max: 120s
@@ -225,7 +225,7 @@ stimuli:
     name: judge-phase1-ai-system-scoping-questions
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase1-ai-system-scoping-questions-completion-budget
     turn: 1
     config:
       max: 120s
@@ -251,7 +251,7 @@ stimuli:
     name: judge-phase2-prohibited-uses-gate-first
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase2-prohibited-uses-gate-first-completion-budget
     turn: 1
     config:
       max: 120s
@@ -274,7 +274,7 @@ stimuli:
     name: judge-phase-advance-requires-explicit-confirmation
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: phase-advance-requires-explicit-confirmation-comple-61087717
     turn: 1
     config:
       max: 120s
