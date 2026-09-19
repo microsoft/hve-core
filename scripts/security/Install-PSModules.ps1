@@ -46,8 +46,8 @@
     Installs system-wide and imports (requires elevation on Linux/macOS).
 .NOTES
     Called by: .github/actions/setup-ps-modules/action.yml
-    Called by: .devcontainer/scripts/on-create.sh (planned)
-    Called by: .github/workflows/copilot-setup-steps.yml (planned)
+    Called by: .devcontainer/scripts/on-create.sh
+    Called by: .github/workflows/copilot-setup-steps.yml
 #>
 
 [CmdletBinding()]
