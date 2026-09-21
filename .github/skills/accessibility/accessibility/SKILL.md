@@ -2,7 +2,7 @@
 name: accessibility
 description: "Consolidated accessibility skill entrypoint for WCAG 2.2, ARIA Authoring Practices, cognitive accessibility, Section 508, EN 301 549, design intent verification, and the Accessibility Planner workflow."
 license: MIT
-compatibility: "Requires Python 3.11+ and uv; the scanner additionally needs Node.js and network access to run 'npx --yes @axe-core/cli@4.12.1'."
+compatibility: "Requires Python 3.11+ and uv; the scanner additionally needs Node.js and network access to fetch the pinned axe-core CLI from the public npm registry."
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
@@ -207,9 +207,9 @@ $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1'; npm ci
 For automated NVDA runs, prepare the Windows machine once, then install the asset selected by the skill-local Guidepup package. Run the asset command again after updating Guidepup:
 
 ```powershell
-npx --yes @guidepup/setup@0.25.3 setup
-Set-Location scripts/runtime_a11y
-npx --yes @guidepup/setup@0.25.3 install nvda
+Set-Location <skill-root>/scripts/runtime_a11y
+npx --yes --registry=https://registry.npmjs.org/ @guidepup/setup@0.25.3 setup
+npx --yes --registry=https://registry.npmjs.org/ @guidepup/setup@0.25.3 install nvda
 ```
 
 The commands configure the machine and write versioned assets to the Guidepup user cache. They are not part of ordinary dependency installation. Run the prerequisite-only probe before a calibration session:

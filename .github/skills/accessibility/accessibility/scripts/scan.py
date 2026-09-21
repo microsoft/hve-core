@@ -24,6 +24,8 @@ from runtime_a11y._errors import ScriptError as RuntimeScriptError
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_USAGE = 2
+NPM_REGISTRY = "https://registry.npmjs.org/"
+SCANNER_NPM_ROOT = Path(__file__).resolve().parent / "scanner_npm"
 
 
 class ScriptError(Exception):
@@ -232,18 +234,26 @@ def run_scan(
         allow_hosts=allow_hosts,
         allow_external=allow_external,
     )
-    command = ["npx", "--yes", "@axe-core/cli@4.12.1", "--", resolved_target]
+    command = [
+        "npx",
+        "--yes",
+        f"--registry={NPM_REGISTRY}",
+        "@axe-core/cli@4.12.1",
+        "--",
+        resolved_target,
+    ]
     try:
         completed = subprocess.run(
             command,
             capture_output=True,
             text=True,
             check=True,
+            cwd=SCANNER_NPM_ROOT,
         )
     except FileNotFoundError as exc:
         raise ScriptError(
             "Node-based axe scanner is unavailable. "
-            "Install Node.js and run 'npx --yes @axe-core/cli@4.12.1'.",
+            "Install Node.js and re-run the scanner.",
             EXIT_USAGE,
         ) from exc
     except subprocess.CalledProcessError as exc:
