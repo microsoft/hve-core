@@ -116,12 +116,12 @@
     "ci:eval:agent:report:dryrun": "npm run ci:eval:agent:matrix:dryrun && npm run ci:eval:agent:dashboard"
   },
   "devDependencies": {
-    "@cspell/cspell-json-reporter": "10.3.0",
+    "@cspell/cspell-json-reporter": "10.3.3",
     "@microsoft/vally-cli": "0.16.0",
     "@modelcontextprotocol/server": "2.0.0",
-    "@vscode/vsce": "3.9.2",
+    "@vscode/vsce": "4.0.0",
     "audit-ci": "7.1.0",
-    "cspell": "10.3.0",
+    "cspell": "10.3.3",
     "markdown-link-check": "3.15.0",
     "markdown-table-formatter": "1.7.0",
     "markdownlint-cli2": "0.23.2",
