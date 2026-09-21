@@ -2,7 +2,7 @@
 title: Accessibility Skill Security Model
 description: STRIDE threat model for the accessibility skill scanners, runtime browser harness, generated evidence, and design-intent verification boundary
 author: microsoft/hve-core
-ms.date: 2026-09-17
+ms.date: 2026-09-21
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -57,7 +57,7 @@ The skill controls initial destinations, configured routes and triggers, one dir
 
 ### Components
 
-1. `scripts/scan.py` classifies a Path A target, authorizes non-loopback HTTP(S), invokes `npx --yes @axe-core/cli@4.12.1`, normalizes JSON, and writes output.
+1. `scripts/scan.py` classifies a Path A target, authorizes non-loopback HTTP(S), invokes the pinned axe CLI from the isolated `scripts/scanner_npm` project, normalizes JSON, and writes output.
 2. `scripts/runtime_a11y/_config.py` loads Path B JSON configuration, enforces schema and URL semantics, and authorizes the base host.
 3. `scripts/runtime_a11y/__main__.py` selects surfaces and probes, then starts Node/npm/PowerShell children with the caller environment.
 4. `scripts/runtime_a11y/runner/*.mjs` validates navigation and identifiers, launches Playwright, drives probes, and emits evidence.
@@ -136,7 +136,7 @@ flowchart TD
 | Path A CLI target to classifier                    | Host network position, local filesystem, argument semantics | Reject leading dash, credentials, unsupported/ambiguous schemes, network shares, remote file authorities, missing files, and directories; classify before npx                                                                          |
 | Path A remote HTTP(S) target                       | Internal services reachable from the workstation            | Loopback permitted by default; other hosts require `--allow-host` or `--allow-external`; residual redirect, DNS, subresource, and browser egress remains G-INF-1                                                                       |
 | Path A local filesystem                            | Operator-selected local content                             | Accept an explicit existing regular local path or local `file:` URI; reject network-shaped resolved paths before any filesystem probe; reject non-local authority; access runs as the operator and is not repository-confined          |
-| npm registry                                       | Path A scanner integrity                                    | Exact package version; argv without shell; no lockfile integrity for npx resolution (G-SUP-1)                                                                                                                                          |
+| npm registry                                       | Path A scanner integrity                                    | Exact package version; canonical registry pinned on the argv; scanner-local npm project prevents adopting-repository config inheritance; no lockfile integrity for npx resolution (G-SUP-1)                                            |
 | Path B config and CLI to Python guard              | Browser destination and host network position               | JSON Schema; absolute credential-free HTTP(S); host authorization; external authorization never overrides scheme validation                                                                                                            |
 | Path B config/environment to JavaScript navigation | Navigation and artifact identity                            | Reassert and reauthorize the effective HTTP(S) base URL after CLI overrides; route paths and trigger destinations remain same-origin; portable path-bearing identifiers are rejected before writes                                     |
 | Python to Node/npm/PowerShell child                | Caller environment and execution context                    | Argument-list spawning; full inherited environment is explicit residual G-INF-3                                                                                                                                                        |
@@ -209,11 +209,11 @@ flowchart TD
 
 ### Spoofing
 
-* The axe CLI package name and version are fixed. Registry compromise or substitution of that exact release remains G-SUP-1.
+* The axe CLI package name, version, and canonical public registry are fixed. A scanner-local npm project prevents npm from inheriting project configuration from an adopting repository. Registry compromise or substitution of that exact release remains G-SUP-1.
 
 ### Tampering
 
-* `npx --yes @axe-core/cli@4.12.1 -- <target>` uses an argument list and parser boundary without a shell.
+* `npx --yes --registry=https://registry.npmjs.org/ @axe-core/cli@4.12.1 -- <target>` runs from the scanner-local npm project and uses an argument list and parser boundary without a shell.
 * npx may resolve the pinned package at runtime without a committed integrity lock for this path.
 
 ### Repudiation
@@ -384,6 +384,7 @@ flowchart TD
 ### Spoofing
 
 * Playwright selects `channel: 'chrome'`; launch-bound preflight records the browser-reported version. Guidepup selects the manifest-owned NVDA asset and records its version and effective settings. Binary signature, installation provenance, and patch posture are owned by endpoint controls (G-SUP-2).
+* The one-time Guidepup setup package name, version, and canonical public registry are fixed. Both setup commands run from the isolated `scripts/runtime_a11y` npm project so an adopting repository cannot select their registry.
 
 ### Tampering
 
