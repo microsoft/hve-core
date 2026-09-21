@@ -8,7 +8,15 @@ BeforeAll {
     function Read-RepoFile {
         param([Parameter(Mandatory)] [string]$Path)
 
-        return Get-Content -LiteralPath (Join-Path $script:RepoRoot $Path) -Raw
+        return ConvertTo-NormalizedLineEndings -Text (
+            Get-Content -LiteralPath (Join-Path $script:RepoRoot $Path) -Raw
+        )
+    }
+
+    function ConvertTo-NormalizedLineEndings {
+        param([Parameter(Mandatory)] [AllowEmptyString()] [string]$Text)
+
+        return $Text -replace "`r`n?", "`n"
     }
 
     function Test-GroomingMutationFields {
@@ -306,6 +314,7 @@ BeforeAll {
     }
 
     $script:ModulePath = Join-Path $script:RepoRoot 'scripts/agentic-workflows/backlog-grooming/Modules/BacklogGrooming.psm1'
+    $script:CollectorPath = Join-Path $script:RepoRoot 'scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomResultCollector.ps1'
     $script:BacklogGroomingModule = Import-Module $script:ModulePath -Force -PassThru
     $script:Source = Read-RepoFile '.github/workflows/backlog-groom.md'
     $script:Module = Read-RepoFile 'scripts/agentic-workflows/backlog-grooming/Modules/BacklogGrooming.psm1'
@@ -325,6 +334,11 @@ BeforeAll {
 }
 
 Describe 'Backlog grooming workflow source' -Tag 'Unit' {
+    It 'normalizes repository text assertions across checkout line endings' {
+        ConvertTo-NormalizedLineEndings -Text "alpha`r`nbeta`rgamma`ndelta" |
+            Should -Be "alpha`nbeta`ngamma`ndelta"
+    }
+
     It 'declares only a reusable worker trigger with the dedicated agent import' {
         $script:Source | Should -Match '(?m)^  workflow_call:$'
         $script:Source | Should -Not -Match '(?m)^  schedule:$'
@@ -651,6 +665,72 @@ Describe 'Candidate-addressed backlog grooming result construction' -Tag 'Unit' 
         $result.report_data.normalizations[0].code | Should -Be 'superseded_similarity_normalized'
     }
 
+    It 'downgrades supersession when equivalent lineage uses different reference forms' -ForEach @(
+        @{
+            Name = 'pull request'
+            Original = 'PR #100 delivered the original behavior'
+            Replacement = 'https://github.com/MICROSOFT/HVE-CORE/pull/100 replaced the behavior'
+        }
+        @{
+            Name = 'commit'
+            Original = 'commit AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA delivered the original behavior'
+            Replacement = 'https://github.com/microsoft/hve-core/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa removed it'
+        }
+        @{
+            Name = 'release'
+            Original = 'release V1.2.3 delivered the original behavior'
+            Replacement = 'https://github.com/Microsoft/HVE-Core/releases/tag/v1.2.3 removed it'
+        }
+    ) {
+        $row = $script:AssessedRow.Clone()
+        $row.disposition = 'Superseded'
+        $row.lineage_evidence = [ordered]@{
+            original_delivery = @($Original)
+            replacement_or_removal = @($Replacement)
+        }
+
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.issues[0].disposition | Should -Be 'Uncertain'
+        $result.report_data.issues[0].similarity_outcome | Should -Be 'Uncertain'
+    }
+
+    It 'downgrades supersession for ambiguous or unsupported lineage: <Name>' -ForEach @(
+        @{
+            Name = 'bare issue shorthand'
+            Original = '#100 delivered the original behavior'
+            Replacement = 'PR #200 replaced the original behavior'
+        }
+        @{
+            Name = 'partial commit digest'
+            Original = 'commit abcdef1 delivered the original behavior'
+            Replacement = 'PR #200 replaced the original behavior'
+        }
+        @{
+            Name = 'unsupported prose'
+            Original = 'the first implementation delivered the original behavior'
+            Replacement = 'PR #200 replaced the original behavior'
+        }
+    ) {
+        $row = $script:AssessedRow.Clone()
+        $row.disposition = 'Superseded'
+        $row.lineage_evidence = [ordered]@{
+            original_delivery = @($Original)
+            replacement_or_removal = @($Replacement)
+        }
+
+        $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
+            -OrderedCandidateIds @(1) -PriorityCandidateIds @(1) -RoundRobinCandidateIds @() `
+            -TotalOpenInventory 1 -PriorCursor 0 -StartedAt '2026-09-02T10:00:00Z' `
+            -CompletedAt '2026-09-02T10:01:00Z' -TestRoot $TestDrive
+
+        $result.report_data.issues[0].disposition | Should -Be 'Uncertain'
+        $result.report_data.issues[0].similarity_outcome | Should -Be 'Uncertain'
+    }
+
     It 'retains the prior cursor when every row is deferred' {
         $rows = 11, 13 | ForEach-Object {
             $row = $script:DeferredRow.Clone()
@@ -679,39 +759,82 @@ Describe 'Candidate-addressed backlog grooming result construction' -Tag 'Unit' 
         $result.report_data.contract_errors | Should -HaveCount 0
     }
 
-    It 'attributes missing and duplicate calls without losing a valid sibling' {
+    It 'attributes a missing call without losing valid siblings' {
         $result = Invoke-GroomingResult -Items @(
-            (New-GroomingCandidateCall -IssueNumber 10),
             (New-GroomingCandidateCall -IssueNumber 10),
             (New-GroomingCandidateCall -IssueNumber 30)
         ) -OrderedCandidateIds @(10, 20, 30)
 
-        $result.report_data.issues.issue | Should -Be @(30)
-        $result.report_data.contract_errors.issue | Should -Be @(10, 20)
-        $result.report_data.contract_errors.code | Should -Be @('invalid_row_contract', 'invalid_row_contract')
-    }
-
-    It 'rejects a foreign call side-band beside a complete valid set' {
-        $result = Invoke-GroomingResult -Items @(
-            (New-GroomingCandidateCall -IssueNumber 99),
-            (New-GroomingCandidateCall -IssueNumber 20),
-            (New-GroomingCandidateCall -IssueNumber 10)
-        ) -OrderedCandidateIds @(10, 20) -InformationVariable Rejections
-
-        $result.report_data.issues.issue | Should -Be @(10, 20)
-        $result.report_data.contract_errors | Should -HaveCount 0
-        $Rejections.MessageData | Should -Contain 'Rejected foreign backlog grooming result call for issue #99'
-    }
-
-    It 'keeps a foreign replacement side-band and represents the planned candidate as missing' {
-        $result = Invoke-GroomingResult -Items @(
-            (New-GroomingCandidateCall -IssueNumber 10),
-            (New-GroomingCandidateCall -IssueNumber 99)
-        ) -OrderedCandidateIds @(10, 20) -InformationVariable Rejections
-
-        $result.report_data.issues.issue | Should -Be @(10)
+        $result.report_data.issues.issue | Should -Be @(10, 30)
         $result.report_data.contract_errors.issue | Should -Be @(20)
-        $Rejections.MessageData | Should -Contain 'Rejected foreign backlog grooming result call for issue #99'
+        $result.report_data.contract_errors.code | Should -Be @('invalid_row_contract')
+    }
+
+    It 'throws before result construction for <Name> identity calls' -ForEach @(
+        @{
+            Name = 'invalid'
+            Message = '*invalid issue identity*'
+        }
+        @{
+            Name = 'foreign'
+            Message = '*foreign issue identity #99*'
+        }
+        @{
+            Name = 'conflicting'
+            Message = '*conflicting issue identity #1*'
+        }
+    ) {
+        $Items = switch ($Name) {
+            'invalid' {
+                @(New-GroomingCandidateCall -IssueNumber 1 -Overrides @{ 'issue-number' = 'invalid' })
+            }
+            'foreign' {
+                @(New-GroomingCandidateCall -IssueNumber 99)
+            }
+            'conflicting' {
+                @(
+                    (New-GroomingCandidateCall -IssueNumber 1)
+                    (New-GroomingCandidateCall -IssueNumber 1)
+                )
+            }
+        }
+        { Invoke-GroomingResult -Items $Items -OrderedCandidateIds @(1) } |
+            Should -Throw $Message
+    }
+
+    It 'writes no artifact for <Name> identity calls' -ForEach @(
+        @{ Name = 'invalid' }
+        @{ Name = 'foreign' }
+        @{ Name = 'conflicting' }
+    ) {
+        $Items = switch ($Name) {
+            'invalid' {
+                @(New-GroomingCandidateCall -IssueNumber 1 -Overrides @{ 'issue-number' = 'invalid' })
+            }
+            'foreign' {
+                @(New-GroomingCandidateCall -IssueNumber 99)
+            }
+            'conflicting' {
+                @(
+                    (New-GroomingCandidateCall -IssueNumber 1)
+                    (New-GroomingCandidateCall -IssueNumber 1)
+                )
+            }
+        }
+        $AgentOutputPath = Join-Path $TestDrive "$Name-agent-output.json"
+        $OutputPath = Join-Path $TestDrive "$Name-output/shard-result.json"
+        @{ items = @($Items) } | ConvertTo-Json -Depth 20 |
+            Set-Content -LiteralPath $AgentOutputPath -Encoding utf8NoBOM
+
+        $ProcessOutput = & pwsh -NoProfile -File $script:CollectorPath `
+            -AgentOutputPath $AgentOutputPath -ShardId 'shard-01' -ManifestDigest ('a' * 64) `
+            -OrderedCandidateIdsJson '[1]' -PriorityCandidateIdsJson '[1]' `
+            -RoundRobinCandidateIdsJson '[]' -TotalOpenInventoryText '1' -PriorCursorText '0' `
+            -OrchestratorRunId '12345' -OrchestratorAttemptText '1' -OutputPath $OutputPath 2>&1
+
+        $LASTEXITCODE | Should -Be 1
+        $OutputPath | Should -Not -Exist
+        "$ProcessOutput" | Should -Match 'result collection failed'
     }
 
     It 'accepts exactly five categorized evidence records across all evidence lists' {
@@ -1035,7 +1158,7 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $script:WaveValidator | Should -Match 'Wave result set is incomplete'
         $script:WaveValidator | Should -Match 'Wave issue coverage is incomplete or out of snapshot'
         [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
-        $script:Publisher | Should -Match '(?m)^  workflow_dispatch:$'
+        $script:Publisher | Should -Not -Match '(?m)^  workflow_dispatch:$'
     }
 }
 
@@ -1056,11 +1179,10 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
     It 'isolates the sole issue-write permission behind complete fan-in' {
         [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
         [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
-        $script:Publisher | Should -Match '(?m)^  workflow_dispatch:$'
+        $script:Publisher | Should -Not -Match '(?m)^  workflow_dispatch:$'
         $script:Publisher | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Sweep\s+branches:\s+- main\s+types:\s+- completed'
         $script:Publisher | Should -Match 'context\.payload\.workflow_run\?\.id'
-        $script:Publisher | Should -Match 'const manualReplay = !automaticRunId'
-        $script:Publisher | Should -Match 'manualReplay\s+\? parsePositiveInteger\("final-run-id", process\.env\.FINAL_RUN_ID\)'
+        $script:Publisher | Should -Not -Match 'manualReplay|inputs\.final-|inputs\.snapshot-digest|inputs\.source-sha|inputs\.sweep-id'
         $script:Publisher | Should -Match 'run\.head_branch !== repository\.default_branch'
         $script:Publisher | Should -Match 'run\.head_sha !== defaultRef\.object\.sha'
         $script:Publisher | Should -Match 'Publication requires the current default-branch orchestrator revision'
@@ -1231,19 +1353,24 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
     }
 
     It 'gives the model the exact semantic publisher contract' {
-        foreach ($key in @('issue', 'title', 'selection_reason', 'activity_and_ownership_context', 'acceptance_signals', 'repository_evidence', 'lineage_evidence', 'original_delivery', 'replacement_or_removal', 'similarity_outcome', 'disposition', 'grooming_finding', 'recommended_next_step', 'assessment_status', 'deferral_reason')) {
-            $script:Agent | Should -Match ([regex]::Escape("`"$key`""))
+        foreach ($key in @(
+                'issue-number', 'title', 'selection-reason', 'activity-and-ownership-context',
+                'acceptance-signals', 'similarity-outcome', 'disposition', 'grooming-finding',
+                'recommended-next-step', 'assessment-status', 'deferral-reason'
+            )) {
+            $script:Agent | Should -Match ([regex]::Escape("``$key``"))
         }
-        $script:Agent | Should -Match 'Use an integer without `#` or prose for `issue`'
-        $script:Agent | Should -Match 'Use exactly `Assessed` or `Deferred` for `assessment_status`'
-        $script:Agent | Should -Match 'For `Deferred`, use a\s+non-empty `deferral_reason`, `Uncertain` similarity and disposition, and empty\s+lineage arrays'
+        $script:Agent | Should -Match 'make exactly one final\s+`publish-backlog-grooming-result` call for each candidate'
+        $script:Agent | Should -Match 'This scalar field is the sole call identity'
+        $script:Agent | Should -Match 'Populate one through five contiguous evidence positions'
+        $script:Agent | Should -Match 'Do not serialize an `issues` envelope'
+        $script:Agent | Should -Not -Match '(?s)```json.*"issues"'
         $script:Agent | Should -Match 'isolated result job derives all\s+structural run state from the validated final rows and trusted caller input'
         $script:Policy | Should -Match 'Calculate the assessed and deferred counts from those\s+final statuses'
         $script:Policy | Should -Match 'Derive the stop reason from the complete set of final deferred\s+rows and account for every distinct deferral reason'
         $script:Source | Should -Match 'Supply semantic values only'
         $script:Source | Should -Match 'The isolated result job joins calls to trusted `ordered_candidate_ids`'
         $script:Source | Should -Match 'derives timestamps and run state'
-        $script:Agent | Should -Match 'put compared issue numbers in the finding rather than the\s+enum value'
         $script:Source | Should -Match 'return only the canonical Backlog\s+Grooming Report required by the imported agent'
     }
 
@@ -1271,8 +1398,8 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
         $script:Policy | Should -Match 'Select `Superseded` only when repository history establishes\s+both states: cite the original surface''s delivery issue or pull request and\s+the later removal or replacement issue or pull request'
         $script:Policy | Should -Match 'If either state cannot\s+be established with distinct evidence, use `Uncertain`'
         $script:Agent | Should -Not -Match 'when both are available'
-        $script:Agent | Should -Match '`lineage_evidence` with exactly\s+`original_delivery` and `replacement_or_removal` arrays'
-        $script:Agent | Should -Match 'For `Superseded`, both\s+arrays contain non-empty, distinct'
+        $script:Agent | Should -Match 'canonically distinct original-delivery and replacement-or-removal source\s+identities'
+        $script:Agent | Should -Not -Match '`lineage_evidence` with exactly'
     }
 
     It 'defines discriminating evidence rules for representative dispositions' -ForEach @(
@@ -1856,9 +1983,14 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
                 'Backlog Grooming Sweep', 'wave_capacity', 'required_waves',
                 'N_max \u2248 retention_days \* 24 \* 60 / T_wave_minutes \* wave_capacity',
                 '30 days', '2,000', '65,000', 'Recovery',
-                'first Monday of each month at 09:00 UTC'
+                'first Monday of each month at 09:00 UTC', 'Monitoring and escalation',
+                'Contract errors', 'Normalizations', 'Deferred rate', '`Uncertain` rate',
+                'Disposition mix', 'Maintainer overturns', 'qualified human maintainer',
+                'Residual risk'
             )) {
             $script:WorkflowReadme | Should -Match $content
         }
+        $script:WorkflowReadme | Should -Match 'no `workflow_dispatch` trigger'
+        $script:WorkflowReadme | Should -Match 'rerun the failed jobs in that original publisher run'
     }
 }

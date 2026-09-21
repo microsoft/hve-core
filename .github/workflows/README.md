@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-09-10
+ms.date: 2026-09-21
 ms.topic: reference
 keywords:
   - github actions
@@ -56,7 +56,7 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 | `release-stable-publish.yml`      | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or create the exact even-minor tag and draft       |
 | `release-vsix-publish.yml`        | Push of `v*` or `prerelease-v*`                         | Post-tag release producer     | Validate, package, attest, verify, and publish the exact immutable release        |
 | `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                  | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate       |
-| `backlog-groom-publisher.yml`     | Completed sweep, manual replay                          | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history |
+| `backlog-groom-publisher.yml`     | Completed sweep                                         | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history |
 | `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                           |
 | `scorecard.yml`                   | Push to main, post-tag release, schedule (Sun 3AM UTC)  | SARIF upload                  | OpenSSF Scorecard security posture                                                |
 
@@ -210,11 +210,11 @@ labeled per-issue details. Only an explicitly approved `Update` or `Comment`
 handoff can proceed to GitHub Backlog Executor, and `Close` remains prohibited.
 
 The reducer retains detailed JSON and Markdown for 30 days and writes the exact
-publisher inputs to its job summary. It does not mutate the tracker. Completion
-activates `backlog-groom-publisher.yml` through the platform `workflow_run`
-event. The publisher resolves the terminal artifact from the completed run,
-authenticates its producer and source revision, revalidates the final aggregate,
-and compares the trusted tracker state before any persistence.
+terminal artifact identity to its job summary. It does not mutate the tracker.
+Completion activates `backlog-groom-publisher.yml` through the platform
+`workflow_run` event. The publisher resolves the terminal artifact from the
+completed run, authenticates its producer and source revision, revalidates the
+final aggregate, and compares the trusted tracker state before any persistence.
 
 Core publication revalidates the aggregate and updates or reopens the compact
 bot-owned tracker without report-history or Pages permissions, wording, or
@@ -234,12 +234,13 @@ SHA. The existing Docusaurus deployment stages that history at
 History or deployment failures do not roll back the completed core tracker
 publication.
 
-The production workflow starts on schedule and also supports manual initiation
-or recovery. Its `workflow_dispatch` inputs form a versioned continuation
-protocol; operators leave the continuation fields at their defaults when
-initiating a sweep. The coordinator passes only artifact identities, digests,
-run identities, the sweep identity, and the next wave number between runs.
-Candidate issue IDs remain inside retained artifacts. Production executes
+The production orchestrator starts on schedule and also supports manual
+initiation or recovery. Its `workflow_dispatch` inputs form a versioned
+continuation protocol; operators leave the continuation fields at their
+defaults when initiating a sweep. The coordinator passes only artifact
+identities, digests, run identities, the sweep identity, and the next wave
+number between runs. Candidate issue IDs remain inside retained artifacts.
+Production executes
 `scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1`
 before checkpoint creation.
 
@@ -263,18 +264,13 @@ worker execution.
 | `checkpoint-artifact-id` | `string` | Empty                       | Positive immutable artifact ID               | Continuation | Requires plan `actions: read` |
 | `checkpoint-digest`      | `string` | Empty                       | 64 lowercase hex characters                  | Continuation | No added permission           |
 
-Automatic publication derives the run, artifact, sweep, and source identities
-from the completed orchestrator run. Manual replay has no defaults and requires
-all six values from the terminal reducer summary.
-
-| Publisher input     | Type     | Valid value or range                   | Permission effect              |
-|---------------------|----------|----------------------------------------|--------------------------------|
-| `final-run-id`      | `string` | Positive terminal orchestrator run ID  | Requires `actions: read`       |
-| `final-artifact-id` | `string` | Exact immutable final artifact ID      | Requires `actions: read`       |
-| `final-digest`      | `string` | 64 lowercase hex characters            | No added permission            |
-| `sweep-id`          | `string` | 64 lowercase hex characters            | No added permission            |
-| `snapshot-digest`   | `string` | 64 lowercase hex characters            | No added permission            |
-| `source-sha`        | `string` | 40 lowercase hex Git commit identifier | Authenticates the producer run |
+Publication derives the run, artifact, sweep, and source identities only from
+the completed orchestrator run delivered by `workflow_run`. The publisher has
+no `workflow_dispatch` trigger or caller-supplied identity inputs. If an
+automatic publisher attempt fails while the exact final artifact remains
+retained, rerun the failed jobs in that original publisher run. When the
+artifact has expired or its source revision is no longer accepted, start a new
+sweep instead of replaying publication from another ref.
 
 ### Permissions
 
@@ -308,8 +304,9 @@ Before setting it to `true`, complete this checklist:
 
 Rollback by unsetting the variable or changing it to any value other than
 `true`. Tracker publication remains active. After an optional failure, inspect
-the history or deployment job, correct the prerequisite, and replay the exact
-publisher tuple if the report should be retried.
+the history or deployment job, correct the prerequisite, and rerun the failed
+jobs in the original automatic publisher run while its authenticated artifacts
+remain retained.
 
 ### Capacity and cost
 
@@ -371,7 +368,7 @@ repository and account billing before approving a large snapshot.
 | Artifact retrieval  | Cross-run download requires an authenticated token and exact run ID; artifact ID, name, producer workflow, run, source SHA, schema, and digest are revalidated |
 | Artifact retention  | Sweep-critical artifacts use 30-day retention; when enabled, accepted final reports persist on the report-history branch and Pages                             |
 | Artifact storage    | Stored bytes count against repository or account quotas; artifact count grows per wave and with reruns                                                         |
-| Dispatch inputs     | GitHub allows 25 top-level `workflow_dispatch` inputs and 65,535 characters; the orchestrator uses nine and the publisher uses six                             |
+| Dispatch inputs     | GitHub allows 25 top-level `workflow_dispatch` inputs and 65,535 characters; the orchestrator uses nine and the publisher uses none                            |
 | Report size         | The tracker has a 65,000-character guard and excludes per-issue rows; enabled optional publication escapes detailed evidence for Pages                         |
 
 See GitHub's [Actions limits](https://docs.github.com/en/actions/reference/limits),
@@ -385,28 +382,70 @@ account concurrency, and billing limits.
 
 ### Failure and recovery
 
-| Condition                                                               | Detection                                                       | Tracker and cursor | Automatic behavior                                            | Operator recovery                                                             | Reassessment                              |
-|-------------------------------------------------------------------------|-----------------------------------------------------------------|--------------------|---------------------------------------------------------------|-------------------------------------------------------------------------------|-------------------------------------------|
-| Worker timeout or missing shard                                         | Shared validator cannot find the exact result set               | Unchanged          | No aggregate, checkpoint, or successor                        | Rerun the bound wave                                                          | The failed wave may run again             |
-| Malformed, stale, duplicate, conflicting, or manifest-mismatched result | Shared schema, identity, digest, and coverage checks fail       | Unchanged          | Fails before checkpoint upload                                | Correct the producer or rerun the wave                                        | The rejected wave may run again           |
-| Aggregate or checkpoint upload fails                                    | Required upload step fails                                      | Unchanged          | No successor dispatch                                         | Rerun the same wave; accepted duplicate detection prevents two checkpoints    | The unaccepted wave may run again         |
-| Duplicate wave dispatch                                                 | One valid checkpoint already exists for the wave                | Unchanged          | Worker-free no-op                                             | Resume from that accepted checkpoint                                          | No accepted issue is reassessed           |
-| Continuation API request fails                                          | Dispatch step fails after checkpoint persistence                | Unchanged          | No successor starts                                           | Manually dispatch the exact next tuple from the checkpoint                    | Accepted waves are not reassessed         |
-| Run stops after checkpoint and before dispatch                          | Later initiation discovers a nonterminal contiguous chain       | Unchanged          | Active sweep resumes at the first missing wave                | Initiate the coordinator on the same ref                                      | Accepted waves are not reassessed         |
-| Active sweep is found by a later initiation                             | One valid nonterminal snapshot and chain are discovered         | Unchanged          | Coordinator resumes instead of capturing another snapshot     | Let the resumed wave continue                                                 | Accepted waves are not reassessed         |
-| Snapshot or checkpoint expires                                          | Artifact metadata reports expiry or download fails              | Unchanged          | Resume and publication fail closed                            | Start a new snapshot after reviewing abandoned evidence                       | A new snapshot reassesses eligible issues |
-| API or concurrency throttling                                           | GitHub rejects or delays metadata, download, or dispatch calls  | Unchanged          | Current job fails or remains queued; no partial tracker write | Wait for limits to reset, then resume from the last accepted checkpoint       | Only an unaccepted wave may repeat        |
-| Multiple trusted trackers                                               | Publisher re-resolves more than one trusted bot-owned marker    | Unchanged          | No issue write                                                | Resolve tracker ambiguity manually, then redispatch the exact publisher tuple | No assessment rerun required              |
-| Final reducer fails                                                     | Chain, manifest, aggregate, or exact-set validation fails       | Unchanged          | No final accepted artifact or publication summary             | Repair or rerun the first invalid or missing wave                             | Only unaccepted work should repeat        |
-| Core publisher fails                                                    | Metadata, digest, compact report, or issue API validation fails | Unchanged          | Final artifacts remain retained; tracker is not advanced      | Correct the publication blocker and redispatch the same exact tuple           | No assessment rerun required              |
-| Optional history or Pages publication fails                             | History write, SHA handoff, staging, or deployment fails        | Already advanced   | Core tracker remains published; optional job records failure  | Correct the optional prerequisite and replay the same exact publisher tuple   | No assessment rerun required              |
+| Condition                                                               | Detection                                                       | Tracker and cursor | Automatic behavior                                            | Operator recovery                                                            | Reassessment                              |
+|-------------------------------------------------------------------------|-----------------------------------------------------------------|--------------------|---------------------------------------------------------------|------------------------------------------------------------------------------|-------------------------------------------|
+| Worker timeout or missing shard                                         | Shared validator cannot find the exact result set               | Unchanged          | No aggregate, checkpoint, or successor                        | Rerun the bound wave                                                         | The failed wave may run again             |
+| Malformed, stale, duplicate, conflicting, or manifest-mismatched result | Shared schema, identity, digest, and coverage checks fail       | Unchanged          | Fails before checkpoint upload                                | Correct the producer or rerun the wave                                       | The rejected wave may run again           |
+| Aggregate or checkpoint upload fails                                    | Required upload step fails                                      | Unchanged          | No successor dispatch                                         | Rerun the same wave; accepted duplicate detection prevents two checkpoints   | The unaccepted wave may run again         |
+| Duplicate wave dispatch                                                 | One valid checkpoint already exists for the wave                | Unchanged          | Worker-free no-op                                             | Resume from that accepted checkpoint                                         | No accepted issue is reassessed           |
+| Continuation API request fails                                          | Dispatch step fails after checkpoint persistence                | Unchanged          | No successor starts                                           | Manually dispatch the exact next tuple from the checkpoint                   | Accepted waves are not reassessed         |
+| Run stops after checkpoint and before dispatch                          | Later initiation discovers a nonterminal contiguous chain       | Unchanged          | Active sweep resumes at the first missing wave                | Initiate the coordinator on the same ref                                     | Accepted waves are not reassessed         |
+| Active sweep is found by a later initiation                             | One valid nonterminal snapshot and chain are discovered         | Unchanged          | Coordinator resumes instead of capturing another snapshot     | Let the resumed wave continue                                                | Accepted waves are not reassessed         |
+| Snapshot or checkpoint expires                                          | Artifact metadata reports expiry or download fails              | Unchanged          | Resume and publication fail closed                            | Start a new snapshot after reviewing abandoned evidence                      | A new snapshot reassesses eligible issues |
+| API or concurrency throttling                                           | GitHub rejects or delays metadata, download, or dispatch calls  | Unchanged          | Current job fails or remains queued; no partial tracker write | Wait for limits to reset, then resume from the last accepted checkpoint      | Only an unaccepted wave may repeat        |
+| Multiple trusted trackers                                               | Publisher re-resolves more than one trusted bot-owned marker    | Unchanged          | No issue write                                                | Resolve tracker ambiguity manually, then rerun the failed publisher job      | No assessment rerun required              |
+| Final reducer fails                                                     | Chain, manifest, aggregate, or exact-set validation fails       | Unchanged          | No final accepted artifact or publication summary             | Repair or rerun the first invalid or missing wave                            | Only unaccepted work should repeat        |
+| Core publisher fails                                                    | Metadata, digest, compact report, or issue API validation fails | Unchanged          | Final artifacts remain retained; tracker is not advanced      | Correct the blocker, then rerun the failed job in the original publisher run | No assessment rerun required              |
+| Optional history or Pages publication fails                             | History write, SHA handoff, staging, or deployment fails        | Already advanced   | Core tracker remains published; optional job records failure  | Correct the prerequisite, then rerun the failed job in the original run      | No assessment rerun required              |
+
+### Monitoring and escalation
+
+The final aggregate, shard results, checkpoint chain, job summaries, compact
+tracker, and optional immutable report history form the audit record. Workflow
+artifacts remain available for 30 days. The tracker retains the latest compact
+state, and optional history retains accepted reports beyond artifact expiry.
+Do not copy sensitive issue details into monitoring notes.
+
+The `@microsoft/edge-ai-core-dev` CODEOWNERS team owns review and escalation.
+After each terminal sweep, a maintainer reviews the final aggregate and records
+any overturned recommendation in the affected issue or pull request so the
+decision remains linked to repository evidence.
+
+| Measure              | Review threshold                                                                        | Required response                                                                                                                                      |
+|----------------------|-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Contract errors      | Any value above zero                                                                    | Publication remains blocked. Inspect the rejected shard, correct the producer or contract, and rerun the unaccepted wave.                              |
+| Normalizations       | Any value above zero                                                                    | Review every normalized issue before using its recommendation. Escalate repeated normalization codes in two consecutive sweeps to the CODEOWNERS team. |
+| Deferred rate        | At least 25% of the snapshot                                                            | Review deferral reasons before the next sweep. At 50% or more, suspend reliance on the report until repository access or evidence gaps are corrected.  |
+| `Uncertain` rate     | At least 25% of assessed rows                                                           | Sample every `Uncertain` row and review evidence quality before maintainers act on adjacent dispositions.                                              |
+| Disposition mix      | Any disposition changes by at least 20 percentage points from the prior accepted sweep  | Compare the two retained aggregates and investigate selection, evidence, or model changes before acting on the shift.                                  |
+| Maintainer overturns | Two or more in one sweep, or the same evidence pattern overturned twice in three sweeps | Escalate the pattern to the CODEOWNERS team and update deterministic validation or worker guidance before the next scheduled sweep.                    |
+
+Every disposition is advisory. A qualified human maintainer must review the
+linked repository evidence before closing, relabeling, rewriting, or otherwise
+changing a community issue. Contract errors have no exceptional publication
+path. Any proposed bypass or alternate privileged recovery path requires a
+reviewed workflow change with CODEOWNER approval; operators must not run
+publisher code from another ref.
+
+During transition from the former manual publisher, cancel queued manual
+publisher runs and use only new `workflow_run` activations. Rerun failed jobs
+only in the original automatic publisher run while its authenticated artifact
+is retained. Expired or abandoned sweeps are replaced by a fresh snapshot.
+GitHub removes ordinary artifacts according to the 30-day retention setting;
+optional immutable history is removed only through a reviewed repository
+maintenance change.
+
+Residual risk remains because model assessments can be incomplete or
+incorrect even when transport, identity, and provenance checks pass. Thresholds
+detect shifts and evidence gaps but do not prove the advisory outcome. Human
+review of community-facing decisions is the final control.
 
 The production sweep starts on the first Monday of each month at 09:00 UTC. A
 weekly Monday cron reaches the orchestrator, which exits as a calendar no-op
 after the seventh day of the month so only the first Monday starts assessment.
 Maintainers can also initiate or resume a sweep manually. The publisher starts
-automatically only after a successful terminal sweep and supports exact manual
-replay. The publisher cannot start or continue a sweep.
+automatically only after a successful terminal sweep. It has no manual trigger
+and cannot start or continue a sweep.
 
 ## Reusable Workflows
 

@@ -549,6 +549,110 @@ function ConvertFrom-CategorizedEvidence {
 
 <#
 .SYNOPSIS
+    Extracts canonical repository source identities from lineage evidence.
+.PARAMETER Evidence
+    Lineage evidence text to parse.
+.OUTPUTS
+    System.Management.Automation.PSCustomObject
+#>
+function Get-CanonicalLineageIdentitySet {
+    [CmdletBinding()]
+    [OutputType([pscustomobject])]
+    param(
+        [Parameter(Mandatory = $true)] [AllowEmptyCollection()] [string[]]$Evidence
+    )
+
+    $Identities = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    $Valid = $Evidence.Count -gt 0
+    foreach ($EvidenceText in $Evidence) {
+        $ItemIdentities = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+
+        foreach ($Match in [regex]::Matches(
+                $EvidenceText,
+                '(?i)https://github\.com/(?<owner>[a-z0-9_.-]+)/(?<repo>[a-z0-9_.-]+)/(?<kind>issues|pull)/(?<number>[1-9]\d*)'
+            )) {
+            $Kind = if ($Match.Groups['kind'].Value -ieq 'pull') { 'pull' } else { 'issue' }
+            $Repository = "$($Match.Groups['owner'].Value)/$($Match.Groups['repo'].Value)".ToLowerInvariant()
+            $null = $ItemIdentities.Add("${Kind}:$Repository#$($Match.Groups['number'].Value)")
+        }
+        foreach ($Match in [regex]::Matches(
+                $EvidenceText,
+                '(?i)https://github\.com/(?<owner>[a-z0-9_.-]+)/(?<repo>[a-z0-9_.-]+)/commit/(?<digest>[a-f0-9]{64}|[a-f0-9]{40})\b'
+            )) {
+            $Repository = "$($Match.Groups['owner'].Value)/$($Match.Groups['repo'].Value)".ToLowerInvariant()
+            $null = $ItemIdentities.Add(
+                "commit:$Repository@$($Match.Groups['digest'].Value.ToLowerInvariant())"
+            )
+        }
+        foreach ($Match in [regex]::Matches(
+                $EvidenceText,
+                '(?i)https://github\.com/(?<owner>[a-z0-9_.-]+)/(?<repo>[a-z0-9_.-]+)/releases/tag/(?<tag>[^\s?#]+)'
+            )) {
+            $Repository = "$($Match.Groups['owner'].Value)/$($Match.Groups['repo'].Value)".ToLowerInvariant()
+            $Tag = [Uri]::UnescapeDataString($Match.Groups['tag'].Value).TrimEnd('.', ',', ';', ':', ')', ']')
+            if (-not [string]::IsNullOrWhiteSpace($Tag)) {
+                $null = $ItemIdentities.Add("release:$Repository@$($Tag.ToLowerInvariant())")
+            }
+        }
+        foreach ($Match in [regex]::Matches(
+                $EvidenceText,
+                '(?i)\b(?<kind>issue|pull\s+request|pull|pr)\s+(?:(?<owner>[a-z0-9_.-]+)/(?<repo>[a-z0-9_.-]+))?#?(?<number>[1-9]\d*)\b'
+            )) {
+            $Kind = if ($Match.Groups['kind'].Value -ieq 'issue') { 'issue' } else { 'pull' }
+            $Repository = if ($Match.Groups['owner'].Success) {
+                "$($Match.Groups['owner'].Value)/$($Match.Groups['repo'].Value)".ToLowerInvariant()
+            }
+            else {
+                'microsoft/hve-core'
+            }
+            $null = $ItemIdentities.Add("${Kind}:$Repository#$($Match.Groups['number'].Value)")
+        }
+        foreach ($Match in [regex]::Matches(
+                $EvidenceText,
+                '(?i)\bcommit\s+(?:(?<owner>[a-z0-9_.-]+)/(?<repo>[a-z0-9_.-]+)@)?(?<digest>[a-f0-9]{64}|[a-f0-9]{40})\b'
+            )) {
+            $Repository = if ($Match.Groups['owner'].Success) {
+                "$($Match.Groups['owner'].Value)/$($Match.Groups['repo'].Value)".ToLowerInvariant()
+            }
+            else {
+                'microsoft/hve-core'
+            }
+            $null = $ItemIdentities.Add(
+                "commit:$Repository@$($Match.Groups['digest'].Value.ToLowerInvariant())"
+            )
+        }
+        foreach ($Match in [regex]::Matches(
+                $EvidenceText,
+                '(?i)\brelease\s+(?:(?<owner>[a-z0-9_.-]+)/(?<repo>[a-z0-9_.-]+)@)?(?<tag>[a-z0-9][a-z0-9._/-]*)'
+            )) {
+            $Repository = if ($Match.Groups['owner'].Success) {
+                "$($Match.Groups['owner'].Value)/$($Match.Groups['repo'].Value)".ToLowerInvariant()
+            }
+            else {
+                'microsoft/hve-core'
+            }
+            $Tag = $Match.Groups['tag'].Value.TrimEnd('.', ',', ';', ':', ')', ']')
+            if (-not [string]::IsNullOrWhiteSpace($Tag)) {
+                $null = $ItemIdentities.Add("release:$Repository@$($Tag.ToLowerInvariant())")
+            }
+        }
+
+        if ($ItemIdentities.Count -eq 0) {
+            $Valid = $false
+        }
+        foreach ($Identity in $ItemIdentities) {
+            $null = $Identities.Add($Identity)
+        }
+    }
+
+    return [pscustomobject]@{
+        Valid = $Valid
+        Identities = [string[]]$Identities
+    }
+}
+
+<#
+.SYNOPSIS
     Tests whether a reconstructed row has distinct supersession lineage.
 .PARAMETER Row
     Reconstructed candidate row.
@@ -564,8 +668,17 @@ function Test-ValidSupersessionLineage {
 
     $OriginalDelivery = [string[]]$Row.lineage_evidence.original_delivery
     $ReplacementOrRemoval = [string[]]$Row.lineage_evidence.replacement_or_removal
-    return $OriginalDelivery.Count -gt 0 -and $ReplacementOrRemoval.Count -gt 0 -and
-        @($ReplacementOrRemoval | Where-Object { $OriginalDelivery -cnotcontains $_ }).Count -gt 0
+    $OriginalIdentities = Get-CanonicalLineageIdentitySet -Evidence $OriginalDelivery
+    $ReplacementIdentities = Get-CanonicalLineageIdentitySet -Evidence $ReplacementOrRemoval
+    if (-not $OriginalIdentities.Valid -or -not $ReplacementIdentities.Valid) {
+        return $false
+    }
+
+    $OriginalSet = [System.Collections.Generic.HashSet[string]]::new(
+        [string[]]$OriginalIdentities.Identities,
+        [System.StringComparer]::Ordinal
+    )
+    return @($ReplacementIdentities.Identities | Where-Object { $OriginalSet.Contains($_) }).Count -eq 0
 }
 
 <#
@@ -767,16 +880,15 @@ function ConvertTo-BacklogGroomingShardResult {
         if (-not $IssueState.Present -or $IssueState.Element.ValueKind -ne [System.Text.Json.JsonValueKind]::Number -or
             -not $IssueState.Element.TryGetInt64([ref]$IssueId) -or $IssueId -le 0 -or
             $IssueId -gt 9007199254740991) {
-            Write-Information 'Rejected backlog grooming result call with invalid issue identity' -InformationAction Continue
-            continue
+            throw 'Backlog grooming result call has an invalid issue identity'
         }
         if (-not $CandidateSet.Contains($IssueId)) {
-            Write-Information "Rejected foreign backlog grooming result call for issue #$IssueId" -InformationAction Continue
-            continue
+            throw "Backlog grooming result call has foreign issue identity #$IssueId"
         }
-        if (-not $CallsByIssue.ContainsKey($IssueId)) {
-            $CallsByIssue[$IssueId] = [System.Collections.Generic.List[System.Text.Json.JsonElement]]::new()
+        if ($CallsByIssue.ContainsKey($IssueId)) {
+            throw "Backlog grooming result calls have conflicting issue identity #$IssueId"
         }
+        $CallsByIssue[$IssueId] = [System.Collections.Generic.List[System.Text.Json.JsonElement]]::new()
         $CallsByIssue[$IssueId].Add($Item.Clone())
     }
 

@@ -108,54 +108,39 @@ shared policy. Include the run timestamp, total open inventory, assessed count,
 priority cohort count, round-robin cohort count, deferred count, stop reason,
 and next cursor in a short labeled run summary before the issue index.
 
-For shard-result publication, encode the final rows as JSON with exactly
-`issues` and use this exact schema. Do not include the display summary or a
-`run` object in the publication input:
+For shard-result publication, make exactly one final
+`publish-backlog-grooming-result` call for each candidate in
+`ordered_candidate_ids`. Set `issue-number` to that candidate's positive
+integer issue number. This scalar field is the sole call identity. Do not
+depend on call order, and do not use the publication call to inspect or test
+its schema.
 
-```json
-{
-  "issues": [
-    {
-      "issue": 1,
-      "title": "raw issue title",
-      "selection_reason": "non-empty text",
-      "activity_and_ownership_context": "non-empty text",
-      "acceptance_signals": "non-empty text",
-      "repository_evidence": ["stable evidence identifier"],
-      "lineage_evidence": {
-        "original_delivery": [],
-        "replacement_or_removal": []
-      },
-      "similarity_outcome": "Distinct",
-      "disposition": "Still needed",
-      "grooming_finding": "non-empty text",
-      "recommended_next_step": "non-empty text",
-      "assessment_status": "Assessed",
-      "deferral_reason": ""
-    }
-  ]
-}
-```
+Supply semantic scalar values for `title`, `selection-reason`,
+`activity-and-ownership-context`, `acceptance-signals`,
+`similarity-outcome`, `disposition`, `grooming-finding`,
+`recommended-next-step`, `assessment-status`, and `deferral-reason`. Use
+exactly `Match`, `Similar`, `Distinct`, or `Uncertain` for
+`similarity-outcome`; exactly `Still needed`, `Likely completed`,
+`Superseded`, `Possible duplicate`, `Needs correction`, or `Uncertain` for
+`disposition`; and exactly `Assessed` or `Deferred` for
+`assessment-status`. Use an empty `deferral-reason` for `Assessed`. For
+`Deferred`, use a non-empty reason with `Uncertain` similarity and disposition.
 
-Use an integer without `#` or prose for `issue`.
-Use exactly `Match`, `Similar`, `Distinct`, or `Uncertain` for
-`similarity_outcome`; put compared issue numbers in the finding rather than the
-enum value. Use exactly `Still needed`, `Likely completed`, `Superseded`,
-`Possible duplicate`, `Needs correction`, or `Uncertain` for `disposition`.
-Use exactly `Assessed` or `Deferred` for `assessment_status`. Each issue object
-includes a non-empty `repository_evidence` array of stable paths, issue or
-pull-request numbers, commit identifiers, release identifiers, or recorded
-negative-search scopes. Each issue also includes `lineage_evidence` with exactly
-`original_delivery` and `replacement_or_removal` arrays. For `Superseded`, both
-arrays contain non-empty, distinct issue, pull-request, commit, release, or path
-identifiers establishing the original delivery and later replacement or
-removal. For other dispositions, use empty arrays when that lineage does not
-apply. Use an empty `deferral_reason` for `Assessed`. For `Deferred`, use a
-non-empty `deferral_reason`, `Uncertain` similarity and disposition, and empty
-lineage arrays. Do not rename, add, or omit keys, interpolate issue text into
-keys, or omit a selected issue. Preserve raw text values in JSON; apply cell
-escaping only to the model-facing Markdown. The isolated result job
-independently validates structured values before artifact upload.
+Populate one through five contiguous evidence positions beginning at position
+1. Supply both `evidence-N-category` and `evidence-N-text` for every populated
+position, and leave all higher positions absent. Use only `Repository`,
+`Original delivery`, or `Replacement or removal` as a category. Keep every
+evidence text at most 500 characters and use concise stable paths, issue or
+pull-request references, full commit identifiers, release identifiers, or
+summarized negative-search scopes. A `Superseded` assessment needs non-empty,
+canonically distinct original-delivery and replacement-or-removal source
+identities. Use only `Repository` evidence for a deferred assessment.
+
+Do not serialize an `issues` envelope, row, lineage object, array, timestamp,
+count summary, cursor, provenance value, result envelope, digest, or output
+path. Do not rename, add, or omit scalar call fields, interpolate issue text
+into field names, or omit a selected candidate. The isolated result job
+validates and reconstructs the structured shard result before artifact upload.
 
 After the safe output succeeds, return only the compact Markdown report. Do not
 include caller-controlled provenance, a result digest, hidden reasoning, or an
