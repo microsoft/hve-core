@@ -18,15 +18,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-human-readable-name
+        name: github-backlog-executor-frontmatter-name-and-descri-a43c9154
         config:
           pattern: '(?i)\bGitHub Backlog Executor\b'
       - type: output-matches
-        name: reports-declared-description
+        name: github-backlog-executor-frontmatter-name-and-descri-e088d5d1
         config:
           pattern: '(?i)dispatched GitHub backlog operation set in one confirmed repository'
       - type: output-matches
-        name: does-not-substitute-filename-for-name
+        name: github-backlog-executor-frontmatter-name-and-descri-429fa822
         config:
           pattern: '(?i)name\s*(is|:)\s*.{0,3}github-backlog-executor'
           negate: true
@@ -41,15 +41,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-declared-flag-value
+        name: github-backlog-executor-user-invocable-flag-reports-94615eac
         config:
           pattern: '(?i)user-invocable\s*(is|:|=)?\s*.{0,3}false'
       - type: output-matches
-        name: reaches-through-a-dispatching-parent
+        name: github-backlog-executor-user-invocable-flag-reaches-8375e6af
         config:
           pattern: '(?i)(dispatch|Backlog Manager|parent agent|orchestrator)'
       - type: output-matches
-        name: not-described-as-picker-selectable
+        name: github-backlog-executor-user-invocable-flag-not-des-4db5a97e
         config:
           pattern: '(?i)(appears in|select(able)? from|choose it in) the (agent )?picker'
           negate: true
@@ -64,23 +64,23 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-purpose-section
+        name: github-backlog-executor-structural-template-reports-5ca849de
         config:
           pattern: '(?im)^\W*Purpose\b'
       - type: output-matches
-        name: reports-inputs-section
+        name: github-backlog-executor-structural-template-reports-c87e95c7
         config:
           pattern: '(?im)^\W*Inputs\b'
       - type: output-matches
-        name: reports-required-steps-section
+        name: github-backlog-executor-structural-template-reports-427b55be
         config:
           pattern: '(?i)Required\s+Steps'
       - type: output-matches
-        name: reports-response-format-section
+        name: github-backlog-executor-structural-template-reports-23590a04
         config:
           pattern: '(?i)Response\s+Format'
       - type: output-matches
-        name: confirms-heading-matches-name
+        name: github-backlog-executor-structural-template-confirm-7216ee87
         config:
           pattern: '(?i)(match(es|ing)?|same as|identical)'
 
@@ -94,7 +94,7 @@ stimuli:
       advisory: "true"
     graders:
       - type: prompt
-        name: tool-restriction-appropriate-for-purpose
+        name: github-backlog-executor-tool-restriction-fit-tool-r-3056e84e
         config:
           prompt: |
             The response assesses whether a subagent's declared tool set fits its
@@ -107,7 +107,7 @@ stimuli:
             artifact's own contract provides.
           threshold: 0.6
       - type: output-matches
-        name: does-not-claim-runtime-enforcement-proof
+        name: github-backlog-executor-tool-restriction-fit-does-n-928e7efe
         config:
           pattern: '(?i)(this (test|check|eval) (proves|demonstrates|verifies))'
           negate: true

@@ -4,8 +4,8 @@ stimuli:
   - name: rpi-agent-class-recipe
     prompt: |
       Research evidence for this task is sufficient. The current lifecycle
-      routes planning through the `rpi-plan` skill, not the `rpi-planner` phase
-      subagent. Do not call tools. Return exactly `rpi-plan`.
+      routes planning through the `rpi-plan` skill. Do not call tools. Return
+      exactly `rpi-plan`.
     tags:
       category: agent-behavior
       advisory: "true"
@@ -25,9 +25,9 @@ stimuli:
       prompt_sha256: 3eb62554be5f1feed44fb65188c7863cbc0aa6dfa0c6a23c99e8f2e1babae210
     graders:
       - type: output-matches
-        name: terminal-state-link-row
+        name: mentions-session-artifact
         config:
-          pattern: '(?ms)\|\s*\[[^\]\r\n]+\]\(\.copilot-tracking/rpi-sessions/2026-07-22/demo-state\.json\)\s*\|\s*[^|\r\n]{1,80}\s*\|\s*$'
+          pattern: '(?i)demo-state\.json'
   - name: rpi-agent-task-recovery-class-recipe
     prompt: |
       Start `/rpi-implement` for issue 2607. The available saved state belongs

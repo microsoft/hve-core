@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-05
+ms.date: 2026-09-18
 ms.topic: how-to
 keywords:
   - evals
@@ -65,6 +65,136 @@ env:
 ```
 
 This pattern keeps each eval job hermetic, prevents credential bleed-through between matrix legs, and avoids the deprecated `--config-dir` CLI flag.
+
+## Bounded Eval Execution
+
+Eval Validation creates `logs/agent-eval-plan.json` once before any model-backed
+work. The digest-covered plan records both changed-artifact manifest hashes,
+conditional baseline applicability, planned shards, artifact and run-key ownership,
+expected trial weights, and the complete producer set.
+
+Agent, instruction, and skill artifacts stay cohesive. Artifacts connected through one
+deduplicated run key remain in the same shard, and deterministic longest-first
+assignment balances each kind by selected stimuli multiplied by declared runs. Agent
+work uses at most four `ordinary-##` shards. Instruction and skill each use at most two
+`instruction-##` and `skill-##` shards. Prompt work retains one producer.
+
+The execution matrix therefore contains one prompt row plus the planned agent,
+instruction, and skill rows. `max-parallel: 6` bounds that matrix. Baseline equivalence
+runs only when the canonical plan marks `baseline.required: true`; its fixed GPT and
+Claude producers use separate runner filesystems and a configurable maximum
+parallelism of two.
+
+At default shard counts the matrix holds more rows than the cap allows to start at
+once, so some rows wait for a free slot. To keep the longest producers from waiting
+behind short ones, the planned rows are emitted heaviest first, ordered by the
+`expectedTrialWeight` the canonical plan already computes, with an ascending shard-id
+tie-break that keeps the emitted matrix reproducible. The static prompt row stays
+first. This ordering is workload-adaptive: whichever kind carries the most trial weight
+for a given change is dispatched first, without hardcoding a kind order.
+
+Treat that ordering as a scheduling heuristic rather than a guarantee. Matrix order
+determines the order in which jobs are *created*, but GitHub does not guarantee the
+order in which matrix jobs run, and expected trial weight predicts runtime only
+loosely because retries and per-trial variance are not modeled. Judge the benefit from
+the queue phase described under [Hosted Measurement](#hosted-measurement) rather than
+assuming a fixed speedup.
+
+Every producer validates the plan identity it consumes. Ordinary shards verify exact
+kind, plan and manifest digests, artifact ownership, and run-key ownership before
+invoking Vally. Baseline producers verify their model is present in the signed plan and
+stamp its digest into their evidence envelope.
+
+## Authoritative Fan-In
+
+The baseline fan-in validates one current-run envelope for each required fixed model
+and computes the combined verdict through the shared baseline aggregation function.
+The global fan-in then requires every planned ordinary producer, the prompt producer,
+and the combined baseline summary when applicable. Missing, duplicate, unexpected,
+unparseable, wrong-kind, digest-mismatched, artifact-incomplete, or run-key-incomplete
+evidence fails closed.
+
+`eval-report` is presentation-only. It downloads the single `eval-authoritative`
+artifact and renders its `eval-summary.json`; it does not concatenate partial summaries
+or decide whether evidence is complete.
+
+## Trusted Progress
+
+Vally stdout and stderr can contain prompts, responses, trajectories, arbitrary errors,
+or environment content. The process wrapper drains both streams asynchronously to
+withheld runner-local files and never replays raw lines to public workflow output.
+
+While a phase is active, logs expose only these bounded fields:
+
+* Event: `phase-start`, `heartbeat`, or `phase-complete`
+* Phase: one declared eval phase such as `ordinary-eval`, `baseline-eval`, or `compare`
+* Sanitized worker identifier
+* Attempt number
+* Elapsed seconds
+* Fixed exit category
+
+The default heartbeat interval is 60 seconds. Aggregate summaries carry diagnostic
+`phaseTimings`; timing does not affect evaluation verdicts.
+
+## Rollback Controls
+
+The reusable workflow inputs change scheduling without changing evidence semantics:
+
+| Input                     | Normal value | Rollback value | Effect                                                      |
+|---------------------------|--------------|----------------|-------------------------------------------------------------|
+| `ordinary-shard-count`    | `4`          | `1`            | Uses the same planner and runner with one agent shard       |
+| `instruction-shard-count` | `2`          | `1`            | Uses the same planner and runner with one instruction shard |
+| `skill-shard-count`       | `2`          | `1`            | Uses the same planner and runner with one skill shard       |
+| `baseline-max-parallel`   | `2`          | `1`            | Serializes the same isolated baseline model producers       |
+
+The single-process fixed-pair baseline driver remains a deterministic aggregation
+oracle for local tests. It is not a second production rollback path.
+
+Run the deterministic and policy checks before changing the scheduling defaults:
+
+```pwsh
+npm run test:ps -- -TestPath scripts/tests/evals/
+npm run lint:ps
+npm run lint:yaml
+npm run lint:permissions
+npm run lint:workflow-runner
+npm run lint:dangerous-workflow
+npm run lint:dependency-pinning
+npm run lint:pr-gate
+```
+
+Model-backed canaries additionally require `COPILOT_GITHUB_TOKEN` and the CI-owned
+moderation environment. Record unavailable credential-backed checks as pending CI.
+
+### Hosted Measurement
+
+Compare one-shard control and two-shard treatment runs only when their plan manifest
+digests, target artifact and run-key sets, model, declared trials, and policy version
+match. Separate these intervals rather than inferring improvement from job duration:
+
+* Queue: job creation to runner start
+* Setup: runner start to `Execute evals`
+* Execution: `Execute evals` start to completion
+* Post-execution: execution completion to producer job completion
+* Fan-in: authoritative fan-in queue and execution
+* Reporting: report queue and execution
+
+Use aggregate `phaseTimings` to attribute worker attempts and moderation, not as a
+substitute for GitHub job timestamps. Sum-of-trial `durationMs` can exceed elapsed job
+time when Vally runs trials concurrently.
+
+Across the first ten qualifying treatment runs and a comparable one-shard control
+cohort, the target is at least a 25 percent reduction in median queue-excluded target
+producer critical interval and at least a 10 percent reduction in median run-creation-
+to-report time. Fan-in plus reporting should remain within 15 seconds of the control
+median, and per-shard setup should remain within 15 seconds of its control-kind median.
+
+Roll back instruction and skill shard counts to `1` when fan-in reports a contract
+failure, merge behavior changes advisory or authoritative outcomes, aggregate-only
+output boundaries are violated, queue or unknown-attempt rates repeatedly regress, or
+the treatment misses either performance target after ten qualifying runs. Keep the
+generalized planner and fan-in active during rollback so evidence semantics do not
+change with scheduling.
 
 ## Fork PR Policy
 
@@ -213,12 +343,20 @@ The CI-owned eval-validation workflow runs the static eval-lint lanes. They are
 not part of `validate:local`; see [Validation Commands and CI-Owned Lanes](validation)
 for local reproduction prerequisites and output handling.
 
-| Script                | Tool                            | Purpose                                                             |
-|-----------------------|---------------------------------|---------------------------------------------------------------------|
-| `ci:eval:lint:vally`  | `vally lint --eval-spec evals/` | Spec validation via the upstream CLI                                |
-| `ci:eval:lint:schema` | `Test-EvalSpec.ps1`             | Schema lint, agent-behavior coverage, and orphaned-tag reachability |
-| `ci:eval:lint:text`   | `Test-EvalSpecText.ps1`         | retext-profanities + retext-equality gate on the AI-artifact corpus |
-| `ci:eval:lint:safety` | `Test-VallyTestSafety.ps1`      | Safety validation for eval stimuli                                  |
+| Script                     | Tool                                | Purpose                                                                        |
+|----------------------------|-------------------------------------|--------------------------------------------------------------------------------|
+| `ci:eval:lint:vally`       | `vally lint --eval-spec evals/`     | Spec validation via the upstream CLI                                           |
+| `lint:eval-grader-lineage` | `Build-GraderLineageMap.ps1 -Check` | Grader-name lineage across Vally migrations; chained into `ci:eval:lint:vally` |
+| `ci:eval:lint:schema`      | `Test-EvalSpec.ps1`                 | Schema lint, agent-behavior coverage, and orphaned-tag reachability            |
+| `ci:eval:lint:text`        | `Test-EvalSpecText.ps1`             | retext-profanities + retext-equality gate on the AI-artifact corpus            |
+| `ci:eval:lint:safety`      | `Test-VallyTestSafety.ps1`          | Safety validation for eval stimuli                                             |
+
+`lint:eval-grader-lineage` is not a standalone lane. `ci:eval:lint:vally` runs it before the
+vally CLI, so a lineage failure fails that lane. With `-Check` it verifies the committed lineage
+JSON without changing it; given `-SourceRevision` and `-TargetRevision` it rebuilds the map
+between two reachable revisions. It pairs graders by source, stimulus, and a name-free behavior
+digest, and fails closed on unreachable history, provenance drift, ambiguous pairs, semantic
+changes, count drift, kind mismatches, duplicate result keys, or output drift.
 
 `ci:eval:lint:text` scans `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` using separate `retext-equality` and `retext-profanities` processors. The `alex` package is no longer a dependency. Equality findings retain `source: alex` in the JSON report and emit `::warning` annotations by default; the source alias and `-FailOnAlex` name are retained for existing consumers.
 

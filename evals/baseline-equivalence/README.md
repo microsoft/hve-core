@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to measure nominal behavior preservation'
 author: HVE Core Team
-ms.date: 2026-08-21
+ms.date: 2026-09-18
 ---
 
 ## Purpose
@@ -84,7 +84,7 @@ The compare invocation deliberately omits `--fail-on-regression`. Comparison is 
 | `schemaVersion`                                                      | string       | Reporting contract version. `2.1.0` is the current contract; consumers fail loudly on an unsupported major                                                                                      |
 | `agent`                                                              | string       | Agent slug under test (matches `-Agent`)                                                                                                                                                        |
 | `tier`                                                               | string       | `devloop` (one-model advisory), `calibration` (two-model report-only comparison), or `ci`; deterministic and structural evidence remains authoritative outside devloop                          |
-| `model`                                                              | string       | Primary model for the run: `devloop` resolves one model; `calibration` and `ci` run the fixed `gpt-5.6-luna` and `claude-sonnet-4.6` pair                                                       |
+| `model`                                                              | string       | Primary model for the run: `devloop` resolves one model; `calibration` and `ci` run the fixed `gpt-5.6-luna` and `claude-sonnet-5` pair                                                         |
 | `runs`                                                               | int          | Total non-errored comparison trials parsed across all `--output` JSONL files                                                                                                                    |
 | `ties`                                                               | int          | Trials with `winner: "tie"`; neither environment showed a clear preference                                                                                                                      |
 | `baselineWins`                                                       | int          | Trials with `winner: "baseline"`; the customization underperformed                                                                                                                              |
@@ -140,7 +140,10 @@ Onboarding a new agent (for example `security-planner`) requires a subject-aware
 
 The driver resolves the agent's frontmatter `model:` hint automatically. No new PowerShell, no new stimulus library, and no new judge prompt are required unless the agent's domain materially differs from the existing corpus.
 
-Vally exposes no agent-selection flag. The repository-standard turn-0 `Launch` instruction causes the model to read the staged agent file before the user question. Invocation evidence is parsed from structured tool calls and results, never inferred from the response text.
+Vally exposes no agent-selection flag. The repository-standard turn-0 `Launch` instruction causes the model to read the staged agent file before the user question.
+The agent file exceeds the single-read limit of the `view` tool, so the launch turn directs the model to fall back to line-range or shell reads and to keep reading
+until content is returned; one trial that never completes a successful read is a data-quality violation that fails the gate closed. Invocation evidence is parsed
+from structured tool calls and results, never inferred from the response text.
 
 ## Agent Coverage
 

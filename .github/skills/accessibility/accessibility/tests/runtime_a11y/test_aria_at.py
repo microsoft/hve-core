@@ -9,6 +9,7 @@ from typing import Any
 
 import jsonschema
 import pytest
+
 from runtime_a11y.matrix._aria_at import (
     load_catalog,
     resolve_aria_at_mapping,

@@ -1,5 +1,5 @@
 ---
-description: Full walkthrough protocol for the rpi-walkthrough skill, covering target resolution, deep subagent review, segment explanations, a decisions-and-changes ledger, reconciliation, and RPI handoff.
+description: Full walkthrough protocol for the rpi-walkthrough skill, covering target resolution, deep review, segment explanations, a decisions-and-changes ledger, reconciliation, and RPI handoff.
 ---
 
 # RPI Walkthrough Protocol
@@ -24,12 +24,12 @@ Resolve the walkthrough target before any review or explanation:
 
 ## Deep review before explaining
 
-Understand the target through subagents before narrating it so the explanation stays accurate and grounded. Keep review results in active conversation and subagent returns.
+Understand the target before narrating it so the explanation stays accurate and grounded. Keep review results in the active conversation.
 
-* Dispatch a generic exploration subagent (`Explore`, or `runSubagent` with no named agent) to trace how the code, UI, UX, feature, or artifact actually works: entry points, call paths, data flow, connected files, and the decisions or evidence recorded inside `.copilot-tracking` artifacts.
+* Trace how the code, UI, UX, feature, or artifact actually works with the available search and read tools: entry points, call paths, data flow, connected files, and the decisions or evidence recorded inside `.copilot-tracking` artifacts.
+* A subagent is optional. Use one when isolating a large trace would protect the conversation context, give it the target and the questions to trace, and treat its return as leads to confirm by reading the target yourself.
 * Activate `rpi-research` when the explanation depends on an external library, framework, standard, or anything that benefits from web or repository research with citations. Supply the walkthrough topic, purpose, audience, questions, evidence criteria, scope and non-goals, constraints, existing evidence, requested outputs, and analysis output mode, then read the completed primary research artifact before explaining.
 * Scale the review to `detail`: a focused single pass for `brief`, a normal pass for `normal`, and a thorough multi-pass review with cross-references for `deep`.
-* When dispatch tooling is unavailable, perform the equivalent review inline and state the fallback reason in the conversation.
 
 ## Segment planning
 
@@ -153,7 +153,7 @@ For a `.copilot-tracking` artifact walkthrough, link the artifact section being 
 
 Interpret the user's `vscode_askQuestions` answer and respond in kind:
 
-* More detail or why: repeat the deep review with subagents and tools as needed, then re-explain the same segment at greater depth before offering to continue.
+* More detail or why: repeat the deep review with the available tools, then re-explain the same segment at greater depth before offering to continue.
 * Less detail or a depth change: adjust `detail` and continue.
 * Continue: advance to the next segment and run the loop again.
 * A material decision or change request: capture it (see Recording decisions and requested changes) and offer immediate reconciliation or continuing with the entry open within the existing one-or-two-question cadence.
@@ -174,8 +174,8 @@ The walkthrough is read-only by default. Create the ledger lazily, from [../temp
 When every planned segment is covered, or when the user declines another segment, asks for a summary, or ends the session:
 
 * If a ledger exists, review its open entries and ask whether to reconcile them now or leave them for later.
-* In a standalone walkthrough, recommend `/rpi-quick` for a one-shot pass, or the exact applicable `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` command only for entries handed off or still requiring downstream work. Do not invoke it.
-* State the no-handoff reason when no entry needs downstream work. In `rpi-quick` or confirmed automatic RPI Agent mode, return the evidence to the parent and state that it selects eligible continuation.
+* In a standalone walkthrough, recommend the exact applicable `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` command only for entries handed off or still requiring downstream work. Do not invoke it.
+* State the no-handoff reason when no entry needs downstream work. In confirmed automatic RPI Agent mode, return the evidence to the parent and state that it selects eligible continuation.
 * Separate walkthrough session status from the ledger decision state. Include covered segments, important updates, and blockers or open entries. Advise `/compact` only when stale output, superseded reasoning, or completed-segment detail outweighs current context and the target and any ledger are current. When advising it, name retained state and artifact pointers. Otherwise omit compaction guidance.
 
 ## Final response contract

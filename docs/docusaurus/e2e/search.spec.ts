@@ -31,7 +31,8 @@ test.describe('Search', () => {
       await expect(searchInput).not.toHaveAttribute('aria-labelledby', /.*/);
       await expect(searchInput).toHaveAttribute('aria-label', /\S/);
       const describedBy = await searchInput.getAttribute('aria-describedby');
-      expect(describedBy).toBeTruthy();
+      expect(describedBy?.split(/\s+/)).toContain('search-shortcut-description');
+      await expect(page.locator('#search-shortcut-description')).toHaveText('Keyboard shortcut: Control plus K');
     });
   }
 
@@ -106,9 +107,8 @@ test.describe('Search', () => {
     const searchInput = await openSearchWidget(page);
 
     // Record every mutation of the status region with the time it happened.
-    // Reading only the final value cannot detect this defect: the last message
-    // is correct either way, and the problem is the queue of announcements a
-    // screen-reader user listens through on the way there. Counting writes alone
+    // Reading only the final value cannot verify the announcement sequence a
+    // screen-reader user receives. Counting writes alone
     // is also not enough, because duplicate suppression can hold the count down
     // while every keystroke still schedules its own announcement. The timings
     // are what distinguish a quiet period that coalesces typing from one that

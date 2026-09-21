@@ -28,15 +28,17 @@ ISA-95-aligned network planning for secure edge Kubernetes to Azure connectivity
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use Network ISA-95 Planner to assess segmentation and plan secure edge Kubernetes connectivity to Azure for brownfield or greenfield sites. It organizes recommendations around zones, conduits, allowed flows, and operational constraints. Use a broader architecture reviewer when the decision is not primarily about site networking.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+1. Select `Network ISA-95 Planner` and provide the site type, levels present, Kubernetes model, connectivity, segmentation, identity, logging, and change-window constraints.
+2. For brownfield sites, describe reusable infrastructure and who can change it. For greenfield sites, describe target trust boundaries and connectivity expectations.
+3. Resolve missing intake facts before asking for a final alignment classification or remediation roadmap.
+4. Review the plain-language assessment and YAML companion together, including effort, confidence, and highest-risk exposures. Planning does not deploy network changes.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask: "Assess our brownfield edge site from `design/site-network.md`. Reuse existing firewall and gateway controls where evidence supports them, ask for missing ownership details, and produce a staged remediation plan without deployment."
+
+Expect an intake-gated assessment with explicit flows, constraints, and prioritized recommendations. Success means unknown site facts remain visible rather than becoming confident alignment scores.

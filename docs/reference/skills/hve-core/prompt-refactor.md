@@ -1,9 +1,9 @@
 ---
 title: prompt-refactor
 description: Compatibility alias for behavior-preserving prompt artifact cleanup. Routes refactoring to hve-builder refactor mode.
-sidebar_position: 8
+sidebar_position: 7
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - skill
@@ -42,9 +42,8 @@ order, citation requirements, missing-data handling, and approval gates. Edit on
 this file.` Supply the actual existing prompt and its consumers as context.
 
 Expect the baseline contract to guide a coherent cleanup, followed by HVE Builder
-validation and independent static review. The current workflow contract resolves
-the behavior gate, including a supported skip for eligible Minor/Medium changes;
-the alias does not add another sandbox or testing loop.
+validation and its review pass. The current workflow contract resolves the
+review verdict and overall outcome; the alias does not add another review loop.
 
 Success is less duplication without lost capabilities, with changed files,
 rationale, verdicts, and evidence reported separately. A proposed artifact split,

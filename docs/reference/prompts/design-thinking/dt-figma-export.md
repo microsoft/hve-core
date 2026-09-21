@@ -3,7 +3,7 @@ title: Dt Figma Export
 description: Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-02
+ms.date: 2026-09-17
 ms.topic: reference
 keywords:
   - prompt
@@ -36,7 +36,8 @@ Before running the prompt, confirm these prerequisites:
 
 * The DT project artifacts exist under `.copilot-tracking/dt/{project-slug}/`.
 * The `figma` MCP server is configured in your workspace. Add `{"figma": {"type": "http", "url": "https://mcp.figma.com/mcp"}}` to the `servers` object in `.vscode/mcp.json`, then restart VS Code.
-* You have a Figma account with a Dev or Full seat on a Professional, Organization, or Enterprise plan for sustained usage. Starter plans are limited to 6 tool calls per month.
+* Choose the remote server for access across Figma plans and seats. The desktop server requires a Dev or Full seat on a paid plan. Confirm current eligibility in Figma's [access guide](https://help.figma.com/hc/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server).
+* Check Figma's current [rate limits and access](https://developers.figma.com/docs/figma-mcp-server/rate-limits-access/) because limits vary by plan, seat, and tool. Treat `generate_diagram` and `use_figma` as write tools; see the current [tool catalog](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/).
 * Authentication happens through browser OAuth on first use, so no credential files or API keys are required.
 
 Provide the `project-slug` and optionally choose a board title, method, and output type. Confirm the destination and authorization before the prompt creates or changes an external Figma file, then review the exported content for fidelity.

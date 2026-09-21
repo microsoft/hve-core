@@ -165,10 +165,10 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             # did not build, so the comparison would not be attributable to the model.
             $customized = @($script:Summary.plannedCommands | Where-Object { $_ -match 'customized/eval\.yaml' })
             $customized.Count | Should -Be 2
-            foreach ($model in @('gpt-5.6-luna', 'claude-sonnet-4.6')) {
+            foreach ($model in @('gpt-5.6-luna', 'claude-sonnet-5')) {
                 $line = @($customized | Where-Object { $_ -match "--model $([regex]::Escape($model)) " })
                 $line.Count | Should -Be 1
-                $line[0] | Should -Match "--skill-dir [^ ]*$([regex]::Escape($model))[\\/][^ ]*customized-skill-dir"
+                $line[0] | Should -Match ('--skill-dir "[^"]*[/\\]' + [regex]::Escape($model) + '[/\\][^"/\\]+[/\\]customized-skill-dir"')
             }
         }
 
@@ -215,8 +215,25 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
         It 'Plans the fixed two-model population' {
             $script:Summary.tier | Should -Be 'calibration'
             $script:Summary.plannedCommands.Count | Should -Be 6
-            ($script:Summary.plannedCommands -join "`n") | Should -Match 'gpt-5\.6-luna'
-            ($script:Summary.plannedCommands -join "`n") | Should -Match 'claude-sonnet-4\.6'
+            $evalModels = @($script:Summary.plannedCommands |
+                    Where-Object { $_ -match '^vally eval ' } |
+                    ForEach-Object { [regex]::Match($_, '--model (\S+) ').Groups[1].Value })
+            ($evalModels -join ',') | Should -BeExactly 'gpt-5.6-luna,gpt-5.6-luna,claude-sonnet-5,claude-sonnet-5'
+        }
+
+        It 'Plans only one model when calibration is isolated' {
+            & $script:ScriptPath `
+                -Agent 'rpi-agent' `
+                -Tier 'calibration' `
+                -CalibrationModel 'claude-sonnet-5' `
+                -RepoRoot $script:RepoRoot `
+                -OutputPath $script:OutputPath `
+                -WhatIf *> $null
+
+            $summary = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
+            $summary.model | Should -Be 'claude-sonnet-5'
+            $summary.plannedCommands | Should -HaveCount 3
+            ($summary.plannedCommands -join "`n") | Should -Not -Match 'gpt-5\.6-luna'
         }
     }
 
@@ -275,10 +292,13 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             ($summary.plannedCommands -join "`n") | Should -Match 'gpt-5-mini'
         }
 
-        It 'Ignores the override for the ci tier' {
+        It 'Ignores the override for the <SelectedTier> tier' -ForEach @(
+            @{ SelectedTier = 'calibration' }
+            @{ SelectedTier = 'ci' }
+        ) {
             & $script:ScriptPath `
                 -Agent 'rpi-agent' `
-                -Tier 'ci' `
+                -Tier $SelectedTier `
                 -Model 'gpt-5-mini' `
                 -RepoRoot $script:RepoRoot `
                 -OutputPath $script:OutputPath `
@@ -286,6 +306,11 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
 
             $summary = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
             $summary.model | Should -Be 'gpt-5.6-luna'
+            $summary.plannedCommands.Count | Should -Be 6
+            $evalModels = @($summary.plannedCommands |
+                    Where-Object { $_ -match '^vally eval ' } |
+                    ForEach-Object { [regex]::Match($_, '--model (\S+) ').Groups[1].Value })
+            ($evalModels -join ',') | Should -BeExactly 'gpt-5.6-luna,gpt-5.6-luna,claude-sonnet-5,claude-sonnet-5'
         }
     }
 
@@ -295,6 +320,237 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             & $script:ScriptPath -Tier 'weekly' -RepoRoot $script:RepoRoot -OutputPath $script:OutputPath -WhatIf *> $null
             $LASTEXITCODE | Should -Be 3
         }
+    }
+}
+
+Describe 'Invoke-VallyCommand output isolation' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    BeforeEach {
+        $script:SavedVallyMode = $env:STUB_VALLY_MODE
+        Set-Alias -Name vally -Value (Join-Path $PSScriptRoot 'fixtures/stub-vally.ps1') -Scope Local
+    }
+
+    AfterEach {
+        $env:STUB_VALLY_MODE = $script:SavedVallyMode
+        Remove-Item Alias:vally -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Returns only numeric exit <Code> without leaking CLI streams' -ForEach @(
+        @{ Mode = 'chatty-pass'; Code = 0 }
+        @{ Mode = 'chatty-fail'; Code = 99 }
+    ) {
+        $env:STUB_VALLY_MODE = $Mode
+        $output = @(Invoke-VallyCommand -Arguments @('eval', '--output-dir', (Join-Path $TestDrive $Mode)) *>&1)
+
+        $output | Should -HaveCount 1
+        $output[0] | Should -BeOfType [int]
+        $output[0] | Should -Be $Code
+    }
+
+    It 'Isolates native streams and preserves nonzero exits under strict native error handling' {
+        $nativeHost = Join-Path $PSHOME $(if ($IsWindows) { 'pwsh.exe' } else { 'pwsh' })
+        Set-Alias -Name vally -Value $nativeHost -Scope Local
+        $PSNativeCommandUseErrorActionPreference = $true
+        $command = '[Console]::Out.WriteLine("synthetic-private-stdout"); [Console]::Error.WriteLine("synthetic-private-stderr"); exit 17'
+
+        $output = @(Invoke-VallyCommand -Arguments @('-NoProfile', '-NonInteractive', '-Command', $command) *>&1)
+
+        $output | Should -HaveCount 1
+        $output[0] | Should -BeOfType [int]
+        $output[0] | Should -Be 17
+        $PSNativeCommandUseErrorActionPreference | Should -BeTrue
+    }
+}
+
+Describe 'Get-VallyExecutionDiagnostic' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    BeforeEach {
+        $script:DiagnosticDir = Join-Path $TestDrive ([Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $script:DiagnosticDir | Out-Null
+        $script:DiagnosticArgs = @{
+            RunDir = $script:DiagnosticDir
+            Model = 'test-model'
+            Variant = 'baseline'
+            Attempt = 1
+            ExitCode = 1
+        }
+    }
+
+    It 'Classifies <Category> without exposing error text' -ForEach @(
+        @{ Message = 'HTTP 401 Unauthorized'; Category = 'authentication-or-authorization' }
+        @{ Message = 'HTTP 403 Forbidden'; Category = 'authentication-or-authorization' }
+        @{ Message = 'Model claude-test is not supported'; Category = 'model-unavailable' }
+        @{ Message = 'Rate limit exceeded (429)'; Category = 'rate-limited' }
+        @{ Message = 'ETIMEDOUT'; Category = 'timeout' }
+        @{ Message = 'ECONNRESET'; Category = 'connection' }
+        @{ Message = 'Unrecognized executor failure'; Category = 'unknown' }
+    ) {
+        $record = @{
+            type = 'trial-result'; status = 'error'; trajectory = $null
+            error = "$Message; Bearer synthetic-private-token; https://example.invalid/?sig=synthetic-private-signature"
+        }
+        $record | ConvertTo-Json -Compress | Set-Content (Join-Path $script:DiagnosticDir 'results.jsonl')
+
+        $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+
+        $result.resultState | Should -Be 'read'
+        $result.trialRecords | Should -Be 1
+        $result.erroredTrials | Should -Be 1
+        $result.errors | Should -HaveCount 1
+        $result.errors[0].category | Should -Be $Category
+        $result.errors[0].count | Should -Be 1
+        ($result | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private|example\.invalid|Bearer'
+    }
+
+    It 'Aggregates categories while ignoring summaries and graded failures' {
+        @(
+            '{"type":"run-summary","status":"error","error":"not a trial"}'
+            '{"type":"trial-result","status":"failed","gradeResult":{"passed":false}}'
+            '{"type":"trial-result","status":"error","error":"HTTP 401"}'
+            '{"type":"trial-result","status":"error","error":"Unauthorized"}'
+            '{"type":"trial-result","status":"error","error":null}'
+        ) | Set-Content (Join-Path $script:DiagnosticDir 'results.jsonl')
+
+        $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+
+        $result.trialRecords | Should -Be 4
+        $result.erroredTrials | Should -Be 3
+        $result.errors | Should -HaveCount 2
+        ($result.errors | Where-Object category -EQ 'authentication-or-authorization').count | Should -Be 2
+        ($result.errors | Where-Object category -EQ 'unknown').count | Should -Be 1
+    }
+
+    It 'Reports malformed evidence without losing valid error records' {
+        @('not-json', 'null', '[]', '{"type":"trial-result","status":"error"}') |
+            Set-Content (Join-Path $script:DiagnosticDir 'results.jsonl')
+
+        $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+
+        $result.malformedRecords | Should -Be 3
+        $result.trialRecords | Should -Be 1
+        $result.errors[0].category | Should -Be 'unknown'
+    }
+
+    It 'Reports absent results as missing, not as a successful execution' {
+        $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+
+        $result.resultState | Should -Be 'missing'
+        $result.exitCode | Should -Be 1
+        $result.trialRecords | Should -Be 0
+        $result.errors | Should -HaveCount 0
+    }
+
+    It 'Accepts a missing run directory' {
+        $script:DiagnosticArgs.RunDir = $null
+        (Get-VallyExecutionDiagnostic @script:DiagnosticArgs).resultState | Should -Be 'missing'
+    }
+
+    It 'Distinguishes an empty result file from a missing file' {
+        Set-Content (Join-Path $script:DiagnosticDir 'results.jsonl') -Value ''
+        $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+
+        $result.resultState | Should -Be 'read'
+        $result.trialRecords | Should -Be 0
+        $result.erroredTrials | Should -Be 0
+    }
+
+    It 'Reports an unreadable result without exposing the exception or path' {
+        $path = Join-Path $script:DiagnosticDir 'results.jsonl'
+        $lock = [System.IO.File]::Open($path, [System.IO.FileMode]::Create, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+        try {
+            $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+        }
+        finally {
+            $lock.Dispose()
+        }
+
+        $result.resultState | Should -Be 'unreadable'
+        $result.trialRecords | Should -Be 0
+        ($result | ConvertTo-Json -Depth 10) | Should -Not -Match ([regex]::Escape($script:DiagnosticDir))
+    }
+
+    It 'Treats non-string error payloads as unknown without serializing arbitrary fields' {
+        @{
+            type = 'trial-result'; status = 'error'
+            error = @{ message = 'synthetic-private-message' }
+            model = 'synthetic-private-model'; variant = 'synthetic-private-variant'
+        } | ConvertTo-Json -Compress | Set-Content (Join-Path $script:DiagnosticDir 'results.jsonl')
+
+        $result = Get-VallyExecutionDiagnostic @script:DiagnosticArgs
+
+        $result.errors[0].category | Should -Be 'unknown'
+        $result.model | Should -Be 'test-model'
+        $result.variant | Should -Be 'baseline'
+        ($result | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private'
+    }
+}
+
+Describe 'Test-CustomizedInvocationRetryEligibility' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    BeforeEach {
+        $script:RetryArgs = @{
+            Tier = 'calibration'
+            Model = 'gpt-5.6-luna'
+            Attempt = 1
+            BaselineHasSignal = $true
+            BaselineStructural = 0
+            InvocationTally = @{
+                Expected = 105; Observed = 101; Failed = 0; Missing = 4
+                Duplicate = 0; WrongPath = 0; Malformed = 4
+                FailedKey = $null; ReasonCode = $null
+            }
+            ExecutionDiagnostic = @{
+                ResultState = 'read'; ExitCode = 1; TrialRecords = 105
+                MalformedRecords = 0; ErroredTrials = 4
+                Errors = @(@{ category = 'unknown'; count = 4 })
+            }
+        }
+    }
+
+    It 'Allows one retry for a reconciled typed executor-error batch' {
+        Test-CustomizedInvocationRetryEligibility @script:RetryArgs | Should -BeTrue
+    }
+
+    It 'Allows the same bounded retry for the fixed Claude calibration model' {
+        $script:RetryArgs.Model = 'claude-sonnet-5'
+
+        Test-CustomizedInvocationRetryEligibility @script:RetryArgs | Should -BeTrue
+    }
+
+    It 'Rejects a model outside the fixed calibration pair' {
+        $script:RetryArgs.Model = 'future-model'
+
+        Test-CustomizedInvocationRetryEligibility @script:RetryArgs | Should -BeFalse
+    }
+
+    It 'Rejects the deterministic <Category> executor category' -ForEach @(
+        @{ Category = 'authentication-or-authorization' }
+        @{ Category = 'model-unavailable' }
+    ) {
+        $script:RetryArgs.ExecutionDiagnostic.Errors = @(@{ category = $Category; count = 4 })
+
+        Test-CustomizedInvocationRetryEligibility @script:RetryArgs | Should -BeFalse
+    }
+
+    It 'Rejects an executor batch whose invocation counts do not reconcile' {
+        $script:RetryArgs.InvocationTally.Malformed = 3
+
+        Test-CustomizedInvocationRetryEligibility @script:RetryArgs | Should -BeFalse
+    }
+
+    It 'Rejects a second attempt' {
+        $script:RetryArgs.Attempt = 2
+
+        Test-CustomizedInvocationRetryEligibility @script:RetryArgs | Should -BeFalse
     }
 }
 
@@ -383,6 +639,52 @@ Describe 'Resolve-ModelList' -Tag 'Unit' {
 
         $models | Should -Be @('gpt-5.6-luna')
     }
+
+    It 'Selects the fixed pair for <SelectedTier> despite a hint and override' -ForEach @(
+        @{ SelectedTier = 'calibration' }
+        @{ SelectedTier = 'ci' }
+    ) {
+        $models = @(Resolve-ModelList -Tier $SelectedTier -Hint 'hint-model' -ModelOverride 'override-model')
+
+        $models | Should -HaveCount 2
+        ($models -join ',') | Should -BeExactly 'gpt-5.6-luna,claude-sonnet-5'
+    }
+
+    It 'Selects only the requested fixed calibration model for <SelectedModel>' -ForEach @(
+        @{ SelectedModel = 'gpt-5.6-luna' }
+        @{ SelectedModel = 'claude-sonnet-5' }
+    ) {
+        $models = @(Resolve-ModelList -Tier 'calibration' -Hint 'hint-model' -ModelOverride 'override-model' -CalibrationModel $SelectedModel)
+
+        $models | Should -HaveCount 1
+        $models[0] | Should -BeExactly $SelectedModel
+    }
+
+    It 'Rejects an arbitrary isolated calibration model' {
+        { Resolve-ModelList -Tier 'calibration' -CalibrationModel 'future-model' } |
+            Should -Throw -ExpectedMessage "Unsupported calibration model 'future-model'.*"
+    }
+
+    It 'Ignores the calibration selector during devloop selection' {
+        $models = @(Resolve-ModelList -Tier 'devloop' -Hint 'hint-model' -ModelOverride 'override-model' -CalibrationModel 'claude-sonnet-5')
+
+        $models | Should -HaveCount 1
+        $models[0] | Should -BeExactly 'override-model'
+    }
+
+    It 'Uses the hint when devloop has no override' {
+        $models = @(Resolve-ModelList -Tier 'devloop' -Hint 'hint-model' -ModelOverride '')
+
+        $models | Should -HaveCount 1
+        $models[0] | Should -BeExactly 'hint-model'
+    }
+
+    It 'Prefers the devloop override over the hint' {
+        $models = @(Resolve-ModelList -Tier 'devloop' -Hint 'hint-model' -ModelOverride 'override-model')
+
+        $models | Should -HaveCount 1
+        $models[0] | Should -BeExactly 'override-model'
+    }
 }
 
 Describe 'Comparison judge pin' -Tag 'Unit' {
@@ -414,6 +716,94 @@ Describe 'Comparison judge pin' -Tag 'Unit' {
         $driverText | Should -Not -Match 'Resolve-AgentSurfaceSignaturePath'
         $driverText | Should -Not -Match 'surface_signatures'
         $driverText | Should -Not -Match "'--eval-spec',\s*\`$renderedSpecRelative"
+    }
+}
+
+Describe 'Invoke-VallyProcess' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+        $script:PwshPath = (Get-Command pwsh -ErrorAction Stop).Source
+    }
+
+    BeforeEach {
+        $script:CaptureStub = Join-Path $TestDrive "capture-$([guid]::NewGuid()).ps1"
+        $script:CaptureLog = Join-Path $TestDrive "capture-$([guid]::NewGuid()).log"
+        Set-Variable -Name VallyHostMessages -Scope Global -Value ([System.Collections.Generic.List[string]]::new())
+        Mock Write-Host {
+            param($Object)
+            (Get-Variable -Name VallyHostMessages -Scope Global -ValueOnly).Add([string]$Object)
+        } -ModuleName VallyRunner
+    }
+
+    It 'withholds complete output while preserving exit status and sanitized progress' {
+        @'
+param([int]$DelayMilliseconds, [int]$ExitCode)
+Write-Output 'UNTRUSTED_STDOUT_SENTINEL'
+[Console]::Error.WriteLine('UNTRUSTED_STDERR_SENTINEL')
+foreach ($indexValue in 1..200) {
+    Write-Output "stdout-$indexValue"
+    [Console]::Error.WriteLine("stderr-$indexValue")
+}
+Start-Sleep -Milliseconds $DelayMilliseconds
+exit $ExitCode
+'@ | Set-Content -LiteralPath $script:CaptureStub -Encoding utf8NoBOM
+
+        $result = Invoke-VallyProcess `
+            -Command $script:PwshPath `
+            -Arguments @('-NoProfile', '-File', $script:CaptureStub, '2200', '7') `
+            -LogPath $script:CaptureLog `
+            -Phase 'compare' `
+            -Worker 'gpt-5.6-luna' `
+            -HeartbeatIntervalSeconds 1
+
+        $result.ExitCode | Should -Be 7
+        $result.ExitCategory | Should -Be 'unknown'
+        $result.PSObject.Properties.Name | Should -Not -Contain 'Lines'
+        $withheld = @(Get-Content -LiteralPath $script:CaptureLog)
+        $withheld | Should -Contain 'UNTRUSTED_STDOUT_SENTINEL'
+        ($withheld -join "`n") | Should -Match 'UNTRUSTED_STDERR_SENTINEL'
+        $withheld | Should -Contain 'stdout-200'
+        ($withheld -join "`n") | Should -Match 'stderr-200'
+        $hostMessages = Get-Variable -Name VallyHostMessages -Scope Global -ValueOnly
+        ($hostMessages -join "`n") | Should -Not -Match 'UNTRUSTED_|stdout-|stderr-'
+        $heartbeats = @($hostMessages | Where-Object { $_ -like 'Vally progress: event=heartbeat*' })
+        $heartbeats.Count | Should -BeGreaterOrEqual 1
+        foreach ($heartbeat in $heartbeats) {
+            $heartbeat | Should -Match '^Vally progress: event=heartbeat phase=compare worker=gpt-5\.6-luna attempt=1 elapsedSeconds=\d+ exitCategory=unknown$'
+        }
+        @($hostMessages | Where-Object { $_ -match '^Vally progress: event=phase-start phase=compare worker=gpt-5\.6-luna attempt=1 elapsedSeconds=0 exitCategory=unknown$' }) | Should -HaveCount 1
+        @($hostMessages | Where-Object { $_ -match '^Vally progress: event=phase-complete phase=compare worker=gpt-5\.6-luna attempt=1 elapsedSeconds=\d+ exitCategory=unknown$' }) | Should -HaveCount 1
+    }
+
+    It 'Terminates the child process tree when interrupted' {
+        $pidPath = Join-Path $TestDrive "child-$([guid]::NewGuid()).pid"
+        @'
+param([string]$PidPath)
+Set-Content -LiteralPath $PidPath -Value $PID -Encoding ascii
+Start-Sleep -Seconds 30
+'@ | Set-Content -LiteralPath $script:CaptureStub -Encoding utf8NoBOM
+        $script:PollCount = 0
+
+        {
+            Invoke-VallyProcess `
+                -Command $script:PwshPath `
+                -Arguments @('-NoProfile', '-File', $script:CaptureStub, $pidPath) `
+                -Phase 'compare' `
+                -Worker 'claude-sonnet-5' `
+                -HeartbeatIntervalSeconds 1 `
+                -ShouldCancel { (Test-Path -LiteralPath $pidPath) -and ((++$script:PollCount) -ge 2) }
+        } | Should -Throw -ExpectedMessage '*interrupted*'
+
+        Test-Path -LiteralPath $pidPath | Should -BeTrue
+        $childPid = [int](Get-Content -LiteralPath $pidPath -Raw)
+        $deadline = [DateTime]::UtcNow.AddSeconds(5)
+        do {
+            $remainingProcess = Get-Process -Id $childPid -ErrorAction SilentlyContinue
+            if ($null -ne $remainingProcess -and [DateTime]::UtcNow -lt $deadline) {
+                Start-Sleep -Milliseconds 50
+            }
+        } while ($null -ne $remainingProcess -and [DateTime]::UtcNow -lt $deadline)
+        $remainingProcess | Should -BeNullOrEmpty
     }
 }
 
@@ -519,18 +909,74 @@ defaults:
         Remove-Item Env:STUB_VALLY_COMPARE_MODE, Env:STUB_VALLY_BASELINE_MODE, Env:STUB_VALLY_CUSTOMIZED_MODES, Env:STUB_VALLY_CUSTOMIZED_COUNT_PATH, Env:STUB_VALLY_CALL_LOG -ErrorAction SilentlyContinue
     }
 
-    It 'Counts each failed empty compare once across ci models' {
+    It 'Counts each failed empty compare once across <SelectedTier> models' -ForEach @(
+        @{ SelectedTier = 'calibration' }
+        @{ SelectedTier = 'ci' }
+    ) {
+        $env:STUB_VALLY_CALL_LOG = Join-Path $TestDrive "model-calls-$SelectedTier.jsonl"
+
         & $script:ScriptPath `
             -Agent 'rpi-agent' `
-            -Tier 'ci' `
+            -Tier $SelectedTier `
             -RepoRoot $script:StubRepoRoot `
-            -OutputPath $script:StubOutputPath *> $null
+            -OutputPath $script:StubOutputPath `
+            -NoBaselineCache *> $null
 
         $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
+        $summary.runId | Should -Not -BeNullOrEmpty
         $summary.runHealthFailures | Should -Be 2
         $summary.runs | Should -Be 0
         $summary.verdict | Should -Be 'fail'
+        @($summary.phaseTimings.phase) | Should -Contain 'materialize'
+        @($summary.phaseTimings.phase) | Should -Contain 'baseline-eval'
+        @($summary.phaseTimings.phase) | Should -Contain 'customized-eval'
+        @($summary.phaseTimings.phase) | Should -Contain 'compare'
         $LASTEXITCODE | Should -Be 1
+
+        $calls = @(Get-Content -LiteralPath $env:STUB_VALLY_CALL_LOG | ForEach-Object { , ($_ | ConvertFrom-Json) })
+        $evalModels = @($calls | Where-Object { $_[0] -eq 'eval' } |
+                ForEach-Object { $_[([Array]::IndexOf([object[]]$_, '--model') + 1)] })
+        ($evalModels -join ',') | Should -BeExactly 'gpt-5.6-luna,gpt-5.6-luna,claude-sonnet-5,claude-sonnet-5'
+    }
+
+    It 'Caches a healthy baseline even when the CLI emits output' {
+        $env:STUB_VALLY_BASELINE_MODE = 'chatty-pass'
+        $env:STUB_VALLY_CUSTOMIZED_MODES = 'invocation-pass'
+        $env:STUB_VALLY_CALL_LOG = Join-Path $TestDrive 'cache-calls.jsonl'
+
+        foreach ($run in 1..2) {
+            & $script:ScriptPath -Tier 'ci' -RepoRoot $script:StubRepoRoot -OutputPath $script:StubOutputPath *> $null
+        }
+
+        $calls = @(Get-Content $env:STUB_VALLY_CALL_LOG | ForEach-Object { , ($_ | ConvertFrom-Json) })
+        @($calls | Where-Object { $_[0] -eq 'eval' -and $_[2] -match '[/\\]baseline[/\\]' }) | Should -HaveCount 2
+        $summary = Get-Content $script:StubOutputPath -Raw | ConvertFrom-Json
+        $summary.executionDiagnostics | Should -HaveCount 2
+        @($summary.executionDiagnostics | Where-Object variant -EQ 'baseline') | Should -HaveCount 0
+    }
+
+    It 'Publishes per-variant executor categories and retains the failing gate' {
+        $env:STUB_VALLY_BASELINE_MODE = 'executor-error'
+        $env:STUB_VALLY_CUSTOMIZED_MODES = 'executor-error'
+
+        & $script:ScriptPath -Tier 'calibration' -RepoRoot $script:StubRepoRoot -OutputPath $script:StubOutputPath -NoBaselineCache *> $null
+        $exitCode = $LASTEXITCODE
+        $text = Get-Content $script:StubOutputPath -Raw
+        $summary = $text | ConvertFrom-Json
+
+        $summary.executionDiagnostics | Should -HaveCount 4
+        foreach ($diagnostic in $summary.executionDiagnostics) {
+            $diagnostic.exitCode | Should -Be 1
+            $diagnostic.attempt | Should -Be 1
+            $diagnostic.erroredTrials | Should -Be 1
+            $diagnostic.errors[0].category | Should -Be 'model-unavailable'
+        }
+        @($summary.executionDiagnostics.model | Sort-Object -Unique) | Should -Be @('claude-sonnet-5', 'gpt-5.6-luna')
+        @($summary.executionDiagnostics.variant | Sort-Object -Unique) | Should -Be @('baseline', 'customized')
+        $text | Should -Not -Match 'synthetic-private|example\.invalid|Bearer'
+        $summary.invocationFailures | Should -BeGreaterThan 0
+        $summary.verdict | Should -Be 'fail'
+        $exitCode | Should -Be 1
     }
 
     It 'Materializes the customization surface where the spec reads it' {
@@ -589,9 +1035,37 @@ defaults:
         $gptAttempts.Count | Should -Be 2
         $gptAttempts[0].reasonCode | Should -Be 'failed-tool-result'
         $gptAttempts[1].hasCompleteEvidence | Should -BeTrue
+        $executionAttempts = @($summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-5.6-luna' -and $_.variant -eq 'customized' })
+        $executionAttempts.attempt | Should -Be @(1, 2)
         $summary.invocationFailures | Should -Be 0
         $baselineCalls.Count | Should -Be 2
         $customizedCalls.Count | Should -Be 3
+    }
+
+    It 'Retries an eligible customized GPT executor-error batch and makes the retry authoritative' {
+        $env:STUB_VALLY_BASELINE_MODE = 'invocation-pass'
+        $env:STUB_VALLY_CUSTOMIZED_MODES = 'executor-error-unknown,invocation-pass'
+        $env:STUB_VALLY_CUSTOMIZED_COUNT_PATH = Join-Path $TestDrive "customized-count-$([Guid]::NewGuid()).txt"
+        $env:STUB_VALLY_COMPARE_MODE = 'pass'
+
+        & $script:ScriptPath `
+            -Agent 'rpi-agent' `
+            -Tier 'calibration' `
+            -RepoRoot $script:StubRepoRoot `
+            -OutputPath $script:StubOutputPath `
+            -NoBaselineCache *> $null
+
+        $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
+        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-5.6-luna' })
+        $executionAttempts = @($summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-5.6-luna' -and $_.variant -eq 'customized' })
+
+        $gptAttempts.Count | Should -Be 2
+        $executionAttempts.attempt | Should -Be @(1, 2)
+        $executionAttempts[0].errors[0].category | Should -Be 'unknown'
+        $executionAttempts[1].exitCode | Should -Be 0
+        $executionAttempts[1].erroredTrials | Should -Be 0
+        $gptAttempts[1].hasCompleteEvidence | Should -BeTrue
+        $summary.invocationFailures | Should -Be 0
     }
 
     It 'Does not retry an ineligible missing exact read' {
@@ -636,6 +1110,10 @@ defaults:
         $gptAttempts[0].reasonCode | Should -Be 'failed-tool-result'
         $gptAttempts[1].observed | Should -Be 0
         $gptAttempts[1].failedKey | Should -BeNullOrEmpty
+        $retryDiagnostic = $summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-5.6-luna' -and $_.variant -eq 'customized' -and $_.attempt -eq 2 }
+        $retryDiagnostic.exitCode | Should -Be 99
+        $retryDiagnostic.resultState | Should -Be 'missing'
+        $retryDiagnostic.trialRecords | Should -Be 0
         $summary.invocationFailures | Should -BeGreaterThan 0
         $summary.runHealthFailures | Should -BeGreaterThan 0
         $summary.verdict | Should -Be 'fail'

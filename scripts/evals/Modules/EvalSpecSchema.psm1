@@ -222,6 +222,8 @@ function Test-EvalSpecCompliance {
 
     $stimulusCount = 0
     $index = -1
+    $isComparisonSpec = $SpecPath.Replace('\', '/') -eq 'evals/baseline-equivalence/compare.eval.yml'
+    $seenGraderNames = @{}
     foreach ($stimulus in $stimuli) {
         $index++
         $stimulusCount++
@@ -261,6 +263,36 @@ function Test-EvalSpecCompliance {
         }
         if ($graderCount -lt 1) {
             $errors.Add(@{ path = $SpecPath; field = "$stimulusLabel.graders"; message = 'Stimulus must declare at least one grader (assertion)' })
+        }
+        else {
+            $graderIndex = -1
+            foreach ($grader in $graders) {
+                $graderIndex++
+                if ($grader -isnot [System.Collections.IDictionary] -or -not $grader.Contains('name')) {
+                    continue
+                }
+                $graderName = [string]$grader['name']
+                if ([string]::IsNullOrWhiteSpace($graderName)) {
+                    continue
+                }
+                if ($graderName -cnotmatch '^[a-z0-9][a-z0-9-]{0,59}$') {
+                    $errors.Add(@{
+                            path    = $SpecPath
+                            field   = "$stimulusLabel.graders[$graderIndex].name"
+                            message = "Invalid grader name '$graderName'; names must contain only lowercase letters, digits, and hyphens, start with a letter or digit, and contain at most 60 characters"
+                        })
+                }
+                if (-not $isComparisonSpec -and $seenGraderNames.ContainsKey($graderName)) {
+                    $errors.Add(@{
+                            path    = $SpecPath
+                            field   = "$stimulusLabel.graders[$graderIndex].name"
+                            message = "Duplicate grader name '$graderName'; first declared in stimulus '$($seenGraderNames[$graderName])'"
+                        })
+                }
+                elseif (-not $seenGraderNames.ContainsKey($graderName)) {
+                    $seenGraderNames[$graderName] = $stimulusName
+                }
+            }
         }
 
         if ($stimulus.ContainsKey('tags') -and $stimulus['tags'] -is [System.Collections.IDictionary]) {

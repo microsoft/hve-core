@@ -75,6 +75,44 @@ async function describeActiveElement(page: Page) {
 }
 
 test.describe('Search keyboard navigation', () => {
+  test('Control+K focuses the named search input and query results keep that focus', async ({ page }) => {
+    await page.goto('/hve-core/docs/getting-started/');
+    await page.waitForLoadState('domcontentloaded');
+    await waitForHydration(page);
+
+    // Focus must start away from the widget so the shortcut is what moves it.
+    await page.locator('body').click({ position: { x: 5, y: 5 } });
+    const before = await describeActiveElement(page);
+    expect(before.role, 'the shortcut test needs focus off the search input').not.toBe('search-input');
+
+    await page.keyboard.press('Control+K');
+
+    const input = page.locator('input.navbar__search-input').first();
+    await expect(input, 'Control+K must move focus to the search input').toBeFocused();
+    // The destination has to be identifiable by name, not just by selector.
+    const accessibleName = await input.evaluate((node) => {
+      const labelledBy = node.getAttribute('aria-labelledby');
+      const labelled = labelledBy ? document.getElementById(labelledBy)?.textContent : null;
+      return (node.getAttribute('aria-label') || labelled || node.getAttribute('placeholder') || '').trim();
+    });
+    expect(accessibleName, 'the shortcut destination must expose an accessible name').toMatch(/search/i);
+
+    await input.fill('agent');
+    await page.locator('[role="listbox"]').first().waitFor({ state: 'visible', timeout: 30000 });
+
+    // Focus must survive result rendering rather than dropping to <body>.
+    await expect(input, 'focus must stay on the input while results render').toBeFocused();
+    const optionIds = await getResultOptionIds(page);
+    expect(optionIds.length, 'the query must expose result options').toBeGreaterThan(0);
+
+    // The full-results action must be keyboard reachable from that same focus.
+    const footerId = await getFooterId(page);
+    expect(footerId, 'the full-results action must expose an id').toBeTruthy();
+    const reached = await arrowDownUntilActive(page, input, footerId as string, optionIds.length + 3);
+    expect(reached, 'arrow keys must reach the full-results action').toBe(true);
+    await expect(input, 'reaching the full-results action must not move focus').toBeFocused();
+  });
+
   test('exposes an accessible name on the search clear button', async ({ page }) => {
     await openNavbarSearch(page);
 
@@ -266,8 +304,8 @@ test.describe('Search keyboard navigation', () => {
     ).not.toBe('body');
 
     if (clearButtonCount > 0) {
-      // The widget's own control is the next stop in document order. The defect
-      // being locked out is skipping past it or losing it to popup teardown.
+      // The widget's own control is the next stop in document order and remains
+      // available while the popup closes.
       await expect(
         clearButton,
         'Tab must reach the search clear button rather than skipping past it',

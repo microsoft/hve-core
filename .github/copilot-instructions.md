@@ -125,8 +125,7 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * BRD Sessions (`.copilot-tracking/brd-sessions/`) - Business requirements document session state.
 * PRD Sessions (`.copilot-tracking/prd-sessions/`) - Product requirements document session state.
 * GitHub Issues (`.copilot-tracking/github-issues/`) - GitHub issue search, triage, and workflow tracking.
-* Sandbox (`.copilot-tracking/sandbox/`) - Prompt testing sandbox environments.
-* HVE Builder (`.copilot-tracking/hve-builder/`) - Prompt-engineering discovery, authoring, review, behavior-test, and validation evidence.
+* HVE Builder (`.copilot-tracking/hve-builder/`) - Prompt-engineering discovery, authoring, review, and validation evidence.
 * Documentation (`.copilot-tracking/documentation/`) - Documentation workflow session tracking.
 * Challenges (`.copilot-tracking/challenges/YYYY-MM-DD/`) - Challenge session Q&A logs, unresolved items, and scope records from `rpi-challenger` sessions.
 

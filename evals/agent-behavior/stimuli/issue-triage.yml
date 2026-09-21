@@ -12,11 +12,11 @@ stimuli:
         config:
           pattern: '(?i)(title|description|acceptance criteria|priority|label|story|epic)'
       - type: output-matches
-        name: tracking-file-write
+        name: issue-triage-class-recipe-tracking-file-write
         config:
           pattern: '(?i)\.copilot-tracking[-/\\]'
       - type: output-matches
-        name: no-source-edit
+        name: issue-triage-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

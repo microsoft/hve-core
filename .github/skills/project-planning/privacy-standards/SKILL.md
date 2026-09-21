@@ -43,8 +43,9 @@ The frontmatter expression is the conjunction of every license present in the pa
 - [GDPR overview](references/gdpr.md)
 - [CCPA/CPRA overview](references/ccpa-cpra.md)
 - [OWASP Top 10 Privacy Risks](references/owasp-top-10-privacy-risks.md)
-- [DPIA threshold heuristics](references/dpia-thresholds.md)
-- [Data governance controls for release readiness](references/data-governance-controls.md)
+- Operational references:
+  - [DPIA threshold heuristics](references/dpia-thresholds.md)
+  - [Data governance controls for release readiness](references/data-governance-controls.md)
 
 ## Privacy planning heuristics
 

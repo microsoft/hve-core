@@ -40,7 +40,7 @@ stimuli:
     name: judge-think-speak-empower-pattern
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: think-speak-empower-pattern-completion-budget
     turn: 1
     config:
       max: 120s
@@ -64,7 +64,7 @@ stimuli:
     name: judge-short-conversational-responses
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: short-conversational-responses-completion-budget
     turn: 1
     config:
       max: 120s
@@ -88,7 +88,7 @@ stimuli:
     name: judge-empowers-with-choices
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: empowers-with-choices-completion-budget
     turn: 1
     config:
       max: 120s
@@ -113,7 +113,7 @@ stimuli:
     name: judge-collaborate-not-execute
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: collaborate-not-execute-completion-budget
     turn: 1
     config:
       max: 120s
@@ -138,7 +138,7 @@ stimuli:
     name: judge-no-prescriptive-solutions
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: no-prescriptive-solutions-completion-budget
     turn: 1
     config:
       max: 120s
@@ -162,7 +162,7 @@ stimuli:
     name: judge-never-make-users-feel-foolish
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: never-make-users-feel-foolish-completion-budget
     turn: 1
     config:
       max: 120s
@@ -188,7 +188,7 @@ stimuli:
     name: judge-method-1-frozen-vs-fluid
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: method-1-frozen-vs-fluid-completion-budget
     turn: 1
     config:
       max: 120s
@@ -219,7 +219,7 @@ stimuli:
     config:
       substring: stakeholder
   - type: wall-time
-    name: completion-budget
+    name: method-1-identify-stakeholders-completion-budget
     turn: 1
     config:
       max: 120s
@@ -245,7 +245,7 @@ stimuli:
     name: judge-method-2-research-planning
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: method-2-research-planning-completion-budget
     turn: 1
     config:
       max: 120s
@@ -273,7 +273,7 @@ stimuli:
     name: judge-method-3-pattern-recognition
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: method-3-pattern-recognition-completion-budget
     turn: 1
     config:
       max: 120s
@@ -300,7 +300,7 @@ stimuli:
     name: judge-method-4-divergent-ideation
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: method-4-divergent-ideation-completion-budget
     turn: 1
     config:
       max: 120s
@@ -326,7 +326,7 @@ stimuli:
     name: judge-method-5-concept-validation
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: method-5-concept-validation-completion-budget
     turn: 1
     config:
       max: 120s
@@ -351,7 +351,7 @@ stimuli:
     name: judge-method-6-scrappy-prototypes
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: method-6-scrappy-prototypes-completion-budget
     turn: 1
     config:
       max: 120s
@@ -377,7 +377,7 @@ stimuli:
     name: judge-method-7-feasibility-testing
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: method-7-feasibility-testing-completion-budget
     turn: 1
     config:
       max: 120s
@@ -405,7 +405,7 @@ stimuli:
     name: judge-method-8-systematic-validation
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: method-8-systematic-validation-completion-budget
     turn: 1
     config:
       max: 120s
@@ -430,7 +430,7 @@ stimuli:
     name: judge-method-9-continuous-optimization
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: method-9-continuous-optimization-completion-budget
     turn: 1
     config:
       max: 120s
@@ -456,7 +456,7 @@ stimuli:
     name: judge-hint-broad-direction-first
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: hint-broad-direction-first-completion-budget
     turn: 1
     config:
       max: 120s
@@ -482,7 +482,7 @@ stimuli:
     name: judge-hint-escalation-on-repeated-confusion
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: hint-escalation-on-repeated-confusion-completion-budget
     turn: 1
     config:
       max: 120s
@@ -509,7 +509,7 @@ stimuli:
     name: judge-backward-transition-accepted
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: backward-transition-accepted-completion-budget
     turn: 1
     config:
       max: 120s
@@ -535,7 +535,7 @@ stimuli:
     name: judge-transparent-method-shift
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: transparent-method-shift-completion-budget
     turn: 1
     config:
       max: 120s
@@ -559,7 +559,7 @@ stimuli:
     name: judge-no-multiple-choice-quizzes
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: no-multiple-choice-quizzes-completion-budget
     turn: 1
     config:
       max: 120s
@@ -583,7 +583,7 @@ stimuli:
     name: judge-no-unsolicited-method-change
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: no-unsolicited-method-change-completion-budget
     turn: 1
     config:
       max: 120s
@@ -607,7 +607,7 @@ stimuli:
     name: judge-session-resumption
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: session-resumption-completion-budget
     turn: 1
     config:
       max: 120s
@@ -633,7 +633,7 @@ stimuli:
     name: judge-init-asks-for-project-slug
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: init-asks-for-project-slug-completion-budget
     turn: 1
     config:
       max: 120s
@@ -658,7 +658,7 @@ stimuli:
     name: judge-init-clarifies-context
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: init-clarifies-context-completion-budget
     turn: 1
     config:
       max: 120s
@@ -685,7 +685,7 @@ stimuli:
     name: judge-init-defaults-to-method-1
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: init-defaults-to-method-1-completion-budget
     turn: 1
     config:
       max: 120s
@@ -711,7 +711,7 @@ stimuli:
     name: judge-active-coaching-open-ended-questions
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: active-coaching-open-ended-questions-completion-budget
     turn: 1
     config:
       max: 120s
@@ -737,7 +737,7 @@ stimuli:
     name: judge-active-coaching-periodic-summary
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: active-coaching-periodic-summary-completion-budget
     turn: 1
     config:
       max: 120s
@@ -765,7 +765,7 @@ stimuli:
     name: judge-method-transition-recap-and-confirm
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: method-transition-recap-and-confirm-completion-budget
     turn: 1
     config:
       max: 120s
@@ -791,7 +791,7 @@ stimuli:
     name: judge-session-closure-summary
     turn: 1
   - type: wall-time
-    name: completion-budget
+    name: session-closure-summary-completion-budget
     turn: 1
     config:
       max: 120s

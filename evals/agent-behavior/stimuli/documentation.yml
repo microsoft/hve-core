@@ -16,11 +16,11 @@ stimuli:
         config:
           pattern: '(?i)success\s+criteria|criteria'
       - type: output-matches
-        name: tracking-file-write
+        name: documentation-audit-class-recipe-tracking-file-write
         config:
           pattern: '(?i)\.copilot-tracking[-/\\](documentation|plans)'
       - type: output-matches
-        name: no-source-edit
+        name: documentation-audit-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
@@ -49,15 +49,15 @@ stimuli:
       category: agent-behavior
     graders:
       - type: output-matches
-        name: findings-table-present
+        name: documentation-drift-class-recipe-findings-table-present
         config:
           pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|violation)'
       - type: output-matches
-        name: severity-vocab
+        name: documentation-drift-class-recipe-severity-vocab
         config:
           pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
       - type: output-matches
-        name: no-source-edit
+        name: documentation-drift-class-recipe-no-source-edit
         config:
           pattern: '(?i)```\s*(diff|patch|c#|csharp|cs|python|py|typescript|ts|javascript|js|rust|rs|go|java)\b'
           negate: true

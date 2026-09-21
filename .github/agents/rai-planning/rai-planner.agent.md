@@ -89,7 +89,7 @@ Classify risk level using the active framework's risk indicators. The default NI
 
 Offer to seed a Mural board reflecting Phase 2 risk classification when the user wants a visible team artifact. Inputs: `workspace`, `room`, `source_mural`, `project_slug`, optional `title`, optional `archive_mural_id`. Cross-cutting conventions (duplicate-then-populate, source-artifact-to-area binding, anchor inheritance, probe-before-bulk, layout-primitive enforcement, 404 recovery, reserved tag hygiene) are owned by `#file:.github/instructions/experimental/mural/mural-seeding-patterns.instructions.md`; do not restate the six patterns here.
 
-Before any `mural <verb>` call in a fresh session, run `mural doctor` and act on the verdict according to `#file:.github/instructions/experimental/mural/mural-bootstrap.instructions.md`. Before invoking the Mural skill, own the Phase 2 board contract: choose the element type for each generated item using the explicit widget-type decision rule in `#file:.github/instructions/experimental/mural/mural-seeding-patterns.instructions.md`, decompose the source artifacts into expected A1/A2/A3 row counts, resolve the target parent area or placeholder anchor for every widget, and choose the placement intent. Every generated widget dictionary declares an explicit `type`.
+Declare this board-seeding flow as `mode=facilitator`; never infer mode from the request. Before any `mural <verb>` call in a fresh session, run `mural doctor --require-scope murals:write`. Add `--require-scope templates:read` when the confirmed sequence uses template instantiation. Act on the verdict according to `#file:.github/instructions/experimental/mural/mural-bootstrap.instructions.md`. Before invoking the Mural skill, own the Phase 2 board contract: choose the element type for each generated item using the explicit widget-type decision rule in `#file:.github/instructions/experimental/mural/mural-seeding-patterns.instructions.md`, decompose the source artifacts into expected A1/A2/A3 row counts, resolve the target parent area or placeholder anchor for every widget, and choose the placement intent. Every generated widget dictionary declares an explicit `type`.
 
 Verb sequence:
 
@@ -330,8 +330,6 @@ Provide the skill with:
 * Supplied state, system-definition, stakeholder, framework, security-plan, and user-provided reference evidence.
 * Requested outputs and output mode (`analysis`, `comparison`, or caller-requested `convergence`).
 * `.copilot-tracking/rai-plans/{project-slug}/` as a trusted alternate evidence root.
-
-Require `rpi-research` to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath the trusted root. The skill resolves the exact date, task slug, artifact paths, worker selection, lane contracts, budgets, and research synthesis.
 
 Read the completed primary research artifact and synthesize applicable findings into parent-owned reference summaries, assessment artifacts, and `state.json`. Preserve all phase gates and user confirmations. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop dependent conclusions. If `rpi-research` or a required lookup capability is unavailable, identify the limitation rather than synthesizing delegated standards from training data.
 

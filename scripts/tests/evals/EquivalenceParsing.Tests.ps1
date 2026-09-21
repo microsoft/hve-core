@@ -1660,3 +1660,62 @@ Describe 'Measure-DivergenceGuardResults' -Tag 'Unit' {
         $r.MalformedRecords | Should -Be 0
     }
 }
+
+Describe 'Grader lineage resolution' -Tag 'Unit' {
+    BeforeAll {
+        $script:LineageFixturePath = Join-Path $script:FixturesRoot 'vally-grader-lineage-history.jsonl'
+        $script:LineageMapPath = Join-Path $PSScriptRoot '../../../evals/migrations/vally-0.16-grader-name-aliases.json'
+        $script:LineageMap = Get-Content -Raw -LiteralPath $script:LineageMapPath | ConvertFrom-Json -Depth 100
+    }
+
+    It 'Resolves unchanged, ordinary-renamed, and hash-truncated historical details through the parser' {
+        $runDir = Join-Path $TestDrive ('lineage-' + [Guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+        Copy-Item -LiteralPath $script:LineageFixturePath -Destination (Join-Path $runDir 'results.jsonl')
+
+        $raw = [System.IO.File]::ReadAllText($script:LineageFixturePath)
+        $raw | Should -Not -Match 'configuredName|graderType'
+        $records = ConvertFrom-EquivalenceResults -RunDir $runDir -GraderLineageMapPath $script:LineageMapPath
+        $lineage = @($records | ForEach-Object { @($_.lineageDetails) })
+
+        $records.Count | Should -Be 3
+        $lineage | Should -HaveCount 3
+        $lineage[0].historicalConfiguredName | Should -Be 'accessibility-planner-class-recipe-tracking-file-write'
+        $lineage[0].currentConfiguredName | Should -Be 'accessibility-planner-class-recipe-tracking-file-write'
+        $lineage[1].historicalConfiguredName | Should -Be 'tracking-file-write'
+        $lineage[1].currentConfiguredName | Should -Be 'accessibility-planner-class-recipe-tracking-file-write'
+        $lineage[1].passed | Should -BeFalse
+        $lineage[1].score | Should -Be 0.5
+        $lineage[1].evidence | Should -Be 'Sanitized renamed evidence.'
+        $lineage[1].label | Should -Be 'incorrect'
+        $lineage[2].currentConfiguredName | Should -Be 'startup-disclaimer-and-framework-attribution-comple-2ac17d44'
+        $records[0].details.code | Should -HaveCount 1
+    }
+
+    It 'Rejects authentic old-shaped <Case> records' -ForEach @(
+        @{ Case = 'unknown-name'; Expected = '*Unknown grader lineage identity*' }
+        @{ Case = 'wrong-kind'; Expected = '*Unknown grader lineage identity*' }
+        @{ Case = 'mismatched-stimulus'; Expected = '*Historical stimulus mismatch*' }
+        @{ Case = 'ambiguous-name'; Expected = '*Ambiguous grader lineage identity*' }
+    ) {
+        $record = (Get-Content -LiteralPath $script:LineageFixturePath -First 1) | ConvertFrom-Json -Depth 100
+        $map = ($script:LineageMap | ConvertTo-Json -Depth 100) | ConvertFrom-Json -Depth 100
+
+        switch ($Case) {
+            'unknown-name' { $record.gradeResult.details[0].name = 'unknown-historical-name' }
+            'wrong-kind' { $record.gradeResult.details[0].kind = 'human' }
+            'mismatched-stimulus' { $record.gradeResult.stimulusName = 'different-stimulus' }
+            'ambiguous-name' {
+                $matching = $map.aliases | Where-Object {
+                    $_.evalName -eq $record.evalName -and
+                    $_.stimulus -eq $record.stimulus -and
+                    $_.newName -eq $record.gradeResult.details[0].name
+                } | Select-Object -First 1
+                $map.aliases = @($map.aliases) + @($matching)
+            }
+        }
+
+        { Resolve-GraderLineageDetails -Record $record -GraderLineageMap $map } |
+            Should -Throw -ExpectedMessage $Expected
+    }
+}

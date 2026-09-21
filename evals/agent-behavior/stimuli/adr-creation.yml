@@ -8,7 +8,7 @@ stimuli:
       category: agent-behavior
     graders:
       - type: output-matches
-        name: tracking-file-write
+        name: adr-creation-class-recipe-tracking-file-write
         config:
           pattern: '(?i)\.copilot-tracking[-/\\]adr-plans[-/\\]adopt-postgresql'
       - type: output-matches
@@ -16,11 +16,11 @@ stimuli:
         config:
           pattern: '(?i)\bframe\b'
       - type: output-matches
-        name: topic-coverage
+        name: adr-creation-class-recipe-topic-coverage
         config:
           pattern: '(?i)postgres(?:ql)?'
       - type: output-matches
-        name: no-source-edit
+        name: adr-creation-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

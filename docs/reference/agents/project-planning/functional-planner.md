@@ -28,15 +28,17 @@ Read-only Product Manager agent that analyzes PRDs and plans Azure DevOps, GitHu
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use Functional Planner to turn a PRD into a platform-appropriate work-item hierarchy without creating or modifying tracker items. It combines requirements, codebase context, and read-only discovery of related work. Use Backlog Manager to execute the resulting handoff after review.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+1. Select `Functional Planner`, supply the PRD, and confirm the Azure DevOps project, GitHub repository, or Jira project key.
+2. Confirm the planning framework when the context does not determine it.
+3. Review the proposed hierarchy, requirement coverage, and validated types and fields. Unsupported fields remain `needs_review`; contradictory requirements stop dependent planning.
+4. Review the plan and handoff before passing them to Backlog Manager. No tracker mutation occurs in this planning session.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask: "Plan a work-item hierarchy from `requirements/import-prd.md` for our confirmed GitHub repository. Discover related issues, map every requirement, and leave unsupported hierarchy choices for review. Do not create issues."
+
+Expect a traceable hierarchy and execution handoff with explicit gaps. Success means every requirement maps to proposed work or a named unresolved item, and no planning identifier is mistaken for an existing tracker ID.
