@@ -28,15 +28,17 @@ Business Requirements Document builder with guided Q&A and references
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use BRD Builder to turn an initiative into solution-neutral business requirements with stakeholder ownership, measurable goals, and traceability. Use PRD Builder for product-level behavior once the business direction is established; do not use a BRD to prescribe implementation details.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+1. Select `BRD Builder` and provide the initiative name, business problem, affected stakeholders, and reference material.
+2. Establish scope and ownership in Discover, then refine testable requirements and their goal and acceptance-criteria links in Define.
+3. Review the BRD Quality Reviewer findings and resolve the quality gate before Govern.
+4. Supply the required approver signoff and review the versioned BRD-to-PRD handoff. The agent does not replace business approval with its own assessment.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask: "Create a BRD for reducing delayed service requests. Use `requirements/process-notes.md`, identify missing stakeholders, and define measurable outcomes without selecting a technology."
+
+Expect an iterative BRD, traceability evidence, quality findings, and a handoff only when its approval conditions are met. Success means requirements connect to business goals and unresolved ownership or evidence remains explicit.

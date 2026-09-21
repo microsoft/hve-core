@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["shapely>=2.0", "networkx>=3.0", "keyring>=24.0"]
+# dependencies = ["shapely>=2.0", "networkx>=3.0", "keyring>=24.0", "pyyaml>=6.0"]
 # ///
 """Mural REST API client and CLI.
 
@@ -12,7 +12,7 @@ The auth surface covers env-var resolution, token-store I/O, PKCE, the
 loopback OAuth ``auth login`` / ``logout`` / ``status`` subcommands. Mural REST
 resource subcommands (workspace, room, mural, widget) live in this same module.
 
-Runtime third-party dependencies are ``shapely`` and ``networkx``;
+Runtime third-party dependencies are ``shapely``, ``networkx``, and ``pyyaml``;
 ``shapely`` requires GEOS >= 3.11 to be present on the host. Test seams are
 exposed via private parameters (``_http``, ``_now``, ``_open_browser``,
 ``_server_factory``) so unit tests can substitute fakes without
@@ -678,6 +678,35 @@ def _list_widgets_with_context(
     )
 
 
+def _hydrate_destination_context(
+    mural_id: str,
+    context: dict[str, Any],
+    widget_url: str,
+    *,
+    cache: dict[tuple[str, str], Any],
+) -> dict[str, Any]:
+    """Hydrate a destination record through cached package-facade reads."""
+    return _hydrate_destination_context_impl(
+        mural_id,
+        context,
+        widget_url,
+        cache=cache,
+        get_mural=lambda identifier: _authenticated_request(
+            "GET", f"/murals/{identifier}"
+        ),
+        get_room=lambda identifier: _authenticated_request(
+            "GET", f"/rooms/{identifier}"
+        ),
+        get_workspace=lambda identifier: _authenticated_request(
+            "GET", f"/workspaces/{identifier}"
+        ),
+        list_tags=lambda identifier: list(
+            _paginate("GET", f"/murals/{identifier}/tags")
+        ),
+        hydrate_destination_record=hydrate_destination_record,
+    )
+
+
 # --- Tag manifest helper --------------------------------------------------
 
 from ._tag_helpers import (  # noqa: E402
@@ -865,6 +894,7 @@ from ._area_helpers import (  # noqa: E402,F401
     _get_area_impl,
     _get_area_with_widget_fallback_impl,
     _get_widget_with_context_impl,
+    _hydrate_destination_context_impl,
     _list_areas_with_widget_fallback_impl,
     _list_widgets_with_context_impl,
     _log_area_fallback_once_impl,
@@ -1038,6 +1068,25 @@ from ._commands import (  # noqa: E402,F401 - re-export carved resource/bulk com
     _typed_widget_path,
     _verify_parent_containment,
 )
+from ._destinations import (  # noqa: E402,F401
+    DestinationAdapter,
+    DestinationEntry,
+    DestinationRegistry,
+    DispatchRequest,
+    DispatchResult,
+    dispatch_destination,
+    hydrate_destination_record,
+    load_destination_registry,
+    project_destination_record,
+    validate_writeback_patch,
+)
+from ._doctor import (  # noqa: E402,F401
+    COMMAND_REQUIRED_SCOPES,
+    _cmd_doctor,
+    command_key,
+    evaluate_readiness,
+    required_scopes_for_args,
+)
 
 # --- Voting tool handlers ----------------------------------------------------
 # --- Workspace search --------------------------------------------------------
@@ -1193,16 +1242,20 @@ def main(argv: list[str] | None = None) -> int:
         or os.environ.get(ENV_PROFILE)
         or DEFAULT_PROFILE_NAME
     )
-    try:
-        _autoload_credentials(profile_name)
-    except MuralError as exc:
-        print(_redact(str(exc)), file=sys.stderr)
-        return EXIT_FAILURE
+    if getattr(args, "command", None) != "doctor":
+        try:
+            _autoload_credentials(profile_name)
+        except MuralError as exc:
+            print(_redact(str(exc)), file=sys.stderr)
+            return EXIT_FAILURE
     func: Callable[[argparse.Namespace], int] = getattr(args, "func", None)
     if func is None:
         parser.print_help(sys.stderr)
         return EXIT_USAGE
     try:
+        required_scopes = required_scopes_for_args(args)
+        if required_scopes:
+            _require_scope(required_scopes, profile_name=profile_name)
         return func(args)
     except SystemExit:
         raise

@@ -18,15 +18,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-human-readable-name
+        name: ado-backlog-executor-frontmatter-name-and-descripti-4ef3c89f
         config:
           pattern: '(?i)\bADO Backlog Executor\b'
       - type: output-matches
-        name: reports-declared-description
+        name: ado-backlog-executor-frontmatter-name-and-descripti-e78abd7b
         config:
           pattern: '(?i)dispatched Azure DevOps backlog operation set in one confirmed project'
       - type: output-matches
-        name: does-not-substitute-filename-for-name
+        name: ado-backlog-executor-frontmatter-name-and-descripti-4cd894c3
         config:
           pattern: '(?i)name\s*(is|:)\s*.{0,3}ado-backlog-executor'
           negate: true
@@ -41,15 +41,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-declared-flag-value
+        name: ado-backlog-executor-user-invocable-flag-reports-de-90237384
         config:
           pattern: '(?i)user-invocable\s*(is|:|=)?\s*.{0,3}false'
       - type: output-matches
-        name: reaches-through-a-dispatching-parent
+        name: ado-backlog-executor-user-invocable-flag-reaches-th-738997a8
         config:
           pattern: '(?i)(dispatch|Backlog Manager|parent agent|orchestrator)'
       - type: output-matches
-        name: not-described-as-picker-selectable
+        name: ado-backlog-executor-user-invocable-flag-not-descri-340903dd
         config:
           pattern: '(?i)(appears in|select(able)? from|choose it in) the (agent )?picker'
           negate: true
@@ -64,23 +64,23 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-purpose-section
+        name: ado-backlog-executor-structural-template-reports-pu-a88fba78
         config:
           pattern: '(?im)^\W*Purpose\b'
       - type: output-matches
-        name: reports-inputs-section
+        name: ado-backlog-executor-structural-template-reports-in-bbc6a6fc
         config:
           pattern: '(?im)^\W*Inputs\b'
       - type: output-matches
-        name: reports-required-steps-section
+        name: ado-backlog-executor-structural-template-reports-re-1ed0a1af
         config:
           pattern: '(?i)Required\s+Steps'
       - type: output-matches
-        name: reports-response-format-section
+        name: ado-backlog-executor-structural-template-reports-re-ca0461b6
         config:
           pattern: '(?i)Response\s+Format'
       - type: output-matches
-        name: confirms-heading-matches-name
+        name: ado-backlog-executor-structural-template-confirms-h-5ddae132
         config:
           pattern: '(?i)(match(es|ing)?|same as|identical)'
 
@@ -94,7 +94,7 @@ stimuli:
       advisory: "true"
     graders:
       - type: prompt
-        name: tool-restriction-appropriate-for-purpose
+        name: ado-backlog-executor-tool-restriction-fit-tool-rest-74ab33a9
         config:
           prompt: |
             The response assesses whether a subagent's declared tool set fits its
@@ -107,7 +107,7 @@ stimuli:
             artifact's own destination-binding contract provides.
           threshold: 0.6
       - type: output-matches
-        name: does-not-claim-runtime-enforcement-proof
+        name: ado-backlog-executor-tool-restriction-fit-does-not-c545a32d
         config:
           pattern: '(?i)(this (test|check|eval) (proves|demonstrates|verifies))'
           negate: true

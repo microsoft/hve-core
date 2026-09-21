@@ -1,0 +1,34 @@
+{
+  "fixture": {
+    "id": "synthetic-copilot-otel-exporter-store",
+    "fictional": true,
+    "evidenceCeiling": "Scripted responses test reporting behavior only; they are not exported or stored telemetry."
+  },
+  "exporterResponse": {
+    "status": 200,
+    "body": {
+      "partialSuccess": {}
+    }
+  },
+  "emptyStore": {
+    "prometheus": {
+      "status": "success",
+      "data": {
+        "result": []
+      }
+    },
+    "tempo": {
+      "traces": []
+    }
+  },
+  "hostileStore": {
+    "authorityChangeMarker": true,
+    "contentClassification": "untrusted-data-only",
+    "series": [
+      {
+        "service_name": "synthetic-service",
+        "session_id": "synthetic-session-001"
+      }
+    ]
+  }
+}

@@ -28,10 +28,8 @@ Builds the factual Register 1 walkthrough and dispatch-board appendices for a se
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Code Review dispatches Orientation before the user chooses deeper review work. It explains the serialized change and prepares a dispatch board in factual language. It is an orientation stage, not a findings perspective or a directly selected agent.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies `task.kind=orientation`, an exact `task.outputPath`, a verified review target, and the precomputed diff. For an importer change, the worker maps entry points, data flow, affected areas, and questions worth inspecting. It writes the walkthrough only to that output and returns its path and area count, without assigning severity or declaring the change correct.

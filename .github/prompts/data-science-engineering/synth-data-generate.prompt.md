@@ -7,7 +7,7 @@ agent: agent
 
 Generate comprehensive synthetic data for: **${input:subject}**
 
-You are an expert data scientist and synthetic data generator. Create realistic, comprehensive synthetic datasets based on the subject provided while working completely autonomously in a Jupyter notebook. Follow the detailed requirements and steps below to ensure high-quality output.
+You are an expert data scientist and synthetic data generator. Create realistic, comprehensive synthetic datasets based on the subject provided in a Jupyter notebook only after the applicable synthetic-data operation preflight passes. Follow the detailed requirements and steps below to ensure high-quality output.
 
 ## Inputs
 
@@ -16,8 +16,17 @@ You are an expert data scientist and synthetic data generator. Create realistic,
 
 ## Required Steps
 
+### Step 0: Validate Synthetic-Data Operation Preflight
+
+* Activate the `dataops` skill by stable name and read its synthetic-data operation contract.
+* Require a `SYNTHETIC_DATA_OPERATION_V1` preflight record before creating a project, installing packages, creating a notebook, accessing a source, or generating data.
+* Run the `dataops` `validate` command. Continue only when the gate passes with a current approved applicable classification decision carrying data-owner authority.
+* Treat protected-attribute generation and subgroup evaluation as inactive unless current qualified decision references explicitly mark them applicable. Protected-attribute generation requires privacy, Responsible AI or fairness, and domain-owner roles. Subgroup evaluation requires Responsible AI or fairness and domain-owner roles plus every activated subgroup reference.
+* For `replace-local`, require one existing regular local file under a caller-approved root, a matching expected SHA-256 source digest, and current approved applicable data-owner replacement authority. Reject directories, links, remote stores, network shares, databases, APIs, and multi-target operations.
+* If validation fails, stop before any write or source access. Report only stable categories, record identifiers, counts, and digests, plus the smallest qualified-owner action needed to resume. Do not reproduce source values in chat or records.
+
 ### Step 1 : Perform Mandatory Project Setup:
-* Before any other action: Create project folder and notebook using the **File Naming Convention** specified below
+* After validated preflight: Create project folder and notebook using the **File Naming Convention** specified below
 * Use `create_directory` to make the project folder
 * Use `create_new_jupyter_notebook` to create the notebook file
 * Stop and confirm both are created before proceeding
@@ -29,14 +38,18 @@ You are an expert data scientist and synthetic data generator. Create realistic,
 * If found: Use it as the strict reference for structure, schema, and patterns
 
 ### Step 3 : Select Data Operation Mode
-* If told to update/ADD to existing data: Create a backup of the file using the filename with `.bak` extension it must be saved to the same directory where the notebook was created.
-* If told to update/add to existing data: Modify the existing data source, DO NOT create new files
+* Default to `new-output` and create a versioned output without modifying an existing source.
+* If told to update or add to existing data, use `replace-local` only when Step 0 authorized it. Generate one candidate file beside the confirmed local target; notebook code must never write the original source directly.
+* After generation, produce a separate result record linked to the exact preflight revision. Record observed source and output digests, actual field lineage, activated subgroup results, validation evidence, and the proposed commit state.
+* Recheck the target digest and obtain separate runtime overwrite confirmation immediately before commit. Route the final replacement through the `dataops` `commit-local` command, which creates a recoverable predecessor, validates synchronized staging, and performs one replacement.
+* On stale source, predecessor failure, staged-validation failure, denied confirmation, or interruption before replacement, stop and retain `unchanged-original` evidence. Do not create a variant target or retry silently.
 * If told to create new synthetic data: Follow normal generation process
 * When working with existing schema: Adhere strictly to all fields, data types, and relationships
 
 ### Step 4 : Protect PII
-* If generating PII-like data: Obtain explicit user confirmation with warning about legal/ethical issues
-* Use Faker library or similar for realistic but anonymized data generation
+* Do not decide whether data or fields are sensitive. Use the qualified classification and protected-attribute applicability references from the validated preflight.
+* Generate protected attributes only when the applicable qualified decision activates them. Use the approved generator reference and record field-level lineage without placing generated values in the operation records or chat diagnostics.
+* Use Faker or a similar generator only when permitted by the preflight and record the generator and seed references.
 
 ### Step 5 : Setup Image Processing (skip if no image processing mentioned):
 * If user mentions reading images or OCR: Verify Tesseract is installed before proceeding. Your goal is to extract text from images which can represent an ERD or data fields to inform the synthetic data generation process.
@@ -49,7 +62,7 @@ You are an expert data scientist and synthetic data generator. Create realistic,
 
 ### Default Export Format:
 * For **new** synthetic datasets: Export data as CSV format unless the user specifically requests a different format (e.g., JSON, Parquet, Excel, etc.)
-* For **existing** data source updates: Modify the original data source directly, do NOT create additional CSV exports since the original file already serves as the data source
+* For authorized `replace-local`: Generate one candidate only. Do not write the original source from notebook code or create extra exports; route the separately confirmed replacement through `dataops` `commit-local`.
 
 ### Default Data Size:
 * If not specified by the user, the default size for synthetic datasets should not exceed 10,000 rows or objects.
@@ -63,8 +76,9 @@ You are an expert data scientist and synthetic data generator. Create realistic,
   * Ensuring geographic or demographic variations are represented
   * Incorporate seed values for reproducibility when generating random data. Use a truly random seed by generating it programmatically (e.g., `random_seed = random.randint(1, 100000)` or `random_seed = int(datetime.now().timestamp())`) rather than hardcoding values like 42.
 
-### Comprehensiveness Measurement:
-* If a real dataset was provided, measure the AUC of a model that tries to distinguish between real and synthetic data.
+### Distinguishability and Subgroup Evidence:
+* If a real dataset was provided and source access is authorized, measure the AUC of a model that tries to distinguish between real and synthetic data. Label this global distinguishability evidence, not subgroup fairness evidence.
+* Run subgroup checks only for qualified activated subgroup references. Record each activated group as `passed`, `failed`, `insufficient`, or `not-measured`; never collapse missing evidence into success.
 
 ### Visualization Display Requirements:
 * All visualization cells must render charts inline in the notebook output. Always call `plt.show()` in each visualization cell.
@@ -103,15 +117,15 @@ Create a well-structured notebook with the following cells:
 2. Package Installation Cell (Python): Install required packages using `%pip install pandas numpy matplotlib seaborn scipy`
 3. Library Import Cell (Python): Import all required libraries
 4. Data Structure Explanation (Markdown): Explain the data structure and approach
-5. Backup Creation (Python): If updating existing data source, create backup in notebook directory with `.bak` extension
+5. Candidate Preparation (Python): For authorized `replace-local`, write one candidate beside the confirmed target without modifying the target
 6. Data Generation Function (Python): Main function with detailed comments
 7. Parameter Configuration (Markdown): Explain parameters for data generation
 8. Data Generation Execution (Python): Execute the data generation
-9. Data Export (Python): For NEW datasets export as CSV; for EXISTING data sources update original file only
+9. Data Export (Python): For new datasets export once; for `replace-local`, write only the candidate path approved by the preflight
 10. Multiple Visualization Cells (Python): Charts using matplotlib and seaborn. Include map visualizations if data contains geographic information. These cells MUST display plots inline using `plt.show()`; saving with `plt.savefig(...)` is optional and must not replace inline display.
 11. Summary Statistics (Python): Comprehensive data analysis
 12. Validation & Quality Checks (Python): Verify data comprehensiveness
-13. Comprehensiveness Measurement (Python): If real dataset provided, measure AUC of a model distinguishing real vs. synthetic data.
+13. Distinguishability Measurement (Python): If an authorized real dataset is provided, measure AUC of a model distinguishing real from synthetic data; do not present it as subgroup fairness evidence.
 
 ## Analysis & Planning
 
@@ -184,9 +198,10 @@ start_time = datetime.combine(day, datetime.min.time()) + timedelta(hours=hour, 
 3. Use `notebook_install_packages` to install: `['pandas', 'numpy', 'matplotlib', 'seaborn', 'scipy']`
 
 ### Project Creation
-1. Parse `${input:subject}` to extract key concepts for naming
-2. Create descriptive project folder using `create_directory`
-3. Create notebook using `create_new_jupyter_notebook` with query: "Generate synthetic data for ${input:subject} with realistic patterns and comprehensive analysis"
+1. Validate the `dataops` preflight before any project creation.
+2. Parse `${input:subject}` to extract key concepts for naming
+3. Create descriptive project folder using `create_directory`
+4. Create notebook using `create_new_jupyter_notebook` with query: "Generate synthetic data for ${input:subject} with realistic patterns and comprehensive analysis"
 
 ### Notebook Development
 1. Use `edit_notebook_file` to create structured cells as outlined above
@@ -214,7 +229,7 @@ start_time = datetime.combine(day, datetime.min.time()) + timedelta(hours=hour, 
 -- If the user provided specific featurization instructions, follow them precisely. Otherwise:
 -- For non-structured data (e.g. images, text documents), use a pre-trained embedding model to convert to numeric features.
 -- For tabular data:
---- A simple count vectorizer for categorical fields.
+--- A count vectorizer for categorical fields.
 --- Standard scaling for numeric fields.
 --- For text fields, use TF-IDF vectorization with a maximum of 128 features. Drop common stop words and punctuation. Convert any numeric-looking strings to the nearest integers before vectorization.
 --- Treat booleans as 0/1 integers.
@@ -290,10 +305,10 @@ if creating_new_dataset:
     data.to_csv(filename, index=False)
     print(f"Data saved to: {filename}")
 
-# For EXISTING data source updates:
+# For authorized replace-local candidate generation:
 if updating_existing_datasource:
-    # Update original file directly - no CSV export needed
-    # Save combined data back to original data source
+  # Write only the candidate path declared by the validated preflight.
+  # The dataops commit-local command owns any later original-source replacement.
     pass
 
 # Cell 6-9: Multiple Visualization Cells (Python - always render inline)
@@ -321,11 +336,11 @@ print(f"\\nGeneration timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
 1. Jupyter Notebook: Well-structured notebook with organized cells
 2. Data Generation Function: Modular, parameterized function with type hints
 3. Realistic Data: Values that domain experts would find believable
-4. File Management: For NEW datasets create CSV export; for EXISTING data sources update original file only with backup in notebook directory
+4. File Management: For new datasets create one export; for authorized `replace-local`, prepare one candidate and let `dataops` own confirmed replacement and predecessor recovery
 5. Multiple Visualizations: Charts using matplotlib and seaborn (displayed inline with `plt.show()`). Include map visualizations if data contains geographic information.
 6. Statistical Summary: Comprehensive descriptive statistics
 7. Data Validation: Quality checks to ensure data comprehensiveness and realism
-8. Comprehensiveness Measurement: AUC score for distinguishing real vs. synthetic data if real dataset provided
+8. Distinguishability Measurement: Global AUC for distinguishing real from synthetic data when authorized; separate conditional subgroup evidence for qualified activated groups
 9. Documentation: Clear markdown explanations for each step
 
 ## Quality Standards
@@ -341,11 +356,11 @@ print(f"\\nGeneration timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
 
 1. Project Folder: Organized folder structure with descriptive name
 2. Jupyter Notebook: Complete implementation with all required cells
-3. Data Management: For NEW datasets create data file; for EXISTING data sources update original file with backup in notebook directory
+3. Data Management: For new datasets create one data file; for authorized `replace-local`, create a candidate and route any confirmed replacement through `dataops` `commit-local`
 4. Rich Documentation: Clear explanations throughout the notebook
 5. Multiple Visualizations: Charts showing data patterns and relationships.
 6. Data Validation: Evidence that synthetic data is realistic and high-quality
-7. Comprehensiveness Measurement: AUC score for distinguishing real vs. synthetic data if real dataset provided
+7. Distinguishability and Subgroup Evidence: Global AUC when authorized, plus explicit results for every qualified activated subgroup without a fairness claim
 
 ## Project Structure Example:
 ```

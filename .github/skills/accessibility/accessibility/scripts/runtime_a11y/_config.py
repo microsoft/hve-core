@@ -199,4 +199,35 @@ def load_validated_config(
     validate_config(_config_for_validation(config, require_target))
     if require_target:
         assert_target_allowed(config, allow_external=allow_external)
+    repository_root = config_path.parent.resolve()
+    for candidate in (repository_root, *repository_root.parents):
+        if (candidate / ".git").exists():
+            repository_root = candidate
+            break
+    for path_key, payload_key in (
+        ("caseCatalog", "resolvedCaseCatalog"),
+        ("bindingProfile", "resolvedBindingProfile"),
+    ):
+        reference = config.get(path_key)
+        if reference is None:
+            continue
+        if not isinstance(reference, str) or not reference.strip():
+            raise ScriptError(f"Config {path_key} must be a non-empty path", EXIT_USAGE)
+        reference_path = Path(reference)
+        if reference_path.is_absolute():
+            raise ScriptError(
+                f"Config {path_key} must be repository-relative", EXIT_USAGE
+            )
+        resolved_path = (config_path.parent / reference_path).resolve()
+        try:
+            resolved_path.relative_to(repository_root)
+            payload = json.loads(resolved_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            raise ScriptError(
+                f"Cannot load repository-contained config {path_key}: {reference}",
+                EXIT_USAGE,
+            ) from exc
+        if not isinstance(payload, dict):
+            raise ScriptError(f"Config {path_key} root must be an object", EXIT_USAGE)
+        config[payload_key] = payload
     return config

@@ -18,15 +18,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-human-readable-name
+        name: jira-backlog-executor-frontmatter-name-and-descript-39c4e919
         config:
           pattern: '(?i)\bJira Backlog Executor\b'
       - type: output-matches
-        name: reports-declared-description
+        name: jira-backlog-executor-frontmatter-name-and-descript-d1a8f441
         config:
           pattern: '(?i)Runs the Jira skill CLI in one confirmed project'
       - type: output-matches
-        name: does-not-substitute-filename-for-name
+        name: jira-backlog-executor-frontmatter-name-and-descript-e1b92f51
         config:
           pattern: '(?i)name\s*(is|:)\s*.{0,3}jira-backlog-executor'
           negate: true
@@ -41,15 +41,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-declared-flag-value
+        name: jira-backlog-executor-user-invocable-flag-reports-d-faabdd22
         config:
           pattern: '(?i)user-invocable\s*(is|:|=)?\s*.{0,3}false'
       - type: output-matches
-        name: reaches-through-a-dispatching-parent
+        name: jira-backlog-executor-user-invocable-flag-reaches-t-3a1c6be6
         config:
           pattern: '(?i)(dispatch|Backlog Manager|parent agent|orchestrator)'
       - type: output-matches
-        name: not-described-as-picker-selectable
+        name: jira-backlog-executor-user-invocable-flag-not-descr-e4fadcaa
         config:
           pattern: '(?i)(appears in|select(able)? from|choose it in) the (agent )?picker'
           negate: true
@@ -64,23 +64,23 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-purpose-section
+        name: jira-backlog-executor-structural-template-reports-p-46d00f78
         config:
           pattern: '(?im)^\W*Purpose\b'
       - type: output-matches
-        name: reports-inputs-section
+        name: jira-backlog-executor-structural-template-reports-i-d241804d
         config:
           pattern: '(?im)^\W*Inputs\b'
       - type: output-matches
-        name: reports-required-steps-section
+        name: jira-backlog-executor-structural-template-reports-r-985aa9ef
         config:
           pattern: '(?i)Required\s+Steps'
       - type: output-matches
-        name: reports-response-format-section
+        name: jira-backlog-executor-structural-template-reports-r-6df1887d
         config:
           pattern: '(?i)Response\s+Format'
       - type: output-matches
-        name: confirms-heading-matches-name
+        name: jira-backlog-executor-structural-template-confirms-2cdab238
         config:
           pattern: '(?i)(match(es|ing)?|same as|identical)'
 
@@ -94,7 +94,7 @@ stimuli:
       advisory: "true"
     graders:
       - type: prompt
-        name: tool-restriction-appropriate-for-purpose
+        name: jira-backlog-executor-tool-restriction-fit-tool-res-2ae1d4c5
         config:
           prompt: |
             The response assesses whether a subagent's declared tool set fits its

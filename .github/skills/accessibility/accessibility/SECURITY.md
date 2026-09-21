@@ -2,7 +2,7 @@
 title: Accessibility Skill Security Model
 description: STRIDE threat model for the accessibility skill scanners, runtime browser harness, generated evidence, and design-intent verification boundary
 author: microsoft/hve-core
-ms.date: 2026-08-31
+ms.date: 2026-09-21
 ms.topic: reference
 estimated_reading_time: 18
 keywords:
@@ -16,7 +16,7 @@ keywords:
 <!-- markdownlint-disable-file -->
 # Accessibility Skill Security Model
 
-This model covers the Path A axe CLI wrapper (`scripts/scan.py`), the Path B Playwright runtime (`scripts/runtime_a11y/` and its Node runner), generated evidence, and offline design-intent verification. The trust buckets are Path A targets (B1), Path A toolchain supply chain (B2), target-derived output (B3), caller and filesystem authority (B4), design-intent verification (B5), Path B configuration and navigation (B6), Playwright and endpoint-managed Chrome (B7), and Path B evidence and child environment (B8). Each bucket enumerates all six STRIDE categories with the implemented mitigations and residual risks.
+This model covers the Path A axe CLI wrapper (`scripts/scan.py`), the Path B Playwright and Guidepup/NVDA runtime (`scripts/runtime_a11y/` and its Node runner), generated evidence, and offline design-intent verification. The trust buckets are Path A targets (B1), Path A toolchain supply chain (B2), target-derived output (B3), caller and filesystem authority (B4), design-intent verification (B5), Path B configuration and navigation (B6), Playwright, endpoint-managed Chrome, and NVDA desktop control (B7), and Path B evidence and child environment (B8). Each bucket enumerates all six STRIDE categories with the implemented mitigations and residual risks.
 
 > **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section.
 
@@ -34,7 +34,7 @@ The skill controls initial destinations, configured routes and triggers, one dir
 | Trust buckets      | B1 Path A targets, B2 Path A supply chain, B3 output, B4 caller/filesystem, B5 design intent, B6 Path B navigation, B7 browser, B8 evidence/environment |
 | Credentials        | No first-party credential store; child processes inherit the caller environment (G-INF-3)                                                               |
 | Network egress     | Authorized Path A HTTP(S), npm on Path A cache miss, Path B HTTP(S) browser/direct requests, and target-derived browser requests                        |
-| Open residual gaps | 7; highest per-skill residuals are Medium                                                                                                               |
+| Open residual gaps | 8; highest per-skill residuals are Medium                                                                                                               |
 
 ## Contents
 
@@ -48,7 +48,7 @@ The skill controls initial destinations, configured routes and triggers, one dir
 * [Bucket B4: Caller process and filesystem authority](#bucket-b4-caller-process-and-filesystem-authority)
 * [Bucket B5: Design-intent verification](#bucket-b5-design-intent-verification)
 * [Bucket B6: Path B configuration and navigation](#bucket-b6-path-b-configuration-and-navigation)
-* [Bucket B7: Playwright and endpoint-managed Chrome](#bucket-b7-playwright-and-endpoint-managed-chrome)
+* [Bucket B7: Playwright, endpoint-managed Chrome, and NVDA](#bucket-b7-playwright-endpoint-managed-chrome-and-nvda)
 * [Bucket B8: Path B evidence and child environment](#bucket-b8-path-b-evidence-and-child-environment)
 * [Enterprise Readiness Gaps](#enterprise-readiness-gaps)
 * [References](#references)
@@ -57,13 +57,15 @@ The skill controls initial destinations, configured routes and triggers, one dir
 
 ### Components
 
-1. `scripts/scan.py` classifies a Path A target, authorizes non-loopback HTTP(S), invokes `npx --yes @axe-core/cli@4.12.1`, normalizes JSON, and writes output.
+1. `scripts/scan.py` classifies a Path A target, authorizes non-loopback HTTP(S), invokes the pinned axe CLI from the isolated `scripts/scanner_npm` project, normalizes JSON, and writes output.
 2. `scripts/runtime_a11y/_config.py` loads Path B JSON configuration, enforces schema and URL semantics, and authorizes the base host.
 3. `scripts/runtime_a11y/__main__.py` selects surfaces and probes, then starts Node/npm/PowerShell children with the caller environment.
 4. `scripts/runtime_a11y/runner/*.mjs` validates navigation and identifiers, launches Playwright, drives probes, and emits evidence.
 5. Playwright 1.61.1 and `@axe-core/playwright` 4.12.1 are installed from the skill-local lockfile.
 6. Endpoint-managed system Chrome is selected by Playwright `channel: 'chrome'` with fixed launch arguments and an ephemeral automation profile.
-7. `_intent.py` and `_projection.py` perform offline design-intent verification and rendering.
+7. Guidepup 0.34.0 starts the manifest-selected NVDA asset, applies isolated settings, synthesizes allowlisted input, binds the foreground Chrome window, captures bounded speech, and verifies cleanup.
+8. `_intent.py` and `_projection.py` perform offline design-intent verification and rendering.
+9. `runtime_a11y/evidence_bundle/` validates downstream catalogs and evidence, verifies artifact integrity, reconciles privacy-minimized reviewer supplements, and atomically composes non-attestation bundles.
 
 ### Data Flow
 
@@ -77,6 +79,7 @@ flowchart TD
         NODE["Path B Node runner"]
         PW["Playwright 1.61.1"]
         CHROME["Endpoint-managed system Chrome"]
+        NVDA["Guidepup-managed NVDA"]
         OUT["Normalized reports, traces, screenshots"]
         INTENT["Design-intent verifier"]
     end
@@ -98,6 +101,8 @@ flowchart TD
     PCFG -->|"validated config + inherited environment"| NODE
     NODE -->|"Playwright API"| PW
     PW -->|"channel: chrome"| CHROME
+    NODE -->|"bounded commands + lifecycle"| NVDA
+    NVDA -->|"OS-level input and speech capture"| CHROME
     CHROME -->|"HTTP(S) navigation and browser requests"| WEB
     NODE -->|"bounded direct request"| WEB
     NODE -->|"reports, traces, screenshots"| OUT
@@ -126,32 +131,32 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary                                           | Assets Protected                                            | Controls Enforced                                                                                                                                                                                                             |
-|----------------------------------------------------|-------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Path A CLI target to classifier                    | Host network position, local filesystem, argument semantics | Reject leading dash, credentials, unsupported/ambiguous schemes, network shares, remote file authorities, missing files, and directories; classify before npx                                                                 |
-| Path A remote HTTP(S) target                       | Internal services reachable from the workstation            | Loopback permitted by default; other hosts require `--allow-host` or `--allow-external`; residual redirect, DNS, subresource, and browser egress remains G-INF-1                                                              |
-| Path A local filesystem                            | Operator-selected local content                             | Accept an explicit existing regular local path or local `file:` URI; reject network-shaped resolved paths before any filesystem probe; reject non-local authority; access runs as the operator and is not repository-confined |
-| npm registry                                       | Path A scanner integrity                                    | Exact package version; argv without shell; no lockfile integrity for npx resolution (G-SUP-1)                                                                                                                                 |
-| Path B config and CLI to Python guard              | Browser destination and host network position               | JSON Schema; absolute credential-free HTTP(S); host authorization; external authorization never overrides scheme validation                                                                                                   |
-| Path B config/environment to JavaScript navigation | Navigation and artifact identity                            | Reassert and reauthorize the effective HTTP(S) base URL after CLI overrides; route paths and trigger destinations remain same-origin; portable path-bearing identifiers are rejected before writes                            |
-| Python to Node/npm/PowerShell child                | Caller environment and execution context                    | Argument-list spawning; full inherited environment is explicit residual G-INF-3                                                                                                                                               |
-| Playwright to system Chrome                        | Browser identity, parser surface, network position          | Fixed channel and launch arguments; ephemeral profile; launch-bound readiness/version evidence; endpoint owns binary identity and patching (G-SUP-2)                                                                          |
-| Browser and direct requests to web content         | Host network position and target-derived data               | Broken-link direct requests retry GET after unsupported HEAD responses and use at most five validated same-origin redirect hops; no complete browser redirect, DNS, worker, socket, download, or process-egress control       |
-| Browser/runner to evidence                         | Artifact integrity and confidentiality                      | Portable identifiers, run-root containment, bounded normalized shape, hashes where supported, and target-derived content treated as untrusted                                                                                 |
-| Design-intent record to verifier                   | Human decision integrity                                    | Safe YAML loading, schema/semantic validation, digest binding, contained atomic writes, and no generator-authored override                                                                                                    |
+| Boundary                                           | Assets Protected                                            | Controls Enforced                                                                                                                                                                                                                      |
+|----------------------------------------------------|-------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Path A CLI target to classifier                    | Host network position, local filesystem, argument semantics | Reject leading dash, credentials, unsupported/ambiguous schemes, network shares, remote file authorities, missing files, and directories; classify before npx                                                                          |
+| Path A remote HTTP(S) target                       | Internal services reachable from the workstation            | Loopback permitted by default; other hosts require `--allow-host` or `--allow-external`; residual redirect, DNS, subresource, and browser egress remains G-INF-1                                                                       |
+| Path A local filesystem                            | Operator-selected local content                             | Accept an explicit existing regular local path or local `file:` URI; reject network-shaped resolved paths before any filesystem probe; reject non-local authority; access runs as the operator and is not repository-confined          |
+| npm registry                                       | Path A scanner integrity                                    | Exact package version; canonical registry pinned on the argv; scanner-local npm project prevents adopting-repository config inheritance; no lockfile integrity for npx resolution (G-SUP-1)                                            |
+| Path B config and CLI to Python guard              | Browser destination and host network position               | JSON Schema; absolute credential-free HTTP(S); host authorization; external authorization never overrides scheme validation                                                                                                            |
+| Path B config/environment to JavaScript navigation | Navigation and artifact identity                            | Reassert and reauthorize the effective HTTP(S) base URL after CLI overrides; route paths and trigger destinations remain same-origin; portable path-bearing identifiers are rejected before writes                                     |
+| Python to Node/npm/PowerShell child                | Caller environment and execution context                    | Argument-list spawning; full inherited environment is explicit residual G-INF-3                                                                                                                                                        |
+| Playwright and Guidepup to system Chrome and NVDA  | Browser/AT identity, foreground input target, desktop state | Fixed Chrome channel; manifest-selected NVDA asset; exact journey selection; allowlisted commands; foreground-window binding; partial-start ownership; bounded teardown; endpoint owns binary identity and patching (G-SUP-2, G-EOP-1) |
+| Browser and direct requests to web content         | Host network position and target-derived data               | Broken-link direct requests retry GET after unsupported HEAD responses and use at most five validated same-origin redirect hops; no complete browser redirect, DNS, worker, socket, download, or process-egress control                |
+| Browser/runner to evidence                         | Artifact integrity and confidentiality                      | Portable identifiers, run-root containment, bounded normalized shape, hashes where supported, and target-derived content treated as untrusted                                                                                          |
+| Design-intent record to verifier                   | Human decision integrity                                    | Safe YAML loading, schema/semantic validation, digest binding, contained atomic writes, and no generator-authored override                                                                                                             |
 
 ## Assets
 
-| Id | Asset                                 | Lifetime                | Notes                                                                                       |
-|----|---------------------------------------|-------------------------|---------------------------------------------------------------------------------------------|
-| A1 | Authorized remote target              | Invocation              | Initial HTTP(S) target and same-origin configured navigation                                |
-| A2 | Operator-selected local file          | Invocation              | Explicit existing regular file; readable with operator permissions; not repository-confined |
-| A3 | Path A and Path B toolchains          | Installation/invocation | axe CLI, skill-local Node dependencies, Python environment, and system Chrome               |
-| A4 | Runtime configuration and environment | Invocation              | Project config, CLI values, and inherited child environment                                 |
-| A5 | Browser execution context             | Invocation              | Ephemeral Playwright context/profile and endpoint-managed Chrome process                    |
-| A6 | Reports and runtime evidence          | Run lifetime            | JSON, traces, screenshots, measurements, transcripts, and hashes                            |
-| A7 | Design-intent record                  | Repository lifetime     | Human-authored committed source that the skill reads but does not rewrite                   |
-| A8 | Verification artifact                 | CI/run lifetime         | Digest-bound result generated beside the authored record                                    |
+| Id | Asset                                 | Lifetime                | Notes                                                                                                               |
+|----|---------------------------------------|-------------------------|---------------------------------------------------------------------------------------------------------------------|
+| A1 | Authorized remote target              | Invocation              | Initial HTTP(S) target and same-origin configured navigation                                                        |
+| A2 | Operator-selected local file          | Invocation              | Explicit existing regular file; readable with operator permissions; not repository-confined                         |
+| A3 | Path A and Path B toolchains          | Installation/invocation | axe CLI, skill-local Node dependencies, Python environment, and system Chrome                                       |
+| A4 | Runtime configuration and environment | Invocation              | Project config, CLI values, and inherited child environment                                                         |
+| A5 | Browser and AT execution context      | Invocation              | Ephemeral Playwright context/profile, endpoint-managed Chrome, Guidepup-managed NVDA, and foreground window binding |
+| A6 | Reports and runtime evidence          | Run lifetime            | JSON, traces, screenshots, measurements, transcripts, and hashes                                                    |
+| A7 | Design-intent record                  | Repository lifetime     | Human-authored committed source that the skill reads but does not rewrite                                           |
+| A8 | Verification artifact                 | CI/run lifetime         | Digest-bound result generated beside the authored record                                                            |
 
 ## Adversaries
 
@@ -204,11 +209,11 @@ flowchart TD
 
 ### Spoofing
 
-* The axe CLI package name and version are fixed. Registry compromise or substitution of that exact release remains G-SUP-1.
+* The axe CLI package name, version, and canonical public registry are fixed. A scanner-local npm project prevents npm from inheriting project configuration from an adopting repository. Registry compromise or substitution of that exact release remains G-SUP-1.
 
 ### Tampering
 
-* `npx --yes @axe-core/cli@4.12.1 -- <target>` uses an argument list and parser boundary without a shell.
+* `npx --yes --registry=https://registry.npmjs.org/ @axe-core/cli@4.12.1 -- <target>` runs from the scanner-local npm project and uses an argument list and parser boundary without a shell.
 * npx may resolve the pinned package at runtime without a committed integrity lock for this path.
 
 ### Repudiation
@@ -374,41 +379,43 @@ flowchart TD
 | Authorized target causes browser resource exhaustion               | Low        | Med    | Low           | Partially Mitigated |
 | External authorization is mistaken for browser-wide egress control | Med        | Med    | Med           | Documented residual |
 
-## Bucket B7: Playwright and endpoint-managed Chrome
+## Bucket B7: Playwright, endpoint-managed Chrome, and NVDA
 
 ### Spoofing
 
-* Playwright selects `channel: 'chrome'`; launch-bound preflight records the browser-reported version. Binary signature, installation provenance, and patch posture are owned by endpoint controls (G-SUP-2).
+* Playwright selects `channel: 'chrome'`; launch-bound preflight records the browser-reported version. Guidepup selects the manifest-owned NVDA asset and records its version and effective settings. Binary signature, installation provenance, and patch posture are owned by endpoint controls (G-SUP-2).
+* The one-time Guidepup setup package name, version, and canonical public registry are fixed. Both setup commands run from the isolated `scripts/runtime_a11y` npm project so an adopting repository cannot select their registry.
 
 ### Tampering
 
-* Playwright and axe dependencies are locked in the skill-local package lock. Chrome receives fixed hardening arguments; generic caller arguments are not accepted.
+* Playwright, axe, and Guidepup dependencies are locked in the skill-local package lock. Chrome receives fixed hardening arguments; NVDA receives isolated settings and allowlisted commands; generic caller arguments are not accepted.
 * Target content reaches independent Playwright/system-Chrome parser and rendering surfaces (G-TAM-2).
 
 ### Repudiation
 
-* Readiness records the selected channel and browser-reported version. It does not attest a binary hash or signature.
+* Readiness records Chrome, Guidepup, NVDA asset, profile, and foreground-window evidence. It does not attest binary hashes or signatures.
 
 ### Information Disclosure
 
-* Browser requests originate from the workstation network position. No complete interception policy constrains redirects, subresources, Service Workers, WebSockets, downloads, DNS changes, peer IPs, or browser-internal connections.
+* Browser requests originate from the workstation network position. NVDA speech can contain target-derived text and remains restricted evidence. No complete interception policy constrains redirects, subresources, Service Workers, WebSockets, downloads, DNS changes, peer IPs, or browser-internal connections.
 * The broken-link direct-request helper is narrower: it disables automatic redirects, retries with GET when HEAD returns 405 or 501, and follows at most five validated same-origin HTTP(S) hops.
 
 ### Denial of Service
 
-* Browser launch and cleanup failures fail readiness. Hostile content can still exhaust or crash Chrome during an authorized run.
+* Browser or NVDA launch, foreground binding, and cleanup failures fail readiness. Partial NVDA starts retain cleanup ownership, failed-start retries require proven cleanup, and browser teardown is bounded. Hostile content or endpoint instability can still exhaust, crash, or stall an authorized run.
 
 ### Elevation of Privilege
 
-* Playwright creates an ephemeral automation profile and does not receive a caller-controlled user-data directory or generic launch arguments. Browser sandbox and endpoint policy remain external controls.
+* Playwright creates an ephemeral automation profile and does not receive a caller-controlled user-data directory or generic launch arguments. NVDA commands synthesize OS-level input only after foreground binding, but focus can still change between verification and dispatch (G-EOP-1). Browser sandbox and endpoint policy remain external controls.
 
 ### Risk Rating
 
-| Threat                                                 | Likelihood | Impact | Residual Risk | Status                        |
-|--------------------------------------------------------|------------|--------|---------------|-------------------------------|
-| Substituted or stale system Chrome                     | Low        | High   | Med           | Endpoint-owned (G-SUP-2)      |
-| Browser/parser exploitation by target content          | Low        | High   | Med           | Partially Mitigated (G-TAM-2) |
-| Browser-derived request reaches unintended destination | Med        | High   | Med           | Accepted workstation residual |
+| Threat                                                  | Likelihood | Impact | Residual Risk | Status                        |
+|---------------------------------------------------------|------------|--------|---------------|-------------------------------|
+| Substituted or stale system Chrome                      | Low        | High   | Med           | Endpoint-owned (G-SUP-2)      |
+| Browser/parser exploitation by target content           | Low        | High   | Med           | Partially Mitigated (G-TAM-2) |
+| Browser-derived request reaches unintended destination  | Med        | High   | Med           | Accepted workstation residual |
+| Synthesized NVDA input reaches the wrong foreground app | Low        | High   | Med           | Partially Mitigated (G-EOP-1) |
 
 ## Bucket B8: Path B evidence and child environment
 
@@ -416,25 +423,29 @@ flowchart TD
 
 * Probe, route, surface, state, journey, and visual-review machine identifiers use one portable grammar and are validated before path construction. The grammar rejects trailing-dot aliases and Windows reserved device names, including device names followed by an extension.
 * Configuration-supplied aliases do not override a schema-validated identifier. The calibration journey identifier is taken from the validated `id` and re-asserted before any path is composed.
+* Reviewer and approver claims complete evidence only when stable pseudonymous identifiers and record digests match a current downstream-produced registry snapshot for the declared method scope.
 
 ### Tampering
 
 * Runtime-owned evidence uses contained roots, regular-file checks, atomic patterns, and hashes where supported. Invalid identifiers are rejected rather than normalized into collisions.
 * Calibration evidence paths are asserted to remain beneath the resolved run root before any directory is created, so a configured identifier cannot steer a write outside that root.
 * Visual-review artifact paths carry route, surface, and state as separate validated segments, so distinct routes sharing a surface and state cannot overwrite each other's evidence.
+* Evidence composition validates closed schemas, domain-separated digests, artifact bytes, expected/deferred obligation partitions, and prior-bundle continuity before atomic finalization.
 
 ### Repudiation
 
-* Evidence records probe, surface, state, timestamps, browser metadata, and hashes where available. It is traceability evidence, not a non-repudiation guarantee.
+* Evidence records probe, surface, state, timestamps, browser metadata, source and bundle hashes, and reviewer-history continuity where available. It is traceability evidence, not a non-repudiation guarantee.
 
 ### Information Disclosure
 
 * Python-spawned Node/npm/PowerShell children inherit the complete caller environment (G-INF-3). The skill does not claim secret filtering.
 * Traces, screenshots, transcripts, and measurements can include target content as described in B3.
+* Ordinary composed bundles reject raw speech, transcript paths, credential-shaped values, and unrestricted reviewer identity. A downstream registry producer remains responsible for minimizing its snapshot before invocation.
 
 ### Denial of Service
 
 * Artifact limits and bounded collections constrain selected outputs. Child tools and browser evidence can still consume local process, disk, and memory resources.
+* Large caller catalogs and evidence histories can consume memory during pure composition; downstream workflows own input size and retention policy.
 
 ### Elevation of Privilege
 
@@ -452,19 +463,18 @@ flowchart TD
 
 The following limitations let operators choose an appropriate execution environment. Severity values are project assessments, not CVSS scores.
 
-| Id      | Gap                                                                                                                                                                                                                                                            | Severity        | Status                                                                                                                                |
-|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| G-SUP-1 | Path A pins `@axe-core/cli@4.12.1`, but npx resolves it without a committed integrity lock for that invocation. (audit: A-SUP-1)                                                                                                                               | SupplyChain-Low | Review upgrades and prefer pre-provisioned trusted caches where stronger integrity is required                                        |
-| G-INF-1 | Path A authorizes the initial remote HTTP(S) host, but browser redirects, DNS rebinding/address changes, subresources, Service Workers, WebSockets, downloads, and browser-internal requests can still use the workstation network position. (audit: A-SSRF-1) | InfoDisc-Med    | Run only against intended targets from a network position with matching trust; use network-level egress policy for stronger isolation |
-| G-TAM-1 | Path A renders targets in the browser engine bundled by the axe CLI toolchain. (audit: A-BRWS-1)                                                                                                                                                               | Tampering-Med   | Keep the toolchain patched and isolate hostile targets                                                                                |
-| G-INF-2 | Reports, traces, screenshots, transcripts, and metadata from both paths can reproduce target-controlled content. (audit: A-INF-1)                                                                                                                              | InfoDisc-Med    | Treat evidence as untrusted and avoid secret or personal-data targets unless the workflow permits retention                           |
-| G-SUP-2 | Path B selects endpoint-managed system Chrome but does not authenticate its binary, signature, installation source, or patch posture                                                                                                                           | SupplyChain-Med | Endpoint application control and patch management own Chrome trust                                                                    |
-| G-TAM-2 | Playwright and system Chrome expose an independent parser, rendering, and automation surface to target content                                                                                                                                                 | Tampering-Med   | Keep locked dependencies and Chrome patched; use controlled workstations for untrusted content                                        |
-| G-INF-3 | Node/npm/PowerShell children inherit the caller environment, which may contain ambient secrets or behavior-changing settings                                                                                                                                   | InfoDisc-Med    | Run in a least-privilege environment and avoid unrelated secrets; filtering awaits a supported cross-platform contract                |
+| Id      | Gap                                                                                                                                                                                                                                                            | Severity        | Status                                                                                                                                              |
+|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| G-SUP-1 | Path A pins `@axe-core/cli@4.12.1`, but npx resolves it without a committed integrity lock for that invocation. (audit: A-SUP-1)                                                                                                                               | SupplyChain-Low | Review upgrades and prefer pre-provisioned trusted caches where stronger integrity is required                                                      |
+| G-INF-1 | Path A authorizes the initial remote HTTP(S) host, but browser redirects, DNS rebinding/address changes, subresources, Service Workers, WebSockets, downloads, and browser-internal requests can still use the workstation network position. (audit: A-SSRF-1) | InfoDisc-Med    | Run only against intended targets from a network position with matching trust; use network-level egress policy for stronger isolation               |
+| G-TAM-1 | Path A renders targets in the browser engine bundled by the axe CLI toolchain. (audit: A-BRWS-1)                                                                                                                                                               | Tampering-Med   | Keep the toolchain patched and isolate hostile targets                                                                                              |
+| G-INF-2 | Reports, traces, screenshots, transcripts, and metadata from both paths can reproduce target-controlled content. (audit: A-INF-1)                                                                                                                              | InfoDisc-Med    | Treat evidence as untrusted and avoid secret or personal-data targets unless the workflow permits retention                                         |
+| G-SUP-2 | Path B selects endpoint-managed system Chrome but does not authenticate its binary, signature, installation source, or patch posture                                                                                                                           | SupplyChain-Med | Endpoint application control and patch management own Chrome trust                                                                                  |
+| G-TAM-2 | Playwright and system Chrome expose an independent parser, rendering, and automation surface to target content                                                                                                                                                 | Tampering-Med   | Keep locked dependencies and Chrome patched; use controlled workstations for untrusted content                                                      |
+| G-INF-3 | Node/npm/PowerShell children inherit the caller environment, which may contain ambient secrets or behavior-changing settings                                                                                                                                   | InfoDisc-Med    | Run in a least-privilege environment and avoid unrelated secrets; filtering awaits a supported cross-platform contract                              |
+| G-EOP-1 | Guidepup/NVDA sends OS-level input after foreground-window verification, but another application or system dialog can steal focus between verification and command dispatch                                                                                    | EoP-Med         | Reserve an unlocked interactive desktop, bind Chrome before and after action boundaries, use exact journey selection, and stop on focus uncertainty |
 
 Path A local-file scanning is not folded into G-INF-1. It is an explicit operator-authorized capability to read any selected existing regular local file with the operator's permissions, without repository confinement. A separate local-file disclosure gap is warranted only if a less-trusted caller or confinement requirement becomes supported.
-
-For active work associated with this model, see [hve-core issue #2786](https://github.com/microsoft/hve-core/issues/2786).
 
 ## References
 

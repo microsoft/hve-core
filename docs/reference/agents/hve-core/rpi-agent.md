@@ -3,7 +3,7 @@ title: RPI Agent
 description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-07
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - agent
@@ -32,7 +32,7 @@ Select `RPI Agent` when one task should move through Research, Plan, Implement, 
 
 It persists mode, active phase, artifact pointers, decisions, blockers, and ranked follow-ups in one JSON state record so a later conversation can resume from the recorded phase.
 
-Child tasks inherit your participation preferences and unresolved work, but own fresh phase artifacts and critique/Review execution records. If a state write fails, progression pauses; recovery reconciles the recorded transition before dispatching work, without creating a duplicate child.
+Child tasks inherit your participation preferences and unresolved work, but own fresh phase artifacts and critique/Review execution records. If a state write fails, progression pauses; recovery reconciles the recorded transition before starting work, without creating a duplicate child.
 
 It offers two modes:
 
@@ -45,7 +45,6 @@ Both modes stop for blockers, required human review, and destructive, hard-to-re
 
 Reach for a different asset when:
 
-* You want a lighter, single-conversation pass with no persisted state. Use [rpi-quick](../../skills/rpi/rpi-quick).
 * The next action is already clear. Invoke the phase skill directly.
 * You want to understand or challenge something before committing to work. Use [rpi-walkthrough](../../skills/rpi/rpi-walkthrough) or [rpi-challenger](../../skills/rpi/rpi-challenger).
 
@@ -68,6 +67,8 @@ The opening question is "How would you like us to work on this?":
 You can retain follow-up selection through the second option or a custom answer. Use the ranked handoffs or answer the follow-up question; you can also stop or switch to manual mode at any time. Resuming automatic mode preserves explicitly retained decisions and a stop-before-Implementation boundary unless you change them.
 
 With the stop-before-Implementation option, the agent completes Planning, including its required critique and decision gates, then returns to manual mode in Plan. It walks you through the research and plan, including trade-offs and readiness, and offers refinement or an explicit Implementation request. Iteration preserves the task and consumed critique gate. Resuming the conversation alone does not start Implementation.
+
+If a critique was interrupted after reservation without a terminal result, `rpi-plan` owns reconciliation and may offer one task-specific, explicitly confirmed recovery after verifying that the original worker ended. A missing result is not a pass. Terminal assessments are not retried, and recovery does not remove your stop-before-Implementation boundary.
 
 ## Example usage
 

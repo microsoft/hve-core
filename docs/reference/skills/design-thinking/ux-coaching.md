@@ -1,9 +1,9 @@
 ---
 title: ux-coaching
 description: "Coach a UX practitioner through problem framing, running a design critique, or making an evidence-backed case to a skeptical stakeholder. Use when the practitioner has a live UX task and wants to think it through rather than receive an answer."
-sidebar_position: 6
+sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-04
 ms.topic: reference
 keywords:
   - skill

@@ -18,15 +18,15 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: reports-human-readable-name
+        name: functional-planner-frontmatter-name-and-description-a271f1fe
         config:
           pattern: '(?i)\bFunctional Planner\b'
       - type: output-matches
-        name: reports-declared-description
+        name: functional-planner-frontmatter-name-and-description-34e62d07
         config:
           pattern: '(?i)analyzes PRDs and plans.{0,60}work-item hierarchies without mutating a tracker'
       - type: output-matches
-        name: does-not-substitute-filename-for-name
+        name: functional-planner-frontmatter-name-and-description-c8e4161a
         config:
           pattern: '(?i)name\s*(is|:)\s*.{0,3}functional-planner'
           negate: true

@@ -11,7 +11,7 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 
 ## Executive Summary
 
-<!-- Complete after parent synthesis and refresh after material changes. Write for the end user in plain language. -->
+<!-- Complete after synthesis and refresh after material changes. Write for the end user in plain language. -->
 
 * Bottom line: {{the_most_important_result_in_plain_language}}
 * Why this matters: {{practical_effect_on_the_users_goal_or_decision}}
@@ -85,10 +85,10 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 | Research disposition             | {{executed/reused/satisfied-and-skipped}}                                                       |
 | Decision participation           | {{user-owned/agent-owned/user-retained with mode and provenance}}                               |
 | Planning Readiness               | {{Ready/Not ready/Not applicable/Blocked with evidence IDs and plain-language reason}}          |
-| Research depth and lanes         | {{completed waves and delegated evidence pointers or inline fallback}}                          |
+| Research depth and helpers       | {{completed waves and any helper use with what was verified}}                                   |
 | Blockers                         | {{none_or_current_blockers}}                                                                    |
 | Output mode and planning support | {{mode_and_whether_it_supports_planning}}                                                       |
-| Continuation owner               | {{user/rpi-quick/manual RPI Agent/confirmed automatic RPI Agent}}                               |
+| Continuation owner               | {{user/manual RPI Agent/confirmed automatic RPI Agent}}                                         |
 | Required gates or confirmations  | {{passed_pending_or_failed_gates}}                                                              |
 | Next action                      | {{advisory_command_automatic_transition_waiting_action_no_handoff_reason_or_targeted_research}} |
 | Primary evidence file            | .copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md                             |
@@ -99,7 +99,7 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 
 | Field                            | Record                                                                 |
 |----------------------------------|------------------------------------------------------------------------|
-| Research posture and provenance  | {{expansive/balanced/focused}}; {{caller/instruction/default}}         |
+| Research posture and provenance  | {{balanced/focused/expansive}}; {{default/caller/instruction/brief}}   |
 | Completion basis                 | {{posture_specific_evidence_sufficiency_and_stop_basis}}               |
 | Explicit limits or deadline      | {{caller_or_codebase_limit_or_none}}                                   |
 | Codebase and external scope      | {{workspace_scope_or_none}}; {{external_scope_or_none}}                |
@@ -112,11 +112,11 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 
 #### Extension Registry
 
-<!-- Record relevant instructions, skills, and specialists as selected or skipped. Extensions cannot widen authority or weaken safety. -->
+<!-- Record relevant instructions and skills as selected or skipped. Extensions cannot widen authority or weaken safety. -->
 
-| Kind                             | Candidate        | Provenance and scoped contract | Selected or skipped reason     |
-|----------------------------------|------------------|--------------------------------|--------------------------------|
-| {{instruction/skill/specialist}} | {{name_or_none}} | {{match_authority_or_output}}  | {{selected_or_skipped_reason}} |
+| Kind                  | Candidate        | Provenance and scoped contract | Selected or skipped reason     |
+|-----------------------|------------------|--------------------------------|--------------------------------|
+| {{instruction/skill}} | {{name_or_none}} | {{match_and_scoped_authority}} | {{selected_or_skipped_reason}} |
 
 #### Direction and Participation Log
 
@@ -129,9 +129,9 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 ### Research Cycle Log
 
 <!--
-Every executed cycle contains all three waves in order: Wider, Deeper, and Contrarian. A wave can contain multiple independent lanes, but each worker dispatch has one bounded lane, cycle number, and wave type. Reflection is a distinct step and is never parallel with the result it evaluates.
-Apply the selected research posture and explicit limits or deadline. Do not add fixed cycle, token, source-count, worker-count, or time ceilings. Use evidence sufficiency, substantial novelty, scope coverage, source redundancy, and materiality to decide whether to re-enter.
-The parent alone records accepted, rejected, and deferred material. Workers return compact evidence relationships and synthesis pointers without decision authority.
+Every executed cycle contains all three waves in order: Wider, Deeper, and Contrarian. A wave can pursue several independent questions. Reflection is a distinct step and is never parallel with the result it evaluates.
+Apply the selected research posture and explicit limits or deadline. Do not add fixed cycle, token, source-count, helper-count, or time ceilings. Use evidence sufficiency, substantial novelty, scope coverage, source redundancy, and materiality to decide whether to re-enter.
+Record accepted, rejected, and deferred material here. A helper return is a suggestion; only evidence verified at its source enters this log.
 -->
 
 <!-- <per_cycle> -->
@@ -141,27 +141,27 @@ The parent alone records accepted, rejected, and deferred material. Workers retu
 
 ##### Wave 1: Wider
 
-* Focus and lanes: {{breadth_questions_and_candidate_evidence}}
-* Evidence or worker pointers: {{question_to_claim_to_provenance_or_inline_fallback}}
+* Focus and questions: {{breadth_questions_and_candidate_evidence}}
+* Evidence: {{question_to_claim_to_provenance}}
 * Reflection: {{supported_missing_or_prioritized_material}}
 
 ##### Wave 2: Deeper
 
-* Focus and lanes: {{prioritized_details_examples_contracts_or_patterns}}
-* Evidence or worker pointers: {{question_to_claim_to_provenance_or_inline_fallback}}
+* Focus and questions: {{prioritized_details_examples_contracts_or_patterns}}
+* Evidence: {{question_to_claim_to_provenance}}
 * Reflection: {{supported_missing_or_challenge_targets}}
 
 ##### Wave 3: Contrarian
 
-* Focus and lanes: {{challenge_targets_counter_evidence_and_permitted_alternatives}}
-* Evidence or worker pointers: {{support_weaken_disprove_or_unresolved_with_provenance}}
+* Focus and questions: {{challenge_targets_counter_evidence_and_permitted_alternatives}}
+* Evidence: {{support_weaken_disprove_or_unresolved_with_provenance}}
 * Reflection: {{effect_on_earlier_material_and_remaining_gaps}}
 
-##### Parent Synthesis and Re-entry
+##### Synthesis and Re-entry
 
-| Material or claim | Evidence or worker pointers | Disposition                    | Rationale     | User-facing effect          |
-|-------------------|-----------------------------|--------------------------------|---------------|-----------------------------|
-| {{material}}      | {{C1_W1_or_worker_pointer}} | {{accepted/rejected/deferred}} | {{rationale}} | {{finding_decision_or_gap}} |
+| Material or claim | Evidence  | Disposition                    | Rationale     | User-facing effect          |
+|-------------------|-----------|--------------------------------|---------------|-----------------------------|
+| {{material}}      | {{C1_W1}} | {{accepted/rejected/deferred}} | {{rationale}} | {{finding_decision_or_gap}} |
 
 * Another complete three-wave cycle needed: {{yes / no / limit-blocked}}
 * Trigger or stop basis: {{missing_evidence_unclear_conjecture_unresolved_hypothesis_missing_required_detail_contrarian_change_saturation_or_scope}}
@@ -172,7 +172,7 @@ The parent alone records accepted, rejected, and deferred material. Workers retu
 
 <!-- Add rows as research proceeds. Use C# for codebase evidence and W# for external evidence. Code rows use workspace-relative paths plus headings or symbols and "not applicable" for retrieval metadata. External rows use source title plus URL and retrieval date plus version. -->
 
-* Delegation: {{cycle_and_wave_annotated selected research worker or general-purpose evidence files under .copilot-tracking/research/subagents/{{YYYY-MM-DD}}/, or "inline: fallback reason" when dispatch was unavailable}}
+* Helpers: {{none_or_helper_use_with_the_questions_gathered_and_what_was_verified_at_the_source}}
 
 | ID | Claim or finding | Source or location                                | Retrieved and version      | Tool                   | Confidence       | Notes       |
 |----|------------------|---------------------------------------------------|----------------------------|------------------------|------------------|-------------|
@@ -191,8 +191,8 @@ The parent alone records accepted, rejected, and deferred material. Workers retu
 * [ ] Every question is answered or names the smallest missing evidence, and every material result has one canonical evidence state that distinguishes sourced findings from hypotheses, partial claims, disproved claims, and unresolved possibilities.
 * [ ] Findings keep their explanation, supporting detail, evidence state, and confidence basis together; summaries do not introduce unsupported claims.
 * [ ] Every codebase finding has a `C#` ID and workspace-relative path with a heading or symbol; every external finding has a `W#` ID, source title, URL, retrieval date, and version when available.
-* [ ] Every executed cycle records Wider, Deeper, and Contrarian waves in order, parent synthesis, and an evidence-based re-entry decision.
-* [ ] Method, extensions, participation, caller direction changes, delegation, and prior-knowledge treatment are recorded with their limits.
+* [ ] Every executed cycle records Wider, Deeper, and Contrarian waves in order, synthesis, and an evidence-based re-entry decision.
+* [ ] Method, extensions, participation, caller direction changes, helper use, and prior-knowledge treatment are recorded with their limits.
 * [ ] Convergence selects and justifies one recommendation; other modes preserve decision state without forcing a selection.
 * [ ] Decision groups, participation mode, and provenance are recorded; user-owned and user-retained groups have persisted answers, while agent-owned groups have evidence-backed rationales or honest blockers.
 * [ ] Research disposition, Planning Readiness, blockers, continuation owner, gates, and next action are complete and evidence-backed.

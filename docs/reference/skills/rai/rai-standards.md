@@ -3,7 +3,7 @@ title: rai-standards
 description: "Consolidated Responsible AI standards reference: NIST AI RMF 1.0, AI STRIDE threat-modeling overlay, EU AI Act risk tiers, and an open-standards catalog with phase mapping"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-09
 ms.topic: reference
 keywords:
   - skill
@@ -28,10 +28,24 @@ Consolidated Responsible AI standards reference: NIST AI RMF 1.0, AI STRIDE thre
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+The RAI Planner loads this standards package for NIST AI RMF mapping, the Microsoft
+AI STRIDE overlay, and a paraphrased EU AI Act reference. Use it when an assessment
+needs a standards baseline; use the `rai-planner` reference for phase-specific
+workflow guidance instead.
+
+Additional organizational frameworks layer onto the default NIST mapping rather
+than replacing it. Restricted standards remain citation-only, and regulatory
+interpretation requires qualified review rather than reliance on a packaged summary.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask the RAI Planner to load `rai-standards` for a fictional document-summarization
+assistant. Supply its intended users, data categories, oversight design, and a
+short organization-authored policy. Request a standards map, not a legal conclusion.
+
+The planner should retain the NIST baseline, map the supplied policy as an
+attributed extension, and select phase-relevant references for measurement,
+threat analysis, or impact management. Success is a map from system facts and
+planned controls to standards references, with missing evidence and regulatory
+questions visible. Do not paste restricted normative text or treat the output as
+certification, model evaluation results, or approval to deploy.

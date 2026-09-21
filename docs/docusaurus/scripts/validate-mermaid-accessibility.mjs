@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { execFileSync } from 'node:child_process';
-import { readdirSync, readFileSync } from 'node:fs';
+import { closeSync, constants, ftruncateSync, mkdirSync, openSync, readdirSync, readFileSync, writeSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -68,6 +68,93 @@ export function groupRouteCases(fences, documents) {
   return Array.from(cases.values());
 }
 
+export function buildGraphicsReviewTemplate(fences, documents, readSource = (file) => readFileSync(path.join(repositoryRoot, file), 'utf8')) {
+  const routeBySource = new Map(documents.map((document) => [
+    document.source.replace(/^@site\/\.\.\//, 'docs/'),
+    document.permalink,
+  ]));
+  const fenceCounts = new Map();
+  const rows = fences.map((fence, index) => {
+    const route = routeBySource.get(fence.file);
+    if (!route) {
+      throw new Error(`No Docusaurus permalink found for ${fence.file}`);
+    }
+    const fenceIndex = (fenceCounts.get(fence.file) ?? 0) + 1;
+    fenceCounts.set(fence.file, fenceIndex);
+    const declaration = activeSourceLines(fence.source).find((line) => line.trim())?.trim() ?? '';
+    const family = declaration === 'stateDiagram-v2'
+      ? 'stateDiagram'
+      : declaration.split(/\s+/, 1)[0];
+    const content = readSource(fence.file);
+    const precedingLines = content.split(/\r?\n/).slice(0, fence.startLine - 1).reverse();
+    const heading = precedingLines
+      .map((line) => line.match(/^\s*#{1,6}\s+(.+?)\s*#*\s*$/)?.[1]?.trim())
+      .find(Boolean) ?? 'Document context';
+    return {
+      number: index + 1,
+      sourcePath: fence.file,
+      fenceLocator: `Mermaid fence ${fenceIndex}`,
+      route,
+      family,
+      title: fence.title,
+      description: fence.description,
+      contextReference: heading,
+    };
+  });
+
+  const escapeCell = (value) => String(value).replaceAll('|', '\\|').replace(/\r?\n/g, ' ');
+  const tableRows = rows.map((row) => `| ${row.number} | ${escapeCell(row.sourcePath)} | ${row.fenceLocator} | ${escapeCell(row.route)} | ${row.family} | ${escapeCell(row.title)} | ${escapeCell(row.description)} | ${escapeCell(row.contextReference)} | not verified | not verified | not verified | not verified | not verified | not verified | not verified | not verified | not verified |`);
+
+  return `<!-- markdownlint-disable-file -->
+# Mermaid Graphics Review Register
+
+## Review Boundary
+
+This register covers all deployed Mermaid diagrams in stable source order. Source metadata and route context are generated observations. A qualified accessibility reviewer must decide equivalent purpose, context sufficiency, atomic or structured representation, reading order where applicable, and whether colour conveys meaning without another cue. The review is informed by the WAI-ARIA Graphics Module (<https://www.w3.org/TR/graphics-aria-1.0/>), SVG Accessibility API Mappings (<https://www.w3.org/TR/svg-aam-1.0/>), and the WAI Complex Images tutorial (<https://www.w3.org/WAI/tutorials/images/complex/>).
+
+| # | Source path | Fence locator | Route | Family | Authored title | Authored description | Surrounding context | Computed role | Computed name | Computed description | Representation decision | Reading-order result | Semantic-colour result | Disposition | Rationale | Reviewer, environment, and review date |
+|---|-------------|---------------|-------|--------|----------------|----------------------|---------------------|---------------|---------------|----------------------|-------------------------|----------------------|------------------------|-------------|-----------|----------------------------------------|
+${tableRows.join('\n')}
+
+## Human Review
+
+- [ ] Reviewed and validated by a qualified accessibility reviewer
+`;
+}
+
+export function writeGraphicsReviewTemplate(outputPath, content, check = false) {
+  mkdirSync(path.dirname(outputPath), { recursive: true });
+  let fileHandle;
+  try {
+    try {
+      fileHandle = openSync(outputPath, check ? constants.O_RDONLY : constants.O_RDWR | constants.O_CREAT);
+    } catch (error) {
+      if (check && error?.code === 'ENOENT') {
+        throw new Error(`Mermaid graphics review template not found: ${outputPath}`);
+      }
+      throw error;
+    }
+
+    const existing = readFileSync(fileHandle, 'utf8').replaceAll('\r\n', '\n');
+    if (existing === content) {
+      return 'NoDrift';
+    }
+    if (/\|\s*verified (?:pass|fail)\s*\|/i.test(existing)) {
+      throw new Error(`Refusing to overwrite completed human dispositions in ${outputPath}`);
+    }
+    if (check) {
+      throw new Error(`Mermaid graphics review template drift detected: ${outputPath}`);
+    }
+
+    ftruncateSync(fileHandle, 0);
+    writeSync(fileHandle, content, 0, 'utf8');
+    return 'Wrote';
+  } finally {
+    if (fileHandle !== undefined) {
+      closeSync(fileHandle);
+    }
+  }
+}
 function discoverGeneratedDocuments() {
   return readdirSync(generatedDocsRoot)
     .filter((file) => file.startsWith('site-') && file.endsWith('.json'))
@@ -205,6 +292,21 @@ async function main() {
       console.error(`- ${failure}`);
     }
     process.exitCode = 1;
+    return;
+  }
+
+  const reviewTemplateIndex = process.argv.indexOf('--review-template');
+  if (reviewTemplateIndex >= 0) {
+    const requestedPath = process.argv[reviewTemplateIndex + 1];
+    if (!requestedPath || requestedPath.startsWith('--')) {
+      throw new Error('--review-template requires an output path');
+    }
+    const outputPath = path.isAbsolute(requestedPath)
+      ? requestedPath
+      : path.resolve(repositoryRoot, requestedPath);
+    const content = buildGraphicsReviewTemplate(fences, discoverGeneratedDocuments());
+    const outcome = writeGraphicsReviewTemplate(outputPath, content, process.argv.includes('--check'));
+    console.log(`${outcome === 'NoDrift' ? 'no drift' : 'wrote'}: ${normalizePath(path.relative(repositoryRoot, outputPath))}`);
     return;
   }
 

@@ -1,0 +1,10 @@
+project:
+  name: "Synthetic Corrupt State"
+  slug: "synthetic-corrupt"
+current:
+  method: [3
+  space: "problem"
+methods_completed: "not-a-list"
+transition_log:
+  - from_method: 2
+    to_method

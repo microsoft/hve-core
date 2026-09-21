@@ -8,15 +8,15 @@ stimuli:
       category: agent-behavior
     graders:
       - type: output-matches
-        name: tracking-file-write
+        name: network-isa95-planner-class-recipe-tracking-file-write
         config:
           pattern: '(?i)\.copilot-tracking[-/\\]'
       - type: output-matches
-        name: topic-coverage
+        name: network-isa95-planner-class-recipe-topic-coverage
         config:
           pattern: '(?i)(isa.?95|level|zone|conduit|network|plc|scada)'
       - type: output-matches
-        name: no-source-edit
+        name: network-isa95-planner-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

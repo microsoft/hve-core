@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-07-16
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - copilot
@@ -181,7 +181,7 @@ Activate the `hve-builder` skill:
 1. Open Copilot Chat and ask to create or improve an instruction artifact
 2. Provide context (files, folders, or requirements)
 3. HVE Builder resolves the mode, write boundary, and applicable conventions
-4. HVE Builder uses one behavior gate with route-specific execution: Major mutations and behavior-bearing review targets execute testing, while eligible no-runtime review targets and Minor or Medium mutations are satisfied-and-skipped
+4. HVE Builder runs a review pass against its requirements catalog and review rubric, reviewing the candidate itself or dispatching the read-only `HVE Builder Reviewer` subagent in fresh context, and verifies every finding before recording it
 5. Known target files and caller-supplied canonical references remain bounded lifecycle reads; open-ended exploration and decision-critical research activate `rpi-research`
 6. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills remain compatibility aliases
 7. The final response reports each gate and an overall Pass, Revise, Deferred, or Blocked outcome

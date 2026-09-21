@@ -28,10 +28,8 @@ Deep adversarial verification of FAIL and PARTIAL findings for a single security
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Reviewer orchestrators dispatch this worker to verify all FAIL and PARTIAL findings for one skill or supported RAI framework in audit or diff mode. It searches for confirming and contradicting evidence rather than accepting an assessor's claims unchanged. Plan mode skips this verification stage.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies the skill, profile, non-empty candidate findings, and diff context for an authorization change. The worker returns a verification verdict and supporting evidence for each finding. A RAI dispatch explicitly supplies `Domain=rai` and the framework contract; unsupported domains are rejected. The parent decides how to consolidate the results, and the worker does not implement suggested fixes.

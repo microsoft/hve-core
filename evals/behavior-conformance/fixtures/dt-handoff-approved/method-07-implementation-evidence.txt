@@ -1,0 +1,20 @@
+# Synthetic Implementation Evidence
+
+## Prototype
+
+A high-fidelity maintenance workflow prototype processes synthetic equipment records and produces prioritized work recommendations.
+
+## Technical Approaches
+
+The team compared a batch service, an event-driven service, and a managed workflow. The event-driven service best met the latency target.
+
+## Readiness Signals
+
+* Prototype behavior with synthetic data: validated
+* Operation under actual production conditions: unknown
+* Production integration with the maintenance system: unknown
+* Rollback approach: assumed
+
+## Constraints
+
+The production maintenance API contract is not yet available. Integration behavior must be investigated before planning.

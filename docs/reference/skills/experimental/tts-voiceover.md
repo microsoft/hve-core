@@ -3,7 +3,7 @@ title: tts-voiceover
 description: Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-09
 ms.topic: reference
 keywords:
   - skill
@@ -28,10 +28,27 @@ Text-to-speech voice-over generation from YAML speaker notes using Azure Speech 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this skill to produce per-slide WAV narration from PowerPoint content YAML's
+`speaker_notes`, with SSML aliases for technical terms. Choose dry-run to inspect
+SSML without Azure credentials or audio generation. Live synthesis requires
+Python 3.11+, `uv`, an Azure Speech resource, authentication, and an approved region.
+
+Speaker notes are transmitted to the configured `SPEECH_REGION`. Do not send
+confidential or regulated narration, and keep authentication values out of chat.
+Use `demo-video` to assemble audio with visuals after narration is ready.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask: `/tts-voiceover Dry-run the synthetic speaker notes in content/ using
+content/acronyms.yaml. Inspect SSML only; do not synthesize audio.` Provide slide
+directories such as `slide-001/content.yaml` with nonempty `speaker_notes` and a
+lexicon mapping `CI/CD` to a spoken alias. Expect SSML with the intended voice,
+rate, and substitutions. Success at this stage is correct template output, not
+a generated WAV or verified pronunciation.
+
+After region and authentication are configured separately, an authorized synthesis
+request can produce matching `slide-NNN.wav` files. Listen for pronunciation and
+pauses; `--collapse-newlines` is useful when block-scalar wrapping should not become
+spoken pauses. Embedding into a separate narrated PPTX is another step: the script
+replaces existing timing and disables click advancement, so review animations and
+playback rather than overwriting an authored deck without checking.

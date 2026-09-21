@@ -12,6 +12,15 @@ import pytest
 from test_constants import TEST_MURAL_ID
 
 
+@pytest.fixture(autouse=True)
+def bypass_scope_policy_for_dispatch_tests(
+    monkeypatch: pytest.MonkeyPatch,
+    mural_module: Any,
+) -> None:
+    """Keep bulk dispatch tests focused on per-widget request behavior."""
+    monkeypatch.setattr(mural_module, "_require_scope", lambda *_args, **_kwargs: None)
+
+
 def _record_per_call(
     monkeypatch: pytest.MonkeyPatch,
     mural_module: Any,

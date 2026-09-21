@@ -18,7 +18,7 @@ stimuli:
         config:
           pattern: '(?i)(function|returns?|parameter|argument|value|purpose|does|bound|clamp|minimum|maximum)'
       - type: output-matches
-        name: no-source-edit
+        name: code-review-explainer-factual-no-source-edit
         config:
           pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

@@ -149,12 +149,12 @@ The `setup-ps-modules` action caches modules keyed on `scripts/security/ps-modul
 
 ## PR Validation Pipeline
 
-The `pr-validation.yml` workflow serves as the primary quality gate for all pull requests. It runs parallel linting, security, and testing jobs.
+The `pr-validation.yml` workflow serves as the primary quality gate for all pull requests. It runs linting, security, and testing jobs in parallel, then funnels all of them into a single required check.
 
 ```mermaid
 flowchart LR
     accTitle: Pull Request Validation Job Groups
-    accDescr: Linting, analysis, and security checks run as parallel validation groups to provide fast pull request feedback.
+    accDescr: Linting, analysis, and security validation groups run in parallel, then every job feeds the pr-validation-success aggregator gate that branch protection requires.
     subgraph "Linting"
         ML[markdown-lint]
         SC[spell-check]
@@ -169,6 +169,8 @@ flowchart LR
     subgraph "Analysis"
         PSA[psscriptanalyzer]
         PT[pester-tests]
+        PY[pytest]
+        NT[node-tests]
         SV[skill-validation]
         PV[plugin-validation]
     end
@@ -180,31 +182,57 @@ flowchart LR
         CQL[codeql]
         GLS[gitleaks-scan]
     end
+
+    Linting --> GATE[pr-validation-success]
+    Analysis --> GATE
+    Security --> GATE
+    GCC[gate-completeness-check] --> GATE
 ```
 
 ### Jobs
 
-| Job                         | Reusable Workflow                 | Validates                       |
-|-----------------------------|-----------------------------------|---------------------------------|
-| spell-check                 | `spell-check.yml`                 | Spelling across all files       |
-| markdown-lint               | `markdown-lint.yml`               | Markdown formatting rules       |
-| table-format                | `table-format.yml`                | Markdown table structure        |
-| psscriptanalyzer            | `ps-script-analyzer.yml`          | PowerShell code quality         |
-| yaml-lint                   | `yaml-lint.yml`                   | YAML syntax                     |
-| pester-tests                | `pester-tests.yml`                | PowerShell unit tests           |
-| frontmatter-validation      | `frontmatter-validation.yml`      | AI artifact metadata            |
-| skill-validation            | `skill-validation.yml`            | Skill directory structure       |
-| link-lang-check             | `link-lang-check.yml`             | Link accessibility              |
-| markdown-link-check         | `markdown-link-check.yml`         | Broken links                    |
-| dependency-pinning-check    | `dependency-pinning-scan.yml`     | Dependency pinning              |
-| devcontainer-lockfile-check | `devcontainer-lockfile-check.yml` | Devcontainer lockfile integrity |
-| npm-audit                   | Inline                            | npm dependency vulnerabilities  |
-| codeql                      | `codeql-analysis.yml`             | Code security patterns          |
-| copyright-headers           | `copyright-headers.yml`           | Copyright header compliance     |
-| plugin-validation           | `plugin-validation.yml`           | Plugin manifest, locator, hooks |
-| gitleaks-scan               | `gitleaks-scan.yml`               | Secret detection                |
+| Job                             | Reusable Workflow                     | Validates                                               |
+|---------------------------------|---------------------------------------|---------------------------------------------------------|
+| spell-check                     | `spell-check.yml`                     | Spelling across all files                               |
+| markdown-lint                   | `markdown-lint.yml`                   | Markdown formatting rules                               |
+| table-format                    | `table-format.yml`                    | Markdown table structure                                |
+| psscriptanalyzer                | `ps-script-analyzer.yml`              | PowerShell code quality                                 |
+| discover-python-projects        | Inline                                | Enumerates Python project directories                   |
+| discover-node-projects          | Inline                                | Enumerates Node skill directories                       |
+| python-lint                     | `python-lint.yml`                     | Python code quality, per project                        |
+| copyright-headers               | `copyright-headers.yml`               | Copyright header compliance                             |
+| yaml-lint                       | `yaml-lint.yml`                       | YAML syntax                                             |
+| pester-tests                    | `pester-tests.yml`                    | PowerShell unit tests                                   |
+| pytest                          | `pytest-tests.yml`                    | Python unit tests, per project                          |
+| copilot-otel-runtime-tests      | `pytest-tests.yml`                    | Copilot OTEL runtime tests                              |
+| node-tests                      | `node-tests.yml`                      | Node unit tests, per skill                              |
+| accessibility-browser-smoke     | Inline                                | Browser accessibility smoke test                        |
+| fuzz-tests                      | `fuzz-tests.yml`                      | Fuzz harness runs, per project                          |
+| pip-audit                       | `pip-audit.yml`                       | Python dependency vulnerabilities                       |
+| docusaurus-tests                | `docusaurus-tests.yml`                | Documentation site build and tests                      |
+| frontmatter-validation          | `frontmatter-validation.yml`          | AI artifact metadata                                    |
+| adr-consistency-validation      | `adr-consistency-validation.yml`      | ADR consistency                                         |
+| ai-artifact-validation          | `ai-artifact-validation.yml`          | AI artifact structure                                   |
+| asset-docs-validation           | `asset-docs-validation.yml`           | Asset documentation                                     |
+| msdate-freshness                | `msdate-freshness-check.yml`          | `ms.date` freshness                                     |
+| plugin-validation               | `plugin-validation.yml`               | Plugin manifest, locator, hooks                         |
+| skill-validation                | `skill-validation.yml`                | Skill directory structure                               |
+| eval-validation                 | `eval-validation.yml`                 | Eval definitions                                        |
+| link-lang-check                 | `link-lang-check.yml`                 | Link accessibility                                      |
+| markdown-link-check             | `markdown-link-check.yml`             | Broken links                                            |
+| dependency-pinning-check        | `dependency-pinning-scan.yml`         | Dependency pinning                                      |
+| devcontainer-lockfile-check     | `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity                         |
+| workflow-permissions-check      | `workflow-permissions-scan.yml`       | Workflow permission scopes                              |
+| workflow-runner-check           | `workflow-runner-scan.yml`            | Workflow runner labels                                  |
+| dangerous-workflow-check        | `dangerous-workflow-scan.yml`         | Dangerous workflow patterns                             |
+| action-version-consistency-scan | `action-version-consistency-scan.yml` | Action version consistency                              |
+| gitleaks-scan                   | `gitleaks-scan.yml`                   | Secret detection                                        |
+| npm-audit                       | Inline                                | npm dependency vulnerabilities                          |
+| codeql                          | `codeql-analysis.yml`                 | Code security patterns                                  |
+| gate-completeness-check         | Inline                                | That the gate's `needs:` list covers every job          |
+| pr-validation-success           | Inline                                | Aggregates every validation job into one required check |
 
-All jobs run in parallel with no dependencies, enabling fast feedback (typically under 3 minutes).
+The validation jobs themselves run in parallel with no dependencies between them, so feedback stays fast. They are not the merge gate: `pr-validation-success` lists every one of them in its `needs:` and is the single check branch protection requires, so it fails if any of them fails or is skipped. `gate-completeness-check` runs `Test-PrValidationGate.ps1 -FailOnViolation` to enforce that the `needs:` list stays in sync with the job set, so a newly added job cannot silently bypass the gate.
 
 ## Release Promotion and Publication
 

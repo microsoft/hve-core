@@ -180,10 +180,10 @@ Describe 'Invoke-AssetDocsGeneration human sections' -Tag 'Unit' {
         Get-Content -LiteralPath $script:TemplatePath -Raw | Should -Not -Match '(?m)^## '
     }
 
-    It 'Preserves an authored human tail while refreshing the generated regions' {
+    It 'Preserves authored guidance and curated links while refreshing generated regions' {
         $pageRel = 'docs/reference/agents/hve-core/alpha-agent.md'
         $page = Join-Path $script:repo $pageRel
-        $authored = "`n`n## When to use it`n`nUse Alpha Agent when the demo needs a first agent.`n`n## Example usage`n`nAuthored example.`n"
+        $authored = "`n`n## When to use it`n`nUse Alpha Agent when the demo needs a first agent.`n`nSee [Coaching guide](../../../design-thinking/dt-coach) and [RPI handoff](../../../design-thinking/dt-rpi-integration).`n`n## How to use it`n`nSelect Alpha Agent and provide the demo input.`n`n## Example usage`n`nAuthored example.`n"
         $original = Get-Content -LiteralPath $page -Raw
         $split = Split-AssetDocByMarkers -Content $original -Region 'overview'
         Set-Content -LiteralPath $page -Value ("$($split.Before)$(New-AssetGeneratedRegion -Region 'overview' -Body $split.Body)$authored") -Encoding utf8NoBOM -NoNewline
@@ -198,6 +198,10 @@ Describe 'Invoke-AssetDocsGeneration human sections' -Tag 'Unit' {
         (Split-AssetDocByMarkers -Content $updated -Region 'overview').Body | Should -Be 'A revised first demo agent.'
         (Split-AssetDocByMarkers -Content $updated -Region 'overview').After | Should -Be $authored
         Test-AssetDocStub -Content $updated | Should -BeFalse
+        $repeat = Invoke-AssetDocsGeneration -RepoRoot $script:repo -TemplatePath $script:TemplatePath
+        $repeat.DriftCount | Should -Be 0
+        (Split-AssetDocByMarkers -Content (Get-Content -LiteralPath $page -Raw) -Region 'overview').After |
+            Should -BeExactly $authored
     }
 }
 
