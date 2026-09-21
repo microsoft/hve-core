@@ -28,15 +28,17 @@ Six-phase repository supply chain security assessment against OpenSSF Scorecard,
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use SSSC Planner to plan software supply-chain improvements across repository controls, dependency hygiene, build provenance, signing, and SBOM practices. It connects assessment evidence to OpenSSF Scorecard, SLSA, and related guidance and produces prioritized workflow work. Use SSSC Reviewer to assess existing posture or changes.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+1. Select `SSSC Planner` and identify the repository, release process, target standards, and any PRD, BRD, or security-plan context.
+2. Confirm scope and supply-chain facts before interpreting maturity or control gaps.
+3. Review assessment evidence, standards mappings, and the gap analysis through the six planning phases.
+4. Review prioritized backlog drafts before execution. Optional VEX planning is distinct from accepting vulnerability applicability or publishing a VEX statement.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask: "Plan supply-chain improvements for our release workflows. Assess dependency pinning, provenance, signing, and SBOM coverage, then prioritize reusable-workflow changes with evidence and unknowns."
+
+Expect a repository-specific assessment and control backlog rather than a generic checklist. Success means the proposed work closes named gaps and does not claim an unverified assurance level.

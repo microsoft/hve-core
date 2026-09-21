@@ -14,11 +14,8 @@ import { test, expect, type Page } from '@playwright/test';
 // device-pixel window at 200% zoom lays out as a 640 CSS pixel viewport at a
 // device scale factor of 2. That equivalence makes real browser zoom
 // reproducible from Playwright context options alone, without the CDP
-// text-scale emulation that never reproduced the reported symptom.
-//
-// The reported defect was the navbar search placeholder being clipped to
-// "Sear" at 200%: the field narrows while the Ctrl+K badges inside it do not
-// yield, leaving less room for the placeholder than the placeholder needs.
+// text-scale emulation. The navbar search placeholder must remain fully visible
+// as the field narrows and shortcut badges leave the compact layout.
 const ZOOM_LEVELS = [
   { label: '100%', width: 1280, height: 768, deviceScaleFactor: 1 },
   { label: '150%', width: 853, height: 512, deviceScaleFactor: 1.5 },
@@ -117,12 +114,8 @@ test.describe('Browser page zoom reflow (WCAG 1.4.10)', () => {
         expect(fit.present, 'the navbar search input should render').toBe(true);
         expect(fit.collapsed, `the search field should expand on focus at ${level.label}`).toBe(false);
 
-        // The reported defect was badges crowding the placeholder, and the fix
-        // removes them from layout below the theme's 996 px breakpoint. Every
-        // zoom level above 100% lays out below that breakpoint, so without this
-        // assertion the badge boundary is simply absent and the measurement no
-        // longer covers the condition the test names. Assert the badge state
-        // directly so a regression that restores them is detected.
+        // Shortcut badges leave layout below the theme's 996 px breakpoint so
+        // the placeholder retains enough space at increased zoom.
         if (level.width <= 996) {
           expect(
             fit.badgeCount,

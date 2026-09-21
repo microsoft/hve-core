@@ -26,6 +26,21 @@ from test_constants import (
     TEST_WORKSPACE_ID,
 )
 
+
+@pytest.fixture(autouse=True)
+def bypass_dispatch_policy_for_handler_tests(
+    monkeypatch: pytest.MonkeyPatch,
+    mural_module: Any,
+) -> None:
+    """Keep handler tests focused on parsing and API request construction."""
+    monkeypatch.setattr(mural_module, "_require_scope", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        mural_module,
+        "_assert_widget_has_author_tag",
+        lambda *_args, **_kwargs: None,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

@@ -15,6 +15,8 @@ BeforeAll {
 
     $script:validatorFixtureCounter = 0
     function script:New-ValidatorFixture {
+        param([switch]$IncludeSkill, [switch]$IncludePrompt, [switch]$Authored)
+
         $script:validatorFixtureCounter++
         $repo = Join-Path $TestDrive "validator-fixture-$($script:validatorFixtureCounter)"
         $gh = Join-Path $repo '.github'
@@ -23,6 +25,13 @@ BeforeAll {
             'agents/hve-core/demo-agent.agent.md'      = @('---', 'name: Demo Agent', 'description: A demo agent.', '---', '', '# Body')
             'instructions/shared/demo.instructions.md' = @('---', 'description: Demo instructions.', 'applyTo: "**/*.ps1"', '---', '', '# Body')
         }
+        if ($IncludeSkill) {
+            $fixtures['skills/hve-core/demo/SKILL.md'] = @('---', 'name: demo', 'description: A demo skill.', 'user-invocable: true', '---', '', '# Body')
+            $fixtures['skills/hve-core/demo/references/usage.md'] = @('# Usage', '', 'Fixture supporting content.')
+        }
+        if ($IncludePrompt) {
+            $fixtures['prompts/hve-core/demo.prompt.md'] = @('---', 'description: A demo prompt.', '---', '', '# Body')
+        }
         foreach ($rel in $fixtures.Keys) {
             $full = Join-Path $gh $rel
             New-Item -ItemType Directory -Path (Split-Path $full -Parent) -Force | Out-Null
@@ -30,6 +39,9 @@ BeforeAll {
         }
 
         Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        if ($Authored) {
+            Set-FixtureAuthored -Repo $repo
+        }
         return $repo
     }
 
@@ -41,6 +53,22 @@ BeforeAll {
     function script:Get-FixtureModel {
         param([string]$Repo, [string]$Kind)
         return (Get-FixtureModels -Repo $Repo | Where-Object { $_.Kind -eq $Kind } | Select-Object -First 1)
+    }
+
+    function script:Set-FixtureAuthored {
+        param([string]$Repo)
+
+        foreach ($model in (Get-FixtureModels -Repo $Repo)) {
+            $page = Join-Path $Repo $model.DocRel
+            $content = Get-Content -LiteralPath $page -Raw
+            foreach ($section in (Get-AssetDocSectionContract | Where-Object TemplateRegion)) {
+                if ((Resolve-AssetDocSectionStatus -Section $section -Kind $model.Kind -Interactive $model.Interactive) -eq 'Required') {
+                    $body = Get-AssetDocSectionBody -Content $content -Heading $section.Heading
+                    $content = $content.Replace($body, "Authored guidance for $($section.Heading).")
+                }
+            }
+            Set-Content -LiteralPath $page -Value $content -Encoding utf8NoBOM -NoNewline
+        }
     }
 
     # Rewrites the value cell of a named field in a generated metadata table
@@ -250,7 +278,7 @@ Describe 'Test-AssetDocStructure' -Tag 'Unit' {
         }
         $content += "`n`n## When to use it`n`n<!-- asset-docs:stub -->`nDuplicate placeholder.`n"
 
-        Test-AssetDocAuthored -Model $script:instrModel -Content $content -RequireAuthoredContent instruction |
+        Test-AssetDocAuthored -Model $script:instrModel -Content $content |
             Should -BeNullOrEmpty
 
         $findings = @(Test-AssetDocStructure -Model $script:instrModel -Content $content)
@@ -347,27 +375,16 @@ Describe 'Test-AssetDocAuthored' -Tag 'Unit' {
         $script:instrContent = Get-Content -LiteralPath (Join-Path $script:repo $script:instrModel.DocRel) -Raw
     }
 
-    It 'Warns when stub placeholders remain by default' {
+    It 'Errors when Required stub placeholders remain by default' {
         $findings = @(Test-AssetDocAuthored -Model $script:agentModel -Content $script:agentContent)
         $findings.Count | Should -Be 1
-        $findings[0].Level | Should -Be 'Warning'
+        $findings[0].Level | Should -Be 'Error'
         $findings[0].Category | Should -Be 'Authored'
     }
 
-    It 'Errors on Required stubs when the model kind is selected' {
-        $findings = @(Test-AssetDocAuthored -Model $script:agentModel -Content $script:agentContent -RequireAuthoredContent agent)
-        $findings[0].Level | Should -Be 'Error'
-    }
-
-    It 'Leaves Required stubs as warnings when the model kind is not selected' {
-        $findings = @(Test-AssetDocAuthored -Model $script:agentModel -Content $script:agentContent -RequireAuthoredContent instruction)
-        $findings | Should -HaveCount 1
-        $findings[0].Level | Should -Be 'Warning'
-    }
-
-    It 'Treats an Optional-only instruction stub as a warning under strict instruction validation' {
+    It 'Treats an Optional-only instruction stub as a warning' {
         $content = "## When to use it`n`nUse these instructions for the fixture.`n`n## Example usage`n`n<!-- asset-docs:stub -->`nExample placeholder.`n"
-        $findings = @(Test-AssetDocAuthored -Model $script:instrModel -Content $content -RequireAuthoredContent instruction)
+        $findings = @(Test-AssetDocAuthored -Model $script:instrModel -Content $content)
 
         $findings | Should -HaveCount 1
         $findings[0].Level | Should -Be 'Warning'
@@ -378,12 +395,12 @@ Describe 'Test-AssetDocAuthored' -Tag 'Unit' {
     It 'Ignores a sentinel in a NotApplicable instruction section' {
         $content = "## When to use it`n`nUse these instructions for the fixture.`n`n## How to use it`n`n<!-- asset-docs:stub -->`nNot applicable.`n"
 
-        Test-AssetDocAuthored -Model $script:instrModel -Content $content -RequireAuthoredContent instruction |
+        Test-AssetDocAuthored -Model $script:instrModel -Content $content |
             Should -BeNullOrEmpty
     }
 
     It 'Reports one Error naming every stubbed Required section' {
-        $findings = @(Test-AssetDocAuthored -Model $script:agentModel -Content $script:agentContent -RequireAuthoredContent agent)
+        $findings = @(Test-AssetDocAuthored -Model $script:agentModel -Content $script:agentContent)
 
         $findings | Should -HaveCount 1
         $findings[0].Level | Should -Be 'Error'
@@ -392,23 +409,239 @@ Describe 'Test-AssetDocAuthored' -Tag 'Unit' {
         $findings[0].Message | Should -Match ([regex]::Escape('## Example usage'))
     }
 
-    It 'Applies cumulative strict kinds' {
-        (Test-AssetDocAuthored -Model $script:agentModel -Content $script:agentContent -RequireAuthoredContent @('instruction', 'agent')).Level |
-            Should -Be 'Error'
-        (Test-AssetDocAuthored -Model $script:instrModel -Content $script:instrContent -RequireAuthoredContent @('instruction', 'agent')).Level |
-            Should -Be 'Error'
-    }
-
     It 'Reports nothing when an Optional section is omitted' {
         $content = "## When to use it`n`nUse these instructions for the fixture.`n"
 
-        Test-AssetDocAuthored -Model $script:instrModel -Content $content -RequireAuthoredContent instruction |
+        Test-AssetDocAuthored -Model $script:instrModel -Content $content |
             Should -BeNullOrEmpty
     }
 
     It 'Reports nothing when stubs are removed' {
         $authored = $script:agentContent -replace '<!-- asset-docs:stub -->', ''
         Test-AssetDocAuthored -Model $script:agentModel -Content $authored | Should -BeNullOrEmpty
+    }
+
+    It 'Enforces each Required section for <Kind> with Interactive=<Interactive>' -ForEach @(
+        @{ Kind = 'agent'; Interactive = $true }
+        @{ Kind = 'agent'; Interactive = $false }
+        @{ Kind = 'prompt'; Interactive = $true }
+        @{ Kind = 'prompt'; Interactive = $false }
+        @{ Kind = 'instruction'; Interactive = $false }
+        @{ Kind = 'skill'; Interactive = $false }
+    ) {
+        $model = [PSCustomObject]@{ Kind = $Kind; Interactive = $Interactive; DocRel = "docs/reference/$Kind/fixture.md" }
+        $sections = @(Get-AssetDocSectionContract | Where-Object TemplateRegion)
+        $required = @($sections | Where-Object {
+                (Resolve-AssetDocSectionStatus -Section $_ -Kind $Kind -Interactive $Interactive) -eq 'Required'
+            })
+
+        foreach ($target in $required) {
+            $content = (@(foreach ($section in $sections) {
+                        $body = if ($section.Name -eq $target.Name) { '<!-- asset-docs:stub -->' } else { 'Authored guidance.' }
+                        "$($section.Heading)`n`n$body`n"
+                    }) -join "`n")
+            $findings = @(Test-AssetDocAuthored -Model $model -Content $content)
+            $findings | Should -HaveCount 1
+            $findings[0].Level | Should -Be 'Error'
+            $findings[0].Category | Should -Be 'Authored'
+            $findings[0].Message | Should -Match ([regex]::Escape($target.Heading))
+            foreach ($other in ($sections | Where-Object Name -NE $target.Name)) {
+                $findings[0].Message | Should -Not -Match ([regex]::Escape($other.Heading))
+            }
+        }
+    }
+
+    It 'Reports mixed Required and Optional stubs as one error' {
+        $findings = @(Test-AssetDocAuthored -Model $script:instrModel -Content $script:instrContent)
+        $findings | Should -HaveCount 1
+        $findings[0].Level | Should -Be 'Error'
+        $findings[0].Message | Should -Match 'When to use it'
+        $findings[0].Message | Should -Match 'Example usage'
+    }
+
+    It 'Preserves sentinel-only detection for <Label> bodies' -ForEach @(
+        @{ Label = 'blank'; Body = ' ' }
+        @{ Label = 'comment-only'; Body = '<!-- author note -->' }
+    ) {
+        Test-AssetDocAuthored -Model $script:instrModel -Content "## When to use it`n`n$Body`n" |
+            Should -BeNullOrEmpty
+    }
+}
+
+Describe 'All-kind authored completeness' -Tag 'Unit' {
+    BeforeAll {
+        $script:skillRepo = New-ValidatorFixture -IncludeSkill -IncludePrompt
+        $script:skillModel = Get-FixtureModel -Repo $script:skillRepo -Kind 'skill'
+        $script:skillContent = Get-Content -LiteralPath (Join-Path $script:skillRepo $script:skillModel.DocRel) -Raw
+    }
+
+    It 'Rejects <Label> required skill stubs in one finding' -ForEach @(
+        @{ Label = 'When-only'; StubHeadings = @('## When to use it') }
+        @{ Label = 'Example-only'; StubHeadings = @('## Example usage') }
+        @{ Label = 'both'; StubHeadings = @('## When to use it', '## Example usage') }
+    ) {
+        $content = $script:skillContent
+        foreach ($heading in @('## When to use it', '## Example usage')) {
+            if ($heading -notin $StubHeadings) {
+                $body = Get-AssetDocSectionBody -Content $content -Heading $heading
+                $content = $content.Replace($body, "Authored guidance for $heading.")
+            }
+        }
+
+        $findings = @(Test-AssetDocAuthored -Model $script:skillModel -Content $content)
+
+        $findings | Should -HaveCount 1
+        $findings[0].Level | Should -Be 'Error'
+        $findings[0].Category | Should -Be 'Authored'
+        $findings[0].Path | Should -BeExactly $script:skillModel.DocRel
+        foreach ($heading in @('## When to use it', '## Example usage')) {
+            if ($heading -in $StubHeadings) {
+                $findings[0].Message | Should -Match ([regex]::Escape($heading))
+            }
+            else {
+                $findings[0].Message | Should -Not -Match ([regex]::Escape($heading))
+            }
+        }
+        $findings[0].Message | Should -Not -Match 'How to use it'
+    }
+
+    It 'Accepts authored skill sections without a How section' {
+        $content = $script:skillContent
+        foreach ($heading in @('## When to use it', '## Example usage')) {
+            $body = Get-AssetDocSectionBody -Content $content -Heading $heading
+            $content = $content.Replace($body, "Authored guidance for $heading.")
+        }
+
+        $content | Should -Not -Match '(?m)^## How to use it'
+        Test-AssetDocStructure -Model $script:skillModel -Content $content | Should -BeNullOrEmpty
+        Test-AssetDocAuthored -Model $script:skillModel -Content $content |
+            Should -BeNullOrEmpty
+    }
+
+    It 'Preserves strict <Kind> enforcement alongside skills' -ForEach @(
+        @{ Kind = 'agent' }
+        @{ Kind = 'instruction' }
+        @{ Kind = 'prompt' }
+    ) {
+        $model = Get-FixtureModel -Repo $script:skillRepo -Kind $Kind
+        $content = Get-Content -LiteralPath (Join-Path $script:skillRepo $model.DocRel) -Raw
+
+        (Test-AssetDocAuthored -Model $model -Content $content).Level |
+            Should -Be 'Error'
+    }
+
+    It 'Keeps an optional instruction example advisory' {
+        $model = Get-FixtureModel -Repo $script:skillRepo -Kind 'instruction'
+        $content = Get-Content -LiteralPath (Join-Path $script:skillRepo $model.DocRel) -Raw
+        $body = Get-AssetDocSectionBody -Content $content -Heading '## When to use it'
+        $content = $content.Replace($body, 'Use these instructions for fixture scripts.')
+        $findings = @(Test-AssetDocAuthored -Model $model -Content $content)
+
+        $findings | Should -HaveCount 1
+        $findings[0].Level | Should -Be 'Warning'
+        $findings[0].Message | Should -Match 'Example usage'
+    }
+
+    It 'Ignores a sentinel in the NotApplicable skill How section' {
+        $content = "## When to use it`n`nUse the fixture skill.`n`n## How to use it`n`n<!-- asset-docs:stub -->`n`n## Example usage`n`nAsk for the fixture output.`n"
+
+        Test-AssetDocAuthored -Model $script:skillModel -Content $content |
+            Should -BeNullOrEmpty
+    }
+
+    It 'Applies changed-file skill enforcement for <Label>' -ForEach @(
+        @{ Label = 'nested support content'; ChangedPath = '.github/skills/hve-core/demo/references/usage.md'; ExitCode = 1; Selected = 1 }
+        @{ Label = 'the skill page'; ChangedPath = 'docs/reference/skills/hve-core/demo.md'; ExitCode = 1; Selected = 1 }
+        @{ Label = 'an unrelated path'; ChangedPath = 'README.md'; ExitCode = 0; Selected = 0 }
+    ) {
+        Mock Get-ChangedFilesFromGit { @($ChangedPath) }
+        $output = Join-Path $TestDrive 'skill-changed-results.json'
+
+        Invoke-AssetDocsValidation -RepoRoot $script:skillRepo -ChangedFilesOnly -FailOnMissing -CheckSync -OutputPath $output |
+            Should -Be $ExitCode
+
+        $result = Get-Content -LiteralPath $output -Raw | ConvertFrom-Json
+        $findings = @($result.findings | Where-Object { $_.Category -eq 'Authored' })
+        $findings | Should -HaveCount $Selected
+        if ($Selected) {
+            $findings[0].Path | Should -BeExactly $script:skillModel.DocRel
+            $findings[0].Level | Should -Be 'Error'
+        }
+    }
+
+    It 'Enforces <Kind> Required content through the default CLI' -ForEach @(
+        @{ Kind = 'agent'; ExitCode = 1 }
+        @{ Kind = 'prompt'; ExitCode = 1 }
+        @{ Kind = 'instruction'; ExitCode = 1 }
+        @{ Kind = 'skill'; ExitCode = 1 }
+        @{ Kind = 'none'; ExitCode = 0 }
+    ) {
+        $repo = New-ValidatorFixture -IncludeSkill -IncludePrompt -Authored
+        if ($Kind -ne 'none') {
+            $model = Get-FixtureModel -Repo $repo -Kind $Kind
+            $page = Join-Path $repo $model.DocRel
+            $content = Get-Content -LiteralPath $page -Raw
+            $body = Get-AssetDocSectionBody -Content $content -Heading '## When to use it'
+            $content = $content.Replace($body, '<!-- asset-docs:stub -->')
+            Set-Content -LiteralPath $page -Value $content -Encoding utf8NoBOM -NoNewline
+        }
+        $output = Join-Path $repo 'logs/default-cli.json'
+
+        & pwsh -NoProfile -File $script:ValidatorPath -RepoRoot $repo -FailOnMissing -CheckSync -OutputPath $output *> $null
+
+        $LASTEXITCODE | Should -Be $ExitCode
+        $result = Get-Content -LiteralPath $output -Raw | ConvertFrom-Json
+        $result.options.PSObject.Properties.Name | Should -Not -Contain 'requireAuthoredContent'
+        $errors = @($result.findings | Where-Object { $_.Level -eq 'Error' })
+        $errors | Should -HaveCount $ExitCode
+        if ($Kind -ne 'none') {
+            $errors[0].Category | Should -Be 'Authored'
+            $errors[0].Path | Should -BeExactly $model.DocRel
+            $errors[0].Message | Should -Match 'When to use it'
+        }
+        else {
+            $warnings = @($result.findings | Where-Object { $_.Level -eq 'Warning' })
+            $warnings | Should -HaveCount 1
+            $warnings[0].Message | Should -Match 'Example usage'
+        }
+    }
+
+    It 'Keeps local and reusable CI enforcement free of rollout selectors' {
+        $root = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $package = Get-Content -LiteralPath (Join-Path $root 'package.json') -Raw | ConvertFrom-Json
+        $package.scripts.'lint:asset-docs' | Should -BeExactly 'pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync'
+
+        $workflow = Get-Content -LiteralPath (Join-Path $root '.github/workflows/asset-docs-validation.yml') -Raw | ConvertFrom-Yaml
+        $step = @($workflow.jobs.validate.steps | Where-Object { $_.name -eq 'Run asset documentation validation' })
+        $step | Should -HaveCount 1
+        $step[0].run | Should -Not -Match 'RequireAuthoredContent'
+        $step[0].run | Should -Match 'FailOnMissing\s*=\s*\$true'
+        $step[0].run | Should -Match 'CheckSync\s*=\s*\$true'
+        $step[0].run | Should -Match 'ChangedFilesOnly'
+    }
+
+    It 'Enforces a changed delegated agent without requiring How to use it' {
+        $repo = New-ValidatorFixture -Authored
+        $sourceRel = '.github/agents/hve-core/subagents/worker.agent.md'
+        $source = Join-Path $repo $sourceRel
+        New-Item -ItemType Directory -Path (Split-Path $source -Parent) -Force | Out-Null
+        Set-Content -LiteralPath $source -Value "---`nname: Worker`ndescription: Delegated fixture.`nuser-invocable: false`n---`n" -Encoding utf8NoBOM
+        Invoke-AssetDocsGeneration -RepoRoot $repo -TemplatePath $script:TemplatePath | Out-Null
+        Mock Get-ChangedFilesFromGit { @('.github/agents/hve-core/subagents/worker.agent.md') }
+        $output = Join-Path $repo 'logs/delegated.json'
+
+        Invoke-AssetDocsValidation -RepoRoot $repo -ChangedFilesOnly -FailOnMissing -CheckSync -OutputPath $output |
+            Should -Be 1
+        $result = Get-Content -LiteralPath $output -Raw | ConvertFrom-Json
+        $result.assetCount | Should -Be 1
+        $result.findings | Should -HaveCount 1
+        $result.findings[0].Category | Should -Be 'Authored'
+        $result.findings[0].Level | Should -Be 'Error'
+        $result.findings[0].Message | Should -Not -Match 'How to use it'
+
+        Set-FixtureAuthored -Repo $repo
+        Invoke-AssetDocsValidation -RepoRoot $repo -ChangedFilesOnly -FailOnMissing -CheckSync -OutputPath $output |
+            Should -Be 0
     }
 }
 
@@ -434,48 +667,15 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
 
         $command.Parameters.Keys | Should -Contain 'ChangedFilesOnly'
         $command.Parameters.Keys | Should -Contain 'BaseBranch'
-        $command.Parameters.Keys | Should -Contain 'RequireAuthoredContent'
-        $command.Parameters['RequireAuthoredContent'].ParameterType | Should -Be ([string[]])
+        $command.Parameters.Keys | Should -Not -Contain 'RequireAuthoredContent'
+        (Get-Command Invoke-AssetDocsValidation).Parameters.Keys | Should -Not -Contain 'RequireAuthoredContent'
+        (Get-Command Test-AssetDocAuthored).Parameters.Keys | Should -Not -Contain 'RequireAuthoredContent'
     }
 
-    It 'Constrains orchestration to the four documentable kinds' {
-        $attribute = (Get-Command Invoke-AssetDocsValidation).Parameters['RequireAuthoredContent'].Attributes |
-            Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] }
-
-        $attribute.ValidValues | Should -Be @('agent', 'prompt', 'instruction', 'skill')
-        { Invoke-AssetDocsValidation -RepoRoot (New-ValidatorFixture) -RequireAuthoredContent unsupported } |
-            Should -Throw
-    }
-
-    It 'Binds single and comma-delimited cumulative kinds through a child pwsh process' {
+    It 'Rejects a freshly generated tree until Required content is authored' {
         $repo = New-ValidatorFixture
-        $singleOutput = Join-Path $TestDrive 'single-kind.json'
-        $cumulativeOutput = Join-Path $TestDrive 'cumulative-kinds.json'
-
-        & pwsh -NoProfile -File $script:ValidatorPath -RepoRoot $repo -RequireAuthoredContent instruction -OutputPath $singleOutput *> $null
-        $LASTEXITCODE | Should -Be 1
-        @((Get-Content -LiteralPath $singleOutput -Raw | ConvertFrom-Json).options.requireAuthoredContent) |
-            Should -Be @('instruction')
-
-        & pwsh -NoProfile -File $script:ValidatorPath -RepoRoot $repo -RequireAuthoredContent instruction,prompt -OutputPath $cumulativeOutput *> $null
-        $LASTEXITCODE | Should -Be 1
-        @((Get-Content -LiteralPath $cumulativeOutput -Raw | ConvertFrom-Json).options.requireAuthoredContent) |
-            Should -Be @('instruction', 'prompt')
-    }
-
-    It 'Rejects an unsupported kind through a child pwsh process' {
-        $repo = New-ValidatorFixture
-        $output = Join-Path $TestDrive 'invalid-kind.json'
-
-        $messages = @(& pwsh -NoProfile -File $script:ValidatorPath -RepoRoot $repo -RequireAuthoredContent unsupported -OutputPath $output 2>&1)
-
-        $LASTEXITCODE | Should -Be 1
-        Test-Path -LiteralPath $output | Should -BeFalse
-        $messages -join "`n" | Should -Match 'Unsupported asset kind'
-    }
-
-    It 'Exits 0 for a freshly generated tree with authored warnings only' {
-        $repo = New-ValidatorFixture
+        (Invoke-AssetDocsValidation -RepoRoot $repo) | Should -Be 1
+        Set-FixtureAuthored -Repo $repo
         (Invoke-AssetDocsValidation -RepoRoot $repo) | Should -Be 0
     }
 
@@ -484,42 +684,34 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
         Invoke-AssetDocsValidation -RepoRoot $repo | Out-Null
         $output = Join-Path $repo 'logs/asset-docs-validation-results.json'
         Test-Path -LiteralPath $output | Should -BeTrue
-        @((Get-Content -LiteralPath $output -Raw | ConvertFrom-Json).options.requireAuthoredContent) |
-            Should -HaveCount 0
-    }
-
-    It 'Preserves selected kind order in the JSON results' {
-        $repo = New-ValidatorFixture
-        $output = Join-Path $repo 'logs/selected-kinds.json'
-
-        Invoke-AssetDocsValidation -RepoRoot $repo -RequireAuthoredContent @('skill', 'instruction') -OutputPath $output | Out-Null
-
-        @((Get-Content -LiteralPath $output -Raw | ConvertFrom-Json).options.requireAuthoredContent) |
-            Should -Be @('skill', 'instruction')
+        $result = Get-Content -LiteralPath $output -Raw | ConvertFrom-Json
+        @($result.options.PSObject.Properties.Name | Sort-Object) |
+            Should -Be @('baseBranch', 'changedFilesOnly', 'checkSync', 'failOnMissing')
+        $result.errorCount | Should -Be 2
     }
 
     It 'Exits 1 when an orphan page is present' {
-        $repo = New-ValidatorFixture
+        $repo = New-ValidatorFixture -Authored
         Set-Content -LiteralPath (Join-Path $repo 'docs/reference/agents/hve-core/ghost.md') -Value (@('---', 'title: Ghost', 'description: x', '---', '') -join "`n") -Encoding utf8NoBOM
         (Invoke-AssetDocsValidation -RepoRoot $repo) | Should -Be 1
     }
 
     It 'Exits 1 for a missing page under -FailOnMissing' {
-        $repo = New-ValidatorFixture
+        $repo = New-ValidatorFixture -Authored
         $model = Get-FixtureModel -Repo $repo -Kind 'agent'
         Remove-Item -LiteralPath (Join-Path $repo $model.DocRel) -Force
         (Invoke-AssetDocsValidation -RepoRoot $repo -FailOnMissing) | Should -Be 1
     }
 
     It 'Exits 0 for a missing page without -FailOnMissing' {
-        $repo = New-ValidatorFixture
+        $repo = New-ValidatorFixture -Authored
         $model = Get-FixtureModel -Repo $repo -Kind 'agent'
         Remove-Item -LiteralPath (Join-Path $repo $model.DocRel) -Force
         (Invoke-AssetDocsValidation -RepoRoot $repo) | Should -Be 0
     }
 
     It 'Exits 1 for sync drift under -CheckSync' {
-        $repo = New-ValidatorFixture
+        $repo = New-ValidatorFixture -Authored
         $model = Get-FixtureModel -Repo $repo -Kind 'agent'
         $page = Join-Path $repo $model.DocRel
         $tampered = Set-TamperedMetadataCell -Content (Get-Content -LiteralPath $page -Raw) -Field 'Kind' -NewValue 'TAMPERED'
@@ -527,13 +719,13 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
         (Invoke-AssetDocsValidation -RepoRoot $repo -CheckSync) | Should -Be 1
     }
 
-    It 'Exits 0 for a freshly generated tree under strict coverage and sync checks' {
-        $repo = New-ValidatorFixture
+    It 'Exits 0 for an authored tree under strict coverage and sync checks' {
+        $repo = New-ValidatorFixture -Authored
         (Invoke-AssetDocsValidation -RepoRoot $repo -FailOnMissing -CheckSync) | Should -Be 0
     }
 
     It 'Does not block unrelated changes on a pre-existing orphan' {
-        $repo = New-ValidatorFixture
+        $repo = New-ValidatorFixture -Authored
         Set-Content -LiteralPath (Join-Path $repo 'docs/reference/agents/hve-core/ghost.md') -Value (@('---', 'title: Ghost', 'description: x', '---', '') -join "`n") -Encoding utf8NoBOM
         Mock Get-ChangedFilesFromGit { @('README.md') }
 
@@ -541,7 +733,7 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
     }
 
     It 'Exits 1 when an orphan page changed' {
-        $repo = New-ValidatorFixture
+        $repo = New-ValidatorFixture -Authored
         $ghostRel = 'docs/reference/agents/hve-core/ghost.md'
         Set-Content -LiteralPath (Join-Path $repo $ghostRel) -Value (@('---', 'title: Ghost', 'description: x', '---', '') -join "`n") -Encoding utf8NoBOM
         Mock Get-ChangedFilesFromGit { @($ghostRel) }
@@ -550,7 +742,7 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
     }
 
     It 'Exits 1 when a deleted source leaves an orphan page' {
-        $repo = New-ValidatorFixture
+        $repo = New-ValidatorFixture -Authored
         $model = Get-FixtureModel -Repo $repo -Kind 'agent'
         Remove-Item -LiteralPath (Join-Path $repo $model.SourceRel) -Force
         Mock Get-ChangedFilesFromGit { @($model.SourceRel) }
@@ -559,7 +751,7 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
     }
 
     It 'Exits 1 when a source rename orphans the old page and misses the new page' {
-        $repo = New-ValidatorFixture
+        $repo = New-ValidatorFixture -Authored
         $oldModel = Get-FixtureModel -Repo $repo -Kind 'agent'
         $newSourceRel = '.github/agents/hve-core/renamed-agent.agent.md'
         $newSource = Join-Path $repo $newSourceRel
@@ -570,7 +762,7 @@ Describe 'Invoke-AssetDocsValidation' -Tag 'Unit' {
     }
 
     It 'Exits 1 when a changed documentation page was deleted' {
-        $repo = New-ValidatorFixture
+        $repo = New-ValidatorFixture -Authored
         $model = Get-FixtureModel -Repo $repo -Kind 'agent'
         Remove-Item -LiteralPath (Join-Path $repo $model.DocRel) -Force
         Mock Get-ChangedFilesFromGit { @($model.DocRel) }

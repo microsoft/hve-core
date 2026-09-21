@@ -7,6 +7,8 @@ applyTo: '**/.copilot-tracking/mural/**, **/.github/instructions/experimental/mu
 
 Action-item destinations are an open registry of named adapters. The extractor core does not change when a new destination is added; the new adapter is registered in the data file and the writeback applies the registered tag.
 
+The Mural skill provides an effect-free control plane for this registry. `load_destination_registry` validates the base and optional override with `yaml.safe_load`; `DispatchRequest` requires explicit destination and action intent; and `dispatch_destination` calls only an adapter injected by the owning caller. The skill does not import or implement GitHub, Jira, Azure DevOps, ADR, document, PowerPoint, or workshop-seed adapters.
+
 ## Registry data file
 
 The authoritative list of adapters lives in [.github/instructions/experimental/mural/destinations/registry.yml](destinations/registry.yml). Layer B agents read it at invocation time. Do not hardcode the destination set into agent or prompt logic.
@@ -71,4 +73,4 @@ The retro v1 wedge ships with the first three adapters (`backlog-item`, `instruc
 
 ## Override file
 
-Repos that need to hide or override registry entries can supply `destinations/dt-sections.yml` (deep-merge override; not populated by default). Agents read both files and merge entries by `id`.
+Repos that need to hide or override registry entries can supply `destinations/dt-sections.yml` (deep-merge override; not populated by default). The Mural registry loader reads both files, applies removals, merges entries by `id`, validates the merged result, and fails before adapter dispatch when either input is invalid.

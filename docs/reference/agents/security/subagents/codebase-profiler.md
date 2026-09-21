@@ -28,10 +28,8 @@ Scans the repository to build a technology profile and select applicable securit
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Reviewer orchestrators dispatch Codebase Profiler to identify technologies, infrastructure patterns, and applicable assessment skills before detailed checks. It supplies context and selection signals, not vulnerability findings or a security verdict. Use the parent reviewer to initiate the assessment.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies a repository path and a focus on the API and deployment directories. The profiler returns a structured technology profile and applicable skill candidates backed by discovered files. For diff or plan work, the parent supplies the corresponding changed-file or plan context. The worker does not infer that detected technology is securely configured or expand the requested review scope.

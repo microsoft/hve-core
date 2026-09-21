@@ -99,6 +99,76 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath $relPath -RepoRoot $script:RepoRoot
             @($errors | Where-Object { $_.field -like 'environment.*' -and $_.message -like '*does not resolve*' }).Count | Should -BeGreaterOrEqual 2
         }
+
+        It 'Flags a duplicate grader name across stimuli and identifies the first declaration' {
+            $spec = @{
+                name     = 'duplicate-graders'
+                defaults = @{ executor = 'copilot-sdk' }
+                stimuli  = @(
+                    @{
+                        name    = 'first-stimulus'
+                        prompt  = 'first prompt'
+                        graders = @(@{ type = 'noop'; name = 'shared-grader' })
+                    },
+                    @{
+                        name    = 'second-stimulus'
+                        prompt  = 'second prompt'
+                        graders = @(@{ type = 'noop'; name = 'shared-grader' })
+                    }
+                )
+            }
+
+            $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'inline.yaml' -RepoRoot $script:RepoRoot
+            $duplicate = @($errors | Where-Object { $_.field -eq 'stimuli[1] (second-stimulus).graders[0].name' })
+
+            $duplicate | Should -HaveCount 1
+            $duplicate[0].message | Should -BeExactly "Duplicate grader name 'shared-grader'; first declared in stimulus 'first-stimulus'"
+        }
+
+        It "Flags grader names outside Vally's lexical contract" {
+            $spec = @{
+                name     = 'invalid-grader-names'
+                defaults = @{ executor = 'copilot-sdk' }
+                stimuli  = @(
+                    @{
+                        name    = 'invalid-names'
+                        prompt  = 'test prompt'
+                        graders = @(
+                            @{ type = 'noop'; name = 'grader-applyTo-evidence' },
+                            @{ type = 'noop'; name = 'grader_name' },
+                            @{ type = 'noop'; name = '-leading-hyphen' },
+                            @{ type = 'noop'; name = ('a' * 61) }
+                        )
+                    }
+                )
+            }
+
+            $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'inline.yaml' -RepoRoot $script:RepoRoot
+            $invalidNames = @($errors | Where-Object { $_.message -like 'Invalid grader name*' })
+
+            $invalidNames | Should -HaveCount 4
+            @($invalidNames.field) | Should -Be @(
+                'stimuli[0] (invalid-names).graders[0].name',
+                'stimuli[0] (invalid-names).graders[1].name',
+                'stimuli[0] (invalid-names).graders[2].name',
+                'stimuli[0] (invalid-names).graders[3].name'
+            )
+        }
+
+        It 'Allows a repeated judge name in the canonical comparison spec contract' {
+            $spec = @{
+                name     = 'comparison-contract'
+                defaults = @{ executor = 'copilot-sdk' }
+                stimuli  = @(
+                    @{ name = 'first'; prompt = 'first'; graders = @(@{ type = 'prompt'; name = 'equivalence-judgement' }) },
+                    @{ name = 'second'; prompt = 'second'; graders = @(@{ type = 'prompt'; name = 'equivalence-judgement' }) }
+                )
+            }
+
+            $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'evals/baseline-equivalence/compare.eval.yml' -RepoRoot $script:RepoRoot
+
+            @($errors | Where-Object { $_.message -like 'Duplicate grader name*' }) | Should -HaveCount 0
+        }
     }
 
     Context 'Optional moderation block' {

@@ -6,6 +6,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from runtime_a11y._config import assert_target_allowed, load_config
 from runtime_a11y._errors import EXIT_USAGE, ScriptError
 

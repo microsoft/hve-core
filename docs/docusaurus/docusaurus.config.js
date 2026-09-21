@@ -9,6 +9,7 @@ import { labelRegistry } from './src/data/labelRegistry';
 import { loadPackageCards } from './src/data/pluginManifestCards';
 import remarkTableCaption from './plugins/remark-table-caption.mjs';
 import rehypeTableScope from './plugins/rehype-table-scope.mjs';
+import { loadSlideBundles } from './scripts/slide-bundles.cjs';
 
 const packageCards = loadPackageCards(
   path.resolve(__dirname, '../../.github/plugin/marketplace.json'),
@@ -46,9 +47,12 @@ const config = {
   projectName: 'hve-core',
 
   onBrokenLinks: 'throw',
+  // Defaults to 'warn', which let a broken in-page anchor reach a passing build.
+  onBrokenAnchors: 'throw',
 
   customFields: {
     packageCards,
+    slideDecks: loadSlideBundles(),
   },
 
   markdown: {
@@ -155,6 +159,7 @@ const config = {
               { label: labelRegistry.rpiWorkflow, to: '/docs/rpi/' },
               { label: labelRegistry.customizeAndExtend, to: '/docs/customization/' },
               { label: labelRegistry.architecture, to: '/docs/architecture/' },
+              { label: labelRegistry.slides, to: '/slides/' },
             ],
           },
           {
@@ -185,6 +190,7 @@ const config = {
               { label: 'Contributing', to: '/docs/contributing/' },
               { label: labelRegistry.security, to: '/docs/security/' },
               { label: labelRegistry.templates, to: '/docs/templates/' },
+              { label: 'Third-party notices', href: 'https://github.com/microsoft/hve-core/blob/main/THIRD-PARTY-NOTICES' },
             ],
           },
           {

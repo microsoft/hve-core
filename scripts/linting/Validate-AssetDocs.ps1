@@ -20,9 +20,8 @@
     3. Sync        - generated regions match a fresh render (under -CheckSync).
     4. Structure   - required H2 sections and generated-region markers present
                      (How to use only required for interactive assets).
-    5. Authored    - human sections differ from stubs (warning by default;
-                     required-section stubs are errors for kinds selected by
-                     -RequireAuthoredContent).
+    5. Authored    - Required human-section stubs are errors for every kind;
+                     Optional-section stubs remain warnings.
 
     Reference index pages (README.md) are excluded from coverage, sync,
     structure, and authored checks and are never treated as orphans.
@@ -38,12 +37,6 @@
     Compare each page's generated regions against a fresh render and report
     drift as errors.
 
-.PARAMETER RequireAuthoredContent
-    One or more asset kinds whose Required human-authored sections must not
-    contain stub placeholders. Supported values are agent, prompt, instruction,
-    and skill. Separate multiple command-line values with commas. Optional-
-    section stubs remain warnings.
-
 .PARAMETER ChangedFilesOnly
     Validate only assets and documentation pages affected by changed files.
     Orphans are reported only when the page or its would-be source asset changed.
@@ -57,16 +50,12 @@
 
 .EXAMPLE
     ./Validate-AssetDocs.ps1
-    Reports coverage as warnings and authored stubs as warnings.
+    Reports missing coverage as warnings and Required authored stubs as errors.
 
 .EXAMPLE
     ./Validate-AssetDocs.ps1 -FailOnMissing -CheckSync
-    Hard-fails on missing pages, orphans, sync drift, and structure problems.
-
-.EXAMPLE
-    ./Validate-AssetDocs.ps1 -FailOnMissing -CheckSync -RequireAuthoredContent instruction
-    Also hard-fails when an instruction page has a stubbed Required human
-    section. Optional instruction examples remain advisory.
+    Hard-fails on missing pages, orphans, sync drift, structure problems, and
+    Required authored stubs. Optional instruction examples remain advisory.
 
 .NOTES
     Runs via: npm run lint:asset-docs
@@ -85,17 +74,6 @@ param(
     [switch]$CheckSync,
 
     [Parameter(Mandatory = $false)]
-    [ValidateScript({
-            $values = @(($_ -split ',') | ForEach-Object { $_.Trim() })
-            $invalid = @($values | Where-Object { [string]::IsNullOrWhiteSpace($_) -or $_ -notin @('agent', 'prompt', 'instruction', 'skill') })
-            if ($invalid.Count -gt 0) {
-                throw "Unsupported asset kind: $($invalid -join ', '). Supported values are agent, prompt, instruction, and skill."
-            }
-            return $true
-        })]
-    [string[]]$RequireAuthoredContent = @(),
-
-    [Parameter(Mandatory = $false)]
     [switch]$ChangedFilesOnly,
 
     [Parameter(Mandatory = $false)]
@@ -107,17 +85,6 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-
-$normalizedAuthoredKinds = [System.Collections.Generic.List[string]]::new()
-foreach ($value in $RequireAuthoredContent) {
-    foreach ($kind in ($value -split ',')) {
-        $normalizedKind = $kind.Trim().ToLowerInvariant()
-        if (-not $normalizedAuthoredKinds.Contains($normalizedKind)) {
-            $normalizedAuthoredKinds.Add($normalizedKind)
-        }
-    }
-}
-$RequireAuthoredContent = $normalizedAuthoredKinds.ToArray()
 
 # Import the modules this script calls directly, highest-level first and
 # lowest-level last, so each -Force re-import re-scopes shared dependencies in
@@ -550,8 +517,6 @@ function Test-AssetDocAuthored {
         Page model from New-AssetPageModel.
     .PARAMETER Content
         Page file content.
-    .PARAMETER RequireAuthoredContent
-        Asset kinds whose Required section stubs produce an error.
     .OUTPUTS
         [PSCustomObject[]] Findings.
     #>
@@ -559,10 +524,7 @@ function Test-AssetDocAuthored {
     [OutputType([PSCustomObject[]])]
     param(
         [Parameter(Mandatory = $true)][PSCustomObject]$Model,
-        [Parameter(Mandatory = $true)][string]$Content,
-        [Parameter(Mandatory = $false)]
-        [ValidateSet('agent', 'prompt', 'instruction', 'skill')]
-        [string[]]$RequireAuthoredContent = @()
+        [Parameter(Mandatory = $true)][string]$Content
     )
 
     $stubbedSections = [System.Collections.Generic.List[PSCustomObject]]::new()
@@ -587,8 +549,7 @@ function Test-AssetDocAuthored {
 
     if ($stubbedSections.Count -gt 0) {
         $hasRequiredStub = @($stubbedSections | Where-Object Status -EQ 'Required').Count -gt 0
-        $kindIsRequired = $RequireAuthoredContent -contains $Model.Kind
-        $level = if ($kindIsRequired -and $hasRequiredStub) { 'Error' } else { 'Warning' }
+        $level = if ($hasRequiredStub) { 'Error' } else { 'Warning' }
         $headings = @($stubbedSections | ForEach-Object { "'$($_.Heading)'" }) -join ', '
         return @(New-AssetDocFinding -Level $level -Category 'Authored' -Path $Model.DocRel -Message "Human-authored sections still contain unwritten stub placeholders: $headings.")
     }
@@ -689,8 +650,6 @@ function Invoke-AssetDocsValidation {
         Treat missing pages as errors.
     .PARAMETER CheckSync
         Enable the generated-region sync check.
-    .PARAMETER RequireAuthoredContent
-        Asset kinds whose Required section stubs produce errors.
     .PARAMETER ChangedFilesOnly
         Validate only assets and pages affected by changed files.
     .PARAMETER BaseBranch
@@ -706,9 +665,6 @@ function Invoke-AssetDocsValidation {
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$RepoRoot,
         [Parameter(Mandatory = $false)][switch]$FailOnMissing,
         [Parameter(Mandatory = $false)][switch]$CheckSync,
-        [Parameter(Mandatory = $false)]
-        [ValidateSet('agent', 'prompt', 'instruction', 'skill')]
-        [string[]]$RequireAuthoredContent = @(),
         [Parameter(Mandatory = $false)][switch]$ChangedFilesOnly,
         [Parameter(Mandatory = $false)][ValidateNotNullOrEmpty()][string]$BaseBranch = 'origin/main',
         [Parameter(Mandatory = $false)][string]$OutputPath = 'logs/asset-docs-validation-results.json'
@@ -744,18 +700,17 @@ function Invoke-AssetDocsValidation {
             $content = Get-Content -LiteralPath $full -Raw
 
             foreach ($f in @(Test-AssetDocStructure -Model $model -Content $content)) { $findings.Add($f) }
-            foreach ($f in @(Test-AssetDocAuthored -Model $model -Content $content -RequireAuthoredContent $RequireAuthoredContent)) { $findings.Add($f) }
+            foreach ($f in @(Test-AssetDocAuthored -Model $model -Content $content)) { $findings.Add($f) }
             if ($CheckSync) {
                 foreach ($f in @(Test-AssetDocRegionSync -Model $model -Content $content)) { $findings.Add($f) }
             }
         }
 
         $options = [ordered]@{
-            failOnMissing          = [bool]$FailOnMissing
-            checkSync              = [bool]$CheckSync
-            requireAuthoredContent = @($RequireAuthoredContent)
-            changedFilesOnly       = [bool]$ChangedFilesOnly
-            baseBranch             = $BaseBranch
+            failOnMissing    = [bool]$FailOnMissing
+            checkSync        = [bool]$CheckSync
+            changedFilesOnly = [bool]$ChangedFilesOnly
+            baseBranch       = $BaseBranch
         }
         Write-AssetDocsValidationResults -Findings $findings.ToArray() -AssetCount $modelsToValidate.Count -RepoRoot $RepoRoot -OutputPath $OutputPath -Options $options
 
@@ -781,7 +736,6 @@ if ($MyInvocation.InvocationName -ne '.') {
         -RepoRoot $RepoRoot `
         -FailOnMissing:$FailOnMissing `
         -CheckSync:$CheckSync `
-        -RequireAuthoredContent $RequireAuthoredContent `
         -ChangedFilesOnly:$ChangedFilesOnly `
         -BaseBranch $BaseBranch `
         -OutputPath $OutputPath

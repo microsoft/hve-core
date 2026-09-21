@@ -28,15 +28,17 @@ Responsible AI standards assessment orchestrator for codebase profiling and RAI 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use RAI Reviewer to assess a codebase, changed surface, or proposed plan against supported responsible-AI frameworks. It coordinates framework-specific assessments and reporting. Use RAI Planner for guided system scoping and control planning when those inputs are not yet established.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+1. Select `RAI Reviewer` and specify `audit`, `diff`, or `plan`, with a path focus, prior report, or plan as appropriate.
+2. Provide framework preferences or allow profiling to identify applicable frameworks.
+3. Inspect the consolidated report and evidence limits. Audit and diff modes verify FAIL and PARTIAL findings; plan findings do not become claims of implemented controls.
+4. Keep human acceptance pending until qualified review is complete. An unavailable assessment or report-generation failure is not a passing framework result.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask: "Review `design/assistant-controls.md` in plan mode against NIST AI RMF and the AI STRIDE overlay. Identify missing oversight and evaluation evidence without claiming the controls are implemented."
+
+Expect a framework-based plan assessment with explicit findings and human acceptance pending. Success means proposed controls, evidence gaps, and verification limits remain distinguishable.

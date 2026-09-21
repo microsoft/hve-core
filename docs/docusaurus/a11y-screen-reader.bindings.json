@@ -1,0 +1,521 @@
+{
+  "$schema": "../../.github/skills/accessibility/accessibility/scripts/runtime_a11y/screen-reader-binding.schema.json",
+  "schemaVersion": "1.0.0",
+  "bindingProfileId": "hve-core-site",
+  "catalogId": "hve-screen-reader-cases",
+  "catalogDigest": "sha256:30cd17362be7fe77e44a2aa254a34fd74771c16ede8e2affc3e94eb1790350d3",
+  "product": { "name": "HVE Core public site", "surfaceProfiles": ["document", "presentation"] },
+  "routes": {
+    "home": "/hve-core/", "docs": "/hve-core/docs/", "search": "/hve-core/search/", "integrity": "/hve-core/accessibility/screen-reader-calibration.html",
+    "slides": "/hve-core/slides/", "accessibility": "/hve-core/accessibility/",
+    "vpat": "/hve-core/accessibility/vpat/", "deck": "/hve-core/slides/{slug}.html"
+  },
+  "targets": {
+    "positiveControl.checkbox": { "routeRef": "integrity", "selector": "[data-a11y-positive-control=checkbox]", "role": "checkbox", "name": "Accept terms" },
+    "positiveControl.headings": { "routeRef": "integrity", "selector": "h1, h2" },
+    "nav.documentation": { "routeRef": "home", "selector": "a[href$='/docs/']", "role": "link", "name": "Documentation" },
+    "nav.topics": { "routeRef": "home", "selector": "[aria-controls='topics-menu']" },
+    "nav.topics.firstItem": { "routeRef": "home", "selector": "#topics-menu a:first-of-type" },
+    "main": { "routeRef": "docs", "selector": "main" },
+    "home.banner": { "routeRef": "home", "selector": "header[role='banner']" },
+    "home.install": { "routeRef": "home", "selector": "a[href*='install']" },
+    "home.collections": { "routeRef": "home", "selector": "a[href*='/docs/getting-started/packages']" },
+    "home.deepDive": { "routeRef": "home", "selector": "[aria-labelledby*='deep']" },
+    "home.collectionsGroup": { "routeRef": "home", "selector": "[aria-labelledby='packages-title']" },
+    "search.input": { "routeRef": "home", "selector": "input.navbar__search-input" },
+    "search.shortcut": { "routeRef": "home", "selector": "[id*='search'][id*='shortcut']" },
+    "search.option": { "routeRef": "home", "selector": "[role='option']" },
+    "search.seeAll": { "routeRef": "home", "selector": "a[href*='/search/']" },
+    "search.clear": { "routeRef": "home", "selector": "button[aria-label*='Clear']" },
+    "search.status": { "routeRef": "search", "selector": "#search-results-status[role='status']" },
+    "search.pageInput": { "routeRef": "search", "selector": "input[name='q']" },
+    "search.regionHeading": { "routeRef": "search", "selector": "h1" },
+    "docs.table": { "routeRef": "docs", "selector": "table[aria-labelledby='when-to-use']" },
+    "docs.heading": { "routeRef": "docs", "selector": "h1, h2, h3, h4, h5" },
+    "docs.diagram": { "routeRef": "docs", "selector": "svg[role~='graphics-document']" },
+    "docs.footerGroup": { "routeRef": "docs", "selector": "footer" },
+    "docs.tocGroup": { "routeRef": "docs", "selector": ".table-of-contents" },
+    "docs.sidebar": { "routeRef": "docs", "selector": "nav[aria-label*='sidebar'], .theme-doc-sidebar-menu" },
+    "presentation.root": { "routeRef": "deck", "selector": "main.slides" },
+    "presentation.currentSlide": { "routeRef": "deck", "selector": ".slides > section.present" },
+    "presentation.inactiveSlides": { "routeRef": "deck", "selector": ".slides > section:not(.present)" },
+    "presentation.previous": { "routeRef": "deck", "selector": "#previous-slide" },
+    "presentation.next": { "routeRef": "deck", "selector": "#next-slide" },
+    "presentation.index": { "routeRef": "deck", "selector": "#overview-button" },
+    "presentation.readingView": { "routeRef": "deck", "selector": "#reading-button" },
+    "presentation.motion": { "routeRef": "deck", "selector": "#motion-button" },
+    "presentation.fullscreen": { "routeRef": "deck", "selector": "#fullscreen-button" },
+    "presentation.announcement": { "routeRef": "deck", "selector": "#announcement" },
+    "presentation.dialog": { "routeRef": "deck", "selector": "#detail-dialog" },
+    "presentation.notes": { "routeRef": "deck", "selector": "[data-dialog='notes']" },
+    "presentation.sources": { "routeRef": "deck", "selector": "[data-dialog='sources']" },
+    "presentation.help": { "routeRef": "deck", "selector": "[data-dialog='help']" },
+    "presentation.walkthrough": { "routeRef": "deck", "selector": "[data-demo]" },
+    "presentation.diagram": { "routeRef": "deck", "selector": ".graph-description, svg[role~='graphics-document']" }
+  },
+  "caseBindings": {
+    "SR-INTEGRITY-001": {
+      "targetRefs": ["positiveControl.checkbox", "positiveControl.headings"],
+      "representativeAt": true,
+      "executions": [{
+        "id": "screen-reader-integrity", "title": "Named checkbox and heading integrity",
+        "route": "/hve-core/accessibility/screen-reader-calibration.html", "surfaceId": "screen-reader-integrity", "state": "initial",
+        "captureMode": "action", "triggerAfterDriverStart": true,
+        "trigger": { "action": "click", "target": "[data-a11y-positive-control=checkbox]" },
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "contains", "evidenceType": "actionSpeech", "value": "checked" },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "checkbox", "name": "Accept terms", "checked": true }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "heading" }, "minCount": 2 }
+        ]
+      }]
+    },
+    "HVE-NVDA-001": {
+      "targetRefs": ["nav.documentation", "main"],
+      "executions": [{
+        "id": "hve-documentation-navigation", "title": "Documentation navigation reaches main content",
+        "route": "/hve-core/", "surfaceId": "homepage", "state": "activated",
+        "triggerAfterDriverStart": true,
+        "trigger": { "action": "press", "scope": "document", "value": "Enter" },
+        "triggerSequence": [
+          { "action": "focus", "target": "a[href$='/docs/']" },
+          { "action": "press", "scope": "document", "value": "Enter" }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 1000 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "main" }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "heading", "level": 1 }, "minCount": 1 }
+        ]
+      }]
+    },
+    "HVE-NVDA-002": {
+      "targetRefs": ["nav.topics", "nav.topics.firstItem"],
+      "executions": [{
+        "id": "hve-topics-menu", "title": "Topics menu exposes its first item",
+        "route": "/hve-core/", "surfaceId": "homepage", "state": "open",
+        "triggerAfterDriverStart": true,
+        "trigger": { "action": "press", "scope": "document", "value": "Enter" },
+        "triggerSequence": [
+          { "action": "focus", "target": "[aria-controls='topics-menu']" },
+          { "action": "press", "scope": "document", "value": "Enter" }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "button", "name": "Topics", "expanded": true } },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "link" }, "minCount": 1 }
+        ]
+      }, {
+        "id": "hve-topics-menu-closed", "title": "Topics menu collapses under keyboard control",
+        "route": "/hve-core/", "surfaceId": "homepage", "state": "closed",
+        "triggerAfterDriverStart": true,
+        "trigger": { "action": "press", "scope": "document", "value": "Escape" },
+        "triggerSequence": [
+          { "action": "focus", "target": "[aria-controls='topics-menu']" },
+          { "action": "press", "scope": "document", "value": "Enter" },
+          { "action": "press", "scope": "document", "value": "Escape" }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "button", "name": "Topics", "expanded": false }, "minCount": 1, "maxCount": 1 }
+        ]
+      }]
+    },
+    "HVE-NVDA-003": {
+      "targetRefs": ["search.seeAll"],
+      "executions": [{
+        "id": "hve-search-see-all-results", "title": "See all results is keyboard reachable from suggestions",
+        "route": "/hve-core/", "surfaceId": "homepage", "state": "suggestions",
+        "triggerAfterDriverStart": true,
+        "trigger": { "action": "press", "scope": "document", "value": "ArrowDown" },
+        "triggerSequence": [
+          { "action": "focus", "target": "input.navbar__search-input" },
+          { "action": "type", "target": "input.navbar__search-input", "value": "agent" },
+          { "action": "waitFor", "target": "[role='option']", "durationMs": 15000 },
+          { "action": "press", "scope": "document", "value": "ArrowDown" }
+        ],
+        "commands": [{ "kind": "key", "value": "End" }, { "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "combobox", "expanded": true }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "option", "selected": true }, "minCount": 1, "maxCount": 1 }
+        ]
+      }]
+    },
+    "HVE-NVDA-004": {
+      "targetRefs": ["home.banner", "home.install", "home.collections"],
+      "executions": [{
+        "id": "hve-home-banner-actions", "title": "Homepage banner and primary actions",
+        "route": "/hve-core/", "surfaceId": "homepage", "state": "initial",
+        "trigger": { "action": "focus", "target": "header[role='banner']" },
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "banner" }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "link", "name": "Install the Extension" } },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "link", "name": "Browse Marketplace Packages" } }
+        ]
+      }]
+    },
+    "HVE-NVDA-005": {
+      "targetRefs": ["home.deepDive", "home.collectionsGroup"],
+      "executions": [{
+        "id": "hve-home-content-groups", "title": "Homepage content group names",
+        "route": "/hve-core/", "surfaceId": "homepage", "state": "initial",
+        "trigger": { "action": "focus", "target": "[aria-labelledby='deep-dive-title']" },
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "region", "name": "Deep dive" } },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "region", "name": "Packages" } }
+        ]
+      }]
+    },
+    "HVE-NVDA-006": {
+      "targetRefs": ["docs.table"],
+      "executions": [{
+        "id": "hve-table-navigation", "title": "Documentation table navigation",
+        "route": "/hve-core/docs/agents/accessibility/accessibility-planner", "surfaceId": "documentation", "state": "initial",
+        "captureMode": "action", "triggerAfterDriverStart": true,
+        "trigger": { "action": "focus", "target": "table[aria-labelledby='when-to-use']" },
+        "commands": [{ "kind": "perform", "value": "moveToNextColumn" }, { "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "table" }, "minCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "columnheader" }, "minCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "cell" }, "minCount": 1 },
+          { "type": "contains", "evidenceType": "actionSpeech", "value": "column" }
+        ]
+      }]
+    },
+    "HVE-NVDA-007": {
+      "targetRefs": ["search.input"],
+      "executions": [{
+        "id": "hve-search-empty-state", "title": "Search input truthful empty state",
+        "route": "/hve-core/", "surfaceId": "homepage", "state": "empty",
+        "trigger": { "action": "focus", "target": "input.navbar__search-input" },
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "textbox", "name": "Search" }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeAbsent", "evidenceType": "accessibilityTree", "expected": { "role": "combobox", "expanded": true } }
+        ]
+      }, {
+        "id": "hve-search-suggestions-state", "title": "Expanded search exposes no stale empty state",
+        "route": "/hve-core/", "surfaceId": "homepage", "state": "suggestions",
+        "trigger": { "action": "focus", "target": "input.navbar__search-input" },
+        "triggerSequence": [
+          { "action": "focus", "target": "input.navbar__search-input" },
+          { "action": "type", "target": "input.navbar__search-input", "value": "agent" },
+          { "action": "waitFor", "target": "[role='option']", "durationMs": 15000 }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "combobox", "expanded": true }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeAbsent", "evidenceType": "accessibilityTree", "expected": { "role": "combobox", "expanded": false } }
+        ]
+      }]
+    },
+    "HVE-NVDA-008": {
+      "targetRefs": ["search.option"],
+      "executions": [{
+        "id": "hve-search-option-context", "title": "Search option active context",
+        "route": "/hve-core/", "surfaceId": "homepage", "state": "suggestions",
+        "captureMode": "action", "triggerAfterDriverStart": true,
+        "trigger": { "action": "press", "scope": "document", "value": "ArrowDown" },
+        "triggerSequence": [
+          { "action": "focus", "target": "input.navbar__search-input" },
+          { "action": "type", "target": "input.navbar__search-input", "value": "agent" },
+          { "action": "waitFor", "target": "[role='option']", "durationMs": 15000 },
+          { "action": "press", "scope": "document", "value": "ArrowDown" }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "combobox", "expanded": true }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "option", "selected": true }, "minCount": 1, "maxCount": 1 },
+          { "type": "contains", "evidenceType": "actionSpeech", "value": "option" }
+        ]
+      }]
+    },
+    "HVE-NVDA-009": {
+      "targetRefs": ["search.clear"],
+      "executions": [{
+        "id": "hve-search-clear-control", "title": "Search clear control name",
+        "route": "/hve-core/", "surfaceId": "homepage", "state": "populated",
+        "trigger": { "action": "focus", "target": "input.navbar__search-input" },
+        "commands": [
+          { "kind": "type", "value": "agent" },
+          { "kind": "waitFor", "value": "button[aria-label='Clear search']", "durationMs": 15000 },
+          { "kind": "pause", "durationMs": 500 }
+        ],
+        "assertions": [{ "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "button", "name": "Clear search" }, "minCount": 1, "maxCount": 1 }]
+      }]
+    },
+    "HVE-NVDA-010": {
+      "targetRefs": ["search.status"],
+      "representativeAt": true,
+      "executions": [{
+        "id": "hve-search-status-results", "title": "Search results status announcement",
+        "route": "/hve-core/search/?q=agent", "surfaceId": "search-results", "state": "results",
+        "captureMode": "action", "triggerAfterDriverStart": true,
+        "trigger": { "action": "type", "target": "input[name='q']", "value": "agent" },
+        "triggerSequence": [
+          { "action": "click", "target": "input[name='q']" },
+          { "action": "type", "target": "input[name='q']", "value": "agent" },
+          { "action": "waitFor", "target": "#search-results-status[role='status']", "durationMs": 15000 }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 4000 }],
+        "assertions": [{ "type": "matches", "evidenceType": "actionSpeech", "value": "[0-9]+ documents? found" }]
+      }, {
+        "id": "hve-search-status-no-results", "title": "Empty search result status announcement",
+        "route": "/hve-core/search/?q=zzzqqq", "surfaceId": "search-results", "state": "no-results",
+        "captureMode": "action", "triggerAfterDriverStart": true,
+        "trigger": { "action": "type", "target": "input[name='q']", "value": "zzzqqq" },
+        "triggerSequence": [
+          { "action": "click", "target": "input[name='q']" },
+          { "action": "type", "target": "input[name='q']", "value": "zzzqqq" },
+          { "action": "waitFor", "target": "#search-results-status[role='status']", "durationMs": 15000 }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 4000 }],
+        "assertions": [{ "type": "contains", "evidenceType": "actionSpeech", "value": "No documents found" }]
+      }]
+    },
+    "HVE-NVDA-011": {
+      "targetRefs": ["docs.heading"],
+      "executions": [{
+        "id": "hve-heading-navigation", "title": "Documentation heading navigation",
+        "route": "/hve-core/docs/agents/accessibility/accessibility-planner", "surfaceId": "documentation", "state": "route-inventory",
+        "trigger": { "action": "focus", "target": "main" },
+        "commands": [{ "kind": "navigate", "value": "nextHeading" }, { "kind": "pause", "durationMs": 500 }],
+        "assertions": [{ "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "heading" }, "minCount": 1 }]
+      }]
+    },
+    "HVE-NVDA-012": {
+      "targetRefs": ["docs.diagram"],
+      "executions": [{
+        "id": "hve-diagram-semantics", "title": "Documentation diagram semantics",
+        "route": "/hve-core/docs/agents/accessibility/accessibility-planner", "surfaceId": "documentation", "state": "diagram",
+        "trigger": { "action": "focus", "target": "svg[role~='graphics-document']" },
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [{ "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "graphics-document" }, "minCount": 1 }]
+      }]
+    },
+    "HVE-NVDA-013": {
+      "targetRefs": ["search.input", "search.shortcut"],
+      "executions": [{
+        "id": "hve-search-shortcut-context", "title": "Search field exposes its shortcut hint",
+        "route": "/hve-core/", "surfaceId": "homepage", "state": "empty",
+        "trigger": { "action": "focus", "target": "input.navbar__search-input" },
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "textbox", "name": "Search" }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "nameContains": "Search" }, "minCount": 1 }
+        ]
+      }]
+    },
+    "HVE-NVDA-014": {
+      "targetRefs": ["search.pageInput", "search.regionHeading"],
+      "executions": [{
+        "id": "hve-search-page-context", "title": "Search page heading and field context",
+        "route": "/hve-core/search/", "surfaceId": "search-results", "state": "refocus",
+        "trigger": { "action": "focus", "target": "body" },
+        "commands": [{ "kind": "key", "value": "Tab" }, { "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "heading", "nameContains": "Search" }, "minCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "nameContains": "Search" }, "minCount": 1 }
+        ]
+      }]
+    },
+    "HVE-NVDA-015": {
+      "targetRefs": ["docs.footerGroup", "docs.tocGroup"],
+      "executions": [{
+        "id": "hve-doc-content-groups", "title": "Documentation TOC and footer groups",
+        "route": "/hve-core/docs/agents/accessibility/accessibility-planner", "surfaceId": "documentation", "state": "initial",
+        "trigger": { "action": "focus", "target": ".table-of-contents" },
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "list" }, "minCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "contentinfo" }, "minCount": 1, "maxCount": 1 }
+        ]
+      }]
+    },
+    "HVE-NVDA-016": {
+      "targetRefs": ["docs.sidebar", "main"],
+      "executions": [{
+        "id": "hve-sidebar-main-navigation", "title": "Sidebar navigation preserves main content",
+        "route": "/hve-core/docs/agents/accessibility/accessibility-planner", "surfaceId": "documentation", "state": "navigation",
+        "triggerAfterDriverStart": true,
+        "trigger": { "action": "press", "scope": "document", "value": "Tab" },
+        "triggerSequence": [
+          { "action": "focus", "target": ".theme-doc-sidebar-menu" },
+          { "action": "press", "scope": "document", "value": "Tab" }
+        ],
+        "commands": [{ "kind": "navigate", "value": "nextLandmark" }, { "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "navigation" }, "minCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "main" }, "minCount": 1, "maxCount": 1 }
+        ]
+      }, {
+        "id": "hve-sidebar-activated-main", "title": "Sidebar activation reaches the destination main content",
+        "route": "/hve-core/docs/agents/accessibility/accessibility-planner", "surfaceId": "documentation", "state": "activated",
+        "triggerAfterDriverStart": true,
+        "trigger": { "action": "press", "scope": "document", "value": "Enter" },
+        "triggerSequence": [
+          { "action": "focus", "target": ".theme-doc-sidebar-menu a" },
+          { "action": "press", "scope": "document", "value": "Enter" }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 1000 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "main" }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "heading", "level": 1 }, "minCount": 1 }
+        ]
+      }]
+    },
+    "PRES-NVDA-001": {
+      "targetRefs": ["presentation.root", "presentation.currentSlide", "presentation.inactiveSlides"],
+      "representativeAt": true,
+      "executions": [{
+        "id": "presentation-current-slide", "title": "Presentation and current slide identity",
+        "route": "/hve-core/slides/hve-updates.html", "surfaceId": "hve-updates-presentation", "state": "initial",
+        "trigger": { "action": "focus", "target": "main.slides" },
+        "commands": [{ "kind": "pause", "durationMs": 1000 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "main", "nameContains": "presentation", "roledescription": "presentation" } },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "group", "nameContains": "HVE Core updates, 1 of 26", "roledescription": "slide" }, "minCount": 1, "maxCount": 1 }
+        ]
+      }, {
+        "id": "presentation-single-exposed-slide", "title": "Exactly one slide stays exposed after a transition",
+        "route": "/hve-core/slides/hve-updates.html", "surfaceId": "hve-updates-presentation", "state": "current",
+        "triggerAfterDriverStart": true,
+        "trigger": { "action": "press", "scope": "document", "value": "ArrowRight" },
+        "triggerSequence": [
+          { "action": "focus", "target": "main.slides" },
+          { "action": "press", "scope": "document", "value": "ArrowRight" },
+          { "action": "press", "scope": "document", "value": "ArrowRight" }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 1000 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "group", "roledescription": "slide" }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "group", "nameContains": "3 of 26", "roledescription": "slide" }, "minCount": 1, "maxCount": 1 }
+        ]
+      }]
+    },
+    "PRES-NVDA-002": {
+      "targetRefs": ["presentation.previous", "presentation.next", "presentation.index", "presentation.currentSlide"],
+      "representativeAt": true,
+      "executions": [{
+        "id": "presentation-next-slide", "title": "Next slide context announcement",
+        "route": "/hve-core/slides/hve-updates.html", "surfaceId": "hve-updates-presentation", "state": "middle",
+        "captureMode": "action", "triggerAfterDriverStart": true,
+        "trigger": { "action": "press", "scope": "document", "value": "ArrowRight" },
+        "triggerSequence": [
+          { "action": "focus", "target": "main.slides" },
+          { "action": "press", "scope": "document", "value": "ArrowRight" }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 1000 }],
+        "assertions": [{ "type": "orderedContains", "evidenceType": "actionSpeech", "value": "Slide 2 of 26 Changes since April" }]
+      }, {
+        "id": "presentation-last-slide", "title": "Last slide boundary context",
+        "route": "/hve-core/slides/hve-updates.html", "surfaceId": "hve-updates-presentation", "state": "last",
+        "triggerAfterDriverStart": true,
+        "trigger": { "action": "press", "scope": "document", "value": "End" },
+        "triggerSequence": [
+          { "action": "focus", "target": "main.slides" },
+          { "action": "press", "scope": "document", "value": "End" }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 1000 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "group", "nameContains": "26 of 26", "roledescription": "slide" }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "button", "name": "Next slide", "disabled": true }, "minCount": 1, "maxCount": 1 }
+        ]
+      }, {
+        "id": "presentation-slide-index", "title": "Slide index current context",
+        "route": "/hve-core/slides/hve-updates.html", "surfaceId": "hve-updates-presentation", "state": "index",
+        "triggerAfterDriverStart": true,
+        "trigger": { "action": "press", "scope": "document", "value": "Enter" },
+        "triggerSequence": [
+          { "action": "focus", "target": "#overview-button" },
+          { "action": "press", "scope": "document", "value": "Enter" }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "dialog", "name": "Slide index" }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "button", "nameContains": "01 / Evolution HVE Core updates" }, "minCount": 1, "maxCount": 1 }
+        ]
+      }]
+    },
+    "PRES-NVDA-003": {
+      "targetRefs": ["presentation.dialog", "presentation.notes", "presentation.sources", "presentation.help", "presentation.readingView", "presentation.fullscreen"],
+      "representativeAt": true,
+      "executions": [{
+        "id": "presentation-sources-dialog", "title": "Sources dialog name and focus",
+        "route": "/hve-core/slides/hve-updates.html", "surfaceId": "hve-updates-presentation", "state": "dialog",
+        "captureMode": "action", "triggerAfterDriverStart": true,
+        "trigger": { "action": "click", "target": "[data-dialog='sources']" },
+        "commands": [{ "kind": "pause", "durationMs": 1000 }],
+        "assertions": [
+          { "type": "contains", "evidenceType": "actionSpeech", "value": "Sources" },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "dialog", "nameContains": "Sources" } }
+        ]
+      }, {
+        "id": "presentation-reading-obligation", "title": "Reading view exposes its own structural state",
+        "route": "/hve-core/slides/hve-updates.html", "surfaceId": "hve-updates-presentation", "state": "reading",
+        "triggerAfterDriverStart": true,
+        "trigger": { "action": "click", "target": "#reading-button" },
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "button", "name": "Reading view", "pressed": true }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "main", "roledescription": "presentation" }, "minCount": 1, "maxCount": 1 }
+        ]
+      }, {
+        "id": "presentation-fullscreen-obligation", "title": "Fullscreen control exposes its own pressed state",
+        "route": "/hve-core/slides/hve-updates.html", "surfaceId": "hve-updates-presentation", "state": "fullscreen",
+        "triggerAfterDriverStart": true,
+        "trigger": { "action": "click", "target": "#fullscreen-button" },
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "button", "name": "Exit full screen", "pressed": true }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "group", "roledescription": "slide" }, "minCount": 1, "maxCount": 1 }
+        ]
+      }]
+    },
+    "PRES-NVDA-004": {
+      "targetRefs": ["presentation.walkthrough", "presentation.announcement"],
+      "representativeAt": true,
+      "executions": [{
+        "id": "presentation-walkthrough-next", "title": "Walkthrough step announcement",
+        "route": "/hve-core/slides/hve-updates.html#/rpi-demo", "surfaceId": "hve-updates-presentation", "state": "walkthrough-next",
+        "captureMode": "action", "triggerAfterDriverStart": true,
+        "trigger": { "action": "click", "target": "section.present [data-action='next']" },
+        "commands": [{ "kind": "pause", "durationMs": 1000 }],
+        "assertions": [{ "type": "orderedContains", "evidenceType": "actionSpeech", "value": "step 2 of" }]
+      }]
+    },
+    "PRES-NVDA-005": {
+      "targetRefs": ["presentation.currentSlide", "presentation.diagram", "presentation.readingView"],
+      "representativeAt": true,
+      "executions": [{
+        "id": "presentation-reading-view", "title": "Reading view semantics",
+        "route": "/hve-core/slides/hve-updates.html", "surfaceId": "hve-updates-presentation", "state": "reading",
+        "trigger": { "action": "click", "target": "#reading-button" },
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "button", "name": "Reading view", "pressed": true } },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "group", "nameContains": "1 of 26", "roledescription": "slide" }, "minCount": 1, "maxCount": 1 }
+        ]
+      }, {
+        "id": "presentation-diagram-context", "title": "Direct-hash diagram context",
+        "route": "/hve-core/slides/hve-updates.html#/rpi-demo", "surfaceId": "hve-updates-presentation", "state": "reading",
+        "trigger": { "action": "click", "target": "section.present [data-action='next']" },
+        "triggerSequence": [
+          { "action": "click", "target": "section.present [data-action='next']" },
+          { "action": "click", "target": "section.present [data-action='next']" }
+        ],
+        "commands": [{ "kind": "pause", "durationMs": 500 }],
+        "assertions": [
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "group", "nameContains": "13 of 26", "roledescription": "slide" }, "minCount": 1, "maxCount": 1 },
+          { "type": "nodeMatches", "evidenceType": "accessibilityTree", "expected": { "role": "graphics-document", "name": "Research the snack queue" }, "minCount": 1, "maxCount": 1 }
+        ]
+      }]
+    }
+  },
+  "bundleDiscovery": {
+    "metadataSource": "docs/docusaurus/scripts/slide-bundles.cjs",
+    "servedRouteTemplate": "/hve-core/slides/{slug}.html",
+    "parityStages": ["source", "folder-build", "committed-bundle", "served-copy", "runtime"]
+  }
+}

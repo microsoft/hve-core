@@ -1,9 +1,9 @@
 ---
 title: rpi-implement
-description: "Execute an approved RPI plan, maintain current planning state, and record implementation evidence. Use when implementation is ready to begin or resume."
+description: "Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-09-11
 ms.topic: reference
 keywords:
   - skill
@@ -23,12 +23,12 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Execute an approved RPI plan, maintain current planning state, and record implementation evidence. Use when implementation is ready to begin or resume.
+Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-Use `rpi-implement` to execute an approved plan. Declare the scope as the full plan, one `Pxx` phase, or one `Pxx-Txx` task; the skill starts at the first unchecked dependency-ready item in that scope and works in plan order. It records evidence under descriptive headings in `.copilot-tracking/changes/`, checks each `Pxx-Txx` marker as soon as its `Requirements:` hold, and runs the checks the task names plus whatever the changed behavior warrants.
+Use `rpi-implement` to work through an approved plan. Declare the scope as the full plan, one `Pxx` phase, or one `Pxx-Txx` task; the skill starts at the first unchecked dependency-ready item in that scope and works in plan order. It checks each `Pxx-Txx` marker as soon as its `Requirements:` hold, runs the checks the plan names, and keeps a condensed changes log in `.copilot-tracking/changes/` that describes the behavior or functionality each completed item changed rather than the edits made.
 
 Implementation also keeps the plan current. It may clarify task wording or references, add a `Guidance:` block to a later task when earlier work created something that task needs, record out-of-scope work under `## Follow-Up Items`, and pause only affected dependent work when a discovery requires a new user decision. The original critique is not repeated.
 

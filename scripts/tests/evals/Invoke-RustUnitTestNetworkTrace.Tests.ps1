@@ -570,7 +570,49 @@ Describe 'Invoke-RustUnitTestNetworkTrace.ps1' -Tag 'Unit' {
         }
 
         It 'kills a timed-out named container before copying and removing it' {
-            $stub = New-DockerStub -Root $TestDrive -StartDelaySeconds 2
+            $stub = New-DockerStub -Root $TestDrive
+            $script:boundedProcessCalls = [System.Collections.Generic.List[string]]::new()
+            Mock Invoke-BoundedProcess {
+                $operationIndex = [Array]::IndexOf($Arguments, 'image')
+                if ($operationIndex -lt 0) {
+                    $operationIndex = $Arguments.IndexOf('create')
+                }
+                if ($operationIndex -lt 0) {
+                    $operationIndex = $Arguments.IndexOf('start')
+                }
+                if ($operationIndex -lt 0) {
+                    $operationIndex = $Arguments.IndexOf('kill')
+                }
+                if ($operationIndex -lt 0) {
+                    $operationIndex = $Arguments.IndexOf('cp')
+                }
+                if ($operationIndex -lt 0) {
+                    $operationIndex = $Arguments.IndexOf('rm')
+                }
+                if ($operationIndex -lt 0) {
+                    $operationIndex = $Arguments.IndexOf('container')
+                }
+                $operation = $Arguments[$operationIndex]
+                $script:boundedProcessCalls.Add($operation)
+
+                if ($operation -eq 'image') {
+                    return [pscustomobject]@{
+                        ExitCode = 0
+                        TimedOut = $false
+                        StandardOutput = '[{"Id":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","RepoDigests":["ghcr.io/example/rust-strace@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]}]'
+                        StandardError = ''
+                    }
+                }
+                if ($operation -eq 'start') {
+                    return [pscustomobject]@{ ExitCode = -1; TimedOut = $true; StandardOutput = ''; StandardError = '' }
+                }
+                if ($operation -eq 'cp') {
+                    '1 connect(3, {sa_family=AF_INET, sin_port=htons(4321), sin_addr=inet_addr("127.0.0.1")}, 16) = 0' |
+                        Set-Content -LiteralPath $Arguments[-1] -Encoding utf8NoBOM
+                }
+                $exitCode = if ($operation -eq 'container') { 1 } else { 0 }
+                return [pscustomobject]@{ ExitCode = $exitCode; TimedOut = $false; StandardOutput = ''; StandardError = '' }
+            }
 
             $result = Invoke-RustUnitTestNetworkTrace `
                 -InputPath $script:InputPath `
@@ -585,8 +627,7 @@ Describe 'Invoke-RustUnitTestNetworkTrace.ps1' -Tag 'Unit' {
                 -NonAttesting
 
             $result.status | Should -Be 'Failed'
-            $calls = @(Get-Content -LiteralPath $stub.ArgumentLog | ForEach-Object { ($_ | ConvertFrom-Json -NoEnumerate)[0] })
-            $calls | Should -Be @('image', 'create', 'start', 'kill', 'cp', 'rm', 'container')
+            @($script:boundedProcessCalls) | Should -Be @('image', 'create', 'start', 'kill', 'cp', 'rm', 'container')
         }
 
         It 'retains host evidence and reports Inconclusive when absence is unconfirmed' {

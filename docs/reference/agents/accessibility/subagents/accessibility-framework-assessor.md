@@ -28,10 +28,8 @@ Assesses accessibility framework scopes through the consolidated Accessibility s
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Accessibility Reviewer dispatches this worker for one accessibility framework or reference scope. It reads the relevant criteria and assesses the codebase or plan with mode-appropriate statuses. Users select the parent reviewer; this worker does not independently expand the assessment or certify conformance.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies a WCAG framework scope, codebase profile, `diff` mode, and changed booking-form files. The assessor returns `SKILL_FINDINGS_V1` with criterion-level evidence and coverage. For a supplied plan it returns `PLAN_FINDINGS_V1` instead, keeping proposed risk coverage separate from implemented behavior. Missing evidence remains unassessed or qualified for downstream verification.

@@ -9,10 +9,10 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: agent-domain-attribution
+        name: brd-quality-reviewer-mentions-quality-guidance-agen-d7c2140c
         config:
           pattern: '(?i)(brd|business|requirements|review|quality)'
       - type: output-matches
-        name: scope-language
+        name: brd-quality-reviewer-mentions-quality-guidance-scop-e4da04f7
         config:
           pattern: '(?i)(draft|review|quality|requirements)'

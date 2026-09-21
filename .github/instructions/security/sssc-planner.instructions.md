@@ -404,8 +404,6 @@ Provide `rpi-research` with:
 * Requested outputs and output mode (`analysis`, `audit`, or `comparison`).
 * `.copilot-tracking/sssc-plans/{project-slug}/` as a trusted alternate evidence root.
 
-Require the skill to mirror `research/YYYY-MM-DD/<task-slug>-research.md` and `research/subagents/...` beneath the trusted root. The skill owns the exact date, task slug, primary and delegated artifact paths, worker selection, lane contracts, budgets, and synthesis.
-
 Read the completed primary research artifact and synthesize applicable evidence before updating `standards-mapping.md` or `gap-analysis.md`. Treat `Blocked` and `Needs clarification` as unresolved evidence, not permission to infer a standard requirement. If `rpi-research` or a required lookup capability is unavailable, inform the user and stop the dependent mapping rather than synthesizing standards from training data.
 
 #### Query Templates

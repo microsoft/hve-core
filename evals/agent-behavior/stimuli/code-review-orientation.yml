@@ -31,7 +31,7 @@ stimuli:
           pattern: '(?i)(request_changes|approve_with_comments|critical finding|high finding|severity_counts|(?:pr-)?findings\.json)'
           negate: true
       - type: output-matches
-        name: no-source-edit
+        name: code-review-orientation-stage-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

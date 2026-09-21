@@ -77,9 +77,10 @@ export function buildResultsFromEntry({
   method = 'runtime-automation',
 }) {
   const results = [];
+  const criteriaState = state === 'desktop' ? 'default' : state;
   const criteriaList = [
-    ...(entry.decides || []).filter((item) => (item.states || []).includes(state)),
-    ...(entry.informs || []).filter((item) => (item.states || []).includes(state)),
+    ...(entry.decides || []).filter((item) => (item.states || []).includes(criteriaState)),
+    ...(entry.informs || []).filter((item) => (item.states || []).includes(criteriaState)),
   ];
 
   for (const item of criteriaList) {

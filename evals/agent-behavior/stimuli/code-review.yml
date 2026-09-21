@@ -25,7 +25,7 @@ stimuli:
         config:
           pattern: '(?is)(orientation|walkthrough).{0,4000}(dispatch\s+board|recommended dispatch)|(dispatch\s+board|recommended dispatch).{0,4000}(orientation|walkthrough)'
       - type: output-matches
-        name: human-confirmation
+        name: code-review-class-recipe-human-confirmation
         config:
           pattern: '(?is)(confirm|adjust|edit).{0,100}(scope|orientation|walkthrough|dispatch\s+board|board|perspective|depth)|(scope|orientation|walkthrough|dispatch\s+board|board|perspective|depth).{0,100}(confirm|adjust|edit)'
       - type: output-matches
@@ -33,12 +33,12 @@ stimuli:
         config:
           pattern: '(?is)(?=.*(?:change[- ]risk|evidence\s+checklist))(?=.*(?:observed|unavailable|qualitative|change[- ]scope|path[- ]criticality|history|test[- ]presence|coverage|rollback))(?=.*recommended\s+depth)(?=.*(?:confirm|adjust|correct|select)).+'
       - type: output-matches
-        name: no-source-edit
+        name: code-review-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
       - type: output-matches
-        name: no-unsolicited-plan-drift
+        name: code-review-class-recipe-no-unsolicited-plan-drift
         config:
           pattern: '(?i)(securityPlanContext|security_plan_drift|security plan drift)'
           negate: true
@@ -82,7 +82,7 @@ stimuli:
         config:
           pattern: '(?i)(skill|python-foundational|python-enterprise)'
       - type: output-matches
-        name: no-source-edit
+        name: code-review-standards-merge-happy-no-conflict-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
@@ -245,7 +245,7 @@ stimuli:
         config:
           pattern: '(?i)(ambig|unknown\s+origin|cannot\s+determine|undetermined|indeterminate|unclear\s+(origin|source)|flag|note)'
       - type: output-matches
-        name: no-source-edit
+        name: code-review-standards-unknown-origin-dedup-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
@@ -341,7 +341,7 @@ stimuli:
         config:
           pattern: '(?is)(orientation|walkthrough).{0,500}(stage|separate|before|factual|no findings).{0,1000}(finding|perspective|dispatch)'
       - type: output-matches
-        name: human-confirmation
+        name: code-review-pull-request-standard-profile-human-confirmation
         config:
           pattern: '(?is)(confirm|adjust|edit).{0,100}(scope|profile|perspective|dispatch)'
 

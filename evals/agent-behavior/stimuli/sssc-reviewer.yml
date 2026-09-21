@@ -23,7 +23,7 @@ stimuli:
           pattern: '(?is)no\s+(findings|issues|concerns)\s+(were\s+)?(found|identified|detected)[\s\S]{0,200}\b(found|identified|detected)\s+(a|an|\d+)\s+\w{0,20}\s?(finding|issue|vulnerability|risk)'
           negate: true
       - type: output-matches
-        name: no-source-edit
+        name: sssc-reviewer-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)(?!\w)'
           negate: true

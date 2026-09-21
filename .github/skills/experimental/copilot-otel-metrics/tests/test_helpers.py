@@ -18,6 +18,7 @@ import subprocess
 import sys
 import urllib.request
 
+import baseline
 import inspect_metrics
 import pytest
 import validate_dashboard
@@ -704,6 +705,210 @@ _ANY_STORE_RESPONSE = {
     "traces": [],
     "series": [],
 }
+
+
+class TestStoredSignalVerification:
+    """Store queries, not exporter acceptance, determine signal evidence."""
+
+    @pytest.fixture(autouse=True)
+    def _isolated_results(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(verify, "results", [])
+
+    def _outcome(self, name: str) -> tuple[bool, str]:
+        return next((ok, detail) for recorded, ok, detail in verify.results if recorded == name)
+
+    def test_given_exporter_partial_success_when_metrics_are_checked_then_no_signal_is_proven(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Arrange
+        monkeypatch.setattr(verify, "api", lambda *args, **kwargs: {"partialSuccess": {}})
+
+        # Act
+        verify.check_copilot_metrics()
+
+        # Assert
+        assert self._outcome("copilot metric names present")[0] is False
+
+    def test_given_stored_metric_samples_when_metrics_are_checked_then_signal_is_present(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Arrange
+        def fake_api(base: str, path: str, params: dict | None = None, timeout: int = 15) -> dict:
+            if path == "/api/v1/label/__name__/values":
+                return {"data": ["copilot_chat_tool_call_duration"]}
+            return {"data": {"result": [{"metric": {"service_name": "copilot-chat"}}]}}
+
+        monkeypatch.setattr(verify, "api", fake_api)
+
+        # Act
+        verify.check_copilot_metrics()
+
+        # Assert
+        assert self._outcome("copilot metrics have samples")[0] is True
+
+    def test_given_no_stored_traces_when_traces_are_checked_then_signal_is_absent(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Arrange
+        monkeypatch.setattr(verify, "api", lambda *args, **kwargs: {"traces": []})
+
+        # Act
+        verify.check_copilot_traces()
+
+        # Assert
+        assert self._outcome("copilot traces present")[0] is False
+
+    def test_given_a_stored_copilot_trace_when_traces_are_checked_then_signal_is_present(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Arrange
+        def fake_api(base: str, path: str, params: dict | None = None, timeout: int = 15) -> dict:
+            if params and "copilot-chat" in params.get("q", ""):
+                return {"traces": [{"traceID": "synthetic-trace-001"}]}
+            return {"traces": []}
+
+        monkeypatch.setattr(verify, "api", fake_api)
+
+        # Act
+        verify.check_copilot_traces()
+
+        # Assert
+        assert self._outcome("copilot traces present")[0] is True
+
+    @pytest.mark.parametrize(
+        ("required_ok", "signal_ok", "expected_exit", "expected_result"),
+        [
+            (False, False, 1, "stack is not healthy"),
+            (True, False, 1, "no Copilot signals stored yet"),
+            (True, True, 0, "stack healthy and storing Copilot signals"),
+        ],
+    )
+    def test_given_health_and_signal_states_when_verify_runs_then_the_final_result_is_exact(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        required_ok: bool,
+        signal_ok: bool,
+        expected_exit: int,
+        expected_result: str,
+    ) -> None:
+        # Arrange
+        monkeypatch.setattr(verify, "check_health", lambda: None)
+        monkeypatch.setattr(verify, "check_delta_flag", lambda: None)
+        monkeypatch.setattr(verify, "check_grafana_credentials", lambda: None)
+        monkeypatch.setattr(verify, "check_copilot_metrics", lambda: None)
+        monkeypatch.setattr(verify, "check_copilot_traces", lambda: None)
+        verify.results = [
+            ("grafana reachable", required_ok, "synthetic health"),
+            ("delta-to-cumulative enabled", required_ok, "synthetic flag"),
+            ("grafana default credential inactive", required_ok, "synthetic credential"),
+            ("copilot metrics have samples", signal_ok, "synthetic store query"),
+        ]
+
+        # Act
+        result = verify.main()
+
+        # Assert
+        assert result == expected_exit
+        assert expected_result in capsys.readouterr().out
+
+
+class TestBaselineVerdicts:
+    """Baseline differences distinguish extension evidence from store residue."""
+
+    def _write_baseline(self, path: pathlib.Path, **overrides) -> dict:
+        record = {
+            "captured_at": 1,
+            "captured_at_iso": "2026-09-17T00:00:00+0000",
+            "metric_names": [],
+            "service_names": [],
+            "service_versions": [],
+            "session_ids": [],
+            "tempo_trace_names": [],
+        }
+        record.update(overrides)
+        path.write_text(json.dumps(record), encoding="utf-8")
+        return record
+
+    def test_given_a_real_activity_metric_when_baseline_diff_runs_then_it_confirms_copilot(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: pathlib.Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        # Arrange
+        snapshot_path = tmp_path / "baseline.json"
+        current = self._write_baseline(snapshot_path)
+        current["metric_names"] = [baseline.REAL_ACTIVITY_ONLY[0]]
+        monkeypatch.setattr(baseline, "SNAPSHOT", snapshot_path)
+        monkeypatch.setattr(baseline, "snapshot", lambda: current)
+
+        # Act
+        result = baseline.do_diff()
+
+        # Assert
+        assert result == 0
+        assert "CONFIRMED: real Copilot telemetry" in capsys.readouterr().out
+
+    def test_given_a_non_synthetic_version_when_baseline_diff_runs_then_it_confirms_copilot(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: pathlib.Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        # Arrange
+        snapshot_path = tmp_path / "baseline.json"
+        current = self._write_baseline(snapshot_path)
+        current["service_versions"] = ["1.2.3"]
+        monkeypatch.setattr(baseline, "SNAPSHOT", snapshot_path)
+        monkeypatch.setattr(baseline, "SYNTHETIC_SERVICE_VERSION", "synthetic-1")
+        monkeypatch.setattr(baseline, "snapshot", lambda: current)
+
+        # Act
+        result = baseline.do_diff()
+
+        # Assert
+        assert result == 0
+        assert "New service_version not used by synthetic payloads" in capsys.readouterr().out
+
+    def test_given_only_ambiguous_new_data_when_baseline_diff_runs_then_it_is_inconclusive(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: pathlib.Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        # Arrange
+        snapshot_path = tmp_path / "baseline.json"
+        current = self._write_baseline(snapshot_path)
+        current["session_ids"] = ["synthetic-session-001"]
+        monkeypatch.setattr(baseline, "SNAPSHOT", snapshot_path)
+        monkeypatch.setattr(baseline, "snapshot", lambda: current)
+
+        # Act
+        result = baseline.do_diff()
+
+        # Assert
+        assert result == 1
+        assert "INCONCLUSIVE" in capsys.readouterr().out
+
+    def test_given_no_new_data_when_baseline_diff_runs_then_it_is_not_confirmed(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: pathlib.Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        # Arrange
+        snapshot_path = tmp_path / "baseline.json"
+        current = self._write_baseline(snapshot_path)
+        monkeypatch.setattr(baseline, "SNAPSHOT", snapshot_path)
+        monkeypatch.setattr(baseline, "snapshot", lambda: current)
+
+        # Act
+        result = baseline.do_diff()
+
+        # Assert
+        assert result == 1
+        assert "NOT CONFIRMED" in capsys.readouterr().out
 
 
 class TestGrafanaCredentialLiveness:

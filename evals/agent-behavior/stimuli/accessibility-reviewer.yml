@@ -8,15 +8,15 @@ stimuli:
       category: agent-behavior
     graders:
       - type: output-matches
-        name: findings-table-present
+        name: accessibility-reviewer-class-recipe-findings-table-present
         config:
           pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|barrier)'
       - type: output-matches
-        name: severity-vocab
+        name: accessibility-reviewer-class-recipe-severity-vocab
         config:
           pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
       - type: output-matches
-        name: no-source-edit
+        name: accessibility-reviewer-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

@@ -29,8 +29,9 @@
     `.github/agents/`. Defaults to `rpi-agent`.
 
 .PARAMETER Tier
-    The harness mode. `devloop` runs a single primary model and stays advisory; `ci`
-    runs a model array for broader coverage and is authoritative. Defaults to `devloop`.
+    The harness mode. `devloop` runs a single primary model and stays advisory;
+    `calibration` and `ci` run a fixed model pair with authoritative deterministic
+    and structural evidence. Defaults to `devloop`.
     The former `pr` and `nightly` names are rejected with a migration message rather
     than aliased, so a stale caller fails loudly instead of silently selecting a
     different exit policy.
@@ -38,8 +39,13 @@
 .PARAMETER Model
     Optional explicit model id for the `devloop` tier. When supplied it overrides the
     agent's frontmatter `model:` hint and the built-in default, letting callers pin a
-    cheaper model for advisory runs. Ignored for the `ci` tier, which always runs its
-    fixed model array of `gpt-5.6-luna` and `claude-sonnet-4.6`.
+    cheaper model for advisory runs. Ignored for the `calibration` and `ci` tiers,
+    which always run the fixed pair `gpt-5.6-luna` and `claude-sonnet-5`.
+
+.PARAMETER CalibrationModel
+    Optional fixed-model selector for an isolated `calibration` or `ci` producer.
+    Accepts only `gpt-5.6-luna` or `claude-sonnet-5`. When omitted, the existing
+    fixed-pair behavior is preserved. It does not affect `devloop` selection.
 
 .PARAMETER ComparisonJudgeModel
     Model used as the `vally compare` judge. Defaults to `claude-haiku-4.5`.
@@ -48,6 +54,11 @@
     Repository-relative path to the comparison-judging contract passed to
     `vally compare --eval-spec`. Defaults to
     `evals/baseline-equivalence/compare.eval.yml`.
+
+.PARAMETER ComparisonHeartbeatSeconds
+    Interval for trusted comparison progress messages while `vally compare` is
+    running. Defaults to 300 seconds. Heartbeats contain only model, phase,
+    attempt, and elapsed time; raw command output remains captured until exit.
 
 .PARAMETER RepoRoot
     Repository root. Defaults to the result of `git rev-parse --show-toplevel`, falling
@@ -92,6 +103,10 @@ param(
     [string]$Model,
 
     [Parameter(Mandatory = $false)]
+    [ValidateSet('gpt-5.6-luna', 'claude-sonnet-5')]
+    [string]$CalibrationModel,
+
+    [Parameter(Mandatory = $false)]
     [string]$RepoRoot,
 
     [Parameter(Mandatory = $false)]
@@ -113,6 +128,10 @@ param(
     [string]$ComparisonSpecPath = 'evals/baseline-equivalence/compare.eval.yml',
 
     [Parameter(Mandatory = $false)]
+    [ValidateRange(1, 3600)]
+    [int]$ComparisonHeartbeatSeconds = 60,
+
+    [Parameter(Mandatory = $false)]
     [switch]$NoBaselineCache
 )
 
@@ -120,6 +139,7 @@ $ErrorActionPreference = 'Stop'
 
 Import-Module -Name (Join-Path $PSScriptRoot 'lib/EquivalenceParsing.psm1') -Force
 Import-Module -Name (Join-Path $PSScriptRoot 'lib/EquivalenceEnvironment.psm1') -Force
+Import-Module -Name (Join-Path $PSScriptRoot 'Modules/VallyRunner.psm1') -Force
 
 #region Helper Functions
 
@@ -203,15 +223,20 @@ function Resolve-ModelList {
         [Parameter(Mandatory)]
         [string]$Tier,
         [string]$Hint,
-        [string]$ModelOverride
+        [string]$ModelOverride,
+        [string]$CalibrationModel
     )
 
     if ($Tier -in @('calibration', 'ci')) {
-        # Two standard-tier models rather than a premium sweep. `gpt-5.5` carried a
-        # 7.5x cost multiplier for no measured gain in cross-vendor signal, and
-        # `claude-sonnet-latest` produced no trajectories at all, so a floating alias
-        # is pinned to an explicit version that the suite has actually executed.
-        return @('gpt-5.6-luna', 'claude-sonnet-4.6')
+        # Keep cross-vendor coverage pinned to explicit model IDs rather than floating
+        # aliases. Hints and overrides apply only to advisory devloop runs.
+        if (-not [string]::IsNullOrWhiteSpace($CalibrationModel)) {
+            if ($CalibrationModel -notin @('gpt-5.6-luna', 'claude-sonnet-5')) {
+                throw "Unsupported calibration model '$CalibrationModel'. Expected gpt-5.6-luna or claude-sonnet-5."
+            }
+            return @($CalibrationModel)
+        }
+        return @('gpt-5.6-luna', 'claude-sonnet-5')
     }
 
     if ($ModelOverride) { return @($ModelOverride) }
@@ -285,6 +310,7 @@ function New-DryRunSummary {
         winRate                  = 0.0
         invariantFailures        = 0
         runHealthFailures        = 0
+        executionDiagnostics     = @()
         invocationEvidence       = @()
         invocationFailures       = 0
         comparisonCalibration    = @()
@@ -328,47 +354,127 @@ function Test-CustomizationCollapse {
 }
 
 function Invoke-VallyCommand {
+    <#
+    .SYNOPSIS
+        Returns the native exit code without emitting untrusted CLI output.
+    .PARAMETER Arguments
+        Arguments passed to Vally.
+    .OUTPUTS
+        [int] Exit code; trial diagnostics are read separately from results.jsonl.
+    #>
     [CmdletBinding()]
+    [OutputType([int])]
     param(
         [Parameter(Mandatory)]
         [string[]]$Arguments
     )
 
-    & vally @Arguments
-    return $LASTEXITCODE
+    # Grader failures use nonzero exits; raw streams can contain agent output or secrets.
+    $PSNativeCommandUseErrorActionPreference = $false
+    & vally @Arguments *> $null
+    return [int]$LASTEXITCODE
 }
 
-function Invoke-VallyCommandWithCapture {
+function Get-VallyExecutionDiagnostic {
+    <#
+    .SYNOPSIS
+        Summarizes one eval attempt without retaining raw executor errors.
+    .DESCRIPTION
+        Categories are bounded hints from error messages, not root-cause verdicts.
+        This evidence is diagnostic only; existing population and grading gates own
+        acceptance. Model and attempt identity come from the caller, not trial content.
+    .PARAMETER RunDir
+        Current attempt's run directory, or null when execution produced none.
+    .PARAMETER Model
+        Model selected by the driver.
+    .PARAMETER Variant
+        Baseline or customized execution.
+    .PARAMETER Attempt
+        Actual invocation ordinal for this variant.
+    .PARAMETER ExitCode
+        Numeric exit code from the invocation.
+    .OUTPUTS
+        [hashtable] Result availability, record counts and fixed error-category counts.
+    #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory)]
-        [string[]]$Arguments,
-        [string]$LogPath
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$RunDir,
+        [Parameter(Mandatory)]
+        [string]$Model,
+        [Parameter(Mandatory)]
+        [ValidateSet('baseline', 'customized')]
+        [string]$Variant,
+        [Parameter(Mandatory)]
+        [ValidateRange(1, 2)]
+        [int]$Attempt,
+        [Parameter(Mandatory)]
+        [int]$ExitCode
     )
 
-    $prev = [Console]::OutputEncoding
+    $result = @{
+        model = $Model
+        variant = $Variant
+        attempt = $Attempt
+        exitCode = $ExitCode
+        resultState = 'missing'
+        trialRecords = 0
+        malformedRecords = 0
+        erroredTrials = 0
+        errors = @()
+    }
+    if ([string]::IsNullOrWhiteSpace($RunDir)) { return $result }
+
+    $counts = @{}
     try {
-        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-        $raw = & vally @Arguments 2>&1
-        $code = $LASTEXITCODE
-    }
-    finally {
-        [Console]::OutputEncoding = $prev
-    }
+        $path = Join-Path $RunDir 'results.jsonl'
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return $result }
+        foreach ($line in [System.IO.File]::ReadLines($path)) {
+            if ([string]::IsNullOrWhiteSpace($line)) { continue }
+            try {
+                $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 100 -ErrorAction Stop
+            }
+            catch {
+                $result.malformedRecords++
+                continue
+            }
+            if ($record -isnot [System.Collections.IDictionary]) {
+                $result.malformedRecords++
+                continue
+            }
+            if ($record.type -and $record.type -ne 'trial-result') { continue }
+            $result.trialRecords++
+            if ($record.status -ne 'error') { continue }
+            $result.erroredTrials++
 
-    $lines = @($raw | ForEach-Object { $_.ToString() })
-    foreach ($line in $lines) { Write-Host $line }
-
-    if ($LogPath) {
-        $dir = Split-Path -Parent $LogPath
-        if ($dir -and -not (Test-Path -LiteralPath $dir)) {
-            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+            # Emit only literal categories, never message fragments or arbitrary keys.
+            $message = if ($record.error -is [string]) { $record.error } else { '' }
+            $category = switch -Regex ($message) {
+                '(?i)\b(401|403|unauthorized|forbidden|authentication)\b' { 'authentication-or-authorization'; break }
+                '(?i)\bmodel\b[^\r\n]*(not supported|unsupported|not found|unavailable|not available|not enabled)' { 'model-unavailable'; break }
+                '(?i)\b(429|rate[ -]?limit|quota)\b' { 'rate-limited'; break }
+                '(?i)\b(timeout|timed out|ETIMEDOUT)\b' { 'timeout'; break }
+                '(?i)\b(ECONNRESET|ECONNREFUSED|ENOTFOUND|fetch failed)\b' { 'connection'; break }
+                default { 'unknown' }
+            }
+            if (-not $counts.ContainsKey($category)) { $counts[$category] = 0 }
+            $counts[$category]++
         }
-        Set-Content -LiteralPath $LogPath -Value $lines -Encoding utf8NoBOM
+        $result.resultState = 'read'
     }
-
-    return @{ ExitCode = $code; Lines = $lines }
+    catch {
+        # File errors may include private paths; retain only the availability state.
+        $result.resultState = 'unreadable'
+    }
+    $result.errors = @(
+        foreach ($category in ($counts.Keys | Sort-Object)) {
+            @{ category = $category; count = $counts[$category] }
+        }
+    )
+    return $result
 }
 
 function Get-CanonicalStimulusPolicy {
@@ -589,11 +695,11 @@ function Resolve-LatestRunDir {
 function Test-CustomizedInvocationRetryEligibility {
     <#
     .SYNOPSIS
-        Determines whether one complete customized GPT calibration retry is allowed.
+        Determines whether one complete customized calibration retry is allowed.
     .DESCRIPTION
-        The retry is limited to the first customized GPT calibration attempt when the
-        validated baseline is structurally complete and the only customized invocation
-        defect is one failed exact read represented by one failed and one missing count.
+        The retry is limited to the first customized calibration attempt for the fixed
+        model pair when the validated baseline is structurally complete and the customized
+        defect is either one failed exact read or a reconciled batch of typed executor errors.
         Every other invocation defect remains immediately authoritative.
     .OUTPUTS
         [bool] True only for the single approved retry condition.
@@ -617,24 +723,51 @@ function Test-CustomizedInvocationRetryEligibility {
         [int]$BaselineStructural,
 
         [Parameter(Mandatory = $true)]
-        [hashtable]$InvocationTally
+        [hashtable]$InvocationTally,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$ExecutionDiagnostic
     )
 
-    if ($Tier -ne 'calibration' -or $Model -ne 'gpt-5.6-luna' -or $Attempt -ne 1) { return $false }
+    if ($Tier -ne 'calibration' -or $Model -notin @('gpt-5.6-luna', 'claude-sonnet-5') -or $Attempt -ne 1) { return $false }
     if (-not $BaselineHasSignal -or $BaselineStructural -ne 0) { return $false }
-    if ($InvocationTally.Expected -le 0 -or $InvocationTally.Observed -ne ($InvocationTally.Expected - 1)) { return $false }
-    if ([string]::IsNullOrWhiteSpace([string]$InvocationTally.FailedKey) -or
-        $InvocationTally.ReasonCode -notin @(
+    if ($InvocationTally.Expected -le 0) { return $false }
+
+    $isolatedReadFailure = $InvocationTally.Observed -eq ($InvocationTally.Expected - 1) -and
+        -not [string]::IsNullOrWhiteSpace([string]$InvocationTally.FailedKey) -and
+        $InvocationTally.ReasonCode -in @(
             'failed-tool-result',
             'missing-correlated-result',
             'successful-result-without-agent-marker'
-        )) { return $false }
-
-    return [int]$InvocationTally.Failed -eq 1 -and
+        ) -and
+        [int]$InvocationTally.Failed -eq 1 -and
         [int]$InvocationTally.Missing -eq 1 -and
         [int]$InvocationTally.Duplicate -eq 0 -and
         [int]$InvocationTally.WrongPath -eq 0 -and
         [int]$InvocationTally.Malformed -eq 0
+    if ($isolatedReadFailure) { return $true }
+
+    $erroredTrials = [int]$ExecutionDiagnostic.ErroredTrials
+    if ($ExecutionDiagnostic.ResultState -ne 'read' -or
+        [int]$ExecutionDiagnostic.ExitCode -eq 0 -or
+        [int]$ExecutionDiagnostic.MalformedRecords -ne 0 -or
+        [int]$ExecutionDiagnostic.TrialRecords -ne [int]$InvocationTally.Expected -or
+        $erroredTrials -le 0) { return $false }
+
+    $diagnosedErrors = 0
+    foreach ($errorCategory in @($ExecutionDiagnostic.Errors)) {
+        if ([string]$errorCategory.category -notin @('rate-limited', 'timeout', 'connection', 'unknown') -or
+            [int]$errorCategory.count -le 0) { return $false }
+        $diagnosedErrors += [int]$errorCategory.count
+    }
+    if ($diagnosedErrors -ne $erroredTrials) { return $false }
+
+    return [int]$InvocationTally.Observed -eq ([int]$InvocationTally.Expected - $erroredTrials) -and
+        [int]$InvocationTally.Failed -eq 0 -and
+        [int]$InvocationTally.Missing -eq $erroredTrials -and
+        [int]$InvocationTally.Duplicate -eq 0 -and
+        [int]$InvocationTally.WrongPath -eq 0 -and
+        [int]$InvocationTally.Malformed -eq $erroredTrials
 }
 
 function Write-SummaryJson {
@@ -677,7 +810,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         }
 
         $modelHint = Get-AgentModelHint -RepoRoot $resolvedRoot -Agent $Agent
-        $models = @(Resolve-ModelList -Tier $Tier -Hint $modelHint -ModelOverride $Model)
+        $models = @(Resolve-ModelList -Tier $Tier -Hint $modelHint -ModelOverride $Model -CalibrationModel $CalibrationModel)
         $primaryModel = $models[0]
 
         # The comparison contract is resolved before any model-backed work so a missing
@@ -790,6 +923,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         # The documented-divergence gate now reads per-guard conformance instead, so the
         # counter keeps its real meaning under an honest name.
         $runHealthFailures = 0
+        $executionDiagnostics = [System.Collections.Generic.List[object]]::new()
         $divergenceGuardFailures = 0
         $divergenceGuardsEvaluated = 0
         $divergenceHasSignal = $false
@@ -803,6 +937,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         $invocationEvidence = [System.Collections.Generic.List[object]]::new()
         $invocationFailures = 0
         $comparisonCalibration = [System.Collections.Generic.List[object]]::new()
+        $phaseTimings = [System.Collections.Generic.List[object]]::new()
 
         # Policy and invariant membership come from the canonical library, because the
         # comparison JSONL identifies stimuli by name only.
@@ -859,6 +994,9 @@ if ($MyInvocation.InvocationName -ne '.') {
             }
             $surfaceGitHub = Join-Path $surfaceRoot '.github'
             New-Item -ItemType Directory -Path $surfaceRoot -Force | Out-Null
+            $materializeStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+            $materializeExitCategory = 'unknown'
+            Write-Host "Vally progress: event=phase-start phase=materialize worker=$model attempt=1 elapsedSeconds=0 exitCategory=unknown" -ForegroundColor DarkGray
             try {
                 $customized = New-CustomizedEnvironment `
                     -RepoRoot $resolvedRoot `
@@ -868,6 +1006,7 @@ if ($MyInvocation.InvocationName -ne '.') {
                 $variantB.applied = @($customized.Applied)
                 $variants.b = $variantB
                 Write-Host "   Customized surface: $($customized.Applied.Count) artifact(s)" -ForegroundColor DarkGray
+                $materializeExitCategory = 'success'
             }
             catch {
                 # A customized environment that cannot be built is a divergence failure,
@@ -880,6 +1019,15 @@ if ($MyInvocation.InvocationName -ne '.') {
                 }
             }
             finally {
+                $materializeStopwatch.Stop()
+                Write-Host "Vally progress: event=phase-complete phase=materialize worker=$model attempt=1 elapsedSeconds=$([math]::Floor($materializeStopwatch.Elapsed.TotalSeconds)) exitCategory=$materializeExitCategory" -ForegroundColor DarkGray
+                $phaseTimings.Add([ordered]@{
+                        phase          = 'materialize'
+                        worker         = $model
+                        attempt        = 1
+                        elapsedSeconds = [math]::Round($materializeStopwatch.Elapsed.TotalSeconds, 3)
+                        exitCategory   = $materializeExitCategory
+                    })
                 # Materialization clears this tree, so the tracked placeholder is restored
                 # after it rather than before. vally's spec linter resolves the path, so a
                 # completed or aborted run must both leave the directory present and the
@@ -947,8 +1095,24 @@ if ($MyInvocation.InvocationName -ne '.') {
                 }
             }
             else {
-                $codeA = Invoke-VallyCommand -Arguments $evalBaseline
+                $baselineLog = Join-Path $resolvedRoot "logs/vally-eval-$model-$runId-baseline.log"
+                $baselineProcess = Invoke-VallyProcess `
+                    -Arguments $evalBaseline `
+                    -LogPath $baselineLog `
+                    -Phase 'baseline-eval' `
+                    -Worker $model `
+                    -Attempt 1 `
+                    -HeartbeatIntervalSeconds $ComparisonHeartbeatSeconds
+                $codeA = $baselineProcess.ExitCode
+                $phaseTimings.Add([ordered]@{
+                        phase          = 'baseline-eval'
+                        worker         = $baselineProcess.Worker
+                        attempt        = 1
+                        elapsedSeconds = [math]::Round($baselineProcess.ElapsedMilliseconds / 1000, 3)
+                        exitCategory   = $baselineProcess.ExitCategory
+                    })
                 $baselineRunDir = Resolve-LatestRunDir -OutputDir $aDir
+                $executionDiagnostics.Add((Get-VallyExecutionDiagnostic -RunDir $baselineRunDir -Model $model -Variant baseline -Attempt 1 -ExitCode $codeA))
                 $baselineTally = Measure-DeclaredInvariantFailures -RunDir $baselineRunDir -InvariantNames $canonicalInvariants -ExpectedManifest $invariantManifest -ExpectedTrials $baselineTrials
                 if ($baselineTally.HasSignal) {
                     $invariantFailures += $baselineTally.Failed
@@ -988,8 +1152,25 @@ if ($MyInvocation.InvocationName -ne '.') {
 
             $aRunDir = $baselineRunDir
             $customizedAttempt = 1
-            $codeB = Invoke-VallyCommand -Arguments $evalCustomized
+            $customizedLog = Join-Path $resolvedRoot "logs/vally-eval-$model-$runId-customized.log"
+            $customizedProcess = Invoke-VallyProcess `
+                -Arguments $evalCustomized `
+                -LogPath $customizedLog `
+                -Phase 'customized-eval' `
+                -Worker $model `
+                -Attempt $customizedAttempt `
+                -HeartbeatIntervalSeconds $ComparisonHeartbeatSeconds
+            $codeB = $customizedProcess.ExitCode
+            $phaseTimings.Add([ordered]@{
+                    phase          = 'customized-eval'
+                    worker         = $customizedProcess.Worker
+                    attempt        = $customizedAttempt
+                    elapsedSeconds = [math]::Round($customizedProcess.ElapsedMilliseconds / 1000, 3)
+                    exitCategory   = $customizedProcess.ExitCategory
+                })
             $bRunDir = Resolve-LatestRunDir -OutputDir $bDir
+            $customizedDiagnostic = Get-VallyExecutionDiagnostic -RunDir $bRunDir -Model $model -Variant customized -Attempt $customizedAttempt -ExitCode $codeB
+            $executionDiagnostics.Add($customizedDiagnostic)
             $invocationTally = Measure-AgentInvocationEvidence `
                 -RunDir $bRunDir `
                 -StimulusNames @($canonicalPolicy.Keys) `
@@ -1015,11 +1196,27 @@ if ($MyInvocation.InvocationName -ne '.') {
                     -Attempt $customizedAttempt `
                     -BaselineHasSignal $baselineTally.HasSignal `
                     -BaselineStructural $baselineStructural `
-                    -InvocationTally $invocationTally) {
-                Write-Host '   Agent invocation: retrying one complete customized GPT calibration run after one isolated exact-read failure' -ForegroundColor Yellow
+                    -InvocationTally $invocationTally `
+                    -ExecutionDiagnostic $customizedDiagnostic) {
+                Write-Host "   Agent invocation: retrying one complete customized $model calibration run after eligible incomplete evidence" -ForegroundColor Yellow
                 $customizedAttempt++
                 $firstCustomizedRunDir = $bRunDir
-                $codeB = Invoke-VallyCommand -Arguments $evalCustomized
+                $customizedProcess = Invoke-VallyProcess `
+                    -Arguments $evalCustomized `
+                    -LogPath $customizedLog `
+                    -AppendLog `
+                    -Phase 'customized-eval' `
+                    -Worker $model `
+                    -Attempt $customizedAttempt `
+                    -HeartbeatIntervalSeconds $ComparisonHeartbeatSeconds
+                $codeB = $customizedProcess.ExitCode
+                $phaseTimings.Add([ordered]@{
+                        phase          = 'customized-eval'
+                        worker         = $customizedProcess.Worker
+                        attempt        = $customizedAttempt
+                        elapsedSeconds = [math]::Round($customizedProcess.ElapsedMilliseconds / 1000, 3)
+                        exitCategory   = $customizedProcess.ExitCategory
+                    })
                 $retryRunDir = Resolve-LatestRunDir -OutputDir $bDir
                 $bRunDir = if ($retryRunDir -and $retryRunDir -ne $firstCustomizedRunDir) {
                     $retryRunDir
@@ -1027,6 +1224,7 @@ if ($MyInvocation.InvocationName -ne '.') {
                 else {
                     $null
                 }
+                $executionDiagnostics.Add((Get-VallyExecutionDiagnostic -RunDir $bRunDir -Model $model -Variant customized -Attempt $customizedAttempt -ExitCode $codeB))
                 $invocationTally = Measure-AgentInvocationEvidence `
                     -RunDir $bRunDir `
                     -StimulusNames @($canonicalPolicy.Keys) `
@@ -1130,7 +1328,20 @@ if ($MyInvocation.InvocationName -ne '.') {
                     '--output', $compareJsonlPath
                 )
                 $compareLog = Join-Path $resolvedRoot "logs/vally-compare-$model-$runId.log"
-                $resultC = Invoke-VallyCommandWithCapture -Arguments $compareArgs -LogPath $compareLog
+                $resultC = Invoke-VallyProcess `
+                    -Arguments $compareArgs `
+                    -LogPath $compareLog `
+                    -Phase 'compare' `
+                    -Worker $model `
+                    -Attempt 1 `
+                    -HeartbeatIntervalSeconds $ComparisonHeartbeatSeconds
+                $phaseTimings.Add([ordered]@{
+                        phase          = 'compare'
+                        worker         = $resultC.Worker
+                        attempt        = 1
+                        elapsedSeconds = [math]::Round($resultC.ElapsedMilliseconds / 1000, 3)
+                        exitCategory   = $resultC.ExitCategory
+                    })
                 $compareFailed = $resultC.ExitCode -ne 0
                 if ($compareFailed) { $runHealthFailures++ }
                 $compareLogs.Add($compareLog)
@@ -1225,6 +1436,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             # rather than reading absent fields as zeros, which is how a dropped field
             # previously degraded into a plausible-looking healthy run.
             schemaVersion            = '2.1.0'
+            runId                    = $runId
             agent                    = $Agent
             tier                     = $Tier
             model                    = $primaryModel
@@ -1238,6 +1450,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             winRate                  = [math]::Round($aggregateWinRate, 4)
             invariantFailures        = $invariantFailures
             runHealthFailures        = $runHealthFailures
+            executionDiagnostics     = @($executionDiagnostics)
             invocationEvidence       = @($invocationEvidence)
             invocationFailures       = $invocationFailures
             divergenceGuardFailures  = $divergenceGuardFailures
@@ -1258,6 +1471,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             verdict                  = $verdict
             variants                 = $variants
             compareLogs              = @($compareLogs)
+            phaseTimings             = @($phaseTimings)
         }
 
         Write-SummaryJson -Summary $summary -Path $OutputPath

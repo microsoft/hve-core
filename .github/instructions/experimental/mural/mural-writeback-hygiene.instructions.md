@@ -21,7 +21,7 @@ Writeback *must* limit itself to these three fields. Composite tools that scaffo
 
 * `text` on any widget the writeback step did not just create in the same call.
 * Removing the reserved `authored-by-ai` tag without `--force-reserved`.
-* Updating or deleting any widget that does not carry the reserved `authored-by-ai` tag unless `--require-author-tag` is satisfied or `--force-human` is set; the skill raises `MuralHumanAuthoredProtected` (exit 77) otherwise.
+* Updating or deleting any widget that does not carry the reserved `authored-by-ai` tag unless `--force-human` is explicit; the skill raises `MuralHumanAuthoredProtected` (exit 77) otherwise.
 
 ## Tag merge semantics
 

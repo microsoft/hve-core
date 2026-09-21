@@ -102,8 +102,21 @@ def test_given_target_when_run_scan_then_invokes_scanner_with_list_arguments() -
     assert result["summary"]["violations"] == 0
     command = mock_run.call_args.args[0]
     assert command[0] == "npx"
-    assert command[1:3] == ["--yes", "@axe-core/cli@4.12.1"]
+    assert command[1:4] == [
+        "--yes",
+        "--registry=https://registry.npmjs.org/",
+        "@axe-core/cli@4.12.1",
+    ]
     assert command[-2:] == ["--", "https://example.com"]
+    assert mock_run.call_args.kwargs["cwd"] == scan.SCANNER_NPM_ROOT
+
+
+def test_given_scanner_npm_root_when_inspected_then_registry_is_anchored() -> None:
+    package_text = (scan.SCANNER_NPM_ROOT / "package.json").read_text(encoding="utf-8")
+    npmrc_text = (scan.SCANNER_NPM_ROOT / ".npmrc").read_text(encoding="utf-8")
+
+    assert '"private": true' in package_text
+    assert "registry=https://registry.npmjs.org/" in npmrc_text
 
 
 def test_given_regular_local_file_when_resolve_scan_target_then_returns_file_uri(

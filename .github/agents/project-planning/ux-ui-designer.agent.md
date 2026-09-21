@@ -141,7 +141,7 @@ When the user explicitly asks to publish a completed UX asset to a Mural board:
 
 1. Require the completed `output_ref`, an explicit publication request, `destination-target` as the board, and `destination-kind=extractor|facilitator`. Never infer either destination value.
 2. Load the `ux-artifacts` Mural mapping for decomposition, element type, cardinality, area intent, and source lineage.
-3. Before any Mural verb in a fresh session, run `mural doctor` and follow `mural-bootstrap.instructions.md`.
+3. Treat the explicit `destination-kind` as `mode=extractor|facilitator`; never infer mode. Before any Mural verb in a fresh session, run `mural doctor` with one `--require-scope` argument for every scope required by the confirmed command sequence, then follow `mural-bootstrap.instructions.md`.
 4. State the exact board target and intended write, then wait for explicit user confirmation.
 5. Apply `mural-seeding-patterns.instructions.md`, `mural-human-record.instructions.md`, `mural-log-hygiene.instructions.md`, `mural-writeback-hygiene.instructions.md`, and `mural-writing-style.instructions.md` during execution.
 
