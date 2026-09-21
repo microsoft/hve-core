@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import { emitProbeResult, redactUrl, runProbeWithPage } from './_shared.mjs';
 
 export async function runProbe() {

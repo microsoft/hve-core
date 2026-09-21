@@ -3,6 +3,26 @@
   "raiPlanFile": ".copilot-tracking/rai-plans/example-project/rai-plan.md",
   "currentPhase": 6,
   "entryMode": "from-security-plan",
+  "preflight": {
+    "templates": [
+      {
+        "kind": "document",
+        "path": "templates/rai-impact-assessment.md",
+        "stableIdMap": {
+          "A1/system-purpose": "RAI-A1-001",
+          "A3/operators": "RAI-A3-001"
+        }
+      },
+      {
+        "kind": "mural",
+        "id": "rai-assessment-board-template",
+        "stableIdMap": {
+          "A2/recommendation-model": "RAI-A2-001"
+        }
+      }
+    ],
+    "assessmentContentFile": ".copilot-tracking/rai-plans/example-project/assessment-content.md"
+  },
   "securityPlanRef": ".copilot-tracking/security-plans/example-project/security-plan.md",
   "assessmentDepth": "comprehensive",
   "standardsMapped": true,

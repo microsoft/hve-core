@@ -147,9 +147,10 @@ def test_assessor_skips_rows_without_id_and_resets_between_tables() -> None:
 def test_assessor_status_synonyms_map_to_canonical_statuses() -> None:
     cases = {
         "covered": "pass",
-        "not_assessed": "fail",
+        "not_assessed": "unknown",
         "not applicable": "not-applicable",
-        "mystery": "fail",
+        "blocked": "fail",
+        "mystery": "unknown",
     }
     for raw, expected in cases.items():
         markdown = (

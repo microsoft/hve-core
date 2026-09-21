@@ -1,8 +1,14 @@
 ---
 title: dt-rpi-integration
-description: "Design Thinking to RPI handoff knowledge covering the DT-to-RPI handoff contract, DT-aware research/planning/implement/review contexts, subagent handoff workflow, and Method 5 image prompt generation"
-sidebar_position: 4
-ms.date: 2026-07-03
+description: "Design Thinking handoff knowledge for research-ready rpi-research inputs and DT-aware rpi-plan, rpi-implement, and rpi-review context"
+sidebar_position: 5
+author: Microsoft
+ms.date: 2026-09-09
+ms.topic: reference
+keywords:
+  - skill
+  - design-thinking
+  - dt-rpi-integration
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,15 +23,27 @@ ms.date: 2026-07-03
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Design Thinking to RPI handoff knowledge covering the DT-to-RPI handoff contract, DT-aware research/planning/implement/review contexts, subagent handoff workflow, and Method 5 image prompt generation
+Design Thinking handoff knowledge for research-ready rpi-research inputs and DT-aware rpi-plan, rpi-implement, and rpi-review context
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+DT Coach loads this pack when a team chooses to carry Design Thinking evidence
+into engineering research. It supports exits after problem synthesis, tested
+concepts, or implementation-space work. Every exit targets `rpi-research`; richer
+evidence can narrow investigation but does not bypass Research, Plan, Implement,
+or Review. RPI Agent can coordinate that lifecycle without replacing the handoff target.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+After a fictional Method 6 exercise, ask DT Coach to prepare a lateral RPI handoff
+using `dt-rpi-integration`. Supply tested concepts, prototype observations,
+constraint discoveries, and the narrowed directions. Keep an untested integration
+assumption visible rather than marking it validated.
+
+Expect a handoff summary with artifact paths, the exit point, `rpi-research` as
+the target, and confidence markers of validated, assumed, unknown, or conflicting.
+The coach records the chosen transition and frames a research-ready topic.
+Success is enough traceable context for Research to verify gaps while preserving
+stakeholder and fidelity constraints downstream. It is not implementation approval,
+and conflicting evidence is not resolved by packaging it into a handoff.

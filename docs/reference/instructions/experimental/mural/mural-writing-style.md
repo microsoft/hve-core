@@ -2,7 +2,13 @@
 title: Experimental/Mural/Mural Writing Style
 description: "Asymmetric writing style for Mural: outbound (writing into Mural) is sticky-concise; inbound (extracting from Mural) is context-hydrated."
 sidebar_position: 7
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - experimental
+  - experimental/mural/mural-writing-style
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,8 +28,10 @@ Asymmetric writing style for Mural: outbound (writing into Mural) is sticky-conc
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Apply this style whenever content moves into or out of Mural. Keep outbound
+widgets concise and room-readable, but hydrate extracted records with parent,
+tag, link, lineage, and neighbor context appropriate to their destination;
+ordinary document prose should follow the repository writing style instead.
 
 ## Example usage
 

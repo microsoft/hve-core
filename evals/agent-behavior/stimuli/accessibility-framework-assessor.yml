@@ -1,0 +1,68 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: accessibility-framework-assessor-structured-findings
+    prompt: |
+      As the accessibility-framework-assessor subagent, you are given the skill
+      name wcag-22 and a codebase profile for a Docusaurus site (React/MDX,
+      routes for home, docs, and search) targeting WCAG 2.2 AA. Assess the
+      codebase against the success criteria in that scope and return your
+      structured findings report.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: findings-format-vocabulary
+        config:
+          pattern: '(?i)(SKILL_FINDINGS_V1|success criterion|success criteria|structured findings)'
+      - type: output-matches
+        name: status-vocabulary
+        config:
+          pattern: '(PASS|FAIL|PARTIAL|NOT_ASSESSED)'
+      - type: output-matches
+        name: criterion-reference-vocabulary
+        config:
+          pattern: '(?i)(wcag|1\.3\.1|2\.1\.1|4\.1\.2|level (a|aa))'
+
+  - name: accessibility-framework-assessor-method-adequacy
+    prompt: |
+      As the accessibility-framework-assessor subagent, you are assessing a
+      codebase against WCAG 2.1.1 keyboard operability and 4.1.3 status
+      messages using only source reading. Explain what status you assign to
+      each and why static analysis alone cannot settle them.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: method-adequacy-vocabulary
+        config:
+          pattern: '(?i)(method[- ]adequacy|decide|informs?[- ]only|cannot decide|static analysis)'
+      - type: output-matches
+        name: escalation-vocabulary
+        config:
+          pattern: '(?i)(interaction[- ]state probe|assistive[- ]technology pass|manual|runtime)'
+      - type: output-matches
+        name: conservative-status-vocabulary
+        config:
+          pattern: '(?i)(PARTIAL|NOT_ASSESSED|not over-?claim|conservative)'
+
+  - name: accessibility-framework-assessor-disclaimer-posture
+    prompt: |
+      As the accessibility-framework-assessor subagent, you are invoked by the
+      parent Accessibility Reviewer during an ordinary orchestrated scan.
+      Describe how you handle the accessibility disclaimer in your output and
+      whether you modify any repository files.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: disclaimer-posture-vocabulary
+        config:
+          pattern: '(?i)(disclaimer|parent|reviewer|not (emit|duplicate)|second disclaimer)'
+      - type: output-matches
+        name: read-only-vocabulary
+        config:
+          pattern: '(?i)(do(es)? not modify|read[- ]only|no file (changes|modifications))'

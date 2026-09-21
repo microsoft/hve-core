@@ -24,6 +24,11 @@ function Get-ChangedFilesFromGit {
     .PARAMETER FileExtensions
     Array of file extensions to filter (e.g., @('*.ps1', '*.md')).
 
+    .PARAMETER IncludeDeleted
+    Include deleted paths and disable rename detection so both the source and
+    destination of a rename are returned. By default, only paths that still
+    exist are returned.
+
     .OUTPUTS
     Array of changed file paths.
     #>
@@ -33,10 +38,14 @@ function Get-ChangedFilesFromGit {
         [string]$BaseBranch = "origin/main",
 
         [Parameter(Mandatory = $false)]
-        [string[]]$FileExtensions = @('*')
+        [string[]]$FileExtensions = @('*'),
+
+        [Parameter(Mandatory = $false)]
+        [switch]$IncludeDeleted
     )
 
     $changedFiles = @()
+    $diffFilter = if ($IncludeDeleted) { 'ACMRD' } else { 'ACMR' }
 
     try {
         # Try merge-base first (best for PRs)
@@ -44,22 +53,34 @@ function Get-ChangedFilesFromGit {
 
         if ($LASTEXITCODE -eq 0 -and $mergeBase) {
             Write-Verbose "Using merge-base: $mergeBase"
-            $changedFiles = git diff --name-only --diff-filter=ACMR $mergeBase HEAD 2>$null
+            $diffArgs = @('diff', '--name-only', "--diff-filter=$diffFilter")
+            if ($IncludeDeleted) { $diffArgs += '--no-renames' }
+            $diffArgs += @($mergeBase, 'HEAD')
+            $changedFiles = git @diffArgs 2>$null
         }
         elseif ((git rev-parse HEAD~1 2>$null)) {
             Write-Verbose "Merge base failed, using HEAD~1"
-            $changedFiles = git diff --name-only --diff-filter=ACMR HEAD~1 HEAD 2>$null
+            $diffArgs = @('diff', '--name-only', "--diff-filter=$diffFilter")
+            if ($IncludeDeleted) { $diffArgs += '--no-renames' }
+            $diffArgs += @('HEAD~1', 'HEAD')
+            $changedFiles = git @diffArgs 2>$null
         }
         else {
             Write-Verbose "HEAD~1 failed, using staged/unstaged files"
-            $changedFiles = git diff --name-only HEAD 2>$null
+            $diffArgs = @('diff', '--name-only', "--diff-filter=$diffFilter")
+            if ($IncludeDeleted) { $diffArgs += '--no-renames' }
+            $diffArgs += 'HEAD'
+            $changedFiles = git @diffArgs 2>$null
         }
 
         if ($LASTEXITCODE -ne 0) {
             throw 'Unable to determine changed files from git'
         }
 
-        $workingTreeFiles = git diff --name-only --diff-filter=ACMR HEAD 2>$null
+        $workingTreeArgs = @('diff', '--name-only', "--diff-filter=$diffFilter")
+        if ($IncludeDeleted) { $workingTreeArgs += '--no-renames' }
+        $workingTreeArgs += 'HEAD'
+        $workingTreeFiles = git @workingTreeArgs 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw 'Unable to determine staged and unstaged files from git'
         }
@@ -86,7 +107,7 @@ function Get-ChangedFilesFromGit {
                 }
             }
 
-            $matchesExtension -and (Test-Path $currentFile -PathType Leaf)
+            $matchesExtension -and ($IncludeDeleted -or (Test-Path $currentFile -PathType Leaf))
         }
 
         Write-Verbose "Found $($filteredFiles.Count) changed files matching extensions: $($FileExtensions -join ', ')"

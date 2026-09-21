@@ -13,7 +13,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -24,6 +24,8 @@ The SSSC Planner's final two phases convert analysis artifacts into actionable o
 
 ```mermaid
 flowchart TD
+  accTitle: SSSC Backlog Generation Pipeline
+  accDescr: Gap analysis and the standards map feed work-item generation and autonomy-tier assignment, producing Azure DevOps work items and GitHub issues.
   GA["Gap Analysis<br/>(Phase 4)"] --> WI["Work Item<br/>Generation"]
   SM["Standards Map<br/>(Phase 3)"] --> WI
   WI --> AT["Autonomy Tier<br/>Assignment"]
@@ -104,6 +106,8 @@ The SSSC Planner coordinates with other agents through state file references rat
 
 ```mermaid
 flowchart LR
+  accTitle: SSSC Cross-Agent Handoff Coordination
+  accDescr: Security planning passes scope context to SSSC planning, which hands work to backlog managers and may retain a reference to RAI planning.
   SecP["Security Planner"] -->|"state.json<br/>scope context"| SSSC["SSSC Planner"]
   SSSC -->|"handoff files"| BM["Backlog Managers"]
   SSSC -.->|"raiPlannerLink"| RAI["RAI Planner"]

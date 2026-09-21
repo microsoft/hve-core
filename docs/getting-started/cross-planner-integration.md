@@ -11,7 +11,7 @@ keywords:
   - SSSC planner
   - evidence register
 author: Microsoft
-ms.date: 2026-05-28
+ms.date: 2026-09-08
 ms.topic: concept
 estimated_reading_time: 4
 ---
@@ -23,21 +23,21 @@ The Accessibility, Security, RAI, and SSSC planners are designed to share work r
 
 ## How Sharing Works
 
-| Mechanism             | How it works                                                                                                                                       |
-|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| Evidence register     | Accessibility evidence records conform to a shared `evidence-register.schema.json` and carry stable URIs, so other planners cite them by reference |
-| Reference fields      | Entry modes set fields such as `securityPlanRef` and `raiPlanRef` in `state.json`, linking the accessibility plan to its upstream source           |
-| Deterministic signals | The Security Reviewer's Codebase Profiler and the Accessibility Reviewer's profiler emit overlapping signals that each can consume as hints        |
+| Mechanism             | How it works                                                                                                                                                                                        |
+|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Evidence register     | Accessibility evidence records follow the `evidenceRegister` entry shape in `accessibility-state.schema.json` and carry stable ids and `sourceUri` values, so other planners cite them by reference |
+| Reference fields      | Entry modes set fields such as `securityPlanRef` and `raiPlanRef` in `state.json`, linking the accessibility plan to its upstream source                                                            |
+| Deterministic signals | The Security Reviewer's Codebase Profiler and the Accessibility Reviewer's profiler emit overlapping signals that each can consume as hints                                                         |
 
 ## Integration Matrix
 
-| Direction                | Mechanism                                                                                                                                              | Trigger                                                                                        |
-|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
-| Accessibility → Security | Shared `evidence-register.schema.json` (`$ref`); accessibility evidence records carry stable URIs that security reports cite under "External evidence" | Security reviewer encounters auth or content-rendering paths flagged as accessibility-relevant |
-| Accessibility → RAI      | Planner Phase 4 inserts `humanReviewControl` entries when the project profile declares AI-generated UI, generated alt text, or generated captions      | Discovery phase tags `aiGeneratedSurfaces: true`                                               |
-| Accessibility → SSSC     | Section 508 and EN 301 549 evidence records feed SSSC procurement gates (VPAT, EAA conformance)                                                        | SSSC Phase 4 (Gap Analysis) requests accessibility statements                                  |
-| RAI → Accessibility      | RAI risk classification escalates to `coga` blocking controls when impacted populations include cognitive disability users                             | RAI Phase 2 prohibited-uses screen flagged "vulnerable populations"                            |
-| Security → Accessibility | Security Codebase Profiler shares deterministic signals; the accessibility profiler may consume the same signals output as a hint                      | Both planners run in the same session                                                          |
+| Direction                | Mechanism                                                                                                                                                                                      | Trigger                                                                                        |
+|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| Accessibility → Security | Shared evidence-entry shape, compatible with security planner evidence records; accessibility evidence records carry stable ids and `sourceUri` values that security reports cite by reference | Security reviewer encounters auth or content-rendering paths flagged as accessibility-relevant |
+| Accessibility → RAI      | Planner Phase 4 inserts `humanReviewControl` entries when the project profile declares AI-generated UI, generated alt text, or generated captions                                              | Discovery phase tags `aiGeneratedSurfaces: true`                                               |
+| Accessibility → SSSC     | Section 508 and EN 301 549 evidence records use the shared evidence-entry shape, so SSSC can cross-reference entries by stable id and `sourceUri`                                              | SSSC Phase 4 (Gap Analysis) runs with the accessibility plan present                           |
+| RAI → Accessibility      | RAI risk classification escalates to `coga` blocking controls when impacted populations include cognitive disability users                                                                     | RAI Phase 2 prohibited-uses screen flagged "vulnerable populations"                            |
+| Security → Accessibility | Security Codebase Profiler shares deterministic signals; the accessibility profiler may consume the same signals output as a hint                                                              | Both planners run in the same session                                                          |
 
 ## Recommended Order
 

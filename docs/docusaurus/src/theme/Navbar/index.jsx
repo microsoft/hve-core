@@ -9,7 +9,7 @@ import Navbar from '@theme-original/Navbar';
 // are present. WCAG 1.3.1 / ARIA landmark completeness.
 export default function NavbarWrapper(props) {
   return (
-    <header>
+    <header aria-label="HVE Core documentation header">
       <Navbar {...props} />
     </header>
   );

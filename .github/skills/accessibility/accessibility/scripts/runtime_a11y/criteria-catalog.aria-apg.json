@@ -1,0 +1,34 @@
+{
+  "$schema": "./criteria-catalog.schema.json",
+  "catalogVersion": "2026-08-07",
+  "framework": "aria-apg",
+  "classification": "standards",
+  "provenance": {
+    "source": "WAI-ARIA Authoring Practices Guide patterns as cited in references/frameworks/aria-apg.md",
+    "basis": "Failure classes and the adequacy rule in SKILL.md, preserving the prior decision that modal dialog, combobox, and menu button patterns remain manual-only until their mode, popup, and focus semantics can be asserted faithfully",
+    "reviewedBy": null
+  },
+  "criteria": [
+    {
+      "id": "APG:widget-semantics",
+      "title": "Widget exposes the pattern's expected role, name, and state",
+      "failureClass": "announcement",
+      "adequateMethods": ["screen-reader", "runtime-automation"],
+      "notes": "An accessibility-tree assertion decides role and name. Patterns whose state depends on assistive-technology mode remain manual-only and are not promoted by this entry."
+    },
+    {
+      "id": "APG:widget-keyboard",
+      "title": "Widget implements the pattern's expected keyboard interaction",
+      "failureClass": "interaction",
+      "adequateMethods": ["manual-keyboard", "runtime-automation"],
+      "notes": "Driving the documented keys across focus and open states decides this. A static scan cannot see key handling."
+    },
+    {
+      "id": "APG:notification-live-region",
+      "title": "Pattern notifications reach assistive technology",
+      "failureClass": "announcement",
+      "adequateMethods": ["screen-reader", "runtime-automation"],
+      "notes": "Decidable only in a state that produces a notification."
+    }
+  ]
+}

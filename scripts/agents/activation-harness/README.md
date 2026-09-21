@@ -36,11 +36,20 @@ Returns:
 
 ## Byte-Budget Contract
 
-The cold-start payload (`CleanWorkspace.ColdStartBytes`) is the gating budget for every agent governed by this harness:
+The cold-start payload (`CleanWorkspace.ColdStartBytes`) is the gating budget for every agent governed by this harness. Budgets are declared as a range in `budgets.json` rather than a single number, so that growth in shared instruction files does not fail an unrelated change:
+
+| Band                       | Meaning                                                       | Suite result      |
+|----------------------------|---------------------------------------------------------------|-------------------|
+| At or below `target`       | Within design intent.                                         | Pass              |
+| Above `target`, at ceiling | Within tolerance; absorbs growth in shared instruction files. | Pass with warning |
+| Above `ceiling`            | Budget violation.                                             | Fail              |
 
 * Pre-refactor baseline for `@adr-creation` is approximately 84 KB and recorded in `baseline.json`.
-* Post-refactor target is **&lt; 44,000 bytes** (≈ 38–43 KB band).
-* The Pester suite under `scripts/tests/agents/activation-harness/` fails fast when the cold-start payload exceeds 44,000 bytes or when an instruction file expected to remain off cold start (for example `adr-handoff.instructions.md`, `adr-byo-template.instructions.md`) appears in `LoadedFiles`.
+* Post-refactor target is **44,000 bytes** with a ceiling of **48,000 bytes**.
+* Every range entry carries a `rationale` explaining why the ceiling sits above the target. The suite asserts that the rationale is present and that `ceiling` is not below `target`.
+* The Pester suite under `scripts/tests/agents/activation-harness/` also fails when an instruction file expected to remain off cold start (for example `adr-handoff.instructions.md`, `adr-byo-template.instructions.md`) appears in `LoadedFiles`.
+
+Raise a `ceiling` only when the growth comes from a shared file the agent does not own. Growth caused by the agent's own design belongs below `target`.
 
 ## Usage
 
@@ -89,6 +98,7 @@ Workflow:
 * `Get-AgentActivationFingerprint.psm1`: public module exposing the single fingerprint function.
 * `Update-AgentActivationBaseline.ps1`: regenerates `baseline.json` deterministically; supports `-DryRun` for CI drift gating.
 * `baseline.json`: pre-refactor reference fingerprints across all four scenarios for `@adr-creation`.
+* `budgets.json`: per-agent, per-scenario cold-start byte ranges with target, ceiling, and rationale.
 * `README.md`: this document.
 
 <!-- markdownlint-disable MD036 -->

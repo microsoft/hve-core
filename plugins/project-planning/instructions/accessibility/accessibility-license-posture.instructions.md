@@ -1,1 +1,0 @@
-../../../../.github/instructions/accessibility/accessibility-license-posture.instructions.md

@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microsoft.github.io/hve-core/accessibility/visual-review-manifest.schema.json",
+  "title": "visual-review-manifest",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "runId",
+    "createdAt",
+    "route",
+    "surface",
+    "state",
+    "viewport",
+    "browser",
+    "platform",
+    "artifacts",
+    "probeOutcomes",
+    "provenance",
+    "evidenceState"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "pattern": "^1\\.0$" },
+    "runId": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "route": { "type": "string" },
+    "surface": { "type": "string" },
+    "state": { "type": "string" },
+    "viewport": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "zoom": {
+      "type": "object",
+      "properties": {
+        "scale": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "browser": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "platform": {
+      "type": "object",
+      "required": ["os", "version"],
+      "properties": {
+        "os": { "type": "string" },
+        "version": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "artifacts": {
+      "type": "object",
+      "required": ["screenshots", "traces", "deterministicMeasurements", "manifestPayload"],
+      "properties": {
+        "screenshots": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifactEntry" }
+        },
+        "traces": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifactEntry" }
+        },
+        "deterministicMeasurements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifactEntry" }
+        },
+        "manifestPayload": { "$ref": "#/$defs/artifactEntry" }
+      },
+      "additionalProperties": true
+    },
+    "deterministicMetrics": { "type": "object" },
+    "probeOutcomes": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "provenance": { "type": "object" },
+    "evidenceState": {
+      "type": "string",
+      "enum": [
+        "deterministic-pass",
+        "deterministic-fail",
+        "real-at-pass",
+        "real-at-fail",
+        "model-flagged",
+        "model-clear-advisory",
+        "ambiguous",
+        "unavailable",
+        "human-confirmed"
+      ]
+    }
+  },
+  "$defs": {
+    "artifactEntry": {
+      "type": "object",
+      "required": ["id", "path", "sha256"],
+      "properties": {
+        "id": { "type": "string" },
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "sizeBytes": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

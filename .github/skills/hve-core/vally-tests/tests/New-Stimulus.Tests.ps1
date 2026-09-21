@@ -36,17 +36,17 @@ Describe 'New-Stimulus' -Tag 'Unit' {
     Context 'Stdout emission' {
         BeforeAll {
             $script:block = & $script:scriptPath `
-                -ArtifactPath '.github/prompts/hve-core/task-research.prompt.md' `
-                -Kind prompt -PromptText 'Invoke task-research with topic=X.' | Out-String
+                -ArtifactPath '.github/prompts/hve-core/rpi.prompt.md' `
+                -Kind prompt -PromptText 'Invoke rpi with task=X.' | Out-String
         }
 
         It 'Emits a named stimulus block with a slugified artifact leaf' {
-            $script:block | Should -Match '- name: task-research-conformance-[0-9a-f]{8}'
+            $script:block | Should -Match '- name: rpi-conformance-[0-9a-f]{8}'
         }
 
         It 'Includes the prompt block scalar' {
             $script:block | Should -Match '(?m)^\s+prompt: \|'
-            $script:block | Should -Match 'Invoke task-research with topic=X\.'
+            $script:block | Should -Match 'Invoke rpi with task=X\.'
         }
 
         It 'Tags the block with the routed category for prompt kind' {
@@ -66,7 +66,7 @@ Describe 'New-Stimulus' -Tag 'Unit' {
     Context 'Kind to category routing' {
         It 'Routes agent kind to the agent-behavior category' {
             $block = & $script:scriptPath `
-                -ArtifactPath '.github/agents/hve-core/task-researcher.agent.md' `
+                -ArtifactPath '.github/agents/hve-core/rpi-agent.agent.md' `
                 -Kind agent -PromptText 'Exercise the agent.' | Out-String
 
             $block | Should -Match 'category: agent-behavior'

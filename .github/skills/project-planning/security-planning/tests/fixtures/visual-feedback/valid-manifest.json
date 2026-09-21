@@ -1,0 +1,32 @@
+{
+  "schema_version": 2,
+  "manifest_type": "tm7_visual_feedback",
+  "model_id": "demo-model",
+  "spec_path": "threat-model-spec.yaml",
+  "spec_sha256": "abc",
+  "generator_profile": "default",
+  "generator_profile_sha256": "def",
+  "candidate_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "iteration_id": "2026-07-16.001",
+  "pinned_tmt_version": "7.3.51110.1",
+  "created_at": "2026-07-16T00:00:00Z",
+  "surfaces": [
+    {
+      "surface_id": "context",
+      "surface_guid": "surface-context",
+      "surface_name": "System context",
+      "capture_path": "evidence/context.png",
+      "uia_path": "uia/context",
+      "metrics": {},
+      "findings": [],
+      "human_review_status": "pending",
+      "human_review_required": true
+    }
+  ],
+  "convergence": {
+    "status": "pending",
+    "selected_candidate": null,
+    "stop_reason": "pending",
+    "evidence_complete": true
+  }
+}

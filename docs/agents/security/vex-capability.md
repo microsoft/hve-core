@@ -3,7 +3,7 @@ title: VEX Capability
 description: HVE Core's VEX capability - triage dependency vulnerabilities and draft OpenVEX documents via the SSSC Reviewer, SSSC Planner, and the vex skill
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-07-01
+ms.date: 2026-08-20
 ms.topic: concept
 keywords:
   - VEX
@@ -47,6 +47,8 @@ The `vex-draft` workflow (via the SSSC Reviewer VEX assessment capability) runs 
 
 ```mermaid
 flowchart LR
+  accTitle: VEX Triage and OpenVEX Generation
+  accDescr: The workflow scans dependencies, enriches vulnerabilities, analyzes reachability, drafts OpenVEX and triage outputs, and ends with accountable human review and merge.
     A[Scan dependencies] --> B[Enrich each CVE]
     B --> C[Analyze reachability]
     C --> D[Draft OpenVEX + report]

@@ -1,0 +1,250 @@
+{
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "grafana-azure-monitor-datasource",
+      "name": "Azure Monitor",
+      "version": "1.0.0"
+    }
+  ],
+  "description": "Organization GitHub Copilot telemetry from Application Insights. Requires an Azure Monitor datasource and a Log Analytics workspace resource selected in the 'workspace' variable. Minimum Grafana 10.0. Every query names the table and customDimensions fields it reads; verify them against your own workspace, because attribute names follow the extension build rather than this file.",
+  "title": "GitHub Copilot - Organization Telemetry (Azure)",
+  "uid": "copilot-otel-azure",
+  "tags": [
+    "copilot",
+    "telemetry",
+    "azure"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5m",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Azure Monitor",
+        "type": "datasource",
+        "query": "grafana-azure-monitor-datasource",
+        "current": {}
+      },
+      {
+        "name": "workspace",
+        "label": "Log Analytics workspace",
+        "type": "textbox",
+        "description": "Full resource ID of the Log Analytics workspace backing Application Insights.",
+        "current": {
+          "text": "",
+          "value": ""
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Usage",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Token usage by model",
+      "description": "Reads dependencies.customDimensions['gen_ai.usage.input_tokens'] and ['gen_ai.usage.output_tokens'].",
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "resources": ["${workspace}"],
+            "dashboardTime": true,
+            "timeColumn": "timestamp",
+            "query": "dependencies\n| where isnotempty(customDimensions['gen_ai.usage.input_tokens'])\n| extend model = tostring(customDimensions['gen_ai.request.model'])\n| extend input_tokens = tolong(customDimensions['gen_ai.usage.input_tokens'])\n| extend output_tokens = tolong(customDimensions['gen_ai.usage.output_tokens'])\n| summarize InputTokens = sum(input_tokens), OutputTokens = sum(output_tokens) by bin(timestamp, 15m), model\n| order by timestamp asc"
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Reporting hosts",
+      "description": "Distinct cloud_RoleInstance values. A proxy for how many workstations are exporting, not a licensed-seat count.",
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 1 },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "resources": ["${workspace}"],
+            "dashboardTime": true,
+            "timeColumn": "timestamp",
+            "query": "dependencies\n| summarize Hosts = dcount(cloud_RoleInstance)"
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total spans (range)",
+      "description": "Ingestion volume proxy. This number drives the Log Analytics bill.",
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 1 },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "resources": ["${workspace}"],
+            "dashboardTime": true,
+            "timeColumn": "timestamp",
+            "query": "dependencies\n| summarize Spans = count()"
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Latency",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM call duration p50 and p95 by model",
+      "description": "Reads dependencies.duration in milliseconds, grouped by customDimensions['gen_ai.request.model'].",
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "fieldConfig": {
+        "defaults": { "unit": "ms" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "resources": ["${workspace}"],
+            "dashboardTime": true,
+            "timeColumn": "timestamp",
+            "query": "dependencies\n| where isnotempty(customDimensions['gen_ai.request.model'])\n| extend model = tostring(customDimensions['gen_ai.request.model'])\n| summarize p50 = percentile(duration, 50), p95 = percentile(duration, 95) by bin(timestamp, 15m), model\n| order by timestamp asc"
+          }
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Failed operations",
+      "description": "Reads dependencies.success. A rising line here usually means the collector or the model endpoint, not the editor.",
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "resources": ["${workspace}"],
+            "dashboardTime": true,
+            "timeColumn": "timestamp",
+            "query": "dependencies\n| summarize Failures = countif(success == false), Total = count() by bin(timestamp, 15m)\n| order by timestamp asc"
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Tools and agents",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 }
+    },
+    {
+      "type": "bargauge",
+      "title": "Top tools (range)",
+      "description": "Reads dependencies.customDimensions['gen_ai.tool.name']. MCP tools appear under their mcp_ prefixed names.",
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 19 },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "resources": ["${workspace}"],
+            "dashboardTime": true,
+            "timeColumn": "timestamp",
+            "query": "dependencies\n| where isnotempty(customDimensions['gen_ai.tool.name'])\n| extend tool = tostring(customDimensions['gen_ai.tool.name'])\n| summarize Calls = count() by tool\n| top 15 by Calls desc"
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Custom agent activity",
+      "description": "Reads dependencies.customDimensions['copilot_chat.mode_name'], which carries the user-selected custom agent. Metrics do not carry this dimension; it exists only on spans.",
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 19 },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "resources": ["${workspace}"],
+            "dashboardTime": true,
+            "timeColumn": "timestamp",
+            "query": "dependencies\n| where isnotempty(customDimensions['copilot_chat.mode_name'])\n| extend agent = tostring(customDimensions['copilot_chat.mode_name'])\n| extend agent_type = tostring(customDimensions['github.copilot.agent.type'])\n| summarize Invocations = count(), Hosts = dcount(cloud_RoleInstance), MedianDurationMs = percentile(duration, 50) by agent, agent_type\n| order by Invocations desc"
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Fleet breakdown",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 28 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Activity by team",
+      "description": "Reads the team.id resource attribute set in Copilot managed settings. Empty until resourceAttributes carries it.",
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 29 },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "resources": ["${workspace}"],
+            "dashboardTime": true,
+            "timeColumn": "timestamp",
+            "query": "dependencies\n| extend team = tostring(customDimensions['team.id'])\n| where isnotempty(team)\n| summarize Operations = count() by bin(timestamp, 1h), team\n| order by timestamp asc"
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Content attributes present",
+      "description": "Prompt and response text has been observed on spans even with captureContent disabled. A non-zero count here means content is reaching billable storage and the collector's strip-content processor is not applied.",
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 29 },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "resources": ["${workspace}"],
+            "dashboardTime": true,
+            "timeColumn": "timestamp",
+            "query": "dependencies\n| summarize\n    UserRequest = countif(isnotempty(customDimensions['copilot_chat.user_request'])),\n    InputMessages = countif(isnotempty(customDimensions['gen_ai.input.messages'])),\n    OutputMessages = countif(isnotempty(customDimensions['gen_ai.output.messages'])),\n    ToolArguments = countif(isnotempty(customDimensions['gen_ai.tool.call.arguments'])),\n    SystemInstructions = countif(isnotempty(customDimensions['gen_ai.system_instructions']))"
+          }
+        }
+      ]
+    }
+  ]
+}

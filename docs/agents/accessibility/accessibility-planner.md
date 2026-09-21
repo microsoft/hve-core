@@ -14,7 +14,7 @@ tags:
   - agents
   - accessibility
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 7
 ---
@@ -56,6 +56,8 @@ Five entry modes determine how Phase 1 (Discovery) begins. All modes converge at
 
 ```mermaid
 flowchart LR
+  accTitle: Accessibility Planning Six-Phase Workflow
+  accDescr: Planning moves from discovery through framework selection, standards mapping, plan risk assessment, impact and evidence analysis, and backlog handoff.
   A["Phase 1<br/>Discovery"] --> B["Phase 2<br/>Framework Selection"]
   B --> C["Phase 3<br/>Standards Mapping"]
   C --> D["Phase 4<br/>Plan Risk Assessment"]

@@ -2,7 +2,13 @@
 title: Report Generator
 description: Collates verified security or accessibility skill assessment findings and generates a comprehensive report written to the domain-appropriate reports directory
 sidebar_position: 4
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - security
+  - report-generator
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,10 +28,8 @@ Collates verified security or accessibility skill assessment findings and genera
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Security, accessibility, and RAI reviewer workflows dispatch Report Generator to consolidate supplied findings into the correct mode and domain report. It calculates summaries and preserves verification limits, disclaimers, and required artifact inventories. It does not perform a new assessment or provide human acceptance.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies verified security findings, repository identity, date, and `diff` mode with changed files. The worker writes a `VULN_REPORT_V1` report and returns its path and counts; plan mode uses `PLAN_REPORT_V1`. RAI dispatches instead require `RAI_REPORT_V1`, the parent-resolved path, and pending human acceptance. Success means counts and findings agree with supplied evidence, not that missing checks become passes.

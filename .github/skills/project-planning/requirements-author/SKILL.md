@@ -6,7 +6,7 @@ user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.1"
-  last_updated: "2026-06-14"
+  last_updated: "2026-08-21"
 ---
 
 # Requirements Author Skill
@@ -28,6 +28,7 @@ Shared (`references/_shared/`):
 BRD scope (`references/brd/`):
 
 * [BRD-to-PRD Handoff](references/brd/brd-to-prd-handoff-v1.md)
+* [Outcome Hypothesis-to-BRD Handoff](references/brd/outcome-hypothesis-to-brd-handoff-v1.md)
 * [BRD Quality Formats](references/brd/brd-quality-formats.md)
 
 PRD scope (`references/prd/`):
@@ -35,6 +36,17 @@ PRD scope (`references/prd/`):
 * [Product Discovery](references/prd/product-discovery.md)
 * [EARS Acceptance](references/prd/ears-acceptance.md)
 * [PRD Quality Formats](references/prd/prd-quality-formats.md)
+
+## Handoff Transport Convention
+
+The producing workflow owns each handoff's canonical transport, and the
+consumer validates the complete payload regardless of transport. An outcome
+hypothesis returns `OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1` inline by default
+because it is a one-time seed derived from an already persisted source
+artifact; the user may instead supply a separately persisted payload path.
+BRD Govern persists `BRD_TO_PRD_HANDOFF_V1` and returns its path because that
+payload is a durable governance record consumed across agent sessions. This
+asymmetry is intentional and does not change payload authority or validation.
 
 ## BRD Lifecycle
 
@@ -52,6 +64,35 @@ PRD scope (`references/prd/`):
 * Identify stakeholders, decision owners, and review participants.
 * Define scope boundaries, assumptions, and dependency surfaces.
 * Draft initial requirement candidates and map early traceability placeholders.
+* Validate and disposition an `OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1` payload when one is supplied.
+
+### Outcome hypothesis intake
+
+Use [Outcome Hypothesis-to-BRD Handoff](references/brd/outcome-hypothesis-to-brd-handoff-v1.md)
+as the canonical contract.
+
+1. Accept the YAML inline or from a user-supplied artifact path.
+2. Validate the complete payload before copying any value into the BRD.
+3. Reject unsupported versions, incomplete seeds, placeholder values, and
+   invalid provenance. Do not reinterpret a rejected payload as unstructured
+   evidence.
+4. Assign the next stable `BG-###` identifier.
+5. Record distinct statement, KPI, baseline, target, timeframe, measurement
+   source, and owner values.
+6. Mark each seed field `accepted` or `revised`. For a revision, preserve the
+   source value, current BRD value, and rationale.
+7. Map assumptions and open questions into their canonical BRD sections.
+   Initialize each imported question to `Open` unless Discover explicitly
+   confirms another BRD-owned status. Every deferred question requires a
+   rationale for deferral and one target phase: `PRD`, `Implementation`,
+   `Operations`, or `Future-Release`.
+8. Record the handoff ID, source path, source SHA-256, and KPI measurement
+   source in the BRD provenance receipt.
+
+Before Discover accepts the handoff, the validated payload is authoritative
+for imported seed values. Discover may explicitly accept or revise those
+values. After Discover exits, the BRD is authoritative. A later hypothesis
+change requires a new validated payload and explicit Discover re-entry.
 
 ### Hard exit gate
 
@@ -60,6 +101,8 @@ Discover exits only when:
 * Scope is bounded and stakeholder ownership is explicit.
 * Core assumptions and constraints are documented and reviewable.
 * Seed artifacts needed for Define are present and internally consistent.
+* Any outcome-hypothesis handoff has passed validation, every imported seed
+  field has an explicit disposition, and its provenance receipt is complete.
 
 ### Output artifacts
 
@@ -67,6 +110,7 @@ Discover exits only when:
 * Stakeholder inventory with role and ownership mapping.
 * Initial assumption and constraint register.
 * Seed requirement and traceability scaffold for Define.
+* Outcome-hypothesis receipt and field dispositions when a handoff was supplied.
 
 ## Define {#define}
 
@@ -113,6 +157,8 @@ Before emitting `BRD_TO_PRD_HANDOFF_V1`, the BRD Builder applies the coverage an
 * The final `BRD_QUALITY_REPORT_V1` reference, overall status, and Govern decision.
 * Signoff approvers, roles, decisions, approval timestamps, comments, and active waivers.
 * Waiver records for any accepted FR-to-AC threshold gap or FR-to-BG target gap.
+
+After validation succeeds, write the complete YAML payload to `.copilot-tracking/brd-sessions/<brd-name>.handoff.yml`, record that path in BRD session state, and return the path with a compact Govern summary. Do not rely on an inline chat payload as the downstream transport.
 
 ### Hard exit gate
 
@@ -170,7 +216,9 @@ The PRD Builder agent runs a seven-phase lifecycle. Each phase has its own secti
 
 * Determine whether enough product context exists to create PRD artifacts.
 * Identify the initiative, problem statement, and primary target users.
-* Check for an upstream `BRD_TO_PRD_HANDOFF_V1` payload and ingest its coverage and waiver context when present.
+* Check for an upstream `BRD_TO_PRD_HANDOFF_V1` artifact path and ingest its coverage and waiver context when present.
+* Check for an upstream feasibility-to-PRD handoff. Follow [Feasibility-to-PRD Handoff](references/prd/feasibility-to-prd-handoff.md) to recognize it by `kind`, verify required metadata, verdict field presence, and a readable workspace-relative study path. Treat feasibility as supplementary evidence and preserve approved BRD scope.
+* For a new session, carry the handoff kind, path, ingest timestamp, verdict, and study revision identifier in the Assess output until Create writes the state file. When state already exists, update its feasibility-specific metadata object directly. Keep raw candidate content in the handoff artifact.
 * Decide whether to gather more context or proceed to file creation.
 
 ### Hard exit gate
@@ -179,13 +227,15 @@ Assess exits only when:
 
 * A meaningful kebab-case PRD name can be derived.
 * Problem framing and primary users are identified.
-* Any available BRD handoff payload has been validated and its coverage metrics recorded.
+* Any available BRD handoff artifact has been read, its payload validated, and its coverage metrics recorded.
+* Any available feasibility handoff is recognized by `kind`, has readable workspace-relative paths, a valid verdict shape, and normalized metadata ready for Create or persisted in existing state.
 
 ### Output artifacts
 
 * Assess summary noting context sufficiency.
 * Derived working title for the PRD.
 * Ingested handoff context when a BRD handoff payload exists.
+* Feasibility verdict, evidence summary, constraints, gaps, and normalized handoff metadata when a feasibility handoff exists. Negative verdicts create no candidate dispositions.
 
 ## PRD Discover {#prd-discover}
 
@@ -216,6 +266,7 @@ Discover exits only when:
 * Generate the PRD file from [prd-full.md](templates/prd/prd-full.md) and create the session state file once title and context are clear.
 * Populate the skeleton with the established scope, users, and goals.
 * Seed the iterative requirement and metric structure for Build.
+* When Assess produced normalized feasibility metadata, write its fields atomically to the new state file as `feasibilityHandoff`, carrying `kind`, `path`, `ingestedAt`, `verdict`, and `studyRevisionId`. State written before this contract may carry `schemaVersion` instead of `kind`; read it without error and rewrite the object to the current shape on the next feasibility metadata update. Do not persist raw candidate content.
 
 ### Hard exit gate
 
@@ -224,18 +275,24 @@ Create exits only when:
 * The PRD file and state file exist.
 * The skeleton matches the canonical PRD structure.
 * Initial scope and goals are seeded.
+* Any normalized feasibility metadata from Assess is present in the newly created state before Build begins.
 
 ### Output artifacts
 
 * PRD draft skeleton.
 * PRD session state file.
 * Seeded scope and goals sections.
+* Feasibility handoff metadata persisted when supplied.
 
 ## PRD Build {#prd-build}
 
 ### Activities
 
 * Gather detailed functional and non-functional requirements iteratively.
+* When `feasibilityHandoff` is present, read candidate content from its workspace-relative path. Stop if ingestion was reported but metadata is absent or the path is unreadable.
+* Give every forward-verdict feasibility candidate exactly one PRD-owned disposition: `accepted-fr`, `accepted-nfr`, `accepted-constraint`, `retained-gap`, `rejected`, or `deferred`. Treat concern hints as advisory evidence only.
+* Allocate final `FR-###`, `NFR-###`, or `CON-###` identifiers only after authoring and accepting the PRD statement. Preserve source handoff ID, source candidate ID, evidence references, disposition, rationale, and resulting PRD ID in the Feasibility Candidate Disposition register.
+* Preserve signed-off BRD authority. Record and explicitly resolve BRD and feasibility conflicts, or retain them as Build gaps when current evidence cannot support a responsible resolution.
 * Author acceptance criteria using [EARS Acceptance](references/prd/ears-acceptance.md) and the [Connextra Template](references/prd/connextra-template.md).
 * Classify non-functional requirements with the [NIST 800-160 NFR taxonomy](references/prd/nist-800-160-nfr.md) and check stories against [INVEST](references/prd/invest.md).
 * Maintain author traceability across requirements, goals, and metrics using [Traceability Naming](references/_shared/traceability-naming.md), [Traceability Matrix](references/_shared/traceability-matrix.md), and [id-schema.md](references/_shared/id-schema.md).
@@ -248,12 +305,14 @@ Build exits only when:
 * Acceptance criteria follow EARS or Given-When-Then form.
 * Non-functional requirements are categorized.
 * Coverage meets the active thresholds or records a blocker.
+* Every forward-verdict feasibility candidate has exactly one disposition row, every accepted row names its final PRD ID, and negative verdicts have no candidate rows.
 
 ### Output artifacts
 
 * Full PRD requirement set.
 * Author-maintained traceability matrix.
 * Acceptance criteria and NFR classifications.
+* Feasibility Candidate Disposition register when a forward feasibility handoff exists.
 
 ## PRD Integrate {#prd-integrate}
 
@@ -351,6 +410,7 @@ The skill bundles reference documents under `references/`, organized into three 
 * [invest.md](references/prd/invest.md) - INVEST quality criteria for user stories.
 * [connextra-template.md](references/prd/connextra-template.md) - Connextra user-story template.
 * [prd-quality-formats.md](references/prd/prd-quality-formats.md) - Producer and consumer map for the PRD data contracts.
+* [feasibility-to-prd-handoff.md](references/prd/feasibility-to-prd-handoff.md) - Consumer rules for feasibility Assess ingestion, Create persistence, Build disposition, BRD coexistence, and source traceability.
 
 ## Templates
 
@@ -364,7 +424,7 @@ Templates under `templates/` are selected by the document frontmatter and canoni
 
 ## Data Contracts
 
-Versioned payload contracts govern quality assessment and downstream handoff for each document type. Each `schema_version` is a fixed identifier; consumers fail fast on any other value, so the constants MUST NOT change.
+Payload contracts govern quality assessment and downstream handoff for each document type. The quality and BRD handoff payloads carry a fixed `schema_version`; consumers fail fast on any other value, so those constants MUST NOT change. The feasibility-to-PRD handoff instead carries a plain `kind` marker, because its producer and consumer ship together and no version negotiation applies.
 
 BRD data contracts:
 
@@ -381,7 +441,14 @@ PRD data contracts:
 | Standard findings | `PRD_STANDARD_FINDINGS_V1` | [prd-standard-findings-v1.md](references/prd/prd-standard-findings-v1.md) |
 | Quality report    | `PRD_QUALITY_REPORT_V1`    | [prd-quality-report-v1.md](references/prd/prd-quality-report-v1.md)       |
 
-The PRD lifecycle consumes `BRD_TO_PRD_HANDOFF_V1` as an upstream input during Assess.
+Upstream PRD input contracts:
+
+| Contract                   | Identifier                              | Reference                                                                     |
+|----------------------------|-----------------------------------------|-------------------------------------------------------------------------------|
+| BRD-to-PRD handoff         | `schema_version: BRD_TO_PRD_HANDOFF_V1` | [brd-to-prd-handoff-v1.md](references/brd/brd-to-prd-handoff-v1.md)           |
+| Feasibility-to-PRD handoff | `kind: feasibility-to-prd-handoff`      | [feasibility-to-prd-handoff.md](references/prd/feasibility-to-prd-handoff.md) |
+
+The PRD lifecycle consumes both upstream contracts during Assess. BRD input supplies approved business context, coverage, and waivers. Feasibility input supplies a confirmed verdict, evidence, constraints, gaps, and candidate proposals for PRD Build. Neither contract bypasses PRD authoring.
 
 ## Mandatory Load Directives
 
@@ -416,5 +483,3 @@ The bundled reference bodies cite third-party standards and frameworks by name a
 ## License
 
 This skill is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-
-

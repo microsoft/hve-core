@@ -2,7 +2,7 @@
 title: Governance
 description: Project governance model, roles, decision-making processes, and contribution authority for HVE Core
 author: HVE Core Team
-ms.date: 2026-05-13
+ms.date: 2026-08-31
 ms.topic: reference
 keywords:
   - governance
@@ -182,7 +182,7 @@ Reopening rules:
 
 ### Discussions
 
-The same 60-day warning and 14-day closure thresholds apply to GitHub Discussions in principle. The same exemptions that prevent automatic closure for issues (pinned, security, do-not-close, or assigned to a milestone) and the same reopening behavior (reopening clears any stale status and resets the inactivity clock) apply to Discussions. Because current automation tooling (actions/stale) does not support Discussions, enforcement is manual through periodic triage until dedicated tooling is implemented.
+The same 60-day warning and 14-day closure thresholds apply to GitHub Discussions in principle. The same exemptions that prevent automatic closure for issues (pinned, security, do-not-close, or assigned to a milestone) and the same reopening behavior (reopening clears any stale status and resets the inactivity clock) apply to Discussions. No automated tooling currently enforces these thresholds for issues or Discussions; enforcement is manual through periodic triage until dedicated tooling is implemented.
 
 ## Access Continuity
 

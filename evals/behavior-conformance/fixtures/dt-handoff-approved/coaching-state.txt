@@ -1,0 +1,41 @@
+project:
+  name: "Synthetic Handoff"
+  slug: "synthetic-handoff"
+  created: "2026-09-10"
+  initial_request: "Validate a synthetic maintenance workflow before production planning."
+  initial_classification: "frozen"
+
+current:
+  method: 7
+  space: "implementation"
+  phase: "implementation exit"
+  disclaimerShownAt: "2026-09-10T00:00:00Z"
+
+methods_completed:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+
+transition_log:
+  - from_method: 6
+    to_method: 7
+    rationale: "Validated concept advanced to high-fidelity prototype work."
+    date: "2026-09-10"
+
+hint_calibration:
+  level: 1
+  pattern_notes: ""
+
+session_log:
+  - date: "2026-09-10"
+    method: 7
+    summary: "The team explicitly chose the lateral handoff to rpi-research."
+
+artifacts:
+  - path: ".copilot-tracking/dt/synthetic-handoff/method-07-implementation-evidence.md"
+    method: 7
+    type: "implementation-evidence"

@@ -1,9 +1,9 @@
 ---
 title: 'DT Review Context'
-description: Criteria augmenting Task Reviewer behavior when evaluating Design Thinking artifacts for coaching quality and method fidelity.
+description: Criteria augmenting rpi-review when evaluating Design Thinking artifacts for coaching quality and method fidelity.
 ---
 
-When Task Reviewer (see `docs/rpi/task-reviewer.md`) operates on DT artifacts, these criteria augment standard review behavior. The review question shifts from "does the code work?" to "does the artifact serve the Design Thinking process?" Evaluate coaching quality, method fidelity, and stakeholder coverage alongside structural correctness.
+When `rpi-review` evaluates DT-origin work, these criteria augment the standard review workflow. The review phase receives DT context through `rpi-research`, `rpi-plan`, and `rpi-implement`, not through a direct DT exit. The review question shifts from "does the code work?" to "does the artifact serve the Design Thinking process?" Evaluate coaching quality, method fidelity, and stakeholder coverage alongside structural correctness.
 
 ## Review Criteria Adjustments
 
@@ -23,7 +23,7 @@ When Task Reviewer (see `docs/rpi/task-reviewer.md`) operates on DT artifacts, t
 | Method instructions      | Correct space assignment; exit signals defined; coaching hat triggers; non-linear iteration support                    |
 | Deep instructions        | Advanced techniques beyond base method; domain expertise depth; fidelity appropriate to space                          |
 | Industry context         | Domain vocabulary mapping; industry-specific constraints; stakeholder archetypes; reference scenarios                  |
-| Handoff artifacts        | Confidence markers applied (validated/assumed/unknown/conflicting); exit point and target agent alignment              |
+| Handoff artifacts        | Confidence markers applied (validated/assumed/unknown/conflicting); exit point and target phase alignment              |
 | Agent definitions        | Subagent delegation patterns; handoff labels; core principles aligned with coaching identity                           |
 | Method output artifacts  | Fidelity matches current space; multi-source evidence; stakeholder coverage across identified groups                   |
 | Coaching state artifacts | Session continuity maintained; method progress accurately tracked; recovery points clearly marked; no stale references |
@@ -48,7 +48,7 @@ When reviewing DT artifacts, add these checks to the standard review checklist:
 | Missing stakeholder perspectives                  | Major    | Violates multi-stakeholder requirement                             |
 | Single-source conclusions                         | Major    | Violates multi-source validation rule                              |
 | Skipped method exit signals                       | Critical | Invalidates downstream work; violates method sequencing            |
-| Confidence markers missing from handoff artifacts | Major    | Downstream agents cannot assess artifact reliability               |
+| Confidence markers missing from handoff artifacts | Major    | Downstream RPI phases cannot assess artifact reliability           |
 | Unresolved conflicting markers passed downstream  | Critical | Invalidates downstream work; violates handoff contract reliability |
 
 ## Severity Mapping

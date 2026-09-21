@@ -1,66 +1,79 @@
 ---
 name: rpi-implement
-description: Execute approved implementation phases, update tracking artifacts, and hand off review-ready results.
-argument-hint: "[plan=...] [phaseStop] [stepStop]"
+description: "Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume."
+argument-hint: "[plan=...] [phase=...] [task=...]"
 license: MIT
 user-invocable: true
 ---
 
-# Task Implementor
-
-Follow the shared conventions in `copilot-tracking.instructions.md`.
+# RPI Implement
 
 ## Goal
 
-Execute an approved implementation plan with phase-by-phase tracking, validation evidence, and review-ready handoff.
+Deliver the approved outcome by following the current task-centered plan. Keep the plan current as new information comes to light, check off work as it completes, and keep a condensed changes log of the behavioral and functional changes made, so the caller can trust what was done and what remains.
 
-## What to do
+## Flow
 
-1. Discover the implementation plan by priority: use the explicit `plan` input when provided; otherwise inspect the currently open file for plan content, extract a plan reference from an open changes log, or select the most recent file in `.copilot-tracking/plans/`.
-2. Discover the details, research, and current tracking files from `.copilot-tracking/plans/**`, `.copilot-tracking/details/**`, and `.copilot-tracking/changes/**`.
-3. Prefer `Phase Implementor` via `runSubagent` or `task`; use `Implementation Validator` when the phase plan includes `Validation:` or `required`, when blockers or deviations appear, or when review evidence is requested. Use `Researcher Subagent` as the fallback for missing context.
-4. If `runSubagent` or `task` is unavailable, perform the equivalent work inline and record the result; do not dead-stop solely because dispatch tooling is missing.
-5. Derive the canonical task slug as `lower-kebab-case(primary task/target) + '-' + YYYY-MM-DD + '-' + <phase>`; when the plan is provided as request text rather than a file, derive the slug from the plan title or the user request summary and keep the same tokens.
-6. When `phaseStop` is true, pause after each completed phase and present progress before continuing; when `stepStop` is true, pause after each completed step within a phase and present progress before continuing.
-7. When execution pauses or stops, summarize completed phases and steps, blockers or clarification requests, and the next resumption point.
-8. Continue from the next unchecked phase when work resumes, update the implementation plan checklist, changes log, and planning log after each completed phase or bounded step, and stop when dependencies or blockers require user clarification.
-9. Return a brief status summary with the next review command and the tracked files.
+1. Resolve the exact plan at `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md` and the declared invocation scope: the full plan, one `Pxx` phase, or one `Pxx-Txx` task. Read each in-scope task's `Goals:`, `Requirements:`, `Details:`, `Guidance:` when present, `References:`, and `Dependencies:` blocks, follow the linked references, and check the plan's decision and risk tables for rows that name the task. The declared scope limits completion claims and active work.
+2. Create or continue `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` using [templates/changes-log.md](templates/changes-log.md). Record each completed item under a descriptive heading tied to its plan marker, describing the behavior or functionality that changed rather than the edits made.
+3. Before substantive source edits, bring the plan checklist, changes record, and any related state tracking artifacts current, then send the implementation opening defined in [references/implementation.md](references/implementation.md).
+4. Start with the first unchecked dependency-ready plan item in declared scope and work through eligible items in plan order. When a task's `Requirements:` hold and its changes-record entry exists, check the `Pxx-Txx` marker immediately. Check a `Pxx` phase only when it is in scope and every task in it is checked. Do not check markers outside declared scope.
+5. When new information comes to light, classify it using [references/implementation.md](references/implementation.md): ordinary local judgment, an immediately relevant plan update that preserves approved intent, follow-up-only work outside the active plan, or a material discovery that needs a user decision or planning reconsideration.
+   * When completed work creates something a later task needs that the plan does not already name, such as a class, API, contract, utility, fixture, or path, add a `Guidance:` block immediately after that task's `Details:` with the concrete pointer. This needs no user decision.
+   * Keep the Phase Checklist diagrams current when a plan update adds, merges, splits, or removes phases or tasks.
+6. Ask for the smallest decision-critical user input only when available evidence cannot support a responsible user-owned decision. Persist the result in the plan and the changes record. If the accepted plan must change, pause only affected dependent work and return the current evidence to planning. The confirmed user decision remains authoritative; do not run another critique.
+7. Run the checks the task's `Requirements:` or `Details:` name and record each result in the changes record as passed, failed, skipped, or unavailable with its reason. Validation alone does not resume paused dependent work.
+8. When declared scope finishes, bring the changes record, blockers, completion markers, remaining work, and validation state current. Report active plan markers outside the scope as remaining work. Report full-plan completion only when the full plan was declared and every marker has completion evidence.
+9. Before handing a full-plan or review-ready scope to Review, reconcile plan markers and task-local context, completed-work entries, handoff prose, blockers, remaining work, follow-up items, and validation state.
+10. Return the current implementation result to the caller using the return contract below.
 
 ## Inputs
 
-* `plan` (optional): path to the approved implementation plan; when omitted, discover it using the priority order in step 1 of What to do.
-* `phaseStop` (optional, default `false`): when `true`, pause after each completed phase and present progress before continuing.
-* `stepStop` (optional, default `false`): when `true`, pause after each completed step within a phase and present progress before continuing.
+* Approved plan path or task context
+* Optional declared scope: full plan, exact `Pxx` phase, or exact `Pxx-Txx` task
+* Task-local plan context, supplied evidence, latest critique disposition, and prior changes record when available
 
 ## Success criteria
 
-* The plan and details are available before implementation starts.
-* The implementation plan is discovered using the priority order of explicit `plan` input, open file, open changes log, or the most recent plan under `.copilot-tracking/plans/`.
-* The implementation plan checklist, changes log, and planning log are updated after each phase or bounded step and remain review-ready.
-* Optional `phaseStop` and `stepStop` pause controls are honored, and pause summaries capture completed phases and steps, blockers or clarifications, and the next resumption point.
-* `Phase Implementor`, `Researcher Subagent`, and `Implementation Validator` use `runSubagent` or `task` when available; if they are not available, the work is performed inline and recorded.
-* Validation evidence is captured when the phase plan says `Validation:` or `required`, or when blockers, deviations, or review evidence are present.
-* Planned validation, linting, and testing checks have completed before handoff, or skipped checks are recorded with the reason.
-* The canonical task slug and phase tokens are applied consistently across the handoff and changes log.
-* The next review command is `/rpi-review`.
+* The implementation follows the approved plan or records a material discovery and its current state explicitly.
+* The first unchecked dependency-ready item in declared scope starts first, and later dependent work does not bypass plan order.
+* Completed `Pxx-Txx` tasks are checked immediately after their changes-record entry exists. A `Pxx` phase is checked immediately after every task in that in-scope phase is checked.
+* A bounded `Pxx` or `Pxx-Txx` result confirms only its declared scope and reports remaining active-plan markers without claiming full-plan completion.
+* Each changes-record entry is a condensed description of the behavior or functionality that changed, tied to its plan marker, with affected files and validation. Entries use descriptive headings, with no second per-entry identity scheme.
+* New information is classified as local judgment, immediately relevant plan update, follow-up-only work, or material decision, with the record required by the reference.
+* A later task that depends on something earlier work created receives a `Guidance:` block naming it when the plan did not already do so.
+* Affected dependent work resumes after the significant or divergent user decision is reflected in the current plan. The task's critique is not repeated.
+* Every check the plan names has a recorded result or an explicit skip reason.
+* A later invocation may implement applicable Review findings as ordinary work without a correction run type or mandatory second Review.
+* Plan markers and task-local context, changes entries, handoff prose, blockers, remaining work, follow-up items, and validation state are reconciled before Review.
+* The caller receives the current execution status, evidence paths, current plan state, validation coverage, blockers, remaining work, and follow-up items.
 
 ## Constraints
 
-* Do not expand scope beyond the approved phase.
-* Use [references/implementation.md](references/implementation.md) for the detailed protocol, subagent contracts, dependency rules, and template guidance.
-* Keep `.copilot-tracking/` paths and other internal planning, research, or implementation artifact references out of produced code, code comments, documentation strings, and commit messages; see [references/implementation.md](references/implementation.md) for the comment-reference rule.
-* Stop when required artifacts or subagent dispatch are unavailable.
+* Use [references/implementation.md](references/implementation.md) for the changes-record contract, plan-update rules, material-discovery handling, questions, resumption, and rendered conversation mechanics.
+* Do not expand active scope. Place unrelated work in an explicit follow-up item.
+* Do not use line numbers or separate legacy log artifacts.
+* In the plan and changes record, wrap code, commands, and symbols in backticks and link existing files and folders with the workspace-relative path as the link text and a path relative to the artifact file as the destination. Keep a not-yet-created path in backticks.
+* Keep `.copilot-tracking/` references out of production code, code comments, documentation strings, and commit messages.
+
+## Conversation guidance
+
+* Follow the detailed opening, continual-update, pre-question, and closeout protocol in [references/implementation.md](references/implementation.md). That reference is the authority for the rendered message templates.
+* Persist canonical state before the opening, any material update, decision question, handoff, or closeout. Chat is a concise projection of that state, never a second history or delivery log.
+* At closeout, report implementation execution status separately from review readiness. Qualify every status by the declared scope and list remaining active-plan markers so bounded completion is not mistaken for task completion.
+* Advise `/compact` only when stale tool output, superseded reasoning, or completed task detail outweighs useful current context and the plan and changes record are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
+* In a standalone invocation, do not invoke `rpi-review`. State `/rpi-review` only when review prerequisites are met. In an active confirmed automatic RPI Agent context, return current artifacts and scope facts to the parent for eligible continuation.
+* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
 
 ## Stop rules
 
-* Stop if the plan or details file is missing or invalid.
-* Stop if a genuine blocker prevents the current phase from proceeding, even when subagent dispatch is unavailable.
-* For a bounded run such as one phase or one step, stop after that phase or step, update the changes log and planning log, capture validation evidence when available, and hand off the current status with blockers or follow-on work and the next review command; do not require all phases to complete before a bounded handoff.
-* Stop if validation finds blocking Critical or High issues that must be resolved before review handoff.
+* Stop as Blocked when the approved plan, required details, or a dependency prevents credible progress.
+* Stop as Blocked when a decision-critical user answer needed for a major plan change, blocker, or workaround is unavailable.
+* Pause affected dependent work only when a significant or divergent decision changes assessed requirements, scope, architecture, dependency model, or evidence boundary. Return current artifacts to planning when needed, preserve the existing critique as historical evidence, and resume after the user decision and plan state are current.
+* Stop after a caller-bounded `Pxx` phase or `Pxx-Txx` task once its declared-scope plan state and changes evidence are current. Do not require or imply completion of work outside that scope.
 
-## Handoff
+## Return to Caller
 
-* End with a brief bullet list of phase status, files changed, validation status, and the next review command.
-* Name `/rpi-review` as the next review command when review evidence is requested.
+Return the changes-record path, implementation execution status, completed and remaining `Pxx` or `Pxx-Txx` items, validation coverage, blockers, current plan updates, follow-up items, and review readiness or the explicit reason affected work awaits a user decision. Follow the Conversation guidance section for standalone or parent-orchestrated continuation, conditional compaction advice, the linked artifact table, and final next steps.
 
 

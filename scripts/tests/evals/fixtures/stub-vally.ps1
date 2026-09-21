@@ -2,16 +2,18 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
-# Stub vally CLI for unit tests covering Invoke-VallyEvals.ps1.
+# Stub vally CLI for unit tests covering Vally eval and compare drivers.
 #
-# Honors the `eval` subcommand and writes a deterministic results.jsonl under
-# a timestamped run directory beneath --output-dir. Behavior is driven by
+# Honors the `eval` and `compare` subcommands. Eval writes deterministic
+# results.jsonl under a timestamped run directory beneath --output-dir. Compare
+# writes deterministic comparison JSONL to --output. Behavior is driven by
 # environment variables so a single fixture script can model pass/fail/mixed
 # scenarios:
 #
 #   STUB_VALLY_MODE            Default mode for any spec ('pass' when unset).
 #   STUB_VALLY_MODES_JSON      Optional JSON object mapping spec basenames to
 #                              modes; overrides STUB_VALLY_MODE per-spec.
+#   STUB_VALLY_COMPARE_MODE    Compare mode: pass or fail-empty.
 #
 # Supported modes:
 #   pass   - two passing trials, exit 0
@@ -23,15 +25,55 @@
 #   empty  - no trials emitted, exit 0
 #   errored - two trials with no gradeResult (executor errored before grading), exit 1
 #   crash  - prints an error and exits 99 (does not write results.jsonl)
+#   chatty-pass / chatty-fail - emit private stdout/stderr, then invocation-pass or exit 99
+#   executor-error - typed error with a null trajectory and a synthetic sensitive message
+#   executor-error-unknown - typed null-trajectory error with an uncategorized message
 #   per-stim - emits one trial per entry of STUB_VALLY_STIM_RESULTS_JSON
 #              (JSON object {stimulusName: passedBool}); exit 1 only when
 #              any record failed AND STUB_VALLY_FAIL_ON_ANY=1.
+#   graded-nonzero - one trial carrying named grader details for the stimulus in
+#              STUB_VALLY_GRADED_STIMULUS, with the graders named in
+#              STUB_VALLY_GRADED_PASSING all passing, then exits 1. Models a real
+#              run where every declared grader passed but some other grader on
+#              some other trial failed, which is how `vally eval` reports a
+#              nonzero exit on an otherwise usable run.
 
 # Note: $args is the automatic parameter variable when no param block exists.
 
-if ($args.Count -eq 0 -or $args[0] -ne 'eval') {
-    Write-Error "stub-vally: only the 'eval' subcommand is supported."
+if ($args.Count -eq 0 -or $args[0] -notin @('eval', 'compare')) {
+    Write-Error "stub-vally: only the 'eval' and 'compare' subcommands are supported."
     exit 64
+}
+
+if ($env:STUB_VALLY_CALL_LOG) {
+    Add-Content -LiteralPath $env:STUB_VALLY_CALL_LOG -Value (, $args | ConvertTo-Json -Compress) -Encoding utf8
+}
+
+if ($args[0] -eq 'compare') {
+    $outputPath = $null
+    for ($i = 1; $i -lt $args.Count; $i++) {
+        if ($args[$i] -eq '--output') { $outputPath = $args[++$i] }
+    }
+    if (-not $outputPath) {
+        Write-Error "stub-vally: compare requires --output."
+        exit 65
+    }
+
+    if ($env:STUB_VALLY_COMPARE_MODE -eq 'fail-empty') {
+        [System.IO.File]::WriteAllText($outputPath, '')
+        exit 1
+    }
+
+    $comparison = [ordered]@{
+        type    = 'comparison'
+        stimuli = @([ordered]@{
+                stimulusName = 'stim-1'
+                trials       = @([ordered]@{ winner = 'tie'; errored = $false })
+            })
+        summary = [ordered]@{ meanScore = 0.0; ciLow = -0.2; ciHigh = 0.2; winRate = 0.0 }
+    }
+    Set-Content -LiteralPath $outputPath -Value ($comparison | ConvertTo-Json -Depth 10 -Compress) -Encoding utf8NoBOM
+    exit 0
 }
 
 # Optional argv capture: when STUB_VALLY_ARGV_OUT is set, record the full
@@ -43,11 +85,12 @@ if ($env:STUB_VALLY_ARGV_OUT) {
 
 $specPath  = $null
 $outputDir = $null
+$model = ''
 for ($i = 1; $i -lt $args.Count; $i++) {
     switch ($args[$i]) {
         '--eval-spec'  { $specPath  = $args[++$i] }
         '--output-dir' { $outputDir = $args[++$i] }
-        '--model'      { $null = $args[++$i] }
+        '--model'      { $model = [string]$args[++$i] }
         default        { }
     }
 }
@@ -70,7 +113,21 @@ if ($env:STUB_VALLY_MODES_JSON) {
     }
 }
 
-$mode = if ($specBase -and $modes.ContainsKey($specBase)) {
+$variant = if (($specPath -replace '\\', '/') -match '/customized/') { 'customized' } else { 'baseline' }
+$mode = if ($variant -eq 'customized' -and $env:STUB_VALLY_CUSTOMIZED_MODES) {
+    $sequence = @(([string]$env:STUB_VALLY_CUSTOMIZED_MODES) -split ',' | Where-Object { $_ })
+    $countPath = [string]$env:STUB_VALLY_CUSTOMIZED_COUNT_PATH
+    $customizedCount = if ($countPath -and (Test-Path -LiteralPath $countPath)) {
+        [int](Get-Content -LiteralPath $countPath -Raw)
+    }
+    else { 0 }
+    if ($countPath) { Set-Content -LiteralPath $countPath -Value ($customizedCount + 1) -Encoding ascii }
+    [string]$sequence[[Math]::Min($customizedCount, $sequence.Count - 1)]
+}
+elseif ($variant -eq 'baseline' -and $env:STUB_VALLY_BASELINE_MODE) {
+    [string]$env:STUB_VALLY_BASELINE_MODE
+}
+elseif ($specBase -and $modes.ContainsKey($specBase)) {
     [string]$modes[$specBase]
 }
 elseif ($env:STUB_VALLY_MODE) {
@@ -80,8 +137,17 @@ else {
     'pass'
 }
 
+if ($mode -in @('chatty-pass', 'chatty-fail')) {
+    Write-Output 'synthetic-private-stdout'
+    Write-Error 'synthetic-private-stderr' -ErrorAction Continue
+    $mode = if ($mode -eq 'chatty-pass') { 'invocation-pass' } else { 'silent-crash' }
+}
+
 if ($mode -eq 'crash') {
     Write-Error "stub-vally: simulated crash"
+    exit 99
+}
+if ($mode -eq 'silent-crash') {
     exit 99
 }
 
@@ -115,6 +181,46 @@ function New-StubRecord {
     return $record
 }
 
+function New-InvocationStubRecord {
+    param(
+        [ValidateSet('pass', 'failed-tool', 'no-exact-read')]
+        [string]$InvocationMode
+    )
+
+    $record = New-StubRecord -Name 'stub-stimulus' -Passed $true -Typed
+    $record['stimulus'] = 'stub-stimulus'
+    $record['model'] = $model
+    $record['trialIndex'] = 0
+    $record.gradeResult['stimulusName'] = 'stub-stimulus'
+    $record.gradeResult.details = @(
+        [ordered]@{ name = 'stub-invariant'; kind = 'code'; passed = $true; score = 1.0 },
+        [ordered]@{ name = 'stub-guard'; kind = 'code'; passed = $true; score = 1.0 }
+    )
+    $record.trajectory['events'] = if ($InvocationMode -eq 'no-exact-read') {
+        @([ordered]@{ type = 'assistant_message'; data = [ordered]@{ status = 'complete' } })
+    }
+    else {
+        @(
+            [ordered]@{
+                type = 'tool_call'
+                data = [ordered]@{
+                    toolCallId = 'stub-agent-read'
+                    arguments = [ordered]@{ path = '.github/agents/hve-core/rpi-agent.agent.md' }
+                }
+            },
+            [ordered]@{
+                type = 'tool_result'
+                data = [ordered]@{
+                    toolCallId = 'stub-agent-read'
+                    success = $InvocationMode -eq 'pass'
+                    result = [ordered]@{ content = $(if ($InvocationMode -eq 'pass') { 'name: RPI Agent' } else { '' }) }
+                }
+            }
+        )
+    }
+    return $record
+}
+
 $records = switch ($mode) {
     'pass'  { @((New-StubRecord -Name 'stim-1' -Passed $true),  (New-StubRecord -Name 'stim-2' -Passed $true)) }
     'typed-pass' {
@@ -140,6 +246,30 @@ $records = switch ($mode) {
     }
     'mixed' { @((New-StubRecord -Name 'stim-1' -Passed $true),  (New-StubRecord -Name 'stim-2' -Passed $false)) }
     'empty' { @() }
+    'executor-error' {
+        @([ordered]@{
+            type = 'trial-result'
+            stimulus = 'stub-stimulus'
+            model = $model
+            trialIndex = 0
+            status = 'error'
+            error = 'Model is not supported. Authorization: Bearer synthetic-private-token https://example.invalid/?sig=synthetic-private-signature'
+            durationMs = 5
+            trajectory = $null
+        })
+    }
+    'executor-error-unknown' {
+        @([ordered]@{
+            type = 'trial-result'
+            stimulus = 'stub-stimulus'
+            model = $model
+            trialIndex = 0
+            status = 'error'
+            error = 'Unrecognized executor failure'
+            durationMs = 5
+            trajectory = $null
+        })
+    }
     'errored' {
         # Trials whose trajectory errored before grading; no gradeResult is emitted,
         # so the runner classifies them as errored (transient) rather than failed.
@@ -172,6 +302,25 @@ $records = switch ($mode) {
         }
         @($emitted)
     }
+    'graded-nonzero' {
+        if (-not $env:STUB_VALLY_GRADED_STIMULUS) {
+            Write-Error "stub-vally: graded-nonzero mode requires STUB_VALLY_GRADED_STIMULUS."
+            exit 70
+        }
+        $stimulusName = [string]$env:STUB_VALLY_GRADED_STIMULUS
+        $graderNames = @(([string]$env:STUB_VALLY_GRADED_PASSING) -split ',' | Where-Object { $_ })
+        $record = New-StubRecord -Name $stimulusName -Passed $true
+        $record.gradeResult['stimulusName'] = $stimulusName
+        $record.gradeResult['details'] = @(
+            foreach ($grader in $graderNames) {
+                [ordered]@{ name = $grader; kind = 'code'; passed = $true; score = 1.0 }
+            }
+        )
+        @($record)
+    }
+    'invocation-pass' { @((New-InvocationStubRecord -InvocationMode 'pass')) }
+    'invocation-failed-tool' { @((New-InvocationStubRecord -InvocationMode 'failed-tool')) }
+    'invocation-no-exact-read' { @((New-InvocationStubRecord -InvocationMode 'no-exact-read')) }
     default {
         Write-Error "stub-vally: unknown mode '$mode'"
         exit 66
@@ -190,6 +339,9 @@ Set-Content -LiteralPath (Join-Path $runDir 'eval-results.md') -Value "# stub ev
 if ($mode -eq 'fail') { exit 1 }
 if ($mode -eq 'fail-noname') { exit 1 }
 if ($mode -eq 'errored') { exit 1 }
+if ($mode -eq 'executor-error') { exit 1 }
+if ($mode -eq 'executor-error-unknown') { exit 1 }
+if ($mode -eq 'graded-nonzero') { exit 1 }
 if ($mode -eq 'per-stim' -and $env:STUB_VALLY_FAIL_ON_ANY -eq '1') {
     foreach ($r in $records) {
         if (-not $r.gradeResult.passed) { exit 1 }

@@ -1,31 +1,67 @@
 ---
 title: rpi-implement
-description: "Execute approved implementation phases, update tracking artifacts, and hand off review-ready results."
-sidebar_position: 1
-ms.date: 2026-07-03
+description: "Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume."
+sidebar_position: 2
+author: Microsoft
+ms.date: 2026-09-11
+ms.topic: reference
+keywords:
+  - skill
+  - rpi
+  - rpi-implement
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                  |
-|-------------|----------------------------------------|
-| Kind        | skill                                  |
-| Source      | `.github/skills/rpi/rpi-implement`     |
-| Invocation  | Loaded on demand by referencing agents |
-| Interactive | No                                     |
+| Field       | Value                                                                           |
+|-------------|---------------------------------------------------------------------------------|
+| Kind        | skill                                                                           |
+| Source      | `.github/skills/rpi/rpi-implement`                                              |
+| Invocation  | Invoked directly as `/rpi-implement`, or loaded on demand by referencing agents |
+| Interactive | No                                                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Execute approved implementation phases, update tracking artifacts, and hand off review-ready results.
+Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use `rpi-implement` to work through an approved plan. Declare the scope as the full plan, one `Pxx` phase, or one `Pxx-Txx` task; the skill starts at the first unchecked dependency-ready item in that scope and works in plan order. It checks each `Pxx-Txx` marker as soon as its `Requirements:` hold, runs the checks the plan names, and keeps a condensed changes log in `.copilot-tracking/changes/` that describes the behavior or functionality each completed item changed rather than the edits made.
+
+Implementation also keeps the plan current. It may clarify task wording or references, add a `Guidance:` block to a later task when earlier work created something that task needs, record out-of-scope work under `## Follow-Up Items`, and pause only affected dependent work when a discovery requires a new user decision. The original critique is not repeated.
+
+Reach for a different asset when:
+
+* No approved plan exists. Run [rpi-plan](rpi-plan) first; do not implement from research alone.
+* The implementation is finished and needs acceptance. Run [rpi-review](rpi-review).
+* The change is small and isolated. Edit directly instead of creating lifecycle artifacts.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Run one bounded task:
+
+```text
+/rpi-implement plan=.copilot-tracking/plans/2026-09-04/blob-storage-plan.md task=P01-T01
+```
+
+The skill sends one `RPI Implement` opening with the scope, write boundary, and planned validation, then reports material results as they land. A bounded closeout confirms only its scope:
+
+```text
+* Implementation execution: Complete for P01-T01
+* Completed markers: P01-T01; remaining active-plan markers: P01-T02, P02-T01, P03-T01
+* Validation: `npm run test:py -- tests/storage` passed
+* Plan updates: added `Guidance:` to P02-T01 pointing at `BlobStorageClient.upload_stream`
+* Review readiness: not ready; P01-T02 and later phases remain
+
+| Artifact                                                                                                                     | Description    |
+|------------------------------------------------------------------------------------------------------------------------------|----------------|
+| [.copilot-tracking/changes/2026-09-04/blob-storage-changes.md](.copilot-tracking/changes/2026-09-04/blob-storage-changes.md) | Changes record |
+
+## Next Steps
+
+Run `/rpi-implement plan=... task=P01-T02`, or omit `task` to complete the rest of the plan.
+```
+
+A later invocation can implement accepted `RV-xxx` findings from a review as ordinary work; no second review is required.

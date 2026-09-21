@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { waitForHydration } from './_helpers/a11yInvariants';
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
@@ -12,6 +13,9 @@ test.use({ viewport: { width: 390, height: 844 } });
 test.describe('Mobile navigation menu', () => {
   test('toggle opens the sidebar and the opened state passes an axe scan', async ({ page }) => {
     await page.goto('/hve-core/docs/getting-started/');
+    // The toggle opens the sidebar through a React handler, so the click must
+    // wait for hydration or it lands on inert server-rendered markup.
+    await waitForHydration(page);
 
     const toggle = page.locator('.navbar__toggle');
     await expect(toggle).toBeVisible();

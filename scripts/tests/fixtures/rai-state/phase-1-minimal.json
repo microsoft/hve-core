@@ -3,6 +3,8 @@
   "raiPlanFile": ".copilot-tracking/rai-plans/example-project/rai-plan.md",
   "currentPhase": 1,
   "entryMode": "capture",
+  "preflight": { "templates": [], "assessmentContentFile": null },
+  "securityPlanRef": null,
   "assessmentDepth": "standard",
   "standardsMapped": false,
   "securityModelAnalysisStarted": false,

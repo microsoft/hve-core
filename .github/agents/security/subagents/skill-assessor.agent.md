@@ -30,7 +30,7 @@ Assess exactly one security knowledge skill per invocation. Read all vulnerabili
 
 ## Constants
 
-Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`). Follow the skill's normative reference links to access the vulnerability index and individual vulnerability references.
+Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`, `mcsb`). Follow the skill's normative reference links to access the vulnerability index and individual vulnerability references.
 
 ### Status Values
 
@@ -141,8 +141,8 @@ Make all guidance specific to the plan content rather than generic boilerplate.
 ### Step 1: Gather All Vulnerability References
 
 1. Read the located skill entry file and capture framework metadata (name, version, reference URL).
-2. Follow the entry file's normative reference links to read the vulnerability index (`references/00-vulnerability-index.md`) and extract the full list of vulnerability IDs.
-3. For each vulnerability ID in the index, read the corresponding reference file from the skill's `references/` directory and store its full content.
+2. Follow the entry file's normative reference links to read the skill's index file (for example `references/00-vulnerability-index.md` for vulnerability skills, `references/00-principle-index.md` for principle skills, or `references/00-control-index.md` for control or benchmark skills such as `mcsb`) and extract the full list of assessable items (vulnerability identifiers, principle identifiers, or control-domain identifiers). For benchmark skills, the control-domain identifiers in the index are the assessable grain; finer per-service control identifiers are volatile and retrieved separately per the skill's lookup playbook.
+3. For each item in the index, read the corresponding reference file from the skill's `references/` directory and store its full content.
 4. Do not proceed to Step 2 until every reference file has been read and stored.
 
 ### Step 2: Analyze Against References

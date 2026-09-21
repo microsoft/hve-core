@@ -52,9 +52,24 @@ function Get-StimulusBacklink {
     $results = [System.Collections.Generic.List[hashtable]]::new()
     foreach ($kind in $script:BacklinkKinds) {
         if (-not $tags.Contains($kind)) { continue }
-        $slug = [string]$tags[$kind]
-        if ([string]::IsNullOrWhiteSpace($slug)) { continue }
-        $results.Add(@{ kind = $kind; slug = $slug.Trim() })
+        # A backlink tag is either a scalar slug or a YAML list of slugs. Casting a
+        # parsed list with [string] joins its elements with a space, which produced a
+        # single compound slug such as 'documentation rpi-agent'. That value then
+        # propagated into artifact IDs, --tag filters, output paths, and -Agent
+        # arguments, so a real multi-agent stimulus resolved to an agent that does not
+        # exist. Enumerate instead, so each declared slug becomes its own record.
+        $rawValue = $tags[$kind]
+        $values = if ($rawValue -is [System.Collections.IEnumerable] -and -not ($rawValue -is [string])) {
+            @($rawValue)
+        }
+        else {
+            @($rawValue)
+        }
+        foreach ($value in $values) {
+            $slug = [string]$value
+            if ([string]::IsNullOrWhiteSpace($slug)) { continue }
+            $results.Add(@{ kind = $kind; slug = $slug.Trim() })
+        }
     }
 
     return ,$results.ToArray()

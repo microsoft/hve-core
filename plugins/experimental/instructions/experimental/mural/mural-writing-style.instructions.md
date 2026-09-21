@@ -1,1 +1,0 @@
-../../../../../.github/instructions/experimental/mural/mural-writing-style.instructions.md

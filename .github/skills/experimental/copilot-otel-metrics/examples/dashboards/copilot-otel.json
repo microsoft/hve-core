@@ -1,0 +1,824 @@
+{
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "tempo",
+      "name": "Tempo",
+      "version": "1.0.0"
+    }
+  ],
+  "description": "Local GitHub Copilot telemetry. Requires a Prometheus datasource with uid 'prometheus' and a Tempo datasource with uid 'tempo', both pre-provisioned by the grafana/otel-lgtm image. Minimum Grafana 10.0 for schemaVersion 39 and TraceQL metrics queries. Metric names are a snapshot of one extension build; enumerate your own store before trusting a panel that renders empty.",
+  "title": "GitHub Copilot - Agent Telemetry",
+  "uid": "copilot-otel",
+  "tags": [
+    "copilot",
+    "opentelemetry",
+    "genai"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "model",
+        "label": "Model",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": "label_values(gen_ai_client_token_usage_sum, gen_ai_request_model)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Usage",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Token usage rate by model",
+      "description": "gen_ai.client.token.usage is a histogram; the _sum series carries total tokens. Split by token type (input/output).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_request_model, gen_ai_token_type) (rate(gen_ai_client_token_usage_sum{gen_ai_request_model=~\"$model\"}[5m]))",
+          "legendFormat": "{{gen_ai_request_model}} / {{gen_ai_token_type}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Total tokens (range)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_token_type) (increase(gen_ai_client_token_usage_sum{gen_ai_request_model=~\"$model\"}[$__range]))",
+          "legendFormat": "{{gen_ai_token_type}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Chat sessions started",
+      "description": "copilot_chat.session.count translated to a Prometheus counter.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(copilot_chat_session_count_total[$__range]))",
+          "legendFormat": "sessions"
+        }
+      ]
+    },
+    {
+      "id": 60,
+      "type": "row",
+      "title": "Token economics",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      }
+    },
+    {
+      "id": 61,
+      "type": "timeseries",
+      "title": "Input tokens by agent",
+      "description": "Token metrics carry no agent label, so this comes from spans via TraceQL metrics. The invoke_agent span holds both the token counts and copilot_chat.mode_name, which is your selected custom agent such as RPI Agent. Input and output are separate panels because the Tempo datasource names every series after its own label, so two queries in one panel produce two identically named lines.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "{name=~\"invoke_agent.*\"} | sum_over_time(span.gen_ai.usage.input_tokens) by (span.copilot_chat.mode_name)"
+        }
+      ]
+    },
+    {
+      "id": 64,
+      "type": "timeseries",
+      "title": "Output tokens by agent",
+      "description": "Output tokens run roughly 400 times smaller than input in an agentic workload, which is why they get their own panel rather than being flattened against the input axis.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 8,
+        "y": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "{name=~\"invoke_agent.*\"} | sum_over_time(span.gen_ai.usage.output_tokens) by (span.copilot_chat.mode_name)"
+        }
+      ]
+    },
+    {
+      "id": 62,
+      "type": "stat",
+      "title": "Total tokens: hour / week / month",
+      "description": "Rolling totals from the metric counter. Prometheus retention is set to 120d in compose.yaml, above the 15d default, so the monthly figure is real rather than truncated. Figures only cover the period since this stack started collecting.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "textMode": "value_and_name",
+        "orientation": "vertical"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(gen_ai_client_token_usage_sum[1h]))",
+          "legendFormat": "last hour",
+          "instant": true
+        },
+        {
+          "refId": "B",
+          "expr": "sum(increase(gen_ai_client_token_usage_sum[7d]))",
+          "legendFormat": "last 7 days",
+          "instant": true
+        },
+        {
+          "refId": "C",
+          "expr": "sum(increase(gen_ai_client_token_usage_sum[30d]))",
+          "legendFormat": "last 30 days",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 63,
+      "type": "timeseries",
+      "title": "Cache-read input tokens",
+      "description": "Cache-read tokens are billed differently from fresh input. Compare this against the Input tokens panel to the left: in a measured session 23.2M of 24.1M input tokens were cache reads, a 96.5 percent hit rate, leaving only 122 tokens of genuinely fresh input. This ratio is usually the largest single cost lever in an agent workload. Span-only, so this is a TraceQL metrics query.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "{name=~\"invoke_agent.*\"} | sum_over_time(span.gen_ai.usage.cache_read.input_tokens)"
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "type": "row",
+      "title": "Agent",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      }
+    },
+    {
+      "id": 51,
+      "type": "stat",
+      "title": "Agent invocations",
+      "description": "copilot_chat.agent.invocation.duration count, split by gen_ai_agent_name. This is the agent surface (for example GitHub Copilot Chat), not the custom agent. Custom agent identity is span-only; see the Custom agent panel. max_over_time is used because increase() returns zero when a counter has only one sample in the window.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 19
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_agent_name) (max_over_time(copilot_chat_agent_invocation_duration_count[$__range]))",
+          "legendFormat": "{{gen_ai_agent_name}}"
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "type": "stat",
+      "title": "Mean turns per invocation",
+      "description": "copilot_chat.agent.turn.count. A high value means the agent looped many times through the model before finishing.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 19
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_agent_name) (max_over_time(copilot_chat_agent_turn_count_sum[$__range])) / sum by (gen_ai_agent_name) (max_over_time(copilot_chat_agent_turn_count_count[$__range]))",
+          "legendFormat": "{{gen_ai_agent_name}}"
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "type": "timeseries",
+      "title": "Mean agent invocation duration",
+      "description": "End-to-end duration of a full agent run, in seconds.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_agent_name) (rate(copilot_chat_agent_invocation_duration_sum[45m])) / sum by (gen_ai_agent_name) (rate(copilot_chat_agent_invocation_duration_count[45m]))",
+          "legendFormat": "{{gen_ai_agent_name}}"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Latency",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "LLM call duration p50 / p95 by model",
+      "description": "gen_ai.client.operation.duration. The real emitter sends this without a unit suffix, so the series is _bucket and not _seconds_bucket.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.50, sum by (le, gen_ai_request_model) (rate(gen_ai_client_operation_duration_bucket{gen_ai_request_model=~\"$model\"}[5m])))",
+          "legendFormat": "p50 {{gen_ai_request_model}}"
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.95, sum by (le, gen_ai_request_model) (rate(gen_ai_client_operation_duration_bucket{gen_ai_request_model=~\"$model\"}[5m])))",
+          "legendFormat": "p95 {{gen_ai_request_model}}"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Time to first token, mean by model",
+      "description": "copilot_chat.time_to_first_token in seconds. Mean is used rather than a quantile because the bucket boundaries are coarse at this volume.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_request_model) (rate(copilot_chat_time_to_first_token_sum{gen_ai_request_model=~\"$model\"}[10m])) / sum by (gen_ai_request_model) (rate(copilot_chat_time_to_first_token_count{gen_ai_request_model=~\"$model\"}[10m]))",
+          "legendFormat": "TTFT {{gen_ai_request_model}}"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Tools and agents",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      }
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Tool call rate by tool",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 37
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 10,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_tool_name) (rate(copilot_chat_tool_call_count_total[5m]))",
+          "legendFormat": "{{gen_ai_tool_name}}"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "type": "bargauge",
+      "title": "Top tools (range)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(10, sum by (gen_ai_tool_name) (increase(copilot_chat_tool_call_count_total[$__range])))",
+          "legendFormat": "{{gen_ai_tool_name}}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Streaming and tool latency",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 45
+      }
+    },
+    {
+      "id": 31,
+      "type": "timeseries",
+      "title": "Mean tool call duration by tool",
+      "description": "copilot_chat.tool.call.duration in milliseconds. Long-running tools such as terminal commands dominate here.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 46
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_tool_name) (rate(copilot_chat_tool_call_duration_sum[10m])) / sum by (gen_ai_tool_name) (rate(copilot_chat_tool_call_duration_count[10m]))",
+          "legendFormat": "{{gen_ai_tool_name}}"
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "Streaming: time to first chunk vs per-chunk",
+      "description": "gen_ai.client.operation.time_to_first_chunk and time_per_output_chunk. Together these separate model think-time from streaming throughput.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 46
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (gen_ai_request_model) (rate(gen_ai_client_operation_time_to_first_chunk_sum{gen_ai_request_model=~\"$model\"}[10m])) / sum by (gen_ai_request_model) (rate(gen_ai_client_operation_time_to_first_chunk_count{gen_ai_request_model=~\"$model\"}[10m]))",
+          "legendFormat": "first chunk {{gen_ai_request_model}}"
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (gen_ai_request_model) (rate(gen_ai_client_operation_time_per_output_chunk_sum{gen_ai_request_model=~\"$model\"}[10m])) / sum by (gen_ai_request_model) (rate(gen_ai_client_operation_time_per_output_chunk_count{gen_ai_request_model=~\"$model\"}[10m]))",
+          "legendFormat": "per chunk {{gen_ai_request_model}}"
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "type": "row",
+      "title": "Traces",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 54
+      }
+    },
+    {
+      "id": 54,
+      "type": "table",
+      "title": "Custom agent (chat mode) activity",
+      "description": "copilot_chat.mode_name carries the custom agent you selected, for example RPI Agent, and github.copilot.agent.type reports builtin, custom, or plugin. These are span attributes only, so this is a trace query rather than a metric panel.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 55
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Trace Service": true
+            },
+            "renameByName": {
+              "copilot_chat.mode_name": "Custom agent",
+              "copilot_chat.turn_count": "Turns",
+              "github.copilot.agent.type": "Agent type",
+              "gen_ai.agent.name": "Agent surface"
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "{span.copilot_chat.mode_name != \"\"} | select(span.copilot_chat.mode_name, span.github.copilot.agent.type, span.gen_ai.agent.name, span.copilot_chat.turn_count)",
+          "limit": 20,
+          "tableType": "spans"
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "type": "table",
+      "title": "Recent agent invocations",
+      "description": "A TraceQL search returns a result set, so this is a table. The traces panel type renders a single trace and shows no data for a search. Click a Trace ID to open the span tree. Tempo makes a trace searchable roughly 30 seconds after ingestion.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 64
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "{resource.service.name=\"copilot-chat\"}",
+          "limit": 20,
+          "tableType": "traces"
+        }
+      ]
+    },
+    {
+      "id": 70,
+      "type": "row",
+      "title": "Edit quality and cost",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 74
+      }
+    },
+    {
+      "id": 71,
+      "type": "timeseries",
+      "title": "Edit acceptance decisions",
+      "description": "Accept and reject decisions on agent edits. This is the closest thing to a quality signal the telemetry offers, because it records what you actually kept.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 75
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (copilot_chat_edit_source) (increase(copilot_chat_edit_acceptance_count_total[10m]))",
+          "legendFormat": "{{copilot_chat_edit_source}}"
+        }
+      ]
+    },
+    {
+      "id": 72,
+      "type": "timeseries",
+      "title": "Edit survival score",
+      "description": "How much accepted AI-generated code is still present later. four_gram is text similarity, no_revert is whether the edit was reverted. Both range 0 to 1, and a falling line means edits are being undone after acceptance.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 75
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(max_over_time(copilot_chat_edit_survival_four_gram_sum[$__range])) / sum(max_over_time(copilot_chat_edit_survival_four_gram_count[$__range]))",
+          "legendFormat": "four-gram similarity"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(max_over_time(copilot_chat_edit_survival_no_revert_sum[$__range])) / sum(max_over_time(copilot_chat_edit_survival_no_revert_count[$__range]))",
+          "legendFormat": "no-revert"
+        }
+      ]
+    },
+    {
+      "id": 73,
+      "type": "timeseries",
+      "title": "Premium request units consumed (nano-AIU)",
+      "description": "copilot_chat.copilot_usage_nano_aiu is the billing unit Copilot reports per request, in billionths of an AIU. Divide by 1e9 for AIU. This is the closest available proxy for spend, and it is span-only.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 75
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "{span.copilot_chat.copilot_usage_nano_aiu > 0} | sum_over_time(span.copilot_chat.copilot_usage_nano_aiu) by (span.gen_ai.request.model)"
+        }
+      ]
+    }
+  ]
+}

@@ -2,7 +2,13 @@
 title: Coding Standards/Bicep/Bicep
 description: Bicep infrastructure-as-code authoring conventions
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - coding-standards
+  - coding-standards/bicep/bicep
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,8 +28,10 @@ Bicep infrastructure-as-code authoring conventions
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these instructions when authoring or revising Azure infrastructure in a
+`bicep` directory, including modules, parameter files, types, and outputs.
+Confirm resource schemas and stable API versions before writing unfamiliar
+resources; use the Terraform conventions for HCL-based infrastructure.
 
 ## Example usage
 

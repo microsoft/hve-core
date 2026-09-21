@@ -2,7 +2,13 @@
 title: Privacy Reviewer
 description: "Privacy-focused reviewer orchestrator for assessment planning, evidence review, and report generation"
 sidebar_position: 2
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - privacy
+  - privacy-reviewer
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,15 +28,17 @@ Privacy-focused reviewer orchestrator for assessment planning, evidence review, 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use Privacy Reviewer to check whether a privacy plan covers the data lifecycle, DPIA triggers, controls, and follow-up actions. It can review a PRD or BRD when no privacy plan exists, recording that absence as a gap. Use Privacy Planner for the guided creation of the missing plan.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+1. Select `Privacy Reviewer` and attach a privacy plan or requirements document with the processing activity to examine.
+2. Choose `review` or `plan` mode and state any narrower scope. Without a usable target, the reviewer asks for one before proceeding.
+3. Read the persisted report's Evidence, Gaps, DPIA completeness, Risks, and Next steps sections.
+4. Resolve outstanding questions with the responsible privacy professionals; the summary is not legal approval.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask: "Review `requirements/support.md` for privacy readiness. No privacy plan exists yet. Focus on retention, deletion, and processor relationships, and separate evidence from assumptions."
+
+Expect a requirements-based review that explicitly records the missing privacy plan, identifies DPIA decision gaps, and ranks next actions. Success means the fallback target and missing evidence are clear, not silently treated as a completed privacy assessment.

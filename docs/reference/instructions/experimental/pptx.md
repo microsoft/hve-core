@@ -2,7 +2,13 @@
 title: Experimental/Pptx
 description: "Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill"
 sidebar_position: 3
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - experimental
+  - experimental/pptx
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,8 +28,10 @@ Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these conventions when a PowerPoint Builder workflow creates or updates
+deck artifacts under `.copilot-tracking/ppt/`. They govern YAML-first content,
+template versus source rebuilds, layout, images, and validation; use the
+`powerpoint` skill for executable pipeline and API details.
 
 ## Example usage
 

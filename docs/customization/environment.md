@@ -2,7 +2,7 @@
 title: Environment Customization
 description: Configure DevContainers, VS Code settings, MCP servers, and coding agent environments for your team
 author: Microsoft
-ms.date: 2026-06-30
+ms.date: 2026-09-10
 ms.topic: how-to
 keywords:
   - devcontainer
@@ -27,6 +27,7 @@ The DevContainer ships with these tools:
 * Python 3.11
 * PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
 * Git and GitHub CLI
+* GitHub Copilot CLI (`copilot`)
 * Azure CLI
 * shellcheck for bash validation
 * actionlint for GitHub Actions workflow validation
@@ -42,10 +43,12 @@ To add tools or adjust versions, modify `.devcontainer/devcontainer.json`. The
 {
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "24"
+      "version": "24",
+      "pnpmVersion": "none"
     },
     "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.11"
+      "version": "3.11",
+      "installTools": false
     },
     "ghcr.io/devcontainers/features/powershell:1": {}
   }
@@ -150,9 +153,17 @@ Each entry maps a directory path to `true` to enable scanning:
   },
   "chat.agentSkillsLocations": {
     ".github/skills": true,
-    ".github/skills/shared": true,
+    ".github/skills/accessibility": true,
     ".github/skills/coding-standards": true,
-    ".github/skills/design-thinking": true
+    ".github/skills/data-science": true,
+    ".github/skills/design-thinking": true,
+    ".github/skills/hve-core": true,
+    ".github/skills/installer": true,
+    ".github/skills/project-planning": true,
+    ".github/skills/rai": true,
+    ".github/skills/rpi": true,
+    ".github/skills/security": true,
+    ".github/skills/shared": true
   }
 }
 ```

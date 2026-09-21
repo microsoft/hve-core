@@ -1,0 +1,292 @@
+{
+  "$schema": "./criteria-catalog.schema.json",
+  "catalogVersion": "2026-08-07",
+  "framework": "wcag-22",
+  "classification": "standards",
+  "provenance": {
+    "source": "WCAG 2.2 success criteria as cited in references/frameworks/wcag-22.md",
+    "basis": "Failure classes and the adequacy rule in SKILL.md, with announcement expectations from references/frameworks/at-announcement-model.md",
+    "reviewedBy": null
+  },
+  "criteria": [
+    {
+      "id": "1.3.1",
+      "title": "Info and Relationships",
+      "level": "A",
+      "failureClass": "announcement",
+      "adequateMethods": ["screen-reader", "runtime-automation"],
+      "notes": "Structure conveyed visually must survive into the accessibility tree. A rule engine cannot see a heading built from styled text, so static evidence only informs."
+    },
+    {
+      "id": "1.3.4",
+      "title": "Orientation",
+      "level": "AA",
+      "failureClass": "adaptive-rendering",
+      "adequateMethods": ["runtime-automation"]
+    },
+    {
+      "id": "1.3.5",
+      "title": "Identify Input Purpose",
+      "level": "AA",
+      "failureClass": "static-decidable",
+      "adequateMethods": ["axe-auto", "runtime-automation", "static-source"]
+    },
+    {
+      "id": "1.4.1",
+      "title": "Use of Color",
+      "level": "A",
+      "failureClass": "faux-semantics",
+      "adequateMethods": [],
+      "humanJudgment": {
+        "required": true,
+        "reason": "Deciding this needs someone to judge whether colour is the only thing carrying the meaning. A tool can spot links distinguished only by colour, but it cannot tell whether surrounding text, an icon, or context already conveys the same information."
+      }
+    },
+    {
+      "id": "1.4.2",
+      "title": "Audio Control",
+      "level": "A",
+      "failureClass": "interaction",
+      "adequateMethods": ["runtime-automation", "manual-keyboard"]
+    },
+    {
+      "id": "1.4.3",
+      "title": "Contrast (Minimum)",
+      "level": "AA",
+      "failureClass": "static-decidable",
+      "adequateMethods": ["axe-auto", "runtime-automation"]
+    },
+    {
+      "id": "1.4.4",
+      "title": "Resize Text",
+      "level": "AA",
+      "failureClass": "adaptive-rendering",
+      "adequateMethods": ["runtime-automation"],
+      "notes": "Decided by rendering at 200 percent and observing loss of content or function."
+    },
+    {
+      "id": "1.4.10",
+      "title": "Reflow",
+      "level": "AA",
+      "failureClass": "adaptive-rendering",
+      "adequateMethods": ["runtime-automation"],
+      "notes": "Decided by rendering at 320 CSS pixels and observing two-dimensional scrolling."
+    },
+    {
+      "id": "1.4.11",
+      "title": "Non-text Contrast",
+      "level": "AA",
+      "failureClass": "static-decidable",
+      "adequateMethods": ["axe-auto", "runtime-automation"]
+    },
+    {
+      "id": "1.4.12",
+      "title": "Text Spacing",
+      "level": "AA",
+      "failureClass": "adaptive-rendering",
+      "adequateMethods": ["runtime-automation"]
+    },
+    {
+      "id": "1.4.13",
+      "title": "Content on Hover or Focus",
+      "level": "AA",
+      "failureClass": "interaction",
+      "adequateMethods": ["runtime-automation", "manual-keyboard"]
+    },
+    {
+      "id": "2.1.1",
+      "title": "Keyboard",
+      "level": "A",
+      "failureClass": "interaction",
+      "adequateMethods": ["manual-keyboard", "runtime-automation"]
+    },
+    {
+      "id": "2.1.2",
+      "title": "No Keyboard Trap",
+      "level": "A",
+      "failureClass": "interaction",
+      "adequateMethods": ["manual-keyboard", "runtime-automation"]
+    },
+    {
+      "id": "2.2.1",
+      "title": "Timing Adjustable",
+      "level": "A",
+      "failureClass": "interaction",
+      "adequateMethods": ["manual-keyboard", "runtime-automation"]
+    },
+    {
+      "id": "2.2.2",
+      "title": "Pause, Stop, Hide",
+      "level": "A",
+      "failureClass": "interaction",
+      "adequateMethods": ["manual-keyboard", "runtime-automation"]
+    },
+    {
+      "id": "2.3.3",
+      "title": "Animation from Interactions",
+      "level": "AAA",
+      "failureClass": "adaptive-rendering",
+      "adequateMethods": ["runtime-automation"]
+    },
+    {
+      "id": "2.4.1",
+      "title": "Bypass Blocks",
+      "level": "A",
+      "failureClass": "interaction",
+      "adequateMethods": ["manual-keyboard", "runtime-automation"],
+      "notes": "Presence of a skip link is static-decidable, but whether it moves focus to the right place is not."
+    },
+    {
+      "id": "2.4.2",
+      "title": "Page Titled",
+      "level": "A",
+      "failureClass": "static-decidable",
+      "adequateMethods": ["axe-auto", "runtime-automation", "static-source"],
+      "notes": "Presence and non-emptiness are decidable. Whether the title is descriptive is covered by 2.4.6."
+    },
+    {
+      "id": "2.4.3",
+      "title": "Focus Order",
+      "level": "A",
+      "failureClass": "interaction",
+      "adequateMethods": ["manual-keyboard", "runtime-automation"]
+    },
+    {
+      "id": "2.4.4",
+      "title": "Link Purpose (In Context)",
+      "level": "A",
+      "failureClass": "faux-semantics",
+      "adequateMethods": [],
+      "humanJudgment": {
+        "required": true,
+        "reason": "A tool can flag placeholder text such as click here, but it cannot judge whether link text plus its surrounding context actually tells a person where the link goes."
+      }
+    },
+    {
+      "id": "2.4.6",
+      "title": "Headings and Labels",
+      "level": "AA",
+      "failureClass": "faux-semantics",
+      "adequateMethods": [],
+      "humanJudgment": {
+        "required": true,
+        "reason": "Whether a heading or label describes its content is a judgment about meaning. A tool can confirm a heading exists and is not empty, never that it is descriptive."
+      }
+    },
+    {
+      "id": "2.4.7",
+      "title": "Focus Visible",
+      "level": "AA",
+      "failureClass": "interaction",
+      "adequateMethods": ["manual-keyboard", "runtime-automation"]
+    },
+    {
+      "id": "2.4.9",
+      "title": "Link Purpose (Link Only)",
+      "level": "AAA",
+      "failureClass": "faux-semantics",
+      "adequateMethods": [],
+      "humanJudgment": {
+        "required": true,
+        "reason": "Requires judging whether the link text alone identifies the destination, which is a question about meaning rather than markup."
+      }
+    },
+    {
+      "id": "2.4.11",
+      "title": "Focus Not Obscured (Minimum)",
+      "level": "AA",
+      "failureClass": "interaction",
+      "adequateMethods": ["manual-keyboard", "runtime-automation"]
+    },
+    {
+      "id": "2.4.13",
+      "title": "Focus Appearance",
+      "level": "AAA",
+      "failureClass": "interaction",
+      "adequateMethods": ["manual-keyboard", "runtime-automation"]
+    },
+    {
+      "id": "2.5.3",
+      "title": "Label in Name",
+      "level": "A",
+      "failureClass": "announcement",
+      "adequateMethods": ["screen-reader", "runtime-automation", "axe-auto"],
+      "notes": "Comparing the visible label against the computed accessible name is mechanical once the accessibility tree is available."
+    },
+    {
+      "id": "2.5.8",
+      "title": "Target Size (Minimum)",
+      "level": "AA",
+      "failureClass": "static-decidable",
+      "adequateMethods": ["runtime-automation"],
+      "notes": "Requires rendered geometry, so measurement happens at runtime rather than from source."
+    },
+    {
+      "id": "3.1.1",
+      "title": "Language of Page",
+      "level": "A",
+      "failureClass": "static-decidable",
+      "adequateMethods": ["axe-auto", "runtime-automation", "static-source"]
+    },
+    {
+      "id": "3.2.1",
+      "title": "On Focus",
+      "level": "A",
+      "failureClass": "interaction",
+      "adequateMethods": ["manual-keyboard", "runtime-automation"]
+    },
+    {
+      "id": "3.2.2",
+      "title": "On Input",
+      "level": "A",
+      "failureClass": "interaction",
+      "adequateMethods": ["manual-keyboard", "runtime-automation"]
+    },
+    {
+      "id": "3.3.1",
+      "title": "Error Identification",
+      "level": "A",
+      "failureClass": "announcement",
+      "adequateMethods": ["screen-reader", "runtime-automation"],
+      "notes": "That an error is programmatically identified is decidable. Whether the wording names the right problem falls under 3.3.3."
+    },
+    {
+      "id": "3.3.2",
+      "title": "Labels or Instructions",
+      "level": "A",
+      "failureClass": "faux-semantics",
+      "adequateMethods": [],
+      "humanJudgment": {
+        "required": true,
+        "reason": "Presence of a label is mechanical, but this criterion asks whether the label or instruction actually helps someone complete the field. That is a judgment about usefulness."
+      }
+    },
+    {
+      "id": "3.3.3",
+      "title": "Error Suggestion",
+      "level": "AA",
+      "failureClass": "faux-semantics",
+      "adequateMethods": [],
+      "humanJudgment": {
+        "required": true,
+        "reason": "Requires judging whether the suggested correction would actually help the person fix the error."
+      }
+    },
+    {
+      "id": "4.1.2",
+      "title": "Name, Role, Value",
+      "level": "A",
+      "failureClass": "announcement",
+      "adequateMethods": ["screen-reader", "runtime-automation"],
+      "notes": "Name presence is static-decidable, but role correctness, state, and value are not. The whole criterion is decided only when computed name, role, state, and value are all observed."
+    },
+    {
+      "id": "4.1.3",
+      "title": "Status Messages",
+      "level": "AA",
+      "failureClass": "announcement",
+      "adequateMethods": ["screen-reader", "runtime-automation"],
+      "notes": "Decidable only in a state where a status message is expected. A state that produces no status change is not applicable rather than passing."
+    }
+  ]
+}

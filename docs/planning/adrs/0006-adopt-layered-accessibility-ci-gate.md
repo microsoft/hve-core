@@ -3,7 +3,7 @@ id: "0006"
 title: "Adopt a layered accessibility CI gate as a blocking merge guardrail"
 description: "Adopt a layered accessibility CI architecture for the Docusaurus site that runs static linting, component-level axe assertions, behavioral end-to-end checks, and a full-site crawl as a single blocking job, gating merges at a zero-violation full-site threshold against WCAG 2.2 AA."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-30"
+ms.date: "2026-07-16"
 ms.topic: "reference"
 status: "accepted"
 proposed_date: "2026-06-14"
@@ -161,7 +161,7 @@ defense in depth, and they fall on CI rather than on authors.
 Compliance with this decision is confirmed by three mechanisms:
 
 1. CI enforcement: `.github/workflows/docusaurus-tests.yml` runs the static, component, full-site, and behavioral layers in one job, and the full-site scan fails the job on any violation because `docs/docusaurus/e2e/site-crawl.spec.ts` gates with `violations: []` at threshold 0.
-2. Local reproduction: the `lint:a11y`, `test:coverage`, and `test:e2e` scripts in `docs/docusaurus/package.json` reproduce each layer outside CI, with `test:e2e` running both the behavioral specs and the full-site axe crawl.
+2. Local reproduction: the `lint:a11y`, `test:coverage`, and historical `test:e2e` scripts in `docs/docusaurus/package.json` reproduced each layer outside CI. The current replacement for the browser command is `ci:test:e2e`, which runs both the behavioral specs and the full-site axe crawl.
 3. Configuration review: the conformance standard and URL set live in `docs/docusaurus/e2e/site-crawl.spec.ts` and `docs/docusaurus/e2e/_helpers/pages.ts`, and the static, component, and behavioral configs live in `docs/docusaurus/eslint.config.mjs`, `docs/docusaurus/jest.config.js`, and `docs/docusaurus/playwright.config.ts`, so the gate's contract is reviewable in version control.
 
 ## Pros and Cons of the Options
@@ -247,7 +247,7 @@ The diagram below traces a pull request through the layers to the merge gate.
 If this decision is reversed, the rollback path is:
 
 1. Remove the accessibility layers from `.github/workflows/docusaurus-tests.yml`, leaving the build and existing test steps intact.
-2. Remove the `lint:a11y` and `test:e2e` wiring from `docs/docusaurus/package.json` and the corresponding configs in `docs/docusaurus/eslint.config.mjs`, `docs/docusaurus/e2e/site-crawl.spec.ts`, and `docs/docusaurus/playwright.config.ts`.
+2. Remove the `lint:a11y` and historical `test:e2e` wiring (currently named `ci:test:e2e`) from `docs/docusaurus/package.json` and the corresponding configs in `docs/docusaurus/eslint.config.mjs`, `docs/docusaurus/e2e/site-crawl.spec.ts`, and `docs/docusaurus/playwright.config.ts`.
 3. Retain or remove the `docs/docusaurus/e2e/` specs depending on whether behavioral coverage is kept for non-accessibility reasons.
 4. Document the reversal in a superseding ADR that links back to this one and sets `superseded-by` here.
 

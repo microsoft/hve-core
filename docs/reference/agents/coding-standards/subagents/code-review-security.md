@@ -2,7 +2,13 @@
 title: Code Review Security
 description: Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings
 sidebar_position: 6
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - coding-standards
+  - code-review-security
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,10 +28,8 @@ Thin skill-backed perspective subagent that reviews a precomputed diff for secur
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Code Review dispatches this perspective for security-relevant changes such as authorization, parsing, input validation, or sensitive-data handling. It traces concrete exploit paths within the supplied scope and does not invoke the standalone Security Reviewer. Users steer it through the parent review workflow.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+For an upload-validation change, the parent supplies the serialized diff, hotspots, review depth, exclusions, and `task.outputs.security`. The worker traces input to its use and returns JSON findings with evidence, impact, and a concrete fix. It does not alter source or report theoretical issues without a realistic security consequence.

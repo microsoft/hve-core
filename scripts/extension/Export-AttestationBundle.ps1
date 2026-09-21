@@ -79,10 +79,12 @@ function Export-AttestationBundle {
     $bundle = Get-Content -Path $BundlePath -Raw | ConvertFrom-Json -Depth 20
     Copy-Item -Path $BundlePath -Destination $SigstorePath -Force
 
-    $dsseEnvelope = $bundle.dsseEnvelope
-    if ($null -eq $dsseEnvelope) {
+    # Strict mode turns a missing property into a terminating error, so presence
+    # is probed before the value is read.
+    if (-not $bundle.PSObject.Properties['dsseEnvelope'] -or $null -eq $bundle.dsseEnvelope) {
         throw 'The attestation bundle does not contain a dsseEnvelope property.'
     }
+    $dsseEnvelope = $bundle.dsseEnvelope
 
     $json = $dsseEnvelope | ConvertTo-Json -Depth 20 -Compress
     Set-Content -Path $IntotoPath -Value $json -Encoding utf8NoBOM

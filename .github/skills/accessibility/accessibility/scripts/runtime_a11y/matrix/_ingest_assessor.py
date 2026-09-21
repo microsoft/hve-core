@@ -108,16 +108,25 @@ def _extract_rows(markdown: str) -> list[dict[str, Any]]:
 
 
 def _map_status(value: Any) -> str:
+    """Map an assessor's reported status onto a matrix status.
+
+    An assessor that did not assess a criterion has not found it failing. The
+    outcome vocabulary keeps failure, undetermined, and untested distinct, so an
+    abstention resolves to unknown rather than asserting a defect the evidence
+    does not support. An unrecognized value also resolves to unknown, because a
+    silent default to failure is how an abstention came to be reported as a
+    failure in the first place.
+    """
     status = str(value or "").strip().lower()
     if status in {"pass", "covered"}:
         return "pass"
     if status in {"partial", "caution"}:
         return "partial"
-    if status in {"fail", "risk", "not_assessed", "not assessed", "blocked"}:
+    if status in {"fail", "risk", "blocked"}:
         return "fail"
     if status in {"not_applicable", "not-applicable", "not applicable"}:
         return "not-applicable"
-    return "fail"
+    return "unknown"
 
 
 def _extract_evidence(value: Any) -> str | None:

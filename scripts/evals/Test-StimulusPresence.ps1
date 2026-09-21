@@ -42,7 +42,7 @@
 .PARAMETER EnforceFullCoverageKinds
     Artifact kinds (subset of skill/agent/prompt/instruction) for which coverage is enforced
     across the full repository, not just the diff manifest. Repo-root-only artifacts under
-    `.github/<kind>/` (without a collection subdirectory) are excluded because they are
+    `.github/<kind>/` (without a package subdirectory) are excluded because they are
     repo-specific and not packaged. Defaults to `@('prompt')`.
 
 .EXAMPLE
@@ -132,9 +132,9 @@ function Get-EnforcedArtifact {
 
     .DESCRIPTION
     Returns artifact records (kind / path / artifactId) for files under `.github/<kind>/`
-    excluding repo-root-only artifacts (no collection subdirectory). Repo-root-only
+    excluding repo-root-only artifacts (no package subdirectory). Repo-root-only
     artifacts are repo-specific per `.github/copilot-instructions.md` and are not packaged
-    into collections, so eval coverage is not enforced for them.
+    into marketplace packages, so eval coverage is not enforced for them.
     #>
     [CmdletBinding()]
     [OutputType([hashtable[]])]

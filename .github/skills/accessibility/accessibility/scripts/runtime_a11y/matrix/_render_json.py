@@ -8,9 +8,15 @@ from pathlib import Path
 from typing import Any
 
 from runtime_a11y.matrix._model import Matrix
+from runtime_a11y.matrix._provenance import ArtifactMetadata
 
 
-def render_json(matrix: Matrix, coverage: dict[str, Any], out_path: Path) -> None:
+def render_json(
+    matrix: Matrix,
+    coverage: dict[str, Any],
+    out_path: Path,
+    metadata: ArtifactMetadata | None = None,
+) -> None:
     """Write a JSON representation of the matrix and coverage summary."""
     payload = {
         "criteria": [
@@ -28,6 +34,7 @@ def render_json(matrix: Matrix, coverage: dict[str, Any], out_path: Path) -> Non
                 "name": surface.name,
                 "platform": surface.platform,
                 "states": list(surface.states),
+                "widgetPattern": surface.widgetPattern,
             }
             for surface in matrix.surfaces
         ],
@@ -51,6 +58,8 @@ def render_json(matrix: Matrix, coverage: dict[str, Any], out_path: Path) -> Non
         ],
         "coverage": coverage,
     }
+    if metadata is not None:
+        payload["assessment"] = metadata.to_dict()
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")

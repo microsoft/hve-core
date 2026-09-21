@@ -22,10 +22,13 @@ footers:
 
 # Artifact names below correspond to generated planning output files
 # produced under .copilot-tracking/rai-plans/{project-slug}/ during RAI
-# planning sessions (e.g., control-surface-catalog.md, evidence-register.md).
+# planning sessions (e.g., control-surface-catalog.md, evidence-register.md),
+# and to generated backlog handoffs produced under the ADO, GitHub, and Jira
+# tracking roots (handoff.md).
 # They do NOT match the .github/instructions/rai-planning/*.instructions.md
 # basenames. To enforce footers in CI against generated artifacts, invoke
-# Validate-PlannerArtifacts.ps1 with -Paths '.copilot-tracking/rai-plans/<slug>'.
+# Validate-PlannerArtifacts.ps1 with -Paths '.copilot-tracking/rai-plans/<slug>'
+# or -Paths '.copilot-tracking/github-issues/<scope>'.
 # The default scan path (.github/instructions) returns 0 issues by design
 # because instruction files are templates, not generated artifacts.
 artifact-classification:
@@ -47,6 +50,9 @@ artifact-classification:
     scope:
       - .github/instructions/rai-planning/**
       - .github/instructions/security/sssc-*.instructions.md
+      - .copilot-tracking/workitems/**
+      - .copilot-tracking/github-issues/**
+      - .copilot-tracking/jira-issues/**
     required-footers:
       - ai-content-note
       - human-review-checkbox
@@ -59,6 +65,7 @@ artifact-classification:
       - monitoring-summary
       - gap-analysis
       - sssc-backlog
+      - handoff
 
   # RAI handoff with disclaimer: Tier 1 + checkbox + Tier 2 RAI disclaimer
   rai-handoff-with-disclaimer:

@@ -12,10 +12,10 @@ BeforeAll {
 Describe 'ArtifactDetection module' -Tag 'Unit' {
     Context 'Get-ArtifactDescriptor' {
         It 'Classifies nested agent artifacts' {
-            $result = Get-ArtifactDescriptor -Path '.github/agents/hve-core/researcher.agent.md'
+            $result = Get-ArtifactDescriptor -Path '.github/agents/hve-core/sample-agent.agent.md'
             $result.kind | Should -Be 'agent'
-            $result.artifactId | Should -Be 'researcher'
-            $result.path | Should -Be '.github/agents/hve-core/researcher.agent.md'
+            $result.artifactId | Should -Be 'sample-agent'
+            $result.path | Should -Be '.github/agents/hve-core/sample-agent.agent.md'
         }
 
         It 'Classifies repo-root-only agent artifacts (no collection subdirectory)' {
@@ -25,9 +25,9 @@ Describe 'ArtifactDetection module' -Tag 'Unit' {
         }
 
         It 'Classifies prompt artifacts' {
-            $result = Get-ArtifactDescriptor -Path '.github/prompts/hve-core/task-research.prompt.md'
+            $result = Get-ArtifactDescriptor -Path '.github/prompts/hve-core/sample-prompt.prompt.md'
             $result.kind | Should -Be 'prompt'
-            $result.artifactId | Should -Be 'task-research'
+            $result.artifactId | Should -Be 'sample-prompt'
         }
 
         It 'Classifies instruction artifacts' {
@@ -49,9 +49,9 @@ Describe 'ArtifactDetection module' -Tag 'Unit' {
         }
 
         It 'Normalizes backslash separators' {
-            $result = Get-ArtifactDescriptor -Path '.github\agents\hve-core\researcher.agent.md'
+            $result = Get-ArtifactDescriptor -Path '.github\agents\hve-core\sample-agent.agent.md'
             $result.kind | Should -Be 'agent'
-            $result.path | Should -Be '.github/agents/hve-core/researcher.agent.md'
+            $result.path | Should -Be '.github/agents/hve-core/sample-agent.agent.md'
         }
 
         It 'Returns null for non-artifact paths' {

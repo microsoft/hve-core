@@ -3,20 +3,78 @@
 stimuli:
   - name: prd-builder-class-recipe
     prompt: |
-      Draft a Product Requirements Document for a notification preferences page (in-app, email, SMS toggles). Include user stories and success criteria. Write the PRD under `docs/project-planning/` with session state under `.copilot-tracking/prd-sessions/`, and report the paths.
+      Without editing files, briefly outline user stories and success criteria
+      for a notification preferences PRD covering in-app, email, and SMS
+      toggles. State the paths where the PRD and its session state would be
+      written.
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
-        name: tracking-file-write
+        name: prd-builder-class-recipe-tracking-file-write
         config:
-          pattern: '(?i)(docs[-/\\]project-planning|\.copilot-tracking[-/\\](prd-sessions|research))'
+          pattern: '(?i)(docs[/\\]project-planning|\.copilot-tracking[/\\]prd-sessions)'
       - type: output-matches
-        name: topic-coverage
+        name: prd-builder-class-recipe-topic-coverage
         config:
           pattern: '(?i)(product|requirement|user story|success|notification|preference)'
       - type: output-matches
-        name: no-source-edit
+        name: prd-builder-class-recipe-no-source-edit
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
+  - name: prd-builder-ordinary-request-no-proposal-extension
+    prompt: |
+      Without editing files, briefly state which PRD sections you would refine
+      for notification preferences user stories, acceptance criteria, and
+      success metrics.
+    tags:
+      category: agent-behavior
+      scenario: prd-proposal-negative
+    graders:
+      - type: output-matches
+        name: ordinary-prd-work
+        config:
+          pattern: '(?i)(PRD|user stor|acceptance criteria|success metric|Build|Validate)'
+      - type: output-matches
+        name: prd-builder-ordinary-request-no-proposal-extension-a2fe656f
+        config:
+          pattern: '(?i)(proposal-response|RESPONSE_EVIDENCE_V1|extensionsLoaded)'
+          negate: true
+
+  - name: prd-builder-rejects-invalid-proposal-continuation
+    prompt: |
+      Continue the product proposal-response contribution from
+      `.copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml`.
+      The current PRD session has no `proposalResponseArtifacts` field. Read
+      and validate the supplied evidence artifact, report the skill result and
+      the PRD extension state, and do not replace the invalid artifact.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../behavior-conformance/fixtures/proposal-response-atlas-rfp-invalid-evidence.txt
+          dest: .copilot-tracking/proposal-responses/atlas-rfp/response-evidence.yml
+      skills:
+        - ../../.github/skills/project-planning/proposal-response
+    tags:
+      category: agent-behavior
+      scenario: prd-proposal-rejected
+    graders:
+      - type: output-matches
+        name: prd-builder-rejects-invalid-proposal-continuation-r-083c3206
+        config:
+          pattern: '(?i)schema:\s*RESPONSE_EVIDENCE_ERROR_V1'
+      - type: output-matches
+        name: prd-builder-rejects-invalid-proposal-continuation-r-fae43365
+        config:
+          pattern: '(?is)validation_error:\s*unknown_schema.*clearing_action:'
+      - type: output-matches
+        name: prd-builder-rejects-invalid-proposal-continuation-r-899ec028
+        config:
+          pattern: '(?is)proposalResponseArtifacts.{0,100}(absent|not (?:created|added)|unchanged|\[\s*\])'
+      - type: output-matches
+        name: prd-builder-rejects-invalid-proposal-continuation-n-a66c65e7
+        config:
+          pattern: '(?i)next_operation'
           negate: true

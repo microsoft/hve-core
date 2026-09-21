@@ -149,6 +149,9 @@ $DependencyPatterns = @{
     'pip'              = @{
         FilePatterns    = @('**/requirements*.txt', '**/Pipfile', '**/pyproject.toml', '**/setup.py')
         ExcludePatterns = @('.venv', 'venv', '.tox', '.nox', '__pypackages__')
+        # '#' starts a comment and ';' starts a PEP 508 environment marker. Both
+        # carry '==' comparisons that are not package pins.
+        IgnoreAfter     = @('#', ';')
         VersionPatterns = @(
             @{
                 Pattern     = '([a-zA-Z0-9._-]+(?:\[[a-zA-Z0-9._,-]+\])?)\s*==\s*([^#\s,";]+)'
@@ -526,6 +529,48 @@ function Test-NpmExactVersion {
     return $Version -match '^\d+\.\d+\.\d+(-[a-zA-Z0-9._-]+)?(\+[a-zA-Z0-9._-]+)?$'
 }
 
+function Get-TrackedFilePathSet {
+    <#
+    .SYNOPSIS
+    Returns the set of git-tracked file paths under a scan root.
+
+    .DESCRIPTION
+    CI scans a clean checkout, so an ignored or untracked working-tree file is
+    content the pipeline never sees. Counting it locally produces compliance
+    failures that cannot be reproduced in CI. Returns $null when the scan root
+    is not a usable git working tree, which the caller treats as a reason to
+    scan every file rather than to scan none.
+
+    .PARAMETER ScanPath
+    Root directory being scanned.
+
+    .OUTPUTS
+    [System.Collections.Generic.HashSet[string]] Full paths, or $null.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Collections.Generic.HashSet[string]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ScanPath
+    )
+
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) { return $null }
+    if (-not (Test-Path -LiteralPath $ScanPath -PathType Container)) { return $null }
+
+    # Paths come back relative to ScanPath, so a subdirectory scan stays correct.
+    $tracked = & git -C $ScanPath ls-files --cached 2>$null
+    if ($LASTEXITCODE -ne 0) { return $null }
+
+    $set = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($relative in $tracked) {
+        if ([string]::IsNullOrWhiteSpace($relative)) { continue }
+        $full = Join-Path $ScanPath ($relative -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+        $null = $set.Add([System.IO.Path]::GetFullPath($full))
+    }
+    return $set
+}
+
 function Get-FilesToScan {
     <#
     .SYNOPSIS
@@ -539,6 +584,10 @@ function Get-FilesToScan {
     )
 
     $allFiles = @()
+    $trackedPaths = Get-TrackedFilePathSet -ScanPath $ScanPath
+    if ($null -eq $trackedPaths) {
+        Write-SecurityLog -CIAnnotation "Scan root is not a git working tree; scanning all matching files." -Level Info
+    }
 
     foreach ($type in $Types) {
         if ($DependencyPatterns.ContainsKey($type)) {
@@ -565,6 +614,10 @@ function Get-FilesToScan {
                     }
 
                     $files = Get-ChildItem -Path $basePath -Filter $leafFilter -Recurse -File -ErrorAction SilentlyContinue
+
+                    if ($null -ne $trackedPaths) {
+                        $files = $files | Where-Object { $trackedPaths.Contains([System.IO.Path]::GetFullPath($_.FullName)) }
+                    }
 
                     # Merge type-specific exclude patterns with caller-provided patterns
                     $mergedExcludes = @()
@@ -616,6 +669,60 @@ function Test-DependencyPinned {
     }
 
     return $false
+}
+
+function Get-MatchableContent {
+    <#
+    .SYNOPSIS
+    Blanks trailing line segments a dependency matcher must not read.
+
+    .DESCRIPTION
+    A pip requirement carries its environment marker after ';', and both
+    requirements files and pyproject.toml use '#' for comments. Each segment can
+    hold an '==' comparison that is not a package pin: `sys_platform == 'linux'`
+    names a marker variable, not a package. Blanking with spaces rather than
+    removing keeps every match index, and therefore every reported line number,
+    identical to the original file.
+
+    .PARAMETER Content
+    Raw file content.
+
+    .PARAMETER IgnoreAfter
+    Characters whose first occurrence on a line begins an ignorable segment.
+
+    .OUTPUTS
+    [string] Content with ignorable segments replaced by spaces.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [AllowNull()]
+        [string]$Content,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [char[]]$IgnoreAfter
+    )
+
+    if ([string]::IsNullOrEmpty($Content)) { return $Content }
+
+    $builder = [System.Text.StringBuilder]::new($Content.Length)
+    $ignoring = $false
+    foreach ($character in $Content.ToCharArray()) {
+        if ($character -eq [char]10 -or $character -eq [char]13) {
+            $ignoring = $false
+            $null = $builder.Append($character)
+            continue
+        }
+        if (-not $ignoring -and $IgnoreAfter -contains $character) {
+            $ignoring = $true
+        }
+        $null = $builder.Append($(if ($ignoring) { ' ' } else { $character }))
+    }
+
+    return $builder.ToString()
 }
 
 function Get-DependencyViolation {
@@ -674,6 +781,11 @@ function Get-DependencyViolation {
     try {
         $content = Get-Content -Path $filePath -Raw
         $lines = Get-Content -Path $filePath
+
+        $ignoreAfter = $DependencyPatterns[$fileType].IgnoreAfter
+        if ($ignoreAfter) {
+            $content = Get-MatchableContent -Content $content -IgnoreAfter $ignoreAfter
+        }
 
         $patterns = $DependencyPatterns[$fileType].VersionPatterns
         $totalCount = 0

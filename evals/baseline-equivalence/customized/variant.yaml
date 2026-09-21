@@ -4,7 +4,7 @@
 # The driver populates `applied` from the actual materialized artifacts
 # at runtime; the list below is a hint for documentation only.
 kind: agent
-name: task-researcher
-label: task-researcher
-description: Workspace materialized with the task-researcher agent and its dependencies.
+name: rpi-agent
+label: rpi-agent
+description: Workspace materialized with the RPI Agent and its dependencies.
 applied: []

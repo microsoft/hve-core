@@ -7,8 +7,8 @@ handoffs:
     prompt: "Create an ADR based on the architecture review findings"
     send: true
   - label: "📋 Create Plan"
-    agent: Task Planner
-    prompt: /task-plan
+    agent: RPI Agent
+    prompt: "Activate `rpi-plan` to create an implementation-ready plan from the architecture review findings."
     send: true
 ---
 

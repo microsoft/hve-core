@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HVE-Core accessibility vocabulary</title>
+    <link rel="alternate" type="application/ld+json" href="./context.jsonld" />
+    <style>
+      body { font-family: system-ui, sans-serif; line-height: 1.6; max-width: 60rem; margin: 0 auto; padding: 2rem 1rem; }
+      table { border-collapse: collapse; width: 100%; margin-block: 1rem; }
+      th, td { border: 1px solid #767676; padding: 0.5rem 0.75rem; text-align: left; vertical-align: top; }
+      caption { text-align: left; font-weight: 600; padding-block-end: 0.5rem; }
+      code { background: #f2f2f2; padding: 0.1rem 0.3rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>HVE-Core accessibility vocabulary</h1>
+      <p>
+        Namespace:
+        <code>https://microsoft.github.io/hve-core/ns/accessibility#</code>
+      </p>
+      <p>
+        These terms extend
+        <a href="https://www.w3.org/TR/EARL10-Schema/">W3C EARL 1.0</a> with
+        provenance and review state that EARL does not define. EARL supplies the
+        assertion, outcome, and mode vocabulary; these terms record how the
+        evidence was produced and whether a person has validated it. A
+        machine-readable context is available at
+        <a href="./context.jsonld">context.jsonld</a>.
+      </p>
+
+      <h2>Why these terms exist</h2>
+      <p>
+        EARL describes a test result but has no way to say that a result is
+        AI-assisted, unreviewed, or produced by a run that did not finish. An
+        accessibility report can travel to a procurement or conformance reader
+        on its own, so that context has to travel with it rather than sitting in
+        a sibling document.
+      </p>
+
+      <h2>Terms</h2>
+      <table>
+        <caption>Vocabulary terms, their expected values, and their meaning</caption>
+        <thead>
+          <tr>
+            <th scope="col">Term</th>
+            <th scope="col">Value</th>
+            <th scope="col">Meaning</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row"><code>hve:aiAssisted</code></th>
+            <td>Boolean</td>
+            <td>An AI-assisted process contributed to producing this document.</td>
+          </tr>
+          <tr>
+            <th scope="row"><code>hve:humanReviewCompleted</code></th>
+            <td>Boolean</td>
+            <td>
+              A qualified accessibility reviewer has validated these results.
+              False by default. The tool never sets this to true on its own.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row"><code>hve:evidenceLimits</code></th>
+            <td>String</td>
+            <td>What the recorded evidence methods can and cannot decide.</td>
+          </tr>
+          <tr>
+            <th scope="row"><code>hve:toolVersion</code></th>
+            <td>String</td>
+            <td>Version of the harness that produced the document.</td>
+          </tr>
+          <tr>
+            <th scope="row"><code>hve:criteriaCatalog</code></th>
+            <td>Object</td>
+            <td>
+              Identity and review state of the reviewed catalog whose adequacy
+              rules decided each outcome.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row"><code>hve:quarantined</code></th>
+            <td>Boolean</td>
+            <td>
+              Derived from a run that ended in an operational failure. The
+              findings are real but the run did not complete, so the document is
+              not a basis for a conformance claim.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row"><code>hve:quarantineReason</code></th>
+            <td>String</td>
+            <td>Why the producing run was quarantined.</td>
+          </tr>
+          <tr>
+            <th scope="row"><code>hve:method</code></th>
+            <td>String</td>
+            <td>
+              Evidence method that produced the result, such as
+              <code>screen-reader</code> or <code>runtime-automation</code>.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row"><code>hve:methodAdequacy</code></th>
+            <td>
+              <code>decides</code> or <code>informs</code>
+            </td>
+            <td>
+              Whether the recorded method can decide the criterion or only raise
+              and lower suspicion about it. A method that only informs never
+              closes a criterion.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row"><code>hve:state</code></th>
+            <td>String</td>
+            <td>Interaction state the surface was in when observed.</td>
+          </tr>
+          <tr>
+            <th scope="row"><code>hve:humanJudgmentRequired</code></th>
+            <td>Boolean</td>
+            <td>
+              No available method can decide this criterion because doing so
+              depends on judging meaning, quality, or intent.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Licensing</h2>
+      <p>
+        These terms are repository-original content licensed under
+        <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+        Referenced standards vocabularies remain with their publishers.
+      </p>
+    </main>
+  </body>
+</html>

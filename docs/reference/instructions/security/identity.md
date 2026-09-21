@@ -2,7 +2,13 @@
 title: Security/Identity
 description: "Security Planner identity, six-phase orchestration, state management, and session recovery protocols"
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - security
+  - security/identity
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,8 +28,11 @@ Security Planner identity, six-phase orchestration, state management, and sessio
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these instructions when a Security Planner session creates, resumes, or
+updates security-plan artifacts from capture or requirements. They govern the
+six-phase state, STRIDE and standards flow, AI-component handoff, and threat
+model source of truth; use specialized skills or bounded research for evolving
+framework details.
 
 ## Example usage
 

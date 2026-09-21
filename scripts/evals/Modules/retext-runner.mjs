@@ -1,24 +1,25 @@
-// Copyright (c) Microsoft Corporation.
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 //
 // retext-runner.mjs
 //
-// Runs alex.js (inclusive-language linter) and retext-profanities against
-// stimulus prompt text supplied via a JSON manifest on stdin. Emits a JSON
-// report on stdout and exits with code 1 when any message is flagged.
+// Runs retext-equality and retext-profanities against stimulus prompt text
+// supplied via a JSON manifest on stdin. Emits a JSON report on stdout and
+// exits with code 1 when any message is flagged.
 //
 // Manifest schema:
 //   [{ "spec": "<rel-path>", "stimulus": "<name>", "text": "<prompt>" }, ...]
 //
 // Report schema:
-//   { "results": [ { spec, stimulus, source, messages: [{rule, message, line, column}] } ] }
+//   { "results": [ { spec, stimulus, messages: [{source, rule, message, line, column}] } ] }
 
 import { stdin as input, stdout as output, stderr } from 'node:process';
-import { text as alexText } from 'alex';
 import { unified } from 'unified';
 import retextEnglish from 'retext-english';
+import retextEquality from 'retext-equality';
 import retextProfanities from 'retext-profanities';
 import retextStringify from 'retext-stringify';
+import { compareMessage } from 'vfile-sort';
 
 // Phrase-aware allowlist keyed by rule ID. When a rule fires, the ±60-char
 // window around the match is tested against each regex. A match suppresses
@@ -50,6 +51,11 @@ const PHRASE_ALLOWLIST = {
         /\bfailed\s+(to|with|because|due|tests?|requests?|attempts?|jobs?|builds?|logins?)\b/i,
     ],
     abuse: [
+        // "abuse case" is the established security-engineering term of art,
+        // published by OWASP under that exact name, and appears as a schema
+        // field, an identifier, and a compound modifier. Bare pejorative
+        // "abuse" is not matched here and still flags.
+        /\babuse[\s_-]cases?\b/i,
         /\b(token|privilege|api|rate[- ]?limit|resource|trust|process|permission|credential|service|account|session|workflow|pipeline|cache|memory|tool|prompt|model|context|chain|insider|lateral|optimization|reservation|scalper|automated)[\s-]+abuse\b/i,
         /\bbusiness\s+logic\s+abuse\b/i,
         /\babuse\s+(of\s+)?(tokens?|privileges?|apis?|rate[- ]?limits?|resources?|trust|processes?|permissions?|credentials?|services?|accounts?|sessions?|tools?)\b/i,
@@ -117,6 +123,8 @@ const PHRASE_ALLOWLIST = {
         /\b(common|easy|classic|usual|interface|design|prompt|mockup|fidelity)\W+trap\b/i,
         /\b(keyboard|focus|tab|mouse|character[- ]key)\s+trap\b/i,
         /\bno\s+keyboard\s+trap\b/i,
+        /\bdoes\s+not\s+trap\s+the\s+keyboard\b/i,
+        /\bthe\s+trap\s+symptom\b/i,
         /\bfocus[- ]trap\b/i,
         /\btrap\s+(focus|pages?|the\s+user|zone)\b/i,
         /\b(break|order)\s+or\s+trap\b/i,
@@ -187,10 +195,18 @@ function normalizeMessage(message, source) {
     };
 }
 
-async function runAlex(text) {
-    const vfile = alexText(text);
-    return (vfile.messages ?? [])
+const equalityProcessor = unified()
+    .use(retextEnglish)
+    .use(retextEquality)
+    .use(retextStringify);
+
+async function runEquality(text) {
+    const file = await equalityProcessor.process(text);
+    return [...(file.messages ?? [])]
+        .sort(compareMessage)
         .filter((m) => !isAllowedByPhrase(m, text))
+        // Preserve the legacy 'alex' report source; it is not a package dependency.
+        // Test-EvalSpecText.ps1 uses it for equality warnings, or errors with -FailOnAlex.
         .map((m) => normalizeMessage(m, 'alex'));
 }
 
@@ -241,7 +257,7 @@ async function main() {
         }
 
         const [alexMessages, profMessages] = await Promise.all([
-            runAlex(text),
+            runEquality(text),
             runProfanities(text),
         ]);
         const messages = [...alexMessages, ...profMessages];

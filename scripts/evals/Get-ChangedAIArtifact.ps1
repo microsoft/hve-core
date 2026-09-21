@@ -13,7 +13,7 @@
     ArtifactDetection module. Writes a manifest JSON array to `-OutFile` (default
     `logs/changed-ai-artifacts.json`) where each entry has `kind`, `path`, `artifactId`,
     `status`, and (for renames/copies) `previousPath`. Repo-root-only artifacts and nested
-    collection-scoped artifacts are both detected.
+    package-scoped artifacts are both detected.
 
     Exit codes:
       0 = manifest written successfully (manifest may be empty).

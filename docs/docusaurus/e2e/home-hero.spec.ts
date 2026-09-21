@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { waitForHydration } from './_helpers/a11yInvariants';
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
@@ -12,6 +13,7 @@ test.describe('Homepage hero accessibility', () => {
   test('hero and search contrast pass an axe scan', async ({ page }) => {
     await page.goto('/hve-core/', { waitUntil: 'commit' });
     await page.waitForLoadState('networkidle', { timeout: 60000 });
+    await waitForHydration(page);
 
     await expect(page.getByRole('heading', { level: 1, name: 'HVE Core' })).toBeVisible();
 
@@ -27,6 +29,7 @@ test.describe('Homepage hero accessibility', () => {
     await page.emulateMedia({ colorScheme: 'dark' });
     await page.goto('/hve-core/', { waitUntil: 'commit' });
     await page.waitForLoadState('networkidle', { timeout: 60000 });
+    await waitForHydration(page);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
     await expect(page.getByRole('heading', { level: 1, name: 'HVE Core' })).toBeVisible();

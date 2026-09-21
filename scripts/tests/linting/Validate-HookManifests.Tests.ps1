@@ -34,22 +34,27 @@ Describe 'Test-HookManifest - valid manifests' {
         Test-HookManifest -Manifest $manifest | Should -BeNullOrEmpty
     }
 
-    It 'Accepts all eight lifecycle events' {
+    It 'Accepts all allowed lifecycle events' {
+        $hooks = @{}
+        foreach ($eventName in $script:HookAllowedEvents) {
+            $hooks[$eventName] = @(@{ type = 'command'; bash = 'a' })
+        }
         $manifest = @{
             version = 1
-            hooks   = @{
-                sessionStart     = @(@{ type = 'command'; bash = 'a' })
-                userPromptSubmit = @(@{ type = 'command'; bash = 'b' })
-                preToolUse       = @(@{ type = 'command'; bash = 'c' })
-                postToolUse      = @(@{ type = 'command'; bash = 'd' })
-                preCompact       = @(@{ type = 'command'; bash = 'e' })
-                subagentStart    = @(@{ type = 'command'; bash = 'f' })
-                subagentStop     = @(@{ type = 'command'; bash = 'g' })
-                stop             = @(@{ type = 'command'; bash = 'h' })
-            }
+            hooks   = $hooks
         }
 
         Test-HookManifest -Manifest $manifest | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Hook manifest schema synchronization' {
+    It 'Keeps the schema event enum in sync with $script:HookAllowedEvents' {
+        $schemaPath = Join-Path $PSScriptRoot '../../linting/schemas/hook-manifest.schema.json'
+        $schema = Get-Content -Path $schemaPath -Raw | ConvertFrom-Json -AsHashtable
+        $schemaEvents = @($schema['properties']['hooks']['propertyNames']['enum'])
+
+        $schemaEvents | Should -Be @($script:HookAllowedEvents)
     }
 }
 
@@ -122,6 +127,47 @@ Describe 'Test-HookManifest - command entry errors' {
         $manifest = @{ version = 1; hooks = @{ stop = @(@{ type = 'command' }) } }
         $errors = Test-HookManifest -Manifest $manifest
         ($errors -join "`n") | Should -BeLike '*must define at least one command property*'
+    }
+}
+
+Describe 'Test-HookManifest - Windows PowerShell 5.1 compatibility' {
+    It 'Rejects a ternary operator in a powershell command' {
+        $command = "& (Join-Path ([string]::IsNullOrWhiteSpace(`$env:CLAUDE_PLUGIN_ROOT) ? '.' : `$env:CLAUDE_PLUGIN_ROOT) 'a.ps1')"
+        $manifest = @{ version = 1; hooks = @{ stop = @(@{ type = 'command'; powershell = $command }) } }
+
+        ((Test-HookManifest -Manifest $manifest) -join "`n") | Should -BeLike "*property 'powershell' uses PowerShell 7-only syntax (ternary operator '? :')*"
+    }
+
+    It 'Accepts the equivalent if-expression form' {
+        $command = "& (Join-Path `$(if ([string]::IsNullOrWhiteSpace(`$env:CLAUDE_PLUGIN_ROOT)) { '.' } else { `$env:CLAUDE_PLUGIN_ROOT }) 'a.ps1')"
+        $manifest = @{ version = 1; hooks = @{ stop = @(@{ type = 'command'; powershell = $command }) } }
+
+        Test-HookManifest -Manifest $manifest | Should -BeNullOrEmpty
+    }
+
+    It 'Does not flag PowerShell 7-only operators that appear inside string literals' {
+        $manifest = @{ version = 1; hooks = @{ stop = @(@{ type = 'command'; powershell = "Write-Output 'a ? b : c && d ?? e'" }) } }
+
+        Test-HookManifest -Manifest $manifest | Should -BeNullOrEmpty
+    }
+
+    It 'Does not inspect the bash command for PowerShell syntax' {
+        $manifest = @{ version = 1; hooks = @{ stop = @(@{ type = 'command'; bash = 'a && b || c' }) } }
+
+        Test-HookManifest -Manifest $manifest | Should -BeNullOrEmpty
+    }
+
+    It 'Reports each PowerShell 7-only construct' -ForEach @(
+        @{ Command = '$a ?? $b'; Expected = "null-coalescing operator '??'" }
+        @{ Command = '$a ??= $b'; Expected = "null-coalescing assignment '??='" }
+        @{ Command = '${a}?.Length'; Expected = "null-conditional member access '?.'" }
+        @{ Command = '${a}?[0]'; Expected = "null-conditional index '?['" }
+        @{ Command = 'a.exe && b.exe'; Expected = "pipeline chain operator '&&'" }
+        @{ Command = 'a.exe || b.exe'; Expected = "pipeline chain operator '||'" }
+    ) {
+        $manifest = @{ version = 1; hooks = @{ stop = @(@{ type = 'command'; powershell = $Command }) } }
+
+        ((Test-HookManifest -Manifest $manifest) -join "`n").Contains($Expected) | Should -BeTrue
     }
 }
 

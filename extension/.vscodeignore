@@ -8,7 +8,6 @@
 !.github/skills/**
 !docs/templates/**
 !scripts/lib/Modules/CIHelpers.psm1
-!scripts/security/**
 !icon.png
 !package.json
 !README.md
@@ -22,8 +21,8 @@
 **/__pycache__/**
 **/*.pyc
 
-# Exclude collection-specific READMEs (only the canonical README.md ships)
+# Exclude package-specific READMEs (only the canonical README.md ships)
 README.*.md
 
-# Exclude collection-specific package templates (only the canonical package.json ships)
+# Exclude package-specific manifests (only the canonical package.json ships)
 package.*.json

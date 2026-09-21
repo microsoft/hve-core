@@ -70,6 +70,32 @@ The frameworks below inform PRD discovery framing. They are cited by name only. 
 * **URL** — [https://www.jpattonassociates.com/user-story-mapping/](https://www.jpattonassociates.com/user-story-mapping/)
 * **Why the PRD Builder cites it** — Method pattern for arranging user activities into a narrative backbone that informs scope slicing and the feature hierarchy. The PRD Builder uses its own templates for the feature hierarchy and does not reproduce the story-map canvas.
 
+## Evidence quality probe (repository-original)
+
+Personas and journey maps describe *what* users need. This probe establishes *how well the team actually knows it*. Run it alongside the templates above, because a well-formed persona built on an untested assumption reads exactly like one built on twenty interviews.
+
+Ask directly, and wait for answers rather than inferring them:
+
+* Has the team spoken with end users or customers about this need? When yes, summarize what was learned.
+* What is the source of each stated requirement: user interview, analytics data, stakeholder request, or team assumption?
+* What evidence supports the need? Distinguish reported requests from observed behavior; the two diverge often enough that conflating them is a common source of mis-scoped work.
+* What happens if this is not built? This assesses urgency against opportunity cost.
+
+### Recording evidence provenance
+
+Label every requirement with its source category:
+
+| Source            | What it means                                         | Confidence |
+|-------------------|-------------------------------------------------------|------------|
+| User research     | Interviews, usability studies, or support tickets     | Highest    |
+| Analytics data    | Usage metrics, error rates, or performance traces     | High       |
+| Stakeholder input | Business sponsor, product owner, or team lead request | Medium     |
+| Assumption        | Team hypothesis with no direct evidence               | Lowest     |
+
+A requirement with no direct user evidence is labeled an unvalidated assumption in the document itself, so a reviewer can see the confidence level without re-deriving it. Do not silently upgrade an assumption to a requirement because it is plausible.
+
+When an entire feature request lacks user research, recommend conducting user interviews or stakeholder discussions before investing in detailed requirement authoring, and offer to structure an interview guide. Requirements grounded solely in AI-generated analysis capture assumptions rather than actual needs; treat the resulting document as a draft requiring human validation.
+
 ## License
 
 This reference file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The persona and journey-map templates are HVE-Core IP and may be reused under the same license. The discovery frameworks named in the cite-only registry remain the property of their respective authors and publishers; their prose is accessed by the reader through the cited URLs and is never redistributed here.

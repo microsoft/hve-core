@@ -29,6 +29,7 @@ __all__ = [
     "DEFAULT_REDIRECT_URI",
     # Environment variable name registry.
     "ENV_BASE_URL",
+    "ENV_ALLOW_INSECURE_API",
     "ENV_CLIENT_ID",
     "ENV_CLIENT_SECRET",
     "ENV_PROFILE",
@@ -100,6 +101,7 @@ MURAL_TOKEN_URL = "https://app.mural.co/api/public/v1/authorization/oauth2/token
 DEFAULT_REDIRECT_URI = "http://localhost:8765/callback"
 
 ENV_BASE_URL = "MURAL_BASE_URL"
+ENV_ALLOW_INSECURE_API = "MURAL_ALLOW_INSECURE_API"
 ENV_CLIENT_ID = "MURAL_CLIENT_ID"
 ENV_CLIENT_SECRET = "MURAL_CLIENT_SECRET"
 ENV_PROFILE = "MURAL_PROFILE"
@@ -235,10 +237,18 @@ _REDACT_PATTERNS.append(
     )
 )
 # Azure Blob SAS query strings (used for image uploads): scrub everything
-# after the storage host's `?` so the `sig=` token is not logged.
+# after the storage host's `?` so the `sig=` token is not logged. The host is
+# matched case-insensitively because DNS labels are case-insensitive and
+# ``_validate_asset_url`` admits a URL on its lowercased ``parsed.hostname``.
+# Without the flag a mixed-case host passes validation and defeats redaction.
 _REDACT_PATTERNS.append(
-    (re.compile(r"(\.blob\.core\.windows\.net/[^\s?]+\?)\S+"), r"\1***")
+    (re.compile(r"(?i)(\.blob\.core\.windows\.net/[^\s?]+\?)\S+"), r"\1***")
 )
+# Standalone SAS signature. The host-anchored pattern above cannot match when
+# the query is rendered without its URL prefix, which happens when an upstream
+# error body quotes the parameters alone or when truncation removes the host.
+# `sig` is the SAS authenticator, so it is masked wherever it appears.
+_REDACT_PATTERNS.append((re.compile(r"(?i)(\bsig=)([^&\s\"'<>]+)"), r"\1***"))
 
 
 _LINE_RE = re.compile(

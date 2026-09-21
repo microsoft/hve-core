@@ -4,12 +4,14 @@ version = "0.0.0"
 requires-python = ">=3.11"
 dependencies = [
     "jsonschema>=4.20",
+    "pyyaml>=6.0",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=9.0",
     "pytest-cov>=7.0",
+    "pyright>=1.1.405",
     "ruff>=0.15",
     "pytest-mock>=3.12",
 ]
@@ -35,6 +37,9 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["runtime_a11y"]
 
 [tool.pyright]
 include = ["tests", "scripts"]

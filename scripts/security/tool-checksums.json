@@ -39,7 +39,7 @@
     {
       "name": "PowerShell-Yaml",
       "version": "0.4.7",
-      "notes": "YAML parser used by lint:yaml and collection metadata validation; pinned to known-good stable per ADR in docs/security/dependency-pinning.md"
+      "notes": "YAML parser used by lint:yaml and artifact metadata validation; pinned to known-good stable per ADR in docs/security/dependency-pinning.md"
     },
     {
       "name": "Pester",

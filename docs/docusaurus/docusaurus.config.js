@@ -3,37 +3,32 @@
 // @ts-check
 import { themes as prismThemes } from 'prism-react-renderer';
 import remarkGithubAlert from 'remark-github-blockquote-alert';
-import * as fs from 'fs';
+import remarkDirective from 'remark-directive';
 import * as path from 'path';
 import { labelRegistry } from './src/data/labelRegistry';
+import { loadPackageCards } from './src/data/pluginManifestCards';
+import remarkTableCaption from './plugins/remark-table-caption.mjs';
+import rehypeTableScope from './plugins/rehype-table-scope.mjs';
+import { loadSlideBundles } from './scripts/slide-bundles.cjs';
 
-const collectionsDir = path.resolve(__dirname, '../../collections');
-
-/**
- * @param {string} name
- */
-function countYamlPaths(name) {
-  const yamlPath = path.join(collectionsDir, `${name}.collection.yml`);
-  let content;
-  try {
-    content = fs.readFileSync(yamlPath, 'utf-8');
-  } catch {
-    throw new Error(
-      `[docusaurus.config.js] Cannot read collection manifest: ${yamlPath}\n` +
-      `Ensure "${name}" exists in the collections/ directory.`,
-    );
-  }
-  return (content.match(/^\s*- path:/gm) || []).length;
-}
-
-const collectionNames = [
-  'ado', 'coding-standards', 'data-science', 'design-thinking',
-  'experimental', 'github', 'gitlab', 'hve-core', 'jira',
-  'project-planning', 'security', 'hve-core-all',
-];
-const collectionCounts = Object.fromEntries(
-  collectionNames.map((n) => [n, countYamlPaths(n)]),
+const packageCards = loadPackageCards(
+  path.resolve(__dirname, '../../.github/plugin/marketplace.json'),
 );
+
+const accessibleGithubPrismTheme = {
+  ...prismThemes.github,
+  styles: prismThemes.github.styles.map((entry) =>
+    entry.types.includes('comment') || entry.types.includes('url')
+      ? {
+          ...entry,
+          style: {
+            ...entry.style,
+            color: entry.types.includes('comment') ? '#505050' : '#00756f',
+          },
+        }
+      : entry,
+  ),
+};
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -52,13 +47,17 @@ const config = {
   projectName: 'hve-core',
 
   onBrokenLinks: 'throw',
+  // Defaults to 'warn', which let a broken in-page anchor reach a passing build.
+  onBrokenAnchors: 'throw',
 
   customFields: {
-    collectionCounts,
+    packageCards,
+    slideDecks: loadSlideBundles(),
   },
 
   markdown: {
     format: 'detect',
+    mermaid: true,
     hooks: {
       onBrokenMarkdownLinks: 'throw',
     },
@@ -89,7 +88,8 @@ const config = {
           showLastUpdateAuthor: true,
           editUrl: ({ docPath }) =>
             `https://github.com/microsoft/hve-core/tree/main/docs/${docPath}`,
-          remarkPlugins: [remarkGithubAlert],
+          remarkPlugins: [remarkGithubAlert, remarkDirective, remarkTableCaption],
+          rehypePlugins: [rehypeTableScope],
         },
         blog: false,
         theme: {
@@ -100,13 +100,20 @@ const config = {
   ],
 
   themes: [
+    '@docusaurus/theme-mermaid',
     [
       '@easyops-cn/docusaurus-search-local',
       /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
       ({
         hashed: true,
+        docsDir: '../',
+        indexBlog: false,
         language: ['en'],
-        highlightSearchTermsOnTargetPage: true,
+        // Disabled: highlighting search terms on the target page injects <mark>
+        // elements and auto-scrolls to them, which disrupts screen readers
+        // (spurious "highlight" announcements + focus/scroll jumps) with no
+        // keyboard affordance to dismiss it.
+        highlightSearchTermsOnTargetPage: false,
         explicitSearchResultPath: true,
       }),
     ],
@@ -118,6 +125,9 @@ const config = {
       image: 'img/microsoft-logo.svg',
       colorMode: {
         respectPrefersColorScheme: true,
+      },
+      mermaid: {
+        theme: { light: 'neutral', dark: 'dark' },
       },
       docs: {
         sidebar: {
@@ -149,6 +159,7 @@ const config = {
               { label: labelRegistry.rpiWorkflow, to: '/docs/rpi/' },
               { label: labelRegistry.customizeAndExtend, to: '/docs/customization/' },
               { label: labelRegistry.architecture, to: '/docs/architecture/' },
+              { label: labelRegistry.slides, to: '/slides/' },
             ],
           },
           {
@@ -179,6 +190,7 @@ const config = {
               { label: 'Contributing', to: '/docs/contributing/' },
               { label: labelRegistry.security, to: '/docs/security/' },
               { label: labelRegistry.templates, to: '/docs/templates/' },
+              { label: 'Third-party notices', href: 'https://github.com/microsoft/hve-core/blob/main/THIRD-PARTY-NOTICES' },
             ],
           },
           {
@@ -194,7 +206,7 @@ const config = {
         copyright: `© Microsoft ${new Date().getFullYear()}. Built with ${labelRegistry.hveCoreExpanded}. Need help? Start with the documentation and the accessibility resources when available.`,
       },
       prism: {
-        theme: prismThemes.github,
+        theme: accessibleGithubPrismTheme,
         darkTheme: prismThemes.dracula,
       },
     }),

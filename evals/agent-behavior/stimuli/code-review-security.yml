@@ -19,7 +19,7 @@ stimuli:
         config:
           pattern: '(?i)(sql injection|injection|sanitize|parameterized|authentication|secret|vulnerability|exploit|severity|finding)'
       - type: output-matches
-        name: no-source-edit
+        name: code-review-security-lens-no-source-edit
         config:
           pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true

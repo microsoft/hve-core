@@ -2,7 +2,7 @@
 title: Authoring Custom Skills
 description: Build self-contained skill packages that bundle domain knowledge, reference materials, and scripts for on-demand use
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-08-29
 ms.topic: how-to
 keywords:
   - skills
@@ -29,7 +29,7 @@ Skills are referenced using the `copilot-skill:` URI scheme. When Copilot encoun
 
 ## Directory Structure
 
-Skills live under `.github/skills/{collection-id}/{skill-name}/`:
+Skills live under `.github/skills/{package-id}/{skill-name}/`:
 
 ```text
 .github/skills/
@@ -77,7 +77,10 @@ The description drives activation decisions. Write it to match the vocabulary us
 
 The body contains the full skill instructions. Structure it with clear sections, concrete examples, and actionable rules:
 
-```markdown
+In the resulting `SKILL.md`, each `##` marker below renders as a level-two
+heading. The following block shows the literal Markdown source.
+
+````markdown
 ## Review Protocol
 
 1. Validate the OpenAPI specification against the schema in
@@ -96,7 +99,7 @@ The body contains the full skill instructions. Structure it with clear sections,
 
 All error responses follow this structure:
 
-\`\`\`json
+```json
 {
   "error": {
     "code": "ResourceNotFound",
@@ -104,37 +107,47 @@ All error responses follow this structure:
     "target": "/users/12345"
   }
 }
-\`\`\`
 ```
+````
 
-## Accelerating with Prompt Builder
+## Authoring with HVE Builder
 
-The Prompt Builder agent automates skill creation and improvement. Use its commands to generate a well-structured SKILL.md and validate existing skills.
-
-Create a new skill or improve an existing one with `/prompt-build`:
+Use `hve-builder` create or improve mode to author a well-structured skill and
+run the applicable quality gates:
 
 ```text
-/prompt-build files=.github/skills/shared/pr-reference/SKILL.md promptFiles=.github/skills/contoso/api-review/SKILL.md
+Use hve-builder with mode=create,
+targets=.github/skills/contoso/api-review/SKILL.md, and
+requirements="Use pr-reference as a known structural reference and preserve
+progressive disclosure".
 ```
 
-Provide `files` for reference context (existing skills to use as structural templates, related instruction files) and `promptFiles` for the SKILL.md files to create or update. Prompt Builder follows the progressive disclosure model and organizes reference materials appropriately.
+Provide existing skills and related instructions as known references during
+intake. HVE Builder applies the progressive disclosure model and checks that
+reference chains remain shallow.
 
-Evaluate a skill's quality with `/prompt-analyze`:
+Use review mode for a read-only assessment:
 
 ```text
-/prompt-analyze promptFiles=.github/skills/contoso/api-review/SKILL.md
+Use hve-builder with mode=review and
+targets=.github/skills/contoso/api-review/SKILL.md.
 ```
 
 The report assesses purpose clarity, description effectiveness for activation decisions, instruction structure, and reference material organization.
 
-Refactor related skills with `/prompt-refactor`:
+Use refactor mode for behavior-preserving consolidation:
 
 ```text
-/prompt-refactor promptFiles=.github/skills/contoso/*/SKILL.md requirements="consolidate overlapping compliance skills into a unified package"
+Use hve-builder with mode=refactor,
+targets=.github/skills/contoso/*/SKILL.md, and
+requirements="consolidate overlapping compliance skills into a unified
+package".
 ```
 
 > [!TIP]
-> Pay attention to the description quality feedback from `/prompt-analyze`. The skill description drives Copilot's activation decisions, so a well-crafted description determines whether the skill loads at the right time.
+> Pay attention to HVE Builder's description-quality findings. The skill
+> description drives activation, so precise trigger metadata determines
+> whether the skill loads at the right time.
 
 ## Progressive Disclosure
 
@@ -152,16 +165,20 @@ The [pr-reference skill](pathname://../../.github/skills/shared/pr-reference/SKI
 
 Reference materials expand the skill's knowledge base without bloating the core instructions. Link to reference files from within SKILL.md using relative paths:
 
-```markdown
+In the resulting `SKILL.md`, the surrounding content remains under its
+level-two section heading; the nested Bash fence is a code block, not another
+heading. The following block shows the literal Markdown source.
+
+````markdown
 For the detailed technical reference, see
 [Detailed Reference](references/REFERENCE.md).
 
 Run the validation script to check for breaking changes:
 
-\`\`\`bash
+```bash
 ./scripts/validate-openapi.sh --spec openapi.yaml --baseline v2.json
-\`\`\`
 ```
+````
 
 Guidelines for organizing reference materials:
 

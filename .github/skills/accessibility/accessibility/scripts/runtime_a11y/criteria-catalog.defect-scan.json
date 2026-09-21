@@ -1,0 +1,61 @@
+{
+  "$schema": "./criteria-catalog.schema.json",
+  "catalogVersion": "2026-08-07",
+  "framework": "defect-scan",
+  "classification": "internal",
+  "provenance": {
+    "source": "Repository-internal quality checks. These are not WCAG success criteria and must not be presented as conformance criteria.",
+    "basis": "Each check observes a mechanically detectable condition in the rendered document, so runtime automation decides it outright.",
+    "reviewedBy": null
+  },
+  "criteria": [
+    {
+      "id": "DEFECT:broken-link",
+      "title": "Links resolve",
+      "failureClass": "internal",
+      "adequateMethods": ["runtime-automation"]
+    },
+    {
+      "id": "DEFECT:console-error",
+      "title": "Page loads without console errors",
+      "failureClass": "internal",
+      "adequateMethods": ["runtime-automation"]
+    },
+    {
+      "id": "DEFECT:duplicate-id",
+      "title": "Element identifiers are unique",
+      "failureClass": "internal",
+      "adequateMethods": ["runtime-automation", "axe-auto"]
+    },
+    {
+      "id": "DEFECT:duplicate-main",
+      "title": "Document declares a single main landmark",
+      "failureClass": "internal",
+      "adequateMethods": ["runtime-automation", "axe-auto"]
+    },
+    {
+      "id": "DEFECT:empty-title",
+      "title": "Document title is present and non-empty",
+      "failureClass": "internal",
+      "adequateMethods": ["runtime-automation", "axe-auto", "static-source"]
+    },
+    {
+      "id": "DEFECT:invalid-lang",
+      "title": "Language declaration is a valid tag",
+      "failureClass": "internal",
+      "adequateMethods": ["runtime-automation", "axe-auto", "static-source"]
+    },
+    {
+      "id": "DEFECT:missing-landmark",
+      "title": "Document declares expected landmarks",
+      "failureClass": "internal",
+      "adequateMethods": ["runtime-automation", "axe-auto"]
+    },
+    {
+      "id": "DEFECT:positive-tabindex",
+      "title": "No positive tabindex values override natural focus order",
+      "failureClass": "internal",
+      "adequateMethods": ["runtime-automation", "static-source"]
+    }
+  ]
+}

@@ -1,1 +1,0 @@
-../../../../.github/prompts/security/vex-triage.prompt.md

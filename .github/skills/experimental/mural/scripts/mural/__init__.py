@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["shapely>=2.0", "networkx>=3.0", "keyring>=24.0"]
+# dependencies = ["shapely>=2.0", "networkx>=3.0", "keyring>=24.0", "pyyaml>=6.0"]
 # ///
 """Mural REST API client and CLI.
 
@@ -12,7 +12,7 @@ The auth surface covers env-var resolution, token-store I/O, PKCE, the
 loopback OAuth ``auth login`` / ``logout`` / ``status`` subcommands. Mural REST
 resource subcommands (workspace, room, mural, widget) live in this same module.
 
-Runtime third-party dependencies are ``shapely`` and ``networkx``;
+Runtime third-party dependencies are ``shapely``, ``networkx``, and ``pyyaml``;
 ``shapely`` requires GEOS >= 3.11 to be present on the host. Test seams are
 exposed via private parameters (``_http``, ``_now``, ``_open_browser``,
 ``_server_factory``) so unit tests can substitute fakes without
@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import argparse
 import getpass  # noqa: F401 - re-exposed as patchable facade attribute
-import json
 import logging
 import os
 import pathlib  # noqa: F401 - re-exposed as patchable facade attribute
@@ -55,6 +54,7 @@ from ._constants import (  # noqa: E402,F401
     DEFAULT_PROFILE_NAME,
     DEFAULT_REDIRECT_URI,
     DEFAULT_SCOPES,
+    ENV_ALLOW_INSECURE_API,
     ENV_BASE_URL,
     ENV_CLIENT_ID,
     ENV_CLIENT_SECRET,
@@ -241,6 +241,9 @@ from ._output import (  # noqa: E402,F401
     _color_mode,
     _emit,
     _emit_debug_traceback,
+    _emit_json,
+    _emit_json_error,
+    _redact_payload,
 )
 
 # isort: split
@@ -284,13 +287,18 @@ from ._backends import (  # noqa: E402,F401
 # defined above, and so ``_oauth`` (imported below) sees ``_TOKEN_OPENER`` and
 # ``_parse_token_response`` already bound on the package.
 from ._transport import (  # noqa: E402,F401
+    _API_OPENER,
     _RATE_BUCKET,
+    MAX_ERROR_EXCERPT_CHARS,
+    REQUEST_TIMEOUT_SECONDS,
+    _SAS_OPENER,
     _TOKEN_OPENER,
     _authenticated_request,
     _backoff_seconds,
     _build_api_error,
     _create_asset_url,
     _decode_body,
+    _error_excerpt,
     _extract_error_payload,
     _join_url,
     _NoRedirect,
@@ -353,6 +361,8 @@ from ._output import (  # noqa: E402,F401
     _strip_html,
 )
 
+# isort: split
+
 # ---------------------------------------------------------------------------
 # Step 3 — Validation, projection, pagination, asset upload helpers
 # ---------------------------------------------------------------------------
@@ -377,6 +387,7 @@ from ._validation import (  # noqa: E402,F401
     _build_shape_body,
     _build_sticky_note_body,
     _build_textbox_body,
+    _canonicalize_api_base_url,
     _coerce_xy,
     _extract_field,
     _format_output,
@@ -387,6 +398,7 @@ from ._validation import (  # noqa: E402,F401
     _project_record,
     _resolve_workspace_id,
     _unwrap_value_envelope,
+    _validate_api_path,
     _validate_area_layout,
     _validate_asset_url,
     _validate_hyperlink,
@@ -397,6 +409,10 @@ from ._validation import (  # noqa: E402,F401
 # Explicit re-export surface so static analysis recognizes these names as part
 # of the package API (consumed by sibling modules and ``mural.<symbol>`` tests).
 __all__ = [
+    # re-exported transport openers
+    "_API_OPENER",
+    "_SAS_OPENER",
+    "_TOKEN_OPENER",
     # re-exported from ._constants
     "_AUTHORED_BY_AI_TAG_TEXT",
     "_KNOWN_CREDENTIAL_KEYS",
@@ -415,7 +431,9 @@ __all__ = [
     "DEFAULT_PROFILE_NAME",
     "DEFAULT_REDIRECT_URI",
     "DEFAULT_SCOPES",
+    "REQUEST_TIMEOUT_SECONDS",
     "ENV_BASE_URL",
+    "ENV_ALLOW_INSECURE_API",
     "ENV_CLIENT_ID",
     "ENV_CLIENT_SECRET",
     "ENV_DEFAULT_WORKSPACE",
@@ -468,6 +486,7 @@ __all__ = [
     "_MAX_TAG_TEXT_LEN",
     "_MURAL_ID_RE",
     "_VALID_AREA_LAYOUTS",
+    "_canonicalize_api_base_url",
     "_area_cache",
     "_build_area_body",
     "_build_arrow_body",
@@ -485,6 +504,7 @@ __all__ = [
     "_resolve_workspace_id",
     "_unwrap_value_envelope",
     "_validate_area_layout",
+    "_validate_api_path",
     "_validate_asset_url",
     "_validate_hyperlink",
     "_validate_mural_id",
@@ -655,6 +675,35 @@ def _list_widgets_with_context(
         parent_id=parent_id,
         limit=limit,
         page_size=page_size,
+    )
+
+
+def _hydrate_destination_context(
+    mural_id: str,
+    context: dict[str, Any],
+    widget_url: str,
+    *,
+    cache: dict[tuple[str, str], Any],
+) -> dict[str, Any]:
+    """Hydrate a destination record through cached package-facade reads."""
+    return _hydrate_destination_context_impl(
+        mural_id,
+        context,
+        widget_url,
+        cache=cache,
+        get_mural=lambda identifier: _authenticated_request(
+            "GET", f"/murals/{identifier}"
+        ),
+        get_room=lambda identifier: _authenticated_request(
+            "GET", f"/rooms/{identifier}"
+        ),
+        get_workspace=lambda identifier: _authenticated_request(
+            "GET", f"/workspaces/{identifier}"
+        ),
+        list_tags=lambda identifier: list(
+            _paginate("GET", f"/murals/{identifier}/tags")
+        ),
+        hydrate_destination_record=hydrate_destination_record,
     )
 
 
@@ -845,6 +894,7 @@ from ._area_helpers import (  # noqa: E402,F401
     _get_area_impl,
     _get_area_with_widget_fallback_impl,
     _get_widget_with_context_impl,
+    _hydrate_destination_context_impl,
     _list_areas_with_widget_fallback_impl,
     _list_widgets_with_context_impl,
     _log_area_fallback_once_impl,
@@ -1018,6 +1068,25 @@ from ._commands import (  # noqa: E402,F401 - re-export carved resource/bulk com
     _typed_widget_path,
     _verify_parent_containment,
 )
+from ._destinations import (  # noqa: E402,F401
+    DestinationAdapter,
+    DestinationEntry,
+    DestinationRegistry,
+    DispatchRequest,
+    DispatchResult,
+    dispatch_destination,
+    hydrate_destination_record,
+    load_destination_registry,
+    project_destination_record,
+    validate_writeback_patch,
+)
+from ._doctor import (  # noqa: E402,F401
+    COMMAND_REQUIRED_SCOPES,
+    _cmd_doctor,
+    command_key,
+    evaluate_readiness,
+    required_scopes_for_args,
+)
 
 # --- Voting tool handlers ----------------------------------------------------
 # --- Workspace search --------------------------------------------------------
@@ -1173,16 +1242,20 @@ def main(argv: list[str] | None = None) -> int:
         or os.environ.get(ENV_PROFILE)
         or DEFAULT_PROFILE_NAME
     )
-    try:
-        _autoload_credentials(profile_name)
-    except MuralError as exc:
-        print(str(exc), file=sys.stderr)
-        return EXIT_FAILURE
+    if getattr(args, "command", None) != "doctor":
+        try:
+            _autoload_credentials(profile_name)
+        except MuralError as exc:
+            print(_redact(str(exc)), file=sys.stderr)
+            return EXIT_FAILURE
     func: Callable[[argparse.Namespace], int] = getattr(args, "func", None)
     if func is None:
         parser.print_help(sys.stderr)
         return EXIT_USAGE
     try:
+        required_scopes = required_scopes_for_args(args)
+        if required_scopes:
+            _require_scope(required_scopes, profile_name=profile_name)
         return func(args)
     except SystemExit:
         raise
@@ -1191,7 +1264,7 @@ def main(argv: list[str] | None = None) -> int:
     except BrokenPipeError:
         return 141
     except MuralAuthScopeError as exc:
-        print(f"auth: {exc}", file=sys.stderr)
+        print(f"auth: {_redact(str(exc))}", file=sys.stderr)
         return 77
     except MuralHumanAuthoredProtected as exc:
         envelope = {
@@ -1199,7 +1272,7 @@ def main(argv: list[str] | None = None) -> int:
             "mural": exc.mural_id,
             "widget": exc.widget_id,
         }
-        print(json.dumps(envelope), file=sys.stderr)
+        _emit_json_error(envelope)
         return EXIT_NOPERM
     except MuralTagMergeConflict as exc:
         envelope = {
@@ -1212,7 +1285,7 @@ def main(argv: list[str] | None = None) -> int:
             "extra": exc.extra,
             "attempts": exc.attempts,
         }
-        print(json.dumps(envelope), file=sys.stderr)
+        _emit_json_error(envelope)
         return EXIT_TEMPFAIL
     except MuralAreaCapacityExceeded as exc:
         envelope = {
@@ -1223,14 +1296,22 @@ def main(argv: list[str] | None = None) -> int:
             "computed_extent": exc.computed_extent,
             "suggestion": exc.suggestion,
         }
-        print(json.dumps(envelope), file=sys.stderr)
+        _emit_json_error(envelope)
         return EXIT_AREA_CAPACITY
     except MuralBulkAtomicAbort as exc:
         envelope = {"error": "bulk_atomic_abort", "aborted": True, **exc.summary}
-        print(json.dumps(envelope), file=sys.stderr)
+        _emit_json_error(envelope)
         return EXIT_TEMPFAIL
+    except MuralAPIError as exc:
+        code = f" code={exc.code}" if exc.code else ""
+        request_id = f" request_id={_redact(exc.request_id)}" if exc.request_id else ""
+        print(
+            f"error: HTTP {exc.status}{code}: {_redact(exc.message)}{request_id}",
+            file=sys.stderr,
+        )
+        return 1
     except MuralError as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        print(f"error: {_redact(str(exc))}", file=sys.stderr)
         return 1
     except Exception as exc:  # noqa: BLE001
         print(f"internal error: {_redact(repr(exc))}", file=sys.stderr)

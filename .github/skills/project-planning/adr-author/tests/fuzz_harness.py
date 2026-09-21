@@ -5,7 +5,7 @@
 Runs as a standalone Atheris fuzzer when invoked from the command line and as
 a regular pytest test (importable smoke check) when discovered by pytest. This
 matches the convention used elsewhere in the repository (see
-`.github/skills/jira/jira/tests/fuzz_harness.py`) and satisfies the OSSF
+`.github/skills/project-planning/jira/tests/fuzz_harness.py`) and satisfies the OSSF
 Scorecard requirement for a fuzz harness in every Python skill that has a
 `tests/` directory.
 

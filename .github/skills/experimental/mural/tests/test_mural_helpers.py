@@ -635,6 +635,71 @@ def test_validate_mural_id_rejects_non_string(mural_module: Any) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Mural API destination and path validation
+# ---------------------------------------------------------------------------
+
+
+def test_canonicalize_api_base_url_accepts_production(mural_module: Any) -> None:
+    assert (
+        mural_module._canonicalize_api_base_url(
+            "https://app.mural.co/api/public/v1/", env={}
+        )
+        == mural_module.MURAL_BASE_URL_DEFAULT
+    )
+
+
+def test_canonicalize_api_base_url_accepts_opted_in_loopback(
+    mural_module: Any,
+) -> None:
+    env = {"MURAL_ALLOW_INSECURE_API": "1"}
+    assert (
+        mural_module._canonicalize_api_base_url(
+            "http://127.0.0.1:8080/api/public/v1", env=env
+        )
+        == "http://127.0.0.1:8080/api/public/v1"
+    )
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://evil.example/api/public/v1",
+        "http://app.mural.co/api/public/v1",
+        "https://app.mural.co:444/api/public/v1",
+        "https://user@app.mural.co/api/public/v1",
+        "https://app.mural.co/api/public/v1?x=1",
+        "https://app.mural.co/wrong",
+        "http://127.0.0.1/api/public/v1",
+    ],
+)
+def test_canonicalize_api_base_url_rejects_unsafe(mural_module: Any, url: str) -> None:
+    with pytest.raises(mural_module.MuralSecurityError):
+        mural_module._canonicalize_api_base_url(url, env={})
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "https://evil.example/steal",
+        "//evil.example/steal",
+        "/workspaces?token=x",
+        "/workspaces#fragment",
+        "/workspaces\\evil",
+        "/workspaces/../tokens",
+        "/workspaces%2Ftokens",
+        "/workspaces%5Ctokens",
+    ],
+)
+def test_validate_api_path_rejects_unsafe(mural_module: Any, path: str) -> None:
+    with pytest.raises(mural_module.MuralValidationError):
+        mural_module._validate_api_path(path)
+
+
+def test_validate_api_path_canonicalizes_relative(mural_module: Any) -> None:
+    assert mural_module._validate_api_path("workspaces/ws-1") == "/workspaces/ws-1"
+
+
+# ---------------------------------------------------------------------------
 # _validate_asset_url (SSRF allowlist)
 # ---------------------------------------------------------------------------
 

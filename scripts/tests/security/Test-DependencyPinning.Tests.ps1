@@ -2,6 +2,10 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
+# Discovery-time probe: Pester evaluates -Skip: while discovering tests, before
+# any BeforeAll runs, so a flag set in BeforeAll reads as $null here.
+$script:GitAvailable = [bool](Get-Command git -ErrorAction SilentlyContinue)
+
 BeforeAll {
     . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
     # Re-import CIHelpers so Pester can resolve its commands for mocking;
@@ -754,6 +758,107 @@ Describe 'shell-downloads ExcludePatterns' -Tag 'Unit' {
     It 'Returns correct type metadata for shell-downloads files' {
         $files = @(Get-FilesToScan -ScanPath $shellTestRoot -Types 'shell-downloads')
         $files[0].Type | Should -Be 'shell-downloads'
+    }
+}
+
+Describe 'pip comment and environment-marker handling' -Tag 'Unit' {
+    BeforeAll {
+        # `sys_platform == 'linux'` is a PEP 508 marker variable, not a package.
+        # The matcher looks for `==` anywhere, so a comment or a marker used to
+        # be reported as an unpinned dependency named after the marker variable.
+        $script:PipRoot = Join-Path $TestDrive 'pip-markers'
+        New-Item -Path $script:PipRoot -ItemType Directory -Force | Out-Null
+
+        $pyproject = @'
+[project]
+dependencies = [
+    # sys_platform == 'linux' condition for secretstorage.
+    "requests==2.32.3",
+    "cryptography>=50.0.0,<51.0; sys_platform == 'linux'",
+    "pywinauto>=0.6.8 ; platform_system == 'Windows'",
+    "httpx==0.27.0 ; python_version < '3.13'",
+]
+'@
+        Set-Content -Path (Join-Path $script:PipRoot 'pyproject.toml') -Value $pyproject
+
+        $script:PipResult = Get-DependencyViolation -FileInfo @{
+            Path         = (Join-Path $script:PipRoot 'pyproject.toml')
+            Type         = 'pip'
+            RelativePath = 'pyproject.toml'
+        }
+    }
+
+    It 'Reports no violation for a marker variable or a commented comparison' {
+        @($script:PipResult.Violations).Name | Should -Not -Contain 'sys_platform'
+        @($script:PipResult.Violations).Name | Should -Not -Contain 'platform_system'
+    }
+
+    It 'Reports no violations at all for this file' {
+        @($script:PipResult.Violations) | Should -HaveCount 0
+    }
+
+    It 'Still counts a pinned dependency that carries an environment marker' {
+        # Blanking the marker must not blank the requirement in front of it.
+        $script:PipResult.TotalCount | Should -Be 2
+    }
+
+    It 'Still flags an unpinned dependency outside a comment or marker' {
+        $root = Join-Path $TestDrive 'pip-unpinned'
+        New-Item -Path $root -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $root 'requirements.txt') -Value 'requests==latest'
+
+        $result = Get-DependencyViolation -FileInfo @{
+            Path         = (Join-Path $root 'requirements.txt')
+            Type         = 'pip'
+            RelativePath = 'requirements.txt'
+        }
+
+        @($result.Violations).Name | Should -Contain 'requests'
+    }
+}
+
+Describe 'git-tracked scan scope' -Tag 'Unit' {    BeforeAll {
+        # CI scans a clean checkout, so an ignored or untracked working-tree file
+        # is content the pipeline never sees. Counting it locally produces a
+        # compliance failure no pipeline run can reproduce.
+        $script:TrackedRoot = Join-Path $TestDrive 'tracked-scope'
+        New-Item -Path $script:TrackedRoot -ItemType Directory -Force | Out-Null
+
+        if (Get-Command git -ErrorAction SilentlyContinue) {
+            & git -C $script:TrackedRoot init --quiet
+            & git -C $script:TrackedRoot config user.email 'test@example.com'
+            & git -C $script:TrackedRoot config user.name 'Test'
+
+            Set-Content -Path (Join-Path $script:TrackedRoot '.gitignore') -Value 'sandbox/'
+            Set-Content -Path (Join-Path $script:TrackedRoot 'package.json') -Value '{ "dependencies": { "left-pad": "1.3.0" } }'
+            & git -C $script:TrackedRoot add .gitignore package.json
+            & git -C $script:TrackedRoot commit --quiet -m 'tracked fixture'
+
+            # Ignored, and untracked-but-not-ignored: neither reaches CI.
+            $sandbox = Join-Path $script:TrackedRoot 'sandbox'
+            New-Item -Path $sandbox -ItemType Directory -Force | Out-Null
+            Set-Content -Path (Join-Path $sandbox 'package.json') -Value '{ "dependencies": { "left-pad": "^1.3.0" } }'
+            Set-Content -Path (Join-Path $script:TrackedRoot 'untracked-package.json') -Value '{ }'
+        }
+
+        $script:PlainRoot = Join-Path $TestDrive 'plain-scope'
+        New-Item -Path $script:PlainRoot -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $script:PlainRoot 'package.json') -Value '{ "dependencies": { "left-pad": "1.3.0" } }'
+    }
+
+    It 'Excludes a gitignored file from the scan' -Skip:(-not $script:GitAvailable) {
+        $files = @(Get-FilesToScan -ScanPath $script:TrackedRoot -Types 'npm')
+        @($files.RelativePath) | Should -Not -Contain (Join-Path 'sandbox' 'package.json')
+    }
+
+    It 'Includes a tracked file in the scan' -Skip:(-not $script:GitAvailable) {
+        $files = @(Get-FilesToScan -ScanPath $script:TrackedRoot -Types 'npm')
+        @($files.RelativePath) | Should -Contain 'package.json'
+    }
+
+    It 'Scans every matching file when the root is not a git working tree' {
+        $files = @(Get-FilesToScan -ScanPath $script:PlainRoot -Types 'npm')
+        @($files.RelativePath) | Should -Contain 'package.json'
     }
 }
 

@@ -31,6 +31,10 @@ BeforeAll {
     $script:raiSchema = Join-Path $script:repoRoot 'scripts/linting/schemas/rai-state.schema.json'
     $script:ssscSchema = Join-Path $script:repoRoot 'scripts/linting/schemas/sssc-state.schema.json'
     $script:accessibilitySchema = Join-Path $script:repoRoot 'scripts/linting/schemas/accessibility-state.schema.json'
+    $script:cadenceFixtures = @(
+        (Join-Path $script:repoRoot 'evals/agent-behavior/fixtures/security-planner-disclaimer-null-state.json')
+        (Join-Path $script:repoRoot 'evals/agent-behavior/fixtures/security-planner-disclaimer-shown-state.json')
+    )
 
     function Assert-NoticeLogSchema {
         param([object]$Schema)
@@ -97,6 +101,24 @@ Describe 'Canonical state schemas declare disclaimerShownAt with nullable string
         $prop.type | Should -Be @('string','null')
         $prop.format | Should -Be 'date-time'
         $schema.required | Should -Contain 'disclaimerShownAt'
+    }
+
+    It 'All planner schemas describe the most recent actual display and replay discriminator' {
+        foreach ($path in @($script:secSchema, $script:raiSchema, $script:ssscSchema, $script:accessibilitySchema)) {
+            $schema = Get-Content -Path $path -Raw | ConvertFrom-Json
+            $schema.properties.disclaimerShownAt.description | Should -Match 'most recent full-disclaimer display'
+            $schema.'$defs'.noticeLogEntry.properties.details.description | Should -Match 'reason=user-requested-redisplay'
+        }
+    }
+}
+
+Describe 'Security disclaimer cadence fixtures' -Tag 'Unit' {
+    It 'Validates synthetic fresh and resumed state fixtures against the Security schema' {
+        $schemaJson = Get-Content -Path $script:secSchema -Raw
+        foreach ($path in $script:cadenceFixtures) {
+            $fixtureJson = Get-Content -Path $path -Raw
+            (Test-Json -Json $fixtureJson -Schema $schemaJson -ErrorAction Stop) | Should -BeTrue
+        }
     }
 }
 

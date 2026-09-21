@@ -1,0 +1,69 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-search-depth": 800,
+  "commit-search-depth": 1000,
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "hve-core",
+      "component": "prerelease",
+      "bootstrap-sha": "0d4452b33c2409d03315019dae0d34e468641dfb",
+      "draft": true,
+      "force-tag-creation": true,
+      "include-component-in-tag": true,
+      "versioning": "always-bump-patch",
+      "changelog-path": "CHANGELOG.md",
+      "changelog-sections": [
+        {
+          "type": "feat",
+          "section": "✨ Features",
+          "hidden": false
+        },
+        {
+          "type": "fix",
+          "section": "🐛 Bug Fixes",
+          "hidden": false
+        },
+        {
+          "type": "docs",
+          "section": "📚 Documentation",
+          "hidden": false
+        },
+        {
+          "type": "refactor",
+          "section": "♻️ Refactoring",
+          "hidden": false
+        },
+        {
+          "type": "chore",
+          "section": "🔧 Maintenance",
+          "hidden": false
+        }
+      ],
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": false,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "extension/templates/package.template.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "plugin.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": ".github/plugin/marketplace.json",
+          "jsonpath": "$.metadata.version"
+        },
+        {
+          "type": "json",
+          "path": ".github/plugin/marketplace.json",
+          "jsonpath": "$.plugins[0].version"
+        }
+      ]
+    }
+  }
+}

@@ -9,7 +9,7 @@
     }
   ],
   "type": "object",
-  "required": ["title", "description"],
+  "required": ["title", "description", "author", "ms.date", "ms.topic", "keywords"],
   "properties": {
     "title": {
       "type": "string",
@@ -21,19 +21,21 @@
     },
     "author": {
       "type": "string",
-      "description": "Recommended: Author or team name"
+      "minLength": 1,
+      "description": "Required: Author or team name"
     },
     "ms.date": {
       "$ref": "base-frontmatter.schema.json#/definitions/iso8601Date",
-      "description": "Recommended: Last modified date"
+      "description": "Required: Last modified date"
     },
     "ms.topic": {
       "type": "string",
       "enum": ["overview", "concept", "tutorial", "reference", "how-to", "troubleshooting", "architecture"],
-      "description": "Recommended: Documentation topic type"
+      "description": "Required: Documentation topic type"
     },
     "keywords": {
-      "$ref": "base-frontmatter.schema.json#/definitions/keywordsArray"
+      "$ref": "base-frontmatter.schema.json#/definitions/keywordsArray",
+      "description": "Required: Keywords for content categorization"
     },
     "estimated_reading_time": {
       "$ref": "base-frontmatter.schema.json#/definitions/positiveInteger"

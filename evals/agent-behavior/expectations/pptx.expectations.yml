@@ -57,20 +57,20 @@ expectations:
     priority: high
     contract_ref: "agent §Required Phases (Phase 1: Research, Phase 2: Build, Phase 3: Validate)"
 
-  - expectation_id: subagent-delegation-named
-    summary: Phase descriptions name the declared subagents.
-    signal: Output references `Researcher Subagent` or `PowerPoint Subagent` by name.
+  - expectation_id: capability-owners-named
+    summary: Phase descriptions name the retained research skill and declared build subagent.
+    signal: Output references `rpi-research` or `PowerPoint Subagent` by name.
     pass_criteria: |
-      For multi-phase plans, the response names `Researcher Subagent` and/or
-      `PowerPoint Subagent` as the actor for at least one phase (topic
-      research, content extraction, content build, deck build, or validation).
-      Per §Required Protocol item 1, subagents are required when available.
+      For multi-phase plans, the response names `rpi-research` for topic
+      research and/or `PowerPoint Subagent` as the actor for extraction,
+      content build, deck build, or validation. Per §Required Protocol item 1,
+      the PowerPoint subagent is required for the later deck phases when available.
     failure_modes:
       - All phases described as inline work with no subagent reference.
       - Subagent referenced by filename instead of by declared name.
       - Invented subagent names (e.g. `Deck Builder Subagent`).
     priority: medium
-    contract_ref: "agent frontmatter `agents:` list (Researcher Subagent, PowerPoint Subagent); §Required Phases (`Use subagents with runSubagent or task tools for all phases`)"
+    contract_ref: "agent frontmatter `agents:` list (PowerPoint Subagent); §Required Phases (`Activate rpi-research for Phase 1 topic research` and use PowerPoint Subagent for later phases)"
 
   - expectation_id: validation-phase-always-runs
     summary: Plans for new decks include a Validate phase, not just Outline → Draft → Render.

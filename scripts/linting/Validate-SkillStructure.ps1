@@ -762,8 +762,10 @@ function Invoke-SkillStructureValidation {
                     Write-Host "  ⏭️  Skill '$skillRelPath' was deleted - skipping validation" -ForegroundColor DarkGray
                     continue
                 }
-                # Find SKILL.md files at or below the changed path
-                $skillMdFiles = Get-ChildItem -Path $candidatePath -Filter 'SKILL.md' -File -Recurse -ErrorAction SilentlyContinue
+                # Find SKILL.md files at or below the changed path (excluding
+                # installed dependency and virtual-environment trees)
+                $skillMdFiles = Get-ChildItem -Path $candidatePath -Filter 'SKILL.md' -File -Recurse -ErrorAction SilentlyContinue |
+                    Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.venv)[\\/]' }
                 if ($null -eq $skillMdFiles -or @($skillMdFiles).Count -eq 0) {
                     # Check if the changed path is inside a skill directory (ancestor has SKILL.md)
                     $searchDir = Get-Item $candidatePath
@@ -796,7 +798,8 @@ function Invoke-SkillStructureValidation {
                 return 0
             }
 
-            $skillFiles = Get-ChildItem -Path $fullSkillsPath -Filter 'SKILL.md' -File -Recurse -ErrorAction SilentlyContinue
+            $skillFiles = Get-ChildItem -Path $fullSkillsPath -Filter 'SKILL.md' -File -Recurse -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.venv)[\\/]' }
             if ($null -eq $skillFiles -or @($skillFiles).Count -eq 0) {
                 Write-Host "No skill directories found under '$SkillsPath' - nothing to validate" -ForegroundColor Yellow
                 return 0

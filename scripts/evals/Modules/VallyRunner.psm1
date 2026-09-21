@@ -128,7 +128,7 @@ function Read-VallyResultsJsonl {
     Directory returned by `Resolve-VallyRunDir`.
 
     .OUTPUTS
-    [hashtable] `@{ assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus }`.
+    [hashtable] `@{ assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus; failedOrErroredTrials }`.
     `perStimulus` is an ordered map keyed by stimulus name with `@{ assertionsPassed; assertionsFailed; durationMs; trials }`.
     #>
     [CmdletBinding()]
@@ -149,6 +149,7 @@ function Read-VallyResultsJsonl {
         trials           = 0
         resultsPath      = $null
         perStimulus      = [ordered]@{}
+        failedOrErroredTrials = @()
     }
 
     if ([string]::IsNullOrWhiteSpace($RunDir) -or -not (Test-Path -LiteralPath $RunDir -PathType Container)) {
@@ -165,6 +166,7 @@ function Read-VallyResultsJsonl {
     $durationMs = 0
     $trials = 0
     $perStimulus = [ordered]@{}
+    $failedOrErroredTrials = [System.Collections.Generic.List[object]]::new()
 
     foreach ($line in Get-Content -LiteralPath $jsonl.FullName -Encoding utf8) {
         if ([string]::IsNullOrWhiteSpace($line)) { continue }
@@ -175,9 +177,10 @@ function Read-VallyResultsJsonl {
             continue
         }
 
-        # Vally 0.6 writes a typed run-summary record after the trial records.
-        # Legacy Vally versions emitted untyped trial records, so accept those
-        # while ignoring every explicitly typed non-trial record.
+        # Vally writes a typed "trial-result" record per trial and a typed
+        # "run-summary" record after them. Older untyped trial records lack a
+        # `type` field, so accept those while ignoring every explicitly typed
+        # non-trial record.
         if ($obj.PSObject.Properties['type'] -and
             -not [string]::IsNullOrWhiteSpace([string]$obj.type) -and
             [string]$obj.type -ne 'trial-result') {
@@ -252,6 +255,17 @@ function Read-VallyResultsJsonl {
             else { $bucket.assertionsFailed++ }
             $bucket.durationMs += $trialWallMs
         }
+
+        if ($trialErrored -or -not $trialPassed) {
+            $failedOrErroredTrials.Add([ordered]@{
+                ordinal      = $trials
+                outcome      = if ($trialErrored) { 'errored' } else { 'failed' }
+                stimulusName = $stimulusName
+                score        = if ($hasScore) { $scoreValue } else { $null }
+                passed       = if ($hasPassed) { [bool]$gradeResult.passed } else { $null }
+                errorState   = if ($trialErrored) { 'no-gradeable-verdict' } else { $null }
+            }) | Out-Null
+        }
     }
 
     return @{
@@ -262,6 +276,170 @@ function Read-VallyResultsJsonl {
         trials           = $trials
         resultsPath      = $jsonl.FullName
         perStimulus      = $perStimulus
+        failedOrErroredTrials = @($failedOrErroredTrials)
+    }
+}
+
+function Get-VallyExitCategory {
+    <#
+    .SYNOPSIS
+    Classifies a process result without returning untrusted output.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][int]$ExitCode,
+        [AllowEmptyString()][string]$OutputText = ''
+    )
+
+    if ($ExitCode -eq 0) { return 'success' }
+    $category = switch -Regex ($OutputText) {
+        '(?i)\b(401|403|unauthorized|forbidden|authentication)\b' { 'authentication'; break }
+        '(?i)\bmodel\b[^\r\n]*(not supported|unsupported|not found|unavailable|not available|not enabled)' { 'model-unavailable'; break }
+        '(?i)\b(429|rate[ -]?limit|quota)\b' { 'rate-limited'; break }
+        '(?i)\b(timeout|timed out|ETIMEDOUT)\b' { 'timeout'; break }
+        '(?i)\b(ECONNRESET|ECONNREFUSED|ENOTFOUND|fetch failed)\b' { 'connection'; break }
+        default { 'unknown' }
+    }
+    return $category
+}
+
+function Invoke-VallyProcess {
+    <#
+    .SYNOPSIS
+    Runs a Vally command while withholding child output and emitting trusted progress.
+
+    .DESCRIPTION
+    Drains stdout and stderr asynchronously, writes their complete contents only to
+    an optional runner-local log, emits allowlisted start, heartbeat, and completion
+    records, preserves the exact exit code, and terminates the child tree when asked.
+
+    .OUTPUTS
+    [hashtable] ExitCode, ExitCategory, ElapsedMilliseconds, and sanitized Worker.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)][string[]]$Arguments,
+        [string]$Command = 'vally',
+        [string]$LogPath,
+        [switch]$AppendLog,
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('plan', 'ordinary-eval', 'output-moderation', 'materialize', 'baseline-eval', 'customized-eval', 'compare', 'merge')]
+        [string]$Phase,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Worker,
+        [ValidateRange(1, 100)][int]$Attempt = 1,
+        [ValidateRange(1, 3600)][int]$HeartbeatIntervalSeconds = 60,
+        [scriptblock]$ShouldCancel
+    )
+
+    $safeWorker = ($Worker -replace '[^A-Za-z0-9._:-]', '_')
+    if ($safeWorker.Length -gt 80) { $safeWorker = $safeWorker.Substring(0, 80) }
+    $wrapper = @'
+$commandName = $args[0]
+$commandArguments = if ($args.Count -gt 1) { @($args[1..($args.Count - 1)]) } else { @() }
+$exitCode = 0
+try {
+    & $commandName @commandArguments 2>&1
+    if ($null -ne $LASTEXITCODE) { $exitCode = $LASTEXITCODE }
+}
+catch {
+    [Console]::Error.WriteLine($_.Exception.Message)
+    $exitCode = 1
+}
+exit $exitCode
+'@
+
+    $commandInfo = Get-Command -Name $Command -ErrorAction Stop
+    $resolvedCommand = if ($commandInfo.CommandType -eq [System.Management.Automation.CommandTypes]::Alias) {
+        [string]$commandInfo.Definition
+    }
+    elseif ($commandInfo.CommandType -in @(
+            [System.Management.Automation.CommandTypes]::Application,
+            [System.Management.Automation.CommandTypes]::ExternalScript)) {
+        [string]$commandInfo.Source
+    }
+    else {
+        $Command
+    }
+
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = (Get-Command pwsh -ErrorAction Stop).Source
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $startInfo.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+    $startInfo.StandardErrorEncoding = [System.Text.Encoding]::UTF8
+    $startInfo.ArgumentList.Add('-NoProfile')
+    $startInfo.ArgumentList.Add('-CommandWithArgs')
+    $startInfo.ArgumentList.Add($wrapper)
+    $startInfo.ArgumentList.Add($resolvedCommand)
+    foreach ($argument in $Arguments) { $startInfo.ArgumentList.Add($argument) }
+
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $startInfo
+    $started = $false
+    $stopwatch = $null
+    try {
+        if (-not $process.Start()) { throw "Could not start command '$Command'." }
+        $started = $true
+        $standardOutput = $process.StandardOutput.ReadToEndAsync()
+        $standardError = $process.StandardError.ReadToEndAsync()
+        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+        $nextHeartbeat = $HeartbeatIntervalSeconds
+        Write-Host "Vally progress: event=phase-start phase=$Phase worker=$safeWorker attempt=$Attempt elapsedSeconds=0 exitCategory=unknown" -ForegroundColor DarkGray
+
+        while (-not $process.WaitForExit(250)) {
+            if ($ShouldCancel -and (& $ShouldCancel)) {
+                throw [System.OperationCanceledException]::new('Vally process execution was interrupted.')
+            }
+            if ($stopwatch.Elapsed.TotalSeconds -ge $nextHeartbeat) {
+                $elapsedSeconds = [math]::Floor($stopwatch.Elapsed.TotalSeconds)
+                Write-Host "Vally progress: event=heartbeat phase=$Phase worker=$safeWorker attempt=$Attempt elapsedSeconds=$elapsedSeconds exitCategory=unknown" -ForegroundColor DarkGray
+                $nextHeartbeat += $HeartbeatIntervalSeconds
+            }
+        }
+
+        $process.WaitForExit()
+        $stopwatch.Stop()
+        $stdoutText = $standardOutput.GetAwaiter().GetResult()
+        $stderrText = $standardError.GetAwaiter().GetResult()
+        $exitCode = $process.ExitCode
+        $combinedText = "$stdoutText`n$stderrText"
+        $exitCategory = Get-VallyExitCategory -ExitCode $exitCode -OutputText $combinedText
+        $elapsedSeconds = [math]::Floor($stopwatch.Elapsed.TotalSeconds)
+        Write-Host "Vally progress: event=phase-complete phase=$Phase worker=$safeWorker attempt=$Attempt elapsedSeconds=$elapsedSeconds exitCategory=$exitCategory" -ForegroundColor DarkGray
+
+        if ($LogPath) {
+            $directory = Split-Path -Parent $LogPath
+            if ($directory -and -not (Test-Path -LiteralPath $directory)) {
+                New-Item -ItemType Directory -Path $directory -Force | Out-Null
+            }
+            $lines = @(
+                foreach ($text in @($stdoutText, $stderrText)) {
+                    if ([string]::IsNullOrEmpty($text)) { continue }
+                    @($text -split '\r?\n') | Where-Object { $_.Length -gt 0 }
+                }
+            )
+            if ($AppendLog) { Add-Content -LiteralPath $LogPath -Value $lines -Encoding utf8NoBOM }
+            else { Set-Content -LiteralPath $LogPath -Value $lines -Encoding utf8NoBOM }
+        }
+
+        return @{
+            ExitCode           = $exitCode
+            ExitCategory       = $exitCategory
+            ElapsedMilliseconds = [int64]$stopwatch.ElapsedMilliseconds
+            Worker             = $safeWorker
+        }
+    }
+    finally {
+        if ($started -and -not $process.HasExited) {
+            $process.Kill($true)
+            $process.WaitForExit()
+        }
+        if ($stopwatch -and $stopwatch.IsRunning) { $stopwatch.Stop() }
+        $process.Dispose()
     }
 }
 
@@ -299,7 +477,7 @@ function Invoke-VallySpec {
     its own stimuli.
 
     .OUTPUTS
-    [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus; tag }`.
+    [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus; failedOrErroredTrials; tag }`.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -310,7 +488,9 @@ function Invoke-VallySpec {
         [string]$VallyCommand = 'vally',
         [string]$LogPath,
         [string]$Tag,
-        [int]$MaxErroredRetries = 2
+        [int]$MaxErroredRetries = 2,
+        [string]$Worker,
+        [ValidateRange(1, 3600)][int]$HeartbeatIntervalSeconds = 60
     )
 
     if (-not (Test-Path -LiteralPath $OutputDir)) {
@@ -329,37 +509,41 @@ function Invoke-VallySpec {
 
     $threshold = Get-VallySpecThreshold -SpecPath $SpecPath
     $specLabel = Split-Path -Leaf $SpecPath
+    if ([string]::IsNullOrWhiteSpace($Worker)) {
+        $Worker = if ([string]::IsNullOrWhiteSpace($Tag)) { $specLabel } else { $Tag }
+    }
     $maxAttempts = [Math]::Max(1, $MaxErroredRetries + 1)
-    $allLines = [System.Collections.Generic.List[string]]::new()
+    $phaseTimings = [System.Collections.Generic.List[object]]::new()
     $best = $null
     $attempt = 0
 
     while ($attempt -lt $maxAttempts) {
         $attempt++
-        $sw = [System.Diagnostics.Stopwatch]::StartNew()
-        $prev = [Console]::OutputEncoding
-        $exitCode = 0
-        try {
-            [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-            $raw = & $VallyCommand @vallyArgs 2>&1
-            $exitCode = $LASTEXITCODE
-        }
-        finally {
-            [Console]::OutputEncoding = $prev
-            $sw.Stop()
-        }
-
-        $lines = @($raw | ForEach-Object { $_.ToString() })
-        foreach ($line in $lines) { Write-Host $line; [void]$allLines.Add($line) }
+        $processResult = Invoke-VallyProcess `
+            -Command $VallyCommand `
+            -Arguments $vallyArgs `
+            -LogPath $LogPath `
+            -AppendLog:($attempt -gt 1) `
+            -Phase 'ordinary-eval' `
+            -Worker $Worker `
+            -Attempt $attempt `
+            -HeartbeatIntervalSeconds $HeartbeatIntervalSeconds
+        $phaseTimings.Add([ordered]@{
+                phase          = 'ordinary-eval'
+                worker         = $processResult.Worker
+                attempt        = $attempt
+                elapsedSeconds = [math]::Round($processResult.ElapsedMilliseconds / 1000, 3)
+                exitCategory   = $processResult.ExitCategory
+            })
 
         $runDir = Resolve-VallyRunDir -OutputDir $OutputDir
         $aggregate = Read-VallyResultsJsonl -RunDir $runDir -Threshold $threshold
 
         $candidate = @{
-            exitCode  = $exitCode
+            exitCode  = $processResult.ExitCode
             runDir    = $runDir
             aggregate = $aggregate
-            elapsedMs = [int]$sw.ElapsedMilliseconds
+            elapsedMs = [int]$processResult.ElapsedMilliseconds
         }
         # Keep the cleanest attempt (fewest errored trials) across retries.
         if ($null -eq $best -or [int]$aggregate.errored -lt [int]$best.aggregate.errored) {
@@ -370,14 +554,6 @@ function Invoke-VallySpec {
         if ($attempt -lt $maxAttempts) {
             Write-Host "vally: $([int]$aggregate.errored) trial(s) errored for spec '$specLabel'; retrying to obtain a clean count (attempt $attempt of $($maxAttempts - 1) retries)..."
         }
-    }
-
-    if ($LogPath) {
-        $dir = Split-Path -Parent $LogPath
-        if ($dir -and -not (Test-Path -LiteralPath $dir)) {
-            New-Item -ItemType Directory -Path $dir -Force | Out-Null
-        }
-        Set-Content -LiteralPath $LogPath -Value $allLines -Encoding utf8NoBOM
     }
 
     $exitCode = $best.exitCode
@@ -402,7 +578,9 @@ function Invoke-VallySpec {
         trials           = $aggregate.trials
         resultsPath      = $aggregate.resultsPath
         perStimulus      = $aggregate.perStimulus
+        failedOrErroredTrials = $aggregate.failedOrErroredTrials
         tag              = $Tag
+        phaseTimings     = @($phaseTimings)
     }
 }
 
@@ -989,13 +1167,173 @@ function Get-VallySpecRunPlan {
     }
 }
 
+function Get-AgentEvalOwnershipComponent {
+    <#
+    .SYNOPSIS
+    Groups artifacts connected by an identical deduplicated run key.
+
+    .OUTPUTS
+    [object[]] Objects containing sorted ArtifactKeys and RunKeys arrays.
+    #>
+    [CmdletBinding()]
+    [OutputType([object[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [object[]]$ArtifactPlan
+    )
+
+    $artifactRuns = @{}
+    $runArtifacts = @{}
+    foreach ($artifact in $ArtifactPlan) {
+        $artifactKey = "$([string]$artifact.kind):$([string]$artifact.artifactId)"
+        if (-not $artifactRuns.ContainsKey($artifactKey)) {
+            $artifactRuns[$artifactKey] = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+        }
+        foreach ($runKey in @($artifact.specRuns)) {
+            [void]$artifactRuns[$artifactKey].Add([string]$runKey)
+            if (-not $runArtifacts.ContainsKey([string]$runKey)) {
+                $runArtifacts[[string]$runKey] = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+            }
+            [void]$runArtifacts[[string]$runKey].Add($artifactKey)
+        }
+    }
+
+    $unvisited = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($artifactKey in $artifactRuns.Keys) { [void]$unvisited.Add($artifactKey) }
+    $components = [System.Collections.Generic.List[object]]::new()
+
+    while ($unvisited.Count -gt 0) {
+        $start = @($unvisited | Sort-Object)[0]
+        $queue = [System.Collections.Generic.Queue[string]]::new()
+        $queue.Enqueue($start)
+        [void]$unvisited.Remove($start)
+        $componentArtifacts = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+        $componentRuns = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+
+        while ($queue.Count -gt 0) {
+            $artifactKey = $queue.Dequeue()
+            [void]$componentArtifacts.Add($artifactKey)
+            foreach ($runKey in $artifactRuns[$artifactKey]) {
+                [void]$componentRuns.Add($runKey)
+                foreach ($neighbor in $runArtifacts[$runKey]) {
+                    if ($unvisited.Remove($neighbor)) { $queue.Enqueue($neighbor) }
+                }
+            }
+        }
+
+        $components.Add([pscustomobject][ordered]@{
+                ArtifactKeys = @($componentArtifacts | Sort-Object)
+                RunKeys      = @($componentRuns | Sort-Object)
+            })
+    }
+
+    return @($components | Sort-Object { $_.ArtifactKeys[0] })
+}
+
+function Get-AgentEvalFileDigest {
+    <#
+    .SYNOPSIS
+    Returns a prefixed SHA-256 digest for one file.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        throw "Required manifest not found: $Path"
+    }
+    return "sha256:$((Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant())"
+}
+
+function Get-AgentEvalValueDigest {
+    <#
+    .SYNOPSIS
+    Returns a prefixed SHA-256 digest for a canonical ordered value.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param([Parameter(Mandatory = $true)]$Value)
+
+    $json = $Value | ConvertTo-Json -Depth 50 -Compress
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
+    $hash = [System.Security.Cryptography.SHA256]::HashData($bytes)
+    return "sha256:$([Convert]::ToHexString($hash).ToLowerInvariant())"
+}
+
+function Test-AgentEvalPlanDigest {
+    <#
+    .SYNOPSIS
+    Verifies the digest on a canonical agent eval plan object.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param([Parameter(Mandatory = $true)][psobject]$Plan)
+
+    $payload = [ordered]@{
+        schemaVersion = $Plan.schemaVersion
+        manifestDigests = [ordered]@{
+            changedArtifacts = $Plan.manifestDigests.changedArtifacts
+            changedSpecs = $Plan.manifestDigests.changedSpecs
+        }
+        baseline = [ordered]@{
+            required = [bool]$Plan.baseline.required
+            reason = [string]$Plan.baseline.reason
+            models = @($Plan.baseline.models)
+        }
+        ordinaryShards = @($Plan.ordinaryShards)
+        expectedProducers = @($Plan.expectedProducers)
+    }
+    return [string]$Plan.planDigest -ceq (Get-AgentEvalValueDigest -Value $payload)
+}
+
+function Assert-AgentEvalOwnership {
+    <#
+    .SYNOPSIS
+    Verifies every expected artifact and run key has exactly one shard owner.
+    #>
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$ExpectedArtifact,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$ExpectedRunKey,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Shard
+    )
+
+    foreach ($expected in $ExpectedArtifact) {
+        $count = 0
+        foreach ($candidateShard in $Shard) {
+            foreach ($artifactKey in @($candidateShard.artifacts)) {
+                if ([string]$artifactKey -ceq $expected) { $count++ }
+            }
+        }
+        if ($count -ne 1) { throw "Artifact '$expected' has $count shard owners; expected exactly one." }
+    }
+    foreach ($expected in $ExpectedRunKey) {
+        $count = 0
+        foreach ($candidateShard in $Shard) {
+            foreach ($ownedRunKey in @($candidateShard.runKeys)) {
+                if ([string]$ownedRunKey -ceq $expected) { $count++ }
+            }
+        }
+        if ($count -ne 1) { throw "Run key '$expected' has $count shard owners; expected exactly one." }
+    }
+}
+
 Export-ModuleMember -Function @(
     'Resolve-VallyRunDir',
     'Read-VallyResultsJsonl',
+    'Get-VallyExitCategory',
+    'Invoke-VallyProcess',
     'Invoke-VallySpec',
     'Test-SpecInputModeration',
     'Test-SpecOutputModerationBatch',
     'Test-SpecOutputModeration',
     'Get-VallySpecBacklinkCount',
-    'Get-VallySpecRunPlan'
+    'Get-VallySpecRunPlan',
+    'Get-AgentEvalOwnershipComponent',
+    'Assert-AgentEvalOwnership',
+    'Get-AgentEvalFileDigest',
+    'Get-AgentEvalValueDigest',
+    'Test-AgentEvalPlanDigest'
 )

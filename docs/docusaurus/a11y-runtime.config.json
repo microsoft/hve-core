@@ -1,0 +1,252 @@
+{
+  "$schema": "./a11y-runtime.config.schema.json",
+  "schemaVersion": "2026-07-17",
+  "baseUrl": "http://127.0.0.1:3001",
+  "serveMode": "auto",
+  "caseCatalog": "../../.github/skills/accessibility/accessibility/scripts/runtime_a11y/screen-reader-cases.json",
+  "bindingProfile": "./a11y-screen-reader.bindings.json",
+  "allowlist": [
+    "http://127.0.0.1:3001",
+    "http://localhost:3001"
+  ],
+  "routes": [
+    {
+      "path": "/hve-core/",
+      "title": "Homepage",
+      "surfaceIds": ["homepage"]
+    },
+    {
+      "path": "/hve-core/search/",
+      "title": "Search results",
+      "surfaceIds": ["search-results"]
+    },
+    {
+      "path": "/hve-core/slides/",
+      "title": "Slides gallery",
+      "surfaceIds": ["slides-gallery"]
+    },
+    {
+      "path": "/hve-core/accessibility/",
+      "title": "Accessibility statement",
+      "surfaceIds": ["accessibility-statement"]
+    },
+    {
+      "path": "/hve-core/accessibility/vpat/",
+      "title": "VPAT",
+      "surfaceIds": ["accessibility-vpat"]
+    },
+    {
+      "path": "/hve-core/slides/hve-updates.html",
+      "title": "HVE Core updates presentation",
+      "surfaceIds": ["hve-updates-presentation"]
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "homepage",
+      "type": "page",
+      "route": "/hve-core/",
+      "selector": "input.navbar__search-input",
+      "states": [
+        { "state": "desktop" },
+        { "state": "reflow-320" },
+        { "state": "zoom-200" },
+        { "state": "text-spacing" },
+        { "state": "forced-colors" }
+      ]
+    },
+    {
+      "id": "search-results",
+      "type": "page",
+      "route": "/hve-core/search/",
+      "selector": "input[name=\"q\"]",
+      "states": [
+        { "state": "desktop" },
+        { "state": "reflow-320" },
+        { "state": "zoom-200" },
+        { "state": "text-spacing" },
+        { "state": "forced-colors" }
+      ]
+    },
+    {
+      "id": "slides-gallery",
+      "type": "page",
+      "route": "/hve-core/slides/",
+      "selector": "main",
+      "states": [
+        { "state": "desktop" }, { "state": "reflow-320" },
+        { "state": "zoom-200" }, { "state": "text-spacing" },
+        { "state": "forced-colors" }
+      ]
+    },
+    {
+      "id": "accessibility-statement",
+      "type": "page",
+      "route": "/hve-core/accessibility/",
+      "selector": "main",
+      "states": [{ "state": "desktop" }, { "state": "reflow-320" }, { "state": "zoom-200" }]
+    },
+    {
+      "id": "accessibility-vpat",
+      "type": "page",
+      "route": "/hve-core/accessibility/vpat/",
+      "selector": "main",
+      "states": [{ "state": "desktop" }, { "state": "reflow-320" }, { "state": "zoom-200" }]
+    },
+    {
+      "id": "hve-updates-presentation",
+      "type": "presentation",
+      "route": "/hve-core/slides/hve-updates.html",
+      "selector": "main.slides",
+      "states": [
+        { "state": "initial" }, { "state": "first" }, { "state": "middle" },
+        { "state": "last" }, { "state": "direct-hash" }, { "state": "index" },
+        { "state": "dialog" }, { "state": "reading" },
+        { "state": "walkthrough-next" }, { "state": "walkthrough-back" },
+        { "state": "walkthrough-reset" }, { "state": "reflow-320" },
+        { "state": "zoom-200" },
+        { "state": "text-spacing" }, { "state": "forced-colors" },
+        { "state": "reduced-motion" }
+      ]
+    }
+  ],
+  "calibration": {
+    "mode": "full",
+    "maxExecutionsPerJourney": 20,
+    "profileVersion": "2026.07.17",
+    "calibrationProfile": "guidepup-nvda-safe-isolated",
+    "manualBoundary": [
+      {
+        "id": "focus-indicator-visibility",
+        "reason": "Four-sided focus indicator visibility and clipping require manual verification.",
+        "reference": "docs/planning/runbooks/accessibility/manual-test-book.md"
+      }
+    ],
+    "journeys": [
+      {
+        "id": "search-keyboard-reachability",
+        "caseIds": ["HVE-NVDA-003", "HVE-NVDA-013"],
+        "title": "Search combobox keyboard reachability",
+        "route": "/hve-core/",
+        "surfaceId": "homepage",
+        "state": "desktop",
+        "captureMode": "action",
+        "triggerAfterDriverStart": true,
+        "trigger": {
+          "action": "press",
+          "scope": "document",
+          "value": "Control+K",
+          "description": "Send the documented search shortcut after the driver starts"
+        },
+        "triggerSequence": [
+          {
+            "action": "focus",
+            "target": "body",
+            "waitFor": "input.navbar__search-input"
+          },
+          {
+            "action": "press",
+            "scope": "document",
+            "value": "Control+K"
+          },
+          {
+            "action": "type",
+            "target": "input.navbar__search-input",
+            "value": "a",
+            "waitFor": "[role=\"listbox\"], [role=\"option\"]"
+          }
+        ],
+        "commands": [
+          { "kind": "pause", "durationMs": 4000 }
+        ],
+        "assertions": [
+          { "id": "shortcut-destination", "type": "contains", "value": "search", "evidenceType": "actionSpeech" },
+          { "id": "result-context", "type": "contains", "value": "result", "evidenceType": "actionSpeech" }
+        ],
+        "profileFingerprint": {
+          "locale": "en-US",
+          "driver": "nvda",
+          "driverVersion": "2026.1.1",
+          "browser": "chrome",
+          "browserVersion": "150.0.7871.127",
+          "automation": "guidepup-nvda-safe-isolated",
+          "automationVersion": "guidepup_nvda_0.2.0-2026.1.1",
+          "isolation": "isolated",
+          "verbosity": "default",
+          "punctuation": "preserve",
+          "speechMode": "default",
+          "addOnPosture": "isolated"
+        }
+      },
+      {
+        "id": "search-status-announcement",
+        "caseIds": ["HVE-NVDA-010"],
+        "title": "Search results status announcement",
+        "route": "/hve-core/search/?q=agent",
+        "surfaceId": "search-results",
+        "state": "desktop",
+        "triggerAfterDriverStart": true,
+        "trigger": {
+          "action": "focus",
+          "target": "input[name=\"q\"]",
+          "description": "Focus the search field"
+        },
+        "triggerSequence": [
+          {
+            "action": "click",
+            "target": "input[name=\"q\"]",
+            "waitFor": "input[name=\"q\"]"
+          }
+        ],
+        "commands": [
+          { "kind": "pause", "durationMs": 2000 },
+          { "kind": "key", "value": "Control+A" },
+          { "kind": "pause", "durationMs": 1000 },
+          { "kind": "type", "value": "z" },
+          { "kind": "waitFor", "value": "#search-results-status[role=\"status\"]", "durationMs": 5000 },
+          { "kind": "pause", "durationMs": 4000 }
+        ],
+        "assertions": [{ "id": "speech", "type": "matches", "value": "No documents found|[0-9]+ documents? found" }],
+        "profileFingerprint": {
+          "locale": "en-US",
+          "driver": "nvda",
+          "driverVersion": "2026.1.1",
+          "browser": "chrome",
+          "browserVersion": "150.0.7871.127",
+          "automation": "guidepup-nvda-safe-isolated",
+          "automationVersion": "guidepup_nvda_0.2.0-2026.1.1",
+          "isolation": "isolated",
+          "verbosity": "default",
+          "punctuation": "preserve",
+          "speechMode": "default",
+          "addOnPosture": "isolated"
+        }
+      }
+    ],
+    "visualStates": [
+      "desktop",
+      "reflow-320",
+      "zoom-200",
+      "text-spacing",
+      "forced-colors"
+    ]
+  },
+  "visualReview": {
+    "enabled": true,
+    "evidenceRoot": ".",
+    "maxArtifactBytes": 1073741824,
+    "publicLoopbackOnly": true,
+    "rejectPersonalData": true,
+    "routes": [
+      { "path": "/hve-core/", "state": "desktop", "surfaceId": "homepage" },
+      { "path": "/hve-core/search/", "state": "desktop", "surfaceId": "search-results" }
+    ],
+    "states": [
+      "desktop",
+      "reflow-320",
+      "zoom-200",
+      "text-spacing",
+      "forced-colors"
+    ]
+  }
+}

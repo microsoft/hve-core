@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // This file is based on the upstream Docusaurus 3.10.1 component
 // @docusaurus/theme-classic/lib/theme/DocSidebarItem/Category/index.js.
-import React, {useEffect, useMemo} from 'react';
+import React, {useEffect} from 'react';
 import clsx from 'clsx';
 import {
   ThemeClassNames,
@@ -14,14 +14,11 @@ import {
 import {isSamePath} from '@docusaurus/theme-common/internal';
 import {
   isActiveSidebarItem,
-  findFirstSidebarItemLink,
   useDocSidebarItemsExpandedState,
   useVisibleSidebarItems,
 } from '@docusaurus/plugin-content-docs/client';
 
-import Link from '@docusaurus/Link';
 import {translate} from '@docusaurus/Translate';
-import useIsBrowser from '@docusaurus/useIsBrowser';
 import DocSidebarItems from '@theme/DocSidebarItems';
 import DocSidebarItemLink from '@theme/DocSidebarItem/Link';
 
@@ -48,19 +45,6 @@ function useAutoExpandActiveCategory({
     activePath,
     previousActivePath,
   ]);
-}
-
-function useCategoryHrefWithSSRFallback(item) {
-  const isBrowser = useIsBrowser();
-  return useMemo(() => {
-    if (item.href && !item.linkUnlisted) {
-      return item.href;
-    }
-    if (isBrowser || !item.collapsible) {
-      return undefined;
-    }
-    return findFirstSidebarItemLink(item);
-  }, [item, isBrowser]);
 }
 
 function CategoryLinkLabel({label}) {
@@ -105,7 +89,6 @@ function DocSidebarItemCategoryCollapsible({
       sidebar: {autoCollapseCategories},
     },
   } = useThemeConfig();
-  const hrefWithSSRFallback = useCategoryHrefWithSSRFallback(item);
   const isActive = isActiveSidebarItem(item, activePath);
   const isCurrentPage = isSamePath(href, activePath);
   const {collapsed, setCollapsed} = useCollapsible({
@@ -140,25 +123,20 @@ function DocSidebarItemCategoryCollapsible({
     }
   }, [collapsible, expandedItem, index, setCollapsed, autoCollapseCategories]);
 
-  const handleItemClick = (event) => {
-    onItemClick?.(item);
-    if (collapsible) {
-      if (href) {
-        if (isCurrentPage) {
-          event.preventDefault();
-          updateCollapsed();
-        } else {
-          updateCollapsed(false);
-        }
-      } else {
-        event.preventDefault();
-        updateCollapsed();
-      }
-    }
+  // The toggle deliberately does not call `onItemClick`. In the mobile sidebar
+  // that callback closes the drawer, and upstream relies on the category header
+  // navigating to justify closing it. This control only discloses, so closing
+  // the drawer would discard the user's place for no navigation. Child document
+  // links still call the callback and still close the drawer when they navigate.
+  const handleToggleClick = () => {
+    updateCollapsed();
   };
 
-  const linkAriaLabel =
-    collapsible && !collapsed
+  // The name states the action rather than the destination, because the control
+  // performs exactly one action and never navigates. It always contains the
+  // category label so a screen-reader user can distinguish sibling toggles.
+  const toggleAriaLabel =
+    !collapsed
       ? translate(
           {
             id: 'theme.DocSidebarItem.collapseCategoryAriaLabel',
@@ -191,20 +169,34 @@ function DocSidebarItemCategoryCollapsible({
         className={clsx('menu__list-item-collapsible', {
           'menu__list-item-collapsible--active': isCurrentPage,
         })}>
-        <Link
-          className={clsx('menu__link', {
+        {/*
+          A native button, not a link with a button role: it gives Enter and
+          Space activation, focusability, and button semantics without any
+          JavaScript. `aria-expanded` is the required disclosure state.
+
+          `aria-controls` is deliberately absent. The collapsible target below
+          uses `Collapsible lazy`, which renders nothing until the group is
+          first opened, so an initially collapsed category has no element to
+          reference. Pointing at a missing id is worse than omitting the
+          optional attribute, and the simple disclosure pattern does not
+          require it.
+
+          The category landing page is not lost: it is rendered as this
+          category's first child link.
+        */}
+        <button
+          type="button"
+          className={clsx('clean-btn', 'menu__link', {
             'menu__link--sublist': collapsible,
-            'menu__link--sublist-caret': !href && collapsible,
+            'menu__link--sublist-caret': collapsible,
             'menu__link--active': isActive,
           })}
-          onClick={handleItemClick}
-          aria-current={isCurrentPage ? 'page' : undefined}
+          onClick={handleToggleClick}
           aria-expanded={collapsible ? !collapsed : undefined}
-          aria-label={linkAriaLabel}
-          href={collapsible ? hrefWithSSRFallback ?? '#' : hrefWithSSRFallback}
+          aria-label={toggleAriaLabel}
           {...props}>
           <CategoryLinkLabel label={label} />
-        </Link>
+        </button>
       </div>
       <Collapsible lazy as="ul" className="menu__list" collapsed={collapsed}>
         <DocSidebarItems

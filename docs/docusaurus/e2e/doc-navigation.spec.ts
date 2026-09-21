@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { SITE_PAGES, collectPageSnapshot, visitInvariantPage } from './_helpers/a11yInvariants';
+import { SITE_PAGES, collectPageSnapshot, visitInvariantPage, waitForHydration } from './_helpers/a11yInvariants';
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
@@ -28,6 +28,7 @@ test.describe('Document navigation', () => {
 
   test('sidebar renders and breadcrumbs are present on a doc page', async ({ page }) => {
     await page.goto('/hve-core/docs/getting-started/');
+    await waitForHydration(page);
 
     await expect(page.locator('.theme-doc-sidebar-container')).toBeVisible();
     await expect(page.locator('nav.theme-doc-breadcrumbs')).toBeVisible();
@@ -41,6 +42,7 @@ test.describe('Document navigation', () => {
     // adjacent doc (deeper category-index pages can emit a self-referential
     // next link, which would never change the URL).
     await page.goto('/hve-core/docs/');
+    await waitForHydration(page);
 
     const nextLink = page.locator('.pagination-nav__link--next');
     await expect(nextLink).toBeVisible();

@@ -79,6 +79,8 @@ personaImpact:                   # list of impacted persona identifiers
   - 'low-vision'
   - 'color-blind-deuteranopia'
 wcagLevel: AA                    # A | AA | AAA | N/A
+winningMethod: axe-static        # the strongest method backing this entry
+methodAdequacy: decides          # decides | informs (per the skill's method-adequacy doctrine)
 ```
 
 ### Cross-Planner Shared Fields
@@ -99,11 +101,13 @@ The following fields share names, semantics, and value spaces with the Security 
 
 ### Accessibility-Specific Extensions
 
-| Field                    | Purpose                                                                     |
-|--------------------------|-----------------------------------------------------------------------------|
-| `assistiveTechValidated` | List of assistive technology stacks the evidence was tested against         |
-| `personaImpact`          | List of impacted persona identifiers from Phase 1 discovery                 |
-| `wcagLevel`              | `A`, `AA`, or `AAA` for WCAG-anchored controls; `N/A` for non-WCAG criteria |
+| Field                    | Purpose                                                                                                                                                    |
+|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `assistiveTechValidated` | List of assistive technology stacks the evidence was tested against                                                                                        |
+| `personaImpact`          | List of impacted persona identifiers from Phase 1 discovery                                                                                                |
+| `wcagLevel`              | `A`, `AA`, or `AAA` for WCAG-anchored controls; `N/A` for non-WCAG criteria                                                                                |
+| `winningMethod`          | The strongest verification method backing the entry (for example, `axe-static`, `probe-keyboard-traversal`, `manual-at`, `manual-keyboard`, `code-review`) |
+| `methodAdequacy`         | `decides` or `informs` for the winning method against this criterion, resolved through the consolidated skill's method-adequacy doctrine                   |
 
 ### Register Rules
 
@@ -111,6 +115,8 @@ The following fields share names, semantics, and value spaces with the Security 
 * An entry with `status: gap` requires at least one `personaImpact` value; collapsing all impacted personas into a generic label is forbidden
 * `wcagLevel` is required whenever `framework` is a WCAG-anchored framework (`wcag-22` and conformance-leveled imports); use `N/A` for other frameworks
 * When the planner is unsure whether a control is covered, it writes `status: pending` rather than guessing; pending entries roll into the watchlist for follow-up
+* `methodAdequacy` is resolved through the consolidated Accessibility skill's method-adequacy doctrine (decide vs inform). An entry whose `methodAdequacy` is `informs` cannot carry `status: covered`; it caps at `status: partial` until an adequate method (an interaction-state probe or an assistive-technology pass) is attached and recorded in `winningMethod`. This cap applies to every control in the interaction, announcement, adaptive-rendering, and faux-semantics classes named in that doctrine (for example, WCAG 2.1.1, 2.4.3, 4.1.3, 1.4.10, and faux-heading 1.3.1)
+* An entry in the announcement class (WCAG 1.3.1, 4.1.2 computed name/role, 4.1.3) cannot carry `status: covered` with an empty `assistiveTechValidated`; announcement correctness is decided by an AT pass or an accessibility-tree assertion, never by attribute presence alone
 
 ## Tradeoff Documentation Pattern
 
@@ -228,6 +234,7 @@ Phase 5 advances to Phase 6 only when all of the following are true:
 
 * Every `controlMappings` entry with `status` of `gap` or `partial` has at least one matching `evidenceRegister` entry, or a `planRiskAssessment.deferredMitigations` record explaining the absence with a `deferredReason`
 * Every `evidenceRegister` entry has the nine cross-planner shared fields populated; the accessibility extensions are populated when the framework requires them
+* Every `evidenceRegister` entry carrying `status: covered` for an interaction, announcement, adaptive-rendering, or faux-semantics criterion records `methodAdequacy: decides` with a `winningMethod` that is an interaction-state probe or an assistive-technology pass; no such entry is `covered` on static evidence alone
 * Every tradeoff in the tradeoff log carries an `acceptedBy` value
 * Every `seedId` references at least one `evidenceId` in `evidenceRefs`
 * The set of severities across all seeds is internally consistent with the underlying evidence statuses (for example, no `enhancement` seed references a `gap` evidence entry)
@@ -243,3 +250,4 @@ The following behaviors are forbidden in Phase 5 and surface as planner self-cor
 * Collapsing the `personaImpact` field into a single generic label such as "users with disabilities"; persona granularity from Phase 1 must be preserved on every gap or partial entry
 * Treating `manual` autonomy as the implicit default for every seed; the autonomy tier is selected explicitly per session and recorded in `userPreferences.autonomyTier`
 * Recording a tradeoff without an `acceptedBy` value; un-accepted tradeoffs are watchlist entries, not tradeoff-log entries
+* Marking an interaction, announcement, adaptive-rendering, or faux-semantics control `status: covered` on static evidence alone; attribute presence (a `role`, an `aria-*` value, a landmark count) only `informs` these classes and caps the control at `status: partial` until an adequate method is recorded in `winningMethod`

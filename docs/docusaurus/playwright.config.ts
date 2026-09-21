@@ -38,7 +38,7 @@ export default defineConfig({
   webServer: {
     // In CI the workflow runs `npm run build` as its own step, so the e2e run
     // only needs to serve that output (no redundant second build). Locally,
-    // build then serve so a bare `test:e2e` is self-contained; `test:e2e:fast`
+    // build then serve so `ci:test:e2e` is self-contained; `ci:test:e2e:fast`
     // reuses an already-running server (see serve:preview) and skips both.
     command: isCI ? 'npm run serve:ci' : 'npm run build && npm run serve:ci',
     url: baseURL,

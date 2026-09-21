@@ -12,7 +12,7 @@ tags:
   - agents
   - rai-planning
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -38,6 +38,8 @@ The RAI Planner follows six sequential phases, each mapped to NIST AI RMF functi
 
 ```mermaid
 flowchart LR
+  accTitle: RAI Planning Six-Phase Assessment
+  accDescr: Governance, mapping, measurement, and management organize six phases from AI system scoping and risk classification through impact assessment and review handoff.
     subgraph govern ["Govern + Map"]
         P1["Phase 1\nAI System Scoping"]
         P2["Phase 2\nRisk Classification"]

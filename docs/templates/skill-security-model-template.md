@@ -3,7 +3,7 @@ title: Skill Security Model Template
 description: 'Canonical structure for per-skill STRIDE security models (SECURITY.md) mirroring the repo-wide security model, with data-flow and trust-boundary diagrams, risk-rating tables, and a G-prefixed gap register'
 sidebar_position: 1
 author: microsoft/hve-core
-ms.date: 2026-07-02
+ms.date: 2026-08-20
 ms.topic: reference
 estimated_reading_time: 8
 keywords:
@@ -15,7 +15,7 @@ keywords:
 ---
 <!-- markdownlint-disable-file -->
 <!--
-USAGE: Copy this file to `.github/skills/<collection>/<skill>/SECURITY.md` and replace every
+USAGE: Copy this file to `.github/skills/<package>/<skill>/SECURITY.md` and replace every
 {{PLACEHOLDER}} and guidance comment. Every diagram, asset, adversary, mitigation, and risk
 rating MUST be derived from the skill's actual runtime — never invent threats or ratings.
 Delete sections only when a category genuinely does not apply, and say so explicitly.
@@ -63,6 +63,8 @@ This template mirrors `docs/security/security-model.md` so per-skill models reac
 
 ```mermaid
 flowchart TD
+    accTitle: Skill Security Data Flow Template
+    accDescr: A skill command-line tool reads local credentials, exchanges untrusted HTTPS data with an external service, and writes output inside the operator trust zone.
     subgraph HOST["Operator Workstation / Runner (trust zone)"]
         CLI["{{skill}} CLI"]
         Credentials["Credentials<br/>(env / token store)"]

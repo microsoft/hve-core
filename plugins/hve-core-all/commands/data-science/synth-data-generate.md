@@ -1,1 +1,0 @@
-../../../../.github/prompts/data-science/synth-data-generate.prompt.md

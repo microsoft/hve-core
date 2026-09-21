@@ -2,7 +2,13 @@
 title: Skill Assessor
 description: Assesses a single security skill against the codebase and returns structured findings
 sidebar_position: 5
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - security
+  - skill-assessor
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,10 +28,8 @@ Assesses a single security skill against the codebase and returns structured fin
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Security Reviewer dispatches Skill Assessor for exactly one security knowledge skill at a time. It reads the skill's vulnerability references and assesses code or a supplied plan. Users select the parent review workflow; the assessor neither chooses a broader scan nor replaces downstream verification.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies a web-security skill, codebase profile, and changed API paths in diff mode. The worker returns `SKILL_FINDINGS_V1` with reference coverage and code evidence for each finding. A plan dispatch returns `PLAN_FINDINGS_V1` with risk-oriented statuses instead. The parent verifies and consolidates the result; the worker does not modify source or claim a whole-system audit from a narrow scope.

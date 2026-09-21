@@ -33,6 +33,10 @@ Local reusable workflows referenced via relative paths are excluded from SHA pin
 
 Workflows MUST declare explicit permissions following the principle of least privilege. The default permission set is `contents: read`. Additional permissions MUST be granted at the job level and only when required for a specific capability.
 
+Every job MUST declare its own `permissions:` block whenever the workflow-level block grants any scope. A job with no block silently inherits the workflow grant, which is neither explicit nor auditable. The one exception is a workflow-level `permissions: {}`, which grants nothing, so a job beneath it that declares no block inherits an empty set and holds no scope.
+
+An empty workflow-level block is a default, not a ceiling. A job that does declare its own block still receives what it declares, because job-level permissions replace the workflow-level set rather than being capped by it.
+
 **Required pattern:**
 
 ```yaml
@@ -58,7 +62,16 @@ jobs:
           echo "Running validation steps"
 ```
 
-**Enforcement:** Violations are detected by `scripts/security/Test-WorkflowPermissions.ps1`. CI will fail on workflows missing a top-level `permissions:` block. The `copilot-setup-steps.yml` workflow is excluded by default.
+**Enforcement:** Violations are detected by `scripts/security/Test-WorkflowPermissions.ps1`, which classifies each workflow and then each of its jobs:
+
+| Workflow-level block | Job-level block | Effective scopes                   | Verdict   |
+|----------------------|-----------------|------------------------------------|-----------|
+| absent               | absent          | repository or organization default | violation |
+| `permissions: {}`    | absent          | none                               | pass      |
+| populated            | absent          | inherits the workflow grant        | violation |
+| any                  | present         | job-declared                       | pass      |
+
+CI will fail on either a missing top-level block or a job that omits its own block under a populated workflow-level block. The `copilot-setup-steps.yml` workflow is excluded by default.
 
 ## Credentials and Secrets
 
@@ -85,7 +98,15 @@ Workflows MUST NOT persist GitHub credentials by default. Credential persistence
 
 ## Runners
 
-Workflows MUST run on GitHub-hosted Ubuntu runners. Other runner types are not supported in hve-core.
+Workflows MUST run on GitHub-hosted Ubuntu runners. Windows, macOS, self-hosted, and other non-Ubuntu runner types are not supported in hve-core.
+
+**Allowed `runs-on` labels** (GitHub-hosted Ubuntu images only):
+
+* `ubuntu-latest`
+* `ubuntu-24.04`, `ubuntu-22.04` (and other GitHub-hosted Ubuntu version labels as they become available, including ARM variants such as `ubuntu-24.04-arm`)
+* `ubuntu-slim` (lightweight 1 vCPU GitHub-hosted runner; still Ubuntu, still GitHub-hosted)
+
+**Disallowed `runs-on` values:** `windows-*`, `macos-*`, `self-hosted`, and any custom or third-party runner label.
 
 **Required pattern:**
 
@@ -252,13 +273,22 @@ All workflows MUST pass the following validation checks:
 ### Workflow Permissions Validation
 
 * **Script:** `scripts/security/Test-WorkflowPermissions.ps1`
-* **What it enforces:** All workflows declare a top-level `permissions:` block
+* **What it enforces:** Every workflow declares a top-level `permissions:` block, and every job declares its own block unless the workflow-level block is empty
+* **CI blocking:** Failures block CI when configured to enforce compliance
+
+### Runner Policy Validation
+
+* **Script:** `scripts/security/Test-WorkflowRunner.ps1`
+* **What it enforces:** Every job's `runs-on` value is a GitHub-hosted Ubuntu label (see § Runners for the allow list)
 * **CI blocking:** Failures block CI when configured to enforce compliance
 
 ## Security Requirements
 
 * Never expose secrets in logs or outputs
-* No personal access tokens (PATs) are used in workflows
+* Never publish agent transcripts or raw model output as workflow artifacts; artifacts on a public repository are world-readable and a transcript can contain job environment contents
+* Classic personal access tokens (`ghp_`) MUST NOT be used in workflows
+* Fine-grained personal access tokens (`github_pat_`) are permitted only as a documented exception where no alternative credential works. The sole current exception is `COPILOT_GITHUB_TOKEN`, which the `@github/copilot` CLI requires and which `GITHUB_TOKEN` cannot satisfy; see `docs/contributing/evals-ci.md`
+* Prefer a GitHub App installation token minted in-run over any stored long-lived credential
 * Use event guards for release-specific operations when needed
 * Enable security features like CodeQL and dependency scanning
 * All security workflows use explicit, minimal permissions
@@ -323,6 +353,7 @@ The following scripts enforce compliance:
 * `scripts/security/Test-DependencyPinning.ps1` - Validates dependency pinning
 * `scripts/security/Test-SHAStaleness.ps1` - Checks for stale dependencies
 * `scripts/security/Test-WorkflowPermissions.ps1` - Validates workflow permissions declarations
+* `scripts/security/Test-WorkflowRunner.ps1` - Validates `runs-on` values against the GitHub-hosted Ubuntu allow-list
 * `scripts/linting/Invoke-YamlLint.ps1` - Runs actionlint validation
 * `scripts/security/Test-PrValidationGate.ps1` - Validates the PR validation gate `needs:` completeness
 

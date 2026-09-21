@@ -1,0 +1,60 @@
+schema_version: 2
+overlay_type: tm7_layout_overlay
+model_id: demo-model
+overlay_id: overlay-001
+applies_to:
+  - surface_id: context
+    generator_profile: default
+zone_rules:
+  - surface_id: context
+    zone_id: trust-zone-portal
+    region:
+      left: 10
+      top: 20
+      width: 140
+      height: 80
+    label_band_height: 24
+    lane_order:
+      - main
+      - contextual
+node_rules:
+  - surface_id: context
+    node_id: trust-zone-portal
+    layout_role: main
+    absolute_position:
+      left: 20
+      top: 30
+      width: 100
+      height: 40
+connector_rules:
+  - surface_id: context
+    flow_id: flow-001
+    source_port: portal-out
+    target_port: identity-in
+    handle_point:
+      x: 120
+      y: 40
+    label_offset:
+      x: 10
+      y: -12
+surface_rules:
+  - surface_id: context
+    zone_order:
+      - trust-zone-portal
+    orientation: horizontal
+    viewport_target:
+      left: 0
+      top: 0
+      width: 1920
+      height: 1080
+    outer_margin: 24
+provenance:
+  evidence_ref: evidence/iteration-01
+  generated_at: 2026-07-16T00:00:00Z
+  approval_state: pending
+invalidation:
+  spec_fingerprint: abc
+  generator_profile_fingerprint: def
+  surface_identity_fingerprint: 4d53f67e9f26986fc18ba2b774431201c50fc9d0ab8bf4dd35c837f854634ac9
+  surface_zone_identity_fingerprint: 087fd05e08352b892137e79445e7c8b8ef0ec57a24ecf877abd8a50c399d5bd5
+  surface_flow_identity_fingerprint: d690b3605b922e2a733e8933033cc80a018cba00547bdcceafa629e342bedc97

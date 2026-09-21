@@ -1,8 +1,14 @@
 ---
 title: Code Review Readiness
-description: "Thin skill-backed perspective subagent that reviews PR deliverable readiness and changed non-code documentation against a precomputed diff and PR context, and writes structured findings"
+description: "Reviews pull-request packaging, deliverable readiness, validation evidence, and changed documentation as structured findings"
 sidebar_position: 5
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-25
+ms.topic: reference
+keywords:
+  - agent
+  - coding-standards
+  - code-review-readiness
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,15 +23,13 @@ ms.date: 2026-07-05
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Thin skill-backed perspective subagent that reviews PR deliverable readiness and changed non-code documentation against a precomputed diff and PR context, and writes structured findings
+Reviews pull-request packaging, deliverable readiness, validation evidence, and changed documentation as structured findings
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Code Review dispatches Readiness to examine change packaging, validation evidence, follow-ups, and changed documentation. PR-specific checks require supplied PR context; the worker does not infer remote state. Code logic and specialist findings stay with their respective perspectives.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies the change brief, diff, full changed guides, optional `prContext`, and `task.outputs.readiness`. The worker checks whether the description and validation claims match the actual change and writes structured findings citing code or specific metadata fields. It returns the output path and coverage summary, never checking human-review boxes or submitting the review itself.

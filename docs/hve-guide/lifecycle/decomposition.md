@@ -3,7 +3,7 @@ title: "Stage 4: Decomposition"
 description: Break product requirements into actionable work items and task hierarchies
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-08-06
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -27,13 +27,14 @@ You enter Decomposition after completing [Stage 3: Product Definition](product-d
 
 ## Available Tools
 
-| Tool                                        | Type        | How to Invoke                                  | Purpose                                                |
-|---------------------------------------------|-------------|------------------------------------------------|--------------------------------------------------------|
-| ado-prd-to-wit                              | Agent       | Select **ado-prd-to-wit** agent                | Convert PRDs into ADO work items automatically         |
-| github-backlog-manager                      | Agent       | Select **github-backlog-manager** agent        | GitHub issue discovery, triage, and backlog management |
-| ado-get-my-work-items                       | Prompt      | `/ado-get-my-work-items`                       | Retrieve your assigned work items                      |
-| ado-process-my-work-items-for-task-planning | Prompt      | `/ado-process-my-work-items-for-task-planning` | Process and prioritize existing work items             |
-| ado-wit-planning                            | Instruction | Auto-activated on workitems                    | Enforces work item planning conventions                |
+| Tool                   | Type  | How to Invoke                       | Purpose                                                        |
+|------------------------|-------|-------------------------------------|----------------------------------------------------------------|
+| functional-planner     | Agent | Select **functional-planner** agent | Plan a work item hierarchy from a PRD, read-only               |
+| backlog-manager        | Agent | Select **backlog-manager** agent    | Work discovery, triage, and backlog management across trackers |
+| backlog-plan my-work   | Skill | `/backlog-plan my-work`             | Retrieve your assigned work items                              |
+| backlog-plan task-plan | Skill | `/backlog-plan task-plan`           | Enrich assigned work into an implementation handoff            |
+| backlog-execute run    | Skill | `/backlog-execute run`              | Apply a reviewed handoff to the tracker                        |
+| backlog-management     | Skill | Auto-loaded by the Backlog Manager  | Supplies work item planning conventions                        |
 
 ## Role-Specific Guidance
 
@@ -45,35 +46,45 @@ TPMs own Decomposition, creating work item hierarchies that engineers pick up du
 
 ### ADO Work Items
 
-Select **ado-prd-to-wit** agent:
+Select **functional-planner** agent:
 
 ```text
-Convert the PRD at docs/project-planning/customer-onboarding-v2.md to Azure DevOps
-work items. Create epics for each major feature area, user stories for
-individual capabilities, and tasks for implementation steps. Tag all
+Convert the PRD at docs/project-planning/customer-onboarding-v2.md into an Azure
+DevOps work item hierarchy plan. Create epics for each major feature area, user
+stories for individual capabilities, and tasks for implementation steps. Tag all
 items with "onboarding-v2".
 ```
 
-```text
-/ado-get-my-work-items Show my assigned work items
-```
+The Functional Planner is read-only. It emits a reviewed handoff that a separate execution pass applies to the tracker:
 
 ```text
-/ado-process-my-work-items-for-task-planning Process and prioritize my work items
+/backlog-execute run
+```
+
+Retrieve the work already assigned to you:
+
+```text
+/backlog-plan my-work
+```
+
+Enrich that assigned work into an ordered implementation handoff:
+
+```text
+/backlog-plan task-plan
 ```
 
 ### GitHub Issues via RPI Workflow
 
-Select **github-backlog-manager** agent:
+Select **functional-planner** agent:
 
 ```text
-Convert the PRD at docs/project-planning/customer-onboarding-v2.md into GitHub
-issues. Create tracking issues for each major feature area, task issues
+Convert the PRD at docs/project-planning/customer-onboarding-v2.md into a GitHub
+issue hierarchy. Create tracking issues for each major feature area, task issues
 for implementation steps, and apply the "onboarding-v2" label to all
 items.
 ```
 
-After creating issues, add them to a GitHub Project for tracking:
+Review the handoff, then create the issues with `/backlog-execute run`. After creating issues, add them to a GitHub Project for tracking:
 
 ```text
 Add all issues labeled "onboarding-v2" to the "Onboarding v2" GitHub
@@ -88,7 +99,7 @@ Decomposition produces work item hierarchies in ADO or GitHub Issues, with accep
 ## Coverage Notes
 
 > [!NOTE]
-> Teams that use GitHub Issues instead of ADO can use the RPI workflow with the **github-backlog-manager** agent for decomposition. Decomposition currently has no skills or templates.
+> Teams that use GitHub Issues instead of ADO use the same tooling: the **backlog-manager** agent resolves the backing tracker at runtime. Decomposition is supported by the `functional-planner`, `backlog-plan`, and `backlog-execute` skills.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

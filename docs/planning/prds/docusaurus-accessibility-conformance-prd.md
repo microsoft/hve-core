@@ -3,8 +3,12 @@ title: "Docusaurus Accessibility Conformance - Product Requirements Document"
 description: "Product requirements for achieving and continuously verifying WCAG 2.2 AA accessibility conformance on the HVE-Core documentation site"
 sidebar_position: 3
 author: "HVE-Core Maintainers"
-ms.date: 2026-06-30
+ms.date: 2026-08-01
 ms.topic: reference
+keywords:
+  - accessibility
+  - wcag
+  - product requirements
 ---
 
 <!-- markdownlint-disable-file -->

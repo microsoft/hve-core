@@ -2,7 +2,13 @@
 title: Hve Core/Git Merge
 description: "Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls"
 sidebar_position: 3
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - hve-core
+  - hve-core/git-merge
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,8 +28,10 @@ Git merge, rebase, and rebase --onto workflows with conflict handling and stop c
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this protocol when coordinating a merge, rebase, or `rebase --onto`
+operation, especially when conflicts or a review pause are possible. Start
+from a clean, identified workspace, preserve unrelated work through stashing,
+and never use this workflow as authorization to push or rewrite remote history.
 
 ## Example usage
 
