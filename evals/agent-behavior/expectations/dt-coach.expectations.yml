@@ -10,7 +10,7 @@ class: planner-coach
 agent_file: .github/agents/design-thinking/dt-coach.agent.md
 stimulus_file: evals/agent-behavior/stimuli/dt-coach.yml
 latest_result: evals/results/agent-matrix/2026-05-28/dt-coach.json
-source_review_date: 2026-09-22
+source_review_date: 2026-05-28
 
 expectations:
   - expectation_id: line-start-phase-marker
@@ -42,20 +42,19 @@ expectations:
     priority: high
     contract_ref: "agent §Session Management › Starting a New Project (`coaching-state.md`)"
 
-  - expectation_id: human-friendly-project-name
-    summary: Project initialization does not ask users for a slug or kebab-case value.
-    signal: The response derives a meaningful identifier or asks for a project name in plain language.
+  - expectation_id: project-slug-kebab-case
+    summary: The project slug embedded in the path is kebab-case and matches the topic.
+    signal: Path segment after `.copilot-tracking/dt/` is a single kebab-case identifier.
     pass_criteria: |
-      When the user provides a clear initiative, derive the internal identifier
-      from that context. When the initiative is ambiguous, ask what they would
-      like to call the project. Do not ask the user for a project slug,
-      kebab-case value, or specially formatted folder name.
+      The directory segment immediately under `.copilot-tracking/dt/` matches
+      `[a-z0-9]+(-[a-z0-9]+)*` and is derived from the user's topic (e.g.
+      `cafeteria-night-shift`, `factory-floor-maintenance`).
     failure_modes:
-      - The first response asks for a project slug or kebab-case value.
-      - The response explains filename formatting before discussing the project.
-      - A clear initiative name is ignored instead of being normalized internally.
-    priority: high
-    contract_ref: "agent §Required Phases › Phase 1 › Step 1"
+      - Slug uses spaces, camelCase, or snake_case.
+      - Slug is a generic placeholder like `project` or `dt-project`.
+      - No slug subdirectory (file written directly under `.copilot-tracking/dt/`).
+    priority: medium
+    contract_ref: "agent §Session Management (slug under `.copilot-tracking/dt/{project-slug}/`)"
 
   - expectation_id: nine-method-vocabulary
     summary: Method references use the agent's declared 9-method vocabulary.

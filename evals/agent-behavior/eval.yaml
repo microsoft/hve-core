@@ -2103,28 +2103,6 @@ stimuli:
     config:
       pattern: (?i)```\s*(diff|patch|c#|csharp|cs|python|py|typescript|ts|javascript|js|rust|rs|go|java)\b
       negate: true
-- name: dt-coach-human-friendly-project-name
-  prompt: |
-    I want to create a new project in the photogrammetry space.
-  agent_environment:
-    skills:
-    - ../../.github/skills/design-thinking/dt-coaching-foundation
-    files:
-    - src: ../../.github/agents/design-thinking/dt-coach.agent.md
-      dest: .github/copilot-instructions.md
-  tags:
-    category: agent-behavior
-    agent: dt-coach
-  graders:
-  - type: output-matches
-    name: dt-coach-no-project-slug-jargon
-    config:
-      pattern: (?i)(kebab[- ]case|project slug|formatted folder name)
-      negate: true
-  - type: output-matches
-    name: dt-coach-project-name-or-context-progress
-    config:
-      pattern: (?i)(photogram|what would you like to call|role|team|method|goal|time)
 - name: dt-coach-class-recipe
   prompt: |
     Coach me through scoping a Design Thinking project (use the project slug `cafeteria-night-shift`) on "improving cafeteria experience for night-shift workers." Lay out the next 2-3 methods as phases. Write the coaching state under `.copilot-tracking/dt/` and tell me the path you wrote it to.
