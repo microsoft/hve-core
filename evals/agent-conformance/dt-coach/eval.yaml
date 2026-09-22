@@ -611,7 +611,7 @@ stimuli:
     turn: 1
     config:
       max: 120s
-- name: init-uses-human-friendly-project-name
+- name: init-asks-for-project-slug
   turns:
   - Launch .github/agents/design-thinking/dt-coach.agent.md
   - >
@@ -631,10 +631,10 @@ stimuli:
     context about the user's role, team, or desired method
   graders:
   - type: prompt
-    name: judge-init-uses-human-friendly-project-name
+    name: judge-init-asks-for-project-slug
     turn: 1
   - type: wall-time
-    name: init-uses-human-friendly-project-name-completion-budget
+    name: init-asks-for-project-slug-completion-budget
     turn: 1
     config:
       max: 120s
