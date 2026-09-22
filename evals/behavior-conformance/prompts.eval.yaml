@@ -1,4 +1,4 @@
-# cspell:ignore declin initializ reinitializ
+# cspell:ignore declin initializ pathspecs reinitializ
 name: behavior-conformance-prompts
 description: >
   Advisory-tier behavior conformance evals for high-traffic prompts. Each
@@ -1477,8 +1477,16 @@ stimuli:
 
   - name: prompt-git-commit-conformance
     prompt: |
-      Invoke the `git-commit` prompt with minimal arguments and explain how it
-      coordinates the workflow.
+      Invoke the `git-commit` prompt using only this synthetic candidate-path
+      inventory. Do not inspect or mutate the actual workspace. No path
+      selection has been provided.
+
+      - `docs/intended.md`: tracked and modified, not staged
+      - `notes/local.txt`: tracked and modified, not staged and unrelated
+      - `.github/prompts/prior.prompt.md`: modified and initially staged
+      - `docs/old-name.md` -> `docs/new-name.md`: unstaged rename pair
+
+      Follow the prompt only until its first required user decision, then stop.
     tags:
       category: behavior-conformance
       prompt: git-commit
@@ -1489,9 +1497,128 @@ stimuli:
         config:
           pattern: "(?i)git|commit"
       - type: output-matches
-        name: prompt-git-commit-conformance-scope-language
+        name: prompt-git-commit-conformance-requests-whole-path-selection
         config:
-          pattern: "(?i)commit|stage|message|scope|conventional"
+          pattern: '(?is)(?:select|choose).{0,160}(?:whole\s+)?paths?.{0,160}(?:commit|stage)'
+      - type: output-matches
+        name: prompt-git-commit-conformance-preserves-initial-index-intent
+        config:
+          pattern: '(?is)(?:prior\.prompt\.md|initially\s+staged).{0,200}(?:must|required|include|selected)'
+      - type: output-matches
+        name: prompt-git-commit-conformance-keeps-rename-pair-atomic
+        config:
+          pattern: '(?is)(?:rename|old-name\.md).{0,200}(?:new-name\.md|both|pair)'
+      - type: output-matches
+        name: prompt-git-commit-conformance-stops-before-mutation
+        config:
+          pattern: '(?is)(?:select|choose).{0,120}(?:whole\s+)?paths?.{0,120}before.{0,80}(?:stag|index)|(?:not|won''t|will not|without).{0,80}(?:stag|index).{0,120}(?:until|before).{0,80}(?:select|choose)'
+      - type: output-not-matches
+        name: prompt-git-commit-conformance-no-prior-index-mutation
+        config:
+          pattern: '(?is)\b(?:I(?:''ve| have)?|we(?:''ve| have)?)\s+(?!not\b|not yet\b)(?:already\s+)?(?:staged|updated|modified|changed)\b.{0,80}\b(?:index|staging area|docs/intended\.md)'
+      - type: output-not-matches
+        name: prompt-git-commit-conformance-does-not-claim-a-commit
+        config:
+          pattern: "(?i)commit (?:created|completed|succeeded) successfully"
+
+  - name: prompt-git-commit-cancellation
+    turns:
+      - |
+        Invoke the staged `git-commit` prompt in this contained repository.
+        Inventory candidate paths, preserve the initially staged path, and ask
+        me to select whole paths. Do not stage or commit before I answer.
+      - |
+        Select `eval-fixtures/git-commit/prior.txt` and
+        `eval-fixtures/git-commit/[ab].txt`. Stage only the newly selected
+        path, inspect the exact staged set, and ask for confirmation.
+      - |
+        Reject the staged set. Restore only this invocation's staging delta,
+        preserve the working tree and initial index, and stop without a commit.
+    agent_environment:
+      git:
+        type: worktree
+        source: ../..
+        ref: HEAD
+      files:
+        - src: ../../.github/prompts/hve-core/git-commit.prompt.md
+          dest: .github/prompts/hve-core/git-commit.prompt.md
+      commands:
+        - git config user.email eval@example.invalid
+        - git config user.name "Eval Fixture"
+        - node -e "const fs=require('fs');const d='eval-fixtures/git-commit';fs.mkdirSync(d,{recursive:true});for(const f of ['[ab].txt','a.txt','prior.txt','unrelated.txt'])fs.writeFileSync(d+'/'+f,'baseline-'+f);"
+        - git --literal-pathspecs add -- '.github/prompts/hve-core/git-commit.prompt.md' 'eval-fixtures/git-commit/[ab].txt' 'eval-fixtures/git-commit/a.txt' 'eval-fixtures/git-commit/prior.txt' 'eval-fixtures/git-commit/unrelated.txt'
+        - git commit --quiet -m "synthetic git commit baseline"
+        - node -e "const fs=require('fs');const d='eval-fixtures/git-commit';fs.writeFileSync(d+'/prior.txt','prior staged change');fs.writeFileSync(d+'/[ab].txt','selected bracket change');fs.writeFileSync(d+'/unrelated.txt','unrelated working change');"
+        - git --literal-pathspecs add -- 'eval-fixtures/git-commit/prior.txt'
+    tags:
+      category: behavior-conformance
+      prompt: git-commit
+      branch: cancellation
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: prompt-git-commit-cancel-selection-before-staging
+        turn: 0
+        config:
+          pattern: '(?is)(?:select|choose).{0,120}(?:whole\s+)?paths?.{0,120}before.{0,80}(?:stag|index)|(?:not|won''t|will not|without).{0,80}(?:stag|index).{0,120}(?:until|before).{0,80}(?:select|choose)'
+      - type: tool-calls
+        name: prompt-git-commit-cancel-no-early-mutation
+        turn: 0
+        config:
+          disallowed:
+            - name: '^(powershell|bash|shell)$'
+              command: '(?is)git\s+(?:--literal-pathspecs\s+)?(?:add|reset|commit)\b'
+      - type: tool-calls
+        name: prompt-git-commit-cancel-literal-stage
+        turn: 1
+        config:
+          required:
+            - name: '^(powershell|bash|shell)$'
+              command: '(?is)git\s+--literal-pathspecs\s+add\s+--.*\[ab\]\.txt'
+          disallowed:
+            - name: '^(powershell|bash|shell)$'
+              command: '(?is)git\s+(?:--literal-pathspecs\s+)?(?:reset|commit)\b'
+      - type: output-matches
+        name: prompt-git-commit-cancel-exact-set-confirmation
+        turn: 1
+        config:
+          pattern: '(?is)(?=.*prior\.txt)(?=.*\[ab\]\.txt)(?=.*(?:confirm|intended))'
+      - type: tool-calls
+        name: prompt-git-commit-cancel-literal-rollback
+        turn: 2
+        config:
+          required:
+            - name: '^(powershell|bash|shell)$'
+              command: '(?is)git\s+--literal-pathspecs\s+reset\s+--.*\[ab\]\.txt'
+          disallowed:
+            - name: '^(powershell|bash|shell)$'
+              command: '(?is)git\s+commit\b'
+      - type: output-matches
+        name: prompt-git-commit-cancel-reports-no-commit
+        turn: 2
+        config:
+          pattern: '(?is)(?:no commit|without committing|commit was not created).*(?:restore|restored|restoration|preserve|preserved|staging delta)'
+      - type: run-command
+        name: prompt-git-commit-cancel-preserves-initial-index
+        config:
+          command: git
+          args: ["diff", "--cached", "--name-only"]
+          stdout_matches: '^eval-fixtures/git-commit/prior\.txt\r?\n?$'
+      - type: run-command
+        name: prompt-git-commit-cancel-preserves-working-tree
+        config:
+          command: git
+          args: ["status", "--porcelain=v1", "--", "eval-fixtures/git-commit/[ab].txt", "eval-fixtures/git-commit/prior.txt", "eval-fixtures/git-commit/unrelated.txt"]
+          stdout_matches:
+            - '(?m)^ M eval-fixtures/git-commit/\[ab\]\.txt$'
+            - '(?m)^M  eval-fixtures/git-commit/prior\.txt$'
+            - '(?m)^ M eval-fixtures/git-commit/unrelated\.txt$'
+      - type: run-command
+        name: prompt-git-commit-cancel-no-new-commit
+        config:
+          command: git
+          args: ["log", "-1", "--pretty=%s"]
+          stdout_matches: '^synthetic git commit baseline\r?\n?$'
 
   - name: prompt-git-commit-message-conformance
     prompt: |
