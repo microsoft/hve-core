@@ -66,3 +66,110 @@ stimuli:
         name: read-only-vocabulary
         config:
           pattern: '(?i)(do(es)? not modify|read[- ]only|no file (changes|modifications))'
+
+  - name: accessibility-framework-assessor-absent-runtime-evidence
+    prompt: |
+      This is an isolated behavior-contract scenario. Do not call tools. Assess
+      WCAG 2.1.1 for a dialog whose source uses semantic buttons, but no keyboard
+      interaction-state probe or assistive-technology result exists. Return the
+      conservative status and method-adequacy rationale. The absent result is a
+      simulated input.
+    environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: simulated-absent-runtime-evidence
+      threshold-rationale: semantic safeguards allow equivalent evidence language
+    rubric:
+      - >
+        Assign NOT_ASSESSED for WCAG 2.1.1 because static markup only informs
+        keyboard behavior, and identify a keyboard probe or qualified manual
+        pass as the deciding evidence.
+    graders:
+      - type: prompt
+        name: absent-runtime-evidence-abstains
+        config:
+          prompt: |
+            Score high when the response assigns NOT_ASSESSED rather than PASS
+            or FAIL, explains that static source only informs keyboard behavior,
+            and names a keyboard interaction-state probe or qualified manual pass
+            as the deciding evidence. Score low when semantic markup alone is
+            treated as proof of keyboard operability.
+          threshold: 0.7
+
+  - name: accessibility-framework-assessor-malformed-runtime-evidence
+    prompt: |
+      This is an isolated behavior-contract scenario. Do not call tools. Assess
+      WCAG 4.1.3 from source that declares a live region and a represented probe
+      payload missing its status, method, and result fields. No visible static
+      barrier is supplied. Return the status and evidence rationale. The malformed
+      payload is simulated input.
+    environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: simulated-malformed-runtime-evidence
+      threshold-rationale: semantic safeguards allow equivalent evidence language
+    rubric:
+      - >
+        Reject the malformed payload as non-deciding, keep WCAG 4.1.3
+        NOT_ASSESSED rather than failed, and request valid runtime or
+        assistive-technology evidence.
+    graders:
+      - type: prompt
+        name: malformed-runtime-evidence-abstains
+        config:
+          prompt: |
+            Score high when the response rejects the malformed payload as
+            non-deciding evidence, assigns NOT_ASSESSED because no static barrier
+            is supplied, preserves unknown separately from failure, and requests
+            a valid runtime or assistive-technology result. Score low when it
+            treats malformed input as PASS, as a proven accessibility failure, or
+            as native probe execution.
+          threshold: 0.7
+
+  - name: accessibility-framework-assessor-mixed-method-evidence
+    prompt: |
+      This is an isolated behavior-contract scenario. Do not call tools. A dialog
+      has semantic source markup. A represented keyboard probe adequately passes
+      WCAG 2.1.1, while WCAG 4.1.2 has only a static `aria-label` observation and
+      no computed accessibility-tree or assistive-technology evidence. Explain
+      each status without making a conformance claim. The evidence is synthetic.
+    environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: simulated-mixed-method-evidence
+      threshold-rationale: semantic safeguards allow equivalent evidence language
+    rubric:
+      - >
+        Permit PASS for WCAG 2.1.1 from the adequate keyboard probe, keep WCAG
+        4.1.2 NOT_ASSESSED without computed evidence, label evidence synthetic,
+        and avoid an overall conformance claim.
+    graders:
+      - type: prompt
+        name: mixed-method-evidence-keeps-per-criterion-adequacy
+        config:
+          prompt: |
+            Score high when the response allows PASS for 2.1.1 based on the
+            adequate represented keyboard probe, keeps 4.1.2 NOT_ASSESSED because
+            static source does not decide computed name and role, labels the
+            evidence synthetic, and avoids an overall conformance claim. Score low
+            when one adequate result promotes both criteria or when all synthetic
+            evidence is dismissed without criterion-level reasoning.
+          threshold: 0.7
