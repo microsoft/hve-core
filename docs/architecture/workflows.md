@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-09-04
+ms.date: 2026-09-22
 ms.topic: overview
 keywords:
   - github actions
@@ -406,70 +406,70 @@ observations, not results of local workflow or documentation validation.
 
 Workflows invoke validation through npm scripts defined in `package.json`:
 
-| npm Script                      | Command                                                                                               | Used By                                     |
-|---------------------------------|-------------------------------------------------------------------------------------------------------|---------------------------------------------|
-| `lint:md`                       | `markdownlint-cli2`                                                                                   | markdown-lint.yml                           |
-| `lint:md:fix`                   | `markdownlint-cli2 --fix`                                                                             | Local                                       |
-| `spell-check`                   | `cspell`                                                                                              | spell-check.yml                             |
-| `spell-check:fix`               | `cspell --show-suggestions`                                                                           | Local                                       |
-| `lint:frontmatter`              | `Validate-MarkdownFrontmatter.ps1`                                                                    | frontmatter-validation.yml                  |
-| `lint:md-links`                 | `Markdown-Link-Check.ps1`                                                                             | markdown-link-check.yml                     |
-| `lint:links`                    | `Invoke-LinkLanguageCheck.ps1`                                                                        | link-lang-check.yml                         |
-| `lint:yaml`                     | `Invoke-YamlLint.ps1`                                                                                 | yaml-lint.yml                               |
-| `lint:ps`                       | `Invoke-PSScriptAnalyzer.ps1`                                                                         | ps-script-analyzer.yml                      |
-| `lint:plugin-manifest`          | `Sync-PluginManifest.ps1 -Check`                                                                      | plugin-validation.yml                       |
-| `lint:version-consistency`      | `Test-ActionVersionConsistency.ps1`                                                                   | Local                                       |
-| `validate:local`                | Local-safe repository validation aggregate                                                            | Local-safe default                          |
-| `validate:docs`                 | Docusaurus lint, label registry, typecheck, and component tests                                       | Local-safe docs default                     |
-| `ci:docs:test:e2e`              | Delegates to the Docusaurus Playwright E2E suite                                                      | CI-owned browser lane                       |
-| `ci:docs:setup:e2e`             | Provisions Chrome for the Docusaurus browser lane                                                     | CI-owned browser setup                      |
-| `format:tables`                 | `markdown-table-formatter`                                                                            | table-format.yml                            |
-| `test:ps`                       | `Invoke-PesterTests.ps1`                                                                              | pester-tests.yml                            |
-| `validate:skills`               | `Validate-SkillStructure.ps1`                                                                         | skill-validation.yml                        |
-| `validate:copyright`            | `Test-CopyrightHeaders.ps1`                                                                           | copyright-headers.yml                       |
-| `extension:prepare`             | `pwsh ./scripts/extension/Prepare-Extension.ps1 && npm run extension:postprocess`                     | Local                                       |
-| `extension:prepare:prerelease`  | `pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease && npm run extension:postprocess` | Local                                       |
-| `extension:postprocess`         | `markdownlint-cli2 + markdown-table-formatter (extension/**/*.md)`                                    | Local                                       |
-| `extension:package`             | `Package-Extension.ps1`                                                                               | Local                                       |
-| `extension:package:prerelease`  | `Package-Extension.ps1 -PreRelease`                                                                   | Local                                       |
-| `plugin:sync`                   | `Sync-PluginManifest.ps1`                                                                             | Local manifest update                       |
-| `plugin:validate`               | Plugin manifest check plus hook validation                                                            | plugin-validation.yml                       |
-| `lint:py`                       | `ruff check` + `ruff format --check`                                                                  | python-lint.yml                             |
-| `lint:models`                   | `Validate-ModelReferences.ps1`                                                                        | model-validation.yml                        |
-| `lint:ai-artifacts`             | `Validate-PlannerArtifacts.ps1 -FailOnMissing`                                                        | ai-artifact-validation.yml                  |
-| `lint:permissions`              | `Test-WorkflowPermissions.ps1`                                                                        | workflow-permissions-scan.yml               |
-| `lint:ps-module-pins`           | `Test-PSModulePins.ps1`                                                                               | Local                                       |
-| `lint:dependency-pinning`       | `Test-DependencyPinning.ps1`                                                                          | dependency-pinning-scan.yml                 |
-| `audit:npm`                     | `audit-ci --config audit-ci.json`                                                                     | pr-validation.yml                           |
-| `test:py`                       | `uv run pytest`                                                                                       | pytest-tests.yml                            |
-| `ci:eval:lint:vally`            | `Build-AgentBehaviorSpec.ps1 -WhatIf && vally lint --eval-spec evals/`                                | CI-owned static lane                        |
-| `ci:eval:lint:schema`           | `Test-EvalSpec.ps1`                                                                                   | CI-owned static lane                        |
-| `ci:eval:lint:text`             | `Test-EvalSpecText.ps1`                                                                               | CI-owned static lane                        |
-| `ci:eval:lint:safety`           | `Test-VallyTestSafety.ps1`                                                                            | CI-owned static lane                        |
-| `ci:eval:lint:skills`           | `vally lint .github/skills/`                                                                          | CI-owned static lane                        |
-| `ci:eval:run`                   | Runs all eval suites                                                                                  | CI-owned model-backed lane                  |
-| `ci:eval:run:skills`            | `vally eval --suite skill-quality`                                                                    | CI-owned model-backed lane                  |
-| `ci:eval:run:agents`            | `vally eval --suite agent-behavior`                                                                   | CI-owned model-backed lane                  |
-| `ci:eval:run:scripts`           | `vally eval --suite script-validation`                                                                | CI-owned model-backed lane                  |
-| `ci:eval:equivalence`           | `Invoke-BaselineEquivalence.ps1`                                                                      | CI-owned model-backed comparison lane       |
-| `ci:eval:presence`              | `Test-StimulusPresence.ps1` (changed-artifact eval-spec coverage gate)                                | CI-owned manifest lane                      |
-| `ci:eval:execute`               | `Invoke-VallyEvals.ps1` (run evals for changed artifacts)                                             | CI-owned model-backed lane                  |
-| `ci:eval:moderate`              | `Invoke-ContentModeration.ps1`                                                                        | CI-owned moderation lane                    |
-| `ci:eval:moderate:corpus`       | `Invoke-CorpusModeration.ps1`                                                                         | CI-owned moderation lane                    |
-| `ci:eval:moderate:artifacts`    | `Invoke-ArtifactModeration.ps1`                                                                       | CI-owned moderation lane                    |
-| `ci:eval:moderate:test`         | Runs `Invoke-ContentModeration.Tests.ps1`                                                             | CI-owned test lane                          |
-| `ci:eval:dashboard`             | `New-EquivalenceDashboard.ps1`                                                                        | CI-owned noninteractive report lane         |
-| `ci:eval:behavior-prompts`      | `vally eval --eval-spec evals/behavior-conformance/prompts.eval.yaml`                                 | CI-owned model-backed lane                  |
-| `ci:eval:behavior-instructions` | `vally eval --eval-spec evals/behavior-conformance/instructions.eval.yaml`                            | CI-owned model-backed lane                  |
-| `ci:eval:behavior-skills`       | `vally eval --eval-spec evals/behavior-conformance/skill-behavior.eval.yaml`                          | CI-owned model-backed lane                  |
-| `ci:eval:agent`                 | `Invoke-AgentMatrix.ps1` (agent behavior matrix)                                                      | CI-owned model-backed lane                  |
-| `ci:eval:agent:matrix`          | `Invoke-AgentMatrix.ps1 -All -Tier nightly`                                                           | CI-owned model-backed lane                  |
-| `ci:eval:agent:matrix:dryrun`   | `Invoke-AgentMatrix.ps1 -All -Tier nightly -WhatIf`                                                   | CI-owned dry-run lane                       |
-| `ci:eval:agent:changed`         | `Invoke-AgentMatrix.ps1` for changed agents (PR tier)                                                 | CI-owned model-backed lane                  |
-| `ci:eval:agent:dashboard`       | `New-AgentMatrixDashboard.ps1`                                                                        | CI-owned noninteractive report lane         |
-| `ci:eval:agent:dashboard:open`  | `New-AgentMatrixDashboard.ps1 -Open`                                                                  | CI-owned interactive lane                   |
-| `ci:eval:agent:report`          | Runs `ci:eval:agent:matrix` then `ci:eval:agent:dashboard`                                            | CI-owned noninteractive report lane         |
-| `ci:eval:agent:report:dryrun`   | Runs `ci:eval:agent:matrix:dryrun` then `ci:eval:agent:dashboard`                                     | CI-owned noninteractive dry-run report lane |
+| npm Script                      | Command                                                                                                    | Used By                                     |
+|---------------------------------|------------------------------------------------------------------------------------------------------------|---------------------------------------------|
+| `lint:md`                       | `markdownlint-cli2`                                                                                        | markdown-lint.yml                           |
+| `lint:md:fix`                   | `markdownlint-cli2 --fix`                                                                                  | Local                                       |
+| `spell-check`                   | `cspell`                                                                                                   | spell-check.yml                             |
+| `spell-check:fix`               | `cspell --show-suggestions`                                                                                | Local                                       |
+| `lint:frontmatter`              | `Validate-MarkdownFrontmatter.ps1`                                                                         | frontmatter-validation.yml                  |
+| `lint:md-links`                 | `Markdown-Link-Check.ps1`                                                                                  | markdown-link-check.yml                     |
+| `lint:links`                    | `Invoke-LinkLanguageCheck.ps1`                                                                             | link-lang-check.yml                         |
+| `lint:yaml`                     | `Invoke-YamlLint.ps1`                                                                                      | yaml-lint.yml                               |
+| `lint:ps`                       | `Invoke-PSScriptAnalyzer.ps1`                                                                              | ps-script-analyzer.yml                      |
+| `lint:plugin-manifest`          | `Sync-PluginManifest.ps1 -Check`                                                                           | plugin-validation.yml                       |
+| `lint:version-consistency`      | `Test-ActionVersionConsistency.ps1`                                                                        | Local                                       |
+| `validate:local`                | Local-safe repository validation aggregate                                                                 | Local-safe default                          |
+| `validate:docs`                 | Docusaurus lint, label registry, typecheck, and component tests                                            | Local-safe docs default                     |
+| `ci:docs:test:e2e`              | Delegates to the Docusaurus Playwright E2E suite                                                           | CI-owned browser lane                       |
+| `ci:docs:setup:e2e`             | Provisions Chrome for the Docusaurus browser lane                                                          | CI-owned browser setup                      |
+| `format:tables`                 | `markdown-table-formatter`                                                                                 | table-format.yml                            |
+| `test:ps`                       | `Invoke-PesterTests.ps1`                                                                                   | pester-tests.yml                            |
+| `validate:skills`               | `Validate-SkillStructure.ps1`                                                                              | skill-validation.yml                        |
+| `validate:copyright`            | `Test-CopyrightHeaders.ps1`                                                                                | copyright-headers.yml                       |
+| `extension:prepare`             | `pwsh ./scripts/extension/Prepare-Extension.ps1 && npm run extension:postprocess`                          | Local                                       |
+| `extension:prepare:prerelease`  | `pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease && npm run extension:postprocess`      | Local                                       |
+| `extension:postprocess`         | `markdownlint-cli2 + markdown-table-formatter (extension/**/*.md)`                                         | Local                                       |
+| `extension:package`             | `Package-Extension.ps1`                                                                                    | Local                                       |
+| `extension:package:prerelease`  | `Package-Extension.ps1 -PreRelease`                                                                        | Local                                       |
+| `plugin:sync`                   | `Sync-PluginManifest.ps1`                                                                                  | Local manifest update                       |
+| `plugin:validate`               | Plugin manifest check plus hook validation                                                                 | plugin-validation.yml                       |
+| `lint:py`                       | `ruff check` + `ruff format --check`                                                                       | python-lint.yml                             |
+| `lint:models`                   | `Validate-ModelReferences.ps1`                                                                             | model-validation.yml                        |
+| `lint:ai-artifacts`             | `Validate-PlannerArtifacts.ps1 -FailOnMissing`                                                             | ai-artifact-validation.yml                  |
+| `lint:permissions`              | `Test-WorkflowPermissions.ps1`                                                                             | workflow-permissions-scan.yml               |
+| `lint:ps-module-pins`           | `Test-PSModulePins.ps1`                                                                                    | Local                                       |
+| `lint:dependency-pinning`       | `Test-DependencyPinning.ps1`                                                                               | dependency-pinning-scan.yml                 |
+| `audit:npm`                     | `audit-ci --config audit-ci.json`                                                                          | pr-validation.yml                           |
+| `test:py`                       | `uv run pytest`                                                                                            | pytest-tests.yml                            |
+| `ci:eval:lint:vally`            | `Build-AgentBehaviorSpec.ps1 -WhatIf && npm run lint:eval-grader-lineage && vally lint --eval-spec evals/` | CI-owned static lane                        |
+| `ci:eval:lint:schema`           | `Test-EvalSpec.ps1`                                                                                        | CI-owned static lane                        |
+| `ci:eval:lint:text`             | `Test-EvalSpecText.ps1`                                                                                    | CI-owned static lane                        |
+| `ci:eval:lint:safety`           | `Test-VallyTestSafety.ps1`                                                                                 | CI-owned static lane                        |
+| `ci:eval:lint:skills`           | `vally lint .github/skills/`                                                                               | CI-owned static lane                        |
+| `ci:eval:run`                   | Runs all eval suites                                                                                       | CI-owned model-backed lane                  |
+| `ci:eval:run:skills`            | `vally eval --suite skill-quality`                                                                         | CI-owned model-backed lane                  |
+| `ci:eval:run:agents`            | `vally eval --suite agent-behavior`                                                                        | CI-owned model-backed lane                  |
+| `ci:eval:run:scripts`           | `vally eval --suite script-validation`                                                                     | CI-owned model-backed lane                  |
+| `ci:eval:equivalence`           | `Invoke-BaselineEquivalence.ps1`                                                                           | CI-owned model-backed comparison lane       |
+| `ci:eval:presence`              | `Test-StimulusPresence.ps1` (changed-artifact eval-spec coverage gate)                                     | CI-owned manifest lane                      |
+| `ci:eval:execute`               | `Invoke-VallyEvals.ps1` (run evals for changed artifacts)                                                  | CI-owned model-backed lane                  |
+| `ci:eval:moderate`              | `Invoke-ContentModeration.ps1`                                                                             | CI-owned moderation lane                    |
+| `ci:eval:moderate:corpus`       | `Invoke-CorpusModeration.ps1`                                                                              | CI-owned moderation lane                    |
+| `ci:eval:moderate:artifacts`    | `Invoke-ArtifactModeration.ps1`                                                                            | CI-owned moderation lane                    |
+| `ci:eval:moderate:test`         | Runs `Invoke-ContentModeration.Tests.ps1`                                                                  | CI-owned test lane                          |
+| `ci:eval:dashboard`             | `New-EquivalenceDashboard.ps1`                                                                             | CI-owned noninteractive report lane         |
+| `ci:eval:behavior-prompts`      | `vally eval --eval-spec evals/behavior-conformance/prompts.eval.yaml`                                      | CI-owned model-backed lane                  |
+| `ci:eval:behavior-instructions` | `vally eval --eval-spec evals/behavior-conformance/instructions.eval.yaml`                                 | CI-owned model-backed lane                  |
+| `ci:eval:behavior-skills`       | `vally eval --eval-spec evals/behavior-conformance/skill-behavior.eval.yaml`                               | CI-owned model-backed lane                  |
+| `ci:eval:agent`                 | `Invoke-AgentMatrix.ps1` (agent behavior matrix)                                                           | CI-owned model-backed lane                  |
+| `ci:eval:agent:matrix`          | `Invoke-AgentMatrix.ps1 -All -Tier nightly`                                                                | CI-owned model-backed lane                  |
+| `ci:eval:agent:matrix:dryrun`   | `Invoke-AgentMatrix.ps1 -All -Tier nightly -WhatIf`                                                        | CI-owned dry-run lane                       |
+| `ci:eval:agent:changed`         | `Invoke-AgentMatrix.ps1` for changed agents (PR tier)                                                      | CI-owned model-backed lane                  |
+| `ci:eval:agent:dashboard`       | `New-AgentMatrixDashboard.ps1`                                                                             | CI-owned noninteractive report lane         |
+| `ci:eval:agent:dashboard:open`  | `New-AgentMatrixDashboard.ps1 -Open`                                                                       | CI-owned interactive lane                   |
+| `ci:eval:agent:report`          | Runs `ci:eval:agent:matrix` then `ci:eval:agent:dashboard`                                                 | CI-owned noninteractive report lane         |
+| `ci:eval:agent:report:dryrun`   | Runs `ci:eval:agent:matrix:dryrun` then `ci:eval:agent:dashboard`                                          | CI-owned noninteractive dry-run report lane |
 
 ### Python Lint Parity
 
