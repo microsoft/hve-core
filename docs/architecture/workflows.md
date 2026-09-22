@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-09-04
+ms.date: 2026-09-21
 ms.topic: overview
 keywords:
   - github actions
@@ -206,7 +206,7 @@ flowchart LR
 | pytest                          | `pytest-tests.yml`                    | Python unit tests, per project                          |
 | copilot-otel-runtime-tests      | `pytest-tests.yml`                    | Copilot OTEL runtime tests                              |
 | node-tests                      | `node-tests.yml`                      | Node unit tests, per skill                              |
-| accessibility-browser-smoke     | Inline                                | Browser accessibility smoke test                        |
+| accessibility-browser-smoke     | Inline                                | Accessibility runner contract tests, browser smoke test |
 | fuzz-tests                      | `fuzz-tests.yml`                      | Fuzz harness runs, per project                          |
 | pip-audit                       | `pip-audit.yml`                       | Python dependency vulnerabilities                       |
 | docusaurus-tests                | `docusaurus-tests.yml`                | Documentation site build and tests                      |

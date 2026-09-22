@@ -9,15 +9,15 @@ Phase 2 of the Accessibility Planner captures which accessibility frameworks app
 
 ## Default Framework Inventory
 
-The five default frameworks correspond to framework reference files under `.github/skills/accessibility/accessibility/references/frameworks/`:
+The five default frameworks correspond to files under this skill's `references/frameworks/` directory:
 
-| Framework id  | Framework reference path                                                          | Default state       | Conformance level field                   |
-|---------------|-----------------------------------------------------------------------------------|---------------------|-------------------------------------------|
-| `wcag-22`     | `.github/skills/accessibility/accessibility/references/frameworks/wcag-22.md`     | enabled at level AA | required (`A`, `AA`, `AAA`); default `AA` |
-| `aria-apg`    | `.github/skills/accessibility/accessibility/references/frameworks/aria-apg.md`    | optional            | not applicable (`null`)                   |
-| `coga`        | `.github/skills/accessibility/accessibility/references/frameworks/coga.md`        | optional            | not applicable (`null`)                   |
-| `section-508` | `.github/skills/accessibility/accessibility/references/frameworks/section-508.md` | enabled             | not applicable (`null`)                   |
-| `en-301-549`  | `.github/skills/accessibility/accessibility/references/frameworks/en-301-549.md`  | optional            | not applicable (`null`)                   |
+| Framework id  | Framework reference path               | Default state       | Conformance level field                   |
+|---------------|----------------------------------------|---------------------|-------------------------------------------|
+| `wcag-22`     | `references/frameworks/wcag-22.md`     | enabled at level AA | required (`A`, `AA`, `AAA`); default `AA` |
+| `aria-apg`    | `references/frameworks/aria-apg.md`    | optional            | not applicable (`null`)                   |
+| `coga`        | `references/frameworks/coga.md`        | optional            | not applicable (`null`)                   |
+| `section-508` | `references/frameworks/section-508.md` | enabled             | not applicable (`null`)                   |
+| `en-301-549`  | `references/frameworks/en-301-549.md`  | optional            | not applicable (`null`)                   |
 
 The default enablement set (`wcag-22` at level `AA` plus `section-508`) is the regulated baseline aligned with EN 301 549, ADA Title II and III, and Section 508 enforcement. Users may add, remove, or re-level frameworks; the planner records every change as an explicit selection entry.
 

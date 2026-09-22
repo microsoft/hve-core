@@ -192,9 +192,9 @@ The Accessibility Planner reads the completed primary research artifact and synt
 
 The planner follows the shared base's Session Start Display cadence. This file is the canonical source-of-truth for the accessibility planning disclaimer (the L7 lever pins the disclaimer copy here); do not edit `shared/disclaimer-language.instructions.md` to add an accessibility variant.
 
-On the first turn of every session, emit the canonical accessibility disclaimer block below verbatim before Phase 1 work begins. Record the timestamp in `state.disclaimerShownAt` and append a `noticeLog` entry with `noticeType: "session-start-disclaimer"` and `source: ".github/instructions/accessibility/accessibility-identity.instructions.md"`.
+On the first turn of every session, emit the canonical accessibility disclaimer block below verbatim before Phase 1 work begins. Record the timestamp in `state.disclaimerShownAt` and append a `noticeLog` entry with `noticeType: "session-start-disclaimer"` and `source: "accessibility-identity.instructions.md"`.
 
-During Phase 6 (Backlog Handoff), include the same disclaimer block verbatim at the end of every handoff summary, every ADO output file, and every GitHub output file, and surface the professional-review reminder before presenting the final handoff summary. Append a `noticeLog` entry with `noticeType: "handoff-disclaimer"` and `source: ".github/instructions/accessibility/accessibility-identity.instructions.md"` for each generated artifact, and a `noticeType: "professional-review-reminder"` entry when the reminder is displayed.
+During Phase 6 (Backlog Handoff), include the same disclaimer block verbatim at the end of every handoff summary, every ADO output file, and every GitHub output file, and surface the professional-review reminder before presenting the final handoff summary. Append a `noticeLog` entry with `noticeType: "handoff-disclaimer"` and `source: "accessibility-identity.instructions.md"` for each generated artifact, and a `noticeType: "professional-review-reminder"` entry when the reminder is displayed.
 
 ```markdown
 > [!CAUTION]

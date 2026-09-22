@@ -111,7 +111,7 @@ Workflow tags must respect the 25-character cap from [mural-writing-style.instru
 
 Three agents and the UX artifact mapping package share these conventions. Each caller owns its own decomposition rules and cardinality contracts, then relies on this file for the cross-cutting patterns above.
 
-The `applyTo` glob in this file's frontmatter is anchored on `.github/`, so it scopes editing assistance inside this repository. Packaging strips that prefix, so the glob does not by itself guarantee that a packaged host loads this file for the agents below. Treat runtime delivery as the consuming caller's responsibility rather than something this frontmatter establishes.
+The `applyTo` glob in this file's frontmatter is anchored on the repository artifact root, so it scopes editing assistance inside this repository. Packaging strips that source-tree prefix, so the glob does not by itself guarantee that a packaged host loads this file for the agents below. Treat runtime delivery as the consuming caller's responsibility rather than something this frontmatter establishes.
 
 | Customization file                                                                  | Workflow            | Inline contract owned by the customization                                                                          |
 |-------------------------------------------------------------------------------------|---------------------|---------------------------------------------------------------------------------------------------------------------|

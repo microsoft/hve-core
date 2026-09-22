@@ -16,7 +16,7 @@ Resolve the walkthrough target before any review or explanation:
 * Classify the target so the right review path and segment ordering apply:
   * Code or feature: source files, a feature flow, or a library or API surface.
   * UI or UX: components, routes, state wiring, styles, and the user-facing flow that connects them.
-  * Prompt-engineering artifact: a prompt, instructions, agent, or skill file under `.github/`.
+  * Prompt-engineering artifact: a prompt, instructions, agent, or skill file in the repository's GitHub customization tree.
   * Artifact or document: a `.copilot-tracking` research, plan, changes, review, or log document, or another project document such as an architecture or planning record.
 * Set `detail` to `brief`, `normal`, or `deep` (default `normal`). The user can change it at any segment boundary.
 * When no target can be formed, stop and ask. When several unrelated targets match, ask the user to choose one before proceeding.

@@ -95,10 +95,12 @@ Cards are ordered by artifact type (Vision → Problem → Scenario → Use Case
 ### Step 1: Generate slide YAML from canonical markdown
 
 ```bash
-python .github/skills/experimental/customer-card-render/scripts/generate_cards.py \
+python "<customer-card-render-skill-root>/scripts/generate_cards.py" \
   --canonical-dir .copilot-tracking/dt/<project-slug>/canonical \
   --output-dir .copilot-tracking/dt/<project-slug>/render/content
 ```
+
+Resolve `<customer-card-render-skill-root>` from the loaded skill location before running the command.
 
 #### generate_cards.py CLI Reference
 
@@ -131,7 +133,7 @@ Canonical artifacts are produced by the DT coach and live under `.copilot-tracki
 ## Running Tests
 
 ```bash
-cd .github/skills/experimental/customer-card-render
+cd "<customer-card-render-skill-root>"
 uv sync --group dev
 uv run pytest tests/
 ```

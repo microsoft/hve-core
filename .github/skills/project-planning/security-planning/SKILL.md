@@ -64,8 +64,8 @@ Scoring keeps deterministic geometry gates separate from advisory screenshot heu
 A Windows-native example uses the skill's locked Windows dependency group:
 
 ```bash
-uv run --project .github/skills/project-planning/security-planning --group windows \
-  python scripts/validate_tm7_with_tmt.py model.tm7 \
+uv run --project "<security-planning-skill-root>" --group windows \
+  python "<security-planning-skill-root>/scripts/validate_tm7_with_tmt.py" model.tm7 \
   --evidence-dir ./artifacts/feedback \
   --feedback-loop \
   --spec ./specs/model.yaml \
@@ -73,6 +73,8 @@ uv run --project .github/skills/project-planning/security-planning --group windo
   --max-iterations 3 \
   --require-feedback-evidence
 ```
+
+Resolve `<security-planning-skill-root>` from the loaded skill location before running the command.
 
 The overlay contract is versioned and deterministic. It carries layout intent in named rule collections and is invalidated unless its full fingerprint block matches, so a stale overlay is rejected rather than replayed onto a changed model.
 
