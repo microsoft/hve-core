@@ -2,7 +2,7 @@
 name: accessibility
 description: "Consolidated accessibility skill entrypoint for WCAG 2.2, ARIA Authoring Practices, cognitive accessibility, Section 508, EN 301 549, design intent verification, and the Accessibility Planner workflow."
 license: MIT
-compatibility: "Requires Python 3.11+ and uv; the scanner additionally needs Node.js and network access to run 'npx --yes @axe-core/cli@4.12.1'."
+compatibility: "Requires Python 3.11+ and uv; the scanner additionally needs Node.js and network access to fetch the pinned axe-core CLI from the public npm registry."
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
@@ -207,9 +207,9 @@ $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1'; npm ci
 For automated NVDA runs, prepare the Windows machine once, then install the asset selected by the skill-local Guidepup package. Run the asset command again after updating Guidepup:
 
 ```powershell
-npx --yes @guidepup/setup@0.25.3 setup
-Set-Location scripts/runtime_a11y
-npx --yes @guidepup/setup@0.25.3 install nvda
+Set-Location <skill-root>/scripts/runtime_a11y
+npx --yes --registry=https://registry.npmjs.org/ @guidepup/setup@0.25.3 setup
+npx --yes --registry=https://registry.npmjs.org/ @guidepup/setup@0.25.3 install nvda
 ```
 
 The commands configure the machine and write versioned assets to the Guidepup user cache. They are not part of ordinary dependency installation. Run the prerequisite-only probe before a calibration session:
@@ -395,7 +395,7 @@ The harness is tested in two tiers. Browserless verdict and pure-helper unit tes
 
 ### CI regression gate
 
-Use the ready-to-copy workflow template at [references/ci/accessibility-coverage.workflow-template.yml](references/ci/accessibility-coverage.workflow-template.yml) as the documentation-first integration point for a target project. Copy it into a real workflow under `.github/workflows/` only after the target project commits an `a11y-runtime.config.json` and has a build/serve path that the template can invoke. Once authored `*.intent.yaml` records exist, the template fails closed if the config or current-run results are missing.
+Use the ready-to-copy workflow template at [references/ci/accessibility-coverage.workflow-template.yml](references/ci/accessibility-coverage.workflow-template.yml) as the documentation-first integration point for a target project. Copy it into the target repository's GitHub Actions workflow directory only after the target project commits an `a11y-runtime.config.json` and has a build/serve path that the template can invoke. Once authored `*.intent.yaml` records exist, the template fails closed if the config or current-run results are missing.
 
 The template mirrors the Docusaurus workflow recipe by provisioning system Chrome, setting up Node 24 plus Python and `uv`, building the target, serving it under a configurable base URL, and running the harness script entrypoint with `uv run --project` pinned at the vendored skill root. The core high-confidence probes always block: `probe-axe`, `probe-dom-hygiene`, `probe-broken-links`, `probe-console-errors`, `probe-target-size`, `probe-contrast`, and `probe-reflow-resize`. The interaction-state and announcement probes (`probe-keyboard-traversal`, `probe-widget-keyboard`, `probe-live-region`, `probe-aria-tree`, `probe-virtual-sr`, `probe-real-sr`) are the adequate method for the classes static analysis only informs, and their blocking posture follows the `A11Y_TIER` dial defined under [Gate strictness by assessment tier](#gate-strictness-by-assessment-tier): `basic` reports them advisory, `standard` ratchets (blocking on the surfaces listed in `A11Y_RATCHET_SURFACES`), and `comprehensive` blocks them everywhere. The remaining heuristic probes such as `use-of-color`, `hover-focus`, `link-purpose`, `name-in-label`, and `focus-*` are surfaced as informational results so they can guide follow-up work without blocking initial adoption. The real-screen-reader probe stays advisory by default unless a project opts into it through configured expected assertions and a supported OS/AT stack; it returns `candidate` when the platform or AT is unavailable rather than pretending a pass or failure. Decisive coverage of the adaptive-rendering class depends on the target committing the `zoom-200`, `reflow-320`, and text-spacing states in its `a11y-runtime.config.json`.
 

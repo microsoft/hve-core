@@ -23,7 +23,7 @@ Generate work items from the evidence register and maturity observations using t
 
 ### Delegation to Shared Backlog Templates
 
-For the full dual-format ADO and GitHub templates, content sanitization guidance, autonomy-tier vocabulary, disclaimer placement, and work-item ID naming rules, use the shared backlog templates skill at `.github/skills/shared/backlog-templates/SKILL.md`. This handoff reference stays focused on the RAI-specific review expectations and the final handoff decisions.
+For the full dual-format ADO and GitHub templates, content sanitization guidance, autonomy-tier vocabulary, disclaimer placement, and work-item ID naming rules, load the `backlog-templates` skill. This handoff reference stays focused on the RAI-specific review expectations and the final handoff decisions.
 
 ## Autonomy and Output Targets
 

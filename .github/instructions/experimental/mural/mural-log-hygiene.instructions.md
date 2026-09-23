@@ -22,7 +22,7 @@ Mural traffic carries credential material at every hop: the OAuth authorization 
 
 ## Skill Guarantees (defense-in-depth backstop)
 
-The skill provides a single `_redact(text)` helper that masks the items in the inventory above wherever they appear in JSON bodies, form-encoded bodies, `Authorization` headers, or Azure Blob SAS query strings. Coverage is verified by `.github/skills/experimental/mural/tests/test_redaction.py` and documented in `.github/skills/experimental/mural/SECURITY.md` §B4 Information Disclosure.
+The `mural` skill provides a single `_redact(text)` helper that masks the items in the inventory above wherever they appear in JSON bodies, form-encoded bodies, `Authorization` headers, or Azure Blob SAS query strings. Coverage is verified by the skill's `tests/test_redaction.py` and documented in its `SECURITY.md` §B4 Information Disclosure.
 
 `_redact` is a backstop, not a license:
 
@@ -40,7 +40,7 @@ The skill provides a single `_redact(text)` helper that masks the items in the i
 
 ## Cross-references
 
-* #file:.github/instructions/experimental/mural/mural-human-record.instructions.md
-* #file:.github/instructions/experimental/mural/mural-writeback-hygiene.instructions.md
-* #file:.github/skills/experimental/mural/SECURITY.md
-* #file:.github/skills/experimental/mural/scripts/mural/_transport.py
+* #file:mural-human-record.instructions.md
+* #file:mural-writeback-hygiene.instructions.md
+* The `mural` skill's `SECURITY.md`
+* The `mural` skill's `scripts/mural/_transport.py`

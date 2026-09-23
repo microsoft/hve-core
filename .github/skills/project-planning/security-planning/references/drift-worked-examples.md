@@ -1,7 +1,7 @@
 ---
 title: Security Plan Drift Worked Examples
 description: Minimal baseline and finding fixtures with deterministic expected outcomes for correlation and caller regressions.
-ms.date: 2026-09-04
+ms.date: 2026-09-20
 ms.topic: reference
 ---
 
@@ -150,7 +150,7 @@ Remove `aiComponents` and set `standardsMapped` to a string. Expected: two named
 
 ### S4 exclusions and override
 
-Add findings under `.github/skills/sample/SKILL.md` and `.github/agents/sample.agent.md`. Expected without explicit scope: both dropped and `Filtered findings: 2`. Expected with `scope=.github/skills/sample/`: the skill finding is retained, the agent finding is dropped, the opted-in prefix is reported, and `Filtered findings: 1`.
+Add findings under `<repository-root>/.github/skills/sample/SKILL.md` and `<repository-root>/.github/agents/sample.agent.md`. Expected without explicit scope: both dropped and `Filtered findings: 2`. Expected with `scope=<repository-root>/.github/skills/sample/`: the skill finding is retained, the agent finding is dropped, the opted-in prefix is reported, and `Filtered findings: 1`.
 
 ### S5 new threat
 

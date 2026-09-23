@@ -37,8 +37,8 @@ Once slug is resolved, establish these paths:
 1. Project root: `.copilot-tracking/dt/{project-slug}`
 2. Canonical dir: `{project-root}/canonical`
 3. Render dir: `{project-root}/render`
-4. Customer-card skill root: `.github/skills/experimental/customer-card-render`
-5. PowerPoint skill root: `.github/skills/experimental/powerpoint`
+4. Customer-card skill root: the loaded `customer-card-render` skill root
+5. PowerPoint skill root: the loaded `powerpoint` skill root
 
 ## Step 2: Offer Branch (`action=offer` or `action=run`)
 
@@ -60,8 +60,8 @@ If accepted:
 
 Before executing build commands, verify the actual command parameters by reading the skill documentation:
 
-1. Check `.github/skills/experimental/customer-card-render/README.md` for the exact flags and parameters for `generate_cards.py`
-2. Check `.github/skills/experimental/powerpoint/SKILL.md` for the exact parameters for `Invoke-PptxPipeline.ps1` (PowerShell) or `invoke-pptx-pipeline.sh` (bash)
+1. Load `customer-card-render` and check its skill instructions under `generate_cards.py CLI Reference` for the exact flags and parameters for `generate_cards.py`
+2. Load `powerpoint` and check its skill instructions for the exact parameters for `Invoke-PptxPipeline.ps1` (PowerShell) or `invoke-pptx-pipeline.sh` (bash)
 3. Confirm parameter names match the commands shown in Step 3 below. If skill interfaces have changed, update commands accordingly and inform the user of any parameter differences
 
 ## Step 3: Build Branch (`action=build` or accepted `action=run`)
@@ -82,7 +82,7 @@ Run the two-command flow using the confirmed parameters from Step 2.5:
 1. Generate slide YAML:
 
 ```bash
-python .github/skills/experimental/customer-card-render/scripts/generate_cards.py \
+python "<customer-card-render-skill-root>/scripts/generate_cards.py" \
   --canonical-dir .copilot-tracking/dt/{project-slug}/canonical \
   --output-dir .copilot-tracking/dt/{project-slug}/render/content
 ```
@@ -90,7 +90,7 @@ python .github/skills/experimental/customer-card-render/scripts/generate_cards.p
 2. Build PPTX using existing PowerPoint pipeline:
 
 ```powershell
-./.github/skills/experimental/powerpoint/scripts/Invoke-PptxPipeline.ps1 -Action Build \
+& "<powerpoint-skill-root>/scripts/Invoke-PptxPipeline.ps1" -Action Build \
   -ContentDir .copilot-tracking/dt/{project-slug}/render/content \
   -StylePath .copilot-tracking/dt/{project-slug}/render/content/global/style.yaml \
   -OutputPath .copilot-tracking/dt/{project-slug}/render/output/customer-cards.pptx

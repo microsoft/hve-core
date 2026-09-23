@@ -18,7 +18,7 @@ asset reference page before the broader conceptual and contributor documentation
 | `scripts/**`                                         | Not applicable                                 | `scripts/README.md`, `docs/architecture/workflows.md`                                       |
 | `extension/**`                                       | Not applicable                                 | `extension/PACKAGING.md`                                                                    |
 | `plugin.json`                                        | Not applicable                                 | `docs/customization/packages.md`, `docs/plugins/hve-core.md`                                |
-| `.github/plugin/marketplace.json`                    | Not applicable                                 | `docs/getting-started/packages.md`, `docs/plugins/hve-core.md`                              |
+| `<repository-root>/.github/plugin/marketplace.json`  | Not applicable                                 | `docs/getting-started/packages.md`, `docs/plugins/hve-core.md`                              |
 | `.devcontainer/**`                                   | Not applicable                                 | `docs/getting-started/`, `docs/customization/environment.md`                                |
 | `.github/workflows/**`                               | Not applicable                                 | `docs/architecture/workflows.md`                                                            |
 

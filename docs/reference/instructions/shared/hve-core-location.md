@@ -1,9 +1,9 @@
 ---
 title: Shared/Hve Core Location
-description: "Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree."
+description: "Important: hve-core is the repository containing this instruction file; Guidance: resolve operational .github references from this file's artifact root, including before a workspace-relative lookup or after a failed lookup."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-09-20
 ms.topic: reference
 keywords:
   - instruction
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree.
+Important: hve-core is the repository containing this instruction file; Guidance: resolve operational .github references from this file's artifact root, including before a workspace-relative lookup or after a failed lookup.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
