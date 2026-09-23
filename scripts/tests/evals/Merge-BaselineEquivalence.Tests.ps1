@@ -73,7 +73,7 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
         $script:ClaudePath = Join-Path $TestDrive "claude-$([guid]::NewGuid()).json"
         $script:OutputPath = Join-Path $TestDrive "combined-$([guid]::NewGuid()).json"
         $script:EvalSummaryPath = Join-Path $TestDrive "eval-$([guid]::NewGuid()).json"
-        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-5.6-luna' -DriverRunId 'gpt-run'
+        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-6-luna' -DriverRunId 'gpt-run'
         Write-TestEnvelope -Path $script:ClaudePath -Model 'claude-sonnet-5' -DriverRunId 'claude-run' -Summary (New-TestSummary -Model 'claude-sonnet-5' -Ties 81 -BaselineWins 22 -TreatmentWins 2 -MeanScore -0.12 -CiLow -0.11 -CiHigh -0.04 -WinRate 0.03 -DivergenceGuardFailures 5)
     }
 
@@ -99,8 +99,8 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
         $combined.divergenceGuardFailures | Should -Be 7
         $combined.equivalenceGate | Should -Be 'pass'
         $combined.documentedDivergenceGate | Should -Be 'report-only'
-        $combined.model | Should -Be 'gpt-5.6-luna'
-        @($combined.models) | Should -Be @('gpt-5.6-luna', 'claude-sonnet-5')
+        $combined.model | Should -Be 'gpt-6-luna'
+        @($combined.models) | Should -Be @('gpt-6-luna', 'claude-sonnet-5')
         @($combined.driverRunIds) | Should -Be @('gpt-run', 'claude-run')
 
         $fragment = Get-Content -LiteralPath $script:EvalSummaryPath -Raw | ConvertFrom-Json
@@ -113,8 +113,8 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
     }
 
     It 'weights model means and win rates by contributed trials' {
-        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-5.6-luna' -DriverRunId 'gpt-run' `
-            -Summary (New-TestSummary -Model 'gpt-5.6-luna' -Runs 100 -MeanScore 0.2 -WinRate 0.2)
+        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-6-luna' -DriverRunId 'gpt-run' `
+            -Summary (New-TestSummary -Model 'gpt-6-luna' -Runs 100 -MeanScore 0.2 -WinRate 0.2)
         Write-TestEnvelope -Path $script:ClaudePath -Model 'claude-sonnet-5' -DriverRunId 'claude-run' `
             -Summary (New-TestSummary -Model 'claude-sonnet-5' -Runs 50 -MeanScore -0.1 -WinRate 0.05)
 
@@ -143,7 +143,7 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
     It 'discovers the exact model pair from an envelope directory' {
         $directory = Join-Path $TestDrive "envelopes-$([guid]::NewGuid())"
         New-Item -ItemType Directory -Path $directory -Force | Out-Null
-        Copy-Item -LiteralPath $script:GptPath -Destination (Join-Path $directory 'model-evidence-gpt-5.6-luna.json')
+        Copy-Item -LiteralPath $script:GptPath -Destination (Join-Path $directory 'model-evidence-gpt-6-luna.json')
         Copy-Item -LiteralPath $script:ClaudePath -Destination (Join-Path $directory 'model-evidence-claude-sonnet-5.json')
 
         & $script:ScriptPath `
@@ -168,7 +168,7 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
     }
 
     It 'rejects duplicate model envelopes' {
-        Write-TestEnvelope -Path $script:ClaudePath -Model 'gpt-5.6-luna' -DriverRunId 'gpt-run-2'
+        Write-TestEnvelope -Path $script:ClaudePath -Model 'gpt-6-luna' -DriverRunId 'gpt-run-2'
 
         & $script:ScriptPath `
             -EnvelopePath $script:GptPath, $script:ClaudePath `
@@ -180,7 +180,7 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
     }
 
     It 'rejects a passing summary paired with nonzero producer exit' {
-        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-5.6-luna' -ProducerExitCode 3
+        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-6-luna' -ProducerExitCode 3
 
         & $script:ScriptPath `
             -EnvelopePath $script:GptPath, $script:ClaudePath `
@@ -193,11 +193,11 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
     }
 
     It 'classifies a matched non-passing producer as an evidence failure' {
-        $summary = New-TestSummary -Model 'gpt-5.6-luna'
+        $summary = New-TestSummary -Model 'gpt-6-luna'
         $summary.verdict = 'fail'
         $summary.equivalenceGate = 'fail'
         $summary.invariantFailures = 1
-        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-5.6-luna' -ProducerExitCode 1 -Summary $summary
+        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-6-luna' -ProducerExitCode 1 -Summary $summary
 
         & $script:ScriptPath `
             -EnvelopePath $script:GptPath, $script:ClaudePath `
@@ -220,7 +220,7 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
         @{ Field = 'tier'; Parameters = @{ Tier = 'ci' } }
         @{ Field = 'driver run'; Parameters = @{ DriverRunId = '' } }
     ) {
-        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-5.6-luna' @Parameters
+        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-6-luna' @Parameters
 
         & $script:ScriptPath `
             -EnvelopePath $script:GptPath, $script:ClaudePath `
@@ -232,7 +232,7 @@ Describe 'Merge-BaselineEquivalence.ps1' -Tag 'Unit' {
     }
 
     It 'rejects a summary whose model does not match its envelope' {
-        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-5.6-luna' -Summary (New-TestSummary -Model 'claude-sonnet-5')
+        Write-TestEnvelope -Path $script:GptPath -Model 'gpt-6-luna' -Summary (New-TestSummary -Model 'claude-sonnet-5')
 
         & $script:ScriptPath `
             -EnvelopePath $script:GptPath, $script:ClaudePath `
@@ -272,7 +272,7 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
     }
 
     It 'defines the exact bounded fixed-model matrix' {
-        $script:Workflow | Should -Match '(?s)equivalence-execute:.*?fail-fast: false.*?max-parallel: \$\{\{ inputs\.baseline-max-parallel \}\}.*?model: gpt-5\.6-luna.*?model: claude-sonnet-5'
+        $script:Workflow | Should -Match '(?s)equivalence-execute:.*?fail-fast: false.*?max-parallel: \$\{\{ inputs\.baseline-max-parallel \}\}.*?model: gpt-6-luna.*?model: claude-sonnet-5'
         $script:Workflow | Should -Match 'CalibrationModel \$env:SELECTED_MODEL'
     }
 
