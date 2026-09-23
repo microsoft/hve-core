@@ -58,7 +58,7 @@
 .PARAMETER Model
     Model passed to `vally eval --model`. Also forwarded to
     `Invoke-BaselineEquivalence.ps1` when baseline equivalence is explicitly
-    enabled. Defaults to `gpt-5.6-luna`.
+    enabled. Defaults to `gpt-6-luna`.
 
 .PARAMETER VallyCommand
     Path or name of the vally executable. Defaults to `vally`. Tests pass the
@@ -123,7 +123,7 @@ param(
     [string]$LogsDir,
     [ValidateSet('agent','prompt','instruction','skill')]
     [string[]]$Kind = @(),
-    [string]$Model = 'gpt-5.6-luna',
+    [string]$Model = 'gpt-6-luna',
     [string]$VallyCommand = 'vally',
     [string]$EquivalenceDriverPath,
     [ValidateSet('devloop','calibration','ci')]

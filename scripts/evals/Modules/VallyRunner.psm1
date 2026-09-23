@@ -476,6 +476,12 @@ function Invoke-VallySpec {
     shared spec is backlinked by multiple artifacts so each artifact runs only
     its own stimuli.
 
+    .PARAMETER Workers
+    Concurrent stimulus sessions passed to `vally eval --workers`. Vally's own
+    default is 5. Useful concurrency is capped by the batch size, which is the
+    tag-filtered stimulus count multiplied by `defaults.runs`, so raising this
+    past that product yields nothing.
+
     .OUTPUTS
     [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus; failedOrErroredTrials; tag }`.
     #>
@@ -488,6 +494,7 @@ function Invoke-VallySpec {
         [string]$VallyCommand = 'vally',
         [string]$LogPath,
         [string]$Tag,
+        [ValidateRange(1, 64)][int]$Workers = 8,
         [int]$MaxErroredRetries = 2,
         [string]$Worker,
         [ValidateRange(1, 3600)][int]$HeartbeatIntervalSeconds = 60
@@ -502,6 +509,7 @@ function Invoke-VallySpec {
         '--eval-spec', $SpecPath
         '--model', $Model
         '--output-dir', $OutputDir
+        '--workers', $Workers
     )
     if (-not [string]::IsNullOrWhiteSpace($Tag)) {
         $vallyArgs += @('--tag', $Tag)

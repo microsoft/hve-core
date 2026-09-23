@@ -41,6 +41,7 @@ REQUIREMENT_HEADING_PATTERN = re.compile(
     r"^#{1,6}\s+((?:FR|NFR)-[0-9]{3,})(?::|\s|$)", re.MULTILINE
 )
 NARRATIVE_ANCHOR_PATTERN = re.compile(r"^###\s+(FS-[0-9]{3,})(?::|\s|$)", re.MULTILINE)
+SECTION_HEADING_PATTERN = re.compile(r"^##\s+(.+?)\s*$", re.MULTILINE)
 
 # Operational bound checked before any study content is read.
 MAX_INPUT_BYTES = 5 * 1024 * 1024
@@ -136,6 +137,17 @@ def read_study_text(path: Path, allowed_roots: Sequence[Path] | None = None) -> 
     if resolved.stat().st_size > MAX_INPUT_BYTES:
         raise FeasibilityValidationError(
             f"study exceeds the {MAX_INPUT_BYTES} byte input limit"
+        )
+    return resolved.read_text(encoding="utf-8")
+
+
+def read_handoff_text(path: Path, allowed_roots: Sequence[Path] | None = None) -> str:
+    """Read a size-bounded handoff file from a permitted root."""
+    roots = tuple(allowed_roots) if allowed_roots else (Path.cwd(), _skill_root())
+    resolved = _resolve_input_path(path, roots)
+    if resolved.stat().st_size > MAX_INPUT_BYTES:
+        raise FeasibilityValidationError(
+            f"handoff exceeds the {MAX_INPUT_BYTES} byte input limit"
         )
     return resolved.read_text(encoding="utf-8")
 
@@ -286,12 +298,101 @@ def parse_profile(markdown: str) -> dict[str, Any]:
     return parsed
 
 
+def parse_handoff(text: str) -> dict[str, Any]:
+    """Parse a handoff using the constrained YAML loader."""
+    try:
+        parsed = yaml.load(text, Loader=UniqueKeyLoader)
+    except FeasibilityValidationError:
+        raise
+    except yaml.YAMLError as error:
+        raise FeasibilityValidationError(_sanitize_yaml_error(error)) from error
+    except RecursionError as error:
+        raise FeasibilityValidationError("handoff is nested too deeply") from error
+    except ValueError as error:
+        raise FeasibilityValidationError(
+            "handoff has an invalid scalar value"
+        ) from error
+    if not isinstance(parsed, dict):
+        raise FeasibilityValidationError("handoff must parse to an object")
+    try:
+        _assert_json_compatible(parsed)
+    except RecursionError as error:
+        raise FeasibilityValidationError("handoff is nested too deeply") from error
+    return parsed
+
+
 def load_schema(skill_root: Path) -> dict[str, Any]:
     """Load the local profile schema."""
     schema_path = (
         skill_root / "assets" / "feasibility-study-interchange-1.0.0.schema.json"
     )
     return json.loads(schema_path.read_text(encoding="utf-8"))
+
+
+def load_handoff_schema(skill_root: Path) -> dict[str, Any]:
+    """Load the local feasibility-to-PRD handoff schema."""
+    schema_path = skill_root / "assets" / "feasibility-to-prd-handoff.schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(schema)
+    return schema
+
+
+def _schema_path(error: Any) -> str:
+    """Return a stable JSON path without including rejected values."""
+    path = "$"
+    for segment in error.absolute_path:
+        path += f"[{segment}]" if isinstance(segment, int) else f".{segment}"
+    return path
+
+
+def validate_handoff(
+    handoff: dict[str, Any],
+    study_data: dict[str, Any],
+    study_markdown: str,
+    schema: dict[str, Any],
+) -> list[str]:
+    """Return structural and cross-artifact handoff errors."""
+    validator = Draft202012Validator(schema, format_checker=build_format_checker())
+    errors = [
+        f"{_schema_path(error)} violates {error.validator}"
+        for error in sorted(validator.iter_errors(handoff), key=str)
+    ]
+    if errors:
+        return errors
+
+    study = study_data["study"]
+    if handoff["study_path"] != study["location"]:
+        errors.append("handoff.study_path does not match the authoritative study")
+    if handoff["study_revision_id"] != study["study_revision_id"]:
+        errors.append("handoff.study_revision_id is stale")
+
+    section_headings = set(
+        SECTION_HEADING_PATTERN.findall(narrative_text(study_markdown))
+    )
+    if any(section not in section_headings for section in handoff["evidence_sections"]):
+        errors.append("handoff.evidence_sections references an absent study section")
+
+    known_item_ids = {item["item_id"] for item in study_data["items"]}
+    known_aliases = {item["display_ref"] for item in study_data["items"]}
+    candidates = [
+        *handoff.get("functional_candidates", []),
+        *handoff.get("nfr_candidates", []),
+    ]
+    candidate_ids = [candidate["candidate_id"] for candidate in candidates]
+    if len(candidate_ids) != len(set(candidate_ids)):
+        errors.append("handoff candidate IDs must be unique")
+    for candidate in candidates:
+        if candidate["study_item_id"] not in known_item_ids:
+            errors.append(
+                f"candidate {candidate['candidate_id']} has unknown study_item_id"
+            )
+        if any(
+            reference not in known_aliases for reference in candidate["evidence_refs"]
+        ):
+            errors.append(
+                f"candidate {candidate['candidate_id']} has unknown evidence_refs alias"
+            )
+    return errors
 
 
 def _duplicates(values: list[str]) -> set[str]:
@@ -509,11 +610,20 @@ def create_parser() -> argparse.ArgumentParser:
         description="Validate a Feasibility Study Interchange Profile"
     )
     parser.add_argument("study", type=Path, help="Markdown study to validate")
+    parser.add_argument(
+        "--handoff",
+        type=Path,
+        help="Optional sibling feasibility-to-PRD handoff to validate",
+    )
     return parser
 
 
-def run(study_path: Path, allowed_roots: Sequence[Path] | None = None) -> int:
-    """Validate one study and print a JSON result.
+def run(
+    study_path: Path,
+    handoff_path: Path | None = None,
+    allowed_roots: Sequence[Path] | None = None,
+) -> int:
+    """Validate one study and its optional handoff, then print a JSON result.
 
     Operational failures report on stderr with EXIT_ERROR. Validation failures
     report on stdout with EXIT_FAILURE.
@@ -522,18 +632,26 @@ def run(study_path: Path, allowed_roots: Sequence[Path] | None = None) -> int:
         markdown = read_study_text(study_path, allowed_roots)
         data = parse_profile(markdown)
         schema = load_schema(_skill_root())
+        handoff = None
+        handoff_schema = None
+        if handoff_path is not None:
+            handoff = parse_handoff(read_handoff_text(handoff_path, allowed_roots))
+            handoff_schema = load_handoff_schema(_skill_root())
     except (OSError, FeasibilityValidationError, json.JSONDecodeError) as error:
         print(f"validate_feasibility: {error}", file=sys.stderr)
         return EXIT_ERROR
 
     errors = validate_profile(data, markdown, schema)
+    if not errors and handoff is not None and handoff_schema is not None:
+        errors.extend(validate_handoff(handoff, data, markdown, handoff_schema))
     print(json.dumps({"valid": not errors, "errors": errors}, indent=2))
     return EXIT_FAILURE if errors else EXIT_SUCCESS
 
 
 def main() -> int:
     """Run the feasibility profile validator CLI."""
-    return run(create_parser().parse_args().study)
+    args = create_parser().parse_args()
+    return run(args.study, args.handoff)
 
 
 if __name__ == "__main__":

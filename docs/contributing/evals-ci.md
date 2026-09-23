@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-18
+ms.date: 2026-09-22
 ms.topic: how-to
 keywords:
   - evals
@@ -343,16 +343,17 @@ The CI-owned eval-validation workflow runs the static eval-lint lanes. They are
 not part of `validate:local`; see [Validation Commands and CI-Owned Lanes](validation)
 for local reproduction prerequisites and output handling.
 
-| Script                     | Tool                                | Purpose                                                                        |
-|----------------------------|-------------------------------------|--------------------------------------------------------------------------------|
-| `ci:eval:lint:vally`       | `vally lint --eval-spec evals/`     | Spec validation via the upstream CLI                                           |
-| `lint:eval-grader-lineage` | `Build-GraderLineageMap.ps1 -Check` | Grader-name lineage across Vally migrations; chained into `ci:eval:lint:vally` |
-| `ci:eval:lint:schema`      | `Test-EvalSpec.ps1`                 | Schema lint, agent-behavior coverage, and orphaned-tag reachability            |
-| `ci:eval:lint:text`        | `Test-EvalSpecText.ps1`             | retext-profanities + retext-equality gate on the AI-artifact corpus            |
-| `ci:eval:lint:safety`      | `Test-VallyTestSafety.ps1`          | Safety validation for eval stimuli                                             |
+| Script                     | Tool                                                                                                       | Purpose                                                                        |
+|----------------------------|------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| `ci:eval:lint:vally`       | `Build-AgentBehaviorSpec.ps1 -WhatIf && npm run lint:eval-grader-lineage && vally lint --eval-spec evals/` | Spec validation via upstream CLI, chained with spec drift and grader lineage   |
+| `lint:eval-grader-lineage` | `Build-GraderLineageMap.ps1 -Check`                                                                        | Grader-name lineage across Vally migrations; chained into `ci:eval:lint:vally` |
+| `ci:eval:lint:schema`      | `Test-EvalSpec.ps1`                                                                                        | Schema lint, agent-behavior coverage, and orphaned-tag reachability            |
+| `ci:eval:lint:text`        | `Test-EvalSpecText.ps1`                                                                                    | retext-profanities + retext-equality gate on the AI-artifact corpus            |
+| `ci:eval:lint:safety`      | `Test-VallyTestSafety.ps1`                                                                                 | Safety validation for eval stimuli                                             |
 
-`lint:eval-grader-lineage` is not a standalone lane. `ci:eval:lint:vally` runs it before the
-vally CLI, so a lineage failure fails that lane. With `-Check` it verifies the committed lineage
+`lint:eval-grader-lineage` is not a standalone lane. `ci:eval:lint:vally` runs it between
+`Build-AgentBehaviorSpec.ps1 -WhatIf` (the agent-behavior spec drift check) and the
+vally CLI, so a drift or lineage failure fails that lane. With `-Check` it verifies the committed lineage
 JSON without changing it; given `-SourceRevision` and `-TargetRevision` it rebuilds the map
 between two reachable revisions. It pairs graders by source, stimulus, and a name-free behavior
 digest, and fails closed on unreachable history, provenance drift, ambiguous pairs, semantic
@@ -415,7 +416,13 @@ When the lane reports an orphaned tag, either the tag is misspelled or the agent
 
 ### Baseline-equivalence specs
 
-`ci:eval:lint:vally` runs `vally lint --eval-spec evals/`, which scans recursively to a maximum depth of ten directory levels. The baseline-equivalence suite under [evals/baseline-equivalence/](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md) ships its paired specs one level down (`baseline/eval.yaml` and `customized/eval.yaml`), so both are discovered by that sweep. Lint either one on its own when iterating on a single spec:
+`ci:eval:lint:vally` runs a three-step composition: it checks agent-behavior spec drift
+(`Build-AgentBehaviorSpec.ps1 -WhatIf`), verifies grader lineage mapping across migrations
+(`npm run lint:eval-grader-lineage` via `Build-GraderLineageMap.ps1 -Check`), and then runs
+`vally lint --eval-spec evals/`, which scans recursively to a maximum depth of ten directory
+levels. The baseline-equivalence suite under [evals/baseline-equivalence/](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md)
+ships its paired specs one level down (`baseline/eval.yaml` and `customized/eval.yaml`), so both
+are discovered by that sweep. Lint either one on its own when iterating on a single spec:
 
 ```pwsh
 vally lint --eval-spec evals/baseline-equivalence/baseline/eval.yaml

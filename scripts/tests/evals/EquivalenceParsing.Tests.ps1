@@ -525,7 +525,7 @@ Describe 'Measure-AgentInvocationEvidence' -Tag 'Unit' {
             return [ordered]@{
                 type       = 'trial-result'
                 stimulus   = $Stimulus
-                model      = 'gpt-5.6-luna'
+                model      = 'gpt-6-luna'
                 trialIndex = $Trial
                 trajectory = [ordered]@{
                     events = @(
@@ -568,7 +568,7 @@ Describe 'Measure-AgentInvocationEvidence' -Tag 'Unit' {
         )
         $result = Measure-AgentInvocationEvidence -RunDir $root -StimulusNames @('stim-1') -ExpectedTrials 2
 
-        $result.Model | Should -Be 'gpt-5.6-luna'
+        $result.Model | Should -Be 'gpt-6-luna'
         $result.Expected | Should -Be 2
         $result.Observed | Should -Be 2
         $result.HasCompleteEvidence | Should -BeTrue
@@ -577,7 +577,7 @@ Describe 'Measure-AgentInvocationEvidence' -Tag 'Unit' {
     It 'Falls back to the Vally itemId trial suffix when trialIndex is absent' {
         $record = New-InvocationRecord
         $record.Remove('trialIndex')
-        $record['itemId'] = 'spec::main::gpt-5.6-luna::stim-1::trial-0'
+        $record['itemId'] = 'spec::main::gpt-6-luna::stim-1::trial-0'
         $root = Write-InvocationRun -Records @($record)
         $result = Measure-AgentInvocationEvidence -RunDir $root -StimulusNames @('stim-1')
 
