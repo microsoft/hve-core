@@ -17,6 +17,7 @@ from validate_catalog import (
     _is_rfc3339_date_time,
     _reject_tagged_node,
     _sanitize_yaml_error,
+    _source_location_contains_secret,
     build_format_checker,
     create_parser,
     extract_frontmatter,
@@ -143,6 +144,94 @@ def test_given_unknown_and_self_lineage_when_validated_then_reports_errors() -> 
     # Assert
     assert any("unknown lineage source" in error for error in errors)
     assert any("cannot derive from itself" in error for error in errors)
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        "postgresql://analyst:synthetic-pass@example.invalid/database",
+        "https://example.invalid/data?access_token=synthetic-token",
+        "storage/path;AccountKey=synthetic-key",
+        "queue/path?SharedAccessSignature=synthetic-signature",
+    ],
+    ids=["uri-userinfo", "query-token", "connection-key", "shared-access-signature"],
+)
+def test_given_secret_bearing_location_when_validated_then_reports_safely(
+    location: str,
+) -> None:
+    # Arrange
+    data = _valid_catalog()
+    data["entities"][0]["source"]["location"] = location
+
+    # Act
+    errors = validate_catalog(data, load_schema(SKILL_ROOT))
+
+    # Assert
+    assert errors == [
+        "entity customer source.location contains embedded credentials or "
+        "secret material"
+    ]
+    assert location not in "\n".join(errors)
+
+
+@pytest.mark.parametrize(
+    "parameter",
+    [
+        "X-Amz-Signature=synthetic",
+        "X-Amz-Credential=synthetic",
+        "X-Amz-Security-Token=synthetic",
+        "X-Goog-Signature=synthetic",
+        "X-Goog-Credential=synthetic",
+        "X-Goog-Security-Token=synthetic",
+        "AWSAccessKeyId=synthetic",
+        "GoogleAccessId=synthetic",
+        "access%5Ftoken=synthetic",
+        "%58%2dAmz%2dSignature=synthetic",
+        "x_GOOG_signature=synthetic",
+        "ACCESS-TOKEN=synthetic",
+        "access_token=&access_token=synthetic",
+        "format=csv;X-Amz-Credential=synthetic",
+        "token=%26%3B",
+    ],
+)
+def test_given_encoded_or_provider_secret_key_when_validated_then_reports_safely(
+    parameter: str,
+) -> None:
+    # Arrange
+    data = _valid_catalog()
+    location = f"https://example.invalid/data?{parameter}"
+    data["entities"][0]["source"]["location"] = location
+
+    # Act
+    errors = validate_catalog(data, load_schema(SKILL_ROOT))
+
+    # Assert
+    assert errors == [
+        "entity customer source.location contains embedded credentials or "
+        "secret material"
+    ]
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        "connections/crm-readonly",
+        "https://example.invalid/data?format=csv",
+        "lake/silver/product",
+        "https://example.invalid/data?X-Amz-Date=20260922",
+        "https://example.invalid/data?note=access_token%3Dsynthetic",
+        "https://example.invalid/data?note=x%26X-Amz-Signature%3Dsynthetic",
+        "https://example.invalid/data?access_token=",
+        "https://example.invalid/data?access_token=%20",
+        "https://example.invalid/data?not_access_token=synthetic",
+        "https://example.invalid/data?access%255Ftoken=synthetic",
+    ],
+)
+def test_given_safe_location_when_checked_then_is_not_secret_bearing(
+    location: str,
+) -> None:
+    # Act and assert
+    assert not _source_location_contains_secret(location)
 
 
 def test_given_unequal_composite_keys_when_validated_then_reports_error() -> None:
