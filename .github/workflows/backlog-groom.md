@@ -276,33 +276,30 @@ untrusted data.
 
 ## Assessment
 
-1. Parse `ordered_candidate_ids` as a JSON array. Call `noop` when it is
-  malformed, contains duplicates, contains non-positive or non-integer values,
-  or does not preserve ascending issue-number order.
-2. Retrieve every listed issue by number. When a listed number is missing,
+1. Retrieve every listed issue by number. When a listed number is missing,
   closed, or has become a pull request since
   snapshot capture, emit one canonical `Deferred` row for that number. Use a
   factual unavailable-after-snapshot title, `Uncertain` similarity and
   disposition, repository evidence describing the observed lookup state, and
   a recommended next step to reassess it in a later snapshot. Do not omit the
-  row or call `noop` for an individual post-capture state change.
-3. Assess candidates in the supplied order. The orchestrator, not the worker,
+  row for an individual post-capture state change.
+2. Assess candidates in the supplied order. The orchestrator, not the worker,
   owns inventory selection, priority ordering, cursor recovery, and sharding.
   Use the supplied priority and round-robin arrays for each row's selection
   reason. The isolated result job uses the trusted cohort and inventory inputs
   to construct canonical run state.
-4. Reserve enough time and AI-credit budget to produce the result. Record
+3. Reserve enough time and AI-credit budget to produce the result. Record
    every selected but incomplete issue as deferred with a reason.
-5. For each hydrated issue, extract its requested outcomes and acceptance
+4. For each hydrated issue, extract its requested outcomes and acceptance
   signals, then search default-branch code, configuration, and documentation;
   open, merged, and closed pull requests; and open and closed issues.
-6. Follow linked issues, pull requests, and commits. Inspect relevant commits or
+5. Follow linked issues, pull requests, and commits. Inspect relevant commits or
   releases when those links do not establish whether the work is still needed,
   completed, superseded, duplicated, or inaccurate.
   Do not require a direct issue link. Treat an unlinked pull request or commit
   as lineage only when changed paths, delivered behavior, and current
   default-branch state corroborate the acceptance signals.
-7. Assess each hydrated issue according to the imported agent and shared
+6. Assess each hydrated issue according to the imported agent and shared
   grooming policy. Use `Uncertain` rather than recommending a disposition when
   required repository evidence is unavailable, conflicting, or too weak.
 
@@ -341,9 +338,9 @@ constructs the immutable v2 artifact, calculates its digest, and publishes it.
 After every final safe output call succeeds, return only the canonical Backlog
 Grooming Report required by the imported agent.
 
-Call `noop` only when shard input validation fails or a repository-wide access
-failure prevents production of a trustworthy result envelope. Individual
-candidate retrieval or evidence gaps produce canonical `Deferred` rows.
+When a repository-wide access failure prevents assessment, emit one canonical
+`Deferred` row for every supplied candidate. Individual candidate retrieval or
+evidence gaps also produce canonical `Deferred` rows.
 
 Do not close, create, edit, label, assign, or milestone candidate issues. Do not
 generate SARIF or request Code Scanning output.
