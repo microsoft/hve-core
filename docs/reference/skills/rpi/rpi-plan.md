@@ -66,6 +66,8 @@ If both the initial attempt and generic recovery ended in verified infrastructur
 
 For example, two host-recorded connection failures with confirmed completion and no assessment may qualify for another consent request. A substantive critique of the same candidate, an unknown run status, or unresolved assessment fragments do not qualify. Earlier findings on a different corrected candidate remain binding and must be reconciled, but do not themselves disqualify recovery of the failed closure.
 
+Older plans may not have an infrastructure reservation count. The planner reconstructs it from the original task's attempt records, parent state, critique outputs and available originating run evidence, counting interrupted reservations even without output. It preserves the task, candidates and findings. If the complete history cannot be established, the count remains unknown, automated retries stay blocked, and the planner requests the specific missing evidence rather than treating the field as zero or exhausting the budget by default.
+
 ### When infrastructure retries are exhausted
 
 The planner stops automated critique calls and prepares sanitized diagnostics: attempt IDs, candidate hashes, evidence locations, failure and lifecycle status, and the host/network support owner and evidence needed. Repairing the transport does not replenish retry slots.

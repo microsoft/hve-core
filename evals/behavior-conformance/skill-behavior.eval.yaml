@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 260
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 287
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -6098,6 +6098,43 @@ stimuli:
         name: skill-rpi-infrastructure-history-preservation-no-reset
         config:
           pattern: '(?i)^\s*Reset:[ \t]*no[ \t]*\r?\nUnknownCount:[ \t]*reconcile\s*$'
+  - name: skill-rpi-legacy-reservation-migration
+    prompt: |
+      An old plan lacks the Infrastructure retry reservations field. A has task
+      T and candidate hashes H0 and H1. H0 received a Complete/Revise critique
+      with finding PC-001; the H1 revision-closure invocation failed. The
+      original plan and parent state preserve distinct reservations for two
+      H1 infrastructure retries. Retry 1 has an output and retry 2 was saved
+      as started before interruption without an output. Complete task-bound
+      run records account for every attempt. B has one known infrastructure
+      reservation pointer, but its parent state and earlier host records are
+      unavailable, so total task history cannot be proved complete. For each
+      case, decide how to migrate without replacing task or candidate history,
+      findings, or consumed reservations. The backwards-compatibility check
+      cannot complete until the migrated evidence has been persisted and read
+      back; ambiguous history must stop it. Return exactly eight lines:
+      A-Task: preserve or replace
+      A-Candidates: preserve or replace
+      A-Findings: preserve or discard
+      A-Count: 0, 1, 2, or unknown
+      A-Check: after-persist or before-persist
+      B-Count: 0, 1, 2, or unknown
+      B-Next: request-specific-evidence or authorize-retry
+      B-Check: blocked or complete
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 5e77a7cf4cda83727e3f25ad71a0f31b0eb7d702afd5a4a00a4c2e0e1b01a1e1
+    graders:
+      - type: output-matches
+        name: skill-rpi-legacy-reservation-migration-preserve
+        config:
+          pattern: '(?i)^\s*A-Task:[ \t]*preserve[ \t]*\r?\nA-Candidates:[ \t]*preserve[ \t]*\r?\nA-Findings:[ \t]*preserve[ \t]*\r?\nA-Count:[ \t]*2[ \t]*\r?\nA-Check:[ \t]*after-persist[ \t]*\r?\nB-Count:[ \t]*unknown[ \t]*\r?\nB-Next:[ \t]*request-specific-evidence[ \t]*\r?\nB-Check:[ \t]*blocked\s*$'
   - name: skill-rpi-infrastructure-late-evidence
     prompt: |
       An infrastructure retry has specific consent but has not started. An old

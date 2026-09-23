@@ -192,7 +192,8 @@ Record the latest critique findings, their disposition, and any explicitly accep
 * Critique execution: {{not_run_started_complete_partial_or_blocked}}
 * Initial attempt consumed: {{yes_or_no}}
 * Recovery attempt consumed: {{yes_or_no}}
-* Infrastructure retry reservations: {{zero_one_or_two_with_preserved_attempt_pointers}}
+* Infrastructure retry reservations: {{zero_one_two_or_unknown_with_known_lower_bound_and_preserved_attempt_pointers}}
+* Legacy reservation reconciliation: {{not_applicable_or_original_missing_field_inventory_task_bound_sources_completeness_basis_conflicts_operator_evidence_request_and_resolved_count_or_unknown}}
 * Invocation outcome and assessment availability: {{separate_host_outcome_and_actual_assessment_execution_or_unknown_or_not_produced}}
 * Attempt provenance: {{task_attempt_id_kind_candidate_saved_hash_boundary_depth_output_and_current_run_evidence}}
 * Revision-bound closure: {{not_applicable_or_root_full_assessment_ordered_adjacent_hash_result_and_delta_links_affected_requirements_full_or_targeted_basis_and_all_dispositions}}
@@ -200,7 +201,7 @@ Record the latest critique findings, their disposition, and any explicitly accep
 * Infrastructure classification and reconciliation: {{not_applicable_or_positive_failure_evidence_all_runs_ended_evidence_searched_fragments_late_results_and_uncertainty}}
 * Exhaustion and human assessment: {{not_applicable_or_diagnostic_owner_clearing_evidence_separate_human_eligibility_consent_provenance_and_coverage}}
 
-<!-- Preserve every attempt and append reconciliation without erasing observations. Mirror pointers and budget use in the parent's single Planning critique execution entry. Follow the planning reference's recovery and human-assessment contracts; exhausted counts and missing evidence never satisfy readiness or authorize reassessment. -->
+<!-- Preserve every attempt and append reconciliation without erasing observations. Mirror pointers and budget use in the parent's single Planning critique execution entry. Reconstruct missing legacy counts only from complete task-bound evidence; unknown blocks reservations. Follow the planning reference's recovery and human-assessment contracts; exhausted counts and missing evidence never satisfy readiness or authorize reassessment. -->
 
 | Critique run and finding | Disposition                                        | Action owner                   | Exact resolving evidence                | Decision route                                     | Plan response or residual risk |
 |--------------------------|----------------------------------------------------|--------------------------------|-----------------------------------------|----------------------------------------------------|--------------------------------|
