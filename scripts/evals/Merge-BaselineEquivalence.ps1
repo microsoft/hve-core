@@ -155,7 +155,7 @@ function Read-ModelEnvelope {
     }
 
     $selectedModel = [string](Assert-Property -InputObject $envelope -Name 'selectedModel' -Context $context)
-    if ($selectedModel -notin @('gpt-5.6-luna', 'claude-sonnet-5')) {
+    if ($selectedModel -notin @('gpt-6-luna', 'claude-sonnet-5')) {
         throw "$context has unexpected selectedModel '$selectedModel'."
     }
     $driverRunId = [string](Assert-Property -InputObject $envelope -Name 'driverRunId' -Context $context)
@@ -208,7 +208,7 @@ function Merge-ModelSummaries {
         [Parameter(Mandatory = $true)][psobject[]]$Envelope
     )
 
-    $orderedEnvelopes = @($Envelope | Sort-Object { if ($_.selectedModel -eq 'gpt-5.6-luna') { 0 } else { 1 } })
+    $orderedEnvelopes = @($Envelope | Sort-Object { if ($_.selectedModel -eq 'gpt-6-luna') { 0 } else { 1 } })
     return Merge-BaselineModelSummary `
         -Summary @($orderedEnvelopes | ForEach-Object { $_.summary }) `
         -DriverRunId @($orderedEnvelopes.driverRunId)
@@ -291,7 +291,7 @@ function New-FailedEvalSummaryFragment {
     return [ordered]@{
         manifestPath = $null
         evalRoot = $null
-        model = 'gpt-5.6-luna'
+        model = 'gpt-6-luna'
         kindFilter = @('equivalence')
         totals = [ordered]@{ artifacts = 0; specs = 0; assertionsPassed = 0; assertionsFailed = 1; durationMs = 0; failedSpecs = 1 }
         perArtifact = @()
@@ -371,7 +371,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             }
         )
         $models = @($envelopes.selectedModel | Sort-Object -Unique)
-        if ($models.Count -ne 2 -or $models[0] -ne 'claude-sonnet-5' -or $models[1] -ne 'gpt-5.6-luna') {
+        if ($models.Count -ne 2 -or $models[0] -ne 'claude-sonnet-5' -or $models[1] -ne 'gpt-6-luna') {
             throw "Expected exactly one envelope for each fixed model; found '$($models -join ',')'."
         }
 

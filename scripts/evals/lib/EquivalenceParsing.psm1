@@ -1186,7 +1186,7 @@ function Merge-BaselineModelSummary {
 
     return [ordered]@{
         schemaVersion = '2.1.0'; agent = [string]$summaries[0].agent; tier = [string]$summaries[0].tier
-        model = 'gpt-5.6-luna'; models = @($summaries.model); driverRunIds = @($DriverRunId)
+        model = 'gpt-6-luna'; models = @($summaries.model); driverRunIds = @($DriverRunId)
         runs = $runs; ties = [int](& $sum 'ties'); baselineWins = [int](& $sum 'baselineWins')
         treatmentWins = [int](& $sum 'treatmentWins'); meanScore = [math]::Round((& $weighted 'meanScore'), 4)
         ciLow = [math]::Round([double](($summaries | Measure-Object -Property ciLow -Maximum).Maximum), 4)
