@@ -3,12 +3,13 @@ name: vally-tests
 description: 'Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli'
 license: MIT
 user-invocable: true
-compatibility: 'Requires Vally CLI 0.12.0+, PowerShell 7+, bash, and Python 3.11+ with uv for corpus-import workflows'
+compatibility: 'Requires Vally CLI 0.15.0+, PowerShell 7+, bash, and Python 3.11+ with uv for corpus-import workflows'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-09-21"
+  last_updated: "2026-09-23"
 ---
+<!-- cspell:ignore roleplay doxxing scaffolder -->
 
 # Vally Tests Skill
 
@@ -47,7 +48,7 @@ Each invocation follows the same six-step pipeline:
 
 1. **Artifact-kind detection.** Resolve the kind from the artifact path or the corpus row's `kind` column. Supported kinds: `prompt`, `instructions`, `agent`, `skill`. Reject unknown kinds with a refusal block.
 2. **Reference lookup.** Load the matching reference file from `references/` and select the check or checks the stimulus exercises.
-3. **Grader selection.** Use `references/grader-catalog.md` to pick a Vally grader (`semantic_similarity`, `contains`, `regex`, `json_schema`) appropriate for the check's expected response shape.
+3. **Grader selection.** Use `references/grader-catalog.md` as the authoritative selection surface. Pick the registered Vally grader family that directly observes the expected behavior and follow its stimulus-shape guidance.
 4. **Robustness check.** Apply `references/grader-robustness.md`. Confirm the stimulus stages every file whose wording the grader asserts, that the pattern constrains order and proximity only where those are the behavior under test, and that a compliant agent phrasing the behavior differently still passes. Verify the pattern offline against answers that must pass and answers that must still fail before appending.
 5. **Safety self-check.** Run a safety self-check against the refusal taxonomy regex set. Refusing here is the correct outcome for any stimulus that matches a refusal category.
 6. **Dedupe and append.** Compute a SHA-256 hash of the normalized prompt text, compare against existing stimuli in the target eval file, and append only when novel.
