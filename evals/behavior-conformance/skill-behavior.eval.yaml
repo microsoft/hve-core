@@ -6254,6 +6254,49 @@ stimuli:
         name: skill-rpi-revision-closure-targeted-choice
         config:
           pattern: '(?i)^\s*targeted\s*$'
+  - name: skill-rpi-revision-closure-corrected-plan-chain
+    prompt: |
+      An independent full critique of saved plan hash A is Complete/Revise
+      with required finding PC-001. The planner corrects PC-001 in saved hash B;
+      the exact A-to-B delta, affected requirement IDs and resolving evidence
+      are available. Requirements, architecture, capability, safety and evidence
+      boundaries remain unchanged. No assessment of B has run yet. Someone
+      requests another critique of unchanged A to obtain Pass.
+      Next, an authorized assessment of B is Complete/Revise with a new
+      required PC-002.
+      An evidence-backed correction creates hash C, with an exact B-to-C delta,
+      affected IDs and the same unchanged boundaries. Before C is assessed,
+      someone requests a repeat of unchanged B solely for a more favorable
+      verdict. Finally, an authorized assessment of C is Complete/Pass. Both
+      findings are resolved, residual risks are disposed and the delivered hash
+      is C.
+      Give the disposition at each checkpoint using exactly these ten lines:
+      A: preserve or discard
+      A-to-B: record-delta or omit-delta
+      B: targeted or replay-A
+      Before-B: blocked or ready
+      Unchanged-A: reject or replay
+      B-to-C: record-delta or omit-delta
+      C: targeted or stop-at-two
+      Before-C: blocked or ready
+      Unchanged-B: reject or retry
+      After-C: ready or blocked
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+        - ../../.github/skills/rpi/rpi-implement
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: b5e8c415db575653c4b1583f392626a5e386668cc446b3e9fb05908a9daf4296
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-corrected-plan-chain-gate
+        config:
+          pattern: '(?i)^\s*A:[ \t]*preserve[ \t]*\r?\nA-to-B:[ \t]*record-delta[ \t]*\r?\nB:[ \t]*targeted[ \t]*\r?\nBefore-B:[ \t]*blocked[ \t]*\r?\nUnchanged-A:[ \t]*reject[ \t]*\r?\nB-to-C:[ \t]*record-delta[ \t]*\r?\nC:[ \t]*targeted[ \t]*\r?\nBefore-C:[ \t]*blocked[ \t]*\r?\nUnchanged-B:[ \t]*reject[ \t]*\r?\nAfter-C:[ \t]*ready\s*$'
   - name: skill-rpi-revision-closure-full
     prompt: |
       A Complete/Revise critique assessed hash A. A required correction changes
