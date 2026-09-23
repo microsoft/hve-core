@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-09-04
+ms.date: 2026-09-23
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -20,12 +20,15 @@ branch and creates no tag. Its merge runs release-please in PR-only mode. The
 later release-please managed PR owns version and changelog metadata. Its merge
 creates `prerelease-v<version>` for PreRelease or `v<version>` for Stable.
 
-`main` is not a release-please target. It is a ref-less development-tip channel and does not receive release metadata or changelog updates when a channel is published. An explicit marketplace refresh and plugin update are required for the ref-less main catalog, whose bytes have no release gate, SBOM, or attestation. Release branches, tags, and published GitHub releases own release state and history.
+`main` is not a release-please target. It is a ref-less development-tip channel and does not receive release metadata or changelog updates when a channel is published. An explicit marketplace refresh and plugin update are required for the ref-less main catalog. Its dependencies are represented in GitHub's current dependency graph, but its bytes have no release gate, published artifact SBOM, or release attestation. Release branches, tags, and published GitHub releases own release state and history.
 
-The ref-less `microsoft/hve-core` registration follows `main`. Main bytes have
-no release gate, SBOM, or attestation. Release channels remain the reviewed
-path through moving branch registrations and exact `prerelease-v<version>` or
-`v<version>` refs: they are release-gated, SBOM-covered, and attested.
+The ref-less `microsoft/hve-core` registration follows `main`. The Dependency
+Review workflow keeps the GitHub dependency graph current for vulnerability and
+dependency review. That current-state inventory is not published release
+evidence. Main bytes have no release gate, published artifact SBOM, or release
+attestation. Release channels remain the reviewed path through moving branch
+registrations and exact `prerelease-v<version>` or `v<version>` refs: they are
+release-gated, SBOM-covered, and attested.
 
 Workflow ownership is explicit:
 
