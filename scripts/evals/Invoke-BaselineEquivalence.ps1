@@ -40,11 +40,11 @@
     Optional explicit model id for the `devloop` tier. When supplied it overrides the
     agent's frontmatter `model:` hint and the built-in default, letting callers pin a
     cheaper model for advisory runs. Ignored for the `calibration` and `ci` tiers,
-    which always run the fixed pair `gpt-5.6-luna` and `claude-sonnet-5`.
+    which always run the fixed pair `gpt-6-luna` and `claude-sonnet-5`.
 
 .PARAMETER CalibrationModel
     Optional fixed-model selector for an isolated `calibration` or `ci` producer.
-    Accepts only `gpt-5.6-luna` or `claude-sonnet-5`. When omitted, the existing
+    Accepts only `gpt-6-luna` or `claude-sonnet-5`. When omitted, the existing
     fixed-pair behavior is preserved. It does not affect `devloop` selection.
 
 .PARAMETER ComparisonJudgeModel
@@ -103,7 +103,7 @@ param(
     [string]$Model,
 
     [Parameter(Mandatory = $false)]
-    [ValidateSet('gpt-5.6-luna', 'claude-sonnet-5')]
+    [ValidateSet('gpt-6-luna', 'claude-sonnet-5')]
     [string]$CalibrationModel,
 
     [Parameter(Mandatory = $false)]
@@ -231,17 +231,17 @@ function Resolve-ModelList {
         # Keep cross-vendor coverage pinned to explicit model IDs rather than floating
         # aliases. Hints and overrides apply only to advisory devloop runs.
         if (-not [string]::IsNullOrWhiteSpace($CalibrationModel)) {
-            if ($CalibrationModel -notin @('gpt-5.6-luna', 'claude-sonnet-5')) {
-                throw "Unsupported calibration model '$CalibrationModel'. Expected gpt-5.6-luna or claude-sonnet-5."
+            if ($CalibrationModel -notin @('gpt-6-luna', 'claude-sonnet-5')) {
+                throw "Unsupported calibration model '$CalibrationModel'. Expected gpt-6-luna or claude-sonnet-5."
             }
             return @($CalibrationModel)
         }
-        return @('gpt-5.6-luna', 'claude-sonnet-5')
+        return @('gpt-6-luna', 'claude-sonnet-5')
     }
 
     if ($ModelOverride) { return @($ModelOverride) }
     if ($Hint) { return @($Hint) }
-    return @('gpt-5.6-luna')
+    return @('gpt-6-luna')
 }
 
 function Get-DiagnosticSample {
@@ -729,7 +729,7 @@ function Test-CustomizedInvocationRetryEligibility {
         [hashtable]$ExecutionDiagnostic
     )
 
-    if ($Tier -ne 'calibration' -or $Model -notin @('gpt-5.6-luna', 'claude-sonnet-5') -or $Attempt -ne 1) { return $false }
+    if ($Tier -ne 'calibration' -or $Model -notin @('gpt-6-luna', 'claude-sonnet-5') -or $Attempt -ne 1) { return $false }
     if (-not $BaselineHasSignal -or $BaselineStructural -ne 0) { return $false }
     if ($InvocationTally.Expected -le 0) { return $false }
 
