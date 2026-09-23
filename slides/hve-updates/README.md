@@ -1,7 +1,7 @@
 ---
 title: HVE Core updates deck
 description: Interactive HTML presentation of HVE Core changes from April to September 2026.
-ms.date: 2026-09-17
+ms.date: 2026-09-22
 ---
 
 ## Build and present

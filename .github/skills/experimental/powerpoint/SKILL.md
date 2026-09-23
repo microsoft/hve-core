@@ -250,10 +250,12 @@ Re-check [NVD](https://nvd.nist.gov) and [OSV](https://osv.dev) advisories for M
 When scripts fail due to missing modules, import errors, or a corrupt virtual environment, recover with:
 
 ```bash
-cd .github/skills/experimental/powerpoint
+cd "<powerpoint-skill-root>"
 rm -rf .venv
 uv sync
 ```
+
+Resolve `<powerpoint-skill-root>` from the loaded skill location before running the command.
 
 This recreates the virtual environment from scratch using `pyproject.toml` as the single source of truth. The `Invoke-PptxPipeline.ps1` orchestrator runs `uv sync` automatically on each invocation unless `-SkipVenvSetup` is passed.
 

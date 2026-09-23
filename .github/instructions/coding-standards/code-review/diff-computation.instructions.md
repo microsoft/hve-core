@@ -4,7 +4,7 @@ description: "Code review diff computation: branch detection, scope locking, lar
 
 # Diff Computation Protocol
 
-> Delivery: this file is delivered via the explicit `#file:` import in code-review.agent.md, not via `applyTo`. Plugin and extension distributions strip the `.github/` prefix, so an `applyTo` glob targeting `.github/...` would match nothing once distributed. Future coding-standards agents or prompts that need this guidance must import it with `#file:` rather than relying on `applyTo`.
+> Delivery: this file is delivered via the explicit `#file:` import in code-review.agent.md, not via `applyTo`. Plugin and extension distributions omit the repository artifact-root prefix, so a source-tree-qualified `applyTo` glob would match nothing once distributed. Future coding-standards agents or prompts that need this guidance must import it with `#file:` rather than relying on `applyTo`.
 
 Obtain the diff before reading any source files. Use the decision tree below to determine the appropriate method, then apply scope rules and large diff handling.
 

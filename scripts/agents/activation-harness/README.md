@@ -27,12 +27,12 @@ Returns:
 
 ## Scenarios
 
-| Scenario         | Models                                                      | Loads                                                                                                          |
-|------------------|-------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| `CleanWorkspace` | Cold start with no editor file matching any `applyTo` glob. | Agent file + every `#file:` directive in the agent body.                                                       |
-| `SteadyState`    | Editor working inside `.copilot-tracking/adr-plans/`.       | `CleanWorkspace` payload + every instruction whose `applyTo` covers ADR working directories.                   |
-| `GovernEntry`    | Agent transitioning into the Govern lifecycle phase.        | `SteadyState` payload + `#file:` references in Lifecycle Dispatch Table rows tagged `Govern`.                  |
-| `AdoptTemplate`  | Agent operating in adopt-template entry mode (Table B).     | `SteadyState` payload + `#file:` references in Table B rows tagged `Ingest`, `Normalize`, `Derive`, or `Fill`. |
+| Scenario         | Models                                                      | Loads                                                                                                                               |
+|------------------|-------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `CleanWorkspace` | Cold start with no editor file matching any `applyTo` glob. | Agent file + every `#file:` directive in the agent body.                                                                            |
+| `SteadyState`    | Editor working inside `.copilot-tracking/adr-plans/`.       | `CleanWorkspace` payload + every instruction whose `applyTo` covers ADR working directories.                                        |
+| `GovernEntry`    | Agent transitioning into the Govern lifecycle phase.        | `SteadyState` payload + portable skill, instruction, and path references in Lifecycle Dispatch rows tagged `Govern`.                |
+| `AdoptTemplate`  | Agent operating in adopt-template entry mode (Table B).     | `SteadyState` payload + portable skill, instruction, and path references in rows tagged `Ingest`, `Normalize`, `Derive`, or `Fill`. |
 
 ## Byte-Budget Contract
 

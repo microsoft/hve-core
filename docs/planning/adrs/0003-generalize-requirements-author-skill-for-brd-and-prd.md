@@ -267,7 +267,7 @@ If this decision is reversed, the rollback path is:
 
 1. Split the `requirements-author` skill back into separate BRD and PRD skills (or re-inline the PRD Builder protocols), restoring the pre-decision layout.
 2. Repoint the two builder agents and two quality reviewers at their separate sources.
-3. Update any collection manifests that reference the skill and re-run `npm run plugin:generate`, `npm run extension:prepare`, and `npm run extension:prepare:prerelease`.
+3. Re-run `npm run plugin:sync`, `npm run extension:prepare`, and `npm run extension:prepare:prerelease` so the root `plugin.json` and the extension outputs no longer list the skill. At the time of this decision the first of these was `npm run plugin:generate` over collection manifests.
 4. Document the reversal in a superseding ADR that links back to this one and sets `superseded-by` here.
 
 No content migration is required beyond moving reference files; the BRD and PRD document models themselves are unchanged.

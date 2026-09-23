@@ -71,7 +71,7 @@ user-invocable: false
 ---
 ```
 
-When you author a standalone subagent before its registration exists, do not invent a parent to register it. Record the exact pending manifest or parent permission, its owner, and the check that confirms it. In hve-core, root `plugin.json` owns component membership and `.github/plugin/marketplace.json` is only a locator; `npm run plugin:validate` checks distribution consistency, not live host activation. Leave dispatch readiness incomplete until host visibility and parent permission are confirmed.
+When you author a standalone subagent before its registration exists, do not invent a parent to register it. Record the exact pending manifest or parent permission, its owner, and the check that confirms it. In hve-core, root `plugin.json` owns component membership and the plugin marketplace file in the repository's GitHub configuration directory is only a locator; `npm run plugin:validate` checks distribution consistency, not live host activation. Leave dispatch readiness incomplete until host visibility and parent permission are confirmed.
 
 ## Worked example
 

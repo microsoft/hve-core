@@ -16,7 +16,7 @@ Instructions for the ADR Creator Govern-phase exit. After an architectural decis
 5. For each peer that fires, prepare the artifact described in that row.
 6. Present the disclaimer block to the user before writing any external work item, and record `state.disclaimerShownAt` (ISO-8601 timestamp).
 7. Apply the autonomy-tier behavior below before any external write.
-8. Before any external or handoff emission, run the deterministic PII and disclosure-risk scanner over the compact summary and every generated work item body: `python .github/skills/project-planning/adr-author/scripts/scan_sensitive_content.py <path>` (or pipe the body on stdin).
+8. Before any external or handoff emission, load the `adr-author` skill and run its deterministic `scripts/scan_sensitive_content.py` PII and disclosure-risk scanner over the compact summary and every generated work item body, using a file argument or stdin.
   Pass `--public` when `state.repoVisibility` is `public` so internal-only URLs and hostnames are included. A non-zero exit blocks emission; surface findings, require redaction confirmation, re-run the scanner, and emit only when it exits zero. This gate runs regardless of autonomy tier.
 9. On confirmation (per tier), generate work items in the requested format(s). For `ado-backlog` and `github-backlog` handoffs, append a canonical record to `state.handoffs[]` (see Handoff State Recording). For agent-peer handoffs (RPI, Security, RAI), record the compact summary and excerpt paths in the Handoff Summary table only; do not append them to `state.handoffs[]`.
 10. Present a final handoff summary listing peers fired, work items generated, and any deferred decisions.
