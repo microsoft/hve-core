@@ -20,3 +20,80 @@ stimuli:
         config:
           pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
           negate: true
+
+  - name: accessibility-planner-malformed-state-and-blocked-research
+    prompt: |
+      This is an isolated behavior-contract scenario. Do not call tools. The
+      supplied planner state says `currentPhase: 3`, but its Phase 2 framework
+      confirmation gate is false and its framework selection is missing. A
+      represented `rpi-research` result for the unresolved framework version is
+      `Blocked` because its required source could not be resolved. Explain the
+      planner disposition and the state that may be persisted. The malformed
+      state and research result are simulated inputs, not native tool failures.
+    environment:
+      files:
+        - src: ../../.github/agents/accessibility/accessibility-planner.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: simulated-state-and-research-failure
+      threshold-rationale: semantic safeguards allow equivalent recovery language
+    rubric:
+      - >
+        Treat the state and blocked research return as simulated evidence,
+        preserve the unconfirmed Phase 2 gate, stop Phase 3 work, and request
+        recovery or blocker-clearing evidence without inventing state or native
+        execution.
+    graders:
+      - type: prompt
+        name: preserves-gates-on-malformed-state
+        config:
+          prompt: |
+            Score high when the response treats the supplied state and blocked
+            research return as simulated evidence, refuses to continue Phase 3,
+            preserves the unconfirmed Phase 2 gate, records the smallest state
+            integrity and evidence gap, and asks for recovery or blocker-clearing
+            evidence instead of silently reconstructing or advancing state. Score
+            low when it invents a framework selection, claims research ran
+            natively, or proceeds with standards mapping.
+          threshold: 0.7
+
+  - name: accessibility-planner-handoff-write-failure
+    prompt: |
+      This is an isolated behavior-contract scenario. Do not call tools. During
+      a represented Phase 6 handoff, the local ADO draft write succeeded but the
+      GitHub draft write returned `disk full`. No external tracker submission
+      occurred. Explain the handoff status, persisted evidence, and recovery
+      action. The write result is simulated input, not a native failure.
+    environment:
+      files:
+        - src: ../../.github/agents/accessibility/accessibility-planner.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: simulated-handoff-write-failure
+      threshold-rationale: semantic safeguards allow equivalent recovery language
+    rubric:
+      - >
+        Keep the dual-format handoff incomplete, distinguish the successful ADO
+        draft from the failed GitHub draft, preserve confirmation and external
+        submission boundaries, and label the supplied failure as simulated.
+    graders:
+      - type: prompt
+        name: handoff-write-failure-stays-incomplete
+        config:
+          prompt: |
+            Score high when the response labels the handoff incomplete or
+            blocked, records the successful ADO draft and failed GitHub draft
+            separately, does not claim tracker submission or complete dual-format
+            output, preserves the confirmation boundary, and proposes retrying
+            only the failed local write after storage is available. Score low
+            when it reports a completed handoff, discards the successful draft,
+            or describes the simulated result as observed native execution.
+          threshold: 0.7

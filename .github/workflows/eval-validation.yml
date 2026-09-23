@@ -53,6 +53,8 @@ jobs:
   eval-validation:
     name: Eval Validation
     runs-on: ubuntu-latest
+    # Lint-only job; observed ~2 min. Without this it inherits the 6h default.
+    timeout-minutes: 20
     permissions:
       contents: read
     outputs:
@@ -234,6 +236,7 @@ jobs:
   content-moderation:
     name: Content Moderation
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: eval-validation
     outputs:
       equivalence-required: ${{ steps.artifact-manifest.outputs.equivalence-required }}
@@ -259,7 +262,7 @@ jobs:
         uses: ./.github/actions/setup-ps-modules
 
       - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           version: "0.10.9"
 
@@ -430,7 +433,7 @@ jobs:
   eval-execute:
     name: Eval Execute (${{ matrix.producer }})
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 60
     needs: [eval-validation, content-moderation, agent-plan]
     # Repository secrets are not exposed to fork PRs; clean-skip execution there.
     # Only run when eval-relevant paths changed (see eval-validation detect step).
@@ -466,7 +469,7 @@ jobs:
         uses: ./.github/actions/setup-ps-modules
 
       - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           version: "0.10.9"
 
@@ -831,6 +834,7 @@ jobs:
   eval-report:
     name: Eval Report
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [eval-fan-in]
     # Present the canonical authoritative summary even when execution failed.
     if: always() && github.event.pull_request.head.repo.fork == false && github.event_name == 'pull_request'
