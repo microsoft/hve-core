@@ -6232,3 +6232,286 @@ stimuli:
         name: skill-rpi-infrastructure-exhaustion-handoff-actionable
         config:
           pattern: '(?i)^\s*Diagnostics:[ \t]*sanitized-attempt-evidence[ \t]*\r?\nOwner:[ \t]*host-network-support[ \t]*\r?\nAssessment:[ \t]*independent-human-report[ \t]*\r?\nAutomatedCalls:[ \t]*stopped\s*$'
+  - name: skill-rpi-revision-closure-targeted
+    prompt: |
+      A Complete/Revise critique assessed plan hash A. The planner saved a
+      correction for PC-001 as hash B, recorded the exact delta, affected
+      requirement IDs and disposition evidence. Requirements, architecture,
+      capability, safety and evidence boundaries are unchanged. Should the
+      planner replay A, ask for independent targeted closure of B, or implement
+      B from A's evidence alone? Return only replay, targeted, or implement.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: fe1e98cd7137f9d00b1b6fad092453e24810e34faac7f39ebfb4b88ab944efa1
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-targeted-choice
+        config:
+          pattern: '(?i)^\s*targeted\s*$'
+  - name: skill-rpi-revision-closure-full
+    prompt: |
+      A Complete/Revise critique assessed hash A. A required correction changes
+      the safety and capability boundary in saved hash B; the planner preserved
+      the original assessment, exact delta, affected requirements and findings.
+      Should the planner request targeted closure, a fresh full assessment of B,
+      or finalize B on the evidence for A? Return only targeted, full, or finalize.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 8bc431a31222cc031970c9e146f3484fef2afda80dc0829423c849514b0c9178
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-full-choice
+        config:
+          pattern: '(?i)^\s*full\s*$'
+  - name: skill-rpi-revision-closure-stale-hash
+    prompt: |
+      A standalone rpi-implement request provides a plan at hash B. The only
+      Complete assessment is for hash A; there is no Complete revision closure.
+      The finding dispositions are recorded, but the plan changed materially.
+      Should implementation start or return to planning for boundary closure?
+      Return only start or return-to-planning.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-implement
+    tags:
+      category: behavior-conformance
+      skill: rpi-implement
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: d239c4883f6b645a20fb56016ab708bb4068b5e21773f846ca7717771910a46c
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-stale-hash-gate
+        config:
+          pattern: '(?i)^\s*return-to-planning\s*$'
+  - name: skill-rpi-revision-closure-no-progress
+    prompt: |
+      A planner has already received a Complete/Revise critique for hash A.
+      A required correction produced B, but the next proposal reverts to A
+      without resolving the required finding. Choose continue, stop-revise,
+      or finalize. Return only the choice.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: ff8dc72dd1e5df34816384f4dc356fb0c6932e5be0e05065ecfbd880dc5b7d9f
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-no-progress-stop
+        config:
+          pattern: '(?i)^\s*stop-revise\s*$'
+  - name: skill-rpi-revision-closure-critic-admission
+    prompt: |
+      The planner saved and read back a current revision-closure reservation
+      for hash B and immediately activated the critic. It supplies the Complete
+      full assessment for A, the required PC-001 correction delta, affected
+      requirements, unchanged material boundaries and distinct output path.
+      Should the critic assess the targeted correction, replay A, or refuse
+      all same-task assessments? Return only assess-targeted, replay, or refuse.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 58b29cb266a9b22a4816831677116c7230eb3c3d5ffcc6674d5696ce49eb4fdf
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-critic-admission-choice
+        config:
+          pattern: '(?i)^\s*assess-targeted\s*$'
+  - name: skill-rpi-revision-closure-partial
+    prompt: |
+      A substantive Partial assessment of hash A records missing coverage.
+      A supported correction resolves the gap in saved hash B with a recorded
+      delta and affected requirement IDs. Should the planner request targeted
+      closure, full reassessment, or an infrastructure retry? Return only
+      targeted, full, or infrastructure.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 4ab079d2bb230ecafc33ddd12bf9c9ffef6b7e85455009b169c0845bc67949a9
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-partial-full
+        config:
+          pattern: '(?i)^\s*full\s*$'
+  - name: skill-rpi-revision-closure-progress-resume
+    prompt: |
+      A Complete assessment covers the approved plan. During implementation,
+      P01-T01 changes from [ ] to [x] and a later task receives a Guidance:
+      pointer to a created utility. Goals, Requirements, Details, References,
+      diagrams and decisions remain unchanged; the Guidance adds no design or
+      safety rule. On a new rpi-implement invocation, should the assessed-content
+      hash be stable or stale, and should work resume or stop for closure?
+      Return exactly two lines: Hash: stable or stale; Action: resume or stop.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-implement
+    tags:
+      category: behavior-conformance
+      skill: rpi-implement
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: eefd9902110216a3fc8aed4efad40f887260208a5da69f6a3811f2ae634f5122
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-progress-resume-status
+        config:
+          pattern: '(?i)^\s*Hash:[ \t]*stable[ \t]*\r?\nAction:[ \t]*resume\s*$'
+  - name: skill-rpi-revision-closure-multi-hop
+    prompt: |
+      Full assessment A is Complete/Revise. Targeted closure B is Complete/Revise
+      and introduces PC-002. A recorded correction creates hash C without
+      changing material boundaries. Should the critic assess C using B plus
+      the complete A-to-B chain, use A alone, or refuse any further closure?
+      Return only chain, root-only, or refuse.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan-critique
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 6262d71dde5a6143b11d7dc5d978b989f6a87f6b2aef4d5242d473dd5b1dfd22
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-multi-hop-chain
+        config:
+          pattern: '(?i)^\s*chain\s*$'
+  - name: skill-rpi-revision-closure-architecture-update
+    prompt: |
+      Implementation discovers that an approved plan must change its service
+      architecture. No FR or evidence source text changes, but the assessed
+      architecture does. Should rpi-implement continue as a local clarification
+      or pause affected work and return the revision to planning for a full
+      assessment? Return only continue or return-to-planning.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-implement
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-implement
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 74285f5a5e3476f5752dbd3b799b31d4a3285d1f9ee7bf6511b253eb544b8c7c
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-architecture-update-route
+        config:
+          pattern: '(?i)^\s*return-to-planning\s*$'
+  - name: skill-rpi-revision-closure-infrastructure-budget
+    prompt: |
+      A is a substantive Complete/Revise assessment. The required correction
+      creates B and an authorized closure invocation fails in transit. Host
+      evidence proves the B run ended; reconciliation finds no B assessment or
+      fragments. No infrastructure-retry reservations have been used for this
+      task. Choose the next action: task-specific-consent-for-shared-retry,
+      automatic-replay, or permanently-blocked. Return only that action.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: faacae109affa43ab3b232ae82bb57b0eb0554a5c43127464581e1862f3922cd
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-infrastructure-budget-consent
+        config:
+          pattern: '(?i)^\s*task-specific-consent-for-shared-retry\s*$'
+  - name: skill-rpi-revision-closure-exhausted-human
+    prompt: |
+      A has a substantive Complete/Revise result. A required correction produced
+      B; the B closure and both task-wide infrastructure retries failed without
+      an assessment, all runs ended, and all fragments were reconciled. No
+      further automated slot exists. With specific consent, what can assess B:
+      independent-human-full, reset-budget, or reuse-A? Return only the choice.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 0d82a581fb49be007e31acc87b78470864f7e93d447b7160edafe44de269ba6b
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-exhausted-human-full
+        config:
+          pattern: '(?i)^\s*independent-human-full\s*$'
+  - name: skill-rpi-revision-closure-guidance-boundary
+    prompt: |
+      During implementation, a later task's new Guidance: block proposes a
+      different safety rule, but the approved Requirements: block is unchanged.
+      Should the implementer treat the Guidance as an ignored annotation and
+      resume, or move the safety change into assessed content and return to
+      planning? Return only resume or return-to-planning.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-implement
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-implement
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 0ee90d960e8bc9a540b0c2eccef223aa10f46d2a423b7cb6eebafcdc10311daf
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-guidance-boundary-route
+        config:
+          pattern: '(?i)^\s*return-to-planning\s*$'
+  - name: skill-rpi-revision-closure-shared-budget
+    prompt: |
+      An initial failed assessment consumed an infrastructure retry, which
+      then produced a substantive Complete/Revise result for hash A. A required
+      correction creates B. Its authorized closure ends in a verified
+      transport failure without an assessment or fragments. How many of the
+      two task-wide infrastructure retry reservations remain available for B
+      after reconciliation and task-specific consent? Return only the number.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 84254a0b53475455c89dac6393610ebb98e0f122b52a3a7d917320316caa87d8
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-shared-budget-one
+        config:
+          pattern: '^\s*1\s*$'

@@ -11,8 +11,9 @@
 * Critique depth: {{standard_or_deep}}
 * Depth provenance: {{default_or_explicit_user_request}}
 * Attempt slot consumed: yes
-* Attempt ID and kind: {{unique_attempt_id_and_initial_recovery_infrastructure_retry_or_human}}
+* Attempt ID and kind: {{unique_attempt_id_and_initial_revision_closure_recovery_infrastructure_retry_or_human}}
 * Candidate identity and saved hash boundary: {{revision_hash_and_reservation_metadata_boundary}}
+* Revision closure: {{not_applicable_or_immediate_predecessor_adjacent_hashes_latest_delta_affected_ids_full_or_targeted_basis_and_targeted_root_complete_full_assessment_with_intermediate_results}}
 * Current-run provenance: {{immediate_planner_activation_or_standalone_initial_reservation}}
 * Original attempt and recovery approval: {{not_applicable_or_original_pointer_and_task_specific_consent}}
 * Prior attempt and reconciliation pointers: {{all_applicable_attempts_and_late_evidence_or_none}}
@@ -25,7 +26,7 @@
 * Task context and caller requirements: {{requirements_or_context_summary}}
 * Research and evidence considered: {{workspace_relative_evidence_paths}}
 * Decisions, dependencies, task Goals, and task Requirements considered: {{decision_dependency_goal_and_requirement_summary}}
-* Assessment boundary: {{what_the_critique_can_and_cannot_conclude_from_supplied_inputs}}
+* Assessment boundary: {{full_candidate_or_targeted_delta_coverage_and_what_the_critique_can_and_cannot_conclude}}
 
 ## Coverage Assessment
 
@@ -39,6 +40,8 @@
 
 * Verdict: {{Pass_Revise_Blocked_or_unavailable_when_no_assessment}}
 * Rationale: {{concise_evidence_based_rationale}}
+* Hash covered by this assessment: {{saved_candidate_hash_or_unavailable}}
+* Closure chain: {{not_applicable_or_root_complete_full_assessment_and_ordered_adjacent_hash_result_and_disposition_pointers}}
 
 ## Findings
 

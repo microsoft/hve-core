@@ -3,7 +3,7 @@ title: rpi-implement
 description: "Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-09-23
 ms.topic: reference
 keywords:
   - skill
@@ -30,7 +30,7 @@ Follow an approved RPI plan, keep it current as new information comes to light, 
 
 Use `rpi-implement` to work through an approved plan. Declare the scope as the full plan, one `Pxx` phase, or one `Pxx-Txx` task; the skill starts at the first unchecked dependency-ready item in that scope and works in plan order. It checks each `Pxx-Txx` marker as soon as its `Requirements:` hold, runs the checks the plan names, and keeps a condensed changes log in `.copilot-tracking/changes/` that describes the behavior or functionality each completed item changed rather than the edits made.
 
-Implementation also keeps the plan current. It may clarify task wording or references, add a `Guidance:` block to a later task when earlier work created something that task needs, record out-of-scope work under `## Follow-Up Items`, and pause only affected dependent work when a discovery requires a new user decision. The original critique is not repeated.
+Implementation also keeps the plan current. Checked task markers, implementation-only `Guidance:` pointers and out-of-scope `## Follow-Up Items` do not change the assessed-content hash, so normal progress can resume. Changes to task wording, references, requirements, architecture, capability, safety, dependencies or other assessed content return to planning for revision-bound closure before affected work resumes. An unresolved significant or divergent choice needs a user decision; an evidence-backed clarification does not. The same candidate's critique is not replayed.
 
 Reach for a different asset when:
 
