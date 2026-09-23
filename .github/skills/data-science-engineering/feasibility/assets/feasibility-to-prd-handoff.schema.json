@@ -29,11 +29,21 @@
     },
     "functional_candidates": {
       "type": "array",
-      "items": {"$ref": "#/$defs/candidate"}
+      "items": {
+        "allOf": [
+          {"$ref": "#/$defs/candidate"},
+          {"properties": {"candidate_id": {"pattern": "^FC-[0-9]{2,}$"}}}
+        ]
+      }
     },
     "nfr_candidates": {
       "type": "array",
-      "items": {"$ref": "#/$defs/candidate"}
+      "items": {
+        "allOf": [
+          {"$ref": "#/$defs/candidate"},
+          {"properties": {"candidate_id": {"pattern": "^NC-[0-9]{2,}$"}}}
+        ]
+      }
     }
   },
   "allOf": [

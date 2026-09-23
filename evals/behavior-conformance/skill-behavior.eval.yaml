@@ -3604,7 +3604,7 @@ stimuli:
       - type: output-matches
         name: skill-feasibility-profile-knowledge-identity-and-co-62ede39b
         config:
-          pattern: '(?is)(?=.*(uuid))(?=.*(revision))(?=.*(functional planner|downstream|prd))(?=.*(does not|never|read-only|separate))(?=.*(FR-|functional requirement|writeback|requirement))'
+          pattern: '(?is)^(?=.*\buuid(?:v4)?\b)(?=.*\b(?:study_|item_)?revision(?:_id|s)?\b)(?=.*\bfunctional[ -]planner\b[^.!?;\r\n]{0,100}\b(?:owns?|maintains?|is responsible for)\b[^.!?;\r\n]{0,80}\b(?:mapping|traceability|requirements?)\b)(?=.*\b(?:does not|do not|must not|never)\s+(?:assign|allocate)\b[^.!?;\r\n]{0,80}\b(?:FR-|functional requirements?\b))(?=.*(?:\b(?:no|without)\s+(?:downstream\s+)?write[ -]?back\b[^.!?;\r\n]{0,80}\bstudy\b|\b(?:does not|do not|must not|never)\s+write\s+back\b[^.!?;\r\n]{0,80}\bstudy\b|\bstudy\b[^.!?;\r\n]{0,80}\bread[ -]only\b|\bread[ -]only\b[^.!?;\r\n]{0,80}\bstudy\b))'
 
   - name: skill-feasibility-handoff-emission-knowledge
     prompt: |
@@ -3926,11 +3926,11 @@ stimuli:
       - type: output-matches
         name: skill-evaluation-design-knowledge-trained-model-boundary
         config:
-          pattern: '(?is)(?=.*(ml-experimentation|trained-model|trained model|model-evaluation|model evaluation))(?=.*(trained|model|predictive))'
+          pattern: '(?is)^(?=.*\b(?:trained[ -]models?|predictive performance)\b)(?=.*(?:\b(?:route|defer|hand[ -]off)\b[^.!?;\r\n]{0,100}\bto\s+[`*]*ml-experimentation\b|\b(?:belongs?\s+to|owned\s+by|handled\s+by)\s+[`*]*ml-experimentation\b|\bml-experimentation[`*]*\s+(?:owns?|handles?)\b))'
       - type: output-matches
         name: skill-evaluation-design-knowledge-population-and-provenance
         config:
-          pattern: '(?is)(?=.*(population_coverage|population coverage|populations))(?=.*(several populations|multiple populations|more than one population|do not sum|does not sum|need not sum|counts overlap))(?=.*(validation_status|validation status|validation|validate))(?=.*(generation_method|generation method|review_state|review state|review|generate))'
+          pattern: '(?is)^(?=.*\bpopulation[_ ]coverage\b)(?=.*(?:\b(?:population\s+)?counts?\s+(?:can\s+|may\s+)?overlap\b|\boverlapping\s+(?:population\s+)?counts?\b|\b(?:population\s+)?counts?\s+(?:do not|need not|must not)\s+sum\b))(?=.*(?:\b(?:populations?|population[_ ]coverage|counts?)\b[^.!?;\r\n]{0,80}\b(?:zero|0)\b|\b(?:zero|0)[ -](?:count|coverage|pair)\b))(?=.*\bvalidation[_ ]status\b[^.!?;\r\n]{0,80}\b(?:provenance|ai-generated|expert-reviewed|mixed)\b)(?=.*\bgeneration[_ ]method\b[^.!?;\r\n]{0,80}\b(?:workflow|process|produced|generated)\b)(?=.*\breview[_ ]state\b[^.!?;\r\n]{0,80}\b(?:progression|draft|sampled|confirmed)\b)'
       - type: output-matches
         name: skill-evaluation-design-knowledge-detection-assessm-381fd882
         config:
@@ -3938,7 +3938,7 @@ stimuli:
       - type: output-matches
         name: skill-evaluation-design-knowledge-consolidated-guide
         config:
-          pattern: '(?is)(?=.*(one|single|consolidated))(?=.*(evaluation guide))(?=.*(rationale))'
+          pattern: '(?is)^(?=.*\b(?:one|single|consolidated)\s+(?:sectioned\s+|consolidated\s+)?evaluation\s+guide\b)(?=.*\bcuration(?:\s+notes?)?\b)(?=.*\b(?:metric\s+selection|selected\s+metrics?|select(?:ing)?\s+metrics?)\b)(?=.*(?:\b(?:metrics?|metric\s+selection)\b[^.!?;\r\n]{0,80}\b(?:rationale|justification|why)\b|\b(?:rationale|justification)\b[^.!?;\r\n]{0,80}\bmetrics?\b))(?=.*\b(?:tooling|tool\s+recommendations?)\b)'
 
   - name: skill-backlog-plan-knowledge
     prompt: |

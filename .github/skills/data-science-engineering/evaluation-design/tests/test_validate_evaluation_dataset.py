@@ -7,6 +7,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -121,6 +122,28 @@ def _write_pair(tmp_path: Path, data: dict) -> tuple[Path, Path]:
     json_path.write_text(json.dumps(data), encoding="utf-8")
     csv_path.write_text(_csv_text(data), encoding="utf-8")
     return json_path, csv_path
+
+
+def _dataset_with_pairs(count: int) -> dict:
+    data = _valid_dataset()
+    pair = data["evaluation_pairs"][0]
+    data["evaluation_pairs"] = [
+        dict(deepcopy(pair), id=f"pair-{index}") for index in range(count)
+    ]
+    data["metadata"]["total_pairs"] = count
+    data["metadata"]["distribution"].update(easy=count, grounding=0, safety=0)
+    data["metadata"]["population_coverage"].update(
+        {"Field technician": count, "Dispatcher": 0}
+    )
+    return data
+
+
+def _node_tree(count: int) -> list:
+    children, remaining = divmod(count - 1, 1000)
+    result = [[None] * 999 for _ in range(children)]
+    if remaining:
+        result.append([None] * (remaining - 1))
+    return result
 
 
 def test_given_bundled_schema_when_checked_then_is_valid() -> None:
@@ -415,3 +438,469 @@ def test_given_cli_invocation_when_main_runs_then_validates_pair(
     # Assert
     assert result == 0
     assert '"valid": true' in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("count", [1000, 1001])
+@pytest.mark.parametrize("final_newline", [False, True])
+def test_given_pair_limit_when_validated_then_json_and_csv_agree(
+    count: int, final_newline: bool
+) -> None:
+    # Arrange
+    data = _dataset_with_pairs(count)
+    text = _csv_text(data)
+    if not final_newline:
+        text = text.rstrip("\n")
+
+    # Act
+    rows, csv_errors = parse_csv_pairs(text)
+    errors = validate_dataset(data, rows, load_schema(SKILL_ROOT))
+    schema_errors = list(
+        Draft202012Validator(load_schema(SKILL_ROOT)).iter_errors(data)
+    )
+
+    # Assert
+    assert bool(errors) == bool(csv_errors) == bool(schema_errors) == (count > 1000)
+    assert len(rows) <= 1000
+
+
+@pytest.mark.parametrize("count", [64, 65])
+@pytest.mark.parametrize(
+    "field",
+    ["user_populations", "populations", "tools_expected", "population_coverage"],
+)
+def test_given_collection_limit_when_validated_then_schema_and_guard_agree(
+    field: str, count: int
+) -> None:
+    # Arrange
+    data = _valid_dataset()
+    names = [f"name-{index}" for index in range(count)]
+    if field == "population_coverage":
+        data["metadata"][field] = dict.fromkeys(names, 0)
+    elif field == "user_populations":
+        data["metadata"][field] = names
+    else:
+        data["evaluation_pairs"][0][field] = names
+
+    # Act
+    resource_error = validator_module._resource_error(data)
+    schema_errors = list(
+        Draft202012Validator(load_schema(SKILL_ROOT)).iter_errors(data)
+    )
+
+    # Assert
+    assert bool(resource_error) == bool(schema_errors) == (count > 64)
+
+
+@pytest.mark.parametrize("count", [2, 3])
+def test_given_mode_limit_when_validated_then_schema_and_guard_agree(
+    count: int,
+) -> None:
+    # Arrange
+    data = _valid_dataset()
+    data["metadata"]["evaluation_mode"] = ["manual", "batch", "manual"][:count]
+
+    # Act
+    errors = validate_dataset(data, _parsed_csv(data), load_schema(SKILL_ROOT))
+    schema_errors = list(
+        Draft202012Validator(load_schema(SKILL_ROOT)).iter_errors(data)
+    )
+
+    # Assert
+    assert bool(errors) == bool(schema_errors) == (count > 2)
+
+
+@pytest.mark.parametrize("extra", [0, 1])
+@pytest.mark.parametrize(
+    ("field", "limit"),
+    [
+        ("query", 16384),
+        ("expected_response", 16384),
+        ("category", 16384),
+        ("source_reference", 16384),
+        ("notes", 16384),
+        ("system_name", 16384),
+        ("recommended_tooling", 16384),
+        ("generation_method", 16384),
+        ("id", 256),
+    ],
+)
+def test_given_string_limit_when_validated_then_schema_and_guard_agree(
+    field: str, limit: int, extra: int
+) -> None:
+    # Arrange
+    data = _valid_dataset()
+    target = (
+        data["metadata"] if field in data["metadata"] else data["evaluation_pairs"][0]
+    )
+    target[field] = "x" * (limit + extra)
+
+    # Act
+    resource_error = validator_module._resource_error(data)
+    schema_errors = list(
+        Draft202012Validator(load_schema(SKILL_ROOT)).iter_errors(data)
+    )
+
+    # Assert
+    assert bool(resource_error) == bool(schema_errors) == bool(extra)
+    if not extra:
+        assert validate_dataset(data, _parsed_csv(data), load_schema(SKILL_ROOT)) == []
+
+
+@pytest.mark.parametrize("extra", [0, 1])
+def test_given_identifier_limits_when_validated_then_names_are_bounded(
+    extra: int,
+) -> None:
+    # Arrange
+    data = _valid_dataset()
+    name = "n" * (256 + extra)
+    data["metadata"]["user_populations"] = [name]
+    data["metadata"]["population_coverage"] = {name: 3}
+    for pair in data["evaluation_pairs"]:
+        pair["populations"] = [name]
+        pair["tools_expected"] = [name]
+
+    # Act
+    schema_errors = list(
+        Draft202012Validator(load_schema(SKILL_ROOT)).iter_errors(data)
+    )
+    resource_error = validator_module._resource_error(data)
+    _, csv_errors = parse_csv_pairs(_csv_text(data))
+    property_error = validator_module._resource_error({name: None})
+
+    # Assert
+    assert bool(schema_errors) == bool(resource_error) == bool(extra)
+    assert bool(csv_errors) == bool(extra)
+    assert bool(property_error) == bool(extra)
+    if not extra:
+        assert validate_dataset(data, _parsed_csv(data), load_schema(SKILL_ROOT)) == []
+
+
+@pytest.mark.parametrize("depth", [8, 9])
+def test_given_container_depth_when_guarded_then_counts_containers(depth: int) -> None:
+    # Arrange
+    value = None
+    for _ in range(depth):
+        value = [value]
+
+    # Act
+    error = validator_module._resource_error(value)
+
+    # Assert
+    assert bool(error) == (depth > 8)
+
+
+@pytest.mark.parametrize("nodes", [100000, 100001])
+def test_given_node_limit_when_guarded_then_combined_roots_are_counted(
+    nodes: int,
+) -> None:
+    # Arrange
+    left = _node_tree(50000)
+    right = _node_tree(nodes - 50000)
+
+    # Act
+    error = validator_module._resource_error(left, right)
+
+    # Assert
+    assert bool(error) == (nodes > 100000)
+
+
+@pytest.mark.parametrize(
+    "kind",
+    ["depth", "cycle", "nodes", "pairs", "list", "string", "property", "key", "type"],
+)
+@pytest.mark.parametrize("target", ["json", "csv"])
+def test_given_unsafe_direct_input_when_validated_then_schema_is_not_called(
+    kind: str, target: str, monkeypatch
+) -> None:
+    # Arrange
+    schema = load_schema(SKILL_ROOT)
+    bad = []
+    if kind == "depth":
+        for _ in range(1500):
+            bad = [bad]
+    elif kind == "cycle":
+        bad.append(bad)
+    elif kind == "nodes":
+        bad = _node_tree(100001)
+    elif kind == "pairs":
+        bad = [None] * 1001
+    elif kind == "list":
+        bad = {"populations": [{}] * 65}
+    elif kind == "string":
+        bad = {"query": "synthetic-secret" * 2000}
+    elif kind == "property":
+        bad = {"synthetic-secret" * 20: None}
+    elif kind == "key":
+        bad = {1: None}
+    else:
+        bad = {"notes": {1, 2}}
+
+    def unexpected_schema(*args, **kwargs):
+        pytest.fail("resource guard must short-circuit schema validation")
+
+    monkeypatch.setattr(Draft202012Validator, "iter_errors", unexpected_schema)
+
+    # Act
+    errors = validate_dataset(
+        bad if target == "json" else _valid_dataset(),
+        bad if target == "csv" else [],
+        schema,
+    )
+
+    # Assert
+    assert len(errors) == 1
+    assert "synthetic-secret" not in errors[0]
+
+
+@pytest.mark.parametrize("extra", [0, 1])
+@pytest.mark.parametrize("field", ["id", "query", "tools_expected"])
+def test_given_csv_field_limit_when_parsed_then_decoded_lengths_are_bounded(
+    field: str, extra: int
+) -> None:
+    # Arrange
+    data = _dataset_with_pairs(1)
+    pair = data["evaluation_pairs"][0]
+    if field == "id":
+        pair[field] = "i" * (256 + extra)
+    elif field == "query":
+        pair[field] = ('"é,\n' * 4096) + "x" * extra
+    else:
+        pair[field] = [f"{index:03}" + "t" * 253 for index in range(64 + extra)]
+    previous_field_limit = csv.field_size_limit()
+
+    # Act
+    rows, errors = parse_csv_pairs(_csv_text(data))
+
+    # Assert
+    assert bool(errors) == bool(extra)
+    assert csv.field_size_limit() == previous_field_limit
+    if not extra:
+        assert rows == data["evaluation_pairs"]
+
+
+@pytest.mark.parametrize("extra", [0, 1])
+def test_given_csv_node_limit_when_parsed_then_rows_stop_at_budget(extra: int) -> None:
+    # Arrange
+    data = _dataset_with_pairs(720)
+    names = [f"name-{index}" for index in range(64)]
+    for pair in data["evaluation_pairs"][:-1]:
+        pair["populations"] = names
+        pair["tools_expected"] = names
+    data["evaluation_pairs"][-1]["populations"] = names[: 47 + extra]
+    data["evaluation_pairs"][-1]["tools_expected"] = []
+
+    # Act
+    rows, errors = parse_csv_pairs(_csv_text(data))
+
+    # Assert
+    assert bool(errors) == bool(extra)
+    assert len(rows) == 720 - extra
+
+
+@pytest.mark.parametrize("kind", ["rows", "width", "field", "header"])
+def test_given_oversized_csv_when_parsed_then_reader_is_not_called(
+    kind: str, monkeypatch
+) -> None:
+    # Arrange
+    header = ",".join(CSV_FIELDS) + "\n"
+    text = {
+        "rows": header + "id,short\n" * 1001,
+        "width": header + "id," + "x," * 100000,
+        "field": header + "id," + "synthetic-secret" * 2000,
+        "header": "id," + "x," * 100000,
+    }[kind]
+
+    def unexpected_reader(*args, **kwargs):
+        pytest.fail("CSV guard must short-circuit row allocation")
+
+    monkeypatch.setattr(csv, "DictReader", unexpected_reader)
+
+    # Act
+    rows, errors = parse_csv_pairs(text)
+
+    # Assert
+    assert rows == []
+    assert len(errors) == 1
+    assert "synthetic-secret" not in errors[0]
+
+
+@pytest.mark.parametrize("count", [50, 51])
+@pytest.mark.parametrize("stage", ["schema", "csv", "parity"])
+def test_given_diagnostic_limit_when_validated_then_truncation_stays_inside_cap(
+    count: int, stage: str
+) -> None:
+    # Arrange
+    data = _dataset_with_pairs(count)
+    rows = _parsed_csv(data)
+    if stage == "schema":
+        for pair in data["evaluation_pairs"]:
+            pair["query"] = ""
+    elif stage == "parity":
+        for row in rows:
+            row["query"] = "synthetic-secret"
+
+    # Act
+    if stage == "csv":
+        _, errors = parse_csv_pairs(",".join(CSV_FIELDS) + "\n" + "short,row\n" * count)
+    else:
+        errors = validate_dataset(data, rows, load_schema(SKILL_ROOT))
+
+    # Assert
+    assert len(errors) == 50
+    assert (errors[-1] == validator_module.TRUNCATION_DIAGNOSTIC) == (count > 50)
+    assert "synthetic-secret" not in "\n".join(errors)
+
+
+def test_given_many_schema_errors_when_validated_then_iteration_stops(
+    monkeypatch,
+) -> None:
+    # Arrange
+    data = _dataset_with_pairs(1000)
+    for pair in data["evaluation_pairs"]:
+        pair["query"] = ""
+    schema = load_schema(SKILL_ROOT)
+    original = Draft202012Validator.iter_errors
+    seen = []
+
+    def bounded_iteration(self, instance, *args, **kwargs):
+        for error in original(self, instance, *args, **kwargs):
+            seen.append(error)
+            assert len(seen) <= 51
+            yield error
+
+    monkeypatch.setattr(Draft202012Validator, "iter_errors", bounded_iteration)
+
+    # Act
+    errors = validate_dataset(data, [], schema)
+
+    # Assert
+    assert len(seen) == 51
+    assert len(errors) == 50
+    assert errors[-1] == validator_module.TRUNCATION_DIAGNOSTIC
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["[" * 10000 + '"synthetic-secret"' + "]" * 10000, "9" * 5000],
+    ids=["parser-depth", "integer-digits"],
+)
+def test_given_parser_resource_failure_when_run_then_returns_sanitized_error(
+    text: str, tmp_path, capsys
+) -> None:
+    # Arrange
+    json_path, csv_path = _write_pair(tmp_path, _valid_dataset())
+    json_path.write_text(text, encoding="utf-8")
+
+    # Act
+    result = run(json_path, csv_path, allowed_roots=(tmp_path,))
+
+    # Assert
+    captured = capsys.readouterr()
+    assert result == 2
+    assert captured.out == ""
+    assert captured.err.startswith("validate_evaluation_dataset: ")
+    assert "synthetic-secret" not in captured.err
+
+
+def test_given_dynamic_property_when_invalid_then_path_does_not_echo_name() -> None:
+    # Arrange
+    data = _valid_dataset()
+    data["metadata"]["population_coverage"] = {"synthetic-secret\npath": "bad"}
+
+    # Act
+    errors = validate_dataset(data, _parsed_csv(data), load_schema(SKILL_ROOT))
+
+    # Assert
+    assert errors == ["$.metadata.population_coverage.[property] violates type"]
+
+
+@pytest.mark.parametrize("count", [64, 65])
+@pytest.mark.parametrize("field", ["populations", "tools_expected"])
+def test_given_short_csv_list_when_parsed_then_item_count_is_bounded(
+    count: int, field: str
+) -> None:
+    # Arrange
+    data = _dataset_with_pairs(1)
+    data["evaluation_pairs"][0][field] = [f"item-{index}" for index in range(count)]
+
+    # Act
+    _, errors = parse_csv_pairs(_csv_text(data))
+
+    # Assert
+    assert bool(errors) == (count > 64)
+    if errors:
+        assert "64 entry limit" in errors[0]
+
+
+def test_given_maximum_lists_when_validated_then_matching_artifacts_pass() -> None:
+    # Arrange
+    data = _valid_dataset()
+    names = [f"{index:03}" + "n" * 253 for index in range(64)]
+    data["metadata"]["user_populations"] = names
+    data["metadata"]["population_coverage"] = dict.fromkeys(names, 3)
+    for pair in data["evaluation_pairs"]:
+        pair["populations"] = names
+        pair["tools_expected"] = names
+
+    # Act
+    errors = validate_dataset(data, _parsed_csv(data), load_schema(SKILL_ROOT))
+
+    # Assert
+    assert errors == []
+
+
+@pytest.mark.parametrize("rows", [None, [None], [{}], [{"query": []}]])
+def test_given_malformed_direct_csv_when_validated_then_returns_diagnostics(
+    rows,
+) -> None:
+    # Act
+    errors = validate_dataset(_valid_dataset(), rows, load_schema(SKILL_ROOT))
+
+    # Assert
+    assert 1 <= len(errors) <= 50
+
+
+def test_given_csv_parse_failure_when_parsed_then_restores_field_limit() -> None:
+    # Arrange
+    text = ",".join(CSV_FIELDS) + '\nid,"unterminated'
+    previous_field_limit = csv.field_size_limit()
+
+    # Act and assert
+    with pytest.raises(EvaluationValidationError, match="CSV cannot be parsed"):
+        parse_csv_pairs(text)
+    assert csv.field_size_limit() == previous_field_limit
+
+
+@pytest.mark.parametrize("stage", ["json", "csv", "parity"])
+def test_given_capped_failures_when_run_then_preserves_result_shape_and_exit(
+    stage: str, tmp_path, capsys
+) -> None:
+    # Arrange
+    data = _dataset_with_pairs(51)
+    json_path, csv_path = _write_pair(tmp_path, data)
+    if stage == "json":
+        for pair in data["evaluation_pairs"]:
+            pair["query"] = ""
+        json_path.write_text(json.dumps(data), encoding="utf-8")
+    elif stage == "csv":
+        csv_path.write_text(
+            ",".join(CSV_FIELDS) + "\n" + "short,row\n" * 51, encoding="utf-8"
+        )
+    else:
+        for pair in data["evaluation_pairs"]:
+            pair["query"] = "synthetic-secret"
+        csv_path.write_text(_csv_text(data), encoding="utf-8")
+
+    # Act
+    result = run(json_path, csv_path, allowed_roots=(tmp_path,))
+
+    # Assert
+    captured = capsys.readouterr()
+    output = json.loads(captured.out)
+    assert result == 1
+    assert set(output) == {"valid", "errors"}
+    assert output["valid"] is False
+    assert len(output["errors"]) == 50
+    assert output["errors"][-1] == validator_module.TRUNCATION_DIAGNOSTIC
+    assert "synthetic-secret" not in captured.out
+    assert captured.err == ""

@@ -583,6 +583,38 @@ def test_given_supported_verdict_when_handoff_validated_then_has_no_errors(
     assert errors == []
 
 
+@pytest.mark.parametrize(
+    ("array_name", "candidate_id", "valid"),
+    [
+        ("functional_candidates", "FC-01", True),
+        ("nfr_candidates", "NC-01", True),
+        ("functional_candidates", "NC-01", False),
+        ("nfr_candidates", "FC-01", False),
+    ],
+)
+def test_given_candidate_prefix_when_validated_then_matches_owning_array(
+    array_name: str, candidate_id: str, valid: bool
+) -> None:
+    # Arrange
+    study, markdown = _valid()
+    handoff = _valid_handoff()
+    candidate = handoff["functional_candidates"][0]
+    candidate["candidate_id"] = candidate_id
+    handoff["functional_candidates"] = []
+    handoff[array_name] = [candidate]
+    schema = load_handoff_schema(SKILL_ROOT)
+
+    # Act
+    schema_errors = list(Draft202012Validator(schema).iter_errors(handoff))
+    errors = validate_handoff(handoff, study, markdown, schema)
+
+    # Assert
+    assert (not schema_errors) is valid
+    assert (not errors) is valid
+    if not valid:
+        assert errors == [f"$.{array_name}[0].candidate_id violates pattern"]
+
+
 def test_given_stale_handoff_when_validated_then_reports_revision_error() -> None:
     # Arrange
     study, markdown = _valid()
@@ -678,7 +710,9 @@ def test_given_duplicate_candidate_ids_when_validated_then_reports_error() -> No
     # Arrange
     study, markdown = _valid()
     handoff = _valid_handoff()
-    handoff["nfr_candidates"] = [copy.deepcopy(handoff["functional_candidates"][0])]
+    handoff["functional_candidates"].append(
+        copy.deepcopy(handoff["functional_candidates"][0])
+    )
 
     # Act
     errors = validate_handoff(handoff, study, markdown, load_handoff_schema(SKILL_ROOT))

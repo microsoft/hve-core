@@ -18,6 +18,7 @@ import sys
 from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qsl
 
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
@@ -33,11 +34,29 @@ RFC3339_DATE_TIME_PATTERN = re.compile(
     r"^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[Zz]|[+-]\d{2}:\d{2})$"
 )
 URI_USERINFO_PATTERN = re.compile(r"^[a-z][a-z0-9+.-]*://[^/?#\s]*@", re.IGNORECASE)
-SECRET_PARAMETER_PATTERN = re.compile(
-    r"(?:^|[?&;])(?:account[-_]?key|api[-_]?key|access[-_]?token|"
-    r"client[-_]?secret|password|passwd|pwd|secret|sig|signature|token|"
-    r"sharedaccesssignature)\s*=\s*[^&;\s]+",
-    re.IGNORECASE,
+SECRET_PARAMETER_KEYS = frozenset(
+    {
+        "accountkey",
+        "apikey",
+        "accesstoken",
+        "clientsecret",
+        "password",
+        "passwd",
+        "pwd",
+        "secret",
+        "sig",
+        "signature",
+        "token",
+        "sharedaccesssignature",
+        "xamzsignature",
+        "xamzcredential",
+        "xamzsecuritytoken",
+        "xgoogsignature",
+        "xgoogcredential",
+        "xgoogsecuritytoken",
+        "awsaccesskeyid",
+        "googleaccessid",
+    }
 )
 
 # Three-colour depth-first search states used for lineage cycle detection.
@@ -231,9 +250,15 @@ def load_schema(skill_root: Path) -> dict[str, Any]:
 
 def _source_location_contains_secret(location: str) -> bool:
     """Return True when a source location contains credential-shaped material."""
-    return bool(
-        URI_USERINFO_PATTERN.search(location)
-        or SECRET_PARAMETER_PATTERN.search(location)
+    if URI_USERINFO_PATTERN.search(location):
+        return True
+    parameters = location.split("#", 1)[0].split("?", 1)[-1]
+    pairs = parse_qsl(parameters.replace(";", "&"), keep_blank_values=True)
+    return any(
+        key.strip().casefold().replace("-", "").replace("_", "")
+        in SECRET_PARAMETER_KEYS
+        and bool(value.strip())
+        for key, value in pairs
     )
 
 

@@ -9,15 +9,18 @@
     "metadata": {"$ref": "#/$defs/metadata"},
     "evaluation_pairs": {
       "type": "array",
+      "maxItems": 1000,
       "items": {"$ref": "#/$defs/pair"}
     }
   },
   "$defs": {
-    "nonEmptyString": {"type": "string", "minLength": 1},
+    "nonEmptyString": {"type": "string", "minLength": 1, "maxLength": 16384},
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 256},
     "stringList": {
       "type": "array",
+      "maxItems": 64,
       "uniqueItems": true,
-      "items": {"$ref": "#/$defs/nonEmptyString"}
+      "items": {"$ref": "#/$defs/identifier"}
     },
     "metadata": {
       "type": "object",
@@ -25,7 +28,7 @@
       "required": ["system_name", "created_date", "version", "total_pairs", "distribution", "user_populations", "population_coverage", "approach", "evaluation_mode", "recommended_tooling", "review_state", "validation_status", "generation_method"],
       "properties": {
         "system_name": {"$ref": "#/$defs/nonEmptyString"},
-        "created_date": {"type": "string", "format": "date"},
+        "created_date": {"type": "string", "maxLength": 16384, "format": "date"},
         "version": {"const": "1.0.0"},
         "total_pairs": {"type": "integer", "minimum": 0},
         "distribution": {
@@ -43,12 +46,15 @@
         "user_populations": {"$ref": "#/$defs/stringList"},
         "population_coverage": {
           "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {"$ref": "#/$defs/identifier"},
           "additionalProperties": {"type": "integer", "minimum": 0}
         },
         "approach": {"enum": ["low-code", "pro-code"]},
         "evaluation_mode": {
           "type": "array",
           "minItems": 1,
+          "maxItems": 2,
           "uniqueItems": true,
           "items": {"enum": ["manual", "batch"]}
         },
@@ -63,7 +69,7 @@
       "additionalProperties": false,
       "required": ["id", "query", "expected_response", "category", "difficulty", "populations", "tools_expected", "source_reference", "needs_sme_review", "notes"],
       "properties": {
-        "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"},
+        "id": {"type": "string", "maxLength": 256, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"},
         "query": {"$ref": "#/$defs/nonEmptyString"},
         "expected_response": {"$ref": "#/$defs/nonEmptyString"},
         "category": {"$ref": "#/$defs/nonEmptyString"},
@@ -77,7 +83,7 @@
           ]
         },
         "needs_sme_review": {"type": "boolean"},
-        "notes": {"type": "string"}
+        "notes": {"type": "string", "maxLength": 16384}
       }
     }
   }
