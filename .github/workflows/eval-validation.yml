@@ -523,7 +523,7 @@ jobs:
           $arguments = @(
             '-Kind', $env:MATRIX_KIND,
             '-ChangedSpecManifestPath', 'logs/changed-spec-stimuli.json',
-            '-Model', 'gpt-5.6-luna',
+            '-Model', 'gpt-6-luna',
             '-SkipInputModeration'
           )
           if (-not [string]::IsNullOrWhiteSpace($env:MATRIX_SHARD)) {
@@ -575,7 +575,7 @@ jobs:
       max-parallel: ${{ inputs.baseline-max-parallel }}
       matrix:
         include:
-          - model: gpt-5.6-luna
+          - model: gpt-6-luna
             key: gpt
           - model: claude-sonnet-5
             key: claude
