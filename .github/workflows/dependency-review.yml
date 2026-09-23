@@ -141,7 +141,7 @@ jobs:
           # lockfile records plain MIT. It arrives transitively through regedit,
           # which the accessibility harness uses to detect a local NVDA install.
           # The nested scripts/extension/marketplace-publisher graph below is
-          # a manifest-scoped duplicate of the root @vscode/vsce 3.9.2
+          # a manifest-scoped duplicate of the root @vscode/vsce 4.0.0
           # build-time toolchain; every package resolves at the identical
           # version already present in the root lockfile, but Dependency
           # Review treats the new manifest as new dependencies.

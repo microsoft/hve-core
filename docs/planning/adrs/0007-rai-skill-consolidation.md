@@ -3,7 +3,7 @@ id: "0007"
 title: "Consolidate RAI knowledge into skills consumed by RAI Planner and RAI Reviewer"
 description: "Consolidate RAI domain guidance into shared rai-standards and rai-planner skills instead of inline per-agent instructions files."
 author: "HVE Core Maintainers"
-ms.date: 2026-06-17
+ms.date: 2026-09-22
 ms.topic: reference
 status: proposed
 proposed_date: 2026-06-17

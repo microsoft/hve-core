@@ -141,7 +141,7 @@ Make all guidance specific to the plan content rather than generic boilerplate.
 
 ### Step 1: Gather All Framework References
 
-1. Read `.github/skills/rai/rai-standards/SKILL.md` and capture framework metadata (source name, version, reference URL) plus the skill's licensing posture.
+1. Load the `rai-standards` skill and capture framework metadata (source name, version, reference URL) plus the skill's licensing posture.
 2. Read the reference file for the requested framework and extract the full list of requirement IDs (NIST AI RMF subcategories, AI STRIDE threat categories, or EU AI Act obligations) along with their associated trustworthiness characteristics.
 3. Store the full content of the reference file. Each reference file may contain multiple requirement sections; capture them all.
 4. Apply the optional scope filter at the end of Step 1 by retaining only the requirements included in the requested scope; do not skip reading the reference file based on the filter.

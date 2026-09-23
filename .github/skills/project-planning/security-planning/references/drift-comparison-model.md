@@ -1,7 +1,7 @@
 ---
 title: Security Plan Drift Comparison Model
 description: Evidence preconditions, exclusion rules, five drift categories, and recommendation-only handoff signals.
-ms.date: 2026-09-04
+ms.date: 2026-09-20
 ms.topic: reference
 ---
 
@@ -18,10 +18,10 @@ Excluded path prefixes:
 * `.copilot-tracking/`
 * `docs/planning/`
 * `docs/adrs/`
-* `.github/agents/`
-* `.github/prompts/`
-* `.github/instructions/`
-* `.github/skills/`
+* `<repository-root>/.github/agents/`
+* `<repository-root>/.github/prompts/`
+* `<repository-root>/.github/instructions/`
+* `<repository-root>/.github/skills/`
 
 Excluded file globs:
 

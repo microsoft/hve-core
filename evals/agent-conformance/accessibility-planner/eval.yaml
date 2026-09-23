@@ -278,3 +278,30 @@ stimuli:
     turn: 1
     config:
       max: 120s
+- name: phase-advance-explicit-denial-preserves-state
+  turns:
+  - Launch .github/agents/accessibility/accessibility-planner.agent.md
+  - >
+    Discovery is complete, but do not advance to Phase 2. Keep this assessment
+    in Phase 1 while I verify the audience scope. State what happens to the
+    current phase and its persisted gate.
+  tags:
+    category: agent-conformance-accessibility-planner
+    phase: phase-1
+    tier: regression
+    labels: phase-boundary,denial,state
+  rubric:
+  - >
+    honors the explicit denial by keeping currentPhase in Phase 1 and leaving
+    the Phase 2 advancement gate unconfirmed, without treating completed
+    discovery inputs as permission to advance or asking for routine Phase 2
+    choices
+  graders:
+  - type: prompt
+    name: judge-phase-advance-explicit-denial-preserves-state
+    turn: 1
+  - type: wall-time
+    name: completion-budget
+    turn: 1
+    config:
+      max: 120s

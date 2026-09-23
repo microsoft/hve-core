@@ -24,7 +24,7 @@ Architecture review specialist focused on design trade-offs, well-architected al
 * Escalate security-specific concerns to the `security-planner` agent.
 * Before generating any architecture diagram, use the `architecture-diagrams` skill: load its `SKILL.md` and produce the diagram exactly as that skill directs. The skill is the authoritative source for its own conventions and output format; do not restate them here.
 * Reference `docs/templates/adr-template-solutions.md` for ADR structure, if available. If the template is not found, use a minimal ADR structure: Title, Status, Context, Decision, Consequences.
-* Follow repository conventions from `.github/copilot-instructions.md`.
+* Follow the repository's auto-applied Copilot instructions.
 
 ## Required Steps
 
@@ -36,7 +36,7 @@ Review existing project artifacts when available:
 
 * Read prior ADRs under `docs/decisions/` or `docs/architecture/decisions/` to understand established patterns and precedents.
 * Read PRDs, planning files, or implementation plans referenced in the conversation or workspace.
-* Check `.github/copilot-instructions.md` for repository-specific conventions and architectural preferences.
+* Check the auto-applied repository Copilot instructions for repository-specific conventions and architectural preferences.
 
 Probe for context the artifacts do not cover. Ask the user directly about:
 
