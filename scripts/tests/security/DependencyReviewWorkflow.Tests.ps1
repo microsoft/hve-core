@@ -82,6 +82,22 @@ Describe 'Dependency Review workflow contract' -Tag 'Unit' {
             Should -Be @('dependency-submission')
     }
 
+    It 'Prepares the main SBOM output directory between checkout and generation' {
+        $Preparation = Get-WorkflowStep -JobName 'main-sbom' -StepName 'Prepare main SBOM output directory'
+        [string]$Preparation['shell'] | Should -BeExactly 'bash'
+        ([string]$Preparation['run']).Trim() | Should -BeExactly 'mkdir -p continuous-sbom'
+        $Preparation.Contains('if') | Should -BeFalse
+        $Preparation.Contains('continue-on-error') | Should -BeFalse
+
+        $StepNames = @($script:Workflow['jobs']['main-sbom']['steps'] | ForEach-Object { [string]$_['name'] })
+        $CheckoutIndex = [array]::IndexOf($StepNames, 'Checkout code')
+        $PreparationIndex = [array]::IndexOf($StepNames, 'Prepare main SBOM output directory')
+        $GenerationIndex = [array]::IndexOf($StepNames, 'Generate main dependency SBOM')
+        $CheckoutIndex | Should -BeGreaterOrEqual 0
+        $PreparationIndex | Should -BeGreaterThan $CheckoutIndex
+        $PreparationIndex | Should -BeLessThan $GenerationIndex
+    }
+
     It 'Publishes an unattested commit-specific SBOM for main pushes' {
         $Job = $script:Workflow['jobs']['main-sbom']
         [string[]]@($Job['permissions'].Keys) | Should -Be @('contents')
