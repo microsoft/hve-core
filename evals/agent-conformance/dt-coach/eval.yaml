@@ -641,9 +641,12 @@ stimuli:
   turns:
   - Launch .github/agents/design-thinking/dt-coach.agent.md
   - >
-    I want to start a project to improve warehouse picking. A Design Thinking
-    project with the name you would derive already exists in this workspace.
+    I want to start a design thinking project called inventory flow.
   - No, start a separate project instead.
+  agent_environment:
+    files:
+    - src: fixtures/coaching-state-inventory-flow.txt
+      dest: .copilot-tracking/dt/inventory-flow/coaching-state.md
   tags:
     category: agent-conformance-dt-coach
     group: session-phases
@@ -655,6 +658,11 @@ stimuli:
     first asks whether to resume the existing derived project, then responds to the
     user's refusal by asking for a different project name before continuing
   graders:
+  - type: output-contains
+    name: init-derived-project-resume-confirmation
+    turn: 1
+    config:
+      substring: resume
   - type: prompt
     name: judge-init-confirms-derived-project-resume
     turn: 2
