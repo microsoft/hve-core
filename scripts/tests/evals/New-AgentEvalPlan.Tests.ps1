@@ -133,8 +133,8 @@ Describe 'New-AgentEvalPlan.ps1' -Tag 'Unit' {
 
         $plan.baseline.required | Should -BeTrue
         $plan.baseline.reason | Should -Be 'affected-agent:rpi-agent'
-        @($plan.baseline.models) | Should -Be @('gpt-5.6-luna', 'claude-sonnet-5')
-        @($plan.expectedProducers) | Should -Contain 'baseline:gpt-5.6-luna'
+        @($plan.baseline.models) | Should -Be @('gpt-6-luna', 'claude-sonnet-5')
+        @($plan.expectedProducers) | Should -Contain 'baseline:gpt-6-luna'
         @($plan.expectedProducers) | Should -Contain 'baseline:claude-sonnet-5'
     }
 

@@ -331,47 +331,52 @@ Describe 'Baseline cache' -Tag 'Unit' {
     }
 
     It 'Round-trips a saved baseline' {
-        $key = Get-BaselineCacheKey -Model 'gpt-5.6-luna' -VallyVersion '0.10.0' -StimulusHash ('a' * 64)
+        $key = Get-BaselineCacheKey -Model 'gpt-6-luna' -VallyVersion '0.10.0' -StimulusHash ('a' * 64)
         Save-BaselineCacheEntry -CacheRoot $script:CacheRoot -CacheKey $key -RunDir $script:SourceRun `
-            -Model 'gpt-5.6-luna' -VallyVersion '0.10.0' -StimulusHash ('a' * 64) | Out-Null
+            -Model 'gpt-6-luna' -VallyVersion '0.10.0' -StimulusHash ('a' * 64) | Out-Null
         $hit = Get-BaselineCacheEntry -CacheRoot $script:CacheRoot -CacheKey $key
         $hit | Should -Not -BeNullOrEmpty
         Test-Path -LiteralPath (Join-Path $hit 'results.jsonl') | Should -BeTrue
     }
 
-    It 'Does not reuse a baseline captured under a different model' {
+    It 'Does not reuse a baseline captured under <PreviousModel> for GPT-6 Luna' -ForEach @(
+        @{ PreviousModel = 'claude-haiku-4.5' }
+        @{ PreviousModel = 'gpt-5.6-luna' }
+    ) {
         # Reusing across models would attribute a model change to the customization.
-        $saved = Get-BaselineCacheKey -Model 'gpt-5.6-luna' -VallyVersion '0.10.0' -StimulusHash ('a' * 64)
-        Save-BaselineCacheEntry -CacheRoot $script:CacheRoot -CacheKey $saved -RunDir $script:SourceRun `
-            -Model 'gpt-5.6-luna' -VallyVersion '0.10.0' -StimulusHash ('a' * 64) | Out-Null
-        $other = Get-BaselineCacheKey -Model 'claude-haiku-4.5' -VallyVersion '0.10.0' -StimulusHash ('a' * 64)
-        Get-BaselineCacheEntry -CacheRoot $script:CacheRoot -CacheKey $other | Should -BeNullOrEmpty
+        $cacheRoot = Join-Path $script:CacheRoot "model-isolation-$PreviousModel"
+        $saved = Get-BaselineCacheKey -Model $PreviousModel -VallyVersion '0.10.0' -StimulusHash ('a' * 64)
+        Save-BaselineCacheEntry -CacheRoot $cacheRoot -CacheKey $saved -RunDir $script:SourceRun `
+            -Model $PreviousModel -VallyVersion '0.10.0' -StimulusHash ('a' * 64) | Out-Null
+        Get-BaselineCacheEntry -CacheRoot $cacheRoot -CacheKey $saved | Should -Not -BeNullOrEmpty
+        $other = Get-BaselineCacheKey -Model 'gpt-6-luna' -VallyVersion '0.10.0' -StimulusHash ('a' * 64)
+        Get-BaselineCacheEntry -CacheRoot $cacheRoot -CacheKey $other | Should -BeNullOrEmpty
     }
 
     It 'Does not reuse a baseline captured under a different Vally version' {
-        $saved = Get-BaselineCacheKey -Model 'gpt-5.6-luna' -VallyVersion '0.10.0' -StimulusHash ('b' * 64)
+        $saved = Get-BaselineCacheKey -Model 'gpt-6-luna' -VallyVersion '0.10.0' -StimulusHash ('b' * 64)
         Save-BaselineCacheEntry -CacheRoot $script:CacheRoot -CacheKey $saved -RunDir $script:SourceRun `
-            -Model 'gpt-5.6-luna' -VallyVersion '0.10.0' -StimulusHash ('b' * 64) | Out-Null
-        $other = Get-BaselineCacheKey -Model 'gpt-5.6-luna' -VallyVersion '0.11.0' -StimulusHash ('b' * 64)
+            -Model 'gpt-6-luna' -VallyVersion '0.10.0' -StimulusHash ('b' * 64) | Out-Null
+        $other = Get-BaselineCacheKey -Model 'gpt-6-luna' -VallyVersion '0.11.0' -StimulusHash ('b' * 64)
         Get-BaselineCacheEntry -CacheRoot $script:CacheRoot -CacheKey $other | Should -BeNullOrEmpty
     }
 
     It 'Does not reuse a baseline when the stimulus content changed' {
         # Editing a prompt must invalidate, or new questions would be compared against
         # answers captured for the old ones.
-        $saved = Get-BaselineCacheKey -Model 'gpt-5.6-luna' -VallyVersion '0.10.0' -StimulusHash ('c' * 64)
+        $saved = Get-BaselineCacheKey -Model 'gpt-6-luna' -VallyVersion '0.10.0' -StimulusHash ('c' * 64)
         Save-BaselineCacheEntry -CacheRoot $script:CacheRoot -CacheKey $saved -RunDir $script:SourceRun `
-            -Model 'gpt-5.6-luna' -VallyVersion '0.10.0' -StimulusHash ('c' * 64) | Out-Null
-        $other = Get-BaselineCacheKey -Model 'gpt-5.6-luna' -VallyVersion '0.10.0' -StimulusHash ('d' * 64)
+            -Model 'gpt-6-luna' -VallyVersion '0.10.0' -StimulusHash ('c' * 64) | Out-Null
+        $other = Get-BaselineCacheKey -Model 'gpt-6-luna' -VallyVersion '0.10.0' -StimulusHash ('d' * 64)
         Get-BaselineCacheEntry -CacheRoot $script:CacheRoot -CacheKey $other | Should -BeNullOrEmpty
     }
 
     It 'Rejects a cache entry whose run directory has no results' {
-        $key = Get-BaselineCacheKey -Model 'gpt-5.6-luna' -VallyVersion '0.10.0' -StimulusHash ('e' * 64)
+        $key = Get-BaselineCacheKey -Model 'gpt-6-luna' -VallyVersion '0.10.0' -StimulusHash ('e' * 64)
         $emptyRun = Join-Path $script:CacheRoot 'empty-run'
         New-Item -ItemType Directory -Path $emptyRun -Force | Out-Null
         Save-BaselineCacheEntry -CacheRoot $script:CacheRoot -CacheKey $key -RunDir $emptyRun `
-            -Model 'gpt-5.6-luna' -VallyVersion '0.10.0' -StimulusHash ('e' * 64) | Out-Null
+            -Model 'gpt-6-luna' -VallyVersion '0.10.0' -StimulusHash ('e' * 64) | Out-Null
         Get-BaselineCacheEntry -CacheRoot $script:CacheRoot -CacheKey $key | Should -BeNullOrEmpty
     }
 }
