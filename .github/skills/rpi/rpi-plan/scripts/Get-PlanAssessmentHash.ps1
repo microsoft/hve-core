@@ -121,9 +121,9 @@ function Get-PlanAssessmentHash {
                 if ($InChecklist -and $Marker) {
                     $TaskMarker = $Marker.Contains('-T')
                     $ExpectedLevel = if ($TaskMarker) { 4 } else { 3 }
-                    $Pattern = '^' + ('#' * $ExpectedLevel) + ' \[[ x]\] ' + [regex]::Escape($Marker) + ': .+$'
+                    $Pattern = '^' + ('#' * $ExpectedLevel) + ' \[[ xX]\] ' + [regex]::Escape($Marker) + ': .+$'
                     if ($Line -cmatch $Pattern) {
-                        $OutputLine = $Line -creplace '^((?:###|####) )\[[ x]\]', '${1}[ ]'
+                        $OutputLine = $Line -creplace '^((?:###|####) )\[[ xX]\]', '${1}[ ]'
                         $InTask = $TaskMarker
                     }
                 }
