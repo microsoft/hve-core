@@ -101,6 +101,36 @@ stimuli:
         config:
           path: ".copilot-tracking/dt/coaching-state.md"
 
+  - name: prompt-dt-start-project-plain-language
+    prompt: |
+      Follow the staged `dt-start-project` prompt.
+      I want to create a new project in the photogrammetry space.
+    agent_environment:
+      skills:
+        - ../../.github/skills/design-thinking/dt-coaching-foundation
+      files:
+        - src: ../../.github/prompts/design-thinking/dt-start-project.prompt.md
+          dest: .github/prompts/design-thinking/dt-start-project.prompt.md
+    tags:
+      category: behavior-conformance
+      prompt: dt-start-project
+      advisory: "true"
+    rubric:
+      - Ask the user for a short folder name before creating project files.
+      - Explain the name format as lowercase words separated by hyphens and offer a project-relevant example.
+      - Use everyday language rather than asking for a slug or kebab-case identifier.
+    graders:
+      - type: prompt
+        name: prompt-dt-start-project-plain-language-folder-question
+        config:
+          threshold: 0.85
+      - type: output-not-matches
+        name: prompt-dt-start-project-plain-language-no-jargon
+        config:
+          pattern: "(?i)\\bslug\\b|\\bkebab[ -]case\\b"
+      - type: diff-empty
+        name: prompt-dt-start-project-plain-language-await-name
+
   - name: prompt-dt-start-project-write-failure
     prompt: |
       Follow the staged `dt-start-project` prompt with
