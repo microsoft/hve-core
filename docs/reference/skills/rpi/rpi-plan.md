@@ -132,7 +132,12 @@ the field as zero or exhausting the budget by default.
 
 The planner stops automated critique calls and prepares sanitized diagnostics: attempt IDs, candidate hashes, evidence locations, failure and lifecycle status, and the host/network support owner and evidence needed. Repairing the transport does not replenish retry slots.
 
-Exhaustion alone does not authorize another assessment. Active or unknown runs must be reconciled first; substantive results for the current candidate follow their existing finding dispositions. Either verified infrastructure exhaustion or an eligible ended closure interruption can permit a specifically authorized independent human critique, with no substantive result or unresolved fragments for the current candidate. If the interrupted attempt was a closure, that human must assess the full revised plan and reconcile prior findings.
+Exhaustion alone does not authorize another assessment. Active or unknown runs must be reconciled
+first; substantive results for the current candidate follow their existing finding dispositions.
+Either verified infrastructure exhaustion or an eligible ended closure interruption can permit a
+specifically authorized independent human critique, with no substantive result or unresolved
+fragments for the current candidate. If the interrupted attempt was a closure, that human must
+assess the full revised plan and reconcile prior findings.
 
 The human supplies a complete assessment of the saved candidate, including assessor provenance, independence, coverage, verdict and findings. The agent verifies that report against the candidate and all surviving evidence; it cannot write or sign the human's assessment. Approval alone or a mismatched candidate remains blocked. Late results are retained and reconciled, never discarded in favor of a passing report.
 
