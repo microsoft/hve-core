@@ -289,7 +289,7 @@ stimuli:
       evaluator availability and preview state are not established. Explain
       the supporting Research route, what returns to `evaluation-design`, and
       who still selects the metrics.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
@@ -319,7 +319,7 @@ stimuli:
       I confirmed the evaluation job, but the current evaluator lookup is
       blocked. Can you invent likely evaluator availability or switch to a
       different job? State what stops and what state remains unchanged.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
@@ -441,7 +441,7 @@ stimuli:
       candidate customer summary before writing it, then reconcile the produced
       Plan, Changes, and Review pointers into coach state without changing jobs
       or adopting planner state.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
@@ -508,7 +508,7 @@ stimuli:
       Their staged artifacts are complete. Reconcile all three pointers into
       coach state, preserve the active job and extension data, and return
       control to pipeline without adopting planner state or changing jobs.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md
@@ -544,7 +544,7 @@ stimuli:
       If the scanner is unavailable, record the blocked segment in coach state,
       keep the active job unchanged, and leave the prior customer artifact
       untouched.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
           dest: .github/copilot-instructions.md

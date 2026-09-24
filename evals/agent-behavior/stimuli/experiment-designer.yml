@@ -73,7 +73,7 @@ stimuli:
       internal trial already answered our proposed durability question. Before
       Phase 2, explain the Research route, what returns to `context.md`, and
       whether that result validates the hypothesis.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -102,7 +102,7 @@ stimuli:
       A current platform constraint is required before one Phase 2 hypothesis
       can be formed, but the Research capability is unavailable. Explain how
       you record the gap and whether unrelated experiment framing continues.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -135,7 +135,7 @@ stimuli:
       `2026-09-21`. Perform it now under the session evidence root and update
       `context.md` with the recommendation, alternative, evidence IDs,
       confidence, unresolved assumptions, and dispositions.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -175,7 +175,7 @@ stimuli:
       behind the threshold and method, using Phase 3 vetting as focus. Create
       the canonical challenge record for synthetic date `2026-09-21` and begin
       with one open-ended question.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -212,7 +212,7 @@ stimuli:
       write `results.md` and the canonical Changes record, then perform the one
       execution-conformance Review. Do not write `outcome.md` or decide whether
       `H1` is validated.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -266,7 +266,7 @@ stimuli:
       and write `outcome.md` now. Preserve Review execution and outcome values
       separately, bind all four artifacts by path and SHA-256, and record the
       downstream decision.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md

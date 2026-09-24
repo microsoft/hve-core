@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-09-11
+ms.date: 2026-09-24
 ---
 
 ## Purpose
@@ -60,10 +60,10 @@ The grader counts a stimulus as passing when the regex matches the agent's respo
 Three coverage kinds are distinct and do not overlap:
 
 * Class-recipe stimuli in this suite provide smoke coverage of output shape.
-* Selected isolated functional stimuli in this suite provide direct contract correctness. They declare a per-stimulus `environment` that stages the agent under test as `.github/copilot-instructions.md` in the trial workspace and names the skills that agent's contract requires, so the assertion tests the declared agent behavior rather than general model knowledge. `experiment-designer-conditional-ml-route` is the current example.
+* Selected isolated functional stimuli in this suite provide direct contract correctness. They declare a per-stimulus `agent_environment` that stages the agent under test as `.github/copilot-instructions.md` in the trial workspace and names the skills that agent's contract requires, so the assertion tests the declared agent behavior rather than general model knowledge. `experiment-designer-conditional-ml-route` is the current example.
 * The [baseline-equivalence](../baseline-equivalence/README.md) harness provides A/B regression detection between the empty baseline and the customized environment.
 
-A per-stimulus `environment.skills` list is concatenated with the suite-level list rather than replacing it, so an isolated stimulus loads its agent-declared skills in addition to the suite-level skills. Declare the skills the agent's contract names and do not assume the suite-level skills are excluded.
+A per-stimulus `agent_environment.skills` list is concatenated with the suite-level list rather than replacing it, so an isolated stimulus loads its agent-declared skills in addition to the suite-level skills. Declare the skills the agent's contract names and do not assume the suite-level skills are excluded.
 
 Vally has no agent-routing option, and staging an `.agent.md` at its normal `.github/agents/` path does not place it in model context. Workspace instructions are the supported channel, which is why isolated functional stimuli remap the agent file rather than copying it to its original location.
 

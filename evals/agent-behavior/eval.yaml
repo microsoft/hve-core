@@ -1075,7 +1075,7 @@ stimuli:
     do not answer. Research returned artifact
     `.copilot-tracking/research/2026-09-18/atlas-research.md` with Q1 and C1.
     Explain the state receipt, BRD disposition record, and authority boundary.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
@@ -1104,7 +1104,7 @@ stimuli:
     Discover depends on a bounded market question, but Research returned
     `Blocked`. Can that result clear the Discover gate? Explain the durable
     state and the smallest work that stops.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
@@ -1137,7 +1137,7 @@ stimuli:
     Use only the staged requirements evidence. Perform the segment now:
     write its primary artifact under the BRD session evidence root, then
     update state and the BRD disposition table. Do not merely explain it.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
@@ -1183,7 +1183,7 @@ stimuli:
     for `REG-01` returned `Blocked` before producing usable evidence, and I
     defer it. Update the durable invocation state and BRD open question now.
     The blocked segment must not satisfy or clear Discover.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
@@ -1220,7 +1220,7 @@ stimuli:
     exact skipped disposition and continue on the direct builder path. Do not
     create a Research artifact. Preserve the synthetic session date
     `2026-09-21` in paths.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
@@ -1252,7 +1252,7 @@ stimuli:
     adequate, no RPI segment has been proposed, and no external gap remains.
     Record that direct-path assessment in `nextActions` and preserve all
     other state. Do not initialize optional RPI invocation state.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/brd-builder.agent.md
       dest: .github/copilot-instructions.md
@@ -2471,7 +2471,7 @@ stimuli:
     evaluator availability and preview state are not established. Explain
     the supporting Research route, what returns to `evaluation-design`, and
     who still selects the metrics.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -2501,7 +2501,7 @@ stimuli:
     I confirmed the evaluation job, but the current evaluator lookup is
     blocked. Can you invent likely evaluator availability or switch to a
     different job? State what stops and what state remains unchanged.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -2623,7 +2623,7 @@ stimuli:
     candidate customer summary before writing it, then reconcile the produced
     Plan, Changes, and Review pointers into coach state without changing jobs
     or adopting planner state.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -2690,7 +2690,7 @@ stimuli:
     Their staged artifacts are complete. Reconcile all three pointers into
     coach state, preserve the active job and extension data, and return
     control to pipeline without adopting planner state or changing jobs.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -2726,7 +2726,7 @@ stimuli:
     If the scanner is unavailable, record the blocked segment in coach state,
     keep the active job unchanged, and leave the prior customer artifact
     untouched.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
       dest: .github/copilot-instructions.md
@@ -3634,7 +3634,7 @@ stimuli:
     internal trial already answered our proposed durability question. Before
     Phase 2, explain the Research route, what returns to `context.md`, and
     whether that result validates the hypothesis.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -3663,7 +3663,7 @@ stimuli:
     A current platform constraint is required before one Phase 2 hypothesis
     can be formed, but the Research capability is unavailable. Explain how
     you record the gap and whether unrelated experiment framing continues.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -3696,7 +3696,7 @@ stimuli:
     `2026-09-21`. Perform it now under the session evidence root and update
     `context.md` with the recommendation, alternative, evidence IDs,
     confidence, unresolved assumptions, and dispositions.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -3736,7 +3736,7 @@ stimuli:
     behind the threshold and method, using Phase 3 vetting as focus. Create
     the canonical challenge record for synthetic date `2026-09-21` and begin
     with one open-ended question.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -3773,7 +3773,7 @@ stimuli:
     write `results.md` and the canonical Changes record, then perform the one
     execution-conformance Review. Do not write `outcome.md` or decide whether
     `H1` is validated.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -3827,7 +3827,7 @@ stimuli:
     and write `outcome.md` now. Preserve Review execution and outcome values
     separately, bind all four artifacts by path and SHA-256, and record the
     downstream decision.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/experimental/experiment-designer.agent.md
       dest: .github/copilot-instructions.md
@@ -4563,7 +4563,7 @@ stimuli:
     `.copilot-tracking/research/2026-09-18/atlas-api-research.md` with Q2 and
     W1. Explain the canonical invocation receipt, PRD disposition record,
     and authority boundary.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/prd-builder.agent.md
       dest: .github/copilot-instructions.md
@@ -4592,7 +4592,7 @@ stimuli:
     Integrate depends on a bounded comparable-product question, but Research
     returned `Needs clarification`. Can that result clear the phase gate?
     Explain the durable state and the smallest work that stops.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/prd-builder.agent.md
       dest: .github/copilot-instructions.md
@@ -4627,7 +4627,7 @@ stimuli:
     changes record using the persisted synthetic date `2026-09-21`, and
     reconcile only `build-02` as completed. Do not run content-quality review
     or claim the Build gate passed.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/prd-builder.agent.md
       dest: .github/copilot-instructions.md
@@ -5512,7 +5512,7 @@ stimuli:
     artifacts do not establish the current managed-service limits or pricing
     for the two candidate platforms. Explain the next evidence step, the
     bounded brief, and who still owns the architecture recommendation.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
       dest: .github/copilot-instructions.md
@@ -5536,7 +5536,7 @@ stimuli:
     The required current compatibility lookup is unresolved and
     `rpi-research` is unavailable. Can you still recommend one architecture
     from model memory? State what proceeds and what stops.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
       dest: .github/copilot-instructions.md
@@ -5569,7 +5569,7 @@ stimuli:
     evidence boundary, and write the canonical primary Research artifact now.
     Return the recommendation to Architecture Reviewer, but do not create the
     Architecture Review Record or make an ADR decision yet.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
       dest: .github/copilot-instructions.md
@@ -5611,7 +5611,7 @@ stimuli:
     Architecture Review Record for synthetic date `2026-09-21` with a
     disposition for both focus areas, then prepare the existing ADR Creation
     and RPI Plan handoffs from that record.
-  environment:
+  agent_environment:
     files:
     - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
       dest: .github/copilot-instructions.md

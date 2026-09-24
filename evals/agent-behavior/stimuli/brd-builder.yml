@@ -83,7 +83,7 @@ stimuli:
       do not answer. Research returned artifact
       `.copilot-tracking/research/2026-09-18/atlas-research.md` with Q1 and C1.
       Explain the state receipt, BRD disposition record, and authority boundary.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -112,7 +112,7 @@ stimuli:
       Discover depends on a bounded market question, but Research returned
       `Blocked`. Can that result clear the Discover gate? Explain the durable
       state and the smallest work that stops.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -145,7 +145,7 @@ stimuli:
       Use only the staged requirements evidence. Perform the segment now:
       write its primary artifact under the BRD session evidence root, then
       update state and the BRD disposition table. Do not merely explain it.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -191,7 +191,7 @@ stimuli:
       for `REG-01` returned `Blocked` before producing usable evidence, and I
       defer it. Update the durable invocation state and BRD open question now.
       The blocked segment must not satisfy or clear Discover.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -228,7 +228,7 @@ stimuli:
       exact skipped disposition and continue on the direct builder path. Do not
       create a Research artifact. Preserve the synthetic session date
       `2026-09-21` in paths.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -260,7 +260,7 @@ stimuli:
       adequate, no RPI segment has been proposed, and no external gap remains.
       Record that direct-path assessment in `nextActions` and preserve all
       other state. Do not initialize optional RPI invocation state.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
           dest: .github/copilot-instructions.md

@@ -86,7 +86,7 @@ stimuli:
       `.copilot-tracking/research/2026-09-18/atlas-api-research.md` with Q2 and
       W1. Explain the canonical invocation receipt, PRD disposition record,
       and authority boundary.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -115,7 +115,7 @@ stimuli:
       Integrate depends on a bounded comparable-product question, but Research
       returned `Needs clarification`. Can that result clear the phase gate?
       Explain the durable state and the smallest work that stops.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -150,7 +150,7 @@ stimuli:
       changes record using the persisted synthetic date `2026-09-21`, and
       reconcile only `build-02` as completed. Do not run content-quality review
       or claim the Build gate passed.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
