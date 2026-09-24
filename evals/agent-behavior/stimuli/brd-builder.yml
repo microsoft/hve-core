@@ -174,11 +174,47 @@ stimuli:
         config:
           path: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
           pattern: '(?is)(REG-01|retention).*(Q1|Research Question).*(C1|seven-year)'
-      - type: file-matches
+      - type: program
         name: brd-research-invocation-state-recorded
         config:
-          path: .copilot-tracking/brd-sessions/atlas.state.json
-          pattern: '(?is)rpiInvocations.*invocationId"?\s*:\s*"discover-01".*taskSlug"?\s*:\s*"atlas-brd-discover-01".*questionIds"?\s*:\s*\[\s*"Q1"\s*\].*evidenceIds"?\s*:\s*\[\s*"C1"\s*\].*segmentStatus"?\s*:\s*"completed".*userDisposition"?\s*:\s*"accepted".*gateEffect"?\s*:\s*"supports".*syntheticExtension.*preserve"?\s*:\s*true'
+          program: pwsh
+          args:
+            - -NoProfile
+            - -Command
+            - |
+              $ErrorActionPreference = 'Stop'
+              $passed = $false
+              $document = $null
+              try {
+                $path = Join-Path $env:EVALUATE_WORKSPACE '.copilot-tracking/brd-sessions/atlas.state.json'
+                if ((Get-Item $path).Length -gt 1MB) { throw 'Oversized state' }
+                $raw = Get-Content -Raw -LiteralPath $path
+                $document = [System.Text.Json.JsonDocument]::Parse($raw)
+                $pending = [System.Collections.Generic.Stack[System.Text.Json.JsonElement]]::new()
+                $pending.Push($document.RootElement)
+                while ($pending.Count) {
+                  $element = $pending.Pop()
+                  if ($element.ValueKind -eq 'Object') {
+                    $keys = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+                    foreach ($property in $element.EnumerateObject()) {
+                      if (-not $keys.Add($property.Name)) { throw 'Duplicate state field' }
+                      $pending.Push($property.Value)
+                    }
+                  } elseif ($element.ValueKind -eq 'Array') {
+                    foreach ($item in $element.EnumerateArray()) { $pending.Push($item) }
+                  }
+                }
+                $state = $raw | ConvertFrom-Json -AsHashtable
+                $receipts = @($state.rpiInvocations | Where-Object { $_.invocationId -ceq 'discover-01' })
+                if (-not ($state.rpiInvocations -is [array]) -or $receipts.Count -ne 1) { throw 'Invalid invocation set' }
+                $receipt = $receipts[0]
+                $passed = $receipt.taskSlug -ceq 'atlas-brd-discover-01' -and
+                  $receipt.questionIds -is [array] -and $receipt.questionIds.Count -eq 1 -and $receipt.questionIds[0] -ceq 'Q1' -and
+                  $receipt.evidenceIds -is [array] -and $receipt.evidenceIds.Count -eq 1 -and $receipt.evidenceIds[0] -ceq 'C1' -and
+                  $receipt.segmentStatus -ceq 'completed' -and $receipt.userDisposition -ceq 'accepted' -and
+                  $receipt.gateEffect -ceq 'supports' -and $state.syntheticExtension.preserve -is [bool] -and $state.syntheticExtension.preserve
+              } catch { $passed = $false } finally { if ($null -ne $document) { $document.Dispose() } }
+              @{ name = 'brd-research-invocation-state-recorded'; kind = 'code'; passed = [bool]$passed; score = [int]$passed; evidence = 'Validate invocation values and preserved extension in unambiguous JSON.' } | ConvertTo-Json -Compress
       - type: file-matches
         name: brd-research-disposition-projected
         config:

@@ -100,7 +100,7 @@ stimuli:
       - type: output-matches
         name: prd-research-receipt-state
         config:
-          pattern: '(?is)(rpiInvocations).*(rpi-research).*(artifactPaths).*(questionIds|Q2).*(evidenceIds|W1).*(findingDispositions)'
+          pattern: '(?is)^(?=.*(?:\b)rpiInvocations\b)(?=.*(?:\b)rpi-research\b)(?=.*\bartifactPaths\b)(?=.*\bQ2\b)(?=.*\bW1\b)(?=.*\bfindingDispositions\b).*'
       - type: output-matches
         name: prd-research-receipt-document
         config:

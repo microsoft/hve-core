@@ -105,7 +105,7 @@ stimuli:
         name: architecture-convergence-research-compares-options
         config:
           path: .copilot-tracking/research/2026-09-21/synthetic-queue-convergence-research.md
-          pattern: '(?is)(Research Questions|Questions).*Q1.*(Evidence|Evidence Ledger).*C1.*managed queue.*self-hosted broker.*(Recommendation and Alternatives|recommendation).*confidence.*unresolved'
+          pattern: '(?is)^(?=.*(?:^|\n)#{1,6}\s+(?:Research\s+)?Questions\b)(?=.*\bQ1\b)(?=.*(?:^|\n)#{1,6}\s+Evidence\b)(?=.*\bC1\b)(?=.*managed queue)(?=.*self-hosted broker)(?=.*(?:^|\n)#{1,6}\s+Recommendation\b)(?=.*\bconfidence\b)(?=.*\bunresolved\b)(?!.*\b(?:no\s+recommendation|recommendation\s*(?:is\s+|:\s*)(?:none|missing|unavailable))).*'
       - type: file-not-exists
         name: architecture-research-does-not-preempt-review-record
         config:

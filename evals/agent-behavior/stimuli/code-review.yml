@@ -504,7 +504,7 @@ stimuli:
       - type: output-matches
         name: complete-orientation-retry
         config:
-          pattern: '(?is)^(?![\s\S]*(?<!\b(?:not|never|no|without)\s)\b(?:retry\s+[*`]*(?:twice|[2-9])\b|(?:two|three|[2-9])\s+[*`]*retries\b|retry\s+until\s+success))(?=[\s\S]*(?:retry\s+[*`]*(?:exactly\s+)?once\b|(?:one|single)\b[*`]*\s+(?:allowed\s+)?retry\b|(?:one|a\s+single)\b[*`]*\s+(?:additional|more)\s+attempt\b))(?=[\s\S]*orientation)(?=[\s\S]*\b(?:task|original\s+instructions?)\b)(?=[\s\S]*(?:diff-state\.json|state path))(?=[\s\S]*(?:orientation-walkthrough\.md|output path))(?=[\s\S]*(?:failure|error))'
+          pattern: '(?is)^(?![\s\S]*(?<!\b(?:not|never|no|without)\s)\b(?:retry\s+[*`]*(?:twice|[2-9]|indefinitely|forever)\b|(?:two|three|[2-9])\s+[*`]*retries\b|retry\s+until\s+(?:success|it\s+(?:works|succeeds))))(?=[\s\S]*(?:retry\s+[*`]*(?:(?:exactly|at\s+most|no\s+more\s+than)\s+)?once\b|(?:one|single)\b[*`]*\s+(?:allowed\s+)?retry\b|(?:one|a\s+single)\b[*`]*\s+(?:additional|more)\s+attempt\b))(?=[\s\S]*orientation)(?=[\s\S]*\b(?:task|original\s+instructions?)\b)(?=[\s\S]*(?:diff-state\.json|state path))(?=[\s\S]*(?:orientation-walkthrough\.md|output path))(?=[\s\S]*(?:failure|error))'
 
   - name: code-review-perspective-no-output-retry
     prompt: |

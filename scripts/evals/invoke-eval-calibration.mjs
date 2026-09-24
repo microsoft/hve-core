@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 import { createHash } from 'node:crypto';
 import { spawnSync, execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdirSync, mkdtempSync } from 'node:fs';
