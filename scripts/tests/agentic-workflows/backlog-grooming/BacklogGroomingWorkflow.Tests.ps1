@@ -1954,20 +1954,37 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
 
     It 'S11 sends only the bounded protocol-versioned continuation allowlist' {
         foreach ($inputName in @(
-                'protocol-version', 'sweep-id', 'wave-number', 'snapshot-run-id',
+                'protocol-version', 'source-ref', 'sweep-id', 'wave-number', 'snapshot-run-id',
                 'snapshot-artifact-id', 'snapshot-digest', 'checkpoint-run-id',
                 'checkpoint-artifact-id', 'checkpoint-digest'
             )) {
             $script:Orchestrator | Should -Match ([regex]::Escape("`"$inputName`""))
         }
         $script:Orchestrator | Should -Not -Match 'candidate-ids|publish-report|failure-injection'
+        $script:Orchestrator | Should -Match 'INPUT_SOURCE_REF: \$\{\{ inputs\.source-ref \}\}'
+        $script:Orchestrator | Should -Match 'snapshot\.source_ref !== process\.env\.INPUT_SOURCE_REF'
+        $script:Orchestrator | Should -Match 'backlog-grooming-sweep-active-\$\{\{ github\.repository_id \}\}-\$\{\{ inputs\.source-ref \|\| github\.ref \}\}'
+        $script:Orchestrator | Should -Match '(?ms)Dispatch exact successor.*?env:\s+SOURCE_REF: \$\{\{ needs\.plan\.outputs\.source-ref \}\}\s+SOURCE_SHA: \$\{\{ needs\.plan\.outputs\.source-sha \}\}\s+SWEEP_ID: \$\{\{ needs\.plan\.outputs\.sweep-id \}\}'
+        $script:Orchestrator | Should -Match 'const sourceRef = process\.env\.SOURCE_REF'
+        $script:Orchestrator | Should -Match 'const sourceSha = process\.env\.SOURCE_SHA'
+        $script:Orchestrator | Should -Match 'const sweepId = process\.env\.SWEEP_ID'
+        $script:Orchestrator | Should -Match 'const executionTag = `backlog-grooming-sweep/\$\{sweepId\}`'
+        $script:Orchestrator | Should -Not -Match 'backlog-grooming-sweep/\$\{snapshot\.sweep_id\}'
+        $script:Orchestrator | Should -Match 'github\.rest\.git\.getRef\('
+        $script:Orchestrator | Should -Match 'github\.rest\.git\.createRef\('
+        $script:Orchestrator | Should -Match 'executionRef\.object\.type !== "commit"'
+        $script:Orchestrator | Should -Match 'executionRef\.object\.sha !== sourceSha'
+        $script:Orchestrator | Should -Match 'ref: executionTag'
+        $script:Orchestrator | Should -Match '"source-ref": sourceRef'
+        $script:Orchestrator | Should -Not -Match 'ref: "\$\{\{ needs\.plan\.outputs\.source-ref-name \}\}"'
+        $script:Orchestrator | Should -Match '(?ms)Check out the validator implementation.*?with:\s+ref: \$\{\{ needs\.plan\.outputs\.source-sha \}\}\s+persist-credentials: false'
     }
 
     It 'S12 isolates lifecycle dispatch and publisher write scopes' {
         [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
         [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
         [regex]::Matches($script:Orchestrator, '(?m)^\s+actions: write$').Count | Should -Be 2
-        $script:Orchestrator | Should -Match '(?ms)^  continue:.*?permissions:\s+actions: write\s+contents: read'
+        $script:Orchestrator | Should -Match '(?ms)^  continue:.*?permissions:\s+actions: write\s+contents: write'
         $script:CorePublisher | Should -Match '(?ms)permissions:\s+actions: read\s+issues: write'
         $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read\s+contents: write'
         $script:Publisher | Should -Not -Match '(?m)^\s+actions: write$'
