@@ -625,16 +625,41 @@ stimuli:
     labels: initialization
   rubric:
   - >
-    derives a meaningful project identifier from the warehouse-picking context or
-    asks what the user would like to call the project, without asking for a project
-    slug, kebab-case value, or specially formatted folder name; then begins gathering
-    context about the user's role, team, or desired method
+    derives a meaningful project identifier from the warehouse-picking context
+    without asking what to call the project, asking for a project slug, requesting a
+    kebab-case value, or requesting a specially formatted folder name; then begins
+    gathering context about the user's role, team, or desired method
   graders:
   - type: prompt
     name: judge-init-asks-for-project-slug
     turn: 1
   - type: wall-time
     name: init-asks-for-project-slug-completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: init-asks-for-short-project-name-when-context-is-insufficient
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    Hi! I want to start a new design thinking project.
+  tags:
+    category: agent-conformance-dt-coach
+    group: session-phases
+    phase: phase-1
+    tier: core
+    labels: initialization
+  rubric:
+  - >
+    asks what the user would like to call the project or requests a short project
+    name, without asking for a project slug, kebab-case value, or specially formatted
+    folder name
+  graders:
+  - type: prompt
+    name: judge-init-short-name-fallback
+    turn: 1
+  - type: wall-time
+    name: init-short-name-fallback-completion-budget
     turn: 1
     config:
       max: 120s
