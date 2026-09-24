@@ -74,9 +74,50 @@ Describe 'Dependency Review workflow contract' -Tag 'Unit' {
 
     It 'Separates dependency submission from pull request review' {
         [string[]]@($script:Workflow['jobs'].Keys | Sort-Object) |
-            Should -Be @('dependency-review', 'dependency-submission')
+            Should -Be @('dependency-review', 'dependency-submission', 'main-sbom')
         [string[]]@($script:Workflow['jobs']['dependency-review']['needs']) |
             Should -Be @('dependency-submission')
+    }
+
+    It 'Publishes an unattested commit-specific SBOM for main pushes' {
+        $Job = $script:Workflow['jobs']['main-sbom']
+        [string[]]@($Job['permissions'].Keys) | Should -Be @('contents')
+        [string]$Job['permissions']['contents'] | Should -BeExactly 'read'
+        [string]$Job['if'] | Should -Match "github\.event_name == 'push'"
+        [string]$Job['if'] | Should -Match "github\.ref == 'refs/heads/main'"
+
+        $Checkout = Get-WorkflowStep -JobName 'main-sbom' -StepName 'Checkout code'
+        [string]$Checkout['uses'] | Should -Match '^actions/checkout@[0-9a-f]{40}$'
+        [bool]$Checkout['with']['persist-credentials'] | Should -BeFalse
+
+        $Generation = Get-WorkflowStep -JobName 'main-sbom' -StepName 'Generate main dependency SBOM'
+        [string]$Generation['uses'] | Should -Match '^anchore/sbom-action@[0-9a-f]{40}$'
+        [string]$Generation['with']['path'] | Should -BeExactly '.'
+        [string]$Generation['with']['format'] | Should -BeExactly 'spdx-json'
+        [string]$Generation['with']['output-file'] |
+            Should -BeExactly 'continuous-sbom/main-dependencies-${{ github.sha }}.spdx.json'
+        [bool]$Generation['with']['upload-artifact'] | Should -BeFalse
+        [bool]$Generation['with']['upload-release-assets'] | Should -BeFalse
+        [string]$Generation['with']['config'] | Should -BeExactly '.syft.yaml'
+
+        $Upload = Get-WorkflowStep -JobName 'main-sbom' -StepName 'Upload main dependency SBOM'
+        [string]$Upload['id'] | Should -BeExactly 'upload-main-sbom'
+        [string]$Upload['uses'] | Should -Match '^actions/upload-artifact@[0-9a-f]{40}$'
+        [string]$Upload['with']['name'] | Should -BeExactly 'main-dependencies-${{ github.sha }}'
+        [string]$Upload['with']['path'] |
+            Should -BeExactly 'continuous-sbom/main-dependencies-${{ github.sha }}.spdx.json'
+        [string]$Upload['with']['if-no-files-found'] | Should -BeExactly 'error'
+        [int]$Upload['with']['retention-days'] | Should -Be 30
+
+        $Summary = Get-WorkflowStep -JobName 'main-sbom' -StepName 'Add SBOM download summary'
+        [string]$Summary['env']['ARTIFACT_URL'] |
+            Should -BeExactly '${{ steps.upload-main-sbom.outputs.artifact-url }}'
+        [string]$Summary['env']['ARTIFACT_DIGEST'] |
+            Should -BeExactly '${{ steps.upload-main-sbom.outputs.artifact-digest }}'
+        [string]$Summary['env']['SOURCE_SHA'] | Should -BeExactly '${{ github.sha }}'
+        [string]$Summary['run'] | Should -Match 'GITHUB_STEP_SUMMARY'
+        [string]$Summary['run'] | Should -Match 'unattested continuous evidence'
+        [string]$Summary['run'] | Should -Match '30 days'
     }
 
     It 'Uses least privilege for dependency submission' {
@@ -137,6 +178,6 @@ Describe 'Dependency Review workflow contract' -Tag 'Unit' {
         }
 
         Get-WorkflowStepText |
-            Should -Not -Match 'anchore/sbom-action|actions/upload-artifact|actions/attest|gh release (upload|edit)'
+            Should -Not -Match 'actions/attest|gh release (upload|edit)'
     }
 }

@@ -2,7 +2,7 @@
 title: HVE Core
 description: Agentic SDLC framework for context management, governance, shift-left engineering, reusable organizational knowledge, and consistent practices across teams
 author: Microsoft
-ms.date: 2026-09-19
+ms.date: 2026-09-23
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -19,6 +19,7 @@ estimated_reading_time: 3
 
 <!-- markdownlint-disable MD013 -->
 [![CI Status](https://github.com/microsoft/hve-core/actions/workflows/release-stable.yml/badge.svg)](https://github.com/microsoft/hve-core/actions/workflows/release-stable.yml)
+[![Main SBOM](https://github.com/microsoft/hve-core/actions/workflows/dependency-review.yml/badge.svg?branch=main)](https://github.com/microsoft/hve-core/actions/workflows/dependency-review.yml?query=branch%3Amain)
 [![CodeQL](https://github.com/microsoft/hve-core/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/microsoft/hve-core/actions/workflows/codeql-analysis.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/microsoft/hve-core/badge)](https://scorecard.dev/viewer/?uri=github.com/microsoft/hve-core)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11795/badge)](https://www.bestpractices.dev/projects/11795)

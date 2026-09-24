@@ -30,6 +30,28 @@ attestation. Release channels remain the reviewed path through moving branch
 registrations and exact `prerelease-v<version>` or `v<version>` refs: they are
 release-gated, SBOM-covered, and attested.
 
+### Continuous Main SBOM
+
+Every successful push to `main` generates an unattested SPDX JSON SBOM and
+uploads it as `main-dependencies-<sha>` for 30 days. The archive contains
+`main-dependencies-<sha>.spdx.json`. The workflow run summary provides the
+authenticated direct download link and artifact digest.
+
+Use the [Main SBOM badge](../../README.md) or open the
+[Dependency Review workflow history](https://github.com/microsoft/hve-core/actions/workflows/dependency-review.yml?query=branch%3Amain)
+to find recent `main` runs. To retrieve the SBOM for an exact commit:
+
+```bash
+gh run list --workflow dependency-review.yml --branch main --commit <sha> \
+  --json databaseId,url
+gh run download <run-id> --name main-dependencies-<sha>
+```
+
+The direct artifact URL requires GitHub access and expires with the artifact.
+This SBOM is continuous inventory evidence, not an attested release SBOM.
+Release workflows regenerate and attest their own dependency and VSIX SBOMs
+from the immutable release tag.
+
 Workflow ownership is explicit:
 
 * `release-prerelease-prepare.yml` opens the reviewed `main` to
