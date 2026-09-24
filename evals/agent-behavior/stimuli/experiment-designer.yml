@@ -66,3 +66,235 @@ stimuli:
         name: conditional-failure-reduces-ml-depth
         config:
           pattern: '(?is)(degrad|reduced depth|less depth|shallower|without ml|avoid (invent|assert|claim)|not (invent|assert|claim|substitut)|no ml-specific|missing ml-specific|ml-specific (guidance|coverage|detail|infrastructure|recommendation))'
+
+  - name: experiment-designer-research-preparation
+    prompt: |
+      Phase 1 identified a material unknown: we do not know whether a prior
+      internal trial already answered our proposed durability question. Before
+      Phase 2, explain the Research route, what returns to `context.md`, and
+      whether that result validates the hypothesis.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: experiment-research-preparation
+    graders:
+      - type: output-matches
+        name: experiment-research-prep-route
+        config:
+          pattern: '(?is)(?=.*rpi-research)(?=.*rpi-research-preparation|Research Preparation)(?=.*context\.md).*'
+      - type: output-matches
+        name: experiment-research-prep-status
+        config:
+          pattern: '(?is)(supported).*(contradicted).*(inconclusive)'
+      - type: output-matches
+        name: experiment-research-not-validation
+        config:
+          pattern: '(?is)(?=.*(rpi-research|research))(?=.*(cannot|does not|never|is not|not a))(?=.*(validate|validation|verdict|experiment result|success criteria))(?=.*(preparation|prepare|evidence|input)).*'
+
+  - name: experiment-designer-research-unavailable
+    prompt: |
+      A current platform constraint is required before one Phase 2 hypothesis
+      can be formed, but the Research capability is unavailable. Explain how
+      you record the gap and whether unrelated experiment framing continues.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: experiment-research-unavailable
+    graders:
+      - type: output-matches
+        name: experiment-research-gap-recorded
+        config:
+          pattern: '(?is)(unavailable|blocked).*(record|retain|mark).*(gap|unknown|inconclusive)'
+      - type: output-matches
+        name: experiment-research-dependent-stop
+        config:
+          pattern: '(?is)(stop|pause|cannot proceed).*(dependent|affected|hypothesis).*(continue|proceed|unrelated|other)'
+      - type: output-matches
+        name: experiment-research-unavailable-no-validated-claim
+        config:
+          pattern: '(?i)(hypothesis|assumption)\s+(is|has been|was)\s+(validated|confirmed|proven)'
+          negate: true
+
+  - name: experiment-designer-executes-convergence-research
+    prompt: |
+      Resume synthetic experiment `synthetic-batching` after Phase 1. I confirm
+      convergence Research task `synthetic-batching-recommendation` using only
+      the staged experiment evidence. Preserve the synthetic session date
+      `2026-09-21`. Perform it now under the session evidence root and update
+      `context.md` with the recommendation, alternative, evidence IDs,
+      confidence, unresolved assumptions, and dispositions.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/experiment-evidence.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
+        - src: fixtures/rpi-depth/experiment-evidence.md
+          dest: evidence/experiment-evidence.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: experiment-rpi-research-execution
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-exists
+        name: experiment-recommendation-artifact-exists
+        config:
+          path: .copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md
+      - type: file-matches
+        name: experiment-recommendation-compares-options
+        config:
+          path: .copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md
+          pattern: '(?is)Recommendation and Alternatives.*batching.*caching.*confidence.*unresolved'
+      - type: file-matches
+        name: experiment-context-records-dispositions
+        config:
+          path: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
+          pattern: '(?is)(supported|contradicted|inconclusive).*(accepted|revised|rejected|deferred).*(synthetic-batching-recommendation-research\.md)'
+
+  - name: experiment-designer-starts-explicit-challenge
+    prompt: |
+      I explicitly invoke `rpi-challenger` for the staged `H1` in experiment
+      `synthetic-batching`. The challenge scope is confirmed: test assumptions
+      behind the threshold and method, using Phase 3 vetting as focus. Create
+      the canonical challenge record for synthetic date `2026-09-21` and begin
+      with one open-ended question.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/experiment-evidence.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/hypotheses.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-challenger
+    tags:
+      category: agent-behavior
+      scenario: experiment-rpi-challenge-execution
+    graders:
+      - type: file-exists
+        name: experiment-challenge-record-exists
+        config:
+          path: .copilot-tracking/challenges/2026-09-21/synthetic-batching-h1-challenge.md
+      - type: file-matches
+        name: experiment-challenge-record-binds-scope
+        config:
+          path: .copilot-tracking/challenges/2026-09-21/synthetic-batching-h1-challenge.md
+          pattern: '(?is)(H1|hypotheses\.md).*(threshold|method).*(confirmed|scope)'
+      - type: output-matches
+        name: experiment-challenge-asks-one-question
+        config:
+          pattern: '(?s)^[^?]*\?[^?]*$'
+
+  - name: experiment-designer-produces-execution-rpi-artifacts
+    prompt: |
+      Resume synthetic experiment `synthetic-batching` after the staged MVE
+      plan was approved. I separately confirm Plan, Implement, and Review for
+      bounded execution task `synthetic-batching-execution` using synthetic
+      date `2026-09-21`. Run the confirmed segments in order now: create and
+      critique the execution plan, execute it against the staged run data,
+      write `results.md` and the canonical Changes record, then perform the one
+      execution-conformance Review. Do not write `outcome.md` or decide whether
+      `H1` is validated.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/experiment-mve-plan.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+        - src: fixtures/rpi-depth/experiment-run-data.md
+          dest: evidence/experiment-run-data.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-implement
+        - ../../.github/skills/rpi/rpi-review
+    tags:
+      category: agent-behavior
+      scenario: experiment-rpi-execution-production
+    constraints:
+      max_agent_duration: 180s
+      max_duration: 240s
+    graders:
+      - type: file-exists
+        name: experiment-execution-plan-produced
+        config:
+          path: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+      - type: file-exists
+        name: experiment-execution-critique-produced
+        config:
+          path: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
+      - type: file-exists
+        name: experiment-execution-changes-produced
+        config:
+          path: .copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md
+      - type: file-exists
+        name: experiment-execution-review-produced
+        config:
+          path: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
+      - type: file-matches
+        name: experiment-results-produced-from-raw-data
+        config:
+          path: .copilot-tracking/mve/2026-09-21/synthetic-batching/results.md
+          pattern: '(?is)100.*76.*24%.*100.*0\.5%.*(none|no anomalies)'
+      - type: file-not-exists
+        name: experiment-execution-does-not-preempt-outcome
+        config:
+          path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
+
+  - name: experiment-designer-writes-post-execution-outcome
+    prompt: |
+      Resume synthetic experiment `synthetic-batching` after RPI Review. The
+      staged MVE plan, execution plan, changes, Review, and results are the
+      complete evidence set. Evaluate `H1` against its criteria committed before execution
+      and write `outcome.md` now. Preserve Review execution and outcome values
+      separately, bind all four artifacts by path and SHA-256, and record the
+      downstream decision.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/experiment-evidence.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+        - src: fixtures/rpi-depth/experiment-evidence.md
+          dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+        - src: fixtures/rpi-depth/experiment-evidence.md
+          dest: .copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md
+        - src: fixtures/rpi-depth/experiment-evidence.md
+          dest: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+    tags:
+      category: agent-behavior
+      scenario: experiment-rpi-outcome-execution
+    graders:
+      - type: file-exists
+        name: experiment-outcome-record-exists
+        config:
+          path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
+      - type: file-matches
+        name: experiment-outcome-binds-evidence
+        config:
+          path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
+          pattern: '(?is)mve-plan\.md.*[a-f0-9]{64}.*execution-plan\.md.*[a-f0-9]{64}.*execution-changes\.md.*[a-f0-9]{64}.*execution-review\.md.*[a-f0-9]{64}'
+      - type: file-matches
+        name: experiment-outcome-separates-status-and-verdict
+        config:
+          path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
+          pattern: '(?is)H1.*validated.*24%.*100.*0\.5%.*(Review execution|execution status).*Complete.*(Review outcome|execution outcome).*Accepted.*(go|Go)'
