@@ -3,7 +3,7 @@ title: Prompts
 description: Reference documentation for HVE Core prompts.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-11
 ms.topic: overview
 keywords:
   - reference
@@ -39,7 +39,7 @@ This page lists the generated reference documentation for HVE Core prompts.
 | [Ado Get Build Info](hve-core/ado-get-build-info.md)                                             | Retrieve Azure DevOps build status and logs for a pull request or build number                                                                                            |
 | [Evals Import](hve-core/evals-import.md)                                                         | Imports a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe                                                                                           |
 | [Git Commit Message](hve-core/git-commit-message.md)                                             | Generate a conventional commit message from all branch changes                                                                                                            |
-| [Git Commit](hve-core/git-commit.md)                                                             | Stage all changes, generate a conventional commit message, and commit                                                                                                     |
+| [Git Commit](hve-core/git-commit.md)                                                             | Stage selected paths, confirm the staged set, and create a conventional commit                                                                                            |
 | [Git Merge](hve-core/git-merge.md)                                                               | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling                                                                                          |
 | [Git Setup](hve-core/git-setup.md)                                                               | Interactive, verification-first Git configuration assistant (non-destructive)                                                                                             |
 | [Pr Review](hve-core/pr-review.md)                                                               | Review a pull request or local change set by routing to the consolidated Code Review agent                                                                                |

@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-09-05
+ms.date: 2026-09-10
 ms.topic: reference
 keywords:
   - powershell
@@ -19,6 +19,7 @@ This directory contains PowerShell scripts for automating linting, validation, a
 
 ```text
 scripts/
+├── agentic-workflows/ Runtime support for compiled Agentic Workflows
 ├── lib/             Shared artifact and CI helpers
 ├── agents/          Agent activation harness and baseline snapshots
 ├── evals/           Eval runner and moderation automation
@@ -61,6 +62,35 @@ The `agents/` directory contains the activation harness for Copilot agent cold-s
 | `activation-harness/baseline.json`                       | Snapshot of the current activation fingerprint baseline for the ADR creation agent   |
 
 See [activation-harness/README.md](agents/activation-harness/README.md) for the full harness contract and baseline workflow.
+
+## Agentic Workflows
+
+The `agentic-workflows/` directory contains trusted runtime support invoked by
+compiled Agentic Workflows. Backlog grooming uses these scripts to reconstruct
+candidate-addressed scalar calls, produce canonical shard results, and validate
+unchanged v2 artifacts before deterministic fan-in.
+
+| Script                                                    | Purpose                                                        |
+|-----------------------------------------------------------|----------------------------------------------------------------|
+| `backlog-grooming/Invoke-BacklogGroomResultCollector.ps1` | Collect scalar candidate calls into one canonical shard result |
+| `backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1`   | Validate shard artifacts and produce an ordered wave aggregate |
+| `backlog-grooming/Modules/BacklogGrooming.psm1`           | Reconstruct, validate, normalize, and digest shard results     |
+
+The agent supplies semantic fields and up to five contiguous categorized
+evidence citations. After parsing and binding the call to a planned issue, the
+collector owns its structural encoding:
+
+* Derive evidence cardinality from complete contiguous category-text pairs
+* Include every evidence citation in repository evidence
+* Partition original-delivery and replacement-or-removal lineage by category
+* Construct an empty deferral reason for `Assessed` and require a non-empty reason for `Deferred`
+* Construct canonical rows, counts, cursors, provenance, timestamps, envelopes, and digests
+
+The supported superseded-similarity conversion remains an explicit `{ issue,
+code }` record in `normalizations`. Malformed JSON, missing semantic fields,
+incomplete or noncontiguous evidence pairs, unsupported enum values, duplicate
+candidate calls, and missing deferred reasons remain candidate-local contract
+errors.
 
 ## Release
 
@@ -105,6 +135,7 @@ The `evals/` directory contains PowerShell entry points for agent-behavior, base
 |-------------------------------------------|-------------------------------------------------------------------------------------|
 | `Build-AgentBehaviorSpec.ps1`             | Regenerate the agent-behavior eval spec from per-agent stimulus partials            |
 | `Build-AgentInventory.ps1`                | Generate the authoritative agent inventory used by eval suites                      |
+| `Build-GraderLineageMap.ps1`              | Build or check the Vally grader-name lineage map                                    |
 | `Get-AgentDependencyMap.ps1`              | Build a JSON map of agent dependencies for the baseline-equivalence dispatcher      |
 | `Get-ChangedAIArtifact.ps1`               | Emit a JSON manifest of AI customization artifacts changed between two git refs     |
 | `Get-ChangedSpecStimulus.ps1`             | Emit a JSON manifest of synthetic artifacts derived from changed eval specs         |
@@ -113,7 +144,11 @@ The `evals/` directory contains PowerShell entry points for agent-behavior, base
 | `Invoke-BaselineEquivalence.ps1`          | Run baseline-vs-customized equivalence evals for a target agent                     |
 | `Invoke-ContentModeration.ps1`            | Invoke the content moderation CLI over prompt or output content                     |
 | `Invoke-CorpusModeration.ps1`             | Moderate changed AI corpus content from the changed-artifact manifest               |
+| `Invoke-RustUnitTestNetworkTrace.ps1`     | Run a prepared Rust crate under network-denied containment                          |
 | `Invoke-VallyEvals.ps1`                   | Execute vally evals for changed AI artifacts                                        |
+| `Merge-BaselineEquivalence.ps1`           | Merge isolated baseline-equivalence model summaries                                 |
+| `Merge-EvalExecution.ps1`                 | Merge all planned eval producer summaries into one authoritative result             |
+| `New-AgentEvalPlan.ps1`                   | Build a deterministic execution plan for PR agent evaluations                       |
 | `New-AgentMatrixDashboard.ps1`            | Render a self-contained HTML dashboard for the per-agent behavior matrix            |
 | `New-EquivalenceDashboard.ps1`            | Render a self-contained HTML dashboard for a local baseline-equivalence run         |
 | `Test-CopilotToken.ps1`                   | Pre-flight probe for the `COPILOT_GITHUB_TOKEN` secret used by vally evals          |
@@ -220,16 +255,17 @@ Copilot CLI plugin manifest synchronization and validation.
 
 Pester test organization matching the scripts structure.
 
-| Directory       | Tests For                     |
-|-----------------|-------------------------------|
-| `lib/`          | Shared helper tests           |
-| `devcontainer/` | Devcontainer validation tests |
-| `extension/`    | Extension packaging tests     |
-| `plugins/`      | Plugin manifest sync tests    |
-| `linting/`      | Linting script tests          |
-| `security/`     | Security validation tests     |
-| `Fixtures/`     | Shared test fixtures          |
-| `Mocks/`        | Shared mock data              |
+| Directory            | Tests For                                 |
+|----------------------|-------------------------------------------|
+| `agentic-workflows/` | Compiled Agentic Workflow runtime support |
+| `lib/`               | Shared helper tests                       |
+| `devcontainer/`      | Devcontainer validation tests             |
+| `extension/`         | Extension packaging tests                 |
+| `plugins/`           | Plugin manifest sync tests                |
+| `linting/`           | Linting script tests                      |
+| `security/`          | Security validation tests                 |
+| `Fixtures/`          | Shared test fixtures                      |
+| `Mocks/`             | Shared mock data                          |
 
 Run all tests:
 

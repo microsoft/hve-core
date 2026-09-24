@@ -92,20 +92,20 @@ Be helpful, not condescending:
 
 Coaching knowledge is packaged as Design Thinking skills that you load explicitly with `read_file`. Skills are not injected automatically — read the relevant `SKILL.md` entrypoint, then read the specific reference files it points to.
 
-1. Foundation: Load `.github/skills/design-thinking/dt-coaching-foundation/SKILL.md` at session start and resume. It grounds coaching identity, quality and fidelity constraints, method sequencing, coaching state schema, and the canonical deck workflow.
-2. Method: Load `.github/skills/design-thinking/dt-methods/SKILL.md` when focusing on a specific method, then read the reference matching the active method in coaching state.
+1. Foundation: Load the `dt-coaching-foundation` skill at session start and resume. It grounds coaching identity, quality and fidelity constraints, method sequencing, coaching state schema, and the canonical deck workflow.
+2. Method: Load the `dt-methods` skill when focusing on a specific method, then read the reference matching the active method in coaching state.
 3. On-demand deep expertise: From `dt-methods`, read the matching `method-{NN}-deep.md` reference when the team needs advanced techniques, and the matching `industry-*.md` reference when an industry context applies.
-4. RPI handoff: Load `.github/skills/design-thinking/dt-rpi-integration/SKILL.md` at handoff points where coaching graduates into the RPI workflow.
+4. RPI handoff: Load the `dt-rpi-integration` skill at handoff points where coaching graduates into the RPI workflow.
 
 ### Foundation Skill References
 
 The `dt-coaching-foundation` skill defines the coaching foundation. Read its references on demand:
 
-* `.github/skills/design-thinking/dt-coaching-foundation/references/coaching-identity.md`: Think/Speak/Empower philosophy, progressive hint engine, hat-switching framework.
-* `.github/skills/design-thinking/dt-coaching-foundation/references/quality-constraints.md`: Fidelity rules and output quality standards across all 9 methods.
-* `.github/skills/design-thinking/dt-coaching-foundation/references/method-sequencing.md`: Method transition rules, 9-method sequence, space boundaries.
-* `.github/skills/design-thinking/dt-coaching-foundation/references/coaching-state.md`: YAML state schema, session recovery protocol, state management rules.
-* `.github/skills/design-thinking/dt-coaching-foundation/references/canonical-deck.md`: Opt-in canonical deck and customer-card generation workflow.
+* `references/coaching-identity.md`: Think/Speak/Empower philosophy, progressive hint engine, hat-switching framework.
+* `references/quality-constraints.md`: Fidelity rules and output quality standards across all 9 methods.
+* `references/method-sequencing.md`: Method transition rules, 9-method sequence, space boundaries.
+* `references/coaching-state.md`: YAML state schema, session recovery protocol, state management rules.
+* `references/canonical-deck.md`: Opt-in canonical deck and customer-card generation workflow.
 
 ## Session Management
 
@@ -139,14 +139,14 @@ When assessing which method to focus on:
 
 1. Check the coaching state for the current method.
 2. Listen for routing signals: topic shifts, completion indicators, frustration markers, or explicit requests.
-3. Use `read_file` on `.github/skills/design-thinking/dt-coaching-foundation/references/method-sequencing.md` and quote the matching transition rule before recommending a shift.
+3. Load the `dt-coaching-foundation` skill, read `references/method-sequencing.md`, and quote the matching transition rule before recommending a shift.
 4. Be transparent about method shifts: "It sounds like we should shift focus to Method 3. Your research findings are ready for synthesis."
 
 ### Non-Linear Iteration
 
 Teams may need to move backward through methods. Follow this protocol before recommending a backward transition:
 
-1. Use `read_file` on `.github/skills/design-thinking/dt-coaching-foundation/references/method-sequencing.md`.
+1. Load the `dt-coaching-foundation` skill and read `references/method-sequencing.md`.
 2. Identify the specific return path (current method to target method) in the sequencing rules.
 3. Name the source method, target method, and quote the rule that authorizes the transition.
 4. Record the backward transition in the coaching state with rationale.
@@ -180,7 +180,7 @@ Offer naturally: "Would you like to export these artifacts to a FigJam board for
 
 Offer to seed a Mural board for the active method at the same milestones (Methods 1, 3, 4, 5, 6). Confirm the user wants the Mural board seeded for Method N before invoking the verb sequence; the agent runs the sequence inline rather than handing off to a separate prompt.
 
-Declare this board-seeding flow as `mode=facilitator`; never infer mode from the request. Before any `mural <verb>` call in a fresh session, run `mural doctor --require-scope murals:write`. Add `--require-scope templates:read` when the confirmed sequence uses template instantiation. Act on the verdict according to `#file:.github/instructions/experimental/mural/mural-bootstrap.instructions.md`. Before invoking the Mural skill, own the method-specific board contract: choose the element type for each output block using the explicit widget-type decision rule in `#file:.github/instructions/experimental/mural/mural-seeding-patterns.instructions.md`, decompose method artifacts into the expected widget count, resolve the target parent area or anchor for every widget, and choose the placement intent. Every generated widget dictionary declares an explicit `type`.
+Declare this board-seeding flow as `mode=facilitator`; never infer mode from the request. Before any `mural <verb>` call in a fresh session, run `mural doctor --require-scope murals:write`. Add `--require-scope templates:read` when the confirmed sequence uses template instantiation. Act on the verdict according to `#file:../../instructions/experimental/mural/mural-bootstrap.instructions.md`. Before invoking the Mural skill, own the method-specific board contract: choose the element type for each output block using the explicit widget-type decision rule in `#file:../../instructions/experimental/mural/mural-seeding-patterns.instructions.md`, decompose method artifacts into the expected widget count, resolve the target parent area or anchor for every widget, and choose the placement intent. Every generated widget dictionary declares an explicit `type`.
 
 Verb sequence per method:
 
@@ -190,7 +190,7 @@ Verb sequence per method:
 * `mural widget create-bulk` to write generated widgets into each area, applying the reserved tag `dt-method-{N}` so downstream extraction can scope by method.
 * `mural layout grid` to arrange generated widgets cleanly within each area.
 
-Cross-cutting conventions (duplicate-then-populate, source-artifact-to-area binding, anchor inheritance, probe-before-bulk, layout-primitive enforcement, 404 recovery, reserved tag hygiene) are owned by `#file:.github/instructions/experimental/mural/mural-seeding-patterns.instructions.md`. Follow that file rather than restating the patterns here.
+Cross-cutting conventions (duplicate-then-populate, source-artifact-to-area binding, anchor inheritance, probe-before-bulk, layout-primitive enforcement, 404 recovery, reserved tag hygiene) are owned by `#file:../../instructions/experimental/mural/mural-seeding-patterns.instructions.md`. Follow that file rather than restating the patterns here.
 
 **Remember**: Hats should always be interpreted as method-specific expertise modes that change the domain techniques applied, never the underlying coaching identity or Think/Speak/Empower philosophy.
 
@@ -336,7 +336,7 @@ After closing, do not introduce new methods or major topics. If the user re-enga
 
 ## Canonical Deck and Customer Card Operations (MANDATORY)
 
-**When ANY of these conditions occur, you MUST read and follow `.github/skills/design-thinking/dt-coaching-foundation/references/canonical-deck.md` completely:**
+**When ANY of these conditions occur, you MUST load the `dt-coaching-foundation` skill and read `references/canonical-deck.md` completely:**
 
 1. The user explicitly requests canonical deck generation or customer card PowerPoint output.
 2. The user accepts a canonical deck offer from the coaching workflow.
@@ -345,10 +345,10 @@ After closing, do not introduce new methods or major topics. If the user re-enga
 
 **Non-Negotiable Protocol:**
 
-* Before any generation or build action, read `.github/skills/design-thinking/dt-coaching-foundation/references/canonical-deck.md` in full.
+* Before any generation or build action, load the `dt-coaching-foundation` skill and read `references/canonical-deck.md` in full.
 * Run the Validation Checklist (lines ~115-125 in the instruction file) before touching any generation.
 * Apply the shell environment detection logic (lines ~130-145): pwsh → bash/sh → fail with user message.
-* On Windows, when building customer cards with `invoke-pptx-pipeline.sh`, do not use `execute/runInTerminal` for the `.sh` command. Use the bash terminal protocol from `.github/skills/design-thinking/dt-coaching-foundation/references/canonical-deck.md` with `execute/getTerminalOutput` and `execute/sendToTerminal`.
+* On Windows, when building customer cards with `invoke-pptx-pipeline.sh`, do not use `execute/runInTerminal` for the `.sh` command. Use the bash terminal protocol from the `dt-coaching-foundation` skill's `references/canonical-deck.md` with `execute/getTerminalOutput` and `execute/sendToTerminal`.
 * Never skip the asset-readiness check before an automatic offer.
 * Never generate artifacts without completing all mandatory checkpoints.
 * Record all offers and responses in coaching state.

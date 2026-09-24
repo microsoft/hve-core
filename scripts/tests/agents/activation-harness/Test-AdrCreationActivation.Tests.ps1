@@ -198,6 +198,124 @@ Describe '@adr-creation activation scenarios produce distinct fingerprints' -Tag
     }
 }
 
+Describe '@adr-creation portable dispatch reference resolution' -Tag 'Unit' {
+    BeforeAll {
+        function New-PortableDispatchFixture {
+            param(
+                [Parameter(Mandatory = $true)][string]$Root,
+                [Parameter(Mandatory = $true)][string]$SkillName,
+                [Parameter(Mandatory = $true)][string]$ResourcePath
+            )
+
+            $agentDirectory = Join-Path $Root '.github/agents/project-planning'
+            New-Item -ItemType Directory -Path $agentDirectory -Force | Out-Null
+            $agentPath = Join-Path $agentDirectory 'fixture.agent.md'
+            @"
+# Fixture Agent
+
+## Lifecycle Dispatch
+
+| Phase | Required skill | Required resource |
+|-------|----------------|-------------------|
+| Govern | Load the ``$SkillName`` skill | None |
+| Normalize | Load the ``$SkillName`` skill | Read the skill's ``$ResourcePath`` |
+"@ | Set-Content -LiteralPath $agentPath -Encoding utf8NoBOM
+            return $agentPath
+        }
+
+        $script:PortableRoot = Join-Path $TestDrive 'portable'
+        $portableSkillRoot = Join-Path $script:PortableRoot '.github/skills/test/portable-skill'
+        New-Item -ItemType Directory -Path (Join-Path $portableSkillRoot 'scripts') -Force | Out-Null
+        "---`nname: portable-skill`n---`n# Portable Skill" |
+            Set-Content -LiteralPath (Join-Path $portableSkillRoot 'SKILL.md') -Encoding utf8NoBOM
+        'print("fixture")' |
+            Set-Content -LiteralPath (Join-Path $portableSkillRoot 'scripts/tool.py') -Encoding utf8NoBOM
+        $script:PortableAgent = New-PortableDispatchFixture `
+            -Root $script:PortableRoot `
+            -SkillName 'portable-skill' `
+            -ResourcePath 'scripts/tool.py'
+
+        $script:MissingRoot = Join-Path $TestDrive 'missing'
+        $script:MissingAgent = New-PortableDispatchFixture `
+            -Root $script:MissingRoot `
+            -SkillName 'missing-skill' `
+            -ResourcePath 'scripts/tool.py'
+
+        $script:AmbiguousRoot = Join-Path $TestDrive 'ambiguous'
+        foreach ($package in @('one', 'two')) {
+            $skillRoot = Join-Path $script:AmbiguousRoot ".github/skills/$package/duplicate-skill"
+            New-Item -ItemType Directory -Path $skillRoot -Force | Out-Null
+            "---`nname: duplicate-skill`n---`n# Duplicate Skill" |
+                Set-Content -LiteralPath (Join-Path $skillRoot 'SKILL.md') -Encoding utf8NoBOM
+        }
+        $script:AmbiguousAgent = New-PortableDispatchFixture `
+            -Root $script:AmbiguousRoot `
+            -SkillName 'duplicate-skill' `
+            -ResourcePath 'scripts/tool.py'
+
+        $script:EscapeRoot = Join-Path $TestDrive 'escape'
+        $escapeSkillRoot = Join-Path $script:EscapeRoot '.github/skills/test/contained-skill'
+        New-Item -ItemType Directory -Path $escapeSkillRoot -Force | Out-Null
+        "---`nname: contained-skill`n---`n# Contained Skill" |
+            Set-Content -LiteralPath (Join-Path $escapeSkillRoot 'SKILL.md') -Encoding utf8NoBOM
+        $outsidePath = Join-Path $script:EscapeRoot '.github/skills/test/outside.py'
+        'print("outside")' | Set-Content -LiteralPath $outsidePath -Encoding utf8NoBOM
+        $script:EscapeAgent = New-PortableDispatchFixture `
+            -Root $script:EscapeRoot `
+            -SkillName 'contained-skill' `
+            -ResourcePath '../outside.py'
+    }
+
+    It 'loads a uniquely named skill for GovernEntry' {
+        $fingerprint = Get-AgentActivationFingerprint `
+            -AgentPath $script:PortableAgent `
+            -ScenarioName 'GovernEntry' `
+            -RepoRoot $script:PortableRoot
+
+        $fingerprint.LoadedFiles.Path | Should -Contain '.github/skills/test/portable-skill/SKILL.md'
+    }
+
+    It 'loads a resource beneath the named skill for AdoptTemplate' {
+        $fingerprint = Get-AgentActivationFingerprint `
+            -AgentPath $script:PortableAgent `
+            -ScenarioName 'AdoptTemplate' `
+            -RepoRoot $script:PortableRoot
+
+        $fingerprint.LoadedFiles.Path | Should -Contain '.github/skills/test/portable-skill/scripts/tool.py'
+    }
+
+    It 'does not resolve a missing skill name' {
+        $fingerprint = Get-AgentActivationFingerprint `
+            -AgentPath $script:MissingAgent `
+            -ScenarioName 'GovernEntry' `
+            -RepoRoot $script:MissingRoot
+
+        $fingerprint.LoadedFiles.Path | Should -Not -Contain '.github/skills/test/missing-skill/SKILL.md'
+        $fingerprint.LoadedFiles | Should -HaveCount 1
+    }
+
+    It 'does not resolve an ambiguous skill name' {
+        $fingerprint = Get-AgentActivationFingerprint `
+            -AgentPath $script:AmbiguousAgent `
+            -ScenarioName 'GovernEntry' `
+            -RepoRoot $script:AmbiguousRoot
+
+        $fingerprint.LoadedFiles.Path | Should -Not -Contain '.github/skills/one/duplicate-skill/SKILL.md'
+        $fingerprint.LoadedFiles.Path | Should -Not -Contain '.github/skills/two/duplicate-skill/SKILL.md'
+        $fingerprint.LoadedFiles | Should -HaveCount 1
+    }
+
+    It 'does not load a skill-relative resource outside the resolved skill root' {
+        $fingerprint = Get-AgentActivationFingerprint `
+            -AgentPath $script:EscapeAgent `
+            -ScenarioName 'AdoptTemplate' `
+            -RepoRoot $script:EscapeRoot
+
+        $fingerprint.LoadedFiles.Path | Should -Contain '.github/skills/test/contained-skill/SKILL.md'
+        $fingerprint.LoadedFiles.Path | Should -Not -Contain '.github/skills/test/outside.py'
+    }
+}
+
 Describe '@adr-creation activation harness emits Pester runner artifacts' -Tag 'Unit' {
     It 'logs/pester-summary.json exists after this suite is invoked via Invoke-PesterTests.ps1' {
         $summaryPath = Join-Path $script:RepoRoot 'logs/pester-summary.json'

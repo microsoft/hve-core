@@ -1626,3 +1626,51 @@ stimuli:
         name: instruction-engagement-reporting-terminology-confor-c0fa4f5c
         config:
           pattern: '(?i)(do not|not|leave|preserve).{0,60}(change|modify|source|record)'
+
+  - name: instruction-hve-core-location-artifact-root-resolution
+    prompt: |
+      An installed HVE Core artifact refers to an operational path beginning
+      with `.github/`, but the consumer workspace does not contain the HVE
+      Core source tree. Which instruction governs path resolution, and what
+      location must be resolved before attempting a workspace-relative lookup?
+    tags:
+      category: behavior-conformance
+      instruction: hve-core-location
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: hve-location-instruction
+        config:
+          pattern: '(?i)hve-core-location\.instructions\.md|HVE Core Location Guidance'
+      - type: output-matches
+        name: hve-location-artifact-root-first
+        config:
+          pattern: '(?is)(artifact root).{0,160}(before|prior).{0,100}(workspace|lookup|resolve)'
+      - type: output-matches
+        name: hve-location-distribution-contexts
+        config:
+          pattern: '(?i)(repository|extension|plugin)'
+
+  - name: instruction-mural-log-hygiene-redaction-boundary
+    prompt: |
+      You are troubleshooting Mural automation and receive a log line that may
+      contain an authorization header and an Azure Blob SAS query string.
+      Which instruction governs operator handling, and what may be copied into
+      chat or a planning artifact?
+    tags:
+      category: behavior-conformance
+      instruction: mural-log-hygiene
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: mural-log-hygiene-instruction
+        config:
+          pattern: '(?i)mural-log-hygiene\.instructions\.md|Mural Log Hygiene'
+      - type: output-matches
+        name: mural-log-hygiene-no-raw-secrets
+        config:
+          pattern: '(?is)(never|must not|do not).{0,120}(raw|authorization|bearer|SAS|token)'
+      - type: output-matches
+        name: mural-log-hygiene-redacted-evidence
+        config:
+          pattern: '(?is)(_redact|redact|masked).{0,120}(evidence|log|output|copy)'

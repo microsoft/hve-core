@@ -51,7 +51,7 @@ RAI collision resolution: The active-mode base path is unsuffixed. If it is occu
 
 ### Available Frameworks
 
-All frameworks resolve to reference files inside the single `rai-standards` skill (`.github/skills/rai/rai-standards/`).
+All frameworks resolve to reference files owned by the `rai-standards` skill.
 
 * nist-ai-rmf-govern
 * nist-ai-rmf-map

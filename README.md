@@ -1,8 +1,8 @@
 ---
 title: HVE Core
-description: Hypervelocity Engineering prompt library for GitHub Copilot with convention-driven AI workflows and validated artifacts
+description: Agentic SDLC framework for context management, governance, shift-left engineering, reusable organizational knowledge, and consistent practices across teams
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-09-23
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -19,6 +19,7 @@ estimated_reading_time: 3
 
 <!-- markdownlint-disable MD013 -->
 [![CI Status](https://github.com/microsoft/hve-core/actions/workflows/release-stable.yml/badge.svg)](https://github.com/microsoft/hve-core/actions/workflows/release-stable.yml)
+[![Main SBOM](https://github.com/microsoft/hve-core/actions/workflows/dependency-review.yml/badge.svg?branch=main)](https://github.com/microsoft/hve-core/actions/workflows/dependency-review.yml?query=branch%3Amain)
 [![CodeQL](https://github.com/microsoft/hve-core/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/microsoft/hve-core/actions/workflows/codeql-analysis.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/microsoft/hve-core/badge)](https://scorecard.dev/viewer/?uri=github.com/microsoft/hve-core)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11795/badge)](https://www.bestpractices.dev/projects/11795)
@@ -26,9 +27,13 @@ estimated_reading_time: 3
 [![Documentation](https://img.shields.io/badge/docs-microsoft.github.io%2Fhve--core-blue)](https://microsoft.github.io/hve-core/)
 <!-- markdownlint-enable MD013 -->
 
-HVE Core helps teams ship faster with GitHub Copilot by combining specialized agents, reusable prompts, coding instructions, and validated skills into one workflow system.
+HVE Core is a highly opinionated agentic software development lifecycle (SDLC) framework. Its core value lies in context management, governance, reusable organizational knowledge, and consistent engineering practices across teams
 
-Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned, and scalable across individuals and teams. HVE Core provides structured AI workflow building blocks:
+HVE Core encodes engineering patterns into the workflow itself so they become part of the development process. Skills and workflows make expertise reusable by systematically bringing security requirements, approximately 80 standards, compliance processes, architecture reviews, and organizational practices into engineering work.
+
+The central principle driving HVE Core is **"AI carries the rules, humans keep the judgment."** AI carries relevant context, standards, and process guidance through the workflow. People remain responsible for judgment, tradeoffs, review, and decision-making.
+
+HVE Core provides structured workflow building blocks:
 
 * Agents for specialized tasks such as research, planning, implementation, and review
 * Prompts for repeatable workflow entry points
@@ -52,21 +57,14 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 3. Select **RPI Agent** from the agent picker or run `/rpi`, then describe the task you want to complete.
 
 > [!TIP]
-> Using GitHub Copilot CLI? Choose a marketplace source:
->
-> * Ref-less current `main`: `microsoft/hve-core`
-> * Moving reviewed channels: `microsoft/hve-core#release/prerelease` and `microsoft/hve-core#release/stable`
-> * Immutable exact releases: `microsoft/hve-core#prerelease-v<version>` and `microsoft/hve-core#v<version>`
->
-> For example, register the development tip and install the HVE Core plugin:
+> Using GitHub Copilot CLI? Register the consolidated HVE Core marketplace and
+> install its plugin:
 >
 > ```bash
 > copilot plugin marketplace add microsoft/hve-core
 > copilot plugin install hve-core@hve-core
 > ```
 >
-> Reviewed source moves from `main` to `release/prerelease` to `release/stable`.
-> Switching registrations can require removing and re-adding the marketplace.
 > Duplicate same-name registration behavior can vary by Copilot CLI version. See
 > [CLI Plugins](docs/getting-started/methods/cli-plugins.md) for details.
 

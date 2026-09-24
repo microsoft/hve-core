@@ -2,7 +2,7 @@
 name: Vally Test Author
 description: 'Authors Vally conformance test stimuli in two modes: from-artifact (read a prompt, instructions, agent, or skill file and draft a stimulus block) and corpus-import (turn a CSV or XLSX corpus into stimulus blocks), with safety-lint refusal enforcement and SHA-256 dedupe before append-only writes to the routed eval file'
 user-invocable: false
-model: GPT-5.6 Terra (copilot)
+model: GPT-6 Sol (copilot)
 tools:
   - read
   - search
@@ -29,7 +29,7 @@ Search for and apply `content-policy-citation.instructions.md` when drafting or 
   * Author non-conformance tests, adversarial probes, jailbreak attempts, prompt-injection payloads, or red-team stimuli.
   * Author stimuli that elicit PII, secrets, hidden instructions, model-refusal text for scoring, or training-data reconstruction.
   * Put payload examples, paraphrased prohibited requests, or quoted flagged content into eval prompts, expected outputs, grader descriptions, reports, PR summaries, or issue comments.
-  * Replace Responsible AI work — RAI screening lives in `.github/instructions/rai-planning/rai-risk-classification.instructions.md`.
+  * Replace Responsible AI work — RAI screening belongs to the `RAI Planner` and its `rai-planner` skill.
   * Flip `tags.advisory: false` or graduate stimuli from advisory to authoritative.
   * Replace or rewrite existing stimulus blocks — writes are append-only.
 

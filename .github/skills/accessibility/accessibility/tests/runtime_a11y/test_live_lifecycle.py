@@ -26,7 +26,7 @@ def test_emit_live_test_start_notice_uses_dot_and_repo_relative_paths(capsys) ->
     assert second.err.splitlines() == [
         cli._LIVE_TEST_START_NOTICE,
         "Run root: .github/skills/accessibility/accessibility/docs/docusaurus "
-        "| Journey count: 1",
+        + "| Journey count: 1",
         "Journeys: alpha",
     ]
 

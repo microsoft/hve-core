@@ -21,9 +21,10 @@ Produce an evaluation dataset and its supporting documentation that measure whet
 2. Present a structured summary of what you heard and obtain explicit confirmation before generating anything.
 3. Derive the difficulty distribution from the confirmed scope, adjusting the defaults when the system's risk profile warrants it.
 4. Generate the dataset against the contract template in both machine-readable forms.
-5. Walk a representative sample through the user, gather consolidated feedback, and revise before finalizing the full set.
-6. Produce one sectioned evaluation guide containing curation notes, metric selection with rationale, and tooling recommendations.
-7. Route every durable write through the workstream's scan gate before it lands in a customer location.
+5. Validate the JSON and CSV pair with `uv run python scripts/validate_evaluation_dataset.py --json <dataset.json> --csv <dataset.csv>` before treating machine facts as evidence.
+6. Walk a representative sample through the user, gather consolidated feedback, and revise before finalizing the full set.
+7. Produce one sectioned evaluation guide containing curation notes, metric selection with rationale, and tooling recommendations.
+8. Route every durable write through the workstream's scan gate before it lands in a customer location.
 
 ## Current Evaluator Research
 
@@ -89,6 +90,8 @@ This skill covers evaluation of AI systems whose output is a response: assistant
 | [provenance.md](references/provenance.md)                                           | Read for source, licensing, and currency posture on external evaluator vocabulary                 |
 | [evaluation-dataset-contract.md](templates/evaluation-dataset-contract.md)          | Copy as the dataset's machine-readable shape                                                      |
 | [supporting-documents.md](templates/supporting-documents.md)                        | Copy as the single sectioned evaluation-guide skeleton                                            |
+| [evaluation-dataset-v1.schema.json](assets/evaluation-dataset-v1.schema.json)       | Execute through the validator to check the version 1.0.0 JSON contract                            |
+| [validate_evaluation_dataset.py](scripts/validate_evaluation_dataset.py)            | Execute against sibling JSON and CSV files before using their machine facts as evidence           |
 
 ## Attribution
 

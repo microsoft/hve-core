@@ -53,14 +53,14 @@ Output saves to `.copilot-tracking/pr/pr-reference.xml` by default.
 
 ## Parameters Reference
 
-| Parameter          | Flag (bash)      | Flag (PowerShell)      | Default                                    | Description                                                        |
-|--------------------|------------------|------------------------|--------------------------------------------|--------------------------------------------------------------------|
-| Base branch        | `--base-branch`  | `-BaseBranch`          | `origin/main` (bash) / `main` (PowerShell) | Target branch for comparison. Use `auto` to detect remote default. |
-| Merge base         | `--merge-base`   | `-MergeBase`           | false                                      | Use `git merge-base` for three-way comparison                      |
-| Exclude markdown   | `--no-md-diff`   | `-ExcludeMarkdownDiff` | false                                      | Exclude markdown files (*.md) from the diff                        |
-| Exclude extensions | `--exclude-ext`  | `-ExcludeExt`          | (none)                                     | Comma-separated extensions to exclude (e.g., `yml,yaml,json,png`)  |
-| Exclude paths      | `--exclude-path` | `-ExcludePath`         | (none)                                     | Comma-separated path prefixes to exclude (e.g., `docs/,.github/`)  |
-| Output path        | `--output`       | `-OutputPath`          | `.copilot-tracking/pr/pr-reference.xml`    | Custom output file path                                            |
+| Parameter          | Flag (bash)      | Flag (PowerShell)      | Default                                    | Description                                                                                                |
+|--------------------|------------------|------------------------|--------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| Base branch        | `--base-branch`  | `-BaseBranch`          | `origin/main` (bash) / `main` (PowerShell) | Target branch for comparison. Use `auto` to detect remote default.                                         |
+| Merge base         | `--merge-base`   | `-MergeBase`           | false                                      | Use `git merge-base` for three-way comparison                                                              |
+| Exclude markdown   | `--no-md-diff`   | `-ExcludeMarkdownDiff` | false                                      | Exclude markdown files (*.md) from the diff                                                                |
+| Exclude extensions | `--exclude-ext`  | `-ExcludeExt`          | (none)                                     | Comma-separated extensions to exclude (e.g., `yml,yaml,json,png`)                                          |
+| Exclude paths      | `--exclude-path` | `-ExcludePath`         | (none)                                     | Comma-separated path prefixes to exclude (for example, documentation and GitHub configuration directories) |
+| Output path        | `--output`       | `-OutputPath`          | `.copilot-tracking/pr/pr-reference.xml`    | Custom output file path                                                                                    |
 
 Both defaults resolve to the same remote comparison. The PowerShell script automatically resolves `origin/<branch>` when a bare branch name is provided.
 

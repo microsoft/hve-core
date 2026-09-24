@@ -102,8 +102,8 @@ changes the resulting pull request.
 Resolve templates in this order:
 
 1. A caller-specified template
-2. `.github/PULL_REQUEST_TEMPLATE.md` or `.github/pull_request_template.md`
-3. A single Markdown template under `.github/PULL_REQUEST_TEMPLATE/`
+2. `<repository-root>/.github/PULL_REQUEST_TEMPLATE.md` or `<repository-root>/.github/pull_request_template.md`
+3. A single Markdown template under `<repository-root>/.github/PULL_REQUEST_TEMPLATE/`
 4. `docs/PULL_REQUEST_TEMPLATE.md` or `docs/pull_request_template.md`
 5. `templates/pull-request.md` in this skill
 

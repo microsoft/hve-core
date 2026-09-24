@@ -8,32 +8,6 @@ on:
       - main
     types:
       - completed
-  workflow_dispatch:
-    inputs:
-      final-run-id:
-        description: Orchestrator run that uploaded the accepted final aggregate
-        required: true
-        type: string
-      final-artifact-id:
-        description: Exact immutable final artifact ID from the reducer summary
-        required: true
-        type: string
-      final-digest:
-        description: Expected canonical SHA-256 digest of the final aggregate
-        required: true
-        type: string
-      sweep-id:
-        description: Expected immutable sweep ID
-        required: true
-        type: string
-      snapshot-digest:
-        description: Expected immutable snapshot digest
-        required: true
-        type: string
-      source-sha:
-        description: Expected orchestrator source revision
-        required: true
-        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.repository_id }}
@@ -44,7 +18,7 @@ permissions: {}
 jobs:
   discover:
     name: Discover terminal publication input
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -56,14 +30,9 @@ jobs:
       sweep-id: ${{ steps.discover.outputs.sweep-id }}
       source-sha: ${{ steps.discover.outputs.source-sha }}
     steps:
-      - name: Resolve manual or completed-run input
+      - name: Resolve completed-run input
         id: discover
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          FINAL_RUN_ID: ${{ inputs.final-run-id }}
-          FINAL_ARTIFACT_ID: ${{ inputs.final-artifact-id }}
-          SWEEP_ID: ${{ inputs.sweep-id }}
-          SOURCE_SHA: ${{ inputs.source-sha }}
         with:
           script: |
             const parsePositiveInteger = (name, value) => {
@@ -71,11 +40,7 @@ jobs:
               if (!Number.isSafeInteger(parsed) || parsed <= 0) throw new Error(`${name} must be a positive safe integer`);
               return parsed;
             };
-            const automaticRunId = context.payload.workflow_run?.id;
-            const manualReplay = !automaticRunId;
-            const finalRunId = manualReplay
-              ? parsePositiveInteger("final-run-id", process.env.FINAL_RUN_ID)
-              : parsePositiveInteger("final-run-id", String(automaticRunId));
+            const finalRunId = parsePositiveInteger("final-run-id", String(context.payload.workflow_run?.id));
             const { data: run } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: finalRunId });
             const { data: repository } = await github.rest.repos.get({ ...context.repo });
             const { data: defaultRef } = await github.rest.git.getRef({
@@ -85,14 +50,6 @@ jobs:
             if (run.path !== ".github/workflows/backlog-groom-orchestrator.yml" ||
                 run.head_branch !== repository.default_branch || run.head_sha !== defaultRef.object.sha) {
               throw new Error("Publication requires the current default-branch orchestrator revision");
-            }
-            if (manualReplay) {
-              core.setOutput("terminal", "true");
-              core.setOutput("final-run-id", String(finalRunId));
-              core.setOutput("final-artifact-id", String(parsePositiveInteger("final-artifact-id", process.env.FINAL_ARTIFACT_ID)));
-              core.setOutput("sweep-id", process.env.SWEEP_ID);
-              core.setOutput("source-sha", process.env.SOURCE_SHA);
-              return;
             }
             const artifacts = await github.paginate(
               github.rest.actions.listWorkflowRunArtifacts,
@@ -166,9 +123,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           FINAL_RUN_ID: ${{ steps.authenticate.outputs.final-run-id }}
-          FINAL_DIGEST: ${{ inputs.final-digest }}
           SWEEP_ID: ${{ steps.authenticate.outputs.sweep-id }}
-          SNAPSHOT_DIGEST: ${{ inputs.snapshot-digest }}
           SOURCE_SHA: ${{ steps.authenticate.outputs.source-sha }}
         with:
           script: |
@@ -187,29 +142,29 @@ jobs:
             const aggregateKeys = [
               "schema_version", "sweep_id", "snapshot_digest", "source_sha", "completed_at",
               "predecessor_aggregate_digest",
-              "total_snapshot_count", "completed_waves", "assessed", "deferred", "prior_cursor",
+              "total_snapshot_count", "completed_waves", "assessed", "deferred", "contract_errors", "prior_cursor",
               "next_cursor", "stop_reason", "planned_sweep_aic",
-              "checkpoint_digests", "rows", "aggregate_digest",
+              "checkpoint_digests", "rows", "contract_error_issue_ids", "contract_error_details",
+              "normalizations", "aggregate_digest",
             ];
             const aggregate = JSON.parse(fs.readFileSync("final-input/aggregate.json", "utf8"));
             const { aggregate_digest: recordedDigest, ...material } = aggregate;
             if (!/^[a-f0-9]{64}$/.test(process.env.SWEEP_ID) ||
-                (process.env.FINAL_DIGEST && !/^[a-f0-9]{64}$/.test(process.env.FINAL_DIGEST)) ||
-                (process.env.SNAPSHOT_DIGEST && !/^[a-f0-9]{64}$/.test(process.env.SNAPSHOT_DIGEST)) ||
                 !/^[a-f0-9]{40}$/.test(process.env.SOURCE_SHA)) {
               throw new Error("Publisher digest or source revision input has an invalid format");
             }
             if (!exactKeys(aggregate, aggregateKeys) || digest(material) !== recordedDigest ||
-                (process.env.FINAL_DIGEST && recordedDigest !== process.env.FINAL_DIGEST) ||
-                aggregate.schema_version !== "backlog-grooming-sweep-aggregate/v1" ||
+                aggregate.schema_version !== "backlog-grooming-sweep-aggregate/v2" ||
                 aggregate.sweep_id !== process.env.SWEEP_ID ||
-                (process.env.SNAPSHOT_DIGEST && aggregate.snapshot_digest !== process.env.SNAPSHOT_DIGEST) ||
                 aggregate.source_sha !== process.env.SOURCE_SHA ||
                 (aggregate.predecessor_aggregate_digest !== null &&
                  !/^[a-f0-9]{64}$/.test(aggregate.predecessor_aggregate_digest)) ||
-                aggregate.assessed + aggregate.deferred !== aggregate.total_snapshot_count ||
+                aggregate.assessed + aggregate.deferred + aggregate.contract_errors !== aggregate.total_snapshot_count ||
+                aggregate.contract_errors !== 0 ||
                 aggregate.checkpoint_digests.length !== aggregate.completed_waves ||
-                aggregate.rows.length !== aggregate.total_snapshot_count) {
+                aggregate.rows.length !== aggregate.assessed + aggregate.deferred ||
+                aggregate.contract_error_issue_ids.length !== aggregate.contract_errors ||
+                aggregate.contract_error_details.length !== aggregate.contract_errors) {
               throw new Error("Final sweep aggregate failed trusted publication validation");
             }
             const marker = "<!-- gh-aw:backlog-grooming-tracker -->";
@@ -356,9 +311,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           FINAL_RUN_ID: ${{ steps.authenticate.outputs.final-run-id }}
-          FINAL_DIGEST: ${{ inputs.final-digest }}
           SWEEP_ID: ${{ steps.authenticate.outputs.sweep-id }}
-          SNAPSHOT_DIGEST: ${{ inputs.snapshot-digest }}
           SOURCE_SHA: ${{ steps.authenticate.outputs.source-sha }}
         with:
           script: |
@@ -386,29 +339,29 @@ jobs:
             const aggregateKeys = [
               "schema_version", "sweep_id", "snapshot_digest", "source_sha", "completed_at",
               "predecessor_aggregate_digest",
-              "total_snapshot_count", "completed_waves", "assessed", "deferred", "prior_cursor",
+              "total_snapshot_count", "completed_waves", "assessed", "deferred", "contract_errors", "prior_cursor",
               "next_cursor", "stop_reason", "planned_sweep_aic",
-              "checkpoint_digests", "rows", "aggregate_digest",
+              "checkpoint_digests", "rows", "contract_error_issue_ids", "contract_error_details",
+              "normalizations", "aggregate_digest",
             ];
             const aggregate = JSON.parse(fs.readFileSync("final-input/aggregate.json", "utf8"));
             const { aggregate_digest: recordedDigest, ...material } = aggregate;
             if (!/^[a-f0-9]{64}$/.test(process.env.SWEEP_ID) ||
-                (process.env.FINAL_DIGEST && !/^[a-f0-9]{64}$/.test(process.env.FINAL_DIGEST)) ||
-                (process.env.SNAPSHOT_DIGEST && !/^[a-f0-9]{64}$/.test(process.env.SNAPSHOT_DIGEST)) ||
                 !/^[a-f0-9]{40}$/.test(process.env.SOURCE_SHA)) {
               throw new Error("Publisher digest or source revision input has an invalid format");
             }
             if (!exactKeys(aggregate, aggregateKeys) || digest(material) !== recordedDigest ||
-                (process.env.FINAL_DIGEST && recordedDigest !== process.env.FINAL_DIGEST) ||
-                aggregate.schema_version !== "backlog-grooming-sweep-aggregate/v1" ||
+                aggregate.schema_version !== "backlog-grooming-sweep-aggregate/v2" ||
                 aggregate.sweep_id !== process.env.SWEEP_ID ||
-                (process.env.SNAPSHOT_DIGEST && aggregate.snapshot_digest !== process.env.SNAPSHOT_DIGEST) ||
                 aggregate.source_sha !== process.env.SOURCE_SHA ||
                 (aggregate.predecessor_aggregate_digest !== null &&
                  !/^[a-f0-9]{64}$/.test(aggregate.predecessor_aggregate_digest)) ||
-                aggregate.assessed + aggregate.deferred !== aggregate.total_snapshot_count ||
+                aggregate.assessed + aggregate.deferred + aggregate.contract_errors !== aggregate.total_snapshot_count ||
+                aggregate.contract_errors !== 0 ||
                 aggregate.checkpoint_digests.length !== aggregate.completed_waves ||
-                aggregate.rows.length !== aggregate.total_snapshot_count) {
+                aggregate.rows.length !== aggregate.assessed + aggregate.deferred ||
+                aggregate.contract_error_issue_ids.length !== aggregate.contract_errors ||
+                aggregate.contract_error_details.length !== aggregate.contract_errors) {
               throw new Error("Final sweep aggregate failed trusted publication validation");
             }
             const reportsBranch = "backlog-grooming-reports";

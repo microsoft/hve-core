@@ -155,8 +155,8 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             $script:Summary.plannedCommands.Count | Should -Be 6
         }
 
-        It 'Selects gpt-5.6-luna as the primary ci model' {
-            $script:Summary.model | Should -Be 'gpt-5.6-luna'
+        It 'Selects gpt-6-luna as the primary ci model' {
+            $script:Summary.model | Should -Be 'gpt-6-luna'
         }
 
         It 'Gives every model its own customized skill directory' {
@@ -165,7 +165,7 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             # did not build, so the comparison would not be attributable to the model.
             $customized = @($script:Summary.plannedCommands | Where-Object { $_ -match 'customized/eval\.yaml' })
             $customized.Count | Should -Be 2
-            foreach ($model in @('gpt-5.6-luna', 'claude-sonnet-5')) {
+            foreach ($model in @('gpt-6-luna', 'claude-sonnet-5')) {
                 $line = @($customized | Where-Object { $_ -match "--model $([regex]::Escape($model)) " })
                 $line.Count | Should -Be 1
                 $line[0] | Should -Match ('--skill-dir "[^"]*[/\\]' + [regex]::Escape($model) + '[/\\][^"/\\]+[/\\]customized-skill-dir"')
@@ -218,7 +218,7 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             $evalModels = @($script:Summary.plannedCommands |
                     Where-Object { $_ -match '^vally eval ' } |
                     ForEach-Object { [regex]::Match($_, '--model (\S+) ').Groups[1].Value })
-            ($evalModels -join ',') | Should -BeExactly 'gpt-5.6-luna,gpt-5.6-luna,claude-sonnet-5,claude-sonnet-5'
+            ($evalModels -join ',') | Should -BeExactly 'gpt-6-luna,gpt-6-luna,claude-sonnet-5,claude-sonnet-5'
         }
 
         It 'Plans only one model when calibration is isolated' {
@@ -233,7 +233,7 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
             $summary = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
             $summary.model | Should -Be 'claude-sonnet-5'
             $summary.plannedCommands | Should -HaveCount 3
-            ($summary.plannedCommands -join "`n") | Should -Not -Match 'gpt-5\.6-luna'
+            ($summary.plannedCommands -join "`n") | Should -Not -Match 'gpt-6-luna'
         }
     }
 
@@ -305,12 +305,12 @@ Describe 'Invoke-BaselineEquivalence.ps1 (dry-run)' -Tag 'Unit' {
                 -WhatIf *> $null
 
             $summary = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
-            $summary.model | Should -Be 'gpt-5.6-luna'
+            $summary.model | Should -Be 'gpt-6-luna'
             $summary.plannedCommands.Count | Should -Be 6
             $evalModels = @($summary.plannedCommands |
                     Where-Object { $_ -match '^vally eval ' } |
                     ForEach-Object { [regex]::Match($_, '--model (\S+) ').Groups[1].Value })
-            ($evalModels -join ',') | Should -BeExactly 'gpt-5.6-luna,gpt-5.6-luna,claude-sonnet-5,claude-sonnet-5'
+            ($evalModels -join ',') | Should -BeExactly 'gpt-6-luna,gpt-6-luna,claude-sonnet-5,claude-sonnet-5'
         }
     }
 
@@ -499,7 +499,7 @@ Describe 'Test-CustomizedInvocationRetryEligibility' -Tag 'Unit' {
     BeforeEach {
         $script:RetryArgs = @{
             Tier = 'calibration'
-            Model = 'gpt-5.6-luna'
+            Model = 'gpt-6-luna'
             Attempt = 1
             BaselineHasSignal = $true
             BaselineStructural = 0
@@ -634,10 +634,10 @@ Describe 'Resolve-ModelList' -Tag 'Unit' {
         . $script:ScriptPath
     }
 
-    It 'Uses GPT-5.6 Luna as the low-cost PR default' {
+    It 'Uses GPT-6 Luna as the low-cost PR default' {
         $models = Resolve-ModelList -Tier 'devloop' -Hint '' -ModelOverride ''
 
-        $models | Should -Be @('gpt-5.6-luna')
+        $models | Should -Be @('gpt-6-luna')
     }
 
     It 'Selects the fixed pair for <SelectedTier> despite a hint and override' -ForEach @(
@@ -647,11 +647,11 @@ Describe 'Resolve-ModelList' -Tag 'Unit' {
         $models = @(Resolve-ModelList -Tier $SelectedTier -Hint 'hint-model' -ModelOverride 'override-model')
 
         $models | Should -HaveCount 2
-        ($models -join ',') | Should -BeExactly 'gpt-5.6-luna,claude-sonnet-5'
+        ($models -join ',') | Should -BeExactly 'gpt-6-luna,claude-sonnet-5'
     }
 
     It 'Selects only the requested fixed calibration model for <SelectedModel>' -ForEach @(
-        @{ SelectedModel = 'gpt-5.6-luna' }
+        @{ SelectedModel = 'gpt-6-luna' }
         @{ SelectedModel = 'claude-sonnet-5' }
     ) {
         $models = @(Resolve-ModelList -Tier 'calibration' -Hint 'hint-model' -ModelOverride 'override-model' -CalibrationModel $SelectedModel)
@@ -753,7 +753,7 @@ exit $ExitCode
             -Arguments @('-NoProfile', '-File', $script:CaptureStub, '2200', '7') `
             -LogPath $script:CaptureLog `
             -Phase 'compare' `
-            -Worker 'gpt-5.6-luna' `
+            -Worker 'gpt-6-luna' `
             -HeartbeatIntervalSeconds 1
 
         $result.ExitCode | Should -Be 7
@@ -769,10 +769,10 @@ exit $ExitCode
         $heartbeats = @($hostMessages | Where-Object { $_ -like 'Vally progress: event=heartbeat*' })
         $heartbeats.Count | Should -BeGreaterOrEqual 1
         foreach ($heartbeat in $heartbeats) {
-            $heartbeat | Should -Match '^Vally progress: event=heartbeat phase=compare worker=gpt-5\.6-luna attempt=1 elapsedSeconds=\d+ exitCategory=unknown$'
+            $heartbeat | Should -Match '^Vally progress: event=heartbeat phase=compare worker=gpt-6-luna attempt=1 elapsedSeconds=\d+ exitCategory=unknown$'
         }
-        @($hostMessages | Where-Object { $_ -match '^Vally progress: event=phase-start phase=compare worker=gpt-5\.6-luna attempt=1 elapsedSeconds=0 exitCategory=unknown$' }) | Should -HaveCount 1
-        @($hostMessages | Where-Object { $_ -match '^Vally progress: event=phase-complete phase=compare worker=gpt-5\.6-luna attempt=1 elapsedSeconds=\d+ exitCategory=unknown$' }) | Should -HaveCount 1
+        @($hostMessages | Where-Object { $_ -match '^Vally progress: event=phase-start phase=compare worker=gpt-6-luna attempt=1 elapsedSeconds=0 exitCategory=unknown$' }) | Should -HaveCount 1
+        @($hostMessages | Where-Object { $_ -match '^Vally progress: event=phase-complete phase=compare worker=gpt-6-luna attempt=1 elapsedSeconds=\d+ exitCategory=unknown$' }) | Should -HaveCount 1
     }
 
     It 'Terminates the child process tree when interrupted' {
@@ -936,7 +936,7 @@ defaults:
         $calls = @(Get-Content -LiteralPath $env:STUB_VALLY_CALL_LOG | ForEach-Object { , ($_ | ConvertFrom-Json) })
         $evalModels = @($calls | Where-Object { $_[0] -eq 'eval' } |
                 ForEach-Object { $_[([Array]::IndexOf([object[]]$_, '--model') + 1)] })
-        ($evalModels -join ',') | Should -BeExactly 'gpt-5.6-luna,gpt-5.6-luna,claude-sonnet-5,claude-sonnet-5'
+        ($evalModels -join ',') | Should -BeExactly 'gpt-6-luna,gpt-6-luna,claude-sonnet-5,claude-sonnet-5'
     }
 
     It 'Caches a healthy baseline even when the CLI emits output' {
@@ -971,7 +971,7 @@ defaults:
             $diagnostic.erroredTrials | Should -Be 1
             $diagnostic.errors[0].category | Should -Be 'model-unavailable'
         }
-        @($summary.executionDiagnostics.model | Sort-Object -Unique) | Should -Be @('claude-sonnet-5', 'gpt-5.6-luna')
+        @($summary.executionDiagnostics.model | Sort-Object -Unique) | Should -Be @('claude-sonnet-5', 'gpt-6-luna')
         @($summary.executionDiagnostics.variant | Sort-Object -Unique) | Should -Be @('baseline', 'customized')
         $text | Should -Not -Match 'synthetic-private|example\.invalid|Bearer'
         $summary.invocationFailures | Should -BeGreaterThan 0
@@ -1027,7 +1027,7 @@ defaults:
             -NoBaselineCache *> $null
 
         $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
-        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-5.6-luna' })
+        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-6-luna' })
         $calls = @(Get-Content -LiteralPath $env:STUB_VALLY_CALL_LOG | ForEach-Object { , ($_ | ConvertFrom-Json) })
         $baselineCalls = @($calls | Where-Object { $_[0] -eq 'eval' -and $_[2] -match '[/\\]baseline[/\\]' })
         $customizedCalls = @($calls | Where-Object { $_[0] -eq 'eval' -and $_[2] -match '[/\\]customized[/\\]' })
@@ -1035,7 +1035,7 @@ defaults:
         $gptAttempts.Count | Should -Be 2
         $gptAttempts[0].reasonCode | Should -Be 'failed-tool-result'
         $gptAttempts[1].hasCompleteEvidence | Should -BeTrue
-        $executionAttempts = @($summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-5.6-luna' -and $_.variant -eq 'customized' })
+        $executionAttempts = @($summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-6-luna' -and $_.variant -eq 'customized' })
         $executionAttempts.attempt | Should -Be @(1, 2)
         $summary.invocationFailures | Should -Be 0
         $baselineCalls.Count | Should -Be 2
@@ -1056,8 +1056,8 @@ defaults:
             -NoBaselineCache *> $null
 
         $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
-        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-5.6-luna' })
-        $executionAttempts = @($summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-5.6-luna' -and $_.variant -eq 'customized' })
+        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-6-luna' })
+        $executionAttempts = @($summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-6-luna' -and $_.variant -eq 'customized' })
 
         $gptAttempts.Count | Should -Be 2
         $executionAttempts.attempt | Should -Be @(1, 2)
@@ -1082,7 +1082,7 @@ defaults:
             -NoBaselineCache *> $null
 
         $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
-        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-5.6-luna' })
+        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-6-luna' })
 
         $gptAttempts.Count | Should -Be 1
         $gptAttempts[0].reasonCode | Should -Be 'no-exact-read'
@@ -1104,13 +1104,13 @@ defaults:
             -NoBaselineCache *> $null
 
         $summary = Get-Content -LiteralPath $script:StubOutputPath -Raw | ConvertFrom-Json
-        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-5.6-luna' })
+        $gptAttempts = @($summary.invocationEvidence | Where-Object { $_.model -eq 'gpt-6-luna' })
 
         $gptAttempts.Count | Should -Be 2
         $gptAttempts[0].reasonCode | Should -Be 'failed-tool-result'
         $gptAttempts[1].observed | Should -Be 0
         $gptAttempts[1].failedKey | Should -BeNullOrEmpty
-        $retryDiagnostic = $summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-5.6-luna' -and $_.variant -eq 'customized' -and $_.attempt -eq 2 }
+        $retryDiagnostic = $summary.executionDiagnostics | Where-Object { $_.model -eq 'gpt-6-luna' -and $_.variant -eq 'customized' -and $_.attempt -eq 2 }
         $retryDiagnostic.exitCode | Should -Be 99
         $retryDiagnostic.resultState | Should -Be 'missing'
         $retryDiagnostic.trialRecords | Should -Be 0

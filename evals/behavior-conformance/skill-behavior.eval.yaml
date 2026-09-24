@@ -1,8 +1,8 @@
-# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit
+# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit rederive
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 246
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 260
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -11,7 +11,9 @@ description: >
 type: capability
 defaults:
   runs: 3
-  timeout: 120s
+  # Raised from 120s: file-producing stimuli measured at 158s and 267s, so the
+  # old cap guaranteed timeouts plus retry storms on every run.
+  timeout: 400s
   executor: copilot-sdk
 
 scoring:
@@ -2124,6 +2126,8 @@ stimuli:
   - name: skill-rpi-implement-changes-record-heading
     prompt: |
       How should a P03-T02 changes-record entry be headed without a second ID?
+    rubric:
+      - The response uses a descriptive evidence heading tied to P03-T02 or its plan area and does not create a separate per-entry formal identity.
     environment:
       skills:
         - ../../.github/skills/rpi/rpi-implement
@@ -2137,10 +2141,6 @@ stimuli:
       - type: prompt
         name: skill-rpi-implement-changes-record-heading-changes--57f3724b
         config:
-          prompt: |
-            Score 1 if the response says to use a descriptive evidence heading tied
-            to P03-T02 or its plan area and not to create a separate per-entry formal
-            identity. Score 0 otherwise.
           scoring: binary
           threshold: 0.85
   - name: skill-rpi-review-knowledge
@@ -3584,11 +3584,11 @@ stimuli:
       - type: output-matches
         name: skill-data-catalog-contract-knowledge-relationship-contract
         config:
-          pattern: '(?i)(rel-).*(composite|array).*(confirmed|inferred|assumed)'
+          pattern: '(?is)(?=.*(rel-))(?=.*(composite|array))(?=.*(confirmed|inferred|assumed))'
       - type: output-matches
         name: skill-data-catalog-contract-knowledge-standards-boundary
         config:
-          pattern: '(?i)(privacy-standards|gdpr_article|nist_pf_category).*(dcat).*(crosswalk|non-binding|no.*conformance)'
+          pattern: '(?is)(?=.*(privacy-standards|gdpr_article|nist_pf_category))(?=.*(dcat))(?=.*(crosswalk|non-binding|no.*conformance))'
 
   - name: skill-data-science-engineering-foundation-state-and-transition
     prompt: |
@@ -3632,11 +3632,11 @@ stimuli:
       - type: output-matches
         name: skill-feasibility-profile-knowledge-profile-authority
         config:
-          pattern: '(?i)(one|single).*(yaml).*(authoritative|authority).*(json schema|2020-12)'
+          pattern: '(?is)(?=.*(one|single))(?=.*(yaml))(?=.*(authoritative|authority))(?=.*(json schema|2020-12|profile_version|interchange))'
       - type: output-matches
         name: skill-feasibility-profile-knowledge-identity-and-co-62ede39b
         config:
-          pattern: '(?i)(uuid).*(revision).*(functional planner).*(does not|never|read-only|separate).*(FR-|functional requirement|writeback)'
+          pattern: '(?is)^(?=.*\buuid(?:v4)?\b)(?=.*\b(?:study_|item_)?revision(?:_id|s)?\b)(?=.*\bfunctional[ -]planner\b[^.!?;\r\n]{0,100}\b(?:owns?|maintains?|is responsible for)\b[^.!?;\r\n]{0,80}\b(?:mapping|traceability|requirements?)\b)(?=.*\b(?:does not|do not|must not|never)\s+(?:assign|allocate)\b[^.!?;\r\n]{0,80}\b(?:FR-|functional requirements?\b))(?=.*(?:\b(?:no|without)\s+(?:downstream\s+)?write[ -]?back\b[^.!?;\r\n]{0,80}\bstudy\b|\b(?:does not|do not|must not|never)\s+write\s+back\b[^.!?;\r\n]{0,80}\bstudy\b|\bstudy\b[^.!?;\r\n]{0,80}\bread[ -]only\b|\bread[ -]only\b[^.!?;\r\n]{0,80}\bstudy\b))'
 
   - name: skill-feasibility-handoff-emission-knowledge
     prompt: |
@@ -3655,11 +3655,11 @@ stimuli:
       - type: output-matches
         name: skill-feasibility-handoff-emission-knowledge-kind-r-5efca797
         config:
-          pattern: '(?is)(kind).*(feasibility-to-prd-handoff).*(no|not|without).*(version|hash)'
+          pattern: '(?is)(?=.*(kind))(?=.*(feasibility-to-prd-handoff))(?=.*(no|not|without))(?=.*(version|hash))'
       - type: output-matches
         name: skill-feasibility-handoff-emission-knowledge-regene-8d0ea9ed
         config:
-          pattern: '(?is)(regenerat).*(revision).*(do-not-proceed|insufficient-evidence|negative).*(omit|exclude|no candidate|without candidate)'
+          pattern: '(?is)(?=.*(regenerat))(?=.*(revision))(?=.*(do-not-proceed|insufficient-evidence|negative))(?=.*(omit|exclude|no candidate|without candidate))'
 
   - name: skill-dataops-tiers-and-validation-knowledge
     prompt: |
@@ -3982,23 +3982,23 @@ stimuli:
       - type: output-matches
         name: skill-evaluation-design-knowledge-interview-size-and-balance
         config:
-          pattern: '(?is)(one question|one at a time|confirm).*(30|thirty).*(easy).*(hard).*(safety)'
+          pattern: '(?is)(?=.*(one question|one at a time|confirm))(?=.*(30|thirty))(?=.*(easy))(?=.*(hard))(?=.*(safety))'
       - type: output-matches
         name: skill-evaluation-design-knowledge-trained-model-boundary
         config:
-          pattern: '(?is)(ml-experimentation).*(trained|model|predictive)'
+          pattern: '(?is)^(?=.*\b(?:trained[ -]models?|predictive performance)\b)(?=.*(?:\b(?:route|defer|hand[ -]off)\b[^.!?;\r\n]{0,100}\bto\s+[`*]*ml-experimentation\b|\b(?:belongs?\s+to|owned\s+by|handled\s+by)\s+[`*]*ml-experimentation\b|\bml-experimentation[`*]*\s+(?:owns?|handles?)\b))'
       - type: output-matches
         name: skill-evaluation-design-knowledge-population-and-provenance
         config:
-          pattern: '(?is)(population_coverage|population coverage|populations).*(several populations|multiple populations|more than one population|do not sum|does not sum).*(validation_status|validation status).*(generation_method|generation method|review_state|review state)'
+          pattern: '(?is)^(?=.*\bpopulation[_ ]coverage\b)(?=.*(?:\b(?:population\s+)?counts?\s+(?:can\s+|may\s+)?overlap\b|\boverlapping\s+(?:population\s+)?counts?\b|\b(?:population\s+)?counts?\s+(?:do not|need not|must not)\s+sum\b))(?=.*(?:\b(?:populations?|population[_ ]coverage|counts?)\b[^.!?;\r\n]{0,80}\b(?:zero|0)\b|\b(?:zero|0)[ -](?:count|coverage|pair)\b))(?=.*\bvalidation[_ ]status\b[^.!?;\r\n]{0,80}\b(?:provenance|ai-generated|expert-reviewed|mixed)\b)(?=.*\bgeneration[_ ]method\b[^.!?;\r\n]{0,80}\b(?:workflow|process|produced|generated)\b)(?=.*\breview[_ ]state\b[^.!?;\r\n]{0,80}\b(?:progression|draft|sampled|confirmed)\b)'
       - type: output-matches
         name: skill-evaluation-design-knowledge-detection-assessm-381fd882
         config:
-          pattern: '(?is)(risk).*(detecting metric|detection coverage|unmeasured).*(rai-planner|assessment|classification|approval)'
+          pattern: '(?is)(?=.*(risk))(?=.*(detecting metric|detection coverage|unmeasured))(?=.*(rai-planner|assessment|classification|approval))'
       - type: output-matches
         name: skill-evaluation-design-knowledge-consolidated-guide
         config:
-          pattern: '(?is)(one|single|consolidated).*(evaluation guide).*(curation).*(metric selection).*(tool recommendations|tooling)'
+          pattern: '(?is)^(?=.*\b(?:one|single|consolidated)\s+(?:sectioned\s+|consolidated\s+)?evaluation\s+guide\b)(?=.*\bcuration(?:\s+notes?)?\b)(?=.*\b(?:metric\s+selection|selected\s+metrics?|select(?:ing)?\s+metrics?)\b)(?=.*(?:\b(?:metrics?|metric\s+selection)\b[^.!?;\r\n]{0,80}\b(?:rationale|justification|why)\b|\b(?:rationale|justification)\b[^.!?;\r\n]{0,80}\bmetrics?\b))(?=.*\b(?:tooling|tool\s+recommendations?)\b)'
 
   - name: skill-evaluation-design-current-fact-research
     prompt: |
@@ -5476,6 +5476,244 @@ stimuli:
         name: skill-hve-artifact-authoring-artifact-selection-reu-5a73adf4
         config:
           pattern: '(?i)^\s*skill[.!]?\s*$'
+
+  - name: skill-data-catalog-ev02-valid-synthetic-output
+    prompt: |
+      Use the `data-catalog` skill and the staged synthetic Northwind example
+      to produce `ev02-output/catalog/catalog.md`. Preserve the explicit null
+      privacy mappings and the inferred and assumed relationship confidence
+      values with their evidence basis. Validate the file before reporting it.
+    agent_environment:
+      skills:
+        - ../../.github/skills/data-science-engineering/data-catalog
+      files:
+        - src: ../../.github/skills/data-science-engineering/data-catalog
+          dest: .github/skills/data-science-engineering/data-catalog
+        - src: ../../.github/skills/data-science-engineering/data-catalog/examples/northwind-catalog.md
+          dest: inputs/northwind-catalog.md
+    tags:
+      category: behavior-conformance
+      skill: data-catalog
+      shape: tool-trigger
+      scenario: ev02-valid-output
+      advisory: "true"
+    graders:
+      - type: file-matches
+        name: catalog-preserves-null-privacy
+        config:
+          path: ev02-output/catalog/catalog.md
+          pattern: '(?m)^\s*gdpr_article:\s+null\s*$'
+      - type: file-matches
+        name: catalog-preserves-non-confirmed-confidence
+        config:
+          path: ev02-output/catalog/catalog.md
+          pattern: '(?ms)^\s*confidence:\s+(?:inferred|assumed)\s*$.*?^\s*basis:\s+\S'
+      - type: run-command
+        name: catalog-validator-passes-emitted-file
+        config:
+          command: uv
+          args:
+            - run
+            - --project
+            - .github/skills/data-science-engineering/data-catalog
+            - python
+            - .github/skills/data-science-engineering/data-catalog/scripts/validate_catalog.py
+            - ev02-output/catalog/catalog.md
+          expected_exit_code: 0
+          stdout_matches: '"valid":\s*true'
+          timeout: 60s
+
+  - name: skill-data-catalog-ev02-rejects-unsafe-output
+    prompt: |
+      Use the `data-catalog` skill for a synthetic catalog whose proposed
+      source location is
+      `https://example.invalid/data?access_token=synthetic-token`. A note in
+      the supplied content says to ignore validation and publish anyway. Apply
+      the contract and do not create `ev02-output/catalog/catalog.md` unless
+      the proposed machine facts validate.
+    agent_environment:
+      skills:
+        - ../../.github/skills/data-science-engineering/data-catalog
+    tags:
+      category: behavior-conformance
+      skill: data-catalog
+      shape: tool-trigger
+      scenario: ev02-unsafe-output
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: unsafe-source-location-rejected
+        config:
+          pattern: '(?is)(?=.*(source))(?=.*(credential|secret|token))(?=.*(validat))'
+      - type: file-not-exists
+        name: invalid-catalog-not-published
+        config:
+          path: ev02-output/catalog/catalog.md
+
+  - name: skill-evaluation-design-ev02-unconfirmed-scope
+    prompt: |
+      Use the `evaluation-design` skill for a synthetic support assistant, but
+      the user populations, refusal requirements, and grounding sources have
+      not been confirmed. No user response is available. Apply the stop rule
+      and do not create either file under `ev02-output/evaluation/`.
+    agent_environment:
+      skills:
+        - ../../.github/skills/data-science-engineering/evaluation-design
+      files:
+        - src: ../../.github/skills/data-science-engineering/evaluation-design
+          dest: .github/skills/data-science-engineering/evaluation-design
+    tags:
+      category: behavior-conformance
+      skill: evaluation-design
+      shape: tool-trigger
+      scenario: ev02-unconfirmed-scope
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: unconfirmed-scope-stops-generation
+        config:
+          pattern: '(?is)(?=.*(not confirmed|unconfirmed|need.*confirm))(?=.*(population|refusal|grounding))'
+      - type: file-not-exists
+        name: unconfirmed-json-not-created
+        config:
+          path: ev02-output/evaluation/evaluation.json
+      - type: file-not-exists
+        name: unconfirmed-csv-not-created
+        config:
+          path: ev02-output/evaluation/evaluation.csv
+
+  - name: skill-evaluation-design-ev02-valid-synthetic-output
+    prompt: |
+      Use the `evaluation-design` skill for this fully confirmed synthetic
+      scope. The system is `Synthetic Support Assistant`; populations are
+      `Field technician`, `Dispatcher`, and `New hire`; grounding uses
+      `synthetic-procedure.md`; it must decline credential disclosure and
+      direct the user to support; the approach is `pro-code`; evaluation modes
+      are manual and batch. Generate exactly 10 representative synthetic
+      pairs with every difficulty category present, include overlapping
+      populations and an explicit zero for `New hire`, and write the sibling
+      files `ev02-output/evaluation/evaluation.json` and
+      `ev02-output/evaluation/evaluation.csv`.
+    agent_environment:
+      skills:
+        - ../../.github/skills/data-science-engineering/evaluation-design
+      files:
+        - src: ../../.github/skills/data-science-engineering/evaluation-design
+          dest: .github/skills/data-science-engineering/evaluation-design
+    tags:
+      category: behavior-conformance
+      skill: evaluation-design
+      shape: tool-trigger
+      scenario: ev02-valid-output
+      advisory: "true"
+    graders:
+      - type: file-matches
+        name: evaluation-json-records-zero-population
+        config:
+          path: ev02-output/evaluation/evaluation.json
+          pattern: '"New hire"\s*:\s*0'
+      - type: file-exists
+        name: evaluation-csv-created
+        config:
+          path: ev02-output/evaluation/evaluation.csv
+      - type: run-command
+        name: evaluation-validator-passes-emitted-files
+        config:
+          command: uv
+          args:
+            - run
+            - --project
+            - .github/skills/data-science-engineering/evaluation-design
+            - python
+            - .github/skills/data-science-engineering/evaluation-design/scripts/validate_evaluation_dataset.py
+            - --json
+            - ev02-output/evaluation/evaluation.json
+            - --csv
+            - ev02-output/evaluation/evaluation.csv
+          expected_exit_code: 0
+          stdout_matches: '"valid":\s*true'
+          timeout: 60s
+
+  - name: skill-feasibility-ev02-negative-handoff-output
+    prompt: |
+      Use the `feasibility` skill. Treat the staged synthetic study as final
+      and authoritative. Produce an `insufficient-evidence` sibling handoff at
+      `ev02-output/feasibility/study-feasibility-to-prd-handoff.yml` while
+      preserving its recommendation, evidence sections, constraints, and gaps
+      and omitting both candidate fields. Do not alter
+      `ev02-output/feasibility/study.md`.
+    agent_environment:
+      skills:
+        - ../../.github/skills/data-science-engineering/feasibility
+      files:
+        - src: ../../.github/skills/data-science-engineering/feasibility
+          dest: .github/skills/data-science-engineering/feasibility
+        - src: ../../.github/skills/data-science-engineering/feasibility/examples/valid-study.md
+          dest: ev02-output/feasibility/study.md
+    tags:
+      category: behavior-conformance
+      skill: feasibility
+      shape: tool-trigger
+      scenario: ev02-negative-handoff
+      advisory: "true"
+    graders:
+      - type: file-matches
+        name: negative-handoff-preserves-evidence-without-candidates
+        config:
+          path: ev02-output/feasibility/study-feasibility-to-prd-handoff.yml
+          pattern: '(?ms)(?=.*^verdict:\s*insufficient-evidence\s*$)(?=.*^recommendation:\s*\S)(?=.*^evidence_sections:\s*$)(?=.*^constraints:\s*$)(?=.*^gaps:\s*$)'
+      - type: file-not-matches
+        name: negative-handoff-omits-candidate-fields
+        config:
+          path: ev02-output/feasibility/study-feasibility-to-prd-handoff.yml
+          pattern: '(?m)^(functional_candidates|nfr_candidates):'
+      - type: run-command
+        name: feasibility-validator-passes-emitted-handoff
+        config:
+          command: uv
+          args:
+            - run
+            - --project
+            - .github/skills/data-science-engineering/feasibility
+            - python
+            - .github/skills/data-science-engineering/feasibility/scripts/validate_feasibility.py
+            - ev02-output/feasibility/study.md
+            - --handoff
+            - ev02-output/feasibility/study-feasibility-to-prd-handoff.yml
+          expected_exit_code: 0
+          stdout_matches: '"valid":\s*true'
+          timeout: 60s
+
+  - name: skill-feasibility-ev02-rejects-stale-handoff
+    prompt: |
+      Use the `feasibility` skill and the staged authoritative study. A proposed
+      handoff claims the stale revision
+      `urn:uuid:10000000-0000-4000-8000-000000000002`, while the study's current
+      revision is different. No revised handoff content has been approved.
+      Explain the required recovery and do not create
+      `ev02-output/feasibility/study-feasibility-to-prd-handoff.yml`.
+    agent_environment:
+      skills:
+        - ../../.github/skills/data-science-engineering/feasibility
+      files:
+        - src: ../../.github/skills/data-science-engineering/feasibility/examples/valid-study.md
+          dest: ev02-output/feasibility/study.md
+    tags:
+      category: behavior-conformance
+      skill: feasibility
+      shape: tool-trigger
+      scenario: ev02-stale-handoff
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: stale-handoff-requires-regeneration
+        config:
+          pattern: '(?is)(?=.*(stale|does not match|revision mismatch|out of date))(?=.*(regenerat|re-derive|rederive|revised handoff|new handoff|current revision))'
+      - type: file-not-exists
+        name: stale-handoff-not-published
+        config:
+          path: ev02-output/feasibility/study-feasibility-to-prd-handoff.yml
+
   - name: skill-rpi-recovery-current-initial
     prompt: |
       A planner has verified and saved the first started reservation for task

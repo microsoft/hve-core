@@ -79,7 +79,7 @@ Three sequential phases structure each ADR session in `capture` and `from-planne
 
 ### Sensitive-Content Scan Gate
 
-Before any durable ADR write, run the deterministic PII and disclosure-risk scanner over generated ADR markdown, predecessor lineage updates, and compact summaries: `python .github/skills/project-planning/adr-author/scripts/scan_sensitive_content.py <path>` (or pipe content on stdin).
+Before any durable ADR write, load the `adr-author` skill and run its deterministic `scripts/scan_sensitive_content.py` PII and disclosure-risk scanner over generated ADR markdown, predecessor lineage updates, and compact summaries, using a file argument or stdin.
 When `state.repoVisibility` is `public`, pass `--public` to include internal-only URL and hostname findings; omit the flag for `private` or `unknown` repositories.
 
 * Findings cover email addresses, phone numbers, national identifiers, and, with `--public`, internal-only URLs or hostnames.

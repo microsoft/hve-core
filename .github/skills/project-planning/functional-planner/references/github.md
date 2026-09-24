@@ -52,7 +52,7 @@ Map only fields validated for the repository (see the GitHub reference of the `b
 * `title` in conventional-commit form so downstream triage can classify it.
 * `body` composed from the Issue Body Template in the GitHub reference of the `backlog-management` skill, including the Children section on parents and an Acceptance Criteria checklist on every item.
 * `labels` drawn from the confirmed subset of the Label Taxonomy Reference; an unconfirmed label is recorded as `needs_review` rather than applied.
-* `milestone` recommended through the Milestone Discovery and Recommendation protocol in the GitHub reference of the `backlog-management` skill, including the `.github/milestone-strategy.yml` override when discovery confidence is low.
+* `milestone` recommended through the Milestone Discovery and Recommendation protocol in the GitHub reference of the `backlog-management` skill, including the target repository's `milestone-strategy.yml` override in its GitHub configuration directory when discovery confidence is low.
 * `type` drawn only from the values `mcp_github_list_issue_types` returned.
 * `parent` as `none`, a `{{TEMP-N}}` reference to a planned issue, or an existing `#number`.
 * A `needs_review` flag on any item whose type, label, milestone, or parent linkage could not be validated.
