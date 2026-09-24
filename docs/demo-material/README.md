@@ -48,7 +48,7 @@ Every level is published with:
   document language set, so screen readers can navigate it
 * Browser slides with keyboard navigation, labelled slides, a reading view that
   reflows on small screens, and speaker notes available to every viewer
-* Text colours that meet the WCAG 2.2 AA contrast minimum of 4.5:1
+* Text colors that meet the WCAG 2.2 AA contrast minimum of 4.5:1
 
 The render workflow checks each item it can verify and withholds a level that
 fails. Caption timing within a slide is estimated from sentence length, so
