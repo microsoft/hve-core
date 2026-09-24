@@ -20,11 +20,92 @@ permissions:
   contents: read
 
 jobs:
-  dependency-review:
-    name: Review Dependencies
+  main-sbom:
+    name: Publish Main SBOM
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Generate main dependency SBOM
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          path: .
+          format: spdx-json
+          output-file: continuous-sbom/main-dependencies-${{ github.sha }}.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+          config: .syft.yaml
+
+      - name: Upload main dependency SBOM
+        id: upload-main-sbom
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: main-dependencies-${{ github.sha }}
+          path: continuous-sbom/main-dependencies-${{ github.sha }}.spdx.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Add SBOM download summary
+        shell: bash
+        env:
+          ARTIFACT_DIGEST: ${{ steps.upload-main-sbom.outputs.artifact-digest }}
+          ARTIFACT_URL: ${{ steps.upload-main-sbom.outputs.artifact-url }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          {
+            echo '## Main dependency SBOM'
+            echo
+            echo "- Source commit: \`$SOURCE_SHA\`"
+            echo "- Download: [main-dependencies-$SOURCE_SHA]($ARTIFACT_URL)"
+            echo "- Artifact digest: \`$ARTIFACT_DIGEST\`"
+            echo '- Retention: 30 days'
+            echo
+            echo 'This is unattested continuous evidence, not a release SBOM.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  dependency-submission:
+    name: Submit Dependencies
+    if: >-
+      github.event_name == 'push'
+      || (
+        github.event_name == 'pull_request'
+        && github.event.pull_request.head.repo.full_name == github.repository
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: write # Elevated for Dependency Submission API (uv.lock)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Submit uv.lock dependencies
+        uses: advanced-security/component-detection-dependency-submission-action@b282c67b1008fde9b60da4bdfcd8849613e293b2 # v0.1.6
+        with:
+          detectorArgs: "UvLock=EnableIfDefaultOff"
+
+  dependency-review:
+    name: Review Dependencies
+    needs: dependency-submission
+    if: >-
+      always()
+      && github.event_name == 'pull_request'
+      && (
+        needs.dependency-submission.result == 'success'
+        || needs.dependency-submission.result == 'skipped'
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
       pull-requests: write
 
     steps:
@@ -33,14 +114,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Submit uv.lock dependencies # Runs on push (base snapshots) and non-fork PRs
-        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: advanced-security/component-detection-dependency-submission-action@b282c67b1008fde9b60da4bdfcd8849613e293b2 # v0.1.6
-        with:
-          detectorArgs: "UvLock=EnableIfDefaultOff"
-
       - name: Dependency Review
-        if: github.event_name == 'pull_request'
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           retry-on-snapshot-warnings: true

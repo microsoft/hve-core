@@ -2,7 +2,7 @@
 name: HVE Builder Reviewer
 description: "Reviews one prompt, instruction, agent, subagent, or skill candidate in fresh context against the hve-builder requirements catalog and review rubric, and returns severity-graded findings with the smallest resolving change as suggestions for the calling agent to verify. Use during an hve-builder review pass when isolating the review would help."
 user-invocable: false
-model: GPT-5.6 Luna (copilot)
+model: GPT-6 Luna (copilot)
 agents: []
 ---
 

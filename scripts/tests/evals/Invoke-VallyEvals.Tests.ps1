@@ -294,7 +294,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
                 $result = Invoke-VallySpec `
                     -SpecPath (Join-Path $script:WorkRoot 'fake.yaml') `
                     -OutputDir $outDir `
-                    -Model 'gpt-5.6-luna' `
+                    -Model 'gpt-6-luna' `
                     -VallyCommand $script:StubPath
             }
             finally {
@@ -335,7 +335,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
                         $script:ChattyResult = Invoke-VallySpec `
                             -SpecPath (Join-Path $script:WorkRoot 'fake.yaml') `
                             -OutputDir $outDir `
-                            -Model 'gpt-5.6-luna' `
+                            -Model 'gpt-6-luna' `
                             -VallyCommand $script:StubPath `
                             -LogPath $logPath
                     } 6>&1)
