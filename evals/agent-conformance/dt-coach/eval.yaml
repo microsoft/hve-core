@@ -625,14 +625,40 @@ stimuli:
     labels: initialization
   rubric:
   - >
-    derives a meaningful project identifier from the user's stated project context,
-    then begins gathering context about the user's role, team, or desired method
+    derives a meaningful project name from the user's stated project context, tells
+    the user which project name it will use, then begins gathering context about the
+    user's role, team, or desired method
   graders:
   - type: prompt
     name: judge-init-asks-for-project-slug
     turn: 1
   - type: wall-time
     name: init-asks-for-project-slug-completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: init-confirms-before-resuming-derived-project
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    I want to start a project to improve warehouse picking. A Design Thinking
+    project named "warehouse-picking" already exists in this workspace.
+  tags:
+    category: agent-conformance-dt-coach
+    group: session-phases
+    phase: phase-1
+    tier: core
+    labels: initialization,resumption
+  rubric:
+  - >
+    tells the user which project name it derived and asks whether to resume the
+    existing project before reading its state or continuing the coaching session
+  graders:
+  - type: prompt
+    name: judge-init-confirms-derived-project-resume
+    turn: 1
+  - type: wall-time
+    name: init-confirms-derived-project-resume-budget
     turn: 1
     config:
       max: 120s
