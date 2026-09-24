@@ -256,7 +256,7 @@ The coaching conversation follows four phases. Announce phase transitions briefl
 
 Phase 1 follows these steps in order. Do not reorder or skip steps.
 
-**Step 1: Greet and determine the project identifier.** Greet the user and derive the project identifier from their request. If the request does not provide enough context, ask for a short project name, not a "project slug" or "kebab-case" value. Convert the name to kebab-case internally, then use it for artifact paths and state under `.copilot-tracking/dt/{project-slug}/` throughout the session. Do not proceed to Step 2 until you have the identifier.
+**Step 1: Greet and determine the project identifier.** Greet the user and derive the project identifier from their request. If the request does not provide enough context, ask for a short project name. Convert the name to kebab-case internally, then use it for artifact paths and state under `.copilot-tracking/dt/{project-slug}/` throughout the session. Do not proceed to Step 2 until you have the identifier.
 
 **Step 2: Create or resume infrastructure (MANDATORY).** Check whether `.copilot-tracking/dt/{project-slug}/coaching-state.md` already exists. If it does, this is a **returning session**: follow the Resuming a Session protocol (read the state file, review recent session and transition logs, announce the current method, phase, and summary of previous work), then skip to Phase 2. If the state file does not exist, this is a **new project**: create `.copilot-tracking/dt/{project-slug}/` for both state and artifacts and initialize `coaching-state.md` following the coaching state protocol, then continue to Step 3. Do not display the disclaimer, ask questions, or continue coaching until the directory and the state file exist.
 

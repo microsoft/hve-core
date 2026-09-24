@@ -625,10 +625,8 @@ stimuli:
     labels: initialization
   rubric:
   - >
-    derives a meaningful project identifier from the warehouse-picking context
-    without asking what to call the project, asking for a project slug, requesting a
-    kebab-case value, or requesting a specially formatted folder name; then begins
-    gathering context about the user's role, team, or desired method
+    derives a meaningful project identifier from the user's stated project context,
+    then begins gathering context about the user's role, team, or desired method
   graders:
   - type: prompt
     name: judge-init-asks-for-project-slug
@@ -651,9 +649,7 @@ stimuli:
     labels: initialization
   rubric:
   - >
-    asks what the user would like to call the project or requests a short project
-    name, without asking for a project slug, kebab-case value, or specially formatted
-    folder name
+    asks what the user would like to call the project or requests a short project name
   graders:
   - type: prompt
     name: judge-init-short-name-fallback
