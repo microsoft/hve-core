@@ -157,7 +157,7 @@ test('research evidence is dated and the context walkthrough is explicitly ficti
   const session = html.match(/<section id="observed-session"[\s\S]*?<\/section>/)[0];
   assert.match(session, /data-demo="tracking"/);
   assert.match(session, /fictional repository/);
-  assert.match(session, /not a replay of the March workshop or a benchmark/);
+  assert.match(session, /not a recorded session or a benchmark/);
   assert.match(session, /does not erase the original Chat history/);
   assert.doesNotMatch(html, /\/Users\/|copilot-tracking\/workshop/);
 });

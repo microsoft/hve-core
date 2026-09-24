@@ -58,9 +58,9 @@ GPT-6 Astra or Claude Opus 5.5.
 The tracking-files walkthrough uses a fictional `sample-repo`. Its question and final
 comparison use reconstructed VS Code panels. The middle steps use an original reconstruction
 of Agent Debug Logs and its Agent Flow Chart, with selectable event cards, arrows, a purple
-Explore subagent group and an event-details pane. It replaces the earlier static workshop
-account rather than replaying that session. The main agent delegates to Explore, which searches
-one phrase, lists the root and reads only lines 1-40 of a 128-line document. A later section
+Explore subagent group and an event-details pane. The sequence is authored for this deck,
+not a recorded session. The main agent delegates to Explore, which searches one phrase,
+lists the root and reads only lines 1-40 of a 128-line document. A later section
 uses different words for job receipts and release entries, so the search and read miss it.
 
 The Event view shows the selected call or message. Missed context shows presenter evidence
