@@ -145,6 +145,7 @@ class TestRequireEnvironment:
         self,
         monkeypatch: pytest.MonkeyPatch,
         tmp_path: pathlib.Path,
+        memory_oauth_store: None,
     ) -> None:
         store_path = tmp_path / "gitlab" / "gitlab-token.json"
         gitlab.credentials.save_store(
@@ -400,6 +401,7 @@ class TestRequest:
         monkeypatch: pytest.MonkeyPatch,
         mocker: MockerFixture,
         tmp_path: pathlib.Path,
+        memory_oauth_store: None,
     ) -> None:
         store_path = tmp_path / "gitlab" / "gitlab-token.json"
         profile = _oauth_profile(expires_at=1)
@@ -435,6 +437,7 @@ class TestRequest:
         self,
         mocker: MockerFixture,
         tmp_path: pathlib.Path,
+        memory_oauth_store: None,
     ) -> None:
         store_path = tmp_path / "gitlab" / "gitlab-token.json"
         profile = _oauth_profile(expires_at=1)
@@ -471,6 +474,7 @@ class TestRequest:
         self,
         mocker: MockerFixture,
         tmp_path: pathlib.Path,
+        memory_oauth_store: None,
     ) -> None:
         store_path = tmp_path / "gitlab" / "gitlab-token.json"
         profile = _oauth_profile(expires_at=1)
@@ -506,6 +510,7 @@ class TestRequest:
         self,
         mocker: MockerFixture,
         tmp_path: pathlib.Path,
+        memory_oauth_store: None,
     ) -> None:
         store_path = tmp_path / "gitlab" / "gitlab-token.json"
         gitlab.credentials.save_store(

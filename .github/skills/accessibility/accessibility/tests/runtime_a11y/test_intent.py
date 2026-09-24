@@ -6,8 +6,10 @@
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pytest_mock import MockerFixture
@@ -51,6 +53,24 @@ def preserve_fixture_artifact() -> Iterator[None]:
     _FIXTURE_ARTIFACT.write_bytes(before)
 
 
+@pytest.fixture()
+def portable_artifact_writer(mocker: MockerFixture) -> None:
+    """Isolate portable verification behavior from POSIX-only artifact writes."""
+
+    def write_artifact(
+        _record: Path, destination: Path, document: dict[str, Any]
+    ) -> Path:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(
+            json.dumps(document, indent=2) + "\n", encoding="utf-8"
+        )
+        return destination
+
+    mocker.patch.object(
+        intent, "_write_verification_artifact", side_effect=write_artifact
+    )
+
+
 def _write_record(tmp_path: Path, body: str, surface_id: str = "s1") -> Path:
     record_dir = tmp_path / "design-intent"
     record_dir.mkdir(parents=True, exist_ok=True)
@@ -63,6 +83,12 @@ def _write_results(tmp_path: Path, rows: list[dict[str, object]]) -> Path:
     path = tmp_path / "results.json"
     path.write_text(json.dumps({"results": rows}), encoding="utf-8")
     return path
+
+
+def _build_document(record_path: Path, results_path: Path) -> dict[str, Any]:
+    raw = intent.read_record_text(record_path)
+    record = intent.parse_record(raw, record_path)
+    return intent.build_verification(record, raw, intent.load_results(results_path))
 
 
 _SIMPLE_RECORD = """
@@ -97,7 +123,7 @@ intents:
 
 
 def _row(**overrides: object) -> dict[str, object]:
-    base = {
+    base: dict[str, object] = {
         "criterionId": "2.1.1",
         "framework": "wcag-22",
         "surfaceId": "s1",
@@ -202,6 +228,34 @@ class TestAuthoredContract:
         with pytest.raises(ScriptError, match="authored schema|requires method"):
             intent.parse_record(body, path)
 
+    def test_given_undeclared_surface_when_parse_then_rejects_binding(
+        self, tmp_path: Path
+    ) -> None:
+        path = tmp_path / "s1.intent.yaml"
+        config = {"surfaces": [{"id": "other", "states": [{"state": "default"}]}]}
+
+        with pytest.raises(ScriptError, match="not declared in the runtime config"):
+            intent.parse_record(_SIMPLE_RECORD, path, config)
+
+    def test_given_undeclared_state_when_parse_then_rejects_binding(
+        self, tmp_path: Path
+    ) -> None:
+        path = tmp_path / "s1.intent.yaml"
+        body = _SIMPLE_RECORD.replace("state: default", "state: editing")
+        config = {"surfaces": [{"id": "s1", "states": [{"state": "default"}]}]}
+
+        with pytest.raises(ScriptError, match="binds undeclared state"):
+            intent.parse_record(body, path, config)
+
+    def test_given_unknown_probe_when_parse_then_rejects_expectation(
+        self, tmp_path: Path, mocker: MockerFixture
+    ) -> None:
+        path = tmp_path / "s1.intent.yaml"
+        mocker.patch.object(intent, "_load_probe_adequacy", return_value={})
+
+        with pytest.raises(ScriptError, match="unknown probe"):
+            intent.parse_record(_SIMPLE_RECORD, path)
+
     def test_given_duplicate_intent_id_when_parse_then_raises(
         self, tmp_path: Path
     ) -> None:
@@ -244,6 +298,7 @@ class TestAuthoredContract:
             intent.parse_record(body, path)
 
 
+@pytest.mark.usefixtures("portable_artifact_writer")
 class TestOutcomeMapping:
     @pytest.mark.parametrize(
         ("status", "expected"),
@@ -274,6 +329,7 @@ class TestOutcomeMapping:
         assert document["assertions"][0]["outcome"] == "cantTell"
 
 
+@pytest.mark.usefixtures("portable_artifact_writer")
 class TestJoin:
     @pytest.mark.parametrize(
         "override",
@@ -312,6 +368,7 @@ class TestJoin:
         assert document["assertions"][0]["outcome"] == "untested"
 
 
+@pytest.mark.usefixtures("portable_artifact_writer")
 class TestAggregation:
     def test_given_mixed_criteria_when_build_then_worst_outcome_wins(
         self, tmp_path: Path
@@ -354,29 +411,27 @@ class TestAggregation:
 
 class TestFixtureRecord:
     @_requires_contract_fixture
-    def test_given_fixture_when_generate_then_one_assertion_per_expectation(
-        self, preserve_fixture_artifact: None
+    def test_given_fixture_when_build_then_one_assertion_per_expectation(
+        self,
     ) -> None:
-        _, document = intent.generate(_FIXTURE_RECORD, _FIXTURE_RESULTS)
+        document = _build_document(_FIXTURE_RECORD, _FIXTURE_RESULTS)
         assert len(document["assertions"]) == 5
         ids = [item["expectationId"] for item in document["assertions"]]
         assert ids == ["EXP-001", "EXP-002", "EXP-003", "EXP-004", "EXP-005"]
 
     @_requires_contract_fixture
-    def test_given_fixture_when_generate_then_outcomes_are_mixed(
-        self, preserve_fixture_artifact: None
-    ) -> None:
-        _, document = intent.generate(_FIXTURE_RECORD, _FIXTURE_RESULTS)
+    def test_given_fixture_when_build_then_outcomes_are_mixed(self) -> None:
+        document = _build_document(_FIXTURE_RECORD, _FIXTURE_RESULTS)
         outcomes = {item["outcome"] for item in document["assertions"]}
         # Every outcome the adapter can produce from a probe run appears here,
         # so a stub emitting one blanket outcome cannot pass.
         assert outcomes == {"passed", "failed", "cantTell", "untested"}
 
     @_requires_contract_fixture
-    def test_given_fixture_when_generate_then_each_expectation_resolves_as_declared(
-        self, preserve_fixture_artifact: None
+    def test_given_fixture_when_build_then_each_expectation_resolves_as_declared(
+        self,
     ) -> None:
-        _, document = intent.generate(_FIXTURE_RECORD, _FIXTURE_RESULTS)
+        document = _build_document(_FIXTURE_RECORD, _FIXTURE_RESULTS)
         by_id = {item["expectationId"]: item for item in document["assertions"]}
         assert by_id["EXP-001"]["outcome"] == "passed"
         # Worst-wins: a single failing criterion fails the whole expectation.
@@ -416,10 +471,8 @@ class TestFixtureRecord:
         assert verdict == intent.BLOCKING_UNCOVERED
 
     @_requires_contract_fixture
-    def test_given_custom_assert_when_generate_then_untested_and_manual(
-        self, preserve_fixture_artifact: None
-    ) -> None:
-        _, document = intent.generate(_FIXTURE_RECORD, _FIXTURE_RESULTS)
+    def test_given_custom_assert_when_build_then_untested_and_manual(self) -> None:
+        document = _build_document(_FIXTURE_RECORD, _FIXTURE_RESULTS)
         custom = next(
             item
             for item in document["assertions"]
@@ -430,12 +483,13 @@ class TestFixtureRecord:
         assert custom["info"]
 
     @_requires_contract_fixture
-    def test_given_fixture_when_generate_then_digest_matches_record(
-        self, preserve_fixture_artifact: None
-    ) -> None:
-        _, document = intent.generate(_FIXTURE_RECORD, _FIXTURE_RESULTS)
+    def test_given_fixture_when_build_then_digest_matches_record(self) -> None:
+        document = _build_document(_FIXTURE_RECORD, _FIXTURE_RESULTS)
         assert document["intentDigest"] == _FIXTURE_DIGEST
 
+    @pytest.mark.skipif(
+        os.name != "posix", reason="secure verification writes require POSIX dir_fd"
+    )
     @_requires_contract_fixture
     def test_given_committed_fixture_sidecar_then_generation_does_not_touch_it(
         self, preserve_fixture_artifact: None
@@ -444,6 +498,7 @@ class TestFixtureRecord:
         assert _FIXTURE_ARTIFACT.exists()
 
 
+@pytest.mark.usefixtures("portable_artifact_writer")
 class TestBlockingEvaluation:
     def test_given_blocking_failure_when_checked_then_true(
         self, tmp_path: Path
@@ -648,6 +703,51 @@ intents:
 
 
 class TestFailurePaths:
+    @pytest.mark.parametrize(
+        ("assertions", "message"),
+        [
+            ([{"intentId": "", "expectationId": "EXP-001"}], "needs an id"),
+            (
+                [
+                    {"intentId": "INT-001", "expectationId": "EXP-001"},
+                    {"intentId": "INT-001", "expectationId": "EXP-001"},
+                ],
+                "Duplicate expectation id",
+            ),
+        ],
+    )
+    def test_given_invalid_assertion_identity_when_validating_then_rejects(
+        self, assertions: list[dict[str, Any]], message: str
+    ) -> None:
+        with pytest.raises(ScriptError, match=message):
+            intent._validate_identifiers(assertions)
+
+    @pytest.mark.parametrize(
+        ("surface_id", "message"),
+        [(None, "no surfaceId"), ("other", "does not match filename")],
+    )
+    def test_given_invalid_prepared_surface_when_generating_then_rejects_before_write(
+        self, tmp_path: Path, surface_id: str | None, message: str
+    ) -> None:
+        record_path = tmp_path / "s1.intent.yaml"
+
+        with pytest.raises(ScriptError, match=message):
+            intent.generate(
+                record_path,
+                tmp_path / "missing.json",
+                prepared=("", {"surfaceId": surface_id}),
+            )
+
+    def test_given_unsupported_platform_when_generate_then_fails_closed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        record_path = _write_record(tmp_path, _SIMPLE_RECORD)
+        results_path = _write_results(tmp_path, [_row()])
+        monkeypatch.setattr(intent.os, "supports_dir_fd", set())
+
+        with pytest.raises(ScriptError, match="Secure verification artifact"):
+            intent.generate(record_path, results_path)
+
     def test_given_missing_record_when_generate_then_usage_error(
         self, tmp_path: Path
     ) -> None:
@@ -715,6 +815,9 @@ class TestFailurePaths:
             intent.generate(record_path, results_path)
 
 
+@pytest.mark.skipif(
+    os.name != "posix", reason="secure verification writes require POSIX dir_fd"
+)
 class TestOutputLocation:
     def test_given_no_out_path_when_generate_then_writes_contract_location(
         self, tmp_path: Path
@@ -807,23 +910,16 @@ class TestOutputLocation:
         with pytest.raises(ScriptError, match="not a regular file"):
             intent.generate(record_path, results_path, destination)
 
-    def test_given_unsupported_platform_when_generate_then_fails_closed(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        record_path = _write_record(tmp_path, _SIMPLE_RECORD)
-        results_path = _write_results(tmp_path, [_row()])
-        monkeypatch.setattr(intent.os, "supports_dir_fd", set())
-
-        with pytest.raises(ScriptError, match="Secure verification artifact"):
-            intent.generate(record_path, results_path)
-
     def test_given_fifo_destination_when_generate_then_raises(
         self, tmp_path: Path
     ) -> None:
         record_path = _write_record(tmp_path, _SIMPLE_RECORD)
         results_path = _write_results(tmp_path, [_row()])
         destination = record_path.parent / "artifact.json"
-        intent.os.mkfifo(destination)
+        mkfifo = getattr(intent.os, "mkfifo", None)
+        if not callable(mkfifo):
+            pytest.skip("POSIX FIFO support required")
+        mkfifo(destination)
 
         with pytest.raises(ScriptError, match="not a regular file"):
             intent.generate(record_path, results_path, destination)
@@ -937,6 +1033,7 @@ class TestOutputLocation:
         assert not destination.exists()
 
 
+@pytest.mark.usefixtures("portable_artifact_writer")
 class TestManualDecidingCustom:
     def _custom_record(self, override: str = "") -> str:
         return _SIMPLE_RECORD.replace(
@@ -1026,6 +1123,33 @@ class TestManualDecidingCustom:
 
 
 class TestCli:
+    @pytest.mark.skipif(os.name != "nt", reason="native-Windows secure write refusal")
+    def test_given_windows_when_verify_intent_then_rejects_without_artifact(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        record_path = _write_record(tmp_path, _SIMPLE_RECORD)
+        results_path = _write_results(tmp_path, [_row()])
+        destination = tmp_path / "verified.json"
+
+        code = cli.main(
+            [
+                "verify-intent",
+                "--record",
+                str(record_path),
+                "--results",
+                str(results_path),
+                "--out",
+                str(destination),
+            ]
+        )
+
+        assert code == EXIT_USAGE
+        assert (
+            "Secure verification artifact writes require POSIX"
+            in capsys.readouterr().err
+        )
+        assert not destination.exists()
+
     @pytest.mark.parametrize(
         ("failure_marker", "explicit_output"),
         [
@@ -1066,7 +1190,10 @@ class TestCli:
         assert not destination.exists()
 
     def test_given_clean_run_when_verify_intent_then_exit_success(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        portable_artifact_writer: None,
     ) -> None:
         record_path = _write_record(tmp_path, _SIMPLE_RECORD)
         results_path = _write_results(tmp_path, [_row(status="pass")])
@@ -1086,7 +1213,10 @@ class TestCli:
         assert "Wrote" in capsys.readouterr().out
 
     def test_given_override_conflict_when_verify_intent_then_warns_and_gates(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        portable_artifact_writer: None,
     ) -> None:
         # A conclusive conflict is written to stderr and fails closed.
         # Settling an unreachable expectation is the documented use of an
@@ -1140,7 +1270,10 @@ class TestCli:
         assert "Warning:" not in settled_stderr
 
     def test_given_blocking_failure_when_verify_intent_then_exit_drift(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        portable_artifact_writer: None,
     ) -> None:
         record_path = _write_record(tmp_path, _SIMPLE_RECORD)
         results_path = _write_results(tmp_path, [_row(status="fail")])
@@ -1161,7 +1294,10 @@ class TestCli:
         assert out.exists(), "the artifact is still written so CI can publish it"
 
     def test_given_blocking_uncovered_when_verify_intent_then_exit_uncovered(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        portable_artifact_writer: None,
     ) -> None:
         body = _SIMPLE_RECORD.replace(
             "          - wcag-22:2.1.1",
