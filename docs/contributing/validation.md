@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-09-05
+ms.date: 2026-09-23
 ms.topic: how-to
 keywords:
   - validation
@@ -65,6 +65,67 @@ the reproducible bootstrap path.
 Installing dependencies for one root does not provision the other roots. The
 root commands that delegate to Docusaurus still need the Docusaurus package
 dependencies available.
+
+## Python skill test baselines on Windows and Linux
+
+The accessibility and GitLab skill suites have separate `uv.lock` files. Run
+the complete pytest command from each skill root, rather than interpreting a
+selected Windows-compatible subset as a full-suite pass. Each skill's default
+coverage gate remains active: 95% for accessibility and 80% for GitLab.
+
+On native Windows, start each block from the repository root. The accessibility
+suite also needs its skill-local Node package. Disable browser downloads for
+this dependency install; ordinary unit tests do not require provisioning
+Chrome or starting NVDA.
+
+```powershell
+Set-Location .github\skills\accessibility\accessibility
+uv sync --locked --dev
+Push-Location scripts\runtime_a11y
+$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1'
+npm ci
+Pop-Location
+uv run pytest -q
+```
+
+```powershell
+Set-Location .github\skills\project-planning\gitlab
+uv sync --locked --dev
+uv run pytest -q
+```
+
+On Linux, start each block from the repository root. The same skill-local Node
+dependency is needed for the complete accessibility suite. If you use WSL,
+prefer a separate Linux checkout for these commands: running `uv sync` or
+`npm ci` against a checkout shared with native Windows can replace that
+checkout's Windows virtual environment or Node dependencies.
+
+```bash
+cd .github/skills/accessibility/accessibility
+uv sync --locked --dev
+(cd scripts/runtime_a11y && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci)
+uv run pytest -q
+```
+
+```bash
+cd .github/skills/project-planning/gitlab
+uv sync --locked --dev
+uv run pytest -q
+```
+
+Native Windows does not support the POSIX verification-artifact writer or
+GitLab OAuth profile persistence. Tests of those real filesystem operations
+skip on Windows but run on Linux; unmocked Windows tests assert that the
+`verify-intent` and `auth status` commands fail closed without creating a file.
+Portable intent and OAuth behavior remain covered on both platforms. Windows
+coverage reporting excludes only the unsupported POSIX persistence functions;
+Linux measures those functions at the same numerical coverage thresholds.
+This test-only reporting distinction does not enable either Windows backend.
+
+The hosted Python test workflow runs on Ubuntu. A green hosted check therefore
+demonstrates Linux behavior, not a native-Windows full-suite pass; run the
+Windows commands above for that evidence. Screen-reader execution and browser
+installation are separate prerequisites for their own validation lanes.
 
 ## Install behind a restricted network
 
