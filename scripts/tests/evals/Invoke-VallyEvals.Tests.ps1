@@ -738,13 +738,14 @@ Describe 'Invoke-VallyEvals.ps1 entry script' -Tag 'Integration' {
         function New-EvalFixture {
             param(
                 [Parameter(Mandatory)][AllowEmptyCollection()][hashtable[]]$Artifacts,
-                [Parameter(Mandatory)][AllowEmptyCollection()][hashtable[]]$Specs
+                [Parameter(Mandatory)][AllowEmptyCollection()][hashtable[]]$Specs,
+                [string]$EvalDirectory = 'evals'
             )
 
             $root = Join-Path $TestDrive ('case-' + [Guid]::NewGuid())
             New-Item -ItemType Directory -Path $root -Force | Out-Null
 
-            $evalRoot = Join-Path $root 'evals'
+            $evalRoot = Join-Path $root $EvalDirectory
             $logsDir  = Join-Path $root 'logs'
             New-Item -ItemType Directory -Path $evalRoot -Force | Out-Null
             New-Item -ItemType Directory -Path $logsDir  -Force | Out-Null
@@ -960,6 +961,62 @@ stimuli:
         Test-Path -LiteralPath $callLog | Should -BeTrue
         $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
         $summary.totals.failedSpecs | Should -Be 0
+    }
+
+    It 'Resolves nested spec sources under <EvalDirectory> with existing sources <SourcesExist>' -Tag 'SourceResolution' -ForEach @(
+        @{ EvalDirectory = 'evals'; SourcesExist = $true }
+        @{ EvalDirectory = 'custom/evals'; SourcesExist = $true }
+        @{ EvalDirectory = 'evals'; SourcesExist = $false }
+        @{ EvalDirectory = 'custom/evals'; SourcesExist = $false }
+    ) {
+        $spec = @'
+name: agent-cover
+agent_environment:
+  skills:
+    - fixtures/skill
+  files:
+    - fixtures/input.md
+stimuli:
+  - name: s1
+    prompt: hi
+    agent_environment:
+      files:
+        - src: fixtures/input.md
+          dest: input.md
+    tags:
+      agent: sample-agent
+'@
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts `
+            -Specs @(@{ Name = 'agent-behavior/eval.yaml'; Yaml = $spec }) `
+            -EvalDirectory $EvalDirectory
+        # Repository-relative decoys must not satisfy missing spec-relative sources.
+        $sourceRoot = if ($SourcesExist) { $fx.EvalRoot } else { $fx.Root }
+        $fixtures = Join-Path $sourceRoot 'agent-behavior/fixtures'
+        New-Item -ItemType Directory -Path (Join-Path $fixtures 'skill') -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $fixtures 'skill/SKILL.md') -Value 'local skill'
+        Set-Content -LiteralPath (Join-Path $fixtures 'input.md') -Value 'local input'
+
+        $callLog = Join-Path $fx.LogsDir 'stub-calls.jsonl'
+        $env:STUB_VALLY_CALL_LOG = $callLog
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root -VallyCommand $script:StubPath `
+                -SkipInputModeration -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_CALL_LOG -ErrorAction SilentlyContinue
+        }
+
+        $LASTEXITCODE | Should -Be $(if ($SourcesExist) { 0 } else { 1 })
+        (Test-Path -LiteralPath $callLog) | Should -Be $SourcesExist
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be $(if ($SourcesExist) { 0 } else { 1 })
+        $summary.perSpec[0].status | Should -Be $(if ($SourcesExist) { 'pass' } else { 'invalid-spec-source' })
+        $summary.perSpec[0].specPath | Should -Be 'agent-behavior/eval.yaml'
     }
 
     It 'Exits 1 when a spec fails, recording the failure per artifact' {

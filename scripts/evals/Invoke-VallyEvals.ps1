@@ -737,10 +737,11 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
     if ($parsedSpec -isnot [System.Collections.IDictionary]) {
         throw "Eval spec '$specRel' must be a mapping before source validation."
     }
-    $sourceErrors = @(Test-EvalSpecSources -Spec $parsedSpec -SpecPath $specRel -RepoRoot $resolvedRoot)
+    $repoRelativeSpecPath = [System.IO.Path]::GetRelativePath($resolvedRoot, $specAbs).Replace('\', '/')
+    $sourceErrors = @(Test-EvalSpecSources -Spec $parsedSpec -SpecPath $repoRelativeSpecPath -RepoRoot $resolvedRoot)
     if ($sourceErrors.Count -gt 0) {
         foreach ($sourceError in $sourceErrors) {
-            Write-Host "::error file=$specRel::$($sourceError.field): $($sourceError.message)"
+            Write-Host "::error file=${repoRelativeSpecPath}::$($sourceError.field): $($sourceError.message)"
         }
         $specResults[$runKey] = @{
             specPath         = $specAbs
