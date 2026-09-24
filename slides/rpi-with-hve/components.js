@@ -1,4 +1,5 @@
 // Copyright (c) Microsoft Corporation. Licensed under the MIT License.
+// cspell:words titlebar sublabel
 (function () {
   'use strict';
   let flowSerial = 0;

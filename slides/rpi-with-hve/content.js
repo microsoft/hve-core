@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation. Licensed under the MIT License.
-// cspell:words distractors Willison Tobi Lutke Andrej Karpathy
+// cspell:words distractors Willison Tobi Lutke Andrej Karpathy sublabel
 (function () {
   'use strict';
   const hve = 'https://github.com/microsoft/hve-core/blob/33ac6ec4a4ab7d1e5b44b01abb4179c567e3d23d/';
