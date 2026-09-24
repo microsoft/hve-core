@@ -141,6 +141,36 @@ stimuli:
                 $newLines[$i] | Should -Be $seedLines[$i]
             }
         }
+
+        It 'Rejects a deprecated root environment before regeneration' {
+            Write-SeedEvalYaml -Root $script:TestRoot -Content @"
+environment:
+  files: []
+stimuli: []
+"@
+            Write-Partial -Root $script:TestRoot -Slug 'gamma' -Content @"
+stimuli:
+  - name: gamma-case
+    prompt: Gamma agent prompt.
+"@
+
+            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot -Force } |
+                Should -Throw -ExpectedMessage "*Spec*eval.yaml*deprecated root 'environment'*"
+        }
+
+        It 'Does not mistake description text for a deprecated root key' {
+            Write-SeedEvalYaml -Root $script:TestRoot -Content @"
+description: |
+  environment: is mentioned here, but is not a key.
+agent_environment:
+  files: []
+stimuli: []
+"@
+
+            (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot -Force).Outcome | Should -Be 'Wrote'
+            $spec = Read-OutputObject -Root $script:TestRoot
+            $spec.agent_environment.files | Should -HaveCount 0
+        }
     }
 
     Context 'Tag injection conflict' {
@@ -315,6 +345,18 @@ stimuli:
     }
 
     Context 'Partial validation errors' {
+        It 'Rejects a deprecated stimulus environment with its partial and name' {
+            Write-Partial -Root $script:TestRoot -Slug 'legacy' -Content @"
+stimuli:
+  - name: legacy-case
+    prompt: A prompt.
+    environment:
+      files: []
+"@
+            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot -WhatIf } |
+                Should -Throw -ExpectedMessage "*legacy.yml*legacy-case*deprecated 'environment'*"
+        }
+
         It 'Names the offending file when a partial is invalid YAML' {
             Write-Partial -Root $script:TestRoot -Slug 'broken' -Content "stimuli:`n  - name: x`n   bad-indent:"
             { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw -ExpectedMessage '*Failed to parse partial*broken*'
@@ -411,12 +453,12 @@ Describe 'Isolated agent environment generation' -Tag 'Unit' {
         Initialize-FixtureRoot -Root $script:TestRoot
     }
 
-    It 'Preserves a stimulus environment that remaps an agent to workspace instructions' {
+    It 'Preserves a stimulus agent environment that remaps an agent to workspace instructions' {
         Write-Partial -Root $script:TestRoot -Slug 'agent-one' -Content @"
 stimuli:
   - name: agent-one-functional
     prompt: Functional prompt.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -428,12 +470,12 @@ stimuli:
 
         $spec = Read-OutputObject -Root $script:TestRoot
         $stimulus = $spec.stimuli | Where-Object { $_.name -eq 'agent-one-functional' }
-        $stimulus.environment.files | Should -HaveCount 1
-        $stimulus.environment.files[0].src | Should -Be '../../.github/agents/experimental/experiment-designer.agent.md'
-        $stimulus.environment.files[0].dest | Should -Be '.github/copilot-instructions.md'
-        $stimulus.environment.skills | Should -HaveCount 2
-        $stimulus.environment.skills | Should -Contain '../../.github/skills/project-planning/experiment-design'
-        $stimulus.environment.skills | Should -Contain '../../.github/skills/data-science-engineering/ml-experimentation'
+        $stimulus.agent_environment.files | Should -HaveCount 1
+        $stimulus.agent_environment.files[0].src | Should -Be '../../.github/agents/experimental/experiment-designer.agent.md'
+        $stimulus.agent_environment.files[0].dest | Should -Be '.github/copilot-instructions.md'
+        $stimulus.agent_environment.skills | Should -HaveCount 2
+        $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/project-planning/experiment-design'
+        $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/data-science-engineering/ml-experimentation'
     }
 
     It 'Keeps each agent environment isolated from other agents' {
@@ -441,7 +483,7 @@ stimuli:
 stimuli:
   - name: agent-one-functional
     prompt: Functional prompt.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -452,7 +494,7 @@ stimuli:
 stimuli:
   - name: agent-two-functional
     prompt: Functional prompt.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/hve-core/documentation.agent.md
           dest: .github/copilot-instructions.md
@@ -465,10 +507,10 @@ stimuli:
         $one = $spec.stimuli | Where-Object { $_.name -eq 'agent-one-functional' }
         $two = $spec.stimuli | Where-Object { $_.name -eq 'agent-two-functional' }
 
-        $one.environment.files[0].dest | Should -Be $two.environment.files[0].dest
-        $one.environment.files[0].src | Should -Not -Be $two.environment.files[0].src
-        $one.environment.skills | Should -Not -Contain '../../.github/skills/hve-core/documentation'
-        $two.environment.skills | Should -Not -Contain '../../.github/skills/project-planning/experiment-design'
+        $one.agent_environment.files[0].dest | Should -Be $two.agent_environment.files[0].dest
+        $one.agent_environment.files[0].src | Should -Not -Be $two.agent_environment.files[0].src
+        $one.agent_environment.skills | Should -Not -Contain '../../.github/skills/hve-core/documentation'
+        $two.agent_environment.skills | Should -Not -Contain '../../.github/skills/project-planning/experiment-design'
     }
 
     It 'Leaves stimuli without a declared environment untouched' {
@@ -476,7 +518,7 @@ stimuli:
 stimuli:
   - name: agent-one-functional
     prompt: Functional prompt.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -487,7 +529,7 @@ stimuli:
 
         $spec = Read-OutputObject -Root $script:TestRoot
         $smoke = $spec.stimuli | Where-Object { $_.name -eq 'agent-one-smoke' }
-        $smoke.Contains('environment') | Should -BeFalse
+        $smoke.Contains('agent_environment') | Should -BeFalse
     }
 
     It 'Remains idempotent when a stimulus environment is present' {
@@ -495,7 +537,7 @@ stimuli:
 stimuli:
   - name: agent-one-functional
     prompt: Functional prompt.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md

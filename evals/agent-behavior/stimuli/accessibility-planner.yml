@@ -30,7 +30,7 @@ stimuli:
       `Blocked` because its required source could not be resolved. Explain the
       planner disposition and the state that may be persisted. The malformed
       state and research result are simulated inputs, not native tool failures.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/accessibility/accessibility-planner.agent.md
           dest: .github/copilot-instructions.md
@@ -68,7 +68,7 @@ stimuli:
       GitHub draft write returned `disk full`. No external tracker submission
       occurred. Explain the handoff status, persisted evidence, and recovery
       action. The write result is simulated input, not a native failure.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/accessibility/accessibility-planner.agent.md
           dest: .github/copilot-instructions.md

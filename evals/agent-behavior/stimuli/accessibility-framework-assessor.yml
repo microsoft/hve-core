@@ -74,7 +74,7 @@ stimuli:
       interaction-state probe or assistive-technology result exists. Return the
       conservative status and method-adequacy rationale. The absent result is a
       simulated input.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
           dest: .github/copilot-instructions.md
@@ -109,7 +109,7 @@ stimuli:
       payload missing its status, method, and result fields. No visible static
       barrier is supplied. Return the status and evidence rationale. The malformed
       payload is simulated input.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
           dest: .github/copilot-instructions.md
@@ -145,7 +145,7 @@ stimuli:
       WCAG 2.1.1, while WCAG 4.1.2 has only a static `aria-label` observation and
       no computed accessibility-tree or assistive-technology evidence. Explain
       each status without making a conformance claim. The evidence is synthetic.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
           dest: .github/copilot-instructions.md
