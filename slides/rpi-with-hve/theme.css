@@ -160,18 +160,6 @@ code { overflow-wrap: anywhere; }
 .research-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; padding-top: 24px; border-top: 1px solid var(--line); }
 .reveal .research-strip p { font-size: 26px; margin-top: 10px; }
 
-/* Observed session */
-.case-layout { display: grid; grid-template-columns: minmax(0, 1.42fr) minmax(0, .58fr); gap: 44px; align-items: start; }
-.reveal .chain { list-style: none; counter-reset: chain; display: grid; gap: 10px; margin: 0; padding: 0; }
-.chain li { counter-increment: chain; display: grid; grid-template-columns: 40px 300px minmax(0, 1fr); gap: 16px; align-items: center; padding: 17px 18px; border: 1px solid #46566c; border-radius: 8px; background: #1b2431; }
-.chain li::before { content: counter(chain, decimal-leading-zero); font: 20px var(--font-mono); color: #a4bddf; }
-.chain strong { font-size: 26px; font-weight: 580; line-height: 1.25; }
-.chain span { font-size: 25px; line-height: 1.35; color: #c3cedd; }
-.chain li:last-child { border: 2px solid #a8834f; background: #2a2219; }
-.case-aside { padding: 22px 28px 24px; border-left: 3px solid #7fae7a; background: #172019; border-radius: 0 8px 8px 0; }
-.case-aside ul { padding-left: 28px; }
-.case-aside li { font-size: 25px; line-height: 1.4; margin-bottom: 14px; }
-
 /* Chapter and closing */
 .chapter-slide.present { display: flex !important; flex-direction: column; justify-content: center; }
 .chapter-slide .eyebrow { position: absolute; top: 52px; }
@@ -316,7 +304,7 @@ html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; 
 [data-reading-view="true"] .reveal .slides section :is(h1, h2) { font-size: 2rem; line-height: 1.2; margin: 20px 0; }
 [data-reading-view="true"] .reveal .slides section h3 { font-size: 1.4rem; line-height: 1.3; margin: 18px 0; }
 [data-reading-view="true"] .reveal .slides section :is(p, li) { line-height: 1.5; }
-[data-reading-view="true"] .reveal .slides section :is(.hero-grid, .split, .compare, .three-points, .model-grid, .log-layout, .failure-grid, .budget-row, .research-strip, .case-layout, .agent-setup-layout, .phase-spine, .session-flow, .demo, .implementation-scene, .chain li, .route-map li, .opening-workflow li) { grid-template-columns: minmax(0, 1fr); height: auto; gap: 16px; margin: 20px 0; }
+[data-reading-view="true"] .reveal .slides section :is(.hero-grid, .split, .compare, .three-points, .model-grid, .log-layout, .failure-grid, .budget-row, .research-strip, .agent-setup-layout, .phase-spine, .session-flow, .demo, .implementation-scene, .route-map li, .opening-workflow li) { grid-template-columns: minmax(0, 1fr); height: auto; gap: 16px; margin: 20px 0; }
 [data-reading-view="true"] .reveal .slides section :is(.budget-bar) { flex-direction: column; height: auto; }
 [data-reading-view="true"] .reveal .slides section .skill-row { grid-template-columns: minmax(0, 1fr); }
 [data-reading-view="true"] .reveal .slides section .budget-delta { margin-left: 0; }

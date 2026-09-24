@@ -8,7 +8,7 @@ const os = require('node:os');
 const vm = require('node:vm');
 const context = vm.createContext({});
 vm.runInContext(fs.readFileSync(path.join(__dirname, 'content.js'), 'utf8'), context);
-const { sources, examples, demos, moveStep, diffStats } = context.DeckContent;
+const { sources, examples, demos, trackingFlow, flowKinds, flowTrace, moveStep, diffStats } = context.DeckContent;
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 // Values created inside the vm context have their own Array prototype.
 const plain = value => JSON.parse(JSON.stringify(value));
@@ -23,7 +23,13 @@ test('slides have unique IDs, headings, chapters, notes and valid citation keys'
     ids.add(id);
     assert.match(attributes, /data-title="[^"]+"/);
     assert.match(attributes, /data-chapter="[^"]+"/);
-    assert.match(body, /<h[12]\b/);
+    const heading = body.match(/<h[12]\b[^>]*>([\s\S]*?)<\/h[12]>/)?.[1];
+    assert.ok(heading, id);
+    assert.equal(
+      attributes.match(/data-title="([^"]+)"/)[1],
+      heading.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(),
+      `${id}: visible heading and navigation title must agree`
+    );
     assert.match(body, /class="notes"/);
     for (const source of (attributes.match(/data-sources="([^"]*)"/)?.[1] || '').split(',').filter(Boolean)) {
       assert.ok(sources[source], source);
@@ -54,9 +60,14 @@ test('walkthrough boundaries clamp, reset and reject malformed state', () => {
   assert.throws(() => moveStep(0, 'next', 0), /Invalid/);
   assert.throws(() => moveStep(8, 'next', 4), /Invalid/);
   assert.throws(() => moveStep(0, 'unknown', 4), /Unknown/);
-  const states = { first: 2, second: 1 };
-  states.first = moveStep(states.first, 'reset', 4);
-  assert.equal(states.second, 1);
+  for (const demo of Object.values(demos)) {
+    assert.equal(moveStep(demo.steps.length - 1, 'next', demo.steps.length), demo.steps.length - 1);
+    assert.equal(moveStep(0, 'back', demo.steps.length), 0);
+  }
+  const states = { tracking: 3, rpi: 4 };
+  states.tracking = moveStep(states.tracking, 'reset', demos.tracking.steps.length);
+  assert.equal(states.tracking, 0);
+  assert.equal(states.rpi, 4);
 });
 
 test('walkthrough step announcements coalesce after focus settles', () => {
@@ -65,6 +76,7 @@ test('walkthrough step announcements coalesce after focus settles', () => {
   // before it is spoken, and a superseded step must not announce at all.
   assert.match(source, /if \(pendingAnnouncement\) clearTimeout\(pendingAnnouncement\)/);
   assert.match(source, /if \(states\.get\(name\) !== index\) return/);
+  assert.match(source, /deck\.getCurrentSlide\(\)\.querySelector\('\[data-demo\]'\)\?\.dataset\.demo !== name/);
   assert.doesNotMatch(source, /if \(speak\) announce\(/);
 });
 
@@ -136,16 +148,102 @@ test('frontier model and tool claims keep their dates, versions and qualifiers',
   assert.match(tools, /Other hosts use different limits/);
 });
 
-test('research evidence is dated and the observed session is labelled as one observation', () => {
+test('research evidence is dated and the context walkthrough is explicitly fictional', () => {
   const budget = html.match(/<section id="context-budget"[\s\S]*?<\/section>/)[0];
   assert.match(budget, /Bars are conceptual, not measurements/);
   assert.match(budget, /studies tested earlier models/);
   for (const label of ['CHROMA / 2025', 'SHI ET AL. / 2023', 'LIU ET AL. / 2023']) assert.ok(budget.includes(label), label);
   for (const segment of [...budget.matchAll(/<li class="seg-[^"]+"><span>([^<]+)<\/span><\/li>/g)]) assert.ok(segment[1].trim());
   const session = html.match(/<section id="observed-session"[\s\S]*?<\/section>/)[0];
-  assert.equal((session.match(/<li><strong>/g) || []).length, 6);
-  assert.match(session, /An observation, not a benchmark/);
+  assert.match(session, /data-demo="tracking"/);
+  assert.match(session, /fictional repository/);
+  assert.match(session, /not a replay of the March workshop or a benchmark/);
+  assert.match(session, /does not erase the original Chat history/);
   assert.doesNotMatch(html, /\/Users\/|copilot-tracking\/workshop/);
+});
+
+test('tracking walkthrough follows scoped tool calls through a misleading answer and correction', () => {
+  const { steps, phases } = demos.tracking;
+  assert.equal(steps.length, 8);
+  assert.deepEqual(plain(phases), ['Question', 'Tools', 'Explore', 'Compaction', 'Answer', 'Check']);
+  assert.deepEqual(plain(steps.map(step => step.phase)), ['Question', 'Tools', 'Tools', 'Tools', 'Explore', 'Compaction', 'Answer', 'Check']);
+  assert.deepEqual(plain(steps.map(step => step.kind)), [
+    'workbench', 'agent-flow', 'agent-flow', 'agent-flow', 'agent-flow', 'agent-flow', 'agent-flow', 'workbench'
+  ]);
+  assert.deepEqual(plain(steps.map(step => step.agent)), ['Agent', 'Explore', 'Explore', 'Explore', 'Agent', 'Agent', 'Agent', 'Agent']);
+  for (const step of steps) {
+    assert.equal(step.workspace, 'sample-repo');
+    assert.match(step.label, /Scripted.*fictional repo/);
+    assert.ok(['editor', 'chat'].includes(step.focus));
+    assert.ok(['files', 'code', 'definitions'].includes(step.editor.kind));
+    assert.ok(step.editor.title && step.editor.caption);
+    assert.ok(step.messages.length);
+    for (const message of step.messages) {
+      assert.ok(['request', 'message', 'tool', 'helper', 'notice', 'summary', 'answer'].includes(message.kind));
+      assert.ok(message.title && message.body);
+    }
+  }
+  assert.equal(steps[1].messages[0].title, 'grep_search');
+  assert.equal(steps[2].messages[0].title, 'list_dir');
+  assert.equal(steps[2].messages[0].body, steps[2].editor.files.join('\n'));
+  assert.match(steps[6].messages[0].title, /incorrect/);
+  assert.equal(steps[6].messages[0].kind, 'answer');
+  assert.deepEqual(plain(steps[7].editor.meanings.map(meaning => meaning.path)), [
+    '.copilot-tracking/', 'var/jobs/', 'changes/'
+  ]);
+});
+
+test('flow excerpts keep directed order, Explore ownership and canonical event evidence', () => {
+  for (const step of demos.tracking.steps.filter(step => step.kind === 'agent-flow')) {
+    const trace = flowTrace(step.flow.nodes);
+    assert.ok(trace.nodes.some(node => node.id === step.flow.selected));
+    assert.equal(trace.edges.length, trace.nodes.length - 1);
+    assert.deepEqual(plain(trace.edges), plain(step.flow.nodes.slice(1).map((id, index) => [step.flow.nodes[index], id])));
+    for (const node of trace.nodes) {
+      assert.ok(flowKinds[node.kind]);
+      const source = demos.tracking.steps[node.sourceStep];
+      assert.ok(source.editor);
+      assert.ok(source.messages[node.messageIndex].body);
+      if (node.parent) {
+        assert.equal(node.parent, 'explore');
+        assert.equal(trackingFlow[node.parent].kind, 'subagentInvocation');
+      }
+    }
+  }
+  assert.deepEqual(plain(flowTrace(demos.tracking.steps[3].flow.nodes).edges), [
+    ['explore', 'search'], ['search', 'list'], ['list', 'read']
+  ]);
+  assert.equal(demos.tracking.steps[3].flow.detailView, 'context');
+  assert.equal(trackingFlow.compaction.kind, 'generic');
+  assert.match(trackingFlow.compaction.sublabel, /Illustrative/);
+  assert.equal(trackingFlow.answer.kind, 'agentResponse');
+  assert.match(trackingFlow.answer.note, /not a failed tool call/);
+});
+
+test('flow excerpts reject missing, duplicate and disconnected subagent references', () => {
+  assert.throws(() => flowTrace([]), /unique event IDs/);
+  assert.throws(() => flowTrace(null), /unique event IDs/);
+  assert.throws(() => flowTrace(['read', 'read']), /unique event IDs/);
+  assert.throws(() => flowTrace(['unknown']), /Unknown flow event/);
+  assert.throws(() => flowTrace(['search']), /Missing preceding subagent/);
+  assert.throws(() => flowTrace(['explore', 'search', 'resume', 'read']), /must stay together/);
+});
+
+test('the missed excerpt is outside the chosen read range and summaries omit that limit', () => {
+  const { steps } = demos.tracking;
+  const read = steps[3];
+  assert.equal(read.messages[0].title, 'read_file');
+  assert.deepEqual(plain(read.readRange), { file: 'docs/tracking.md', start: 1, end: 40, total: 128 });
+  assert.equal(read.editor.title, read.readRange.file);
+  assert.equal(read.editor.startLine, 84);
+  const lastLine = read.editor.startLine + read.editor.body.split('\n').length - 1;
+  assert.equal(lastLine, 90);
+  assert.ok(read.editor.startLine > read.readRange.end && lastLine <= read.readRange.total);
+  assert.doesNotMatch(read.editor.body, /tracking files/i);
+  assert.match(read.insight, /not the 2,000-line tool cap/);
+  assert.doesNotMatch(steps[4].messages[0].body, /1-40|root only|not checked/i);
+  assert.doesNotMatch(steps[5].messages[1].body, /1-40|root only|not checked/i);
+  assert.match(steps[5].insight, /not erased/);
 });
 
 test('RPI Agent selection precedes the phase overview and stays optional', () => {
@@ -182,15 +280,30 @@ test('walkthrough follows one task from request through a routed review finding'
   assert.equal(demo.steps[1].surface, 'tool');
   assert.match(demo.steps[1].body, /showing 100 matches/);
   assert.match(demo.steps[3].body, /PC-001[\s\S]*Resolved/);
+  assert.match(demo.steps[3].body, /test 0 and 366 in each module/);
+  assert.equal(demo.steps[4].state, 'Reported complete');
+  assert.match(demo.steps[4].changes, /terraform test: Passed\nScope: not recorded/);
+  assert.match(demo.steps[4].insight, /not which modules they covered/);
   assert.match(demo.steps.at(-1).body, /Route: rpi-implement[\s\S]*Execution: Complete\nOutcome: Defects found/);
   for (const step of demo.steps) assert.match(step.label, /Reconstructed|Illustrative|Scripted/);
+});
+
+test('phase explanations keep research readiness and optional chat resets distinct', () => {
+  const phases = html.match(/<section id="phase-contract"[\s\S]*?<\/section>/)[0];
+  assert.match(phases, /Task, code and sources/);
+  assert.match(phases, /without changing source code/);
+  assert.match(phases, /doesn't start one automatically/);
+  const research = html.match(/<section id="research-coverage"[\s\S]*?<\/section>/)[0];
+  assert.match(research, /Not ready: decide whether to keep legacy names/);
+  const fresh = html.match(/<section id="fresh-context"[\s\S]*?<\/section>/)[0];
+  assert.match(fresh, /An optional way to work/);
 });
 
 test('trade-off slide keeps the direct-edit path and the limits of RPI', () => {
   const tradeoffs = html.match(/<section id="when-to-use"[\s\S]*?<\/section>/)[0];
   assert.match(tradeoffs, /USE A DIRECT EDIT/);
   assert.match(tradeoffs, /describe the diff in one sentence/);
-  assert.match(tradeoffs, /It needs your review/);
+  assert.match(tradeoffs, /Human review still matters/);
   const cited = tradeoffs.match(/data-sources="([^"]+)"/)[1].split(',');
   for (const source of ['rpi-overview', 'claude-code-practices', 'codex-practices', 'anthropic-context-eng']) assert.ok(cited.includes(source), source);
 });

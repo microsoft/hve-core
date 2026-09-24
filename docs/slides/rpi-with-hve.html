@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="Why context still decides the result with frontier coding models, and how the HVE Core RPI workflow keeps each phase focused.">
+  <meta name="description" content="How to manage context and carry evidence between Research, Plan, Implement and Review in HVE Core.">
   <title>RPI with HVE Core / September 2026</title>
   <style data-bundled-source="vendor/reveal.css">
 .reveal .stretch,.reveal .r-stretch{max-width:none;max-height:none}.reveal pre.stretch code,.reveal pre.r-stretch code{box-sizing:border-box;height:100%;max-height:100%}.reveal .r-fit-text{white-space:nowrap;display:inline-block}.reveal .r-stack{grid-template-rows:100%;display:grid}.reveal .r-stack>*{grid-area:1/1;margin:auto}.reveal .r-vstack,.reveal .r-hstack{display:flex}.reveal .r-vstack img,.reveal .r-vstack video,.reveal .r-hstack img,.reveal .r-hstack video{object-fit:contain;min-width:0;min-height:0}.reveal .r-vstack{flex-direction:column;justify-content:center;align-items:center}.reveal .r-hstack{flex-direction:row;justify-content:center;align-items:center}.reveal .items-stretch{align-items:stretch}.reveal .items-start{align-items:flex-start}.reveal .items-center{align-items:center}.reveal .items-end{align-items:flex-end}.reveal .justify-between{justify-content:space-between}.reveal .justify-around{justify-content:space-around}.reveal .justify-start{justify-content:flex-start}.reveal .justify-center{justify-content:center}.reveal .justify-end{justify-content:flex-end}html.reveal-full-page{width:100%;height:100vh;height:calc(var(--vh,1vh) * 100);height:100dvh;overflow:hidden}.reveal-viewport{color:#000;--r-controls-spacing:12px;--r-overlay-header-height:40px;--r-overlay-margin:0px;--r-overlay-padding:6px;--r-overlay-gap:5px;background-color:#fff;height:100%;margin:0;line-height:1;position:relative;overflow:hidden}@media screen and (width<=1024px),(height<=768px){.reveal-viewport{--r-overlay-header-height:26px}}.reveal-viewport:fullscreen{width:100%!important;height:100%!important;top:0!important;left:0!important;transform:none!important}.reveal .fragment{transition:all .2s}.reveal .fragment:not(.custom){opacity:0;visibility:hidden;will-change:opacity}.reveal .fragment.visible{opacity:1;visibility:inherit}.reveal .fragment.disabled{transition:none}.reveal .fragment.grow{opacity:1;visibility:inherit}.reveal .fragment.grow.visible{transform:scale(1.3)}.reveal .fragment.shrink{opacity:1;visibility:inherit}.reveal .fragment.shrink.visible{transform:scale(.7)}.reveal .fragment.zoom-in{transform:scale(.1)}.reveal .fragment.zoom-in.visible{transform:none}.reveal .fragment.fade-out{opacity:1;visibility:inherit}.reveal .fragment.fade-out.visible{opacity:0;visibility:hidden}.reveal .fragment.semi-fade-out{opacity:1;visibility:inherit}.reveal .fragment.semi-fade-out.visible{opacity:.5;visibility:inherit}.reveal .fragment.strike{opacity:1;visibility:inherit}.reveal .fragment.strike.visible{text-decoration:line-through}.reveal .fragment.fade-up{transform:translateY(40px)}.reveal .fragment.fade-up.visible{transform:translate(0)}.reveal .fragment.fade-down{transform:translateY(-40px)}.reveal .fragment.fade-down.visible{transform:translate(0)}.reveal .fragment.fade-right{transform:translate(-40px)}.reveal .fragment.fade-right.visible{transform:translate(0)}.reveal .fragment.fade-left{transform:translate(40px)}.reveal .fragment.fade-left.visible{transform:translate(0)}.reveal .fragment.fade-in-then-out,.reveal .fragment.current-visible{opacity:0;visibility:hidden}.reveal .fragment.fade-in-then-out.current-fragment,.reveal .fragment.current-visible.current-fragment{opacity:1;visibility:inherit}.reveal .fragment.fade-in-then-semi-out{opacity:0;visibility:hidden}.reveal .fragment.fade-in-then-semi-out.visible{opacity:.5;visibility:inherit}.reveal .fragment.fade-in-then-semi-out.current-fragment,.reveal .fragment.highlight-red,.reveal .fragment.highlight-current-red,.reveal .fragment.highlight-green,.reveal .fragment.highlight-current-green,.reveal .fragment.highlight-blue,.reveal .fragment.highlight-current-blue{opacity:1;visibility:inherit}.reveal .fragment.highlight-red.visible{color:#ff2c2d}.reveal .fragment.highlight-green.visible{color:#17ff2e}.reveal .fragment.highlight-blue.visible{color:#1b91ff}.reveal .fragment.highlight-current-red.current-fragment{color:#ff2c2d}.reveal .fragment.highlight-current-green.current-fragment{color:#17ff2e}.reveal .fragment.highlight-current-blue.current-fragment{color:#1b91ff}.reveal:after{content:"";font-style:italic}.reveal iframe{z-index:1}.reveal a{position:relative}@keyframes bounce-right{0%,10%,25%,40%,50%{transform:translate(0)}20%{transform:translate(10px)}30%{transform:translate(-5px)}}@keyframes bounce-left{0%,10%,25%,40%,50%{transform:translate(0)}20%{transform:translate(-10px)}30%{transform:translate(5px)}}@keyframes bounce-down{0%,10%,25%,40%,50%{transform:translateY(0)}20%{transform:translateY(10px)}30%{transform:translateY(-5px)}}.reveal .controls{top:auto;bottom:var(--r-controls-spacing);right:var(--r-controls-spacing);z-index:11;color:#000;pointer-events:none;font-size:10px;display:none;position:absolute;left:auto}.reveal .controls button{cursor:pointer;color:currentColor;z-index:2;pointer-events:auto;font-size:inherit;visibility:hidden;opacity:0;-webkit-appearance:none;-webkit-tap-highlight-color:#0000;background-color:#0000;border:0;outline:0;padding:0;transition:color .2s,opacity .2s,transform .2s;position:absolute;transform:scale(.9999)}.reveal .controls .controls-arrow:before,.reveal .controls .controls-arrow:after{content:"";transform-origin:.2em;will-change:transform;background-color:currentColor;border-radius:.25em;width:2.6em;height:.5em;transition:all .15s,background-color .8s;position:absolute;top:0;left:0}.reveal .controls .controls-arrow{width:3.6em;height:3.6em;position:relative}.reveal .controls .controls-arrow:before{transform:translate(.5em)translateY(1.55em)rotate(45deg)}.reveal .controls .controls-arrow:after{transform:translate(.5em)translateY(1.55em)rotate(-45deg)}.reveal .controls .controls-arrow:hover:before{transform:translate(.5em)translateY(1.55em)rotate(40deg)}.reveal .controls .controls-arrow:hover:after{transform:translate(.5em)translateY(1.55em)rotate(-40deg)}.reveal .controls .controls-arrow:active:before{transform:translate(.5em)translateY(1.55em)rotate(36deg)}.reveal .controls .controls-arrow:active:after{transform:translate(.5em)translateY(1.55em)rotate(-36deg)}.reveal .controls .navigate-left{bottom:3.2em;right:6.4em;transform:translate(-10px)}.reveal .controls .navigate-left.highlight{animation:2s ease-out 50 both bounce-left}.reveal .controls .navigate-right{bottom:3.2em;right:0;transform:translate(10px)}.reveal .controls .navigate-right .controls-arrow{transform:rotate(180deg)}.reveal .controls .navigate-right.highlight{animation:2s ease-out 50 both bounce-right}.reveal .controls .navigate-up{bottom:6.4em;right:3.2em;transform:translateY(-10px)}.reveal .controls .navigate-up .controls-arrow{transform:rotate(90deg)}.reveal .controls .navigate-down{padding-bottom:1.4em;bottom:-1.4em;right:3.2em;transform:translateY(10px)}.reveal .controls .navigate-down .controls-arrow{transform:rotate(-90deg)}.reveal .controls .navigate-down.highlight{animation:2s ease-out 50 both bounce-down}.reveal .controls[data-controls-back-arrows=faded] .navigate-up.enabled{opacity:.3}.reveal .controls[data-controls-back-arrows=faded] .navigate-up.enabled:hover{opacity:1}.reveal .controls[data-controls-back-arrows=hidden] .navigate-up.enabled{opacity:0;visibility:hidden}.reveal .controls .enabled{visibility:visible;opacity:.9;cursor:pointer;transform:none}.reveal .controls .enabled.fragmented{opacity:.5}.reveal .controls .enabled:hover,.reveal .controls .enabled.fragmented:hover{opacity:1}.reveal:not(.rtl) .controls[data-controls-back-arrows=faded] .navigate-left.enabled{opacity:.3}.reveal:not(.rtl) .controls[data-controls-back-arrows=faded] .navigate-left.enabled:hover{opacity:1}.reveal:not(.rtl) .controls[data-controls-back-arrows=hidden] .navigate-left.enabled{opacity:0;visibility:hidden}.reveal.rtl .controls[data-controls-back-arrows=faded] .navigate-right.enabled{opacity:.3}.reveal.rtl .controls[data-controls-back-arrows=faded] .navigate-right.enabled:hover{opacity:1}.reveal.rtl .controls[data-controls-back-arrows=hidden] .navigate-right.enabled{opacity:0;visibility:hidden}.reveal[data-navigation-mode=linear].has-horizontal-slides .navigate-up,.reveal[data-navigation-mode=linear].has-horizontal-slides .navigate-down{display:none}.reveal[data-navigation-mode=linear].has-horizontal-slides .navigate-left,.reveal:not(.has-vertical-slides) .controls .navigate-left{bottom:1.4em;right:5.5em}.reveal[data-navigation-mode=linear].has-horizontal-slides .navigate-right,.reveal:not(.has-vertical-slides) .controls .navigate-right{bottom:1.4em;right:.5em}.reveal:not(.has-horizontal-slides) .controls .navigate-up{bottom:5em;right:1.4em}.reveal:not(.has-horizontal-slides) .controls .navigate-down{bottom:.5em;right:1.4em}.reveal.has-dark-background .controls{color:#fff}.reveal.has-light-background .controls{color:#000}.reveal.no-hover .controls .controls-arrow:hover:before,.reveal.no-hover .controls .controls-arrow:active:before{transform:translate(.5em)translateY(1.55em)rotate(45deg)}.reveal.no-hover .controls .controls-arrow:hover:after,.reveal.no-hover .controls .controls-arrow:active:after{transform:translate(.5em)translateY(1.55em)rotate(-45deg)}@media screen and (width>=500px){.reveal-viewport{--r-controls-spacing:.8em}.reveal .controls[data-controls-layout=edges]{inset:0}.reveal .controls[data-controls-layout=edges] .navigate-left,.reveal .controls[data-controls-layout=edges] .navigate-right,.reveal .controls[data-controls-layout=edges] .navigate-up,.reveal .controls[data-controls-layout=edges] .navigate-down{bottom:auto;right:auto}.reveal .controls[data-controls-layout=edges] .navigate-left{top:50%;left:var(--r-controls-spacing);margin-top:-1.8em}.reveal .controls[data-controls-layout=edges] .navigate-right{top:50%;right:var(--r-controls-spacing);margin-top:-1.8em}.reveal .controls[data-controls-layout=edges] .navigate-up{top:var(--r-controls-spacing);margin-left:-1.8em;left:50%}.reveal .controls[data-controls-layout=edges] .navigate-down{bottom:calc(var(--r-controls-spacing) - 1.4em + .3em);margin-left:-1.8em;left:50%}}.reveal .progress{z-index:10;color:#fff;background-color:#0003;width:100%;height:3px;display:none;position:absolute;bottom:0;left:0}.reveal .progress:after{content:"";width:100%;height:10px;display:block;position:absolute;top:-10px}.reveal .progress span{transform-origin:0 0;background-color:currentColor;width:100%;height:100%;transition:transform .8s cubic-bezier(.26,.86,.44,.985);display:block;transform:scaleX(0)}.reveal .slide-number{z-index:31;color:#fff;background-color:#0006;padding:5px;font-family:Helvetica,sans-serif;font-size:12px;line-height:1;display:block;position:absolute;bottom:8px;right:8px}.reveal .slide-number a{color:currentColor}.reveal .slide-number-delimiter{margin:0 3px}.reveal{touch-action:pinch-zoom;width:100%;height:100%;position:relative;overflow:hidden}.reveal.embedded{touch-action:pan-y}.reveal.embedded.is-vertical-slide{touch-action:none}.reveal .slides{pointer-events:none;z-index:1;text-align:center;perspective:600px;perspective-origin:50% 40%;width:100%;height:100%;margin:auto;position:absolute;inset:0;overflow:visible}.reveal .slides>section{perspective:600px}.reveal .slides>section,.reveal .slides>section>section{pointer-events:auto;z-index:10;transform-style:flat;width:100%;transition:transform-origin .8s cubic-bezier(.26,.86,.44,.985),transform .8s cubic-bezier(.26,.86,.44,.985),visibility .8s cubic-bezier(.26,.86,.44,.985),opacity .8s cubic-bezier(.26,.86,.44,.985);display:none;position:absolute}.reveal[data-transition-speed=fast] .slides section{transition-duration:.4s}.reveal[data-transition-speed=slow] .slides section{transition-duration:1.2s}.reveal .slides section[data-transition-speed=fast]{transition-duration:.4s}.reveal .slides section[data-transition-speed=slow]{transition-duration:1.2s}.reveal .slides>section.stack{pointer-events:none;height:100%;padding-top:0;padding-bottom:0}.reveal .slides>section.present,.reveal .slides>section>section.present{z-index:11;opacity:1;display:block}.reveal .slides>section:empty,.reveal .slides>section>section:empty,.reveal .slides>section[data-background-interactive],.reveal .slides>section>section[data-background-interactive]{pointer-events:none}.reveal.center,.reveal.center .slides,.reveal.center .slides section{min-height:0!important}.reveal .slides>section:not(.present),.reveal .slides>section>section:not(.present){pointer-events:none}.reveal.overview .slides>section,.reveal.overview .slides>section>section{pointer-events:auto}.reveal .slides>section.past,.reveal .slides>section.future,.reveal .slides>section.past>section,.reveal .slides>section.future>section,.reveal .slides>section>section.past,.reveal .slides>section>section.future{opacity:0}.reveal .slides>section[data-transition=slide].past,.reveal .slides>section[data-transition~=slide-out].past,.reveal.slide .slides>section:not([data-transition]).past{transform:translate(-150%)}.reveal .slides>section[data-transition=slide].future,.reveal .slides>section[data-transition~=slide-in].future,.reveal.slide .slides>section:not([data-transition]).future{transform:translate(150%)}.reveal .slides>section>section[data-transition=slide].past,.reveal .slides>section>section[data-transition~=slide-out].past,.reveal.slide .slides>section>section:not([data-transition]).past{transform:translateY(-150%)}.reveal .slides>section>section[data-transition=slide].future,.reveal .slides>section>section[data-transition~=slide-in].future,.reveal.slide .slides>section>section:not([data-transition]).future{transform:translateY(150%)}.reveal .slides>section[data-transition=linear].past,.reveal .slides>section[data-transition~=linear-out].past,.reveal.linear .slides>section:not([data-transition]).past{transform:translate(-150%)}.reveal .slides>section[data-transition=linear].future,.reveal .slides>section[data-transition~=linear-in].future,.reveal.linear .slides>section:not([data-transition]).future{transform:translate(150%)}.reveal .slides>section>section[data-transition=linear].past,.reveal .slides>section>section[data-transition~=linear-out].past,.reveal.linear .slides>section>section:not([data-transition]).past{transform:translateY(-150%)}.reveal .slides>section>section[data-transition=linear].future,.reveal .slides>section>section[data-transition~=linear-in].future,.reveal.linear .slides>section>section:not([data-transition]).future{transform:translateY(150%)}.reveal .slides section[data-transition=default].stack,.reveal.default .slides section.stack{transform-style:preserve-3d}.reveal .slides>section[data-transition=default].past,.reveal .slides>section[data-transition~=default-out].past,.reveal.default .slides>section:not([data-transition]).past{transform:translate(-100%)rotateY(-90deg)translate(-100%)}.reveal .slides>section[data-transition=default].future,.reveal .slides>section[data-transition~=default-in].future,.reveal.default .slides>section:not([data-transition]).future{transform:translate(100%)rotateY(90deg)translate(100%)}.reveal .slides>section>section[data-transition=default].past,.reveal .slides>section>section[data-transition~=default-out].past,.reveal.default .slides>section>section:not([data-transition]).past{transform:translateY(-300px)rotateX(70deg)translateY(-300px)}.reveal .slides>section>section[data-transition=default].future,.reveal .slides>section>section[data-transition~=default-in].future,.reveal.default .slides>section>section:not([data-transition]).future{transform:translateY(300px)rotateX(-70deg)translateY(300px)}.reveal .slides section[data-transition=convex].stack,.reveal.convex .slides section.stack{transform-style:preserve-3d}.reveal .slides>section[data-transition=convex].past,.reveal .slides>section[data-transition~=convex-out].past,.reveal.convex .slides>section:not([data-transition]).past{transform:translate(-100%)rotateY(-90deg)translate(-100%)}.reveal .slides>section[data-transition=convex].future,.reveal .slides>section[data-transition~=convex-in].future,.reveal.convex .slides>section:not([data-transition]).future{transform:translate(100%)rotateY(90deg)translate(100%)}.reveal .slides>section>section[data-transition=convex].past,.reveal .slides>section>section[data-transition~=convex-out].past,.reveal.convex .slides>section>section:not([data-transition]).past{transform:translateY(-300px)rotateX(70deg)translateY(-300px)}.reveal .slides>section>section[data-transition=convex].future,.reveal .slides>section>section[data-transition~=convex-in].future,.reveal.convex .slides>section>section:not([data-transition]).future{transform:translateY(300px)rotateX(-70deg)translateY(300px)}.reveal .slides section[data-transition=concave].stack,.reveal.concave .slides section.stack{transform-style:preserve-3d}.reveal .slides>section[data-transition=concave].past,.reveal .slides>section[data-transition~=concave-out].past,.reveal.concave .slides>section:not([data-transition]).past{transform:translate(-100%)rotateY(90deg)translate(-100%)}.reveal .slides>section[data-transition=concave].future,.reveal .slides>section[data-transition~=concave-in].future,.reveal.concave .slides>section:not([data-transition]).future{transform:translate(100%)rotateY(-90deg)translate(100%)}.reveal .slides>section>section[data-transition=concave].past,.reveal .slides>section>section[data-transition~=concave-out].past,.reveal.concave .slides>section>section:not([data-transition]).past{transform:translateY(-80%)rotateX(-70deg)translateY(-80%)}.reveal .slides>section>section[data-transition=concave].future,.reveal .slides>section>section[data-transition~=concave-in].future,.reveal.concave .slides>section>section:not([data-transition]).future{transform:translateY(80%)rotateX(70deg)translateY(80%)}.reveal .slides section[data-transition=zoom],.reveal.zoom .slides section:not([data-transition]){transition-timing-function:ease}.reveal .slides>section[data-transition=zoom].past,.reveal .slides>section[data-transition~=zoom-out].past,.reveal.zoom .slides>section:not([data-transition]).past{visibility:hidden;transform:scale(16)}.reveal .slides>section[data-transition=zoom].future,.reveal .slides>section[data-transition~=zoom-in].future,.reveal.zoom .slides>section:not([data-transition]).future{visibility:hidden;transform:scale(.2)}.reveal .slides>section>section[data-transition=zoom].past,.reveal .slides>section>section[data-transition~=zoom-out].past,.reveal.zoom .slides>section>section:not([data-transition]).past{transform:scale(16)}.reveal .slides>section>section[data-transition=zoom].future,.reveal .slides>section>section[data-transition~=zoom-in].future,.reveal.zoom .slides>section>section:not([data-transition]).future{transform:scale(.2)}.reveal.cube .slides{perspective:1300px}.reveal.cube .slides section{backface-visibility:hidden;box-sizing:border-box;min-height:700px;transform-style:preserve-3d;padding:30px}.reveal.center.cube .slides section{min-height:0}.reveal.cube .slides section:not(.stack):before{content:"";background:#0000001a;border-radius:4px;width:100%;height:100%;display:block;position:absolute;top:0;left:0;transform:translateZ(-20px)}.reveal.cube .slides section:not(.stack):after{content:"";z-index:1;background:0 0;border-radius:4px;width:90%;height:30px;display:block;position:absolute;bottom:0;left:5%;transform:translateZ(-90px)rotateX(65deg);box-shadow:0 95px 25px #0003}.reveal.cube .slides>section.stack{background:0 0;padding:0}.reveal.cube .slides>section.past{transform-origin:100% 0;transform:translate(-100%)rotateY(-90deg)}.reveal.cube .slides>section.future{transform-origin:0 0;transform:translate(100%)rotateY(90deg)}.reveal.cube .slides>section>section.past{transform-origin:0 100%;transform:translateY(-100%)rotateX(90deg)}.reveal.cube .slides>section>section.future{transform-origin:0 0;transform:translateY(100%)rotateX(-90deg)}.reveal.page .slides{perspective-origin:0%;perspective:3000px}.reveal.page .slides section{box-sizing:border-box;min-height:700px;transform-style:preserve-3d;padding:30px}.reveal.page .slides section.past{z-index:12}.reveal.page .slides section:not(.stack):before{content:"";background:#0000001a;width:100%;height:100%;display:block;position:absolute;top:0;left:0;transform:translateZ(-20px)}.reveal.page .slides section:not(.stack):after{content:"";z-index:1;background:0 0;border-radius:4px;width:90%;height:30px;display:block;position:absolute;bottom:0;left:5%;transform:translateZ(-90px)rotateX(65deg);box-shadow:0 95px 25px #0003}.reveal.page .slides>section.stack{background:0 0;padding:0}.reveal.page .slides>section.past{transform-origin:0 0;transform:translate(-40%)rotateY(-80deg)}.reveal.page .slides>section.future{transform-origin:100% 0;transform:translate(0,0)}.reveal.page .slides>section>section.past{transform-origin:0 0;transform:translateY(-40%)rotateX(80deg)}.reveal.page .slides>section>section.future{transform-origin:0 100%;transform:translate(0,0)}.reveal .slides section[data-transition=fade],.reveal.fade .slides section:not([data-transition]),.reveal.fade .slides>section>section:not([data-transition]){transition:opacity .5s;transform:none}.reveal.fade.overview .slides section,.reveal.fade.overview .slides>section>section{transition:none}.reveal .slides section[data-transition=none],.reveal.none .slides section:not([data-transition]){transition:none;transform:none}.reveal .pause-overlay{visibility:hidden;opacity:0;z-index:100;background:#000;width:100%;height:100%;transition:all 1s;position:absolute;top:0;left:0}.reveal .pause-overlay .resume-button{color:#ccc;cursor:pointer;background:0 0;border:2px solid #ccc;border-radius:2px;padding:6px 14px;font-size:16px;position:absolute;bottom:20px;right:20px}.reveal .pause-overlay .resume-button:hover{color:#fff;border-color:#fff}.reveal.paused .pause-overlay{visibility:visible;opacity:1}.reveal .no-transition,.reveal .no-transition *,.reveal .slides.disable-slide-transitions section{transition:none!important}.reveal .slides.disable-slide-transitions section{transform:none!important}.reveal .backgrounds{perspective:600px;width:100%;height:100%;position:absolute;top:0;left:0}.reveal .slide-background{opacity:0;visibility:hidden;background-color:#0000;width:100%;height:100%;transition:all .8s cubic-bezier(.26,.86,.44,.985);display:none;position:absolute;overflow:hidden}.reveal .slide-background-content{background-position:50%;background-repeat:no-repeat;background-size:cover;width:100%;height:100%;position:absolute}.reveal .slide-background.stack{display:block}.reveal .slide-background.present{opacity:1;visibility:visible;z-index:2}.print-pdf .reveal .slide-background{opacity:1!important;visibility:visible!important}.reveal .slide-background video{object-fit:cover;width:100%;max-width:none;height:100%;max-height:none;position:absolute;top:0;left:0}.reveal .slide-background[data-background-size=contain] video{object-fit:contain}.reveal[data-background-transition=none]>.backgrounds .slide-background:not([data-background-transition]),.reveal>.backgrounds .slide-background[data-background-transition=none]{transition:none}.reveal[data-background-transition=slide]>.backgrounds .slide-background:not([data-background-transition]),.reveal>.backgrounds .slide-background[data-background-transition=slide]{opacity:1}.reveal[data-background-transition=slide]>.backgrounds .slide-background.past:not([data-background-transition]),.reveal>.backgrounds .slide-background.past[data-background-transition=slide]{transform:translate(-100%)}.reveal[data-background-transition=slide]>.backgrounds .slide-background.future:not([data-background-transition]),.reveal>.backgrounds .slide-background.future[data-background-transition=slide]{transform:translate(100%)}.reveal[data-background-transition=slide]>.backgrounds .slide-background>.slide-background.past:not([data-background-transition]),.reveal>.backgrounds .slide-background>.slide-background.past[data-background-transition=slide]{transform:translateY(-100%)}.reveal[data-background-transition=slide]>.backgrounds .slide-background>.slide-background.future:not([data-background-transition]),.reveal>.backgrounds .slide-background>.slide-background.future[data-background-transition=slide]{transform:translateY(100%)}.reveal[data-background-transition=convex]>.backgrounds .slide-background.past:not([data-background-transition]),.reveal>.backgrounds .slide-background.past[data-background-transition=convex]{opacity:0;transform:translate(-100%)rotateY(-90deg)translate(-100%)}.reveal[data-background-transition=convex]>.backgrounds .slide-background.future:not([data-background-transition]),.reveal>.backgrounds .slide-background.future[data-background-transition=convex]{opacity:0;transform:translate(100%)rotateY(90deg)translate(100%)}.reveal[data-background-transition=convex]>.backgrounds .slide-background>.slide-background.past:not([data-background-transition]),.reveal>.backgrounds .slide-background>.slide-background.past[data-background-transition=convex]{opacity:0;transform:translateY(-100%)rotateX(90deg)translateY(-100%)}.reveal[data-background-transition=convex]>.backgrounds .slide-background>.slide-background.future:not([data-background-transition]),.reveal>.backgrounds .slide-background>.slide-background.future[data-background-transition=convex]{opacity:0;transform:translateY(100%)rotateX(-90deg)translateY(100%)}.reveal[data-background-transition=concave]>.backgrounds .slide-background.past:not([data-background-transition]),.reveal>.backgrounds .slide-background.past[data-background-transition=concave]{opacity:0;transform:translate(-100%)rotateY(90deg)translate(-100%)}.reveal[data-background-transition=concave]>.backgrounds .slide-background.future:not([data-background-transition]),.reveal>.backgrounds .slide-background.future[data-background-transition=concave]{opacity:0;transform:translate(100%)rotateY(-90deg)translate(100%)}.reveal[data-background-transition=concave]>.backgrounds .slide-background>.slide-background.past:not([data-background-transition]),.reveal>.backgrounds .slide-background>.slide-background.past[data-background-transition=concave]{opacity:0;transform:translateY(-100%)rotateX(-90deg)translateY(-100%)}.reveal[data-background-transition=concave]>.backgrounds .slide-background>.slide-background.future:not([data-background-transition]),.reveal>.backgrounds .slide-background>.slide-background.future[data-background-transition=concave]{opacity:0;transform:translateY(100%)rotateX(90deg)translateY(100%)}.reveal[data-background-transition=zoom]>.backgrounds .slide-background:not([data-background-transition]),.reveal>.backgrounds .slide-background[data-background-transition=zoom]{transition-timing-function:ease}.reveal[data-background-transition=zoom]>.backgrounds .slide-background.past:not([data-background-transition]),.reveal>.backgrounds .slide-background.past[data-background-transition=zoom]{opacity:0;visibility:hidden;transform:scale(16)}.reveal[data-background-transition=zoom]>.backgrounds .slide-background.future:not([data-background-transition]),.reveal>.backgrounds .slide-background.future[data-background-transition=zoom]{opacity:0;visibility:hidden;transform:scale(.2)}.reveal[data-background-transition=zoom]>.backgrounds .slide-background>.slide-background.past:not([data-background-transition]),.reveal>.backgrounds .slide-background>.slide-background.past[data-background-transition=zoom]{opacity:0;visibility:hidden;transform:scale(16)}.reveal[data-background-transition=zoom]>.backgrounds .slide-background>.slide-background.future:not([data-background-transition]),.reveal>.backgrounds .slide-background>.slide-background.future[data-background-transition=zoom]{opacity:0;visibility:hidden;transform:scale(.2)}.reveal[data-transition-speed=fast]>.backgrounds .slide-background{transition-duration:.4s}.reveal[data-transition-speed=slow]>.backgrounds .slide-background{transition-duration:1.2s}.reveal [data-auto-animate-target^=unmatched]{will-change:opacity}.reveal section[data-auto-animate]:not(.stack):not([data-auto-animate=running]) [data-auto-animate-target^=unmatched]{opacity:0}.reveal.overview{perspective-origin:50%;perspective:700px}.reveal.overview .slides section{cursor:pointer;box-sizing:border-box;height:100%;overflow:hidden;opacity:1!important;visibility:visible!important;top:0!important}.reveal.overview .slides section:hover,.reveal.overview .slides section.present{outline-offset:10px;outline:10px solid #96969699}.reveal.overview .slides section.present{outline:10px solid var(--r-link-color)}.reveal.overview .slides section .fragment{opacity:1;transition:none}.reveal.overview .slides section:after,.reveal.overview .slides section:before{display:none!important}.reveal.overview .slides>section.stack{background:0 0;outline:none;padding:0;overflow:visible;top:0!important}.reveal.overview .backgrounds{perspective:inherit}.reveal.overview .backgrounds .slide-background{opacity:1;visibility:visible;outline-offset:10px;outline:10px solid #9696961a}.reveal.overview .backgrounds .slide-background.stack{overflow:visible}.reveal.overview .slides section,.reveal.overview-deactivating .slides section,.reveal.overview .backgrounds .slide-background,.reveal.overview-deactivating .backgrounds .slide-background{transition:none}.reveal.rtl .slides,.reveal.rtl .slides h1,.reveal.rtl .slides h2,.reveal.rtl .slides h3,.reveal.rtl .slides h4,.reveal.rtl .slides h5,.reveal.rtl .slides h6{direction:rtl;font-family:sans-serif}.reveal.rtl pre,.reveal.rtl code{direction:ltr}.reveal.rtl ol,.reveal.rtl ul{text-align:right}.reveal.rtl .progress span{transform-origin:100% 0}.reveal.has-parallax-background .backgrounds{transition:all .8s}.reveal.has-parallax-background[data-transition-speed=fast] .backgrounds{transition-duration:.4s}.reveal.has-parallax-background[data-transition-speed=slow] .backgrounds{transition-duration:1.2s}@keyframes fade-in{0%{opacity:0}to{opacity:1}}@keyframes scale-up{0%{transform:scale(.95)}to{transform:scale(1)}}.reveal [data-preview-image],.reveal [data-preview-video],.reveal [data-preview-link]:not(a):not([data-preview-link=false]){cursor:zoom-in}.r-overlay{top:var(--r-overlay-margin);right:var(--r-overlay-margin);bottom:var(--r-overlay-margin);left:var(--r-overlay-margin);border-radius:min(var(--r-overlay-margin), 6px);z-index:99;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;background:#000000f2;font-family:ui-sans-serif,system-ui,-apple-system,Helvetica,sans-serif;transition:all .3s;animation:.3s fade-in;position:absolute}.r-overlay-viewport{top:var(--r-overlay-padding);right:var(--r-overlay-padding);bottom:var(--r-overlay-padding);left:var(--r-overlay-padding);gap:var(--r-overlay-gap);flex-direction:column;display:flex;position:absolute}.r-overlay-header{z-index:2;box-sizing:border-box;height:var(--r-overlay-header-height);justify-content:flex-end;align-items:center;gap:6px;display:flex}.r-overlay-header .r-overlay-header-button{all:unset;min-width:var(--r-overlay-header-height);min-height:var(--r-overlay-header-height);padding:0 calc(var(--r-overlay-header-height) / 4);opacity:1;cursor:pointer;box-sizing:border-box;border-radius:6px;justify-content:center;align-items:center;gap:8px;font-size:18px;display:flex}.r-overlay-header .r-overlay-header-button:hover{opacity:1;background-color:#ffffff26}.r-overlay-header .icon{background-position:50%;background-repeat:no-repeat;background-size:100%;width:20px;height:20px;display:inline-block}.r-overlay-close .icon{background-image:url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0ibm9uZSI+PHBhdGggZmlsbD0iI2ZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMTIuODU0IDIuODU0YS41LjUgMCAwIDAtLjcwOC0uNzA4TDcuNSA2Ljc5MyAyLjg1NCAyLjE0NmEuNS41IDAgMSAwLS43MDguNzA4TDYuNzkzIDcuNWwtNC42NDcgNC42NDZhLjUuNSAwIDAgMCAuNzA4LjcwOEw3LjUgOC4yMDdsNC42NDYgNC42NDdhLjUuNSAwIDAgMCAuNzA4LS43MDhMOC4yMDcgNy41bDQuNjQ3LTQuNjQ2WiIgY2xpcC1ydWxlPSJldmVub2RkIi8+PC9zdmc+)}.r-overlay-external .icon{background-image:url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0ibm9uZSI+PHBhdGggZmlsbD0iI2ZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMyAyYTEgMSAwIDAgMC0xIDF2OWExIDEgMCAwIDAgMSAxaDlhMSAxIDAgMCAwIDEtMVY4LjVhLjUuNSAwIDAgMC0xIDBWMTJIM1YzaDMuNWEuNS41IDAgMCAwIDAtMUgzWm05Ljg1NC4xNDZhLjUuNSAwIDAgMSAuMTQ2LjM1MVY1LjVhLjUuNSAwIDAgMS0xIDBWMy43MDdMNi44NTQgOC44NTRhLjUuNSAwIDEgMS0uNzA4LS43MDhMMTEuMjkzIDNIOS41YS41LjUgMCAwIDEgMC0xaDNhLjQ5OS40OTkgMCAwIDEgLjM1NC4xNDZaIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=)}.r-overlay-content{background-color:#141414cc;border-radius:6px;flex-grow:1;place-items:center;animation:.5s cubic-bezier(.26,.86,.44,.985) scale-up;display:grid;position:relative;overflow:hidden}.r-overlay-spinner{z-index:10;visibility:hidden;opacity:0;background-image:url(data:image/gif;base64,R0lGODlhIAAgAPMAAJmZmf%2F%2F%2F6%2Bvr8nJybW1tcDAwOjo6Nvb26ioqKOjo7Ozs%2FLy8vz8%2FAAAAAAAAAAAACH%2FC05FVFNDQVBFMi4wAwEAAAAh%2FhpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh%2BQQJCgAAACwAAAAAIAAgAAAE5xDISWlhperN52JLhSSdRgwVo1ICQZRUsiwHpTJT4iowNS8vyW2icCF6k8HMMBkCEDskxTBDAZwuAkkqIfxIQyhBQBFvAQSDITM5VDW6XNE4KagNh6Bgwe60smQUB3d4Rz1ZBApnFASDd0hihh12BkE9kjAJVlycXIg7CQIFA6SlnJ87paqbSKiKoqusnbMdmDC2tXQlkUhziYtyWTxIfy6BE8WJt5YJvpJivxNaGmLHT0VnOgSYf0dZXS7APdpB309RnHOG5gDqXGLDaC457D1zZ%2FV%2FnmOM82XiHRLYKhKP1oZmADdEAAAh%2BQQJCgAAACwAAAAAIAAgAAAE6hDISWlZpOrNp1lGNRSdRpDUolIGw5RUYhhHukqFu8DsrEyqnWThGvAmhVlteBvojpTDDBUEIFwMFBRAmBkSgOrBFZogCASwBDEY%2FCZSg7GSE0gSCjQBMVG023xWBhklAnoEdhQEfyNqMIcKjhRsjEdnezB%2BA4k8gTwJhFuiW4dokXiloUepBAp5qaKpp6%2BHo7aWW54wl7obvEe0kRuoplCGepwSx2jJvqHEmGt6whJpGpfJCHmOoNHKaHx61WiSR92E4lbFoq%2BB6QDtuetcaBPnW6%2BO7wDHpIiK9SaVK5GgV543tzjgGcghAgAh%2BQQJCgAAACwAAAAAIAAgAAAE7hDISSkxpOrN5zFHNWRdhSiVoVLHspRUMoyUakyEe8PTPCATW9A14E0UvuAKMNAZKYUZCiBMuBakSQKG8G2FzUWox2AUtAQFcBKlVQoLgQReZhQlCIJesQXI5B0CBnUMOxMCenoCfTCEWBsJColTMANldx15BGs8B5wlCZ9Po6OJkwmRpnqkqnuSrayqfKmqpLajoiW5HJq7FL1Gr2mMMcKUMIiJgIemy7xZtJsTmsM4xHiKv5KMCXqfyUCJEonXPN2rAOIAmsfB3uPoAK%2B%2BG%2Bw48edZPK%2BM6hLJpQg484enXIdQFSS1u6UhksENEQAAIfkECQoAAAAsAAAAACAAIAAABOcQyEmpGKLqzWcZRVUQnZYg1aBSh2GUVEIQ2aQOE%2BG%2BcD4ntpWkZQj1JIiZIogDFFyHI0UxQwFugMSOFIPJftfVAEoZLBbcLEFhlQiqGp1Vd140AUklUN3eCA51C1EWMzMCezCBBmkxVIVHBWd3HHl9JQOIJSdSnJ0TDKChCwUJjoWMPaGqDKannasMo6WnM562R5YluZRwur0wpgqZE7NKUm%2BFNRPIhjBJxKZteWuIBMN4zRMIVIhffcgojwCF117i4nlLnY5ztRLsnOk%2BaV%2BoJY7V7m76PdkS4trKcdg0Zc0tTcKkRAAAIfkECQoAAAAsAAAAACAAIAAABO4QyEkpKqjqzScpRaVkXZWQEximw1BSCUEIlDohrft6cpKCk5xid5MNJTaAIkekKGQkWyKHkvhKsR7ARmitkAYDYRIbUQRQjWBwJRzChi9CRlBcY1UN4g0%2FVNB0AlcvcAYHRyZPdEQFYV8ccwR5HWxEJ02YmRMLnJ1xCYp0Y5idpQuhopmmC2KgojKasUQDk5BNAwwMOh2RtRq5uQuPZKGIJQIGwAwGf6I0JXMpC8C7kXWDBINFMxS4DKMAWVWAGYsAdNqW5uaRxkSKJOZKaU3tPOBZ4DuK2LATgJhkPJMgTwKCdFjyPHEnKxFCDhEAACH5BAkKAAAALAAAAAAgACAAAATzEMhJaVKp6s2nIkolIJ2WkBShpkVRWqqQrhLSEu9MZJKK9y1ZrqYK9WiClmvoUaF8gIQSNeF1Er4MNFn4SRSDARWroAIETg1iVwuHjYB1kYc1mwruwXKC9gmsJXliGxc%2BXiUCby9ydh1sOSdMkpMTBpaXBzsfhoc5l58Gm5yToAaZhaOUqjkDgCWNHAULCwOLaTmzswadEqggQwgHuQsHIoZCHQMMQgQGubVEcxOPFAcMDAYUA85eWARmfSRQCdcMe0zeP1AAygwLlJtPNAAL19DARdPzBOWSm1brJBi45soRAWQAAkrQIykShQ9wVhHCwCQCACH5BAkKAAAALAAAAAAgACAAAATrEMhJaVKp6s2nIkqFZF2VIBWhUsJaTokqUCoBq%2BE71SRQeyqUToLA7VxF0JDyIQh%2FMVVPMt1ECZlfcjZJ9mIKoaTl1MRIl5o4CUKXOwmyrCInCKqcWtvadL2SYhyASyNDJ0uIiRMDjI0Fd30%2FiI2UA5GSS5UDj2l6NoqgOgN4gksEBgYFf0FDqKgHnyZ9OX8HrgYHdHpcHQULXAS2qKpENRg7eAMLC7kTBaixUYFkKAzWAAnLC7FLVxLWDBLKCwaKTULgEwbLA4hJtOkSBNqITT3xEgfLpBtzE%2FjiuL04RGEBgwWhShRgQExHBAAh%2BQQJCgAAACwAAAAAIAAgAAAE7xDISWlSqerNpyJKhWRdlSAVoVLCWk6JKlAqAavhO9UkUHsqlE6CwO1cRdCQ8iEIfzFVTzLdRAmZX3I2SfZiCqGk5dTESJeaOAlClzsJsqwiJwiqnFrb2nS9kmIcgEsjQydLiIlHehhpejaIjzh9eomSjZR%2BipslWIRLAgMDOR2DOqKogTB9pCUJBagDBXR6XB0EBkIIsaRsGGMMAxoDBgYHTKJiUYEGDAzHC9EACcUGkIgFzgwZ0QsSBcXHiQvOwgDdEwfFs0sDzt4S6BK4xYjkDOzn0unFeBzOBijIm1Dgmg5YFQwsCMjp1oJ8LyIAACH5BAkKAAAALAAAAAAgACAAAATwEMhJaVKp6s2nIkqFZF2VIBWhUsJaTokqUCoBq%2BE71SRQeyqUToLA7VxF0JDyIQh%2FMVVPMt1ECZlfcjZJ9mIKoaTl1MRIl5o4CUKXOwmyrCInCKqcWtvadL2SYhyASyNDJ0uIiUd6GGl6NoiPOH16iZKNlH6KmyWFOggHhEEvAwwMA0N9GBsEC6amhnVcEwavDAazGwIDaH1ipaYLBUTCGgQDA8NdHz0FpqgTBwsLqAbWAAnIA4FWKdMLGdYGEgraigbT0OITBcg5QwPT4xLrROZL6AuQAPUS7bxLpoWidY0JtxLHKhwwMJBTHgPKdEQAACH5BAkKAAAALAAAAAAgACAAAATrEMhJaVKp6s2nIkqFZF2VIBWhUsJaTokqUCoBq%2BE71SRQeyqUToLA7VxF0JDyIQh%2FMVVPMt1ECZlfcjZJ9mIKoaTl1MRIl5o4CUKXOwmyrCInCKqcWtvadL2SYhyASyNDJ0uIiUd6GAULDJCRiXo1CpGXDJOUjY%2BYip9DhToJA4RBLwMLCwVDfRgbBAaqqoZ1XBMHswsHtxtFaH1iqaoGNgAIxRpbFAgfPQSqpbgGBqUD1wBXeCYp1AYZ19JJOYgH1KwA4UBvQwXUBxPqVD9L3sbp2BNk2xvvFPJd%2BMFCN6HAAIKgNggY0KtEBAAh%2BQQJCgAAACwAAAAAIAAgAAAE6BDISWlSqerNpyJKhWRdlSAVoVLCWk6JKlAqAavhO9UkUHsqlE6CwO1cRdCQ8iEIfzFVTzLdRAmZX3I2SfYIDMaAFdTESJeaEDAIMxYFqrOUaNW4E4ObYcCXaiBVEgULe0NJaxxtYksjh2NLkZISgDgJhHthkpU4mW6blRiYmZOlh4JWkDqILwUGBnE6TYEbCgevr0N1gH4At7gHiRpFaLNrrq8HNgAJA70AWxQIH1%2BvsYMDAzZQPC9VCNkDWUhGkuE5PxJNwiUK4UfLzOlD4WvzAHaoG9nxPi5d%2BjYUqfAhhykOFwJWiAAAIfkECQoAAAAsAAAAACAAIAAABPAQyElpUqnqzaciSoVkXVUMFaFSwlpOCcMYlErAavhOMnNLNo8KsZsMZItJEIDIFSkLGQoQTNhIsFehRww2CQLKF0tYGKYSg%2BygsZIuNqJksKgbfgIGepNo2cIUB3V1B3IvNiBYNQaDSTtfhhx0CwVPI0UJe0%2Bbm4g5VgcGoqOcnjmjqDSdnhgEoamcsZuXO1aWQy8KAwOAuTYYGwi7w5h%2BKr0SJ8MFihpNbx%2B4Erq7BYBuzsdiH1jCAzoSfl0rVirNbRXlBBlLX%2BBP0XJLAPGzTkAuAOqb0WT5AH7OcdCm5B8TgRwSRKIHQtaLCwg1RAAAOwAAAAAAAAAAAA%3D%3D);width:32px;height:32px;margin:-16px 0 0 -16px;display:block;position:absolute;top:50%;left:50%}.r-overlay-preview .r-overlay-content iframe{opacity:0;visibility:hidden;border:0;width:100%;max-width:100%;height:100%;max-height:100%;transition:all .3s}.r-overlay-preview[data-state=loaded] iframe{opacity:1;visibility:visible}.r-overlay-preview .r-overlay-content img,.r-overlay-preview .r-overlay-content video{object-fit:scale-down;width:100%;max-width:100%;height:100%;max-height:100%;margin:0;position:absolute}.r-overlay-preview[data-preview-fit=none] img,.r-overlay-preview[data-preview-fit=none] video{object-fit:none}.r-overlay-preview[data-preview-fit=scale-down] img,.r-overlay-preview[data-preview-fit=scale-down] video{object-fit:scale-down}.r-overlay-preview[data-preview-fit=contain] img,.r-overlay-preview[data-preview-fit=contain] video{object-fit:contain}.r-overlay-preview[data-preview-fit=cover] img,.r-overlay-preview[data-preview-fit=cover] video{object-fit:cover}.r-overlay-preview[data-state=loaded] .r-overlay-content-inner{z-index:-1;text-align:center;letter-spacing:normal;width:100%;position:absolute;top:45%;left:0}.r-overlay-preview .r-overlay-error{color:orange;font-size:18px}.r-overlay-preview .x-frame-error{opacity:0;transition:opacity .3s .3s}.r-overlay-preview[data-state=loaded] .x-frame-error{opacity:1}.r-overlay-preview[data-state=loading] .r-overlay-spinner{opacity:.6;visibility:visible}.r-overlay-help .r-overlay-content{overflow:auto}.r-overlay-help-content{text-align:center;letter-spacing:normal;max-width:560px;margin:auto;padding:20px 0}.r-overlay-help-content .title{margin-top:0;font-size:20px}.r-overlay-help .r-overlay-help-content table{border-collapse:collapse;text-align:left;border:1px solid #fff;font-size:16px}.r-overlay-help .r-overlay-help-content table th,.r-overlay-help .r-overlay-help-content table td{vertical-align:middle;border:1px solid #fff;width:240px;padding:14px}.r-overlay-help .r-overlay-help-content table th{padding-top:20px;padding-bottom:20px}.reveal .playback{z-index:30;cursor:pointer;-webkit-tap-highlight-color:#0000;transition:all .4s;position:absolute;bottom:20px;left:15px}.reveal.overview .playback{opacity:0;visibility:hidden}.reveal .hljs{min-height:100%}.reveal .hljs table{margin:initial}.reveal .hljs-ln-code,.reveal .hljs-ln-numbers{border:0;padding:0}.reveal .hljs-ln-numbers{opacity:.6;text-align:right;vertical-align:top;padding-right:.75em}.reveal .hljs.has-highlights tr:not(.highlight-line){opacity:.4}.reveal .hljs.has-highlights.fragment{transition:all .2s}.reveal .hljs:not(:first-child).fragment{box-sizing:border-box;width:100%;position:absolute;top:0;left:0}.reveal pre[data-auto-animate-target]{overflow:hidden}.reveal pre[data-auto-animate-target] code{height:100%}.reveal .roll{vertical-align:top;perspective:400px;perspective-origin:50%;line-height:1.2;display:inline-block;overflow:hidden}.reveal .roll:hover{text-shadow:none;background:0 0}.reveal .roll span{pointer-events:none;transform-origin:50% 0;transform-style:preserve-3d;backface-visibility:hidden;padding:0 2px;transition:all .4s;display:block;position:relative}.reveal .roll:hover span{background:#00000080;transform:translateZ(-45px)rotateX(90deg)}.reveal .roll span:after{content:attr(data-title);backface-visibility:hidden;transform-origin:50% 0;padding:0 2px;display:block;position:absolute;top:0;left:0;transform:translateY(110%)rotateX(-90deg)}.reveal aside.notes{display:none}.reveal .speaker-notes{z-index:1;color:#222;box-sizing:border-box;text-align:left;-webkit-overflow-scrolling:touch;background-color:#f5f5f5;border:1px solid #0000000d;width:33.3333%;height:100%;padding:14px 18px;font-family:Helvetica,sans-serif;font-size:18px;line-height:1.4;display:none;position:absolute;top:0;left:100%;overflow:auto}.reveal .speaker-notes .notes-placeholder{color:#ccc;font-style:italic}.reveal .speaker-notes:focus{outline:none}.reveal .speaker-notes:before{content:"Speaker notes";opacity:.5;margin-bottom:10px;display:block}.reveal.show-notes{max-width:75%;overflow:visible}.reveal.show-notes .speaker-notes{display:block}@media screen and (width>=1600px){.reveal .speaker-notes{font-size:20px}}@media screen and (width<=1024px){.reveal.show-notes{border-left:0;max-width:none;max-height:70vh;overflow:visible}.reveal.show-notes .speaker-notes{border:0;width:100%;height:30vh;top:100%;left:0}}@media screen and (width<=600px){.reveal.show-notes{max-height:60vh}.reveal.show-notes .speaker-notes{height:40vh;top:100%}.reveal .speaker-notes{font-size:14px}}.reveal .jump-to-slide{z-index:30;-webkit-tap-highlight-color:#0000;font-size:32px;position:absolute;top:15px;left:15px}.reveal .jump-to-slide-input{font-size:inherit;color:currentColor;background:0 0;border:0;padding:8px}.reveal .jump-to-slide-input::placeholder{color:currentColor;opacity:.5}.reveal.has-dark-background .jump-to-slide-input{color:#fff}.reveal.has-light-background .jump-to-slide-input{color:#222}.reveal .jump-to-slide-input:focus{outline:none}.reveal .r-overlay-button{all:unset;z-index:30;cursor:pointer;-webkit-tap-highlight-color:#0000;appearance:none;color:#fff;background:#000000b3;border-radius:5px;justify-content:center;align-items:center;padding:10px;font-size:.4em;display:flex;position:absolute}.reveal .r-overlay-button:hover{background:#000000e6}.reveal.has-light-background .r-overlay-button{color:#222;background:#ffffffb3}.reveal.has-light-background .r-overlay-button:hover{background:#ffffffe6}.reveal .r-media-play-button{bottom:20px;left:15px}.zoomed .reveal *,.zoomed .reveal :before,.zoomed .reveal :after{backface-visibility:visible!important}.zoomed .reveal .progress,.zoomed .reveal .controls{opacity:0}.zoomed .reveal .roll span{background:0 0}.zoomed .reveal .roll span:after,.reveal-viewport.loading-scroll-mode{visibility:hidden}.reveal-viewport.reveal-scroll{z-index:1;--r-scrollbar-width:7px;--r-scrollbar-trigger-size:5px;--r-controls-spacing:8px;margin:0 auto;overflow:hidden auto}@media screen and (width<=500px){.reveal-viewport.reveal-scroll{--r-scrollbar-width:3px;--r-scrollbar-trigger-size:3px}}.reveal-viewport.reveal-scroll .controls,.reveal-viewport.reveal-scroll .progress,.reveal-viewport.reveal-scroll .playback,.reveal-viewport.reveal-scroll .backgrounds,.reveal-viewport.reveal-scroll .slide-number,.reveal-viewport.reveal-scroll .speaker-notes{display:none!important}.reveal-viewport.reveal-scroll .r-overlay,.reveal-viewport.reveal-scroll .pause-overlay,.reveal-viewport.reveal-scroll .r-media-play-button{position:fixed}.reveal-viewport.reveal-scroll .reveal{touch-action:manipulation;overflow:visible}.reveal-viewport.reveal-scroll .slides{pointer-events:initial;perspective:none;perspective-origin:50%;margin:0;padding:0;display:block;position:static;top:auto;left:auto;overflow:visible;width:100%!important}.reveal-viewport.reveal-scroll .scroll-page{width:100%;height:calc(var(--page-height) + var(--page-scroll-padding));z-index:1;position:relative;overflow:visible}.reveal-viewport.reveal-scroll .scroll-page-sticky{height:var(--page-height);position:sticky;top:0}.reveal-viewport.reveal-scroll .scroll-page-content{width:100%;height:100%;position:absolute;top:0;left:0;overflow:hidden}.reveal-viewport.reveal-scroll .scroll-page section{visibility:visible!important;width:var(--slide-width)!important;height:var(--slide-height)!important;opacity:1!important;transform:scale(var(--slide-scale)) translate(-50%, -50%)!important;transform-style:flat!important;transform-origin:0 0!important;display:block!important;position:absolute!important;top:50%!important;left:50%!important}.reveal-viewport.reveal-scroll .slide-background{visibility:visible;opacity:1;touch-action:manipulation;width:100%;height:100%;position:absolute;top:0;left:0;z-index:auto!important;display:block!important}.reveal-viewport.reveal-scroll[data-scrollbar=true]::-webkit-scrollbar{display:none}.reveal-viewport.reveal-scroll[data-scrollbar=auto]::-webkit-scrollbar{display:none}.reveal-viewport.reveal-scroll[data-scrollbar=true],.reveal-viewport.reveal-scroll[data-scrollbar=auto]{scrollbar-width:none}.reveal.has-dark-background,.reveal-viewport.has-dark-background{--r-overlay-element-bg-color:240, 240, 240;--r-overlay-element-fg-color:0, 0, 0}.reveal.has-light-background,.reveal-viewport.has-light-background{--r-overlay-element-bg-color:0, 0, 0;--r-overlay-element-fg-color:240, 240, 240}.reveal-viewport.reveal-scroll .scrollbar{z-index:20;opacity:0;transition:all .3s;position:sticky;top:50%}.reveal-viewport.reveal-scroll .scrollbar.visible,.reveal-viewport.reveal-scroll .scrollbar:hover{opacity:1}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-inner{width:var(--r-scrollbar-width);height:calc(var(--viewport-height) - var(--r-controls-spacing) * 2);right:var(--r-controls-spacing);border-radius:var(--r-scrollbar-width);z-index:10;position:absolute;top:0;transform:translateY(-50%)}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-playhead{width:var(--r-scrollbar-width);height:var(--r-scrollbar-width);border-radius:var(--r-scrollbar-width);background-color:rgba(var(--r-overlay-element-bg-color), 1);z-index:11;transition:background-color .2s;position:absolute;top:0;left:0}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide{background-color:rgba(var(--r-overlay-element-bg-color), .2);width:100%;box-shadow:0 0 0px 1px rgba(var(--r-overlay-element-fg-color), .1);border-radius:var(--r-scrollbar-width);transition:background-color .2s;position:absolute}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide:after{content:"";z-index:-1;background:0 0;width:200%;height:100%;position:absolute;top:0;left:-50%}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide:hover,.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active{background-color:rgba(var(--r-overlay-element-bg-color), .4)}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-trigger{width:100%;transition:background-color .2s;position:absolute}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active.has-triggers{background-color:rgba(var(--r-overlay-element-bg-color), .4);z-index:10}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active .scrollbar-trigger:after{content:"";width:var(--r-scrollbar-trigger-size);height:var(--r-scrollbar-trigger-size);background-color:rgba(var(--r-overlay-element-bg-color), 1);opacity:.4;border-radius:20px;transition:transform .2s,opacity .2s;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active .scrollbar-trigger.active:after,.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active .scrollbar-trigger.active~.scrollbar-trigger:after{opacity:1}.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active .scrollbar-trigger~.scrollbar-trigger.active:after{transform:translate(calc(var(--r-scrollbar-width) * -2), 0);background-color:rgba(var(--r-overlay-element-bg-color), 1)}@media (pointer:coarse){.reveal .controls{font-size:clamp(10px,2.5vmin,40px)}.reveal .progress{height:clamp(3px,.75vmin,10px)}.reveal .r-overlay-button{padding:clamp(.2em,2vmin,1em);font-size:clamp(.4em,3vmin,1em)}}html.reveal-print *{-webkit-print-color-adjust:exact}html.reveal-print{width:100%;height:100%;overflow:visible}html.reveal-print body{border:0;padding:0;overflow:visible;float:none!important;margin:0 auto!important}html.reveal-print .nestedarrow,html.reveal-print .reveal .controls,html.reveal-print .reveal .progress,html.reveal-print .reveal .playback,html.reveal-print .reveal.overview,html.reveal-print .state-background{display:none!important}html.reveal-print .reveal pre code{overflow:hidden!important}html.reveal-print .reveal{width:auto!important;height:auto!important;overflow:hidden!important}html.reveal-print .reveal .slides{pointer-events:initial;perspective:none;perspective-origin:50%;display:block;position:static;top:auto;left:auto;overflow:visible;zoom:1!important;width:100%!important;height:auto!important;margin:0!important;padding:0!important}html.reveal-print .reveal .slides .pdf-page{z-index:1;page-break-after:always;position:relative;overflow:hidden}html.reveal-print .reveal .slides .pdf-page:last-of-type{page-break-after:avoid}html.reveal-print .reveal .slides section{min-height:1px;visibility:visible!important;box-sizing:border-box!important;opacity:1!important;transform-style:flat!important;margin:0!important;padding:0!important;display:block!important;position:absolute!important;transform:none!important}html.reveal-print .reveal section.stack{page-break-after:avoid!important;height:auto!important;min-height:auto!important;margin:0!important;padding:0!important;position:relative!important}html.reveal-print .reveal img{box-shadow:none}html.reveal-print .reveal .backgrounds{display:none}html.reveal-print .reveal .slide-background{width:100%;height:100%;position:absolute;top:0;left:0;z-index:auto!important;display:block!important}html.reveal-print .reveal.show-notes{max-width:none;max-height:none}html.reveal-print .reveal .speaker-notes-pdf{z-index:100;width:100%;height:auto;max-height:none;display:block;inset:auto}html.reveal-print .reveal .speaker-notes-pdf[data-layout=separate-page]{color:inherit;page-break-after:always;background-color:#0000;border:0;padding:20px;position:relative}html.reveal-print .reveal .slide-number-pdf{visibility:visible;font-size:14px;display:block;position:absolute}html.reveal-print .aria-status{display:none}@media print{html:not(.print-pdf){width:auto;height:auto;overflow:visible}html:not(.print-pdf) body{margin:0;padding:0;overflow:visible}html:not(.print-pdf) .reveal{background:#fff;font-size:20pt}html:not(.print-pdf) .reveal .controls,html:not(.print-pdf) .reveal .state-background,html:not(.print-pdf) .reveal .progress,html:not(.print-pdf) .reveal .backgrounds,html:not(.print-pdf) .reveal .slide-number{display:none!important}html:not(.print-pdf) .reveal p,html:not(.print-pdf) .reveal td,html:not(.print-pdf) .reveal li{color:#000;font-size:20pt!important}html:not(.print-pdf) .reveal h1,html:not(.print-pdf) .reveal h2,html:not(.print-pdf) .reveal h3,html:not(.print-pdf) .reveal h4,html:not(.print-pdf) .reveal h5,html:not(.print-pdf) .reveal h6{text-align:left;letter-spacing:normal;height:auto;line-height:normal;color:#000!important}html:not(.print-pdf) .reveal h1{font-size:28pt!important}html:not(.print-pdf) .reveal h2{font-size:24pt!important}html:not(.print-pdf) .reveal h3{font-size:22pt!important}html:not(.print-pdf) .reveal h4{font-variant:small-caps;font-size:22pt!important}html:not(.print-pdf) .reveal h5{font-size:21pt!important}html:not(.print-pdf) .reveal h6{font-style:italic;font-size:20pt!important}html:not(.print-pdf) .reveal a:link,html:not(.print-pdf) .reveal a:visited{font-weight:700;text-decoration:underline;color:#000!important}html:not(.print-pdf) .reveal ul,html:not(.print-pdf) .reveal ol,html:not(.print-pdf) .reveal div,html:not(.print-pdf) .reveal p{visibility:visible;width:auto;height:auto;margin:0;display:block;position:static;overflow:visible;text-align:left!important}html:not(.print-pdf) .reveal pre,html:not(.print-pdf) .reveal table{margin-left:0;margin-right:0}html:not(.print-pdf) .reveal pre code{padding:20px}html:not(.print-pdf) .reveal blockquote{margin:20px 0}html:not(.print-pdf) .reveal .slides{perspective:none;perspective-origin:50%;zoom:1!important;text-align:left!important;width:auto!important;height:auto!important;margin-top:0!important;margin-left:0!important;padding:0!important;display:block!important;position:static!important;top:0!important;left:0!important;overflow:visible!important;transform:none!important}html:not(.print-pdf) .reveal .slides section{visibility:visible!important;z-index:auto!important;opacity:1!important;page-break-after:always!important;transform-style:flat!important;width:auto!important;height:auto!important;margin-top:0!important;margin-left:0!important;padding:60px 20px!important;transition:none!important;display:block!important;position:static!important;top:0!important;left:0!important;overflow:visible!important;transform:none!important}html:not(.print-pdf) .reveal .slides section.stack{padding:0!important}html:not(.print-pdf) .reveal .slides section:last-of-type{page-break-after:avoid!important}html:not(.print-pdf) .reveal .slides section .fragment{opacity:1!important;visibility:visible!important;transform:none!important}html:not(.print-pdf) .reveal .r-fit-text{white-space:normal!important}html:not(.print-pdf) .reveal section img{box-shadow:none;background:#fff;border:1px solid #666;margin:15px 0;display:block}html:not(.print-pdf) .reveal section small{font-size:.8em}html:not(.print-pdf) .reveal .hljs{white-space:pre-wrap;word-wrap:break-word;word-break:break-word;max-height:100%;font-size:15pt}html:not(.print-pdf) .reveal .hljs .hljs-ln-numbers{white-space:nowrap}html:not(.print-pdf) .reveal .hljs td{font-size:inherit!important;color:inherit!important}}
@@ -174,18 +174,6 @@ code { overflow-wrap: anywhere; }
 .research-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; padding-top: 24px; border-top: 1px solid var(--line); }
 .reveal .research-strip p { font-size: 26px; margin-top: 10px; }
 
-/* Observed session */
-.case-layout { display: grid; grid-template-columns: minmax(0, 1.42fr) minmax(0, .58fr); gap: 44px; align-items: start; }
-.reveal .chain { list-style: none; counter-reset: chain; display: grid; gap: 10px; margin: 0; padding: 0; }
-.chain li { counter-increment: chain; display: grid; grid-template-columns: 40px 300px minmax(0, 1fr); gap: 16px; align-items: center; padding: 17px 18px; border: 1px solid #46566c; border-radius: 8px; background: #1b2431; }
-.chain li::before { content: counter(chain, decimal-leading-zero); font: 20px var(--font-mono); color: #a4bddf; }
-.chain strong { font-size: 26px; font-weight: 580; line-height: 1.25; }
-.chain span { font-size: 25px; line-height: 1.35; color: #c3cedd; }
-.chain li:last-child { border: 2px solid #a8834f; background: #2a2219; }
-.case-aside { padding: 22px 28px 24px; border-left: 3px solid #7fae7a; background: #172019; border-radius: 0 8px 8px 0; }
-.case-aside ul { padding-left: 28px; }
-.case-aside li { font-size: 25px; line-height: 1.4; margin-bottom: 14px; }
-
 /* Chapter and closing */
 .chapter-slide.present { display: flex !important; flex-direction: column; justify-content: center; }
 .chapter-slide .eyebrow { position: absolute; top: 52px; }
@@ -330,7 +318,7 @@ html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; 
 [data-reading-view="true"] .reveal .slides section :is(h1, h2) { font-size: 2rem; line-height: 1.2; margin: 20px 0; }
 [data-reading-view="true"] .reveal .slides section h3 { font-size: 1.4rem; line-height: 1.3; margin: 18px 0; }
 [data-reading-view="true"] .reveal .slides section :is(p, li) { line-height: 1.5; }
-[data-reading-view="true"] .reveal .slides section :is(.hero-grid, .split, .compare, .three-points, .model-grid, .log-layout, .failure-grid, .budget-row, .research-strip, .case-layout, .agent-setup-layout, .phase-spine, .session-flow, .demo, .implementation-scene, .chain li, .route-map li, .opening-workflow li) { grid-template-columns: minmax(0, 1fr); height: auto; gap: 16px; margin: 20px 0; }
+[data-reading-view="true"] .reveal .slides section :is(.hero-grid, .split, .compare, .three-points, .model-grid, .log-layout, .failure-grid, .budget-row, .research-strip, .agent-setup-layout, .phase-spine, .session-flow, .demo, .implementation-scene, .route-map li, .opening-workflow li) { grid-template-columns: minmax(0, 1fr); height: auto; gap: 16px; margin: 20px 0; }
 [data-reading-view="true"] .reveal .slides section :is(.budget-bar) { flex-direction: column; height: auto; }
 [data-reading-view="true"] .reveal .slides section .skill-row { grid-template-columns: minmax(0, 1fr); }
 [data-reading-view="true"] .reveal .slides section .budget-delta { margin-left: 0; }
@@ -438,6 +426,115 @@ html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; 
 .diff-add .diff-sign { color: #b1e2b6; }
 .diff-remove .diff-sign { color: #ffb4b6; }
 
+.tracking-demo .demo-body { padding: 10px 16px 12px; }
+.tracking-demo .demo-phases li, .tracking-demo .demo-state strong, .reveal .tracking-demo .demo-insight { font-size: 26px; }
+.workbench { border: 1px solid #505057; border-radius: 6px; background: #1f1f1f; color: #e4e4e4; }
+.workbench-titlebar { display: flex; align-items: center; gap: 20px; padding: 7px 12px; background: #181818; border-bottom: 1px solid #424248; font-size: 18px; line-height: 1.2; }
+.workbench-command-center { display: flex; align-items: center; justify-content: center; gap: 9px; flex: 1; padding: 2px 16px; border: 1px solid #55565d; border-radius: 5px; background: #25262b; }
+.workbench-command-center .ui-icon { width: 17px; height: 17px; flex-basis: 17px; }
+.workbench-window-mark { color: #cccccc; }
+.workbench-grid { display: grid; grid-template-columns: 42px minmax(0, .85fr) minmax(0, 1.15fr); min-height: 360px; }
+.workbench-activity { display: flex; flex-direction: column; align-items: center; gap: 22px; padding: 14px 0; border-right: 1px solid #424248; background: #181818; }
+.workbench-editor, .workbench-chat { min-width: 0; }
+.workbench-editor { border-right: 1px solid #505057; }
+.workbench-pane-heading { display: flex; align-items: center; gap: 9px; min-height: 42px; padding: 8px 12px; border-top: 2px solid transparent; border-bottom: 1px solid #424248; background: #181818; }
+.reveal .workbench-pane-heading h4 { margin: 0; color: #e4e4e4; font: 550 22px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; text-transform: none; letter-spacing: 0; }
+.workbench-pane-heading .ui-icon { width: 20px; height: 20px; flex-basis: 20px; }
+.workbench[data-focus="editor"] .workbench-editor > .workbench-pane-heading,
+.workbench[data-focus="chat"] .workbench-chat > .workbench-pane-heading { border-top-color: #9ac5ff; }
+.workbench-agent { margin-left: auto; color: #bfcad7; font-size: 19px; }
+.reveal .workbench-caption { padding: 7px 12px; margin: 0; color: #f2cf8d; background: #29251e; font-size: 20px; line-height: 1.35; }
+.reveal .workbench-files { list-style: none; padding: 12px; margin: 0; }
+.workbench-files li { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+.workbench-files code { font-size: 23px; line-height: 1.35; color: #dddddd; }
+.workbench-files .ui-icon { color: #c5bb94; width: 20px; height: 20px; flex-basis: 20px; }
+.reveal .workbench pre.numbered-code { width: 100%; max-height: none; padding: 10px 12px; font-size: 23px; line-height: 1.35; }
+.workbench .numbered-code > code { max-height: none; padding: 0; overflow: visible; }
+.workbench .code-line { min-height: 1.35em; }
+.workbench .line-number { line-height: 1.725; }
+.workbench-conversation { padding: 12px 14px; }
+.workbench-message + .workbench-message { margin-top: 14px; }
+.workbench-speaker { display: block; margin-bottom: 7px; font-size: 22px; line-height: 1.3; }
+.reveal .workbench-message > p { margin: 0; font-size: 26px; line-height: 1.36; }
+.workbench-detail { color: #c0ccda; font: 19px/1.35 var(--font-mono); overflow-wrap: anywhere; }
+.workbench-message-tool, .workbench-message-summary { border: 1px solid #57585f; border-radius: 5px; background: #181818; }
+.workbench-message-tool > .workbench-speaker, .workbench-message-summary > .workbench-speaker { margin: 0; padding: 8px 12px 4px; color: #bddaff; }
+.workbench-message-tool > .workbench-detail { padding: 0 12px; }
+.workbench-message-helper { padding-left: 12px; border-left: 3px solid #9ac5ff; }
+.workbench-message-notice { padding: 10px 12px; border: 1px solid #9d8052; border-radius: 5px; background: #2a241b; }
+.workbench-message-notice .workbench-speaker { color: #f2cf8d; }
+.workbench-message-answer { padding: 12px 14px; border: 1px solid #bd8383; border-radius: 5px; background: #302121; }
+.workbench-message-answer .workbench-speaker { color: #ffd2cc; }
+.workbench-meanings { margin: 0; padding: 8px 16px; }
+.workbench-meanings dt { font-size: 26px; font-weight: 600; line-height: 1.3; }
+.workbench-meanings dd { margin: 0 0 6px; }
+.workbench-meanings dd:last-child { margin-bottom: 0; }
+.workbench-meanings code { color: #bddaff; font-size: 23px; }
+.reveal .workbench-meanings p { margin: 0; color: #c9d1dc; font-size: 26px; line-height: 1.3; }
+.workbench-status { display: flex; justify-content: space-between; gap: 12px; padding: 5px 12px; border-top: 1px solid #505057; background: #181818; color: #c9cdd5; font-size: 18px; line-height: 1.2; }
+
+.agent-debugger {
+  --debug-model: #75beff;
+  --debug-tool: #73c991;
+  --debug-subagent: #b267e6;
+  --debug-response: #cccccc;
+  --debug-generic: #a3a3a3;
+  border: 1px solid #454545;
+  border-radius: 6px;
+  background: #1f1f1f;
+  color: #cccccc;
+}
+.debug-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid #3e3e3e; background: #252526; font-size: 20px; line-height: 1.2; }
+.debug-breadcrumb strong { font-weight: 550; }
+.debug-breadcrumb-separator { color: #b0b0b0; }
+.debug-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; padding: 6px 14px; font-size: 18px; line-height: 1.25; }
+.debug-legend span::before { content: ""; display: inline-block; width: 5px; height: 14px; margin-right: 7px; border-radius: 2px; vertical-align: -2px; background: var(--node-color); }
+.debug-legend-modelTurn, .debug-event-modelTurn { --node-color: var(--debug-model); }
+.debug-legend-toolCall, .debug-event-toolCall { --node-color: var(--debug-tool); }
+.debug-legend-subagentInvocation, .debug-event-subagentInvocation { --node-color: var(--debug-subagent); }
+.debug-legend-agentResponse, .debug-event-agentResponse { --node-color: var(--debug-response); }
+.debug-legend-generic, .debug-event-generic { --node-color: var(--debug-generic); }
+.debug-flow-hint { margin-left: auto; color: #bdbdbd; }
+.debug-legend .debug-flow-hint::before { display: none; }
+.debug-panes { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); height: 396px; border-top: 1px solid #3e3e3e; }
+.debug-diagram { min-width: 0; min-height: 0; padding: 10px 18px; background: #1f1f1f; }
+.reveal .debug-trace, .reveal .debug-child-trace { list-style: none; padding: 0; margin: 0; }
+.reveal .debug-trace-entry { display: flex; flex-direction: column; align-items: center; padding: 0; margin: 0; }
+.debug-flow-arrow { display: block; width: 30px; height: 22px; flex: 0 0 22px; color: #a0a0a0; }
+.debug-event { position: relative; display: block; width: 360px; max-width: 100%; min-height: 68px; padding: 7px 16px; border: 1.5px solid var(--node-color); border-radius: 6px; background: #1f1f1f; text-align: left; }
+.debug-event::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 4px; border-radius: 4px 0 0 4px; background: var(--node-color); }
+.debug-event:hover:not(:disabled) { background: #292929; border-color: var(--node-color); }
+.debug-event[aria-pressed="true"] { outline: 2px solid #e5e5e5; outline-offset: 3px; }
+.debug-event:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.debug-event-toolCall { width: 310px; }
+.debug-event-agentResponse { width: 380px; }
+.reveal .debug-node-label { display: block; color: #e4e4e4; font-size: 26px; font-weight: 500; line-height: 1.15; }
+.debug-node-detail { display: block; margin-top: 2px; color: #bdbdbd; font-size: 20px; line-height: 1.15; }
+.debug-subgraph { width: 450px; max-width: 100%; border: 1px dashed #9b75b8; border-left: 3px solid var(--debug-subagent); border-radius: 6px; background: #b267e60f; }
+.debug-subgraph > .debug-event { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 40px; padding: 6px 12px; border: 0; border-radius: 5px 5px 0 0; background: #b267e61f; }
+.debug-subgraph > .debug-event::before { display: none; }
+.debug-subgraph > .debug-event .debug-node-label { font-size: 26px; }
+.debug-subgraph > .debug-event .debug-node-detail { margin: 0; color: #d1b3eb; }
+.reveal .debug-child-trace { padding: 0 12px 8px; }
+.debug-inspector { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding-top: 9px; border-left: 1px solid #505050; background: #252526; }
+.debug-inspector-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 12px; padding: 0 14px 8px; }
+.debug-inspector-kind { margin-left: auto; color: #bdbdbd; font-size: 18px; line-height: 1.3; }
+.reveal .debug-inspector-title { margin: 0; color: #e4e4e4; font-size: 26px; line-height: 1.2; text-transform: none; letter-spacing: 0; }
+.debug-detail-views { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 14px 8px; border-bottom: 1px solid #414141; }
+.debug-detail-views button { min-height: 34px; padding: 5px 10px; border-radius: 4px; border-color: #626262; background: #303031; font-size: 19px; line-height: 1.2; }
+.debug-detail-views button[aria-pressed="true"] { background: #174e78; border-color: #84baff; }
+.debug-inspector-body { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 10px 14px 14px; scrollbar-color: #777777 #252526; scrollbar-width: thin; }
+.debug-inspector-body:focus-visible { outline-offset: -3px; }
+.reveal .debug-inspector-body h5 { margin: 0 0 7px; color: #dddddd; font-size: 20px; line-height: 1.25; text-transform: none; letter-spacing: 0; }
+.reveal .debug-inspector-body > p { margin: 0 0 10px; font-size: 26px; line-height: 1.35; }
+.reveal .debug-inspector-body .debug-context-label { color: #f2cf8d; font-size: 19px; }
+.reveal .debug-inspector-body .debug-context-caption { color: #c7c7c7; font-size: 20px; line-height: 1.4; }
+.reveal .debug-inspector-body .debug-unsupported { border-left: 3px solid #d99b94; padding-left: 12px; }
+.reveal .debug-inspector-body pre.numbered-code { width: 100%; max-height: none; margin: 0 0 12px; padding: 8px 0; font-size: 23px; line-height: 1.35; }
+.debug-inspector-body .numbered-code > code { max-height: none; padding: 0; overflow: visible; }
+.debug-inspector-body .code-line { min-height: 1.35em; }
+.debug-inspector-body .line-number { line-height: 1.725; }
+
 .reveal pre.plain-code { padding-left: 16px; }
 .reveal pre.plain-code .code-line { grid-template-columns: minmax(0, 1fr); }
 
@@ -447,6 +544,22 @@ html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; 
 [data-reading-view="true"] .reveal .slides section .diff-row .diff-line-number:first-child { display: none; }
 [data-reading-view="true"] .reveal .slides section :is(.question-options, .question-freeform) { margin-left: 0; margin-right: 0; }
 [data-reading-view="true"] .reveal .slides section .composer-picker { white-space: normal; }
+[data-reading-view="true"] .reveal .slides section .workbench-grid { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+[data-reading-view="true"] .workbench-activity { display: none; }
+[data-reading-view="true"] .workbench-editor { border-right: 0; border-bottom: 1px solid #505057; }
+[data-reading-view="true"] .reveal .slides section :is(.workbench-titlebar, .workbench-pane-heading, .workbench-status, .workbench-files li) { flex-wrap: wrap; }
+[data-reading-view="true"] .reveal .slides section .workbench-pane-heading h4 { font-size: 1.125rem; }
+[data-reading-view="true"] .reveal .slides section .workbench-command-center { flex-basis: 100%; }
+[data-reading-view="true"] .reveal .slides section .debug-panes { grid-template-columns: minmax(0, 1fr); height: auto; }
+[data-reading-view="true"] .reveal .slides section .debug-inspector { border-left: 0; border-top: 1px solid #505050; }
+[data-reading-view="true"] .reveal .slides section .debug-inspector-body { overflow: visible; }
+[data-reading-view="true"] .reveal .slides section :is(.debug-inspector-title, .debug-inspector-body h5) { font-size: 1.125rem; }
+[data-reading-view="true"] .reveal .slides section .debug-subgraph > .debug-event { flex-wrap: wrap; }
+@media (forced-colors: active) {
+  .debug-event { background: ButtonFace; }
+  .debug-event[aria-pressed="true"] { outline-color: Highlight; }
+  .debug-flow-arrow { color: CanvasText; }
+}
 
 </style>
 
@@ -467,104 +580,104 @@ html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; 
         <div class="hero-grid">
           <div>
             <h1>RPI with<br><em>HVE Core</em></h1>
-            <p class="lead">Why context still decides the result<br>with frontier coding models.</p>
+            <p class="lead">Help your coding agent keep track<br>of a multi-file change.</p>
             <div class="date-pill">SOURCE SNAPSHOT <span>/</span> SEPTEMBER 23, 2026</div>
           </div>
-          <ol class="opening-workflow" aria-label="RPI phases and the file each one leaves">
-            <li><span class="phase-order">01</span><div><strong>Research</strong><span>Evidence and its limits</span></div><code>research.md</code></li>
-            <li><span class="phase-order">02</span><div><strong>Plan</strong><span>Checkable tasks, one critique</span></div><code>plan.md</code></li>
-            <li><span class="phase-order">03</span><div><strong>Implement</strong><span>Changes and check results</span></div><code>changes.md</code></li>
-            <li><span class="phase-order">04</span><div><strong>Review</strong><span>Each gap routed to an owner</span></div><code>review.md</code></li>
+          <ol class="opening-workflow" aria-label="RPI phases and their written results">
+            <li><span class="phase-order">01</span><div><strong>Research</strong><span>Findings and open questions</span></div><code>research.md</code></li>
+            <li><span class="phase-order">02</span><div><strong>Plan</strong><span>Tasks and required checks</span></div><code>plan.md</code></li>
+            <li><span class="phase-order">03</span><div><strong>Implement</strong><span>Code changes and results</span></div><code>changes.md</code></li>
+            <li><span class="phase-order">04</span><div><strong>Review</strong><span>Findings and follow-up</span></div><code>review.md</code></li>
           </ol>
         </div>
         <div class="slide-bottom"><span>microsoft/hve-core</span><span>Includes scripted examples</span></div>
-        <aside class="notes">This talk covers why the context a model sees still matters now that GPT-6 Astra and Claude Opus 5.5 offer million-token windows, and how the current HVE Core RPI workflow manages that context. The first chapter shows how context goes wrong. The second walks through the four RPI phases and the files that carry context between them. Model, tool and HVE facts come from sources retrieved on September 23, 2026.</aside>
+        <aside class="notes">A coding agent can read a lot and still miss the detail that matters. On a multi-file change, that might be a naming exception, a decision buried in chat or a check that ran against only one module. RPI gives the work separate research, planning, implementation and review steps, with files that let you inspect the reasoning and continue in a new chat. We'll follow one log-retention change through those steps. Product details reflect the September 23, 2026 source snapshot.</aside>
       </section>
 
-      <section id="frontier-models" data-title="Frontier models still act on their context" data-chapter="Context" data-sources="gpt6-astra,gpt6-release,gpt6-guide,opus-55,claude-context,copilot-models">
+      <section id="frontier-models" data-title="Larger windows still need good context" data-chapter="Context" data-sources="gpt6-astra,gpt6-release,codex-practices,opus-55,claude-context,copilot-models">
         <div class="eyebrow">01 / CONTEXT</div>
-        <h2>Frontier models still act on their context</h2>
+        <h2>Larger windows still need good context</h2>
         <div class="model-grid">
           <article class="model-card">
             <span class="label">OPENAI / SEPTEMBER 3, 2026</span>
             <h3>GPT-6 Astra</h3>
             <p class="stat"><strong>1,050,000</strong><span>token context window</span></p>
-            <p>Stays coherent on longer tasks. Follows instructions in skills and files such as <code>AGENTS.md</code> more closely, so OpenAI recommends auditing them.</p>
+            <p>A larger window doesn't ensure the agent has read the right files. OpenAI's Codex guidance recommends supplying task-relevant files and examples.</p>
           </article>
           <article class="model-card">
             <span class="label">ANTHROPIC / SEPTEMBER 22, 2026</span>
             <h3>Claude Opus 5.5</h3>
             <p class="stat"><strong>1M</strong><span>token context window</span></p>
-            <p>Built for long-running agentic coding. Anthropic's guidance: more context is not automatically better, because accuracy and recall degrade as tokens grow.</p>
+            <p>Anthropic describes Opus 5.5 as a model for long coding sessions. Its context guidance still warns that longer inputs can reduce recall.</p>
           </article>
         </div>
-        <div class="gate-banner"><p>Capacity grew. The next decision still depends on what reached the context: <strong>complete or partial, current or stale, relevant or distracting.</strong></p></div>
-        <p class="footnote">API figures from provider documentation. Effective limits depend on the client and model setup. Both models are listed as generally available in GitHub Copilot.</p>
-        <aside class="notes">Both providers made large capacity gains this month, and their own documentation still treats context quality as the constraint. OpenAI's GPT-6 guide says Astra is more coherent on long tasks, asks when input could change the result, and is more sensitive to instructions in skills and files it can read. Anthropic calls the degradation context rot and says curating context matters as much as the available space. In the March workshop, the discussion was about windows growing from roughly 10K to 200K tokens; the frontier is now about one million.</aside>
+        <div class="gate-banner"><p>A model can hold more information and still <strong>miss the detail your task depends on.</strong></p></div>
+        <p class="footnote">Provider API limits. Effective limits depend on the client and configuration. GitHub lists both models as generally available in Copilot as of September 23.</p>
+        <aside class="notes">There are two separate questions here: did the evidence reach the model, and can it use that evidence reliably? A large window answers neither by itself. OpenAI's Codex guidance addresses the first by asking for task-relevant files and examples. Anthropic warns about the second: recall can fall as inputs grow. The OpenAI source is general workflow guidance, not a measured recall limit for Astra. These figures are provider API limits; Copilot may expose a different effective limit.</aside>
       </section>
 
-      <section id="running-log" data-title="The whole session steers the next action" data-chapter="Context" data-sources="claude-context,claude-code-practices,vscode-sessions">
-        <div class="eyebrow">CONTEXT / ONE GROWING LOG</div>
-        <h2>The whole session steers the next action</h2>
+      <section id="running-log" data-title="Your prompt shares space with the session" data-chapter="Context" data-sources="claude-context,claude-code-practices,vscode-sessions">
+        <div class="eyebrow">CONTEXT / WHAT THE MODEL RECEIVES</div>
+        <h2>Your prompt shares space with the session</h2>
         <div class="log-layout">
           <div class="talk-track">
-            <h3>The model reads one growing log</h3>
-            <p>Each message and tool call adds to it. The next action is chosen from all of it, including what is stale or unrelated.</p>
+            <h3>The prompt is only part of the input</h3>
+            <p>The next response uses the context the client sends. That can include earlier messages, file reads and tool results, or summaries of older turns.</p>
             <ul>
-              <li>After a long session, your request is a small share of the log.</li>
-              <li>Tool output usually dominates: file reads, search results and terminal logs.</li>
-              <li>When the window fills, VS Code compacts the history into a summary.</li>
+              <li>Old instructions can remain after the task changes.</li>
+              <li>Large tool outputs can take up much more space than your request.</li>
+              <li>When the window fills, VS Code summarizes older conversation history.</li>
             </ul>
           </div>
           <figure class="log-model">
-            <figcaption>Running log</figcaption>
-            <ul class="log-stack" aria-label="What a coding session accumulates">
+            <figcaption>What can be in the context</figcaption>
+            <ul class="log-stack" aria-label="Information a coding agent may receive">
               <li>System prompt and tool definitions</li>
               <li>Your request and attached files</li>
               <li>Instructions and skills</li>
               <li>Files the agent read</li>
               <li>Search and tool results</li>
               <li>Terminal output</li>
-              <li>MCP and subagent returns</li>
-              <li>Compaction summaries</li>
+              <li>Results from connected tools and subagents</li>
+              <li>Summaries of older turns</li>
             </ul>
             <div class="log-arrow" aria-hidden="true">&#8595;</div>
-            <div class="next-action">All of it feeds the <strong>next action</strong></div>
+            <div class="next-action">Input for the <strong>next action</strong></div>
           </figure>
         </div>
-        <aside class="notes">Anthropic's context-window documentation lists what counts: the system prompt, every message, tool results, images, documents and tool definitions. Claude Code's guidance makes the same point about files read and command output. The rows are categories that accumulate together, not steps in order. VS Code shows usage in the context window control in the chat input and compacts the conversation automatically when the window fills.</aside>
+        <aside class="notes">The right-hand list shows possible inputs, not a guarantee that every earlier message arrives unchanged. Clients can select, truncate or summarize history. The practical point is that your latest request shares space with material gathered along the way, including work that may no longer be relevant. VS Code shows context usage in the Chat input and compacts older history when the window fills. A summary saves space, but it may leave out a detail you still need.</aside>
       </section>
 
-      <section id="three-failures" data-title="Three ways context misleads a model" data-chapter="Context" data-sources="vscode-search-tool,vscode-read-tool,claude-code-practices,gpt6-guide,distracted,context-rot">
+      <section id="three-failures" data-title="How useful context gets lost" data-chapter="Context" data-sources="vscode-search-tool,vscode-read-tool,claude-code-practices,gpt6-guide,distracted,context-rot">
         <div class="eyebrow">CONTEXT / FAILURE MODES</div>
-        <h2>Three ways context misleads a model</h2>
+        <h2>How useful context gets lost</h2>
         <div class="failure-grid">
           <article class="failure-card">
             <span class="label">01 / MISSING</span>
-            <h3>Evidence never arrives</h3>
-            <p>Search and read tools return a bounded slice. The model decides from what came back.</p>
-            <p class="consequence"><span>Result</span>Decides on partial evidence</p>
+            <h3>Some evidence is missing</h3>
+            <p>A search returns 100 matches. The relevant module is in the results that weren't shown.</p>
+            <p class="consequence"><span>Risk</span>The agent misses an exception</p>
           </article>
           <article class="failure-card">
             <span class="label">02 / NOISE</span>
-            <h3>Useful context gets diluted</h3>
-            <p>Old reads, failed attempts and long logs stay in the session and compete for attention.</p>
-            <p class="consequence"><span>Result</span>Loses precision over time</p>
+            <h3>The chat fills with old work</h3>
+            <p>Failed attempts and long logs remain after they've stopped helping with the task.</p>
+            <p class="consequence"><span>Risk</span>Important details are harder to use</p>
           </article>
           <article class="failure-card">
             <span class="label">03 / DISTRACTION</span>
-            <h3>Wrong examples look right</h3>
-            <p>A legacy pattern, a similar file or a conflicting instruction competes with the intended one.</p>
-            <p class="consequence"><span>Result</span>Follows a plausible, wrong pattern</p>
+            <h3>An old pattern looks reusable</h3>
+            <p>A nearby module uses a legacy convention. The agent copies it without checking whether it still applies.</p>
+            <p class="consequence"><span>Risk</span>The change follows the wrong convention</p>
           </article>
         </div>
-        <div class="gate-banner"><p>The output looks like a model error. The cause is often what reached the context.</p></div>
-        <aside class="notes">These are the three failure modes this talk is about. Missing evidence comes from bounded tools; the next slide shows the actual VS Code limits. Noise builds up in long sessions; Claude Code's documentation calls out the kitchen-sink session and repeated corrections. Distraction is the hardest to spot because the wrong context looks relevant: an older module, a similar file or an instruction that conflicts with the task. OpenAI notes that GPT-6 Astra follows instructions in files it can read more closely, which makes a stale or conflicting instruction more consequential.</aside>
+        <div class="gate-banner"><p>When an answer is wrong, check <strong>what the agent saw</strong> as well as what it did.</p></div>
+        <aside class="notes">These problems call for different responses. Missing evidence needs another search or file read. Old session history may call for a fresh chat. A misleading example needs a check against the current requirement. A legacy module isn't automatically wrong, but copying it without understanding the exception is risky. Context is one place to investigate a bad result; it isn't an explanation for every model error.</aside>
       </section>
 
-      <section id="bounded-tools" data-title="Tools return a slice and say so" data-chapter="Context" data-sources="vscode-search-tool,vscode-read-tool,vscode-release,vscode-best-practices">
+      <section id="bounded-tools" data-title="A search result may be incomplete" data-chapter="Context" data-sources="vscode-search-tool,vscode-read-tool,vscode-release,vscode-best-practices">
         <div class="eyebrow">MISSING EVIDENCE <span class="separator">/</span> VS CODE 1.139.0</div>
-        <h2>Tools return a slice and say so</h2>
+        <h2>A search result may be incomplete</h2>
         <div class="split">
           <div class="editor tool-trace">
             <div class="editor-bar"><span class="terminal-dot" aria-hidden="true"></span> Agent tool calls <span class="surface-tag">Reconstructed from source</span></div>
@@ -580,24 +693,24 @@ modules/blob/variables.tf
 with offset/limit parameters to view more.]</span></code></pre>
           </div>
           <div class="talk-track">
-            <h3>What the model has to notice</h3>
+            <h3>Read the limits with the result</h3>
             <ol>
-              <li>212 of 312 matches were never shown.</li>
-              <li>The long file stopped at line 2,000.</li>
-              <li>No tool fetches the rest on its own. The agent decides whether to ask again.</li>
+              <li>Only 100 of the 312 matches are shown.</li>
+              <li>The file read ends at line 2,000.</li>
+              <li>The agent needs another call to read the rest.</li>
             </ol>
-            <p class="callout">If the match that matters is number 101, it is not in context until the agent asks for it.</p>
+            <p class="callout">Search each module or read the next range before treating this as complete coverage.</p>
           </div>
         </div>
-        <p class="footnote">Fictional repository. Search defaults to 100 results with a 200-result cap, both experiment-based settings; read_file stops at 2,000 lines. Other hosts use different limits.</p>
-        <aside class="notes">Both behaviors come from the VS Code 1.139.0 source released on September 23. grep_search collects more matches than it shows, then reports how many it found and how many it is showing, grouped by file. The alternative tag format reports, for example, 100 matches (more results are available). read_file truncates at 2,000 lines and at 2,000 characters per line, and tells the model to continue with offset and limit. These limits keep one call from flooding the context. They also mean the model works from partial evidence unless it follows up. The March workshop showed the same effect with the earlier 200-match output.</aside>
+        <p class="footnote">Fictional repository; VS Code 1.139.0 behavior. Search defaults to 100 results with a 200-result cap, both experiment-based settings. Other hosts use different limits.</p>
+        <aside class="notes">The warning is part of the evidence. In this example, 212 matches haven't been shown, so the first search cannot establish a repo-wide naming convention. Narrowing the search to each module makes coverage easier to track. In VS Code 1.139.0, grep_search reports found and shown counts. read_file stops at 2,000 lines and truncates lines longer than 2,000 characters, with guidance to continue using offset and limit. These limits keep a single call manageable; the agent still has to follow up.</aside>
       </section>
 
-      <section id="context-budget" data-title="Noise grows faster than evidence" data-chapter="Context" data-sources="context-rot,distracted,lost-middle,anthropic-context-eng,claude-context">
+      <section id="context-budget" data-title="A longer chat can make details harder to find" data-chapter="Context" data-sources="context-rot,distracted,lost-middle,anthropic-context-eng,claude-context">
         <div class="eyebrow">NOISE AND DISTRACTION</div>
-        <h2>Noise grows faster than evidence</h2>
+        <h2>A longer chat can make details harder to find</h2>
         <figure class="budget" aria-labelledby="budget-caption">
-          <figcaption id="budget-caption" class="sr-only">Conceptual context budgets. At the start of a task, instructions and tools, then relevant evidence, leave most of the window free. After a long session, stale reads, failed attempts and logs take the largest share and little space remains.</figcaption>
+          <figcaption id="budget-caption" class="sr-only">Illustration of context use, not measured proportions. The first bar has room for more evidence. In the second, old reads, failed attempts and logs use much of that space, leaving less room for new information.</figcaption>
           <div class="budget-row">
             <span class="budget-label">Start of a task</span>
             <ul class="budget-bar" aria-label="Start of a task">
@@ -607,152 +720,135 @@ with offset/limit parameters to view more.]</span></code></pre>
             </ul>
           </div>
           <div class="budget-row">
-            <span class="budget-label">After a long session</span>
-            <ul class="budget-bar" aria-label="After a long session">
+            <span class="budget-label">Later in the session</span>
+            <ul class="budget-bar" aria-label="Later in the session">
               <li class="seg-overhead"><span>Instructions and tools</span></li>
               <li class="seg-evidence seg-evidence-late"><span>Relevant evidence</span></li>
               <li class="seg-noise"><span>Stale reads, failed attempts, logs</span></li>
               <li class="seg-free seg-free-late"><span>Free</span></li>
             </ul>
           </div>
-          <p class="budget-delta">Instructions stay about the same. Evidence grows slowly. Noise grows fastest.</p>
+          <p class="budget-delta">Old reads and logs can compete with the details needed for the next step.</p>
         </figure>
         <div class="research-strip">
-          <article><span class="label">CHROMA / 2025</span><p>18 models lost accuracy as input grew, with the task held constant.</p></article>
-          <article><span class="label">SHI ET AL. / 2023</span><p>Irrelevant details in a problem cut reasoning accuracy sharply.</p></article>
-          <article><span class="label">LIU ET AL. / 2023</span><p>Facts in the middle of long inputs were used less reliably.</p></article>
+          <article><span class="label">CHROMA / 2025</span><p>Across 18 models, longer inputs often reduced accuracy on controlled tasks.</p></article>
+          <article><span class="label">SHI ET AL. / 2023</span><p>Irrelevant sentences reduced accuracy on the math problems tested.</p></article>
+          <article><span class="label">LIU ET AL. / 2023</span><p>Models used facts in the middle of long inputs less reliably.</p></article>
         </div>
-        <p class="footnote">Bars are conceptual, not measurements. The studies tested earlier models; Anthropic's current guidance says the effect appears across models, more gently in some.</p>
-        <aside class="notes">The bars are a conceptual picture carried over from the March workshop, not measured percentages. The research strip is the evidence. Chroma held task difficulty constant and still saw accuracy fall as input grew across 18 models, with distractors affecting models unevenly. Shi and colleagues showed that irrelevant sentences in math problems substantially reduce accuracy. Liu and colleagues showed that models use information in the middle of long inputs less reliably. These studies evaluated earlier model generations. Anthropic's current documentation describes the same effect, context rot, for its current models.</aside>
+        <p class="footnote">Bars are conceptual, not measurements. The studies tested earlier models, not the two models shown earlier in this talk.</p>
+        <aside class="notes">The bars illustrate what can accumulate; they don't measure how quickly noise grows. The studies below them show several ways long or distracting inputs affected earlier models. Chroma found that the effect varied by model and task. More context can also help when it contains evidence the task needs. The goal is to keep useful information available and remove material that no longer helps, rather than make every prompt as short as possible.</aside>
       </section>
 
-      <section id="observed-session" data-title="A finished file is not a correct result" data-chapter="Context" data-sources="claude-code-practices,anthropic-context-eng,vscode-sessions,research">
-        <div class="eyebrow">CASE <span class="separator">/</span> MARCH 2026 WORKSHOP</div>
-        <h2>A finished file is not a correct result</h2>
-        <div class="case-layout">
-          <ol class="chain" aria-label="Observed session, in order">
-            <li><strong>Broad request</strong><span>Find how tracking files are used, repo-wide.</span></li>
-            <li><strong>Searches fill the window</strong><span>Wide searches and full reads used most of it.</span></li>
-            <li><strong>A fast helper summarizes</strong><span>An Explore subagent returned condensed findings.</span></li>
-            <li><strong>Re-reading to fill gaps</strong><span>The main agent re-read files to recover detail.</span></li>
-            <li><strong>Compaction mid-write</strong><span>History was summarized as the file was written.</span></li>
-            <li><strong>Document delivered</strong><span>It existed, but was inaccurate and incomplete.</span></li>
-          </ol>
-          <div class="case-aside">
-            <h3>What RPI changes</h3>
-            <ul>
-              <li>Research scopes the question and records what it covered.</li>
-              <li>Helper returns are leads. The researcher verifies them at the source.</li>
-              <li>Verified findings go into the research file as they arrive, so compaction cannot erase them.</li>
-            </ul>
-          </div>
-        </div>
-        <p class="footnote">One session with earlier model and client versions, reconstructed as a diagram. An observation, not a benchmark.</p>
-        <aside class="notes">In the March 2026 workshop, a request to document how Copilot tracking files are used across microsoft/hve-core went wrong. The session used Claude Opus 4.6 in VS Code; the built-in Explore subagent ran on Claude Haiku 4.5. Broad searching filled the context, the subagent returned a condensed summary, the main agent re-read files and ran low on space, and compaction ran while it was writing. The result was a file with inaccurate and missing details. Claude Code's documentation calls this pattern the infinite exploration: an unscoped investigation that reads hundreds of files. Current RPI research answers it with a scoped question, recorded coverage, verification of helper returns and incremental writes to the research file.</aside>
+      <section id="observed-session" class="demo-slide" data-title="How a simple repo question goes wrong" data-chapter="Context" data-sources="vscode-search-tool,vscode-dir-tool,vscode-read-tool,vscode-sessions,vscode-debug,vscode-flow-layout,vscode-flow-view,vscode-debug-types,anthropic-context-eng,research">
+        <div class="eyebrow">CONTEXT / SCRIPTED VS CODE WALKTHROUGH</div>
+        <h2>How a simple repo question goes wrong</h2>
+        <div class="demo tracking-demo" data-demo="tracking"></div>
+        <aside class="notes">Use Next step to follow eight stages. This is a fictional repository and an authored failure sequence, not a replay of the March workshop or a benchmark. After the question, the Agent Flow Chart shows focused excerpts: blue model turns, green tool calls, a purple Explore subagent group and grey response or generic-event nodes. Select a node to inspect its Event details. Missed context shows presenter evidence that was not necessarily sent to the model. On read_file, compare the requested lines 1-40 with the unread section at 84-90. Explore's summary drops the investigation's limits. The compaction step jumps ahead over further exploration and shows a summary that also omits those limits; it does not erase the original Chat history or debug logs. Compaction is an illustrative generic event, not a dedicated native node type. The final response completes but makes unsupported claims, so it is not drawn as a failed tool call. The last step compares the three uses of tracking records. Node selection inspects the trace without advancing the story. Timings, token counts and intermediate turns are omitted. Real Agent Debug Logs require logging to be enabled before the session.</aside>
       </section>
 
-      <section id="rpi-chapter" class="chapter-slide" data-title="Give each phase the context it needs" data-chapter="RPI" data-sources="context-term,anthropic-context-eng,rpi-overview">
+      <section id="rpi-chapter" class="chapter-slide" data-title="Carry the findings into the next phase" data-chapter="RPI" data-sources="context-term,anthropic-context-eng,rpi-overview">
         <div class="eyebrow">02 / RPI</div>
         <div class="chapter-mark" aria-hidden="true">R<span>&#8594;</span>P<span>&#8594;</span>I<span>&#8594;</span>R</div>
-        <h2>Give each phase<br><em>the context it needs</em></h2>
-        <p class="lead">Research, Plan, Implement and Review each leave a file.<br>The next phase starts from that file, not the whole chat.</p>
-        <blockquote class="chapter-quote"><p>&#8220;&#8230;filling the context window with just the right information for the next step.&#8221;</p><cite>Andrej Karpathy on context engineering, June 2025</cite></blockquote>
-        <aside class="notes">Context engineering is Andrej Karpathy's phrase for filling the context window with just the right information for the next step; Tobi Lutke described it as providing all the context for the task to be plausibly solvable. RPI applies the idea to software changes: each phase has a narrow job, writes its result to a file, and the next phase can start from that file in a fresh chat.</aside>
+        <h2>Carry the findings<br><em>into the next phase</em></h2>
+        <p class="lead">RPI records what you've learned and decided.<br>A new chat can pick up from those files.</p>
+        <div class="chapter-quote"><p>Context engineering means choosing the information an agent needs for its next step.</p><cite>Summary of the idea discussed by Andrej Karpathy and Tobi Lutke, June 2025</cite></div>
+        <aside class="notes">The useful idea behind context engineering is to choose the information needed for the next step. Tobi Lutke and Andrej Karpathy helped popularize that framing. RPI applies it to a software change: investigate first where evidence is missing, write a plan, make the change and compare the result with the requirements. The written records let another chat or another person continue without reconstructing the entire conversation.</aside>
       </section>
 
-      <section id="start-rpi" data-title="Start RPI from VS Code Chat" data-chapter="RPI" data-sources="agent,research,plan,implement,review,rpi-overview">
+      <section id="start-rpi" data-title="Start with RPI Agent or a phase skill" data-chapter="RPI" data-sources="agent,research,plan,implement,review,rpi-overview">
         <div class="eyebrow">RPI / CHAT SETUP</div>
-        <h2>Start RPI from VS Code Chat</h2>
+        <h2>Start with RPI Agent or a phase skill</h2>
         <div class="agent-setup-layout">
           <div data-example="request"></div>
           <div class="agent-setup-instructions">
-            <h3>For the coordinated workflow</h3>
+            <h3>Let RPI Agent coordinate the work</h3>
             <ol>
               <li>Open the agent dropdown below the Chat input.</li>
               <li>Select <strong>RPI Agent</strong>.</li>
-              <li>Describe the task, its constraints and what done means.</li>
+              <li>Describe the task, its constraints and how you'll check the result.</li>
             </ol>
-            <p>Or run a phase skill directly when you know the next step:</p>
+            <p>If you only need one phase, run its skill directly:</p>
             <div class="skill-row"><code>/rpi-research</code><code>/rpi-plan</code><code>/rpi-implement</code><code>/rpi-review</code></div>
           </div>
         </div>
-        <p class="footnote">RPI Agent is optional and uses the same phase skills. The Chat input is a display-only reconstruction.</p>
-        <aside class="notes">Switch the agent dropdown below the VS Code Chat input to RPI Agent for the coordinated workflow. It starts with a research-readiness check and keeps one task identity across the files it writes. The standalone phase skills work without it, which helps when you already know the next action, for example planning from research you already have. The composer on this slide is a reconstruction; it does not change your real agent.</aside>
+        <p class="footnote">RPI Agent is optional and uses the same phase skills. This Chat example doesn't send a request.</p>
+        <aside class="notes">In VS Code Chat, select RPI Agent from the agent dropdown before entering the task. It checks whether enough evidence already exists and coordinates the phases according to the participation mode you choose. You can also use the phase skills without the agent. If you already have adequate research, for example, ask /rpi-plan to work from it. The input shown here is a reconstruction, not a connected Chat session.</aside>
       </section>
 
-      <section id="phase-contract" data-title="Each phase starts from a file" data-chapter="RPI" data-sources="research,plan,critique,implement,review,rpi-overview">
+      <section id="phase-contract" data-title="Each phase has a job and a written result" data-chapter="RPI" data-sources="research,plan,critique,implement,review,rpi-overview">
         <div class="eyebrow">RPI / WHAT EACH PHASE READS AND WRITES</div>
-        <h2>Each phase starts from a file</h2>
+        <h2>Each phase has a job and a written result</h2>
         <div class="phase-spine">
           <article>
             <b>01</b><h3>Research</h3>
-            <dl><dt>Reads</dt><dd>Task, codebase and sources</dd><dt>Writes</dt><dd><code>research.md</code></dd></dl>
-            <p>Read-only. Evidence, gaps and a readiness call.</p>
+            <dl><dt>Reads</dt><dd>Task, code and sources</dd><dt>Writes</dt><dd><code>research.md</code></dd></dl>
+            <p>Investigates without changing source code.</p>
           </article>
           <article>
             <b>02</b><h3>Plan</h3>
             <dl><dt>Reads</dt><dd>Research findings and decisions</dd><dt>Writes</dt><dd><code>plan.md</code> + critique</dd></dl>
-            <p>Checkable tasks. One critique before code.</p>
+            <p>Defines tasks and checks; gets one critique.</p>
           </article>
           <article>
             <b>03</b><h3>Implement</h3>
             <dl><dt>Reads</dt><dd>Plan tasks and their references</dd><dt>Writes</dt><dd>Source + <code>changes.md</code></dd></dl>
-            <p>Follows the plan. Records the checks.</p>
+            <p>Changes the code and records check results.</p>
           </article>
           <article>
             <b>04</b><h3>Review</h3>
             <dl><dt>Reads</dt><dd>Plan, critique, changes and checks</dd><dt>Writes</dt><dd><code>review.md</code></dd></dl>
-            <p>Compares once. Routes each gap.</p>
+            <p>Compares the result with the requirements.</p>
           </article>
         </div>
-        <div class="gate-banner"><p><strong>The next phase reads the file, not the whole chat.</strong> Research runs only for a real gap; adequate evidence is reused.</p></div>
-        <aside class="notes">The files live in dated folders under .copilot-tracking, which is gitignored. Research is read-only and ends with a Planning Readiness record. Planning writes one task-centered plan with Pxx phases and Pxx-Txx tasks, then records one independent critique. Implementation works through approved tasks, keeps the plan current and writes a condensed changes log. Review writes one record that compares the plan, critique, changes and validation evidence and routes each gap.</aside>
+        <div class="gate-banner"><p><strong>Use the files to carry decisions forward.</strong> Research runs when evidence is missing; adequate existing evidence can be reused.</p></div>
+        <aside class="notes">Read-only research means it doesn't change project source. It does write findings and a Planning Readiness record. Planning turns the evidence and decisions into tasks, then gets one critique of the final candidate. Implementation changes the code and records the checks it ran. Review compares those results with the plan and decides what still needs work. The filenames are shortened here; the actual records use dated folders and task names under .copilot-tracking. A file handoff makes a fresh chat possible, but doesn't start one automatically.</aside>
       </section>
 
-      <section id="research-coverage" data-title="Research names what is missing" data-chapter="RPI" data-sources="research,research-template,advisory-helpers,why-rpi">
+      <section id="research-coverage" data-title="Record what you checked and what is missing" data-chapter="RPI" data-sources="research,research-template,advisory-helpers,why-rpi">
         <div class="eyebrow">RESEARCH</div>
-        <h2>Research names what is missing</h2>
+        <h2>Record what you checked and what is missing</h2>
         <div class="split">
           <div class="editor">
             <div class="editor-bar"><span class="file-icon" aria-hidden="true">M</span> log-retention-research.md <span class="surface-tag">Illustrative excerpt</span></div>
-            <pre><code><span class="tok-heading">### Storage modules use resource_prefix</span>
-12 of 14 modules declare resource_prefix.
+            <pre><code><span class="tok-heading">### Variable names differ across modules</span>
+12 of 14 modules use resource_prefix.
+2 legacy modules use prefix.
 <span class="tok-key">Evidence:</span> C1, C2
 <span class="tok-key">Coverage:</span> all 14 variables.tf files read.
-  The first search showed 100 of 312 matches,
-  so it was rerun per module.
-<span class="tok-key">Limits:</span> 2 legacy modules use prefix.
+  First search: 100 of 312 matches shown.
+  Follow-up: searched each module.
+<span class="tok-key">Limits:</span> only variable declarations checked.
 
 <span class="tok-heading">## Planning Readiness and Next Step</span>
-Ready after one decision: legacy naming.</code></pre>
+Not ready: decide whether to keep legacy names.</code></pre>
           </div>
           <div class="talk-track">
-            <h3>Guarding against missing evidence</h3>
+            <h3>Make the evidence easy to check</h3>
             <ul>
-              <li>It cannot edit code, so its job is evidence.</li>
-              <li>Every finding cites <strong>C#</strong> codebase or <strong>W#</strong> external evidence and states its limits.</li>
-              <li>Helper results are leads. The researcher verifies them at the source.</li>
+              <li>Record which files and sources you examined.</li>
+              <li>Link findings to <strong>C#</strong> codebase or <strong>W#</strong> external evidence. State what remains unknown.</li>
+              <li>Check a helper's suggestions against the original source before using them.</li>
             </ul>
             <div class="micro-flow" aria-label="Research waves in order"><span>Wider</span><i aria-hidden="true">&#8594;</i><span>Deeper</span><i aria-hidden="true">&#8594;</i><span>Contrarian</span></div>
           </div>
         </div>
-        <p class="footnote">Sample evidence IDs. Since September 18 (#2902), no RPI phase requires a subagent.</p>
-        <aside class="notes">Research is read-only. Each executed cycle runs three waves: Wider for breadth, Deeper for detail and Contrarian for counter-evidence. Findings map to C# codebase and W# external evidence IDs in an Evidence Log, with confidence and limits, and Planning Readiness records whether planning can proceed. A research helper such as RPI Researcher is optional; it returns source pointers and excerpts as suggestions, and the researcher verifies them before recording evidence. That rule answers the workshop session, where a condensed summary stood in for evidence.</aside>
+        <p class="footnote">Illustrative findings and evidence IDs. Subagents are optional in every RPI phase as of September 18 (#2902).</p>
+        <aside class="notes">Notice the difference between an exception and a limit. The two legacy names are a finding. The fact that only variable declarations were checked is a limit on the investigation. Planning is not ready while the naming decision remains unresolved. Each research cycle goes Wider to find relevant areas, Deeper to inspect the details, then Contrarian to look for evidence against the emerging answer. C and W IDs let the reader trace findings to code or external sources. A helper can suggest where to look; the researcher still verifies the source.</aside>
       </section>
 
-      <section id="plan-critique" data-title="Plan turns evidence into checkable tasks" data-chapter="RPI" data-sources="plan,plan-template,critique">
+      <section id="plan-critique" data-title="Write tasks you can verify" data-chapter="RPI" data-sources="plan,plan-template,critique">
         <div class="eyebrow">PLAN <span class="separator">/</span> CRITIQUE</div>
-        <h2>Plan turns evidence into checkable tasks</h2>
+        <h2>Write tasks you can verify</h2>
         <div class="split">
           <div class="editor">
             <div class="editor-bar"><span class="file-icon" aria-hidden="true">M</span> log-retention-plan.md <span class="surface-tag">Illustrative excerpt</span></div>
             <pre><code><span class="tok-heading">#### [ ] P01-T01: Add log retention</span>
 <span class="tok-key">Goals:</span>
-* Storage modules accept log_retention_days.
+* All 14 modules accept log_retention_days.
 <span class="tok-key">Requirements:</span>
-* FR-001: defaults to 30 days.
-* FR-002: rejects values outside 1 to 365.
-* FR-003: legacy modules keep prefix (D1).
+* FR-001: Default to 30 days.
+* FR-002: Accept only 1 to 365 days.
+* FR-003: Keep prefix in legacy modules (D1).
 <span class="tok-key">Details:</span>
 * Follow the pattern in modules/blob.
 <span class="tok-key">References:</span>
@@ -761,86 +857,86 @@ Ready after one decision: legacy naming.</code></pre>
 * None</code></pre>
           </div>
           <div class="talk-track">
-            <h3>Why this helps the implementer</h3>
-            <p>The task carries its own goals, requirements and references. The implementer reads this, not the whole research log.</p>
-            <p><strong>Requirements</strong> make the result checkable.</p>
-            <p class="callout">rpi-plan-critique reads the final plan once, with fresh eyes: Pass, Revise or Blocked.</p>
+            <h3>Keep the details with the task</h3>
+            <p>Put the goal, requirements and source references together, so the implementer can find them without retracing the investigation.</p>
+            <p>Here, a value of <strong>0 must fail in every module</strong>, including the two legacy modules.</p>
+            <p class="callout">rpi-plan-critique assesses the final plan once: Pass, Revise or Blocked.</p>
           </div>
         </div>
-        <aside class="notes">The plan opens with an executive summary and a Phase Checklist with before-and-after Mermaid diagrams; the excerpt shows one task block. Stable IDs such as P01-T01 survive edits to the file, so you can refer to them in feedback. The critique is a separate, read-only assessment of the final plan against the supplied evidence. The planner addresses its findings and records their disposition; the critique is not repeated.</aside>
+        <aside class="notes">A useful task says what must hold when it's done. Here, adding a variable isn't enough: the default and range must be correct in all 14 modules, and the existing prefix names must remain. P01-T01 gives feedback a specific task to refer to. The full plan also includes a summary and before-and-after diagrams. The critique checks the final candidate against the evidence. The planner resolves the findings rather than rerunning the critique in search of a pass.</aside>
       </section>
 
-      <section id="fresh-context" data-title="Clear the chat, keep the evidence" data-chapter="RPI" data-sources="context-doc,vscode-sessions,vscode-context-guide,claude-code-practices,anthropic-context-eng">
+      <section id="fresh-context" data-title="Start a fresh chat without starting over" data-chapter="RPI" data-sources="context-doc,vscode-sessions,vscode-context-guide,claude-code-practices,anthropic-context-eng">
         <div class="eyebrow">CONTEXT BETWEEN PHASES</div>
-        <h2>Clear the chat, keep the evidence</h2>
+        <h2>Start a fresh chat without starting over</h2>
         <ol class="session-flow" aria-label="Phases in separate chats, connected by files">
           <li><span class="session">Research chat</span><span class="starts">Starts from the task</span><code>research.md</code></li>
           <li><span class="session">Plan chat</span><span class="starts">Starts from research.md</span><code>plan.md + critique</code></li>
           <li><span class="session">Implement chat</span><span class="starts">Starts from the plan</span><code>changes.md</code></li>
-          <li><span class="session">Review chat</span><span class="starts">Starts from plan and changes</span><code>review.md</code></li>
+          <li><span class="session">Review chat</span><span class="starts">Reads plan, critique and results</span><code>review.md</code></li>
         </ol>
         <div class="three-points">
-          <article><h3>Reset when it stops helping</h3><p>Use <code>/clear</code> or a new chat between phases or tasks, or after repeated corrections.</p></article>
-          <article><h3>Resume from files</h3><p>Open or reference the file and its task ID, such as <code>P01-T01</code>.</p></article>
-          <article><h3>Compact with care</h3><p><code>/compact</code> keeps the chat, but its summary can drop details. VS Code also compacts when the window fills.</p></article>
+          <article><h3>Leave unhelpful history behind</h3><p>Use <code>/clear</code> or a new chat when old work or repeated corrections get in the way.</p></article>
+          <article><h3>Bring the relevant files</h3><p>Reference the current plan and supporting files. Name the task, such as <code>P01-T01</code>.</p></article>
+          <article><h3>Check the summary</h3><p><code>/compact</code> summarizes the chat and can omit details. Save important decisions in the files first.</p></article>
         </div>
-        <p class="footnote">RPI files live in dated folders under <code>.copilot-tracking/</code>, which is gitignored. A reset is a tool for clarity, not a required step.</p>
-        <aside class="notes">Resetting is optional; use it when the chat no longer helps the next action. Claude Code's guidance is blunt: after two failed corrections, clear and start again with a better prompt. VS Code's context engineering guide recommends saving a plan to a file, opening a new chat that references it and reviewing in a fresh chat against the plan. RPI's files make that routine. The research, plan, critique, changes and review records carry the evidence, and stable task IDs let a fresh chat pick up where the last one stopped.</aside>
+        <p class="footnote">An optional way to work. RPI records live in dated folders under <code>.copilot-tracking/</code>, which is gitignored in HVE Core.</p>
+        <aside class="notes">You don't have to clear the chat at every phase. Do it when the history is making the next step harder. Before leaving, check that the files include the decisions and evidence the next phase needs. Then reference those files in the new chat. VS Code's context-engineering guide recommends this for implementation and review. Compaction is another option when you want to continue the same chat, but a summary is not a complete copy of the conversation.</aside>
       </section>
 
-      <section id="review-routing" data-title="Implement to the plan, review against it" data-chapter="RPI" data-sources="implement,changes-template,review,review-template,claude-code-practices">
+      <section id="review-routing" data-title="Check the change against the plan" data-chapter="RPI" data-sources="implement,changes-template,review,review-template,claude-code-practices">
         <div class="eyebrow">IMPLEMENT <span class="separator">/</span> REVIEW</div>
-        <h2>Implement to the plan, review against it</h2>
+        <h2>Check the change against the plan</h2>
         <div class="compare">
           <article class="panel">
             <span class="label">IMPLEMENT</span>
             <ul class="check-list">
-              <li>Works through approved tasks in plan order.</li>
-              <li>Checks a task only when its requirements hold.</li>
-              <li>Records changes and validation in <code>changes.md</code>.</li>
-              <li>Significant discoveries update the plan before dependent work continues.</li>
+              <li>Follow approved tasks in dependency order.</li>
+              <li>Mark a task done only when its requirements hold.</li>
+              <li>Record the changes and check results in <code>changes.md</code>.</li>
+              <li>Update the plan when a discovery changes the work. Pause tasks that depend on it.</li>
             </ul>
           </article>
           <article class="panel current">
-            <span class="label">REVIEW / ONE RECORD PER TASK</span>
+            <span class="label">REVIEW / ONE RECORD PER RPI TASK</span>
             <ul class="route-map" aria-label="Where review sends each kind of gap">
-              <li><span>Implementation defect</span><b aria-hidden="true">&#8594;</b><code>rpi-implement</code></li>
-              <li><span>Decision gap</span><b aria-hidden="true">&#8594;</b><code>rpi-plan</code></li>
-              <li><span>Evidence gap</span><b aria-hidden="true">&#8594;</b><code>rpi-research</code></li>
-              <li><span>Residual work</span><b aria-hidden="true">&#8594;</b><code>follow-up item</code></li>
+              <li><span>Code misses a requirement</span><b aria-hidden="true">&#8594;</b><code>rpi-implement</code></li>
+              <li><span>A decision is missing</span><b aria-hidden="true">&#8594;</b><code>rpi-plan</code></li>
+              <li><span>Evidence is missing</span><b aria-hidden="true">&#8594;</b><code>rpi-research</code></li>
+              <li><span>Work remains outside scope</span><b aria-hidden="true">&#8594;</b><code>follow-up item</code></li>
             </ul>
             <div class="status-pair"><span>Execution: <strong>Complete</strong></span><span>Outcome: <strong>Defects found</strong></span></div>
           </article>
         </div>
-        <p class="footnote">Example statuses. Review keeps execution (Complete, Partial or Blocked) separate from outcome, so finishing a review never implies passing it.</p>
-        <aside class="notes">Implementation follows the current task-centered plan. When new information changes the plan, it updates the affected tasks after any required decision and pauses only dependent work. The changes log describes behavior that changed, not every edit. Review compares the evidence in one pass and writes RV-xxx findings with proposed routes; a later fix does not trigger another review of the same task. Claude Code's guidance adds a caution: a reviewer asked to find gaps usually reports some, so act on those that affect correctness or the stated requirements.</aside>
+        <p class="footnote">Example statuses. Complete means the review finished. The outcome tells you whether the result meets the plan.</p>
+        <aside class="notes">Implementation records what changed, which checks ran and what remains unverified. Review then compares that evidence with the requirements. A code defect goes back to implementation; a missing decision belongs in planning; missing evidence calls for research. Work beyond the agreed scope becomes a separate follow-up. The review's execution can be Complete while its outcome is Defects found. That distinction prevents a finished review from being mistaken for an accepted change. A later fix does not require another Review of the same RPI task.</aside>
       </section>
 
-      <section id="participation" data-title="Choose when RPI Agent asks you" data-chapter="RPI" data-sources="agent,loops">
+      <section id="participation" data-title="Decide how involved you want to be" data-chapter="RPI" data-sources="agent,loops">
         <div class="eyebrow">OPTIONAL RPI AGENT <span class="separator">/</span> PARTICIPATION</div>
-        <h2>Choose when RPI Agent asks you</h2>
+        <h2>Decide how involved you want to be</h2>
         <div class="participation-popup" data-example="participation"></div>
         <p class="footnote">Example selection. Safety confirmations, required gates and human review apply in every mode.</p>
-        <aside class="notes">RPI Agent asks this when your request does not already set a mode; the labels and descriptions are the agent's own. The first two continue through full RPI loops and required follow-ups, and the second keeps you in unclear decisions. The third, shown selected, researches and plans with you, walks you through the files and stops before implementation. The fourth waits for you at every phase. Asking for full auto in the request selects automatic mode without the question. This card is display-only and does not change a session.</aside>
+        <aside class="notes">These are the RPI Agent's actual choices and descriptions. The first lets the agent make ordinary decisions and continue through the work. The second keeps that automatic progression but brings unresolved decisions back to you. The selected option researches and plans with you, then stops before implementation. The fourth waits for you to advance each phase. If your request already establishes a mode, the agent doesn't need to ask again. Every mode keeps the required safety and human-review boundaries.</aside>
       </section>
 
-      <section id="walkthrough" class="demo-slide" data-title="Example: add log retention to storage modules" data-chapter="In practice" data-sources="agent,research,plan,critique,implement,review,vscode-search-tool">
+      <section id="walkthrough" class="demo-slide" data-title="Walkthrough: add a retention setting" data-chapter="In practice" data-sources="agent,research,plan,critique,implement,review,vscode-search-tool">
         <div class="eyebrow">RPI / SCRIPTED WALKTHROUGH</div>
-        <h2>Example: add log retention to storage modules</h2>
+        <h2>Walkthrough: add a retention setting</h2>
         <div class="demo" data-demo="rpi"></div>
-        <aside class="notes">Select RPI Agent in the Chat agent dropdown before starting a real session. Use Next step, Back and Reset. The repository, tool output, question, files and results are scripted. The example follows one change through the context risks from the first chapter: a partial search result, a legacy pattern that could mislead the plan, a fresh chat for implementation and a review that catches what the implementation missed.</aside>
+        <aside class="notes">Use Next step to follow the change, and Back or Reset to revisit it. Everything in the example is scripted. The first search is incomplete, a naming exception needs a decision, and the critique catches a missing range check. Implementation then reports success, but its log doesn't say which modules the tests covered. Review finds that two modules still lack validation. Pause there: passing checks only tell us about what was checked. In a real session, select RPI Agent in the Chat dropdown before submitting the request.</aside>
       </section>
 
-      <section id="when-to-use" data-title="Use RPI when context is the risk" data-chapter="In practice" data-sources="rpi-overview,claude-code-practices,codex-practices,anthropic-context-eng,gpt6-guide">
+      <section id="when-to-use" data-title="Use RPI when the work needs investigation" data-chapter="In practice" data-sources="rpi-overview,claude-code-practices,codex-practices,anthropic-context-eng,gpt6-guide">
         <div class="eyebrow">TRADE-OFFS</div>
-        <h2>Use RPI when context is the risk</h2>
+        <h2>Use RPI when the work needs investigation</h2>
         <div class="compare">
           <article class="panel current">
             <span class="label">USE RPI</span>
             <ul>
               <li>The change spans files or modules you don't know well.</li>
-              <li>Searches return more than one page of results.</li>
-              <li>Decisions, dependencies or risks need a record.</li>
+              <li>Different modules follow different conventions.</li>
+              <li>You need a record of decisions or dependencies.</li>
               <li>Someone else will continue or review the work.</li>
             </ul>
           </article>
@@ -851,24 +947,24 @@ Ready after one decision: legacy naming.</code></pre>
               <li>You could describe the diff in one sentence.</li>
               <li>Existing evidence and checks are enough.</li>
             </ul>
-            <p class="panel-note">Need only one step? Run that phase skill, such as <code>/rpi-research</code>.</p>
+            <p class="panel-note">You can also use one phase skill, such as <code>/rpi-research</code>, without the full workflow.</p>
           </article>
         </div>
         <div class="three-points limits">
-          <article><h3>It records evidence</h3><p>A wrong requirement stays wrong until someone questions it.</p></article>
-          <article><h3>It takes time</h3><p>Each phase adds a step. Skip phases the task doesn't need.</p></article>
-          <article><h3>It needs your review</h3><p>Read the research and plan before approving them.</p></article>
+          <article><h3>Check the assumptions</h3><p>A written requirement can still be wrong.</p></article>
+          <article><h3>Allow for the extra work</h3><p>Research and review take time. Use them where they help.</p></article>
+          <article><h3>Human review still matters</h3><p>Read the findings and plan before approving the change.</p></article>
         </div>
-        <aside class="notes">Provider guidance supports both columns. Codex's guide says a strong model can do useful work with minimal setup, and recommends planning for complex, ambiguous or hard-to-describe tasks. Claude Code says plan mode adds overhead and to skip it when you could describe the diff in one sentence. Anthropic's advice is to do the simplest thing that works. HVE Core's own RPI documentation recommends a smaller direct edit for clear, isolated changes and research only for a demonstrated gap.</aside>
+        <aside class="notes">RPI adds work, so use it where the investigation and written decisions are worth that effort. A change across unfamiliar modules is a good candidate. A clear, isolated edit may need only the edit and its checks. Both HVE and provider guidance leave room for that smaller path. You can also use research or planning on its own. If you choose the coordinated workflow, its required checks and safety boundaries still apply; a shorter task is not permission to bypass them.</aside>
       </section>
 
-      <section id="closing" class="closing-slide" data-title="Try RPI on your next multi-file change" data-chapter="In practice" data-sources="agent,research,rpi-overview,snapshot">
+      <section id="closing" class="closing-slide" data-title="Try RPI on your project" data-chapter="In practice" data-sources="agent,research,rpi-overview,snapshot">
         <div class="eyebrow">GETTING STARTED</div>
-        <h2>Try RPI on your<br><em>next multi-file change</em></h2>
+        <h2>Try RPI on<br><em>your project</em></h2>
         <div class="closing-commands"><code>RPI Agent</code><code>/rpi-research</code></div>
-        <p class="lead">Start with research when the evidence is thin.<br>Resume from the files when the chat gets long.</p>
+        <p class="lead">Give it the task and the constraints.<br>Read the findings before you approve the plan.</p>
         <div class="closing-footer"><span>microsoft/hve-core</span><span>Source snapshot / 23 SEP 2026</span></div>
-        <aside class="notes">Pick one task that touches several files. Select RPI Agent, or start with /rpi-research if you only need the investigation. Read the research and plan before implementation, and clear the chat between phases when it stops helping. Sources and Notes remain available in the bottom bar; this presentation does not run an agent.</aside>
+        <aside class="notes">Choose a real change where you need to understand several files before editing. Select RPI Agent to coordinate the work, or use /rpi-research for the investigation alone. Tell it the constraints and how you'll check success. Then read the findings, especially the limits and unresolved decisions, before agreeing to a plan. You can open Sources for any slide if you want to check a claim or explore the workflow further.</aside>
       </section>
     </main>
   </div>
@@ -913,7 +1009,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.</pre></template>
-<script type="application/json" id="hve-slide-metadata">{"title":"RPI with HVE Core","description":"Why context still decides the result with frontier coding models, and how the HVE Core RPI workflow keeps each phase focused."}</script>
+<script type="application/json" id="hve-slide-metadata">{"title":"RPI with HVE Core","description":"How to manage context and carry evidence between Research, Plan, Implement and Review in HVE Core."}</script>
 <script data-bundled-source="vendor/reveal.js">
 /*!
  * reveal.js
@@ -958,7 +1054,7 @@ THE SOFTWARE.</pre></template>
 </script>
 <script data-bundled-source="config.js">
 // Generated from deck.json.
-globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context still decides the result with frontier coding models, and how the HVE Core RPI workflow keeps each phase focused.","sourceNote":"September 23, 2026 source snapshot: HVE Core 33ac6ec, VS Code 1.139.0 and provider documentation retrieved that day. Walkthroughs and editor panels are scripted reconstructions."};
+globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"How to manage context and carry evidence between Research, Plan, Implement and Review in HVE Core.","sourceNote":"Product details reflect the September 23, 2026 snapshot: HVE Core 33ac6ec, VS Code 1.139.0 and the linked provider documentation. Scripted examples illustrate the workflow; they are not recorded agent runs."};
 
 </script>
 <script data-bundled-source="content.js">
@@ -970,53 +1066,58 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
   const rpi = hve + '.github/skills/rpi/';
   const vscode = 'https://github.com/microsoft/vscode/blob/1.139.0/extensions/copilot/src/extension/tools/node/';
   const sources = {
-    snapshot: { title: 'HVE Core source snapshot 33ac6ec', url: 'https://github.com/microsoft/hve-core/tree/33ac6ec4a4ab7d1e5b44b01abb4179c567e3d23d', note: 'Repository state observed September 23, 2026. RPI claims in this deck describe this revision.' },
-    'rpi-overview': { title: 'Understanding the RPI workflow', url: hve + 'docs/rpi/README.md', note: 'Lifecycle concepts, entry surfaces and when a smaller direct edit is enough. ms.date 2026-09-11.' },
-    'why-rpi': { title: 'Why the RPI workflow works', url: hve + 'docs/rpi/why-rpi.md', note: 'Phase separation, research readiness and the resource_prefix example.' },
-    'context-doc': { title: 'Context engineering in RPI', url: hve + 'docs/rpi/context-engineering.md', note: 'Deliberate /clear, resuming from artifacts and the /compact trade-off. Its 128K to 200K window range predates current models.' },
-    research: { title: 'rpi-research skill', url: rpi + 'rpi-research/SKILL.md', note: 'Read-only. Research runs for a demonstrated gap; each cycle completes Wider, Deeper and Contrarian waves; findings map to C# and W# evidence IDs.' },
-    'research-template': { title: 'Research artifact template', url: rpi + 'rpi-research/templates/research.md', note: 'Findings, alternatives, decisions and Planning Readiness above the Research Record and Evidence Log.' },
-    plan: { title: 'rpi-plan skill', url: rpi + 'rpi-plan/SKILL.md', note: 'One task-centered plan. The primary planner owns orchestration, revisions, critique timing and readiness.' },
-    'plan-template': { title: 'Implementation plan template', url: rpi + 'rpi-plan/templates/implementation-plan.md', note: 'Pxx phases and Pxx-Txx tasks with Goals, Requirements, Details, References and Dependencies.' },
-    critique: { title: 'rpi-plan-critique skill', url: rpi + 'rpi-plan-critique/SKILL.md', note: 'One read-only credibility assessment of the final plan, recorded as Pass, Revise or Blocked.' },
-    implement: { title: 'rpi-implement skill', url: rpi + 'rpi-implement/SKILL.md', note: 'Follows the plan, keeps it current, checks off completed work and keeps a condensed changes log.' },
-    'changes-template': { title: 'Changes record template', url: rpi + 'rpi-implement/templates/changes-log.md', note: 'Completed work, implementation-time plan updates, validation record and remaining work.' },
-    review: { title: 'rpi-review skill', url: rpi + 'rpi-review/SKILL.md', note: 'One review per task. Execution status is separate from outcome. Gaps route to implementation, planning, research or a follow-up item.' },
-    'review-template': { title: 'Review record template', url: rpi + 'rpi-review/templates/review-log.md', note: 'RV-xxx findings with proposed routes and an append-only Parent Decision Record.' },
-    agent: { title: 'RPI Agent', url: hve + '.github/agents/hve-core/rpi-agent.agent.md', note: 'Optional user-selected wrapper. Four participation choices; manual by default; Full Auto on request.' },
-    'advisory-helpers': { title: 'Optional, advisory RPI subagents / PR #2902', url: 'https://github.com/microsoft/hve-core/pull/2902', note: 'Merged September 18, 2026. No phase requires a subagent. Helpers return suggestions; the phase owner verifies them and assigns every evidence ID.' },
-    loops: { title: 'Automatic RPI loops and walkthroughs / PR #2859', url: 'https://github.com/microsoft/hve-core/pull/2859', note: 'Merged September 8, 2026. Participation choices, progression and stop rules.' },
+    snapshot: { title: 'HVE Core source snapshot 33ac6ec', url: 'https://github.com/microsoft/hve-core/tree/33ac6ec4a4ab7d1e5b44b01abb4179c567e3d23d', note: 'RPI behavior is described at this revision, observed September 23, 2026.' },
+    'rpi-overview': { title: 'Understanding the RPI workflow', url: hve + 'docs/rpi/README.md', note: 'Explains the phases, how to start them and when a direct edit is enough. Updated September 11, 2026.' },
+    'why-rpi': { title: 'Why the RPI workflow works', url: hve + 'docs/rpi/why-rpi.md', note: 'Explains phase separation and when research is needed, using resource_prefix as an example.' },
+    'context-doc': { title: 'Context engineering in RPI', url: hve + 'docs/rpi/context-engineering.md', note: 'Covers /clear, resuming from saved files and what /compact can lose. Its 128K to 200K window figures describe earlier models.' },
+    research: { title: 'rpi-research skill', url: rpi + 'rpi-research/SKILL.md', note: 'Investigates missing evidence without editing project source. Each cycle runs Wider, Deeper and Contrarian waves. C# and W# IDs connect findings to sources.' },
+    'research-template': { title: 'Research artifact template', url: rpi + 'rpi-research/templates/research.md', note: 'Puts findings and decisions first, followed by the Research Record and Evidence Log. Planning Readiness states whether planning can proceed.' },
+    plan: { title: 'rpi-plan skill', url: rpi + 'rpi-plan/SKILL.md', note: 'The planner writes and revises one plan, arranges its critique and decides whether it is ready for implementation.' },
+    'plan-template': { title: 'Implementation plan template', url: rpi + 'rpi-plan/templates/implementation-plan.md', note: 'Uses Pxx phase IDs and Pxx-Txx task IDs. Each task includes Goals, Requirements, Details, References and Dependencies.' },
+    critique: { title: 'rpi-plan-critique skill', url: rpi + 'rpi-plan-critique/SKILL.md', note: 'Assesses the final plan without changing it. Records Pass, Revise or Blocked; the planner handles the findings.' },
+    implement: { title: 'rpi-implement skill', url: rpi + 'rpi-implement/SKILL.md', note: 'Follows the plan, updates it when needed and records completed work and check results in a changes log.' },
+    'changes-template': { title: 'Changes record template', url: rpi + 'rpi-implement/templates/changes-log.md', note: 'Records what changed, how the plan was updated, which checks ran and what remains to be done.' },
+    review: { title: 'rpi-review skill', url: rpi + 'rpi-review/SKILL.md', note: 'Produces one review per RPI task. Separates completion of the review from acceptance of the result, and identifies where follow-up work belongs.' },
+    'review-template': { title: 'Review record template', url: rpi + 'rpi-review/templates/review-log.md', note: 'Records RV-xxx findings and suggested next actions. The Parent Decision Record preserves subsequent decisions without rewriting earlier ones.' },
+    agent: { title: 'RPI Agent', url: hve + '.github/agents/hve-core/rpi-agent.agent.md', note: 'Optional agent that coordinates the phase skills. Offers four participation choices and supports Full Auto when requested.' },
+    'advisory-helpers': { title: 'Optional, advisory RPI subagents / PR #2902', url: 'https://github.com/microsoft/hve-core/pull/2902', note: 'Merged September 18, 2026. Subagents are optional. The assistant responsible for the phase verifies their suggestions before recording evidence.' },
+    loops: { title: 'Automatic RPI loops and walkthroughs / PR #2859', url: 'https://github.com/microsoft/hve-core/pull/2859', note: 'Merged September 8, 2026. Defines when RPI continues, asks for input or stops, and how follow-ups are handled.' },
     'gpt6-astra': { title: 'OpenAI: GPT-6 Astra model', url: 'https://developers.openai.com/api/docs/models/gpt-6-astra', note: '1,050,000-token context window; 922,000 maximum input and 128,000 maximum output tokens. Retrieved September 23, 2026.' },
     'gpt6-release': { title: 'OpenAI API changelog', url: 'https://developers.openai.com/api/docs/changelog', note: 'GPT-6 Astra released September 3, 2026. GPT-6 Sol and Luna released September 22.' },
-    'gpt6-guide': { title: 'OpenAI: Using GPT-6', url: 'https://developers.openai.com/api/docs/guides/latest-model', note: 'Astra stays coherent on long tasks and asks when input could change the result. It is more sensitive to instructions in skills and files such as AGENTS.md; OpenAI recommends auditing them.' },
+    'gpt6-guide': { title: 'OpenAI: Using GPT-6', url: 'https://developers.openai.com/api/docs/guides/latest-model', note: 'OpenAI describes better coherence on long tasks and closer adherence to file-based instructions. It recommends auditing skills and files such as AGENTS.md.' },
     'opus-55': { title: 'Anthropic: Claude Opus 5.5', url: 'https://platform.claude.com/docs/en/models/opus-5-5/overview', note: 'Released September 22, 2026. 1M-token context window; 128K maximum output.' },
-    'claude-context': { title: 'Anthropic: Context windows', url: 'https://platform.claude.com/docs/en/build-with-claude/context-windows', note: 'More context is not automatically better; accuracy and recall degrade as token count grows. The system prompt, messages, tool results and tool definitions all count.' },
+    'claude-context': { title: 'Anthropic: Context windows', url: 'https://platform.claude.com/docs/en/build-with-claude/context-windows', note: 'Explains what uses context space and warns that larger inputs can reduce accuracy and recall. Input includes instructions, messages, tool results and tool definitions.' },
     'copilot-models': { title: 'GitHub Docs: Supported AI models in Copilot', url: 'https://docs.github.com/en/copilot/reference/ai-models/supported-models', note: 'Lists GPT-6 Astra, Sol, Luna and Claude Opus 5.5 as generally available. Retrieved September 23, 2026; plan availability varies.' },
-    'vscode-release': { title: 'VS Code 1.139.0 release', url: 'https://github.com/microsoft/vscode/releases/tag/1.139.0', note: 'Published September 23, 2026. Tool behavior below is read from this tag.' },
-    'vscode-search-tool': { title: 'VS Code 1.139.0: grep_search tool source', url: vscode + 'findTextInFilesTool.tsx', note: 'Default 100 results and a 200-result cap, both experiment-based settings. Reports found versus shown matches and truncates long lines.' },
-    'vscode-read-tool': { title: 'VS Code 1.139.0: read_file tool source', url: vscode + 'readFileTool.tsx', note: 'Truncates at 2,000 lines and 2,000 characters per line, then asks the model to continue with offset and limit.' },
-    'vscode-sessions': { title: 'VS Code: Manage agent sessions', url: 'https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions', note: 'Context window control in the chat input; automatic compaction when the window fills; new sessions for independent tasks.' },
-    'vscode-best-practices': { title: 'VS Code: Best practices for using AI', url: 'https://code.visualstudio.com/docs/agents/best-practices', note: 'Bounded tasks, relevant context, plan first for complex changes, new sessions for unrelated work and search exclusions for noisy files.' },
-    'vscode-context-guide': { title: 'VS Code: Context engineering flow', url: 'https://code.visualstudio.com/docs/agents/guides/context-engineering-guide', note: 'Save the plan to a file, start a new chat that references it and review in a fresh chat against the plan.' },
-    'claude-code-practices': { title: 'Claude Code: Best practices', url: 'https://code.claude.com/docs/en/best-practices', note: 'Context fills fast and performance degrades as it fills. Explore, plan, then code; skip the plan when the diff fits in one sentence. Names the infinite-exploration failure pattern.' },
-    'codex-practices': { title: 'OpenAI Codex: Best practices', url: 'https://learn.chatgpt.com/guides/best-practices', note: 'Goal, context, constraints and a done condition; plan first for complex or ambiguous work. Useful results are possible with minimal setup.' },
-    'anthropic-context-eng': { title: 'Anthropic: Effective context engineering for AI agents', url: 'https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents', note: 'Context rot appears across models; aim for the smallest set of high-signal tokens; larger windows remain subject to pollution; do the simplest thing that works.' },
-    'context-rot': { title: 'Chroma: Context rot', url: 'https://www.trychroma.com/research/context-rot', note: 'July 2025 study of 18 models. With task difficulty held constant, accuracy fell as input grew, and distractors had non-uniform effects.' },
-    distracted: { title: 'Shi et al.: LLMs can be easily distracted by irrelevant context', url: 'https://arxiv.org/abs/2302.00093', note: '2023. Irrelevant details in math problems substantially reduced accuracy. Evaluated an earlier model generation.' },
-    'lost-middle': { title: 'Liu et al.: Lost in the middle', url: 'https://arxiv.org/abs/2307.03172', note: '2023. Relevant information in the middle of long inputs was used less reliably. Evaluated an earlier model generation.' },
-    'context-term': { title: 'Simon Willison: Context engineering', url: 'https://simonwillison.net/2025/Jun/27/context-engineering/', note: 'June 27, 2025. Quotes Tobi Lutke and Andrej Karpathy on the term, with links to their original posts.' }
+    'vscode-release': { title: 'VS Code 1.139.0 release', url: 'https://github.com/microsoft/vscode/releases/tag/1.139.0', note: 'Published September 23, 2026. The tool examples use source from this release.' },
+    'vscode-search-tool': { title: 'VS Code 1.139.0: grep_search tool source', url: vscode + 'findTextInFilesTool.tsx', note: 'Defaults to 100 results with a 200-result cap; both are experiment-based settings. Reports how many matches were found and shown, and truncates long lines.' },
+    'vscode-dir-tool': { title: 'VS Code 1.139.0: list_dir tool source', url: vscode + 'listDirTool.tsx', note: 'Lists the immediate contents of the requested directory. A root listing does not inspect nested files or explain what those files do.' },
+    'vscode-read-tool': { title: 'VS Code 1.139.0: read_file tool source', url: vscode + 'readFileTool.tsx', note: 'Stops at 2,000 lines and truncates lines longer than 2,000 characters. Tells the model to continue with offset and limit.' },
+    'vscode-sessions': { title: 'VS Code: Manage agent sessions', url: 'https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions', note: 'Explains the context-usage control, automatic history compaction and starting a separate session for independent work.' },
+    'vscode-debug': { title: 'VS Code: Debug chat interactions', url: 'https://code.visualstudio.com/docs/agents/agent-troubleshooting/chat-debug-view', note: 'Chat Debug shows request context and tool responses; Agent Debug Logs show calls and subagents. Logging requires setup and is not retroactive. The deck uses invented traces and explanatory context snapshots, not exported logs.' },
+    'vscode-flow-layout': { title: 'VS Code 1.139.0: Agent Flow Chart renderer', url: 'https://github.com/microsoft/vscode/blob/1.139.0/src/vs/workbench/contrib/chat/browser/chatDebug/chatDebugFlowLayout.ts', note: 'Visual reference for typed node colors, colored gutters, rounded cards, arrows and purple subagent groups. The deck uses an original, enlarged renderer and focused trace excerpts; no upstream renderer or screenshots are bundled.' },
+    'vscode-flow-view': { title: 'VS Code 1.139.0: Agent Flow Chart view', url: 'https://github.com/microsoft/vscode/blob/1.139.0/src/vs/workbench/contrib/chat/browser/chatDebug/chatDebugFlowChartView.ts', note: 'Breadcrumbs, event selection and the event-details pane informed the reconstruction. The presentation uses fitted excerpts rather than the native pan, zoom and filter controls.' },
+    'vscode-debug-types': { title: 'VS Code 1.139.0: Debug event types', url: 'https://github.com/microsoft/vscode/blob/1.139.0/src/vs/workbench/contrib/chat/common/chatDebugService.ts', note: 'Defines model turns, tool calls, subagent invocations, responses and generic events. Compaction is not a dedicated type in this contract; the deck labels its compaction node as an illustrative generic event.' },
+    'vscode-best-practices': { title: 'VS Code: Best practices for using AI', url: 'https://code.visualstudio.com/docs/agents/best-practices', note: 'Recommends focused tasks, relevant context and planning for complex changes. Covers fresh sessions and excluding noisy files from search.' },
+    'vscode-context-guide': { title: 'VS Code: Context engineering flow', url: 'https://code.visualstudio.com/docs/agents/guides/context-engineering-guide', note: 'Recommends saving a plan, referencing it in a new implementation chat and reviewing the result in a fresh chat.' },
+    'claude-code-practices': { title: 'Claude Code: Best practices', url: 'https://code.claude.com/docs/en/best-practices', note: 'Warns about long, unfocused sessions and repeated corrections. Recommends planning where useful and a direct edit for a small, clear change.' },
+    'codex-practices': { title: 'OpenAI Codex: Best practices', url: 'https://learn.chatgpt.com/guides/best-practices', note: 'Recommends task-relevant files and examples, a clear goal, constraints and a way to check success. This is general Codex guidance, not an Astra-specific long-context benchmark. Planning helps with complex or ambiguous work.' },
+    'anthropic-context-eng': { title: 'Anthropic: Effective context engineering for AI agents', url: 'https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents', note: 'Recommends selecting information that helps the next action. Describes context degradation across models, with differences in severity, and favors the simplest effective approach.' },
+    'context-rot': { title: 'Chroma: Context rot', url: 'https://www.trychroma.com/research/context-rot', note: 'July 2025 study of 18 models on controlled tasks. Longer inputs often reduced performance, but the effect varied by model and task.' },
+    distracted: { title: 'Shi et al.: LLMs can be easily distracted by irrelevant context', url: 'https://arxiv.org/abs/2302.00093', note: '2023 study of earlier models. Adding irrelevant sentences reduced accuracy on the math problems tested.' },
+    'lost-middle': { title: 'Liu et al.: Lost in the middle', url: 'https://arxiv.org/abs/2307.03172', note: '2023 study of earlier models. Relevant information was used less reliably when placed in the middle of long inputs.' },
+    'context-term': { title: 'Simon Willison: Context engineering', url: 'https://simonwillison.net/2025/Jun/27/context-engineering/', note: 'June 27, 2025 discussion of the term, with links to posts by Tobi Lutke and Andrej Karpathy. The slide summarizes the idea rather than quoting it.' }
   };
 
   const request = {
     kind: 'composer', phase: 'Request', state: 'RPI Agent selected',
-    title: 'Describe the task and its constraint', label: 'Reconstructed Copilot Chat input',
-    body: 'Add a configurable log retention setting to every storage module. Follow the existing variable naming.',
+    title: 'Start with the change you need', label: 'Reconstructed Copilot Chat input',
+    body: 'Add a configurable log retention setting to every storage module. Use the repo\'s variable naming conventions.',
     attachments: ['modules/'], mode: 'RPI Agent',
-    insight: 'Scripted request. RPI Agent first checks if existing evidence is enough.'
+    insight: 'RPI Agent checks what is already known and whether the task needs research.'
   };
 
   const participation = {
-    kind: 'question', title: 'Choose a participation mode', label: 'Reconstructed Copilot question',
+    kind: 'question', title: 'Choose how involved you want to be', label: 'Reconstructed Copilot question',
     body: 'How would you like us to work on this?', headingLevel: 3,
     options: [
       { label: 'Handle it end to end', detail: 'I\'ll make the decisions and work through Research, Planning, Implementation, Review, and any needed follow-ups until your request is complete.' },
@@ -1029,42 +1130,195 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
 
   const examples = { request, participation };
 
+  const trackingRoot = ['.copilot-tracking/', 'changes/', 'docs/', 'src/', 'var/'];
+  const trackingRead = { file: 'docs/tracking.md', start: 1, end: 40, total: 128 };
+  const trackingMeanings = [
+    { name: 'Planning notes', path: '.copilot-tracking/', use: 'Local, Git-ignored notes' },
+    { name: 'Job receipts', path: 'var/jobs/', use: 'Runtime retry state' },
+    { name: 'Release entries', path: 'changes/', use: 'Committed release inputs' }
+  ];
+  const trackingScene = {
+    kind: 'workbench', workspace: 'sample-repo', focus: 'chat', agent: 'Agent',
+    label: 'Scripted VS Code example / fictional repo'
+  };
+  const flowKinds = {
+    modelTurn: 'Model turn',
+    toolCall: 'Tool call',
+    subagentInvocation: 'Subagent',
+    agentResponse: 'Agent response',
+    generic: 'Generic event'
+  };
+  const trackingFlow = {
+    delegate: { kind: 'modelTurn', label: 'Model turn', sublabel: 'Agent / delegate', sourceStep: 0, messageIndex: 1 },
+    explore: { kind: 'subagentInvocation', label: 'Explore', sublabel: 'Subagent', sourceStep: 0, messageIndex: 0, note: 'Explore runs the shown calls in its own context and returns a summary to the parent agent.' },
+    search: { kind: 'toolCall', label: 'grep_search', sublabel: 'success / 1 match', parent: 'explore', sourceStep: 1, messageIndex: 0 },
+    list: { kind: 'toolCall', label: 'list_dir', sublabel: 'success / root only', parent: 'explore', sourceStep: 2, messageIndex: 0 },
+    read: { kind: 'toolCall', label: 'read_file', sublabel: 'success / lines 1-40', parent: 'explore', sourceStep: 3, messageIndex: 0 },
+    summary: { kind: 'agentResponse', label: 'Explore response', sublabel: 'Summary returned', parent: 'explore', sourceStep: 4, messageIndex: 0 },
+    resume: { kind: 'modelTurn', label: 'Model turn', sublabel: 'Agent / accept summary', sourceStep: 4, messageIndex: 1 },
+    compaction: { kind: 'generic', label: 'Compaction', sublabel: 'Illustrative event', sourceStep: 5, messageIndex: 1, note: 'This generic event illustrates a later compaction. It is not a dedicated native node type or a claim that the original logs were deleted.' },
+    write: { kind: 'modelTurn', label: 'Model turn', sublabel: 'Agent / write answer', sourceStep: 6, messageIndex: 0 },
+    answer: { kind: 'agentResponse', label: 'Agent Response', sublabel: 'Answer produced', sourceStep: 6, messageIndex: 0, note: 'The response completed, but its claims are unsupported. This is a presenter assessment, not a failed tool call.' }
+  };
+
   const demos = {
+    tracking: {
+      label: 'Tracking files',
+      phases: ['Question', 'Tools', 'Explore', 'Compaction', 'Answer', 'Check'],
+      steps: [
+        {
+          ...trackingScene, phase: 'Question', state: 'Sounds straightforward',
+          title: 'One question, several possible meanings',
+          editor: {
+            kind: 'files', title: 'Explorer', caption: 'A fictional repository',
+            files: trackingRoot
+          },
+          messages: [
+            { kind: 'request', title: 'You', body: 'Explain how this repo uses tracking files.' },
+            { kind: 'message', title: 'Copilot', body: 'I\'ll ask Explore to inspect the repo, then summarize what it finds.' }
+          ],
+          insight: 'A small question hides an open decision: what counts as a tracking file?'
+        },
+        {
+          ...trackingScene, kind: 'agent-flow', phase: 'Tools', state: 'One phrase searched', agent: 'Explore',
+          title: 'The search finds a phrase, not every use',
+          flow: { nodes: ['delegate', 'explore', 'search'], selected: 'search' },
+          editor: {
+            kind: 'code', title: 'Search results', caption: 'Literal text matches only',
+            numbered: false,
+            body: 'Query: "tracking files"\n\n1 match\n\ndocs/tracking.md:1\n# Tracking files'
+          },
+          messages: [
+            { kind: 'tool', title: 'grep_search', detail: 'query: "tracking files"', body: 'docs/tracking.md:1\n# Tracking files' },
+            { kind: 'message', title: 'Explore', body: 'I found the tracking-files documentation. I\'ll start there.' }
+          ],
+          insight: 'The phrase matches planning notes. Receipts and release entries use other words.'
+        },
+        {
+          ...trackingScene, kind: 'agent-flow', phase: 'Tools', state: 'Root directory only', focus: 'editor', agent: 'Explore',
+          title: 'A directory listing does not explain behavior',
+          flow: { nodes: ['explore', 'search', 'list'], selected: 'list' },
+          editor: {
+            kind: 'files', title: 'Explorer', caption: 'Root listed; nested files not inspected',
+            files: trackingRoot
+          },
+          messages: [
+            { kind: 'tool', title: 'list_dir', detail: 'path: sample-repo/', body: trackingRoot.join('\n') },
+            { kind: 'message', title: 'Explore', body: 'I\'ll read docs/tracking.md.' }
+          ],
+          insight: 'A root listing gives names. Explore never inspects the worker or release code.'
+        },
+        {
+          ...trackingScene, kind: 'agent-flow', phase: 'Tools', state: 'Only lines 1-40 read', focus: 'editor', agent: 'Explore',
+          title: 'The requested range misses the later section',
+          flow: { nodes: ['explore', 'search', 'list', 'read'], selected: 'read', detailView: 'context' },
+          readRange: trackingRead,
+          editor: {
+            kind: 'code', title: trackingRead.file,
+            caption: 'Lines 84-90: not included in the read',
+            startLine: 84,
+            body: '## Other records\n\nJob receipts: var/jobs/\nPrevent duplicate jobs.\n\nRelease entries: changes/\nCommitted release inputs.'
+          },
+          messages: [
+            { kind: 'tool', title: 'read_file', detail: `${trackingRead.file} / lines ${trackingRead.start}-${trackingRead.end} of ${trackingRead.total}`, body: '# Tracking files\n## Planning notes\nLocal research and plans.\nIn .copilot-tracking/.\nIgnored by Git.' },
+            { kind: 'message', title: 'Explore', body: 'These are local planning notes.' }
+          ],
+          insight: 'Only the requested lines reach Explore. This is not the 2,000-line tool cap.'
+        },
+        {
+          ...trackingScene, kind: 'agent-flow', phase: 'Explore', state: 'Limits dropped',
+          title: 'The Explore summary sounds more complete',
+          flow: { nodes: ['explore', 'read', 'summary', 'resume'], selected: 'summary' },
+          editor: {
+            kind: 'code', title: 'Checked evidence', caption: 'What the investigation actually covered',
+            numbered: false,
+            body: 'Search: "tracking files"\nListing: repo root\nRead: docs/tracking.md 1-40\n\nNot checked:\n- Other terms and folders\n- Remaining file sections'
+          },
+          messages: [
+            { kind: 'helper', title: 'Explore returned', body: 'Tracking files are local planning notes in .copilot-tracking/. They are ignored by Git.' },
+            { kind: 'message', title: 'Copilot', body: 'That gives me the repo-wide convention.' }
+          ],
+          insight: 'Explore drops the limits. The parent mistakes one convention for a repo-wide fact.'
+        },
+        {
+          ...trackingScene, kind: 'agent-flow', phase: 'Compaction', state: 'Tool detail omitted',
+          title: 'Compaction keeps the conclusion, loses the limits',
+          flow: { nodes: ['explore', 'summary', 'resume', 'compaction'], selected: 'compaction' },
+          editor: {
+            kind: 'code', title: 'Before compaction', caption: 'Details omitted from the next model input',
+            numbered: false,
+            body: 'query: "tracking files"\nlist_dir: root only\nread_file: 1-40 of 128\n\nNo evidence about:\n- Runtime consumers\n- Other tracking locations'
+          },
+          messages: [
+            { kind: 'notice', title: 'Conversation compacted', body: 'Later, after more tool calls.' },
+            { kind: 'summary', title: 'Retained summary / illustrative', body: 'Task: explain tracking files.\nFinding: local planning notes.\nNext: write the explanation.' }
+          ],
+          insight: 'Read limits vanish from this model input. The original logs are not erased.'
+        },
+        {
+          ...trackingScene, kind: 'agent-flow', phase: 'Answer', state: 'Unsupported claims',
+          title: 'The final answer fills the gaps with assumptions',
+          flow: { nodes: ['compaction', 'write', 'answer'], selected: 'answer' },
+          editor: {
+            kind: 'code', title: 'Evidence check', caption: 'Presenter annotations on the answer',
+            numbered: false,
+            body: '"All tracking files"\nNo repo-wide coverage.\n\n"Never affect runtime"\nNo runtime code inspected.\n\n"Can be deleted safely"\nNo lifecycle checked.'
+          },
+          messages: [
+            { kind: 'answer', title: 'Copilot / incorrect in this example', body: 'All tracking files live in .copilot-tracking/ and are ignored by Git. They never affect runtime behavior and can be deleted safely.' }
+          ],
+          insight: 'The agent invents "all", "never" and "safe to delete" without checking those claims.'
+        },
+        {
+          ...trackingScene, phase: 'Check', state: 'Three different uses', focus: 'editor',
+          title: 'The same question needed three separate checks',
+          editor: {
+            kind: 'definitions', title: 'What the repo contains', caption: 'Scripted facts missed by the answer',
+            meanings: trackingMeanings
+          },
+          messages: [
+            { kind: 'message', title: 'A supported answer would say', body: 'I found the planning-note convention. I haven\'t checked the worker receipts or release records yet.' },
+            { kind: 'notice', title: 'Before generalizing', body: 'Clarify the term, finish the reads and inspect the consumers. Save the evidence and its limits.' }
+          ],
+          insight: 'Check each meaning and its consumers before giving a repo-wide answer.'
+        }
+      ]
+    },
     rpi: {
       label: 'Log retention example',
       phases: ['Request', 'Research', 'Plan', 'Implement', 'Review'],
       steps: [
         request,
         {
-          kind: 'code', phase: 'Research', state: 'Coverage incomplete',
-          title: 'The first search returns a partial view', file: 'grep_search result', surface: 'tool', label: 'Reconstructed tool output',
+          kind: 'code', phase: 'Research', state: 'Search is incomplete',
+          title: 'The search leaves 212 matches unread', file: 'grep_search result', surface: 'tool', label: 'Reconstructed tool output',
           body: 'Found 312 matches in 14 files for "variable"\n(showing 100 matches in 14 files)\n\nmodules/blob/variables.tf\n3:variable "resource_prefix" {\n11:variable "location" {\n... (19 more matches in this file)\n\nmodules/legacy-table/variables.tf\n2:variable "prefix" {\n... (24 more matches in this file)',
-          insight: 'Only 100 of 312 matches came back. Research reruns the search per module.'
+          insight: 'Only 100 of 312 matches are shown. Search each module before drawing a repo-wide conclusion.'
         },
         {
           kind: 'question', phase: 'Research', state: 'Decision needed',
-          title: 'Ask before deciding for the user', label: 'Reconstructed Copilot question',
-          body: 'Two legacy modules use prefix, not resource_prefix. How should the plan treat them?',
+          title: 'Resolve the naming exception', label: 'Reconstructed Copilot question',
+          body: 'Two legacy modules use prefix instead of resource_prefix. Should this change rename them?',
           options: [
-            { label: 'Add the setting and keep their names', detail: 'Smallest change. Renaming becomes a separate follow-up.' },
-            { label: 'Rename their variables too', detail: 'Consistent names, but a breaking change for callers.' },
-            { label: 'Skip the legacy modules', detail: 'Two modules would not get the setting.' }
+            { label: 'Keep the existing names', detail: 'Add the setting to every module. Leave renaming for separate work.' },
+            { label: 'Rename them as part of this change', detail: 'Use the same names everywhere. Callers will need updating.' },
+            { label: 'Leave the legacy modules out', detail: 'Those two modules won\'t get the setting. This narrows the request.' }
           ],
           selected: 0,
-          insight: 'The answer is recorded as decision D1, next to evidence C1 and C2.'
+          insight: 'Record the answer as D1, alongside the evidence for the two naming patterns.'
         },
         {
-          kind: 'code', phase: 'Plan', state: 'Critique: Revise, then resolved',
-          title: 'The critique finds a missing check', file: 'log-retention-plan.md', label: 'Illustrative excerpt',
-          body: '#### [ ] P01-T01: Add log retention\nRequirements:\n* FR-001: defaults to 30 days.\n* FR-002: rejects values outside 1 to 365.\n* FR-003: legacy modules keep prefix (D1).\n\n## Critique Disposition\nPC-001: FR-002 has no check.\nResolved: add terraform test cases for 0 and 366.',
-          insight: 'The planner added the missing check before any code changed.'
+          kind: 'code', phase: 'Plan', state: 'Critique: Revise; finding resolved',
+          title: 'Catch a missing test before coding', file: 'log-retention-plan.md', label: 'Illustrative excerpt',
+          body: '#### [ ] P01-T01: Add log retention\nRequirements:\n* FR-001: Default to 30 days.\n* FR-002: Accept only 1 to 365 days.\n* FR-003: Keep legacy names (D1).\n\n## Critique Disposition\nPC-001: No check for out-of-range values.\nResolved: test 0 and 366 in each module.',
+          insight: 'The planner adds checks for invalid values. They must cover the legacy modules too.'
         },
         {
-          kind: 'implementation', phase: 'Implement', state: 'New chat from the plan',
-          title: 'Implement the task and record the checks', label: 'Scripted implementation',
+          kind: 'implementation', phase: 'Implement', state: 'Reported complete',
+          title: 'The agent reports the work as done', label: 'Scripted implementation report',
           plan: 'log-retention-plan.md', phaseTitle: 'P01 / Log retention',
           tasks: ['P01-T01 Add the variable', 'P01-T02 Run the checks'],
-          changes: '## Completed Work\nP01-T01: all 14 modules\naccept log_retention_days.\n## Validation Record\nterraform validate: Passed\nterraform test: Passed',
+          changes: '## Validation Record\nterraform validate: Passed\nterraform test: Passed\nScope: not recorded',
           file: 'modules/blob/variables.tf', startLine: 14,
           diff: [
             { type: 'context', text: '}' },
@@ -1079,17 +1333,39 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
             { type: 'add', text: '  }' },
             { type: 'add', text: '}' }
           ],
-          insight: 'A fresh chat started from the plan. Tasks were checked only when requirements held.'
+          insight: 'The log says checks passed, but not which modules they covered. FR-002 still needs verification.'
         },
         {
           kind: 'code', phase: 'Review', state: 'Complete / Defects found',
-          title: 'Review against the plan and route the gap', file: 'log-retention-review.md', label: 'Illustrative excerpt',
-          body: '### RV-001 [Medium]: legacy modules accept 0\nExpected: FR-002 validation in all 14 modules.\nObserved: legacy-table and legacy-files have no\nvalidation block.\nRoute: rpi-implement (P01-T01)\n\n## Parent Decision Record\nExecution: Complete\nOutcome: Defects found',
-          insight: 'The FR-002 defect goes back to implementation. Finishing is not passing.'
+          title: 'Two modules are missing validation', file: 'log-retention-review.md', label: 'Illustrative excerpt',
+          body: '### RV-001 [Medium]: legacy modules accept 0\nExpected: FR-002 in all 14 modules.\nObserved: legacy-table and legacy-files lack\nthe validation block.\nRoute: rpi-implement (P01-T01)\n\n## Parent Decision Record\nExecution: Complete\nOutcome: Defects found',
+          insight: 'Return P01-T01 to implementation. Passing checks didn\'t establish coverage of every module.'
         }
       ]
     }
   };
+
+  function flowTrace(ids) {
+    if (!Array.isArray(ids) || !ids.length || new Set(ids).size !== ids.length) {
+      throw new Error('A flow excerpt requires unique event IDs.');
+    }
+    const nodes = ids.map(id => {
+      if (!Object.hasOwn(trackingFlow, id)) throw new Error(`Unknown flow event: ${id}`);
+      return { id, ...trackingFlow[id] };
+    });
+    const closedGroups = new Set();
+    let group = null;
+    nodes.forEach((node, index) => {
+      const nextGroup = node.kind === 'subagentInvocation' ? node.id : node.parent ?? null;
+      if (group !== nextGroup && group) closedGroups.add(group);
+      if (nextGroup && closedGroups.has(nextGroup)) throw new Error('Subagent events must stay together.');
+      if (node.parent && !nodes.slice(0, index).some(parent => parent.id === node.parent && parent.kind === 'subagentInvocation')) {
+        throw new Error(`Missing preceding subagent: ${node.parent}`);
+      }
+      group = nextGroup;
+    });
+    return { nodes, edges: ids.slice(1).map((id, index) => [ids[index], id]) };
+  }
 
   function moveStep(index, action, length) {
     if (!Number.isInteger(length) || length < 1 || !Number.isInteger(index) || index < 0 || index >= length) {
@@ -1109,7 +1385,7 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
       removed: rows.filter(row => row.type === 'remove').length
     };
   }
-  globalThis.DeckContent = { sources, examples, demos, moveStep, diffStats };
+  globalThis.DeckContent = { sources, examples, demos, trackingFlow, flowKinds, flowTrace, moveStep, diffStats };
 }());
 
 </script>
@@ -1117,6 +1393,7 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
 // Copyright (c) Microsoft Corporation. Licensed under the MIT License.
 (function () {
   'use strict';
+  let flowSerial = 0;
   function element(tag, className = '', text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
@@ -1130,6 +1407,7 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
   }
   const iconPaths = {
     file: 'M6 3h8l4 4v14H6z M14 3v5h4 M9 12h6 M9 16h6',
+    folder: 'M3 5h7l2 3h9v12H3z',
     chevron: 'm8 10 4 4 4-4',
     send: 'M12 19V5 M6 11l6-6 6 6',
     plus: 'M12 5v14 M5 12h14',
@@ -1145,13 +1423,14 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
     svg.append(svgElement('path', { d: iconPaths[name], fill: 'none', stroke: 'currentColor', 'stroke-width': 1.65, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
     return svg;
   }
-  function codeBlock(text, { numbered = true } = {}) {
+  function codeBlock(text, { numbered = true, startLine = 1 } = {}) {
+    if (!Number.isInteger(startLine) || startLine < 1) throw new Error('Invalid excerpt start line.');
     const pre = element('pre', `numbered-code${numbered ? '' : ' plain-code'}`);
     const code = element('code');
     text.split('\n').forEach((line, index) => {
       const row = element('span', 'code-line');
       if (numbered) {
-        const number = element('span', 'line-number', String(index + 1));
+        const number = element('span', 'line-number', String(index + startLine));
         number.setAttribute('aria-hidden', 'true');
         row.append(number);
       }
@@ -1240,19 +1519,19 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
     const layout = element('div', 'implementation-scene');
     const artifacts = element('div', 'implementation-artifacts');
     const plan = element('div', 'code-surface');
-    plan.append(fileHeader(example.plan, 'Checked'));
+    plan.append(fileHeader(example.plan, 'Agent report'));
     const checklist = element('div', 'completed-checklist');
     checklist.append(element('strong', '', example.phaseTitle));
     example.tasks.forEach(task => {
       const row = element('div', 'completed-task');
       const mark = element('span', 'completed-box', '\u2713');
       mark.setAttribute('aria-hidden', 'true');
-      row.append(mark, element('span', 'sr-only', 'Completed: '), element('code', '', task));
+      row.append(mark, element('span', 'sr-only', 'Reported complete: '), element('code', '', task));
       checklist.append(row);
     });
     plan.append(checklist);
     const log = element('div', 'code-surface');
-    log.append(fileHeader('log-retention-changes.md', 'Evidence'), codeBlock(example.changes, { numbered: false }));
+    log.append(fileHeader('log-retention-changes.md', 'Checks'), codeBlock(example.changes, { numbered: false }));
     artifacts.append(plan, log);
     const editing = element('div', 'implementation-editing');
     const stats = globalThis.DeckContent.diffStats(example.diff);
@@ -1282,6 +1561,224 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
     layout.append(artifacts, editing);
     return layout;
   }
+  function editorContents(editor) {
+    const content = document.createDocumentFragment();
+    if (editor.kind === 'files') {
+      const files = element('ul', 'workbench-files');
+      editor.files.forEach(name => {
+        const row = element('li');
+        row.append(icon(name.endsWith('/') ? 'folder' : 'file'), element('code', '', name));
+        files.append(row);
+      });
+      content.append(files);
+    } else if (editor.kind === 'code') {
+      content.append(codeBlock(editor.body, { numbered: editor.numbered !== false, startLine: editor.startLine ?? 1 }));
+    } else if (editor.kind === 'definitions') {
+      const meanings = element('dl', 'workbench-meanings');
+      editor.meanings.forEach(meaning => {
+        const description = element('dd');
+        description.append(element('code', '', meaning.path), element('p', '', meaning.use));
+        meanings.append(element('dt', '', meaning.name), description);
+      });
+      content.append(meanings);
+    } else throw new Error(`Unknown workbench pane: ${editor.kind}`);
+    return content;
+  }
+  function renderWorkbench(example) {
+    const { editor, messages } = example;
+    if (!editor || !Array.isArray(messages) || !messages.length) throw new Error('Incomplete scripted workbench.');
+    const workbench = element('div', 'workbench');
+    workbench.dataset.focus = example.focus;
+    workbench.setAttribute('role', 'group');
+    workbench.setAttribute('aria-label', 'Scripted VS Code workbench; display only');
+    const titlebar = element('div', 'workbench-titlebar');
+    const commandCenter = element('div', 'workbench-command-center');
+    commandCenter.append(icon('search'), element('span', '', example.workspace));
+    titlebar.append(element('span', '', 'VS Code'), commandCenter, element('span', 'workbench-window-mark', '...'));
+    const grid = element('div', 'workbench-grid');
+    const activity = element('div', 'workbench-activity');
+    activity.setAttribute('aria-hidden', 'true');
+    for (const name of ['file', 'search', 'sparkle']) activity.append(icon(name));
+    const filePane = element('div', 'workbench-editor');
+    const fileHeading = element('div', 'workbench-pane-heading');
+    fileHeading.append(icon(editor.kind === 'files' ? 'folder' : 'file'), element('h4', '', editor.title));
+    filePane.append(fileHeading, element('p', 'workbench-caption', editor.caption), editorContents(editor));
+    const chat = element('div', 'workbench-chat');
+    const chatHeading = element('div', 'workbench-pane-heading');
+    chatHeading.append(icon('sparkle'), element('h4', '', 'Chat'), element('span', 'workbench-agent', example.agent));
+    const conversation = element('div', 'workbench-conversation');
+    messages.forEach(message => {
+      if (!['request', 'message', 'tool', 'helper', 'notice', 'summary', 'answer'].includes(message.kind)) {
+        throw new Error(`Unknown scripted message: ${message.kind}`);
+      }
+      const item = element('div', `workbench-message workbench-message-${message.kind}`);
+      item.append(element('strong', 'workbench-speaker', message.title));
+      if (message.detail) item.append(element('div', 'workbench-detail', message.detail));
+      if (message.kind === 'request') item.append(composer({ body: message.body, mode: 'Agent' }));
+      else if (['tool', 'summary'].includes(message.kind)) item.append(codeBlock(message.body, { numbered: false }));
+      else item.append(element('p', '', message.body));
+      conversation.append(item);
+    });
+    chat.append(chatHeading, conversation);
+    grid.append(activity, filePane, chat);
+    const status = element('div', 'workbench-status');
+    status.append(element('span', '', 'main'), element('span', '', 'No connected agent'));
+    workbench.append(titlebar, grid, status);
+    return workbench;
+  }
+  function flowArrow(from, to) {
+    const arrow = svgElement('svg', {
+      viewBox: '0 0 30 22', class: 'debug-flow-arrow',
+      'aria-hidden': 'true', focusable: 'false', 'data-from': from, 'data-to': to
+    });
+    arrow.append(svgElement('path', {
+      d: 'M15 1V19M9 13L15 19L21 13',
+      fill: 'none', stroke: 'currentColor', 'stroke-width': 1.8,
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+    }));
+    return arrow;
+  }
+  function renderAgentFlow(example) {
+    const { demos, flowKinds, flowTrace } = globalThis.DeckContent;
+    const trace = flowTrace(example.flow?.nodes);
+    const nodes = new Map(trace.nodes.map(node => [node.id, node]));
+    if (!nodes.has(example.flow.selected)) throw new Error('The selected event is outside the flow excerpt.');
+    const prefix = `agent-flow-${++flowSerial}`;
+    const surface = element('div', 'agent-debugger');
+    const breadcrumb = element('div', 'debug-breadcrumb');
+    for (const [index, label] of ['Agent Debug Logs', 'Tracking files', 'Agent Flow Chart'].entries()) {
+      if (index) {
+        const separator = element('span', 'debug-breadcrumb-separator', '\u203a');
+        separator.setAttribute('aria-hidden', 'true');
+        breadcrumb.append(separator);
+      }
+      breadcrumb.append(element(index === 2 ? 'strong' : 'span', '', label));
+    }
+    const legend = element('div', 'debug-legend');
+    for (const kind of ['modelTurn', 'toolCall', 'subagentInvocation', 'agentResponse', 'generic']) {
+      legend.append(element('span', `debug-legend-${kind}`, flowKinds[kind]));
+    }
+    legend.append(element('span', 'debug-flow-hint', 'Focused trace / select a node'));
+    const panes = element('div', 'debug-panes');
+    const diagram = element('div', 'debug-diagram');
+    diagram.setAttribute('role', 'group');
+    diagram.setAttribute('aria-label', 'Agent Flow Chart, focused excerpt');
+    diagram.setAttribute('aria-describedby', `${prefix}-description`);
+    const sequence = trace.nodes.map(node => `${node.label} (${flowKinds[node.kind]}${node.parent ? ', inside Explore' : ''})`).join(' to ');
+    const description = element('p', 'sr-only', `Arrows connect ${sequence}. This is a focused excerpt; other events are omitted.`);
+    description.id = `${prefix}-description`;
+    const list = element('ol', 'debug-trace');
+    const groups = new Map();
+    const buttons = new Map();
+    const inspector = element('div', 'debug-inspector');
+    const inspectorKind = element('div', 'debug-inspector-kind');
+    const inspectorTitle = element('h4', 'debug-inspector-title');
+    inspectorTitle.id = `${prefix}-title`;
+    const inspectorHeading = element('div', 'debug-inspector-heading');
+    inspectorHeading.append(inspectorTitle, inspectorKind);
+    const views = element('div', 'debug-detail-views');
+    views.setAttribute('role', 'group');
+    views.setAttribute('aria-label', 'Event detail view');
+    const eventButton = element('button', '', 'Event');
+    const contextButton = element('button', '', 'Missed context');
+    for (const button of [eventButton, contextButton]) {
+      button.type = 'button';
+      button.setAttribute('aria-controls', `${prefix}-details`);
+    }
+    const details = element('div', 'debug-inspector-body');
+    details.id = `${prefix}-details`;
+    details.tabIndex = 0;
+    details.setAttribute('role', 'region');
+    details.setAttribute('aria-labelledby', inspectorTitle.id);
+    details.addEventListener('keydown', event => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End'].includes(event.key)) {
+        event.stopPropagation();
+      }
+    });
+    let selected = example.flow.selected;
+    function selectNode(id, view = 'event') {
+      const node = nodes.get(id);
+      if (!node || !['event', 'context'].includes(view)) throw new Error('Invalid flow detail selection.');
+      const source = demos.tracking.steps[node.sourceStep];
+      const message = source?.messages[node.messageIndex];
+      if (!message) throw new Error(`Missing event evidence: ${id}`);
+      selected = id;
+      surface.dataset.selectedEvent = id;
+      surface.dataset.detailView = view;
+      buttons.forEach((button, key) => button.setAttribute('aria-pressed', String(key === id)));
+      eventButton.setAttribute('aria-pressed', String(view === 'event'));
+      contextButton.setAttribute('aria-pressed', String(view === 'context'));
+      inspectorKind.textContent = `${flowKinds[node.kind]} / ${node.parent ? 'Explore' : 'Agent'}`;
+      inspectorTitle.textContent = node.label;
+      details.replaceChildren();
+      if (view === 'context') {
+        const caption = element('p', 'debug-context-label', 'Presenter-only context: ');
+        caption.append(element('code', '', source.editor.title), ` / ${source.editor.caption}`);
+        details.append(caption, editorContents(source.editor));
+      } else {
+        if (message.detail) details.append(element('h5', '', 'Input'), codeBlock(message.detail, { numbered: false }));
+        const heading = message.kind === 'tool' ? 'Output' : message.kind === 'summary' ? 'Retained summary' : 'Message';
+        details.append(element('h5', '', heading));
+        details.append(['tool', 'summary'].includes(message.kind)
+          ? codeBlock(message.body, { numbered: false })
+          : element('p', message.kind === 'answer' ? 'debug-unsupported' : 'debug-message', message.body));
+        if (node.note) details.append(element('p', 'debug-context-caption', node.note));
+      }
+      details.scrollTop = 0;
+    }
+    function nodeButton(node) {
+      const button = element('button', `debug-event debug-event-${node.kind}`);
+      button.type = 'button';
+      button.dataset.flowNode = node.id;
+      button.setAttribute('aria-controls', details.id);
+      const detail = node.sublabel === flowKinds[node.kind] ? '' : ` ${node.sublabel}.`;
+      button.setAttribute('aria-label', `${flowKinds[node.kind]}: ${node.label}.${detail} Inspect event.`);
+      if (node.id === example.flow.selected) button.setAttribute('aria-current', 'step');
+      button.append(element('strong', 'debug-node-label', node.label), element('span', 'debug-node-detail', node.sublabel));
+      button.addEventListener('click', () => selectNode(node.id));
+      buttons.set(node.id, button);
+      return button;
+    }
+    trace.nodes.forEach((node, index) => {
+      const entry = element('li', 'debug-trace-entry');
+      if (index) entry.append(flowArrow(trace.nodes[index - 1].id, node.id));
+      if (node.kind === 'subagentInvocation') {
+        const group = element('div', 'debug-subgraph');
+        group.setAttribute('role', 'group');
+        group.setAttribute('aria-label', `${node.label} subagent`);
+        const children = element('ol', 'debug-child-trace');
+        group.append(nodeButton(node), children);
+        entry.append(group);
+        list.append(entry);
+        groups.set(node.id, children);
+      } else {
+        entry.append(nodeButton(node));
+        (node.parent ? groups.get(node.parent) : list).append(entry);
+      }
+    });
+    const orderedButtons = [...buttons.values()];
+    orderedButtons.forEach((button, index) => {
+      button.addEventListener('keydown', event => {
+        if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        const delta = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 }[event.key];
+        if (delta === undefined && !['Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? orderedButtons.length - 1
+          : Math.max(0, Math.min(orderedButtons.length - 1, index + delta));
+        orderedButtons[next].focus();
+      });
+    });
+    eventButton.addEventListener('click', () => selectNode(selected, 'event'));
+    contextButton.addEventListener('click', () => selectNode(selected, 'context'));
+    views.append(eventButton, contextButton);
+    inspector.append(inspectorHeading, views, details);
+    diagram.append(description, list);
+    panes.append(diagram, inspector);
+    surface.append(breadcrumb, legend, panes);
+    selectNode(selected, example.flow.detailView ?? 'event');
+    return surface;
+  }
   function renderExample(example) {
     if (!example || typeof example.kind !== 'string') throw new Error('Missing example kind.');
     const scene = element('div', `example-scene example-${example.kind}`);
@@ -1294,6 +1791,8 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
     } else if (example.kind === 'composer') scene.append(renderComposer(example));
     else if (example.kind === 'question') scene.append(renderQuestion(example));
     else if (example.kind === 'implementation') scene.append(renderImplementation(example));
+    else if (example.kind === 'workbench') scene.append(renderWorkbench(example));
+    else if (example.kind === 'agent-flow') scene.append(renderAgentFlow(example));
     else throw new Error(`Unknown example component: ${example.kind}`);
     return scene;
   }
@@ -1385,6 +1884,7 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
         pendingAnnouncement = null;
         // A faster action may have moved the walkthrough on before this fires.
         if (states.get(name) !== index) return;
+        if (deck.getCurrentSlide().querySelector('[data-demo]')?.dataset.demo !== name) return;
         announce(text);
       }, ANNOUNCE_SETTLE_MS);
     }
@@ -1520,7 +2020,7 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
       } else if (kind === 'notes') {
         title.textContent = `Notes / ${current.dataset.title}`;
         dialogContent.append(element('p', '', current.querySelector('.notes')?.textContent || 'No presenter notes for this slide.'));
-        dialogContent.append(element('p', 'source-note', 'Recipients can read all bundled notes.'));
+        dialogContent.append(element('p', 'source-note', 'Anyone with this HTML file can read these notes.'));
       } else if (kind === 'overview') {
         title.textContent = 'Slide index';
         const list = element('div', 'slide-index');
@@ -1533,19 +2033,19 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"Why context 
         });
         dialogContent.append(list);
       } else if (kind === 'help') {
-        title.textContent = 'Presentation keys';
+        title.textContent = 'Keyboard shortcuts';
         const grid = element('div', 'key-grid');
         for (const [key, description] of [
           ['Left / Right', 'Previous / next slide. Page Up / Page Down also work.'],
           ['Space', 'Next slide; Shift+Space goes back.'],
           ['Home / End', 'First / last slide.'],
-          ['[ / ] / R', 'Back / next / reset the current walkthrough.'],
+          ['[ / ] / R', 'Previous step / next step / reset this walkthrough.'],
           ['O / S / N', 'Slide index / sources / notes.'],
           ['? / F', 'This help / full screen.'],
-          ['Escape', 'Close an overlay and return focus.'],
-          ['Tab / Enter', 'Reach and activate controls; focused controls keep their normal keys.']
+          ['Escape', 'Close the dialog and return focus.'],
+          ['Tab / Enter', 'Move between controls / activate the focused control.']
         ]) grid.append(element('kbd', '', key), element('span', '', description));
-        dialogContent.append(grid, element('p', 'source-note', 'Walkthroughs keep their step on slide revisits. Reload preserves the slide hash but resets walkthroughs. Motion is optional and respects reduced motion. Character shortcuts work only when the presentation surface has focus. Reading view provides unscaled, scrollable content and starts automatically on compact screens.'));
+        dialogContent.append(grid, element('p', 'source-note', 'Returning to a slide keeps your walkthrough step. Reloading keeps the slide but resets the walkthrough. Letter, symbol and Space shortcuts work while the slide area has focus. Reading view uses full-size, scrollable text and turns on automatically on smaller screens. Slide fades are optional and follow your reduced-motion preference.'));
       } else throw new Error(`Unknown dialog: ${kind}`);
       if (!dialog.open) dialog.showModal();
       dialogContent.scrollTop = 0;

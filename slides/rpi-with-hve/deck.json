@@ -1,5 +1,5 @@
 {
   "title": "RPI with HVE Core",
-  "description": "Why context still decides the result with frontier coding models, and how the HVE Core RPI workflow keeps each phase focused.",
-  "sourceNote": "September 23, 2026 source snapshot: HVE Core 33ac6ec, VS Code 1.139.0 and provider documentation retrieved that day. Walkthroughs and editor panels are scripted reconstructions."
+  "description": "How to manage context and carry evidence between Research, Plan, Implement and Review in HVE Core.",
+  "sourceNote": "Product details reflect the September 23, 2026 snapshot: HVE Core 33ac6ec, VS Code 1.139.0 and the linked provider documentation. Scripted examples illustrate the workflow; they are not recorded agent runs."
 }
