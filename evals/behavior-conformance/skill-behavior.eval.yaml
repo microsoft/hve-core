@@ -2,7 +2,7 @@
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 287
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 289
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -6595,3 +6595,63 @@ stimuli:
         name: skill-rpi-revision-closure-shared-budget-one
         config:
           pattern: '^\s*1\s*$'
+  - name: skill-rpi-revision-closure-interrupted-human
+    prompt: |
+      For three independent tasks, a Complete/Revise assessment of H0 required
+      a correction to saved hash H1. Each authorized H1 closure was interrupted:
+      A by user cancellation, B by a closed window, C by session timeout.
+      Originating host records or explicit operator confirmation establish that
+      every run ended. Reconciliation accounts for the complete attempt history
+      and finds no H1 assessment or unresolved fragments. No positive host or
+      transport failure evidence exists; invocation outcomes remain unknown.
+      Both infrastructure retry slots remain unused. No human assessment has
+      been authorized. Under rpi-plan, choose each next action from
+      ask-human-consent, generic-recovery, infrastructure-retry, wait-for-ceiling,
+      or implement. Return exactly three lines labeled A, B and C.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: b9f5eed222c13b388bdb486400ae1d96cc8a7b75f1d3ad1cc51a50fa02192871
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-interrupted-human-route
+        config:
+          pattern: '(?i)^\s*A:[ \t]*ask-human-consent[ \t]*\r?\nB:[ \t]*ask-human-consent[ \t]*\r?\nC:[ \t]*ask-human-consent\s*$'
+  - name: skill-rpi-revision-closure-interrupted-guards
+    prompt: |
+      Independent H1 closure attempts were interrupted without positive
+      infrastructure-failure evidence. Each saved H1 corrects a Complete/Revise
+      H0 with PC-001; both infrastructure retry slots remain unused and the
+      complete attempt histories are reconciled. Classify the next action:
+      A has unknown originating-run liveness. B has an ended run but unresolved
+      H1 assessment fragments. C has an ended run and a substantive Partial H1
+      assessment. D has ended runs and no H1 result or fragments, but the user
+      declines human-assessment consent. E was eligible and specifically
+      authorized for human assessment; an H1 result arrives before the human
+      starts. F remains eligible after the same checks and specific consent,
+      with no new evidence before the independent human starts.
+      Choose from wait-for-status, reconcile-fragments, dispose-existing,
+      pause, reconcile-before-start, or independent-human-full. Also report
+      how many infrastructure slots were consumed by this direct escalation
+      and whether H0, PC-001, hashes and correction evidence are preserved
+      or replaced. Return exactly eight lines: A through F, Slots: number,
+      and History: preserved or replaced.
+    environment:
+      skills:
+        - ../../.github/skills/rpi/rpi-plan
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+      prompt_sha256: 1e85db95f253a900556abc87728e808cc817f515ce01ad08ac659b69e9548a2c
+    graders:
+      - type: output-matches
+        name: skill-rpi-revision-closure-interrupted-guards-gates
+        config:
+          pattern: '(?i)^\s*A:[ \t]*wait-for-status[ \t]*\r?\nB:[ \t]*reconcile-fragments[ \t]*\r?\nC:[ \t]*dispose-existing[ \t]*\r?\nD:[ \t]*pause[ \t]*\r?\nE:[ \t]*reconcile-before-start[ \t]*\r?\nF:[ \t]*independent-human-full[ \t]*\r?\nSlots:[ \t]*0[ \t]*\r?\nHistory:[ \t]*preserved\s*$'

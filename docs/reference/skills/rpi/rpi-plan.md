@@ -93,6 +93,15 @@ candidates or hosts does not reset the task's budget.
 
 For example, two host-recorded connection failures with confirmed completion and no assessment may qualify for another consent request. A substantive critique of the same candidate, an unknown run status, or unresolved assessment fragments do not qualify. Earlier findings on a different corrected candidate remain binding and must be reconciled, but do not themselves disqualify recovery of the failed closure.
 
+If a closure is interrupted without positive host or transport failure evidence, the planner
+checks the saved candidate, attempt history and available results, then confirms every originating
+run ended. A user cancellation, closed window or session timeout alone does not establish that
+status. With no substantive result or unresolved fragments for the revised candidate, the planner
+routes directly to independent human-assessment eligibility checks, even when infrastructure retry
+slots remain. It preserves unknown outcomes, prior findings, hashes and actual reservation counts;
+it neither retries automatically nor marks unused slots exhausted. Specific consent is still
+required, and implementation stays blocked until a qualifying full human assessment is reconciled.
+
 Older plans may not have an infrastructure reservation count. The planner reconstructs it from the
 original task's attempt records, parent state, critique outputs and available originating run
 evidence, counting interrupted reservations even without output. It preserves the task, candidates
@@ -104,7 +113,7 @@ the field as zero or exhausting the budget by default.
 
 The planner stops automated critique calls and prepares sanitized diagnostics: attempt IDs, candidate hashes, evidence locations, failure and lifecycle status, and the host/network support owner and evidence needed. Repairing the transport does not replenish retry slots.
 
-Exhaustion alone does not authorize another assessment. Active or unknown runs must be reconciled first; substantive results for the current candidate follow their existing finding dispositions. Only confirmed ended infrastructure-only failures with no assessment or unresolved fragments for the current candidate permit a specifically authorized independent human critique. If the failed attempt was a closure, that human must assess the full revised plan and reconcile prior findings.
+Exhaustion alone does not authorize another assessment. Active or unknown runs must be reconciled first; substantive results for the current candidate follow their existing finding dispositions. Either verified infrastructure exhaustion or an eligible ended closure interruption can permit a specifically authorized independent human critique, with no substantive result or unresolved fragments for the current candidate. If the interrupted attempt was a closure, that human must assess the full revised plan and reconcile prior findings.
 
 The human supplies a complete assessment of the saved candidate, including assessor provenance, independence, coverage, verdict and findings. The agent verifies that report against the candidate and all surviving evidence; it cannot write or sign the human's assessment. Approval alone or a mismatched candidate remains blocked. Late results are retained and reconciled, never discarded in favor of a passing report.
 
