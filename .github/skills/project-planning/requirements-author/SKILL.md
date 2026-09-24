@@ -6,7 +6,7 @@ user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.1"
-  last_updated: "2026-08-21"
+  last_updated: "2026-09-18"
 ---
 
 # Requirements Author Skill
@@ -24,6 +24,7 @@ Shared (`references/_shared/`):
 * [Requirements Definition](references/_shared/requirements-definition.md)
 * [Traceability Naming](references/_shared/traceability-naming.md)
 * [Traceability Matrix](references/_shared/traceability-matrix.md)
+* [Requirements Research Integration](references/_shared/rpi-research-integration.md)
 
 BRD scope (`references/brd/`):
 
