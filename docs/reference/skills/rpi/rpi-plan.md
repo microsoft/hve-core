@@ -3,7 +3,7 @@ title: rpi-plan
 description: "Create or resume an evidence-based RPI implementation plan. Use for planning, interrupted critiques, or bounded critique infrastructure recovery."
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-23
+ms.date: 2026-09-24
 ms.topic: reference
 keywords:
   - skill
@@ -30,9 +30,19 @@ Create or resume an evidence-based RPI implementation plan. Use for planning, in
 
 Use `rpi-plan` when adequate evidence exists and the work needs a sequenced, verifiable plan before implementation. The skill writes one plan under `.copilot-tracking/plans/` with a stable task ID, `Pxx` phases, and `Pxx-Txx` tasks. The plan leads with an executive summary and a diagrammed Phase Checklist; each task carries `Goals:`, `Requirements:`, `Details:`, `References:`, and `Dependencies:` blocks.
 
-The Phase Checklist opens with **Before** and **After** Mermaid diagrams comparing the evidence-backed starting state with the intended result of all phases. Each phase highlights its changes within the After view, including labeled removal context when needed. Diagrams inherit the renderer's light or dark theme, use readable sans-serif labels, and pair custom highlight fills with explicit contrasting text colors.
+The Phase Checklist opens with **Before** and **After** Mermaid diagrams comparing the
+evidence-backed starting state with the intended result of all phases. Each phase highlights its
+changes within the After view, including labeled removal context when needed. Diagrams inherit the
+renderer's light or dark theme, use readable sans-serif labels, and pair custom highlight fills
+with explicit contrasting text colors.
 
-Planning owns two internal gates. It activates [rpi-research](rpi-research) only for a demonstrated readiness gap, and runs [rpi-plan-critique](rpi-plan-critique) once the plan is implementation-ready. Substantive assessments are not replayed for an unchanged candidate. Required corrections and material implementation-time plan changes receive revision-bound closure. The planner can authorize one generic interruption recovery for the initial assessment; two infrastructure-only retries are shared across the task, including failed closure runs, with separate consent and evidence checks. Confirmed user direction outranks critique advice.
+Planning owns two internal gates. It activates [rpi-research](rpi-research) only for a demonstrated
+readiness gap, and runs [rpi-plan-critique](rpi-plan-critique) once the plan is implementation-ready.
+Substantive assessments are not replayed for an unchanged candidate. Required corrections and
+material implementation-time plan changes receive revision-bound closure. The planner can authorize
+one generic interruption recovery for the initial assessment; two infrastructure-only retries are
+shared across the task, including failed closure runs, with separate consent and evidence checks.
+Confirmed user direction outranks critique advice.
 
 The planner drafts every phase itself. Before drafting, it looks for skills and subagents whose descriptions say they are used during planning or with `rpi-plan` and follows each description's guidance on when and how to use it; no subagent is required.
 
@@ -58,15 +68,37 @@ A substantive `Complete`, `Partial` or `Blocked` result remains binding for its 
 
 ### Close findings after a plan correction
 
-For a required correction, the planner preserves the first assessment and findings, records the original and revised plan hashes, the exact change and affected requirements, and reserves a distinct revision-closure result. If requirements, architecture, capability, safety or evidence boundaries change, the revised plan needs a fresh full assessment. Otherwise, an independent targeted closure verifies the correction against the immediately preceding Complete result and every intervening result back to the Complete full assessment. A Partial or Blocked assessment cannot be extended by targeted closure.
+For a required correction, the planner preserves the first assessment and findings, records the
+original and revised plan hashes, the exact change and affected requirements, and reserves a
+distinct revision-closure result. If requirements, architecture, capability, safety or evidence
+boundaries change, the revised plan needs a fresh full assessment. Otherwise, an independent
+targeted closure verifies the correction against the immediately preceding Complete result and
+every intervening result back to the Complete full assessment. A Partial or Blocked assessment
+cannot be extended by targeted closure.
 
-Repeated hashes, oscillating corrections or no material progress stop as Revise or Blocked. Before handing off to implementation, the planner compares the delivered assessed-content hash with a Complete full assessment or a valid Complete targeted closure chain and verifies every blocking finding is closed. Checked task markers and implementation-only `Guidance:` pointers do not change that hash; changes to assessed plan content do. Changing candidates does not reset infrastructure-retry reservations.
+Repeated hashes, oscillating corrections or no material progress stop as Revise or Blocked. Before
+handing off to implementation, the planner compares the delivered assessed-content hash with a
+Complete full assessment or a valid Complete targeted closure chain and verifies every blocking
+finding is closed. Checked task markers and implementation-only `Guidance:` pointers do not change
+that hash; changes to assessed plan content do. Changing candidates does not reset
+infrastructure-retry reservations.
 
-If both the initial attempt and generic recovery ended in verified infrastructure failures without an assessment, the planner may request up to two additional infrastructure retries. A failed revision-closure invocation may use remaining slots from the same task-wide allowance without a generic recovery. Each needs confirmed ended runs, reconciled saved and late evidence, an identified candidate hash and fresh consent. A network-looking error or absent file alone is insufficient. Every reservation consumes its slot, even if interrupted; changing sessions, candidates or hosts does not reset the task's budget.
+If both the initial attempt and generic recovery ended in verified infrastructure failures without an
+assessment, the planner may request up to two additional infrastructure retries. A failed
+revision-closure invocation may use remaining slots from the same task-wide allowance without a
+generic recovery. Each needs confirmed ended runs, reconciled saved and late evidence, an
+identified candidate hash and fresh consent. A network-looking error or absent file alone is
+insufficient. Every reservation consumes its slot, even if interrupted; changing sessions,
+candidates or hosts does not reset the task's budget.
 
 For example, two host-recorded connection failures with confirmed completion and no assessment may qualify for another consent request. A substantive critique of the same candidate, an unknown run status, or unresolved assessment fragments do not qualify. Earlier findings on a different corrected candidate remain binding and must be reconciled, but do not themselves disqualify recovery of the failed closure.
 
-Older plans may not have an infrastructure reservation count. The planner reconstructs it from the original task's attempt records, parent state, critique outputs and available originating run evidence, counting interrupted reservations even without output. It preserves the task, candidates and findings. If the complete history cannot be established, the count remains unknown, automated retries stay blocked, and the planner requests the specific missing evidence rather than treating the field as zero or exhausting the budget by default.
+Older plans may not have an infrastructure reservation count. The planner reconstructs it from the
+original task's attempt records, parent state, critique outputs and available originating run
+evidence, counting interrupted reservations even without output. It preserves the task, candidates
+and findings. If the complete history cannot be established, the count remains unknown, automated
+retries stay blocked, and the planner requests the specific missing evidence rather than treating
+the field as zero or exhausting the budget by default.
 
 ### When infrastructure retries are exhausted
 

@@ -3,7 +3,7 @@ title: rpi-plan-critique
 description: "Independently assess an RPI plan without editing it. Use for an initial critique, revision-bound closure, or planner-authorized recovery including infrastructure retry."
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-23
+ms.date: 2026-09-24
 ms.topic: reference
 keywords:
   - skill
@@ -28,11 +28,27 @@ Independently assess an RPI plan without editing it. Use for an initial critique
 
 ## When to use it
 
-`rpi-plan-critique` is the readiness gate inside planning. [rpi-plan](rpi-plan) runs it after the plan is implementation-ready, and the critique writes its assigned artifact under `.copilot-tracking/reviews/plans/` without editing the plan. Substantive `Complete`, `Partial` or `Blocked` assessments cannot be replayed for the same candidate. After a required correction, the planner preserves the earlier findings and may commission a distinct revision-bound closure for the new hash. A transport failure with no assessment has no verdict and cannot establish readiness.
+`rpi-plan-critique` is the readiness gate inside planning. [rpi-plan](rpi-plan) runs it after the
+plan is implementation-ready, and the critique writes its assigned artifact under
+`.copilot-tracking/reviews/plans/` without editing the plan. Substantive `Complete`, `Partial` or
+`Blocked` assessments cannot be replayed for the same candidate. After a required correction, the
+planner preserves the earlier findings and may commission a distinct revision-bound closure for the
+new hash. A transport failure with no assessment has no verdict and cannot establish readiness.
 
-The current run may execute its own verified initial, revision-closure, recovery or infrastructure-retry reservation. A saved `started` record alone does not authorize a replacement run. Only `rpi-plan` can authorize revision closure of a required correction, the single initial-attempt generic recovery, or either of the two task-wide infrastructure retries, including recovery from a failed closure. Recovery requires fresh consent, positive failure evidence, ended-run proof and evidence reconciliation. The critic cannot authorize retries or reset counters.
+The current run may execute its own verified initial, revision-closure, recovery or
+infrastructure-retry reservation. A saved `started` record alone does not authorize a replacement
+run. Only `rpi-plan` can authorize revision closure of a required correction, the single
+initial-attempt generic recovery, or either of the two task-wide infrastructure retries, including
+recovery from a failed closure. Recovery requires fresh consent, positive failure evidence,
+ended-run proof and evidence reconciliation. The critic cannot authorize retries or reset
+counters.
 
-For an unchanged assessment boundary, targeted closure checks the recorded correction delta and affected requirements against its immediate predecessor and the uninterrupted Complete chain back to a full assessment. Changes to requirements, architecture, capability, safety or evidence boundaries require a fresh full assessment. Partial or Blocked coverage cannot be extended by targeted closure. Implementation remains gated until a Complete result covers the delivered assessed-content hash and all blocking findings are closed.
+For an unchanged assessment boundary, targeted closure checks the recorded correction delta and
+affected requirements against its immediate predecessor and the uninterrupted Complete chain back
+to a full assessment. Changes to requirements, architecture, capability, safety or evidence
+boundaries require a fresh full assessment. Partial or Blocked coverage cannot be extended by
+targeted closure. Implementation remains gated until a Complete result covers the delivered
+assessed-content hash and all blocking findings are closed.
 
 After verified infrastructure exhaustion, `rpi-plan` may commission an independent human-authored complete critique with specific consent. Exhausted counts alone do not permit it: active/unknown runs, substantive results for the current candidate and unresolved assessment fragments remain in reconciliation. Earlier assessments for a different candidate remain binding. This skill cannot generate or attest that human report. See [the exhaustion guidance](rpi-plan#when-infrastructure-retries-are-exhausted).
 
