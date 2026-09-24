@@ -118,13 +118,14 @@ function MermaidErrorFallback({
   retryPending: { current: boolean };
 }): ReactNode {
   const containerRef = useRef<HTMLDivElement>(null);
+  const shouldFocusRetry = retryPending.current;
 
   useEffect(() => {
-    if (retryPending.current) {
+    if (shouldFocusRetry) {
       retryPending.current = false;
       containerRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
     }
-  }, [retryPending]);
+  }, [retryPending, shouldFocusRetry]);
 
   return (
     <div ref={containerRef} role="alert" aria-atomic="true">
