@@ -61,9 +61,7 @@ def portable_artifact_writer(mocker: MockerFixture) -> None:
         _record: Path, destination: Path, document: dict[str, Any]
     ) -> Path:
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(
-            json.dumps(document, indent=2) + "\n", encoding="utf-8"
-        )
+        destination.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
         return destination
 
     mocker.patch.object(
