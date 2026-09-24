@@ -630,10 +630,10 @@ Describe 'Candidate-addressed backlog grooming result construction' -Tag 'Unit' 
         $result.report_data.run.stop_reason | Should -Be 'Contract errors: 1'
     }
 
-    It 'downgrades unsupported supersession outcomes to uncertain' {
+    It 'normalizes misplaced superseded similarity before downgrading unsupported lineage' {
         $row = $script:AssessedRow.Clone()
         $row.disposition = 'Superseded'
-        $row.similarity_outcome = 'Distinct'
+        $row.similarity_outcome = 'Superseded'
         $row.grooming_finding = 'A later dependency upgrade may have superseded the request'
         $row.recommended_next_step = 'Verify the upgrade before closing the issue'
         $result = Invoke-GroomingResultJob -ReportData @{ issues = @($row) } `
@@ -646,6 +646,9 @@ Describe 'Candidate-addressed backlog grooming result construction' -Tag 'Unit' 
         $result.report_data.issues[0].grooming_finding | Should -Be $row.grooming_finding
         $result.report_data.issues[0].recommended_next_step | Should -Be $row.recommended_next_step
         $result.report_data.issues[0].assessment_status | Should -Be 'Assessed'
+        $result.report_data.normalizations[0].issue | Should -Be 1
+        $result.report_data.normalizations[0].code | Should -Be 'superseded_similarity_normalized'
+        $result.report_data.contract_errors | Should -HaveCount 0
     }
 
     It 'normalizes issue 1946 superseded similarity placement with distinct lineage' {
@@ -1218,8 +1221,16 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:Publisher | Should -Match 'Final sweep aggregate failed trusted publication validation'
         $script:Publisher | Should -Match 'digest\(material\) !== recordedDigest'
         $script:Publisher | Should -Match 'aggregate\.assessed \+ aggregate\.deferred \+ aggregate\.contract_errors !== aggregate\.total_snapshot_count'
-        $script:CorePublisher | Should -Match 'aggregate\.contract_errors !== 0'
-        $script:HistoryPublisher | Should -Match 'aggregate\.contract_errors !== 0'
+        $script:CorePublisher | Should -Not -Match 'aggregate\.contract_errors !== 0'
+        $script:HistoryPublisher | Should -Not -Match 'aggregate\.contract_errors !== 0'
+        $script:CorePublisher | Should -Match 'new Set\(aggregate\.contract_error_issue_ids\)\.size !== aggregate\.contract_errors'
+        $script:HistoryPublisher | Should -Match 'new Set\(aggregate\.contract_error_issue_ids\)\.size !== aggregate\.contract_errors'
+        $script:CorePublisher | Should -Match 'rowIssueIdSet\.size !== rowIssueIds\.length'
+        $script:HistoryPublisher | Should -Match 'rowIssueIdSet\.size !== rowIssueIds\.length'
+        $script:CorePublisher | Should -Match 'rowIssueIdSet\.has\(issue\)'
+        $script:HistoryPublisher | Should -Match 'rowIssueIdSet\.has\(issue\)'
+        $script:CorePublisher | Should -Match 'aggregate\.contract_error_details\[index\]\.code !== "invalid_row_contract"'
+        $script:HistoryPublisher | Should -Match 'aggregate\.contract_error_details\[index\]\.code !== "invalid_row_contract"'
         $script:Publisher | Should -Match 'aggregate\.checkpoint_digests\.length !== aggregate\.completed_waves'
         $script:Publisher | Should -Match 'artifact\.workflow_run\?\.id !== finalRunId'
         $script:Orchestrator | Should -Match 'Final result set does not exactly equal the snapshot'
@@ -1374,6 +1385,9 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
         $script:Source | Should -Match 'The isolated result job joins calls to trusted `ordered_candidate_ids`'
         $script:Source | Should -Match 'derives timestamps and run state'
         $script:Source | Should -Match 'return only the canonical Backlog\s+Grooming Report required by the imported agent'
+        $script:Source | Should -Match 'Use only `Match`, `Similar`, `Distinct`, or `Uncertain` for\s+`similarity-outcome`'
+        $script:Source | Should -Match '`Superseded` is a disposition, not a similarity outcome'
+        $script:Source | Should -Not -Match 'supported Superseded normalization input'
     }
 
     It 'requires repository-grounded dispositions and evidence-backed maintainer actions' {
@@ -1997,9 +2011,9 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
         $script:WorkflowReadme | Should -Match 'no `workflow_dispatch` trigger'
         $script:WorkflowReadme | Should -Match 'rerun the failed jobs in that original publisher run'
         $script:WorkflowReadme | Should -Match 'Terminal contract errors'
-        $script:WorkflowReadme | Should -Match 'Final evidence is retained; orchestrator fails after upload and publisher does not activate'
-        $script:WorkflowReadme | Should -Match 'Publication is suppressed because the orchestrator fails after upload'
-        $script:WorkflowReadme | Should -Match 'correct the producer or contract, then start a fresh snapshot'
+        $script:WorkflowReadme | Should -Match 'Valid assessments and contract-error diagnostics publish together'
+        $script:WorkflowReadme | Should -Match 'Publication continues with explicit candidate-local diagnostics'
+        $script:WorkflowReadme | Should -Match 'Correct the producer or contract before the next scheduled sweep'
         $script:WorkflowReadme | Should -Not -Match 'rerun the unaccepted wave'
         $script:WorkflowReadme | Should -Match 'Rerun the bound wave'
         $script:WorkflowReadme | Should -Match 'The unaccepted wave may run again'
@@ -2007,24 +2021,26 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
         $script:WorkflowReadme | Should -Match 'per-issue normalization codes'
     }
 
-    It 'S19 retains terminal diagnostics before blocking non-clean publication' {
+    It 'S19 publishes valid rows with retained candidate-local diagnostics' {
         $script:Orchestrator | Should -Match '## Accepted and Deferred Rows'
         $script:Orchestrator | Should -Match '## Contract Errors'
         $script:Orchestrator | Should -Match '## Normalizations'
         $script:Orchestrator | Should -Match 'core\.setOutput\("contract-errors", String\(contractErrors\.length\)\)'
-        $script:Orchestrator | Should -Match 'Backlog grooming publication blocked'
+        $script:Orchestrator | Should -Match 'Backlog grooming publication queued with contract errors'
         $script:Orchestrator | Should -Match 'Final diagnostic evidence was retained'
-        $script:Orchestrator | Should -Match 'Publication and trusted cursor advancement are blocked'
-        $script:Orchestrator | Should -Match 'core\.setFailed\(`\$\{contractErrors\} snapshot issues have contract errors`\)'
+        $script:Orchestrator | Should -Match 'Valid assessments and contract-error diagnostics will be published together'
+        $script:Orchestrator | Should -Not -Match 'core\.setFailed\(`\$\{contractErrors\} snapshot issues have contract errors`\)'
         $script:Orchestrator | Should -Not -Match 'exact manual replay'
-        $script:Orchestrator.IndexOf('Upload final detailed sweep evidence') |
-            Should -BeLessThan $script:Orchestrator.IndexOf('core.setFailed(`${contractErrors} snapshot issues have contract errors`)')
         $script:Publisher | Should -Match "github\.event\.workflow_run\.conclusion == 'success'"
     }
 
-    It 'S20 publishes normalization notes only through clean trusted outputs' {
-        $script:CorePublisher | Should -Match 'aggregate\.contract_errors !== 0'
-        $script:HistoryPublisher | Should -Match 'aggregate\.contract_errors !== 0'
+    It 'S20 publishes contract errors and normalization notes through trusted outputs' {
+        $script:CorePublisher | Should -Not -Match 'aggregate\.contract_errors !== 0'
+        $script:HistoryPublisher | Should -Not -Match 'aggregate\.contract_errors !== 0'
+        $script:CorePublisher | Should -Match '\| Contract errors \|'
+        $script:CorePublisher | Should -Match 'aggregate\.contract_errors'
+        $script:HistoryPublisher | Should -Match 'const contractErrorRows = aggregate\.contract_error_details\.length > 0'
+        $script:HistoryPublisher | Should -Match '<caption>Contract errors for \$\{escapeHtml\(reportSlug\)\}</caption>'
         $script:HistoryPublisher | Should -Match 'const normalizationRows = aggregate\.normalizations\.length > 0'
         $script:HistoryPublisher | Should -Match 'aggregate\.normalizations\.map\(\(entry\) =>'
         $script:HistoryPublisher | Should -Match '<caption>Normalizations for \$\{escapeHtml\(reportSlug\)\}</caption>'

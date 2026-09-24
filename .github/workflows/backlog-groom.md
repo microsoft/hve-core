@@ -205,7 +205,7 @@ safe-outputs:
           required: false
           type: string
         similarity-outcome:
-          description: "Match, Similar, Distinct, Uncertain, or the supported Superseded normalization input"
+          description: "Match, Similar, Distinct, or Uncertain"
           required: true
           type: string
         disposition:
@@ -327,6 +327,9 @@ evidence by category. Deferred assessments use only `Repository` records. Keep
 each evidence text value to at most 500 characters. Use concise stable paths,
 issue or pull-request numbers, commit or release identifiers, or summarized
 negative-search scopes instead of directory listings or extended prose.
+
+Use only `Match`, `Similar`, `Distinct`, or `Uncertain` for
+`similarity-outcome`. `Superseded` is a disposition, not a similarity outcome.
 
 Omit `deferral-reason` for `Assessed`. For `Deferred`, use a non-empty reason,
 `Uncertain` similarity and disposition, and zero original-delivery and

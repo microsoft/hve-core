@@ -1293,7 +1293,7 @@ jobs:
           path: final-output
           if-no-files-found: error
           retention-days: 30
-      - name: Record final publication decision
+      - name: Record final publication readiness
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           CONTRACT_ERRORS: ${{ steps.reduce.outputs.contract-errors }}
@@ -1303,10 +1303,10 @@ jobs:
             if (!Number.isSafeInteger(contractErrors) || contractErrors < 0) {
               throw new Error("Final contract-error count is invalid");
             }
-            const publicationBlocked = contractErrors > 0;
+            const publicationHasErrors = contractErrors > 0;
             await core.summary
-              .addHeading(publicationBlocked
-                ? "Backlog grooming publication blocked"
+              .addHeading(publicationHasErrors
+                ? "Backlog grooming publication queued with contract errors"
                 : "Backlog grooming publication queued")
               .addTable([
                 [{ data: "Publisher input", header: true }, { data: "Value", header: true }],
@@ -1318,10 +1318,7 @@ jobs:
                 ["source-sha", "${{ needs.plan.outputs.source-sha }}"],
                 ["contract-errors", String(contractErrors)],
               ])
-              .addRaw(publicationBlocked
-                ? "\nFinal diagnostic evidence was retained. Publication and trusted cursor advancement are blocked.\n"
+              .addRaw(publicationHasErrors
+                ? "\nFinal diagnostic evidence was retained. Valid assessments and contract-error diagnostics will be published together.\n"
                 : "\nThe completed clean run activates Backlog Grooming Publisher automatically.\n")
               .write();
-            if (publicationBlocked) {
-              core.setFailed(`${contractErrors} snapshot issues have contract errors`);
-            }

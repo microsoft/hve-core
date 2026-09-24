@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-09-10
+ms.date: 2026-09-24
 ms.topic: reference
 keywords:
   - powershell
@@ -86,8 +86,9 @@ collector owns its structural encoding:
 * Construct an empty deferral reason for `Assessed` and require a non-empty reason for `Deferred`
 * Construct canonical rows, counts, cursors, provenance, timestamps, envelopes, and digests
 
-The supported superseded-similarity conversion remains an explicit `{ issue,
-code }` record in `normalizations`. Malformed JSON, missing semantic fields,
+The defensive superseded-similarity conversion remains an explicit `{ issue,
+code }` record in `normalizations`, but the worker contract does not advertise
+that invalid similarity value. Malformed JSON, missing semantic fields,
 incomplete or noncontiguous evidence pairs, unsupported enum values, duplicate
 candidate calls, and missing deferred reasons remain candidate-local contract
 errors.

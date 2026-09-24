@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-09-22
+ms.date: 2026-09-24
 ms.topic: reference
 keywords:
   - github actions
@@ -395,7 +395,7 @@ account concurrency, and billing limits.
 | API or concurrency throttling                                                    | GitHub rejects or delays metadata, download, or dispatch calls  | Unchanged          | Current job fails or remains queued; no partial tracker write                               | Wait for limits to reset, then resume from the last accepted checkpoint      | Only an unaccepted wave may repeat        |
 | Multiple trusted trackers                                                        | Publisher re-resolves more than one trusted bot-owned marker    | Unchanged          | No issue write                                                                              | Resolve tracker ambiguity manually, then rerun the failed publisher job      | No assessment rerun required              |
 | Final reducer fails                                                              | Chain, manifest, aggregate, or exact-set validation fails       | Unchanged          | No final accepted artifact or publication summary                                           | Repair or rerun the first invalid or missing wave                            | Only unaccepted work should repeat        |
-| Terminal contract errors                                                         | Final aggregate contains one or more fixed candidate errors     | Unchanged          | Final evidence is retained; orchestrator fails after upload and publisher does not activate | Correct the producer or contract, then start a fresh snapshot                | A new snapshot reassesses eligible issues |
+| Terminal contract errors                                                         | Final aggregate contains one or more fixed candidate errors     | Already advanced   | Valid assessments and contract-error diagnostics publish together                          | Correct the producer or contract before the next scheduled sweep             | Normal cursor rotation reassesses issues  |
 | Core publisher fails                                                             | Metadata, digest, compact report, or issue API validation fails | Unchanged          | Final artifacts remain retained; tracker is not advanced                                    | Correct the blocker, then rerun the failed job in the original publisher run | No assessment rerun required              |
 | Optional history or Pages publication fails                                      | History write, SHA handoff, staging, or deployment fails        | Already advanced   | Core tracker remains published; optional job records failure                                | Correct the prerequisite, then rerun the failed job in the original run      | No assessment rerun required              |
 
@@ -404,9 +404,10 @@ account concurrency, and billing limits.
 The final aggregate, retained final detail, shard results, checkpoint chain, job
 summaries, compact tracker, and optional immutable report history form the audit
 record. Workflow artifacts remain available for 30 days. The tracker retains
-the latest clean compact state and its normalization count. Optional history
-retains accepted reports and per-issue normalization codes beyond artifact
-expiry. Do not copy sensitive issue details into monitoring notes.
+the latest compact state, contract-error count, and normalization count.
+Optional history retains accepted reports, candidate-local contract errors, and
+per-issue normalization codes beyond artifact expiry. Do not copy sensitive
+issue details into monitoring notes.
 
 The `@microsoft/edge-ai-core-dev` CODEOWNERS team owns review and escalation.
 After each terminal sweep, a maintainer reviews the final aggregate and records
@@ -415,7 +416,7 @@ decision remains linked to repository evidence.
 
 | Measure              | Review threshold                                                                        | Required response                                                                                                                                                          |
 |----------------------|-----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Contract errors      | Any value above zero                                                                    | Inspect the retained final evidence. Publication is suppressed because the orchestrator fails after upload. Correct the producer or contract, then start a fresh snapshot. |
+| Contract errors      | Any value above zero                                                                    | Inspect the published candidate-local diagnostics. Publication continues with explicit candidate-local diagnostics. Correct the producer or contract before the next scheduled sweep. |
 | Normalizations       | Any value above zero                                                                    | Review every normalized issue before using its recommendation. Escalate repeated normalization codes in two consecutive sweeps to the CODEOWNERS team.                     |
 | Deferred rate        | At least 25% of the snapshot                                                            | Review deferral reasons before the next sweep. At 50% or more, suspend reliance on the report until repository access or evidence gaps are corrected.                      |
 | `Uncertain` rate     | At least 25% of assessed rows                                                           | Sample every `Uncertain` row and review evidence quality before maintainers act on adjacent dispositions.                                                                  |
@@ -424,10 +425,11 @@ decision remains linked to repository evidence.
 
 Every disposition is advisory. A qualified human maintainer must review the
 linked repository evidence before closing, relabeling, rewriting, or otherwise
-changing a community issue. Contract errors have no exceptional publication
-path. Any proposed bypass or alternate privileged recovery path requires a
-reviewed workflow change with CODEOWNER approval; operators must not run
-publisher code from another ref.
+changing a community issue. Contract errors publish only through the ordinary
+authenticated aggregate path and never bypass provenance, exact-set, or digest
+validation. Any alternate privileged recovery path requires a reviewed workflow
+change with CODEOWNER approval; operators must not run publisher code from
+another ref.
 
 During transition from the former manual publisher, cancel queued manual
 publisher runs and use only new `workflow_run` activations. Rerun failed jobs

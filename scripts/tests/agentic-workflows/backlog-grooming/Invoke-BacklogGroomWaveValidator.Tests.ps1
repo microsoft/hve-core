@@ -439,6 +439,11 @@ Describe 'Backlog grooming wave validation' -Tag 'Unit' {
         @{ InvalidField = 'blank title'; Mutate = { param($Row) $Row.title = ' ' } }
         @{ InvalidField = 'overlong selection reason'; Mutate = { param($Row) $Row.selection_reason = 'x' * 201 } }
         @{ InvalidField = 'unknown similarity'; Mutate = { param($Row) $Row.similarity_outcome = 'Exact' } }
+        @{ InvalidField = 'legacy superseded similarity'; Mutate = {
+                param($Row)
+                $Row.similarity_outcome = 'Superseded'
+                $Row.disposition = 'Superseded'
+            }
         @{ InvalidField = 'non-string lineage item'; Mutate = { param($Row) $Row.lineage_evidence.original_delivery = @(1) } }
     ) {
         $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive "invalid-$InvalidField")

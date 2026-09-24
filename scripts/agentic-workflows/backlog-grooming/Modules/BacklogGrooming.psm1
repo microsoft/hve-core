@@ -766,8 +766,7 @@ function ConvertFrom-BacklogGroomingCandidateCall {
         assessment_status = $ScalarValues.assessment_status
         deferral_reason = $DeferralReason
     }
-    if ($Row.similarity_outcome -ceq 'Superseded' -and $Row.disposition -ceq 'Superseded' -and
-        (Test-ValidSupersessionLineage -Row $Row)) {
+    if ($Row.similarity_outcome -ceq 'Superseded' -and $Row.disposition -ceq 'Superseded') {
         $Row.similarity_outcome = 'Uncertain'
         $NormalizationCodes.Add('superseded_similarity_normalized')
     }

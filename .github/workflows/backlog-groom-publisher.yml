@@ -149,6 +149,8 @@ jobs:
             ];
             const aggregate = JSON.parse(fs.readFileSync("final-input/aggregate.json", "utf8"));
             const { aggregate_digest: recordedDigest, ...material } = aggregate;
+            const rowIssueIds = Array.isArray(aggregate.rows) ? aggregate.rows.map((row) => row?.issue) : [];
+            const rowIssueIdSet = new Set(rowIssueIds);
             if (!/^[a-f0-9]{64}$/.test(process.env.SWEEP_ID) ||
                 !/^[a-f0-9]{40}$/.test(process.env.SOURCE_SHA)) {
               throw new Error("Publisher digest or source revision input has an invalid format");
@@ -160,11 +162,19 @@ jobs:
                 (aggregate.predecessor_aggregate_digest !== null &&
                  !/^[a-f0-9]{64}$/.test(aggregate.predecessor_aggregate_digest)) ||
                 aggregate.assessed + aggregate.deferred + aggregate.contract_errors !== aggregate.total_snapshot_count ||
-                aggregate.contract_errors !== 0 ||
                 aggregate.checkpoint_digests.length !== aggregate.completed_waves ||
                 aggregate.rows.length !== aggregate.assessed + aggregate.deferred ||
+                rowIssueIds.some((issue) => !Number.isSafeInteger(issue) || issue <= 0) ||
+                rowIssueIdSet.size !== rowIssueIds.length ||
                 aggregate.contract_error_issue_ids.length !== aggregate.contract_errors ||
-                aggregate.contract_error_details.length !== aggregate.contract_errors) {
+                aggregate.contract_error_details.length !== aggregate.contract_errors ||
+                new Set(aggregate.contract_error_issue_ids).size !== aggregate.contract_errors ||
+                aggregate.contract_error_issue_ids.some((issue, index) =>
+                  !Number.isSafeInteger(issue) || issue <= 0 ||
+                  rowIssueIdSet.has(issue) ||
+                  !exactKeys(aggregate.contract_error_details[index], ["issue", "code"]) ||
+                  aggregate.contract_error_details[index].issue !== issue ||
+                  aggregate.contract_error_details[index].code !== "invalid_row_contract")) {
               throw new Error("Final sweep aggregate failed trusted publication validation");
             }
             const marker = "<!-- gh-aw:backlog-grooming-tracker -->";
@@ -219,9 +229,9 @@ jobs:
               "",
               `Sweep \`${aggregate.sweep_id}\` completed with immutable aggregate \`${aggregate.aggregate_digest}\` in orchestrator run ${process.env.FINAL_RUN_ID}.`,
               "",
-              "| Completed | Snapshot issues | Waves | Assessed | Deferred | Normalizations | Prior cursor | Next cursor | Planned AIC | Stop reason |",
-              "|---|---|---|---|---|---|---|---|---|---|",
-              `| ${aggregate.completed_at} | ${aggregate.total_snapshot_count} | ${aggregate.completed_waves} | ${aggregate.assessed} | ${aggregate.deferred} | ${aggregate.normalizations.length} | ${aggregate.prior_cursor} | ${aggregate.next_cursor} | ${aggregate.planned_sweep_aic} | ${aggregate.stop_reason} |`,
+              "| Completed | Snapshot issues | Waves | Assessed | Deferred | Contract errors | Normalizations | Prior cursor | Next cursor | Planned AIC | Stop reason |",
+              "|---|---|---|---|---|---|---|---|---|---|---|",
+              `| ${aggregate.completed_at} | ${aggregate.total_snapshot_count} | ${aggregate.completed_waves} | ${aggregate.assessed} | ${aggregate.deferred} | ${aggregate.contract_errors} | ${aggregate.normalizations.length} | ${aggregate.prior_cursor} | ${aggregate.next_cursor} | ${aggregate.planned_sweep_aic} | ${aggregate.stop_reason} |`,
               "",
               `Inspect the [source workflow run](${runUrl}) for retained detailed evidence.`,
               "",
@@ -346,6 +356,8 @@ jobs:
             ];
             const aggregate = JSON.parse(fs.readFileSync("final-input/aggregate.json", "utf8"));
             const { aggregate_digest: recordedDigest, ...material } = aggregate;
+            const rowIssueIds = Array.isArray(aggregate.rows) ? aggregate.rows.map((row) => row?.issue) : [];
+            const rowIssueIdSet = new Set(rowIssueIds);
             if (!/^[a-f0-9]{64}$/.test(process.env.SWEEP_ID) ||
                 !/^[a-f0-9]{40}$/.test(process.env.SOURCE_SHA)) {
               throw new Error("Publisher digest or source revision input has an invalid format");
@@ -357,11 +369,19 @@ jobs:
                 (aggregate.predecessor_aggregate_digest !== null &&
                  !/^[a-f0-9]{64}$/.test(aggregate.predecessor_aggregate_digest)) ||
                 aggregate.assessed + aggregate.deferred + aggregate.contract_errors !== aggregate.total_snapshot_count ||
-                aggregate.contract_errors !== 0 ||
                 aggregate.checkpoint_digests.length !== aggregate.completed_waves ||
                 aggregate.rows.length !== aggregate.assessed + aggregate.deferred ||
+                rowIssueIds.some((issue) => !Number.isSafeInteger(issue) || issue <= 0) ||
+                rowIssueIdSet.size !== rowIssueIds.length ||
                 aggregate.contract_error_issue_ids.length !== aggregate.contract_errors ||
-                aggregate.contract_error_details.length !== aggregate.contract_errors) {
+                aggregate.contract_error_details.length !== aggregate.contract_errors ||
+                new Set(aggregate.contract_error_issue_ids).size !== aggregate.contract_errors ||
+                aggregate.contract_error_issue_ids.some((issue, index) =>
+                  !Number.isSafeInteger(issue) || issue <= 0 ||
+                  rowIssueIdSet.has(issue) ||
+                  !exactKeys(aggregate.contract_error_details[index], ["issue", "code"]) ||
+                  aggregate.contract_error_details[index].issue !== issue ||
+                  aggregate.contract_error_details[index].code !== "invalid_row_contract")) {
               throw new Error("Final sweep aggregate failed trusted publication validation");
             }
             const reportsBranch = "backlog-grooming-reports";
@@ -395,8 +415,12 @@ jobs:
             const normalizationRows = aggregate.normalizations.length > 0
               ? aggregate.normalizations.map((entry) => `<tr><th scope="row"><a href="${escapeHtml(`${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/issues/${entry.issue}`)}">#${escapeHtml(entry.issue)}</a></th><td>${display(entry.code)}</td></tr>`).join("")
               : '<tr><td colspan="2">None</td></tr>';
+            const contractErrorRows = aggregate.contract_error_details.length > 0
+              ? aggregate.contract_error_details.map((entry) => `<tr><th scope="row"><a href="${escapeHtml(`${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/issues/${entry.issue}`)}">#${escapeHtml(entry.issue)}</a></th><td>${display(entry.code)}</td></tr>`).join("")
+              : '<tr><td colspan="2">None</td></tr>';
+            const contractErrorSection = `<section><h2>Contract errors</h2><p>Candidate-local errors retained without suppressing valid assessments.</p><div class="table-wrap"><table><caption>Contract errors for ${escapeHtml(reportSlug)}</caption><thead><tr><th scope="col">Issue</th><th scope="col">Code</th></tr></thead><tbody>${contractErrorRows}</tbody></table></div></section>`;
             const normalizationSection = `<section><h2>Normalizations</h2><p>Allowed deterministic transformations applied before publication.</p><div class="table-wrap"><table><caption>Normalizations for ${escapeHtml(reportSlug)}</caption><thead><tr><th scope="col">Issue</th><th scope="col">Code</th></tr></thead><tbody>${normalizationRows}</tbody></table></div></section>`;
-            const detailedReportHtml = accessibleReportHtml.replace("</main>", `${normalizationSection}</main>`);
+            const detailedReportHtml = accessibleReportHtml.replace("</main>", `${contractErrorSection}${normalizationSection}</main>`);
 
             let branchRef;
             let branchCommit;
