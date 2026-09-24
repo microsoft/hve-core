@@ -202,6 +202,122 @@ function Get-VallyDiagnosticConfiguration {
     return $result
 }
 
+function Get-VallyAcceptanceInventory {
+    <#
+    .SYNOPSIS
+    Validates an explicit acceptance profile and seals its configured inventory.
+    .PARAMETER ProfilePath
+    Checked-in JSON profile containing required selections and synthetic controls.
+    .PARAMETER EvalRoot
+    Root containing the referenced evaluation specifications.
+    .OUTPUTS
+    Allowlisted profile identity, configured selections and calibration expectations.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)][string]$ProfilePath,
+        [Parameter(Mandatory = $true)][string]$EvalRoot
+    )
+
+    $acceptanceProfile = Get-Content -LiteralPath $ProfilePath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable -Depth 50
+    if ($acceptanceProfile.schemaVersion -cne '1.0.0' -or $acceptanceProfile.name -cnotmatch '^[a-z0-9][a-z0-9-]{0,79}$' -or
+        $acceptanceProfile.executorModel -cne 'gpt-6-luna' -or $acceptanceProfile.judgeModel -cne 'claude-sonnet-5' -or
+        $acceptanceProfile.vallyVersion -cne '0.16.0' -or @($acceptanceProfile.selections).Count -eq 0) {
+        throw 'Invalid acceptance profile identity or runtime.'
+    }
+    $seen = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $selections = @(
+        foreach ($selection in $acceptanceProfile.selections) {
+            $spec = [string]$selection.specPath
+            $tag = [string]$selection.tag
+            if ($spec -cnotmatch '^[a-zA-Z0-9][a-zA-Z0-9_./-]*\.ya?ml$' -or $spec -match '(^|/)\.\.?(/|$)' -or
+                $tag -cnotmatch '^(agent|prompt|skill|instruction)=[a-z0-9][a-z0-9-]*$' -or
+                @($selection.stimuli).Count -eq 0 -or $selection.runs -notin @(3, 5)) {
+                throw 'Invalid acceptance selection.'
+            }
+            $configuration = Get-VallyDiagnosticConfiguration -SpecPath (Join-Path $EvalRoot $spec) -Tag $tag
+            if ($configuration.status -cne 'available' -or @($configuration.judgeModels | Where-Object { $_ -cne $acceptanceProfile.judgeModel }).Count) {
+                throw 'Acceptance configuration or judge is unavailable.'
+            }
+            $required = [ordered]@{}
+            foreach ($name in $selection.stimuli) {
+                if ($name -isnot [string] -or -not $configuration.stimuli.Contains($name) -or
+                    -not $seen.Add("$spec|$name") -or $configuration.stimuli[$name].runs -ne $selection.runs -or
+                    @($configuration.stimuli[$name].graders).Count -eq 0) {
+                    throw 'Missing, duplicate or changed acceptance scenario.'
+                }
+                $required[$name] = $configuration.stimuli[$name]
+            }
+            [ordered]@{
+                specPath = $spec; tag = $tag; specDigest = $configuration.specDigest
+                selectionDigest = $configuration.selectionDigest; expectedStimuli = $configuration.stimuli
+                requiredStimuli = $required; threshold = Get-VallySpecThreshold -SpecPath (Join-Path $EvalRoot $spec)
+            }
+        }
+    )
+    $controlIds = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $controlPairs = @{}
+    $controls = @(
+        foreach ($control in $acceptanceProfile.calibration) {
+            $owner = @($selections | Where-Object { $_.specPath -ceq $control.specPath -and $_.requiredStimuli.Contains($control.stimulusName) })
+            if ($owner.Count -ne 1 -or $control.id -cnotmatch '^[a-z0-9][a-z0-9-]{0,79}$' -or -not $controlIds.Add($control.id) -or
+                $control.expectedPass -isnot [bool] -or $control.output -isnot [string] -or
+                [string]::IsNullOrWhiteSpace($control.output) -or $control.output.Length -gt 16000) {
+                throw 'Invalid acceptance calibration control.'
+            }
+            $graders = @($owner[0].requiredStimuli[$control.stimulusName].graders | Where-Object { $_.name -ceq $control.graderName -and $_.type -ceq 'prompt' })
+            if ($graders.Count -ne 1) { throw 'Calibration must target one configured prompt grader.' }
+            $pairKey = "$($control.specPath)|$($control.stimulusName)|$($control.graderName)"
+            if (-not $controlPairs.ContainsKey($pairKey)) { $controlPairs[$pairKey] = @() }
+            $controlPairs[$pairKey] += $control.expectedPass
+            [ordered]@{ id = $control.id; specPath = $control.specPath; stimulusName = $control.stimulusName
+                graderName = $control.graderName; expectedPass = $control.expectedPass }
+        }
+    )
+    if ($controls.Count -lt 2 -or $controls.Count -gt 16 -or
+        @($controlPairs.Values | Where-Object { $true -notin $_ -or $false -notin $_ }).Count) {
+        throw 'Calibration requires bounded positive and negative controls for each grader.'
+    }
+    return [ordered]@{
+        schemaVersion = '1.0.0'; name = $acceptanceProfile.name; profileDigest = Get-AgentEvalFileDigest -Path $ProfilePath
+        executorModel = $acceptanceProfile.executorModel; judgeModel = $acceptanceProfile.judgeModel; vallyVersion = $acceptanceProfile.vallyVersion
+        selections = $selections; calibration = $controls
+    }
+}
+
+function Merge-VallyAcceptanceArtifact {
+    <#
+    .SYNOPSIS
+    Adds required acceptance owners without duplicating ordinary artifact entries.
+    .PARAMETER Artifact
+    Existing changed-spec artifacts.
+    .PARAMETER Inventory
+    Validated acceptance inventory.
+    .OUTPUTS
+    Existing artifacts plus missing required owners.
+    #>
+    [CmdletBinding()]
+    [OutputType([object[]])]
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Artifact,
+        [Parameter(Mandatory = $true)][System.Collections.IDictionary]$Inventory
+    )
+    $seen = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $result = [System.Collections.Generic.List[object]]::new()
+    foreach ($item in $Artifact) {
+        if ([string]$item.status -ceq 'D') { continue }
+        if ($seen.Add("$($item.kind):$($item.artifactId)")) { $result.Add($item) }
+    }
+    foreach ($selection in $Inventory.selections) {
+        $parts = $selection.tag -split '=', 2
+        if ($seen.Add("$($parts[0]):$($parts[1])")) {
+            $result.Add([ordered]@{ kind = $parts[0]; artifactId = $parts[1]; status = 'M'; path = "evals/$($selection.specPath)" })
+        }
+    }
+    return ,$result.ToArray()
+}
+
 function Get-VallyInputDigest {
     <#
     .SYNOPSIS
@@ -1879,6 +1995,8 @@ function Assert-AgentEvalOwnership {
 Export-ModuleMember -Function @(
     'Resolve-VallyRunDir',
     'Get-VallyDiagnosticConfiguration',
+    'Get-VallyAcceptanceInventory',
+    'Merge-VallyAcceptanceArtifact',
     'Get-VallyInputDigest',
     'Test-VallyDiagnosticEvidence',
     'Read-VallyResultsJsonl',

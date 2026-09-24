@@ -14,6 +14,72 @@ BeforeAll {
     Import-Module powershell-yaml -ErrorAction Stop
 }
 
+Describe 'Acceptance profile inventory' -Tag 'Unit', 'Acceptance' {
+        BeforeEach {
+                $script:AcceptanceRoot = Join-Path $TestDrive ([Guid]::NewGuid().ToString('N'))
+                New-Item -ItemType Directory -Path $script:AcceptanceRoot -Force | Out-Null
+                @{
+                    defaults = @{ runs = 5; judge_model = 'claude-sonnet-5' }
+                    stimuli = @(
+                        @{ name = 'required-case'; tags = @{ agent = 'example' }; graders = @(@{ name = 'meaning'; type = 'prompt'; config = @{ threshold = 0.7 } }) }
+                        @{ name = 'healthy-sibling'; tags = @{ agent = 'example' }; graders = @(@{ name = 'format'; type = 'output-matches' }) }
+                    )
+                } | ConvertTo-Yaml | Set-Content (Join-Path $script:AcceptanceRoot 'spec.yaml') -Encoding utf8NoBOM
+                $script:AcceptanceProfile = [ordered]@{
+                        schemaVersion = '1.0.0'; name = 'synthetic-acceptance'; executorModel = 'gpt-6-luna'
+                        judgeModel = 'claude-sonnet-5'; vallyVersion = '0.16.0'
+                        selections = @([ordered]@{ specPath = 'spec.yaml'; tag = 'agent=example'; runs = 5; stimuli = @('required-case') })
+                        calibration = @(
+                                [ordered]@{ id = 'positive'; specPath = 'spec.yaml'; stimulusName = 'required-case'; graderName = 'meaning'; expectedPass = $true; output = 'Synthetic positive' }
+                                [ordered]@{ id = 'negative'; specPath = 'spec.yaml'; stimulusName = 'required-case'; graderName = 'meaning'; expectedPass = $false; output = 'Synthetic negative' }
+                        )
+                }
+                $script:AcceptancePath = Join-Path $script:AcceptanceRoot 'profile.json'
+        }
+        It 'seals required checks while retaining selected healthy siblings and excluding synthetic text' {
+                $script:AcceptanceProfile | ConvertTo-Json -Depth 10 | Set-Content $script:AcceptancePath
+                $result = Get-VallyAcceptanceInventory -ProfilePath $script:AcceptancePath -EvalRoot $script:AcceptanceRoot
+                $result.selections[0].requiredStimuli.Count | Should -Be 1
+                $result.selections[0].expectedStimuli.Count | Should -Be 2
+                $result.selections[0].requiredStimuli['required-case'].graders[0].name | Should -Be 'meaning'
+                $result.profileDigest | Should -Match '^sha256:[a-f0-9]{64}$'
+                ($result | ConvertTo-Json -Depth 30) | Should -Not -Match 'Synthetic positive|Synthetic negative'
+        }
+        It 'adds unchanged required owners while preserving existing delta metadata' {
+            $inventory = @{ selections = @(@{ tag = 'agent=existing'; specPath = 'spec.yaml' }, @{ tag = 'agent=missing'; specPath = 'spec.yaml' }) }
+            $artifact = [ordered]@{ kind = 'agent'; artifactId = 'existing'; status = 'M'; path = 'original.yaml' }
+            $result = Merge-VallyAcceptanceArtifact -Artifact @($artifact) -Inventory $inventory
+            $result.Count | Should -Be 2
+            $result[0].path | Should -Be 'original.yaml'
+            $result[1].artifactId | Should -Be 'missing'
+            $result[1].path | Should -Be 'evals/spec.yaml'
+        }
+        It 'selects required owners for an empty delta' {
+            $inventory = @{ selections = @(@{ tag = 'prompt=required'; specPath = 'spec.yaml' }) }
+            $result = Merge-VallyAcceptanceArtifact -Artifact @() -Inventory $inventory
+            $result.Count | Should -Be 1
+            $result[0].kind | Should -Be 'prompt'
+        }
+        It 'rejects invalid profile boundary <Mutation>' -ForEach @(
+                @{ Mutation = 'missing' }, @{ Mutation = 'duplicate' }, @{ Mutation = 'runs' },
+                @{ Mutation = 'escape' }, @{ Mutation = 'judge' }, @{ Mutation = 'grader' },
+                @{ Mutation = 'unpaired' }, @{ Mutation = 'duplicate-control' }
+        ) {
+                switch ($Mutation) {
+                        'missing' { $script:AcceptanceProfile.selections[0].stimuli = @('absent') }
+                        'duplicate' { $script:AcceptanceProfile.selections += $script:AcceptanceProfile.selections[0] }
+                        'runs' { $script:AcceptanceProfile.selections[0].runs = 3 }
+                        'escape' { $script:AcceptanceProfile.selections[0].specPath = '../spec.yaml' }
+                        'judge' { $script:AcceptanceProfile.judgeModel = 'other' }
+                        'grader' { $script:AcceptanceProfile.calibration[0].graderName = 'absent' }
+                        'unpaired' { $script:AcceptanceProfile.calibration[1].expectedPass = $true }
+                        'duplicate-control' { $script:AcceptanceProfile.calibration[1].id = 'positive' }
+                }
+                $script:AcceptanceProfile | ConvertTo-Json -Depth 10 | Set-Content $script:AcceptancePath
+                { Get-VallyAcceptanceInventory -ProfilePath $script:AcceptancePath -EvalRoot $script:AcceptanceRoot } | Should -Throw
+        }
+}
+
 Describe 'VallyRunner module' -Tag 'Unit' {
     BeforeEach {
         $script:WorkRoot = Join-Path $TestDrive ('runner-' + [Guid]::NewGuid())

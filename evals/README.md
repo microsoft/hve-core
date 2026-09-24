@@ -87,6 +87,37 @@ fixtures, scripts and root lockfile. They identify inputs, not agent behavior.
 First-attempt clean acceptance requires complete evidence from that attempt;
 a cleaner ordinary retry does not erase earlier failures.
 
+### Explicit Hosted Acceptance
+
+The optional `acceptance-profile: pr-2951` workflow input enables the checked-in
+[acceptance profile](acceptance/pr-2951.json). It adds required owners to the
+ordinary delta manifest, retaining the original 140 scenarios and 674 required
+trials without removing ordinary coverage or healthy selected siblings. The
+actual scheduled population can be larger and must be reviewed before execution.
+
+Acceptance is separate from ordinary aggregate scoring. Fan-in requires the
+sealed checkout, input, specification, grader inventory, model and version
+identities; complete first-attempt evidence; every selected check passing; and
+eight synthetic real-judge controls with their expected positive or negative
+verdicts. Ordinary thresholds, advisory classifications and retry policy do not
+change. Missing calibration, mismatched identities or a cleaner retry cannot
+establish acceptance.
+
+Use the existing PR Validation manual dispatch with this input, or the Eval
+Validation manual dispatch once its trigger is available on the default branch.
+Publish the candidate first and verify the exact branch revision, selection,
+credentials, cost and retention before explicitly authorizing a run. Dispatching
+PR Validation also runs its normal non-evaluation checks. The empty input keeps
+ordinary PR behavior. No workflow runs merely because a profile exists.
+
+`ci:eval:calibrate` is a model-backed command, not local-safe validation. The
+helper's `--check` option only validates an already-generated acceptance manifest
+and the installed configuration; it makes no model calls. Calibration executes
+once per output marker with no outer retry. Public artifacts retain only control
+IDs, statuses, scores and booleans for 30 days. Raw judge output stays under the
+runner's temporary directory and is not uploaded. Offline stub tests validate
+plumbing, not judge accuracy.
+
 ## Adding New Evals
 
 1. Create a directory under `evals/` with an `eval.yaml`.

@@ -17,6 +17,10 @@
     Canonical merged eval summary destination.
 .PARAMETER StatusPath
     Bounded fan-in status destination.
+.PARAMETER AcceptanceManifestPath
+    Optional changed-spec manifest containing the sealed acceptance contract.
+.PARAMETER CalibrationPath
+    Safe real-judge calibration results for the same sealed contract.
 .EXAMPLE
     ./Merge-EvalExecution.ps1 -PlanPath logs/agent-eval-plan.json `
         -SummaryDirectory shard-results -OutputPath logs/eval-summary.json
@@ -28,7 +32,9 @@ param(
     [string]$PlanPath,
     [string]$SummaryDirectory,
     [string]$OutputPath,
-    [string]$StatusPath
+    [string]$StatusPath,
+    [string]$AcceptanceManifestPath,
+    [string]$CalibrationPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -147,6 +153,100 @@ function Merge-EvalSummaryValue {
     }
 }
 
+function Test-EvalAcceptanceValue {
+    <#
+    .SYNOPSIS
+    Checks first-attempt acceptance separately from ordinary aggregate scoring.
+    .PARAMETER Summary
+    Validated ordinary merged summary.
+    .PARAMETER Acceptance
+    Sealed manifest acceptance contract.
+    .PARAMETER Calibration
+    Safe calibration evidence from the same checkout and profile.
+    .OUTPUTS
+    Bounded acceptance verdict and categorical issues.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Collections.IDictionary])]
+    param(
+        [Parameter(Mandatory = $true)]$Summary,
+        [Parameter(Mandatory = $true)]$Acceptance,
+        [AllowNull()]$Calibration
+    )
+    $issues = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $requiredScenarios = 0
+    $requiredTrials = 0
+    try {
+        $contract = $Acceptance | ConvertTo-Json -Depth 100 | ConvertFrom-Json -AsHashtable -Depth 100
+        $inventory = $contract.inventory
+        if ($inventory.schemaVersion -cne '1.0.0' -or @($inventory.selections).Count -eq 0 -or
+            $contract.checkout -cnotmatch '^[a-f0-9]{40}$' -or $contract.inputDigest -cnotmatch '^sha256:[a-f0-9]{64}$') {
+            throw 'Invalid sealed acceptance contract.'
+        }
+        foreach ($selection in $inventory.selections) {
+            $requiredScenarios += $selection.requiredStimuli.Count
+            foreach ($required in $selection.requiredStimuli.Values) { $requiredTrials += [int]$required.runs }
+            $matching = @($Summary.perSpec | Where-Object { $_.specPath -ceq $selection.specPath -and [string]$_.tag -ceq [string]$selection.tag })
+            if ($matching.Count -ne 1) { [void]$issues.Add('required-selection-missing-or-duplicate'); continue }
+            $diagnostics = $matching[0].diagnostics | ConvertTo-Json -Depth 100 | ConvertFrom-Json -AsHashtable -Depth 100
+            $valid = Test-VallyDiagnosticEvidence -Diagnostics $diagnostics
+            if (-not $valid.contractValid -or -not $valid.integrityPassed) { [void]$issues.Add('invalid-trial-evidence') }
+            if ($diagnostics.checkout -cne $contract.checkout -or $diagnostics.inputDigest -cne $contract.inputDigest -or
+                $diagnostics.specDigest -cne $selection.specDigest -or $diagnostics.selectionDigest -cne $selection.selectionDigest -or
+                $diagnostics.executorModel -cne $inventory.executorModel -or
+                $diagnostics.versions.vally -cne $inventory.vallyVersion -or $diagnostics.versions['vally-cli'] -cne $inventory.vallyVersion -or
+                @($diagnostics.judgeModels | Where-Object { $_ -cne $inventory.judgeModel }).Count -gt 0 -or
+                $diagnostics.threshold -ne $selection.threshold) { [void]$issues.Add('source-or-configuration-mismatch') }
+            if (@($diagnostics.attempts).Count -ne 1 -or $diagnostics.selectedAttempt -ne 1 -or $diagnostics.attempts[0].ordinal -ne 1) {
+                [void]$issues.Add('not-clean-first-attempt')
+            }
+            if (-not $valid.allChecksPassed) { [void]$issues.Add('required-check-failed') }
+            foreach ($name in $selection.requiredStimuli.Keys) {
+                if (-not $diagnostics.expectedStimuli.Contains($name) -or
+                    (Get-AgentEvalValueDigest $diagnostics.expectedStimuli[$name]) -cne (Get-AgentEvalValueDigest $selection.requiredStimuli[$name])) {
+                    [void]$issues.Add('required-grader-inventory-mismatch')
+                }
+            }
+        }
+        if ($null -eq $Calibration) { [void]$issues.Add('calibration-missing') }
+        else {
+            $result = $Calibration | ConvertTo-Json -Depth 50 | ConvertFrom-Json -AsHashtable -Depth 50
+            $allowed = @('schemaVersion', 'profileDigest', 'checkout', 'inputDigest', 'judgeModel', 'vallyVersion', 'controls')
+            if (@($result.Keys | Where-Object { $_ -cnotin $allowed }).Count -or @($allowed | Where-Object { -not $result.Contains($_) }).Count -or
+                $result.schemaVersion -cne '1.0.0' -or $result.profileDigest -cne $inventory.profileDigest -or
+                $result.checkout -cne $contract.checkout -or $result.inputDigest -cne $contract.inputDigest -or
+                $result.judgeModel -cne $inventory.judgeModel -or $result.vallyVersion -cne $inventory.vallyVersion -or
+                @($result.controls).Count -ne @($inventory.calibration).Count) { [void]$issues.Add('calibration-contract-mismatch') }
+            foreach ($expected in $inventory.calibration) {
+                $observed = @($result.controls | Where-Object { $_.id -ceq $expected.id })
+                if ($observed.Count -ne 1) { [void]$issues.Add('calibration-control-missing-or-duplicate'); continue }
+                $control = $observed[0]
+                $controlAllowed = @('id', 'status', 'passed', 'score', 'criteria')
+                if (@($control.Keys | Where-Object { $_ -cnotin $controlAllowed }).Count -or
+                    @($controlAllowed | Where-Object { -not $control.Contains($_) }).Count -or
+                    $control.status -cne 'success' -or $control.passed -isnot [bool] -or $control.passed -ne $expected.expectedPass -or
+                    $control.score -isnot [ValueType] -or $control.score -is [bool] -or
+                    -not [double]::IsFinite([double]$control.score) -or $control.score -lt 0 -or $control.score -gt 1) {
+                    [void]$issues.Add('calibration-control-failed')
+                }
+                if (@($control.criteria).Count -eq 0) { [void]$issues.Add('calibration-criteria-missing') }
+                $criterionIndex = 0
+                foreach ($criterion in $control.criteria) {
+                    if (@($criterion.Keys | Where-Object { $_ -cnotin @('index', 'passed', 'score') }).Count -or
+                        $criterion.index -ne $criterionIndex -or $criterion.passed -isnot [bool] -or
+                        $criterion.score -isnot [ValueType] -or $criterion.score -is [bool] -or
+                        -not [double]::IsFinite([double]$criterion.score) -or $criterion.score -lt 0 -or $criterion.score -gt 1) {
+                        [void]$issues.Add('calibration-criteria-invalid')
+                    }
+                    $criterionIndex++
+                }
+            }
+        }
+    }
+    catch { [void]$issues.Add('invalid-acceptance-contract') }
+    return [ordered]@{ passed = ($issues.Count -eq 0); requiredScenarios = $requiredScenarios; requiredTrials = $requiredTrials; issues = @($issues | Sort-Object) }
+}
+
 if ($MyInvocation.InvocationName -ne '.') {
     if ([string]::IsNullOrWhiteSpace($PlanPath) -or [string]::IsNullOrWhiteSpace($SummaryDirectory) -or [string]::IsNullOrWhiteSpace($OutputPath)) {
         Write-Error -ErrorAction Continue 'PlanPath, SummaryDirectory, and OutputPath are required.'
@@ -158,9 +258,18 @@ if ($MyInvocation.InvocationName -ne '.') {
         $paths = @(Get-ChildItem -LiteralPath $SummaryDirectory -Filter 'eval-summary.json' -Recurse -File | Select-Object -ExpandProperty FullName)
         $summaries = @($paths | ForEach-Object { Get-Content -LiteralPath $_ -Raw -Encoding utf8 | ConvertFrom-Json -Depth 100 -ErrorAction Stop })
         $merged = Merge-EvalSummaryValue -Plan $plan -Summary $summaries
+        $acceptanceFailed = $false
+        if (-not [string]::IsNullOrWhiteSpace($AcceptanceManifestPath)) {
+            if ((Get-AgentEvalFileDigest -Path $AcceptanceManifestPath) -cne $plan.manifestDigests.changedSpecs) { throw 'Acceptance manifest digest mismatch.' }
+            $manifest = Get-Content -LiteralPath $AcceptanceManifestPath -Raw -Encoding utf8 | ConvertFrom-Json -Depth 100
+            if (-not $manifest.PSObject.Properties['acceptance']) { throw 'Acceptance manifest omits the sealed contract.' }
+            $calibration = if ($CalibrationPath -and (Test-Path -LiteralPath $CalibrationPath)) { Get-Content -LiteralPath $CalibrationPath -Raw -Encoding utf8 | ConvertFrom-Json -Depth 50 } else { $null }
+            $merged.acceptance = Test-EvalAcceptanceValue -Summary $merged -Acceptance $manifest.acceptance -Calibration $calibration
+            $acceptanceFailed = -not $merged.acceptance.passed
+        }
         Write-EvalFanInJson -Value $merged -Path $OutputPath
         Write-Host "Merged eval execution: producers=$($merged.producers.Count) failedSpecs=$($merged.totals.failedSpecs)"
-        if ($merged.totals.failedSpecs -gt 0) {
+        if ($merged.totals.failedSpecs -gt 0 -or $acceptanceFailed) {
             Write-EvalFanInJson -Value ([ordered]@{ schemaVersion = '1.0.0'; status = 'fail'; category = 'evidence' }) -Path $StatusPath
             exit 1
         }

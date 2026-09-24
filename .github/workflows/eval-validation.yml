@@ -3,8 +3,21 @@
 name: Eval Validation
 
 on:
+  workflow_dispatch:
+    inputs:
+      acceptance-profile:
+        description: "Explicit acceptance profile; executes configured trials and judge controls"
+        required: true
+        type: choice
+        options:
+          - pr-2951
   workflow_call:
     inputs:
+      acceptance-profile:
+        description: "Optional explicit acceptance profile (pr-2951); empty preserves PR delta behavior"
+        required: false
+        type: string
+        default: ""
       soft-fail:
         description: "Whether to continue on eval validation failures"
         required: false
@@ -44,10 +57,17 @@ on:
       copilot-github-token:
         description: "GitHub credential exported as COPILOT_GITHUB_TOKEN for the Copilot CLI used by vally eval"
         required: false
+      COPILOT_GITHUB_TOKEN:
+        description: "Repository credential name used by explicit workflow_dispatch acceptance runs"
+        required: false
 
 # Minimal permissions
 permissions:
   contents: read
+
+concurrency:
+  group: eval-validation-${{ github.event.pull_request.number || github.ref }}-${{ inputs.acceptance-profile || 'delta' }}
+  cancel-in-progress: false
 
 jobs:
   eval-validation:
@@ -89,7 +109,16 @@ jobs:
         env:
           INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
           INPUT_BASE_BRANCH: ${{ inputs.base-branch }}
+          ACCEPTANCE_PROFILE: ${{ inputs.acceptance-profile }}
         run: |
+          if ($env:ACCEPTANCE_PROFILE -notin @('', 'pr-2951')) {
+            throw 'Unsupported acceptance profile.'
+          }
+          if (-not [string]::IsNullOrWhiteSpace($env:ACCEPTANCE_PROFILE)) {
+            'EVAL_RELEVANT=true' >> $env:GITHUB_ENV
+            'eval-relevant=true' >> $env:GITHUB_OUTPUT
+            exit 0
+          }
           if ($env:INPUT_CHANGED_FILES_ONLY -ne 'true') {
             'EVAL_RELEVANT=true' >> $env:GITHUB_ENV
             'eval-relevant=true' >> $env:GITHUB_OUTPUT
@@ -347,7 +376,7 @@ jobs:
     name: Agent Eval Plan
     runs-on: ubuntu-latest
     needs: [eval-validation, content-moderation]
-    if: needs.eval-validation.outputs.eval-relevant == 'true' && github.event.pull_request.head.repo.fork == false
+    if: needs.eval-validation.outputs.eval-relevant == 'true' && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || (github.event_name == 'workflow_dispatch' && inputs.acceptance-profile == 'pr-2951'))
     permissions:
       contents: read
     outputs:
@@ -376,21 +405,27 @@ jobs:
         shell: pwsh
         env:
           INPUT_BASE_BRANCH: ${{ inputs.base-branch }}
+          ACCEPTANCE_PROFILE: ${{ inputs.acceptance-profile }}
         run: |
           $base = $env:INPUT_BASE_BRANCH
           if ([string]::IsNullOrWhiteSpace($base)) { $base = 'origin/main' }
-          pwsh -NoProfile -File scripts/evals/Get-ChangedSpecStimulus.ps1 `
-            -BaseRef $base -HeadRef HEAD -OutFile logs/changed-spec-stimuli.json
+          $arguments = @('-BaseRef', $base, '-HeadRef', 'HEAD', '-OutFile', 'logs/changed-spec-stimuli.json')
+          if ($env:ACCEPTANCE_PROFILE -eq 'pr-2951') {
+            $arguments += @('-AcceptanceProfilePath', 'evals/acceptance/pr-2951.json')
+          }
+          pwsh -NoProfile -File scripts/evals/Get-ChangedSpecStimulus.ps1 @arguments
+          if ($LASTEXITCODE -ne 0) { throw 'Changed-spec selection failed.' }
 
       - name: Build canonical plan and matrix
         id: plan
         shell: pwsh
         env:
-          ORDINARY_SHARD_COUNT: ${{ inputs.ordinary-shard-count }}
-          INSTRUCTION_SHARD_COUNT: ${{ inputs.instruction-shard-count }}
-          SKILL_SHARD_COUNT: ${{ inputs.skill-shard-count }}
-          BASELINE_MAX_PARALLEL: ${{ inputs.baseline-max-parallel }}
-          COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
+          ORDINARY_SHARD_COUNT: ${{ inputs.ordinary-shard-count || 4 }}
+          INSTRUCTION_SHARD_COUNT: ${{ inputs.instruction-shard-count || 2 }}
+          SKILL_SHARD_COUNT: ${{ inputs.skill-shard-count || 2 }}
+          BASELINE_MAX_PARALLEL: ${{ inputs.baseline-max-parallel || 2 }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token || secrets.COPILOT_GITHUB_TOKEN }}
+          ACCEPTANCE_PROFILE: ${{ inputs.acceptance-profile }}
         run: |
           if ($env:ORDINARY_SHARD_COUNT -notin @('1', '4')) {
             throw "ordinary-shard-count must be 1 or 4; received '$env:ORDINARY_SHARD_COUNT'."
@@ -415,12 +450,18 @@ jobs:
           $plan = Get-Content -LiteralPath logs/agent-eval-plan.json -Raw | ConvertFrom-Json -Depth 50
           $include = [System.Collections.Generic.List[object]]::new()
           $include.Add([ordered]@{ kind = 'prompt'; producer = 'prompt'; shard = '' })
+          if ($env:ACCEPTANCE_PROFILE -eq 'pr-2951') {
+            $include.Add([ordered]@{ kind = 'calibration'; producer = 'calibration'; shard = '' })
+          }
           # Matrix order determines job creation order, so emit the heaviest shards before the concurrency cap fills.
           $orderedShards = @($plan.ordinaryShards | Sort-Object @{ Expression = { [int]$_.expectedTrialWeight }; Descending = $true }, @{ Expression = { [string]$_.id }; Ascending = $true })
           foreach ($shard in $orderedShards) {
             $include.Add([ordered]@{ kind = [string]$shard.kind; producer = [string]$shard.id; shard = [string]$shard.id })
           }
           $matrix = [ordered]@{ include = @($include) } | ConvertTo-Json -Depth 5 -Compress
+          if ($env:ACCEPTANCE_PROFILE -eq 'pr-2951' -and [string]::IsNullOrWhiteSpace($env:COPILOT_GITHUB_TOKEN)) {
+            throw 'Explicit acceptance requires the configured Copilot credential; execution cannot be skipped.'
+          }
           "execution-matrix=$matrix" >> $env:GITHUB_OUTPUT
           "baseline-required=$(([bool]$plan.baseline.required).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
           "execution-enabled=$((-not [string]::IsNullOrWhiteSpace($env:COPILOT_GITHUB_TOKEN)).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
@@ -446,7 +487,8 @@ jobs:
     if: >-
       needs.eval-validation.outputs.eval-relevant == 'true' &&
       needs.agent-plan.outputs.execution-enabled == 'true' &&
-      github.event.pull_request.head.repo.fork == false
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+       (github.event_name == 'workflow_dispatch' && inputs.acceptance-profile == 'pr-2951'))
     permissions:
       contents: read
     strategy:
@@ -454,7 +496,7 @@ jobs:
       max-parallel: 6
       matrix: ${{ fromJSON(needs.agent-plan.outputs.execution-matrix) }}
     env:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
+      COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token || secrets.COPILOT_GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -522,7 +564,7 @@ jobs:
 
       - name: Execute evals
         id: execute
-        if: env.EVAL_EXECUTE == 'true'
+        if: env.EVAL_EXECUTE == 'true' && matrix.kind != 'calibration'
         shell: pwsh
         env:
           MATRIX_KIND: ${{ matrix.kind }}
@@ -543,6 +585,13 @@ jobs:
           }
         continue-on-error: true
 
+      - name: Calibrate acceptance judges
+        if: env.EVAL_EXECUTE == 'true' && matrix.kind == 'calibration'
+        shell: pwsh
+        run: |
+          npm run ci:eval:calibrate -- --profile evals/acceptance/pr-2951.json --manifest logs/changed-spec-stimuli.json --output logs/eval-calibration.json
+          if ($LASTEXITCODE -ne 0) { throw 'Acceptance calibration did not match all expected verdicts.' }
+
       - name: Upload eval execution results
         if: always() && env.EVAL_EXECUTE == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -557,6 +606,7 @@ jobs:
             logs/stimulus-presence.json
             logs/eval-summary.json
             logs/eval-results-*.json
+            logs/eval-calibration.json
           retention-days: 30
           if-no-files-found: error
 
@@ -575,12 +625,13 @@ jobs:
       needs.eval-validation.outputs.eval-relevant == 'true' &&
       needs.agent-plan.outputs.execution-enabled == 'true' &&
       needs.agent-plan.outputs.baseline-required == 'true' &&
-      github.event.pull_request.head.repo.fork == false
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+       (github.event_name == 'workflow_dispatch' && inputs.acceptance-profile == 'pr-2951'))
     permissions:
       contents: read
     strategy:
       fail-fast: false
-      max-parallel: ${{ inputs.baseline-max-parallel }}
+      max-parallel: ${{ inputs.baseline-max-parallel || 2 }}
       matrix:
         include:
           - model: gpt-6-luna
@@ -588,7 +639,7 @@ jobs:
           - model: claude-sonnet-5
             key: claude
     env:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
+      COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token || secrets.COPILOT_GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -696,7 +747,8 @@ jobs:
       always() && !cancelled() &&
       needs.eval-validation.outputs.eval-relevant == 'true' &&
       needs.agent-plan.outputs.execution-enabled == 'true' &&
-      github.event.pull_request.head.repo.fork == false
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+       (github.event_name == 'workflow_dispatch' && inputs.acceptance-profile == 'pr-2951'))
     permissions:
       contents: read
     steps:
@@ -782,7 +834,8 @@ jobs:
       always() && !cancelled() &&
       needs.eval-validation.outputs.eval-relevant == 'true' &&
       needs.agent-plan.outputs.execution-enabled == 'true' &&
-      github.event.pull_request.head.repo.fork == false
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+       (github.event_name == 'workflow_dispatch' && inputs.acceptance-profile == 'pr-2951'))
     permissions:
       contents: read
     steps:
@@ -816,13 +869,22 @@ jobs:
         shell: pwsh
         env:
           SOFT_FAIL: ${{ inputs.soft-fail }}
+          ACCEPTANCE_PROFILE: ${{ inputs.acceptance-profile }}
         run: |
           New-Item -ItemType Directory -Path logs -Force | Out-Null
-          pwsh -NoProfile -File scripts/evals/Merge-EvalExecution.ps1 `
-            -PlanPath plan-input/agent-eval-plan.json `
-            -SummaryDirectory producer-results `
-            -OutputPath logs/eval-summary.json `
-            -StatusPath logs/eval-fan-in-status.json
+          $arguments = @(
+            '-PlanPath', 'plan-input/agent-eval-plan.json',
+            '-SummaryDirectory', 'producer-results',
+            '-OutputPath', 'logs/eval-summary.json',
+            '-StatusPath', 'logs/eval-fan-in-status.json'
+          )
+          if ($env:ACCEPTANCE_PROFILE -eq 'pr-2951') {
+            $arguments += @(
+              '-AcceptanceManifestPath', 'plan-input/changed-spec-stimuli.json',
+              '-CalibrationPath', 'producer-results/eval-execution-results-calibration/eval-calibration.json'
+            )
+          }
+          pwsh -NoProfile -File scripts/evals/Merge-EvalExecution.ps1 @arguments
           $mergeExitCode = $LASTEXITCODE
           if ($mergeExitCode -ne 0) {
             $status = if (Test-Path -LiteralPath logs/eval-fan-in-status.json) { Get-Content -LiteralPath logs/eval-fan-in-status.json -Raw | ConvertFrom-Json } else { $null }

@@ -93,6 +93,7 @@
     "ci:eval:lint:safety": "pwsh -NoProfile -File scripts/evals/Test-VallyTestSafety.ps1 -OutputPath logs/vally-test-safety.json",
     "ci:eval:presence": "pwsh -NoProfile -File scripts/evals/Test-StimulusPresence.ps1 -ManifestPath logs/changed-ai-artifacts.json -EvalRoot evals/ -OutFile logs/stimulus-presence.json",
     "ci:eval:execute": "pwsh -NoProfile -File scripts/evals/Invoke-VallyEvals.ps1 -ManifestPath logs/changed-ai-artifacts.json -LogsDir logs/",
+    "ci:eval:calibrate": "node scripts/evals/invoke-eval-calibration.mjs",
     "ci:eval:moderate": "pwsh -NoProfile -File scripts/evals/Invoke-ContentModeration.ps1",
     "ci:eval:moderate:corpus": "pwsh -NoProfile -File scripts/evals/Invoke-CorpusModeration.ps1 -ManifestPath logs/changed-ai-artifacts.json -OutFile logs/moderation-corpus.json",
     "ci:eval:moderate:artifacts": "pwsh -NoProfile -File scripts/evals/Invoke-ArtifactModeration.ps1 -ManifestPath logs/changed-ai-artifacts.json -OutFile logs/moderation-artifacts.json",
