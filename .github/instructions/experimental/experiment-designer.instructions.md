@@ -30,6 +30,7 @@ Write session artifacts to that directory using these names, so a later reader o
 | `vetting.md`           | Vetting results and red flag assessment                                                 |
 | `experiment-design.md` | Approach, scope, timeline, resources, success criteria                                  |
 | `mve-plan.md`          | Consolidated MVE plan                                                                   |
+| `outcome.md`           | Evidence bindings, execution status, hypothesis outcomes, and downstream decision       |
 | `backlog-brief.md`     | Optional requirements bridge for backlog manager consumption                            |
 
 `context.md` records an experiment type naming the domain the experiment sits in, or `undetermined` when the classification is not yet supported. Downstream conditional skill loading reads this field, so it is recorded explicitly rather than inferred from the problem statement.

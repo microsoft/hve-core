@@ -1,14 +1,14 @@
 ---
 description: 'Start a new Design Thinking coaching project with state initialization and first coaching interaction'
 agent: DT Coach
-argument-hint: "project-slug=... [context=...] [stakeholders=...] [industry=...]"
+argument-hint: "[project-slug=...] [context=...] [stakeholders=...] [industry=...]"
 ---
 
 # Start Design Thinking Project
 
 ## Inputs
 
-* ${input:project-slug}: (Required) Kebab-case project identifier for the artifact directory (e.g., `factory-floor-maintenance`).
+* ${input:project-slug}: (Optional) Project identifier for the artifact directory. When omitted, derive it from the supplied context or ask for a short project name.
 * ${input:context}: (Optional) Initial project context, problem statement, or customer request to capture.
 * ${input:stakeholders}: (Optional) Known stakeholder groups or key contacts to include in initial mapping.
 * ${input:industry}: (Optional) Industry or domain context (e.g., manufacturing, healthcare, finance) to inform coaching vocabulary and constraint patterns.

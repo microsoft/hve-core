@@ -1,9 +1,9 @@
 ---
 title: backlog-execute
 description: "Mutating backlog execution for Azure DevOps, GitHub, and Jira. Use to create one item or apply a reviewed handoff to a confirmed tracker."
-sidebar_position: 2
+sidebar_position: 3
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-09-21
 ms.topic: reference
 keywords:
   - skill
