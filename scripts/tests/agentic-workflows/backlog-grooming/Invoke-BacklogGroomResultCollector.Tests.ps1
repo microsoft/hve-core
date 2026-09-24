@@ -15,7 +15,6 @@ BeforeAll {
                     type = 'publish_backlog_grooming_result'
                     'issue-number' = $IssueNumber
                     title = "Issue $IssueNumber"
-                    'selection-reason' = 'priority'
                     'activity-and-ownership-context' = 'active'
                     'acceptance-signals' = 'requested behavior is present'
                     'evidence-1-category' = 'Repository'
@@ -103,6 +102,7 @@ Describe 'Invoke-BacklogGroomResultCollector process boundary' -Tag 'Unit' {
         $OutputPath | Should -Exist
         $Result = Get-Content -LiteralPath $OutputPath -Raw | ConvertFrom-Json
         $Result.report_data.issues.issue | Should -Be @(42)
+        $Result.report_data.issues.selection_reason | Should -BeExactly 'Priority cohort'
         $Result.report_data.contract_errors | Should -HaveCount 0
     }
 

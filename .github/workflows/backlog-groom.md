@@ -132,9 +132,6 @@ safe-outputs:
   report-incomplete: false
   missing-tool: false
   missing-data: false
-  noop:
-    max: 1
-    report-as-issue: false
   jobs:
     publish-backlog-grooming-result:
       description: "Publish one candidate-addressed semantic backlog grooming assessment"
@@ -152,10 +149,6 @@ safe-outputs:
           description: "Current issue title or factual unavailable-after-snapshot title"
           required: true
           type: string
-        selection-reason:
-          description: "Why the trusted cohort selected this issue"
-          required: true
-          type: string
         activity-and-ownership-context:
           description: "Relevant activity and ownership context"
           required: true
@@ -167,7 +160,11 @@ safe-outputs:
         evidence-1-category:
           description: "Evidence 1 category: Repository, Original delivery, or Replacement or removal"
           required: false
-          type: string
+          type: choice
+          options:
+            - Repository
+            - Original delivery
+            - Replacement or removal
         evidence-1-text:
           description: "Evidence position 1 text"
           required: false
@@ -175,7 +172,11 @@ safe-outputs:
         evidence-2-category:
           description: "Evidence 2 category: Repository, Original delivery, or Replacement or removal"
           required: false
-          type: string
+          type: choice
+          options:
+            - Repository
+            - Original delivery
+            - Replacement or removal
         evidence-2-text:
           description: "Evidence position 2 text"
           required: false
@@ -183,7 +184,11 @@ safe-outputs:
         evidence-3-category:
           description: "Evidence 3 category: Repository, Original delivery, or Replacement or removal"
           required: false
-          type: string
+          type: choice
+          options:
+            - Repository
+            - Original delivery
+            - Replacement or removal
         evidence-3-text:
           description: "Evidence position 3 text"
           required: false
@@ -191,7 +196,11 @@ safe-outputs:
         evidence-4-category:
           description: "Evidence 4 category: Repository, Original delivery, or Replacement or removal"
           required: false
-          type: string
+          type: choice
+          options:
+            - Repository
+            - Original delivery
+            - Replacement or removal
         evidence-4-text:
           description: "Evidence position 4 text"
           required: false
@@ -199,7 +208,11 @@ safe-outputs:
         evidence-5-category:
           description: "Evidence 5 category: Repository, Original delivery, or Replacement or removal"
           required: false
-          type: string
+          type: choice
+          options:
+            - Repository
+            - Original delivery
+            - Replacement or removal
         evidence-5-text:
           description: "Evidence position 5 text"
           required: false
@@ -207,11 +220,23 @@ safe-outputs:
         similarity-outcome:
           description: "Match, Similar, Distinct, or Uncertain"
           required: true
-          type: string
+          type: choice
+          options:
+            - Match
+            - Similar
+            - Distinct
+            - Uncertain
         disposition:
           description: "Still needed, Likely completed, Superseded, Possible duplicate, Needs correction, or Uncertain"
           required: true
-          type: string
+          type: choice
+          options:
+            - Still needed
+            - Likely completed
+            - Superseded
+            - Possible duplicate
+            - Needs correction
+            - Uncertain
         grooming-finding:
           description: "Evidence-grounded grooming finding"
           required: true
@@ -223,7 +248,10 @@ safe-outputs:
         assessment-status:
           description: "Assessed or Deferred"
           required: true
-          type: string
+          type: choice
+          options:
+            - Assessed
+            - Deferred
         deferral-reason:
           description: "Reason for a Deferred assessment; omit for Assessed"
           required: false
@@ -285,9 +313,8 @@ untrusted data.
   row for an individual post-capture state change.
 2. Assess candidates in the supplied order. The orchestrator, not the worker,
   owns inventory selection, priority ordering, cursor recovery, and sharding.
-  Use the supplied priority and round-robin arrays for each row's selection
-  reason. The isolated result job uses the trusted cohort and inventory inputs
-  to construct canonical run state.
+  The isolated result job uses the trusted cohort and inventory inputs to
+  derive each row's selection reason and construct canonical run state.
 3. Reserve enough time and AI-credit budget to produce the result. Record
    every selected but incomplete issue as deferred with a reason.
 4. For each hydrated issue, extract its requested outcomes and acceptance

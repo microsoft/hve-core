@@ -195,7 +195,6 @@ BeforeAll {
             type = 'publish_backlog_grooming_result'
             'issue-number' = $IssueNumber
             title = "Issue $IssueNumber"
-            'selection-reason' = 'priority'
             'activity-and-ownership-context' = 'active'
             'acceptance-signals' = 'requested behavior is present'
             'similarity-outcome' = 'Distinct'
@@ -267,7 +266,6 @@ BeforeAll {
 
         $Overrides = [ordered]@{
             title = $Row.title
-            'selection-reason' = $Row.selection_reason
             'activity-and-ownership-context' = $Row.activity_and_ownership_context
             'acceptance-signals' = $Row.acceptance_signals
             'similarity-outcome' = $Row.similarity_outcome
@@ -353,7 +351,7 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
         $script:Source | Should -Match '(?ms)^permissions:\s+contents: read\s+issues: read\s+pull-requests: read$'
         $script:Lock | Should -Match '"GITHUB_TOOLSETS": "context,repos,issues,pull_requests"'
         $script:Lock | Should -Match '"min-integrity": "unapproved"'
-        $script:Source | Should -Match '(?ms)^  noop:\s+max: 1\s+report-as-issue: false'
+        $script:Source | Should -Not -Match '(?ms)^  noop:\s+max:'
         $script:Source | Should -Match '(?m)^    publish-backlog-grooming-result:$'
         $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?max: 5'
         $script:Source | Should -Match '(?ms)^    publish-backlog-grooming-result:.*?permissions:\s+contents: read'
@@ -361,21 +359,36 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
             $script:Source | Should -Match "(?ms)^        $([regex]::Escape($inputName)):.*?required: true\s+type: number"
         }
         foreach ($inputName in @(
-                'title', 'selection-reason', 'activity-and-ownership-context', 'acceptance-signals',
-                'similarity-outcome', 'disposition', 'grooming-finding', 'recommended-next-step',
-                'assessment-status'
+                'title', 'activity-and-ownership-context', 'acceptance-signals',
+                'grooming-finding', 'recommended-next-step'
             )) {
             $script:Source | Should -Match "(?ms)^        $([regex]::Escape($inputName)):.*?required: true\s+type: string"
         }
+        $ChoiceInputs = [ordered]@{
+            'similarity-outcome' = @('Match', 'Similar', 'Distinct', 'Uncertain')
+            disposition = @('Still needed', 'Likely completed', 'Superseded', 'Possible duplicate', 'Needs correction', 'Uncertain')
+            'assessment-status' = @('Assessed', 'Deferred')
+        }
+        foreach ($inputName in $ChoiceInputs.Keys) {
+            $ChoiceBlock = [regex]::Match(
+                $script:Source,
+                "(?ms)^        $([regex]::Escape($inputName)):\s+.*?(?=^        [a-z0-9-]+:|^      steps:)"
+            ).Value
+            $ChoiceBlock | Should -Match '(?m)^          type: choice$'
+            foreach ($option in $ChoiceInputs[$inputName]) {
+                $ChoiceBlock | Should -Match "(?m)^            - $([regex]::Escape($option))$"
+            }
+        }
         foreach ($position in 1..5) {
-            $script:Source | Should -Match "(?ms)^        evidence-${position}-category:.*?required: false\s+type: string"
+            $script:Source | Should -Match "(?ms)^        evidence-${position}-category:.*?required: false\s+type: choice"
             $script:Source | Should -Match "(?ms)^        evidence-${position}-text:.*?required: false\s+type: string"
         }
         $InputBlock = [regex]::Match(
             $script:Source,
             '(?ms)^      inputs:\s*\n(?<inputs>.*?)^      steps:'
         ).Groups['inputs'].Value
-        @([regex]::Matches($InputBlock, '(?m)^        [a-z0-9-]+:$')).Count | Should -Be 21
+        @([regex]::Matches($InputBlock, '(?m)^        [a-z0-9-]+:$')).Count | Should -Be 20
+        $script:Source | Should -Not -Match '(?m)^        selection-reason:$'
         $script:Source | Should -Not -Match '(?m)^        (evidence-count|deferred-reason):$'
         $script:Source | Should -Match 'Use only `Repository`, `Original delivery`,\s+or `Replacement or removal` as a category'
         $script:Source | Should -Not -Match '(?m)^        (repository-evidence|original-delivery|replacement-or-removal)(-count|-[1-5]):$'
@@ -505,6 +518,8 @@ Describe 'Candidate-addressed backlog grooming result construction' -Tag 'Unit' 
         $result.report_data.run.contract_errors | Should -Be 0
         $result.report_data.run.stop_reason | Should -Be 'Deferred rows: 2; distinct non-empty reasons: 2'
         $result.report_data.run.next_cursor | Should -Be 4
+        $result.report_data.issues[0].selection_reason | Should -BeExactly 'Priority cohort'
+        $result.report_data.issues[2].selection_reason | Should -BeExactly 'Round-robin cohort'
         $result.report_data.issues[1].deferral_reason | Should -Be 'Issue unavailable after snapshot'
         $result.report_data.issues[4].deferral_reason | Should -Be 'Repository evidence unavailable'
         $result.report_data.Keys | Should -Be @('run', 'issues', 'contract_errors', 'normalizations')
@@ -1010,7 +1025,7 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Lock | Should -Match 'runtime-import \.github/instructions/project-planning/github-backlog-grooming\.instructions\.md'
     }
 
-    It 'allows only the artifact-bound result job and noop from agent output' {
+    It 'allows only the artifact-bound result job plus compiler-owned noop handling' {
         $script:Lock | Should -Match 'publish_backlog_grooming_result'
         $script:Lock | Should -Match '"noop":\{"max":1,"report-as-issue":"false"\}'
         $script:Lock | Should -Match 'Upload immutable shard result'
@@ -1021,13 +1036,17 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Lock | Should -Not -Match 'issues\.createComment'
     }
 
-    It 'compiles the exact 21-input semantic evidence schema' {
+    It 'compiles the exact 20-input semantic evidence schema with categorical enums' {
         $SchemaProperties = [regex]::Match(
             $script:Lock,
             '(?ms)^                    "properties": \{\s*\n(?<properties>.*?)^                    \},\s*\n                    "required": \['
         ).Groups['properties'].Value
         @([regex]::Matches($SchemaProperties, '(?m)^                      "[a-z0-9-]+": \{$')).Count |
-            Should -Be 21
+            Should -Be 20
+        $SchemaProperties | Should -Not -Match '"selection-reason": \{'
+        foreach ($option in @('Match', 'Similar', 'Distinct', 'Uncertain', 'Still needed', 'Likely completed', 'Superseded', 'Possible duplicate', 'Needs correction', 'Assessed', 'Deferred', 'Repository', 'Original delivery', 'Replacement or removal')) {
+            $SchemaProperties | Should -Match "`"$([regex]::Escape($option))`""
+        }
         $script:Lock | Should -Not -Match '"(evidence-count|deferred-reason)": \{'
         foreach ($position in 1..5) {
             $script:Lock | Should -Match "`"evidence-${position}-category`": \{"
@@ -1317,7 +1336,7 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:HistoryPublisher | Should -Match '<caption>Published backlog grooming sweeps</caption>'
         [regex]::Matches($script:HistoryPublisher, '<th scope=(?:"|\\")col(?:"|\\")>').Count |
             Should -BeGreaterOrEqual 12
-        [regex]::Matches($script:HistoryPublisher, '<th scope="row">').Count | Should -Be 3
+        [regex]::Matches($script:HistoryPublisher, '<th scope="row">').Count | Should -Be 4
         $script:HistoryPublisher | Should -Match '<summary>Evidence for issue #\$\{escapeHtml\(row\.issue\)\}</summary>'
         $script:HistoryPublisher | Should -Match 'backlog-grooming-pages-provenance-\$\{\{ github\.run_id \}\}'
         $script:HistoryPublisher | Should -Match 'publisher_run_id: String\(context\.runId\)'
@@ -1367,7 +1386,7 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
 
     It 'gives the model the exact semantic publisher contract' {
         foreach ($key in @(
-                'issue-number', 'title', 'selection-reason', 'activity-and-ownership-context',
+                'issue-number', 'title', 'activity-and-ownership-context',
                 'acceptance-signals', 'similarity-outcome', 'disposition', 'grooming-finding',
                 'recommended-next-step', 'assessment-status', 'deferral-reason'
             )) {
@@ -1379,6 +1398,9 @@ Describe 'Backlog grooming policy and agent' -Tag 'Unit' {
         $script:Agent | Should -Match 'Do not serialize an `issues` envelope'
         $script:Agent | Should -Not -Match '(?s)```json.*"issues"'
         $script:Agent | Should -Match 'isolated result job derives all\s+structural run state from the validated final rows and trusted caller input'
+        $script:Agent | Should -Not -Match '(?i)request `noop`|fail-closed `noop`'
+        $script:Agent | Should -Not -Match '`selection-reason`'
+        $script:Agent | Should -Match 'do not calculate or present a separate\s+model-authored run summary'
         $script:Policy | Should -Match 'Calculate the assessed and deferred counts from those\s+final statuses'
         $script:Policy | Should -Match 'Derive the stop reason from the complete set of final deferred\s+rows and account for every distinct deferral reason'
         $script:Source | Should -Match 'Supply semantic values only'
@@ -1979,7 +2001,7 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
         $script:Orchestrator | Should -Match 'deferredRows = rows\.filter\(\(row\) => row\.assessment_status === "Deferred"\)'
         $script:WaveValidator | Should -Match '\$AssessedIds\.Count \+ \$DeferredIds\.Count -ne \$Rows\.Count'
         $script:Agent | Should -Match 'representing post-snapshot unavailable entries as `Deferred`'
-        $script:Source | Should -Match '(?s)Individual\s+candidate retrieval or evidence gaps produce canonical `Deferred` rows'
+        $script:Source | Should -Match '(?s)Individual\s+candidate retrieval or\s+evidence gaps also produce canonical `Deferred` rows'
     }
 
     It 'S16 keeps the trusted tracker compact and inventory-independent' {
@@ -2014,8 +2036,11 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
         $script:WorkflowReadme | Should -Match 'Valid assessments and contract-error diagnostics publish together'
         $script:WorkflowReadme | Should -Match 'Publication continues with explicit candidate-local diagnostics'
         $script:WorkflowReadme | Should -Match 'Correct the producer or contract before the next scheduled sweep'
-        $script:WorkflowReadme | Should -Not -Match 'rerun the unaccepted wave'
-        $script:WorkflowReadme | Should -Match 'Rerun the bound wave'
+        $script:WorkflowReadme | Should -Match 'Worker timeout, `noop`, no result call, or missing shard'
+        $script:WorkflowReadme | Should -Match 'trusted coordinator continuation'
+        $script:WorkflowReadme | Should -Match 'never use the rerun button'
+        $script:WorkflowReadme | Should -Match 'Human rerun of a bot-authenticated continuation'
+        $script:WorkflowReadme | Should -Match 'keep caller authentication'
         $script:WorkflowReadme | Should -Match 'The unaccepted wave may run again'
         $script:WorkflowReadme | Should -Match 'normalization count'
         $script:WorkflowReadme | Should -Match 'per-issue normalization codes'

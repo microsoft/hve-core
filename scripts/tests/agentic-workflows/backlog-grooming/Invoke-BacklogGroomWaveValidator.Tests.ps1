@@ -443,7 +443,7 @@ Describe 'Backlog grooming wave validation' -Tag 'Unit' {
                 param($Row)
                 $Row.similarity_outcome = 'Superseded'
                 $Row.disposition = 'Superseded'
-            }
+            } }
         @{ InvalidField = 'non-string lineage item'; Mutate = { param($Row) $Row.lineage_evidence.original_delivery = @(1) } }
     ) {
         $Fixture = New-ValidWaveFixture -Root (Join-Path $TestDrive "invalid-$InvalidField")
