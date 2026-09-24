@@ -162,6 +162,8 @@ deck. Recipients need to download the HTML and open it in a browser.
 
 Run `npm run bundle` after edits, then `npm test`. From the repository root,
 `npm run slides:check` verifies that every committed bundle matches its source.
+Pull request validation also runs these tests when deck files change, and a Dependabot
+update to reveal.js needs the same rebuild before it merges.
 Tests check source and bundle contracts. After changing copy or behavior, also open the
 rebuilt deck and check text wrapping, readability and the affected controls.
 
