@@ -148,7 +148,6 @@ Maintain state in `.copilot-tracking/prd-sessions/<prd-name>.state.json`:
   "phaseSkillsLoaded": ["prd-author#assess", "prd-author#discover"],
   "extensionsLoaded": ["proposal-response#contribute:product"],
   "proposalResponseArtifacts": [".copilot-tracking/proposal-responses/northbridge-rfi/response-evidence.yml"],
-  "researchReceipts": [],
   "sourceBrdHandoff": ".copilot-tracking/brd-sessions/supplier-onboarding.handoff.yml",
   "questionsAsked": [
     "product-name", "target-users", "core-problem", "success-metrics"

@@ -122,7 +122,6 @@ Maintain state in `.copilot-tracking/brd-sessions/<brd-name>.state.json`:
   "phaseSkillsLoaded": ["brd-author#discover", "brd-author#define"],
   "extensionsLoaded": ["proposal-response#contribute:business"],
   "proposalResponseArtifacts": [".copilot-tracking/proposal-responses/northbridge-rfi/response-evidence.yml"],
-  "researchReceipts": [],
   "brdToPrdHandoff": ".copilot-tracking/brd-sessions/claims-automation.handoff.yml",
   "questionsAsked": ["business-goals", "primary-stakeholders"],
   "answeredQuestions": {

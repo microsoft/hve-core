@@ -4,7 +4,6 @@
   "currentPhase": "Build",
   "disclaimerShownAt": "2026-09-21T08:00:00Z",
   "phaseSkillsLoaded": ["prd-author#build"],
-  "researchReceipts": [],
   "rpiInvocations": [
     {
       "invocationId": "build-01",

@@ -53,7 +53,7 @@ Provide `rpi-research` with:
 * Relevant conversation, document, state, requirements, stakeholder, and reference evidence.
 * Requested outputs and an output mode of `analysis`, `comparison`, or caller-requested `convergence`.
 
-Use the default Research evidence root. The builder does not create a second research artifact.
+Pass the builder session directory as the trusted alternate Research evidence root. The builder does not create a second research artifact.
 
 ## Return and Authority
 

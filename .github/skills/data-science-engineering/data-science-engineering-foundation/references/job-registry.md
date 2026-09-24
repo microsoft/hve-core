@@ -26,6 +26,8 @@ it does not duplicate the methods owned by a skill.
 | `testing`         | `episodic`   | `dataops`: DataOps and DS/MLOps test techniques                                                                      | `analysis-authoring` for dashboard validation technique                                                | Test code and assertions                                        |
 | `observability`   | `episodic`   | `dataops`: data/model signals and validation-versus-drift guidance                                                   | None                                                                                                   | Instrumentation code and signal recommendations                 |
 
+Optional supporting routes in the registry are job-specific skill support and do not limit the separate segment-level Research eligibility defined by the RPI depth matrix.
+
 ## RPI depth matrix
 
 RPI is a user-directed depth route inside the confirmed job, not a job or lifecycle. Keep simple or adequately evidenced work on the primary route. No RPI segment auto-activates. Before each eligible segment, state the demonstrated need, purpose, expected artifact, expected interaction cost, limits, and direct path available if the user skips it.

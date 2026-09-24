@@ -279,7 +279,7 @@ expectations:
 
   - expectation_id: research-receipt-and-disposition
     summary: Bounded BRD Research records one state receipt and one disposition per material finding.
-    signal: Output names `researchReceipts`, Research identifiers, and the BRD Research Finding Dispositions table.
+    signal: Output names `rpiInvocations`, Research identifiers, and the BRD Research Finding Dispositions table.
     pass_criteria: |
       A named Discover evidence gap uses the shared requirements Research
       contract. State retains the primary artifact and identifiers, and the BRD

@@ -2510,7 +2510,7 @@ stimuli:
       - type: output-matches
         name: requirements-research-receipt-pointer
         config:
-          pattern: '(?is)(researchReceipts).*(artifactPath).*(questionIds).*(evidenceIds).*(findingDispositions)'
+          pattern: '(?is)(rpiInvocations).*(artifactPaths).*(questionIds).*(evidenceIds).*(findingDispositions)'
       - type: output-matches
         name: requirements-research-per-finding
         config:
