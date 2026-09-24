@@ -78,3 +78,121 @@ stimuli:
         config:
           pattern: '(?i)next_operation'
           negate: true
+
+  - name: prd-builder-research-receipt
+    prompt: |
+      The PRD has a named API compatibility gap that supplied references do not
+      answer. Research returned artifact
+      `.copilot-tracking/research/2026-09-18/atlas-api-research.md` with Q2 and
+      W1. Explain the canonical invocation receipt, PRD disposition record,
+      and authority boundary.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: prd-research-receipt
+    graders:
+      - type: output-matches
+        name: prd-research-receipt-state
+        config:
+          pattern: '(?is)(rpiInvocations).*(rpi-research).*(artifactPaths).*(questionIds|Q2).*(evidenceIds|W1).*(findingDispositions)'
+      - type: output-matches
+        name: prd-research-receipt-document
+        config:
+          pattern: '(?is)(Research Finding Dispositions).*(incorporated|revised|rejected|deferred|retained-assumption)'
+      - type: output-matches
+        name: prd-research-receipt-authority
+        config:
+          pattern: '(?is)(research artifact|Research).*(evidence|question).*(PRD).*(authoritative|authority|decision)'
+
+  - name: prd-builder-research-blocked
+    prompt: |
+      Integrate depends on a bounded comparable-product question, but Research
+      returned `Needs clarification`. Can that result clear the phase gate?
+      Explain the durable state and the smallest work that stops.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: prd-research-blocked
+    graders:
+      - type: output-matches
+        name: prd-research-blocked-no-gate
+        config:
+          pattern: '(?is)(Needs clarification|unresolved).*(cannot|does not|must not).*(phase|gate|exit)'
+      - type: output-matches
+        name: prd-research-blocked-gap
+        config:
+          pattern: '(?is)(open question|unvalidated assumption).*(dependent|evidence-dependent|affected).*(stop|pause|blocked)'
+      - type: output-matches
+        name: prd-research-blocked-no-gate-exit
+        config:
+          pattern: '(?i)(phase|gate|integrate)\s+(is|can be|may now be)\s+(complete|cleared|satisfied|exited)'
+          negate: true
+
+  - name: prd-builder-executes-approved-authoring-plan
+    prompt: |
+      Resume the staged Atlas PRD in Build. I confirm the Implement segment for
+      accepted Plan invocation `build-01`. The staged state already contains
+      separate Implement invocation `build-02` with task slug
+      `atlas-product-prd-build-02`. Follow the Plan's one task now: add `FR-001`
+      and `AC-001`, update the Plan marker, write the canonical Implement
+      changes record using the persisted synthetic date `2026-09-21`, and
+      reconcile only `build-02` as completed. Do not run content-quality review
+      or claim the Build gate passed.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/prd-state.json
+          dest: .copilot-tracking/prd-sessions/atlas-product.state.json
+        - src: fixtures/rpi-depth/atlas-prd.md
+          dest: docs/project-planning/atlas-product.md
+        - src: fixtures/rpi-depth/authoring-plan.md
+          dest: .copilot-tracking/plans/2026-09-21/atlas-product-prd-build-01-plan.md
+        - src: fixtures/rpi-depth/authoring-plan-critique.md
+          dest: .copilot-tracking/reviews/plans/2026-09-21/atlas-product-prd-build-01-plan-critique.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/rpi/rpi-implement
+    tags:
+      category: agent-behavior
+      scenario: prd-rpi-authoring-execution
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-matches
+        name: prd-authoring-content-progressed
+        config:
+          path: docs/project-planning/atlas-product.md
+          pattern: '(?is)FR-001.*approval.*AC-001'
+      - type: file-matches
+        name: prd-authoring-plan-marker-completed
+        config:
+          path: .copilot-tracking/plans/2026-09-21/atlas-product-prd-build-01-plan.md
+          pattern: '(?m)^#### \[x\] P01-T01:'
+      - type: file-exists
+        name: prd-authoring-changes-record-exists
+        config:
+          path: .copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md
+      - type: file-matches
+        name: prd-authoring-state-records-separate-plan-and-implement
+        config:
+          path: .copilot-tracking/prd-sessions/atlas-product.state.json
+          pattern: '(?is)rpiInvocations.*invocationId"?\s*:\s*"build-01".*capability"?\s*:\s*"rpi-plan".*taskSlug"?\s*:\s*"atlas-product-prd-build-01".*invocationId"?\s*:\s*"build-02".*capability"?\s*:\s*"rpi-implement".*taskSlug"?\s*:\s*"atlas-product-prd-build-02".*dependsOnInvocationId"?\s*:\s*"build-01".*changes.*atlas-product-prd-build-02-changes\.md.*segmentStatus"?\s*:\s*"completed".*userDisposition"?\s*:\s*"accepted".*gateEffect"?\s*:\s*"supports".*syntheticExtension.*preserve"?\s*:\s*true'
+      - type: output-matches
+        name: prd-authoring-does-not-claim-quality-gate
+        config:
+          pattern: '(?i)(Build|quality)\s+(gate\s+)?(passed|cleared|satisfied|complete)'
+          negate: true

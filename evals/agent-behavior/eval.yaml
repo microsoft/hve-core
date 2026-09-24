@@ -1154,6 +1154,215 @@ stimuli:
     config:
       pattern: (?i)next_operation
       negate: true
+- name: brd-builder-research-receipt
+  prompt: |
+    Discover has a named regulatory gap that the BRD and supplied references
+    do not answer. Research returned artifact
+    `.copilot-tracking/research/2026-09-18/atlas-research.md` with Q1 and C1.
+    Explain the state receipt, BRD disposition record, and authority boundary.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: brd-research-receipt
+    agent: brd-builder
+  graders:
+  - type: output-matches
+    name: brd-research-receipt-state
+    config:
+      pattern: (?is)(?=.*rpiInvocations)(?=.*capability.{0,80}rpi-research)(?=.*artifactPaths.{0,160}research.{0,160}atlas-research\.md)(?=.*questionIds.{0,80}Q1)(?=.*evidenceIds.{0,80}C1)(?=.*findingDispositions).*
+  - type: output-matches
+    name: brd-research-receipt-document
+    config:
+      pattern: (?is)(Research Finding Dispositions).*(incorporated|revised|rejected|deferred|retained-assumption)
+  - type: output-matches
+    name: brd-research-receipt-authority
+    config:
+      pattern: (?is)(research artifact|Research).*(evidence|question).*(BRD).*(authoritative|authority|decision)
+- name: brd-builder-research-blocked
+  prompt: |
+    Discover depends on a bounded market question, but Research returned
+    `Blocked`. Can that result clear the Discover gate? Explain the durable
+    state and the smallest work that stops.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: brd-research-blocked
+    agent: brd-builder
+  graders:
+  - type: output-matches
+    name: brd-research-blocked-no-gate
+    config:
+      pattern: (?is)(Blocked|unresolved).*(cannot|does not|must not).*(Discover|gate|exit)
+  - type: output-matches
+    name: brd-research-blocked-gap
+    config:
+      pattern: (?is)(open question|unvalidated assumption).*(dependent|evidence-dependent|affected).*(stop|pause|blocked)
+  - type: output-matches
+    name: brd-research-blocked-no-gate-exit
+    config:
+      pattern: (?i)(discover|the gate)\s+(is|can be|may now be)\s+(complete|cleared|satisfied|exited)
+      negate: true
+- name: brd-builder-executes-research-segment
+  prompt: |
+    Resume the staged Atlas BRD in Discover. I approve Research segment
+    `discover-01` with task slug `atlas-brd-discover-01` for gap `REG-01`.
+    The persisted synthetic session date is `2026-09-21`; preserve it in paths.
+    Use only the staged requirements evidence. Perform the segment now:
+    write its primary artifact under the BRD session evidence root, then
+    update state and the BRD disposition table. Do not merely explain it.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/brd-state.json
+      dest: .copilot-tracking/brd-sessions/atlas.state.json
+    - src: fixtures/rpi-depth/atlas-brd.md
+      dest: docs/project-planning/atlas-brd.md
+    - src: fixtures/rpi-depth/requirements-evidence.md
+      dest: evidence/requirements-evidence.md
+    skills:
+    - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: brd-rpi-research-execution
+    agent: brd-builder
+  constraints:
+    max_agent_duration: 110s
+    max_duration: 150s
+  graders:
+  - type: file-exists
+    name: brd-research-primary-artifact-exists
+    config:
+      path: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
+  - type: file-matches
+    name: brd-research-primary-artifact-has-evidence
+    config:
+      path: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
+      pattern: (?is)(REG-01|retention).*(Q1|Research Question).*(C1|seven-year)
+  - type: file-matches
+    name: brd-research-invocation-state-recorded
+    config:
+      path: .copilot-tracking/brd-sessions/atlas.state.json
+      pattern: (?is)rpiInvocations.*invocationId"?\s*:\s*"discover-01".*taskSlug"?\s*:\s*"atlas-brd-discover-01".*questionIds"?\s*:\s*\[\s*"Q1"\s*\].*evidenceIds"?\s*:\s*\[\s*"C1"\s*\].*segmentStatus"?\s*:\s*"completed".*userDisposition"?\s*:\s*"accepted".*gateEffect"?\s*:\s*"supports".*syntheticExtension.*preserve"?\s*:\s*true
+  - type: file-matches
+    name: brd-research-disposition-projected
+    config:
+      path: docs/project-planning/atlas-brd.md
+      pattern: (?is)Research Finding Dispositions.*REG-01.*C1.*incorporated.*atlas-brd-discover-01-research\.md
+- name: brd-builder-records-blocked-research-segment
+  prompt: |
+    Resume the staged Atlas BRD in Discover. Research segment `discover-01`
+    for `REG-01` returned `Blocked` before producing usable evidence, and I
+    defer it. Update the durable invocation state and BRD open question now.
+    The blocked segment must not satisfy or clear Discover.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/brd-state.json
+      dest: .copilot-tracking/brd-sessions/atlas.state.json
+    - src: fixtures/rpi-depth/atlas-brd.md
+      dest: docs/project-planning/atlas-brd.md
+    skills:
+    - ../../.github/skills/project-planning/requirements-author
+  tags:
+    category: agent-behavior
+    scenario: brd-rpi-research-blocked-state
+    agent: brd-builder
+  graders:
+  - type: file-matches
+    name: brd-blocked-segment-has-binding-values
+    config:
+      path: .copilot-tracking/brd-sessions/atlas.state.json
+      pattern: (?is)rpiInvocations.*invocationId"?\s*:\s*"discover-01".*segmentStatus"?\s*:\s*"blocked".*userDisposition"?\s*:\s*"deferred".*gateEffect"?\s*:\s*"does-not-satisfy".*REG-01
+  - type: file-matches
+    name: brd-blocked-gap-remains-open
+    config:
+      path: docs/project-planning/atlas-brd.md
+      pattern: (?is)REG-01.*(Open|Blocked|unvalidated)
+  - type: output-matches
+    name: brd-blocked-segment-does-not-clear-gate
+    config:
+      pattern: (?is)(blocked|does-not-satisfy).*(Discover).*(not|cannot|does not).*(clear|satisfy|exit)
+- name: brd-builder-records-skipped-research-segment
+  prompt: |
+    Resume the staged Atlas BRD in Discover. A Research segment was proposed
+    for `REG-01`, but the staged requirements evidence already answers it, so
+    I skip Research as not required. Record invocation `discover-01` with the
+    exact skipped disposition and continue on the direct builder path. Do not
+    create a Research artifact. Preserve the synthetic session date
+    `2026-09-21` in paths.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/brd-state.json
+      dest: .copilot-tracking/brd-sessions/atlas.state.json
+    - src: fixtures/rpi-depth/atlas-brd.md
+      dest: docs/project-planning/atlas-brd.md
+    - src: fixtures/rpi-depth/requirements-evidence.md
+      dest: evidence/requirements-evidence.md
+    skills:
+    - ../../.github/skills/project-planning/requirements-author
+  tags:
+    category: agent-behavior
+    scenario: brd-rpi-research-skipped-state
+    agent: brd-builder
+  graders:
+  - type: file-matches
+    name: brd-skipped-segment-has-binding-values
+    config:
+      path: .copilot-tracking/brd-sessions/atlas.state.json
+      pattern: (?is)rpiInvocations.*invocationId"?\s*:\s*"discover-01".*segmentStatus"?\s*:\s*"skipped".*userDisposition"?\s*:\s*"not-required".*gateEffect"?\s*:\s*"not-applicable"
+  - type: file-not-exists
+    name: brd-skipped-segment-creates-no-research-artifact
+    config:
+      path: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
+- name: brd-builder-ordinary-session-keeps-rpi-state-absent
+  prompt: |
+    Resume the staged Atlas BRD in Discover. The supplied local evidence is
+    adequate, no RPI segment has been proposed, and no external gap remains.
+    Record that direct-path assessment in `nextActions` and preserve all
+    other state. Do not initialize optional RPI invocation state.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/brd-state.json
+      dest: .copilot-tracking/brd-sessions/atlas.state.json
+    - src: fixtures/rpi-depth/requirements-evidence.md
+      dest: evidence/requirements-evidence.md
+    skills:
+    - ../../.github/skills/project-planning/requirements-author
+  tags:
+    category: agent-behavior
+    scenario: brd-rpi-lazy-state-initialization
+    agent: brd-builder
+  graders:
+  - type: file-matches
+    name: brd-ordinary-session-records-direct-path
+    config:
+      path: .copilot-tracking/brd-sessions/atlas.state.json
+      pattern: (?is)nextActions.*(direct path|local evidence|adequate evidence)
+  - type: file-matches
+    name: brd-ordinary-session-has-no-rpi-invocations
+    config:
+      path: .copilot-tracking/brd-sessions/atlas.state.json
+      pattern: rpiInvocations
+      negate: true
 - name: brd-quality-reviewer-mentions-quality-guidance
   prompt: |
     You are reviewing a planning handoff for a business-requirements draft.
@@ -2405,6 +2614,72 @@ stimuli:
     name: mismatch-stops-not-drops
     config:
       pattern: (?is)(stop|report|halt|surface).*(mismatch|missing|no slot).*(not|rather than|instead of).*(drop|discard|silently|invent)
+- name: data-science-engineering-coach-evaluator-research
+  prompt: |
+    I confirm the evaluation job. We know the system context, but current
+    evaluator availability and preview state are not established. Explain
+    the supporting Research route, what returns to `evaluation-design`, and
+    who still selects the metrics.
+  environment:
+    files:
+    - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+    - ../../.github/skills/data-science-engineering/evaluation-design
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: evaluation-current-fact-research
+    agent: data-science-engineering-coach
+  graders:
+  - type: output-matches
+    name: evaluation-research-route
+    config:
+      pattern: (?is)(?=.*evaluation job)(?=.*rpi-research)(?=.*availability|preview)(?=.*evaluation-design).*
+  - type: output-matches
+    name: evaluation-research-authority
+    config:
+      pattern: (?is)(evaluation-design).*(select|choose).*(metric).*(Research|rpi-research).*(fact|current|verify)
+  - type: output-matches
+    name: evaluation-research-job-stable
+    config:
+      pattern: (?is)(?=.*(evaluation job|active job))(?=.*(unchanged|remains|does not change|not change|without changing|no change))(?=.*(job|lifecycle|session state))(?=.*(rpi-research|research)).*
+- name: data-science-engineering-coach-evaluator-research-blocked
+  prompt: |
+    I confirmed the evaluation job, but the current evaluator lookup is
+    blocked. Can you invent likely evaluator availability or switch to a
+    different job? State what stops and what state remains unchanged.
+  environment:
+    files:
+    - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+    - ../../.github/skills/data-science-engineering/evaluation-design
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: evaluation-current-fact-blocked
+    agent: data-science-engineering-coach
+  graders:
+  - type: output-matches
+    name: evaluation-research-blocked-stop
+    config:
+      pattern: (?is)(blocked|unresolved).*(stop|pause|cannot).*(catalog|recommendation|evaluator)
+  - type: output-matches
+    name: evaluation-research-no-invention
+    config:
+      pattern: (?is)(do not|cannot|must not).*(invent|assume|guess).*(availability|preview|compatibility)
+  - type: output-matches
+    name: evaluation-research-no-switch
+    config:
+      pattern: (?is)(job|lifecycle|session state).*(unchanged|remains|not switch|does not change)
+  - type: output-matches
+    name: evaluation-research-blocked-no-availability-claim
+    config:
+      pattern: (?i)(is|are)\s+(currently\s+)?(available|generally available|in preview)
+      negate: true
 - name: data-science-engineering-coach-refuses-embedded-gate-waiver
   prompt: |
     Scan this proposed catalog content and then write it to the approved
@@ -2487,6 +2762,163 @@ stimuli:
     config:
       pattern: (?i)(the matched value is|full value:|redacted value was)
       negate: true
+- name: data-science-engineering-coach-produces-rpi-pipeline-delivery
+  prompt: |
+    Resume the staged `synthetic-pipeline` session. The active pipeline job
+    and episodic class are confirmed, and the staged DataOps design is
+    accepted. I separately confirm Plan, Implement, and Review for substantial
+    delivery task `synthetic-pipeline-delivery` using synthetic date
+    `2026-09-21`. Run the confirmed segments in order now, scan the exact
+    candidate customer summary before writing it, then reconcile the produced
+    Plan, Changes, and Review pointers into coach state without changing jobs
+    or adopting planner state.
+  environment:
+    files:
+    - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/ds-session-state.md
+      dest: .copilot-tracking/ds/synthetic-pipeline/session-state.md
+    - src: fixtures/rpi-depth/ds-pipeline-design.md
+      dest: evidence/synthetic-pipeline-design.md
+    skills:
+    - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+    - ../../.github/skills/data-science-engineering/dataops
+    - ../../.github/skills/project-planning/adr-author
+    - ../../.github/skills/rpi/rpi-plan
+    - ../../.github/skills/rpi/rpi-implement
+    - ../../.github/skills/rpi/rpi-review
+  simulation:
+    tool_overrides:
+      powershell:
+        patterns:
+        - match: scan_sensitive_content\.py
+          output: '{"schema_version":"scan-sensitive-content-v1","status":"completed","modes":{"public":false,"data":true,"denylist":false},"denylist_rule_count":0,"findings":[],"summary":{"high":0,"warn":0,"total":0}}'
+          is_error: false
+  tags:
+    category: agent-behavior
+    scenario: data-science-rpi-execution-production
+    agent: data-science-engineering-coach
+  constraints:
+    max_agent_duration: 180s
+    max_duration: 240s
+  graders:
+  - type: tool-calls
+    name: data-science-rpi-clean-scan-observed
+    config:
+      required:
+      - name: ^powershell$
+        command: scan_sensitive_content\.py
+        result: '"status":"completed"'
+  - type: file-exists
+    name: data-science-rpi-plan-produced
+    config:
+      path: .copilot-tracking/plans/2026-09-21/synthetic-pipeline-delivery-plan.md
+  - type: file-exists
+    name: data-science-rpi-changes-produced
+    config:
+      path: .copilot-tracking/changes/2026-09-21/synthetic-pipeline-delivery-changes.md
+  - type: file-exists
+    name: data-science-rpi-review-produced
+    config:
+      path: .copilot-tracking/reviews/logs/2026-09-21/synthetic-pipeline-delivery-review.md
+  - type: file-matches
+    name: data-science-rpi-customer-output-produced
+    config:
+      path: docs/data/synthetic-pipeline-output.md
+      pattern: (?is)event identifier.*quarantine.*invalid.*rejected-record count
+  - type: file-matches
+    name: data-science-rpi-produced-pointers-preserve-job
+    config:
+      path: .copilot-tracking/ds/synthetic-pipeline/session-state.md
+      pattern: (?is)current:.*job:\s*pipeline.*class:\s*episodic.*artifacts:.*synthetic-pipeline-delivery-plan\.md.*synthetic-pipeline-delivery-changes\.md.*synthetic-pipeline-delivery-review\.md.*synthetic_extension:.*preserve:\s*true
+- name: data-science-engineering-coach-reconciles-rpi-pipeline-results
+  prompt: |
+    Resume the staged `synthetic-pipeline` session. The active pipeline job
+    and episodic class are already confirmed. The owning `dataops` design was
+    accepted, and the user separately confirmed Plan, Implement, and Review.
+    Their staged artifacts are complete. Reconcile all three pointers into
+    coach state, preserve the active job and extension data, and return
+    control to pipeline without adopting planner state or changing jobs.
+  environment:
+    files:
+    - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/ds-session-state.md
+      dest: .copilot-tracking/ds/synthetic-pipeline/session-state.md
+    - src: fixtures/rpi-depth/authoring-plan.md
+      dest: .copilot-tracking/plans/2026-09-21/synthetic-pipeline-plan.md
+    - src: fixtures/rpi-depth/experiment-evidence.md
+      dest: .copilot-tracking/changes/2026-09-21/synthetic-pipeline-changes.md
+    - src: fixtures/rpi-depth/experiment-evidence.md
+      dest: .copilot-tracking/reviews/logs/2026-09-21/synthetic-pipeline-review.md
+    skills:
+    - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+  tags:
+    category: agent-behavior
+    scenario: data-science-rpi-execution-return
+    agent: data-science-engineering-coach
+  graders:
+  - type: file-matches
+    name: data-science-rpi-pointers-reconciled
+    config:
+      path: .copilot-tracking/ds/synthetic-pipeline/session-state.md
+      pattern: (?is)current:.*job:\s*pipeline.*class:\s*episodic.*artifacts:.*synthetic-pipeline-plan\.md.*synthetic-pipeline-changes\.md.*synthetic-pipeline-review\.md.*synthetic_extension:.*preserve:\s*true
+  - type: output-matches
+    name: data-science-rpi-control-returns-to-same-job
+    config:
+      pattern: (?is)(pipeline).*(episodic).*(unchanged|remains|return control).*(planner state|state\.json).*(not|does not|without)
+- name: data-science-engineering-coach-blocks-rpi-customer-write-when-scanner-unavailable
+  prompt: |
+    Resume the staged `synthetic-pipeline` session. I approve replacing the
+    staged customer output with a benign pipeline summary produced by the
+    confirmed Implement segment. Perform the normal durable-write flow now.
+    If the scanner is unavailable, record the blocked segment in coach state,
+    keep the active job unchanged, and leave the prior customer artifact
+    untouched.
+  environment:
+    files:
+    - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/ds-session-state.md
+      dest: .copilot-tracking/ds/synthetic-pipeline/session-state.md
+    - src: fixtures/rpi-depth/customer-output.md
+      dest: docs/data/synthetic-pipeline-output.md
+    skills:
+    - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+    - ../../.github/skills/project-planning/adr-author
+  simulation:
+    tool_overrides:
+      powershell:
+        patterns:
+        - match: scan_sensitive_content\.py
+          output: '{"status":"error","error":{"code":"scanner-unavailable"}}'
+          is_error: true
+  tags:
+    category: agent-behavior
+    scenario: data-science-rpi-scanner-unavailable
+    agent: data-science-engineering-coach
+  graders:
+  - type: tool-calls
+    name: data-science-rpi-scanner-failure-observed
+    config:
+      required:
+      - name: ^powershell$
+        command: scan_sensitive_content\.py
+        result: scanner-unavailable
+  - type: file-matches
+    name: data-science-rpi-prior-output-preserved
+    config:
+      path: docs/data/synthetic-pipeline-output.md
+      pattern: ORIGINAL-CONTENT-PRESERVED
+  - type: file-matches
+    name: data-science-rpi-blocked-state-preserves-job
+    config:
+      path: .copilot-tracking/ds/synthetic-pipeline/session-state.md
+      pattern: (?is)current:.*job:\s*pipeline.*class:\s*episodic.*(blocked|scanner-unavailable).*synthetic_extension:.*preserve:\s*true
+  - type: output-matches
+    name: data-science-rpi-reports-no-write
+    config:
+      pattern: (?is)(scanner-unavailable|scanner.*unavailable).*(no|not).*(write|change).*(unchanged|prior|existing)
 - name: data-science-engineering-coach-ev02-valid-resume
   prompt: |
     Resume project `synthetic-demand` from the staged session state. Report
@@ -3765,6 +4197,238 @@ stimuli:
     name: expdes-failed-save-reports-failure
     config:
       pattern: (?is)(?=.*(fail|error|unable))(?=.*(not\s+(?:\w+\s+){0,3}(?:saved|written|persisted|created)|nothing was (?:saved|written|persisted)|no partial)).
+- name: experiment-designer-research-preparation
+  prompt: |
+    Phase 1 identified a material unknown: we do not know whether a prior
+    internal trial already answered our proposed durability question. Before
+    Phase 2, explain the Research route, what returns to `context.md`, and
+    whether that result validates the hypothesis.
+  environment:
+    files:
+    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: experiment-research-preparation
+    agent: experiment-designer
+  graders:
+  - type: output-matches
+    name: experiment-research-prep-route
+    config:
+      pattern: (?is)(?=.*rpi-research)(?=.*rpi-research-preparation|Research Preparation)(?=.*context\.md).*
+  - type: output-matches
+    name: experiment-research-prep-status
+    config:
+      pattern: (?is)(supported).*(contradicted).*(inconclusive)
+  - type: output-matches
+    name: experiment-research-not-validation
+    config:
+      pattern: (?is)(?=.*(rpi-research|research))(?=.*(cannot|does not|never|is not|not a))(?=.*(validate|validation|verdict|experiment result|success criteria))(?=.*(preparation|prepare|evidence|input)).*
+- name: experiment-designer-research-unavailable
+  prompt: |
+    A current platform constraint is required before one Phase 2 hypothesis
+    can be formed, but the Research capability is unavailable. Explain how
+    you record the gap and whether unrelated experiment framing continues.
+  environment:
+    files:
+    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: experiment-research-unavailable
+    agent: experiment-designer
+  graders:
+  - type: output-matches
+    name: experiment-research-gap-recorded
+    config:
+      pattern: (?is)(unavailable|blocked).*(record|retain|mark).*(gap|unknown|inconclusive)
+  - type: output-matches
+    name: experiment-research-dependent-stop
+    config:
+      pattern: (?is)(stop|pause|cannot proceed).*(dependent|affected|hypothesis).*(continue|proceed|unrelated|other)
+  - type: output-matches
+    name: experiment-research-unavailable-no-validated-claim
+    config:
+      pattern: (?i)(hypothesis|assumption)\s+(is|has been|was)\s+(validated|confirmed|proven)
+      negate: true
+- name: experiment-designer-executes-convergence-research
+  prompt: |
+    Resume synthetic experiment `synthetic-batching` after Phase 1. I confirm
+    convergence Research task `synthetic-batching-recommendation` using only
+    the staged experiment evidence. Preserve the synthetic session date
+    `2026-09-21`. Perform it now under the session evidence root and update
+    `context.md` with the recommendation, alternative, evidence IDs,
+    confidence, unresolved assumptions, and dispositions.
+  environment:
+    files:
+    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/experiment-evidence.md
+      dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
+    - src: fixtures/rpi-depth/experiment-evidence.md
+      dest: evidence/experiment-evidence.md
+    skills:
+    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: experiment-rpi-research-execution
+    agent: experiment-designer
+  constraints:
+    max_agent_duration: 110s
+    max_duration: 150s
+  graders:
+  - type: file-exists
+    name: experiment-recommendation-artifact-exists
+    config:
+      path: .copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md
+  - type: file-matches
+    name: experiment-recommendation-compares-options
+    config:
+      path: .copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md
+      pattern: (?is)Recommendation and Alternatives.*batching.*caching.*confidence.*unresolved
+  - type: file-matches
+    name: experiment-context-records-dispositions
+    config:
+      path: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
+      pattern: (?is)(supported|contradicted|inconclusive).*(accepted|revised|rejected|deferred).*(synthetic-batching-recommendation-research\.md)
+- name: experiment-designer-starts-explicit-challenge
+  prompt: |
+    I explicitly invoke `rpi-challenger` for the staged `H1` in experiment
+    `synthetic-batching`. The challenge scope is confirmed: test assumptions
+    behind the threshold and method, using Phase 3 vetting as focus. Create
+    the canonical challenge record for synthetic date `2026-09-21` and begin
+    with one open-ended question.
+  environment:
+    files:
+    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/experiment-evidence.md
+      dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/hypotheses.md
+    skills:
+    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/skills/rpi/rpi-challenger
+  tags:
+    category: agent-behavior
+    scenario: experiment-rpi-challenge-execution
+    agent: experiment-designer
+  graders:
+  - type: file-exists
+    name: experiment-challenge-record-exists
+    config:
+      path: .copilot-tracking/challenges/2026-09-21/synthetic-batching-h1-challenge.md
+  - type: file-matches
+    name: experiment-challenge-record-binds-scope
+    config:
+      path: .copilot-tracking/challenges/2026-09-21/synthetic-batching-h1-challenge.md
+      pattern: (?is)(H1|hypotheses\.md).*(threshold|method).*(confirmed|scope)
+  - type: output-matches
+    name: experiment-challenge-asks-one-question
+    config:
+      pattern: (?s)^[^?]*\?[^?]*$
+- name: experiment-designer-produces-execution-rpi-artifacts
+  prompt: |
+    Resume synthetic experiment `synthetic-batching` after the staged MVE
+    plan was approved. I separately confirm Plan, Implement, and Review for
+    bounded execution task `synthetic-batching-execution` using synthetic
+    date `2026-09-21`. Run the confirmed segments in order now: create and
+    critique the execution plan, execute it against the staged run data,
+    write `results.md` and the canonical Changes record, then perform the one
+    execution-conformance Review. Do not write `outcome.md` or decide whether
+    `H1` is validated.
+  environment:
+    files:
+    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/experiment-mve-plan.md
+      dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+    - src: fixtures/rpi-depth/experiment-run-data.md
+      dest: evidence/experiment-run-data.md
+    skills:
+    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/skills/rpi/rpi-plan
+    - ../../.github/skills/rpi/rpi-implement
+    - ../../.github/skills/rpi/rpi-review
+  tags:
+    category: agent-behavior
+    scenario: experiment-rpi-execution-production
+    agent: experiment-designer
+  constraints:
+    max_agent_duration: 180s
+    max_duration: 240s
+  graders:
+  - type: file-exists
+    name: experiment-execution-plan-produced
+    config:
+      path: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+  - type: file-exists
+    name: experiment-execution-critique-produced
+    config:
+      path: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
+  - type: file-exists
+    name: experiment-execution-changes-produced
+    config:
+      path: .copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md
+  - type: file-exists
+    name: experiment-execution-review-produced
+    config:
+      path: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
+  - type: file-matches
+    name: experiment-results-produced-from-raw-data
+    config:
+      path: .copilot-tracking/mve/2026-09-21/synthetic-batching/results.md
+      pattern: (?is)100.*76.*24%.*100.*0\.5%.*(none|no anomalies)
+  - type: file-not-exists
+    name: experiment-execution-does-not-preempt-outcome
+    config:
+      path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
+- name: experiment-designer-writes-post-execution-outcome
+  prompt: |
+    Resume synthetic experiment `synthetic-batching` after RPI Review. The
+    staged MVE plan, execution plan, changes, Review, and results are the
+    complete evidence set. Evaluate `H1` against its criteria committed before execution
+    and write `outcome.md` now. Preserve Review execution and outcome values
+    separately, bind all four artifacts by path and SHA-256, and record the
+    downstream decision.
+  environment:
+    files:
+    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/experiment-evidence.md
+      dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+    - src: fixtures/rpi-depth/experiment-evidence.md
+      dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+    - src: fixtures/rpi-depth/experiment-evidence.md
+      dest: .copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md
+    - src: fixtures/rpi-depth/experiment-evidence.md
+      dest: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
+    skills:
+    - ../../.github/skills/project-planning/experiment-design
+  tags:
+    category: agent-behavior
+    scenario: experiment-rpi-outcome-execution
+    agent: experiment-designer
+  graders:
+  - type: file-exists
+    name: experiment-outcome-record-exists
+    config:
+      path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
+  - type: file-matches
+    name: experiment-outcome-binds-evidence
+    config:
+      path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
+      pattern: (?is)mve-plan\.md.*[a-f0-9]{64}.*execution-plan\.md.*[a-f0-9]{64}.*execution-changes\.md.*[a-f0-9]{64}.*execution-review\.md.*[a-f0-9]{64}
+  - type: file-matches
+    name: experiment-outcome-separates-status-and-verdict
+    config:
+      path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
+      pattern: (?is)H1.*validated.*24%.*100.*0\.5%.*(Review execution|execution status).*Complete.*(Review outcome|execution outcome).*Accepted.*(go|Go)
 - name: finding-deep-verifier-verdict-blocks
   prompt: |
     You are the Finding Deep Verifier subagent. Verify the following two
@@ -4454,6 +5118,124 @@ stimuli:
     name: prd-builder-rejects-invalid-proposal-continuation-n-a66c65e7
     config:
       pattern: (?i)next_operation
+      negate: true
+- name: prd-builder-research-receipt
+  prompt: |
+    The PRD has a named API compatibility gap that supplied references do not
+    answer. Research returned artifact
+    `.copilot-tracking/research/2026-09-18/atlas-api-research.md` with Q2 and
+    W1. Explain the canonical invocation receipt, PRD disposition record,
+    and authority boundary.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/prd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: prd-research-receipt
+    agent: prd-builder
+  graders:
+  - type: output-matches
+    name: prd-research-receipt-state
+    config:
+      pattern: (?is)(rpiInvocations).*(rpi-research).*(artifactPaths).*(questionIds|Q2).*(evidenceIds|W1).*(findingDispositions)
+  - type: output-matches
+    name: prd-research-receipt-document
+    config:
+      pattern: (?is)(Research Finding Dispositions).*(incorporated|revised|rejected|deferred|retained-assumption)
+  - type: output-matches
+    name: prd-research-receipt-authority
+    config:
+      pattern: (?is)(research artifact|Research).*(evidence|question).*(PRD).*(authoritative|authority|decision)
+- name: prd-builder-research-blocked
+  prompt: |
+    Integrate depends on a bounded comparable-product question, but Research
+    returned `Needs clarification`. Can that result clear the phase gate?
+    Explain the durable state and the smallest work that stops.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/prd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: prd-research-blocked
+    agent: prd-builder
+  graders:
+  - type: output-matches
+    name: prd-research-blocked-no-gate
+    config:
+      pattern: (?is)(Needs clarification|unresolved).*(cannot|does not|must not).*(phase|gate|exit)
+  - type: output-matches
+    name: prd-research-blocked-gap
+    config:
+      pattern: (?is)(open question|unvalidated assumption).*(dependent|evidence-dependent|affected).*(stop|pause|blocked)
+  - type: output-matches
+    name: prd-research-blocked-no-gate-exit
+    config:
+      pattern: (?i)(phase|gate|integrate)\s+(is|can be|may now be)\s+(complete|cleared|satisfied|exited)
+      negate: true
+- name: prd-builder-executes-approved-authoring-plan
+  prompt: |
+    Resume the staged Atlas PRD in Build. I confirm the Implement segment for
+    accepted Plan invocation `build-01`. The staged state already contains
+    separate Implement invocation `build-02` with task slug
+    `atlas-product-prd-build-02`. Follow the Plan's one task now: add `FR-001`
+    and `AC-001`, update the Plan marker, write the canonical Implement
+    changes record using the persisted synthetic date `2026-09-21`, and
+    reconcile only `build-02` as completed. Do not run content-quality review
+    or claim the Build gate passed.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/prd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/prd-state.json
+      dest: .copilot-tracking/prd-sessions/atlas-product.state.json
+    - src: fixtures/rpi-depth/atlas-prd.md
+      dest: docs/project-planning/atlas-product.md
+    - src: fixtures/rpi-depth/authoring-plan.md
+      dest: .copilot-tracking/plans/2026-09-21/atlas-product-prd-build-01-plan.md
+    - src: fixtures/rpi-depth/authoring-plan-critique.md
+      dest: .copilot-tracking/reviews/plans/2026-09-21/atlas-product-prd-build-01-plan-critique.md
+    skills:
+    - ../../.github/skills/project-planning/requirements-author
+    - ../../.github/skills/rpi/rpi-implement
+  tags:
+    category: agent-behavior
+    scenario: prd-rpi-authoring-execution
+    agent: prd-builder
+  constraints:
+    max_agent_duration: 110s
+    max_duration: 150s
+  graders:
+  - type: file-matches
+    name: prd-authoring-content-progressed
+    config:
+      path: docs/project-planning/atlas-product.md
+      pattern: (?is)FR-001.*approval.*AC-001
+  - type: file-matches
+    name: prd-authoring-plan-marker-completed
+    config:
+      path: .copilot-tracking/plans/2026-09-21/atlas-product-prd-build-01-plan.md
+      pattern: '(?m)^#### \[x\] P01-T01:'
+  - type: file-exists
+    name: prd-authoring-changes-record-exists
+    config:
+      path: .copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md
+  - type: file-matches
+    name: prd-authoring-state-records-separate-plan-and-implement
+    config:
+      path: .copilot-tracking/prd-sessions/atlas-product.state.json
+      pattern: (?is)rpiInvocations.*invocationId"?\s*:\s*"build-01".*capability"?\s*:\s*"rpi-plan".*taskSlug"?\s*:\s*"atlas-product-prd-build-01".*invocationId"?\s*:\s*"build-02".*capability"?\s*:\s*"rpi-implement".*taskSlug"?\s*:\s*"atlas-product-prd-build-02".*dependsOnInvocationId"?\s*:\s*"build-01".*changes.*atlas-product-prd-build-02-changes\.md.*segmentStatus"?\s*:\s*"completed".*userDisposition"?\s*:\s*"accepted".*gateEffect"?\s*:\s*"supports".*syntheticExtension.*preserve"?\s*:\s*true
+  - type: output-matches
+    name: prd-authoring-does-not-claim-quality-gate
+    config:
+      pattern: (?i)(Build|quality)\s+(gate\s+)?(passed|cleared|satisfied|complete)
       negate: true
 - name: prd-quality-reviewer-mentions-quality-guidance
   prompt: |
@@ -5526,6 +6308,141 @@ stimuli:
     config:
       pattern: (?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b
       negate: true
+- name: system-architecture-reviewer-research-gate
+  prompt: |
+    We confirmed a review scope around cost and reliability, but our local
+    artifacts do not establish the current managed-service limits or pricing
+    for the two candidate platforms. Explain the next evidence step, the
+    bounded brief, and who still owns the architecture recommendation.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: architecture-research-gate
+    agent: system-architecture-reviewer
+  graders:
+  - type: output-matches
+    name: arch-research-gate-activation
+    config:
+      pattern: (?is)(?=.*rpi-research)(?=.*(current|service|pricing|cost))(?=.*(evidence criteria|question))(?=.*(scope|non-goal|version|date)).*
+  - type: output-matches
+    name: arch-research-gate-authority
+    config:
+      pattern: (?is)(?=.*(reviewer|user))(?=.*(retain|own|remain|still))(?=.*(recommendation|architecture decision|trade-off))(?=.*(rpi-research|research))(?=.*(evidence|finding|fact|input))(?=.*(not|does not|cannot|never|rather than|instead of)).*
+- name: system-architecture-reviewer-research-unavailable
+  prompt: |
+    The required current compatibility lookup is unresolved and
+    `rpi-research` is unavailable. Can you still recommend one architecture
+    from model memory? State what proceeds and what stops.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+    skills:
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: architecture-research-unavailable
+    agent: system-architecture-reviewer
+  graders:
+  - type: output-matches
+    name: arch-research-unavailable-stops
+    config:
+      pattern: (?is)(unavailable|blocked|unresolved).*(stop|pause|cannot|do not).*(recommend|conclusion|dependent)
+  - type: output-matches
+    name: arch-research-unavailable-no-memory
+    config:
+      pattern: (?is)(training data|model memory).*(not|cannot|do not|instead of|substitute|substituting)
+  - type: output-matches
+    name: arch-research-unavailable-no-current-fact-claim
+    config:
+      pattern: (?i)(current|latest)\s+(pricing|limits|availability|compatibility)\s+(is|are)\s
+      negate: true
+- name: system-architecture-reviewer-produces-convergence-research
+  prompt: |
+    Scope is confirmed for synthetic review `synthetic-queue` with reliability
+    and cost focus. I confirm convergence Research task
+    `synthetic-queue-convergence` for synthetic date `2026-09-21`. Use only
+    the staged architecture options, compare both candidates, preserve the
+    evidence boundary, and write the canonical primary Research artifact now.
+    Return the recommendation to Architecture Reviewer, but do not create the
+    Architecture Review Record or make an ADR decision yet.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/architecture-options.md
+      dest: evidence/architecture-options.md
+    skills:
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: architecture-rpi-research-production
+    agent: system-architecture-reviewer
+  constraints:
+    max_agent_duration: 110s
+    max_duration: 150s
+  graders:
+  - type: file-exists
+    name: architecture-convergence-research-exists
+    config:
+      path: .copilot-tracking/research/2026-09-21/synthetic-queue-convergence-research.md
+  - type: file-matches
+    name: architecture-convergence-research-compares-options
+    config:
+      path: .copilot-tracking/research/2026-09-21/synthetic-queue-convergence-research.md
+      pattern: (?is)(Research Questions|Questions).*Q1.*(Evidence|Evidence Ledger).*C1.*managed queue.*self-hosted broker.*(Recommendation and Alternatives|recommendation).*confidence.*unresolved
+  - type: file-not-exists
+    name: architecture-research-does-not-preempt-review-record
+    config:
+      path: .copilot-tracking/reviews/architecture/2026-09-21/synthetic-queue-architecture-review.md
+  - type: output-matches
+    name: architecture-research-returns-to-reviewer-authority
+    config:
+      pattern: (?is)(Architecture Reviewer|reviewer).*(retain|own|decide).*(recommendation|trade-off|architecture)
+- name: system-architecture-reviewer-writes-record-first-handoffs
+  prompt: |
+    Scope is confirmed for synthetic review `synthetic-queue` with reliability
+    and cost focus. The staged Research artifact is complete, and I accept
+    recommendation `C1`. Preserve evidence `E1` and the staged Research
+    artifact path. Perform the review now, write the canonical
+    Architecture Review Record for synthetic date `2026-09-21` with a
+    disposition for both focus areas, then prepare the existing ADR Creation
+    and RPI Plan handoffs from that record.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/architecture-research.md
+      dest: .copilot-tracking/research/2026-09-21/synthetic-queue-research.md
+    skills:
+    - ../../.github/skills/project-planning/architecture-review
+    - ../../.github/skills/rpi/rpi-research
+  tags:
+    category: agent-behavior
+    scenario: architecture-record-execution
+    agent: system-architecture-reviewer
+  constraints:
+    max_agent_duration: 110s
+    max_duration: 150s
+  graders:
+  - type: file-exists
+    name: architecture-review-record-exists
+    config:
+      path: .copilot-tracking/reviews/architecture/2026-09-21/synthetic-queue-architecture-review.md
+  - type: file-matches
+    name: architecture-review-record-covers-scope-and-research
+    config:
+      path: .copilot-tracking/reviews/architecture/2026-09-21/synthetic-queue-architecture-review.md
+      pattern: (?is)(?=.*Evidence Sources.*E1.*synthetic-queue-research\.md)(?=.*Pillar Findings and Non-Findings.*reliability.*(?:finding|no finding|unassessed).*cost.*(?:finding|no finding|unassessed))(?=.*Research Recommendation.*C1.*E1.*medium.*budget approval)(?=.*Reviewer Disposition.*C1.*accepted).*
+  - type: transcript-matches
+    name: architecture-handoffs-use-record-path
+    config:
+      pattern: (?is)(ADR Creation|Create ADR).*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md.*(RPI Plan|Create Plan).*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md
 - name: ux-ui-designer-problem-framing-route
   prompt: |
     Project `operations-dashboard`: help me work out what the actual problem is

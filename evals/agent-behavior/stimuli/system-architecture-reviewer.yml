@@ -18,3 +18,138 @@ stimuli:
         config:
           pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
+
+  - name: system-architecture-reviewer-research-gate
+    prompt: |
+      We confirmed a review scope around cost and reliability, but our local
+      artifacts do not establish the current managed-service limits or pricing
+      for the two candidate platforms. Explain the next evidence step, the
+      bounded brief, and who still owns the architecture recommendation.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: architecture-research-gate
+    graders:
+      - type: output-matches
+        name: arch-research-gate-activation
+        config:
+          pattern: '(?is)(?=.*rpi-research)(?=.*(current|service|pricing|cost))(?=.*(evidence criteria|question))(?=.*(scope|non-goal|version|date)).*'
+      - type: output-matches
+        name: arch-research-gate-authority
+        config:
+          pattern: '(?is)(?=.*(reviewer|user))(?=.*(retain|own|remain|still))(?=.*(recommendation|architecture decision|trade-off))(?=.*(rpi-research|research))(?=.*(evidence|finding|fact|input))(?=.*(not|does not|cannot|never|rather than|instead of)).*'
+
+  - name: system-architecture-reviewer-research-unavailable
+    prompt: |
+      The required current compatibility lookup is unresolved and
+      `rpi-research` is unavailable. Can you still recommend one architecture
+      from model memory? State what proceeds and what stops.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: architecture-research-unavailable
+    graders:
+      - type: output-matches
+        name: arch-research-unavailable-stops
+        config:
+          pattern: '(?is)(unavailable|blocked|unresolved).*(stop|pause|cannot|do not).*(recommend|conclusion|dependent)'
+      - type: output-matches
+        name: arch-research-unavailable-no-memory
+        config:
+          pattern: '(?is)(training data|model memory).*(not|cannot|do not|instead of|substitute|substituting)'
+      - type: output-matches
+        name: arch-research-unavailable-no-current-fact-claim
+        config:
+          pattern: '(?i)(current|latest)\s+(pricing|limits|availability|compatibility)\s+(is|are)\s'
+          negate: true
+
+  - name: system-architecture-reviewer-produces-convergence-research
+    prompt: |
+      Scope is confirmed for synthetic review `synthetic-queue` with reliability
+      and cost focus. I confirm convergence Research task
+      `synthetic-queue-convergence` for synthetic date `2026-09-21`. Use only
+      the staged architecture options, compare both candidates, preserve the
+      evidence boundary, and write the canonical primary Research artifact now.
+      Return the recommendation to Architecture Reviewer, but do not create the
+      Architecture Review Record or make an ADR decision yet.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/architecture-options.md
+          dest: evidence/architecture-options.md
+      skills:
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: architecture-rpi-research-production
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-exists
+        name: architecture-convergence-research-exists
+        config:
+          path: .copilot-tracking/research/2026-09-21/synthetic-queue-convergence-research.md
+      - type: file-matches
+        name: architecture-convergence-research-compares-options
+        config:
+          path: .copilot-tracking/research/2026-09-21/synthetic-queue-convergence-research.md
+          pattern: '(?is)(Research Questions|Questions).*Q1.*(Evidence|Evidence Ledger).*C1.*managed queue.*self-hosted broker.*(Recommendation and Alternatives|recommendation).*confidence.*unresolved'
+      - type: file-not-exists
+        name: architecture-research-does-not-preempt-review-record
+        config:
+          path: .copilot-tracking/reviews/architecture/2026-09-21/synthetic-queue-architecture-review.md
+      - type: output-matches
+        name: architecture-research-returns-to-reviewer-authority
+        config:
+          pattern: '(?is)(Architecture Reviewer|reviewer).*(retain|own|decide).*(recommendation|trade-off|architecture)'
+
+  - name: system-architecture-reviewer-writes-record-first-handoffs
+    prompt: |
+      Scope is confirmed for synthetic review `synthetic-queue` with reliability
+      and cost focus. The staged Research artifact is complete, and I accept
+      recommendation `C1`. Preserve evidence `E1` and the staged Research
+      artifact path. Perform the review now, write the canonical
+      Architecture Review Record for synthetic date `2026-09-21` with a
+      disposition for both focus areas, then prepare the existing ADR Creation
+      and RPI Plan handoffs from that record.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/architecture-research.md
+          dest: .copilot-tracking/research/2026-09-21/synthetic-queue-research.md
+      skills:
+        - ../../.github/skills/project-planning/architecture-review
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: architecture-record-execution
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-exists
+        name: architecture-review-record-exists
+        config:
+          path: .copilot-tracking/reviews/architecture/2026-09-21/synthetic-queue-architecture-review.md
+      - type: file-matches
+        name: architecture-review-record-covers-scope-and-research
+        config:
+          path: .copilot-tracking/reviews/architecture/2026-09-21/synthetic-queue-architecture-review.md
+          pattern: '(?is)(?=.*Evidence Sources.*E1.*synthetic-queue-research\.md)(?=.*Pillar Findings and Non-Findings.*reliability.*(?:finding|no finding|unassessed).*cost.*(?:finding|no finding|unassessed))(?=.*Research Recommendation.*C1.*E1.*medium.*budget approval)(?=.*Reviewer Disposition.*C1.*accepted).*'
+      - type: transcript-matches
+        name: architecture-handoffs-use-record-path
+        config:
+          pattern: '(?is)(ADR Creation|Create ADR).*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md.*(RPI Plan|Create Plan).*\.copilot-tracking[/\\]reviews[/\\]architecture[/\\]2026-09-21[/\\]synthetic-queue-architecture-review\.md'
