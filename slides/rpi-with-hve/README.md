@@ -1,7 +1,7 @@
 ---
 title: RPI with HVE Core deck
 description: An interactive presentation on managing context and carrying evidence through the HVE Core RPI workflow.
-ms.date: 2026-09-23
+ms.date: 2026-09-24
 ---
 
 ## Build and present
@@ -171,3 +171,5 @@ imports from another deck. The deck uses [reveal.js](https://revealjs.com/) 6.0.
 under the MIT license; the build preserves its upstream license in the bundle.
 The source code is licensed under MIT; see `LICENSE`. This README's explanatory prose
 is Microsoft content under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
