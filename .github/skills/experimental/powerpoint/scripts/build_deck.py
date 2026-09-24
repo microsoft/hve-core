@@ -27,7 +27,7 @@ from pathlib import Path
 
 from lxml import etree
 from pptx import Presentation
-from pptx.enum.shapes import MSO_CONNECTOR_TYPE, MSO_SHAPE
+from pptx.enum.shapes import MSO_CONNECTOR_TYPE, MSO_SHAPE, MSO_SHAPE_TYPE
 from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
 from pptx_charts import add_chart_element
@@ -61,6 +61,8 @@ CONNECTOR_TYPE_MAP = {
 
 PNS = "http://schemas.openxmlformats.org/presentationml/2006/main"
 ANS = "http://schemas.openxmlformats.org/drawingml/2006/main"
+DECORATIVE_NS = "http://schemas.microsoft.com/office/drawing/2017/decorative"
+DECORATIVE_EXT_URI = "{C183D7F6-B498-43B3-948B-1728B52AA6E4}"
 
 # Text auto-fit. Helvetica metrics understate Segoe UI, the deck default, so
 # measured widths are widened before comparison; calibrated against renders that
@@ -406,6 +408,7 @@ def add_image_element(slide, elem, content_dir: Path):
     pic = slide.shapes.add_picture(str(img_path), left, top, width, height)
     if "name" in elem:
         pic.name = elem["name"]
+    set_alt_text(pic, elem)
     apply_rotation(pic, elem.get("rotation"))
 
     # Restore blipFill attributes (rotWithShape, dpi, etc.)
@@ -442,6 +445,97 @@ def add_image_element(slide, elem, content_dir: Path):
             amf.set("amt", amt)
 
     return pic
+
+
+def set_alt_text(pic, elem: dict) -> None:
+    """Set a picture's alternative text or mark it decorative.
+
+    ``alt`` becomes the ``descr`` read by screen readers. ``decorative: true``
+    clears it and adds the Office decorative flag so readers skip the image.
+    Without either, python-pptx's default (the image file name) remains.
+    """
+    c_nv_pr = pic._element.find(".//" + qn("p:cNvPr"))
+    if c_nv_pr is None:
+        return
+    if elem.get("decorative"):
+        c_nv_pr.set("descr", "")
+        ext_lst = c_nv_pr.find(qn("a:extLst"))
+        if ext_lst is None:
+            ext_lst = etree.SubElement(c_nv_pr, qn("a:extLst"))
+        ext = etree.SubElement(ext_lst, qn("a:ext"), uri=DECORATIVE_EXT_URI)
+        decorative = etree.SubElement(ext, f"{{{DECORATIVE_NS}}}decorative")
+        decorative.set("val", "1")
+    elif elem.get("alt"):
+        c_nv_pr.set("descr", str(elem["alt"]))
+
+
+def _normalized(text: str) -> str:
+    return " ".join(str(text).split()).casefold()
+
+
+def ensure_slide_title(slide, title: str | None, slide_width) -> None:
+    """Give the slide a title placeholder so assistive technology can find it.
+
+    Reuses the visible text box whose text equals ``title``; otherwise adds an
+    off-slide title that screen readers announce but nothing renders.
+    """
+    if not title or not str(title).strip():
+        return
+    existing = slide.shapes.title
+    if existing is not None and existing.has_text_frame and existing.text.strip():
+        return
+
+    target = None
+    for shape in slide.shapes:
+        if (
+            shape.shape_type == MSO_SHAPE_TYPE.TEXT_BOX
+            and shape.has_text_frame
+            and _normalized(shape.text_frame.text) == _normalized(title)
+        ):
+            target = shape
+            break
+    if target is None:
+        target = slide.shapes.add_textbox(
+            slide_width + Inches(1), Inches(0), Inches(6), Inches(0.5)
+        )
+        target.text_frame.text = str(title)
+        target.name = "Slide Title"
+        sp_tree = slide.shapes._spTree
+        sp_tree.remove(target._element)
+        # Index 2 follows nvGrpSpPr and grpSpPr, so the title is read first.
+        sp_tree.insert(2, target._element)
+
+    sp = target._element
+    c_nv_sp_pr = sp.find(qn("p:nvSpPr") + "/" + qn("p:cNvSpPr"))
+    if c_nv_sp_pr is not None and "txBox" in c_nv_sp_pr.attrib:
+        del c_nv_sp_pr.attrib["txBox"]
+    nv_pr = sp.find(qn("p:nvSpPr") + "/" + qn("p:nvPr"))
+    if nv_pr is not None and nv_pr.find(qn("p:ph")) is None:
+        ph = etree.Element(qn("p:ph"))
+        ph.set("type", "title")
+        nv_pr.insert(0, ph)
+    # A title placeholder inherits the master's centred anchor and alignment;
+    # keep the text box defaults.
+    body_pr = sp.find(qn("p:txBody") + "/" + qn("a:bodyPr"))
+    if body_pr is not None and not body_pr.get("anchor"):
+        body_pr.set("anchor", "t")
+    for paragraph in sp.iter(qn("a:p")):
+        p_pr = paragraph.find(qn("a:pPr"))
+        if p_pr is None:
+            p_pr = etree.Element(qn("a:pPr"))
+            paragraph.insert(0, p_pr)
+        if not p_pr.get("algn"):
+            p_pr.set("algn", "l")
+
+
+def apply_text_language(prs, language: str | None) -> None:
+    """Tag every slide text run with ``language`` where no language is set."""
+    if not language:
+        return
+    for slide in prs.slides:
+        for node in slide._element.iter(qn("a:rPr"), qn("a:endParaRPr")):
+            if not node.get("lang"):
+                node.set("lang", str(language))
 
 
 def add_rich_text_element(slide, elem, colors, typography):
@@ -1211,6 +1305,8 @@ def build_slide(
     if turbo_enabled:
         slide.shapes.turbo_add_enabled = False
 
+    ensure_slide_title(slide, slide_content.get("title"), prs.slide_width)
+
     # Add speaker notes (preserve empty strings when notes slide exists)
     notes = slide_content.get("speaker_notes")
     if notes is not None:
@@ -1452,6 +1548,7 @@ def main():
             )
             print(f"Built slide {num}: {slide_content.get('title', 'Untitled')}")
 
+    apply_text_language(prs, (style.get("metadata") or {}).get("language"))
     prs.save(str(output_path))
     print(f"\nDeck saved to {output_path}")
     print(f"Total slides: {len(prs.slides)}")

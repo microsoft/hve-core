@@ -19,6 +19,7 @@ from build_deck import (
     add_rich_text_element,
     add_shape_element,
     add_textbox,
+    apply_text_language,
     build_element_in_group,
     build_slide,
     clear_slide_shapes,
@@ -2185,3 +2186,145 @@ class TestDryRun:
         )
         rc = main()
         assert rc == 1
+
+
+class TestAccessibility:
+    """Tests for slide titles, alternative text, and text language."""
+
+    def _slide(self, presentation, tmp_path, elements, title="Deck Title"):
+        content = {"slide": 1, "title": title, "elements": elements}
+        return build_slide(presentation, content, {}, tmp_path)
+
+    def test_given_matching_textbox_when_built_then_it_becomes_the_title(
+        self, blank_presentation, tmp_path
+    ):
+        # Arrange
+        elements = [
+            {
+                "type": "textbox",
+                "left": 1,
+                "top": 1,
+                "width": 6,
+                "height": 1,
+                "text": "Deck  Title",
+            },
+            {
+                "type": "textbox",
+                "left": 1,
+                "top": 3,
+                "width": 6,
+                "height": 1,
+                "text": "Body",
+            },
+        ]
+
+        # Act
+        slide = self._slide(blank_presentation, tmp_path, elements)
+
+        # Assert
+        assert slide.shapes.title is not None
+        assert slide.shapes.title.text == "Deck  Title"
+        assert slide.shapes.title.left == Inches(1)
+        assert slide.shapes.title.text_frame.paragraphs[0]._p.pPr.get("algn") == "l"
+        assert len(slide.shapes) == 2
+
+    def test_given_no_matching_text_when_built_then_off_slide_title_is_first(
+        self, blank_presentation, tmp_path
+    ):
+        # Arrange
+        elements = [
+            {
+                "type": "textbox",
+                "left": 1,
+                "top": 1,
+                "width": 6,
+                "height": 1,
+                "text": "Something else",
+            },
+        ]
+
+        # Act
+        slide = self._slide(blank_presentation, tmp_path, elements)
+
+        # Assert
+        title = slide.shapes.title
+        assert title is not None and title.text == "Deck Title"
+        assert title.left >= blank_presentation.slide_width
+        assert slide.shapes[0].shape_id == title.shape_id
+
+    def test_given_no_title_field_when_built_then_no_title_added(
+        self, blank_presentation, tmp_path
+    ):
+        # Act
+        slide = self._slide(blank_presentation, tmp_path, [], title=None)
+
+        # Assert
+        assert slide.shapes.title is None
+
+    def test_given_alt_when_image_added_then_descr_set(
+        self, blank_slide, sample_image_path
+    ):
+        # Arrange
+        elem = {
+            "type": "image",
+            "path": sample_image_path.name,
+            "left": 1,
+            "top": 1,
+            "width": 2,
+            "height": 2,
+            "alt": "VS Code editor",
+        }
+
+        # Act
+        pic = add_image_element(blank_slide, elem, sample_image_path.parent)
+
+        # Assert
+        assert pic._element.nvPicPr.cNvPr.get("descr") == "VS Code editor"
+
+    def test_given_decorative_when_image_added_then_flagged(
+        self, blank_slide, sample_image_path
+    ):
+        # Arrange
+        elem = {
+            "type": "image",
+            "path": sample_image_path.name,
+            "left": 1,
+            "top": 1,
+            "width": 2,
+            "height": 2,
+            "decorative": True,
+        }
+
+        # Act
+        pic = add_image_element(blank_slide, elem, sample_image_path.parent)
+
+        # Assert
+        c_nv_pr = pic._element.nvPicPr.cNvPr
+        assert c_nv_pr.get("descr") == ""
+        ns = "{http://schemas.microsoft.com/office/drawing/2017/decorative}"
+        assert c_nv_pr.find(f".//{ns}decorative").get("val") == "1"
+
+    def test_given_language_when_applied_then_runs_tagged(
+        self, blank_presentation, tmp_path
+    ):
+        # Arrange
+        elements = [
+            {
+                "type": "textbox",
+                "left": 1,
+                "top": 1,
+                "width": 6,
+                "height": 1,
+                "text": "Hello",
+            },
+        ]
+        slide = self._slide(blank_presentation, tmp_path, elements)
+
+        # Act
+        apply_text_language(blank_presentation, "en-US")
+
+        # Assert
+        runs = slide._element.iter(
+            "{http://schemas.openxmlformats.org/drawingml/2006/main}rPr"
+        )
+        assert all(r.get("lang") == "en-US" for r in runs)
