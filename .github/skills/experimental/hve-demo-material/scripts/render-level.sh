@@ -4,7 +4,8 @@
 #
 # render-level.sh
 # Render one authored demo-material level into a deck, frames, narration, a
-# captioned MP4, and a transcript page, then score the machine-verifiable
+# captioned MP4, a transcript page, and, when the HVE Slides starter is
+# available, a single-file HTML deck, then score the machine-verifiable
 # criteria.
 
 set -euo pipefail
@@ -20,6 +21,8 @@ readonly PPTX_PIPELINE="${SKILLS_ROOT}/powerpoint/scripts/invoke-pptx-pipeline.s
 readonly VOICEOVER="${SKILLS_ROOT}/tts-voiceover/scripts/generate-voiceover.sh"
 readonly ASSEMBLE="${SKILLS_ROOT}/demo-video/scripts/assemble-video.sh"
 readonly CAPTURE_SKILL="${SKILLS_ROOT}/vscode-playwright"
+# The HVE Slides starter lives only in the hve-core repository, not in the plugin.
+readonly DEFAULT_HTML_DECK_TEMPLATE="${SKILLS_ROOT}/../hve-slides/templates/deck"
 
 LEVEL=""
 LEVEL_DIR=""
@@ -27,6 +30,8 @@ WORKSPACE=""
 NARRATION="piper"
 CAPTURE=""
 VISION_PROMPT_FILE=""
+HTML_DECK_TEMPLATE=""
+HTML_DECK="auto"
 declare -a SKIP_VENV=()
 
 usage() {
@@ -41,6 +46,8 @@ Options:
   --narration <azure|piper>     Narration engine (default: piper)
   --capture <live|deck-export>  Capture profile (default: the level default)
   --vision-prompt-file <path>   Run the vision slide check with this prompt
+  --html-deck-template <dir>    HVE Slides starter; required, fails when missing
+  --no-html-deck                Skip the HTML deck even when the starter exists
   --skip-venv-setup             Skip uv sync in each skill wrapper
   -h, --help                    Show this help message
 EOF
@@ -65,6 +72,8 @@ parse_args() {
       --narration) NARRATION="$2"; shift 2 ;;
       --capture) CAPTURE="$2"; shift 2 ;;
       --vision-prompt-file) VISION_PROMPT_FILE="$2"; shift 2 ;;
+      --html-deck-template) HTML_DECK_TEMPLATE="$2"; HTML_DECK="required"; shift 2 ;;
+      --no-html-deck) HTML_DECK="off"; shift ;;
       --skip-venv-setup) SKIP_VENV=("--skip-venv-setup"); shift ;;
       -h|--help) usage ;;
       *) err "Unknown option: $1" ;;
@@ -86,6 +95,22 @@ validate_args() {
   [[ "${CAPTURE}" =~ ^(live|deck-export)$ ]] || err "--capture must be live or deck-export."
   LEVEL_DIR="$(cd "${LEVEL_DIR}" && pwd)"
   WORKSPACE="$(cd "${WORKSPACE}" && pwd)"
+  case "${HTML_DECK}" in
+    required)
+      [[ -f "${HTML_DECK_TEMPLATE}/bundle.mjs" ]] || err "No HVE Slides starter at ${HTML_DECK_TEMPLATE}."
+      ;;
+    auto)
+      if [[ -f "${DEFAULT_HTML_DECK_TEMPLATE}/bundle.mjs" ]]; then
+        HTML_DECK_TEMPLATE="${DEFAULT_HTML_DECK_TEMPLATE}"
+        HTML_DECK="required"
+      else
+        HTML_DECK="off"
+      fi
+      ;;
+  esac
+  if [[ "${HTML_DECK}" == "required" ]]; then
+    HTML_DECK_TEMPLATE="$(cd "${HTML_DECK_TEMPLATE}" && pwd -P)"
+  fi
 }
 
 run_captures() {
@@ -142,6 +167,32 @@ narrate_and_assemble() {
     --output "${LEVEL_DIR}/output/${video_name}"
 }
 
+build_html_deck() {
+  local name="hve-demo-${LEVEL}"
+  local root="${LEVEL_DIR}/html-deck"
+  local deck_dir="${root}/slides/${name}"
+  log "Building the HTML slide deck"
+  rm -rf "${root}"
+  uv run --directory "${SKILL_ROOT}" python scripts/html_deck.py \
+    --level "${LEVEL}" \
+    --level-dir "${LEVEL_DIR}" \
+    --template "${HTML_DECK_TEMPLATE}" \
+    --deck-dir "${deck_dir}"
+  npm ci --prefix "${deck_dir}" --ignore-scripts --no-audit --no-fund --silent
+  # bundle.mjs only runs when invoked by its real path, not through a symlink.
+  deck_dir="$(cd "${deck_dir}" && pwd -P)"
+  node "${deck_dir}/bundle.mjs"
+  mv "$(dirname "$(dirname "${deck_dir}")")/docs/slides/${name}.html" \
+    "${LEVEL_DIR}/output/${name}.html"
+  cp "${deck_dir}/demo-material-build.json" "${LEVEL_DIR}/output/html-deck-build.json"
+
+  log "Checking the HTML slide deck offline"
+  uv run --directory "${CAPTURE_SKILL}" python "${SCRIPT_DIR}/check_html_deck.py" \
+    --deck "${LEVEL_DIR}/output/${name}.html" \
+    --output "${LEVEL_DIR}/output/html-deck-check.json" \
+    || log "HTML deck check failed; T-10 records the details."
+}
+
 write_accessible_media() {
   local video="${LEVEL_DIR}/output/$1"
   local captions="${video%.mp4}.vtt"
@@ -173,6 +224,13 @@ main() {
   fi
   build_and_validate_deck "${deck}"
   narrate_and_assemble "${video_name}"
+  local -a html_deck=()
+  if [[ "${HTML_DECK}" == "required" ]]; then
+    build_html_deck
+    html_deck=(--html-deck)
+  else
+    log "Skipping the HTML slide deck: no HVE Slides starter"
+  fi
   write_accessible_media "${video_name}"
 
   log "Scoring machine-verifiable criteria"
@@ -182,6 +240,7 @@ main() {
     --level-dir "${LEVEL_DIR}" \
     --capture "${CAPTURE}" \
     --narration "${NARRATION}" \
+    "${html_deck[@]}" \
     > "${LEVEL_DIR}/output/render-result.json" || exit_code=$?
   cat "${LEVEL_DIR}/output/render-result.json"
   return "${exit_code}"

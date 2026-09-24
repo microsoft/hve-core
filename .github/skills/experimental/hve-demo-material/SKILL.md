@@ -60,6 +60,8 @@ capture fidelity, and criterion templates, while topic sets the source set.
 * Each requested level has one PPTX and one narrated MP4 at the manifest paths.
 * Each MP4 carries captions, and each level has a WebVTT captions file and a
   transcript page covering every slide's title, on-screen text, and narration.
+* In the hve-core repository, each scripted render also produces a single-file
+  HTML slide deck from the same slide content, scored by `T-10`.
 * Every criterion template that applies to the level is instantiated against the
   topic's resolved sources and scored in the manifest.
 * L100 and L200 frames are exported from the built deck, while L300 and L400
@@ -149,7 +151,17 @@ without an agent: live capture from `capture-plan.yml`, deck build and
 validation, frame export, narration, and MP4 assembly. It then writes WebVTT
 captions from the speaker notes, embeds them in the MP4, writes a transcript
 page with a captioned player, and writes `output/render-result.json`, which
-scores the criteria a machine can verify (`T-04` through `T-09`).
+scores the criteria a machine can verify (`T-04` through `T-10`).
+
+When the repository's HVE Slides starter is present, the script also converts
+the same slide content into a browser deck. `scripts/html_deck.py` maps each
+slide to semantic markup with its speaker notes and embedded images, the
+starter's bundler writes one offline HTML file to
+`output/hve-demo-<level>.html`, and `scripts/check_html_deck.py` opens it in
+headless Chromium with the network disabled. The starter is not part of the
+plugin, so outside the hve-core repository the step is skipped and `T-10` is not
+scored. Pass `--html-deck-template` to make the deck required, or
+`--no-html-deck` to skip it.
 
 ```bash
 scripts/render-level.sh --level L100 --level-dir <level-dir> --workspace <repo> --narration piper

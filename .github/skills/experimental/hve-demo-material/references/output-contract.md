@@ -47,6 +47,13 @@ Store the deck at `output/hve-demo-{{level}}.pptx`, its narrated version at
 `output/hve-demo-{{level}}.mp4`. Store the manifest at
 `output/manifest.yml`.
 
+A scripted render in the hve-core repository also stores a single-file HTML
+slide deck at `output/hve-demo-{{level}}.html`, with its offline browser result
+in `output/html-deck-check.json`. The deck is generated from the same
+`content/` as the PPTX, so the two never diverge. It uses the HVE Slides theme
+and presenter controls rather than the house palette, which governs the PPTX and
+the video frames.
+
 ## Prerequisite Matrix
 
 | Capability                                      | Required prerequisite                                                                                               | Deferred behavior                                                                                                                              |
@@ -60,6 +67,7 @@ Store the deck at `output/hve-demo-{{level}}.pptx`, its narrated version at
 | MP4 assembly                                    | FFmpeg and ffprobe on `PATH`                                                                                        | Record the missing executable as `Deferred`; do not claim an MP4 exists                                                                        |
 | Live capture, `capture: live` only              | VS Code CLI plus Playwright MCP browser tools                                                                       | Record the unavailable entrypoint by name as `Deferred`; do not replace an L300 or L400 live capture with deck export                          |
 | Dynamic topic resolution                        | The `rpi-research` skill                                                                                            | Record its absence as `Deferred` for any topic other than `hve-core-general`; do not guess a source set                                        |
+| HTML slide deck, scripted renders only          | The hve-core HVE Slides starter, Node.js 24 with npm, and Chromium through `vscode-playwright`                      | Without the starter, skip the deck and record `html_deck: not-applicable`; a missing Node.js or Chromium fails `T-10`                          |
 
 Establish live-capture availability by attempting a browser navigation, never by
 inspecting tool names. MCP tool prefixes are derived from the server's
@@ -100,6 +108,7 @@ deliverables:
   mp4: output/hve-demo-L100.mp4 # carries an English caption track
   captions: output/hve-demo-L100.vtt
   transcript_page: output/index.html
+  html_deck: <output/hve-demo-L100.html | not-applicable> # scripted renders with the HVE Slides starter
 visuals:
   capture_profile: <live | deck-export> # deck-export at L300 or L400 only when the caller supplied it
   evidence:

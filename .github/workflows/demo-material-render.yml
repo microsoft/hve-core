@@ -225,6 +225,11 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
 
+      - name: Setup Node.js for the HTML slide deck
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
       - name: Install LibreOffice and FFmpeg
         shell: bash
         run: |
@@ -248,7 +253,15 @@ jobs:
             "${PIPER_VOICE_ONNX_SHA256}" "${PIPER_VOICE}.onnx" \
             "${PIPER_VOICE_JSON_SHA256}" "${PIPER_VOICE}.onnx.json" | sha256sum --check
 
-      - name: Install VS Code CLI and Chromium for live capture
+      - name: Install Chromium for the HTML deck check and live capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv sync --directory .github/skills/experimental/vscode-playwright
+          uv run --directory .github/skills/experimental/vscode-playwright \
+            playwright install --with-deps chromium
+
+      - name: Install VS Code CLI for live capture
         if: ${{ matrix.level == 'L300' || matrix.level == 'L400' }}
         shell: bash
         run: |
@@ -260,9 +273,6 @@ jobs:
           printf '%s  %s\n' "${VSCODE_CLI_SHA256}" "${cli_dir}/cli.tar.gz" | sha256sum --check
           tar -xzf "${cli_dir}/cli.tar.gz" -C "${cli_dir}"
           echo "${cli_dir}" >> "${GITHUB_PATH}"
-          uv sync --directory .github/skills/experimental/vscode-playwright
-          uv run --directory .github/skills/experimental/vscode-playwright \
-            playwright install --with-deps chromium
 
       - name: Render ${{ matrix.level }}
         shell: bash
@@ -272,7 +282,8 @@ jobs:
             --level "${LEVEL}" \
             --level-dir "${LEVEL_DIR}" \
             --workspace "${GITHUB_WORKSPACE}" \
-            --narration piper
+            --narration piper \
+            --html-deck-template "${GITHUB_WORKSPACE}/.github/skills/hve-slides/templates/deck"
 
       - name: Collect render outputs
         if: ${{ always() }}
@@ -286,9 +297,11 @@ jobs:
             "output/hve-demo-${LEVEL}.pptx" \
             "output/hve-demo-${LEVEL}.mp4" \
             "output/hve-demo-${LEVEL}.vtt" \
+            "output/hve-demo-${LEVEL}.html" \
             output/index.html \
             output/render-result.json \
             output/captures.json \
+            output/html-deck-check.json \
             research/source-register.md \
             manifest.yml; do
             if [[ -f "${LEVEL_DIR}/${rel}" ]]; then
@@ -355,7 +368,7 @@ jobs:
           index = json.loads(index_path.read_text(encoding="utf-8")) if index_path.is_file() else {}
           if index.get("schema_version") != "demo-material-site/v1":
               index = {"schema_version": "demo-material-site/v1", "levels": {}}
-          published = ("pptx", "mp4", "vtt")
+          published = ("pptx", "mp4", "vtt", "html")
 
           for level_dir in sorted(p for p in renders.iterdir() if re.fullmatch(r"L[1-4]00", p.name)):
               level = level_dir.name
@@ -397,7 +410,7 @@ jobs:
           index["generated_at"] = now
           index["render_run_id"] = os.environ["RENDER_RUN_ID"]
           allowed = re.compile(
-              r"^(index\.json|L[1-4]00/(hve-demo-L[1-4]00\.(pptx|mp4|vtt)|index\.html|render-result\.json|source-register\.md))$"
+              r"^(index\.json|L[1-4]00/(hve-demo-L[1-4]00\.(pptx|mp4|vtt|html)|index\.html|render-result\.json|source-register\.md))$"
           )
           for path in site.rglob("*"):
               if path.is_symlink() or (path.is_file() and not allowed.match(path.relative_to(site).as_posix())):

@@ -7,7 +7,7 @@ Reads the level contracts and pinned sources from ``references/curriculum.md``
 so CI and the agent share one policy source, decides which levels need a new
 run, writes the ``demo-video`` segments manifest, generates captions and an
 accessible transcript page, and scores the criteria a machine can verify
-(T-04 through T-09).
+(T-04 through T-10).
 
 Usage::
 
@@ -16,7 +16,7 @@ Usage::
     python render_checks.py segments --level-dir DIR --output-name x.mp4
     python render_checks.py captions --level-dir DIR --output DIR/output/x.vtt
     python render_checks.py transcript --level L100 --level-dir DIR
-    python render_checks.py evaluate --level L100 --level-dir DIR
+    python render_checks.py evaluate --level L100 --level-dir DIR [--html-deck]
 
 ``levels`` and ``changed`` use only the standard library so a runner can call
 them before any environment is synced.
@@ -567,6 +567,11 @@ def build_transcript_page(level: str, level_dir: Path) -> str:
     minutes = measure_minutes(level_dir / "output" / f"hve-demo-{level}.mp4")
     length = f" &middot; {minutes:.1f} minutes" if minutes else ""
     stem = f"hve-demo-{level}"
+    slides_link = (
+        f' &middot; <a href="{stem}.html">Open the slides (HTML)</a>'
+        if (level_dir / "output" / f"{stem}.html").is_file()
+        else ""
+    )
     sections = []
     for number, slide in load_slides(level_dir / "content"):
         slide_title = str(slide.get("title") or f"Slide {number}")
@@ -602,7 +607,7 @@ def build_transcript_page(level: str, level_dir: Path) -> str:
         'label="English" default></video>'
         f'<p><a href="{stem}.mp4">Download the video (MP4)</a> &middot; '
         f'<a href="{stem}.pptx">Download the deck (PowerPoint)</a> &middot; '
-        f'<a href="{stem}.vtt">Download the captions (WebVTT)</a></p>'
+        f'<a href="{stem}.vtt">Download the captions (WebVTT)</a>{slides_link}</p>'
         f"<h2>Transcript</h2>{''.join(sections)}</main></body></html>\n"
     )
 
@@ -681,6 +686,45 @@ def check_accessibility(level: str, level_dir: Path) -> dict:
     }
 
 
+def check_html_deck(level: str, level_dir: Path) -> dict:
+    """Score T-10: a single-file HTML deck that starts offline and fits."""
+    output = level_dir / "output"
+    problems = []
+    deck = output / f"hve-demo-{level}.html"
+    slides = len(slide_numbers(level_dir / "content"))
+    if not deck.is_file():
+        problems.append("HTML deck missing")
+    else:
+        page = deck.read_text(encoding="utf-8")
+        if page.count('id="hve-slide-metadata"') != 1:
+            problems.append("slide catalog metadata missing")
+        if page.count('<section id="slide-') != slides:
+            problems.append(f"HTML deck does not hold all {slides} slides")
+        if re.search(r'<link rel="stylesheet"|<script defer src=', page):
+            problems.append("HTML deck still references sibling files")
+    build = output / "html-deck-build.json"
+    if build.is_file():
+        missing = json.loads(build.read_text(encoding="utf-8")).get("missing_images")
+        problems += [f"image not embedded: {path}" for path in missing or []]
+    browser = output / "html-deck-check.json"
+    if not browser.is_file():
+        problems.append("offline browser check not run")
+    else:
+        result = json.loads(browser.read_text(encoding="utf-8"))
+        if result.get("result") != "pass":
+            detail = (
+                result.get("overflowing_slides")
+                or result.get("errors")
+                or result.get("external_requests")
+            )
+            problems.append(f"offline browser check failed: {detail}")
+    return {
+        "result": "fail" if problems else "pass",
+        "evidence": "; ".join(problems)
+        or "single-file deck with every slide, started offline, no slide overflows",
+    }
+
+
 def default_capture_profile(level: str) -> str:
     """Return the curriculum's default capture profile for ``level``."""
     return "live" if level in LIVE_LEVELS else "deck-export"
@@ -692,8 +736,12 @@ def evaluate(
     curriculum: dict[str, dict],
     capture_profile: str | None = None,
     narration_engine: str = "piper",
+    html_deck: bool = False,
 ) -> dict:
-    """Score the machine-verifiable criteria for one rendered level."""
+    """Score the machine-verifiable criteria for one rendered level.
+
+    ``html_deck`` adds T-10 when the render built the HTML slide deck.
+    """
     if level not in curriculum:
         raise CheckError(f"unknown level {level}")
     contract = curriculum[level]
@@ -727,6 +775,8 @@ def evaluate(
         else {"result": "deferred", "evidence": "content/global/style.yaml missing"}
     )
     checks["T-09"] = check_accessibility(level, level_dir)
+    if html_deck:
+        checks["T-10"] = check_html_deck(level, level_dir)
     return {
         "schema_version": 1,
         "level": level,
@@ -763,6 +813,9 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_cmd.add_argument("--capture", choices=("live", "deck-export"))
     evaluate_cmd.add_argument(
         "--narration", choices=("azure", "piper"), default="piper"
+    )
+    evaluate_cmd.add_argument(
+        "--html-deck", action="store_true", help="Score T-10 for the HTML deck"
     )
     return parser
 
@@ -807,6 +860,7 @@ def main(argv: list[str] | None = None) -> int:
             load_curriculum(),
             capture_profile=args.capture,
             narration_engine=args.narration,
+            html_deck=args.html_deck,
         )
         print(json.dumps(result, indent=2))
         return EXIT_SUCCESS if result["ok"] else EXIT_FAILURE

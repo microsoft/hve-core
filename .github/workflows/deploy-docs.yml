@@ -218,7 +218,7 @@ jobs:
           bundle = Path("demo-material-bundle")
           target = Path("docs/docusaurus/build/demo-material")
           allowed = re.compile(
-              r"^(index\.json|L[1-4]00/(hve-demo-L[1-4]00\.(pptx|mp4|vtt)|index\.html|render-result\.json|source-register\.md))$"
+              r"^(index\.json|L[1-4]00/(hve-demo-L[1-4]00\.(pptx|mp4|vtt|html)|index\.html|render-result\.json|source-register\.md))$"
           )
           for path in bundle.rglob("*"):
               if path.is_symlink() or (path.is_file() and not allowed.match(path.relative_to(bundle).as_posix())):
