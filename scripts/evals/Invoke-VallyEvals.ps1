@@ -360,7 +360,7 @@ function Write-JsonFile {
     if ($dir -and -not (Test-Path -LiteralPath $dir)) {
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
     }
-    $json = $Value | ConvertTo-Json -Depth 12
+    $json = $Value | ConvertTo-Json -Depth 30
     Set-Content -LiteralPath $Path -Value $json -Encoding utf8NoBOM
 }
 
@@ -667,6 +667,7 @@ $failedSpecs = 0
 $promotedRunKeys = @{}
 $outputModerationRuns = [System.Collections.Generic.List[hashtable]]::new()
 $phaseTimings = [System.Collections.Generic.List[object]]::new()
+$inputDigest = Get-VallyInputDigest -RepoRoot $resolvedRoot
 
 foreach ($runKey in $uniqueSpecRuns.Keys) {
     $run     = $uniqueSpecRuns[$runKey]
@@ -744,6 +745,8 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         -VallyCommand $VallyCommand `
         -LogPath $specLog `
         -Tag $tag `
+        -RunKey $runKey `
+        -InputDigest $inputDigest `
         -Worker $(if ($assignedShard) { $ShardId } else { $specKey })
     $result['specRel'] = $specRel
     $result['tag'] = $tag
@@ -762,6 +765,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
 
     $result['moderationInput'] = $inputModeration
     $result['moderationOutput'] = $outputModeration
+    $result['integrity'] = Test-VallyDiagnosticEvidence -Diagnostics $result.diagnostics -RunKey $runKey
 
     $isEvaluatorError = $result.exitCode -ne 0 -and
         $result.trials -eq 0 -and
@@ -955,6 +959,16 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             }
         }
     }
+    if (-not $result.integrity.integrityPassed) {
+        $result['status'] = 'integrity-failure'
+        $result['isAdvisory'] = $false
+        if (-not $promotedRunKeys.ContainsKey($runKey)) {
+            $failedSpecs++
+            $promotedRunKeys[$runKey] = $true
+        }
+        Write-Host "::error file=$specRel::Selected evaluation evidence failed integrity validation"
+        if ($FailFast) { break }
+    }
 }
 
 if (-not $SkipOutputModeration -and $outputModerationRuns.Count -gt 0) {
@@ -1024,6 +1038,10 @@ if (-not $SkipOutputModeration -and $outputModerationRuns.Count -gt 0) {
                 $failedSpecs++
                 $promotedRunKeys[$runKey] = $true
             }
+        }
+        if ($result.ContainsKey('integrity') -and -not $result.integrity.integrityPassed) {
+            $result.status = 'integrity-failure'
+            $result.isAdvisory = $false
         }
     }
 }
@@ -1167,6 +1185,7 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
 $hardFailStatuses = @(
     'fail',
     'evaluator-error',
+    'integrity-failure',
     'content-moderation-input',
     'content-moderation-error-input',
     'content-moderation-output',
@@ -1247,6 +1266,8 @@ foreach ($plan in $artifactPlan) {
             resultsPath      = $r.resultsPath
             status           = $specStatus
             failedOrErroredTrials = if ($r.ContainsKey('failedOrErroredTrials')) { @($r.failedOrErroredTrials) } else { @() }
+            diagnostics      = if ($r.ContainsKey('diagnostics')) { $r.diagnostics } else { $null }
+            integrity        = if ($r.ContainsKey('integrity')) { $r.integrity } else { $null }
         })
     }
 
@@ -1316,6 +1337,8 @@ foreach ($runKey in $specResults.Keys) {
     }
     if ($r.ContainsKey('status')) { $record['status'] = $r.status }
     if ($r.ContainsKey('isAdvisory')) { $record['isAdvisory'] = [bool]$r.isAdvisory }
+    $record['diagnostics'] = if ($r.ContainsKey('diagnostics')) { $r.diagnostics } else { $null }
+    $record['integrity'] = if ($r.ContainsKey('integrity')) { $r.integrity } else { $null }
     if ($r.ContainsKey('failedOrErroredTrials')) { $record['failedOrErroredTrials'] = @($r.failedOrErroredTrials) }
     foreach ($field in @('advisoryFailed', 'authoritativeFailed', 'advisoryStimuliFailed', 'authoritativeStimuliFailed', 'toleratedFailed')) {
         if ($r.ContainsKey($field)) { $record[$field] = [int]$r[$field] }

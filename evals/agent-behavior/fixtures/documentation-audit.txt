@@ -1,0 +1,7 @@
+Synthetic Renewal Service Documentation
+
+The renewal command accepts an account identifier and prints a confirmation.
+Installation requires Node.js. This small documentation sample has no
+troubleshooting section, command examples, or documented release procedure.
+An audit plan should inventory coverage and identify evidence needed to assess
+these gaps. This fixture does not represent a complete production docs tree.

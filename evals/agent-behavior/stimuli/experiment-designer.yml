@@ -20,7 +20,7 @@ stimuli:
       - type: output-matches
         name: experiment-designer-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
 
   - name: experiment-designer-conditional-ml-route
@@ -29,7 +29,7 @@ stimuli:
       We completed general hypothesis framing and are entering experiment
       design. State which reusable skills you load, what each owns, and what
       you would do if the conditional ML skill were unavailable.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -86,7 +86,7 @@ stimuli:
       Write the Phase 1 tracking artifact. In the final reply, summarize the
       classification and the evidence needed to resolve it. Do not continue
       past Phase 1.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/project-planning/experiment-design'
       files:
@@ -134,8 +134,10 @@ stimuli:
       - A third thinks throughput at peak is the actual problem.
       - No measurement, baseline, or user observation exists for any of these.
 
-      Write the Phase 1 tracking artifact. Do not continue past Phase 1.
-    environment:
+      Write the Phase 1 tracking artifact. In the final reply, summarize the
+      classification and the evidence needed to resolve it. Do not continue
+      past Phase 1.
+    agent_environment:
       skills:
         - '../../.github/skills/project-planning/experiment-design'
       files:
@@ -167,11 +169,18 @@ stimuli:
               try {
                 const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
                 const context = fs.readFileSync(path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/mve/2026-03-02/synthetic-signal-routing/context.md'), 'utf8');
-                const field = /^.*experiment type[^\r\n]*$/im.exec(context)?.[0] || '';
-                const unresolved = /\bundetermined\b/i.test(field) && !/\bnot\s+undetermined\b/i.test(field);
+                const lines = context.split(/\r?\n/).map(line => line.replace(/[*`]/g, '').trim());
+                const fields = lines.flatMap((line, index) => {
+                  const field = /^(?:#{1,6}\s+)?experiment type\s*(?::\s*)?(.*)$/i.exec(line);
+                  if (!field) return [];
+                  const value = field[1].trim() || lines.slice(index + 1).find(candidate => candidate.length > 0) || '';
+                  return [value];
+                });
+                const unresolved = fields.length === 1 && /^undetermined\b(?!\s+(?:is\s+)?(?:wrong|false|not)\b)/i.test(fields[0]) &&
+                  !/\b(?:classification|experiment type)\s*(?:is|:)\s*(?:AI|ML|architecture|performance)\b/i.test(fields[0]);
                 const reply = input.trajectory.output;
                 const summary = /(?<!\b(?:not|never)\s)\b(?:undetermined|uncertain|ambiguous|unresolved|not yet classified)\b/i.test(reply);
-                const evidence = /\b(?:evidence|measurement|baseline|observation|clarif\w*)\b/i.test(reply);
+                const evidence = /\b(?:evidence|measurements?|baselines?|observations?|clarif\w*)\b/i.test(reply);
                 const contradiction = /(?:classification|experiment type)\s*(?:is|:)\s*(?:AI|ML|architecture|performance)\b/i.test(reply);
                 process.exit(unresolved && summary && evidence && !contradiction ? 0 : 1);
               } catch { process.exit(1); }
@@ -188,7 +197,7 @@ stimuli:
 
       Move to hypothesis formation and write that phase's tracking artifact. Do not
       run vetting or experiment design yet.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/project-planning/experiment-design'
       files:
@@ -241,7 +250,7 @@ stimuli:
 
       Decide how this session should proceed and update the tracking artifacts to
       match that decision.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/project-planning/experiment-design'
       files:
@@ -298,7 +307,7 @@ stimuli:
       I am not asking for backlog work items, and I do not want any created.
 
       Report your summary in your response only.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/project-planning/experiment-design'
       files:
@@ -336,7 +345,7 @@ stimuli:
       Move to hypothesis formation and write that phase's tracking artifact using
       PowerShell `Set-Content`. If the write fails, report exactly what happened and
       what durable state remains. Do not claim the artifact was saved.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/project-planning/experiment-design'
       files:

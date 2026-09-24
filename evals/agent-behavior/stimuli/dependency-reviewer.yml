@@ -15,7 +15,7 @@ stimuli:
       - type: output-matches
         name: dependency-reviewer-class-recipe-findings-table-present
         config:
-          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|violation)'
+          pattern: '(?is)^(?=[\s\S]*\blodash\b)(?=[\s\S]*\b(?:critical|high|medium|low)\b)(?=[\s\S]*\b(?:upgrade|retain|keep|reject|avoid|restore|pin|replace|recommend)\b)(?=[\s\S]*(?:3\.0\.0|4\.17\.21|downgrade|older|outdated|vulnerab))'
       - type: output-matches
         name: dependency-reviewer-class-recipe-severity-vocab
         config:
@@ -23,5 +23,5 @@ stimuli:
       - type: output-matches
         name: dependency-reviewer-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true

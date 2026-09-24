@@ -11,7 +11,7 @@ BeforeAll {
             planDigest = ''
             baseline = [pscustomobject][ordered]@{ required = $false; reason = 'agent-not-affected:rpi-agent'; models = @() }
             ordinaryShards = @(
-                [pscustomobject][ordered]@{ id = 'ordinary-01'; kind = 'agent'; expectedTrialWeight = 1; artifacts = @('agent:alpha'); runKeys = @('alpha.yaml') }
+                [pscustomobject][ordered]@{ id = 'ordinary-01'; kind = 'agent'; expectedTrialWeight = 2; artifacts = @('agent:alpha'); runKeys = @('alpha.yaml') }
                 [pscustomobject][ordered]@{ id = 'instruction-01'; kind = 'instruction'; expectedTrialWeight = 1; artifacts = @('instruction:beta'); runKeys = @('instructions.yaml|instruction=beta') }
                 [pscustomobject][ordered]@{ id = 'skill-01'; kind = 'skill'; expectedTrialWeight = 0; artifacts = @(); runKeys = @() }
             )
@@ -38,12 +38,26 @@ BeforeAll {
         $agent = New-FanInSummary 'ordinary-01' 'agent' $Plan.planDigest
         $agent.totals = [pscustomobject]@{ artifacts = 1; specs = 1; assertionsPassed = 2; assertionsFailed = 0; durationMs = 10; failedSpecs = 0 }
         $agent.perArtifact = @([pscustomobject]@{ kind = 'agent'; artifactId = 'alpha' })
-        $agent.perSpec = @([pscustomobject]@{ specPath = 'alpha.yaml'; tag = '' })
+        $agent.perSpec = @([pscustomobject]@{ specPath = 'alpha.yaml'; tag = ''; diagnostics = (New-FanInDiagnostics 'alpha.yaml' 2) })
         $instruction = New-FanInSummary 'instruction-01' 'instruction' $Plan.planDigest
         $instruction.totals = [pscustomobject]@{ artifacts = 1; specs = 1; assertionsPassed = 1; assertionsFailed = 0; durationMs = 5; failedSpecs = 0 }
         $instruction.perArtifact = @([pscustomobject]@{ kind = 'instruction'; artifactId = 'beta' })
-        $instruction.perSpec = @([pscustomobject]@{ specPath = 'instructions.yaml'; tag = 'instruction=beta' })
+        $instruction.perSpec = @([pscustomobject]@{ specPath = 'instructions.yaml'; tag = 'instruction=beta'; diagnostics = (New-FanInDiagnostics 'instructions.yaml|instruction=beta' 1) })
         return @($agent, $instruction, (New-FanInSummary 'skill-01' 'skill' $Plan.planDigest), (New-FanInSummary prompt))
+    }
+    function New-FanInDiagnostics([string]$RunKey, [int]$Runs) {
+        $inventory = [ordered]@{ synthetic = [ordered]@{ runs = $Runs; graders = @([ordered]@{ name = 'check'; type = 'program' }) } }
+        $trials = @(foreach ($trialIndex in 0..($Runs - 1)) {
+            [ordered]@{ stimulusName = 'synthetic'; trialIndex = $trialIndex; itemIdDigest = $null; identitySource = 'stimulus-trial-index'
+                executionStatus = 'success'; score = 1.0; thresholdPassed = $true; allGradersPassed = $true; gradeStatus = 'success'
+                graders = @([ordered]@{ name = 'check'; graderType = 'program'; score = 1.0; passed = $true; status = 'success' }) }
+        })
+        return [ordered]@{ schemaVersion = '1.0.0'; runKey = $RunKey; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
+            inputDigestScope = 'spec-only'; selectionDigest = (Get-AgentEvalValueDigest -Value $inventory); checkout = $null; executorModel = 'model'; judgeModels = @()
+            versions = @{}; threshold = 0.7; expectedStimuli = $inventory; selectedAttempt = 1
+            attempts = @([ordered]@{ runKey = $RunKey; ordinal = 1; selected = $true; selectionReason = 'fewest-errors-first-on-tie'; exitCategory = 'success'
+                assertionsPassed = $Runs; assertionsFailed = 0; erroredTrials = 0; observedTrials = $Runs; recordIssues = @(); trials = $trials
+                perStimulus = @([ordered]@{ stimulusName = 'synthetic'; expectedTrials = $Runs; observedTrials = $Runs; aggregateScore = 1.0; aggregatePassed = $true }) }) }
     }
 }
 
@@ -70,9 +84,40 @@ Describe 'Merge-EvalExecution.ps1' -Tag 'Unit' {
         $ordinary = New-FanInSummary 'ordinary-01' 'agent' $plan.planDigest
         { Merge-EvalSummaryValue -Plan $plan -Summary @($ordinary) } | Should -Throw '*Producer set*'
     }
+    It 'rejects missing or poisoned ordinary diagnostic contracts' -ForEach @(
+        @{ Mutation = 'missing' }
+        @{ Mutation = 'poisoned' }
+        @{ Mutation = 'wrong-owner' }
+    ) {
+        $plan = New-FanInPlan
+        $summaries = New-ValidFanInSummary $plan
+        switch ($Mutation) {
+            'missing' { $summaries[0].perSpec[0].diagnostics = $null }
+            'poisoned' { $summaries[0].perSpec[0].diagnostics['rawOutput'] = 'synthetic-private-output' }
+            'wrong-owner' { $summaries[0].perSpec[0].diagnostics.runKey = 'wrong.yaml' }
+        }
+        { Merge-EvalSummaryValue -Plan $plan -Summary $summaries } | Should -Throw '*invalid diagnostic contract*'
+    }
     It 'rejects duplicate producer evidence' {
         $plan = New-FanInPlan
         { Merge-EvalSummaryValue -Plan $plan -Summary @((New-FanInSummary prompt), (New-FanInSummary prompt)) } | Should -Throw '*Duplicate producer*'
+    }
+    It 'reports invalid selected evidence even when producer failure totals are zero' {
+        $plan = New-FanInPlan
+        $summaries = New-ValidFanInSummary $plan
+        $summaries[0].perSpec[0].diagnostics.attempts[0].trials[1].trialIndex = 0
+        $result = Merge-EvalSummaryValue -Plan $plan -Summary $summaries
+        $result.totals.failedSpecs | Should -Be 1
+        $spec = @($result.perSpec | Where-Object specPath -eq 'alpha.yaml')[0]
+        $spec.status | Should -Be 'integrity-failure'
+        $spec.integrity.integrityPassed | Should -BeFalse
+        $spec.integrity.issues | Should -Contain 'duplicate-trial'
+    }
+    It 'rejects a self-consistent reduced population against the canonical plan' {
+        $plan = New-FanInPlan
+        $summaries = New-ValidFanInSummary $plan
+        $summaries[0].perSpec[0].diagnostics = New-FanInDiagnostics 'alpha.yaml' 1
+        { Merge-EvalSummaryValue -Plan $plan -Summary $summaries } | Should -Throw '*population differs from the canonical plan*'
     }
     It 'rejects an incomplete ordinary shard' {
         $plan = New-FanInPlan

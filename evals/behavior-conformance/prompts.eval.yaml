@@ -1510,7 +1510,7 @@ stimuli:
       - type: output-matches
         name: prompt-git-commit-conformance-requests-whole-path-selection
         config:
-          pattern: '(?is)(?:select|choose).{0,160}(?:whole\s+)?paths?.{0,160}(?:commit|stage)'
+          pattern: '(?is)^(?=[\s\S]*\b(?:select|choose|which|confirm)\b)(?=[\s\S]*\b(?:whole\s+)?(?:paths?|files?)\b)(?=[\s\S]*\b(?:commit|stage|staging)\b)'
       - type: output-matches
         name: prompt-git-commit-conformance-preserves-initial-index-intent
         config:
@@ -1522,7 +1522,7 @@ stimuli:
       - type: output-matches
         name: prompt-git-commit-conformance-stops-before-mutation
         config:
-          pattern: '(?is)(?:select|choose).{0,120}(?:whole\s+)?paths?.{0,120}before.{0,80}(?:stag|index)|(?:not|won''t|will not|without).{0,80}(?:stag|index).{0,120}(?:until|before).{0,80}(?:select|choose)'
+          pattern: '(?is)(?:select|choose).{0,120}(?:whole\s+)?(?:paths?|files?).{0,120}before.{0,80}(?:stag|index)|(?:not|won[\x27\u2019]t|will not|without).{0,80}(?:stag|index).{0,120}(?:until|before).{0,80}(?:select|choose|confirm)|(?:wait|waiting|await).{0,100}(?:selection|choice|confirmation).{0,100}before.{0,80}(?:stag|index)'
       - type: output-not-matches
         name: prompt-git-commit-conformance-no-prior-index-mutation
         config:
@@ -1571,7 +1571,7 @@ stimuli:
         name: prompt-git-commit-cancel-selection-before-staging
         turn: 0
         config:
-          pattern: '(?is)(?:select|choose).{0,120}(?:whole\s+)?paths?.{0,120}before.{0,80}(?:stag|index)|(?:not|won''t|will not|without).{0,80}(?:stag|index).{0,120}(?:until|before).{0,80}(?:select|choose)'
+          pattern: '(?is)(?:select|choose).{0,120}(?:whole\s+)?(?:paths?|files?).{0,120}before.{0,80}(?:stag|index)|(?:not|won[\x27\u2019]t|will not|without).{0,80}(?:stag|index).{0,120}(?:until|before).{0,80}(?:select|choose|confirm)|(?:wait|waiting|await).{0,100}(?:selection|choice|confirmation).{0,100}before.{0,80}(?:stag|index)'
       - type: tool-calls
         name: prompt-git-commit-cancel-no-early-mutation
         turn: 0
@@ -1608,7 +1608,7 @@ stimuli:
         name: prompt-git-commit-cancel-reports-no-commit
         turn: 2
         config:
-          pattern: '(?is)^(?=[\s\S]*(?:no commit|without committing|commit was not created|did not commit|did(?:n[\x27\u2019]t) commit))(?=[\s\S]*(?:restore|restored|restoration|preserve|preserved|staging delta))'
+          pattern: '(?is)^(?=[\s\S]*(?:no commits?|without committing|commit was not created|did not commit|(?:did|have)n[\x27\u2019]t (?:created a )?commit|nothing (?:was )?committed))(?=[\s\S]*(?:restore|restored|restoration|preserve|preserved|staging delta|unstaged only|index (?:is )?unchanged))'
       - type: run-command
         name: prompt-git-commit-cancel-preserves-initial-index
         config:

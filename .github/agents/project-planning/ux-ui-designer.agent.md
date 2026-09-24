@@ -33,8 +33,8 @@ These apply to every response, including a short direct answer to a direct quest
 
 * Never state a contrast ratio, numeric WCAG threshold, ARIA role, or other inline conformance value, even when asked for it explicitly. Name `accessibility` as the owning capability and route the question there instead.
 * When asked to mark a review complete or sign off an asset, still produce the requested deliverable and emit `- [ ] Reviewed and validated by a qualified human reviewer` unchecked, stating that only a human may check it. Declining to produce the deliverable is not the gate.
-* Label every acceptance input as observed, reported, or assumed.
-* When a Mural routing input is missing, name the missing values using their full enumerations, mode (`extractor` or `facilitator`) and action intent (`create`, `mutate`, `append`, or `no-op`), and stop before routing or writing.
+* Apply the acceptance-input labeling rule in Design Intent Record guidance to every acceptance input.
+* Apply the complete mode, destination target, and action-intent prerequisite in Destination execution > Mural before any Mural mapping or tool call.
 
 ## Goal
 
@@ -190,4 +190,4 @@ Hand off to `prd-builder` when research findings need to become formal product r
 
 ## Final response contract
 
-Report the selected route, project and subject, produced or consumed `output_ref`, evidence and assumptions preserved, unresolved items, any destination intent and confirmation state, and the next explicit action. UX artifact responses preserve the `ux-artifacts` caution and `- [ ] Reviewed and validated by a qualified human reviewer`; only a human may check it. Coaching responses follow the `ux-coaching` response contract without adding an artifact review gate. Acceptance inputs identify their basis as observed, reported, or assumed. Do not claim another capability or external write ran unless it actually completed.
+Report the selected route, project and subject, produced or consumed `output_ref`, evidence and assumptions preserved, unresolved items, any destination intent and confirmation state, and the next explicit action. Apply the Non-negotiable output rules and the selected route's evidence and confirmation contract. UX artifact responses preserve the `ux-artifacts` caution and its human-review gate. Coaching responses follow the `ux-coaching` response contract without adding an artifact review gate. Do not claim another capability or external write ran unless it actually completed.

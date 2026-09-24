@@ -23,6 +23,11 @@ Describe 'Build-GraderLineageMap.ps1' -Tag 'Unit' {
         ($second.Counts | ConvertTo-Json -Compress) | Should -BeExactly ($first.Counts | ConvertTo-Json -Compress)
     }
 
+    It 'Rejects replacing mapped code checks with a different result kind' {
+        Mock Get-GraderResultKind { 'llm' } -ParameterFilter { $GraderType -eq 'program' }
+        { Invoke-GraderLineageMap -RepoRoot $script:RepoRoot -Check } | Should -Throw '*Mapped current grader*was not found*'
+    }
+
     It 'Maps authored grader type <GraderType> to result kind <ExpectedKind>' -ForEach @(
         @{ GraderType = 'diff-empty'; ExpectedKind = 'code' }
         @{ GraderType = 'file-exists'; ExpectedKind = 'code' }

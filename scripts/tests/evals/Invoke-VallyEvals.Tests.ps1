@@ -192,6 +192,82 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $diagnostics[0].PSObject.Properties.Name | Should -Not -Contain 'graderDetail'
         }
 
+        It 'Retains configured checks inside a threshold-passing trial without private metadata' -Tag 'Diagnostic' {
+            $runDir = Join-Path $script:WorkRoot 'run-all-checks'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $expectedStimuli = @{
+                'configured-stimulus' = @{
+                    runs = 1
+                    graders = @(
+                        @{ name = 'required-marker'; type = 'output-matches' }
+                        @{ name = 'write-observed'; type = 'tool-calls' }
+                    )
+                }
+            }
+            $record = @{
+                type = 'trial-result'
+                trajectory = @{ stimulus = @{ name = 'configured-stimulus' }; output = 'synthetic-private-output' }
+                gradeResult = @{
+                    passed = $false
+                    score = 0.75
+                    evidence = 'synthetic-private-evidence'
+                    details = @(
+                        @{ configuredName = 'required-marker'; name = 'synthetic-private-name'; graderType = 'output-matches'; passed = $false; score = 0; metadata = @{ token = 'synthetic-private-token' } }
+                        @{ configuredName = 'write-observed'; graderType = 'tool-calls'; passed = $true; score = 1 }
+                    )
+                }
+            } | ConvertTo-Json -Depth 10 -Compress
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value $record -Encoding utf8
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir -Threshold 0.7 -ExpectedStimuli $expectedStimuli
+
+            $result.assertionsPassed | Should -Be 1
+            $result.assertionsFailed | Should -Be 0
+            $result.failedOrErroredTrials | Should -BeNullOrEmpty
+            @($result.trialDiagnostics) | Should -HaveCount 1
+            $trial = $result.trialDiagnostics[0]
+            $trial.stimulusName | Should -Be 'configured-stimulus'
+            $trial.thresholdPassed | Should -BeTrue
+            $trial.allGradersPassed | Should -BeFalse
+            $trial.score | Should -Be 0.75
+            $trial.gradeStatus | Should -Be 'success'
+            $trial.trialIndex | Should -Be 0
+            $trial.identitySource | Should -Be 'stimulus-trial-index'
+            @($trial.graders) | Should -HaveCount 2
+            $trial.graders[0].name | Should -Be 'required-marker'
+            $trial.graders[0].graderType | Should -Be 'output-matches'
+            $trial.graders[0].status | Should -Be 'success'
+            $trial.graders[0].passed | Should -BeFalse
+            ($result.trialDiagnostics | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private'
+        }
+
+        It 'Preserves native identity and classifies <Status> without leaking status text' -Tag 'Diagnostic' -ForEach @(
+            @{ Status = 'error'; ExpectedStatus = 'error' }
+            @{ Status = 'synthetic-private-status'; ExpectedStatus = 'invalid' }
+        ) {
+            $runDir = Join-Path $script:WorkRoot 'native-identity'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            @{
+                type = 'trial-result'; itemId = 'synthetic-private-path::native::0'
+                stimulus = 'native'; trialIndex = 0; totalTrials = 5; status = 'success'; trajectory = $null
+                gradeResult = @{ status = $Status; score = 1; passed = $true; details = @(
+                    @{ configuredName = 'check'; graderType = 'program'; passed = $true; score = 1; status = $Status }
+                ) }
+            } | ConvertTo-Json -Depth 10 -Compress | Set-Content (Join-Path $runDir 'results.jsonl')
+            $result = Read-VallyResultsJsonl -RunDir $runDir -Threshold 0.7 -ExpectedStimuli @{
+                native = @{ runs = 5; graders = @(@{ name = 'check'; type = 'program' }) }
+            }
+            $trial = $result.trialDiagnostics[0]
+            $trial.stimulusName | Should -Be 'native'
+            $trial.trialIndex | Should -Be 0
+            $trial.identitySource | Should -Be 'native-item-id'
+            $trial.itemIdDigest | Should -Be (Get-AgentEvalValueDigest -Value 'synthetic-private-path::native::0')
+            $trial.gradeStatus | Should -Be $ExpectedStatus
+            $trial.allGradersPassed | Should -BeFalse
+            $trial.thresholdPassed | Should -BeTrue
+            ($trial | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private'
+        }
+
         It 'Ignores typed non-trial records while accepting typed trial results' {
             $runDir = Join-Path $script:WorkRoot 'run-typed-summary'
             New-Item -ItemType Directory -Path $runDir -Force | Out-Null
@@ -210,7 +286,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result.assertionsPassed | Should -Be 1
         }
 
-        It 'Skips malformed lines without throwing' {
+        It 'Skips malformed lines without throwing and retains their diagnostic category' -Tag 'Diagnostic' {
             $runDir = Join-Path $script:WorkRoot 'run-bad'
             New-Item -ItemType Directory -Path $runDir -Force | Out-Null
             $good = @{ gradeResult = @{ passed = $true }; trajectory = @{ stimulus = @{ name = 's' } } } | ConvertTo-Json -Depth 4 -Compress
@@ -219,10 +295,195 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result = Read-VallyResultsJsonl -RunDir $runDir
             $result.trials | Should -Be 1
             $result.assertionsPassed | Should -Be 1
+            $result.recordIssues | Should -Contain 'malformed-record'
+        }
+    }
+
+    Context 'Diagnostic configuration' {
+        It 'Changes the input digest when an included source changes without exposing content' -Tag 'Diagnostic' {
+            InModuleScope VallyRunner -Parameters @{ Root = $script:WorkRoot } {
+                Mock git { $global:LASTEXITCODE = 0; @('source.txt') }
+                Set-Content (Join-Path $Root 'source.txt') 'synthetic-private-first'
+                $before = Get-VallyInputDigest -RepoRoot $Root
+                Set-Content (Join-Path $Root 'source.txt') 'synthetic-private-second'
+                $after = Get-VallyInputDigest -RepoRoot $Root
+                $before | Should -Match '^sha256:[a-f0-9]{64}$'
+                $after | Should -Match '^sha256:[a-f0-9]{64}$'
+                $after | Should -Not -Be $before
+                $after | Should -Not -Match 'synthetic-private|source.txt'
+            }
+        }
+
+        It 'Separates <Case> integrity from the unchanged behavioral score' -Tag 'Diagnostic' -ForEach @(
+            @{ Case = 'clean'; Expected = $true }
+            @{ Case = 'duplicate'; Expected = $false }
+            @{ Case = 'scored-error'; Expected = $false }
+            @{ Case = 'malformed'; Expected = $false }
+            @{ Case = 'missing-contract'; Expected = $false }
+            @{ Case = 'poisoned-grader'; Expected = $false }
+            @{ Case = 'wrong-mean'; Expected = $false }
+            @{ Case = 'invalid-score'; Expected = $false }
+            @{ Case = 'zero-output'; Expected = $false }
+            @{ Case = 'extra-trial'; Expected = $false }
+            @{ Case = 'missing-grader'; Expected = $false }
+            @{ Case = 'empty-selection'; Expected = $true }
+            @{ Case = 'clean-retry'; Expected = $true }
+        ) {
+            $inventory = [ordered]@{ synthetic = [ordered]@{ runs = 2; graders = @([ordered]@{ name = 'check'; type = 'program' }) } }
+            $trials = @(0, 1 | ForEach-Object {
+                [ordered]@{ stimulusName = 'synthetic'; trialIndex = $_; itemIdDigest = $null; identitySource = 'stimulus-trial-index'
+                    executionStatus = 'success'; score = 1.0; thresholdPassed = $true; allGradersPassed = $true; gradeStatus = 'success'
+                    graders = @([ordered]@{ name = 'check'; graderType = 'program'; score = 1.0; passed = $true; status = 'success' }) }
+            })
+            $attempt = [ordered]@{ runKey = 'synthetic.yaml'; ordinal = 1; selected = $true; selectionReason = 'fewest-errors-first-on-tie'; exitCategory = 'success'
+                assertionsPassed = 2; assertionsFailed = 0; erroredTrials = 0; observedTrials = 2; recordIssues = @(); trials = $trials
+                perStimulus = @([ordered]@{ stimulusName = 'synthetic'; expectedTrials = 2; observedTrials = 2; aggregateScore = 1.0; aggregatePassed = $true }) }
+            $diagnostics = [ordered]@{ schemaVersion = '1.0.0'; runKey = 'synthetic.yaml'; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
+                inputDigestScope = 'spec-only'; selectionDigest = (Get-AgentEvalValueDigest -Value $inventory); checkout = $null; executorModel = 'model'; judgeModels = @()
+                versions = @{}; threshold = 0.7; expectedStimuli = $inventory; selectedAttempt = 1; attempts = @($attempt) }
+            switch ($Case) {
+                'duplicate' { $trials[1].trialIndex = 0 }
+                'scored-error' { $trials[0].gradeStatus = 'error'; $trials[0].graders[0].status = 'error'; $trials[0].allGradersPassed = $false }
+                'malformed' { $attempt.recordIssues = @('malformed-record') }
+                'missing-contract' { $diagnostics.Remove('expectedStimuli') }
+                'poisoned-grader' { $trials[0].graders[0]['rawOutput'] = 'synthetic-private' }
+                'wrong-mean' { $attempt.perStimulus[0].aggregateScore = 0.8 }
+                'invalid-score' { $trials[0].score = 'synthetic-private-score' }
+                'zero-output' {
+                    $attempt.trials = @(); $attempt.observedTrials = 0; $attempt.assertionsPassed = 0
+                    $attempt.perStimulus[0].observedTrials = 0; $attempt.perStimulus[0].aggregateScore = $null; $attempt.perStimulus[0].aggregatePassed = $null
+                }
+                'extra-trial' { $attempt.trials += $trials[0] }
+                'missing-grader' { $trials[0].graders = @(); $trials[0].allGradersPassed = $false }
+                'empty-selection' {
+                    $diagnostics.expectedStimuli = [ordered]@{}
+                    $diagnostics.selectionDigest = Get-AgentEvalValueDigest -Value $diagnostics.expectedStimuli
+                    $attempt.trials = @(); $attempt.perStimulus = @(); $attempt.observedTrials = 0; $attempt.assertionsPassed = 0
+                }
+                'clean-retry' {
+                    $earlier = $attempt | ConvertTo-Json -Depth 20 | ConvertFrom-Json -AsHashtable -Depth 20
+                    $earlier.selected = $false; $earlier.selectionReason = 'more-errors'
+                    $earlier.assertionsPassed = 0; $earlier.erroredTrials = 2
+                    foreach ($trial in $earlier.trials) {
+                        $trial.executionStatus = 'error'; $trial.gradeStatus = 'missing'; $trial.score = $null
+                        $trial.thresholdPassed = $null; $trial.allGradersPassed = $false
+                        $trial.graders[0].status = 'missing'; $trial.graders[0].score = $null; $trial.graders[0].passed = $null
+                    }
+                    $earlier.perStimulus[0].aggregateScore = $null; $earlier.perStimulus[0].aggregatePassed = $null
+                    $attempt.ordinal = 2; $diagnostics.selectedAttempt = 2; $diagnostics.attempts = @($earlier, $attempt)
+                }
+            }
+            $result = Test-VallyDiagnosticEvidence -Diagnostics $diagnostics -RunKey 'synthetic.yaml'
+            $result.integrityPassed | Should -Be $Expected
+            $result.allChecksPassed | Should -Be $Expected
+            if (-not $Expected) { $result.issues | Should -Not -BeNullOrEmpty }
+        }
+
+        It 'Uses configured identities and effective case-sensitive tag selection' -Tag 'Diagnostic' {
+            $specPath = Join-Path $script:WorkRoot 'diagnostics.yaml'
+            @{
+                name = 'diagnostic-spec'
+                defaults = @{ runs = 5; judge_model = 'declared-judge' }
+                tags = @{ agent = 'selected' }
+                stimuli = @(
+                    @{ name = 'included'; prompt = 'synthetic'; graders = @(@{ name = 'authored'; type = 'output-matches' }, @{ type = 'tool-calls' }) }
+                    @{ name = 'overridden'; prompt = 'synthetic'; tags = @{ agent = 'other' }; graders = @() }
+                    @{ name = 'wrong-case'; prompt = 'synthetic'; tags = @{ agent = 'Selected' }; graders = @() }
+                )
+            } | ConvertTo-Yaml | Set-Content -LiteralPath $specPath -Encoding utf8
+
+            $configuration = Get-VallyDiagnosticConfiguration -SpecPath $specPath -Tag 'agent=selected'
+
+            $configuration.status | Should -Be 'available'
+            @($configuration.stimuli.Keys) | Should -HaveCount 1
+            $configuration.stimuli['included'].runs | Should -Be 5
+            $configuration.stimuli['included'].graders[0].name | Should -Be 'authored'
+            $configuration.stimuli['included'].graders[1].name | Should -Be 'tool-calls-1'
+            $configuration.judgeModels | Should -Contain 'declared-judge'
+            $configuration.selectionDigest | Should -Match '^sha256:[a-f0-9]{64}$'
+        }
+    }
+
+    Context 'Selected evidence completeness' {
+        It 'Rejects one graded pass and four executor errors without changing the behavioral mean' -Tag 'Diagnostic' {
+            $runDir = Join-Path $script:WorkRoot 'low-sample'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $inventory = [ordered]@{ synthetic = [ordered]@{ runs = 5; graders = @([ordered]@{ name = 'check'; type = 'program' }) } }
+            $records = @(foreach ($trialIndex in 0..4) {
+                @{ type = 'trial-result'; stimulus = 'synthetic'; trialIndex = $trialIndex; status = $(if ($trialIndex -eq 0) { 'success' } else { 'error' })
+                    trajectory = $null; gradeResult = $(if ($trialIndex -eq 0) {
+                        @{ score = 1; passed = $true; details = @(@{ configuredName = 'check'; graderType = 'program'; score = 1; passed = $true }) }
+                    } else { $null }) } | ConvertTo-Json -Depth 10 -Compress
+            })
+            Set-Content (Join-Path $runDir 'results.jsonl') $records
+            $aggregate = Read-VallyResultsJsonl -RunDir $runDir -Threshold 0.7 -ExpectedStimuli $inventory
+            $aggregate.perStimulus.synthetic.aggregateScore | Should -Be 1
+            $aggregate.perStimulus.synthetic.aggregatePassed | Should -BeTrue
+            $aggregate.errored | Should -Be 4
+            $diagnostics = [ordered]@{ schemaVersion = '1.0.0'; runKey = 'synthetic.yaml'; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
+                inputDigestScope = 'spec-only'; selectionDigest = (Get-AgentEvalValueDigest -Value $inventory); checkout = $null; executorModel = 'model'; judgeModels = @()
+                versions = @{}; threshold = 0.7; expectedStimuli = $inventory; selectedAttempt = 1
+                attempts = @([ordered]@{ runKey = 'synthetic.yaml'; ordinal = 1; selected = $true; selectionReason = 'fewest-errors-first-on-tie'; exitCategory = 'unknown'
+                    assertionsPassed = 1; assertionsFailed = 0; erroredTrials = 4; observedTrials = 5; recordIssues = @(); trials = $aggregate.trialDiagnostics
+                    perStimulus = @([ordered]@{ stimulusName = 'synthetic'; expectedTrials = 5; observedTrials = 5; aggregateScore = 1.0; aggregatePassed = $true }) }) }
+            $evidence = Test-VallyDiagnosticEvidence -Diagnostics $diagnostics
+            $evidence.contractValid | Should -BeTrue
+            $evidence.integrityPassed | Should -BeFalse
+            $evidence.issues | Should -Contain 'execution-error'
         }
     }
 
     Context 'Invoke-VallySpec (stub)' {
+        It 'Emits a verifiable complete diagnostic contract using native-shaped records' -Tag 'DiagnosticIntegration' {
+            $specPath = Join-Path $script:WorkRoot 'configured.yaml'
+            @{
+                name = 'configured'; defaults = @{ runs = 2 }; scoring = @{ threshold = 0.7 }
+                stimuli = @(@{ name = 'synthetic'; prompt = 'synthetic'; graders = @(@{ name = 'check'; type = 'program' }) })
+            } | ConvertTo-Yaml | Set-Content $specPath
+            $env:STUB_VALLY_MODE = 'diagnostic'
+            try {
+                $result = Invoke-VallySpec -SpecPath $specPath -OutputDir (Join-Path $script:WorkRoot 'configured-output') `
+                    -Model 'configured-model' -RunKey 'configured.yaml' -VallyCommand $script:StubPath -MaxErroredRetries 0
+            }
+            finally { Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue }
+            $evidence = Test-VallyDiagnosticEvidence -Diagnostics $result.diagnostics -RunKey 'configured.yaml'
+            $evidence.contractValid | Should -BeTrue
+            $evidence.integrityPassed | Should -BeTrue
+            $evidence.allChecksPassed | Should -BeTrue
+            $result.diagnostics.versions.vally | Should -Be '0.16.0'
+            $result.diagnostics.checkout | Should -Match '^[a-f0-9]{40}$'
+        }
+
+        It 'Retains both attempts and selects <Selected> by errors rather than score' -Tag 'Diagnostic' -ForEach @(
+            @{ Errors = @(1, 1); Selected = 1; Reason = 'later-tie' }
+            @{ Errors = @(1, 0); Selected = 2; Reason = 'more-errors' }
+        ) {
+            InModuleScope VallyRunner -Parameters @{ Root = $script:WorkRoot; Errors = $Errors; Selected = $Selected; Reason = $Reason } {
+                $script:DiagnosticAttempt = 0
+                Mock Invoke-VallyProcess {
+                    @{ ExitCode = 0; Worker = 'synthetic'; ElapsedMilliseconds = 1; ExitCategory = 'success' }
+                }
+                Mock Resolve-VallyRunDir { 'synthetic-run' }
+                Mock Read-VallyResultsJsonl {
+                    $current = $script:DiagnosticAttempt++
+                    @{
+                        assertionsPassed = $current; assertionsFailed = 1 - $current; errored = $Errors[$current]
+                        durationMs = 1; trials = 2; stimuliPassed = $current; stimuliFailed = 1 - $current
+                        resultsPath = 'synthetic-private-result'; perStimulus = @{}; failedOrErroredTrials = @(); trialDiagnostics = @(); recordIssues = @()
+                    }
+                }
+                $result = Invoke-VallySpec -SpecPath (Join-Path $Root 'absent.yaml') -OutputDir (Join-Path $Root 'attempts') `
+                    -Model 'configured-model' -RunKey 'spec.yaml|agent=synthetic' -MaxErroredRetries 1
+                $result.diagnostics.selectedAttempt | Should -Be $Selected
+                @($result.diagnostics.attempts) | Should -HaveCount 2
+                @($result.diagnostics.attempts | Where-Object selected) | Should -HaveCount 1
+                $discarded = @($result.diagnostics.attempts | Where-Object { -not $_.selected })[0]
+                $discarded.selectionReason | Should -Be $Reason
+                $result.diagnostics.attempts[0].runKey | Should -Be 'spec.yaml|agent=synthetic'
+                ($result.diagnostics | ConvertTo-Json -Depth 20) | Should -Not -Match 'synthetic-private-result'
+            }
+        }
+
         It 'Returns aggregated counts after running the stub in pass mode' {
             $outDir = Join-Path $script:WorkRoot 'spec-pass'
             $env:STUB_VALLY_MODE = 'pass'
@@ -246,6 +507,11 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             @($result.phaseTimings) | Should -HaveCount 1
             $result.phaseTimings[0].phase | Should -Be 'ordinary-eval'
             $result.phaseTimings[0].exitCategory | Should -Be 'success'
+            $result.diagnostics.schemaVersion | Should -Be '1.0.0'
+            $result.diagnostics.selectedAttempt | Should -Be 1
+            @($result.diagnostics.attempts) | Should -HaveCount 1
+            $result.diagnostics.attempts[0].selected | Should -BeTrue
+            $result.diagnostics.attempts[0].selectionReason | Should -Be 'fewest-errors-first-on-tie'
         }
 
         It 'Propagates a non-zero exit code from the stub' {
@@ -804,7 +1070,14 @@ Describe 'Invoke-VallyEvals.ps1 entry script' -Tag 'Integration' {
                 if (-not (Test-Path -LiteralPath $specDir)) {
                     New-Item -ItemType Directory -Path $specDir -Force | Out-Null
                 }
-                Set-Content -LiteralPath $specPath -Value $spec.Yaml -Encoding utf8
+                $configuration = $spec.Yaml | ConvertFrom-Yaml
+                if ($configuration -is [System.Collections.IDictionary] -and $configuration.Contains('stimuli')) {
+                    if (-not $configuration.Contains('defaults')) { $configuration.defaults = @{} }
+                    if (-not $configuration.defaults.Contains('runs')) { $configuration.defaults.runs = 2 }
+                    $fixtureYaml = $configuration | ConvertTo-Yaml
+                }
+                else { $fixtureYaml = $spec.Yaml }
+                Set-Content -LiteralPath $specPath -Value $fixtureYaml -Encoding utf8
             }
 
             $manifestPath = Join-Path $root 'manifest.json'
@@ -881,7 +1154,38 @@ Describe 'Invoke-VallyEvals.ps1 entry script' -Tag 'Integration' {
         $summary.totals.artifacts | Should -Be 0
     }
 
-    It 'Exits 0 and aggregates passing trials per artifact' {
+    It 'Blocks <Case> selected evidence even for advisory stimuli' -Tag 'DiagnosticIntegration' -ForEach @(
+        @{ Case = 'missing' }
+        @{ Case = 'duplicate' }
+        @{ Case = 'graded-errors' }
+    ) {
+        $spec = @{
+            name = 'integrity'; defaults = @{ runs = 5 }; scoring = @{ threshold = 0.7 }
+            stimuli = @(@{ name = 'synthetic'; prompt = 'synthetic'; tags = @{ skill = 'pr-reference'; advisory = 'true' }
+                graders = @(@{ name = 'check'; type = 'program' }) })
+        } | ConvertTo-Yaml
+        $fx = New-EvalFixture -Artifacts @(@{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' }) `
+            -Specs @(@{ Name = 'integrity.yaml'; Yaml = $spec })
+        $env:STUB_VALLY_MODE = 'diagnostic'
+        $env:STUB_VALLY_DIAGNOSTIC_CASE = $Case
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir -RepoRoot $fx.Root -VallyCommand $script:StubPath -SkipInputModeration -SkipOutputModeration *> $null
+            $LASTEXITCODE | Should -Be 1
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE, Env:\STUB_VALLY_DIAGNOSTIC_CASE -ErrorAction SilentlyContinue
+        }
+        $summary = Get-Content -Raw $fx.SummaryPath | ConvertFrom-Json -Depth 50
+        $summary.perSpec[0].status | Should -Be 'integrity-failure'
+        $summary.perSpec[0].integrity.integrityPassed | Should -BeFalse
+        $summary.perSpec[0].isAdvisory | Should -BeFalse
+        $summary.perArtifact[0].status | Should -Be 'fail'
+        $summary.totals.failedSpecs | Should -Be 1
+        $summary.totals.assertionsFailed | Should -Be 0
+    }
+
+    It 'Exits 0 and aggregates passing trials per artifact' -Tag 'DiagnosticIntegration' {
         $spec = @'
 name: skill-cover
 stimuli:
@@ -926,6 +1230,9 @@ stimuli:
         $detail = Get-Content -LiteralPath $perArtifactFile -Raw | ConvertFrom-Json
         $detail.specs.Count | Should -Be 1
         $detail.specs[0].trials | Should -Be 2
+        $detail.specs[0].diagnostics.schemaVersion | Should -Be '1.0.0'
+        $summary.perSpec[0].diagnostics.runKey | Should -Be 'skill-pr-reference.yaml'
+        @($summary.perSpec[0].diagnostics.attempts[0].trials) | Should -HaveCount 2
     }
 
     It 'Exits 1 when a spec fails, recording the failure per artifact' {
@@ -2270,13 +2577,12 @@ stimuli:
         @($thresholds | Where-Object { $_ -eq 0.9 }).Count | Should -BeGreaterThan 0
     }
 
-    It 'Reconciles batched output flags into authoritative failure totals' {
+    It 'Reconciles batched output flags into authoritative failure totals' -Tag 'IntegrityFixture' {
         $fx = New-ModerationFixture -SpecThreshold '0.9'
         $specPath = Join-Path $fx.EvalRoot 'skill-pr-reference.yaml'
         $authoritativeSpec = @'
 name: skill-cover
-defaults:
-  executor: copilot-sdk
+defaults: { runs: 2, executor: copilot-sdk }
 moderation:
   threshold: 0.9
 stimuli:
@@ -2298,15 +2604,15 @@ stimuli:
         $env:HVE_TEST_MODERATION_FLAG = '1'
         $env:STUB_VALLY_MODE = 'pass'
 
-        & pwsh -NoProfile -File $script:ScriptPath `
+        $runOutput = & pwsh -NoProfile -File $script:ScriptPath `
             -ManifestPath $fx.ManifestPath `
             -EvalRoot $fx.EvalRoot `
             -LogsDir $fx.LogsDir `
             -RepoRoot $fx.Root `
             -VallyCommand $script:StubPath `
-            -SkipInputModeration *> $null
+            -SkipInputModeration 2>&1
 
-        $LASTEXITCODE | Should -Be 1
+        $LASTEXITCODE | Should -Be 1 -Because ($runOutput -join [Environment]::NewLine)
         $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
         $summary.totals.failedSpecs | Should -Be 1
         $summary.perSpec[0].status | Should -Be 'content-moderation-output'
@@ -2366,7 +2672,7 @@ Describe 'Invoke-VallyEvals.ps1 per-stimulus advisory promotion' -Tag 'Integrati
         Remove-Item Env:\STUB_VALLY_FAIL_ON_ANY -ErrorAction SilentlyContinue
     }
 
-    It 'Does not promote when only advisory stimuli fail' {
+    It 'Does not promote when only advisory stimuli fail' -Tag 'IntegrityRegression' {
         $spec = @'
 name: skill-cover
 stimuli:
@@ -2412,11 +2718,7 @@ stimuli:
         $summary.perArtifact[0].authoritativeFailed | Should -Be 0
     }
 
-    It 'Does not promote an all-advisory spec when results carry no per-stimulus name' {
-        # Reproduces the CI advisory-leak: results.jsonl with failing trials but no
-        # resolvable stimulus name leaves perStimulus empty, so attribution must
-        # reconcile the failures as advisory rather than letting the exit-code
-        # fallback gate the build.
+    It 'Blocks unidentified advisory evidence without reclassifying its behavioral failures' -Tag 'IntegrityRegression' {
         $spec = @'
 name: skill-cover
 stimuli:
@@ -2441,14 +2743,14 @@ stimuli:
             -VallyCommand $script:StubPath `
             -SkipInputModeration `
             -SkipOutputModeration *> $null
-        $LASTEXITCODE | Should -Be 0
+        $LASTEXITCODE | Should -Be 1
 
         $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
-        $summary.totals.failedSpecs | Should -Be 0
-        $summary.perSpec[0].status | Should -Be 'advisory-fail'
+        $summary.totals.failedSpecs | Should -Be 1
+        $summary.perSpec[0].status | Should -Be 'integrity-failure'
         $summary.perSpec[0].advisoryFailed | Should -Be 2
         $summary.perSpec[0].authoritativeFailed | Should -Be 0
-        $summary.perArtifact[0].status | Should -Be 'advisory-fail'
+        $summary.perArtifact[0].status | Should -Be 'fail'
         $summary.perArtifact[0].advisoryFailed | Should -Be 2
         $summary.perArtifact[0].authoritativeFailed | Should -Be 0
     }
@@ -2541,7 +2843,7 @@ stimuli:
         $summary.perArtifact[0].authoritativeFailed | Should -Be 1
     }
 
-    It 'Falls back to legacy spec-level advisory detection when no stimulus carries the tag' {
+    It 'Falls back to legacy spec-level advisory detection when no stimulus carries the tag' -Tag 'IntegrityFixture' {
         $spec = @'
 name: agent-cover
 stimuli:
@@ -2550,6 +2852,9 @@ stimuli:
     tags:
             agent: sample-agent
 '@
+        $configuration = $spec | ConvertFrom-Yaml
+        $configuration.stimuli += @{ name = 'stim-b'; prompt = 'hi'; tags = @{ agent = 'sample-agent' } }
+        $spec = $configuration | ConvertTo-Yaml
         $fx = New-PerStimFixture `
             -SpecName 'legacy.yaml' `
             -SpecYaml $spec `
@@ -2577,10 +2882,10 @@ stimuli:
         $summary.perSpec[0].toleratedFailed | Should -Be 0
     }
 
-    It 'Gates a no-advisory spec on its own threshold verdict when vally exits 0' {
-        # The harness must gate on the failed trial even when vally exits 0.
+    It 'Gates a no-advisory spec on its own threshold verdict when vally exits 0' -Tag 'IntegrityFixture' {
         $spec = @'
 name: agent-cover
+defaults: { runs: 2 }
 stimuli:
   - name: stim-a
     prompt: hi
@@ -2612,7 +2917,7 @@ stimuli:
         $summary.perArtifact[0].status | Should -Be 'fail'
     }
 
-    It 'Preserves <ExpectedStatus> for ordinary work alongside excluded baseline coverage' -ForEach @(
+    It 'Preserves <ExpectedStatus> for ordinary work alongside excluded baseline coverage' -Tag 'IntegrityRegression' -ForEach @(
         @{ Mode = 'pass'; Advisory = 'false'; ExpectedStatus = 'pass'; ExpectedExit = 0 }
         @{ Mode = 'fail'; Advisory = 'true'; ExpectedStatus = 'advisory-fail'; ExpectedExit = 0 }
         @{ Mode = 'fail'; Advisory = 'false'; ExpectedStatus = 'fail'; ExpectedExit = 1 }

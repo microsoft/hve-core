@@ -23,5 +23,5 @@ stimuli:
       - type: output-matches
         name: issue-triage-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true

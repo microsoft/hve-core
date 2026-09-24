@@ -16,7 +16,6 @@ BeforeAll {
     function ConvertTo-NormalizedLineEndings {
         param([Parameter(Mandatory)] [AllowEmptyString()] [string]$Text)
         return $Text -replace "`r`n?", "`n"
-        return $Text -replace "`r`n?", "`n"
     }
 
     function Test-GroomingMutationFields {

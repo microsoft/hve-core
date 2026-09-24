@@ -112,6 +112,8 @@ console.log(`PASS: ${input.controls.length} cancellation narrative controls`);
             controls = @(
                 @{ output = 'I restored the staging delta and preserved the initial index. No commit was created.'; expected = $true }
                 @{ output = "Restoration is complete. I didn't commit."; expected = $true }
+                @{ output = 'Nothing was committed; I unstaged only my changes.'; expected = $true }
+                @{ output = "I haven$([char]0x2019)t created a commit; the index is unchanged."; expected = $true }
                 @{ output = 'No commit was created.'; expected = $false }
                 @{ output = 'I restored the staging delta, then created a commit.'; expected = $false }
             )
@@ -119,7 +121,7 @@ console.log(`PASS: ${input.controls.length} cancellation narrative controls`);
         $graderPath = Join-Path $script:RepoRoot 'node_modules/@microsoft/vally/dist/graders/static/output-matches-grader.js'
         $result = $payload | & node --input-type=module --eval $probe $graderPath
         $LASTEXITCODE | Should -Be 0
-        $result | Should -Be 'PASS: 4 cancellation narrative controls'
+        $result | Should -Be 'PASS: 6 cancellation narrative controls'
     }
 
     It 'Stages the selection contract while preserving the simulated inventory boundary' {

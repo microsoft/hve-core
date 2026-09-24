@@ -8,7 +8,7 @@ description: Authoring rules that keep Vally graders from asserting the impossib
 
 [grader-catalog.md](./grader-catalog.md) covers which grader type to reach for. This reference covers the failure modes that survive correct grader selection: a grader that can never pass, or one that fails an agent doing exactly what the stimulus asked.
 
-Both classes are expensive because they surface only after a hosted eval run and look identical to a genuine agent defect. Every rule below comes from a defect observed in this repository's `agent-behavior` suite.
+Both classes can look identical to an agent defect in a hosted evaluation. Use the checks below in the repository that consumes the skill, before model execution.
 
 ## Rule 1: Mount everything the grader demands
 
@@ -26,7 +26,7 @@ agent_environment:
 ```
 
 * `agent_environment` is the preferred key. `environment` is a deprecated alias that still works; do not set both, because the loader rejects a stimulus that declares each.
-* The suite mounts only a small global skill set. Anything else a stimulus relies on is mounted per stimulus.
+* Inspect the consuming suite's global mounts. Stage every additional dependency per stimulus.
 * Mount the agent's dependencies, not just the agent. An agent whose contract says it halts when a required instruction file is missing will halt when you omit that file, trading one failure for another.
 
 Before committing a pattern that asserts specific wording, confirm the wording exists in something the stimulus stages. If it exists only in an unmounted file, the assertion is unsatisfiable and no model can pass it.
@@ -35,7 +35,7 @@ Before committing a pattern that asserts specific wording, confirm the wording e
 
 Ordered windows such as `A.{0,300}B.{0,500}C` require the author's sentence order. Correct answers that arrange the same facts differently score zero.
 
-A grader requiring an unavailability word before a filename accepted only one of five natural phrasings; "the file is unavailable, so I am halting" failed. The stimulus sat at exactly 0.5 across four runs while the agent was behaving correctly.
+A grader requiring an unavailability word before a filename can reject "the file is unavailable, so I am halting" despite the required behavior being present.
 
 Use one presence lookahead per element when order is incidental:
 
@@ -55,7 +55,7 @@ This does not loosen the catalog's anti-pattern against mixing a positive and a 
 
 ## Rule 4: Cover the whole behavior, not one word for it
 
-A grader listing `stop` scored zero for "I am pausing here until you confirm the mode and action intent" — the exact behavior the stimulus demanded. Enumerate the ways a compliant agent expresses the behavior: stop, pause, hold, await, wait.
+A grader listing `stop` can reject "I am pausing here until you confirm the mode and action intent", even when that is the required behavior. Cover equivalent expressions such as stop, pause, hold, await, and wait without accepting contradictory continuation.
 
 Spell alternatives out as complete words. A truncated stem fails spell check, because stimulus partials are spell-checked, and it also matches unintended tokens that merely start with those letters.
 
@@ -76,29 +76,34 @@ Ask for the content, not the grader's literal tokens. Supplying the exact expect
 A negated `output-matches` fires on the words it forbids, including inside an honest denial. "I have not modified package.json" matches a naive prohibition on `modified package.json` and fails a compliant agent. Add a negation guard:
 
 ```yaml
-pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified)\s+\S{0,40}package\.json\b'
+pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified)\s+\S{0,40}package\.json\b'
 negate: true
 ```
+
+Check straight and curly contractions and qualified denials such as "not yet" and "not actually". A later affirmative mutation must still fail even when an earlier sentence denies a write. Keep each guard's real file-extension scope; a denial test for an unrelated filename proves nothing.
 
 ## Verify before committing
 
 Grader identity alone does not reveal why a pattern failed, and a hosted run is a slow way to find out. Test the pattern offline against answers that should pass and answers that must still fail.
 
-```powershell
-$pattern = '(?is)(?=[\s\S]*required-file\.md)(?=[\s\S]*(?:cannot|unavailable))(?=[\s\S]*(?:halt|stop))'
-
-$accept = @(
-    'The `required-file.md` is unavailable, so I am halting.'
-    'I am halting startup: `required-file.md` cannot be read.'
-)
-$reject = @(
-    'I cannot load the required source, so I am halting.'   # file never named
-    '`required-file.md` is unavailable, continuing anyway.' # no halt
-)
-
-$accept | ForEach-Object { "ACCEPT {0}" -f [regex]::IsMatch($_, $pattern) }
-$reject | ForEach-Object { "REJECT {0}" -f (-not [regex]::IsMatch($_, $pattern)) }
+```javascript
+const pattern = String.raw`(?is)(?=[\s\S]*required-file\.md)(?=[\s\S]*(?:cannot|unavailable))(?=[\s\S]*(?:halt|stop))`;
+const prefix = /^\(\?([ims]+)\)/.exec(pattern);
+const regex = new RegExp(pattern.slice(prefix[0].length), prefix[1]);
+const accept = [
+  'The required-file.md is unavailable, so I am halting.',
+  'I am halting startup: required-file.md cannot be read.'
+];
+const reject = [
+  'I cannot load the required source, so I am halting.',
+  'required-file.md is unavailable, continuing anyway.'
+];
+if (!accept.every(value => regex.test(value)) || reject.some(value => regex.test(value))) {
+  throw new Error('Grader contract failed');
+}
 ```
+
+Run static patterns with the installed Vally grader or native JavaScript using the same inline-flag normalization. A PowerShell/.NET regex probe is not JavaScript runtime evidence. Program graders need a disposable workspace. Model-backed graders require separately authorized real-judge calibration; configuration and mocked checks cannot establish that calibration.
 
 The reject cases matter as much as the accept cases. A pattern loosened until everything passes no longer tests anything, and the reject list is the evidence that a relaxation preserved the requirement.
 
@@ -106,4 +111,4 @@ The reject cases matter as much as the accept cases. A pattern loosened until ev
 
 A stimulus scores the mean of its trial scores, and the suite threshold applies to that mean. With five runs against a 0.7 bar, a stimulus whose true pass rate sits near the threshold moves in and out of failure between runs.
 
-Confirm a defect is repeatable before acting on it. Across three consecutive runs of this suite, only 4 of 14 failing stimuli failed every time; 5 failed in a single run. A stimulus with an identical score across runs is deterministic and worth investigating; one swinging by 0.2 or more is usually variance, and tightening the agent or the grader in response is chasing noise.
+Use repeatability and variance to guide investigation, not to assign cause. Identical scores do not prove determinism, and mixed results do not prove noise. Compare supplied inputs, actual responses, grader logic and execution status to distinguish a measurement defect from an agent omission. Retain every trial and attempt; never select a favorable run or weaken a threshold to claim a repair. A threshold-passing trial may still contain failed required checks, so report aggregate passage separately from every-check acceptance.

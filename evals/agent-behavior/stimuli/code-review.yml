@@ -35,7 +35,7 @@ stimuli:
       - type: output-matches
         name: code-review-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
       - type: output-matches
         name: code-review-class-recipe-no-unsolicited-plan-drift
@@ -84,10 +84,13 @@ stimuli:
       - type: output-matches
         name: code-review-standards-merge-happy-no-conflict-no-source-edit
         config:
-          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
   - name: code-review-standards-merge-name-collision
     prompt: |
+      Read the discovery and selection policy in
+      `policy/code-review-standards.agent.md` as reference data. Do not invoke
+      the native review workflow or inspect real candidate skill bodies.
       As the standards code-review perspective, evaluate this merge-policy
       scenario. Treat the inline skill summaries below as the discovered
       candidate set; do not inspect or rely on real workspace skill files.
@@ -108,6 +111,10 @@ stimuli:
           return x * 2
       ```
 
+    agent_environment:
+      files:
+        - src: ../../.github/agents/coding-standards/subagents/code-review-standards.agent.md
+          dest: policy/code-review-standards.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
@@ -171,7 +178,7 @@ stimuli:
       - type: output-matches
         name: no-silent-arbitration
         config:
-          pattern: '(?i)(defer|human|reviewer|surface\s+both|both\s+findings|(?:not|cannot|won[\x27\u2019]t)\s+(?:silently\s+)?(?:arbitrate|resolve|decide|choose|select)\b|(?:remain|left|kept)\s+(?:explicitly\s+)?unresolved|author\S{0,20}\s+(?:smell|mistake|fix|issue))'
+          pattern: '(?is)^(?![\s\S]*\b(?:I\s+(?:choose|select|apply)|discard\s+(?:the\s+)?(?:other|python-)))(?=[\s\S]*(?:defer|human|reviewer|person\s+to\s+settle|surface\s+both|both\s+findings|each\s+backed\s+finding\s+independently|(?:not|cannot|won[\x27\u2019]t)\s+(?:silently\s+)?(?:arbitrate|resolve|decide|choose|select)\b|(?:remain|left|kept|stays?)\s+(?:explicitly\s+)?(?:unresolved|open)))'
 
   # Origin-precedence and stacking coverage for the Workspace/User/Bundled
   # skill-discovery revision (issue #1901). These assert the "Resolve
@@ -260,7 +267,7 @@ stimuli:
       - type: output-matches
         name: single-copy-no-merge
         config:
-          pattern: '(?i)(?<!\b(?:not|never|without)\s)(?:load|select|use|retain|choose)\s+(?:(?:only|exactly|just)\s+)?one\b|\b(?:only\s+one|single\s+(?:copy|version|body|instance)|one\s+(?:copy|version|body|instance))\b'
+          pattern: '(?is)^(?![\s\S]*(?<!\b(?:not|never|without)\s)\b(?:load|select|use|retain|apply)\s+both\b)(?![\s\S]*(?<!\b(?:not|never|without)\s)\b(?:merge|combine)\s+(?:the\s+)?(?:two|both|their)\s+bodies)(?=[\s\S]*(?:\bonly\s+one\b|\b(?:single|solitary|one)\s+(?:copy|version|body|instance)\b|(?<!\b(?:not|never|without)\s)\b(?:load|select|use|retain|choose)\s+(?:(?:only|exactly|just)\s+)?one\b))'
       - type: output-matches
         name: ambiguous-duplicate-noted
         config:
@@ -268,7 +275,7 @@ stimuli:
       - type: output-matches
         name: code-review-standards-unknown-origin-dedup-no-source-edit
         config:
-          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
   - name: code-review-standards-stacked-coverage
     prompt: |
@@ -347,11 +354,11 @@ stimuli:
       - type: output-matches
         name: waits-for-findings
         config:
-          pattern: '(?is)(?=[\s\S]*(?:confirm|await|orientation|dispatch board))(?=[\s\S]*(?:drift|correlation|correlate|correlated|correlating))(?=[\s\S]*(?:after|once|until|defer))(?=[\s\S]*(?:finding|security perspective))'
+          pattern: '(?is)^(?![\s\S]*\b(?:not|never)\s+(?:after|once|until)\b)(?![\s\S]*\b(?:completed|performed|ran|finished)\s+(?:the\s+)?(?:drift\s+)?correlation\b)(?![\s\S]*\b(?:correlate|run\s+(?:drift\s+)?correlation)\s+now\b)(?=[\s\S]*(?:(?:drift|correlation|correlate|correlated|correlating)[^.\r\n]{0,200}\b(?:after|once|until)\b[^.\r\n]{0,200}(?:findings|security perspective)|\b(?:after|once|until)\b[^.\r\n]{0,200}(?:findings|security perspective)[^.\r\n]{0,200}(?:drift|correlation|correlate|correlated|correlating)))'
       - type: output-matches
         name: no-premature-drift-output
         config:
-          pattern: '(?is)validated controls:\s*\d+\s*\|\s*control drift:'
+          pattern: '(?is)validated controls:\s*\d+\s*\|\s*control drift:|(?<!\b(?:not|never|without)\s)\b(?:completed|performed|ran|finished)\s+(?:the\s+)?(?:drift\s+)?correlation\b|\bdrift\s+correlation\s+results\s*:|\b(?:found|identified|detected)\s+(?:control\s+)?drift\b'
           negate: true
 
   - name: code-review-pull-request-standard-profile
@@ -497,7 +504,7 @@ stimuli:
       - type: output-matches
         name: complete-orientation-retry
         config:
-          pattern: '(?is)^(?=[\s\S]*(?:retry\s+(?:exactly\s+)?once|(?:one|single)\s+(?:allowed\s+)?retry))(?=[\s\S]*orientation)(?=[\s\S]*(?:diff-state\.json|state path))(?=[\s\S]*(?:orientation-walkthrough\.md|output path))(?=[\s\S]*(?:failure|error))'
+          pattern: '(?is)^(?![\s\S]*(?<!\b(?:not|never|no|without)\s)\b(?:retry\s+[*`]*(?:twice|[2-9])\b|(?:two|three|[2-9])\s+[*`]*retries\b|retry\s+until\s+success))(?=[\s\S]*(?:retry\s+[*`]*(?:exactly\s+)?once\b|(?:one|single)\b[*`]*\s+(?:allowed\s+)?retry\b|(?:one|a\s+single)\b[*`]*\s+(?:additional|more)\s+attempt\b))(?=[\s\S]*orientation)(?=[\s\S]*\b(?:task|original\s+instructions?)\b)(?=[\s\S]*(?:diff-state\.json|state path))(?=[\s\S]*(?:orientation-walkthrough\.md|output path))(?=[\s\S]*(?:failure|error))'
 
   - name: code-review-perspective-no-output-retry
     prompt: |
@@ -517,7 +524,7 @@ stimuli:
       - type: output-matches
         name: complete-perspective-retry
         config:
-          pattern: '(?is)retry.{0,120}once.{0,500}(complete original|complete.*dispatch).{0,500}(failure|no output|missing).{0,500}(functional-findings\.json|expected (findings[- ](file|path)|output))'
+          pattern: '(?is)^(?![\s\S]*(?<!\b(?:not|never|no|without)\s)\b(?:retry\s+[*`]*(?:twice|[2-9])\b|(?:two|three|[2-9])\s+[*`]*retries\b))(?=[\s\S]*(?:retry\s+[*`]*(?:exactly\s+)?once\b|(?:one|single)\b[*`]*\s+retry\b|one\s+additional\s+attempt))(?=[\s\S]*(?:complete\s+original|complete\s+dispatch))(?=[\s\S]*(?:failure|no output|missing))(?=[\s\S]*(?:functional-findings\.json|expected\s+(?:findings[- ](?:file|path)|output)))'
       - type: output-matches
         name: skip-only-after-retry
         config:
