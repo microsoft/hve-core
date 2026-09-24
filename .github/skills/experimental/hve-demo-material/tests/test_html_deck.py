@@ -181,6 +181,25 @@ class TestSlideMarkup:
         assert "<td>1 min</td>" in markup
         assert '<div class="card-grid"><article class="panel"><h3>A</h3>' in markup
 
+    def test_given_wrapped_sentence_when_mapped_then_one_paragraph(self, tmp_path):
+        slide = {
+            "title": "Intro",
+            "elements": [
+                {
+                    "type": "textbox",
+                    "top": 1.0,
+                    "text": "Agents, prompts, and\nexecutable skills for Copilot.",
+                },
+                {"type": "textbox", "top": 3.0, "text": "Research\n- plan\nImplement"},
+            ],
+        }
+        markup = slide_markup(2, slide, tmp_path, [], [])
+        assert (
+            '<p class="lead">Agents, prompts, and executable skills for Copilot.</p>'
+            in markup
+        )
+        assert "<ul><li>Research</li><li>plan</li><li>Implement</li></ul>" in markup
+
     def test_given_image_when_mapped_then_embedded_as_css_with_label(self, tmp_path):
         slide_dir = tmp_path / "slide-005"
         (slide_dir / "images").mkdir(parents=True)

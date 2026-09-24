@@ -65,6 +65,7 @@ ROW_TOLERANCE_IN = 0.35
 FOOTNOTE_MAX_PT = 10
 LABEL_MAX_PT = 13
 PANEL_HEADING_MIN_PT = 19
+BULLET_MARKS = "-*\u2022"
 
 DECK_CSS_FILE = SKILL_ROOT / "templates" / "html-deck.css"
 
@@ -175,15 +176,33 @@ def _contains(frame: dict, elem: dict) -> bool:
     )
 
 
+def _text_lines(text: str) -> list[str]:
+    """Split text into lines, joining a hard wrap back onto its sentence.
+
+    A line that starts in lowercase continues the previous line unless that
+    line is a bullet, so only separately authored lines become list items.
+    """
+    lines: list[str] = []
+    for raw in str(text or "").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        bullet = line[0] in BULLET_MARKS
+        if lines and not bullet and line[0].islower():
+            lines[-1] = f"{lines[-1]} {line}"
+        else:
+            lines.append(line.lstrip(BULLET_MARKS + " ").strip() or line)
+    return lines
+
+
 def _text_markup(elem: dict, in_panel: bool) -> str:
     """Return a text element as a label, heading, list, or paragraph."""
-    lines = [line.strip() for line in str(elem.get("text") or "").splitlines()]
-    lines = [line for line in lines if line]
+    lines = _text_lines(elem.get("text"))
     size = _num(elem, "font_size") or 18
     if not lines:
         return _list(_items(elem.get("bullets") or elem.get("paragraphs") or []))
     if len(lines) > 1:
-        return _list([line.lstrip("-*\u2022 ").strip() or line for line in lines])
+        return _list(lines)
     text = _esc(lines[0])
     if size <= FOOTNOTE_MAX_PT:
         return f'<p class="footnote">{text}</p>'
