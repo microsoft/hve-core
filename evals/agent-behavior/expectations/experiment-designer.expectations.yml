@@ -52,7 +52,7 @@ expectations:
       outcome clause. Exact wording may vary but all three components must be
       present and falsifiable.
     failure_modes:
-      - Hypothesis written as a single declarative sentence with no test method or success threshold (current 2026-05-28 output: "A price slider on the listing page lifts purchase conversion ≥ 5%" — has belief and outcome but no explicit test method clause).
+      - 'Hypothesis written as a single declarative sentence with no test method or success threshold (current 2026-05-28 output: "A price slider on the listing page lifts purchase conversion ≥ 5%" — has belief and outcome but no explicit test method clause).'
       - Multiple assumptions conflated into one hypothesis.
       - No measurable outcome (no threshold, no measurement).
     priority: high
@@ -171,3 +171,31 @@ expectations:
     priority: low
     stimulus_scoped: true
     contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"
+
+  - expectation_id: research-prepares-without-validating
+    summary: Prior-art and current-constraint Research reconciles Phase 1 assumptions without validating hypotheses.
+    signal: Output loads the preparation reference, uses `rpi-research`, and writes supported, contradicted, or inconclusive status to `context.md`.
+    pass_criteria: |
+      A material Phase 1 prior-art or current-fact gap activates the bounded
+      preparation contract. Findings reconcile assumptions but never count as
+      an experiment run, hypothesis verdict, success criterion, or enablement.
+    failure_modes:
+      - Reports a researched assumption as a validated hypothesis.
+      - Reduces joint experiment scope because prior Research exists.
+      - Omits the primary artifact or evidence identifiers.
+    priority: high
+    contract_ref: "agent §Phase 1 › Research Preparation"
+
+  - expectation_id: unavailable-preparation-preserves-other-work
+    summary: Unavailable Research records the gap and pauses only dependent hypothesis work.
+    signal: Output marks the missing fact unresolved while allowing unrelated framing to continue.
+    pass_criteria: |
+      Blocked or unavailable Research is recorded as an unresolved preparation
+      gap. The dependent hypothesis pauses, while unrelated experiment framing
+      can continue under the existing phase gates.
+    failure_modes:
+      - Invents the current constraint.
+      - Treats unavailable Research as a failed experiment.
+      - Stops the entire session without identifying dependent work.
+    priority: high
+    contract_ref: "agent §Phase 1 › Research Preparation"
