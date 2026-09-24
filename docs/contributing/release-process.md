@@ -37,7 +37,7 @@ uploads it as `main-dependencies-<sha>` for 30 days. The archive contains
 `main-dependencies-<sha>.spdx.json`. The workflow run summary provides the
 authenticated direct download link and artifact digest.
 
-Use the [Main SBOM badge](../../README.md) or open the
+Use the [Main SBOM badge](https://github.com/microsoft/hve-core/blob/main/README.md) or open the
 [Dependency Review workflow history](https://github.com/microsoft/hve-core/actions/workflows/dependency-review.yml?query=branch%3Amain)
 to find recent `main` runs. To retrieve the SBOM for an exact commit:
 
