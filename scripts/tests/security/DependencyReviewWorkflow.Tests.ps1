@@ -46,9 +46,12 @@ BeforeAll {
         #>
         [CmdletBinding()]
         [OutputType([string])]
-        param()
+        param(
+            [Parameter()]
+            [System.Collections.IDictionary]$Workflow = $script:Workflow
+        )
 
-        return (@($script:Workflow['jobs'].Values['steps'] | ForEach-Object {
+        return (@($Workflow['jobs'].Values | ForEach-Object { $_['steps'] } | ForEach-Object {
                     $Uses = if ($_.Contains('uses')) { [string]$_['uses'] } else { '' }
                     $Run = if ($_.Contains('run')) { [string]$_['run'] } else { '' }
                     "$Uses`n$Run"
@@ -177,7 +180,27 @@ Describe 'Dependency Review workflow contract' -Tag 'Unit' {
             $Permission | Should -Not -Contain 'security-events'
         }
 
-        Get-WorkflowStepText |
-            Should -Not -Match 'actions/attest|gh release (upload|edit)'
+        $StepText = Get-WorkflowStepText
+        $StepText | Should -Match 'anchore/sbom-action@'
+        $StepText | Should -Match 'actions/upload-artifact@'
+        $StepText | Should -Not -Match 'actions/attest|gh release (upload|edit)'
+    }
+
+    It 'Detects prohibited actions added to any job' {
+        $Job = $script:Workflow['jobs']['main-sbom']
+        $OriginalSteps = $Job['steps']
+
+        try {
+            $Job['steps'] = @($OriginalSteps) + [ordered]@{
+                name = 'Prohibited attestation mutation'
+                uses = 'actions/attest-build-provenance@0000000000000000000000000000000000000000'
+            }
+
+            Get-WorkflowStepText |
+                Should -Match 'actions/attest-build-provenance@'
+        }
+        finally {
+            $Job['steps'] = $OriginalSteps
+        }
     }
 }
