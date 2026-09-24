@@ -16,8 +16,8 @@ level. Keep all generated work inside the selected level's
 ## Goal
 
 Deliver a PPTX deck and narrated MP4 for every requested level, with a resolved
-and audited source register, required visual-capture fidelity, Azure AI Speech
-neural narration, and a complete output manifest.
+and audited source register, required visual-capture fidelity, narration from
+the engine in force, and a complete output manifest.
 
 ## Inputs
 
@@ -26,8 +26,9 @@ neural narration, and a complete output manifest.
 * `autonomy` from `full`, `partial`, or `manual`, defaulting to `partial`
 * `capture` from `live` or `deck-export`, defaulting to `live` for L300 and L400
   and to `deck-export` for L100 and L200
-* Audience, delivery context, Azure Speech region, approved neural voice, and
-  whether a GIF is explicitly requested
+* `narration` from `azure` or `piper`, defaulting to `azure`
+* Audience, delivery context, approved voice, the Azure Speech region when
+  `narration` is `azure`, and whether a GIF is explicitly requested
 
 ## Success Criteria
 
@@ -55,9 +56,9 @@ item and wait for user confirmation. Auto means execute without prompting.
 | Manual            | Gate       | Gate                      | Gate                |
 
 Source-set resolution is never a gate in any mode, so an unattended run can
-resolve a topic on its own. The capture profile is likewise never a gate, and
-never an autonomous decision: it comes from the level default or from a
-caller-supplied `capture` value.
+resolve a topic on its own. The capture profile and narration engine are
+likewise never gates, and never autonomous decisions: each comes from its
+default or from a caller-supplied `capture` or `narration` value.
 
 Under `full`, which exists so this agent can run from unattended agentic
 workflows where no human can answer a prompt:
@@ -76,8 +77,8 @@ workflows where no human can answer a prompt:
   exactly as it does under the attended modes.
 
 Every mode writes artifacts into the level working directory only. This agent
-never publishes or distributes a deck or video; publication is a separate human
-action.
+never publishes or distributes a deck or video; publication happens by hand or
+through a human-configured pipeline outside the agent.
 
 ## Constraints
 
@@ -108,6 +109,9 @@ action.
   moves L300 or L400 to `deck-export`, and the profile in force is recorded as
   `visuals.capture_profile` so a downgraded run stays distinguishable from a
   live capture run.
+* Never switch the narration engine. Only a caller-supplied `narration: piper`
+  selects Piper, and the engine in force is recorded as `narration.engine` so
+  Piper-narrated output stays distinguishable from Azure-narrated output.
 * Point every live capture at a file that opens in the Monaco text editor, and
   measure its rendered font size with the procedure in the skill's curriculum. A
   markdown file opens as a cross-origin preview webview whose text cannot be
@@ -122,11 +126,13 @@ action.
 
 ## Stop Rules
 
-* Set the affected level to `Deferred` when Azure Speech credentials, FFmpeg,
-  LibreOffice, `uv`, live-capture tooling, a gate the active autonomy mode
-  requires, or `rpi-research` is absent while a topic or lesson needs research
-  beyond its pinned sources. Record the condition and the resumption action in
-  the manifest, naming the unavailable entrypoint.
+* Set the affected level to `Deferred` when the narration engine in force
+  (Azure Speech credentials under `narration: azure`, the Piper executable or
+  voice under `narration: piper`), FFmpeg, LibreOffice, `uv`, live-capture
+  tooling, a gate the active autonomy mode requires, or `rpi-research` is
+  absent while a topic or lesson needs research beyond its pinned sources.
+  Record the condition and the resumption action in the manifest, naming the
+  unavailable entrypoint.
 * Set a level running under `capture: live` to `Deferred` when the VS Code CLI
   is absent, or when an attempted browser navigation through the host's
   Playwright MCP tools fails. Determine availability by attempting the
@@ -154,13 +160,15 @@ action.
 
 ### 1. Confirm Scope and Prerequisites
 
-1. Confirm requested levels, topic, autonomy mode, capture profile, audience,
-   delivery context, Azure Speech region, approved neural voice, and whether a
-   GIF is explicitly requested. Apply the documented defaults for anything
-   unstated, and under `full` never prompt for them.
+1. Confirm requested levels, topic, autonomy mode, capture profile, narration
+   engine, audience, delivery context, approved voice, the Azure Speech region
+   under `narration: azure`, and whether a GIF is explicitly requested. Apply
+   the documented defaults for anything unstated, and under `full` never prompt
+   for them.
 2. Create `.copilot-tracking/demo-material/{{YYYY-MM-DD}}/{{level}}/` with the
    subdirectories defined in the skill's output contract.
-3. Check `uv`, LibreOffice, FFmpeg, Azure Speech authentication, `rpi-research`
+3. Check `uv`, LibreOffice, FFmpeg, the narration engine in force (Azure Speech
+   authentication, or the Piper executable and voice), `rpi-research`
    availability as needed, and, for any level under `capture: live`, the VS Code
    CLI plus Playwright MCP browser tools. Establish browser availability by
    attempting a navigation rather than by inspecting tool names. Record missing
@@ -220,12 +228,14 @@ action.
    VS Code Web keeps user settings in browser IndexedDB and a settings-based
    font size never reaches the capture. Measure the result and record the
    measured font size and source resolution per capture ID.
-3. Use `tts-voiceover` with Azure AI Speech neural voices to create per-slide
-   WAV files in `audio/`. Pass `--collapse-newlines` whenever speaker notes use
+3. Use `tts-voiceover` with the narration engine in force to create per-slide
+   WAV files in `audio/`, passing `--engine piper` under `narration: piper`.
+   Pass `--collapse-newlines` whenever speaker notes use
    YAML block scalars, because each hard line wrap in a block scalar is
    otherwise spoken as a pause: one measured level ran 361 seconds without the
-   option and 284 seconds with it. Verify `SPEECH_KEY` or `SPEECH_RESOURCE_ID`
-   and `SPEECH_REGION` are available without reading or recording secret values.
+   option and 284 seconds with it. Under `narration: azure`, verify `SPEECH_KEY`
+   or `SPEECH_RESOURCE_ID` and `SPEECH_REGION` are available without reading or
+   recording secret values.
 4. Create `output/segments.yml` and use `demo-video` to assemble the narrated
    MP4 in `output/`. Its paths resolve relative to the manifest file, not the
    level directory, so reference sibling directories as `../frames/...` and

@@ -7,8 +7,12 @@ description: "Working-directory, manifest, autonomy, prerequisite, and output co
 ## Publication Boundary
 
 A run produces artifacts into the level working directory and nothing else. It
-never publishes, uploads, or distributes a deck or a video. Publication is a
-separate human action in every autonomy mode, including `full`.
+never publishes, uploads, or distributes a deck or a video in any autonomy mode,
+including `full`. Publication is a human decision. A human either publishes the
+artifacts by hand or configures a deterministic pipeline that publishes them
+outside the agent. The repository's Demo Material Render workflow is such a
+pipeline: it publishes a level only after that level's machine-verifiable
+criteria pass.
 
 ## Working Directory
 
@@ -45,16 +49,17 @@ Store the deck at `output/hve-demo-{{level}}.pptx`, its narrated version at
 
 ## Prerequisite Matrix
 
-| Capability                         | Required prerequisite                                               | Deferred behavior                                                                                                                              |
-|------------------------------------|---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| Build and deck operations          | `uv`, Python 3.11+, and PowerShell 7+                               | Record `uv` or runtime absence as `Deferred`; do not build the deck                                                                            |
-| Deterministic deck frame export    | LibreOffice                                                         | Record `LibreOffice` absence as `Deferred`; do not claim the L100 or L200 visual evidence passed                                               |
-| Azure neural narration             | `SPEECH_KEY` or `SPEECH_RESOURCE_ID`, plus `SPEECH_REGION`          | Record unavailable authentication or region approval as `Deferred`; do not generate substitute delivery narration                              |
-| Vision slide check                 | GitHub Copilot CLI, authenticated                                   | Required before `validation.deck: pass`; record `Deferred` when unavailable, because property and geometry checks do not inspect rendered text |
-| Approved neural voice              | A caller-named voice, otherwise `en-US-Andrew:DragonHDLatestNeural` | Record the selected voice in the manifest; under `manual` and `partial` confirm it, under `full` use the default without prompting             |
-| MP4 assembly                       | FFmpeg and ffprobe on `PATH`                                        | Record the missing executable as `Deferred`; do not claim an MP4 exists                                                                        |
-| Live capture, `capture: live` only | VS Code CLI plus Playwright MCP browser tools                       | Record the unavailable entrypoint by name as `Deferred`; do not replace an L300 or L400 live capture with deck export                          |
-| Dynamic topic resolution           | The `rpi-research` skill                                            | Record its absence as `Deferred` for any topic other than `hve-core-general`; do not guess a source set                                        |
+| Capability                                      | Required prerequisite                                                                                               | Deferred behavior                                                                                                                              |
+|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| Build and deck operations                       | `uv`, Python 3.11+, and PowerShell 7+                                                                               | Record `uv` or runtime absence as `Deferred`; do not build the deck                                                                            |
+| Deterministic deck frame export                 | LibreOffice                                                                                                         | Record `LibreOffice` absence as `Deferred`; do not claim the L100 or L200 visual evidence passed                                               |
+| Azure neural narration, `narration: azure` only | `SPEECH_KEY` or `SPEECH_RESOURCE_ID`, plus `SPEECH_REGION`                                                          | Record unavailable authentication or region approval as `Deferred`; do not switch to Piper                                                     |
+| Local narration, `narration: piper` only        | The Piper executable (`PIPER_COMMAND` or `piper` on `PATH`) and a downloaded voice                                  | Record the missing executable or voice as `Deferred`; do not switch to Azure                                                                   |
+| Vision slide check                              | GitHub Copilot CLI, authenticated                                                                                   | Required before `validation.deck: pass`; record `Deferred` when unavailable, because property and geometry checks do not inspect rendered text |
+| Approved narration voice                        | A caller-named voice, otherwise `en-US-Andrew:DragonHDLatestNeural` for Azure or `en_US-joe-medium` (CC0) for Piper | Record the selected voice in the manifest; under `manual` and `partial` confirm it, under `full` use the default without prompting             |
+| MP4 assembly                                    | FFmpeg and ffprobe on `PATH`                                                                                        | Record the missing executable as `Deferred`; do not claim an MP4 exists                                                                        |
+| Live capture, `capture: live` only              | VS Code CLI plus Playwright MCP browser tools                                                                       | Record the unavailable entrypoint by name as `Deferred`; do not replace an L300 or L400 live capture with deck export                          |
+| Dynamic topic resolution                        | The `rpi-research` skill                                                                                            | Record its absence as `Deferred` for any topic other than `hve-core-general`; do not guess a source set                                        |
 
 Establish live-capture availability by attempting a browser navigation, never by
 inspecting tool names. MCP tool prefixes are derived from the server's
@@ -74,7 +79,7 @@ Read this schema and copy its structure into `output/manifest.yml`. Values in
 angle brackets are placeholders, not literal output.
 
 ```yaml
-schema_version: 3
+schema_version: 4
 level: L100
 topic: <topic name, default hve-core-general>
 autonomy: <full | partial | manual>
@@ -92,7 +97,9 @@ sources:
 deliverables:
   pptx: output/hve-demo-L100.pptx
   narrated_pptx: output/hve-demo-L100-narrated.pptx
-  mp4: output/hve-demo-L100.mp4
+  mp4: output/hve-demo-L100.mp4 # carries an English caption track
+  captions: output/hve-demo-L100.vtt
+  transcript_page: output/index.html
 visuals:
   capture_profile: <live | deck-export> # deck-export at L300 or L400 only when the caller supplied it
   evidence:
@@ -101,9 +108,10 @@ visuals:
       rendered_font_size_pt: <measured number | not-applicable>
       source_resolution: <width>x<height | not-applicable>
 narration:
-  provider: Azure AI Speech
-  voice: <approved neural voice name>
-  speech_region: <approved region name>
+  engine: <azure | piper> # caller-selected; default azure
+  provider: <Azure AI Speech | Piper>
+  voice: <approved voice name>
+  speech_region: <approved region name | not-applicable> # not-applicable under piper
   total_word_count: <number> # summed across the synthesized speaker notes
   measured_duration_minutes: <number> # measured from the produced MP4, for example with ffprobe
   contract_duration_minutes:
@@ -124,7 +132,8 @@ prerequisites:
   uv: <available | missing>
   libreoffice: <available | missing | not-required>
   ffmpeg: <available | missing>
-  azure_speech: <available | missing>
+  azure_speech: <available | missing | not-required>
+  piper: <available | missing | not-required>
   playwright: <available | missing | not-required>
   rpi_research: <available | missing | not-required>
 approvals:

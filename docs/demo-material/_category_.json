@@ -1,0 +1,10 @@
+{
+  "label": "Demo Material",
+  "position": 3,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "demo-material/README"
+  }
+}

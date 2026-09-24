@@ -13,6 +13,7 @@ metadata:
   subject: "<one line naming the level and its audience>" # substitute
   keywords: "<comma separated keywords, ending with the level label>" # substitute
   category: "Demo Material"
+  language: "en-US"
 
 defaults:
   title_bar:

@@ -72,6 +72,22 @@ the pinned value for that role, over both `#1B1B1F` and `#2D2D35`. L100 used
 slide check, so `#C9CDD6` replaces it everywhere. That vision check, which gates
 `validation.deck: pass`, is where a contrast regression surfaces.
 
+Measured WCAG contrast ratios against the page background `#1B1B1F` and the
+card fill `#2D2D35`:
+
+| Colour    | On `#1B1B1F` | On `#2D2D35` | Allowed use                                          |
+|-----------|--------------|--------------|------------------------------------------------------|
+| `#F8F8FC` | 16.2:1       | 12.9:1       | Any text                                             |
+| `#C9CDD6` | 10.8:1       | 8.6:1        | Any text                                             |
+| `#00B4D8` | 7.0:1        | 5.5:1        | Any text, including small emphasis                   |
+| `#0078D4` | 3.8:1        | 3.0:1        | Title bar and other non-text shapes only, never text |
+
+`#0078D4` stays below the 4.5:1 text minimum on both surfaces, so it carries
+structure, not words.
+
+`metadata.language` is fixed at `en-US`. The deck builder applies it to the
+document and to every text run so screen readers pronounce the deck correctly.
+
 ## What a Run Substitutes
 
 Copy `templates/style.yaml` to the level's `content/global/style.yaml` and

@@ -1,0 +1,424 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+#
+# Renders demo-material content authored by the Demo Material Author agentic
+# workflow into decks and narrated MP4s, then publishes a site bundle artifact
+# that the documentation deployment stages under /demo-material/.
+
+name: Demo Material Render
+
+on:
+  workflow_run:
+    workflows:
+      - Demo Material Author
+    branches:
+      - main
+    types:
+      - completed
+  schedule:
+    - cron: '47 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      author-run-id:
+        description: 'Demo Material Author run to render (default: refresh the latest bundle)'
+        required: false
+        type: string
+
+concurrency:
+  group: demo-material-render
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  PIPER_VERSION: '1.8.0'
+  PIPER_VOICE: en_US-joe-medium
+  PIPER_VOICE_BASE: https://huggingface.co/rhasspy/piper-voices/resolve/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/joe/medium
+  PIPER_VOICE_ONNX_SHA256: 58afce0321b8d9c46d7cdf9c16500cc55a793b4220212dba6b70fb788b3baf06
+  PIPER_VOICE_JSON_SHA256: 3d6d5410b3795cb1950595247ef8f06190719e6fdbfa3a2356d8ec368e1aad33
+  VSCODE_CLI_URL: https://vscode.download.prss.microsoft.com/dbazure/download/stable/2242ebbb54efeeb0129e08e919e7e8d43033cd83/vscode_cli_linux_x64_cli.tar.gz
+  VSCODE_CLI_SHA256: 651bc54695531375589c837b907a4e784bc2892076592e2464da12ead994d4bd
+  # A bundle older than this is re-uploaded so it never reaches the 90-day artifact expiry.
+  REFRESH_AFTER_DAYS: 60
+
+jobs:
+  resolve:
+    name: Resolve render inputs
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      mode: ${{ steps.resolve.outputs.mode }}
+      levels: ${{ steps.levels.outputs.levels || '[]' }}
+      source-sha: ${{ steps.resolve.outputs.source-sha }}
+      author-run-id: ${{ steps.resolve.outputs.author-run-id }}
+      content-artifact-id: ${{ steps.resolve.outputs.content-artifact-id }}
+      previous-artifact-id: ${{ steps.resolve.outputs.previous-artifact-id }}
+      previous-run-id: ${{ steps.resolve.outputs.previous-run-id }}
+    steps:
+      - name: Resolve author run and previous bundle
+        id: resolve
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          DISPATCH_AUTHOR_RUN_ID: ${{ inputs.author-run-id }}
+        with:
+          script: |
+            const refreshAfterMs = Number(process.env.REFRESH_AFTER_DAYS) * 86400000;
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            const defaultBranch = repository.default_branch;
+
+            const findArtifact = async (runId, name) => {
+              const artifacts = await github.paginate(
+                github.rest.actions.listWorkflowRunArtifacts,
+                { ...context.repo, run_id: runId, per_page: 100 },
+              );
+              const matches = artifacts.filter((a) => !a.expired && a.name === name);
+              return matches.length === 1 ? matches[0] : null;
+            };
+
+            const { data: own } = await github.rest.actions.listWorkflowRuns({
+              ...context.repo,
+              workflow_id: "demo-material-render.yml",
+              branch: defaultBranch,
+              status: "success",
+              per_page: 20,
+            });
+            let previous = null;
+            for (const run of own.workflow_runs) {
+              if (run.id === context.runId) continue;
+              const artifact = await findArtifact(run.id, `demo-material-site-${run.id}`);
+              if (artifact) {
+                previous = artifact;
+                core.setOutput("previous-artifact-id", String(artifact.id));
+                core.setOutput("previous-run-id", String(run.id));
+                break;
+              }
+            }
+
+            let authorRun = null;
+            if (context.eventName === "workflow_run") {
+              authorRun = context.payload.workflow_run;
+            } else if (context.eventName === "workflow_dispatch" && process.env.DISPATCH_AUTHOR_RUN_ID) {
+              if (!/^[0-9]+$/.test(process.env.DISPATCH_AUTHOR_RUN_ID)) {
+                throw new Error("author-run-id must be a numeric run ID");
+              }
+              ({ data: authorRun } = await github.rest.actions.getWorkflowRun({
+                ...context.repo,
+                run_id: Number(process.env.DISPATCH_AUTHOR_RUN_ID),
+              }));
+            }
+
+            if (authorRun) {
+              if (authorRun.conclusion !== "success" ||
+                  authorRun.path !== ".github/workflows/demo-material-author.lock.yml" ||
+                  authorRun.head_branch !== defaultBranch ||
+                  !/^[0-9a-f]{40}$/.test(authorRun.head_sha)) {
+                core.notice("Author run is not a successful default-branch Demo Material Author run; nothing to render.");
+                core.setOutput("mode", "skip");
+                return;
+              }
+              const content = await findArtifact(authorRun.id, `demo-material-content-${authorRun.id}`);
+              if (!content) {
+                core.notice("Author run produced no content artifact; nothing to render.");
+                core.setOutput("mode", "skip");
+                return;
+              }
+              core.setOutput("mode", "render");
+              core.setOutput("source-sha", authorRun.head_sha);
+              core.setOutput("author-run-id", String(authorRun.id));
+              core.setOutput("content-artifact-id", String(content.id));
+              return;
+            }
+
+            const stale = previous && Date.now() - Date.parse(previous.created_at) > refreshAfterMs;
+            const manual = previous && context.eventName === "workflow_dispatch";
+            core.setOutput("mode", stale || manual ? "refresh" : "skip");
+
+      - name: Download authored content
+        if: ${{ steps.resolve.outputs.mode == 'render' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ steps.resolve.outputs.content-artifact-id }}
+          run-id: ${{ steps.resolve.outputs.author-run-id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/content
+
+      - name: Validate authored content
+        id: levels
+        if: ${{ steps.resolve.outputs.mode == 'render' }}
+        shell: bash
+        env:
+          CONTENT: ${{ runner.temp }}/content
+          AUTHOR_RUN_ID: ${{ steps.resolve.outputs.author-run-id }}
+          SOURCE_SHA: ${{ steps.resolve.outputs.source-sha }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+
+          root = Path(os.environ["CONTENT"])
+          allowed = re.compile(
+              r"^(provenance\.json|L[1-4]00/(content/slide-\d{3}/content\.yaml"
+              r"|content/global/style\.yaml|research/source-register\.md"
+              r"|capture-plan\.yml|manifest\.yml))$"
+          )
+          for path in root.rglob("*"):
+              if path.is_symlink():
+                  raise SystemExit(f"symlink in authored content: {path}")
+              if path.is_file() and not allowed.match(path.relative_to(root).as_posix()):
+                  raise SystemExit(f"unexpected file in authored content: {path}")
+          provenance = json.loads((root / "provenance.json").read_text(encoding="utf-8"))
+          if (provenance.get("schema_version") != "demo-material-content/v1"
+                  or provenance.get("author_run_id") != os.environ["AUTHOR_RUN_ID"]
+                  or provenance.get("source_sha") != os.environ["SOURCE_SHA"]):
+              raise SystemExit("content provenance is not bound to the author run")
+          levels = provenance.get("levels", [])
+          if not all(re.fullmatch(r"L[1-4]00", level) and (root / level / "content").is_dir()
+                     for level in levels):
+              raise SystemExit(f"invalid level list in provenance: {levels}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"levels={json.dumps(levels)}\n")
+          print(f"Levels to render: {levels}")
+          PY
+
+  render:
+    name: Render ${{ matrix.level }}
+    needs: resolve
+    if: ${{ needs.resolve.outputs.mode == 'render' && needs.resolve.outputs.levels != '[]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        level: ${{ fromJSON(needs.resolve.outputs.levels) }}
+    env:
+      LEVEL: ${{ matrix.level }}
+      LEVEL_DIR: ${{ github.workspace }}/../demo-level/${{ matrix.level }}
+      PIPER_DATA_DIR: ${{ github.workspace }}/../piper-voices
+    steps:
+      - name: Checkout the authored commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.source-sha }}
+          persist-credentials: false
+
+      - name: Download authored content
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.resolve.outputs.content-artifact-id }}
+          run-id: ${{ needs.resolve.outputs.author-run-id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/content
+
+      - name: Stage the level directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "${LEVEL_DIR}")"
+          cp -R "${RUNNER_TEMP}/content/${LEVEL}" "${LEVEL_DIR}"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Install LibreOffice and FFmpeg
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libreoffice-impress ffmpeg
+
+      - name: Install Piper and its voice
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv tool install "piper-tts==${PIPER_VERSION}"
+          uv tool dir --bin >> "${GITHUB_PATH}"
+          mkdir -p "${PIPER_DATA_DIR}"
+          cd "${PIPER_DATA_DIR}"
+          curl --fail --location --silent --show-error \
+            --output "${PIPER_VOICE}.onnx" "${PIPER_VOICE_BASE}/${PIPER_VOICE}.onnx"
+          curl --fail --location --silent --show-error \
+            --output "${PIPER_VOICE}.onnx.json" "${PIPER_VOICE_BASE}/${PIPER_VOICE}.onnx.json"
+          printf '%s  %s\n%s  %s\n' \
+            "${PIPER_VOICE_ONNX_SHA256}" "${PIPER_VOICE}.onnx" \
+            "${PIPER_VOICE_JSON_SHA256}" "${PIPER_VOICE}.onnx.json" | sha256sum --check
+
+      - name: Install VS Code CLI and Chromium for live capture
+        if: ${{ matrix.level == 'L300' || matrix.level == 'L400' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cli_dir="${RUNNER_TEMP}/vscode-cli"
+          mkdir -p "${cli_dir}"
+          curl --fail --location --silent --show-error \
+            --output "${cli_dir}/cli.tar.gz" "${VSCODE_CLI_URL}"
+          printf '%s  %s\n' "${VSCODE_CLI_SHA256}" "${cli_dir}/cli.tar.gz" | sha256sum --check
+          tar -xzf "${cli_dir}/cli.tar.gz" -C "${cli_dir}"
+          echo "${cli_dir}" >> "${GITHUB_PATH}"
+          uv sync --directory .github/skills/experimental/vscode-playwright
+          uv run --directory .github/skills/experimental/vscode-playwright \
+            playwright install --with-deps chromium
+
+      - name: Render ${{ matrix.level }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash .github/skills/experimental/hve-demo-material/scripts/render-level.sh \
+            --level "${LEVEL}" \
+            --level-dir "${LEVEL_DIR}" \
+            --workspace "${GITHUB_WORKSPACE}" \
+            --narration piper
+
+      - name: Collect render outputs
+        if: ${{ always() }}
+        shell: bash
+        env:
+          OUT: ${{ runner.temp }}/render-out
+        run: |
+          set -euo pipefail
+          mkdir -p "${OUT}/${LEVEL}"
+          for rel in \
+            "output/hve-demo-${LEVEL}.pptx" \
+            "output/hve-demo-${LEVEL}.mp4" \
+            "output/hve-demo-${LEVEL}.vtt" \
+            output/index.html \
+            output/render-result.json \
+            output/captures.json \
+            research/source-register.md \
+            manifest.yml; do
+            if [[ -f "${LEVEL_DIR}/${rel}" ]]; then
+              cp "${LEVEL_DIR}/${rel}" "${OUT}/${LEVEL}/$(basename "${rel}")"
+            fi
+          done
+
+      - name: Upload render outputs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: demo-material-level-${{ matrix.level }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/render-out
+          retention-days: 7
+          if-no-files-found: warn
+
+  bundle:
+    name: Publish site bundle
+    needs:
+      - resolve
+      - render
+    if: ${{ always() && (needs.resolve.outputs.mode == 'render' || needs.resolve.outputs.mode == 'refresh') }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    steps:
+      - name: Download the previous bundle
+        if: ${{ needs.resolve.outputs.previous-artifact-id != '' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.resolve.outputs.previous-artifact-id }}
+          run-id: ${{ needs.resolve.outputs.previous-run-id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/site
+
+      - name: Download this run's renders
+        if: ${{ needs.resolve.outputs.mode == 'render' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: demo-material-level-*-${{ github.run_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/renders
+
+      - name: Assemble the bundle
+        shell: bash
+        env:
+          SITE: ${{ runner.temp }}/site
+          RENDERS: ${{ runner.temp }}/renders
+          SOURCE_SHA: ${{ needs.resolve.outputs.source-sha }}
+          AUTHOR_RUN_ID: ${{ needs.resolve.outputs.author-run-id }}
+          RENDER_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${SITE}" "${RENDERS}"
+          python3 - <<'PY'
+          import json, os, re, shutil
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          site = Path(os.environ["SITE"])
+          renders = Path(os.environ["RENDERS"])
+          now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+          index_path = site / "index.json"
+          index = json.loads(index_path.read_text(encoding="utf-8")) if index_path.is_file() else {}
+          if index.get("schema_version") != "demo-material-site/v1":
+              index = {"schema_version": "demo-material-site/v1", "levels": {}}
+          published = ("pptx", "mp4", "vtt")
+
+          for level_dir in sorted(p for p in renders.iterdir() if re.fullmatch(r"L[1-4]00", p.name)):
+              level = level_dir.name
+              result_path = level_dir / "render-result.json"
+              result = json.loads(result_path.read_text(encoding="utf-8")) if result_path.is_file() else {}
+              files = {ext: level_dir / f"hve-demo-{level}.{ext}" for ext in published}
+              entry = index["levels"].get(level, {})
+              attempt = {
+                  "render_run_id": os.environ["RENDER_RUN_ID"],
+                  "author_run_id": os.environ["AUTHOR_RUN_ID"],
+                  "source_sha": os.environ["SOURCE_SHA"],
+                  "at": now,
+                  "checks": result.get("checks", {}),
+              }
+              if result.get("ok") is True and all(f.is_file() for f in files.values()) and (level_dir / "index.html").is_file():
+                  target = site / level
+                  shutil.rmtree(target, ignore_errors=True)
+                  target.mkdir(parents=True)
+                  for name in [f.name for f in files.values()] + ["index.html", "render-result.json", "source-register.md"]:
+                      if (level_dir / name).is_file():
+                          shutil.copy2(level_dir / name, target / name)
+                  entry = {
+                      **attempt,
+                      "rendered_at": now,
+                      "narration_engine": result.get("narration_engine"),
+                      "capture_profile": result.get("capture_profile"),
+                      "measured_duration_minutes": result.get("measured_duration_minutes"),
+                      "files": {
+                          **{ext: f"{level}/hve-demo-{level}.{ext}" for ext in published},
+                          "page": f"{level}/index.html",
+                      },
+                  }
+                  print(f"{level}: published")
+              else:
+                  entry["last_failed_attempt"] = attempt
+                  print(f"{level}: render did not pass; keeping the previous files")
+              index["levels"][level] = entry
+
+          index["generated_at"] = now
+          index["render_run_id"] = os.environ["RENDER_RUN_ID"]
+          allowed = re.compile(
+              r"^(index\.json|L[1-4]00/(hve-demo-L[1-4]00\.(pptx|mp4|vtt)|index\.html|render-result\.json|source-register\.md))$"
+          )
+          for path in site.rglob("*"):
+              if path.is_symlink() or (path.is_file() and not allowed.match(path.relative_to(site).as_posix())):
+                  raise SystemExit(f"unexpected file in site bundle: {path}")
+          index_path.write_text(json.dumps(index, indent=2) + "\n", encoding="utf-8")
+          PY
+          mkdir -p "${RUNNER_TEMP}/index"
+          cp "${SITE}/index.json" "${RUNNER_TEMP}/index/index.json"
+
+      - name: Upload the site bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: demo-material-site-${{ github.run_id }}
+          path: ${{ runner.temp }}/site
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Upload the site index
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: demo-material-index-${{ github.run_id }}
+          path: ${{ runner.temp }}/index
+          retention-days: 90
+          if-no-files-found: error
