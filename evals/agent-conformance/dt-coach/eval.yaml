@@ -642,7 +642,7 @@ stimuli:
   - Launch .github/agents/design-thinking/dt-coach.agent.md
   - >
     I want to start a project to improve warehouse picking. A Design Thinking
-    project named "warehouse-picking" already exists in this workspace.
+    project with the name you would derive already exists in this workspace.
   - No, start a separate project instead.
   tags:
     category: agent-conformance-dt-coach
