@@ -2492,6 +2492,38 @@ stimuli:
         config:
           pattern: '(?i)(requirements|brd|prd|artifact|author)'
 
+  - name: skill-requirements-author-research-receipt
+    prompt: |
+      Using `requirements-author`, explain how a BRD or PRD consumes a bounded
+      `rpi-research` artifact that has two material findings with different
+      outcomes. Cover session state, document dispositions, authority, and what
+      happens when Research is blocked.
+    environment:
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+    tags:
+      category: behavior-conformance
+      skill: requirements-author
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: requirements-research-receipt-pointer
+        config:
+          pattern: '(?is)(rpiInvocations).*(artifactPaths).*(questionIds).*(evidenceIds).*(findingDispositions)'
+      - type: output-matches
+        name: requirements-research-per-finding
+        config:
+          pattern: '(?is)(one|each|per).*(material finding|finding).*(incorporated|revised|rejected|deferred|retained-assumption)'
+      - type: output-matches
+        name: requirements-research-authority
+        config:
+          pattern: '(?is)(research artifact|Research).*(evidence|question).*(BRD|PRD).*(requirement|document).*(authoritative|authority|decision)'
+      - type: output-matches
+        name: requirements-research-blocked-gate
+        config:
+          pattern: '(?is)(Blocked|Needs clarification).*(cannot|does not|must not).*(gate|exit|approve|authorize)'
+
   - name: skill-proposal-response-analyze
     prompt: |
       Use `proposal-response` analyze mode on these source questions: Q1 asks
@@ -3854,6 +3886,34 @@ stimuli:
           pattern: '(?i)(mlflow|azure\s*ml|experiment\s+tracking\s+(tool|framework|server|backend)|(dataset|model)\s+abstraction|feature\s+engineering|hyperparameter|training\s+run|model\s+production\s+checklist|ml\s+fundamentals\s+checklist)'
           negate: true
 
+  - name: skill-experiment-design-research-preparation
+    prompt: |
+      Using `experiment-design`, explain when a prior-attempt or current-
+      constraint gap should use `rpi-research`, what status returns to the
+      experiment context, and whether Research validates a hypothesis or
+      reduces collaborative experiment work.
+    environment:
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+    tags:
+      category: behavior-conformance
+      skill: experiment-design
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: experiment-research-preparation-trigger
+        config:
+          pattern: '(?is)(rpi-research).*(prior attempt|existing solution|current constraint|already answered)'
+      - type: output-matches
+        name: experiment-research-preparation-status
+        config:
+          pattern: '(?is)(supported).*(contradicted).*(inconclusive)'
+      - type: output-matches
+        name: experiment-research-preparation-boundary
+        config:
+          pattern: '(?is)(cannot|does not|not).*(validate|hypothesis verdict|experiment result).*(collaborative|joint|enablement|scope)'
+
   - name: skill-ml-experimentation-authority
     prompt: |
       I have a trained model and need an experiment-tracking setup plus a
@@ -3939,6 +3999,34 @@ stimuli:
         name: skill-evaluation-design-knowledge-consolidated-guide
         config:
           pattern: '(?is)^(?=.*\b(?:one|single|consolidated)\s+(?:sectioned\s+|consolidated\s+)?evaluation\s+guide\b)(?=.*\bcuration(?:\s+notes?)?\b)(?=.*\b(?:metric\s+selection|selected\s+metrics?|select(?:ing)?\s+metrics?)\b)(?=.*(?:\b(?:metrics?|metric\s+selection)\b[^.!?;\r\n]{0,80}\b(?:rationale|justification|why)\b|\b(?:rationale|justification)\b[^.!?;\r\n]{0,80}\bmetrics?\b))(?=.*\b(?:tooling|tool\s+recommendations?)\b)'
+
+  - name: skill-evaluation-design-current-fact-research
+    prompt: |
+      Using `evaluation-design`, explain how to handle a metric plan when the
+      current evaluator names, preview state, and tool compatibility are not
+      established. Cover the Research brief, metric-selection authority, and
+      the blocked-lookup path.
+    environment:
+      skills:
+        - ../../.github/skills/data-science-engineering/evaluation-design
+    tags:
+      category: behavior-conformance
+      skill: evaluation-design
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: evaluation-current-fact-research-trigger
+        config:
+          pattern: '(?is)(rpi-research).*(evaluator names|availability|preview|compatibility|prerequisites).*(source|date|version)'
+      - type: output-matches
+        name: evaluation-current-fact-metric-authority
+        config:
+          pattern: '(?is)(Research|rpi-research).*(fact|verify|current).*(evaluation-design|skill).*(select|choose).*(metric)'
+      - type: output-matches
+        name: evaluation-current-fact-blocked
+        config:
+          pattern: '(?is)(Blocked|Needs clarification|unavailable).*(stop|pause).*(catalog|recommendation).*(not|do not|cannot).*(invent|guess|assume)'
 
   - name: skill-backlog-plan-knowledge
     prompt: |

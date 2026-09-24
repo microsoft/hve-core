@@ -51,13 +51,15 @@ Discover exits only through the brd-author Discover hard gate: scope is bounded,
 
 ### Discover Research Activation
 
-Provide `rpi-research` with the topic and BRD decision purpose; business stakeholders, authors, and approvers as the audience and intended use; explicit questions and evidence criteria tied to a named BRD gap; market, jurisdiction, source, and date scope plus non-goals; regulatory, licensing, schedule, solution-neutrality, and Discover-gate constraints; supplied conversation, BRD, state, stakeholder, and reference evidence; requested outputs; and output mode (`analysis` unless comparison or convergence is explicitly requested). Use the skill's default evidence root.
+Load `requirements-author` reference `references/_shared/rpi-research-integration.md` and follow its depth-point, activation, brief, return, invocation-state, disposition, and source-authority contracts. When Discover has a named external evidence gap, propose a Research segment with its purpose, expected artifact, expected interaction cost, limits, and direct path before activation. Supply the BRD-specific topic and decision purpose; stakeholder roles and register IDs, authors, and approvers as the audience and intended use; explicit questions and evidence criteria tied to the gap; market, jurisdiction, source, and date scope plus non-goals; regulatory, licensing, schedule, solution-neutrality, and Discover-gate constraints; and the current conversation, BRD, state, stakeholder, and reference evidence. Pass `.copilot-tracking/brd-sessions/<brd-name>/` as the trusted alternate Research evidence root. Request `analysis` output mode unless comparison or convergence is explicitly requested.
 
-Read the completed primary research artifact before evaluating sources or synthesizing findings into the BRD and session state. Preserve all Discover gates. Treat `Blocked` and `Needs clarification` as unresolved evidence and record the smallest gap as an unvalidated assumption or open question. If `rpi-research` or a required lookup capability is unavailable, stop the evidence-dependent conclusion rather than synthesizing uncertain market or regulatory claims from training data.
+Append one `rpiInvocations` entry per activation, copy the completed Research artifact's exact question and evidence IDs into `questionIds` and `evidenceIds`, and record one BRD-owned disposition per material finding. Preserve existing `researchReceipts` without initializing or appending the legacy array for a new activation, and project Research dispositions into the BRD Research Finding Dispositions table. A blocked or unresolved segment uses `does-not-satisfy`, remains an unvalidated assumption or open question, and cannot authorize Discover exit.
 
 ### Define
 
 Load `brd-author#define` first. Author full BRD content using the canonical templates and the FR/AC/NFR/CON/BR taxonomy (see Requirement Quality), then build and verify traceability links across requirements and acceptance criteria.
+
+When Define work has substantial dependency structure, contested traceability, or material interruption risk, load `references/_shared/rpi-research-integration.md` and propose a Plan segment under its depth-point contract. The Plan sequences authoring work such as goals before requirements, requirements before acceptance criteria, and traceability before coverage checks; the canonical BRD template remains the document authority. Store the canonical Plan and Critique pointers on the Plan invocation. After the user accepts that same-phase Plan, propose an Implement segment to track drafting progress, blockers, plan updates, and gate-relevant validation. Append a separate Implement invocation with the next task-slug sequence, set `dependsOnInvocationId` to the accepted Plan invocation, and store the accepted Plan and canonical Changes pointers on the Implement entry. Neither segment issues a content-quality verdict or clears the Define gate.
 
 Dispatch the `BRD Quality Reviewer` subagent to grade the draft. A single invocation returns a `BRD_STANDARD_FINDINGS_V1` payload and an aggregated `BRD_QUALITY_REPORT_V1` payload; treat both as the evidence for the Define gate. Define does not exit until the quality report's gate decision permits advancement.
 
@@ -134,7 +136,7 @@ Maintain state in `.copilot-tracking/brd-sessions/<brd-name>.state.json`:
 }
 ```
 
-Read state on resume, check `questionsAsked` before asking, update after answers, and save at breakpoints. Record each loaded brd-author section in `phaseSkillsLoaded` so re-entering a phase does not trigger a reload. Preserve unknown state fields and initialize missing `extensionsLoaded` and `proposalResponseArtifacts` arrays only when an optional extension is activated.
+Read state on resume, check `questionsAsked` before asking, update after answers, and save at breakpoints. Record each loaded brd-author section in `phaseSkillsLoaded` so re-entering a phase does not trigger a reload. Preserve unknown state fields and existing `researchReceipts`. Initialize missing `extensionsLoaded` and `proposalResponseArtifacts` only when the proposal-response extension is activated. Initialize `rpiInvocations` only when the first RPI segment is proposed; do not migrate or duplicate prior `researchReceipts`.
 
 ### Resume and Recovery
 

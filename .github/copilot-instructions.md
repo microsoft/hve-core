@@ -121,6 +121,7 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * Plans (`.copilot-tracking/plans/`) - Ordinary plan checklists.
 * Research (`.copilot-tracking/research/`) - Technical research findings and subagent research outputs.
 * Reviews (`.copilot-tracking/reviews/`) - Completed review evidence.
+  * Architecture reviews (`.copilot-tracking/reviews/architecture/`) - System Architecture Reviewer records that preserve review analysis while linked ADRs retain decision authority.
 * ADRs (`.copilot-tracking/adrs/`) - Architecture Decision Record drafts.
 * BRD Sessions (`.copilot-tracking/brd-sessions/`) - Business requirements document session state.
 * PRD Sessions (`.copilot-tracking/prd-sessions/`) - Product requirements document session state.

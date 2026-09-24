@@ -76,3 +76,212 @@ stimuli:
         config:
           pattern: '(?i)next_operation'
           negate: true
+
+  - name: brd-builder-research-receipt
+    prompt: |
+      Discover has a named regulatory gap that the BRD and supplied references
+      do not answer. Research returned artifact
+      `.copilot-tracking/research/2026-09-18/atlas-research.md` with Q1 and C1.
+      Explain the state receipt, BRD disposition record, and authority boundary.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: brd-research-receipt
+    graders:
+      - type: output-matches
+        name: brd-research-receipt-state
+        config:
+          pattern: '(?is)(?=.*rpiInvocations)(?=.*capability.{0,80}rpi-research)(?=.*artifactPaths.{0,160}research.{0,160}atlas-research\.md)(?=.*questionIds.{0,80}Q1)(?=.*evidenceIds.{0,80}C1)(?=.*findingDispositions).*'
+      - type: output-matches
+        name: brd-research-receipt-document
+        config:
+          pattern: '(?is)(Research Finding Dispositions).*(incorporated|revised|rejected|deferred|retained-assumption)'
+      - type: output-matches
+        name: brd-research-receipt-authority
+        config:
+          pattern: '(?is)(research artifact|Research).*(evidence|question).*(BRD).*(authoritative|authority|decision)'
+
+  - name: brd-builder-research-blocked
+    prompt: |
+      Discover depends on a bounded market question, but Research returned
+      `Blocked`. Can that result clear the Discover gate? Explain the durable
+      state and the smallest work that stops.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: brd-research-blocked
+    graders:
+      - type: output-matches
+        name: brd-research-blocked-no-gate
+        config:
+          pattern: '(?is)(Blocked|unresolved).*(cannot|does not|must not).*(Discover|gate|exit)'
+      - type: output-matches
+        name: brd-research-blocked-gap
+        config:
+          pattern: '(?is)(open question|unvalidated assumption).*(dependent|evidence-dependent|affected).*(stop|pause|blocked)'
+      - type: output-matches
+        name: brd-research-blocked-no-gate-exit
+        config:
+          pattern: '(?i)(discover|the gate)\s+(is|can be|may now be)\s+(complete|cleared|satisfied|exited)'
+          negate: true
+
+  - name: brd-builder-executes-research-segment
+    prompt: |
+      Resume the staged Atlas BRD in Discover. I approve Research segment
+      `discover-01` with task slug `atlas-brd-discover-01` for gap `REG-01`.
+      The persisted synthetic session date is `2026-09-21`; preserve it in paths.
+      Use only the staged requirements evidence. Perform the segment now:
+      write its primary artifact under the BRD session evidence root, then
+      update state and the BRD disposition table. Do not merely explain it.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/brd-state.json
+          dest: .copilot-tracking/brd-sessions/atlas.state.json
+        - src: fixtures/rpi-depth/atlas-brd.md
+          dest: docs/project-planning/atlas-brd.md
+        - src: fixtures/rpi-depth/requirements-evidence.md
+          dest: evidence/requirements-evidence.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/rpi/rpi-research
+    tags:
+      category: agent-behavior
+      scenario: brd-rpi-research-execution
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-exists
+        name: brd-research-primary-artifact-exists
+        config:
+          path: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
+      - type: file-matches
+        name: brd-research-primary-artifact-has-evidence
+        config:
+          path: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
+          pattern: '(?is)(REG-01|retention).*(Q1|Research Question).*(C1|seven-year)'
+      - type: file-matches
+        name: brd-research-invocation-state-recorded
+        config:
+          path: .copilot-tracking/brd-sessions/atlas.state.json
+          pattern: '(?is)rpiInvocations.*invocationId"?\s*:\s*"discover-01".*taskSlug"?\s*:\s*"atlas-brd-discover-01".*questionIds"?\s*:\s*\[\s*"Q1"\s*\].*evidenceIds"?\s*:\s*\[\s*"C1"\s*\].*segmentStatus"?\s*:\s*"completed".*userDisposition"?\s*:\s*"accepted".*gateEffect"?\s*:\s*"supports".*syntheticExtension.*preserve"?\s*:\s*true'
+      - type: file-matches
+        name: brd-research-disposition-projected
+        config:
+          path: docs/project-planning/atlas-brd.md
+          pattern: '(?is)Research Finding Dispositions.*REG-01.*C1.*incorporated.*atlas-brd-discover-01-research\.md'
+
+  - name: brd-builder-records-blocked-research-segment
+    prompt: |
+      Resume the staged Atlas BRD in Discover. Research segment `discover-01`
+      for `REG-01` returned `Blocked` before producing usable evidence, and I
+      defer it. Update the durable invocation state and BRD open question now.
+      The blocked segment must not satisfy or clear Discover.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/brd-state.json
+          dest: .copilot-tracking/brd-sessions/atlas.state.json
+        - src: fixtures/rpi-depth/atlas-brd.md
+          dest: docs/project-planning/atlas-brd.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+    tags:
+      category: agent-behavior
+      scenario: brd-rpi-research-blocked-state
+    graders:
+      - type: file-matches
+        name: brd-blocked-segment-has-binding-values
+        config:
+          path: .copilot-tracking/brd-sessions/atlas.state.json
+          pattern: '(?is)rpiInvocations.*invocationId"?\s*:\s*"discover-01".*segmentStatus"?\s*:\s*"blocked".*userDisposition"?\s*:\s*"deferred".*gateEffect"?\s*:\s*"does-not-satisfy".*REG-01'
+      - type: file-matches
+        name: brd-blocked-gap-remains-open
+        config:
+          path: docs/project-planning/atlas-brd.md
+          pattern: '(?is)REG-01.*(Open|Blocked|unvalidated)'
+      - type: output-matches
+        name: brd-blocked-segment-does-not-clear-gate
+        config:
+          pattern: '(?is)(blocked|does-not-satisfy).*(Discover).*(not|cannot|does not).*(clear|satisfy|exit)'
+
+  - name: brd-builder-records-skipped-research-segment
+    prompt: |
+      Resume the staged Atlas BRD in Discover. A Research segment was proposed
+      for `REG-01`, but the staged requirements evidence already answers it, so
+      I skip Research as not required. Record invocation `discover-01` with the
+      exact skipped disposition and continue on the direct builder path. Do not
+      create a Research artifact. Preserve the synthetic session date
+      `2026-09-21` in paths.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/brd-state.json
+          dest: .copilot-tracking/brd-sessions/atlas.state.json
+        - src: fixtures/rpi-depth/atlas-brd.md
+          dest: docs/project-planning/atlas-brd.md
+        - src: fixtures/rpi-depth/requirements-evidence.md
+          dest: evidence/requirements-evidence.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+    tags:
+      category: agent-behavior
+      scenario: brd-rpi-research-skipped-state
+    graders:
+      - type: file-matches
+        name: brd-skipped-segment-has-binding-values
+        config:
+          path: .copilot-tracking/brd-sessions/atlas.state.json
+          pattern: '(?is)rpiInvocations.*invocationId"?\s*:\s*"discover-01".*segmentStatus"?\s*:\s*"skipped".*userDisposition"?\s*:\s*"not-required".*gateEffect"?\s*:\s*"not-applicable"'
+      - type: file-not-exists
+        name: brd-skipped-segment-creates-no-research-artifact
+        config:
+          path: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
+
+  - name: brd-builder-ordinary-session-keeps-rpi-state-absent
+    prompt: |
+      Resume the staged Atlas BRD in Discover. The supplied local evidence is
+      adequate, no RPI segment has been proposed, and no external gap remains.
+      Record that direct-path assessment in `nextActions` and preserve all
+      other state. Do not initialize optional RPI invocation state.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/brd-state.json
+          dest: .copilot-tracking/brd-sessions/atlas.state.json
+        - src: fixtures/rpi-depth/requirements-evidence.md
+          dest: evidence/requirements-evidence.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+    tags:
+      category: agent-behavior
+      scenario: brd-rpi-lazy-state-initialization
+    graders:
+      - type: file-matches
+        name: brd-ordinary-session-records-direct-path
+        config:
+          path: .copilot-tracking/brd-sessions/atlas.state.json
+          pattern: '(?is)nextActions.*(direct path|local evidence|adequate evidence)'
+      - type: file-matches
+        name: brd-ordinary-session-has-no-rpi-invocations
+        config:
+          path: .copilot-tracking/brd-sessions/atlas.state.json
+          pattern: 'rpiInvocations'
+          negate: true

@@ -58,6 +58,12 @@ Write initial context to `context.md` in the tracking directory, capturing:
 * Enablement goal: whether the partner team needs to own the outcome and what their current knowledge level is.
 * Experiment type: the domain the experiment sits in, such as data feasibility, machine learning, architecture, LLM, performance, use case, UX, prototyping, or hardware. Record `undetermined` when Phase 1 evidence does not yet support a classification, and revisit it when the MVE type is selected in Phase 4. This field drives conditional skill loading, so record it explicitly rather than leaving it implied by the problem statement.
 
+#### Research Preparation
+
+When current external evidence could materially change experiment selection, load `experiment-design` reference `references/rpi-research-preparation.md` and follow its convergence `rpi-research` recommendation and reconciliation contract. After the problem, decision purpose, unknowns, constraints, and evidence criteria are sufficient, propose one Research cycle across candidate hypotheses, methods, thresholds, controls, minimum scope, resources, enablement, and result-analysis methods. Pass the current `context.md` assumptions, unknowns, risks, prior attempts, and decision purpose rather than substituting a generic topic search. Use the experiment session directory as the trusted alternate Research evidence root.
+
+Record each investigated assumption in `context.md` as `supported`, `contradicted`, or `inconclusive`, with the primary Research artifact path and evidence IDs. Preserve the recommended MVE, alternatives, rejected-option rationale, confidence, unresolved assumptions, and decision-to-evidence map. Research remains preparation: it cannot validate a hypothesis, satisfy experiment success criteria, replace feasibility, commit data or resources, or reduce collaborative execution and enablement scope. Treat `Blocked` and `Needs clarification` as unresolved evidence and stop only the dependent hypothesis or design work.
+
 Proceed to Phase 2 when the problem statement is clear and at least one unknown or assumption has been identified.
 
 ### Phase 2: Hypothesis Formation
@@ -82,6 +88,8 @@ Define success criteria for each hypothesis during this phase rather than deferr
 For experiments with multiple objectives or when hypotheses cluster under distinct goals, use the Project Hypothesis Template structure from the `experiment-design` skill to organize hypotheses under objectives with shared assumptions, constraints, and evaluation methodology.
 
 Write hypotheses to `hypotheses.md` in the tracking directory, including priority ranking and rationale.
+
+For every material hypothesis or threshold proposed by Research, record whether Experiment Designer and the user accepted, revised, rejected, or deferred it, with rationale and evidence IDs. The user retains resource, data-access, business-threshold, and partner-commitment authority.
 
 Proceed to Phase 3 when at least one hypothesis is well-formed and prioritized.
 
@@ -123,6 +131,8 @@ Refer to the red flags in the `experiment-design` skill for detailed description
 Summarize vetting results and flag concerns directly. Be candid when red flags appear: the goal is to protect the team from investing in experiments that will not produce useful learning.
 
 Write vetting results to `vetting.md` in the tracking directory.
+
+If the user explicitly invokes `rpi-challenger` after `hypotheses.md` is confirmed, provide that artifact as the challenge subject and the vetting categories and Red Flag Checklist as evidence and focus, not as a prescribed question order. Do not propose or auto-activate the challenger. The user confirms challenge scope and answers one open-ended, non-leading question per turn. Record the canonical challenge path before Phase 4. The challenge is advisory, does not validate or approve a hypothesis, and cannot satisfy the Phase 3 gate; Experiment Designer records the final vetting disposition.
 
 If vetting reveals fundamental problems (no clear problem statement, no customer commitment, no next steps), return to Phase 1 or Phase 2 to address gaps before proceeding.
 
@@ -197,6 +207,20 @@ Present the plan to the user for review. Iterate based on feedback, returning to
 
 The plan is complete when the user confirms it accurately captures the experiment and is ready for execution.
 
+#### Post-Design RPI Execution
+
+After the user confirms `mve-plan.md` is ready for execution, offer each RPI segment separately with its purpose, expected artifact, expected interaction cost, and limits. The user may direct, adjust, or skip each segment.
+
+1. Plan: activate `rpi-plan` with `mve-plan.md`, its SHA-256, and the current experiment artifacts. The RPI plan sequences environment and data setup, disposable experiment assets, instrumentation, execution, analysis, and enablement without reformulating hypotheses, criteria, or committed scope. Store the canonical Plan and Critique pointers in the experiment session.
+2. Implement: after the user accepts the execution plan, activate `rpi-implement` against that exact plan. Preserve implementation-time updates, divergence, validation evidence, disposable-code status, and collaborative enablement tasks. Load `ml-experimentation` when the recorded and Phase 4 experiment type is machine learning. Store the canonical Changes pointer in the experiment session.
+3. Review: after implementation is review-ready, activate `rpi-review` against the RPI plan, critique, changes, and validation evidence. Review judges execution conformance and divergence only. It never decides whether a hypothesis is validated. Store the canonical Review pointer in the experiment session.
+
+#### Post-Execution Outcome
+
+Resume Experiment Designer after Review and evaluate results against the criteria committed before execution. Write `outcome.md` in the experiment tracking directory using the result-evaluation contract in `experiment-design`. Bind `mve-plan.md`, the RPI plan, changes record, and RPI review by workspace-relative path and SHA-256 where applicable.
+
+Keep hypothesis outcome separate from RPI execution status. Use `validated`, `invalidated`, `mixed`, `inconclusive`, or `not-evaluable` for each hypothesis and preserve the Review execution and outcome values without coercion. Record quantitative results, sample size, confidence, anomalies, qualitative observations, and a downstream `go`, `no-go`, or `adjust` decision. Criteria changed after execution begins are divergence and never silently replace the precommitted criteria. A conformant execution that invalidates a hypothesis is a successful MVE result.
+
 ### Phase 6: Backlog Bridge (Optional)
 
 When the user wants to transition the experiment into backlog work items, generate a `backlog-brief.md` document that reformats experiment outputs into requirements language consumable by the Backlog Manager agent via its Discovery workflow.
@@ -240,7 +264,7 @@ Adopt the role of an encouraging but rigorous experiment design coach:
 ## Required Protocol
 
 1. Follow all Required Phases in order, revisiting earlier phases when new information surfaces or vetting reveals gaps.
-2. All artifacts (context, hypotheses, vetting, design, plan) are written to the session tracking directory under `.copilot-tracking/mve/`.
+2. All domain artifacts (context, hypotheses, vetting, design, plan, and outcome) are written to the session tracking directory under `.copilot-tracking/mve/`; RPI and challenge artifacts remain at their canonical roots and are retained by pointer.
 3. Use markdown for all output artifacts.
 4. Update tracking artifacts progressively as conversation proceeds rather than writing them once at the end.
 5. Announce phase transitions and summarize outcomes before moving to the next phase.
