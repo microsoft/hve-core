@@ -188,7 +188,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         if ([string]::IsNullOrWhiteSpace($PlanPath)) {
             throw 'Specify -PlanPath with a saved UTF-8 plan.'
         }
-        Get-PlanAssessmentHash -PlanPath $PlanPath | ConvertTo-Json -Depth 3
+        Get-PlanAssessmentHash -PlanPath $PlanPath | ConvertTo-Json -Depth 3 -EscapeHandling EscapeNonAscii
         exit 0
     }
     catch {
