@@ -307,6 +307,66 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             }
         }
 
+        It 'Rejects a linked source ancestor before inspecting its children' {
+            $outside = Join-Path $TestDrive 'outside'
+            New-Item -ItemType Directory -Path $outside -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $outside 'input.md') -Value 'not staged'
+            $link = Join-Path $TestDrive 'suite/assets/linked'
+            $linkType = if ($IsWindows) { 'Junction' } else { 'SymbolicLink' }
+            New-Item -ItemType $linkType -Path $link -Target $outside -ErrorAction Stop | Out-Null
+            $script:EnvironmentOwner[$Key] = @{
+                skills = @('assets/linked')
+                files = @('assets/linked/input.md', @{ src = 'assets/linked/input.md'; dest = 'output.md' })
+            }
+
+            $errors = @(Test-EvalSpecCompliance -Spec $script:EnvironmentSpec -SpecPath $script:EnvironmentSpecPath -RepoRoot $TestDrive)
+
+            $errors | Should -HaveCount 3
+            $errors.field | Should -Contain "$script:EnvironmentField.skills[0]"
+            $errors.field | Should -Contain "$script:EnvironmentField.files[0]"
+            $errors.field | Should -Contain "$script:EnvironmentField.files[1]"
+            foreach ($errorRecord in $errors) { $errorRecord.message | Should -Match 'symbolic links and reparse points are not allowed' }
+        }
+
+        It 'Accepts an ordinary directory used as a file source' {
+            $script:EnvironmentOwner[$Key] = @{ files = @('assets/skill') }
+
+            $errors = @(Test-EvalSpecCompliance -Spec $script:EnvironmentSpec -SpecPath $script:EnvironmentSpecPath -RepoRoot $TestDrive)
+
+            $errors | Should -HaveCount 0
+        }
+
+        It 'Rejects an ordinary file used as a skill source' {
+            $script:EnvironmentOwner[$Key] = @{ skills = @('assets/input.md') }
+
+            $errors = @(Test-EvalSpecCompliance -Spec $script:EnvironmentSpec -SpecPath $script:EnvironmentSpecPath -RepoRoot $TestDrive)
+
+            $errors | Should -HaveCount 1
+            $errors[0].message | Should -Match 'expected an ordinary directory'
+        }
+
+        It 'Accepts a local hardlink as an ordinary file source' {
+            $link = Join-Path $TestDrive 'suite/assets/hardlink.md'
+            New-Item -ItemType HardLink -Path $link -Target (Join-Path $TestDrive 'suite/assets/input.md') -ErrorAction Stop | Out-Null
+            $script:EnvironmentOwner[$Key] = @{ files = @('assets/hardlink.md') }
+
+            $errors = @(Test-EvalSpecCompliance -Spec $script:EnvironmentSpec -SpecPath $script:EnvironmentSpecPath -RepoRoot $TestDrive)
+
+            $errors | Should -HaveCount 0
+        }
+
+        It 'Rejects a Unix named pipe as a file source' -Skip:$IsWindows {
+            $pipePath = Join-Path $TestDrive 'suite/assets/pipe'
+            & mkfifo $pipePath
+            $LASTEXITCODE | Should -Be 0
+            $script:EnvironmentOwner[$Key] = @{ files = @('assets/pipe') }
+
+            $errors = @(Test-EvalSpecCompliance -Spec $script:EnvironmentSpec -SpecPath $script:EnvironmentSpecPath -RepoRoot $TestDrive)
+
+            $errors | Should -HaveCount 1
+            $errors[0].message | Should -Match 'not an ordinary file or directory'
+        }
+
         It 'Accepts a named reference without requiring a filesystem path' {
             $script:EnvironmentOwner[$Key] = 'named-environment-not-on-disk'
 

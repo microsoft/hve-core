@@ -85,6 +85,116 @@ function Resolve-EvalArtifactPath {
     return $null
 }
 
+function Get-EvalSourceIssue {
+    <#
+    .SYNOPSIS
+    Checks a source and its ancestors before an evaluation copies them.
+    .PARAMETER Path
+    Lexically resolved absolute source path.
+    .PARAMETER Kind
+    Expected source type: directory for skills, or an ordinary file or directory for files.
+    .OUTPUTS
+    [string] Missing or unsafe source reason, or $null for a regular local source.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('entry', 'directory')]
+        [string]$Kind
+    )
+
+    if ($Path -match '^(?:[\\/]{2}|[\\/]\?\?[\\/])') {
+        return 'UNC and device paths are not allowed'
+    }
+    if ($IsWindows -and [System.IO.DriveInfo]::new($Path).DriveType -eq [System.IO.DriveType]::Network) {
+        return 'Network drives are not allowed'
+    }
+
+    $root = [System.IO.Path]::GetPathRoot($Path)
+    if ($Path -eq $root) { return 'filesystem roots are not allowed as sources' }
+    $separators = [char[]]@([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    $current = $root
+    foreach ($segment in $Path.Substring($root.Length).Split($separators, [System.StringSplitOptions]::RemoveEmptyEntries)) {
+        $current = Join-Path $current $segment
+        try {
+            $component = Get-Item -LiteralPath $current -Force -ErrorAction Stop
+        }
+        catch [System.Management.Automation.ItemNotFoundException] {
+            return 'missing'
+        }
+        if ($component.LinkType -in @('SymbolicLink', 'Junction') -or ($component.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+            return "symbolic links and reparse points are not allowed ('$current')"
+        }
+        if ($current -ne $Path -and $component -isnot [System.IO.DirectoryInfo]) {
+            return "source ancestor is not a directory ('$current')"
+        }
+    }
+
+    if ($Kind -eq 'directory' -and $component -isnot [System.IO.DirectoryInfo]) {
+        return "expected an ordinary $Kind ('$Path')"
+    }
+    if ($IsLinux -or $IsMacOS) {
+        $modeText = if ($IsLinux) { & stat -c '%f' -- $Path } else { & stat -f '%p' $Path }
+        if ($LASTEXITCODE -ne 0) { throw "Cannot inspect source type '$Path'." }
+        $mode = [Convert]::ToInt64($modeText.Trim(), $(if ($IsLinux) { 16 } else { 8 }))
+        $type = $mode -band 0xF000
+        if ($type -ne 0x8000 -and $type -ne 0x4000) {
+            return "source is not an ordinary file or directory ('$Path')"
+        }
+    }
+    return $null
+}
+
+function Test-EvalSpecSources {
+    <#
+    .SYNOPSIS
+    Validates root and stimulus environment sources before staging.
+    .PARAMETER Spec
+    Parsed evaluation specification.
+    .PARAMETER SpecPath
+    Spec path relative to the repository, used for diagnostics and source resolution.
+    .PARAMETER RepoRoot
+    Repository root containing the spec.
+    .OUTPUTS
+    [System.Collections.Generic.List[hashtable]] Indexed source errors.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Collections.Generic.List[hashtable]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Spec,
+
+        [Parameter(Mandatory = $true)]
+        [string]$SpecPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    $errors = [System.Collections.Generic.List[hashtable]]::new()
+    $specDir = Split-Path -Path (Join-Path -Path $RepoRoot -ChildPath $SpecPath) -Parent
+    foreach ($errorRecord in (Test-EvalEnvironment -Owner $Spec -FieldPrefix '' -SpecPath $SpecPath -SpecDirectory $specDir)) {
+        $errors.Add($errorRecord)
+    }
+    if ($Spec.Contains('stimuli') -and $Spec['stimuli'] -is [System.Collections.IEnumerable] -and $Spec['stimuli'] -isnot [string]) {
+        $index = -1
+        foreach ($stimulus in $Spec['stimuli']) {
+            $index++
+            if ($stimulus -isnot [System.Collections.IDictionary]) { continue }
+            $name = if ($stimulus.Contains('name')) { [string]$stimulus['name'] } else { '' }
+            $label = if ([string]::IsNullOrWhiteSpace($name)) { "stimuli[$index]" } else { "stimuli[$index] ($name)" }
+            foreach ($errorRecord in (Test-EvalEnvironment -Owner $stimulus -FieldPrefix $label -SpecPath $SpecPath -SpecDirectory $specDir)) {
+                $errors.Add($errorRecord)
+            }
+        }
+    }
+    return $errors
+}
+
 function Test-EvalEnvironment {
     <#
     .SYNOPSIS
@@ -170,11 +280,22 @@ function Test-EvalEnvironment {
             }
             try {
                 $resolved = [System.IO.Path]::GetFullPath($pathString, $SpecDirectory)
-                if (-not (Test-Path -LiteralPath $resolved -ErrorAction Stop)) {
+                $kind = if ($entryKey -eq 'skills') { 'directory' } else { 'entry' }
+                $issue = Get-EvalSourceIssue -Path $resolved -Kind $kind
+                if ($issue -eq 'missing') {
                     $errors.Add(@{ path = $SpecPath; field = $entryField; message = "$field.$entryKey path '$pathString' does not resolve to an existing path (resolved to '$resolved'); vally resolves it relative to the spec directory" })
                 }
+                elseif ($issue) {
+                    $errors.Add(@{ path = $SpecPath; field = $entryField; message = "Unsafe $field.$entryKey source '$pathString': $issue" })
+                }
             }
-            catch {
+            catch [System.ArgumentException] {
+                $errors.Add(@{ path = $SpecPath; field = $entryField; message = "Invalid $field.$entryKey path" })
+            }
+            catch [System.NotSupportedException] {
+                $errors.Add(@{ path = $SpecPath; field = $entryField; message = "Invalid $field.$entryKey path" })
+            }
+            catch [System.IO.PathTooLongException] {
                 $errors.Add(@{ path = $SpecPath; field = $entryField; message = "Invalid $field.$entryKey path" })
             }
         }
@@ -275,8 +396,7 @@ function Test-EvalSpecCompliance {
         }
     }
 
-    $specDir = Split-Path -Path (Join-Path -Path $RepoRoot -ChildPath $SpecPath) -Parent
-    foreach ($errorRecord in (Test-EvalEnvironment -Owner $Spec -FieldPrefix '' -SpecPath $SpecPath -SpecDirectory $specDir)) {
+    foreach ($errorRecord in (Test-EvalSpecSources -Spec $Spec -SpecPath $SpecPath -RepoRoot $RepoRoot)) {
         $errors.Add($errorRecord)
     }
 
@@ -307,10 +427,6 @@ function Test-EvalSpecCompliance {
 
         $stimulusName = if ($stimulus.ContainsKey('name')) { [string]$stimulus['name'] } else { '' }
         $stimulusLabel = if ([string]::IsNullOrWhiteSpace($stimulusName)) { $fieldPrefix } else { "$fieldPrefix ($stimulusName)" }
-
-        foreach ($errorRecord in (Test-EvalEnvironment -Owner $stimulus -FieldPrefix $stimulusLabel -SpecPath $SpecPath -SpecDirectory $specDir)) {
-            $errors.Add($errorRecord)
-        }
 
         if (-not $stimulus.ContainsKey('name') -or [string]::IsNullOrWhiteSpace($stimulusName)) {
             $errors.Add(@{ path = $SpecPath; field = "$fieldPrefix.name"; message = 'Stimulus missing required key: name' })
@@ -402,5 +518,6 @@ function Test-EvalSpecCompliance {
 
 Export-ModuleMember -Function @(
     'Test-EvalSpecCompliance',
+    'Test-EvalSpecSources',
     'Resolve-EvalArtifactPath'
 )

@@ -879,6 +879,89 @@ stimuli:
         $detail.specs[0].trials | Should -Be 2
     }
 
+    It 'Refuses a linked environment source before invoking Vally' {
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent-sample-agent.yaml'; Yaml = 'name: placeholder' })
+        $outside = Join-Path $fx.Root 'outside'
+        New-Item -ItemType Directory -Path $outside -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $outside 'input.md') -Value 'not staged'
+        $link = Join-Path $fx.EvalRoot 'linked'
+        $linkType = if ($IsWindows) { 'Junction' } else { 'SymbolicLink' }
+        New-Item -ItemType $linkType -Path $link -Target $outside -ErrorAction Stop | Out-Null
+        $spec = @'
+name: agent-cover
+agent_environment:
+  files:
+    - src: linked/input.md
+      dest: input.md
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+      agent: sample-agent
+      advisory: "true"
+'@
+        Set-Content -LiteralPath (Join-Path $fx.EvalRoot 'agent-sample-agent.yaml') -Value $spec
+        $callLog = Join-Path $fx.LogsDir 'stub-calls.jsonl'
+        $env:STUB_VALLY_CALL_LOG = $callLog
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root -VallyCommand $script:StubPath `
+                -SkipInputModeration -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_CALL_LOG -ErrorAction SilentlyContinue
+        }
+
+        $LASTEXITCODE | Should -Be 1
+        Test-Path -LiteralPath $callLog | Should -BeFalse
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be 1
+        $summary.perArtifact[0].status | Should -Be 'fail'
+        $summary.perSpec[0].status | Should -Be 'invalid-spec-source'
+    }
+
+    It 'Invokes Vally for an ordinary local absolute environment file' {
+        $artifacts = @(
+            @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'agent-sample-agent.yaml'; Yaml = 'name: placeholder' })
+        $source = Join-Path $fx.Root 'input.md'
+        Set-Content -LiteralPath $source -Value 'local'
+        $sourceForYaml = $source.Replace('\', '/')
+        $spec = @"
+name: agent-cover
+stimuli:
+  - name: s1
+    prompt: hi
+    agent_environment:
+      files:
+        - $sourceForYaml
+    tags:
+      agent: sample-agent
+"@
+        Set-Content -LiteralPath (Join-Path $fx.EvalRoot 'agent-sample-agent.yaml') -Value $spec
+        $callLog = Join-Path $fx.LogsDir 'stub-calls.jsonl'
+        $env:STUB_VALLY_CALL_LOG = $callLog
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root -VallyCommand $script:StubPath `
+                -SkipInputModeration -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_CALL_LOG -ErrorAction SilentlyContinue
+        }
+
+        $LASTEXITCODE | Should -Be 0
+        Test-Path -LiteralPath $callLog | Should -BeTrue
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be 0
+    }
+
     It 'Exits 1 when a spec fails, recording the failure per artifact' {
         $spec = @'
 name: agent-cover
