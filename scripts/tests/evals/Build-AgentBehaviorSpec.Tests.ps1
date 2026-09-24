@@ -209,6 +209,42 @@ stimuli:
             $diff | Should -Match 'expected'
             $diff | Should -Match 'actual'
         }
+
+        It 'Emits a recovery command that overwrites the same generated spec' {
+            $script:TestRoot = Join-Path $TestDrive 'recovery root'
+            Initialize-FixtureRoot -Root $script:TestRoot
+            Write-Partial -Root $script:TestRoot -Slug 'drift' -Content @"
+stimuli:
+  - name: drift-case
+    prompt: Drift prompt.
+"@
+            (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
+
+            Write-Partial -Root $script:TestRoot -Slug 'drift' -Content @"
+stimuli:
+  - name: drift-case
+    prompt: Drift prompt UPDATED.
+"@
+            $output = @(Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot -WhatIf 6>&1)
+            $result = $output | Where-Object {
+                $_.PSObject.Properties.Name -contains 'Outcome' -and $_.Outcome -eq 'Drift'
+            }
+            $messages = @(
+                $output |
+                    Where-Object { $_ -is [System.Management.Automation.InformationRecord] } |
+                    ForEach-Object { [string]$_.MessageData }
+            )
+
+            $result.Outcome | Should -Be 'Drift'
+            $expectedCommand = Get-AgentBehaviorSpecRecoveryCommand `
+                -ScriptPath (Resolve-Path $script:ScriptPath).Path `
+                -RepoRoot $script:TestRoot `
+                -PartialsDir (Join-Path $script:TestRoot 'evals/agent-behavior/stimuli') `
+                -OutputPath (Join-Path $script:TestRoot 'evals/agent-behavior/eval.yaml')
+            $messages | Should -Contain "  $expectedCommand"
+            $expectedCommand | Should -Match " -Force$"
+            $expectedCommand | Should -Match ([regex]::Escape("'$script:TestRoot'"))
+        }
     }
 
     Context 'Overwrite semantics' {
