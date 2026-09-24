@@ -635,6 +635,9 @@ $equivalenceRunKeys = @($uniqueSpecRuns.Keys | Where-Object {
 foreach ($equivalenceRunKey in $equivalenceRunKeys) {
     $uniqueSpecRuns.Remove($equivalenceRunKey)
 }
+foreach ($artifactEntry in $artifactPlan) {
+    $artifactEntry.specRuns = @($artifactEntry.specRuns | Where-Object { $_ -notin $equivalenceRunKeys })
+}
 
 if ($assignedShard) {
     $expectedRunKeys = @($assignedShard.runKeys | ForEach-Object { [string]$_ } | Sort-Object -Unique)
@@ -1184,7 +1187,7 @@ foreach ($plan in $artifactPlan) {
     $artifactHasEvaluatorError = $false
     $artifactFailedOrErroredTrials = [System.Collections.Generic.List[object]]::new()
     $specBreakdown     = [System.Collections.Generic.List[object]]::new()
-    $allSpecsRan       = $true
+    $allSpecsRan       = @($plan.specRuns).Count -gt 0
 
     foreach ($runKey in $plan.specRuns) {
         if (-not $specResults.ContainsKey($runKey)) {

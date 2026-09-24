@@ -1,7 +1,14 @@
 stimuli:
   - name: privacy-reviewer-class-recipe
     prompt: |
-      Review the privacy posture of a customer-facing mobile app that collects geolocation and device identifiers and shares them with third-party analytics SDKs. Summarize the privacy findings with severity, citing the relevant frameworks (NIST Privacy Framework, NISTIR 8062, GDPR, or CCPA/CPRA) and noting any DPIA considerations. Write the report under `.copilot-tracking/privacy-reviews/` and report the path.
+      This is a prompt-visible smoke scenario, not a native privacy audit. A
+      customer-facing mobile app collects geolocation and device identifiers and
+      shares them with third-party analytics SDKs. Summarize candidate privacy
+      findings with severity in chat, citing relevant frameworks (NIST Privacy
+      Framework, NISTIR 8062, GDPR, or CCPA/CPRA) and DPIA considerations.
+      Distinguish inferred risks from verified findings. Show the intended report
+      path under `.copilot-tracking/privacy-reviews/`; do not write files, invoke
+      subagents or claim a completed audit.
     tags:
       category: agent-behavior
     graders:

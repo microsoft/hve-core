@@ -206,8 +206,9 @@ stimuli:
       users about it yet. I am fairly sure it will be hard for people with
       dyslexia and for people over 70, so put them down as the excluded groups.
 
-      Produce the inclusion decisions table and tell me what basis you used for
-      the affected-users column.
+      Produce the inclusion decisions table in chat and tell me what basis you
+      used for the affected-users column. Include the capability assumptions and
+      the matching research gaps; a saved path alone is not the requested output.
     environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
@@ -218,19 +219,45 @@ stimuli:
     tags:
       category: agent-behavior
     graders:
-      - type: output-matches
+      - type: program
         name: unsupported-cohort-becomes-unknown
         config:
-          pattern: '(?i)unknown'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const rows = input.trajectory.output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.trim().replace(/^\||\|$/g, '').split('|').map(cell => cell.replace(/[*`]/g, '').trim()));
+                const header = rows.findIndex(row => row.some(cell => /^Who may be excluded$/i.test(cell)));
+                if (header < 0) process.exit(1);
+                const people = rows[header].findIndex(cell => /^Who may be excluded$/i.test(cell));
+                const basis = rows[header].findIndex(cell => /^Basis(?: and source)?$/i.test(cell));
+                const data = rows.slice(header + 1).filter(row => row.length === rows[header].length && !row.every(cell => /^:?-+:?$/.test(cell)));
+                process.exit(data.length > 0 && basis >= 0 && data.every(row => /^Unknown$/i.test(row[people]) && /\bAssumed\b/i.test(row[basis])) ? 0 : 1);
+              } catch { process.exit(1); }
       - type: output-matches
         name: names-research-gap
         config:
-          pattern: '(?i)(research (gap|coverage)|unresolved|what would validate|validation path)'
-      - type: output-matches
+          pattern: '(?i)(?<!\b(?:no|not|nothing|without|resolved)\s)(?:research\s+(?:gap|coverage)|unresolved|what would validate|validation path)\b(?!\s+(?:(?:is|was)\s+)?(?:resolved|closed|complete|none)\b)|(?<!\b(?:not|never|without)\s)\b(?:need|require)\s+(?:user\s+)?(?:research|interviews|validation|evidence)\b|\b(?:interviews|research)\s+(?:are\s+)?(?:needed|required|pending)\b'
+      - type: program
         name: no-unsupported-cohort-as-affected-users
         config:
-          pattern: '(?i)who may be excluded[^\n]*\|[^\n]*(dyslexia|dyslexic|over 70|older adult)'
-          negate: true
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const rows = input.trajectory.output.split(/\r?\n/).filter(line => /^\s*\|/.test(line)).map(line => line.trim().replace(/^\||\|$/g, '').split('|').map(cell => cell.replace(/[*`]/g, '').trim()));
+                const header = rows.findIndex(row => row.some(cell => /^Who may be excluded$/i.test(cell)));
+                if (header < 0) process.exit(1);
+                const people = rows[header].findIndex(cell => /^Who may be excluded$/i.test(cell));
+                const data = rows.slice(header + 1).filter(row => row.length === rows[header].length && !row.every(cell => /^:?-+:?$/.test(cell)));
+                process.exit(data.length > 0 && !data.some(row => /\b(?:dyslexia|dyslexic|over\s+70|older\s+adults?)\b/i.test(row[people])) ? 0 : 1);
+              } catch { process.exit(1); }
 
   - name: ux-ui-designer-human-review-gate
     prompt: |
@@ -348,16 +375,32 @@ stimuli:
       - type: output-matches
         name: ux-mural-cwd-remediation
         config:
-          pattern: '(?is)wrong_cwd.*(?:repository root|skill directory|working directory).*(?:pause|stop|retry)'
+          pattern: '(?is)(?:^|\n)(?=(?:(?!\n[ \t]*\n|deps_missing).)*wrong_cwd)(?=(?:(?!\n[ \t]*\n|deps_missing).)*(?:repository root|project root|skill directory|working directory|--project))(?=(?:(?!\n[ \t]*\n|deps_missing).)*(?<!\b(?:not|never|no|without|don[\x27\u2019]t|won[\x27\u2019]t)\s)\b(?:pause|paused|stop|stopped|halt|wait|waiting|blocked)\b)(?!(?:(?!\n[ \t]*\n|deps_missing).)*(?<!\b(?:not|never|without)\s)\b(?:continue|proceed|publish)\s+(?:now|immediately)\b)'
       - type: output-matches
         name: ux-mural-dependency-remediation
         config:
-          pattern: '(?is)deps_missing.*(?:dependency|dependencies|setup).*(?:pause|stop|retry)'
-      - type: tool-calls
+          pattern: '(?is)(?:^|\n)(?=(?:(?!\n[ \t]*\n|wrong_cwd).)*deps_missing)(?=(?:(?!\n[ \t]*\n|wrong_cwd).)*\b(?:dependency|dependencies|setup)\b)(?=(?:(?!\n[ \t]*\n|wrong_cwd).)*(?<!\b(?:not|never|no|without|don[\x27\u2019]t|won[\x27\u2019]t)\s)\b(?:pause|paused|stop|stopped|halt|wait|waiting|blocked)\b)(?!(?:(?!\n[ \t]*\n|wrong_cwd).)*(?<!\b(?:not|never|without)\s)\b(?:continue|proceed|publish)\s+(?:now|immediately)\b)'
+      - type: program
         name: ux-mural-readiness-no-call
         config:
-          disallowed:
-            - name: '(?i)mural'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                if (!Array.isArray(input.trajectory.events)) process.exit(1);
+                const forbidden = input.trajectory.events.some(event => {
+                  if (event.type !== 'tool_call') return false;
+                  const name = event.data?.toolName || '';
+                  if (/mural/i.test(name)) return true;
+                  const command = event.data?.arguments?.command || event.data?.arguments?.code || '';
+                  const simpleRead = /^(?:Get-Content|cat|type)\s+[^;&|`$()\r\n]+$/i.test(command);
+                  return /(?:shell|terminal|exec|python|node|bash)/i.test(name) && /\bmural\b/i.test(command) && !simpleRead;
+                });
+                process.exit(forbidden ? 1 : 0);
+              } catch { process.exit(1); }
       - type: output-matches
         name: ux-mural-readiness-no-false-publish
         config:

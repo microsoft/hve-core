@@ -127,6 +127,9 @@ stimuli:
           pattern: '(?i)numpy'
   - name: code-review-standards-merge-content-contradiction
     prompt: |
+      Read the "Discover and load skills" rules in the staged reference
+      `policy/code-review-standards.agent.md`. Apply only those discovery rules
+      to this contained scenario, not the native review or report-writing workflow.
       As the standards code-review perspective, evaluate this merge-policy
       scenario. Treat the inline skill summaries below as the discovered
       candidate set; do not inspect or rely on real workspace skill files.
@@ -148,6 +151,10 @@ stimuli:
           return requests.get(url).json()
       ```
 
+    agent_environment:
+      files:
+        - src: ../../.github/agents/coding-standards/subagents/code-review-standards.agent.md
+          dest: policy/code-review-standards.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
@@ -164,7 +171,7 @@ stimuli:
       - type: output-matches
         name: no-silent-arbitration
         config:
-          pattern: '(?i)(defer|human|reviewer|surface\s+both|both\s+findings|not\s+\S{0,20}(arbitrate|arbitration|arbitrating|resolve|resolved|resolving|decide|decided|deciding)|cannot\s+\S{0,20}(arbitrate|arbitration|arbitrating|resolve|resolved|resolving|decide|decided|deciding)|author\S{0,20}\s+(smell|mistake|fix|issue))'
+          pattern: '(?i)(defer|human|reviewer|surface\s+both|both\s+findings|(?:not|cannot|won[\x27\u2019]t)\s+(?:silently\s+)?(?:arbitrate|resolve|decide|choose|select)\b|(?:remain|left|kept)\s+(?:explicitly\s+)?unresolved|author\S{0,20}\s+(?:smell|mistake|fix|issue))'
 
   # Origin-precedence and stacking coverage for the Workspace/User/Bundled
   # skill-discovery revision (issue #1901). These assert the "Resolve
@@ -172,6 +179,9 @@ stimuli:
   # subagent through the parent Code Review matrix slug.
   - name: code-review-standards-user-tier-precedence
     prompt: |
+      Read the "Discover and load skills" rules in the staged reference
+      `policy/code-review-standards.agent.md`. Apply only those discovery rules
+      to this contained scenario, not the native review or report-writing workflow.
       As the standards code-review perspective, evaluate this merge-policy
       scenario. Treat the inline skill summaries below as the discovered
       candidate set; do not inspect or rely on real workspace skill files.
@@ -194,6 +204,10 @@ stimuli:
           return x * 2
       ```
 
+    agent_environment:
+      files:
+        - src: ../../.github/agents/coding-standards/subagents/code-review-standards.agent.md
+          dest: policy/code-review-standards.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
@@ -202,7 +216,7 @@ stimuli:
       - type: output-matches
         name: user-tier-takes-precedence
         config:
-          pattern: '(?i)(user[-\s]?profile|user\s+(origin|tier|copy|version))'
+          pattern: '(?i)(?:(?<!\b(?:not|never|without)\s)(?:select|load|use|apply|prefer|choose|retain)\s+(?:only\s+|the\s+)?(?:User(?:[-\s](?:profile|origin|tier|copy|version))?|Candidate\s+A)\b|(?:User(?:[-\s](?:profile|origin|tier|copy|version))?|Candidate\s+A)\s+(?:(?:is|was)\s+)?(?:selected|loaded|chosen|wins|takes\s+precedence)\b)'
       - type: output-matches
         name: single-copy-loaded-bundled-shadowed
         config:
@@ -213,6 +227,9 @@ stimuli:
           pattern: '(?i)(type\s?hint|annotation)'
   - name: code-review-standards-unknown-origin-dedup
     prompt: |
+      Read the "Discover and load skills" rules in the staged reference
+      `policy/code-review-standards.agent.md`. Apply only those discovery rules
+      to this contained scenario, not the native review or report-writing workflow.
       As the standards code-review perspective, evaluate this merge-policy
       scenario. Treat the inline skill summaries below as the discovered
       candidate set; do not inspect or rely on real workspace skill files.
@@ -231,6 +248,10 @@ stimuli:
           return x * 2
       ```
 
+    agent_environment:
+      files:
+        - src: ../../.github/agents/coding-standards/subagents/code-review-standards.agent.md
+          dest: policy/code-review-standards.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
@@ -239,7 +260,7 @@ stimuli:
       - type: output-matches
         name: single-copy-no-merge
         config:
-          pattern: '(?i)(only\s+one|single\s+(copy|version)|one\s+(copy|version)|do\s+not\s+merge|not\s+merge|without\s+merging|not\s+combine|no\s+merg)'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)(?:load|select|use|retain|choose)\s+(?:(?:only|exactly|just)\s+)?one\b|\b(?:only\s+one|single\s+(?:copy|version|body|instance)|one\s+(?:copy|version|body|instance))\b'
       - type: output-matches
         name: ambiguous-duplicate-noted
         config:
@@ -293,10 +314,21 @@ stimuli:
 
   - name: code-review-security-planning-drift-context
     prompt: |
-      Begin an interactive review with `securityPlanRef=.copilot-tracking/security-plans/sample-service/state.json`. The diff changes authorization behavior in src/auth/policy.ts. Return the factual orientation and dispatch board, recommend the security perspective, and carry the explicitly supplied baseline toward the optional Step 7 drift correlation. Do not run the final correlation before findings exist.
+      This is a response-only review-contract scenario, not a live repository
+      review. Read the staged review skill references as needed; do not run Git,
+      resolve provider data, write artifacts or invoke perspectives. The target
+      and scope are already resolved to a branch diff for `src/auth/policy.ts`.
+      The explicitly supplied reference is
+      `securityPlanRef=.copilot-tracking/security-plans/sample-service/state.json`.
+      Treat that path as resolved in the represented workspace and carry its
+      supplied provenance forward; do not read the baseline until Step 7's
+      preconditions are met. No security findings exist yet.
+      Return the factual orientation and proposed dispatch board in chat,
+      recommend the security perspective, and explain when optional drift
+      correlation becomes eligible. Do not claim the correlation ran.
       ```diff
-      -return resource.owner_id == user.id
-      +return True
+      -return resource.ownerId === user.id;
+      +return true;
       ```
     agent_environment:
       files:
@@ -342,7 +374,7 @@ stimuli:
       - type: output-matches
         name: pull-request-standard-profile
         config:
-          pattern: '(?is)(pull[_ -]?request)(?=.{0,3000}standard)(?=.{0,3000}functional)(?=.{0,3000}standards)(?=.{0,3000}readiness)(?=.{0,3000}(prContext|PR context|metadata|PR description|checks|mergeability|merge readiness))'
+          pattern: '(?is)^(?=[\s\S]*pull[_ -]?request)(?=[\s\S]*\bstandard\b)(?=[\s\S]*\bfunctional\b)(?=[\s\S]*\bstandards\b)(?=[\s\S]*\breadiness\b)(?=[\s\S]*(?:prContext|PR context|metadata|PR description|checks|mergeability|merge readiness))'
       - type: output-matches
         name: orientation-separated
         config:
@@ -465,7 +497,7 @@ stimuli:
       - type: output-matches
         name: complete-orientation-retry
         config:
-          pattern: '(?is)(retry.{0,120}once|one allowed retry).{0,500}(orientation).{0,500}(diff-state\.json|state path).{0,500}(orientation-walkthrough\.md|output path).{0,500}(failure|error)'
+          pattern: '(?is)^(?=[\s\S]*(?:retry\s+(?:exactly\s+)?once|(?:one|single)\s+(?:allowed\s+)?retry))(?=[\s\S]*orientation)(?=[\s\S]*(?:diff-state\.json|state path))(?=[\s\S]*(?:orientation-walkthrough\.md|output path))(?=[\s\S]*(?:failure|error))'
 
   - name: code-review-perspective-no-output-retry
     prompt: |
@@ -539,4 +571,4 @@ stimuli:
       - type: output-matches
         name: complete-pr-state-check
         config:
-          pattern: '(?is)(revalidat|validat|check)(?=.{0,600}(open|state))(?=.{0,600}base)(?=.{0,600}head)(?=.{0,600}(sha|commit))'
+          pattern: '(?is)^(?=[\s\S]*(?:revalidate|validate|check))(?=[\s\S]*(?:open|state))(?=[\s\S]*base)(?=[\s\S]*head)(?=[\s\S]*(?:sha|commit))'

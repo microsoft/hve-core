@@ -237,6 +237,7 @@ function Get-GraderResultKind {
                 'file-not-matches',
                 'output-contains',
                 'output-matches',
+                'program',
                 'tool-calls',
                 'transcript-matches',
                 'wall-time'

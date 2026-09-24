@@ -99,7 +99,10 @@ stimuli:
       This is an isolated behavior-contract scenario. Do not call tools. All
       verified findings are ready, but the represented Report Generator result
       is `failed` and no report path or file exists. Explain the review status
-      and what may be claimed. The generator result is simulated input.
+      and what may be claimed. Also explain what happens to the already verified
+      findings, what bounded recovery action is appropriate, and how the evidence
+      source limits claims about execution. Give the response in chat without
+      performing recovery. The generator result is simulated input.
     environment:
       files:
         - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md

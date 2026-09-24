@@ -2612,6 +2612,51 @@ stimuli:
         $summary.perArtifact[0].status | Should -Be 'fail'
     }
 
+    It 'Preserves <ExpectedStatus> for ordinary work alongside excluded baseline coverage' -ForEach @(
+        @{ Mode = 'pass'; Advisory = 'false'; ExpectedStatus = 'pass'; ExpectedExit = 0 }
+        @{ Mode = 'fail'; Advisory = 'true'; ExpectedStatus = 'advisory-fail'; ExpectedExit = 0 }
+        @{ Mode = 'fail'; Advisory = 'false'; ExpectedStatus = 'fail'; ExpectedExit = 1 }
+        @{ Mode = 'crash'; Advisory = 'false'; ExpectedStatus = 'evaluator-error'; ExpectedExit = 1 }
+    ) {
+        $spec = [ordered]@{
+            name = 'ordinary'
+            stimuli = @(
+                foreach ($stimulusName in @('stim-1', 'stim-2')) {
+                    [ordered]@{
+                        name = $stimulusName
+                        prompt = 'hi'
+                        tags = @{ agent = 'sample-agent'; advisory = $Advisory }
+                    }
+                }
+            )
+        } | ConvertTo-Yaml
+        $fx = New-PerStimFixture `
+            -SpecName 'ordinary.yaml' `
+            -SpecYaml $spec `
+            -Artifact @{ kind = 'agent'; artifactId = 'sample-agent'; path = '.github/agents/hve-core/sample-agent.agent.md'; status = 'M' }
+        $baselineDir = Join-Path $fx.EvalRoot 'baseline-equivalence'
+        New-Item -ItemType Directory -Path $baselineDir -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $baselineDir 'stimuli.yml') -Value $spec -Encoding utf8
+        $env:STUB_VALLY_MODE = $Mode
+
+        $runOutput = & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath `
+            -EvalRoot $fx.EvalRoot `
+            -LogsDir $fx.LogsDir `
+            -RepoRoot $fx.Root `
+            -VallyCommand $script:StubPath `
+            -SkipInputModeration `
+            -SkipOutputModeration 2>&1
+        $LASTEXITCODE | Should -Be $ExpectedExit -Because ($runOutput -join [Environment]::NewLine)
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.perSpec.Count | Should -Be 1
+        $summary.perSpec[0].status | Should -Be $ExpectedStatus
+        $summary.perArtifact[0].status | Should -Be $ExpectedStatus
+        $summary.perArtifact[0].specCount | Should -Be 1
+        @($summary.perSpec | Where-Object { $_.specPath -match 'baseline-equivalence' }) | Should -BeNullOrEmpty
+    }
+
     It 'Excludes a baseline-equivalence spec from the generic run plan' {
         # Stage 1 measures the equivalence corpus only through the dedicated harness,
         # which runs the full canonical population against a materialized customization
@@ -2649,6 +2694,8 @@ stimuli:
         # coverage. It simply performs no generic baseline-equivalence execution.
         @($summary.perSpec | Where-Object { $_.specPath -match 'baseline-equivalence' }) | Should -BeNullOrEmpty
         $summary.totals.specs | Should -Be 0
+        $summary.perArtifact[0].status | Should -Be 'skipped'
+        $summary.perArtifact[0].specCount | Should -Be 0
     }
 }
 

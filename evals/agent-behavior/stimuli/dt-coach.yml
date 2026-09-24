@@ -53,7 +53,18 @@ stimuli:
 
   - name: dt-coach-asset-ready-deck-offer
     prompt: |
-      We just finished Method 3 for the project slug `clinic-intake-redesign`. We have completed personas, a journey map, and a point-of-view statement recorded in the coaching state. What should we do next?
+      This is a response-only coaching simulation. Read the staged foundation
+      skill's canonical-deck reference, but do not inspect or update real coaching
+      state or generate artifacts. Use this preloaded synthetic state for
+      `clinic-intake-redesign`: Method 3 is complete; no snapshot or deck offer
+      has occurred; the following method outputs are available in the represented
+      project. The persona describes an intake nurse who needs fewer repeated
+      demographic questions. The journey map records repeated form entry at
+      arrival and handoff. The validated point of view identifies repeated entry
+      as the source of avoidable intake delay. These outputs map to persona and
+      problem-statement canonical entries.
+      What should we do next? Explain the readiness basis and optional next
+      decision in chat, distinguishing a proposed snapshot from a completed one.
     agent_environment:
       skills:
         - '../../.github/skills/design-thinking/dt-coaching-foundation'
@@ -74,7 +85,18 @@ stimuli:
 
   - name: dt-coach-method-5-deck-offer
     prompt: |
-      We have just wrapped Method 5 for the project slug `clinic-intake-redesign`. Selected concepts and the three-lens evaluation are recorded in the coaching state. Where does that leave us?
+      This is a response-only coaching simulation. Read the staged foundation
+      skill's canonical-deck reference, but do not inspect or update real coaching
+      state or generate artifacts. Use this preloaded synthetic state for
+      `clinic-intake-redesign`: Method 5 is complete; no prior offer was declined;
+      no snapshot has been generated. Selected concept: a pre-arrival intake form
+      with optional desk assistance, represented as a use-case artifact. The
+      three-lens evaluation records desirability from the team's interview
+      synthesis, feasibility from an existing forms service, and viability from
+      reducing duplicate entry without adding staff. These are simulated method
+      outputs, not externally validated evidence.
+      Where does that leave us? Explain the readiness basis and optional next
+      decision in chat without claiming a snapshot or customer-card build ran.
     environment:
       skills:
         - '../../.github/skills/design-thinking/dt-coaching-foundation'
@@ -142,7 +164,14 @@ stimuli:
 
   - name: dt-coach-not-ready-no-offer
     prompt: |
-      We just finished Method 3 for the project slug `clinic-intake-redesign`, but honestly the session ran short. We have some raw interview notes and nothing else written up yet. What should we do next?
+      This is a response-only coaching simulation. Read the staged foundation
+      skill's canonical-deck reference, but do not inspect or update real coaching
+      state or generate artifacts. Preloaded synthetic state for
+      `clinic-intake-redesign`: the Method 3 session ended, but synthesis is
+      incomplete. Only raw interview notes exist; no persona, journey map,
+      problem statement or other canonical-ready method output is available.
+      No snapshot was requested. What should we do next? Explain the missing
+      evidence in chat without treating unavailable artifacts as verified ready.
     environment:
       skills:
         - '../../.github/skills/design-thinking/dt-coaching-foundation'
@@ -308,12 +337,28 @@ stimuli:
       - type: output-matches
         name: dt-mural-scope-remediation
         config:
-          pattern: '(?i)(needs_scope_upgrade|missing.{0,30}scope|reauthorize).{0,160}(pause|stop|retry)'
-      - type: tool-calls
+          pattern: '(?is)^(?=[\s\S]*(?:needs_scope_upgrade|missing\s+(?:write\s+)?scope|reauthorize))(?=[\s\S]*(?<!\b(?:not|never|no|without|don[\x27\u2019]t|won[\x27\u2019]t)\s)\b(?:pause|paused|stop|stopped|halt|hold|wait|waiting|blocked)\b)(?![\s\S]*(?<!\b(?:not|never|without|don[\x27\u2019]t|won[\x27\u2019]t)\s)\b(?:continue|proceed|publish|seed)\s+(?:now|immediately)\b)'
+      - type: program
         name: dt-mural-scope-no-call
         config:
-          disallowed:
-            - name: '(?i)mural'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                if (!Array.isArray(input.trajectory.events)) process.exit(1);
+                const forbidden = input.trajectory.events.some(event => {
+                  if (event.type !== 'tool_call') return false;
+                  const name = event.data?.toolName || '';
+                  if (/mural/i.test(name)) return true;
+                  const command = event.data?.arguments?.command || event.data?.arguments?.code || '';
+                  const simpleRead = /^(?:Get-Content|cat|type)\s+[^;&|`$()\r\n]+$/i.test(command);
+                  return /(?:shell|terminal|exec|python|node|bash)/i.test(name) && /\bmural\b/i.test(command) && !simpleRead;
+                });
+                process.exit(forbidden ? 1 : 0);
+              } catch { process.exit(1); }
       - type: output-matches
         name: dt-mural-scope-no-false-change
         config:

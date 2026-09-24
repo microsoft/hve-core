@@ -3,7 +3,12 @@
 stimuli:
   - name: issue-triage-class-recipe
     prompt: |
-      Triage this new GitHub issue: "App is super slow on iPhone." Suggest labels, priority, and assignee. Write the triage record under `.copilot-tracking/github-issues/` and report the path along with the triage decision.
+      This is a prompt-visible smoke scenario, not a native tracker operation.
+      Triage this synthetic issue: "App is super slow on iPhone." Suggest labels,
+      priority and an assignee role, and identify information still needed.
+      Return the triage decision in chat with an intended record path under
+      `.copilot-tracking/github-issues/`. Do not invent a real person's identity,
+      write files, mutate GitHub or claim that an issue was assigned.
     tags:
       category: agent-behavior
     graders:

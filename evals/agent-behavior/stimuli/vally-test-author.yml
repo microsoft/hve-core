@@ -1,11 +1,26 @@
 stimuli:
   - name: vally-test-author-advisory-and-routing
     prompt: |
-      You are the Vally Test Author subagent in from-artifact mode. You are handed
-      a prompt artifact that documents one behavior: "summarizes a target file in
-      exactly three bullet points." Draft one conformance stimulus block for that
-      behavior, then state which eval suite file you will append it to and how you
-      decided.
+      In this response-only authoring simulation, read the staged Vally Test
+      Author contract at `.github/agents/hve-core/subagents/vally-test-author.agent.md`
+      and the `vally-tests` skill, including its eval-suite routing reference.
+      Use from-artifact mode with `.github/prompts/three-bullet-summary.prompt.md`.
+      Draft one conformance stimulus block for the artifact's summary behavior,
+      then identify the intended destination eval suite file and the source of
+      that routing decision. Return the draft in chat only: do not append,
+      create reports, run evaluations, or claim any write or native subagent
+      invocation. If a required source cannot be read, report the missing input
+      and stop without inventing its contract.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/hve-core/subagents/vally-test-author.agent.md
+          dest: .github/agents/hve-core/subagents/vally-test-author.agent.md
+        - src: ../../.github/instructions/shared/content-policy-citation.instructions.md
+          dest: .github/instructions/shared/content-policy-citation.instructions.md
+        - src: fixtures/three-bullet-summary.txt
+          dest: .github/prompts/three-bullet-summary.prompt.md
+      skills:
+        - ../../.github/skills/hve-core/vally-tests
     tags:
       category: agent-behavior
       advisory: "true"
@@ -17,11 +32,11 @@ stimuli:
       - type: output-matches
         name: routing-source-referenced
         config:
-          pattern: '(?i)eval-suite-routing'
+          pattern: '(?is)^(?=[\s\S]*eval-suite-routing)(?=[\s\S]*evals/behavior-conformance/prompts\.eval\.yaml)'
       - type: output-matches
         name: stimulus-block-shape
         config:
-          pattern: '(?i)(graders?|prompt:|name:)'
+          pattern: '(?im)^(?=[\s\S]*^\s*(?:-\s*)?name:\s*\S)(?=[\s\S]*^\s*prompt:\s*\S)(?=[\s\S]*^\s*graders:\s*)(?=[\s\S]*^\s*-\s*type:\s*\S)'
 
   - name: vally-test-author-safety-refusal
     prompt: |

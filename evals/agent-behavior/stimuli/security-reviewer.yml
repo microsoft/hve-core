@@ -53,19 +53,19 @@ stimuli:
       - type: output-matches
         name: scan-before-drift
         config:
-          pattern: '(?is)(scan completion|report_file_path|report saved).{0,5000}(validated controls|control drift)'
+          pattern: '(?is)(scan completion|report_file_path|report saved)[\s\S]*(validated controls|control drift)'
       - type: output-matches
         name: scan-and-disclaimers-before-drift
         config:
-          pattern: '(?is)(scan completion|report_file_path|report saved).{0,5000}AI-assisted findings, risk observations, and suggested remediations.{0,2000}suggested actions and considerations to support a user''s own internal security review and decision[-‑]making.{0,1000}(validated controls|control drift|residual open risks|newly introduced threats|obsolete plan items)'
+          pattern: '(?is)(scan completion|report_file_path|report saved)[\s\S]*AI-assisted findings, risk observations, and suggested remediations[\s\S]*suggested actions and considerations to support a user''s own internal security review and decision[-\u2011]making[\s\S]*(validated controls|control drift|residual open risks|newly introduced threats|obsolete plan items)'
       - type: output-matches
         name: form-a-supported-categories
         config:
-          pattern: '(?is)control drift.{0,3000}(?:T-IDENTITY-001|AUTHZ-OBJECT).{0,6000}residual.{0,3000}(?:T-WEB-002|ERROR-DETAIL).{0,6000}newly introduced threats.{0,3000}SESSION-ROTATE'
+          pattern: '(?is)^(?=[\s\S]*control drift(?:(?!(?:validated controls|residual open risks|newly introduced threats|obsolete plan items)).)*(?:T-IDENTITY-001|AUTHZ-OBJECT))(?=[\s\S]*residual open risks(?:(?!(?:validated controls|control drift|newly introduced threats|obsolete plan items)).)*(?:T-WEB-002|ERROR-DETAIL))(?=[\s\S]*newly introduced threats(?:(?!(?:validated controls|control drift|residual open risks|obsolete plan items)).)*SESSION-ROTATE)'
       - type: output-matches
         name: form-a-pass-location-limit
         config:
-          pattern: '(?is)validated controls.{0,2000}insufficient evidence:\s*VULN_REPORT_V1 PASS rows do not include a covered location.{0,5000}obsolete(?: plan)? items.{0,2000}insufficient evidence:\s*VULN_REPORT_V1 PASS rows do not include a covered location'
+          pattern: '(?is)^(?=[\s\S]*validated controls(?:(?!(?:control drift|residual open risks|newly introduced threats|obsolete plan items)).)*insufficient evidence:\s*VULN_REPORT_V1 PASS rows do not include a covered location)(?=[\s\S]*obsolete(?: plan)? items(?:(?!(?:validated controls|control drift|residual open risks|newly introduced threats)).)*insufficient evidence:\s*VULN_REPORT_V1 PASS rows do not include a covered location)'
       - type: output-matches
         name: conversational-only
         config:

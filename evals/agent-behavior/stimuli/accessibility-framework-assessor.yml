@@ -3,11 +3,33 @@
 stimuli:
   - name: accessibility-framework-assessor-structured-findings
     prompt: |
-      As the accessibility-framework-assessor subagent, you are given the skill
-      name wcag-22 and a codebase profile for a Docusaurus site (React/MDX,
-      routes for home, docs, and search) targeting WCAG 2.2 AA. Assess the
-      codebase against the success criteria in that scope and return your
-      structured findings report.
+      This is a contained, response-only assessor-contract scenario, not a native
+      subagent invocation. Read `policy/accessibility-framework-assessor.agent.md`
+      for its findings format and status rules, and the staged accessibility
+      skill for WCAG 2.2 references and method adequacy.
+
+      Represented profile: Docusaurus with React/MDX, targeting WCAG 2.2 AA.
+      Assessment scope: WCAG 2.1.1 and 4.1.3 for this synthetic source fragment
+      at `src/SearchPanel.tsx`:
+
+      ```tsx
+      <section aria-label="Search">
+        <button type="button">Search</button>
+        <p role="status" aria-live="polite"></p>
+      </section>
+      ```
+
+      This is all the supplied source evidence. There are no keyboard probes,
+      computed accessibility-tree results or assistive-technology observations.
+      Return the structured findings report in chat, citing the scope and the
+      limits of each evidence method. Do not invent findings for other routes,
+      invoke tools beyond reference reads, write files, or claim a runtime pass.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+          dest: policy/accessibility-framework-assessor.agent.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"
@@ -27,10 +49,28 @@ stimuli:
 
   - name: accessibility-framework-assessor-method-adequacy
     prompt: |
-      As the accessibility-framework-assessor subagent, you are assessing a
-      codebase against WCAG 2.1.1 keyboard operability and 4.1.3 status
-      messages using only source reading. Explain what status you assign to
-      each and why static analysis alone cannot settle them.
+      This is a contained, response-only assessor-contract scenario, not a native
+      subagent invocation. Read `policy/accessibility-framework-assessor.agent.md`
+      for its status rules and the staged accessibility skill for method adequacy.
+      Assess WCAG 2.1.1 keyboard operability and 4.1.3 status messages using only
+      this synthetic source fragment at `src/SearchPanel.tsx`:
+
+      ```tsx
+      <button type="button">Search</button>
+      <p role="status" aria-live="polite"></p>
+      ```
+
+      No visible static barrier, keyboard probe, accessibility-tree result or
+      assistive-technology observation is supplied. Explain in chat what status
+      you assign to each criterion, what source reading can establish, and what
+      deciding evidence is still needed. Do not invoke tools beyond reference
+      reads, write files, or claim runtime verification.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+          dest: policy/accessibility-framework-assessor.agent.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
     tags:
       category: agent-behavior
       advisory: "true"

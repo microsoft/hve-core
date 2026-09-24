@@ -83,7 +83,9 @@ stimuli:
         under that peak.
       - Nobody has tested the caching approach. That is an assumption, not a measurement.
 
-      Write the Phase 1 tracking artifact. Do not continue past Phase 1.
+      Write the Phase 1 tracking artifact. In the final reply, summarize the
+      classification and the evidence needed to resolve it. Do not continue
+      past Phase 1.
     environment:
       skills:
         - '../../.github/skills/project-planning/experiment-design'
@@ -153,10 +155,26 @@ stimuli:
         config:
           path: .copilot-tracking/mve/2026-03-02/synthetic-signal-routing/context.md
           pattern: '(?is)experiment type.{0,160}undetermined'
-      - type: output-matches
+      - type: program
         name: expdes-ambiguous-classification-output
         config:
-          pattern: '(?i)undetermined'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const context = fs.readFileSync(path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/mve/2026-03-02/synthetic-signal-routing/context.md'), 'utf8');
+                const field = /^.*experiment type[^\r\n]*$/im.exec(context)?.[0] || '';
+                const unresolved = /\bundetermined\b/i.test(field) && !/\bnot\s+undetermined\b/i.test(field);
+                const reply = input.trajectory.output;
+                const summary = /(?<!\b(?:not|never)\s)\b(?:undetermined|uncertain|ambiguous|unresolved|not yet classified)\b/i.test(reply);
+                const evidence = /\b(?:evidence|measurement|baseline|observation|clarif\w*)\b/i.test(reply);
+                const contradiction = /(?:classification|experiment type)\s*(?:is|:)\s*(?:AI|ML|architecture|performance)\b/i.test(reply);
+                process.exit(unresolved && summary && evidence && !contradiction ? 0 : 1);
+              } catch { process.exit(1); }
       - type: file-not-exists
         name: expdes-ambiguous-classification-no-hypotheses
         config:

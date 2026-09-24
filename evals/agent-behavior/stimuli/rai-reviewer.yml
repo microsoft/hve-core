@@ -3,7 +3,14 @@
 stimuli:
   - name: rai-reviewer-class-recipe
     prompt: |
-      Run a Responsible AI assessment of a customer-facing chatbot that uses an LLM to answer billing questions and stores conversation transcripts. Summarize the RAI findings with severity, citing the relevant frameworks (NIST AI RMF, the AI STRIDE overlay, or the EU AI Act). Write the report under `.copilot-tracking/rai-reviews/` and report the path.
+      This is a prompt-visible smoke scenario, not a native Responsible AI audit.
+      A customer-facing chatbot uses an LLM to answer billing questions and stores
+      conversation transcripts. Summarize candidate RAI findings with severity in
+      chat, citing relevant frameworks (NIST AI RMF, the AI STRIDE overlay, or the
+      EU AI Act). Distinguish risks inferred from the supplied description from
+      verified findings. Show the intended report path under
+      `.copilot-tracking/rai-reviews/`; do not write files, invoke subagents or
+      claim a completed audit.
     tags:
       category: agent-behavior
     graders:
