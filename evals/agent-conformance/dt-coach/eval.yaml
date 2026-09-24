@@ -643,6 +643,7 @@ stimuli:
   - >
     I want to start a project to improve warehouse picking. A Design Thinking
     project named "warehouse-picking" already exists in this workspace.
+  - No, start a separate project instead.
   tags:
     category: agent-conformance-dt-coach
     group: session-phases
@@ -651,15 +652,15 @@ stimuli:
     labels: initialization,resumption
   rubric:
   - >
-    tells the user which project name it derived and asks whether to resume the
-    existing project before reading its state or continuing the coaching session
+    first asks whether to resume the existing derived project, then responds to the
+    user's refusal by asking for a different project name before continuing
   graders:
   - type: prompt
     name: judge-init-confirms-derived-project-resume
-    turn: 1
+    turn: 2
   - type: wall-time
     name: init-confirms-derived-project-resume-budget
-    turn: 1
+    turn: 2
     config:
       max: 120s
 - name: init-asks-for-short-project-name-when-context-is-insufficient
