@@ -1,12 +1,12 @@
 ---
 name: vscode-playwright
-description: 'VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation'
+description: 'VS Code screenshot capture with serve-web for slide decks and documentation, either scripted headless for CI or interactive through Playwright MCP'
 license: MIT
-compatibility: 'Requires VS Code CLI (code or code-insiders), Playwright MCP tools, and curl'
+compatibility: 'Requires VS Code CLI (code or code-insiders). Scripted capture requires uv and Python 3.11+; interactive capture requires Playwright MCP tools and curl'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-11"
+  last_updated: "2026-09-23"
 ---
 
 # VS Code Playwright Screenshot Skill
@@ -16,6 +16,33 @@ Captures VS Code editor views, code walkthroughs, and Copilot Chat examples usin
 ## Overview
 
 This skill provides a complete workflow for capturing high-quality VS Code screenshots suitable for embedding in slide decks, documentation, and other visual media. It handles server lifecycle management, viewport configuration, UI cleanup, and screenshot validation.
+
+Two paths share the same constraints. Prefer the scripted path for any repeatable or unattended capture, including CI. Use the interactive Playwright MCP path for exploratory or one-off captures.
+
+## Scripted Capture
+
+`scripts/capture_vscode.py` runs a YAML capture plan headless: it starts `serve-web`, applies capture settings, opens each file in Monaco, measures the rendered font, and writes one screenshot per capture. It drives Playwright directly, so it needs no MCP server and runs on a CI runner.
+
+```bash
+uv sync
+uv run playwright install --with-deps chromium
+uv run python scripts/capture_vscode.py --plan capture-plan.yml --workspace /path/to/repo
+```
+
+A plan names each capture's `id`, a workspace-relative `file`, and an `output` path relative to the plan directory, or to `--output-root` when given:
+
+```yaml
+resolution: 1920x1080
+min_font_pt: 18
+font_size: 26
+theme: Default Dark Modern
+captures:
+  - id: marketplace-catalog
+    file: .github/plugin/marketplace.json
+    output: frames/marketplace-catalog.png
+```
+
+The script exits `0` only when every capture was written and met `min_font_pt`, and prints one JSON result on its last stdout line with each capture's measured `rendered_font_size_pt`, `zoom`, and `source_resolution`. A failed capture also writes `debug-<id>.png`. It rejects markdown targets at plan validation and fails when the dark theme does not apply, so a clashing light capture cannot pass. When piping its output in CI, run the step under `shell: bash` so pipefail preserves the exit code.
 
 ## Prerequisites
 
@@ -29,7 +56,7 @@ Tool names in this skill use an `mcp_microsoft_pla_browser_*` prefix. The actual
 
 These three constraints were confirmed against a running `serve-web` instance. Each one invalidates an approach that looks reasonable but does not work.
 
-* User settings live in the browser's IndexedDB, not on disk. Seeding `--server-data-dir/data/User/settings.json` has no effect on VS Code Web, so the theme, font size, and UI visibility cannot be set that way. Apply them through Command Palette commands after the workbench loads.
+* User settings live in the browser's IndexedDB, not on disk. Seeding `--server-data-dir/data/User/settings.json` has no effect on VS Code Web. Write them through `Preferences: Open User Settings (JSON)` by dispatching a paste event, because paste avoids both EditContext key handling and bracket auto-closing, then save and reload the page. The reload closes the settings editor, which Insiders opens as a modal that holds focus, and applies window-level settings such as workspace trust. A persistent browser context keeps the settings across the reload.
 * Markdown files open as a cross-origin preview webview rather than a Monaco editor. The webview DOM is unreachable from the page, so rendered text inside it cannot be inspected or measured. Capture a code or configuration file when the screenshot needs measurable editor text.
 * Confirm browser tooling by attempting a navigation rather than by matching tool names, because MCP tool prefixes vary by server registration. VS Code's built-in browser tools are a known case that loads the page but delivers neither keyboard nor mouse events to the VS Code Web workbench, so an attempt using them fails at the first command-palette step.
 
