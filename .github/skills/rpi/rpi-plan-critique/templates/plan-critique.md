@@ -13,6 +13,7 @@
 * Attempt slot consumed: yes
 * Attempt ID and kind: {{unique_attempt_id_and_initial_revision_closure_recovery_infrastructure_retry_or_human}}
 * Candidate identity and saved hash boundary: {{revision_hash_and_reservation_metadata_boundary}}
+* Canonical projection evidence: {{resolved_helper_path_projection_version_and_recomputed_projection_or_immutable_evidence_path}}
 * Revision closure: {{not_applicable_or_immediate_predecessor_adjacent_hashes_latest_delta_affected_ids_full_or_targeted_basis_and_targeted_root_complete_full_assessment_with_intermediate_results}}
 * Current-run provenance: {{immediate_planner_activation_or_standalone_initial_reservation}}
 * Original attempt and recovery approval: {{not_applicable_or_original_pointer_and_task_specific_consent}}

@@ -38,6 +38,11 @@ revision-bound closure before affected work resumes. An unresolved significant o
 needs a user decision; an evidence-backed clarification does not. The same candidate's critique is
 not replayed.
 
+Before changing source, the implementer runs the [rpi-plan hashing helper](rpi-plan#verify-a-plans-assessed-content-hash)
+against the saved plan and compares its version, exact projection and SHA-256 with the covering
+assessment. Missing tooling, failed computation or unverifiable identity returns to planning
+without a hand-built projection or another critique from implementation.
+
 Reach for a different asset when:
 
 * No approved plan exists. Run [rpi-plan](rpi-plan) first; do not implement from research alone.

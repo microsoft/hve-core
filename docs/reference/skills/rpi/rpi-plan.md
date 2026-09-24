@@ -60,6 +60,25 @@ Reach for a different asset when:
 
 ## Example usage
 
+### Verify a plan's assessed-content hash
+
+Resolve the installed `rpi-plan` skill root, then run its self-contained PowerShell 7.4 helper:
+
+```powershell
+pwsh -NoProfile -File "<resolved-rpi-plan-root>\scripts\Get-PlanAssessmentHash.ps1" -PlanPath "<absolute-plan-path>"
+```
+
+The JSON contains `projection_version`, `projection` and `sha256`. The hash covers the projection's
+UTF-8 bytes without BOM, with LF line endings. Retain that projection with each attempt to make the
+digest independently verifiable. The helper excludes bookkeeping sections, normalizes marked
+phase/task status and removes task-local pointer-only Guidance; other assessed text remains intact.
+It preserves other whitespace and ignores syntax-like text inside code fences and comments.
+
+The planner, critic and implementer run the same helper. A missing helper, failed invocation,
+version mismatch or unverifiable recorded identity blocks the gate rather than falling back to an
+agent-generated algorithm. A matching hash does not substitute for a Complete assessment or
+authorize substantive changes in excluded Guidance.
+
 ### Resume an interrupted critique
 
 If planning reports `started` but no result survived, resume the same task through `rpi-plan`. It checks recorded evidence, confirms the original critique run has ended, and verifies the saved plan and state. When eligible, it asks for your approval of one recovery for the identified task and candidate, preserving original records and writing a separate recovery result.

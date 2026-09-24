@@ -56,9 +56,15 @@ Invoke it directly only when you want an independent, evidence-bounded read of a
 
 The critique considers requirements across the supplied plan. Tasks need not repeat established requirements solely for restatement, and an abbreviated excerpt does not prove the full plan omits a detail. Explicitly missing tests, conflicting task instructions and material evidence gaps still warrant findings; stating a requirement does not by itself prove implementation coverage.
 
-You can install only the complete `rpi-plan-critique` skill for standalone first use; it checks and saves its initial reservation without requiring planner files.
+Standalone first use also requires `rpi-plan` for its canonical PowerShell hashing helper and
+identity contract. The critic recomputes the saved plan's projection, version and SHA-256 before
+reserving or assessing, rather than trusting a caller-reported hash.
 
-Critiques run from `rpi-plan` instead read the canonical planning reference supplied by the parent, or locate the available `rpi-plan` skill by name when no pointer is supplied. The skills need not be sibling directories. An unavailable parent reference stops that run without a standalone fallback. An existing standalone reservation still requires planner reconciliation; installing only the critique skill does not permit a retry.
+Critiques run from `rpi-plan` read the canonical planning reference and helper supplied by the parent,
+or locate the available `rpi-plan` skill by name when no pointer is supplied. The skills need not be
+sibling directories. An unavailable reference/helper, failed command or unverifiable identity stops
+that run without a standalone fallback. An existing standalone reservation still requires planner
+reconciliation; installing only the critique skill does not permit a retry.
 
 | Depth      | When                       | Behavior                                                                                        |
 |------------|----------------------------|-------------------------------------------------------------------------------------------------|

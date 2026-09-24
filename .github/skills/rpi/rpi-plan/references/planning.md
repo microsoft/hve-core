@@ -205,7 +205,7 @@ Keep invocation outcome separate from assessment execution and verdict. Record i
 Keep append-only attempt records in the plan's Critique Disposition. Each records task identity, unique attempt ID, kind (`initial`, `revision-closure`, `recovery`, `infrastructure-retry`, or `human`), candidate revision and saved-content hash boundary, depth and provenance, output path, invocation outcome, assessment execution/availability, verdict, run provenance and authorization.
 Append reconciliation evidence, failure classification, ended-run proof and findings without deleting earlier observations. When parent state exists, mirror original and current pointers and budget use in its single `Planning critique execution` entry; do not add top-level schema fields or replace original provenance.
 
-Before reserving, verify the candidate and evidence at exact absolute paths under the resolved workspace. Hash the saved plan's assessed content before adding reservation metadata. Exclude the full `## Critique Disposition`, `## Artifact Self-Check`, `## Planning Readiness and Next Step`, `## Follow-Up Items` and `## Handoff` sections. Within `## Phase Checklist`, normalize only the `[ ]`/`[x]` status of marked `Pxx` and `Pxx-Txx` headings, and exclude only task-local `Guidance:` blocks used for implementation pointers. Record this exact projection and hash boundary for every attempt and final comparison. A `Guidance:` block cannot change requirements, architecture, capability, safety, dependencies, test ownership, or other assessed content; put such changes in the assessed plan blocks and follow Revision-bound closure. Changes to the executive summary, requirements, phases, task wording, decisions or evidence pointers still change the hash. Persist `started` in the plan and parent state, verify the saved records, then immediately run the named attempt in the same uninterrupted planner execution. If persistence fails, do not run the critique. A saved reservation without the immediate run remains consumed on resume.
+Before reserving, verify the candidate and evidence at exact absolute paths under the resolved workspace. Compute its saved assessed content with [the canonical helper](#deterministic-assessed-content-identity) before adding reservation metadata. Record the helper's resolved path, projection version, exact projection (inline or at an immutable attempt-specific evidence path) and SHA-256 for every attempt and final comparison. A `Guidance:` block cannot change requirements, architecture, capability, safety, dependencies, test ownership, or other assessed content; put such changes in the assessed plan blocks and follow Revision-bound closure. Changes to the executive summary, requirements, phases, task wording, decisions or evidence pointers still change the hash. Persist `started` in the plan and parent state, verify the saved records, then immediately run the named attempt in the same uninterrupted planner execution. If persistence fails, do not run the critique. A saved reservation without the immediate run remains consumed on resume.
 
 The activation gives the critique the task, attempt ID and kind, candidate identity/hash boundary, depth, plan and state paths, exact output, and current-run provenance. Use the host invocation identifier when exposed; otherwise record the uninterrupted reservation-to-activation sequence. Matching saved strings are not proof of a current run.
 A critique may assess its own just-authorized initial, revision-closure, recovery or infrastructure-retry reservation once; a later caller cannot replay it. Standalone critique requires an unconsumed task and reserves its initial attempt in its output before assessing. Human assessment follows its separate commissioning contract below, not automated activation.
@@ -241,6 +241,49 @@ Persist and read back the reservation with revision kind, immediate predecessor,
 If a closure invocation is interrupted without positive host/transport failure evidence, route directly to Exhaustion and independent human assessment once every run is confirmed ended and evidence reconciliation finds no substantive result or unresolved assessment fragments for the revised candidate. This includes user cancellation, a closed window or a session timeout; none alone proves run termination or infrastructure failure. Apply the saved-file, ended-run and evidence checks from Interrupted critique recovery without reserving its generic recovery. Record the interruption, any unknown invocation outcome, the unchanged retry counts, predecessor assessments, correction delta and candidate hashes. This route requires neither infrastructure classification nor budget exhaustion and permits no automated retry of the interrupted candidate. It opens human-assessment eligibility checks, not implementation readiness or permission to author the human report.
 
 Before finalization, compare the delivered plan's saved assessed-content hash using the same projection as the reservation with the hash covered by the latest Complete full assessment or a Complete targeted closure chain rooted in a Complete full assessment. Verify every adjacent hash link and all findings across that chain are resolved or explicitly accepted as residual risk. If hashes, coverage or dispositions cannot be reconciled, stop Plan; earlier Complete evidence for hash A does not authorize implementing hash B.
+
+### Deterministic assessed-content identity
+
+Execute [scripts/Get-PlanAssessmentHash.ps1](../scripts/Get-PlanAssessmentHash.ps1) from the
+resolved `rpi-plan` skill root. The planner supplies that absolute helper path to the critic and
+implementation handoff; a standalone consumer discovers `rpi-plan` by stable name, not an assumed
+sibling directory. PowerShell 7.4 is required; the helper has no repository or package dependencies.
+The [Bash entry point](../scripts/get-plan-assessment-hash.sh) forwards the same arguments to
+PowerShell, preserving one implementation rather than duplicating the projection algorithm.
+
+```powershell
+pwsh -NoProfile -File "<resolved-rpi-plan-root>\scripts\Get-PlanAssessmentHash.ps1" -PlanPath "<absolute-saved-plan-path>"
+```
+
+The command emits JSON with `projection_version` (`rpi-plan-assessment-v1`), lowercase `sha256`,
+and `projection`. The digest covers precisely the projection's UTF-8 bytes without BOM, not the
+JSON serialization. It reads a literal path and never rewrites the plan.
+
+The versioned projection follows the canonical plan template:
+
+* Decode strict UTF-8, remove an optional leading BOM, and normalize CRLF and CR to LF. Preserve all
+  other whitespace, including retained blank lines and terminal newlines.
+* Remove the complete level-two `Critique Disposition`, `Artifact Self-Check`,
+  `Planning Readiness and Next Step`, `Follow-Up Items` and `Handoff` sections through the next
+  level-one or level-two heading, or EOF. Names are case-sensitive; optional closing ATX hashes
+  and heading whitespace are recognized. Similarly named and deeper sections remain assessed.
+* Within the single level-two `Phase Checklist`, normalize `[x]` to `[ ]` only in canonical
+  `###` phase and `####` task headings immediately following their matching `rpi:phase` or
+  `rpi:task` marker. Other checkboxes and unmarked headings remain unchanged.
+* Within a marked task, remove `Guidance:` after `Details:` through the line before `References:`,
+  including its trailing blank lines. Preserve the preceding separator. Guidance outside that
+  scope remains assessed; a misplaced or unterminated recognized block is an error.
+* Treat backtick/tilde fenced code and HTML comments as opaque to heading, marker and label
+  recognition. The helper is for canonical ATX RPI plans, not arbitrary Markdown dialects.
+
+Every consumer recomputes with this helper and compares both version and digest with the
+assessment record. Retain its emitted projection for independent verification with a standard
+SHA-256 tool. A missing helper, failed command, unsupported version, missing recorded projection,
+or mismatched identity stops admission for planner reconciliation. Never substitute an agent-written
+projection, invent a match or relabel historical hashes as this version. Reconcile earlier evidence
+without changing its original identity; if coverage cannot be verified, readiness remains blocked.
+Hash equality identifies the assessed bytes, not approval, complete assessment coverage or proof
+that excluded Guidance contains only pointers.
 
 ### Interrupted critique recovery
 

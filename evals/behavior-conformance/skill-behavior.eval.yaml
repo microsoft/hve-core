@@ -5862,7 +5862,7 @@ stimuli:
       - type: output-matches
         name: skill-rpi-critique-standalone-without-planner-stand-1f419e3d
         config:
-          pattern: '(?i)^\s*reserve-initial\s*$'
+          pattern: '(?i)^\s*require-planner\s*$'
   - name: skill-rpi-critique-parent-reference-unavailable
     prompt: |
       A planning parent activated a current initial critique in a separate

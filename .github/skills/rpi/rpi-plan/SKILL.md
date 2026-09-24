@@ -14,6 +14,10 @@ Produce one implementation-ready, human-readable Markdown plan. Lead with the ex
 
 Read [references/planning.md](references/planning.md) for section order, task block format, formatting conventions, diagrams, readiness, planning extensions, and artifact guidance.
 
+Use [scripts/Get-PlanAssessmentHash.ps1](scripts/Get-PlanAssessmentHash.ps1) to compute every
+candidate identity. The [deterministic identity contract](references/planning.md#deterministic-assessed-content-identity)
+defines invocation, output, projection evidence and failure handling; do not reconstruct the projection in model-authored code.
+
 ## Flow
 
 1. Establish the task identity and build `## User Decisions and Requirements` from user prompts, user-pointed external documents, tasks, issues, and prior research. Preserve confirmed direction as a concise freeform list. Record unresolved material choices separately as related decision groups with status, owner, rationale or requested input, evidence, and impact. Treat supplied evidence as the starting point, not as a reason to repeat investigation.

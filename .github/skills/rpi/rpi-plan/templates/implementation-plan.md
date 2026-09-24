@@ -187,6 +187,7 @@ The planner synthesizes and maintains these current requirements from the user l
 Record the latest critique findings, their disposition, and any explicitly accepted residual risk. Keep this section outside user decisions and current planning synthesis.
 
 * Critique candidate identity: {{task_id_and_plan_revision_or_hash}}
+* Canonical projection evidence: {{resolved_helper_path_projection_version_and_exact_projection_or_immutable_evidence_path}}
 * Delivered assessed-content hash and covering assessment: {{normalized_candidate_hash_and_latest_complete_full_assessment_or_complete_targeted_closure_chain}}
 * Critique depth and provenance: {{standard_or_deep}}; {{default_or_explicit_user_request}}
 * Critique execution: {{not_run_started_complete_partial_or_blocked}}
