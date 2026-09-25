@@ -64,9 +64,10 @@ npm run ci:eval:equivalence -- -Agent rpi-agent -Tier devloop
 Ordinary producer summaries expose a versioned `diagnostics` object per spec run.
 It includes configured scenario and grader identities, every outer attempt,
 hashed native trial IDs, trial indices, scores, execution and grader statuses,
-per-stimulus means, declared models, installed Vally versions, checkout identity,
-and input/selection digests. Raw responses, grader rationale, tool arguments,
-environment values and absolute paths are excluded from this projection.
+trajectory end reason, configured/observed/response turn counts, per-trial wall
+time, per-stimulus means, declared models, installed Vally versions, checkout
+identity, and input/selection digests. Raw responses, grader rationale, tool
+arguments, environment values and absolute paths are excluded from this projection.
 
 `thresholdPassed` follows the suite's existing score rule; `allGradersPassed`
 reports a distinct per-trial result. A passing mean or trial can still contain a

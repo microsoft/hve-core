@@ -223,8 +223,22 @@ function Get-VallyAcceptanceInventory {
     $acceptanceProfile = Get-Content -LiteralPath $ProfilePath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable -Depth 50
     if ($acceptanceProfile.schemaVersion -cne '1.0.0' -or $acceptanceProfile.name -cnotmatch '^[a-z0-9][a-z0-9-]{0,79}$' -or
         $acceptanceProfile.executorModel -cne 'gpt-6-luna' -or $acceptanceProfile.judgeModel -cne 'claude-sonnet-5' -or
-        $acceptanceProfile.vallyVersion -cne '0.16.0' -or @($acceptanceProfile.selections).Count -eq 0) {
+        @($acceptanceProfile.selections).Count -eq 0) {
         throw 'Invalid acceptance profile identity or runtime.'
+    }
+    $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
+    $cliPackagePath = Join-Path $repoRoot 'node_modules/@microsoft/vally-cli/package.json'
+    $corePackagePath = Join-Path $repoRoot 'node_modules/@microsoft/vally/package.json'
+    if (-not (Test-Path -LiteralPath $cliPackagePath -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $corePackagePath -PathType Leaf)) {
+        throw 'Installed Vally package identity is unavailable.'
+    }
+    $cliVersion = [string](Get-Content -LiteralPath $cliPackagePath -Raw -Encoding utf8 | ConvertFrom-Json).version
+    $coreVersion = [string](Get-Content -LiteralPath $corePackagePath -Raw -Encoding utf8 | ConvertFrom-Json).version
+    if ($acceptanceProfile.vallyVersion -isnot [string] -or
+        $acceptanceProfile.vallyVersion -cnotmatch '^\d+\.\d+\.\d+(?:[-+][a-zA-Z0-9.-]+)?$' -or
+        $acceptanceProfile.vallyVersion -cne $cliVersion -or $acceptanceProfile.vallyVersion -cne $coreVersion) {
+        throw 'Acceptance Vally version does not match the installed CLI and core packages.'
     }
     $seen = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     $selections = @(
@@ -436,11 +450,32 @@ function Test-VallyDiagnosticEvidence {
             foreach ($trial in $attempt.trials) {
                 $trialFields = @('stimulusName', 'trialIndex', 'itemIdDigest', 'identitySource', 'executionStatus', 'score',
                     'thresholdPassed', 'allGradersPassed', 'gradeStatus', 'graders')
+                $completionFields = @('endReason', 'configuredTurns', 'observedTurns', 'responseTurns', 'wallTimeMs')
+                $presentCompletionFields = @($completionFields | Where-Object { $trial.Contains($_) })
                 if (@($trialFields | Where-Object { -not $trial.Contains($_) }).Count -gt 0 -or
-                    @($trial.Keys | Where-Object { $_ -cnotin $trialFields }).Count -gt 0) { throw 'Invalid trial contract.' }
+                    @($trial.Keys | Where-Object { $_ -cnotin @($trialFields + $completionFields) }).Count -gt 0 -or
+                    $presentCompletionFields.Count -notin @(0, $completionFields.Count)) { throw 'Invalid trial contract.' }
                 if ($trial.executionStatus -cnotin @('success', 'error', 'skipped', 'cancelled', 'unknown', 'invalid') -or
                     $trial.gradeStatus -cnotin @('success', 'error', 'missing', 'invalid') -or
                     $trial.identitySource -cnotin @('native-item-id', 'stimulus-trial-index', 'missing')) { throw 'Invalid trial category.' }
+                if ($presentCompletionFields.Count -eq $completionFields.Count) {
+                    if ($null -ne $trial.endReason -and $trial.endReason -cnotin @('completed', 'agent_timeout', 'simulation_cap', 'invalid')) {
+                        throw 'Invalid trajectory end reason.'
+                    }
+                    foreach ($field in @('observedTurns', 'responseTurns', 'wallTimeMs')) {
+                        if (($trial[$field] -isnot [long] -and $trial[$field] -isnot [int]) -or $trial[$field] -lt 0) {
+                            throw 'Invalid completion count.'
+                        }
+                    }
+                    if ($null -ne $trial.configuredTurns -and
+                        (($trial.configuredTurns -isnot [long] -and $trial.configuredTurns -isnot [int]) -or $trial.configuredTurns -lt 1)) {
+                        throw 'Invalid configured turn count.'
+                    }
+                    if ($trial.responseTurns -gt $trial.observedTurns -or
+                        ($null -ne $trial.configuredTurns -and $trial.observedTurns -gt $trial.configuredTurns)) {
+                        throw 'Inconsistent completion counts.'
+                    }
+                }
                 if ($null -eq $trial.thresholdPassed) { $erroredCount++ }
                 elseif ($trial.thresholdPassed -isnot [bool]) { throw 'Invalid threshold verdict.' }
                 elseif ($trial.thresholdPassed) { $passedCount++ }
@@ -784,6 +819,44 @@ function Read-VallyResultsJsonl {
         $executionStatus = if (-not $obj.PSObject.Properties['status']) { 'unknown' }
         elseif ([string]$obj.status -cin @('success', 'error', 'skipped', 'cancelled')) { [string]$obj.status }
         else { 'invalid' }
+        $trajectory = if ($obj.PSObject.Properties['trajectory']) { $obj.trajectory } else { $null }
+        $endReason = $null
+        $configuredTurns = $null
+        $observedTurns = [System.Collections.Generic.HashSet[int]]::new()
+        $responseTurns = [System.Collections.Generic.HashSet[int]]::new()
+        if ($trajectory) {
+            if ($trajectory.PSObject.Properties['endReason']) {
+                $endReason = if ([string]$trajectory.endReason -cin @('completed', 'agent_timeout', 'simulation_cap')) {
+                    [string]$trajectory.endReason
+                }
+                else { 'invalid' }
+            }
+            if ($trajectory.PSObject.Properties['stimulus'] -and $trajectory.stimulus) {
+                if ($trajectory.stimulus.PSObject.Properties['turns'] -and @($trajectory.stimulus.turns).Count -gt 0) {
+                    $configuredTurns = @($trajectory.stimulus.turns).Count
+                }
+                elseif ($trajectory.stimulus.PSObject.Properties['prompt'] -and
+                    -not [string]::IsNullOrWhiteSpace([string]$trajectory.stimulus.prompt)) {
+                    $configuredTurns = 1
+                }
+            }
+            if ($trajectory.PSObject.Properties['events']) {
+                foreach ($trajectoryEvent in @($trajectory.events)) {
+                    if ($null -eq $trajectoryEvent -or -not $trajectoryEvent.PSObject.Properties['turn'] -or
+                        $trajectoryEvent.turn -isnot [ValueType] -or $trajectoryEvent.turn -is [bool] -or
+                        [double]$trajectoryEvent.turn -lt 0 -or [double]$trajectoryEvent.turn -gt [int]::MaxValue -or
+                        [double]$trajectoryEvent.turn -ne [math]::Truncate([double]$trajectoryEvent.turn)) {
+                        continue
+                    }
+                    $turn = [int]$trajectoryEvent.turn
+                    [void]$observedTurns.Add($turn)
+                    if ($trajectoryEvent.PSObject.Properties['type'] -and [string]$trajectoryEvent.type -ceq 'assistant_message' -and
+                        (-not $trajectoryEvent.PSObject.Properties['agentId'] -or $null -eq $trajectoryEvent.agentId)) {
+                        [void]$responseTurns.Add($turn)
+                    }
+                }
+            }
+        }
         $trialDiagnostics.Add([ordered]@{
             stimulusName = if ($knownStimulus) { [string]$stimulusName } else { $null }
             trialIndex = $trialIndex
@@ -795,6 +868,11 @@ function Read-VallyResultsJsonl {
             allGradersPassed = [bool]$allGradersPassed
             gradeStatus = $gradeStatus
             graders = $graderDiagnostics
+            endReason = $endReason
+            configuredTurns = $configuredTurns
+            observedTurns = $observedTurns.Count
+            responseTurns = $responseTurns.Count
+            wallTimeMs = $trialWallMs
         })
 
         if ($trialErrored -or -not $trialPassed) {

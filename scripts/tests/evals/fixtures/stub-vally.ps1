@@ -171,8 +171,10 @@ function New-StubRecord {
         trialIndex = 0
         itemId = "synthetic::$Name::0"
         trajectory  = [ordered]@{
-            stimulus = [ordered]@{ name = $Name }
+            stimulus = [ordered]@{ name = $Name; prompt = 'Synthetic prompt' }
             output   = "stub output for $Name"
+            endReason = 'completed'
+            events = @([ordered]@{ type = 'assistant_message'; turn = 0; data = [ordered]@{ content = 'Synthetic response' } })
             metrics  = [ordered]@{
                 wallTimeMs = $WallMs
                 tokenUsage = [ordered]@{ totalTokens = 7 }

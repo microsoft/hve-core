@@ -208,18 +208,32 @@ stimuli:
                 $receipts = @($state.rpiInvocations | Where-Object { $_.invocationId -ceq 'discover-01' })
                 if (-not ($state.rpiInvocations -is [array]) -or $receipts.Count -ne 1) { throw 'Invalid invocation set' }
                 $receipt = $receipts[0]
+                $artifactRelativePath = '.copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md'
+                $artifact = Get-Content -Raw -LiteralPath (Join-Path $env:EVALUATE_WORKSPACE $artifactRelativePath)
+                $questionIds = @($receipt.questionIds)
+                $evidenceIds = @($receipt.evidenceIds)
+                $validQuestions = $questionIds.Count -gt 0 -and
+                  @($questionIds | Where-Object { $_ -isnot [string] -or $_ -cnotmatch '^Q[0-9]+$' }).Count -eq 0 -and
+                  @($questionIds | Sort-Object -Unique).Count -eq $questionIds.Count -and
+                  @($questionIds | Where-Object { $artifact -cnotmatch "(?<![A-Za-z0-9_-])$([regex]::Escape($_))(?![A-Za-z0-9_-])" }).Count -eq 0
+                $validEvidence = $evidenceIds.Count -gt 0 -and
+                  @($evidenceIds | Where-Object { $_ -isnot [string] -or $_ -cnotmatch '^C[0-9]+$' }).Count -eq 0 -and
+                  @($evidenceIds | Sort-Object -Unique).Count -eq $evidenceIds.Count -and
+                  @($evidenceIds | Where-Object { $artifact -cnotmatch "(?<![A-Za-z0-9_-])$([regex]::Escape($_))(?![A-Za-z0-9_-])" }).Count -eq 0
                 $passed = $receipt.taskSlug -ceq 'atlas-brd-discover-01' -and
-                  $receipt.questionIds -is [array] -and $receipt.questionIds.Count -eq 1 -and $receipt.questionIds[0] -ceq 'Q1' -and
-                  $receipt.evidenceIds -is [array] -and $receipt.evidenceIds.Count -eq 1 -and $receipt.evidenceIds[0] -ceq 'C1' -and
-                  $receipt.segmentStatus -ceq 'completed' -and $receipt.userDisposition -ceq 'accepted' -and
-                  $receipt.gateEffect -ceq 'supports' -and $state.syntheticExtension.preserve -is [bool] -and $state.syntheticExtension.preserve
+                  $receipt.questionIds -is [array] -and $validQuestions -and
+                  $receipt.evidenceIds -is [array] -and $validEvidence -and
+                  $receipt.artifactPaths.research -ceq $artifactRelativePath -and
+                  $receipt.segmentStatus -ceq 'completed' -and $receipt.userDisposition -ceq 'pending' -and
+                  $receipt.gateEffect -ceq 'does-not-satisfy' -and @($receipt.findingDispositions).Count -eq 0 -and
+                  $state.syntheticExtension.preserve -is [bool] -and $state.syntheticExtension.preserve
               } catch { $passed = $false } finally { if ($null -ne $document) { $document.Dispose() } }
               @{ name = 'brd-research-invocation-state-recorded'; kind = 'code'; passed = [bool]$passed; score = [int]$passed; evidence = 'Validate invocation values and preserved extension in unambiguous JSON.' } | ConvertTo-Json -Compress
       - type: file-matches
         name: brd-research-disposition-projected
         config:
           path: docs/project-planning/atlas-brd.md
-          pattern: '(?is)Research Finding Dispositions.*REG-01.*C1.*incorporated.*atlas-brd-discover-01-research\.md'
+          pattern: '(?is)Research Finding Dispositions.*REG-01.*C1.*pending.*atlas-brd-discover-01-research\.md'
 
   - name: brd-builder-records-blocked-research-segment
     prompt: |

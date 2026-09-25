@@ -50,6 +50,7 @@ BeforeAll {
         $trials = @(foreach ($trialIndex in 0..($Runs - 1)) {
             [ordered]@{ stimulusName = 'synthetic'; trialIndex = $trialIndex; itemIdDigest = $null; identitySource = 'stimulus-trial-index'
                 executionStatus = 'success'; score = 1.0; thresholdPassed = $true; allGradersPassed = $true; gradeStatus = 'success'
+                endReason = 'completed'; configuredTurns = 1; observedTurns = 1; responseTurns = 1; wallTimeMs = 5
                 graders = @([ordered]@{ name = 'check'; graderType = 'program'; score = 1.0; passed = $true; status = 'success' }) }
         })
         return [ordered]@{ schemaVersion = '1.0.0'; runKey = $RunKey; configurationStatus = 'available'; specDigest = ('sha256:' + 'a' * 64); inputDigest = ('sha256:' + 'b' * 64)
@@ -66,11 +67,14 @@ Describe 'Merge-EvalExecution.ps1' -Tag 'Unit' {
                 It 'projects only finite configured calibration verdicts and rejects poisoned or partial output' {
                         $helper = (Join-Path $PSScriptRoot '../../evals/invoke-eval-calibration.mjs') -replace '\\', '/'
                         $probe = @'
-const { projectCalibrationGrade, executeCalibration } = await import(process.argv[2]);
+const { prepareCalibration, projectCalibrationGrade, executeCalibration } = await import(process.argv[2]);
 const assert = await import('node:assert/strict');
+const { createHash } = await import('node:crypto');
+const { execFileSync } = await import('node:child_process');
 const fs = await import('node:fs');
 const os = await import('node:os');
 const path = await import('node:path');
+const repoRoot = process.argv[3];
 const control = {id:'positive', graderName:'meaning', judgeModel:'judge', criterionCount:1};
 const detail = {configuredName:'meaning', graderType:'prompt', passed:true, score:0.75, status:'success', evidence:'private', metadata:{model:'judge'},details:[{passed:true,score:0.75,evidence:'private'}]};
 const record = {status:'success', gradeResult:{status:'success', details:[detail]}, trajectory:{output:'private'}};
@@ -86,6 +90,19 @@ const priorTemp = process.env.RUNNER_TEMP;
 process.env.RUNNER_TEMP = workRoot;
 try {
     const output = path.join(workRoot, 'safe.json');
+    const profilePath = path.join(workRoot, 'profile.json');
+    const manifestPath = path.join(workRoot, 'manifest.json');
+    const installedVersion = JSON.parse(fs.readFileSync(path.join(repoRoot, 'node_modules/@microsoft/vally-cli/package.json'), 'utf8')).version;
+    const profile = {executorModel:'gpt-6-luna',judgeModel:'claude-sonnet-5',vallyVersion:installedVersion,calibration:[{id:'positive'},{id:'negative'}]};
+    const writeVersionProbe = value => {
+        const bytes = Buffer.from(JSON.stringify({...profile,vallyVersion:value}));
+        fs.writeFileSync(profilePath, bytes);
+        fs.writeFileSync(manifestPath, JSON.stringify({acceptance:{checkout:execFileSync('git',['rev-parse','HEAD'],{cwd:repoRoot,encoding:'utf8'}).trim(),inventory:{profileDigest:`sha256:${createHash('sha256').update(bytes).digest('hex')}`,calibration:[],selections:[]}}}));
+    };
+    writeVersionProbe(installedVersion);
+    assert.throws(() => prepareCalibration(profilePath, manifestPath, repoRoot), /Calibration control mismatch/);
+    writeVersionProbe('0.0.0');
+    assert.throws(() => prepareCalibration(profilePath, manifestPath, repoRoot), /Calibration Vally version mismatch/);
     const referenceText = 'Synthetic declarations '.repeat(80) + 'Reference end';
     const prepared = { acceptance: {inventory:{profileDigest:'sha256:test'},checkout:'test',inputDigest:'sha256:test'},judge:'judge',version:'0.16.0',cli:'never-executed',
         controls:[{...control,expectedPass:true,stimulusName:'synthetic',stimulus:{prompt:'Synthetic task'},specPath:'synthetic.yaml',output:'Synthetic answer',referenceText}] };
@@ -113,7 +130,8 @@ try {
 }
 console.log('PASS safe calibration projection');
 '@
-                        $probe | & node --input-type=module - "file:///$helper"
+                        $repoRoot = (git rev-parse --show-toplevel) -replace '\\', '/'
+                        $probe | & node --input-type=module - "file:///$helper" $repoRoot
                         $LASTEXITCODE | Should -Be 0
                 }
         BeforeEach {
@@ -233,6 +251,16 @@ console.log('PASS safe calibration projection');
         $spec.status | Should -Be 'integrity-failure'
         $spec.integrity.integrityPassed | Should -BeFalse
         $spec.integrity.issues | Should -Contain 'duplicate-trial'
+    }
+    It 'preserves bounded completion evidence through authoritative fan-in' {
+        $plan = New-FanInPlan
+        $result = Merge-EvalSummaryValue -Plan $plan -Summary (New-ValidFanInSummary $plan)
+        $trial = @($result.perSpec | Where-Object specPath -eq 'alpha.yaml')[0].diagnostics.attempts[0].trials[0]
+        $trial.endReason | Should -Be 'completed'
+        $trial.configuredTurns | Should -Be 1
+        $trial.observedTurns | Should -Be 1
+        $trial.responseTurns | Should -Be 1
+        $trial.wallTimeMs | Should -Be 5
     }
     It 'rejects a self-consistent reduced population against the canonical plan' {
         $plan = New-FanInPlan

@@ -6,6 +6,8 @@ BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../evals/Invoke-VallyEvals.ps1'
     $script:RunnerModule = Join-Path $PSScriptRoot '../../evals/Modules/VallyRunner.psm1'
     $script:StubPath = Join-Path $PSScriptRoot 'fixtures/stub-vally.ps1'
+    $script:RepositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
+    $script:InstalledVallyVersion = [string](Get-Content -Raw (Join-Path $script:RepositoryRoot 'node_modules/@microsoft/vally-cli/package.json') | ConvertFrom-Json).version
 
     Import-Module $script:RunnerModule -Force
     if (-not (Get-Module -ListAvailable -Name 'powershell-yaml')) {
@@ -27,7 +29,7 @@ Describe 'Acceptance profile inventory' -Tag 'Unit', 'Acceptance' {
                 } | ConvertTo-Yaml | Set-Content (Join-Path $script:AcceptanceRoot 'spec.yaml') -Encoding utf8NoBOM
                 $script:AcceptanceProfile = [ordered]@{
                         schemaVersion = '1.0.0'; name = 'synthetic-acceptance'; executorModel = 'gpt-6-luna'
-                        judgeModel = 'claude-sonnet-5'; vallyVersion = '0.16.0'
+                        judgeModel = 'claude-sonnet-5'; vallyVersion = $script:InstalledVallyVersion
                         selections = @([ordered]@{ specPath = 'spec.yaml'; tag = 'agent=example'; runs = 5; stimuli = @('required-case') })
                         calibration = @(
                                 [ordered]@{ id = 'positive'; specPath = 'spec.yaml'; stimulusName = 'required-case'; graderName = 'meaning'; expectedPass = $true; output = 'Synthetic positive' }
@@ -63,7 +65,7 @@ Describe 'Acceptance profile inventory' -Tag 'Unit', 'Acceptance' {
         It 'rejects invalid profile boundary <Mutation>' -ForEach @(
                 @{ Mutation = 'missing' }, @{ Mutation = 'duplicate' }, @{ Mutation = 'runs' },
                 @{ Mutation = 'escape' }, @{ Mutation = 'judge' }, @{ Mutation = 'grader' },
-                @{ Mutation = 'unpaired' }, @{ Mutation = 'duplicate-control' }
+                @{ Mutation = 'unpaired' }, @{ Mutation = 'duplicate-control' }, @{ Mutation = 'version' }
         ) {
                 switch ($Mutation) {
                         'missing' { $script:AcceptanceProfile.selections[0].stimuli = @('absent') }
@@ -71,6 +73,7 @@ Describe 'Acceptance profile inventory' -Tag 'Unit', 'Acceptance' {
                         'runs' { $script:AcceptanceProfile.selections[0].runs = 3 }
                         'escape' { $script:AcceptanceProfile.selections[0].specPath = '../spec.yaml' }
                         'judge' { $script:AcceptanceProfile.judgeModel = 'other' }
+                        'version' { $script:AcceptanceProfile.vallyVersion = '0.0.0' }
                         'grader' { $script:AcceptanceProfile.calibration[0].graderName = 'absent' }
                         'unpaired' { $script:AcceptanceProfile.calibration[1].expectedPass = $true }
                         'duplicate-control' { $script:AcceptanceProfile.calibration[1].id = 'positive' }
@@ -307,6 +310,39 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             ($result.trialDiagnostics | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private'
         }
 
+        It 'Projects bounded native completion evidence without response content' -Tag 'Diagnostic' {
+            $runDir = Join-Path $script:WorkRoot 'native-completion'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            @{
+                type = 'trial-result'; stimulus = 'native'; trialIndex = 0; status = 'success'
+                trajectory = @{
+                    stimulus = @{ name = 'native'; turns = @('first', 'second', 'third') }
+                    endReason = 'agent_timeout'
+                    output = 'synthetic-private-output'
+                    metrics = @{ wallTimeMs = 123 }
+                    events = @(
+                        @{ type = 'assistant_message'; turn = 0; data = @{ content = 'synthetic-private-first' } }
+                        @{ type = 'tool_call'; turn = 1; data = @{ toolName = 'synthetic-private-tool' } }
+                    )
+                }
+                gradeResult = @{ status = 'success'; score = 1; passed = $true; details = @(
+                    @{ configuredName = 'check'; graderType = 'program'; passed = $true; score = 1; status = 'success' }
+                ) }
+            } | ConvertTo-Json -Depth 10 -Compress | Set-Content (Join-Path $runDir 'results.jsonl')
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir -Threshold 0.7 -ExpectedStimuli @{
+                native = @{ runs = 1; graders = @(@{ name = 'check'; type = 'program' }) }
+            }
+
+            $trial = $result.trialDiagnostics[0]
+            $trial.endReason | Should -Be 'agent_timeout'
+            $trial.configuredTurns | Should -Be 3
+            $trial.observedTurns | Should -Be 2
+            $trial.responseTurns | Should -Be 1
+            $trial.wallTimeMs | Should -Be 123
+            ($trial | ConvertTo-Json -Depth 10) | Should -Not -Match 'synthetic-private'
+        }
+
         It 'Preserves native identity and classifies <Status> without leaking status text' -Tag 'Diagnostic' -ForEach @(
             @{ Status = 'error'; ExpectedStatus = 'error' }
             @{ Status = 'synthetic-private-status'; ExpectedStatus = 'invalid' }
@@ -516,8 +552,14 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $evidence.contractValid | Should -BeTrue
             $evidence.integrityPassed | Should -BeTrue
             $evidence.allChecksPassed | Should -BeTrue
-            $result.diagnostics.versions.vally | Should -Be '0.16.0'
+            $result.diagnostics.versions.vally | Should -Be $script:InstalledVallyVersion
             $result.diagnostics.checkout | Should -Match '^[a-f0-9]{40}$'
+            $trial = $result.diagnostics.attempts[0].trials[0]
+            $trial.endReason | Should -Be 'completed'
+            $trial.configuredTurns | Should -Be 1
+            $trial.observedTurns | Should -Be 1
+            $trial.responseTurns | Should -Be 1
+            $trial.wallTimeMs | Should -Be 12
         }
 
         It 'Retains both attempts and selects <Selected> by errors rather than score' -Tag 'Diagnostic' -ForEach @(

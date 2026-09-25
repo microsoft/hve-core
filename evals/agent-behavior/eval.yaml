@@ -1286,18 +1286,32 @@ stimuli:
           $receipts = @($state.rpiInvocations | Where-Object { $_.invocationId -ceq 'discover-01' })
           if (-not ($state.rpiInvocations -is [array]) -or $receipts.Count -ne 1) { throw 'Invalid invocation set' }
           $receipt = $receipts[0]
+          $artifactRelativePath = '.copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md'
+          $artifact = Get-Content -Raw -LiteralPath (Join-Path $env:EVALUATE_WORKSPACE $artifactRelativePath)
+          $questionIds = @($receipt.questionIds)
+          $evidenceIds = @($receipt.evidenceIds)
+          $validQuestions = $questionIds.Count -gt 0 -and
+            @($questionIds | Where-Object { $_ -isnot [string] -or $_ -cnotmatch '^Q[0-9]+$' }).Count -eq 0 -and
+            @($questionIds | Sort-Object -Unique).Count -eq $questionIds.Count -and
+            @($questionIds | Where-Object { $artifact -cnotmatch "(?<![A-Za-z0-9_-])$([regex]::Escape($_))(?![A-Za-z0-9_-])" }).Count -eq 0
+          $validEvidence = $evidenceIds.Count -gt 0 -and
+            @($evidenceIds | Where-Object { $_ -isnot [string] -or $_ -cnotmatch '^C[0-9]+$' }).Count -eq 0 -and
+            @($evidenceIds | Sort-Object -Unique).Count -eq $evidenceIds.Count -and
+            @($evidenceIds | Where-Object { $artifact -cnotmatch "(?<![A-Za-z0-9_-])$([regex]::Escape($_))(?![A-Za-z0-9_-])" }).Count -eq 0
           $passed = $receipt.taskSlug -ceq 'atlas-brd-discover-01' -and
-            $receipt.questionIds -is [array] -and $receipt.questionIds.Count -eq 1 -and $receipt.questionIds[0] -ceq 'Q1' -and
-            $receipt.evidenceIds -is [array] -and $receipt.evidenceIds.Count -eq 1 -and $receipt.evidenceIds[0] -ceq 'C1' -and
-            $receipt.segmentStatus -ceq 'completed' -and $receipt.userDisposition -ceq 'accepted' -and
-            $receipt.gateEffect -ceq 'supports' -and $state.syntheticExtension.preserve -is [bool] -and $state.syntheticExtension.preserve
+            $receipt.questionIds -is [array] -and $validQuestions -and
+            $receipt.evidenceIds -is [array] -and $validEvidence -and
+            $receipt.artifactPaths.research -ceq $artifactRelativePath -and
+            $receipt.segmentStatus -ceq 'completed' -and $receipt.userDisposition -ceq 'pending' -and
+            $receipt.gateEffect -ceq 'does-not-satisfy' -and @($receipt.findingDispositions).Count -eq 0 -and
+            $state.syntheticExtension.preserve -is [bool] -and $state.syntheticExtension.preserve
         } catch { $passed = $false } finally { if ($null -ne $document) { $document.Dispose() } }
         @{ name = 'brd-research-invocation-state-recorded'; kind = 'code'; passed = [bool]$passed; score = [int]$passed; evidence = 'Validate invocation values and preserved extension in unambiguous JSON.' } | ConvertTo-Json -Compress
   - type: file-matches
     name: brd-research-disposition-projected
     config:
       path: docs/project-planning/atlas-brd.md
-      pattern: (?is)Research Finding Dispositions.*REG-01.*C1.*incorporated.*atlas-brd-discover-01-research\.md
+      pattern: (?is)Research Finding Dispositions.*REG-01.*C1.*pending.*atlas-brd-discover-01-research\.md
 - name: brd-builder-records-blocked-research-segment
   prompt: |
     Resume the staged Atlas BRD in Discover. Research segment `discover-01`
@@ -2125,7 +2139,7 @@ stimuli:
   - type: output-matches
     name: complete-perspective-retry
     config:
-      pattern: (?is)^(?![\s\S]*(?<!\b(?:not|never|no|without)\s)\b(?:retry\s+[*`]*(?:twice|[2-9])\b|(?:two|three|[2-9])\s+[*`]*retries\b))(?=[\s\S]*(?:retry\s+[*`]*(?:exactly\s+)?once\b|(?:one|single)\b[*`]*\s+retry\b|one\s+additional\s+attempt))(?=[\s\S]*(?:complete\s+original|complete\s+dispatch))(?=[\s\S]*(?:failure|no output|missing))(?=[\s\S]*(?:functional-findings\.json|expected\s+(?:findings[- ](?:file|path)|output)))
+      pattern: (?is)^(?![\s\S]*(?<!\b(?:not|never|no|without)\s)\b(?:retry\s+[*`]*(?:twice|[2-9]|indefinitely|forever)\b|(?:two|three|[2-9])\s+[*`]*retries\b|retry\s+until\s+(?:success|it\s+(?:works|succeeds))))(?=[\s\S]*(?:retry\s+[*`]*(?:(?:exactly|at\s+most|no\s+more\s+than)\s+)?once\b|(?:one|single)\b[*`]*\s+(?:allowed\s+)?retry\b|(?:one|a\s+single)\b[*`]*\s+(?:additional|more)\s+attempt\b))(?=[\s\S]*(?:complete\s+original|complete\s+dispatch))(?=[\s\S]*(?:failure|no output|missing))(?=[\s\S]*(?:functional-findings\.json|expected\s+(?:findings[- ](?:file|path)|output)))
   - type: output-matches
     name: skip-only-after-retry
     config:
@@ -4283,11 +4297,11 @@ stimuli:
   - type: output-matches
     name: experiment-research-gap-recorded
     config:
-      pattern: (?is)(unavailable|blocked).*(record|retain|mark).*(gap|unknown|inconclusive)
+      pattern: (?is)^(?=[\s\S]*(?:unavailable|blocked))(?=[\s\S]*(?:(?:record|retain|mark)[^.\r\n]{0,200}(?:gap|unknown|inconclusive)|(?:gap|unknown|inconclusive)[^.\r\n]{0,200}(?:record|retain|mark)))
   - type: output-matches
     name: experiment-research-dependent-stop
     config:
-      pattern: (?is)(stop|pause|cannot proceed).*(dependent|affected|hypothesis).*(continue|proceed|unrelated|other)
+      pattern: (?is)^(?![\s\S]*\b(?:cannot|can[\x27\u2019]t|will\s+not|won[\x27\u2019]t|do\s+not)\s+(?:continue|proceed)\b[^.\r\n]{0,160}\b(?:unrelated|other)\b)(?=[\s\S]*(?:(?:stop|pause|cannot proceed)[^.\r\n]{0,200}(?:dependent|affected|hypothesis)|(?:dependent|affected|hypothesis)[^.\r\n]{0,200}(?:stop|pause|cannot proceed)))(?=[\s\S]*(?:(?:continue|proceed)[^.\r\n]{0,160}(?:unrelated|other)|(?:unrelated|other)[^.\r\n]{0,160}(?:continue|proceed)))
   - type: output-matches
     name: experiment-research-unavailable-no-validated-claim
     config:
@@ -4339,7 +4353,7 @@ stimuli:
     name: experiment-context-records-dispositions
     config:
       path: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
-      pattern: (?is)(supported|contradicted|inconclusive).*(accepted|revised|rejected|deferred).*(synthetic-batching-recommendation-research\.md)
+      pattern: (?is)^(?=[\s\S]*(?:supported|contradicted|inconclusive))(?=[\s\S]*(?:accepted|revised|rejected|deferred))(?=[\s\S]*synthetic-batching-recommendation-research\.md)
 - name: experiment-designer-starts-explicit-challenge
   prompt: |
     I explicitly invoke `rpi-challenger` for the staged `H1` in experiment
@@ -6535,7 +6549,7 @@ stimuli:
     name: architecture-convergence-research-compares-options
     config:
       path: .copilot-tracking/research/2026-09-21/synthetic-queue-convergence-research.md
-      pattern: (?is)^(?=.*(?:^|\n)#{1,6}\s+(?:Research\s+)?Questions\b)(?=.*\bQ1\b)(?=.*(?:^|\n)#{1,6}\s+Evidence\b)(?=.*\bC1\b)(?=.*managed queue)(?=.*self-hosted broker)(?=.*(?:^|\n)#{1,6}\s+Recommendation\b)(?=.*\bconfidence\b)(?=.*\bunresolved\b)(?!.*\b(?:no\s+recommendation|recommendation\s*(?:is\s+|:\s*)(?:none|missing|unavailable))).*
+      pattern: (?is)^(?=.*(?:^|\n)#{1,6}\s+(?:(?:Research|Scope\s+and)\s+)?Questions\b)(?=.*\bQ1\b)(?=.*(?:^|\n)#{1,6}\s+Evidence\b)(?=.*\bC1\b)(?=.*managed queue)(?=.*self-hosted broker)(?=.*(?:^|\n)#{1,6}\s+Recommendation\b)(?=.*\bconfidence\b)(?=.*\bunresolved\b)(?!.*\b(?:no\s+recommendation|recommendation\s*(?:is\s+|:\s*)(?:none|missing|unavailable))).*
   - type: file-not-exists
     name: architecture-research-does-not-preempt-review-record
     config:
@@ -6543,7 +6557,7 @@ stimuli:
   - type: output-matches
     name: architecture-research-returns-to-reviewer-authority
     config:
-      pattern: (?is)(Architecture Reviewer|reviewer).*(retain|own|decide).*(recommendation|trade-off|architecture)
+      pattern: (?is)^(?=[\s\S]*(?:Architecture Reviewer|\breviewer\b))(?=[\s\S]*(?:(?:retain|own|decide)[^.\r\n]{0,200}(?:recommendation|trade-off|architecture)|(?:recommendation|trade-off|architecture)[^.\r\n]{0,200}(?:retain|own|decide)))
 - name: system-architecture-reviewer-writes-record-first-handoffs
   prompt: |
     Scope is confirmed for synthetic review `synthetic-queue` with reliability
@@ -6830,8 +6844,9 @@ stimuli:
             if (row.length !== header.length || row.every(cell => /^:?-+:?$/.test(cell))) process.exit(1);
             data.push(row);
           }
-          const assumed = row => row.some((cell, index) => index !== people && /(?<!\b(?:not|never|without)\s)\bAssumed\b/i.test(cell));
-          process.exit(data.length > 0 && data.every(row => /^Unknown$/i.test(row[people]) && assumed(row)) ? 0 : 1);
+          const evidenceLabel = row => row.some((cell, index) => index !== people && /(?<!\b(?:not|never|without)\s)\b(?:Assumed|Reported|Observed)\b/i.test(cell));
+          const contradictsGap = row => row.some((cell, index) => index !== people && /\bObserved\b[^|]{0,80}\b(?:interviews?|user research)\b[^|]{0,80}\b(?:complete|completed|conducted|available)\b/i.test(cell));
+          process.exit(data.length > 0 && data.every(row => /^Unknown$/i.test(row[people]) && evidenceLabel(row) && !contradictsGap(row)) ? 0 : 1);
         } catch { process.exit(1); }
   - type: output-matches
     name: names-research-gap

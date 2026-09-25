@@ -21,7 +21,7 @@ export function prepareCalibration(profilePath, manifestPath, repoRoot = root) {
   const inventory = acceptance?.inventory;
   if (!inventory || inventory.profileDigest !== digest(profileBytes) ||
       profile.executorModel !== 'gpt-6-luna' || profile.judgeModel !== 'claude-sonnet-5' ||
-      profile.vallyVersion !== '0.16.0' || !Array.isArray(profile.calibration) ||
+      !Array.isArray(profile.calibration) ||
       profile.calibration.length < 2 || profile.calibration.length > 16 ||
       acceptance.checkout !== execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).trim()) {
     throw new Error('Calibration profile or checkout mismatch.');

@@ -15,7 +15,7 @@ This agent creates comprehensive BRDs that express business needs, outcomes, and
 
 ## Lifecycle Dispatch
 
-The BRD Builder runs the three-phase lifecycle defined by the `requirements-author` skill: Discover, Define, and Govern. Each phase loads its section of that skill with `read_file` before any phase work executes, then appends the section anchor to `state.phaseSkillsLoaded`. Re-entering an already-loaded phase does not require reloading; check `phaseSkillsLoaded` first. If a section load fails, halt and report the missing artifact instead of improvising phase prose.
+The BRD Builder runs the three-phase lifecycle defined by the `requirements-author` skill: Discover, Define, and Govern. Each phase loads its section of that skill with `read_file` before any phase work executes, then appends the section anchor to `state.phaseSkillsLoaded`. The marker records durable load history, not guidance available in the current model context. After a cold resume or context summarization, reload the current phase section even when its marker exists. Within the same live context, an existing marker prevents a redundant reload. If a required section load fails, halt and report the missing artifact instead of improvising phase prose.
 
 | Phase    | Section to load from `requirements-author` | `phaseSkillsLoaded` entry | Phase responsibility                                                                             |
 |----------|--------------------------------------------|---------------------------|--------------------------------------------------------------------------------------------------|
@@ -81,7 +81,7 @@ Before emitting `BRD_TO_PRD_HANDOFF_V1`, compute and record the handoff evidence
 
 ## Disclaimer Acknowledgment
 
-Display the BRD Requirements Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim once per session, before any phase work, whenever `state.json.disclaimerShownAt` is `null`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist `state.json`.
+Display the BRD Requirements Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim once per session, before any phase work, whenever the active `.copilot-tracking/brd-sessions/<brd-name>.state.json` file has a `null` `disclaimerShownAt`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist that same state file.
 
 ## File Management
 
@@ -136,16 +136,17 @@ Maintain state in `.copilot-tracking/brd-sessions/<brd-name>.state.json`:
 }
 ```
 
-Read state on resume, check `questionsAsked` before asking, update after answers, and save at breakpoints. Record each loaded brd-author section in `phaseSkillsLoaded` so re-entering a phase does not trigger a reload. Preserve unknown state fields and existing `researchReceipts`. Initialize missing `extensionsLoaded` and `proposalResponseArtifacts` only when the proposal-response extension is activated. Initialize `rpiInvocations` only when the first RPI segment is proposed; do not migrate or duplicate prior `researchReceipts`.
+Read state on resume, check `questionsAsked` before asking, update after answers, and save at breakpoints. Record each loaded brd-author section in `phaseSkillsLoaded`. Use that history to avoid duplicate reads only in the current live context; after context loss, reload the active phase guidance before work. Preserve unknown state fields and existing `researchReceipts`. Initialize missing `extensionsLoaded` and `proposalResponseArtifacts` only when the proposal-response extension is activated. Initialize `rpiInvocations` only when the first RPI segment is proposed; do not migrate or duplicate prior `researchReceipts`.
 
 ### Resume and Recovery
 
 When resuming or after context summarization:
 
-1. Read state file and BRD content to rebuild context.
-2. Present progress summary with completed sections and next steps.
-3. Confirm understanding with user before proceeding.
-4. If state file is missing or corrupted, reconstruct from BRD content.
+1. Read the document-named state file and BRD content to rebuild context.
+2. Reload the current phase section from `requirements-author`; `phaseSkillsLoaded` alone does not establish current-context availability.
+3. Present progress summary with completed sections and next steps.
+4. Confirm understanding with user before proceeding.
+5. If the state file is missing or corrupted, reconstruct from BRD content without inventing prior user dispositions.
 
 Resume summary format:
 

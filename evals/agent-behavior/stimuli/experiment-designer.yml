@@ -457,11 +457,11 @@ stimuli:
       - type: output-matches
         name: experiment-research-gap-recorded
         config:
-          pattern: '(?is)(unavailable|blocked).*(record|retain|mark).*(gap|unknown|inconclusive)'
+          pattern: '(?is)^(?=[\s\S]*(?:unavailable|blocked))(?=[\s\S]*(?:(?:record|retain|mark)[^.\r\n]{0,200}(?:gap|unknown|inconclusive)|(?:gap|unknown|inconclusive)[^.\r\n]{0,200}(?:record|retain|mark)))'
       - type: output-matches
         name: experiment-research-dependent-stop
         config:
-          pattern: '(?is)(stop|pause|cannot proceed).*(dependent|affected|hypothesis).*(continue|proceed|unrelated|other)'
+          pattern: '(?is)^(?![\s\S]*\b(?:cannot|can[\x27\u2019]t|will\s+not|won[\x27\u2019]t|do\s+not)\s+(?:continue|proceed)\b[^.\r\n]{0,160}\b(?:unrelated|other)\b)(?=[\s\S]*(?:(?:stop|pause|cannot proceed)[^.\r\n]{0,200}(?:dependent|affected|hypothesis)|(?:dependent|affected|hypothesis)[^.\r\n]{0,200}(?:stop|pause|cannot proceed)))(?=[\s\S]*(?:(?:continue|proceed)[^.\r\n]{0,160}(?:unrelated|other)|(?:unrelated|other)[^.\r\n]{0,160}(?:continue|proceed)))'
       - type: output-matches
         name: experiment-research-unavailable-no-validated-claim
         config:
@@ -513,7 +513,7 @@ stimuli:
         name: experiment-context-records-dispositions
         config:
           path: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
-          pattern: '(?is)(supported|contradicted|inconclusive).*(accepted|revised|rejected|deferred).*(synthetic-batching-recommendation-research\.md)'
+          pattern: '(?is)^(?=[\s\S]*(?:supported|contradicted|inconclusive))(?=[\s\S]*(?:accepted|revised|rejected|deferred))(?=[\s\S]*synthetic-batching-recommendation-research\.md)'
 
   - name: experiment-designer-starts-explicit-challenge
     prompt: |

@@ -105,7 +105,7 @@ stimuli:
         name: architecture-convergence-research-compares-options
         config:
           path: .copilot-tracking/research/2026-09-21/synthetic-queue-convergence-research.md
-          pattern: '(?is)^(?=.*(?:^|\n)#{1,6}\s+(?:Research\s+)?Questions\b)(?=.*\bQ1\b)(?=.*(?:^|\n)#{1,6}\s+Evidence\b)(?=.*\bC1\b)(?=.*managed queue)(?=.*self-hosted broker)(?=.*(?:^|\n)#{1,6}\s+Recommendation\b)(?=.*\bconfidence\b)(?=.*\bunresolved\b)(?!.*\b(?:no\s+recommendation|recommendation\s*(?:is\s+|:\s*)(?:none|missing|unavailable))).*'
+          pattern: '(?is)^(?=.*(?:^|\n)#{1,6}\s+(?:(?:Research|Scope\s+and)\s+)?Questions\b)(?=.*\bQ1\b)(?=.*(?:^|\n)#{1,6}\s+Evidence\b)(?=.*\bC1\b)(?=.*managed queue)(?=.*self-hosted broker)(?=.*(?:^|\n)#{1,6}\s+Recommendation\b)(?=.*\bconfidence\b)(?=.*\bunresolved\b)(?!.*\b(?:no\s+recommendation|recommendation\s*(?:is\s+|:\s*)(?:none|missing|unavailable))).*'
       - type: file-not-exists
         name: architecture-research-does-not-preempt-review-record
         config:
@@ -113,7 +113,7 @@ stimuli:
       - type: output-matches
         name: architecture-research-returns-to-reviewer-authority
         config:
-          pattern: '(?is)(Architecture Reviewer|reviewer).*(retain|own|decide).*(recommendation|trade-off|architecture)'
+          pattern: '(?is)^(?=[\s\S]*(?:Architecture Reviewer|\breviewer\b))(?=[\s\S]*(?:(?:retain|own|decide)[^.\r\n]{0,200}(?:recommendation|trade-off|architecture)|(?:recommendation|trade-off|architecture)[^.\r\n]{0,200}(?:retain|own|decide)))'
 
   - name: system-architecture-reviewer-writes-record-first-handoffs
     prompt: |

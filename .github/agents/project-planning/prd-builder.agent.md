@@ -28,7 +28,7 @@ For artifact-scoped enforcement, the shared `telemetry-overlay` instructions app
 
 ## Lifecycle Dispatch
 
-The PRD Builder runs the seven-phase lifecycle defined by the `requirements-author` skill: Assess, Discover, Create, Build, Integrate, Validate, and Finalize. Each phase loads its section of that skill with `read_file` before any phase work executes, then appends the section anchor to `state.phaseSkillsLoaded`. Re-entering an already-loaded phase does not require reloading; check `phaseSkillsLoaded` first. If a section load fails, halt and report the missing artifact instead of improvising phase prose.
+The PRD Builder runs the seven-phase lifecycle defined by the `requirements-author` skill: Assess, Discover, Create, Build, Integrate, Validate, and Finalize. Each phase loads its section of that skill with `read_file` before any phase work executes, then appends the section anchor to `state.phaseSkillsLoaded`. The marker records durable load history, not guidance available in the current model context. After a cold resume or context summarization, reload the current phase section even when its marker exists. Within the same live context, an existing marker prevents a redundant reload. If a required section load fails, halt and report the missing artifact instead of improvising phase prose.
 
 | Phase     | Section to load from `requirements-author` | phaseSkillsLoaded entry | Phase responsibility                                                      |
 |-----------|--------------------------------------------|-------------------------|---------------------------------------------------------------------------|
@@ -101,7 +101,7 @@ When the PRD benefits from an architecture or network diagram, use the `architec
 
 ## Disclaimer Acknowledgment
 
-Display the PRD Requirements Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim once per session, before any phase work, whenever `state.json.disclaimerShownAt` is `null`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist `state.json`.
+Display the PRD Requirements Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim once per session, before any phase work, whenever the active `.copilot-tracking/prd-sessions/<prd-name>.state.json` file has a `null` `disclaimerShownAt`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist that same state file.
 
 ## File Management
 
@@ -143,7 +143,7 @@ Maintain state in `.copilot-tracking/prd-sessions/<prd-name>.state.json`:
 {
   "prdFile": "docs/project-planning/mobile-expense-app.md",
   "lastAccessed": "2025-08-24T10:30:00Z",
-  "currentPhase": "requirements-gathering",
+  "currentPhase": "Build",
   "disclaimerShownAt": null,
   "phaseSkillsLoaded": ["prd-author#assess", "prd-author#discover"],
   "extensionsLoaded": ["proposal-response#contribute:product"],
@@ -199,6 +199,7 @@ When user requests to continue existing work:
 
 2. Load previous state:
    * Read state file to understand conversation history.
+   * Reload the current phase section from `requirements-author`; `phaseSkillsLoaded` is history and cannot prove the guidance is present after context loss.
    * Review `answeredQuestions` to avoid repetition.
    * Check `nextActions` for recommended next steps.
    * Restore user preferences and context.
@@ -231,6 +232,8 @@ When conversation context has been summarized, implement robust recovery:
    # Validate timestamps and detect stale data
    # Flag any missing or corrupted sections
    ```
+
+   Reload the validated current phase section from `requirements-author` before resuming phase work. Stop if it is unavailable; do not rely on a persisted `phaseSkillsLoaded` marker after context summarization.
 
 2. Context reconstruction protocol:
    ```markdown
@@ -616,6 +619,7 @@ When the PRD reaches Finalize and passes the Final Approval Checklist, end the f
 
 ### Post-Summarization Recovery
 
+* Apply the detailed Post-Summarization Recovery protocol above, including the current-phase guidance reload.
 * Check state file integrity before using.
 * When in doubt, trust PRD content over state files.
 * Confirm key assumptions when context is lost.

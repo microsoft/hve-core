@@ -844,8 +844,13 @@ console.log(JSON.stringify(results));
     }
     @{
       Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-perspective-no-output-retry'; Grader = 'complete-perspective-retry'; Count = 2
-      Accept = @('Include the failure detail and functional-findings.json in the complete original dispatch, then retry **once**.', 'Make one additional attempt with the complete dispatch, missing output detail and expected findings path.')
-      Reject = @('Retry twice with complete original dispatch, failure and functional-findings.json.', 'Retry once with failure and functional-findings.json.')
+      Accept = @('Include the failure detail and functional-findings.json in the complete original dispatch, then retry **once**.',
+        'Make one additional attempt with the complete dispatch, missing output detail and expected findings path.',
+        'Retry at most once with the complete original dispatch, failure detail, and functional-findings.json.',
+        'Retry no more than once with the complete dispatch, missing output reason, and expected findings file.')
+      Reject = @('Retry twice with complete original dispatch, failure and functional-findings.json.', 'Retry once with failure and functional-findings.json.',
+        'Retry at most once with the complete original dispatch, failure and functional-findings.json. Then retry indefinitely.',
+        'Retry the complete dispatch until it succeeds; include the failure and functional-findings.json.')
     }
     @{
       Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-security-planning-drift-context'; Grader = 'waits-for-findings'; Count = 3
@@ -993,6 +998,16 @@ console.log(JSON.stringify(results));
       Reject = @('Research evidence validates the hypothesis.', 'Research provides preparation evidence.')
     }
     @{
+      Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-research-unavailable'; Grader = 'experiment-research-gap-recorded'; Count = 3
+      Accept = @('Research is unavailable, so record the evidence gap as inconclusive.', 'Retain the unknown as a recorded gap because Research is blocked.')
+      Reject = @('Research is unavailable.', 'Record the validated result and continue.')
+    }
+    @{
+      Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-research-unavailable'; Grader = 'experiment-research-dependent-stop'; Count = 3
+      Accept = @('Pause the dependent hypothesis, but continue unrelated framing.', 'Unrelated experiment framing may proceed; the affected hypothesis must stop.')
+      Reject = @('Continue the dependent hypothesis and unrelated work.', 'Pause the affected hypothesis and do not continue unrelated work.')
+    }
+    @{
       Spec = 'stimuli/prd-builder.yml'; Scenario = 'prd-builder-research-receipt'; Grader = 'prd-research-receipt-state'; Count = 3
       Accept = @('{"rpiInvocations":[{"capability":"rpi-research","questionIds":["Q2"],"evidenceIds":["W1"],"artifactPaths":[".copilot-tracking/research/2026-09-18/atlas-api-research.md"],"findingDispositions":[]}]}',
         'findingDispositions retains Q2 and W1; artifactPaths points to the primary artifact in the rpi-research entry of rpiInvocations.')
@@ -1003,7 +1018,8 @@ console.log(JSON.stringify(results));
     @{
       Spec = 'stimuli/system-architecture-reviewer.yml'; Scenario = 'system-architecture-reviewer-produces-convergence-research'; Grader = 'architecture-convergence-research-compares-options'; Count = 4
       Accept = @("## Recommendation and Alternatives`nRecommend the managed queue over the self-hosted broker on supplied evidence C1. Confidence: medium; unresolved load shape.`n## Research Questions`nQ1: Which option fits?`n## Evidence Ledger`nC1: staged cost and reliability comparison.",
-        "## Questions`nQ1: Which option fits?`n## Evidence`nC1: managed queue and self-hosted broker trade-offs.`n## Recommendation`nPrefer the managed queue. Confidence: medium. Unresolved: load shape.")
+        "## Questions`nQ1: Which option fits?`n## Evidence`nC1: managed queue and self-hosted broker trade-offs.`n## Recommendation`nPrefer the managed queue. Confidence: medium. Unresolved: load shape.",
+        "## Scope and Questions`nQ1: Which option fits?`n## Evidence Log`nC1: managed queue and self-hosted broker trade-offs.`n## Recommendation and Alternatives`nPrefer the managed queue. Confidence: medium. Unresolved: load shape.")
       Reject = @('Questions Q1 Evidence C1 managed queue recommendation confidence unresolved',
         'Questions Q1 Evidence C1 managed queue self-hosted broker recommendation confidence unresolved',
         "## Questions`nQ1: compare options.`n## Evidence`nC1: managed queue and self-hosted broker.`n## Recommendation`nNo recommendation is offered. Confidence: medium; unresolved load.",
@@ -1011,6 +1027,12 @@ console.log(JSON.stringify(results));
         'Questions Q1 Evidence C1 managed queue self-hosted broker recommendation unresolved',
         'Questions Q1 Evidence C1 managed queue self-hosted broker recommendation confidence',
         'Questions Q2 Evidence C1 managed queue self-hosted broker recommendation confidence unresolved')
+    }
+    @{
+      Spec = 'stimuli/system-architecture-reviewer.yml'; Scenario = 'system-architecture-reviewer-produces-convergence-research'; Grader = 'architecture-research-returns-to-reviewer-authority'; Count = 4
+      Accept = @('The Architecture Reviewer retains ownership of the recommendation and trade-off decision.',
+        'Recommendation ownership remains with the reviewer after Research returns.')
+      Reject = @('Research owns and decides the architecture recommendation.', 'The recommendation is accepted automatically.')
     }
     @{
       Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-native-emission-sha-gate'; Grader = 'complete-pr-state-check'; Count = 2
@@ -1246,7 +1268,9 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     @{ Variant = 'extension-first'; Expected = $true }
     @{ Variant = 'extension-last'; Expected = $true }
     @{ Variant = 'reordered-receipt'; Expected = $true }
+    @{ Variant = 'multiple-ids'; Expected = $true }
     @{ Variant = 'missing-state'; Expected = $false }
+    @{ Variant = 'missing-artifact'; Expected = $false }
     @{ Variant = 'malformed'; Expected = $false }
     @{ Variant = 'duplicate-key'; Expected = $false }
     @{ Variant = 'duplicate-invocation'; Expected = $false }
@@ -1261,22 +1285,30 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     $workspace = Join-Path $TestDrive "receipt-$Variant"
     $directory = Join-Path $workspace '.copilot-tracking/brd-sessions'
     New-Item -ItemType Directory -Path $directory -Force | Out-Null
-    $receipt = [ordered]@{ invocationId = 'discover-01'; taskSlug = 'atlas-brd-discover-01'; questionIds = @('Q1'); evidenceIds = @('C1'); segmentStatus = 'completed'; userDisposition = 'accepted'; gateEffect = 'supports' }
+    $artifactRelativePath = '.copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md'
+    $artifactPath = Join-Path $workspace $artifactRelativePath
+    New-Item -ItemType Directory -Path (Split-Path -Parent $artifactPath) -Force | Out-Null
+    Set-Content $artifactPath "## Scope and Questions`nQ1`nQ2`n## Evidence Log`nC1`nC2"
+    $receipt = [ordered]@{ invocationId = 'discover-01'; taskSlug = 'atlas-brd-discover-01'; questionIds = @('Q1'); evidenceIds = @('C1')
+      artifactPaths = @{ research = $artifactRelativePath }; segmentStatus = 'completed'; userDisposition = 'pending'; gateEffect = 'does-not-satisfy'; findingDispositions = @() }
     if ($Variant -eq 'reordered-receipt') {
-      $receipt = [ordered]@{ gateEffect = 'supports'; userDisposition = 'accepted'; segmentStatus = 'completed'; evidenceIds = @('C1'); questionIds = @('Q1'); taskSlug = 'atlas-brd-discover-01'; invocationId = 'discover-01' }
+      $receipt = [ordered]@{ findingDispositions = @(); gateEffect = 'does-not-satisfy'; userDisposition = 'pending'; segmentStatus = 'completed'
+        artifactPaths = @{ research = $artifactRelativePath }; evidenceIds = @('C1'); questionIds = @('Q1'); taskSlug = 'atlas-brd-discover-01'; invocationId = 'discover-01' }
     }
     switch ($Variant) {
       'wrong-task' { $receipt.taskSlug = 'different-task' }
-      'wrong-question' { $receipt.questionIds = @('Q2') }
+      'multiple-ids' { $receipt.questionIds = @('Q1', 'Q2'); $receipt.evidenceIds = @('C1', 'C2') }
+      'wrong-question' { $receipt.questionIds = @('Q3') }
       'duplicate-evidence' { $receipt.evidenceIds = @('C1', 'C1') }
       'wrong-status' { $receipt.segmentStatus = 'blocked' }
-      'wrong-disposition' { $receipt.userDisposition = 'deferred' }
-      'wrong-gate' { $receipt.gateEffect = 'does-not-satisfy' }
+      'wrong-disposition' { $receipt.userDisposition = 'accepted' }
+      'wrong-gate' { $receipt.gateEffect = 'supports' }
     }
     $state = [ordered]@{ syntheticExtension = @{ preserve = $true }; rpiInvocations = @($receipt) }
     if ($Variant -eq 'extension-last') { $state = [ordered]@{ rpiInvocations = @($receipt); syntheticExtension = @{ preserve = $true } } }
     if ($Variant -eq 'lost-extension') { $state.Remove('syntheticExtension') }
     if ($Variant -eq 'duplicate-invocation') { $state.rpiInvocations = @($receipt, $receipt) }
+    if ($Variant -eq 'missing-artifact') { Remove-Item -LiteralPath $artifactPath }
     $raw = $state | ConvertTo-Json -Depth 10
     if ($Variant -eq 'malformed') { $raw = '{' }
     if ($Variant -eq 'duplicate-key') { $raw = $raw.Replace('"preserve": true', '"preserve": false, "preserve": true') }
@@ -1398,6 +1430,7 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     @{ Variant = 'invented-evidence'; People = 'Unknown'; Basis = 'Observed: interviews already complete'; Unknown = $false; NoCohort = $true }
     @{ Variant = 'missing-table'; People = ''; Basis = ''; Unknown = $false; NoCohort = $false }
     @{ Variant = 'trailing-table'; People = 'Unknown'; Basis = 'Assumed: reading demand'; Unknown = $true; NoCohort = $true }
+    @{ Variant = 'mixed-evidence'; People = 'Unknown'; Basis = 'Assumed: reading demand'; Unknown = $true; NoCohort = $true }
     @{ Variant = 'assumed-decision'; People = 'Unknown'; Basis = 'No population evidence'; Unknown = $true; NoCohort = $true }
     @{ Variant = 'reordered-columns'; People = '**Unknown**'; Basis = '**Assumed**: reading demand'; Unknown = $true; NoCohort = $true }
     @{ Variant = 'malformed-row'; People = 'Unknown'; Basis = 'Assumed'; Unknown = $false; NoCohort = $false }
@@ -1410,6 +1443,7 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     if ($Variant -eq 'missing-table') { $reply = 'Unknown. Research gap: reading demands require validation.' }
     switch ($Variant) {
       'trailing-table' { $reply += "`n`n## Research Coverage`n| Gap | Topic | Participants | Basis | Plan | State |`n|---|---|---|---|---|---|`n| Reading | Renewal | People with dyslexia | Proposed | Interview | Open |" }
+      'mixed-evidence' { $reply += "`n| Language | Support channel | Unknown | Reported: support tickets | Assisted renewal | Unresolved |" }
       'assumed-decision' { $reply = $reply.Replace('| Reading demand |', '| Assumed: reading demand |') }
       'reordered-columns' { $reply = "| Who may be excluded | Basis and source | Current decision |`n|---|---|---|`n| $People | $Basis | Reading demand |" }
       'malformed-row' { $reply += "`n| Extra | Missing columns |" }
@@ -1422,6 +1456,37 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     $unknownResult.score | Should -Be ([int]$Unknown)
     $cohortResult.passed | Should -Be $NoCohort
     $cohortResult.score | Should -Be ([int]$NoCohort)
+  }
+}
+
+Describe 'Requirements builder reliability contracts' -Tag 'Unit', 'HveBuilderReliability' {
+  BeforeAll {
+    $script:RepositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
+    $script:ResearchContract = Get-Content -Raw (Join-Path $script:RepositoryRoot '.github/skills/project-planning/requirements-author/references/_shared/rpi-research-integration.md')
+    $script:BrdAgent = Get-Content -Raw (Join-Path $script:RepositoryRoot '.github/agents/project-planning/brd-builder.agent.md')
+    $script:PrdAgent = Get-Content -Raw (Join-Path $script:RepositoryRoot '.github/agents/project-planning/prd-builder.agent.md')
+  }
+
+  It 'Represents a completed unanswered return without clearing the owning gate' {
+    $script:ResearchContract | Should -Match 'userDisposition.*pending'
+    $script:ResearchContract | Should -Match 'completed segment awaiting a required user answer uses `pending` with `does-not-satisfy`'
+    $script:ResearchContract | Should -Match 'agent-owned work'
+    $script:ResearchContract | Should -Match 'Do not infer or automatically migrate'
+  }
+
+  It 'Uses canonical state identities and declared phases' {
+    $script:BrdAgent | Should -Match '\.copilot-tracking/brd-sessions/<brd-name>\.state\.json'
+    $script:PrdAgent | Should -Match '\.copilot-tracking/prd-sessions/<prd-name>\.state\.json'
+    $script:PrdAgent | Should -Match '"currentPhase": "Build"'
+    $script:PrdAgent | Should -Not -Match '"currentPhase": "requirements-gathering"'
+  }
+
+  It 'Treats persisted load markers as history after context loss' {
+    foreach ($agent in @($script:BrdAgent, $script:PrdAgent)) {
+      $agent | Should -Match 'marker records durable load history'
+      $agent | Should -Match 'reload the current phase section'
+      $agent | Should -Match 'Within the same live context'
+    }
   }
 }
 

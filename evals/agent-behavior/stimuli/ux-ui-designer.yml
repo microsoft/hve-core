@@ -245,8 +245,9 @@ stimuli:
                   if (row.length !== header.length || row.every(cell => /^:?-+:?$/.test(cell))) process.exit(1);
                   data.push(row);
                 }
-                const assumed = row => row.some((cell, index) => index !== people && /(?<!\b(?:not|never|without)\s)\bAssumed\b/i.test(cell));
-                process.exit(data.length > 0 && data.every(row => /^Unknown$/i.test(row[people]) && assumed(row)) ? 0 : 1);
+                const evidenceLabel = row => row.some((cell, index) => index !== people && /(?<!\b(?:not|never|without)\s)\b(?:Assumed|Reported|Observed)\b/i.test(cell));
+                const contradictsGap = row => row.some((cell, index) => index !== people && /\bObserved\b[^|]{0,80}\b(?:interviews?|user research)\b[^|]{0,80}\b(?:complete|completed|conducted|available)\b/i.test(cell));
+                process.exit(data.length > 0 && data.every(row => /^Unknown$/i.test(row[people]) && evidenceLabel(row) && !contradictsGap(row)) ? 0 : 1);
               } catch { process.exit(1); }
       - type: output-matches
         name: names-research-gap
