@@ -1291,13 +1291,13 @@ stimuli:
           $questionIds = @($receipt.questionIds)
           $evidenceIds = @($receipt.evidenceIds)
           $validQuestions = $questionIds.Count -gt 0 -and
-            @($questionIds | Where-Object { $_ -isnot [string] -or $_ -cnotmatch '^Q[0-9]+$' }).Count -eq 0 -and
+            @($questionIds | Where-Object { -not ($_ -is [string]) -or -not [regex]::IsMatch([string]$_, '^Q[0-9]+$') }).Count -eq 0 -and
             @($questionIds | Sort-Object -Unique).Count -eq $questionIds.Count -and
-            @($questionIds | Where-Object { $artifact -cnotmatch "(?<![A-Za-z0-9_-])$([regex]::Escape($_))(?![A-Za-z0-9_-])" }).Count -eq 0
+            @($questionIds | Where-Object { -not [regex]::IsMatch($artifact, "(?<![A-Za-z0-9_-])$([regex]::Escape($_))(?![A-Za-z0-9_-])") }).Count -eq 0
           $validEvidence = $evidenceIds.Count -gt 0 -and
-            @($evidenceIds | Where-Object { $_ -isnot [string] -or $_ -cnotmatch '^C[0-9]+$' }).Count -eq 0 -and
+            @($evidenceIds | Where-Object { -not ($_ -is [string]) -or -not [regex]::IsMatch([string]$_, '^C[0-9]+$') }).Count -eq 0 -and
             @($evidenceIds | Sort-Object -Unique).Count -eq $evidenceIds.Count -and
-            @($evidenceIds | Where-Object { $artifact -cnotmatch "(?<![A-Za-z0-9_-])$([regex]::Escape($_))(?![A-Za-z0-9_-])" }).Count -eq 0
+            @($evidenceIds | Where-Object { -not [regex]::IsMatch($artifact, "(?<![A-Za-z0-9_-])$([regex]::Escape($_))(?![A-Za-z0-9_-])") }).Count -eq 0
           $passed = $receipt.taskSlug -ceq 'atlas-brd-discover-01' -and
             $receipt.questionIds -is [array] -and $validQuestions -and
             $receipt.evidenceIds -is [array] -and $validEvidence -and
