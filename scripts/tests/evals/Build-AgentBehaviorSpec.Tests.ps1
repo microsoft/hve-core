@@ -738,6 +738,37 @@ console.log(JSON.stringify(results));
 '@
   }
 
+  It 'Projects document-owned BRD findings separately from pending user acceptance' -Tag 'ReceiptRepair' {
+    $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot 'stimuli/brd-builder.yml'))
+    $stimulus = $specification.stimuli | Where-Object name -eq 'brd-builder-executes-research-segment'
+    $stimulus.graders | Should -HaveCount 4
+    $grader = $stimulus.graders | Where-Object name -eq 'brd-research-disposition-projected'
+    $template = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/project-planning/requirements-author/templates/brd/brd-full.md')
+    $header = [regex]::Match($template, '(?m)^\| Gap ID[^\r\n]+').Value
+    $header | Should -Not -BeNullOrEmpty
+    $prefix = "## Research Finding Dispositions`n`n$header`n|---|---|---|---|---|---|`n"
+    $research = '.copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md'
+    $accept = @(
+      $prefix + "| REG-01 | C1 | Assumptions | Deferred | Await the user's decision | $research |"
+      $prefix + "| REG-01 | C1, C2 | Assumptions | Retained-assumption | No approval has been given | $research |"
+      "## Research Finding Dispositions`n| Primary research artifact | Disposition | Evidence IDs | Gap ID |`n|---|---|---|---|`n| $research | Deferred | C1 | REG-01 |"
+    )
+    $reject = @(
+      $prefix + "| REG-01 | C1 | Assumptions | Pending | Await the user's decision | $research |"
+      $prefix + "| REG-01 | C1 | Assumptions | Approved | User decision is pending | $research |"
+      $prefix + "| REG-02 | C1 | Assumptions | Deferred | Await decision | $research |"
+      $prefix + "| REG-01 | C1 | Assumptions | Deferred | Await decision | unrelated-research.md |"
+      $prefix + "| REG-01 | | Assumptions | Deferred | Await decision | $research |"
+      $prefix + "| REG-01 | C1 | Assumptions | | Deferred appears only in the rationale | $research |"
+    )
+    $payload = @{ type = $grader.type; config = $grader.config; outputs = $accept + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
+    $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
+    $LASTEXITCODE | Should -Be 0
+    $results | Should -HaveCount ($accept.Count + $reject.Count)
+    foreach ($result in $results | Select-Object -First $accept.Count) { $result.passed | Should -BeTrue }
+    foreach ($result in $results | Select-Object -Skip $accept.Count) { $result.passed | Should -BeFalse }
+  }
+
   It 'Keeps one complete UX routing prerequisite and evidence-label authority' -Tag 'GuidanceRepair' {
     $agent = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/agents/project-planning/ux-ui-designer.agent.md')
     $mural = ($agent -split '### Mural', 2)[1].Split('## Cross-agent collaboration')[0]
@@ -1269,6 +1300,16 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     @{ Variant = 'extension-last'; Expected = $true }
     @{ Variant = 'reordered-receipt'; Expected = $true }
     @{ Variant = 'multiple-ids'; Expected = $true }
+    @{ Variant = 'reordered-ids'; Expected = $true }
+    @{ Variant = 'external-evidence'; Expected = $true }
+    @{ Variant = 'retained-assumption'; Expected = $true }
+    @{ Variant = 'dropped-question'; Expected = $false }
+    @{ Variant = 'dropped-evidence'; Expected = $false }
+    @{ Variant = 'missing-dispositions'; Expected = $false }
+    @{ Variant = 'invented-disposition-evidence'; Expected = $false }
+    @{ Variant = 'empty-targets'; Expected = $false }
+    @{ Variant = 'empty-rationale'; Expected = $false }
+    @{ Variant = 'invalid-finding-disposition'; Expected = $false }
     @{ Variant = 'missing-state'; Expected = $false }
     @{ Variant = 'missing-artifact'; Expected = $false }
     @{ Variant = 'malformed'; Expected = $false }
@@ -1288,16 +1329,31 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     $artifactRelativePath = '.copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md'
     $artifactPath = Join-Path $workspace $artifactRelativePath
     New-Item -ItemType Directory -Path (Split-Path -Parent $artifactPath) -Force | Out-Null
-    Set-Content $artifactPath "## Scope and Questions`nQ1`nQ2`n## Evidence Log`nC1`nC2"
+    $questionIds = @('Q1', 'Q2')
+    $evidenceIds = if ($Variant -eq 'external-evidence') { @('C1', 'W1') } else { @('C1', 'C2') }
+    $artifactBody = @('## Scope and Questions') + $questionIds + @('## Evidence Log') + $evidenceIds
+    Set-Content $artifactPath ($artifactBody -join "`n")
+    $finding = @{ evidenceIds = $evidenceIds; affectedTargets = @('Assumptions'); disposition = 'deferred'; rationale = 'Awaiting the user decision.' }
     $receipt = [ordered]@{ invocationId = 'discover-01'; taskSlug = 'atlas-brd-discover-01'; questionIds = @('Q1'); evidenceIds = @('C1')
-      artifactPaths = @{ research = $artifactRelativePath }; segmentStatus = 'completed'; userDisposition = 'pending'; gateEffect = 'does-not-satisfy'; findingDispositions = @() }
+      artifactPaths = @{ research = $artifactRelativePath }; segmentStatus = 'completed'; userDisposition = 'pending'; gateEffect = 'does-not-satisfy'; findingDispositions = @($finding) }
     if ($Variant -eq 'reordered-receipt') {
-      $receipt = [ordered]@{ findingDispositions = @(); gateEffect = 'does-not-satisfy'; userDisposition = 'pending'; segmentStatus = 'completed'
+      $receipt = [ordered]@{ findingDispositions = @($finding); gateEffect = 'does-not-satisfy'; userDisposition = 'pending'; segmentStatus = 'completed'
         artifactPaths = @{ research = $artifactRelativePath }; evidenceIds = @('C1'); questionIds = @('Q1'); taskSlug = 'atlas-brd-discover-01'; invocationId = 'discover-01' }
     }
+    $receipt.questionIds = $questionIds
+    $receipt.evidenceIds = $evidenceIds
     switch ($Variant) {
       'wrong-task' { $receipt.taskSlug = 'different-task' }
       'multiple-ids' { $receipt.questionIds = @('Q1', 'Q2'); $receipt.evidenceIds = @('C1', 'C2') }
+      'reordered-ids' { $receipt.questionIds = @('Q2', 'Q1'); $receipt.evidenceIds = @('C2', 'C1') }
+      'retained-assumption' { $finding.disposition = 'retained-assumption' }
+      'dropped-question' { $receipt.questionIds = @('Q1') }
+      'dropped-evidence' { $receipt.evidenceIds = @('C1') }
+      'missing-dispositions' { $receipt.findingDispositions = @() }
+      'invented-disposition-evidence' { $finding.evidenceIds = @('C99') }
+      'empty-targets' { $finding.affectedTargets = @() }
+      'empty-rationale' { $finding.rationale = ' ' }
+      'invalid-finding-disposition' { $finding.disposition = 'pending' }
       'wrong-question' { $receipt.questionIds = @('Q3') }
       'duplicate-evidence' { $receipt.evidenceIds = @('C1', 'C1') }
       'wrong-status' { $receipt.segmentStatus = 'blocked' }

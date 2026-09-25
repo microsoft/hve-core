@@ -212,20 +212,38 @@ stimuli:
                 $artifact = Get-Content -Raw -LiteralPath (Join-Path $env:EVALUATE_WORKSPACE $artifactRelativePath)
                 $questionIds = @($receipt.questionIds)
                 $evidenceIds = @($receipt.evidenceIds)
+                $sourceQuestions = @([regex]::Matches($artifact, '(?<![A-Za-z0-9_-])Q[0-9]+(?![A-Za-z0-9_-])').Value | Sort-Object -Unique)
+                $sourceEvidence = @([regex]::Matches($artifact, '(?<![A-Za-z0-9_-])[CW][0-9]+(?![A-Za-z0-9_-])').Value | Sort-Object -Unique)
                 $validQuestions = $questionIds.Count -gt 0 -and
                   @($questionIds | Where-Object { -not ($_ -is [string]) -or -not [regex]::IsMatch([string]$_, '^Q[0-9]+$') }).Count -eq 0 -and
                   @($questionIds | Sort-Object -Unique).Count -eq $questionIds.Count -and
-                  @($questionIds | Where-Object { -not [regex]::IsMatch($artifact, "(?<![A-Za-z0-9_-])$([regex]::Escape($_))(?![A-Za-z0-9_-])") }).Count -eq 0
+                  $questionIds.Count -eq $sourceQuestions.Count -and
+                  @($questionIds | Where-Object { -not $sourceQuestions.Contains($_) }).Count -eq 0
                 $validEvidence = $evidenceIds.Count -gt 0 -and
-                  @($evidenceIds | Where-Object { -not ($_ -is [string]) -or -not [regex]::IsMatch([string]$_, '^C[0-9]+$') }).Count -eq 0 -and
+                  @($evidenceIds | Where-Object { -not ($_ -is [string]) -or -not [regex]::IsMatch([string]$_, '^[CW][0-9]+$') }).Count -eq 0 -and
                   @($evidenceIds | Sort-Object -Unique).Count -eq $evidenceIds.Count -and
-                  @($evidenceIds | Where-Object { -not [regex]::IsMatch($artifact, "(?<![A-Za-z0-9_-])$([regex]::Escape($_))(?![A-Za-z0-9_-])") }).Count -eq 0
+                  $evidenceIds.Count -eq $sourceEvidence.Count -and
+                  @($evidenceIds | Where-Object { -not $sourceEvidence.Contains($_) }).Count -eq 0
+                if (-not ($receipt.findingDispositions -is [array]) -or $receipt.findingDispositions.Count -eq 0) {
+                  throw 'Missing finding dispositions'
+                }
+                foreach ($finding in $receipt.findingDispositions) {
+                  if (-not ($finding.evidenceIds -is [array]) -or $finding.evidenceIds.Count -eq 0 -or
+                    @($finding.evidenceIds | Where-Object { -not $evidenceIds.Contains($_) }).Count -gt 0 -or
+                    @($finding.evidenceIds | Sort-Object -Unique).Count -ne $finding.evidenceIds.Count -or
+                    -not ($finding.affectedTargets -is [array]) -or $finding.affectedTargets.Count -eq 0 -or
+                    @($finding.affectedTargets | Where-Object { -not ($_ -is [string]) -or [string]::IsNullOrWhiteSpace($_) }).Count -gt 0 -or
+                    -not ($finding.rationale -is [string]) -or [string]::IsNullOrWhiteSpace($finding.rationale) -or
+                    -not [regex]::IsMatch([string]$finding.disposition, '^(incorporated|revised|rejected|deferred|retained-assumption)$')) {
+                    throw 'Invalid finding disposition'
+                  }
+                }
                 $passed = $receipt.taskSlug -ceq 'atlas-brd-discover-01' -and
                   $receipt.questionIds -is [array] -and $validQuestions -and
                   $receipt.evidenceIds -is [array] -and $validEvidence -and
                   $receipt.artifactPaths.research -ceq $artifactRelativePath -and
                   $receipt.segmentStatus -ceq 'completed' -and $receipt.userDisposition -ceq 'pending' -and
-                  $receipt.gateEffect -ceq 'does-not-satisfy' -and @($receipt.findingDispositions).Count -eq 0 -and
+                  $receipt.gateEffect -ceq 'does-not-satisfy' -and
                   $state.syntheticExtension.preserve -is [bool] -and $state.syntheticExtension.preserve
               } catch { $passed = $false } finally { if ($null -ne $document) { $document.Dispose() } }
               @{ name = 'brd-research-invocation-state-recorded'; kind = 'code'; passed = [bool]$passed; score = [int]$passed; evidence = 'Validate invocation values and preserved extension in unambiguous JSON.' } | ConvertTo-Json -Compress
@@ -233,7 +251,7 @@ stimuli:
         name: brd-research-disposition-projected
         config:
           path: docs/project-planning/atlas-brd.md
-          pattern: '(?is)Research Finding Dispositions.*REG-01.*C1.*pending.*atlas-brd-discover-01-research\.md'
+          pattern: '(?im)^(?=[\s\S]*^#{1,6}\s+Research Finding Dispositions\s*$)[\s\S]*^\|(?=[^\r\n]*\bREG-01\b)(?=[^\r\n]*\bC1\b)(?=[^\r\n]*\|\s*(?:incorporated|revised|rejected|deferred|retained-assumption)\s*\|)(?=[^\r\n]*atlas-brd-discover-01-research\.md)[^\r\n]+\|'
 
   - name: brd-builder-records-blocked-research-segment
     prompt: |
