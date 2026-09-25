@@ -81,6 +81,7 @@
         pendingAnnouncement = null;
         // A faster action may have moved the walkthrough on before this fires.
         if (states.get(name) !== index) return;
+        if (deck.getCurrentSlide().querySelector('[data-demo]')?.dataset.demo !== name) return;
         announce(text);
       }, ANNOUNCE_SETTLE_MS);
     }
@@ -256,6 +257,12 @@
       else overview.focus();
     });
     dialog.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        // Some embedded browsers do not map Escape to the native dialog close request.
+        event.preventDefault();
+        dialog.close();
+        return;
+      }
       if (event.key !== 'Tab') return;
       const nodes = [...dialog.querySelectorAll('button, a[href], summary, input, select, textarea, [tabindex]:not([tabindex="-1"])')]
         .filter(node => {

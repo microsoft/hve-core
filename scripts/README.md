@@ -136,6 +136,7 @@ The `evals/` directory contains PowerShell entry points for agent-behavior, base
 |-------------------------------------------|-------------------------------------------------------------------------------------|
 | `Build-AgentBehaviorSpec.ps1`             | Regenerate the agent-behavior eval spec from per-agent stimulus partials            |
 | `Build-AgentInventory.ps1`                | Generate the authoritative agent inventory used by eval suites                      |
+| `Build-GraderLineageMap.ps1`              | Build or check the Vally grader-name lineage map                                    |
 | `Get-AgentDependencyMap.ps1`              | Build a JSON map of agent dependencies for the baseline-equivalence dispatcher      |
 | `Get-ChangedAIArtifact.ps1`               | Emit a JSON manifest of AI customization artifacts changed between two git refs     |
 | `Get-ChangedSpecStimulus.ps1`             | Emit a JSON manifest of synthetic artifacts derived from changed eval specs         |
@@ -144,7 +145,11 @@ The `evals/` directory contains PowerShell entry points for agent-behavior, base
 | `Invoke-BaselineEquivalence.ps1`          | Run baseline-vs-customized equivalence evals for a target agent                     |
 | `Invoke-ContentModeration.ps1`            | Invoke the content moderation CLI over prompt or output content                     |
 | `Invoke-CorpusModeration.ps1`             | Moderate changed AI corpus content from the changed-artifact manifest               |
+| `Invoke-RustUnitTestNetworkTrace.ps1`     | Run a prepared Rust crate under network-denied containment                          |
 | `Invoke-VallyEvals.ps1`                   | Execute vally evals for changed AI artifacts                                        |
+| `Merge-BaselineEquivalence.ps1`           | Merge isolated baseline-equivalence model summaries                                 |
+| `Merge-EvalExecution.ps1`                 | Merge all planned eval producer summaries into one authoritative result             |
+| `New-AgentEvalPlan.ps1`                   | Build a deterministic execution plan for PR agent evaluations                       |
 | `New-AgentMatrixDashboard.ps1`            | Render a self-contained HTML dashboard for the per-agent behavior matrix            |
 | `New-EquivalenceDashboard.ps1`            | Render a self-contained HTML dashboard for a local baseline-equivalence run         |
 | `Test-CopilotToken.ps1`                   | Pre-flight probe for the `COPILOT_GITHUB_TOKEN` secret used by vally evals          |

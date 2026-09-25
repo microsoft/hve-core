@@ -1,9 +1,9 @@
 ---
 title: gitlab
 description: Manage GitLab merge requests and pipelines with a Python CLI
-sidebar_position: 7
+sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-14
+ms.date: 2026-09-21
 ms.topic: reference
 keywords:
   - skill

@@ -1,9 +1,9 @@
 ---
 title: experiment-design
 description: "Experiment design reference for problem-class framing, Minimum Viable Experiment coaching, hypothesis formation, vetting and red flags, and experiment readiness. Use when translating a stated business outcome into candidate data-science problem classes, or when framing, vetting, scoping, or evaluating an experiment of any kind, including data feasibility, architecture, LLM, performance, use-case, UX, prototyping, and hardware experiments."
-sidebar_position: 5
+sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-28
+ms.date: 2026-09-21
 ms.topic: reference
 keywords:
   - skill

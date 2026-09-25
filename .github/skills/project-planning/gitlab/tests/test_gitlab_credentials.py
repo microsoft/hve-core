@@ -16,6 +16,7 @@ import time
 
 import _gitlab_credentials as credentials
 import pytest
+from pytest_mock import MockerFixture
 
 
 def _profile() -> credentials.Profile:
@@ -32,6 +33,7 @@ def _profile() -> credentials.Profile:
     }
 
 
+@pytest.mark.skipif(os.name == "nt", reason="protected OAuth store requires POSIX")
 def test_store_round_trip_uses_private_directory_and_mode_0600(
     tmp_path: pathlib.Path,
 ) -> None:
@@ -88,6 +90,7 @@ def test_load_store_rejects_symlink(tmp_path: pathlib.Path) -> None:
         credentials.load_store(link)
 
 
+@pytest.mark.skipif(os.name == "nt", reason="protected OAuth store requires POSIX")
 def test_load_store_normalizes_invalid_utf8(tmp_path: pathlib.Path) -> None:
     path = tmp_path / "gitlab-token.json"
     path.write_bytes(b"\xff")
@@ -101,7 +104,8 @@ def test_windows_store_fails_closed_before_filesystem_access(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
 ) -> None:
-    monkeypatch.setattr(credentials.os, "name", "nt")
+    if os.name != "nt":
+        monkeypatch.setattr(credentials.os, "name", "nt")
     opened: list[object] = []
     monkeypatch.setattr(
         credentials.os,
@@ -115,12 +119,36 @@ def test_windows_store_fails_closed_before_filesystem_access(
     assert opened == []
 
 
+@pytest.mark.skipif(os.name != "nt", reason="native-Windows protected-store refusal")
+@pytest.mark.parametrize("operation", ["load", "save", "lock"])
+def test_given_windows_when_accessing_store_then_refuses_without_creating_files(
+    tmp_path: pathlib.Path, mocker: MockerFixture, operation: str
+) -> None:
+    path = tmp_path / "gitlab" / "gitlab-token.json"
+    opened = mocker.spy(credentials.os, "open")
+    created = mocker.spy(credentials.tempfile, "mkstemp")
+
+    with pytest.raises(credentials.CredentialSecurityError, match="unavailable"):
+        if operation == "load":
+            credentials.load_store(path)
+        elif operation == "save":
+            credentials.save_store(path, {"schema_version": 1, "profiles": {}})
+        else:
+            with credentials.store_lock(path):
+                pytest.fail("protected store lock must refuse on Windows")
+
+    assert not path.parent.exists()
+    opened.assert_not_called()
+    created.assert_not_called()
+
+
 def _raise_inside_store_lock(path: pathlib.Path) -> None:
     """Raise from inside a held store lock so the caller can assert release."""
     with credentials.store_lock(path):
         raise RuntimeError("boom")
 
 
+@pytest.mark.skipif(os.name == "nt", reason="protected OAuth store requires POSIX")
 def test_store_lock_releases_after_body_error(tmp_path: pathlib.Path) -> None:
     path = tmp_path / "gitlab" / "gitlab-token.json"
 
@@ -134,6 +162,7 @@ def test_store_lock_releases_after_body_error(tmp_path: pathlib.Path) -> None:
     assert reacquired, "store_lock must be re-acquirable after its body raised"
 
 
+@pytest.mark.skipif(os.name == "nt", reason="protected OAuth store requires POSIX")
 def test_store_lock_serializes_threads(tmp_path: pathlib.Path) -> None:
     path = tmp_path / "gitlab" / "gitlab-token.json"
     entered: list[int] = []
@@ -311,6 +340,7 @@ def test_store_lock_times_out_against_independent_process(
     assert released, "store_lock must acquire once the other process releases it"
 
 
+@pytest.mark.skipif(os.name == "nt", reason="protected OAuth store requires POSIX")
 def test_save_failure_preserves_existing_store(
     tmp_path: pathlib.Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -336,7 +366,8 @@ def test_save_failure_preserves_existing_store(
 def test_default_store_path_uses_dedicated_private_leaf(
     tmp_path: pathlib.Path,
 ) -> None:
-    path = credentials.resolve_store_path({"XDG_DATA_HOME": str(tmp_path)})
+    data_root = "LOCALAPPDATA" if os.name == "nt" else "XDG_DATA_HOME"
+    path = credentials.resolve_store_path({data_root: str(tmp_path)})
 
     assert path == tmp_path / "hve-core" / "gitlab" / "gitlab-token.json"
 

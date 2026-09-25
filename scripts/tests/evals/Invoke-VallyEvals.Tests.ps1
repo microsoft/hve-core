@@ -245,7 +245,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
                 $result = Invoke-VallySpec `
                     -SpecPath (Join-Path $script:WorkRoot 'fake.yaml') `
                     -OutputDir $outDir `
-                    -Model 'gpt-5.6-luna' `
+                    -Model 'gpt-6-luna' `
                     -VallyCommand $script:StubPath
             }
             finally {
@@ -286,7 +286,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
                         $script:ChattyResult = Invoke-VallySpec `
                             -SpecPath (Join-Path $script:WorkRoot 'fake.yaml') `
                             -OutputDir $outDir `
-                            -Model 'gpt-5.6-luna' `
+                            -Model 'gpt-6-luna' `
                             -VallyCommand $script:StubPath `
                             -LogPath $logPath
                     } 6>&1)
@@ -302,7 +302,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $withheld | Should -Match 'synthetic-private-stderr'
         }
 
-        It 'Forwards -Tag to the vally CLI as --tag and echoes it in the result' {
+        It 'Forwards tag and worker count while preserving progress worker identity' {
             $outDir   = Join-Path $script:WorkRoot 'spec-tag'
             $argvPath = Join-Path $script:WorkRoot 'spec-tag-argv.txt'
             $env:STUB_VALLY_MODE = 'pass'
@@ -313,7 +313,10 @@ Describe 'VallyRunner module' -Tag 'Unit' {
                     -OutputDir $outDir `
                     -Model 'claude-opus-4.7' `
                     -VallyCommand $script:StubPath `
-                    -Tag 'agent=alpha'
+                    -Tag 'agent=alpha' `
+                    -Workers 3 `
+                    -Worker 'agent-alpha' `
+                    -HeartbeatIntervalSeconds 1
             }
             finally {
                 Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
@@ -322,11 +325,15 @@ Describe 'VallyRunner module' -Tag 'Unit' {
 
             $result.exitCode | Should -Be 0
             $result.tag | Should -Be 'agent=alpha'
+            $result.phaseTimings[0].worker | Should -Be 'agent-alpha'
 
             $argv = Get-Content -LiteralPath $argvPath
             $tagIndex = [array]::IndexOf($argv, '--tag')
             $tagIndex | Should -BeGreaterThan -1
             $argv[$tagIndex + 1] | Should -Be 'agent=alpha'
+            $workersIndex = [array]::IndexOf($argv, '--workers')
+            $workersIndex | Should -BeGreaterThan -1
+            $argv[$workersIndex + 1] | Should -Be '3'
         }
 
         It 'Omits --tag and leaves the result tag empty when -Tag is not supplied' {
@@ -351,6 +358,9 @@ Describe 'VallyRunner module' -Tag 'Unit' {
 
             $argv = Get-Content -LiteralPath $argvPath
             $argv | Should -Not -Contain '--tag'
+            $workersIndex = [array]::IndexOf($argv, '--workers')
+            $workersIndex | Should -BeGreaterThan -1
+            $argv[$workersIndex + 1] | Should -Be '8'
         }
     }
 
@@ -2699,4 +2709,3 @@ Describe 'Stage 1 equivalence subject selection' -Tag 'Unit' {
         $script:Backlinked.Count | Should -Be 7
     }
 }
-
