@@ -11,7 +11,7 @@ stimuli:
       +def get_user(user_id):
       +    return db.query("SELECT * FROM users WHERE id = ?", user_id)
       ```
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/coding-standards/code-review.agent.md
           dest: .github/copilot-instructions.md
@@ -323,7 +323,7 @@ stimuli:
       interactive confirmation for that pull-request target using the standard
       profile. Explain the recommended findings perspectives before asking me to
       confirm the scope. Keep orientation separate from findings.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/coding-standards/code-review.agent.md
           dest: .github/copilot-instructions.md
@@ -353,7 +353,7 @@ stimuli:
       confirmation using the standard profile, explain the recommended findings
       perspectives, and ask me to confirm the scope. Do not require pull-request
       metadata.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/coding-standards/code-review.agent.md
           dest: .github/copilot-instructions.md
@@ -381,7 +381,7 @@ stimuli:
       confirmation before dispatch. Make the board, perspective ownership,
       omitted perspectives, and depth recommendation clear enough that I can
       approve or edit them in one reply.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/coding-standards/code-review.agent.md
           dest: .github/copilot-instructions.md
@@ -417,7 +417,7 @@ stimuli:
       Pull request 42 resolves to base `main`, head `feature/auth`, and head SHA
       `abc123`, but checked-out `HEAD` is `def456`. State what must happen before
       diff generation and whether reviewing may continue. Do not call tools.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/coding-standards/code-review.agent.md
           dest: .github/copilot-instructions.md
@@ -446,7 +446,7 @@ stimuli:
       The orientation worker failed to create its artifact. Describe the one
       allowed retry contract, including the task, state path, expected output,
       and failure detail. Do not call tools.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/coding-standards/code-review.agent.md
           dest: .github/copilot-instructions.md
@@ -466,7 +466,7 @@ stimuli:
       A selected Functional perspective invocation returned no output and did
       not create its expected findings file. Describe the recovery behavior and
       when that perspective may be marked skipped. Do not call tools.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/coding-standards/code-review.agent.md
           dest: .github/copilot-instructions.md
@@ -492,7 +492,7 @@ stimuli:
       diff and untracked-file evidence, and no serialized requirement supports
       the claim. Explain whether the finding may affect severity counts or the
       final verdict and how the merge records it. Do not call tools.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/coding-standards/code-review.agent.md
           dest: .github/copilot-instructions.md
@@ -516,7 +516,7 @@ stimuli:
       A pull-request review draft is ready, but `reviewTarget.headSha` is absent.
       The user has confirmed posting. State whether native emission may proceed
       and state the complete PR identity revalidation contract. Do not call tools.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/coding-standards/code-review.agent.md
           dest: .github/copilot-instructions.md

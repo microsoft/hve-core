@@ -36,7 +36,7 @@ stimuli:
       fixture's exact status-field and canonical-caution requirements. Do not
       invoke child agents, write files, or claim that native orchestration ran.
       This scenario tests staged response-contract semantics only.
-    environment:
+    agent_environment:
       files:
         - src: fixtures/rai-reviewer-audit-copilot-instructions.md
           dest: .github/copilot-instructions.md

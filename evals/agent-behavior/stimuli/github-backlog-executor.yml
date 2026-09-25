@@ -92,6 +92,10 @@ stimuli:
     tags:
       category: agent-behavior
       advisory: "true"
+    rubric:
+      - Grounds the tool-fit assessment in the artifact's declared tools and description without inventing tools.
+      - Identifies GitHub issue read and write tools, no other tracker family, and no terminal, and relates that grant to the single-repository execution role.
+      - Attributes repository-level confinement to the artifact's contract rather than claiming the tool grant enforces it.
     graders:
       - type: prompt
         name: github-backlog-executor-tool-restriction-fit-tool-r-3056e84e

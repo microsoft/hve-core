@@ -173,6 +173,9 @@ function Read-PartialStimuli {
         if (-not $item.Contains('prompt') -or [string]::IsNullOrWhiteSpace([string]$item['prompt'])) {
             throw "Partial '$Path' stimulus '$($item['name'])' is missing a non-empty 'prompt' field."
         }
+        if ($item.Contains('environment')) {
+            throw "Partial '$Path' stimulus '$($item['name'])' uses deprecated 'environment'; use 'agent_environment' instead."
+        }
 
         $tags = if ($item.Contains('tags')) { $item['tags'] } else { $null }
         if ($null -eq $tags) {
@@ -465,6 +468,14 @@ function Invoke-AgentBehaviorSpecCore {
     }
     else {
         ''
+    }
+
+    $prelude = (Split-ExistingPrelude -ExistingText $existingText).Prelude
+    if (-not [string]::IsNullOrWhiteSpace($prelude)) {
+        $rootKeys = ConvertFrom-Yaml -Yaml $prelude -Ordered
+        if ($rootKeys -is [System.Collections.IDictionary] -and $rootKeys.Contains('environment')) {
+            throw "Spec '$OutputPath' uses deprecated root 'environment'; use 'agent_environment' instead."
+        }
     }
 
     $rendered = Get-RenderedSpec -ExistingText $existingText -Stimuli $allStimuli

@@ -92,6 +92,10 @@ stimuli:
     tags:
       category: agent-behavior
       advisory: "true"
+    rubric:
+      - Grounds the tool-fit assessment in the artifact's declared tools, description, and stated boundary without inventing tools.
+      - Identifies the grant as a general terminal rather than a Jira-specific tool family and relates it to the declared Jira execution role.
+      - Explains that prose narrows usage to the Jira CLI invocation shape while the host and tool list do not enforce that narrowing.
     graders:
       - type: prompt
         name: jira-backlog-executor-tool-restriction-fit-tool-res-2ae1d4c5

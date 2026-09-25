@@ -92,6 +92,10 @@ stimuli:
     tags:
       category: agent-behavior
       advisory: "true"
+    rubric:
+      - Grounds the tool-fit assessment in the artifact's declared tools and description without inventing tools.
+      - Identifies Azure DevOps read and write tools, no other tracker family, and no terminal, and relates that grant to the single-project execution role.
+      - Attributes project-level confinement to the artifact's destination-binding contract rather than claiming the tool grant enforces it.
     graders:
       - type: prompt
         name: ado-backlog-executor-tool-restriction-fit-tool-rest-74ab33a9

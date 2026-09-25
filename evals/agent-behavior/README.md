@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-ms.date: 2026-09-11
+ms.date: 2026-09-24
 ---
 
 ## Purpose
@@ -60,12 +60,37 @@ The grader counts a stimulus as passing when the regex matches the agent's respo
 Three coverage kinds are distinct and do not overlap:
 
 * Class-recipe stimuli in this suite provide smoke coverage of output shape.
-* Selected isolated functional stimuli in this suite provide direct contract correctness. They declare a per-stimulus `environment` that stages the agent under test as `.github/copilot-instructions.md` in the trial workspace and names the skills that agent's contract requires, so the assertion tests the declared agent behavior rather than general model knowledge. `experiment-designer-conditional-ml-route` is the current example.
+* Selected isolated functional stimuli in this suite provide direct contract correctness. They declare a per-stimulus `agent_environment` that stages the agent under test as `.github/copilot-instructions.md` in the trial workspace and names the skills that agent's contract requires, so the assertion tests the declared agent behavior rather than general model knowledge. `experiment-designer-conditional-ml-route` is the current example.
 * The [baseline-equivalence](../baseline-equivalence/README.md) harness provides A/B regression detection between the empty baseline and the customized environment.
 
-A per-stimulus `environment.skills` list is concatenated with the suite-level list rather than replacing it, so an isolated stimulus loads its agent-declared skills in addition to the suite-level skills. Declare the skills the agent's contract names and do not assume the suite-level skills are excluded.
+A per-stimulus `agent_environment.skills` list is concatenated with the suite-level list rather than replacing it, so an isolated stimulus loads its agent-declared skills in addition to the suite-level skills. Declare the skills the agent's contract names and do not assume the suite-level skills are excluded.
 
 Vally has no agent-routing option, and staging an `.agent.md` at its normal `.github/agents/` path does not place it in model context. Workspace instructions are the supported channel, which is why isolated functional stimuli remap the agent file rather than copying it to its original location.
+
+### Data Science Coach RPI Scenarios
+
+The [Data Science Coach partial](stimuli/data-science-engineering-coach.yml) keeps
+its Research and RPI delivery scenarios authoritative. Prose graders check
+semantic obligations without requiring a particular sentence order, Markdown
+emphasis, or refusal contraction. File and tool-call graders independently
+verify produced artifacts, preserved state, and the durable-write scan.
+
+The reconciliation scenario stages task-consistent synthetic pipeline
+[Plan](fixtures/rpi-depth/ds-pipeline-plan.md),
+[Changes](fixtures/rpi-depth/ds-pipeline-changes.md), and
+[Review](fixtures/rpi-depth/ds-pipeline-review.md) evidence. These fixtures
+describe completed synthetic work; they are not claims of live validation.
+The production scenario actually executes the segments, including the required
+`rpi-plan-critique` skill, and has an explicit
+900-second agent budget and 960-second total budget, rather than the shorter
+budget used for a single conversational response. Execution remains bounded;
+the scoring threshold and required scan, artifact, and state assertions are
+unchanged. The scanner-unavailable scenario supplies an exact candidate and
+the accepted design, loads the pipeline-owning skill, and allows 300 seconds
+for agent execution and 360 seconds total so it reaches the scan gate rather
+than stopping on missing domain inputs. The clean-scan grader accepts both raw
+JSON and JSON escaped inside a tool-result envelope, while still requiring
+`status: completed` from the scanner command.
 
 ### Path Separators in Tracking-File Graders
 

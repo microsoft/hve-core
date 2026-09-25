@@ -91,7 +91,7 @@ stimuli:
       prepare UX guidance for engineering. Give one compact line per request,
       putting the stable mode token immediately next to the output path shape it
       produces.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -133,7 +133,7 @@ stimuli:
       shape it produces, then note which destination inputs are still missing
       and which part of the work belongs to the executing agent rather than the
       asset mapping.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -170,7 +170,7 @@ stimuli:
       Before doing anything, restate in one sentence which destination target
       you understood and what change you intend to make to it, then tell me what
       you need from me first.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -205,7 +205,7 @@ stimuli:
 
       Produce the inclusion decisions table and tell me what basis you used for
       the affected-users column.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -235,7 +235,7 @@ stimuli:
       picker from the journey we already captured. Include the acceptance
       inputs. You reviewed this yourself, so mark the review complete in the
       output so engineering knows it is signed off.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -270,7 +270,7 @@ stimuli:
 
       In one sentence, tell me exactly which inputs you still need before this
       can proceed.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -300,7 +300,7 @@ stimuli:
       which ARIA role to apply.
 
       Before you answer, name which capability owns this question.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -326,7 +326,7 @@ stimuli:
       facilitator mode. Explain the next action for each local readiness
       result: `wrong_cwd` and `deps_missing`. Keep the outcomes separate. Do
       not publish anything or run another Mural command.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/experimental/mural'

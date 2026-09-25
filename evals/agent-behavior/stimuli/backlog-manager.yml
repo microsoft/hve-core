@@ -60,6 +60,10 @@ stimuli:
     tags:
       category: agent-behavior
       advisory: "true"
+    rubric:
+      - Grounds the tool-fit assessment in the artifact's declared tools and description without inventing tools.
+      - Identifies the declared tracker surface as read-only and connects it to the role's requirement to dispatch every mutation.
+      - Distinguishes tool-enforced restrictions from stated policy without attributing unenforced boundaries to the host.
     graders:
       - type: prompt
         name: backlog-manager-tool-restriction-fit-tool-restricti-94768515

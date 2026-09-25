@@ -28,7 +28,7 @@ stimuli:
       Static evidence is available, but the represented required keyboard probe
       failed to start because no serve path was available. Explain the finding
       disposition and next evidence step. The probe error is simulated input.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
           dest: .github/copilot-instructions.md
@@ -65,7 +65,7 @@ stimuli:
       the initial call and remained malformed after the one permitted retry.
       Explain what may flow into report generation and how the limitation is
       recorded. These verifier responses are simulated inputs.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
           dest: .github/copilot-instructions.md
@@ -100,7 +100,7 @@ stimuli:
       verified findings are ready, but the represented Report Generator result
       is `failed` and no report path or file exists. Explain the review status
       and what may be claimed. The generator result is simulated input.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/accessibility/accessibility-reviewer.agent.md
           dest: .github/copilot-instructions.md

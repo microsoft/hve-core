@@ -141,6 +141,36 @@ stimuli:
                 $newLines[$i] | Should -Be $seedLines[$i]
             }
         }
+
+        It 'Rejects a deprecated root environment before regeneration' {
+            Write-SeedEvalYaml -Root $script:TestRoot -Content @"
+environment:
+  files: []
+stimuli: []
+"@
+            Write-Partial -Root $script:TestRoot -Slug 'gamma' -Content @"
+stimuli:
+  - name: gamma-case
+    prompt: Gamma agent prompt.
+"@
+
+            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot -Force } |
+                Should -Throw -ExpectedMessage "*Spec*eval.yaml*deprecated root 'environment'*"
+        }
+
+        It 'Does not mistake description text for a deprecated root key' {
+            Write-SeedEvalYaml -Root $script:TestRoot -Content @"
+description: |
+  environment: is mentioned here, but is not a key.
+agent_environment:
+  files: []
+stimuli: []
+"@
+
+            (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot -Force).Outcome | Should -Be 'Wrote'
+            $spec = Read-OutputObject -Root $script:TestRoot
+            $spec.agent_environment.files | Should -HaveCount 0
+        }
     }
 
     Context 'Tag injection conflict' {
@@ -315,6 +345,18 @@ stimuli:
     }
 
     Context 'Partial validation errors' {
+        It 'Rejects a deprecated stimulus environment with its partial and name' {
+            Write-Partial -Root $script:TestRoot -Slug 'legacy' -Content @"
+stimuli:
+  - name: legacy-case
+    prompt: A prompt.
+    environment:
+      files: []
+"@
+            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot -WhatIf } |
+                Should -Throw -ExpectedMessage "*legacy.yml*legacy-case*deprecated 'environment'*"
+        }
+
         It 'Names the offending file when a partial is invalid YAML' {
             Write-Partial -Root $script:TestRoot -Slug 'broken' -Content "stimuli:`n  - name: x`n   bad-indent:"
             { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw -ExpectedMessage '*Failed to parse partial*broken*'
@@ -411,12 +453,12 @@ Describe 'Isolated agent environment generation' -Tag 'Unit' {
         Initialize-FixtureRoot -Root $script:TestRoot
     }
 
-    It 'Preserves a stimulus environment that remaps an agent to workspace instructions' {
+    It 'Preserves a stimulus agent environment that remaps an agent to workspace instructions' {
         Write-Partial -Root $script:TestRoot -Slug 'agent-one' -Content @"
 stimuli:
   - name: agent-one-functional
     prompt: Functional prompt.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -428,12 +470,12 @@ stimuli:
 
         $spec = Read-OutputObject -Root $script:TestRoot
         $stimulus = $spec.stimuli | Where-Object { $_.name -eq 'agent-one-functional' }
-        $stimulus.environment.files | Should -HaveCount 1
-        $stimulus.environment.files[0].src | Should -Be '../../.github/agents/experimental/experiment-designer.agent.md'
-        $stimulus.environment.files[0].dest | Should -Be '.github/copilot-instructions.md'
-        $stimulus.environment.skills | Should -HaveCount 2
-        $stimulus.environment.skills | Should -Contain '../../.github/skills/project-planning/experiment-design'
-        $stimulus.environment.skills | Should -Contain '../../.github/skills/data-science-engineering/ml-experimentation'
+        $stimulus.agent_environment.files | Should -HaveCount 1
+        $stimulus.agent_environment.files[0].src | Should -Be '../../.github/agents/experimental/experiment-designer.agent.md'
+        $stimulus.agent_environment.files[0].dest | Should -Be '.github/copilot-instructions.md'
+        $stimulus.agent_environment.skills | Should -HaveCount 2
+        $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/project-planning/experiment-design'
+        $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/data-science-engineering/ml-experimentation'
     }
 
     It 'Keeps each agent environment isolated from other agents' {
@@ -441,7 +483,7 @@ stimuli:
 stimuli:
   - name: agent-one-functional
     prompt: Functional prompt.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -452,7 +494,7 @@ stimuli:
 stimuli:
   - name: agent-two-functional
     prompt: Functional prompt.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/hve-core/documentation.agent.md
           dest: .github/copilot-instructions.md
@@ -465,10 +507,10 @@ stimuli:
         $one = $spec.stimuli | Where-Object { $_.name -eq 'agent-one-functional' }
         $two = $spec.stimuli | Where-Object { $_.name -eq 'agent-two-functional' }
 
-        $one.environment.files[0].dest | Should -Be $two.environment.files[0].dest
-        $one.environment.files[0].src | Should -Not -Be $two.environment.files[0].src
-        $one.environment.skills | Should -Not -Contain '../../.github/skills/hve-core/documentation'
-        $two.environment.skills | Should -Not -Contain '../../.github/skills/project-planning/experiment-design'
+        $one.agent_environment.files[0].dest | Should -Be $two.agent_environment.files[0].dest
+        $one.agent_environment.files[0].src | Should -Not -Be $two.agent_environment.files[0].src
+        $one.agent_environment.skills | Should -Not -Contain '../../.github/skills/hve-core/documentation'
+        $two.agent_environment.skills | Should -Not -Contain '../../.github/skills/project-planning/experiment-design'
     }
 
     It 'Leaves stimuli without a declared environment untouched' {
@@ -476,7 +518,7 @@ stimuli:
 stimuli:
   - name: agent-one-functional
     prompt: Functional prompt.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -487,7 +529,7 @@ stimuli:
 
         $spec = Read-OutputObject -Root $script:TestRoot
         $smoke = $spec.stimuli | Where-Object { $_.name -eq 'agent-one-smoke' }
-        $smoke.Contains('environment') | Should -BeFalse
+        $smoke.Contains('agent_environment') | Should -BeFalse
     }
 
     It 'Remains idempotent when a stimulus environment is present' {
@@ -495,7 +537,7 @@ stimuli:
 stimuli:
   - name: agent-one-functional
     prompt: Functional prompt.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -560,8 +602,8 @@ $script:RaiReviewerFixtureCaution
   }
 
   It 'Stages the RAI contract dependencies in one isolated response scenario' {
-    $files = @($script:RaiReviewerContract['environment']['files'])
-    $skills = @($script:RaiReviewerContract['environment']['skills'])
+    $files = @($script:RaiReviewerContract['agent_environment']['files'])
+    $skills = @($script:RaiReviewerContract['agent_environment']['skills'])
     $graderNames = @($script:RaiReviewerContract['graders'] | ForEach-Object { [string]$_['name'] })
 
     $files | Should -HaveCount 1
@@ -680,6 +722,140 @@ $script:RaiReviewerFixtureCaution
   ) {
     $Path | Should -Not -Match $script:RaiReviewerPathPattern
   }
+}
+
+Describe 'Data Science Coach RPI evaluation contracts' -Tag 'Unit' {
+    BeforeAll {
+        $script:DsRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $partialPath = Join-Path $script:DsRepoRoot 'evals/agent-behavior/stimuli/data-science-engineering-coach.yml'
+        $partial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($partialPath))
+        $script:DsStimuli = @{}
+        $script:DsPatterns = @{}
+        foreach ($stimulus in $partial.stimuli) {
+            $script:DsStimuli[$stimulus.name] = $stimulus
+            foreach ($grader in $stimulus.graders) {
+                if ($grader.type -eq 'output-matches') {
+                    $script:DsPatterns[$grader.name] = [string]$grader.config.pattern
+                }
+            }
+        }
+    }
+
+    It 'Accepts valid semantic variant <Name>' -ForEach @(
+        @{ Name = 'Markdown job name'; Grader = 'evaluation-research-route'; Text = 'The **evaluation** job is owned by evaluation-design. Research verifies evaluator availability.' }
+        @{ Name = 'reordered route'; Grader = 'evaluation-research-route'; Text = 'rpi-research verifies preview status for evaluation-design. Active job: evaluation (episodic).' }
+        @{ Name = 'Research before metric selection'; Grader = 'evaluation-research-authority'; Text = 'Research verifies current facts. `evaluation-design` still selects metrics.' }
+        @{ Name = 'metric selection before Research'; Grader = 'evaluation-research-authority'; Text = 'evaluation-design chooses the metrics. rpi-research returns verified facts.' }
+        @{ Name = 'ASCII contraction'; Grader = 'evaluation-research-no-invention'; Text = "I won't guess evaluator availability." }
+        @{ Name = 'typographic contraction'; Grader = 'evaluation-research-no-invention'; Text = "I won$([char]0x2019)t guess evaluator availability." }
+        @{ Name = 'negation before planner state'; Grader = 'data-science-rpi-control-returns-to-same-job'; Text = 'pipeline remains active and episodic; no planner state or job change was applied.' }
+        @{ Name = 'negation after planner state'; Grader = 'data-science-rpi-control-returns-to-same-job'; Text = 'pipeline is episodic and unchanged. Planner state was not adopted.' }
+        @{ Name = 'blocked Implement with unchanged output'; Grader = 'data-science-rpi-reports-no-write'; Text = 'scanner-unavailable. The blocked Implement segment is recorded; the customer output is unchanged.' }
+        @{ Name = 'preservation before scan failure'; Grader = 'data-science-rpi-reports-no-write'; Text = 'The prior content is preserved; no write occurred. The scanner is unavailable.' }
+        @{ Name = 'dependent recommendation stops'; Grader = 'evaluation-research-blocked-stop'; Text = 'The availability-dependent recommendation stops because the lookup is blocked.' }
+        @{ Name = 'blocked claim but job continues'; Grader = 'evaluation-research-blocked-stop'; Text = 'The evaluator availability claim remains unresolved; the evaluation job continues.' }
+        @{ Name = 'owner of metric selection'; Grader = 'evaluation-research-authority'; Text = 'evaluation-design remains the owner of evaluation design, including metric selection. Research gathers evidence.' }
+        @{ Name = 'returned skill retains authority'; Grader = 'evaluation-research-authority'; Text = 'Research returns verified facts to evaluation-design. That skill retains authority over metric selection.' }
+        @{ Name = 'metric selection before authority'; Grader = 'evaluation-research-authority'; Text = 'Research returns verified facts. Metric selection remains within evaluation-design authority.' }
+        @{ Name = 'emphasized job stability'; Grader = 'evaluation-research-job-stable'; Text = 'Research does **not** change the active evaluation job, lifecycle class or session state.' }
+    ) {
+        $Text | Should -Match $script:DsPatterns[$Grader]
+    }
+
+    It 'Rejects missing or contradicted obligation <Name>' -ForEach @(
+        @{ Name = 'missing owning skill'; Grader = 'evaluation-research-route'; Text = 'The evaluation job uses Research to verify availability.' }
+        @{ Name = 'missing current-fact scope'; Grader = 'evaluation-research-route'; Text = 'The evaluation job uses rpi-research and evaluation-design.' }
+        @{ Name = 'swapped authorities'; Grader = 'evaluation-research-authority'; Text = 'Research selects metrics. evaluation-design verifies current facts.' }
+        @{ Name = 'negated metric authority'; Grader = 'evaluation-research-authority'; Text = 'evaluation-design does not select metrics. Research verifies current facts.' }
+        @{ Name = 'invention allowed'; Grader = 'evaluation-research-no-invention'; Text = 'I will guess evaluator availability.' }
+        @{ Name = 'unrelated negation'; Grader = 'evaluation-research-no-invention'; Text = 'I cannot stop the evaluation. I will invent evaluator availability.' }
+        @{ Name = 'planner state adopted'; Grader = 'data-science-rpi-control-returns-to-same-job'; Text = 'pipeline remains active and episodic. Planner state was adopted.' }
+        @{ Name = 'job changed'; Grader = 'data-science-rpi-control-returns-to-same-job'; Text = 'The episodic pipeline job was replaced by analysis. No planner state was adopted.' }
+        @{ Name = 'customer write occurred'; Grader = 'data-science-rpi-reports-no-write'; Text = 'scanner-unavailable. The customer output was written. The job is unchanged.' }
+        @{ Name = 'preservation omitted'; Grader = 'data-science-rpi-reports-no-write'; Text = 'scanner-unavailable. The Implement segment is blocked and no write occurred.' }
+        @{ Name = 'recommendations continue'; Grader = 'evaluation-research-blocked-stop'; Text = 'The evaluation job is active and evaluator recommendations continue as usual.' }
+        @{ Name = 'negated recommendation stop'; Grader = 'evaluation-research-blocked-stop'; Text = 'Evaluator recommendations are not stopped.' }
+        @{ Name = 'negated metric selection ownership'; Grader = 'evaluation-research-authority'; Text = 'Research returns facts. Metric selection is not within evaluation-design authority.' }
+    ) {
+        $Text | Should -Not -Match $script:DsPatterns[$Grader]
+    }
+
+    It 'Stages task-consistent <Kind> evidence for reconciliation' -ForEach @(
+        @{ Kind = 'plan'; Source = 'ds-pipeline-plan.md'; Destination = '.copilot-tracking/plans/2026-09-21/synthetic-pipeline-plan.md' }
+        @{ Kind = 'changes'; Source = 'ds-pipeline-changes.md'; Destination = '.copilot-tracking/changes/2026-09-21/synthetic-pipeline-changes.md' }
+        @{ Kind = 'review'; Source = 'ds-pipeline-review.md'; Destination = '.copilot-tracking/reviews/logs/2026-09-21/synthetic-pipeline-review.md' }
+    ) {
+        $stimulus = $script:DsStimuli['data-science-engineering-coach-reconciles-rpi-pipeline-results']
+        $mapping = @($stimulus.agent_environment.files | Where-Object { $_.dest -eq $Destination })
+        $mapping | Should -HaveCount 1
+        $mapping[0].src | Should -Be "fixtures/rpi-depth/$Source"
+        $fixturePath = Join-Path $script:DsRepoRoot "evals/agent-behavior/fixtures/rpi-depth/$Source"
+        $text = [System.IO.File]::ReadAllText($fixturePath)
+        $text | Should -Match 'SYNTHETIC-PIPELINE-01'
+        $text | Should -Match '(?i)event identifier'
+        $text | Should -Match '(?i)quarantine'
+        $text | Should -Match 'rejected-record count'
+        $text | Should -Not -Match '(?i)Atlas|PRD|batching'
+    }
+
+    It 'Keeps delivery authoritative with a bounded full-workflow budget and original obligations' {
+        $stimulus = $script:DsStimuli['data-science-engineering-coach-produces-rpi-pipeline-delivery']
+        $stimulus.tags.Contains('advisory') | Should -BeFalse
+        $stimulus.constraints.max_agent_duration | Should -Be '900s'
+        $stimulus.constraints.max_duration | Should -Be '960s'
+        $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan-critique'
+        $stimulus.graders | Should -HaveCount 6
+        @($stimulus.graders | Where-Object { $_.type -eq 'tool-calls' }) | Should -HaveCount 1
+        @($stimulus.graders | Where-Object { $_.type -eq 'file-exists' }) | Should -HaveCount 3
+        @($stimulus.graders | Where-Object { $_.type -eq 'file-matches' }) | Should -HaveCount 2
+    }
+
+    It 'Keeps generated DS scenarios equivalent to their canonical partials' {
+        $specPath = Join-Path $script:DsRepoRoot 'evals/agent-behavior/eval.yaml'
+        $spec = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($specPath))
+        $spec.scoring.threshold | Should -Be 0.7
+        foreach ($generated in @($spec.stimuli | Where-Object { $_.tags.agent -eq 'data-science-engineering-coach' })) {
+            $canonical = $script:DsStimuli[$generated.name]
+            $canonical | Should -Not -BeNullOrEmpty
+            $generated.tags['advisory'] | Should -Be $canonical.tags['advisory']
+            foreach ($grader in $generated.graders) {
+                if ($grader.type -eq 'output-matches') {
+                    $grader.config.pattern | Should -BeExactly $script:DsPatterns[$grader.name]
+                }
+
+            }
+        }
+    }
+}
+
+Describe 'Data Science Coach scanner evaluation setup' -Tag 'Unit' {
+    It 'Grades scanner result serialization <Name>' -ForEach @(
+        @{ Name = 'plain JSON'; Result = '{"status":"completed"}'; Expected = $true }
+        @{ Name = 'formatted JSON'; Result = '{ "status": "completed" }'; Expected = $true }
+        @{ Name = 'wrapped tool content'; Result = '{"content":"{\"status\":\"completed\"}"}'; Expected = $true }
+        @{ Name = 'error status'; Result = '{"status":"error"}'; Expected = $false }
+        @{ Name = 'completed in unrelated field'; Result = '{"status":"error","message":"completed"}'; Expected = $false }
+        @{ Name = 'missing status'; Result = '{"summary":{"high":0}}'; Expected = $false }
+    ) {
+        $partialPath = Join-Path $PSScriptRoot '../../../evals/agent-behavior/stimuli/data-science-engineering-coach.yml'
+        $partial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($partialPath))
+        $stimulus = $partial.stimuli | Where-Object { $_.name -eq 'data-science-engineering-coach-produces-rpi-pipeline-delivery' }
+        $grader = $stimulus.graders | Where-Object { $_.name -eq 'data-science-rpi-clean-scan-observed' }
+        [bool]($Result -match $grader.config.required[0].result) | Should -Be $Expected
+    }
+
+    It 'Supplies scanner preconditions and bounds the durable-write trial' {
+        $partialPath = Join-Path $PSScriptRoot '../../../evals/agent-behavior/stimuli/data-science-engineering-coach.yml'
+        $partial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($partialPath))
+        $stimulus = $partial.stimuli | Where-Object { $_.name -eq 'data-science-engineering-coach-blocks-rpi-customer-write-when-scanner-unavailable' }
+        $stimulus.prompt | Should -Match 'exact candidate summary'
+        $stimulus.prompt | Should -Match 'Scan this candidate, not the prior output'
+        $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/data-science-engineering/dataops'
+        @($stimulus.agent_environment.files | Where-Object { $_.dest -eq 'evidence/synthetic-pipeline-design.md' }) | Should -HaveCount 1
+        $stimulus.constraints.max_agent_duration | Should -Be '300s'
+        $stimulus.constraints.max_duration | Should -Be '360s'
+        $stimulus.tags.Contains('advisory') | Should -BeFalse
+    }
 }
 
 Describe 'experiment-designer conditional-ML semantic graders' -Tag 'Unit' {
