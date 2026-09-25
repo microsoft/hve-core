@@ -275,16 +275,17 @@ sweep instead of replaying publication from another ref.
 
 ### Permissions
 
-| Job or workflow        | Permissions                                        | Responsibility                                                |
-|------------------------|----------------------------------------------------|---------------------------------------------------------------|
-| Plan                   | `actions: read`, `issues: read`                    | Capture or recover the snapshot and plan one wave             |
-| Assess                 | `actions: write`, `contents: read`, `issues: read` | Run the bounded workers and upload shard evidence             |
-| Validate and reduce    | `actions: read`                                    | Validate immutable artifacts and reconstruct results          |
-| Checkpoint             | `actions: read`                                    | Persist one accepted checkpoint after exact wave validation   |
-| Continue               | `actions: write`, `contents: write`                | Create or verify the execution tag and dispatch one successor |
-| Core publisher         | `actions: read`, `issues: write`                   | Revalidate the aggregate and update the compact tracker       |
-| Optional history       | `actions: read`, `contents: write`                 | Persist authenticated report history when explicitly enabled  |
-| Optional Pages request | `actions: write`, `contents: read`                 | Dispatch the existing docs deployment at the report head      |
+| Job or workflow        | Permissions                                        | Responsibility                                               |
+|------------------------|----------------------------------------------------|--------------------------------------------------------------|
+| Plan                   | `actions: read`, `issues: read`                    | Capture or recover the snapshot and plan one wave            |
+| Pin source             | `contents: write`                                  | Create or verify the execution tag before workers run        |
+| Assess                 | `actions: write`, `contents: read`, `issues: read` | Run the bounded workers and upload shard evidence            |
+| Validate and reduce    | `actions: read`                                    | Validate immutable artifacts and reconstruct results         |
+| Checkpoint             | `actions: read`                                    | Persist one accepted checkpoint after exact wave validation  |
+| Continue               | `actions: write`, `contents: read`                 | Verify the execution tag and dispatch one successor          |
+| Core publisher         | `actions: read`, `issues: write`                   | Revalidate the aggregate and update the compact tracker      |
+| Optional history       | `actions: read`, `contents: write`                 | Persist authenticated report history when explicitly enabled |
+| Optional Pages request | `actions: write`, `contents: read`                 | Dispatch the existing docs deployment at the report head     |
 
 No job combines `actions: write` with `issues: write`. Candidate issues are
 read-only throughout assessment. The publisher is the only issue-write surface,
@@ -361,7 +362,7 @@ repository and account billing before approving a large snapshot.
 | Workflow duration   | A workflow run may last 35 days, but this design starts one sequential run per wave                                                                            |
 | Event rate          | GitHub limits workflow-triggering events to 1,500 per 10 seconds per repository                                                                                |
 | Queued runs         | GitHub limits queued workflow runs to 500 per 10 seconds; account concurrency and larger-runner limits also apply                                              |
-| Sweep concurrency   | One repository/ref concurrency group runs at a time with `cancel-in-progress: false`                                                                           |
+| Sweep concurrency   | One repository-wide concurrency group runs at a time with `cancel-in-progress: false`                                                                          |
 | Primary REST rate   | `GITHUB_TOKEN` normally receives 1,000 requests per hour per repository; qualifying Enterprise Cloud resources may receive 15,000                              |
 | Secondary REST rate | GitHub documents 100 concurrent requests and 900 REST points per minute, plus content-creation limits                                                          |
 | Discovery metadata  | At most 500 snapshot and checkpoint candidates are authenticated by producer metadata per discovery pass                                                       |

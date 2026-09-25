@@ -1926,6 +1926,12 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
     }
 
     It 'S09 dispatches no successor when wave validation or checkpoint upload fails' {
+        $pinSourceJob = [regex]::Match($script:Orchestrator, '(?ms)^  pin-source:.*?(?=^  assess:)').Value
+        $pinSourceJob | Should -Match '(?ms)needs: plan.*?permissions:\s+contents: write'
+        $pinSourceJob | Should -Match "(?ms)if:.*?mode != 'calendar-noop'.*?mode != 'complete-noop'"
+        $pinSourceJob | Should -Not -Match "shard-matrix != '\[\]'"
+        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?needs:\s+- plan\s+- pin-source'
+        $script:Orchestrator | Should -Match "(?ms)^  validate-wave:.*?needs:\s+- plan\s+- pin-source\s+- assess.*?needs\.pin-source\.result == 'success'"
         $script:Orchestrator | Should -Match '(?ms)^  checkpoint:.*?if:.*?needs\.validate-wave\.result == ''success'''
         $script:Orchestrator | Should -Match '(?ms)^  continue:.*?if:.*?needs\.checkpoint\.result == ''success''.*?sweep-complete == ''false'''
         $script:Orchestrator | Should -Match '(?ms)^  validate-wave:.*?permissions:\s+actions: read\s+outputs:'
@@ -1965,7 +1971,8 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
         $script:Orchestrator | Should -Not -Match 'candidate-ids|publish-report|failure-injection'
         $script:Orchestrator | Should -Match 'INPUT_SOURCE_REF: \$\{\{ inputs\.source-ref \}\}'
         $script:Orchestrator | Should -Match 'snapshot\.source_ref !== process\.env\.INPUT_SOURCE_REF'
-        $script:Orchestrator | Should -Match 'backlog-grooming-sweep-active-\$\{\{ github\.repository_id \}\}-\$\{\{ inputs\.source-ref \|\| github\.ref \}\}'
+        $script:Orchestrator | Should -Match 'group: backlog-grooming-sweep-active-\$\{\{ github\.repository_id \}\}'
+        $script:Orchestrator | Should -Not -Match 'group: backlog-grooming-sweep-active-\$\{\{ github\.repository_id \}\}-'
         $script:Orchestrator | Should -Match '(?ms)Dispatch exact successor.*?env:\s+SOURCE_REF: \$\{\{ needs\.plan\.outputs\.source-ref \}\}\s+SOURCE_SHA: \$\{\{ needs\.plan\.outputs\.source-sha \}\}\s+SWEEP_ID: \$\{\{ needs\.plan\.outputs\.sweep-id \}\}'
         $script:Orchestrator | Should -Match 'const sourceRef = process\.env\.SOURCE_REF'
         $script:Orchestrator | Should -Match 'const sourceSha = process\.env\.SOURCE_SHA'
@@ -1973,7 +1980,8 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
         $script:Orchestrator | Should -Match 'const executionTag = `backlog-grooming-sweep/\$\{sweepId\}`'
         $script:Orchestrator | Should -Not -Match 'backlog-grooming-sweep/\$\{snapshot\.sweep_id\}'
         $script:Orchestrator | Should -Match 'github\.rest\.git\.getRef\('
-        $script:Orchestrator | Should -Match 'github\.rest\.git\.createRef\('
+        $script:Orchestrator | Should -Match '(?ms)^  pin-source:.*?github\.rest\.git\.createRef\('
+        $script:Orchestrator | Should -Not -Match '(?ms)^  continue:.*?github\.rest\.git\.createRef\('
         $script:Orchestrator | Should -Match 'executionRef\.object\.type !== "commit"'
         $script:Orchestrator | Should -Match 'executionRef\.object\.sha !== sourceSha'
         $script:Orchestrator | Should -Match 'ref: executionTag'
@@ -1986,7 +1994,8 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
         [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
         [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
         [regex]::Matches($script:Orchestrator, '(?m)^\s+actions: write$').Count | Should -Be 2
-        $script:Orchestrator | Should -Match '(?ms)^  continue:.*?permissions:\s+actions: write\s+contents: write'
+        $script:Orchestrator | Should -Match '(?ms)^  pin-source:.*?permissions:\s+contents: write'
+        $script:Orchestrator | Should -Match '(?ms)^  continue:.*?permissions:\s+actions: write\s+contents: read'
         $script:CorePublisher | Should -Match '(?ms)permissions:\s+actions: read\s+issues: write'
         $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read\s+contents: write'
         $script:Publisher | Should -Not -Match '(?m)^\s+actions: write$'
@@ -2064,6 +2073,8 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
         $script:WorkflowReadme | Should -Match 'backlog-grooming-sweep/<sweep-id>'
         $script:WorkflowReadme | Should -Match 'continuation inputs empty'
         $script:WorkflowReadme | Should -Match 'retained sweep tag'
+        $script:WorkflowReadme | Should -Match 'Create or verify the execution tag before workers run'
+        $script:WorkflowReadme | Should -Match 'One repository-wide concurrency group'
         $script:WorkflowReadme | Should -Match 'normalization count'
         $script:WorkflowReadme | Should -Match 'per-issue normalization codes'
     }

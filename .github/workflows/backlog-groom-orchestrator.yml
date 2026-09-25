@@ -57,7 +57,7 @@ on:
         default: ''
 
 concurrency:
-  group: backlog-grooming-sweep-active-${{ github.repository_id }}-${{ inputs.source-ref || github.ref }}
+  group: backlog-grooming-sweep-active-${{ github.repository_id }}
   cancel-in-progress: false
 
 permissions: {}
@@ -686,10 +686,50 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  pin-source:
+    name: Pin immutable sweep source
+    needs: plan
+    if: >-
+      ${{ needs.plan.result == 'success' &&
+          needs.plan.outputs.mode != 'calendar-noop' &&
+          needs.plan.outputs.mode != 'complete-noop' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create or verify execution tag
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SOURCE_SHA: ${{ needs.plan.outputs.source-sha }}
+          SWEEP_ID: ${{ needs.plan.outputs.sweep-id }}
+        with:
+          script: |
+            const sourceSha = process.env.SOURCE_SHA;
+            const executionTag = `backlog-grooming-sweep/${process.env.SWEEP_ID}`;
+            let executionRef;
+            try {
+              ({ data: executionRef } = await github.rest.git.getRef({
+                ...context.repo,
+                ref: `tags/${executionTag}`,
+              }));
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              ({ data: executionRef } = await github.rest.git.createRef({
+                ...context.repo,
+                ref: `refs/tags/${executionTag}`,
+                sha: sourceSha,
+              }));
+            }
+            if (executionRef.object.type !== "commit" || executionRef.object.sha !== sourceSha) {
+              throw new Error("Sweep execution tag does not match the immutable source revision");
+            }
+
   assess:
     name: Assess ${{ matrix.shard.shard_id }}
-    needs: plan
-    if: ${{ needs.plan.outputs.shard-matrix != '[]' }}
+    needs:
+      - plan
+      - pin-source
+    if: ${{ needs.pin-source.result == 'success' && needs.plan.outputs.shard-matrix != '[]' }}
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -722,9 +762,11 @@ jobs:
     name: Validate complete wave result set
     needs:
       - plan
+      - pin-source
       - assess
     if: >-
       ${{ always() && needs.plan.result == 'success' &&
+          needs.pin-source.result == 'success' &&
           needs.plan.outputs.mode != 'calendar-noop' &&
           needs.plan.outputs.mode != 'complete-noop' &&
           (needs.assess.result == 'success' ||
@@ -964,7 +1006,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-      contents: write
+      contents: read
     steps:
       - name: Dispatch exact successor
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -978,20 +1020,10 @@ jobs:
             const sourceSha = process.env.SOURCE_SHA;
             const sweepId = process.env.SWEEP_ID;
             const executionTag = `backlog-grooming-sweep/${sweepId}`;
-            let executionRef;
-            try {
-              ({ data: executionRef } = await github.rest.git.getRef({
-                ...context.repo,
-                ref: `tags/${executionTag}`,
-              }));
-            } catch (error) {
-              if (error.status !== 404) throw error;
-              ({ data: executionRef } = await github.rest.git.createRef({
-                ...context.repo,
-                ref: `refs/tags/${executionTag}`,
-                sha: sourceSha,
-              }));
-            }
+            const { data: executionRef } = await github.rest.git.getRef({
+              ...context.repo,
+              ref: `tags/${executionTag}`,
+            });
             if (executionRef.object.type !== "commit" || executionRef.object.sha !== sourceSha) {
               throw new Error("Sweep execution tag does not match the immutable source revision");
             }
