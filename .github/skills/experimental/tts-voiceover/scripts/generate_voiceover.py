@@ -241,7 +241,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--rate",
         default=DEFAULT_RATE,
-        help=f"Speech prosody rate (default: {DEFAULT_RATE})",
+        help=f"Speech prosody rate (default: {DEFAULT_RATE.replace('%', '%%')})",
     )
     parser.add_argument(
         "--content-dir",
