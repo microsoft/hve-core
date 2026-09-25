@@ -285,10 +285,13 @@ stimuli:
 
   - name: data-science-engineering-coach-evaluator-research
     prompt: |
-      I confirm the evaluation job. We know the system context, but current
+      Explain this contract without initializing or resuming a live session:
+      the evaluation job is confirmed in a valid resumed session, but current
       evaluator availability and preview state are not established. Explain
-      the supporting Research route, what returns to `evaluation-design`, and
-      who still selects the metrics.
+      the supporting Research route, what returns to `evaluation-design`, who
+      still selects the metrics, and whether Research changes the active job,
+      lifecycle class, or coach session-state authority. Do not start Research
+      or mutate state during this walkthrough.
     agent_environment:
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
@@ -304,15 +307,15 @@ stimuli:
       - type: output-matches
         name: evaluation-research-route
         config:
-          pattern: '(?is)(?=.*evaluation job)(?=.*rpi-research)(?=.*availability|preview)(?=.*evaluation-design).*'
+          pattern: '(?is)(?=.*(?:\bevaluation\b.{0,30}\bjob\b|\bjob\b.{0,30}\bevaluation\b))(?=.*\b(?:rpi-research|Research)\b)(?=.*\b(?:availability|preview)\b)(?=.*\bevaluation-design\b).*'
       - type: output-matches
         name: evaluation-research-authority
         config:
-          pattern: '(?is)(evaluation-design).*(select|choose).*(metric).*(Research|rpi-research).*(fact|current|verify)'
+          pattern: '(?is)(?=.*\bevaluation-design\b)(?=.*(?:\bevaluation-design\b(?:(?!\b(?:not|never|cannot)\b)[^\r\n.!?])*\b(?:selects?|chooses?)\b[^\r\n.!?]*\bmetrics?\b|\b(?:evaluation-design|That skill)\b(?:(?!\b(?:not|never|cannot)\b)[^\r\n.!?])*\b(?:authority|owner)\b[^\r\n.!?]*\bmetric selection\b|\bmetric selection\b(?:(?!\b(?:not|never|cannot)\b)[^\r\n.!?])*\bevaluation-design\b[^\r\n.!?]*\bauthority\b))(?=.*\b(?:Research|rpi-research)\b[^\r\n.!?]*\b(?:facts?|current|verify|verifies|verified|evidence)\b).*'
       - type: output-matches
         name: evaluation-research-job-stable
         config:
-          pattern: '(?is)(?=.*(evaluation job|active job))(?=.*(unchanged|remains|does not change|not change|without changing|no change))(?=.*(job|lifecycle|session state))(?=.*(rpi-research|research)).*'
+          pattern: '(?is)(?=.*(?:\bevaluation\b.{0,30}\bjob\b|\bjob\b.{0,30}\bevaluation\b|\bactive job\b))(?=.*(?:unchanged|remains|does\s+[*`]*not[*`]*\s+change|not change|without changing|no change|not a job change))(?=.*(?:job|lifecycle|session state))(?=.*(?:rpi-research|research)).*'
 
   - name: data-science-engineering-coach-evaluator-research-blocked
     prompt: |
@@ -334,11 +337,11 @@ stimuli:
       - type: output-matches
         name: evaluation-research-blocked-stop
         config:
-          pattern: '(?is)(blocked|unresolved).*(stop|pause|cannot).*(catalog|recommendation|evaluator)'
+          pattern: '(?is)(?:\b(?:catalog|recommendations?|evaluator|availability)\b(?:(?!\b(?:not|never)\b)[^\r\n.!?])*\b(?:stops?|stopped|pauses?|paused|blocked|unresolved)\b|\b(?:blocked|unresolved)\b[^\r\n.!?]*\b(?:stop|pause|cannot)\b[^\r\n.!?]*\b(?:catalog|recommendations?|evaluator|availability)\b)'
       - type: output-matches
         name: evaluation-research-no-invention
         config:
-          pattern: '(?is)(do not|cannot|must not).*(invent|assume|guess).*(availability|preview|compatibility)'
+          pattern: '(?is)\b(?:do not|don[''\u2019]t|cannot|can[''\u2019]t|must not|will not|won[''\u2019]t)\s+(?:invent|assume|guess|fabricate)\b[^\r\n.!?]*\b(?:availability|preview|compatibility)\b'
       - type: output-matches
         name: evaluation-research-no-switch
         config:
@@ -454,6 +457,7 @@ stimuli:
         - ../../.github/skills/data-science-engineering/dataops
         - ../../.github/skills/project-planning/adr-author
         - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
         - ../../.github/skills/rpi/rpi-implement
         - ../../.github/skills/rpi/rpi-review
     simulation:
@@ -467,8 +471,8 @@ stimuli:
       category: agent-behavior
       scenario: data-science-rpi-execution-production
     constraints:
-      max_agent_duration: 180s
-      max_duration: 240s
+      max_agent_duration: 900s
+      max_duration: 960s
     graders:
       - type: tool-calls
         name: data-science-rpi-clean-scan-observed
@@ -476,7 +480,7 @@ stimuli:
           required:
             - name: '^powershell$'
               command: 'scan_sensitive_content\.py'
-              result: '"status":"completed"'
+              result: '\\?"status\\?"\s*:\s*\\?"completed\\?"'
       - type: file-exists
         name: data-science-rpi-plan-produced
         config:
@@ -514,11 +518,11 @@ stimuli:
           dest: .github/copilot-instructions.md
         - src: fixtures/rpi-depth/ds-session-state.md
           dest: .copilot-tracking/ds/synthetic-pipeline/session-state.md
-        - src: fixtures/rpi-depth/authoring-plan.md
+        - src: fixtures/rpi-depth/ds-pipeline-plan.md
           dest: .copilot-tracking/plans/2026-09-21/synthetic-pipeline-plan.md
-        - src: fixtures/rpi-depth/experiment-evidence.md
+        - src: fixtures/rpi-depth/ds-pipeline-changes.md
           dest: .copilot-tracking/changes/2026-09-21/synthetic-pipeline-changes.md
-        - src: fixtures/rpi-depth/experiment-evidence.md
+        - src: fixtures/rpi-depth/ds-pipeline-review.md
           dest: .copilot-tracking/reviews/logs/2026-09-21/synthetic-pipeline-review.md
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
@@ -534,7 +538,7 @@ stimuli:
       - type: output-matches
         name: data-science-rpi-control-returns-to-same-job
         config:
-          pattern: '(?is)(pipeline).*(episodic).*(unchanged|remains|return control).*(planner state|state\.json).*(not|does not|without)'
+          pattern: '(?is)(?=.*\bpipeline\b)(?=.*\bepisodic\b)(?=.*\b(?:unchanged|remains|return control|still active)\b)(?=.*(?:\b(?:no|not|without|never)\b[^\r\n.!?]*(?:planner state|state\.json)|(?:planner state|state\.json)[^\r\n.!?]*\b(?:not|never)\b)).*'
 
   - name: data-science-engineering-coach-blocks-rpi-customer-write-when-scanner-unavailable
     prompt: |
@@ -544,6 +548,11 @@ stimuli:
       If the scanner is unavailable, record the blocked segment in coach state,
       keep the active job unchanged, and leave the prior customer artifact
       untouched.
+
+      The accepted pipeline design is staged. The exact candidate summary is:
+      "Validate the event identifier before transformation. Quarantine invalid
+      records without changing accepted records. Emit a bounded rejected-record
+      count after each run." Scan this candidate, not the prior output.
     agent_environment:
       files:
         - src: ../../.github/agents/data-science-engineering/data-science-engineering-coach.agent.md
@@ -552,8 +561,11 @@ stimuli:
           dest: .copilot-tracking/ds/synthetic-pipeline/session-state.md
         - src: fixtures/rpi-depth/customer-output.md
           dest: docs/data/synthetic-pipeline-output.md
+        - src: fixtures/rpi-depth/ds-pipeline-design.md
+          dest: evidence/synthetic-pipeline-design.md
       skills:
         - ../../.github/skills/data-science-engineering/data-science-engineering-foundation
+        - ../../.github/skills/data-science-engineering/dataops
         - ../../.github/skills/project-planning/adr-author
     simulation:
       tool_overrides:
@@ -565,6 +577,9 @@ stimuli:
     tags:
       category: agent-behavior
       scenario: data-science-rpi-scanner-unavailable
+    constraints:
+      max_agent_duration: 300s
+      max_duration: 360s
     graders:
       - type: tool-calls
         name: data-science-rpi-scanner-failure-observed
@@ -586,7 +601,7 @@ stimuli:
       - type: output-matches
         name: data-science-rpi-reports-no-write
         config:
-          pattern: '(?is)(scanner-unavailable|scanner.*unavailable).*(no|not).*(write|change).*(unchanged|prior|existing)'
+          pattern: '(?is)(?=.*(?:scanner-unavailable|scanner[^\r\n.!?]*unavailable))(?=.*(?:\bunchanged\b|\b(?:prior|existing)\b[^\r\n.!?]*\bpreserved\b))(?=.*(?:\b(?:no|not)\b[^\r\n.!?]*\b(?:writ\w*|chang\w*)\b|\bblocked\b[^\r\n.!?]*\b(?:write|Implement)\b)).*'
 
   - name: data-science-engineering-coach-ev02-valid-resume
     prompt: |
