@@ -29,3 +29,5 @@ This is synthetic fixture evidence, not a live scan claim.
 
 The active job remains `pipeline`, class `episodic`. Coach state and extension
 data are preserved; no planner state is adopted.
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
