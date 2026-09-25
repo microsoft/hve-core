@@ -132,9 +132,6 @@ safe-outputs:
   report-incomplete: false
   missing-tool: false
   missing-data: false
-  noop:
-    max: 1
-    report-as-issue: false
   jobs:
     publish-backlog-grooming-result:
       description: "Publish one candidate-addressed semantic backlog grooming assessment"
@@ -152,10 +149,6 @@ safe-outputs:
           description: "Current issue title or factual unavailable-after-snapshot title"
           required: true
           type: string
-        selection-reason:
-          description: "Why the trusted cohort selected this issue"
-          required: true
-          type: string
         activity-and-ownership-context:
           description: "Relevant activity and ownership context"
           required: true
@@ -167,7 +160,11 @@ safe-outputs:
         evidence-1-category:
           description: "Evidence 1 category: Repository, Original delivery, or Replacement or removal"
           required: false
-          type: string
+          type: choice
+          options:
+            - Repository
+            - Original delivery
+            - Replacement or removal
         evidence-1-text:
           description: "Evidence position 1 text"
           required: false
@@ -175,7 +172,11 @@ safe-outputs:
         evidence-2-category:
           description: "Evidence 2 category: Repository, Original delivery, or Replacement or removal"
           required: false
-          type: string
+          type: choice
+          options:
+            - Repository
+            - Original delivery
+            - Replacement or removal
         evidence-2-text:
           description: "Evidence position 2 text"
           required: false
@@ -183,7 +184,11 @@ safe-outputs:
         evidence-3-category:
           description: "Evidence 3 category: Repository, Original delivery, or Replacement or removal"
           required: false
-          type: string
+          type: choice
+          options:
+            - Repository
+            - Original delivery
+            - Replacement or removal
         evidence-3-text:
           description: "Evidence position 3 text"
           required: false
@@ -191,7 +196,11 @@ safe-outputs:
         evidence-4-category:
           description: "Evidence 4 category: Repository, Original delivery, or Replacement or removal"
           required: false
-          type: string
+          type: choice
+          options:
+            - Repository
+            - Original delivery
+            - Replacement or removal
         evidence-4-text:
           description: "Evidence position 4 text"
           required: false
@@ -199,19 +208,35 @@ safe-outputs:
         evidence-5-category:
           description: "Evidence 5 category: Repository, Original delivery, or Replacement or removal"
           required: false
-          type: string
+          type: choice
+          options:
+            - Repository
+            - Original delivery
+            - Replacement or removal
         evidence-5-text:
           description: "Evidence position 5 text"
           required: false
           type: string
         similarity-outcome:
-          description: "Match, Similar, Distinct, Uncertain, or the supported Superseded normalization input"
+          description: "Match, Similar, Distinct, or Uncertain"
           required: true
-          type: string
+          type: choice
+          options:
+            - Match
+            - Similar
+            - Distinct
+            - Uncertain
         disposition:
           description: "Still needed, Likely completed, Superseded, Possible duplicate, Needs correction, or Uncertain"
           required: true
-          type: string
+          type: choice
+          options:
+            - Still needed
+            - Likely completed
+            - Superseded
+            - Possible duplicate
+            - Needs correction
+            - Uncertain
         grooming-finding:
           description: "Evidence-grounded grooming finding"
           required: true
@@ -223,7 +248,10 @@ safe-outputs:
         assessment-status:
           description: "Assessed or Deferred"
           required: true
-          type: string
+          type: choice
+          options:
+            - Assessed
+            - Deferred
         deferral-reason:
           description: "Reason for a Deferred assessment; omit for Assessed"
           required: false
@@ -276,33 +304,29 @@ untrusted data.
 
 ## Assessment
 
-1. Parse `ordered_candidate_ids` as a JSON array. Call `noop` when it is
-  malformed, contains duplicates, contains non-positive or non-integer values,
-  or does not preserve ascending issue-number order.
-2. Retrieve every listed issue by number. When a listed number is missing,
+1. Retrieve every listed issue by number. When a listed number is missing,
   closed, or has become a pull request since
   snapshot capture, emit one canonical `Deferred` row for that number. Use a
   factual unavailable-after-snapshot title, `Uncertain` similarity and
   disposition, repository evidence describing the observed lookup state, and
   a recommended next step to reassess it in a later snapshot. Do not omit the
-  row or call `noop` for an individual post-capture state change.
-3. Assess candidates in the supplied order. The orchestrator, not the worker,
+  row for an individual post-capture state change.
+2. Assess candidates in the supplied order. The orchestrator, not the worker,
   owns inventory selection, priority ordering, cursor recovery, and sharding.
-  Use the supplied priority and round-robin arrays for each row's selection
-  reason. The isolated result job uses the trusted cohort and inventory inputs
-  to construct canonical run state.
-4. Reserve enough time and AI-credit budget to produce the result. Record
+  The isolated result job uses the trusted cohort and inventory inputs to
+  derive each row's selection reason and construct canonical run state.
+3. Reserve enough time and AI-credit budget to produce the result. Record
    every selected but incomplete issue as deferred with a reason.
-5. For each hydrated issue, extract its requested outcomes and acceptance
+4. For each hydrated issue, extract its requested outcomes and acceptance
   signals, then search default-branch code, configuration, and documentation;
   open, merged, and closed pull requests; and open and closed issues.
-6. Follow linked issues, pull requests, and commits. Inspect relevant commits or
+5. Follow linked issues, pull requests, and commits. Inspect relevant commits or
   releases when those links do not establish whether the work is still needed,
   completed, superseded, duplicated, or inaccurate.
   Do not require a direct issue link. Treat an unlinked pull request or commit
   as lineage only when changed paths, delivered behavior, and current
   default-branch state corroborate the acceptance signals.
-7. Assess each hydrated issue according to the imported agent and shared
+6. Assess each hydrated issue according to the imported agent and shared
   grooming policy. Use `Uncertain` rather than recommending a disposition when
   required repository evidence is unavailable, conflicting, or too weak.
 
@@ -331,6 +355,9 @@ each evidence text value to at most 500 characters. Use concise stable paths,
 issue or pull-request numbers, commit or release identifiers, or summarized
 negative-search scopes instead of directory listings or extended prose.
 
+Use only `Match`, `Similar`, `Distinct`, or `Uncertain` for
+`similarity-outcome`. `Superseded` is a disposition, not a similarity outcome.
+
 Omit `deferral-reason` for `Assessed`. For `Deferred`, use a non-empty reason,
 `Uncertain` similarity and disposition, and zero original-delivery and
 replacement-or-removal evidence records.
@@ -341,9 +368,9 @@ constructs the immutable v2 artifact, calculates its digest, and publishes it.
 After every final safe output call succeeds, return only the canonical Backlog
 Grooming Report required by the imported agent.
 
-Call `noop` only when shard input validation fails or a repository-wide access
-failure prevents production of a trustworthy result envelope. Individual
-candidate retrieval or evidence gaps produce canonical `Deferred` rows.
+When a repository-wide access failure prevents assessment, emit one canonical
+`Deferred` row for every supplied candidate. Individual candidate retrieval or
+evidence gaps also produce canonical `Deferred` rows.
 
 Do not close, create, edit, label, assign, or milestone candidate issues. Do not
 generate SARIF or request Code Scanning output.

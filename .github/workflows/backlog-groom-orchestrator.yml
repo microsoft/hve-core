@@ -10,6 +10,11 @@ on:
         required: true
         type: string
         default: backlog-grooming-sweep/v1
+      source-ref:
+        description: 'Internal continuation initiating source ref; leave empty for initiation'
+        required: false
+        type: string
+        default: ''
       sweep-id:
         description: 'Internal continuation sweep identity; leave empty for initiation'
         required: false
@@ -52,7 +57,7 @@ on:
         default: ''
 
 concurrency:
-  group: backlog-grooming-sweep-active-${{ github.repository_id }}-${{ github.ref }}
+  group: backlog-grooming-sweep-active-${{ github.repository_id }}
   cancel-in-progress: false
 
 permissions: {}
@@ -81,7 +86,7 @@ jobs:
       required-waves: ${{ steps.plan.outputs.required-waves }}
       snapshot-digest: ${{ steps.plan.outputs.snapshot-digest }}
       source-sha: ${{ steps.plan.outputs.source-sha }}
-      source-ref-name: ${{ steps.plan.outputs.source-ref-name }}
+      source-ref: ${{ steps.plan.outputs.source-ref }}
       snapshot-run-id: ${{ steps.plan.outputs.snapshot-run-id }}
       snapshot-artifact-id: ${{ steps.snapshot.outputs.artifact-id || steps.plan.outputs.snapshot-artifact-id }}
       prior-checkpoint-run-id: ${{ steps.plan.outputs.prior-checkpoint-run-id }}
@@ -100,6 +105,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           INPUT_PROTOCOL_VERSION: ${{ inputs.protocol-version || 'backlog-grooming-sweep/v1' }}
+          INPUT_SOURCE_REF: ${{ inputs.source-ref }}
           INPUT_SWEEP_ID: ${{ inputs.sweep-id }}
           INPUT_WAVE_NUMBER: ${{ inputs.wave-number || 1 }}
           INPUT_SNAPSHOT_RUN_ID: ${{ inputs.snapshot-run-id }}
@@ -256,7 +262,7 @@ jobs:
               throw new Error("Unknown sweep continuation protocol version");
             }
             const continuationValues = [
-              process.env.INPUT_SWEEP_ID, process.env.INPUT_SNAPSHOT_RUN_ID,
+              process.env.INPUT_SOURCE_REF, process.env.INPUT_SWEEP_ID, process.env.INPUT_SNAPSHOT_RUN_ID,
               process.env.INPUT_SNAPSHOT_ARTIFACT_ID, process.env.INPUT_SNAPSHOT_DIGEST,
               process.env.INPUT_CHECKPOINT_RUN_ID, process.env.INPUT_CHECKPOINT_ARTIFACT_ID,
               process.env.INPUT_CHECKPOINT_DIGEST,
@@ -291,6 +297,9 @@ jobs:
               );
               snapshot = JSON.parse(fs.readFileSync("continuation-snapshot/snapshot.json", "utf8"));
               validateSnapshot(snapshot);
+              if (snapshot.source_ref !== process.env.INPUT_SOURCE_REF) {
+                throw new Error("Continuation source ref does not match the immutable sweep snapshot");
+              }
               if (process.env.GITHUB_SHA !== snapshot.source_sha) {
                 throw new Error("Coordinator source ref moved after the immutable sweep snapshot was captured");
               }
@@ -399,8 +408,14 @@ jobs:
                 try {
                   candidateSnapshot = JSON.parse(fs.readFileSync(path.join(destination, "snapshot.json"), "utf8"));
                   validateSnapshot(candidateSnapshot);
-                  if (candidateSnapshot.source_ref !== process.env.GITHUB_REF ||
-                      candidateSnapshot.source_sha !== process.env.GITHUB_SHA) {
+                  const expectedExecutionRef = `refs/tags/backlog-grooming-sweep/${candidateSnapshot.sweep_id}`;
+                  const sourceRunMatches =
+                    candidateSnapshot.source_ref === process.env.GITHUB_REF &&
+                    candidateSnapshot.source_sha === process.env.GITHUB_SHA;
+                  const executionTagRunMatches =
+                    process.env.GITHUB_REF === expectedExecutionRef &&
+                    candidateSnapshot.source_sha === process.env.GITHUB_SHA;
+                  if (!sourceRunMatches && !executionTagRunMatches) {
                     throw new Error("Snapshot ref or source revision does not match the active coordinator run");
                   }
                   authenticateArtifact(snapshotMetadata, {
@@ -641,7 +656,7 @@ jobs:
             core.setOutput("required-waves", String(snapshot.required_waves));
             core.setOutput("snapshot-digest", snapshot.snapshot_digest);
             core.setOutput("source-sha", snapshot.source_sha);
-            core.setOutput("source-ref-name", snapshot.source_ref.replace(/^refs\/(heads|tags)\//, ""));
+            core.setOutput("source-ref", snapshot.source_ref);
             core.setOutput("snapshot-run-id", snapshotRunId || String(context.runId));
             core.setOutput("snapshot-artifact-id", snapshotArtifactId);
             core.setOutput("prior-checkpoint-run-id", priorCheckpointRunId);
@@ -671,10 +686,50 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  pin-source:
+    name: Pin immutable sweep source
+    needs: plan
+    if: >-
+      ${{ needs.plan.result == 'success' &&
+          needs.plan.outputs.mode != 'calendar-noop' &&
+          needs.plan.outputs.mode != 'complete-noop' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create or verify execution tag
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SOURCE_SHA: ${{ needs.plan.outputs.source-sha }}
+          SWEEP_ID: ${{ needs.plan.outputs.sweep-id }}
+        with:
+          script: |
+            const sourceSha = process.env.SOURCE_SHA;
+            const executionTag = `backlog-grooming-sweep/${process.env.SWEEP_ID}`;
+            let executionRef;
+            try {
+              ({ data: executionRef } = await github.rest.git.getRef({
+                ...context.repo,
+                ref: `tags/${executionTag}`,
+              }));
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              ({ data: executionRef } = await github.rest.git.createRef({
+                ...context.repo,
+                ref: `refs/tags/${executionTag}`,
+                sha: sourceSha,
+              }));
+            }
+            if (executionRef.object.type !== "commit" || executionRef.object.sha !== sourceSha) {
+              throw new Error("Sweep execution tag does not match the immutable source revision");
+            }
+
   assess:
     name: Assess ${{ matrix.shard.shard_id }}
-    needs: plan
-    if: ${{ needs.plan.outputs.shard-matrix != '[]' }}
+    needs:
+      - plan
+      - pin-source
+    if: ${{ needs.pin-source.result == 'success' && needs.plan.outputs.shard-matrix != '[]' }}
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -707,9 +762,11 @@ jobs:
     name: Validate complete wave result set
     needs:
       - plan
+      - pin-source
       - assess
     if: >-
       ${{ always() && needs.plan.result == 'success' &&
+          needs.pin-source.result == 'success' &&
           needs.plan.outputs.mode != 'calendar-noop' &&
           needs.plan.outputs.mode != 'complete-noop' &&
           (needs.assess.result == 'success' ||
@@ -727,6 +784,7 @@ jobs:
       - name: Check out the validator implementation
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.plan.outputs.source-sha }}
           persist-credentials: false
       - name: Download wave manifest
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -952,14 +1010,30 @@ jobs:
     steps:
       - name: Dispatch exact successor
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SOURCE_REF: ${{ needs.plan.outputs.source-ref }}
+          SOURCE_SHA: ${{ needs.plan.outputs.source-sha }}
+          SWEEP_ID: ${{ needs.plan.outputs.sweep-id }}
         with:
           script: |
+            const sourceRef = process.env.SOURCE_REF;
+            const sourceSha = process.env.SOURCE_SHA;
+            const sweepId = process.env.SWEEP_ID;
+            const executionTag = `backlog-grooming-sweep/${sweepId}`;
+            const { data: executionRef } = await github.rest.git.getRef({
+              ...context.repo,
+              ref: `tags/${executionTag}`,
+            });
+            if (executionRef.object.type !== "commit" || executionRef.object.sha !== sourceSha) {
+              throw new Error("Sweep execution tag does not match the immutable source revision");
+            }
             await github.rest.actions.createWorkflowDispatch({
               ...context.repo,
               workflow_id: "backlog-groom-orchestrator.yml",
-              ref: "${{ needs.plan.outputs.source-ref-name }}",
+              ref: executionTag,
               inputs: {
                 "protocol-version": process.env.SWEEP_PROTOCOL_VERSION,
+                "source-ref": sourceRef,
                 "sweep-id": "${{ needs.plan.outputs.sweep-id }}",
                 "wave-number": String(Number("${{ needs.plan.outputs.wave-number }}") + 1),
                 "snapshot-run-id": "${{ needs.plan.outputs.snapshot-run-id }}",
@@ -1265,13 +1339,26 @@ jobs:
             const finalAggregate = { ...finalMaterial, aggregate_digest: digest(finalMaterial) };
             fs.mkdirSync("final-output", { recursive: true });
             fs.writeFileSync("final-output/aggregate.json", `${JSON.stringify(finalAggregate, null, 2)}\n`);
+            const escapeMarkdown = (value) => String(value).replace(/\|/g, "\\|").replace(/\r?\n/g, "<br>");
             const report = [
               "# Backlog Grooming Sweep Detail", "",
+              "## Accepted and Deferred Rows", "",
               "| Issue | Title | Disposition | Assessment status | Recommended next step |", "|---|---|---|---|---|",
-              ...rows.map((row) => `| #${row.issue} | ${String(row.title).replace(/\|/g, "\\|").replace(/\r?\n/g, "<br>")} | ${row.disposition} | ${row.assessment_status} | ${String(row.recommended_next_step).replace(/\|/g, "\\|").replace(/\r?\n/g, "<br>")} |`),
+              ...rows.map((row) => `| #${row.issue} | ${escapeMarkdown(row.title)} | ${escapeMarkdown(row.disposition)} | ${escapeMarkdown(row.assessment_status)} | ${escapeMarkdown(row.recommended_next_step)} |`),
+              "", "## Contract Errors", "",
+              "| Issue | Code |", "|---|---|",
+              ...(contractErrors.length > 0
+                ? contractErrors.map((entry) => `| #${entry.issue} | ${escapeMarkdown(entry.code)} |`)
+                : ["| None | None |"]),
+              "", "## Normalizations", "",
+              "| Issue | Code |", "|---|---|",
+              ...(normalizations.length > 0
+                ? normalizations.map((entry) => `| #${entry.issue} | ${escapeMarkdown(entry.code)} |`)
+                : ["| None | None |"]),
             ].join("\n");
             fs.writeFileSync("final-output/report.md", `${report}\n`);
             core.setOutput("final-digest", finalAggregate.aggregate_digest);
+            core.setOutput("contract-errors", String(contractErrors.length));
       - name: Upload final detailed sweep evidence
         id: final
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -1280,12 +1367,21 @@ jobs:
           path: final-output
           if-no-files-found: error
           retention-days: 30
-      - name: Record automatic publication inputs
+      - name: Record final publication readiness
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          CONTRACT_ERRORS: ${{ steps.reduce.outputs.contract-errors }}
         with:
           script: |
+            const contractErrors = Number(process.env.CONTRACT_ERRORS);
+            if (!Number.isSafeInteger(contractErrors) || contractErrors < 0) {
+              throw new Error("Final contract-error count is invalid");
+            }
+            const publicationHasErrors = contractErrors > 0;
             await core.summary
-              .addHeading("Backlog grooming publication queued")
+              .addHeading(publicationHasErrors
+                ? "Backlog grooming publication queued with contract errors"
+                : "Backlog grooming publication queued")
               .addTable([
                 [{ data: "Publisher input", header: true }, { data: "Value", header: true }],
                 ["final-run-id", String(context.runId)],
@@ -1294,6 +1390,9 @@ jobs:
                 ["sweep-id", "${{ needs.plan.outputs.sweep-id }}"],
                 ["snapshot-digest", "${{ needs.plan.outputs.snapshot-digest }}"],
                 ["source-sha", "${{ needs.plan.outputs.source-sha }}"],
+                ["contract-errors", String(contractErrors)],
               ])
-              .addRaw("\nThe completed run activates Backlog Grooming Publisher automatically. These values also support an exact manual replay.\n")
+              .addRaw(publicationHasErrors
+                ? "\nFinal diagnostic evidence was retained. Valid assessments and contract-error diagnostics will be published together.\n"
+                : "\nThe completed clean run activates Backlog Grooming Publisher automatically.\n")
               .write();
