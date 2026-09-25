@@ -126,7 +126,7 @@
       if (!demo?.steps?.length || demo.steps.some(step => !demo.phases.includes(step.phase))) throw new Error(`Invalid walkthrough: ${name}`);
       if (states.has(name)) throw new Error(`Duplicate walkthrough host: ${name}`);
       states.set(name, 0);
-      const sidebar = element('aside', 'demo-sidebar');
+      const sidebar = element('div', 'demo-sidebar');
       const phases = element('ol', 'demo-phases');
       phases.setAttribute('aria-label', `${demo.label} phases`);
       demo.phases.forEach(phase => phases.append(element('li', '', phase)));
@@ -217,7 +217,7 @@
       } else if (kind === 'notes') {
         title.textContent = `Notes / ${current.dataset.title}`;
         dialogContent.append(element('p', '', current.querySelector('.notes')?.textContent || 'No presenter notes for this slide.'));
-        dialogContent.append(element('p', 'source-note', 'Recipients can read all bundled notes.'));
+        dialogContent.append(element('p', 'source-note', 'Anyone with this HTML file can read these notes.'));
       } else if (kind === 'overview') {
         title.textContent = 'Slide index';
         const list = element('div', 'slide-index');
@@ -230,19 +230,19 @@
         });
         dialogContent.append(list);
       } else if (kind === 'help') {
-        title.textContent = 'Presentation keys';
+        title.textContent = 'Keyboard shortcuts';
         const grid = element('div', 'key-grid');
         for (const [key, description] of [
           ['Left / Right', 'Previous / next slide. Page Up / Page Down also work.'],
           ['Space', 'Next slide; Shift+Space goes back.'],
           ['Home / End', 'First / last slide.'],
-          ['[ / ] / R', 'Back / next / reset the current walkthrough.'],
+          ['[ / ] / R', 'Previous step / next step / reset this walkthrough.'],
           ['O / S / N', 'Slide index / sources / notes.'],
           ['? / F', 'This help / full screen.'],
-          ['Escape', 'Close an overlay and return focus.'],
-          ['Tab / Enter', 'Reach and activate controls; focused controls keep their normal keys.']
+          ['Escape', 'Close the dialog and return focus.'],
+          ['Tab / Enter', 'Move between controls / activate the focused control.']
         ]) grid.append(element('kbd', '', key), element('span', '', description));
-        dialogContent.append(grid, element('p', 'source-note', 'Walkthroughs keep their step on slide revisits. Reload preserves the slide hash but resets walkthroughs. Motion is optional and respects reduced motion. Character shortcuts work only when the presentation surface has focus. Reading view provides unscaled, scrollable content and starts automatically on compact screens.'));
+        dialogContent.append(grid, element('p', 'source-note', 'Returning to a slide keeps your walkthrough step. Reloading keeps the slide but resets the walkthrough. Letter, symbol and Space shortcuts work while the slide area has focus. Reading view uses full-size, scrollable text and turns on automatically on smaller screens. Slide fades are optional and follow your reduced-motion preference.'));
       } else throw new Error(`Unknown dialog: ${kind}`);
       if (!dialog.open) dialog.showModal();
       dialogContent.scrollTop = 0;

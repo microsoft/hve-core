@@ -625,15 +625,72 @@ stimuli:
     labels: initialization
   rubric:
   - >
-    asks the user for a project slug (a kebab-case identifier) or proposes one, and
-    begins gathering context about the user's role, team, and which method they want
-    to start with
+    derives a meaningful project name from the user's stated project context, tells
+    the user which project name it will use, then begins gathering context about the
+    user's role, team, or desired method
   graders:
   - type: prompt
     name: judge-init-asks-for-project-slug
     turn: 1
   - type: wall-time
     name: init-asks-for-project-slug-completion-budget
+    turn: 1
+    config:
+      max: 120s
+- name: init-confirms-before-resuming-derived-project
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    I want to start a design thinking project called inventory flow.
+  - No, start a separate project instead.
+  agent_environment:
+    files:
+    - src: fixtures/coaching-state-inventory-flow.txt
+      dest: .copilot-tracking/dt/inventory-flow/coaching-state.md
+  tags:
+    category: agent-conformance-dt-coach
+    group: session-phases
+    phase: phase-1
+    tier: core
+    labels: initialization,resumption
+  rubric:
+  - >
+    first asks whether to resume the existing derived project, then responds to the
+    user's refusal by asking for a different project name before continuing
+  graders:
+  - type: output-contains
+    name: init-derived-project-resume-confirmation
+    turn: 1
+    config:
+      substring: resume
+  - type: prompt
+    name: judge-init-confirms-derived-project-resume
+    turn: 2
+  - type: wall-time
+    name: init-confirms-derived-project-resume-budget
+    turn: 2
+    config:
+      max: 120s
+- name: init-asks-for-short-project-name-when-context-is-insufficient
+  turns:
+  - Launch .github/agents/design-thinking/dt-coach.agent.md
+  - >
+    Hi! I want to start a new design thinking project.
+  tags:
+    category: agent-conformance-dt-coach
+    group: session-phases
+    phase: phase-1
+    tier: core
+    labels: initialization
+  rubric:
+  - >
+    asks what the user would like to call the project or requests a short project name
+  graders:
+  - type: prompt
+    name: judge-init-short-name-fallback
+    turn: 1
+  - type: wall-time
+    name: init-short-name-fallback-completion-budget
     turn: 1
     config:
       max: 120s

@@ -95,7 +95,7 @@ jobs:
           }
 
   discover-node-projects:
-    name: Discover Node Skills
+    name: Discover Node Projects
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -108,31 +108,34 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Find Node skills
+      - name: Find Node projects
         id: find
         shell: pwsh
         run: |
-          # A Node skill is any skill (dir containing SKILL.md) that ships at
-          # least one *.test.* / *.spec.* (mjs/cjs/js). The skill root is the
-          # node --test working dir.
-          $skills = @(Get-ChildItem -Path .github/skills -Recurse -Force -Filter SKILL.md -ErrorAction SilentlyContinue |
+          # A Node project is any skill (dir containing SKILL.md) or slide deck
+          # (direct child of slides/) that ships at least one *.test.* / *.spec.*
+          # (mjs/cjs/js). The project root is the node --test working dir.
+          $candidates = @(Get-ChildItem -Path .github/skills -Recurse -Force -Filter SKILL.md -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -notmatch 'node_modules' } |
-            ForEach-Object { $_.DirectoryName } |
+            ForEach-Object { $_.DirectoryName }) +
+            @(Get-ChildItem -Path slides -Directory -Force -ErrorAction SilentlyContinue |
+            ForEach-Object { $_.FullName })
+          $projects = @($candidates |
             Where-Object { @(Get-ChildItem -Path $_ -Recurse -Force -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '\.(test|spec)\.(mjs|cjs|js)$' -and $_.FullName -notmatch 'node_modules' }).Count -gt 0 } |
             ForEach-Object { (Resolve-Path -Relative $_) -replace '^\.[\\/]', '' -replace '\\', '/' } |
             Sort-Object -Unique)
           # Reject repository-derived paths that could alter command structure downstream.
           . ./scripts/security/Assert-WorkflowProjectDirectory.ps1
-          $skills = @(Assert-WorkflowProjectDirectory -Path $skills)
-          $jsonItems = $skills | ForEach-Object { $_ | ConvertTo-Json -Compress }
+          $projects = @(Assert-WorkflowProjectDirectory -Path $projects)
+          $jsonItems = $projects | ForEach-Object { $_ | ConvertTo-Json -Compress }
           $dirs = '[' + (($jsonItems) -join ',') + ']'
           "directories=$dirs" >> $env:GITHUB_OUTPUT
-          if ($skills.Count -eq 0) {
+          if ($projects.Count -eq 0) {
             "has-projects=false" >> $env:GITHUB_OUTPUT
-            Write-Output 'No Node skills found'
+            Write-Output 'No Node projects found'
           } else {
             "has-projects=true" >> $env:GITHUB_OUTPUT
-            Write-Output "Found Node skills: $dirs"
+            Write-Output "Found Node projects: $dirs"
           }
 
   python-lint:
@@ -228,6 +231,11 @@ jobs:
       working-directory: ${{ matrix.directory }}
       soft-fail: false
       changed-files-only: true
+      # Deck tests also read HTML, CSS and JSON sources, so each slide deck and
+      # the hve-slides skill that carries the starter deck run on any change in
+      # their directory. Other projects receive '' and keep node-tests.yml's
+      # JS-family default.
+      changed-paths-pattern: ${{ (startsWith(matrix.directory, 'slides/') || matrix.directory == '.github/skills/hve-slides') && format('^{0}/', matrix.directory) || '' }}
     strategy:
       fail-fast: false
       matrix:
