@@ -115,7 +115,7 @@ Optional tools have separate data paths.
 [TTS Voice-over](docs/reference/skills/experimental/tts-voiceover.md) uses Azure
 Speech to create audio from authored notes. If you use a Microsoft AI Service
 covered by Microsoft Product Terms, follow the
-[Code of Conduct for Microsoft AI Services](https://learn.microsoft.com/en-us/legal/ai-code-of-conduct).
+[Code of Conduct for Microsoft AI Services](https://learn.microsoft.com/legal/ai-code-of-conduct).
 That code governs covered services; it is not HVE Core's license or a substitute
 for GitHub Copilot's terms.
 
