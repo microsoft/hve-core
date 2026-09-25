@@ -63,7 +63,14 @@ test('walkthrough step announcements coalesce after focus settles', () => {
   // before it is spoken, and a superseded step must not announce at all.
   assert.match(source, /if \(pendingAnnouncement\) clearTimeout\(pendingAnnouncement\)/);
   assert.match(source, /if \(states\.get\(name\) !== index\) return/);
+  assert.match(source, /deck\.getCurrentSlide\(\)\.querySelector\('\[data-demo\]'\)\?\.dataset\.demo !== name/);
   assert.doesNotMatch(source, /if \(speak\) announce\(/);
+});
+
+test('dialog Escape closes without relying on the browser close request', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  // Escape must be handled before the Tab-only focus trap returns early.
+  assert.match(source, /dialog\.addEventListener\('keydown', event => \{\s*if \(event\.key === 'Escape'\) \{[^}]*event\.preventDefault\(\);[^}]*dialog\.close\(\);[^}]*return;\s*\}\s*if \(event\.key !== 'Tab'\) return;/);
 });
 
 test('fullscreen state and forced-colors behavior are part of the starter contract', () => {
