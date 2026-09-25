@@ -1,6 +1,6 @@
 ---
 name: rpi-plan
-description: "Create or resume an evidence-based RPI implementation plan. Use for planning from supplied context or reconciling an interrupted planning critique."
+description: "Create or resume an evidence-based RPI implementation plan. Use for planning, interrupted critiques, or bounded critique infrastructure recovery."
 argument-hint: "[task=...] [research=...] [context=...] [draft=...] [decisions=...] [critique={standard|deep}]"
 license: MIT
 user-invocable: true
@@ -13,6 +13,10 @@ user-invocable: true
 Produce one implementation-ready, human-readable Markdown plan. Lead with the executive summary and the Phase Checklist so a reader sees what will change and how it is sequenced first; put user direction, pending decisions, readiness, goals, scope, requirements, risks, sources, and critique records after the checklist. Keep implementation context under the task that consumes it. The primary planner authors the plan and owns orchestration, revisions, critique timing, and the final readiness decision.
 
 Read [references/planning.md](references/planning.md) for section order, task block format, formatting conventions, diagrams, readiness, planning extensions, and artifact guidance.
+
+Use [scripts/Get-PlanAssessmentHash.ps1](scripts/Get-PlanAssessmentHash.ps1) to compute every
+candidate identity. The [deterministic identity contract](references/planning.md#deterministic-assessed-content-identity)
+defines invocation, output, projection evidence and failure handling; do not reconstruct the projection in model-authored code.
 
 ## Flow
 
@@ -34,17 +38,17 @@ Read [references/planning.md](references/planning.md) for section order, task bl
    * Persist each answer or agent-owned decision in User Decisions and Requirements, every affected plan section, and parent state before presenting the next group or continuing.
 9. Keep the stable overall task ID and current `Pxx` and `Pxx-Txx` markers for navigation. The primary planner may add, update, delete, reorder, split, merge, or replace phases and tasks and may renumber current IDs so the plan stays coherent. Remove obsolete active content rather than retaining identifier history.
 10. Once the phases are stable and before critique, add two overall Mermaid diagrams under `## Phase Checklist`: `### Before` for the evidence-backed pre-change state, then `### After` for the intended result of all phases. Show the relevant components, files, contracts, tests, or behaviors and their relationships. Under each phase, after its `Dependencies:` block, add a copy of the After diagram with that phase's changes highlighted, including removal context when needed. Reuse stable node IDs and follow the light- and dark-mode styling and state-comparison guidance in [references/planning.md](references/planning.md). Keep the Before baseline anchored to pre-change evidence and update the After and phase diagrams when the plan changes.
-11. Run one initial final-candidate critique, only when the primary planner judges the plan implementation-ready. The sole additional attempt is the explicitly confirmed Interrupted critique recovery in [references/planning.md](references/planning.md#interrupted-critique-recovery).
+11. Run one initial implementation-ready critique. Follow [revision-bound closure](references/planning.md#revision-bound-closure) when a required finding or an implementation-time assessed-content change produces a revised candidate; use the separate [recovery contracts](references/planning.md#interrupted-critique-recovery) for the single initial-attempt generic recovery, two task-wide infrastructure-only retries and guarded human-assessment escalation. A confirmed-ended closure interruption without positive infrastructure-failure evidence routes directly to human-assessment eligibility checks, not another automated recovery or budget exhaustion. Recovery and human-assessment attempts need their own eligibility checks and specific user consent.
    * Resolve critique depth first. Use `standard` by default. Use `deep` only when the user explicitly requests a deep critique; do not infer it from complexity or risk. Record depth and provenance in Critique Disposition and parent state when present.
-   * Inspect Critique Disposition, parent state, and every recorded critique path. Terminal `Complete`, `Partial`, or `Blocked` evidence prohibits another assessment even when its file is missing. An earlier `started` reservation consumes that attempt; reconcile it through the reference's recovery protocol. Never reset the record or treat missing evidence as Pass.
+   * Inspect Critique Disposition, parent state and every recorded output. Substantive `Complete`, `Partial` or `Blocked` evidence prohibits unchanged-candidate replay even when its file is missing; only a verified correction with a new hash may enter revision-bound closure. A reservation consumes its attempt slot, not a completed assessment. Reconcile infrastructure-only failures, preflight limitations and unknown outcomes using the reference; never infer eligibility from missing evidence or reset records.
    * Lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence in the candidate.
-   * Apply the reference's Reservation and current-run ownership contract: persist and verify the attempt, then immediately activate `rpi-plan-critique` once. Supply attempt ID/kind, candidate identity/hash boundary, depth, output, current-run provenance and recovery consent when applicable, alongside task context, caller requirements, evidence, plan/state paths, decisions, dependencies and task Requirements. If persistence fails, do not run the critique. A critique run may execute its own current reservation, not replay a prior one.
+   * For an eligible automated attempt, apply Reservation and current-run ownership: persist and verify, then immediately activate `rpi-plan-critique` once. Supply attempt ID/kind, assessed-content hash boundary and projection, depth, output, current-run provenance and specific consent/eligibility when applicable, plus task context, requirements, evidence, plan/state paths, decisions and dependencies. For a closure or its infrastructure retry, supply the immediate predecessor, adjacent hashes, delta, affected IDs and full-versus-targeted basis; targeted closure also supplies the root Complete full assessment and intervening chain. Persistence failure stops dispatch. A run may execute its own current reservation, not replay a prior one. Human commissioning follows the reference's distinct contract, never automated activation.
    * The critique reads the plan and supplied evidence and writes only the critique artifact. Do not critique an initial draft merely because it exists.
    * In `standard`, require a complete actionable finding set for the supplied boundary while minimizing elapsed work. Prioritize implementation blockers, contradictions, missing dependencies or acceptance coverage, unsupported scope or architecture, and material risk. Omit plan restatement, cosmetic feedback, exhaustive strengths, and low-impact suggestions. Read all directly relevant supplied evidence needed to assess the material boundary.
-   * In `deep`, assess the same supplied boundary with broader evidence tracing, alternative stress testing, and substantive lower-severity concerns. Deep mode does not permit open-ended research or a second invocation.
+   * In `deep`, assess the same supplied boundary with broader evidence tracing, alternative stress testing, and substantive lower-severity concerns. Deep mode does not permit open-ended research.
    * Each `PC-xxx` records its action owner, exact resolving evidence, and whether the planner can apply it directly or needs a significant or divergent user decision.
    * Treat confirmed user requests and answers as authoritative when critique advice conflicts with them. Apply compatible planner-owned corrections in one coherent batch. Reject a conflicting recommendation when current user direction already resolves it. Route a significant or divergent finding not resolved by current direction through the decision-participation protocol in step 8 when it affects requirements, scope, architecture, dependencies, or evidence boundaries.
-   * Treat any returned execution status, including Partial or Blocked, as consuming the invocation. Record every finding disposition in the plan's standalone top-level `## Critique Disposition` section and finalize without running a closure critique. A `Revise` verdict means revise the candidate or obtain the required user decision; it never creates a critique loop. If the original evidence cannot support closure, stop Plan rather than retrying critique.
+   * Record invocation outcome separately from assessment execution and verdict. A substantive Partial or Blocked result is not retryable infrastructure failure. Preserve every attempt and finding in `## Critique Disposition`. After a required correction or material assessed-content update, record the new candidate hash, exact delta and affected requirements, then follow revision-bound closure rather than treating earlier evidence as covering the delivered hash. Finalize only with actual Complete assessment evidence covering the delivered hash through every adjacent link and closed blocking findings; otherwise stop with the reference's specific clearing action.
 12. Prepare the plan, critique, and downstream changes-record path for the next stage. Treat executive-summary synchronization as a readiness condition. The implementation phase owns creation of `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`.
 
 ## Inputs
@@ -68,7 +72,8 @@ Read [references/planning.md](references/planning.md) for section order, task bl
 * Task-local context grounds implementation without prescribing unsupported choreography. Examples are illustrative unless a requirement or interface contract makes them binding.
 * Each task's `Requirements:` block is the checkable record for that task and cites the plan's `FR-nnn` and `NFR-nnn` identifiers rather than restating them. Open decisions, risks, and questions name the affected `Pxx-Txx` in their tables.
 * Research is activated only for a demonstrated readiness gap.
-* The initial critique begins only after the plan is implementation-ready. Standard is the recorded default; deep requires explicit user direction. Only the reference's single user-confirmed interruption recovery may add an attempt. Terminal assessments are not retried, all findings remain binding until disposed, and no closure critique runs.
+* The initial critique begins only after the plan is implementation-ready. Standard is the default; deep requires explicit direction. Recovery attempts share the reference's bounded task-wide infrastructure allowance and exhaustion contracts, with ended-run proof, preserved hashes/history and fresh consent. Substantive results are not replayed for an unchanged candidate; necessary corrections receive revision-bound closure with preserved findings and candidate hashes.
+* Infrastructure-only or unknown outcomes never satisfy implementation readiness. Exhausted counts alone cannot commission a human assessment; its eligibility, independent authorship and complete evidence must verify under the canonical contract.
 
 ## Constraints
 
@@ -95,7 +100,7 @@ Read [references/planning.md](references/planning.md) for section order, task bl
 
 * Stop as Blocked when the task, its requirements, or a decision-critical evidence gap cannot be resolved responsibly. For user-owned or user-retained decisions, preserve an unanswered required item after `vscode_askQuestions`; for agent-owned decisions, record the smallest evidence gap. Do not guess.
 * Stop as Revise when critique findings require plan changes that remain open.
-* Finalize when the plan is credible for implementation, the latest critique passes or blocking findings are resolved, and any accepted residual risk is explicitly disposed.
+* Finalize when the plan is credible for implementation, actual critique execution is Complete, its verdict passes or blocking findings are resolved, and residual risks are explicitly disposed. Budget exhaustion, approval alone and infrastructure-only evidence do not meet this gate.
 
 ## Handoff
 
@@ -104,4 +109,3 @@ The critique gate returns to this planning parent and is not a peer lifecycle tr
 ## Final Response
 
 Return a concise user-facing version of the executive summary, covering planning execution status, planning readiness, important decisions and consequences, information the user may not immediately know, and unresolved decisions or blockers. Follow the Conversation guidance section for conditional compaction advice, standalone or parent-orchestrated continuation, the linked artifact table, and final next steps.
-
