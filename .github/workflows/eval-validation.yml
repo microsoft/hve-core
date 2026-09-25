@@ -53,6 +53,8 @@ jobs:
   eval-validation:
     name: Eval Validation
     runs-on: ubuntu-latest
+    # Lint-only job; observed ~2 min. Without this it inherits the 6h default.
+    timeout-minutes: 20
     permissions:
       contents: read
     outputs:
@@ -73,10 +75,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install PowerShell-Yaml
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Create logs directory
         run: mkdir -p logs
@@ -236,6 +236,7 @@ jobs:
   content-moderation:
     name: Content Moderation
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: eval-validation
     outputs:
       equivalence-required: ${{ steps.artifact-manifest.outputs.equivalence-required }}
@@ -257,13 +258,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install PowerShell-Yaml
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           version: "0.10.9"
 
@@ -358,10 +357,8 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Install PowerShell-Yaml
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Download changed-artifact manifest
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -436,7 +433,7 @@ jobs:
   eval-execute:
     name: Eval Execute (${{ matrix.producer }})
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 60
     needs: [eval-validation, content-moderation, agent-plan]
     # Repository secrets are not exposed to fork PRs; clean-skip execution there.
     # Only run when eval-relevant paths changed (see eval-validation detect step).
@@ -468,13 +465,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install PowerShell-Yaml
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           version: "0.10.9"
 
@@ -528,7 +523,7 @@ jobs:
           $arguments = @(
             '-Kind', $env:MATRIX_KIND,
             '-ChangedSpecManifestPath', 'logs/changed-spec-stimuli.json',
-            '-Model', 'gpt-5.6-luna',
+            '-Model', 'gpt-6-luna',
             '-SkipInputModeration'
           )
           if (-not [string]::IsNullOrWhiteSpace($env:MATRIX_SHARD)) {
@@ -580,7 +575,7 @@ jobs:
       max-parallel: ${{ inputs.baseline-max-parallel }}
       matrix:
         include:
-          - model: gpt-5.6-luna
+          - model: gpt-6-luna
             key: gpt
           - model: claude-sonnet-5
             key: claude
@@ -602,10 +597,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install PowerShell-Yaml
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Create logs directory
         run: mkdir -p logs
@@ -841,6 +834,7 @@ jobs:
   eval-report:
     name: Eval Report
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [eval-fan-in]
     # Present the canonical authoritative summary even when execution failed.
     if: always() && github.event.pull_request.head.repo.fork == false && github.event_name == 'pull_request'

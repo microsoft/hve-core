@@ -6,6 +6,11 @@ updates:
   - /
   - /docs/docusaurus
   - /scripts/extension/marketplace-publisher
+  # Each slide deck pins reveal.js in its own lockfile, and new decks copy the
+  # starter's lockfile. A deck update changes its embedded library, so rebuild
+  # that deck's bundle with `npm run slides:build` before merging.
+  - /slides/*
+  - /.github/skills/hve-slides/templates/deck
   groups:
     npm-dependencies:
       patterns:

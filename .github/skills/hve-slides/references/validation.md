@@ -46,6 +46,12 @@ separate job before analysis, so generated intermediates do not enter the scan w
 This avoids scanning vendored reveal.js again inside generated HTML; it does not establish
 that upstream library findings are fixed. Keep dependency audits and notice checks.
 
+Pull request validation runs a deck's Node tests whenever a file in that deck changes, and
+runs the starter's tests with this skill's tests whenever a skill file changes. Dependabot
+proposes reveal.js updates for every deck and for the starter. A deck update changes the
+embedded library, so `npm run slides:check` fails on that branch until the bundle is
+rebuilt with `npm run slides:build` and committed.
+
 The starter and HVE Updates disable reveal.js `postMessage` commands and events because
 they do not need cross-window control. Presenter buttons and local keyboard navigation
 remain the supported controls.

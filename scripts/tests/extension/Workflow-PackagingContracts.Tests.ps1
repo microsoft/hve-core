@@ -1111,6 +1111,18 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
             Should -Not -Match 'poutine:ignore'
     }
 
+    It 'Acknowledges only the exact setup-uv package for its creator finding' -Tag 'Poutine' {
+        $config = Get-Content -LiteralPath (Join-Path $script:RepositoryRoot '.poutine.yml') -Raw -Encoding utf8 |
+            ConvertFrom-Yaml
+        $exceptions = @($config['skip'] | Where-Object {
+                @($_['rule']) -contains 'github_action_from_unverified_creator_used' -and
+                @($_['purl']) -contains 'pkg:githubactions/astral-sh/setup-uv'
+            })
+        $exceptions | Should -HaveCount 1
+        @($exceptions[0].Keys | Sort-Object) | Should -Be @('purl', 'rule')
+        [string[]]@($exceptions[0]['purl']) | Should -Be @('pkg:githubactions/astral-sh/setup-uv')
+    }
+
     It 'Verifies the event-default signer checkout before source execution' {
         $document = Get-WorkflowDocument -Name 'extension-provenance-signer.yml'
         $checkout = Get-NamedJobStep -Document $document -JobName 'package' -StepName 'Checkout code'

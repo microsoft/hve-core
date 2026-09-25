@@ -2,7 +2,7 @@
 title: Creating Custom Agents
 description: Build specialized agents with tool restrictions, subagent delegation, and mode-based workflows for your team
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-09-23
 ms.topic: how-to
 keywords:
   - agents
@@ -238,7 +238,7 @@ Specifies a preferred AI model as a single string. When omitted, a subagent inhe
 
 ```yaml
 # Single model
-model: GPT-5.6 Terra (copilot)
+model: GPT-6 Sol (copilot)
 ```
 
 The [official custom agents configuration reference](https://docs.github.com/en/copilot/reference/custom-agents-configuration) defines `model` as `string` for GitHub.com, the Copilot CLI, and supported IDEs.
@@ -246,7 +246,7 @@ VS Code Copilot Chat additionally accepts an array of fallback models, but the C
 This is an open, unresolved incompatibility tracked in [github/copilot-cli#2133](https://github.com/github/copilot-cli/issues/2133).
 Use a single scalar `model` value so agents load correctly in the Copilot CLI. Array-form fallback lists remain valid for `.prompt.md` files only.
 
-When a stable model is needed, select a responsibility profile first (High, Medium, or Low), then declare that profile's canonical scalar rather than an arbitrary catalog entry: Low is `GPT-5.6 Luna (copilot)` for bounded, literal, mechanical execution; Medium is `GPT-5.6 Terra (copilot)` for semantic discovery, authoring, or calibrated review; High is `Claude Opus 5 (copilot)` for the deepest reasoning tasks.
+When a stable model is needed, select a responsibility profile first (High, Medium, or Low), then declare that profile's canonical scalar rather than an arbitrary catalog entry: Low is `GPT-6 Luna (copilot)` for bounded, literal, mechanical execution; Medium is `GPT-6 Sol (copilot)` for semantic discovery, authoring, or calibrated review; High is `Claude Opus 5 (copilot)` for the deepest reasoning tasks.
 Accepted models are those in `scripts/linting/model-catalog.json` whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`. Run `npm run lint:models` to validate.
 
 ### description

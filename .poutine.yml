@@ -36,3 +36,8 @@ skip:
   - rule: github_action_from_unverified_creator_used
     purl:
       - pkg:githubactions/googleapis/release-please-action
+  # GitHub Marketplace verifies Astral; Poutine issue #452 tracks the missing
+  # astral-sh namespace in the rule's static verified-creator allowlist.
+  - rule: github_action_from_unverified_creator_used
+    purl:
+      - pkg:githubactions/astral-sh/setup-uv

@@ -2,7 +2,7 @@
 name: RPI Researcher
 description: "Gathers candidate sources for one bounded research question and returns source pointers, exact locations, contract excerpts, and brief relevance notes as suggestions for the calling agent to verify. Use during research when isolating source gathering would help."
 user-invocable: false
-model: GPT-5.6 Luna (copilot)
+model: GPT-6 Luna (copilot)
 tools: [execute/runInTerminal, read, agent, edit, search, web, 'microsoft-docs/*']
 agents: []
 ---
