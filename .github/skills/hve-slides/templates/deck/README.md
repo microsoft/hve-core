@@ -28,6 +28,8 @@ these fields as inert JSON in the HTML; adding or renaming a catalog entry requi
 only source metadata edits and a rebuild, not hand-editing the HTML or site.
 From the repository root, `npm run slides:check` verifies that every committed bundle
 matches source without rewriting it. The template exports `checkBundle()` for this check.
+Pull request validation runs this deck's tests when any of its files change. When
+Dependabot updates reveal.js here, rebuild and commit the bundle on that branch.
 
 The default four slides are neutral layout examples, not researched HVE product claims.
 Change them before presenting. The walkthrough is scripted and all chat controls inside
