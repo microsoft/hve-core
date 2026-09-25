@@ -408,8 +408,14 @@ jobs:
                 try {
                   candidateSnapshot = JSON.parse(fs.readFileSync(path.join(destination, "snapshot.json"), "utf8"));
                   validateSnapshot(candidateSnapshot);
-                  if (candidateSnapshot.source_ref !== process.env.GITHUB_REF ||
-                      candidateSnapshot.source_sha !== process.env.GITHUB_SHA) {
+                  const expectedExecutionRef = `refs/tags/backlog-grooming-sweep/${candidateSnapshot.sweep_id}`;
+                  const sourceRunMatches =
+                    candidateSnapshot.source_ref === process.env.GITHUB_REF &&
+                    candidateSnapshot.source_sha === process.env.GITHUB_SHA;
+                  const executionTagRunMatches =
+                    process.env.GITHUB_REF === expectedExecutionRef &&
+                    candidateSnapshot.source_sha === process.env.GITHUB_SHA;
+                  if (!sourceRunMatches && !executionTagRunMatches) {
                     throw new Error("Snapshot ref or source revision does not match the active coordinator run");
                   }
                   authenticateArtifact(snapshotMetadata, {

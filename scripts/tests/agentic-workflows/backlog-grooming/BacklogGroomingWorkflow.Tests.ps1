@@ -1946,8 +1946,10 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
         $metadataIndex | Should -BeGreaterThan -1
         $downloadIndex | Should -BeGreaterThan $metadataIndex
         $script:Orchestrator | Should -Match 'consumeDiscoveryDownload\(\)'
-        $script:Orchestrator | Should -Match 'candidateSnapshot\.source_ref !== process\.env\.GITHUB_REF'
-        $script:Orchestrator | Should -Match 'candidateSnapshot\.source_sha !== process\.env\.GITHUB_SHA'
+        $script:Orchestrator | Should -Match 'const expectedExecutionRef = `refs/tags/backlog-grooming-sweep/\$\{candidateSnapshot\.sweep_id\}`'
+        $script:Orchestrator | Should -Match '(?ms)const sourceRunMatches =\s+candidateSnapshot\.source_ref === process\.env\.GITHUB_REF &&\s+candidateSnapshot\.source_sha === process\.env\.GITHUB_SHA'
+        $script:Orchestrator | Should -Match '(?ms)const executionTagRunMatches =\s+process\.env\.GITHUB_REF === expectedExecutionRef &&\s+candidateSnapshot\.source_sha === process\.env\.GITHUB_SHA'
+        $script:Orchestrator | Should -Match '!sourceRunMatches && !executionTagRunMatches'
         $script:Orchestrator | Should -Match 'current\.prior_checkpoint_artifact_id !=='
         $script:Orchestrator | Should -Match 'waveNumber = priorCheckpoint \? priorCheckpoint\.wave_number \+ 1 : 1'
     }
@@ -2059,6 +2061,9 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
         $script:WorkflowReadme | Should -Match 'Human rerun of a bot-authenticated continuation'
         $script:WorkflowReadme | Should -Match 'keep caller authentication'
         $script:WorkflowReadme | Should -Match 'The unaccepted wave may run again'
+        $script:WorkflowReadme | Should -Match 'backlog-grooming-sweep/<sweep-id>'
+        $script:WorkflowReadme | Should -Match 'continuation inputs empty'
+        $script:WorkflowReadme | Should -Match 'retained sweep tag'
         $script:WorkflowReadme | Should -Match 'normalization count'
         $script:WorkflowReadme | Should -Match 'per-issue normalization codes'
     }
