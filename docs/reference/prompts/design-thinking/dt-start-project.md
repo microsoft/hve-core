@@ -32,12 +32,12 @@ Use this prompt to initialize a new Design Thinking coaching project and begin t
 
 ## How to use it
 
-Provide a unique `project-slug`, then optionally add context, stakeholders, and industry. The prompt creates the project state and starts the first coaching interaction from that context.
+Provide an optional `project-slug`, or let the prompt derive one from your context or ask for a short project name. You can also provide context, stakeholders, and industry. The prompt creates the project state and starts the first coaching interaction from that context.
 
 ## Example usage
 
 ```text
-/dt-start-project project-slug=factory-floor-maintenance industry=manufacturing
+/dt-start-project context="Reduce maintenance delays on the factory floor" industry=manufacturing
 ```
 
 The prompt initializes the project and begins Method 1 coaching for the manufacturing scenario.
