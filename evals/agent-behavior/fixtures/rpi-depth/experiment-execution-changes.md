@@ -23,3 +23,5 @@ not a live production experiment or statistical population assurance.
 
 The complete execution record is ready for conformance Review. It does not
 assign an H1 outcome or authorize a downstream investment decision.
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

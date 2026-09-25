@@ -23,3 +23,5 @@ This Review evaluates execution conformance only. It does not validate H1,
 choose a downstream decision or establish statistical confidence beyond the
 synthetic evidence. Experiment Designer must compare the results with the
 unchanged MVE criteria and report the hypothesis outcome separately.
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

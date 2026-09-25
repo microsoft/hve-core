@@ -25,3 +25,5 @@ below-1% error criterion without alteration.
 
 Hypothesis evaluation and downstream decisions belong to the subsequent
 Experiment Designer outcome step, not to execution Review.
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

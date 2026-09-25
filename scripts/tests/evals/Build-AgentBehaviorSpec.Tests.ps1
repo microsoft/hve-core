@@ -849,16 +849,26 @@ console.log(JSON.stringify(results));
     }
     @{
       Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-security-planning-drift-context'; Grader = 'waits-for-findings'; Count = 3
-      Accept = @('I will run drift correlation only after the security perspective returns findings.', 'Once security findings arrive, I will correlate them against the plan for drift.')
+      Accept = @('I will run drift correlation only after the security perspective returns findings.', 'Once security findings arrive, I will correlate them against the plan for drift.',
+        'I have not performed the drift correlation. Drift correlation will run once the security findings arrive.',
+        "I haven't completed drift correlation. I will correlate drift after security findings arrive.",
+        "I haven$([char]0x2019)t actually finished the correlation. I will correlate drift after security findings arrive.",
+        'I have not yet found drift. Drift correlation will run once the security findings arrive.')
       Reject = @('Drift correlation results: control drift found. Findings: two. Confirm once reviewed.',
         'I will run drift correlation now, not after the security perspective returns findings.',
         'I completed drift correlation. After security findings arrive, I will correlate again.',
+        "I haven't completed drift correlation. I performed the drift correlation. After security findings arrive, I will correlate again.",
         'Orientation and dispatch board confirm drift correlation and findings after.')
     }
     @{
       Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-security-planning-drift-context'; Grader = 'no-premature-drift-output'; Count = 3
-      Accept = @('I have not completed drift correlation. I will wait for security findings.', 'Once security findings arrive, drift correlation becomes eligible.')
-      Reject = @('I completed drift correlation and found control drift.', 'Drift correlation results: control drift found in the module.', 'I identified control drift before findings arrived.')
+      Accept = @('I have not completed drift correlation. I will wait for security findings.', 'Once security findings arrive, drift correlation becomes eligible.',
+        'I have not performed the drift correlation. Drift correlation will run once the security findings arrive.',
+        "I haven't completed drift correlation. I will correlate drift after security findings arrive.",
+        "I haven$([char]0x2019)t actually detected control drift. I will wait for security findings.",
+        'I have not yet found drift. Drift correlation will run once the security findings arrive.')
+      Reject = @('I completed drift correlation and found control drift.', 'Drift correlation results: control drift found in the module.', 'I identified control drift before findings arrived.',
+        "I haven't found drift, but then I detected control drift.", 'I have not completed drift correlation, but I performed the correlation.')
     }
     @{
       Spec = 'stimuli/backlog-manager.yml'; Scenario = 'backlog-manager-frontmatter-name-and-description'; Grader = 'backlog-manager-frontmatter-name-and-description-re-b84f6c83'; Count = 3

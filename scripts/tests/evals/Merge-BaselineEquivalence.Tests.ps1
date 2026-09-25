@@ -284,7 +284,17 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
         $script:Workflow | Should -Match 'npm run ci:eval:calibrate -- --profile evals/acceptance/pr-2951.json'
         $script:Workflow | Should -Match "'-AcceptanceManifestPath', 'plan-input/changed-spec-stimuli.json'"
         $script:Workflow | Should -Match "'-CalibrationPath', 'producer-results/eval-execution-results-calibration/eval-calibration.json'"
-        $script:Workflow | Should -Match "github.event_name == 'workflow_dispatch' && inputs.acceptance-profile == 'pr-2951'"
+        $script:Workflow | Should -Not -Match "github.event_name == 'workflow_dispatch' && inputs.acceptance-profile"
+    }
+
+    It 'keeps ordinary manual execution independent of the acceptance profile' {
+        $workflow = ConvertFrom-Yaml -Yaml $script:Workflow
+        foreach ($jobName in @('agent-plan', 'eval-execute', 'equivalence-execute', 'equivalence-fan-in', 'eval-fan-in')) {
+            $condition = [string]$workflow.jobs[$jobName]['if']
+            $condition | Should -Match "github.event_name == 'workflow_dispatch'"
+            $condition | Should -Not -Match 'inputs\.acceptance-profile'
+            $condition | Should -Match "github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false"
+        }
     }
 
     It 'uses one canonical plan for mixed execution and baseline applicability' {

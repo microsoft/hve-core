@@ -1955,11 +1955,11 @@ stimuli:
   - type: output-matches
     name: waits-for-findings
     config:
-      pattern: (?is)^(?![\s\S]*\b(?:not|never)\s+(?:after|once|until)\b)(?![\s\S]*\b(?:completed|performed|ran|finished)\s+(?:the\s+)?(?:drift\s+)?correlation\b)(?![\s\S]*\b(?:correlate|run\s+(?:drift\s+)?correlation)\s+now\b)(?=[\s\S]*(?:(?:drift|correlation|correlate|correlated|correlating)[^.\r\n]{0,200}\b(?:after|once|until)\b[^.\r\n]{0,200}(?:findings|security perspective)|\b(?:after|once|until)\b[^.\r\n]{0,200}(?:findings|security perspective)[^.\r\n]{0,200}(?:drift|correlation|correlate|correlated|correlating)))
+      pattern: (?is)^(?![\s\S]*\b(?:not|never)\s+(?:after|once|until)\b)(?![\s\S]*(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:completed|performed|ran|finished)\s+(?:the\s+)?(?:drift\s+)?correlation\b)(?![\s\S]*\b(?:correlate|run\s+(?:drift\s+)?correlation)\s+now\b)(?=[\s\S]*(?:(?:drift|correlation|correlate|correlated|correlating)[^.\r\n]{0,200}\b(?:after|once|until)\b[^.\r\n]{0,200}(?:findings|security perspective)|\b(?:after|once|until)\b[^.\r\n]{0,200}(?:findings|security perspective)[^.\r\n]{0,200}(?:drift|correlation|correlate|correlated|correlating)))
   - type: output-matches
     name: no-premature-drift-output
     config:
-      pattern: (?is)validated controls:\s*\d+\s*\|\s*control drift:|(?<!\b(?:not|never|without)\s)\b(?:completed|performed|ran|finished)\s+(?:the\s+)?(?:drift\s+)?correlation\b|\bdrift\s+correlation\s+results\s*:|\b(?:found|identified|detected)\s+(?:control\s+)?drift\b
+      pattern: (?is)validated controls:\s*\d+\s*\|\s*control drift:|(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:completed|performed|ran|finished)\s+(?:the\s+)?(?:drift\s+)?correlation\b|\bdrift\s+correlation\s+results\s*:|(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:found|identified|detected)\s+(?:control\s+)?drift\b
       negate: true
 - name: code-review-pull-request-standard-profile
   prompt: |

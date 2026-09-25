@@ -32,3 +32,5 @@ The experiment is disposable, local and non-ML. No customer data, external
 services, or production deployment is involved. The team can operate either
 candidate method. Experiment Designer and the user retain design and threshold
 decisions. Research can recommend a design but cannot validate a hypothesis.
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
