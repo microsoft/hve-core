@@ -1014,6 +1014,196 @@ Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
             }
         }
 
+        It 'Reports dead external links as warnings without throwing in advisory mode' {
+            $deadUrl = 'https://dead.example.test/advisory'
+            $env:MARKDOWN_LINK_CHECK_TEST_URL_MODE = 'true'
+            $env:MARKDOWN_LINK_CHECK_TEST_DEAD_URL = $deadUrl
+            $targetPath = Join-Path (Split-Path $script:BatchTargets[0] -Parent) 'advisory.md'
+            Set-Content -LiteralPath $targetPath -Value "[Advisory]($deadUrl)" -Encoding utf8
+            $script:BatchTargets = @($targetPath)
+
+            $captured = @(
+                Invoke-MarkdownLinkCheck `
+                    -Path @('unused') `
+                    -ConfigPath $script:FixtureConfig `
+                    -ExternalLinksAsWarnings `
+                    -ThrottleLimit 1 `
+                    -Quiet
+            )
+
+            $result = Get-Content -LiteralPath $script:ResultsPath -Raw | ConvertFrom-Json
+            $result.summary.files_with_broken_links | Should -Be 1
+            $result.summary.total_broken_links | Should -Be 1
+            @($captured | Where-Object { $_ -like 'markdown-link-check completed with advisory*' }).Count |
+                Should -Be 1
+            Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+                $Level -eq 'Warning' -and $Message -like "Broken link: $deadUrl*"
+            }
+            Should -Invoke Write-CIAnnotation -Times 0 -Exactly -ParameterFilter {
+                $Level -eq 'Error'
+            }
+            Should -Invoke Set-CIEnv -Times 0 -Exactly -ParameterFilter {
+                $Name -eq 'MARKDOWN_LINK_CHECK_FAILED'
+            }
+        }
+
+        It 'Reports an external check error with its URL in advisory mode' {
+            $errorUrl = 'https://example.test/error'
+            $env:MARKDOWN_LINK_CHECK_TEST_URL_MODE = 'true'
+            $targetPath = Join-Path (Split-Path $script:BatchTargets[0] -Parent) 'external-error.md'
+            Set-Content -LiteralPath $targetPath -Value "[External]($errorUrl)" -Encoding utf8
+            $script:BatchTargets = @($targetPath)
+            Mock ConvertFrom-MarkdownExternalLinkReport {
+                return [pscustomobject]@{
+                    Trusted = $true
+                    Links = @(
+                        [pscustomobject]@{
+                            Url = $errorUrl
+                            Status = 'error'
+                            StatusCode = $null
+                        }
+                    )
+                }
+            }
+
+            {
+                Invoke-MarkdownLinkCheck `
+                    -Path @('unused') `
+                    -ConfigPath $script:FixtureConfig `
+                    -ExternalLinksAsWarnings `
+                    -ThrottleLimit 1 `
+                    -Quiet
+            } | Should -Not -Throw
+
+            $result = Get-Content -LiteralPath $script:ResultsPath -Raw | ConvertFrom-Json
+            $result.summary.files_with_broken_links | Should -Be 1
+            $result.summary.total_broken_links | Should -Be 1
+            $result.broken_links[0].Link | Should -Be $errorUrl
+            $result.broken_links[0].Status | Should -Be 'error'
+            Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+                $Level -eq 'Warning' -and $Message -eq "External link check error: $errorUrl"
+            }
+        }
+
+        It 'Keeps internal-link failures blocking in advisory-external mode' {
+            $targetPath = Join-Path (Split-Path $script:BatchTargets[0] -Parent) 'internal-dead.md'
+            Set-Content -LiteralPath $targetPath -Value '[Missing](missing.md)' -Encoding utf8
+            $script:BatchTargets = @($targetPath)
+            $relativeTarget = [System.IO.Path]::GetRelativePath($script:RepoRoot, $targetPath)
+            Mock ConvertFrom-MarkdownLinkCheckReport {
+                return [pscustomobject]@{
+                    File = $relativeTarget
+                    Failed = $true
+                    ParseFailed = $false
+                    ReportError = $null
+                    Links = @(
+                        [pscustomobject]@{
+                            Url = 'missing.md'
+                            Status = 'dead'
+                            StatusCode = '404'
+                        }
+                    )
+                }
+            }
+
+            {
+                Invoke-MarkdownLinkCheck `
+                    -Path @('unused') `
+                    -ConfigPath $script:FixtureConfig `
+                    -ExternalLinksAsWarnings `
+                    -ThrottleLimit 2 `
+                    -Quiet
+            } | Should -Throw '*blocking failures*'
+
+            Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+                $Level -eq 'Error' -and $File -eq $relativeTarget
+            }
+            Should -Invoke Set-CIEnv -Times 1 -Exactly -ParameterFilter {
+                $Name -eq 'MARKDOWN_LINK_CHECK_FAILED' -and $Value -eq 'true'
+            }
+        }
+
+        It 'Blocks a mixed internal and external failure while warning about the external URL' {
+            $deadUrl = 'https://dead.example.test/mixed'
+            $env:MARKDOWN_LINK_CHECK_TEST_URL_MODE = 'true'
+            $env:MARKDOWN_LINK_CHECK_TEST_DEAD_URL = $deadUrl
+            $targetPath = Join-Path (Split-Path $script:BatchTargets[0] -Parent) 'mixed.md'
+            Set-Content -LiteralPath $targetPath -Value "[Missing](missing.md)`n[External]($deadUrl)" -Encoding utf8
+            $script:BatchTargets = @($targetPath)
+            $relativeTarget = [System.IO.Path]::GetRelativePath($script:RepoRoot, $targetPath)
+            Mock ConvertFrom-MarkdownLinkCheckReport {
+                return [pscustomobject]@{
+                    File = $relativeTarget
+                    Failed = $true
+                    ParseFailed = $false
+                    ReportError = $null
+                    Links = @(
+                        [pscustomobject]@{
+                            Url = 'missing.md'
+                            Status = 'dead'
+                            StatusCode = '404'
+                        }
+                        [pscustomobject]@{
+                            Url = $deadUrl
+                            Status = 'ignored'
+                            StatusCode = '0'
+                        }
+                    )
+                }
+            }
+
+            {
+                Invoke-MarkdownLinkCheck `
+                    -Path @('unused') `
+                    -ConfigPath $script:FixtureConfig `
+                    -ExternalLinksAsWarnings `
+                    -ThrottleLimit 1 `
+                    -Quiet
+            } | Should -Throw '*blocking failures*'
+
+            $result = Get-Content -LiteralPath $script:ResultsPath -Raw | ConvertFrom-Json
+            $result.summary.files_with_broken_links | Should -Be 1
+            $result.summary.total_broken_links | Should -Be 2
+            Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+                $Level -eq 'Error' -and $Message -like 'Broken link: missing.md*'
+            }
+            Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+                $Level -eq 'Warning' -and $Message -like "Broken link: $deadUrl*"
+            }
+        }
+
+        It 'Blocks an untrusted internal source report in advisory-external mode' {
+            $targetPath = Join-Path (Split-Path $script:BatchTargets[0] -Parent) 'source-report.md'
+            Set-Content -LiteralPath $targetPath -Value '[Missing](missing.md)' -Encoding utf8
+            $script:BatchTargets = @($targetPath)
+            $relativeTarget = [System.IO.Path]::GetRelativePath($script:RepoRoot, $targetPath)
+            Mock ConvertFrom-MarkdownLinkCheckReport {
+                return [pscustomobject]@{
+                    File = $relativeTarget
+                    Failed = $true
+                    ParseFailed = $true
+                    ReportError = 'Untrusted source report.'
+                    Links = @()
+                }
+            }
+
+            {
+                Invoke-MarkdownLinkCheck `
+                    -Path @('unused') `
+                    -ConfigPath $script:FixtureConfig `
+                    -ExternalLinksAsWarnings `
+                    -ThrottleLimit 1 `
+                    -Quiet
+            } | Should -Throw '*blocking failures*'
+
+            $result = Get-Content -LiteralPath $script:ResultsPath -Raw | ConvertFrom-Json
+            $result.summary.files_with_broken_links | Should -Be 1
+            $result.summary.total_broken_links | Should -Be 0
+            Should -Invoke Set-CIEnv -Times 1 -Exactly -ParameterFilter {
+                $Name -eq 'MARKDOWN_LINK_CHECK_FAILED' -and $Value -eq 'true'
+            }
+        }
+
         It 'Keeps exact variants disjoint and preserves original ignored-link behavior' {
             $sharedUrl = 'https://example.test/shared'
             $queryUrl = 'https://example.test/shared?view=one'
@@ -1126,6 +1316,37 @@ Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
             $result.summary.total_broken_links | Should -Be 0
             @($captured | Where-Object { $_ -like 'THREW:*' }).Count | Should -Be 1
             Should -Invoke Write-CIAnnotation -Times 0 -Exactly
+        }
+
+        It 'Reports an untrusted external aggregate as a warning in advisory mode' {
+            $defectUrl = 'https://example.test/advisory-defect'
+            $env:MARKDOWN_LINK_CHECK_TEST_URL_MODE = 'true'
+            $env:MARKDOWN_LINK_CHECK_TEST_AGGREGATE_DEFECT = 'malformed-xml'
+            $env:MARKDOWN_LINK_CHECK_TEST_DEFECT_URL = $defectUrl
+            $targetPath = Join-Path (Split-Path $script:BatchTargets[0] -Parent) 'advisory-defect.md'
+            Set-Content -LiteralPath $targetPath -Value "[Link]($defectUrl)" -Encoding utf8
+            $script:BatchTargets = @($targetPath)
+
+            {
+                Invoke-MarkdownLinkCheck `
+                    -Path @('unused') `
+                    -ConfigPath $script:FixtureConfig `
+                    -ExternalLinksAsWarnings `
+                    -ThrottleLimit 1 `
+                    -Quiet
+            } | Should -Not -Throw
+
+            $result = Get-Content -LiteralPath $script:ResultsPath -Raw | ConvertFrom-Json
+            $result.summary.files_with_broken_links | Should -Be 1
+            $result.summary.total_broken_links | Should -Be 0
+            Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+                $Level -eq 'Warning' -and
+                $File -like '*advisory-defect.md' -and
+                $Message -like "External link validation was inconclusive for ${defectUrl}:*"
+            }
+            Should -Invoke Set-CIEnv -Times 0 -Exactly -ParameterFilter {
+                $Name -eq 'MARKDOWN_LINK_CHECK_FAILED'
+            }
         }
 
         It 'Removes one common task workspace after <Outcome>' -ForEach @(

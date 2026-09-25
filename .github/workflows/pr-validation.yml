@@ -421,8 +421,9 @@ jobs:
     permissions:
       contents: read
     with:
-      soft-fail: true
+      soft-fail: false
       changed-files-only: true
+      external-links-as-warnings: true
       base-branch: ${{ github.event.pull_request.base.sha || format('origin/{0}', github.base_ref) }}
 
   dependency-pinning-check:

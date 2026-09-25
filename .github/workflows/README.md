@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-09-21
+ms.date: 2026-09-25
 ms.topic: reference
 keywords:
   - github actions
@@ -460,9 +460,9 @@ and cannot start or continue a sweep.
 | `frontmatter-validation.yml` | Custom PS script         | YAML frontmatter validation          | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true) | frontmatter-validation-results |
 | `skill-validation.yml`       | Custom PS script         | Skill directory structure validation | `soft-fail` (false), `changed-files-only` (true)                                                                | skill-validation-results       |
 | `link-lang-check.yml`        | Custom PS script         | Detect language-specific URLs        | `soft-fail` (false)                                                                                             | link-lang-check-results        |
-| `markdown-link-check.yml`    | markdown-link-check      | Validate internal and external links | `soft-fail` (false), `changed-files-only` (true, external links only), `throttle-limit` (8)                     | markdown-link-check-results    |
+| `markdown-link-check.yml`    | markdown-link-check      | Validate internal and external links | `soft-fail` (false), `changed-files-only` (true, external links only), `external-links-as-warnings` (false), `throttle-limit` (8) | markdown-link-check-results    |
 
-Parenthesized values are the defaults declared by each reusable workflow, not the values its callers pass. Callers override them per lane: `pr-validation.yml` and `weekly-validation.yml` both invoke `markdown-link-check.yml` with `soft-fail: true`, and `weekly-validation.yml` additionally sets `changed-files-only: false` for the full-repository sweep.
+Parenthesized values are the defaults declared by each reusable workflow, not the values its callers pass. `pr-validation.yml` sets `soft-fail: false` and `external-links-as-warnings: true`, so internal failures block while external findings remain advisory. `weekly-validation.yml` sets `soft-fail: true` and `changed-files-only: false` for an advisory full-repository sweep.
 
 All validation workflows use `permissions: contents: read`, publish PR annotations, and retain artifacts for 30 days.
 
