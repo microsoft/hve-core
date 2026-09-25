@@ -2,7 +2,7 @@
 title: "Transparency Note for HVE Core"
 description: "What HVE Core does, how we test it, its limitations, and what you should know before using it with GitHub Copilot."
 author: HVE Core Maintainers
-ms.date: 2026-09-24
+ms.date: 2026-09-25
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -83,6 +83,11 @@ rank developers using agent activity or review findings, evade safety controls,
 or present generated assessments as professional approval or certification.
 Do not portray a synthetic persona as a real participant.
 
+Evaluate the legal and regulatory obligations for your intended use of AI
+services and solutions. Requirements can differ by region and industry, and
+some uses may not be appropriate. Follow applicable service terms and codes of
+conduct, including their restrictions on prohibited uses.
+
 Components labeled `experimental` may change substantially. Inclusion in a
 Stable release does not make a capability suitable for every production use.
 
@@ -104,7 +109,7 @@ In a typical session:
 Before sending project content, review
 [responsible use of GitHub Copilot](https://docs.github.com/en/copilot/responsible-use)
 and the
-[VS Code Copilot account and data-handling guidance](https://code.visualstudio.com/docs/setup/copilot).
+[VS Code Copilot account and data-handling guidance](https://code.visualstudio.com/docs/copilot/setup).
 Your Copilot plan, organization policies, and model-provider terms determine
 how that data is handled.
 
@@ -141,8 +146,8 @@ Removing that hook stops its new writes but does not delete existing data.
 If you used it, inspect these locations and remove only the files you no longer
 need:
 
-* The project telemetry store named by `HVE_TELEMETRY_DIR`, or the `telemetry`
-  folder inside the project's local Copilot tracking directory
+* The project telemetry store named by `HVE_TELEMETRY_DIR`, or
+  `<repo>/.copilot-tracking/telemetry` by default
 * The sensitive `raw-input.jsonl` capture in that store
 * The cross-project registry at `~/.hve/telemetry-dirs` or
   `$HVE_HOME/telemetry-dirs`, including the older `telemetry-dirs.txt` name
@@ -251,7 +256,7 @@ For generated media and personas:
    Preserve copyright notices, license information, and attribution on copies.
 
 For VS Code, follow the
-[AI-assisted development security guidance](https://code.visualstudio.com/docs/agents/run/security)
+[AI-assisted development security guidance](https://github.com/microsoft/vscode-docs/blob/main/docs/agents/run/security.md)
 for workspace trust, tool approvals, sandboxing, and reviewing changes.
 Auto-approval reduces opportunities to catch mistakes before tools act.
 
@@ -261,18 +266,10 @@ from a development branch does not provide the same release assurance.
 
 ## Updates and feedback
 
-HVE Core Maintainers review this note at least every 180 days. They also review
-and update it when:
+HVE Core Maintainers review this note at least every 180 days and whenever a
+change meets the [review and update triggers in the contributor guidance](CONTRIBUTING.md#ai-artifact-contributions).
 
-* Intended uses or functionality change.
-* The product moves to a new release stage.
-* New information about reliability, safety, accuracy, or performance becomes
-  available.
-* Data handling, external services, supported clients, distribution methods,
-  permissions, or review responsibilities change.
-
-The [contributor guidance](CONTRIBUTING.md) describes when a change requires an
-update. Report documentation problems, accessibility issues, or Responsible AI
+Report documentation problems, accessibility issues, or Responsible AI
 concerns through [GitHub issues](https://github.com/microsoft/hve-core/issues).
 Do not include secrets or personal data in a public report. Report suspected
 vulnerabilities privately using [SECURITY.md](SECURITY.md).

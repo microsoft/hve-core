@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-09-24
+ms.date: 2026-09-25
 ms.topic: guide
 keywords:
   - contributing
@@ -245,7 +245,7 @@ HVE Core includes specialized contribution guides for AI artifacts that enhance 
 > Check the relevant sections when changing external services or data handling,
 > saved state or memory, agent actions or decisions, media or personas, handling
 > of untrusted content, supported clients, distribution methods, evaluation
-> coverage, or safety and privacy responsibilities.
+> coverage, permissions, or review, safety, and privacy responsibilities.
 
 ### Getting Started with AI Artifacts
 
