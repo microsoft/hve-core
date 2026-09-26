@@ -1111,11 +1111,12 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
             Should -Not -Match 'poutine:ignore'
     }
 
-    It 'Acknowledges only setup-uv for the Poutine verified-creator rule' -Tag 'Poutine' {
+    It 'Acknowledges only the exact setup-uv package for its creator finding' -Tag 'Poutine' {
         $config = Get-Content -LiteralPath (Join-Path $script:RepositoryRoot '.poutine.yml') -Raw -Encoding utf8 |
             ConvertFrom-Yaml
         $exceptions = @($config['skip'] | Where-Object {
-                @($_['rule']) -contains 'github_action_from_unverified_creator_used'
+                @($_['rule']) -contains 'github_action_from_unverified_creator_used' -and
+                @($_['purl']) -contains 'pkg:githubactions/astral-sh/setup-uv'
             })
         $exceptions | Should -HaveCount 1
         @($exceptions[0].Keys | Sort-Object) | Should -Be @('purl', 'rule')
@@ -1145,6 +1146,154 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
         [string]$document['jobs']['validate-release']['outputs']['source-sha'] | Should -BeExactly '${{ steps.identity.outputs.source-sha }}'
         [string[]]@($document['jobs']['extension-provenance']['needs']) | Should -Contain 'validate-release'
         [string[]]@($document['jobs']['verify-provenance']['needs']) | Should -Contain 'validate-release'
+    }
+}
+
+Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
+    BeforeAll {
+        $script:PoutineConfig = Get-Content -LiteralPath (Join-Path $script:RepositoryRoot '.poutine.yml') -Raw -Encoding utf8 |
+            ConvertFrom-Yaml
+    }
+
+    It 'Acknowledges only the exact release-please package for its creator finding' {
+        $exceptions = @($script:PoutineConfig['skip'] | Where-Object {
+                @($_['rule']) -contains 'github_action_from_unverified_creator_used' -and
+                @($_['purl']) -contains 'pkg:githubactions/googleapis/release-please-action'
+            })
+        $exceptions | Should -HaveCount 1
+        @($exceptions[0].Keys | Sort-Object) | Should -Be @('purl', 'rule')
+        @($exceptions[0]['rule']) | Should -Be @('github_action_from_unverified_creator_used')
+        @($exceptions[0]['purl']) | Should -Be @('pkg:githubactions/googleapis/release-please-action')
+    }
+
+    It 'Retains unrelated creator signal including EndBug' {
+        $exceptions = @($script:PoutineConfig['skip'] | Where-Object {
+                @($_['rule']) -contains 'github_action_from_unverified_creator_used'
+            })
+        foreach ($exception in $exceptions) {
+            @($exception.Keys | Sort-Object) | Should -Be @('purl', 'rule')
+            @($exception['rule']) | Should -Be @('github_action_from_unverified_creator_used')
+            @($exception['purl']) | Should -HaveCount 1
+            @('pkg:githubactions/googleapis/release-please-action', 'pkg:githubactions/astral-sh/setup-uv') |
+                Should -Contain $exception['purl'][0]
+        }
+        $labelSync = Get-WorkflowText -Name 'label-sync.yml'
+        $labelSync | Should -Match 'EndBug/label-sync@[0-9a-f]{40}'
+        $labelSync | Should -Not -Match 'poutine:ignore'
+    }
+
+    It 'Scopes the marketplace checkout acknowledgment to preparation only' {
+        $exceptions = @($script:PoutineConfig['skip'] | Where-Object {
+                @($_['path']) -contains '.github/workflows/extension-marketplace-publish.yml'
+            })
+        $exceptions | Should -HaveCount 1
+        @($exceptions[0].Keys | Sort-Object) | Should -Be @('job', 'path', 'rule')
+        @($exceptions[0]['rule']) | Should -Be @('untrusted_checkout_exec')
+        @($exceptions[0]['path']) | Should -Be @('.github/workflows/extension-marketplace-publish.yml')
+        @($exceptions[0]['job']) | Should -Be @('prepare-publisher')
+    }
+
+    It 'Binds acknowledged publisher preparation to read-only immutable main content' {
+        $document = Get-WorkflowDocument -Name 'extension-marketplace-publish.yml'
+        $job = $document['jobs']['prepare-publisher']
+        @($job['permissions'].Keys) | Should -Be @('contents')
+        $job['permissions']['contents'] | Should -BeExactly 'read'
+        $job.Contains('environment') | Should -BeFalse
+        $checkout = Get-NamedJobStep -Document $document -JobName 'prepare-publisher' -StepName 'Checkout protected publisher commit'
+        $checkout['with']['ref'] | Should -BeExactly '${{ needs.validate-inputs.outputs.publisher-digest }}'
+        $checkout['with']['persist-credentials'] | Should -BeFalse
+        $verify = Get-NamedJobStep -Document $document -JobName 'prepare-publisher' -StepName 'Confirm protected publisher checkout'
+        $verify['env']['PUBLISHER_DIGEST'] | Should -BeExactly '${{ needs.validate-inputs.outputs.publisher-digest }}'
+        $verify['run'] | Should -Match 'git rev-parse HEAD'
+        $verify['run'] | Should -Match 'PUBLISHER_DIGEST.*!=.*CHECKOUT_DIGEST'
+        $steps = [string[]]@($job['steps'] | ForEach-Object { $_['name'] })
+        $install = @($job['steps'] | Where-Object { $_['run'] -match 'npm ci' })
+        $install | Should -HaveCount 1
+        $steps.IndexOf('Confirm protected publisher checkout') | Should -BeLessThan $steps.IndexOf($install[0]['name'])
+        $validation = Get-NamedJobStep -Document $document -JobName 'validate-inputs' -StepName 'Validate publication inputs'
+        $validation['run'] | Should -Match 'git/ref/heads/main'
+        $validation['run'] | Should -Match 'MAIN_TYPE.*!=.*commit'
+        (Get-JobStepText -Document $document -JobName 'prepare-publisher') -join "`n" |
+            Should -Not -Match 'secrets\.|azure/login@'
+    }
+
+    It 'Acknowledges only the empty-default PR-review permissions finding' {
+        $exceptions = @($script:PoutineConfig['skip'] | Where-Object {
+                @($_['rule']) -contains 'default_permissions_on_risky_events'
+            })
+        $exceptions | Should -HaveCount 1
+        @($exceptions[0].Keys | Sort-Object) | Should -Be @('path', 'rule')
+        @($exceptions[0]['rule']) | Should -Be @('default_permissions_on_risky_events')
+        @($exceptions[0]['path']) | Should -Be @('.github/workflows/pr-review.lock.yml')
+        $document = Get-WorkflowDocument -Name 'pr-review.lock.yml'
+        $document.Contains('permissions') | Should -BeTrue
+        $document['permissions'] | Should -BeOfType [System.Collections.IDictionary]
+        $document['permissions'].Count | Should -Be 0
+    }
+
+    It 'Reuses the advisory scanner weekly with minimum permissions and uploads' {
+        $document = Get-WorkflowDocument -Name 'weekly-security-maintenance.yml'
+        $document['on']['schedule'][0]['cron'] | Should -BeExactly '0 2 * * 0'
+        $document['on'].Contains('workflow_dispatch') | Should -BeTrue
+        $job = $document['jobs']['dangerous-workflow-scan']
+        $job['uses'] | Should -BeExactly './.github/workflows/dangerous-workflow-scan.yml'
+        @($job['permissions'].Keys | Sort-Object) | Should -Be @('contents', 'security-events')
+        $job['permissions']['contents'] | Should -BeExactly 'read'
+        $job['permissions']['security-events'] | Should -BeExactly 'write'
+        foreach ($inputName in @('soft-fail', 'poutine-soft-fail', 'upload-sarif', 'upload-artifact')) {
+            $job['with'][$inputName] | Should -BeTrue
+        }
+        $job.Contains('secrets') | Should -BeFalse
+        @($document['jobs']['summary']['needs']) | Should -Contain 'dangerous-workflow-scan'
+    }
+
+    It 'Reports <ScanResult> advisory execution without claiming a finding-free scan' -ForEach @(
+        @{ ScanResult = 'success' }
+        @{ ScanResult = 'failure' }
+        @{ ScanResult = 'cancelled' }
+        @{ ScanResult = 'skipped' }
+    ) {
+        $document = Get-WorkflowDocument -Name 'weekly-security-maintenance.yml'
+        $step = Get-NamedJobStep -Document $document -JobName 'summary' -StepName 'Generate summary'
+        $step['env']['WORKFLOW_SCAN_RESULT'] | Should -BeExactly '${{ needs.dangerous-workflow-scan.result }}'
+        $step['run'] | Should -Match 'workflowScanResult -ne ''success''.*hasIssues = \$true'
+        $step['run'] | Should -Match 'Advisory job success does not establish zero findings'
+        $step['run'] | Should -Not -Match 'All Clear!|security posture is excellent'
+        $environment = @{
+            THRESHOLD_DAYS = '30'
+            PINNING_SCORE = '100'
+            UNPINNED_COUNT = '0'
+            STALE_COUNT = '0'
+            CODEQL_RESULT = 'success'
+            WORKFLOW_SCAN_RESULT = $ScanResult
+            EVENT_NAME = 'schedule'
+            SERVER_URL = 'https://github.com'
+            REPO = 'example/repository'
+            RUN_ID = '1'
+            GITHUB_STEP_SUMMARY = (Join-Path $TestDrive "$ScanResult.md")
+        }
+        $savedEnvironment = @{}
+        try {
+            foreach ($key in $environment.Keys) {
+                $savedEnvironment[$key] = [Environment]::GetEnvironmentVariable($key)
+                [Environment]::SetEnvironmentVariable($key, $environment[$key])
+            }
+            & ([scriptblock]::Create($step['run']))
+            $summary = Get-Content -LiteralPath $environment['GITHUB_STEP_SUMMARY'] -Raw
+            $summary | Should -Match ([regex]::Escape("$ScanResult (advisory; review logs and SARIF)"))
+            $summary | Should -Match 'Advisory job success does not establish zero findings'
+            if ($ScanResult -eq 'success') {
+                $summary | Should -Match 'Dependency Checks Clear'
+            }
+            else {
+                $summary | Should -Not -Match 'Dependency Checks Clear|analysis jobs completed'
+            }
+        }
+        finally {
+            foreach ($key in $savedEnvironment.Keys) {
+                [Environment]::SetEnvironmentVariable($key, $savedEnvironment[$key])
+            }
+        }
     }
 }
 

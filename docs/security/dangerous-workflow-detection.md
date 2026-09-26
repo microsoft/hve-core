@@ -3,7 +3,7 @@ title: Dangerous Workflow Detection
 description: How the hybrid dangerous-workflow control combines a homegrown template-injection gate with the Poutine supply-chain scanner for GitHub Actions workflows
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-08-30
+ms.date: 2026-09-22
 ms.topic: reference
 keywords:
   - security
@@ -14,6 +14,8 @@ keywords:
   - poutine
 estimated_reading_time: 4
 ---
+
+<!-- cspell:ignore githubactions -->
 
 ## Overview
 
@@ -84,6 +86,20 @@ wider class of issues as advisory SARIF, including:
 Poutine findings appear in the Security tab under the `poutine` category. They are **advisory**
 and do not block merge; the homegrown template-injection gate is the only required check.
 
+### Standing default-branch coverage
+
+`weekly-security-maintenance.yml` calls the same reusable `dangerous-workflow-scan.yml`
+every Sunday at 02:00 UTC on the default branch. Manual dispatch scans the selected ref;
+select `main` when collecting a merged-state baseline. Both scanners are advisory in this
+maintenance caller. The homegrown check remains blocking in PR validation.
+
+The caller grants only `contents: read` and `security-events: write`, enabling SARIF uploads
+without repository-content write access. Poutine retains its pinned action revision, the
+`poutine` SARIF category, and the `poutine-results` artifact with 90-day retention.
+The maintenance summary reports job execution, not a finding-free scan. Because analysis
+and upload steps tolerate failures, inspect step logs and confirm that a current SARIF
+artifact exists even when the job succeeds.
+
 ## Scope and limitations
 
 The split is deliberate:
@@ -91,7 +107,8 @@ The split is deliberate:
 * The homegrown gate stays narrow, deterministic, and offline so it can block with near-zero
   false positives.
 * Poutine provides breadth and is maintained upstream, but runs advisory to avoid a noisy hard gate.
-* Reviewed Poutine exceptions are configured in `.poutine.yml` by rule and path. They do not
+* Reviewed Poutine exceptions are configured in `.poutine.yml` by exact rule and package URL,
+  or workflow path and job where available. They do not
   affect the homegrown template-injection gate.
 * Taint-based expansion of the injection rule (indirect derivations) remains tracked as follow-on work.
   CodeQL's `actions/code-injection` query models untrusted sources as `github.event.*` values, so it
@@ -120,24 +137,80 @@ CI-only scanner and is not part of the offline lint pipeline.
 
 ## Suppression
 
-Use a rule-and-path skip only when a checkout is genuinely trusted and the exception has been
-reviewed:
+Use acknowledgments only for evidence-backed false positives or explicitly reviewed
+compensating controls. For a trusted checkout, constrain the rule by path and job:
 
 ```yaml
 skip:
   - rule: untrusted_checkout_exec
     path:
       - .github/workflows/example.yml
+    job:
+      - prepare
 ```
 
 Poutine also supports skip entries by job, level, OSV ID, or package URL. Prefer the narrowest
 combination that matches the reviewed finding.
 
-Use this only for a legitimate trusted checkout. Review expectations:
+For creator-list false positives, use the exact package URL with
+`github_action_from_unverified_creator_used`, not an organization-wide or rule-only skip.
+A Marketplace verified-creator badge establishes publisher verification, not action safety;
+SHA pinning and least privilege remain necessary.
+
+Review expectations:
 
 * The checkout target must be a trusted constant or otherwise intentionally approved.
 * The configuration entry should be added only after review confirms that the workflow needs the exception.
 * Suppressions should be temporary and removed when the workflow is refactored to a safer pattern.
+
+### Baseline dispositions
+
+The baseline used for [issue 2983](https://github.com/microsoft/hve-core/issues/2983)
+contains 12 Poutine v1.1.4 findings across three rules. Analysis `1822021547` scanned
+the synthetic merge commit `8ef91813` for PR 2906. Its Git tree
+`20025492a0cfb71be4dfbdd08ef52336455c7553` matches `main` commit `5e21810e` exactly.
+This proves content equivalence, not execution on `refs/heads/main`; no main-ref Poutine
+analysis was present in the retrieved inventory. Weekly coverage closes that scheduling
+gap once deployed, but the first hosted result must still be confirmed.
+
+* Alerts 788, 789, 601, 593, 719, and 595 identify `astral-sh/setup-uv`.
+  Marketplace verifies the creator, but Poutine's static list omits it, as tracked in
+  [upstream issue 452](https://github.com/boostsecurityio/poutine/issues/452).
+  The exact package acknowledgment is handled by the separate setup-uv change; this
+  baseline-triage change does not add it.
+* Alerts 742 and 743 identify `googleapis/release-please-action` in the two release
+  workflows. Its [Marketplace listing](https://github.com/marketplace/actions/release-please-action)
+  verifies the creator. The acknowledgment uses only the exact rule and
+  `pkg:githubactions/googleapis/release-please-action` package identity.
+* Alerts 755 and 756 identify dependency execution in `prepare-publisher` within
+  `extension-marketplace-publish.yml`. Preparation checks out an API-resolved `main`
+  commit, verifies `HEAD` before installation, and has only `contents: read`, with no
+  protected environment or marketplace credential. Publication happens in a separate
+  protected job. The exception relies on the repository's protected-main trust assumption
+  and is restricted to this rule, workflow, and preparation job.
+* Alert 348 uses `default_permissions_on_risky_events` for `pr-review.lock.yml`.
+  The generated workflow declares `permissions: {}`, which grants no scopes to jobs
+  without overrides. Poutine treats the empty map as absent. The exact rule-and-path
+  acknowledgment does not change job grants or the separate permissions hard gate.
+* Alert 340 identifies `EndBug/label-sync`, which lacks a Marketplace verified-creator
+  badge. Retain this advisory finding as accepted provenance risk, not a false positive.
+  The action remains full-SHA-pinned, with job-scoped permissions and normal staleness
+  monitoring. Reassess on action updates or a change in publisher verification.
+
+These three acknowledgments target five baseline occurrences. Six setup-uv occurrences
+remain the responsibility of the separate fix, and EndBug remains visible. These are
+dispositions and expected filter effects, not evidence that remote alerts are resolved.
+
+The job-level permissions opportunity from issue 2527 is already implemented by
+`Test-WorkflowPermissions.ps1`: absent workflow permissions fail, jobs under populated
+workflow grants need explicit permissions, and an empty workflow map grants nothing to
+jobs without overrides. No further validator or generated-workflow edit is needed here.
+
+Remove creator acknowledgments when a pinned scanner upgrade recognizes the verified
+publisher without them. Remove the PR-review acknowledgment when the scanner distinguishes
+empty permissions from missing permissions. Re-review or remove the marketplace exception
+if the checkout source, digest checks, permissions, or credential separation changes.
+Maintainers should verify each removal against hosted SARIF, not job success alone.
 
 ## Triage flow
 
@@ -148,7 +221,13 @@ When the required homegrown check fails, resolve the blocking `dangerous-workflo
 3. Replace the interpolation with a trusted value, route the untrusted value through an intermediate `env:` variable, or restructure the workflow so the untrusted payload is never executed as code.
 4. Re-run `npm run lint:dangerous-workflow` and re-check the PR validation status.
 
-Advisory Poutine findings such as `untrusted_checkout_exec` appear separately in the Security tab under the `poutine` category and do not block merge. Triage them by hardening the workflow or acknowledging the finding in `.poutine.yml`.
+Advisory Poutine findings appear separately under the `poutine` category and do not block merge:
+
+1. Record the scanner revision, scanned commit/ref, complete SARIF, rule, path, job, and package identity where available.
+2. Classify each finding as actionable, a verified false positive, or an accepted residual risk. Cite source controls or upstream evidence; advisory status alone is not a disposition.
+3. Harden actionable findings. Acknowledge proven false positives with the narrowest supported selector and a removal condition. Keep accepted-risk signal visible unless maintainers explicitly decide otherwise.
+4. After publication, inspect hosted SARIF and step logs for the actual change. Confirm scheduled default-branch coverage after merge.
+5. Reconcile remote alerts and review threads only with current hosted evidence and separate authorization. A local contract test does not prove remote resolution.
 
 ## Related documentation
 

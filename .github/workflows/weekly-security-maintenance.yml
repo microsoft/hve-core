@@ -51,10 +51,23 @@ jobs:
       security-events: write  # Required for SARIF upload to Security tab
       actions: read
 
-  # Job 4: Generate consolidated summary
+  # Reuse the advisory hybrid scan for default-branch coverage.
+  dangerous-workflow-scan:
+    name: Dangerous Workflow and Poutine Scan
+    uses: ./.github/workflows/dangerous-workflow-scan.yml
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    with:
+      soft-fail: true
+      poutine-soft-fail: true
+      upload-sarif: true
+      upload-artifact: true
+
+  # Generate consolidated summary.
   summary:
     name: Security Maintenance Summary
-    needs: [validate-pinning, check-staleness, codeql-analysis]
+    needs: [validate-pinning, check-staleness, codeql-analysis, dangerous-workflow-scan]
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -69,6 +82,7 @@ jobs:
           UNPINNED_COUNT: ${{ needs.validate-pinning.outputs.unpinned-count }}
           STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
           CODEQL_RESULT: ${{ needs.codeql-analysis.result }}
+          WORKFLOW_SCAN_RESULT: ${{ needs.dangerous-workflow-scan.result }}
           EVENT_NAME: ${{ github.event_name }}
           SERVER_URL: ${{ github.server_url }}
           REPO: ${{ github.repository }}
@@ -78,12 +92,15 @@ jobs:
           $unpinnedCount = $env:UNPINNED_COUNT
           $staleCount = $env:STALE_COUNT
           $codeqlResult = $env:CODEQL_RESULT
+          $workflowScanResult = $env:WORKFLOW_SCAN_RESULT
           $thresholdDays = $env:THRESHOLD_DAYS
           
           # Determine overall status
           $hasIssues = $false
           if ($unpinnedCount -ne '0') { $hasIssues = $true }
           if ($staleCount -ne '0') { $hasIssues = $true }
+          if ($codeqlResult -ne 'success') { $hasIssues = $true }
+          if ($workflowScanResult -ne 'success') { $hasIssues = $true }
           
           @"
           # 🔐 Weekly Security Maintenance Report
@@ -104,8 +121,12 @@ jobs:
           | Component | Status |
           |-----------|--------|
           | CodeQL Analysis | $(if ($codeqlResult -eq 'success') { '✅ Complete' } else { '⚠️ See details' }) |
+          | Dangerous Workflow / Poutine | $(if ($workflowScanResult -eq 'success') { '✅' } else { '⚠️' }) $workflowScanResult (advisory; review logs and SARIF) |
           | Secret Scanning | ✅ Enabled (GitHub native) |
           | Dependabot Alerts | ✅ Enabled (GitHub native) |
+
+          Advisory job success does not establish zero findings or a successful Poutine analysis.
+          Review the scanner step logs, Security tab, and poutine-results artifact for scan evidence.
           
           $(if ($unpinnedCount -ne '0') {
             @"
@@ -162,12 +183,13 @@ jobs:
           $(if (!$hasIssues) {
             @"
           
-          ## ✅ All Clear!
+          ## ✅ Dependency Checks Clear
           
-          Repository security posture is excellent:
+          Dependency checks are clear and analysis jobs completed:
           - All dependencies are properly pinned
           - All SHAs are current (< $thresholdDays days old)
           - CodeQL analysis completed successfully
+          - Advisory workflow scan job completed; findings still require review
           - GitHub Secret Scanning and Dependabot actively monitoring
           
           "@

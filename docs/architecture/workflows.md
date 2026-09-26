@@ -338,14 +338,22 @@ The ref-less `microsoft/hve-core` registration sources canonical content from `.
 
 ### Weekly Security Maintenance
 
-The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, providing scheduled security posture review.
+The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC on the default branch, providing scheduled security posture review. Manual dispatch uses the selected ref.
 
-| Job              | Purpose                              |
-|------------------|--------------------------------------|
-| validate-pinning | Verify dependency pinning compliance |
-| check-staleness  | Detect outdated SHA references       |
-| codeql-analysis  | Full CodeQL security scan            |
-| summary          | Aggregate security status report     |
+| Job                     | Purpose                                   |
+|-------------------------|-------------------------------------------|
+| validate-pinning        | Verify dependency pinning compliance      |
+| check-staleness         | Detect outdated SHA references            |
+| codeql-analysis         | Full CodeQL security scan                 |
+| dangerous-workflow-scan | Advisory homegrown and Poutine scans      |
+| summary                 | Aggregate execution and dependency status |
+
+The weekly caller reuses `dangerous-workflow-scan.yml` with both scanners advisory,
+SARIF and artifact uploads enabled, and only read-content/SARIF-write permissions.
+PR validation retains the blocking homegrown gate. A successful advisory job does not
+prove zero findings or successful analysis; inspect its logs and retained SARIF.
+See [Dangerous Workflow Detection](../security/dangerous-workflow-detection) for baseline
+dispositions and acknowledgment removal conditions.
 
 ### Security Validation Tools
 

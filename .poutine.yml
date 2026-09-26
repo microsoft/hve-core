@@ -19,6 +19,23 @@ skip:
   - rule: untrusted_checkout_exec
     path:
       - .github/workflows/backlog-groom.lock.yml
+  # Publisher dependencies execute at an API-resolved main digest with only
+  # contents: read, outside the protected marketplace publication job.
+  - rule: untrusted_checkout_exec
+    path:
+      - .github/workflows/extension-marketplace-publish.yml
+    job:
+      - prepare-publisher
+  # The generated workflow explicitly defaults to no token scopes. Poutine
+  # treats the empty map as absent; explicit job grants are checked separately.
+  - rule: default_permissions_on_risky_events
+    path:
+      - .github/workflows/pr-review.lock.yml
+  # Marketplace verifies googleapis; Poutine's static creator list omits it.
+  # Remove after a pinned scanner upgrade recognizes this exact package.
+  - rule: github_action_from_unverified_creator_used
+    purl:
+      - pkg:githubactions/googleapis/release-please-action
   # GitHub Marketplace verifies Astral; Poutine issue #452 tracks the missing
   # astral-sh namespace in the rule's static verified-creator allowlist.
   - rule: github_action_from_unverified_creator_used

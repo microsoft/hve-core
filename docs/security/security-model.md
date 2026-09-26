@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-17
+ms.date: 2026-09-22
 ms.topic: reference
 keywords:
   - security
@@ -409,6 +409,7 @@ Affected workflow jobs:
 | `security-scan.yml`               | `codeql`                     |
 | `weekly-security-maintenance.yml` | `validate-pinning`           |
 | `weekly-security-maintenance.yml` | `codeql-analysis`            |
+| `weekly-security-maintenance.yml` | `dangerous-workflow-scan`    |
 
 Defense-in-depth controls:
 
@@ -416,6 +417,12 @@ Defense-in-depth controls:
 * `persist-credentials: false` set on all checkout steps
 * Inline YAML comments document each `security-events: write` declaration
 * SARIF upload is the only write operation performed under this permission
+
+An explicit workflow-level `permissions: {}` grants no scopes to jobs without overrides;
+it is not a missing declaration. Job-level declarations replace that empty default.
+The permissions validator already enforces this distinction. The narrowly acknowledged
+Poutine warning on `pr-review.lock.yml` is an empty-map parser false positive, not a
+waiver of job-level least privilege. See [baseline dispositions](dangerous-workflow-detection#baseline-dispositions).
 
 #### E-2: Branch Protection Bypass
 
@@ -2345,7 +2352,13 @@ Skills whose scripts perform only local validation with no external surface (for
 | release-stable.yml              | Push to main       | Pinning, gitleaks, SBOM attestation, dependency diff (release) |
 | codeql-analysis.yml             | Push, PR, weekly   | Static analysis                                                |
 | dependency-review.yml           | PR to main/develop | Vulnerability scanning                                         |
-| weekly-security-maintenance.yml | Sundays 2 AM UTC   | Pinning, staleness, CodeQL                                     |
+| weekly-security-maintenance.yml | Sundays 2 AM UTC   | Pinning, staleness, CodeQL, advisory workflow/Poutine scans    |
+
+Weekly Poutine coverage reuses the PR scanner with findings retained in the `poutine`
+SARIF category and a 90-day artifact. Its success status is execution metadata, not proof
+of a clean scan. [Dangerous Workflow Detection](dangerous-workflow-detection) records the
+baseline, narrow false-positive acknowledgments, retained EndBug provenance risk, and
+the hosted evidence needed before claiming alert resolution.
 
 ## References
 
