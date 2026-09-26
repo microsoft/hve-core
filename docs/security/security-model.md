@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-17
+ms.date: 2026-09-25
 ms.topic: reference
 keywords:
   - security
@@ -2339,13 +2339,13 @@ Skills whose scripts perform only local validation with no external surface (for
 
 ### Validation Workflow Coverage
 
-| Workflow                        | Trigger            | Security Checks                                                |
-|---------------------------------|--------------------|----------------------------------------------------------------|
-| pr-validation.yml               | PR to main/develop | Pinning, npm audit, CodeQL, gitleaks                           |
-| release-stable.yml              | Push to main       | Pinning, gitleaks, SBOM attestation, dependency diff (release) |
-| codeql-analysis.yml             | Push, PR, weekly   | Static analysis                                                |
-| dependency-review.yml           | PR to main/develop | Vulnerability scanning                                         |
-| weekly-security-maintenance.yml | Sundays 2 AM UTC   | Pinning, staleness, CodeQL                                     |
+| Workflow                        | Trigger                 | Security Checks                                                |
+|---------------------------------|-------------------------|----------------------------------------------------------------|
+| pr-validation.yml               | PR to main/develop      | Pinning, npm audit, CodeQL, gitleaks                           |
+| release-stable.yml              | Push to main            | Pinning, gitleaks, SBOM attestation, dependency diff (release) |
+| codeql-analysis.yml             | Push, PR, weekly        | Static analysis                                                |
+| dependency-review.yml           | Push/PR to main/develop | Vulnerability scanning                                         |
+| weekly-security-maintenance.yml | Sundays 2 AM UTC        | Pinning, staleness, CodeQL                                     |
 
 ## References
 
