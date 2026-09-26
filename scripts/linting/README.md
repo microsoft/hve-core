@@ -724,7 +724,7 @@ blockquote markers, so line wrapping does not affect matching.
 | npm Script                       | Description                                                                                                                                                          |
 |----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                        |
-| `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts              |
+| `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts                |
 | `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds |
 | `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                               |
 | `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                             |
