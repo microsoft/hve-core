@@ -20,13 +20,14 @@ import argparse
 import ast
 import importlib.util
 import logging
+import math
 import re
 import sys
 from pathlib import Path
 
 from lxml import etree
 from pptx import Presentation
-from pptx.enum.shapes import MSO_CONNECTOR_TYPE, MSO_SHAPE
+from pptx.enum.shapes import MSO_CONNECTOR_TYPE, MSO_SHAPE, MSO_SHAPE_TYPE
 from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
 from pptx_charts import add_chart_element
@@ -60,6 +61,16 @@ CONNECTOR_TYPE_MAP = {
 
 PNS = "http://schemas.openxmlformats.org/presentationml/2006/main"
 ANS = "http://schemas.openxmlformats.org/drawingml/2006/main"
+DECORATIVE_NS = "http://schemas.microsoft.com/office/drawing/2017/decorative"
+DECORATIVE_EXT_URI = "{C183D7F6-B498-43B3-948B-1728B52AA6E4}"
+
+# Text auto-fit. Helvetica metrics understate Segoe UI, the deck default, so
+# measured widths are widened before comparison; calibrated against renders that
+# broke words mid-character and overlapped wrapped bullets.
+SEGOE_WIDTH_FACTOR = 1.15
+CHEVRON_MIN_FONT_PT = 9
+PPTX_DEFAULT_MARGIN_IN = 0.1
+CARD_BULLET_LINE_IN = 0.35
 
 # Stdlib modules blocked in content-extra.py scripts due to security risk.
 # content-extra.py may only import from pptx and safe standard-library modules.
@@ -397,6 +408,7 @@ def add_image_element(slide, elem, content_dir: Path):
     pic = slide.shapes.add_picture(str(img_path), left, top, width, height)
     if "name" in elem:
         pic.name = elem["name"]
+    set_alt_text(pic, elem)
     apply_rotation(pic, elem.get("rotation"))
 
     # Restore blipFill attributes (rotWithShape, dpi, etc.)
@@ -433,6 +445,97 @@ def add_image_element(slide, elem, content_dir: Path):
             amf.set("amt", amt)
 
     return pic
+
+
+def set_alt_text(pic, elem: dict) -> None:
+    """Set a picture's alternative text or mark it decorative.
+
+    ``alt`` becomes the ``descr`` read by screen readers. ``decorative: true``
+    clears it and adds the Office decorative flag so readers skip the image.
+    Without either, python-pptx's default (the image file name) remains.
+    """
+    c_nv_pr = pic._element.find(".//" + qn("p:cNvPr"))
+    if c_nv_pr is None:
+        return
+    if elem.get("decorative"):
+        c_nv_pr.set("descr", "")
+        ext_lst = c_nv_pr.find(qn("a:extLst"))
+        if ext_lst is None:
+            ext_lst = etree.SubElement(c_nv_pr, qn("a:extLst"))
+        ext = etree.SubElement(ext_lst, qn("a:ext"), uri=DECORATIVE_EXT_URI)
+        decorative = etree.SubElement(ext, f"{{{DECORATIVE_NS}}}decorative")
+        decorative.set("val", "1")
+    elif elem.get("alt"):
+        c_nv_pr.set("descr", str(elem["alt"]))
+
+
+def _normalized(text: str) -> str:
+    return " ".join(str(text).split()).casefold()
+
+
+def ensure_slide_title(slide, title: str | None, slide_width) -> None:
+    """Give the slide a title placeholder so assistive technology can find it.
+
+    Reuses the visible text box whose text equals ``title``; otherwise adds an
+    off-slide title that screen readers announce but nothing renders.
+    """
+    if not title or not str(title).strip():
+        return
+    existing = slide.shapes.title
+    if existing is not None and existing.has_text_frame and existing.text.strip():
+        return
+
+    target = None
+    for shape in slide.shapes:
+        if (
+            shape.shape_type == MSO_SHAPE_TYPE.TEXT_BOX
+            and shape.has_text_frame
+            and _normalized(shape.text_frame.text) == _normalized(title)
+        ):
+            target = shape
+            break
+    if target is None:
+        target = slide.shapes.add_textbox(
+            slide_width + Inches(1), Inches(0), Inches(6), Inches(0.5)
+        )
+        target.text_frame.text = str(title)
+        target.name = "Slide Title"
+        sp_tree = slide.shapes._spTree
+        sp_tree.remove(target._element)
+        # Index 2 follows nvGrpSpPr and grpSpPr, so the title is read first.
+        sp_tree.insert(2, target._element)
+
+    sp = target._element
+    c_nv_sp_pr = sp.find(qn("p:nvSpPr") + "/" + qn("p:cNvSpPr"))
+    if c_nv_sp_pr is not None and "txBox" in c_nv_sp_pr.attrib:
+        del c_nv_sp_pr.attrib["txBox"]
+    nv_pr = sp.find(qn("p:nvSpPr") + "/" + qn("p:nvPr"))
+    if nv_pr is not None and nv_pr.find(qn("p:ph")) is None:
+        ph = etree.Element(qn("p:ph"))
+        ph.set("type", "title")
+        nv_pr.insert(0, ph)
+    # A title placeholder inherits the master's centred anchor and alignment;
+    # keep the text box defaults.
+    body_pr = sp.find(qn("p:txBody") + "/" + qn("a:bodyPr"))
+    if body_pr is not None and not body_pr.get("anchor"):
+        body_pr.set("anchor", "t")
+    for paragraph in sp.iter(qn("a:p")):
+        p_pr = paragraph.find(qn("a:pPr"))
+        if p_pr is None:
+            p_pr = etree.Element(qn("a:pPr"))
+            paragraph.insert(0, p_pr)
+        if not p_pr.get("algn"):
+            p_pr.set("algn", "l")
+
+
+def apply_text_language(prs, language: str | None) -> None:
+    """Tag every slide text run with ``language`` where no language is set."""
+    if not language:
+        return
+    for slide in prs.slides:
+        for node in slide._element.iter(qn("a:rPr"), qn("a:endParaRPr")):
+            if not node.get("lang"):
+                node.set("lang", str(language))
 
 
 def add_rich_text_element(slide, elem, colors, typography):
@@ -523,25 +626,92 @@ def add_card_element(slide, elem, colors, typography):
         y_offset += 0.5
 
     # Content bullets
+    text_width = elem["width"] - 0.4 - 2 * PPTX_DEFAULT_MARGIN_IN
     for item in elem.get("content", []):
         bullet_text = (
             f"\u2022 {item['bullet']}" if "bullet" in item else item.get("text", "")
         )
         color = resolve_color(item.get("color", "#F8F8FC"))
+        font_size = item.get("size", 14)
+        # Advance by wrapped height: a fixed pitch overlaps multi-line bullets.
+        lines = wrapped_line_count(bullet_text, font_size, text_width)
+        block_height = CARD_BULLET_LINE_IN * lines
         add_textbox(
             slide,
             elem["left"] + 0.2,
             elem["top"] + y_offset,
             elem["width"] - 0.4,
-            0.35,
+            block_height,
             bullet_text,
             font_name="Segoe UI",
-            font_size=item.get("size", 14),
+            font_size=font_size,
             font_color=color,
         )
-        y_offset += 0.35
+        y_offset += block_height
 
     return shape
+
+
+def _longest_word_width_in(text, font_size_pt):
+    """Approximate the widest word's rendered width in inches.
+
+    Measures with PyMuPDF's Helvetica-Bold metrics and applies a widening factor
+    because Segoe UI Bold, the deck default, runs wider than the metric font.
+    Returns None when measurement is unavailable so callers keep the requested
+    size rather than guessing.
+    """
+    words = text.split()
+    if not words:
+        return None
+    try:
+        import fitz
+    except ImportError:
+        return None
+    widest = max(
+        fitz.get_text_length(word, fontname="hebo", fontsize=font_size_pt)
+        for word in words
+    )
+    return widest / 72 * SEGOE_WIDTH_FACTOR
+
+
+def wrapped_line_count(text, font_size_pt, available_width_in):
+    """Estimate how many lines `text` occupies at the given width.
+
+    Returns 1 when measurement is unavailable, preserving the previous
+    single-line layout rather than guessing a larger block.
+    """
+    if not text or available_width_in <= 0:
+        return 1
+    try:
+        import fitz
+    except ImportError:
+        return 1
+    width = (
+        fitz.get_text_length(text, fontname="helv", fontsize=font_size_pt)
+        / 72
+        * SEGOE_WIDTH_FACTOR
+    )
+    return max(1, math.ceil(width / available_width_in))
+
+
+def fit_chevron_font_size(label, item_width, height, margin, requested_size):
+    """Shrink a chevron label's font until its longest word fits on one line.
+
+    A chevron's notch and point consume roughly `height` of horizontal space, so
+    the usable text width is much narrower than the shape. When a single word
+    exceeds it, renderers break the word mid-character, so shrink instead. Only
+    ever reduces the requested size.
+    """
+    usable = item_width - height - 2 * margin
+    if usable <= 0:
+        return requested_size
+    size = requested_size
+    while size > CHEVRON_MIN_FONT_PT:
+        width = _longest_word_width_in(label, size)
+        if width is None or width <= usable:
+            break
+        size -= 1
+    return size
 
 
 def add_arrow_flow_element(slide, elem, colors, typography):
@@ -559,6 +729,25 @@ def add_arrow_flow_element(slide, elem, colors, typography):
     default_font = elem.get("font", "Segoe UI")
     default_size = elem.get("font_size", 14)
     default_color = elem.get("font_color", "#F8F8FC")
+
+    # One size across the flow: a per-item fit renders a visibly ragged row.
+    # An explicit per-item size is author intent and is never auto-fitted.
+    auto_items = [item for item in items if "size" not in item]
+    fitted_size = min(
+        (
+            fit_chevron_font_size(
+                item["label"],
+                item_width,
+                elem["height"],
+                item.get("label_margin", label_margin)
+                if item.get("label_margin", label_margin) is not None
+                else PPTX_DEFAULT_MARGIN_IN,
+                default_size,
+            )
+            for item in auto_items
+        ),
+        default=default_size,
+    )
 
     for item in items:
         shape = slide.shapes.add_shape(
@@ -582,7 +771,7 @@ def add_arrow_flow_element(slide, elem, colors, typography):
         p.alignment = ALIGNMENT_MAP["center"]
         run = p.runs[0]
         run.font.name = item.get("font", default_font)
-        run.font.size = Pt(item.get("size", default_size))
+        run.font.size = Pt(item.get("size", fitted_size))
         apply_color_to_font(
             run.font.color, resolve_color(item.get("color_text", default_color))
         )
@@ -1116,6 +1305,8 @@ def build_slide(
     if turbo_enabled:
         slide.shapes.turbo_add_enabled = False
 
+    ensure_slide_title(slide, slide_content.get("title"), prs.slide_width)
+
     # Add speaker notes (preserve empty strings when notes slide exists)
     notes = slide_content.get("speaker_notes")
     if notes is not None:
@@ -1357,6 +1548,7 @@ def main():
             )
             print(f"Built slide {num}: {slide_content.get('title', 'Untitled')}")
 
+    apply_text_language(prs, (style.get("metadata") or {}).get("language"))
     prs.save(str(output_path))
     print(f"\nDeck saved to {output_path}")
     print(f"Total slides: {len(prs.slides)}")

@@ -18,8 +18,12 @@
 .PARAMETER DryRun
     Print SSML templates without generating audio.
 
+.PARAMETER Engine
+    Synthesis engine: azure (default) or piper. Piper must be installed separately.
+
 .PARAMETER Voice
-    Azure TTS voice name. Defaults to en-US-Andrew:DragonHDLatestNeural.
+    Voice name. Defaults to en-US-Andrew:DragonHDLatestNeural for azure and
+    en_US-joe-medium for piper.
 
 .PARAMETER Rate
     Speech prosody rate. Defaults to +10%.
@@ -54,6 +58,10 @@
 param(
     [Parameter(Mandatory = $false)]
     [switch]$DryRun,
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet('azure', 'piper')]
+    [string]$Engine,
 
     [Parameter(Mandatory = $false)]
     [string]$Voice,
@@ -101,6 +109,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     $PythonArgs = @()
 
     if ($DryRun) { $PythonArgs += '--dry-run' }
+    if ($Engine) { $PythonArgs += '--engine', $Engine }
     if ($Voice) { $PythonArgs += '--voice', $Voice }
     if ($Rate) { $PythonArgs += '--rate', $Rate }
     if ($ContentDir) { $PythonArgs += '--content-dir', $ContentDir }

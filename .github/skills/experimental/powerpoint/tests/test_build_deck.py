@@ -19,6 +19,7 @@ from build_deck import (
     add_rich_text_element,
     add_shape_element,
     add_textbox,
+    apply_text_language,
     build_element_in_group,
     build_slide,
     clear_slide_shapes,
@@ -746,6 +747,39 @@ class TestAddArrowFlowElement:
             assert run.font.name == "Arial"
             assert run.font.size == Pt(11)
             assert f"#{run.font.color.rgb}".lower() == "#112233"
+
+    def test_long_label_shrinks_to_avoid_mid_word_break(self, blank_slide):
+        # A chevron's notch and point consume about `height` of width, so a long
+        # word overflows and renderers split it mid-character.
+        elem = {
+            "left": 0.9,
+            "top": 2.0,
+            "width": 11.5,
+            "height": 1.1,
+            "items": [
+                {"label": "1. Setup and Exploration"},
+                {"label": "2. Guided Workflow"},
+                {"label": "3. Independent Workflow"},
+                {"label": "4. Autonomous Engineering"},
+            ],
+        }
+        add_arrow_flow_element(blank_slide, elem, {}, {})
+        shapes = [s for s in blank_slide.shapes if s.has_text_frame]
+        sizes = {s.text_frame.paragraphs[0].runs[0].font.size for s in shapes}
+        assert len(sizes) == 1, "flow must render one uniform size"
+        assert sizes.pop() < Pt(14), "long label must shrink below the default"
+
+    def test_short_labels_keep_requested_size(self, blank_slide):
+        elem = {
+            "left": 1.0,
+            "top": 2.0,
+            "width": 10.0,
+            "height": 1.5,
+            "items": [{"label": "Plan"}, {"label": "Ship"}],
+        }
+        add_arrow_flow_element(blank_slide, elem, {}, {})
+        for shape in [s for s in blank_slide.shapes if s.has_text_frame]:
+            assert shape.text_frame.paragraphs[0].runs[0].font.size == Pt(14)
 
     def test_per_item_overrides_take_precedence(self, blank_slide):
         elem = {
@@ -2152,3 +2186,145 @@ class TestDryRun:
         )
         rc = main()
         assert rc == 1
+
+
+class TestAccessibility:
+    """Tests for slide titles, alternative text, and text language."""
+
+    def _slide(self, presentation, tmp_path, elements, title="Deck Title"):
+        content = {"slide": 1, "title": title, "elements": elements}
+        return build_slide(presentation, content, {}, tmp_path)
+
+    def test_given_matching_textbox_when_built_then_it_becomes_the_title(
+        self, blank_presentation, tmp_path
+    ):
+        # Arrange
+        elements = [
+            {
+                "type": "textbox",
+                "left": 1,
+                "top": 1,
+                "width": 6,
+                "height": 1,
+                "text": "Deck  Title",
+            },
+            {
+                "type": "textbox",
+                "left": 1,
+                "top": 3,
+                "width": 6,
+                "height": 1,
+                "text": "Body",
+            },
+        ]
+
+        # Act
+        slide = self._slide(blank_presentation, tmp_path, elements)
+
+        # Assert
+        assert slide.shapes.title is not None
+        assert slide.shapes.title.text == "Deck  Title"
+        assert slide.shapes.title.left == Inches(1)
+        assert slide.shapes.title.text_frame.paragraphs[0]._p.pPr.get("algn") == "l"
+        assert len(slide.shapes) == 2
+
+    def test_given_no_matching_text_when_built_then_off_slide_title_is_first(
+        self, blank_presentation, tmp_path
+    ):
+        # Arrange
+        elements = [
+            {
+                "type": "textbox",
+                "left": 1,
+                "top": 1,
+                "width": 6,
+                "height": 1,
+                "text": "Something else",
+            },
+        ]
+
+        # Act
+        slide = self._slide(blank_presentation, tmp_path, elements)
+
+        # Assert
+        title = slide.shapes.title
+        assert title is not None and title.text == "Deck Title"
+        assert title.left >= blank_presentation.slide_width
+        assert slide.shapes[0].shape_id == title.shape_id
+
+    def test_given_no_title_field_when_built_then_no_title_added(
+        self, blank_presentation, tmp_path
+    ):
+        # Act
+        slide = self._slide(blank_presentation, tmp_path, [], title=None)
+
+        # Assert
+        assert slide.shapes.title is None
+
+    def test_given_alt_when_image_added_then_descr_set(
+        self, blank_slide, sample_image_path
+    ):
+        # Arrange
+        elem = {
+            "type": "image",
+            "path": sample_image_path.name,
+            "left": 1,
+            "top": 1,
+            "width": 2,
+            "height": 2,
+            "alt": "VS Code editor",
+        }
+
+        # Act
+        pic = add_image_element(blank_slide, elem, sample_image_path.parent)
+
+        # Assert
+        assert pic._element.nvPicPr.cNvPr.get("descr") == "VS Code editor"
+
+    def test_given_decorative_when_image_added_then_flagged(
+        self, blank_slide, sample_image_path
+    ):
+        # Arrange
+        elem = {
+            "type": "image",
+            "path": sample_image_path.name,
+            "left": 1,
+            "top": 1,
+            "width": 2,
+            "height": 2,
+            "decorative": True,
+        }
+
+        # Act
+        pic = add_image_element(blank_slide, elem, sample_image_path.parent)
+
+        # Assert
+        c_nv_pr = pic._element.nvPicPr.cNvPr
+        assert c_nv_pr.get("descr") == ""
+        ns = "{http://schemas.microsoft.com/office/drawing/2017/decorative}"
+        assert c_nv_pr.find(f".//{ns}decorative").get("val") == "1"
+
+    def test_given_language_when_applied_then_runs_tagged(
+        self, blank_presentation, tmp_path
+    ):
+        # Arrange
+        elements = [
+            {
+                "type": "textbox",
+                "left": 1,
+                "top": 1,
+                "width": 6,
+                "height": 1,
+                "text": "Hello",
+            },
+        ]
+        slide = self._slide(blank_presentation, tmp_path, elements)
+
+        # Act
+        apply_text_language(blank_presentation, "en-US")
+
+        # Assert
+        runs = slide._element.iter(
+            "{http://schemas.openxmlformats.org/drawingml/2006/main}rPr"
+        )
+        assert all(r.get("lang") == "en-US" for r in runs)

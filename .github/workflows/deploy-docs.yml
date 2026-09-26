@@ -17,6 +17,7 @@ on:
   workflow_run:
     workflows:
       - Backlog Grooming Publisher
+      - Demo Material Render
     branches:
       - main
     types:
@@ -70,7 +71,7 @@ jobs:
         run: npm run build
 
       - name: Authenticate publisher provenance artifact
-        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.path == '.github/workflows/backlog-groom-publisher.yml' }}
         id: reports
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
@@ -160,6 +161,74 @@ jobs:
         run: |
           mkdir -p docs/docusaurus/build/backlog-grooming
           cp -R report-history/backlog-grooming/. docs/docusaurus/build/backlog-grooming/
+
+      # Pages replaces the whole site on each deploy, so every deploy restages
+      # the latest bundle rather than only deploys triggered by a render.
+      - name: Find the latest demo material bundle
+        id: demo
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            let runs = [];
+            try {
+              ({ data: { workflow_runs: runs } } = await github.rest.actions.listWorkflowRuns({
+                ...context.repo,
+                workflow_id: "demo-material-render.yml",
+                branch: repository.default_branch,
+                status: "success",
+                per_page: 20,
+              }));
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            for (const run of runs) {
+              if (run.path !== ".github/workflows/demo-material-render.yml") continue;
+              const artifacts = await github.paginate(
+                github.rest.actions.listWorkflowRunArtifacts,
+                { ...context.repo, run_id: run.id, per_page: 100 },
+              );
+              const bundle = artifacts.filter(
+                (artifact) => !artifact.expired && artifact.name === `demo-material-site-${run.id}`,
+              );
+              if (bundle.length === 1) {
+                core.setOutput("artifact-id", String(bundle[0].id));
+                core.setOutput("run-id", String(run.id));
+                return;
+              }
+            }
+            core.notice("No demo material bundle is available; the demo material page links stay empty.");
+
+      - name: Download the demo material bundle
+        if: ${{ steps.demo.outputs.artifact-id != '' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ steps.demo.outputs.artifact-id }}
+          run-id: ${{ steps.demo.outputs.run-id }}
+          github-token: ${{ github.token }}
+          path: demo-material-bundle
+
+      - name: Stage demo material
+        if: ${{ steps.demo.outputs.artifact-id != '' }}
+        run: |
+          python3 - <<'PY'
+          import json, re, shutil
+          from pathlib import Path
+
+          bundle = Path("demo-material-bundle")
+          target = Path("docs/docusaurus/build/demo-material")
+          allowed = re.compile(
+              r"^(index\.json|L[1-4]00/(hve-demo-L[1-4]00\.(pptx|mp4|vtt|html)|index\.html|render-result\.json|source-register\.md))$"
+          )
+          for path in bundle.rglob("*"):
+              if path.is_symlink() or (path.is_file() and not allowed.match(path.relative_to(bundle).as_posix())):
+                  raise SystemExit(f"unexpected file in demo material bundle: {path}")
+          index = json.loads((bundle / "index.json").read_text(encoding="utf-8"))
+          if index.get("schema_version") != "demo-material-site/v1":
+              raise SystemExit("demo material bundle has an unknown schema")
+          shutil.copytree(bundle, target, dirs_exist_ok=True)
+          print(f"Staged demo material levels: {sorted(index.get('levels', {}))}")
+          PY
 
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

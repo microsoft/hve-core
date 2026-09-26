@@ -1,9 +1,9 @@
 ---
 title: TTS Voice-Over Skill
-description: Generate per-slide WAV voice-over files from YAML speaker notes using Azure Speech SDK
+description: Generate per-slide WAV voice-over files from YAML speaker notes using Azure Speech SDK or an offline Piper engine
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-09-23
 ms.topic: how-to
 keywords:
   - tts
@@ -68,6 +68,17 @@ uv run scripts/generate_voiceover.py --dry-run --content-dir path/to/content
 ```bash
 uv run scripts/generate_voiceover.py --content-dir path/to/content --output-dir voice-over
 ```
+
+To generate narration offline without an Azure Speech resource, install [Piper](https://github.com/OHF-Voice/piper1-gpl) separately, download a voice, and select the `piper` engine:
+
+```bash
+uv tool install piper-tts
+uvx --from piper-tts python -m piper.download_voices en_US-joe-medium --data-dir ~/.local/share/piper
+uv run scripts/generate_voiceover.py --engine piper --piper-data-dir ~/.local/share/piper \
+  --content-dir path/to/content --output-dir voice-over
+```
+
+Piper is GPL-3.0-or-later and is not installed with the skill. Each voice has its own license in its model card; the default `en_US-joe-medium` voice is CC0. Piper sounds less natural than Azure neural voices, so prefer Azure for published narration.
 
 ### 3. Embed Audio into PPTX
 
