@@ -137,9 +137,9 @@ The `evals/` directory contains PowerShell entry points for agent-behavior, base
 | `Build-AgentInventory.ps1`                | Generate the authoritative agent inventory used by eval suites                      |
 | `Build-GraderLineageMap.ps1`              | Build or check the Vally grader-name lineage map                                    |
 | `Get-AgentDependencyMap.ps1`              | Build a JSON map of agent dependencies for the baseline-equivalence dispatcher      |
-| `Get-EvalChangeSet.ps1`                  | Freeze explicit base/head commits, their merge base, and changed paths               |
-| `Get-ChangedAIArtifact.ps1`               | Classify AI customization artifacts from the canonical eval change set               |
-| `Get-ChangedSpecStimulus.ps1`             | Resolve changed stimuli from canonical comparison-base and head content              |
+| `Get-EvalChangeSet.ps1`                   | Freeze explicit base/head commits, their merge base, and changed paths              |
+| `Get-ChangedAIArtifact.ps1`               | Classify AI customization artifacts from the canonical eval change set              |
+| `Get-ChangedSpecStimulus.ps1`             | Resolve changed stimuli from canonical comparison-base and head content             |
 | `Invoke-AgentMatrix.ps1`                  | Run the agent-behavior matrix and aggregate per-agent summaries                     |
 | `Invoke-ArtifactModeration.ps1`           | Moderate all eval specs plus changed AI artifacts as a pre-job gate                 |
 | `Invoke-BaselineEquivalence.ps1`          | Run baseline-vs-customized equivalence evals for a target agent                     |
