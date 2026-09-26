@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-09-04
+ms.date: 2026-09-25
 ms.topic: guide
 keywords:
   - copilot
@@ -104,11 +104,13 @@ to `hve-builder`; they are not independent agents or lifecycle owners.
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
 
-**Modes:** Manual mode stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. The **Full Auto** handoff requests an automatic session; after you confirm whether ordinary Research and Plan decisions are agent-owned or user-retained, the agent continues through Review without routine approval prompts.
+**Modes:** Manual mode waits for explicit phase advancement. The **Full Auto** handoff authorizes automatic progression without another mode-confirmation prompt, preserving previously retained decisions and stop-before-Implementation boundaries.
 
-After Review, an automatic session offers ranked follow-up choices plus **Stop automatic session** and **Switch to manual mode**. Blockers, required human review, and destructive or externally visible actions still stop for confirmation.
+The planner recovers missing critique evidence within authorized scope without fresh consent or a lifetime retry cap. It preserves run-inactivity checks, prior findings and current candidate identity. Ordinary corrections receive parent-owned closure rather than a routine second critique. An interruption or agent self-check does not create a human-signature requirement.
 
-**Critical:** `RPI Agent` is a user-selected lifecycle wrapper, not a dispatcher for named specialized task workers. Automatic mode begins only after explicit confirmation and never infers consent from a handoff request. It may use generic bounded delegation only when it materially improves an isolated activity. Navigate durable artifacts with the task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
+After Review, automatic sessions select required in-scope follow-ups according to retained decision preferences. You can stop the session or switch to manual mode. Applicable human attestations, unresolved evidence and required confirmation for risky actions remain separate gates.
+
+**Critical:** `RPI Agent` is a user-selected lifecycle wrapper. Explicit automatic authorization governs progression, not permission to ignore scoped safety or evidence requirements. Delegation is optional and used only when isolation is useful. Navigate durable artifacts with the task ID, `Pxx`, `Pxx-Txx`, headings, and `<!-- rpi:... -->` markers.
 
 ### ux-ui-designer
 

@@ -14,6 +14,12 @@ In both artifacts, wrap code, commands, and symbols in backticks. Link an existi
 
 ## Following the plan and checking off work
 
+An approved plan has current evidence-backed readiness and authorization for its declared scope.
+Neither an unchecked implementation task nor an agent self-check creates a human-signature gate.
+Require human attestation only when its actual source applies to the affected action. A historical
+Revise with resolved findings and verified parent closure does not require another critique or a
+rewritten Pass. Keep unresolved material user choices and explicit phase boundaries separate.
+
 1. Resolve declared invocation scope before changing source. With no exact scope, the full plan is in scope. An exact `Pxx` includes that phase and its tasks; an exact `Pxx-Txx` includes that task only. Keep all other active-plan markers outside completion claims.
 2. Read the first unchecked applicable plan item and its labeled blocks: `Goals:`, `Requirements:`, `Details:`, `Guidance:` when present, `References:`, and `Dependencies:`. Open the linked references, the decision and risk table rows that name the task, the latest critique disposition, the prior changes record, and relevant evidence. Select the first dependency-ready item in plan order. Do not advance a dependent item until its plan prerequisites are checked.
 3. Complete the item so that its `Requirements:` hold, then write its changes-record entry.
@@ -36,7 +42,7 @@ Apply this decision rule when new information comes to light:
 2. Apply an implementation-only annotation when it changes no assessed content: update marked checklist status, add task-local `Guidance:` pointers, or record evidence in the changes record. These changes preserve the plan's assessed-content hash; no critique is needed.
    * Add a `Guidance:` block to a later task when completed work created something that task needs and the plan did not already name it: a class, API, contract, utility, fixture, script, or path that a future agent would otherwise have to rediscover. Place the block immediately after that task's `Details:` and keep each bullet concrete, for example a bullet that says to consider using the contracts added under `scripts/plugins/contracts/`. Do not restate what the task's existing blocks already say.
 3. Use a follow-up-only update when newly discovered work is outside immediate scope. Add its item to the plan's `## Follow-Up Items` section with the outside-immediate-scope reason, triggering evidence, and owner or next action. Keep it outside active `Pxx` and `Pxx-Txx` completion and acceptance claims.
-4. Return any change to assessed content, including factual `References:`, `Requirements:`, `Details:`, task wording, sequencing, diagrams, scope, architecture, capability, safety, dependencies or evidence, to planning for revision-bound closure before affected work resumes. When an update adds, merges, splits, or removes phases or tasks, reconcile Phase Checklist diagrams using existing node IDs in that planning step. A significant or divergent choice without confirmed user direction also requires a decision. Corrections, test work and validation refinement that do not change assessed content remain in Implement.
+4. Return assessed-content changes to the planning owner for the reference's parent-owned closure. Supported factual corrections need a recorded delta, current identity and resolving evidence, not a routine second critique. A materially changed requirement, architecture, capability, safety or evidence boundary needs assessment of the affected scope; an unresolved significant choice also needs user direction. Reconcile diagrams when phase/task structure changes. Corrections and validation work that do not change assessed content remain in Implement.
 
 For every plan update, add a descriptive changes-record entry that records the affected plan area or `Pxx` or `Pxx-Txx` marker, what changed, why, triggering evidence, user answer or decision when present, reconciliation performed, and planning and critique state when material.
 
@@ -59,7 +65,7 @@ An assessed-content change requires planning closure even without a new user dec
 1. Record the discovery, affected `Pxx` or `Pxx-Txx`, current plan state, triggering evidence, impact, and paused work in the changes record.
 2. Return the current plan and evidence to the planning owner when the accepted plan must change.
 3. Reconcile the plan through the planning owner's current-state process. Preserve unrelated completed work and its evidence.
-4. Resume only affected dependent work after any needed user decision, updated plan state and revision-bound closure are current. Preserve each critique and its hash lineage as historical evidence and record the resulting decision state in the changes record.
+4. Resume affected work once needed decisions, current plan identity and parent closure are recorded, including actual assessment of any missing or materially changed coverage. Preserve prior critiques and their hash lineage as historical evidence. Ordinary parent correction does not create a human-review or additional-critique gate.
 
 On resumption, continue from the first unchecked dependency-ready item in declared scope. Read the prior changes-record entries, current plan markers and task-local context, and latest critique disposition. Do not resume a task awaiting a user decision or advance a dependent item before its prerequisites are checked.
 

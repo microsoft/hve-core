@@ -1,0 +1,49 @@
+{
+  "task_id": "fixture-task",
+  "identity_file": "rpi-fixture/identities.json",
+  "identity_entry": "A",
+  "context": "Synthetic phase-local evidence, not an activated automatic RPI parent.",
+  "repeated_interruption": {
+    "attempts": [
+      {
+        "attempt_id": "initial-interrupted",
+        "kind": "initial",
+        "output": ".copilot-tracking/reviews/plans/2026-09-25/fixture-task-initial-interrupted.md",
+        "invocation_outcome": "unknown",
+        "execution": "Deferred",
+        "verdict": "unavailable",
+        "lifecycle": "ended",
+        "evidence": "Operator confirmed the closed-window invocation ended; no task stop was requested."
+      },
+      {
+        "attempt_id": "recovery-interrupted",
+        "kind": "recovery",
+        "output": ".copilot-tracking/reviews/plans/2026-09-25/fixture-task-recovery-interrupted.md",
+        "invocation_outcome": "unknown",
+        "execution": "Deferred",
+        "verdict": "unavailable",
+        "lifecycle": "ended",
+        "evidence": "Operator confirmed the timed-out invocation ended; persistence failed before output survived."
+      }
+    ],
+    "reconciliation": "All named outputs, returns and task records inspected; no assessment or unresolved fragments survived. Full coverage remains missing.",
+    "repair": "Execution context restored and review directory persistence repaired. Verify a distinct writable output before reservation.",
+    "historical_consumed_flag": true
+  },
+  "repaired_preflight": {
+    "attempts": [
+      {
+        "attempt_id": "initial-preflight",
+        "kind": "initial",
+        "output": ".copilot-tracking/reviews/plans/2026-09-25/fixture-task-initial-preflight.md",
+        "invocation_outcome": "preflight-limitation",
+        "execution": "Deferred",
+        "verdict": "unavailable",
+        "lifecycle": "never-dispatched",
+        "evidence": "The canonical planning reference was unavailable; no substantive assessment ran."
+      }
+    ],
+    "reconciliation": "No worker was dispatched and no assessment or fragments exist. Full coverage remains missing.",
+    "repair": "The complete rpi-plan skill, its canonical reference and hashing helper are now staged and readable. Verify them before reserving recovery."
+  }
+}

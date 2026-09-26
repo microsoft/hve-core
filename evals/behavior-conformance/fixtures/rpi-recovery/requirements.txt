@@ -1,0 +1,5 @@
+Task fixture-task has one local output: rpi-fixture/result.txt.
+Its exact UTF-8 bytes without BOM are fixture-complete followed by one LF.
+Read those bytes back and record a passed comparison in the task's changes record.
+No service, network, model, tracker, commit, repository source edit, or publication is needed.
+Human publication attestation is separate and remains unchanged.
