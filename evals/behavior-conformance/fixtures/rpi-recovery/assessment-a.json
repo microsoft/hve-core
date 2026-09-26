@@ -1,0 +1,31 @@
+{
+  "task_id": "fixture-task",
+  "attempt_id": "initial-a",
+  "kind": "initial",
+  "depth": "standard",
+  "invocation_outcome": "returned",
+  "execution": "Complete",
+  "verdict": "Revise",
+  "identity_file": "rpi-fixture/identities.json",
+  "identity_entry": "A",
+  "plan": "rpi-fixture/plan-a.md",
+  "run_evidence": "Synthetic completed assessment; no active worker. Historical reservation-to-assessment sequence completed once.",
+  "coverage": {
+    "scope": "full",
+    "requirements": ["FR-001", "NFR-001", "P01-T01"],
+    "assessed": ["requirements", "task details", "dependencies", "decisions", "scope", "architecture", "capability", "safety", "evidence", "material risks"],
+    "missing": []
+  },
+  "findings": [
+    {
+      "id": "PC-001",
+      "severity": "Medium",
+      "owner": "planning parent",
+      "status": "open",
+      "evidence": "P01-T01 Details says fixture-pending, contradicting FR-001 and the supplied output contract.",
+      "resolution": "Change only that Details value to fixture-complete; preserve the one LF and all boundaries."
+    }
+  ],
+  "residual_risks": ["Diagram rendering is informational for this single local file; no unassessed material boundary."],
+  "human_attestation": false
+}

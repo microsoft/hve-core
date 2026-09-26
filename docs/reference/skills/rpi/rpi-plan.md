@@ -1,9 +1,9 @@
 ---
 title: rpi-plan
-description: "Create or resume an evidence-based RPI implementation plan. Use for planning, interrupted critiques, or bounded critique infrastructure recovery."
+description: Create or resume an evidence-based RPI implementation plan with parent-owned finding closure and recoverable critique evidence.
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-24
+ms.date: 2026-09-25
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Create or resume an evidence-based RPI implementation plan. Use for planning, interrupted critiques, or bounded critique infrastructure recovery.
+Create or resume an evidence-based RPI implementation plan with parent-owned finding closure and recoverable critique evidence.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
@@ -38,11 +38,10 @@ with explicit contrasting text colors.
 
 Planning owns two internal gates. It activates [rpi-research](rpi-research) only for a demonstrated
 readiness gap, and runs [rpi-plan-critique](rpi-plan-critique) once the plan is implementation-ready.
-Substantive assessments are not replayed for an unchanged candidate. Required corrections and
-material implementation-time plan changes receive revision-bound closure. The planner can authorize
-one generic interruption recovery for the initial assessment; two infrastructure-only retries are
-shared across the task, including failed closure runs, with separate consent and evidence checks.
-Confirmed user direction outranks critique advice.
+Completed coverage is reused rather than replayed for a more favorable verdict. The planner closes
+ordinary supported corrections directly and commissions assessment for missing or materially changed
+coverage. Recovery within authorized scope needs no fresh consent or task-lifetime retry allowance.
+Confirmed user direction outranks critique advice; actual human attestations remain separate.
 
 The planner drafts every phase itself. Before drafting, it looks for skills and subagents whose descriptions say they are used during planning or with `rpi-plan` and follows each description's guidance on when and how to use it; no subagent is required.
 
@@ -81,71 +80,39 @@ authorize substantive changes in excluded Guidance.
 
 ### Resume an interrupted critique
 
-If planning reports `started` but no result survived, resume the same task through `rpi-plan`. It checks recorded evidence, confirms the original critique run has ended, and verifies the saved plan and state. When eligible, it asks for your approval of one recovery for the identified task and candidate, preserving original records and writing a separate recovery result.
+If planning reports `started` but no result survived, resume the same task through `rpi-plan`. It reconciles evidence, confirms that no competing run is active, verifies the saved candidate, and records the repaired prerequisite or missing assessment scope. Within existing authorization it can continue without another consent prompt, preserving original records and using a distinct output.
 
-A substantive `Complete`, `Partial` or `Blocked` result remains binding for its candidate even if its file is missing. A saved reservation cannot be replayed. Missing evidence is not a pass: implementation requires an actual Complete assessment covering the delivered plan hash, closed blocking findings and explicit residual-risk dispositions.
+A preflight failure with no assessment is Deferred, with no verdict about the plan. Substantive findings remain binding even when their output file is missing. A status label alone does not prove coverage; the planner accounts for surviving evidence and missing work before authorizing recovery. Missing evidence is never Pass.
 
 ### Close findings after a plan correction
 
-For a required correction, the planner preserves the first assessment and findings, records the
-original and revised plan hashes, the exact change and affected requirements, and reserves a
-distinct revision-closure result. If requirements, architecture, capability, safety or evidence
-boundaries change, the revised plan needs a fresh full assessment. Otherwise, an independent
-targeted closure verifies the correction against the immediately preceding Complete result and
-every intervening result back to the Complete full assessment. A Partial or Blocked assessment
-cannot be extended by targeted closure.
+The planner preserves the original assessment and findings, records predecessor and current hashes,
+and verifies the exact correction against resolving evidence. When assessed requirements,
+architecture, capability, safety and evidence boundaries are unchanged, this parent closure needs
+no routine second critique. A historical Revise can remain in the record while the corrected plan
+becomes Ready.
 
-Repeated hashes, oscillating corrections or no material progress stop as Revise or Blocked. Before
-handing off to implementation, the planner compares the delivered assessed-content hash with a
-Complete full assessment or a valid Complete targeted closure chain and verifies every blocking
-finding is closed. Checked task markers and implementation-only `Guidance:` pointers do not change
-that hash; changes to assessed plan content do. Changing candidates does not reset
-infrastructure-retry reservations.
+A material boundary change needs assessment of its affected scope and dependencies, or a full
+assessment when impact cannot be bounded. Partial coverage is never silently promoted to complete.
+Before implementation, current identity, complete combined coverage, parent closure and blocking
+finding dispositions must agree.
 
-If both the initial attempt and generic recovery ended in verified infrastructure failures without an
-assessment, the planner may request up to two additional infrastructure retries. A failed
-revision-closure invocation may use remaining slots from the same task-wide allowance without a
-generic recovery. Each needs confirmed ended runs, reconciled saved and late evidence, an
-identified candidate hash and fresh consent. A network-looking error or absent file alone is
-insufficient. Every reservation consumes its slot, even if interrupted; changing sessions,
-candidates or hosts does not reset the task's budget.
+### When recovery pauses
 
-For example, two host-recorded connection failures with confirmed completion and no assessment may qualify for another consent request. A substantive critique of the same candidate, an unknown run status, or unresolved assessment fragments do not qualify. Earlier findings on a different corrected candidate remain binding and must be reconciled, but do not themselves disqualify recovery of the failed closure.
+Recovery pauses when run activity, saved identity or required evidence cannot be established, or
+the same failure recurs without a changed prerequisite or concrete resolving action. The planner
+identifies the diagnostic owner and smallest clearing evidence. It does not use a historical
+attempt count, missing counter field or interruption to require human assessment.
 
-If a closure is interrupted without positive host or transport failure evidence, the planner
-checks the saved candidate, attempt history and available results, then confirms every originating
-run ended. A user cancellation, closed window or session timeout alone does not establish that
-status. With no substantive result or unresolved fragments for the revised candidate, the planner
-routes directly to independent human-assessment eligibility checks, even when infrastructure retry
-slots remain. It preserves unknown outcomes, prior findings, hashes and actual reservation counts;
-it neither retries automatically nor marks unused slots exhausted. Specific consent is still
-required, and implementation stays blocked until a qualifying full human assessment is reconciled.
-
-Older plans may not have an infrastructure reservation count. The planner reconstructs it from the
-original task's attempt records, parent state, critique outputs and available originating run
-evidence, counting interrupted reservations even without output. It preserves the task, candidates
-and findings. If the complete history cannot be established, the count remains unknown, automated
-retries stay blocked, and the planner requests the specific missing evidence rather than treating
-the field as zero or exhausting the budget by default.
-
-### When infrastructure retries are exhausted
-
-The planner stops automated critique calls and prepares sanitized diagnostics: attempt IDs, candidate hashes, evidence locations, failure and lifecycle status, and the host/network support owner and evidence needed. Repairing the transport does not replenish retry slots.
-
-Exhaustion alone does not authorize another assessment. Active or unknown runs must be reconciled
-first; substantive results for the current candidate follow their existing finding dispositions.
-Either verified infrastructure exhaustion or an eligible ended closure interruption can permit a
-specifically authorized independent human critique, with no substantive result or unresolved
-fragments for the current candidate. If the interrupted attempt was a closure, that human must
-assess the full revised plan and reconcile prior findings.
-
-The human supplies a complete assessment of the saved candidate, including assessor provenance, independence, coverage, verdict and findings. The agent verifies that report against the candidate and all surviving evidence; it cannot write or sign the human's assessment. Approval alone or a mismatched candidate remains blocked. Late results are retained and reconciled, never discarded in favor of a passing report.
+Human review applies only when a named source requires it for the affected artifact or action.
+Agent self-checks are not human attestations, and a genuine human signature remains human-owned.
+Manual phase boundaries and unresolved material user decisions still apply.
 
 ### Preserve evidence when resuming
 
-For example, an editor-visible plan that is absent on disk must be saved or synchronized and verified before recovery. Do not delete the reservation to restart. A reconstructed candidate must be identified and approved as current, not represented as the lost original.
+For example, an editor-visible plan that is absent on disk must be saved or synchronized and verified before recovery. Preserve reservations and identify a reconstructed candidate honestly. Ask only for a material decision that existing direction does not resolve, not a routine signature on the recovered plan.
 
-Use a consistently updated workflow before resuming: edits to this checkout do not replace instructions already loaded in a conversation or update an installed plugin snapshot. Start a fresh session with the updated repository workflow, or update the installed distribution you use. Choosing this recovery policy or enabling automatic mode does not authorize a specific task's recovery.
+Use a consistently updated workflow before resuming: edits to this checkout do not replace loaded instructions or update an installed plugin snapshot. Retain the original evidence and reconcile it under the active contract. Policy adoption alone does not prove readiness; authorized recovery still needs its identity, inactivity and progress checks.
 
 ### Create a plan
 
@@ -157,7 +124,7 @@ The skill sends one `RPI Plan` opening with the interpreted goal, starting evide
 
 ```text
 * Planning execution: Complete; Planning Readiness: Ready
-* Critique: standard, initial Revise; PC-001 (Medium) corrected in P02-T02 Requirements and verified by Complete targeted closure of the delivered hash
+* Critique: standard, initial Revise; PC-001 corrected in P02-T02 Requirements and verified by parent closure with current identity and resolving evidence
 * Decisions: managed identity for production confirmed; connection string limited to local development
 
 | Artifact                                                                                                                                             | Description          |

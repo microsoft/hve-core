@@ -3,7 +3,7 @@ title: Using RPI Together
 description: Complete walkthrough of an evidence-led RPI lifecycle from research readiness through Follow-up
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-09-25
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -196,7 +196,17 @@ Dependencies:
 
 Use `Pxx` and `Pxx-Txx` IDs, headings, and markers to navigate the plan. They remain stable when surrounding text changes. Code, commands, and symbols use backticks, and existing files are Markdown links relative to the plan so you can open them from the editor.
 
-`/rpi-plan` owns the complete plan and drafts every phase itself. Skills and subagents whose descriptions say they are used during planning extend it as their descriptions direct; no subagent is required. `rpi-plan-critique` independently assesses the complete plan once.
+`/rpi-plan` owns the complete plan and drafts every phase itself. Skills and subagents whose descriptions say they are used during planning extend it as their descriptions direct; no subagent is required. `rpi-plan-critique` assesses the candidate, then returns control to the planner for finding closure and readiness.
+
+### Recovering a planning critique
+
+A saved reservation is not a completed assessment. If critique stops before producing usable evidence, the planner reconciles saved results, confirms that no competing run is active, and identifies the prerequisite or missing coverage that the next attempt will address. Recovery within already-authorized scope needs no additional consent and has no task-lifetime retry limit. An unchanged failure without a resolving action pauses for diagnosis rather than retrying blindly.
+
+The planner preserves prior findings, candidate identity and late results. It closes supported corrections directly with the revised identity and resolving evidence; a historical Revise verdict does not need to be rewritten as Pass. Missing or materially changed assessment scope still needs actual coverage before implementation.
+
+Agent self-checks, user decisions and human attestations are different gates. An ordinary RPI plan or interrupted critique does not require a human signature. Real human-review requirements still apply to their named artifact or action, and manual progression or an explicit stop-before-Implementation boundary still waits for your direction.
+
+Updating repository files does not replace instructions already loaded in a conversation or update an installed plugin. Resume with a consistently updated workflow and the original task evidence; do not treat an old attempt count or a policy update as automatic readiness.
 
 ### Implement
 
@@ -221,7 +231,7 @@ P01-T01 and P01-T02 have completion evidence; P01 is checked.
 
 Check the code and validation evidence, then continue to the next approved `Pxx` or `Pxx-Txx` item.
 
-If implementation requires a significant departure from the approved plan, record the discovery in the changes record, obtain any required decision, and update the affected plan tasks before dependent work resumes. Preserve the existing critique as historical evidence; do not run it again. Ordinary local judgment and non-material updates remain in Implement.
+If implementation changes assessed plan content, return the delta to the planning owner for current identity and parent closure. Supported corrections need no routine second critique or user approval. A material change to requirements, architecture, safety or evidence boundaries needs assessment of the affected scope, and an unresolved user decision still pauses that work. Preserve existing critiques as historical evidence; ordinary local judgment remains in Implement.
 
 When a completed task creates something a later task needs, such as a new class or contract path the plan did not name, implementation adds a `Guidance:` block to that later task so the next agent does not have to rediscover it.
 
@@ -405,7 +415,9 @@ Choose the entry surface that best fits the task.
 
 ### Manual and Automatic Mode in RPI Agent
 
-`RPI Agent` starts in manual mode: it stays in the active phase until you invoke the next `/rpi-*` command or select a phase handoff. Choose **Full Auto** to request an automatic session. The agent asks whether it should resolve ordinary Research and Plan decisions itself or pause for you to retain decisions in either phase, then continues through Review without routine approval prompts. It still stops for blockers, required human review, and any destructive or externally visible action.
+Choose how `RPI Agent` should progress and which decisions you want to retain. In manual mode it waits for explicit phase advancement. The **Full Auto** handoff authorizes automatic progression without another mode-confirmation prompt, preserving any previously retained decisions or stop-before-Implementation boundary.
+
+Recovery within authorized scope does not introduce another approval checkpoint. Actual evidence gaps, applicable human attestations, and required confirmation for risky or externally visible actions remain in force.
 
 After Review, an automatic session presents ranked follow-up choices alongside **Stop automatic session** and **Switch to manual mode**. Selecting a follow-up starts a child task from Research with the completed task recorded as its parent. Review-item decisions are agent-owned in automatic mode unless you explicitly retain them.
 

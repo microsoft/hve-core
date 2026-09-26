@@ -1,9 +1,9 @@
 ---
 title: RPI Agent
-description: "User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination."
+description: "Coordinate one task through Research, Plan, Implement, Review, and Follow-up with resumable evidence and explicit phase authority."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-09-25
 ms.topic: reference
 keywords:
   - agent
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-User-selected RPI workflow wrapper for Research, Plan, Implement, Review, and Follow-up. Use when one task needs lifecycle coordination.
+Coordinate one task through Research, Plan, Implement, Review, and Follow-up with resumable evidence and explicit phase authority.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
@@ -41,7 +41,7 @@ It offers two modes:
 | `manual`    | Walks you through the active phase's artifacts and waits for an explicit next-phase request, a `/rpi-*` command, or a phase handoff. You own every material decision.                                                                                                                                                          |
 | `automatic` | An explicit automatic request or **Full Auto** selection starts automatic progression without another mode question. The agent makes ordinary decisions and runs required in-scope follow-ups through new RPI loops until the requested outcome is complete. Explicitly retained decisions and progression limits still apply. |
 
-Both modes stop for blockers, required human review, and destructive, hard-to-reverse, or externally visible actions.
+Both modes preserve actual evidence blockers, applicable human attestations, and required confirmation for risky actions. An ordinary plan self-check or critique interruption does not create a human-review gate.
 
 Reach for a different asset when:
 
@@ -66,9 +66,9 @@ The opening question is "How would you like us to work on this?":
 
 You can retain follow-up selection through the second option or a custom answer. Use the ranked handoffs or answer the follow-up question; you can also stop or switch to manual mode at any time. Resuming automatic mode preserves explicitly retained decisions and a stop-before-Implementation boundary unless you change them.
 
-With the stop-before-Implementation option, the agent completes Planning, including its required critique and decision gates, then returns to manual mode in Plan. It walks you through the research and plan, including trade-offs and readiness, and offers refinement or an explicit Implementation request. Iteration preserves the task and consumed critique gate. Resuming the conversation alone does not start Implementation.
+With the stop-before-Implementation option, the agent completes Planning and its applicable evidence and decision gates, then returns to manual mode in Plan. It explains trade-offs and readiness and offers refinement or an explicit Implementation request. Iteration preserves task identity and assessment evidence. Resuming the conversation alone does not start Implementation.
 
-If a critique was interrupted after reservation without a terminal result, `rpi-plan` owns reconciliation and may offer one task-specific, explicitly confirmed recovery after verifying that the original worker ended. A missing result is not a pass. Terminal assessments are not retried, and recovery does not remove your stop-before-Implementation boundary.
+If critique is interrupted or deferred, `rpi-plan` reconciles saved evidence, verifies no competing run is active, and records a concrete resolving action before continuing missing assessment work. Recovery within authorized scope needs no fresh consent and has no lifetime retry cap. Parent-owned closure handles ordinary corrections; actual assessment covers missing or materially changed scope. Neither recovery nor a Ready result removes your stop-before-Implementation boundary.
 
 ## Example usage
 

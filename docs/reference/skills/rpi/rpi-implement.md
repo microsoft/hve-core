@@ -1,9 +1,9 @@
 ---
 title: rpi-implement
-description: "Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume."
+description: "Execute an authorized, evidence-ready RPI plan, maintain current task and closure evidence, and record completed work. Use to begin or resume implementation."
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-24
+ms.date: 2026-09-25
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Follow an approved RPI plan, keep it current as new information comes to light, check off completed work, and keep a condensed changes log. Use when implementation is ready to begin or resume.
+Execute an authorized, evidence-ready RPI plan, maintain current task and closure evidence, and record completed work. Use to begin or resume implementation.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
@@ -33,15 +33,20 @@ Use `rpi-implement` to work through an approved plan. Declare the scope as the f
 Implementation also keeps the plan current. Checked task markers, implementation-only
 `Guidance:` pointers and out-of-scope `## Follow-Up Items` do not change the assessed-content
 hash, so normal progress can resume. Changes to task wording, references, requirements,
-architecture, capability, safety, dependencies or other assessed content return to planning for
-revision-bound closure before affected work resumes. An unresolved significant or divergent choice
-needs a user decision; an evidence-backed clarification does not. The same candidate's critique is
-not replayed.
+architecture, capability, safety, dependencies or other assessed content return to the planning
+owner for current identity and parent closure before affected work resumes. Ordinary supported
+corrections need no routine second critique; missing or materially changed coverage needs an actual
+assessment. An unresolved significant choice needs user direction, not a generic approval prompt.
 
 Before changing source, the implementer runs the [rpi-plan hashing helper](rpi-plan#verify-a-plans-assessed-content-hash)
 against the saved plan and compares its version, exact projection and SHA-256 with the covering
-assessment. Missing tooling, failed computation or unverifiable identity returns to planning
-without a hand-built projection or another critique from implementation.
+assessment and parent-closure evidence. Missing tooling, failed computation or unverifiable
+identity returns to planning without a hand-built projection or another critique from implementation.
+
+An approved plan has evidence-backed readiness and authorization for the declared scope. A direct
+Implementation request or authorized automatic progression needs no second plan approval.
+Agent self-checks and historical Revise verdicts with resolved findings are not human-signature
+gates. Genuine human attestations and explicit phase boundaries still apply to their named actions.
 
 Reach for a different asset when:
 

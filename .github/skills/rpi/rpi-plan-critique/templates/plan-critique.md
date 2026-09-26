@@ -7,20 +7,18 @@
 * Critique date: {{YYYY-MM-DD}}
 * Plan: .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
 * Invocation outcome: {{completed_or_preflight_limitation_or_host_failure_or_unknown}}
-* Assessment execution/availability: {{Complete_Partial_Blocked_or_not_produced_or_unknown}}
+* Assessment execution/availability: {{Complete_Partial_Blocked_Deferred_or_unknown}}
 * Critique depth: {{standard_or_deep}}
 * Depth provenance: {{default_or_explicit_user_request}}
-* Attempt slot consumed: yes
-* Attempt ID and kind: {{unique_attempt_id_and_initial_revision_closure_recovery_infrastructure_retry_or_human}}
+* Attempt ID and kind: {{unique_attempt_id_and_initial_revision_closure_or_recovery}}
 * Candidate identity and saved hash boundary: {{revision_hash_and_reservation_metadata_boundary}}
 * Canonical projection evidence: {{resolved_helper_path_projection_version_and_recomputed_projection_or_immutable_evidence_path}}
-* Revision closure: {{not_applicable_or_immediate_predecessor_adjacent_hashes_latest_delta_affected_ids_full_or_targeted_basis_and_targeted_root_complete_full_assessment_with_intermediate_results}}
+* Revision or recovery scope: {{full_or_scoped_assessment_predecessor_hashes_delta_or_missing_coverage_affected_ids_and_retained_evidence}}
 * Current-run provenance: {{immediate_planner_activation_or_standalone_initial_reservation}}
-* Original attempt and recovery approval: {{not_applicable_or_original_pointer_and_task_specific_consent}}
+* Recovery eligibility: {{not_applicable_or_original_pointer_existing_authority_inactivity_and_concrete_resolving_action}}
 * Prior attempt and reconciliation pointers: {{all_applicable_attempts_and_late_evidence_or_none}}
-* Human assessor provenance: {{not_applicable_or_human_supplied_identity_role_independence_confirmation_date_and_specific_authorization}}
 
-<!-- For no assessment, record the limitation and unavailable verdict rather than fabricated coverage or findings. Infrastructure classification belongs to the planning parent. Only a human may author or attest a human assessment. -->
+<!-- For no assessment, record Deferred and an unavailable verdict rather than fabricated findings. Preserve uncertain outcomes and fragments. The parent owns recovery and subsequent plan edits. This template does not create a human attestation requirement. -->
 
 ## Inputs and Criterion Boundary
 
@@ -42,7 +40,7 @@
 * Verdict: {{Pass_Revise_Blocked_or_unavailable_when_no_assessment}}
 * Rationale: {{concise_evidence_based_rationale}}
 * Hash covered by this assessment: {{saved_candidate_hash_or_unavailable}}
-* Closure chain: {{not_applicable_or_root_complete_full_assessment_and_ordered_adjacent_hash_result_and_disposition_pointers}}
+* Retained coverage and remaining gaps: {{prior_assessment_scope_and_applicability_with_explicit_unassessed_work_or_none}}
 
 ## Findings
 

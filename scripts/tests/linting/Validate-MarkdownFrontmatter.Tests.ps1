@@ -1397,6 +1397,32 @@ Content
     }
 
     Context 'Pattern matching behavior' {
+        It 'Excludes RPI recovery fixtures without excluding their documentation' {
+            $tokens = $null
+            $parseErrors = $null
+            $scriptAst = [System.Management.Automation.Language.Parser]::ParseFile(
+                $scriptPath,
+                [ref]$tokens,
+                [ref]$parseErrors
+            )
+            $excludeParameter = $scriptAst.ParamBlock.Parameters | Where-Object {
+                $_.Name.VariablePath.UserPath -eq 'ExcludePaths'
+            }
+            $exclusions = @($excludeParameter.DefaultValue.SafeGetValue())
+
+            $parseErrors | Should -BeNullOrEmpty
+            $exclusions | Should -Contain 'evals/behavior-conformance/fixtures/rpi-recovery/**'
+            foreach ($path in @(
+                'evals/behavior-conformance/fixtures/rpi-recovery/plan-a.md',
+                'evals/behavior-conformance/fixtures/rpi-recovery/plan-b.md',
+                'evals/behavior-conformance/fixtures/rpi-recovery/attestation.md'
+            )) {
+                @($exclusions | Where-Object { $path -like $_ }).Count | Should -BeGreaterThan 0
+            }
+            $documentation = 'docs/reference/skills/rpi/rpi-plan.md'
+            @($exclusions | Where-Object { $documentation -like $_ }).Count | Should -Be 0
+        }
+
         It 'Defines default exclusions for generated Docusaurus test output' {
             $tokens = $null
             $parseErrors = $null

@@ -1,0 +1,72 @@
+{
+  "identities": {
+    "A": {
+      "projection_version": "rpi-plan-assessment-v1",
+      "sha256": "c0d063924dfe00c986db645e99d2d386401a1a5584e928b195022c1b0e6e0915",
+      "projection": "---\ndescription: \"Synthetic RPI recovery task with one ordinary correction.\"\n---\n\n# Local fixture plan\n\n## Task Metadata\n\n* Task ID: `fixture-task`\n* Task slug: `fixture-task`\n* Artifact date: `2026-09-25`\n* Context: standalone phase fixture, not an active RPI Agent session.\n\n## Executive Summary\n\nCreate one local text output and record completion. No service, network, model,\ntracker, repository source, or commit operation is part of this task.\n\n### What You May Not Know\n\nThe output is synthetic. Human publication review is a separate action recorded\nin `rpi-fixture/attestation.md`; this task neither publishes nor attests it.\n\n## Phase Checklist\n\n### Before\n\n```mermaid\n%%{init: {\"themeVariables\": {\"fontFamily\": \"Arial, Helvetica, sans-serif\", \"fontSize\": \"16px\"}}}%%\nflowchart LR\n    A[\"No fixture output\"]\n```\n\n### After\n\n```mermaid\n%%{init: {\"themeVariables\": {\"fontFamily\": \"Arial, Helvetica, sans-serif\", \"fontSize\": \"16px\"}}}%%\nflowchart LR\n    A[\"Saved plan\"] --> B[\"Added: local fixture output\"]\n    classDef new stroke-dasharray: 5 5\n    class B new\n```\n\n<!-- markdownlint-disable MD032 -->\n<!-- rpi:phase id=P01 -->\n### [ ] P01: Produce the local output\n\nGoals:\n* Establish a checkable local artifact without external effects.\n\nDependencies:\n* None.\n\n```mermaid\n%%{init: {\"themeVariables\": {\"fontFamily\": \"Arial, Helvetica, sans-serif\", \"fontSize\": \"16px\"}}}%%\nflowchart LR\n    A[\"Saved plan\"] --> B[\"Added: local fixture output\"]\n    classDef new stroke-dasharray: 5 5\n    classDef phase fill:#fff3bf,color:#1f2328,stroke:#9a6700,stroke-width:2px\n    class B new,phase\n```\n\nHighlighted work: the added local output.\n\n<!-- rpi:task id=P01-T01 -->\n#### [ ] P01-T01: Write the fixture result\n\nGoals:\n* Make the requested text available for local inspection.\n\nRequirements:\n* Satisfy `FR-001` and `NFR-001`.\n* The contractual UTF-8 bytes of `rpi-fixture/result.txt` are\n  `fixture-complete` followed by one LF, without a BOM.\n* Read the output back and record the byte comparison in the changes record.\n\nDetails:\n* Write `fixture-pending` followed by one LF to the result.\n* Use ordinary file operations; do not create an executable helper.\n\nReferences:\n* [rpi-fixture/requirements.txt](../../../rpi-fixture/requirements.txt): output contract.\n\nDependencies:\n* None.\n\n<!-- markdownlint-enable MD032 -->\n\n## User Decisions and Requirements\n\n### Confirmed User Direction\n\n* Only the local output and canonical phase evidence are in scope.\n* Progression authority comes from the invoking request, not these fixtures.\n\n### Planning Decisions and Feedback\n\nNo unresolved material choices.\n\n## Goals\n\nProduce a harmless artifact whose bytes can be independently checked.\n\n## Scope and Non-Goals\n\nOnly `rpi-fixture/result.txt` and task-bound tracking evidence may change.\nPublication, attestation, repository source edits and external actions are excluded.\n\n## Functional Requirements\n\n* `FR-001`: output exactly `fixture-complete` followed by one LF.\n\n## Non-Functional Requirements\n\n* `NFR-001`: use UTF-8 without BOM; preserve supplied evidence and human attestation.\n\n## Risks and Open Questions\n\nNo material uncertainty. Diagram rendering is informational for this single-file\nfixture; source relationships are sufficient for this task's assessment.\n\n## Dependencies\n\nThe canonical plan identity helper and readable requirements are available.\n\n## Sources\n\n* [rpi-fixture/requirements.txt](../../../rpi-fixture/requirements.txt)\n\n"
+    },
+    "B": {
+      "projection_version": "rpi-plan-assessment-v1",
+      "sha256": "7c16990b5d65dab8f5dbf41dd6a1395ee93a93c052d176b99e821d2037597aa2",
+      "projection": "---\ndescription: \"Synthetic RPI recovery task with one ordinary correction.\"\n---\n\n# Local fixture plan\n\n## Task Metadata\n\n* Task ID: `fixture-task`\n* Task slug: `fixture-task`\n* Artifact date: `2026-09-25`\n* Context: standalone phase fixture, not an active RPI Agent session.\n\n## Executive Summary\n\nCreate one local text output and record completion. No service, network, model,\ntracker, repository source, or commit operation is part of this task.\n\n### What You May Not Know\n\nThe output is synthetic. Human publication review is a separate action recorded\nin `rpi-fixture/attestation.md`; this task neither publishes nor attests it.\n\n## Phase Checklist\n\n### Before\n\n```mermaid\n%%{init: {\"themeVariables\": {\"fontFamily\": \"Arial, Helvetica, sans-serif\", \"fontSize\": \"16px\"}}}%%\nflowchart LR\n    A[\"No fixture output\"]\n```\n\n### After\n\n```mermaid\n%%{init: {\"themeVariables\": {\"fontFamily\": \"Arial, Helvetica, sans-serif\", \"fontSize\": \"16px\"}}}%%\nflowchart LR\n    A[\"Saved plan\"] --> B[\"Added: local fixture output\"]\n    classDef new stroke-dasharray: 5 5\n    class B new\n```\n\n<!-- markdownlint-disable MD032 -->\n<!-- rpi:phase id=P01 -->\n### [ ] P01: Produce the local output\n\nGoals:\n* Establish a checkable local artifact without external effects.\n\nDependencies:\n* None.\n\n```mermaid\n%%{init: {\"themeVariables\": {\"fontFamily\": \"Arial, Helvetica, sans-serif\", \"fontSize\": \"16px\"}}}%%\nflowchart LR\n    A[\"Saved plan\"] --> B[\"Added: local fixture output\"]\n    classDef new stroke-dasharray: 5 5\n    classDef phase fill:#fff3bf,color:#1f2328,stroke:#9a6700,stroke-width:2px\n    class B new,phase\n```\n\nHighlighted work: the added local output.\n\n<!-- rpi:task id=P01-T01 -->\n#### [ ] P01-T01: Write the fixture result\n\nGoals:\n* Make the requested text available for local inspection.\n\nRequirements:\n* Satisfy `FR-001` and `NFR-001`.\n* The contractual UTF-8 bytes of `rpi-fixture/result.txt` are\n  `fixture-complete` followed by one LF, without a BOM.\n* Read the output back and record the byte comparison in the changes record.\n\nDetails:\n* Write `fixture-complete` followed by one LF to the result.\n* Use ordinary file operations; do not create an executable helper.\n\nReferences:\n* [rpi-fixture/requirements.txt](../../../rpi-fixture/requirements.txt): output contract.\n\nDependencies:\n* None.\n\n<!-- markdownlint-enable MD032 -->\n\n## User Decisions and Requirements\n\n### Confirmed User Direction\n\n* Only the local output and canonical phase evidence are in scope.\n* Progression authority comes from the invoking request, not these fixtures.\n\n### Planning Decisions and Feedback\n\nNo unresolved material choices.\n\n## Goals\n\nProduce a harmless artifact whose bytes can be independently checked.\n\n## Scope and Non-Goals\n\nOnly `rpi-fixture/result.txt` and task-bound tracking evidence may change.\nPublication, attestation, repository source edits and external actions are excluded.\n\n## Functional Requirements\n\n* `FR-001`: output exactly `fixture-complete` followed by one LF.\n\n## Non-Functional Requirements\n\n* `NFR-001`: use UTF-8 without BOM; preserve supplied evidence and human attestation.\n\n## Risks and Open Questions\n\nNo material uncertainty. Diagram rendering is informational for this single-file\nfixture; source relationships are sufficient for this task's assessment.\n\n## Dependencies\n\nThe canonical plan identity helper and readable requirements are available.\n\n## Sources\n\n* [rpi-fixture/requirements.txt](../../../rpi-fixture/requirements.txt)\n\n"
+    }
+  },
+  "history": {
+    "task_id": "fixture-task",
+    "identity_file": "rpi-fixture/identities.json",
+    "identity_entry": "A",
+    "context": "Synthetic phase-local evidence, not an activated automatic RPI parent.",
+    "repeated_interruption": {
+      "attempts": [
+        {
+          "attempt_id": "initial-interrupted",
+          "kind": "initial",
+          "output": ".copilot-tracking/reviews/plans/2026-09-25/fixture-task-initial-interrupted.md",
+          "invocation_outcome": "unknown",
+          "execution": "Deferred",
+          "verdict": "unavailable",
+          "lifecycle": "ended",
+          "evidence": "Operator confirmed the closed-window invocation ended; no task stop was requested."
+        },
+        {
+          "attempt_id": "recovery-interrupted",
+          "kind": "recovery",
+          "output": ".copilot-tracking/reviews/plans/2026-09-25/fixture-task-recovery-interrupted.md",
+          "invocation_outcome": "unknown",
+          "execution": "Deferred",
+          "verdict": "unavailable",
+          "lifecycle": "ended",
+          "evidence": "Operator confirmed the timed-out invocation ended; persistence failed before output survived."
+        }
+      ],
+      "reconciliation": "All named outputs, returns and task records inspected; no assessment or unresolved fragments survived. Full coverage remains missing.",
+      "repair": "Execution context restored and review directory persistence repaired. Verify a distinct writable output before reservation.",
+      "historical_consumed_flag": true
+    },
+    "repaired_preflight": {
+      "attempts": [
+        {
+          "attempt_id": "initial-preflight",
+          "kind": "initial",
+          "output": ".copilot-tracking/reviews/plans/2026-09-25/fixture-task-initial-preflight.md",
+          "invocation_outcome": "preflight-limitation",
+          "execution": "Deferred",
+          "verdict": "unavailable",
+          "lifecycle": "never-dispatched",
+          "evidence": "The canonical planning reference was unavailable; no substantive assessment ran."
+        }
+      ],
+      "reconciliation": "No worker was dispatched and no assessment or fragments exist. Full coverage remains missing.",
+      "repair": "The complete rpi-plan skill, its canonical reference and hashing helper are now staged and readable. Verify them before reserving recovery."
+    }
+  },
+  "file_sha256_lf": {
+    "plan-a.md": "7DF118FD5BDDA25C80C0CC29023A2048DC60BC633526FDA19E13F2BB73570990",
+    "plan-b.md": "52663E2BA0D7C1D959D3F42D315B667A1A08BC046D9CA1ABCDB3ADD85615DA81",
+    "assessment-a.json": "DE9F6070287C54CB6256329FD9958294C7AC56AF5AD6CC471B9222E0AED51C4E",
+    "identities.json": "F182E42A0C7B75CFBDC8CBFA03FFCE4788BF653A5558360B628DAA3E0F2A809D",
+    "history.json": "DFC7B9B18810EC5A558F2FA84C247F23C181A5A572932A0AE3975BCED0CDA238",
+    "attestation.md": "B0623C9A1A6A561D1EDA3C45C9ADE38AC50EB84AEDA94E5A800D4D2F87CB9C47",
+    "requirements.txt": "50EF851B8BD52B91BE1F38881A42B5ABD6ECD7C3D01721ECBAFAE4B5655910C1"
+  }
+}
