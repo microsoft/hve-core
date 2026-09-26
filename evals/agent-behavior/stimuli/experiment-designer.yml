@@ -473,12 +473,14 @@ stimuli:
       Resume synthetic experiment `synthetic-batching` after Phase 1. I confirm
       convergence Research task `synthetic-batching-recommendation` using only
       the staged experiment evidence. Preserve the synthetic session date
-      `2026-09-21`. Perform it now under the session evidence root and update
-      `context.md` with the recommendation, alternative, evidence IDs,
-      confidence, unresolved assumptions, and dispositions. The experiment
-      session directory is the alternate Research evidence root; no execution
-      or hypothesis validation has occurred. Research posture: `focused`. The
-      staged evidence file is the only source; explicit limit: one research cycle.
+      `2026-09-21`. Perform it now under the session evidence root and write
+      the primary Research artifact with the recommendation, alternative,
+      evidence IDs, confidence, and unresolved assumptions. Stop after the
+      Research return; reconciling `context.md` is a separate step. The
+      experiment session directory is the alternate Research evidence root; no
+      execution or hypothesis validation has occurred. Research posture:
+      `focused`. The staged evidence file is the only source; explicit limit:
+      one research cycle.
     environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
@@ -510,6 +512,35 @@ stimuli:
         config:
           path: .copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md
           pattern: '(?is)Recommendation and Alternatives.*batching.*caching.*confidence.*unresolved'
+
+  - name: experiment-designer-reconciles-convergence-research
+    prompt: |
+      Resume synthetic experiment `synthetic-batching` after Phase 1.
+      Convergence Research task `synthetic-batching-recommendation` completed
+      and returned the staged primary artifact under the session evidence root
+      for synthetic date `2026-09-21`. Reconcile it into `context.md` now:
+      record the result for each investigated assumption and a disposition for
+      each recommended field, with the artifact path and evidence IDs. No
+      execution or hypothesis validation has occurred. Do not rerun Research.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/experiment-context.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
+        - src: fixtures/rpi-depth/experiment-convergence-research.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+    tags:
+      category: agent-behavior
+      scenario: experiment-rpi-research-reconciliation
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
       - type: file-matches
         name: experiment-context-records-dispositions
         config:
@@ -552,30 +583,15 @@ stimuli:
         config:
           pattern: '(?s)^[^?]*\?[^?]*$'
 
-  - name: experiment-designer-produces-execution-rpi-artifacts
-    turns:
-      - |
-        Resume synthetic experiment `synthetic-batching` after the staged MVE
-        plan was approved. I confirm only Plan for bounded execution task
-        `synthetic-batching-execution` using synthetic date `2026-09-21`.
-        Create and critique the execution plan against the staged run data.
-        Stop for my acceptance of the returned execution plan before Implement.
-        Do not execute it, write results or Changes, perform Review, write
-        `outcome.md`, or decide whether `H1` is validated in this turn.
-      - |
-        I accept the execution plan returned in the preceding turn, provided
-        its required critique gates are complete and no unresolved blocker
-        remains. If those prerequisites are absent, stop and report the gap;
-        this acceptance does not waive them. Otherwise, I confirm Implement
-        against that exact plan. Use the staged run data, write `results.md`
-        and the canonical Changes record, and report Review readiness.
-        Do not perform Review or write `outcome.md` in this turn.
-      - |
-        I confirm the one execution-conformance Review against the returned
-        plan, critique, Changes, and validation evidence, only if Implementation
-        is Review-ready. If required evidence is missing, stop and report it.
-        Preserve synthetic task `synthetic-batching-execution` and date
-        `2026-09-21`. Do not write `outcome.md` or decide whether `H1` is validated.
+  - name: experiment-designer-plans-execution
+    prompt: |
+      Resume synthetic experiment `synthetic-batching` after the staged MVE
+      plan was approved. I confirm only Plan for bounded execution task
+      `synthetic-batching-execution` using synthetic date `2026-09-21`. Draft
+      the implementation-ready execution plan against the staged run data now,
+      then stop before its critique; I will run the critique as a separate
+      step. Do not execute it, write results or Changes, perform Review, write
+      `outcome.md`, or decide whether `H1` is validated.
     environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
@@ -591,12 +607,9 @@ stimuli:
       skills:
         - ../../.github/skills/project-planning/experiment-design
         - ../../.github/skills/rpi/rpi-plan
-        - ../../.github/skills/rpi/rpi-plan-critique
-        - ../../.github/skills/rpi/rpi-implement
-        - ../../.github/skills/rpi/rpi-review
     tags:
       category: agent-behavior
-      scenario: experiment-rpi-execution-production
+      scenario: experiment-rpi-execution-plan
     constraints:
       max_agent_duration: 180s
       max_duration: 240s
@@ -605,18 +618,86 @@ stimuli:
         name: experiment-execution-plan-produced
         config:
           path: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+
+  - name: experiment-designer-critiques-execution-plan
+    prompt: |
+      Resume synthetic experiment `synthetic-batching`. The staged execution
+      plan for task `synthetic-batching-execution` (synthetic date
+      `2026-09-21`) is drafted and implementation-ready, and its initial
+      critique has not run. Run that one initial critique now at standard
+      depth, then stop for my acceptance of the plan. Do not implement it,
+      write results or Changes, perform Review, or write `outcome.md`.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/experiment-mve-plan.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+        - src: fixtures/rpi-depth/experiment-run-data.md
+          dest: evidence/experiment-run-data.md
+        - src: fixtures/rpi-depth/experiment-execution-plan-draft.md
+          dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+          dest: .github/instructions/hve-core/copilot-tracking.instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: agent-behavior
+      scenario: experiment-rpi-execution-critique
+    constraints:
+      max_agent_duration: 180s
+      max_duration: 240s
+    graders:
       - type: file-exists
         name: experiment-execution-critique-produced
         config:
           path: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
+
+  - name: experiment-designer-produces-execution-rpi-artifacts
+    prompt: |
+      Resume synthetic experiment `synthetic-batching`. I accept the staged
+      execution plan for task `synthetic-batching-execution` (synthetic date
+      `2026-09-21`); its staged initial critique is Complete. If the plan's
+      admission prerequisites do not hold, stop and report the gap; this
+      acceptance does not waive them. Otherwise, I confirm Implement against
+      that exact plan. Use the staged run data, write `results.md` and the
+      canonical Changes record, and report Review readiness. Do not perform
+      Review, write `outcome.md`, or decide whether `H1` is validated.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/experiment-mve-plan.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+        - src: fixtures/rpi-depth/experiment-run-data.md
+          dest: evidence/experiment-run-data.md
+        - src: fixtures/rpi-depth/experiment-execution-plan.md
+          dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+        - src: fixtures/rpi-depth/experiment-execution-plan-critique.md
+          dest: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+          dest: .github/instructions/hve-core/copilot-tracking.instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-implement
+    tags:
+      category: agent-behavior
+      scenario: experiment-rpi-execution-production
+    constraints:
+      max_agent_duration: 180s
+      max_duration: 240s
+    graders:
       - type: file-exists
         name: experiment-execution-changes-produced
         config:
           path: .copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md
-      - type: file-exists
-        name: experiment-execution-review-produced
-        config:
-          path: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
       - type: file-matches
         name: experiment-results-produced-from-raw-data
         config:
@@ -624,6 +705,51 @@ stimuli:
           pattern: '(?is)100.*76.*24%.*100.*0\.5%.*(none|no anomalies)'
       - type: file-not-exists
         name: experiment-execution-does-not-preempt-outcome
+        config:
+          path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
+
+  - name: experiment-designer-reviews-execution
+    prompt: |
+      Resume synthetic experiment `synthetic-batching`. Implementation of task
+      `synthetic-batching-execution` (synthetic date `2026-09-21`) is
+      Review-ready: the staged plan, critique, Changes and results are the
+      execution evidence. I confirm the one execution-conformance Review
+      against them now. If required evidence is missing, stop and report it.
+      Do not write `outcome.md` or decide whether `H1` is validated.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/experiment-mve-plan.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+        - src: fixtures/rpi-depth/experiment-execution-plan.md
+          dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+        - src: fixtures/rpi-depth/experiment-execution-plan-critique.md
+          dest: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
+        - src: fixtures/rpi-depth/experiment-execution-changes.md
+          dest: .copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md
+        - src: fixtures/rpi-depth/experiment-run-data.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/results.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+          dest: .github/instructions/hve-core/copilot-tracking.instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-review
+    tags:
+      category: agent-behavior
+      scenario: experiment-rpi-execution-review
+    constraints:
+      max_agent_duration: 180s
+      max_duration: 240s
+    graders:
+      - type: file-exists
+        name: experiment-execution-review-produced
+        config:
+          path: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
+      - type: file-not-exists
+        name: experiment-execution-review-does-not-preempt-outcome
         config:
           path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
 

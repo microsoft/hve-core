@@ -740,8 +740,8 @@ console.log(JSON.stringify(results));
 
   It 'Projects document-owned BRD findings separately from pending user acceptance' -Tag 'ReceiptRepair' {
     $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot 'stimuli/brd-builder.yml'))
-    $stimulus = $specification.stimuli | Where-Object name -eq 'brd-builder-executes-research-segment'
-    $stimulus.graders | Should -HaveCount 4
+    $stimulus = $specification.stimuli | Where-Object name -eq 'brd-builder-reconciles-completed-research-segment'
+    $stimulus.graders | Should -HaveCount 2
     $grader = $stimulus.graders | Where-Object name -eq 'brd-research-disposition-projected'
     $template = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/project-planning/requirements-author/templates/brd/brd-full.md')
     $header = [regex]::Match($template, '(?m)^\| Gap ID[^\r\n]+').Value
@@ -1065,7 +1065,7 @@ console.log(JSON.stringify(results));
       Reject = @('The segment is blocked. Discover is cleared.', 'Discover cannot exit yet.', 'The segment is blocked and Discover is satisfied.')
     }
     @{
-      Spec = 'stimuli/prd-builder.yml'; Scenario = 'prd-builder-executes-approved-authoring-plan'; Grader = 'prd-authoring-does-not-claim-quality-gate'; Count = 5
+      Spec = 'stimuli/prd-builder.yml'; Scenario = 'prd-builder-executes-approved-authoring-plan'; Grader = 'prd-authoring-does-not-claim-quality-gate'; Count = 4
       Accept = @('I did not mark the Build gate complete.', "I haven't claimed the quality gate passed.", 'Drafted FR-001 and AC-001; content-quality review remains with PRD Builder.')
       Reject = @('The Build gate passed.', 'Quality gate cleared.', 'I did not run review, but the Build gate passed.')
     }
@@ -1273,23 +1273,85 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     $result.passed | Should -Be $Expected
   }
 
-  It 'Keeps native execution acceptance after Plan and Review after Implement' -Tag 'NativeFixture' {
-    $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot 'stimuli/experiment-designer.yml'))
-    $stimulus = $specification.stimuli | Where-Object name -eq 'experiment-designer-produces-execution-rpi-artifacts'
-    $stimulus.Contains('prompt') | Should -BeFalse
-    $stimulus.turns | Should -HaveCount 3
-    $stimulus.turns[0] | Should -Match 'confirm only Plan'
-    $stimulus.turns[0] | Should -Match 'Stop for my acceptance'
-    $stimulus.turns[1] | Should -Match 'preceding turn'
-    $stimulus.turns[1] | Should -Match 'acceptance does not waive'
-    $stimulus.turns[1] | Should -Match 'Do not perform Review'
-    $stimulus.turns[2] | Should -Match 'only if Implementation\s+is Review-ready'
-    $stimulus.turns[2] | Should -Match 'If required evidence is missing, stop'
-    $stimulus.graders | Should -HaveCount 6
-    $stimulus.constraints.max_agent_duration | Should -Be '180s'
-    $stimulus.constraints.max_duration | Should -Be '240s'
-    $stimulus.environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan-critique'
-    $stimulus.environment.files.dest | Should -Contain '.github/instructions/hve-core/copilot-tracking.instructions.md'
+  It 'Maps every native execution and reconciliation obligation to exactly one single-segment scenario' -Tag 'NativeFixture' {
+    $map = [ordered]@{
+      'experiment-designer.yml' = [ordered]@{
+        'experiment-designer-plans-execution' = @('experiment-execution-plan-produced')
+        'experiment-designer-critiques-execution-plan' = @('experiment-execution-critique-produced')
+        'experiment-designer-produces-execution-rpi-artifacts' = @('experiment-execution-changes-produced', 'experiment-results-produced-from-raw-data', 'experiment-execution-does-not-preempt-outcome')
+        'experiment-designer-reviews-execution' = @('experiment-execution-review-produced', 'experiment-execution-review-does-not-preempt-outcome')
+        'experiment-designer-executes-convergence-research' = @('experiment-recommendation-artifact-exists', 'experiment-recommendation-compares-options')
+        'experiment-designer-reconciles-convergence-research' = @('experiment-context-records-dispositions')
+      }
+      'brd-builder.yml' = [ordered]@{
+        'brd-builder-executes-research-segment' = @('brd-research-primary-artifact-exists', 'brd-research-primary-artifact-has-evidence')
+        'brd-builder-reconciles-completed-research-segment' = @('brd-research-invocation-state-recorded', 'brd-research-disposition-projected')
+      }
+      'prd-builder.yml' = [ordered]@{
+        'prd-builder-executes-approved-authoring-plan' = @('prd-authoring-content-progressed', 'prd-authoring-plan-marker-completed', 'prd-authoring-changes-record-exists', 'prd-authoring-does-not-claim-quality-gate')
+        'prd-builder-reconciles-completed-authoring-segment' = @('prd-authoring-state-records-separate-plan-and-implement')
+      }
+    }
+    $limits = @{ 'experiment-designer-plans-execution' = '180s'; 'experiment-designer-critiques-execution-plan' = '180s'; 'experiment-designer-produces-execution-rpi-artifacts' = '180s'; 'experiment-designer-reviews-execution' = '180s' }
+    $stimuli = @{}
+    $allNames = [System.Collections.Generic.List[string]]::new()
+    foreach ($file in $map.Keys) {
+      $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot "stimuli/$file"))
+      foreach ($stimulus in $partial.stimuli) { foreach ($grader in @($stimulus.graders)) { $allNames.Add($grader.name) } }
+      foreach ($name in $map[$file].Keys) {
+        $stimulus = @($partial.stimuli | Where-Object name -eq $name)
+        $stimulus | Should -HaveCount 1 -Because $name
+        $stimuli[$name] = $stimulus[0]
+        $stimulus[0].Contains('turns') | Should -BeFalse -Because $name
+        @($stimulus[0].graders.name) | Should -Be $map[$file][$name] -Because $name
+        $expected = if ($limits.ContainsKey($name)) { $limits[$name] } else { '110s' }
+        $stimulus[0].constraints.max_agent_duration | Should -Be $expected -Because $name
+      }
+    }
+    foreach ($name in @($map.Values | ForEach-Object { $_.Values } | ForEach-Object { $_ })) {
+      @($allNames | Where-Object { $_ -ceq $name }) | Should -HaveCount 1 -Because "$name is owned by exactly one scenario"
+    }
+
+    $noPrecreated = @{
+      'experiment-designer-plans-execution' = '.copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md'
+      'experiment-designer-critiques-execution-plan' = '.copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md'
+      'experiment-designer-produces-execution-rpi-artifacts' = '.copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md'
+      'experiment-designer-reviews-execution' = '.copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md'
+      'experiment-designer-executes-convergence-research' = '.copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md'
+      'brd-builder-executes-research-segment' = '.copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md'
+      'prd-builder-executes-approved-authoring-plan' = '.copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md'
+    }
+    foreach ($name in $noPrecreated.Keys) { $stimuli[$name].environment.files.dest | Should -Not -Contain $noPrecreated[$name] -Because $name }
+    $stimuli['experiment-designer-produces-execution-rpi-artifacts'].environment.files.dest | Should -Not -Contain '.copilot-tracking/mve/2026-09-21/synthetic-batching/results.md'
+    $stimuli['experiment-designer-reviews-execution'].environment.files.dest | Should -Not -Contain '.copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md'
+    $stimuli['experiment-designer-produces-execution-rpi-artifacts'].environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan'
+    $stimuli['experiment-designer-produces-execution-rpi-artifacts'].environment.skills | Should -Contain '../../.github/skills/rpi/rpi-implement'
+    $stimuli['experiment-designer-critiques-execution-plan'].environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan-critique'
+    $stimuli['experiment-designer-reviews-execution'].environment.skills | Should -Contain '../../.github/skills/rpi/rpi-review'
+    $stimuli['experiment-designer-plans-execution'].prompt | Should -Match 'stop before its critique'
+
+    $draftMount = $stimuli['experiment-designer-critiques-execution-plan'].environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
+    $draft = Get-Content -Raw (Join-Path $script:ObservationRoot $draftMount.src)
+    $draft | Should -Not -Match '(?m)^## Critique Disposition'
+    . (Join-Path $PSScriptRoot '../../../.github/skills/rpi/rpi-plan/scripts/Get-PlanAssessmentHash.ps1')
+    { Get-PlanAssessmentHash -PlanPath (Resolve-Path (Join-Path $script:ObservationRoot $draftMount.src)).Path } | Should -Not -Throw
+    foreach ($name in 'experiment-designer-produces-execution-rpi-artifacts', 'experiment-designer-reviews-execution') {
+      $planMount = $stimuli[$name].environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
+      $critiqueMount = $stimuli[$name].environment.files | Where-Object dest -like '.copilot-tracking/reviews/plans/*'
+      $identity = Get-PlanAssessmentHash -PlanPath (Resolve-Path (Join-Path $script:ObservationRoot $planMount.src)).Path
+      $critique = Get-Content -Raw (Join-Path $script:ObservationRoot $critiqueMount.src)
+      $recorded = [regex]::Match($critique, '(?s)```json\r?\n(.*?)\r?\n```').Groups[1].Value | ConvertFrom-Json
+      $recorded.sha256 | Should -BeExactly $identity.sha256 -Because $name
+      $recorded.projection | Should -BeExactly $identity.projection -Because $name
+      $critique | Should -Match 'Assessment execution/availability: Complete'
+      (Get-Content -Raw (Join-Path $script:ObservationRoot $planMount.src)) | Should -Match "Covered sha256: ``$($identity.sha256)``"
+    }
+
+    $brdArtifact = Get-Content -Raw (Join-Path $script:ObservationRoot 'fixtures/rpi-depth/brd-discover-01-research.md')
+    @([regex]::Matches($brdArtifact, '(?<![A-Za-z0-9_-])[QCW][0-9]+(?![A-Za-z0-9_-])').Value | Sort-Object -Unique) | Should -Be @('C1', 'Q1')
+    $stimuli['brd-builder-reconciles-completed-research-segment'].environment.files.dest | Should -Contain '.copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md'
+    $stimuli['experiment-designer-reconciles-convergence-research'].environment.files.dest | Should -Contain '.copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md'
+    $stimuli['prd-builder-reconciles-completed-authoring-segment'].environment.files.dest | Should -Contain '.copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md'
   }
 
   It 'Stages phase-faithful research and distinct complete outcome evidence' -Tag 'NativeFixture' {

@@ -1159,8 +1159,9 @@ stimuli:
     Discover has a named regulatory gap that the BRD and supplied references
     do not answer. Research returned artifact
     `.copilot-tracking/research/2026-09-18/atlas-research.md` with Q1 and C1.
-    Show the resulting state receipt entry and the BRD disposition row in your
-    reply, then explain the authority boundary.
+    Show the resulting state receipt entry and the BRD
+    `Research Finding Dispositions` row in your reply, then explain the
+    authority boundary.
   environment:
     files:
     - src: ../../.github/agents/project-planning/brd-builder.agent.md
@@ -1220,9 +1221,10 @@ stimuli:
     Resume the staged Atlas BRD in Discover. I approve Research segment
     `discover-01` with task slug `atlas-brd-discover-01` for gap `REG-01`.
     The persisted synthetic session date is `2026-09-21`; preserve it in paths.
-    Use only the staged requirements evidence. Perform the segment now:
-    write its primary artifact under the BRD session evidence root, then
-    update state and the BRD disposition table. Do not merely explain it.
+    Use only the staged requirements evidence. Perform the segment now and
+    write its primary artifact under the BRD session evidence root. Stop
+    after the Research return; state and BRD disposition reconciliation is a
+    separate step. Do not merely explain it.
     Research posture: `focused`. The staged evidence file is the only source;
     explicit limit: one research cycle.
   environment:
@@ -1255,6 +1257,37 @@ stimuli:
     config:
       path: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
       pattern: (?is)(REG-01|retention).*(Q1|Research Question).*(C1|seven-year)
+- name: brd-builder-reconciles-completed-research-segment
+  prompt: |
+    Resume the staged Atlas BRD in Discover. Research segment `discover-01`
+    with task slug `atlas-brd-discover-01` for gap `REG-01` completed and
+    returned the staged primary artifact under the BRD session evidence root
+    for synthetic date `2026-09-21`. Reconcile it now: record the segment's
+    invocation receipt in state and give its finding a document-owned
+    disposition in the BRD. I have not yet answered whether to accept the
+    returned work. Do not rerun Research.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/brd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/brd-state.json
+      dest: .copilot-tracking/brd-sessions/atlas.state.json
+    - src: fixtures/rpi-depth/atlas-brd.md
+      dest: docs/project-planning/atlas-brd.md
+    - src: fixtures/rpi-depth/requirements-evidence.md
+      dest: evidence/requirements-evidence.md
+    - src: fixtures/rpi-depth/brd-discover-01-research.md
+      dest: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
+    skills:
+    - ../../.github/skills/project-planning/requirements-author
+  tags:
+    category: agent-behavior
+    scenario: brd-rpi-research-reconciliation
+    agent: brd-builder
+  constraints:
+    max_agent_duration: 110s
+    max_duration: 150s
+  graders:
   - type: program
     name: brd-research-invocation-state-recorded
     config:
@@ -4333,12 +4366,14 @@ stimuli:
     Resume synthetic experiment `synthetic-batching` after Phase 1. I confirm
     convergence Research task `synthetic-batching-recommendation` using only
     the staged experiment evidence. Preserve the synthetic session date
-    `2026-09-21`. Perform it now under the session evidence root and update
-    `context.md` with the recommendation, alternative, evidence IDs,
-    confidence, unresolved assumptions, and dispositions. The experiment
-    session directory is the alternate Research evidence root; no execution
-    or hypothesis validation has occurred. Research posture: `focused`. The
-    staged evidence file is the only source; explicit limit: one research cycle.
+    `2026-09-21`. Perform it now under the session evidence root and write
+    the primary Research artifact with the recommendation, alternative,
+    evidence IDs, confidence, and unresolved assumptions. Stop after the
+    Research return; reconciling `context.md` is a separate step. The
+    experiment session directory is the alternate Research evidence root; no
+    execution or hypothesis validation has occurred. Research posture:
+    `focused`. The staged evidence file is the only source; explicit limit:
+    one research cycle.
   environment:
     files:
     - src: ../../.github/agents/experimental/experiment-designer.agent.md
@@ -4371,6 +4406,35 @@ stimuli:
     config:
       path: .copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md
       pattern: (?is)Recommendation and Alternatives.*batching.*caching.*confidence.*unresolved
+- name: experiment-designer-reconciles-convergence-research
+  prompt: |
+    Resume synthetic experiment `synthetic-batching` after Phase 1.
+    Convergence Research task `synthetic-batching-recommendation` completed
+    and returned the staged primary artifact under the session evidence root
+    for synthetic date `2026-09-21`. Reconcile it into `context.md` now:
+    record the result for each investigated assumption and a disposition for
+    each recommended field, with the artifact path and evidence IDs. No
+    execution or hypothesis validation has occurred. Do not rerun Research.
+  environment:
+    files:
+    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/experiment-context.md
+      dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
+    - src: fixtures/rpi-depth/experiment-convergence-research.md
+      dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md
+    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+      dest: .github/instructions/experimental/experiment-designer.instructions.md
+    skills:
+    - ../../.github/skills/project-planning/experiment-design
+  tags:
+    category: agent-behavior
+    scenario: experiment-rpi-research-reconciliation
+    agent: experiment-designer
+  constraints:
+    max_agent_duration: 110s
+    max_duration: 150s
+  graders:
   - type: file-matches
     name: experiment-context-records-dispositions
     config:
@@ -4412,30 +4476,15 @@ stimuli:
     name: experiment-challenge-asks-one-question
     config:
       pattern: (?s)^[^?]*\?[^?]*$
-- name: experiment-designer-produces-execution-rpi-artifacts
-  turns:
-  - |
+- name: experiment-designer-plans-execution
+  prompt: |
     Resume synthetic experiment `synthetic-batching` after the staged MVE
     plan was approved. I confirm only Plan for bounded execution task
-    `synthetic-batching-execution` using synthetic date `2026-09-21`.
-    Create and critique the execution plan against the staged run data.
-    Stop for my acceptance of the returned execution plan before Implement.
-    Do not execute it, write results or Changes, perform Review, write
-    `outcome.md`, or decide whether `H1` is validated in this turn.
-  - |
-    I accept the execution plan returned in the preceding turn, provided
-    its required critique gates are complete and no unresolved blocker
-    remains. If those prerequisites are absent, stop and report the gap;
-    this acceptance does not waive them. Otherwise, I confirm Implement
-    against that exact plan. Use the staged run data, write `results.md`
-    and the canonical Changes record, and report Review readiness.
-    Do not perform Review or write `outcome.md` in this turn.
-  - |
-    I confirm the one execution-conformance Review against the returned
-    plan, critique, Changes, and validation evidence, only if Implementation
-    is Review-ready. If required evidence is missing, stop and report it.
-    Preserve synthetic task `synthetic-batching-execution` and date
-    `2026-09-21`. Do not write `outcome.md` or decide whether `H1` is validated.
+    `synthetic-batching-execution` using synthetic date `2026-09-21`. Draft
+    the implementation-ready execution plan against the staged run data now,
+    then stop before its critique; I will run the critique as a separate
+    step. Do not execute it, write results or Changes, perform Review, write
+    `outcome.md`, or decide whether `H1` is validated.
   environment:
     files:
     - src: ../../.github/agents/experimental/experiment-designer.agent.md
@@ -4451,12 +4500,9 @@ stimuli:
     skills:
     - ../../.github/skills/project-planning/experiment-design
     - ../../.github/skills/rpi/rpi-plan
-    - ../../.github/skills/rpi/rpi-plan-critique
-    - ../../.github/skills/rpi/rpi-implement
-    - ../../.github/skills/rpi/rpi-review
   tags:
     category: agent-behavior
-    scenario: experiment-rpi-execution-production
+    scenario: experiment-rpi-execution-plan
     agent: experiment-designer
   constraints:
     max_agent_duration: 180s
@@ -4466,18 +4512,86 @@ stimuli:
     name: experiment-execution-plan-produced
     config:
       path: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+- name: experiment-designer-critiques-execution-plan
+  prompt: |
+    Resume synthetic experiment `synthetic-batching`. The staged execution
+    plan for task `synthetic-batching-execution` (synthetic date
+    `2026-09-21`) is drafted and implementation-ready, and its initial
+    critique has not run. Run that one initial critique now at standard
+    depth, then stop for my acceptance of the plan. Do not implement it,
+    write results or Changes, perform Review, or write `outcome.md`.
+  environment:
+    files:
+    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/experiment-mve-plan.md
+      dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+    - src: fixtures/rpi-depth/experiment-run-data.md
+      dest: evidence/experiment-run-data.md
+    - src: fixtures/rpi-depth/experiment-execution-plan-draft.md
+      dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+      dest: .github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+      dest: .github/instructions/hve-core/copilot-tracking.instructions.md
+    skills:
+    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/skills/rpi/rpi-plan
+    - ../../.github/skills/rpi/rpi-plan-critique
+  tags:
+    category: agent-behavior
+    scenario: experiment-rpi-execution-critique
+    agent: experiment-designer
+  constraints:
+    max_agent_duration: 180s
+    max_duration: 240s
+  graders:
   - type: file-exists
     name: experiment-execution-critique-produced
     config:
       path: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
+- name: experiment-designer-produces-execution-rpi-artifacts
+  prompt: |
+    Resume synthetic experiment `synthetic-batching`. I accept the staged
+    execution plan for task `synthetic-batching-execution` (synthetic date
+    `2026-09-21`); its staged initial critique is Complete. If the plan's
+    admission prerequisites do not hold, stop and report the gap; this
+    acceptance does not waive them. Otherwise, I confirm Implement against
+    that exact plan. Use the staged run data, write `results.md` and the
+    canonical Changes record, and report Review readiness. Do not perform
+    Review, write `outcome.md`, or decide whether `H1` is validated.
+  environment:
+    files:
+    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/experiment-mve-plan.md
+      dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+    - src: fixtures/rpi-depth/experiment-run-data.md
+      dest: evidence/experiment-run-data.md
+    - src: fixtures/rpi-depth/experiment-execution-plan.md
+      dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+    - src: fixtures/rpi-depth/experiment-execution-plan-critique.md
+      dest: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
+    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+      dest: .github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+      dest: .github/instructions/hve-core/copilot-tracking.instructions.md
+    skills:
+    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/skills/rpi/rpi-plan
+    - ../../.github/skills/rpi/rpi-implement
+  tags:
+    category: agent-behavior
+    scenario: experiment-rpi-execution-production
+    agent: experiment-designer
+  constraints:
+    max_agent_duration: 180s
+    max_duration: 240s
+  graders:
   - type: file-exists
     name: experiment-execution-changes-produced
     config:
       path: .copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md
-  - type: file-exists
-    name: experiment-execution-review-produced
-    config:
-      path: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
   - type: file-matches
     name: experiment-results-produced-from-raw-data
     config:
@@ -4485,6 +4599,51 @@ stimuli:
       pattern: (?is)100.*76.*24%.*100.*0\.5%.*(none|no anomalies)
   - type: file-not-exists
     name: experiment-execution-does-not-preempt-outcome
+    config:
+      path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
+- name: experiment-designer-reviews-execution
+  prompt: |
+    Resume synthetic experiment `synthetic-batching`. Implementation of task
+    `synthetic-batching-execution` (synthetic date `2026-09-21`) is
+    Review-ready: the staged plan, critique, Changes and results are the
+    execution evidence. I confirm the one execution-conformance Review
+    against them now. If required evidence is missing, stop and report it.
+    Do not write `outcome.md` or decide whether `H1` is validated.
+  environment:
+    files:
+    - src: ../../.github/agents/experimental/experiment-designer.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/experiment-mve-plan.md
+      dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+    - src: fixtures/rpi-depth/experiment-execution-plan.md
+      dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+    - src: fixtures/rpi-depth/experiment-execution-plan-critique.md
+      dest: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
+    - src: fixtures/rpi-depth/experiment-execution-changes.md
+      dest: .copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md
+    - src: fixtures/rpi-depth/experiment-run-data.md
+      dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/results.md
+    - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+      dest: .github/instructions/experimental/experiment-designer.instructions.md
+    - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+      dest: .github/instructions/hve-core/copilot-tracking.instructions.md
+    skills:
+    - ../../.github/skills/project-planning/experiment-design
+    - ../../.github/skills/rpi/rpi-review
+  tags:
+    category: agent-behavior
+    scenario: experiment-rpi-execution-review
+    agent: experiment-designer
+  constraints:
+    max_agent_duration: 180s
+    max_duration: 240s
+  graders:
+  - type: file-exists
+    name: experiment-execution-review-produced
+    config:
+      path: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
+  - type: file-not-exists
+    name: experiment-execution-review-does-not-preempt-outcome
     config:
       path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
 - name: experiment-designer-writes-post-execution-outcome
@@ -5364,10 +5523,10 @@ stimuli:
     accepted Plan invocation `build-01`. The staged state already contains
     separate Implement invocation `build-02` with task slug
     `atlas-product-prd-build-02`. Follow the Plan's one task now: add `FR-001`
-    and `AC-001`, update the Plan marker, write the canonical Implement
-    changes record using the persisted synthetic date `2026-09-21`, and
-    reconcile only `build-02` as completed. Do not run content-quality review
-    or claim the Build gate passed.
+    and `AC-001`, update the Plan marker, and write the canonical Implement
+    changes record using the persisted synthetic date `2026-09-21`. Stop
+    after the Implement return; session-state reconciliation is a separate
+    step. Do not run content-quality review or claim the Build gate passed.
   environment:
     files:
     - src: ../../.github/agents/project-planning/prd-builder.agent.md
@@ -5406,6 +5565,44 @@ stimuli:
     name: prd-authoring-changes-record-exists
     config:
       path: .copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md
+  - type: output-matches
+    name: prd-authoring-does-not-claim-quality-gate
+    config:
+      pattern: (?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly)\s+)*(?:(?:mark|claim|declare|say|state|report)(?:ed|ing|s)?\s+)?(?:the\s+)?)\b(Build|quality)\s+(gate\s+)?(passed|cleared|satisfied|complete)
+      negate: true
+- name: prd-builder-reconciles-completed-authoring-segment
+  prompt: |
+    Resume the staged Atlas PRD in Build. Implement invocation `build-02`
+    with task slug `atlas-product-prd-build-02` completed against accepted
+    Plan invocation `build-01` and returned the staged canonical changes
+    record for synthetic date `2026-09-21`. Reconcile only `build-02` in
+    session state now, preserving `build-01` and unknown fields. Do not
+    rerun Implement, run content-quality review, or claim the Build gate
+    passed.
+  environment:
+    files:
+    - src: ../../.github/agents/project-planning/prd-builder.agent.md
+      dest: .github/copilot-instructions.md
+    - src: fixtures/rpi-depth/prd-state.json
+      dest: .copilot-tracking/prd-sessions/atlas-product.state.json
+    - src: fixtures/rpi-depth/atlas-prd.md
+      dest: docs/project-planning/atlas-product.md
+    - src: fixtures/rpi-depth/authoring-plan.md
+      dest: .copilot-tracking/plans/2026-09-21/atlas-product-prd-build-01-plan.md
+    - src: fixtures/rpi-depth/authoring-plan-critique.md
+      dest: .copilot-tracking/reviews/plans/2026-09-21/atlas-product-prd-build-01-plan-critique.md
+    - src: fixtures/rpi-depth/prd-authoring-changes.md
+      dest: .copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md
+    skills:
+    - ../../.github/skills/project-planning/requirements-author
+  tags:
+    category: agent-behavior
+    scenario: prd-rpi-authoring-reconciliation
+    agent: prd-builder
+  constraints:
+    max_agent_duration: 110s
+    max_duration: 150s
+  graders:
   - type: program
     name: prd-authoring-state-records-separate-plan-and-implement
     config:
@@ -5438,11 +5635,6 @@ stimuli:
             state.syntheticExtension !== null && typeof state.syntheticExtension === 'object' && state.syntheticExtension.preserve === true;
         } catch { passed = false; }
         console.log(JSON.stringify({ name: 'prd-authoring-state-records-separate-plan-and-implement', kind: 'code', passed, score: Number(passed), evidence: 'Compare separate Plan and Implement invocation values independently of key order.' }));
-  - type: output-matches
-    name: prd-authoring-does-not-claim-quality-gate
-    config:
-      pattern: (?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly)\s+)*(?:(?:mark|claim|declare|say|state|report)(?:ed|ing|s)?\s+)?(?:the\s+)?)\b(Build|quality)\s+(gate\s+)?(passed|cleared|satisfied|complete)
-      negate: true
 - name: prd-quality-reviewer-mentions-quality-guidance
   prompt: |
     You are reviewing a product-requirements draft for a planning workflow.

@@ -82,8 +82,9 @@ stimuli:
       Discover has a named regulatory gap that the BRD and supplied references
       do not answer. Research returned artifact
       `.copilot-tracking/research/2026-09-18/atlas-research.md` with Q1 and C1.
-      Show the resulting state receipt entry and the BRD disposition row in your
-      reply, then explain the authority boundary.
+      Show the resulting state receipt entry and the BRD
+      `Research Finding Dispositions` row in your reply, then explain the
+      authority boundary.
     environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
@@ -143,9 +144,10 @@ stimuli:
       Resume the staged Atlas BRD in Discover. I approve Research segment
       `discover-01` with task slug `atlas-brd-discover-01` for gap `REG-01`.
       The persisted synthetic session date is `2026-09-21`; preserve it in paths.
-      Use only the staged requirements evidence. Perform the segment now:
-      write its primary artifact under the BRD session evidence root, then
-      update state and the BRD disposition table. Do not merely explain it.
+      Use only the staged requirements evidence. Perform the segment now and
+      write its primary artifact under the BRD session evidence root. Stop
+      after the Research return; state and BRD disposition reconciliation is a
+      separate step. Do not merely explain it.
       Research posture: `focused`. The staged evidence file is the only source;
       explicit limit: one research cycle.
     environment:
@@ -177,6 +179,37 @@ stimuli:
         config:
           path: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
           pattern: '(?is)(REG-01|retention).*(Q1|Research Question).*(C1|seven-year)'
+
+  - name: brd-builder-reconciles-completed-research-segment
+    prompt: |
+      Resume the staged Atlas BRD in Discover. Research segment `discover-01`
+      with task slug `atlas-brd-discover-01` for gap `REG-01` completed and
+      returned the staged primary artifact under the BRD session evidence root
+      for synthetic date `2026-09-21`. Reconcile it now: record the segment's
+      invocation receipt in state and give its finding a document-owned
+      disposition in the BRD. I have not yet answered whether to accept the
+      returned work. Do not rerun Research.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/brd-state.json
+          dest: .copilot-tracking/brd-sessions/atlas.state.json
+        - src: fixtures/rpi-depth/atlas-brd.md
+          dest: docs/project-planning/atlas-brd.md
+        - src: fixtures/rpi-depth/requirements-evidence.md
+          dest: evidence/requirements-evidence.md
+        - src: fixtures/rpi-depth/brd-discover-01-research.md
+          dest: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+    tags:
+      category: agent-behavior
+      scenario: brd-rpi-research-reconciliation
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
       - type: program
         name: brd-research-invocation-state-recorded
         config:
