@@ -121,7 +121,7 @@ jobs:
           | Component | Status |
           |-----------|--------|
           | CodeQL Analysis | $(if ($codeqlResult -eq 'success') { '✅ Complete' } else { '⚠️ See details' }) |
-          | Dangerous Workflow / Poutine | $workflowScanResult (advisory; review logs and SARIF) |
+          | Dangerous Workflow / Poutine | $(if ($workflowScanResult -eq 'success') { '✅' } else { '⚠️' }) $workflowScanResult (advisory; review logs and SARIF) |
           | Secret Scanning | ✅ Enabled (GitHub native) |
           | Dependabot Alerts | ✅ Enabled (GitHub native) |
 
