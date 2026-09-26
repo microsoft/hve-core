@@ -702,7 +702,7 @@ stimuli:
         name: experiment-results-produced-from-raw-data
         config:
           path: .copilot-tracking/mve/2026-09-21/synthetic-batching/results.md
-          pattern: '(?is)100.*76.*24%.*100.*0\.5%.*(none|no anomalies)'
+          pattern: '(?is)^(?=[\s\S]*(?:unbatched|baseline)[^\n]{0,60}\b100\b)(?=[\s\S]*(?:\b100\b[^\n]{0,40}\b(?:requests?|samples?)\b|\b(?:requests?|samples?|sample size)\b[^\n]{0,40}\b100\b))(?=[\s\S]*\bbatched[^\n]{0,60}\b76\b)(?=[\s\S]*\b24(?:\.0+)?\s*%)(?=[\s\S]*\b0\.5\s*(?:%|percent))(?=[\s\S]*(?:anomalies[^\n]{0,40}\bnone\b|\bnone\b[^\n]{0,40}anomalies|no (?:observed )?anomalies))'
       - type: file-not-exists
         name: experiment-execution-does-not-preempt-outcome
         config:

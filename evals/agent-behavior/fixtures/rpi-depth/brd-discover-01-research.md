@@ -23,8 +23,8 @@ The supplied policy summary sets a seven-year retention period for the approval 
 
 ## Scope and Questions
 
-| ID | Question | Source | Status |
-|----|----------|--------|--------|
+| ID   | Question                                                              | Source                     | Status   |
+|------|-----------------------------------------------------------------------|----------------------------|----------|
 | `Q1` | What retention period applies to the synthetic Atlas approval record? | Builder brief for `REG-01` | answered |
 
 ## Planning Readiness and Next Step

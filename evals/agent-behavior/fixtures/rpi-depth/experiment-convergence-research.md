@@ -33,10 +33,10 @@ The staged context proposes at least 20% lower median latency with errors below 
 * Confidence: medium, limited to the staged synthetic context.
 * Unresolved assumptions: the 20% threshold and 1% error bound are proposed design inputs; the user and Experiment Designer commit them.
 
-| Assumption | Research result | Evidence |
-|------------|-----------------|----------|
-| Batching can be isolated as the tested variable | supported | `C1` |
-| A 20% reduction is a realistic success threshold | inconclusive | `C2` |
+| Assumption                                       | Research result | Evidence |
+|--------------------------------------------------|-----------------|----------|
+| Batching can be isolated as the tested variable  | supported       | `C1`     |
+| A 20% reduction is a realistic success threshold | inconclusive    | `C2`     |
 
 ## Planning Readiness and Next Step
 

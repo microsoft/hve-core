@@ -1070,6 +1070,16 @@ console.log(JSON.stringify(results));
       Reject = @('The Build gate passed.', 'Quality gate cleared.', 'I did not run review, but the Build gate passed.')
     }
     @{
+      Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-produces-execution-rpi-artifacts'; Grader = 'experiment-results-produced-from-raw-data'; Count = 3
+      Accept = @("Unbatched median: 100 ms`nBatched median: 76 ms`nReduction: 24%`nSynthetic requests: 100`nErrors: 0.5%`nAnomalies: none",
+        "Synthetic requests: 100`nUnbatched median: 100 ms`nBatched median: 76 ms`nReduction: 24%`nErrors: 0.5%`nAnomalies: none",
+        "| Measure | Value |`n|---|---|`n| Synthetic requests | 100 |`n| Unbatched median | 100 ms |`n| Batched median | 76 ms |`n| Batched errors | 0.5 percent |`n| Median reduction | 24% |`n`nNo anomalies were observed.")
+      Reject = @("Unbatched median: 100 ms`nBatched median: 80 ms`nReduction: 20%`nSynthetic requests: 100`nErrors: 0.5%`nAnomalies: none",
+        "Unbatched median: 100 ms`nBatched median: 76 ms`nReduction: 24%`nSynthetic requests: 100`nErrors: 0.5%",
+        "Unbatched median: 100 ms`nBatched median: 76 ms`nReduction: 24%`nErrors: 0.5%`nAnomalies: none",
+        "Unbatched median: 100 ms`nBatched median: 76 ms`nReduction: 24%`nSynthetic requests: 100`nErrors: 5%`nAnomalies: none")
+    }
+    @{
       Spec = 'stimuli/prd-builder.yml'; Scenario = 'prd-builder-research-receipt'; Grader = 'prd-research-receipt-state'; Count = 3
       Accept = @('{"rpiInvocations":[{"capability":"rpi-research","questionIds":["Q2"],"evidenceIds":["W1"],"artifactPaths":[".copilot-tracking/research/2026-09-18/atlas-api-research.md"],"findingDispositions":[]}]}',
         'findingDispositions retains Q2 and W1; artifactPaths points to the primary artifact in the rpi-research entry of rpiInvocations.')
