@@ -87,6 +87,59 @@ BeforeAll {
 }
 
 Describe 'Git commit prompt contract' -Tag 'Unit' {
+    It 'Grades cancellation narration with installed Vally independently of sentence order' {
+        $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $script:EvalSpecPath -Raw)
+        $stimulus = $spec.stimuli | Where-Object { $_.name -eq 'prompt-git-commit-cancellation' }
+        $grader = $stimulus.graders | Where-Object { $_.name -eq 'prompt-git-commit-cancel-reports-no-commit' }
+        $grader.turn | Should -Be 2
+        $grader.type | Should -Be 'output-matches'
+        $probe = @'
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+const { OutputMatchesGrader } = await import(pathToFileURL(process.argv[1]).href);
+const input = JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+const grader = new OutputMatchesGrader();
+for (const control of input.controls) {
+  const result = await grader.grade({ config: input.config, trajectory: { output: control.output } });
+  if (result.status === 'error' || result.passed !== control.expected || result.score !== Number(control.expected)) {
+    throw new Error('Cancellation narrative control failed');
+  }
+}
+console.log(`PASS: ${input.controls.length} cancellation narrative controls`);
+'@
+        $payload = @{
+            config = $grader.config
+            controls = @(
+                @{ output = 'I restored the staging delta and preserved the initial index. No commit was created.'; expected = $true }
+                @{ output = "Restoration is complete. I didn't commit."; expected = $true }
+                @{ output = 'Nothing was committed; I unstaged only my changes.'; expected = $true }
+                @{ output = "I haven$([char]0x2019)t created a commit; the index is unchanged."; expected = $true }
+                @{ output = 'No commit was created.'; expected = $false }
+                @{ output = 'I restored the staging delta, then created a commit.'; expected = $false }
+            )
+        } | ConvertTo-Json -Depth 10 -Compress
+        $graderPath = Join-Path $script:RepoRoot 'node_modules/@microsoft/vally/dist/graders/static/output-matches-grader.js'
+        $result = $payload | & node --input-type=module --eval $probe $graderPath
+        $LASTEXITCODE | Should -Be 0
+        $result | Should -Be 'PASS: 6 cancellation narrative controls'
+    }
+
+    It 'Stages the selection contract while preserving the simulated inventory boundary' {
+        $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $script:EvalSpecPath -Raw)
+        $stimulus = $spec.stimuli | Where-Object { $_.name -eq 'prompt-git-commit-conformance' }
+        $files = @($stimulus.agent_environment.files)
+        $files | Should -HaveCount 2
+        $files.dest | Should -Contain '.github/prompts/hve-core/git-commit.prompt.md'
+        $files.dest | Should -Contain '.github/instructions/hve-core/commit-message.instructions.md'
+        foreach ($file in $files) {
+            Test-Path -LiteralPath (Join-Path (Split-Path $script:EvalSpecPath -Parent) $file.src) | Should -BeTrue
+        }
+        $stimulus.prompt | Should -Match 'response-only simulation'
+        $stimulus.prompt | Should -Match 'do not inspect real repository state, run Git, or mutate'
+        $stimulus.prompt | Should -Match 'represented HEAD'
+        $stimulus.graders | Should -HaveCount 7
+    }
+
     It 'Requires selected-path staging and both confirmation boundaries' {
         $Prompt = Get-Content -LiteralPath $script:PromptPath -Raw
 

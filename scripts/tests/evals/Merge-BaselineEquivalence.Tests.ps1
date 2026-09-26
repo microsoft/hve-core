@@ -272,8 +272,29 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
     }
 
     It 'defines the exact bounded fixed-model matrix' {
-        $script:Workflow | Should -Match '(?s)equivalence-execute:.*?fail-fast: false.*?max-parallel: \$\{\{ inputs\.baseline-max-parallel \}\}.*?model: gpt-6-luna.*?model: claude-sonnet-5'
+        $script:Workflow | Should -Match '(?s)equivalence-execute:.*?fail-fast: false.*?max-parallel: \$\{\{ inputs\.baseline-max-parallel \|\| 2 \}\}.*?model: gpt-6-luna.*?model: claude-sonnet-5'
         $script:Workflow | Should -Match 'CalibrationModel \$env:SELECTED_MODEL'
+    }
+
+    It 'keeps acceptance opt-in and separates calibration from ordinary dispatch' {
+        $script:Workflow | Should -Match '(?s)workflow_call:.*?acceptance-profile:.*?default: ""'
+        $script:Workflow | Should -Match "ACCEPTANCE_PROFILE -notin @\('', 'pr-2951'\)"
+        $script:Workflow | Should -Match "matrix.kind != 'calibration'"
+        $script:Workflow | Should -Match "matrix.kind == 'calibration'"
+        $script:Workflow | Should -Match 'npm run ci:eval:calibrate -- --profile evals/acceptance/pr-2951.json'
+        $script:Workflow | Should -Match "'-AcceptanceManifestPath', 'plan-input/changed-spec-stimuli.json'"
+        $script:Workflow | Should -Match "'-CalibrationPath', 'producer-results/eval-execution-results-calibration/eval-calibration.json'"
+        $script:Workflow | Should -Not -Match "github.event_name == 'workflow_dispatch' && inputs.acceptance-profile"
+    }
+
+    It 'keeps ordinary manual execution independent of the acceptance profile' {
+        $workflow = ConvertFrom-Yaml -Yaml $script:Workflow
+        foreach ($jobName in @('agent-plan', 'eval-execute', 'equivalence-execute', 'equivalence-fan-in', 'eval-fan-in')) {
+            $condition = [string]$workflow.jobs[$jobName]['if']
+            $condition | Should -Match "github.event_name == 'workflow_dispatch'"
+            $condition | Should -Not -Match 'inputs\.acceptance-profile'
+            $condition | Should -Match "github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false"
+        }
     }
 
     It 'uses one canonical plan for mixed execution and baseline applicability' {

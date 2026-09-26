@@ -54,12 +54,13 @@ BeforeAll {
 
     function script:Invoke-PowerShellDetector {
         param([pscustomobject]$Fixture)
-        return (& $script:PowerShellScript -HveCoreBasePath $Fixture.Source -TargetRoot $Fixture.Target 6>&1 | Out-String).Trim()
+        # Normalize CRLF so (?m)$ anchors behave identically on Windows and Linux.
+        return ((& $script:PowerShellScript -HveCoreBasePath $Fixture.Source -TargetRoot $Fixture.Target 6>&1 | Out-String) -replace "`r`n", "`n").Trim()
     }
 
     function script:Invoke-BashDetector {
         param([pscustomobject]$Fixture)
-        return (& bash $script:BashScript $Fixture.Source $Fixture.Target 2>&1 | Out-String).Trim()
+        return ((& bash $script:BashScript $Fixture.Source $Fixture.Target 2>&1 | Out-String) -replace "`r`n", "`n").Trim()
     }
 }
 

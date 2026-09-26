@@ -20,7 +20,7 @@ stimuli:
       - type: output-matches
         name: brd-builder-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
   - name: brd-builder-ordinary-request-no-proposal-extension
     prompt: |
@@ -82,7 +82,9 @@ stimuli:
       Discover has a named regulatory gap that the BRD and supplied references
       do not answer. Research returned artifact
       `.copilot-tracking/research/2026-09-18/atlas-research.md` with Q1 and C1.
-      Explain the state receipt, BRD disposition record, and authority boundary.
+      Show the resulting state receipt entry and the BRD
+      `Research Finding Dispositions` row in your reply, then explain the
+      authority boundary.
     environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
@@ -130,7 +132,7 @@ stimuli:
       - type: output-matches
         name: brd-research-blocked-gap
         config:
-          pattern: '(?is)(open question|unvalidated assumption).*(dependent|evidence-dependent|affected).*(stop|pause|blocked)'
+          pattern: '(?is)^(?=[\s\S]*(?:open question|unvalidated assumption))(?=[\s\S]*(?:(?:dependent|affected)[^.\r\n]{0,160}\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b|\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b[^.\r\n]{0,160}(?:dependent|affected)))'
       - type: output-matches
         name: brd-research-blocked-no-gate-exit
         config:
@@ -142,9 +144,12 @@ stimuli:
       Resume the staged Atlas BRD in Discover. I approve Research segment
       `discover-01` with task slug `atlas-brd-discover-01` for gap `REG-01`.
       The persisted synthetic session date is `2026-09-21`; preserve it in paths.
-      Use only the staged requirements evidence. Perform the segment now:
-      write its primary artifact under the BRD session evidence root, then
-      update state and the BRD disposition table. Do not merely explain it.
+      Use only the staged requirements evidence. Perform the segment now and
+      write its primary artifact under the BRD session evidence root. Stop
+      after the Research return; state and BRD disposition reconciliation is a
+      separate step. Do not merely explain it.
+      Research posture: `focused`. The staged evidence file is the only source;
+      explicit limit: one research cycle.
     environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
@@ -174,16 +179,115 @@ stimuli:
         config:
           path: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
           pattern: '(?is)(REG-01|retention).*(Q1|Research Question).*(C1|seven-year)'
-      - type: file-matches
+
+  - name: brd-builder-reconciles-completed-research-segment
+    prompt: |
+      Resume the staged Atlas BRD in Discover. Research segment `discover-01`
+      with task slug `atlas-brd-discover-01` for gap `REG-01` completed and
+      returned the staged primary artifact under the BRD session evidence root
+      for synthetic date `2026-09-21`. Reconcile it now: record the segment's
+      invocation receipt in state and give its finding a document-owned
+      disposition in the BRD. I have not yet answered whether to accept the
+      returned work. Do not rerun Research.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/brd-builder.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/brd-state.json
+          dest: .copilot-tracking/brd-sessions/atlas.state.json
+        - src: fixtures/rpi-depth/atlas-brd.md
+          dest: docs/project-planning/atlas-brd.md
+        - src: fixtures/rpi-depth/requirements-evidence.md
+          dest: evidence/requirements-evidence.md
+        - src: fixtures/rpi-depth/brd-discover-01-research.md
+          dest: .copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+    tags:
+      category: agent-behavior
+      scenario: brd-rpi-research-reconciliation
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: program
         name: brd-research-invocation-state-recorded
         config:
-          path: .copilot-tracking/brd-sessions/atlas.state.json
-          pattern: '(?is)rpiInvocations.*invocationId"?\s*:\s*"discover-01".*taskSlug"?\s*:\s*"atlas-brd-discover-01".*questionIds"?\s*:\s*\[\s*"Q1"\s*\].*evidenceIds"?\s*:\s*\[\s*"C1"\s*\].*segmentStatus"?\s*:\s*"completed".*userDisposition"?\s*:\s*"accepted".*gateEffect"?\s*:\s*"supports".*syntheticExtension.*preserve"?\s*:\s*true'
+          program: pwsh
+          args:
+            - -NoProfile
+            - -Command
+            - |
+              $ErrorActionPreference = 'Stop'
+              $passed = $false
+              $document = $null
+              try {
+                $path = Join-Path $env:EVALUATE_WORKSPACE '.copilot-tracking/brd-sessions/atlas.state.json'
+                if ((Get-Item $path).Length -gt 1MB) { throw 'Oversized state' }
+                $raw = Get-Content -Raw -LiteralPath $path
+                $document = [System.Text.Json.JsonDocument]::Parse($raw)
+                $pending = [System.Collections.Generic.Stack[System.Text.Json.JsonElement]]::new()
+                $pending.Push($document.RootElement)
+                while ($pending.Count) {
+                  $element = $pending.Pop()
+                  if ($element.ValueKind -eq 'Object') {
+                    $keys = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+                    foreach ($property in $element.EnumerateObject()) {
+                      if (-not $keys.Add($property.Name)) { throw 'Duplicate state field' }
+                      $pending.Push($property.Value)
+                    }
+                  } elseif ($element.ValueKind -eq 'Array') {
+                    foreach ($item in $element.EnumerateArray()) { $pending.Push($item) }
+                  }
+                }
+                $state = $raw | ConvertFrom-Json -AsHashtable
+                $receipts = @($state.rpiInvocations | Where-Object { $_.invocationId -ceq 'discover-01' })
+                if (-not ($state.rpiInvocations -is [array]) -or $receipts.Count -ne 1) { throw 'Invalid invocation set' }
+                $receipt = $receipts[0]
+                $artifactRelativePath = '.copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md'
+                $artifact = Get-Content -Raw -LiteralPath (Join-Path $env:EVALUATE_WORKSPACE $artifactRelativePath)
+                $questionIds = @($receipt.questionIds)
+                $evidenceIds = @($receipt.evidenceIds)
+                $sourceQuestions = @([regex]::Matches($artifact, '(?<![A-Za-z0-9_-])Q[0-9]+(?![A-Za-z0-9_-])').Value | Sort-Object -Unique)
+                $sourceEvidence = @([regex]::Matches($artifact, '(?<![A-Za-z0-9_-])[CW][0-9]+(?![A-Za-z0-9_-])').Value | Sort-Object -Unique)
+                $validQuestions = $questionIds.Count -gt 0 -and
+                  @($questionIds | Where-Object { -not ($_ -is [string]) -or -not [regex]::IsMatch([string]$_, '^Q[0-9]+$') }).Count -eq 0 -and
+                  @($questionIds | Sort-Object -Unique).Count -eq $questionIds.Count -and
+                  $questionIds.Count -eq $sourceQuestions.Count -and
+                  @($questionIds | Where-Object { -not $sourceQuestions.Contains($_) }).Count -eq 0
+                $validEvidence = $evidenceIds.Count -gt 0 -and
+                  @($evidenceIds | Where-Object { -not ($_ -is [string]) -or -not [regex]::IsMatch([string]$_, '^[CW][0-9]+$') }).Count -eq 0 -and
+                  @($evidenceIds | Sort-Object -Unique).Count -eq $evidenceIds.Count -and
+                  $evidenceIds.Count -eq $sourceEvidence.Count -and
+                  @($evidenceIds | Where-Object { -not $sourceEvidence.Contains($_) }).Count -eq 0
+                if (-not ($receipt.findingDispositions -is [array]) -or $receipt.findingDispositions.Count -eq 0) {
+                  throw 'Missing finding dispositions'
+                }
+                foreach ($finding in $receipt.findingDispositions) {
+                  if (-not ($finding.evidenceIds -is [array]) -or $finding.evidenceIds.Count -eq 0 -or
+                    @($finding.evidenceIds | Where-Object { -not $evidenceIds.Contains($_) }).Count -gt 0 -or
+                    @($finding.evidenceIds | Sort-Object -Unique).Count -ne $finding.evidenceIds.Count -or
+                    -not ($finding.affectedTargets -is [array]) -or $finding.affectedTargets.Count -eq 0 -or
+                    @($finding.affectedTargets | Where-Object { -not ($_ -is [string]) -or [string]::IsNullOrWhiteSpace($_) }).Count -gt 0 -or
+                    -not ($finding.rationale -is [string]) -or [string]::IsNullOrWhiteSpace($finding.rationale) -or
+                    -not [regex]::IsMatch([string]$finding.disposition, '^(incorporated|revised|rejected|deferred|retained-assumption)$')) {
+                    throw 'Invalid finding disposition'
+                  }
+                }
+                $passed = $receipt.taskSlug -ceq 'atlas-brd-discover-01' -and
+                  $receipt.questionIds -is [array] -and $validQuestions -and
+                  $receipt.evidenceIds -is [array] -and $validEvidence -and
+                  $receipt.artifactPaths.research -ceq $artifactRelativePath -and
+                  $receipt.segmentStatus -ceq 'completed' -and $receipt.userDisposition -ceq 'pending' -and
+                  $receipt.gateEffect -ceq 'does-not-satisfy' -and
+                  $state.syntheticExtension.preserve -is [bool] -and $state.syntheticExtension.preserve
+              } catch { $passed = $false } finally { if ($null -ne $document) { $document.Dispose() } }
+              @{ name = 'brd-research-invocation-state-recorded'; kind = 'code'; passed = [bool]$passed; score = [int]$passed; evidence = 'Validate invocation values and preserved extension in unambiguous JSON.' } | ConvertTo-Json -Compress
       - type: file-matches
         name: brd-research-disposition-projected
         config:
           path: docs/project-planning/atlas-brd.md
-          pattern: '(?is)Research Finding Dispositions.*REG-01.*C1.*incorporated.*atlas-brd-discover-01-research\.md'
+          pattern: '(?im)^(?=[\s\S]*^#{1,6}\s+Research Finding Dispositions\s*$)[\s\S]*^\|(?=[^\r\n]*\bREG-01\b)(?=[^\r\n]*\bC1\b)(?=[^\r\n]*\|\s*(?:incorporated|revised|rejected|deferred|retained-assumption)\s*\|)(?=[^\r\n]*atlas-brd-discover-01-research\.md)[^\r\n]+\|'
 
   - name: brd-builder-records-blocked-research-segment
     prompt: |
@@ -218,7 +322,7 @@ stimuli:
       - type: output-matches
         name: brd-blocked-segment-does-not-clear-gate
         config:
-          pattern: '(?is)(blocked|does-not-satisfy).*(Discover).*(not|cannot|does not).*(clear|satisfy|exit)'
+          pattern: '(?is)^(?=[\s\S]*(?:blocked|does-not-satisfy))(?=[\s\S]*(?:Discover[^.\r\n]{0,120}\b(?:not|cannot|can[\x27\u2019]t|does(?:\s+no|n[\x27\u2019])t|must not|won[\x27\u2019]t)\b[^.\r\n]{0,40}\b(?:clear|satisfy|exit|pass)\w*|\b(?:not|cannot|can[\x27\u2019]t|does(?:\s+no|n[\x27\u2019])t|must not|won[\x27\u2019]t)\b[^.\r\n]{0,40}\b(?:clear|satisfy|exit|pass)\w*[^.\r\n]{0,80}Discover))'
 
   - name: brd-builder-records-skipped-research-segment
     prompt: |

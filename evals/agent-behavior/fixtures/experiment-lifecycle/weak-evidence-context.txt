@@ -1,0 +1,40 @@
+<!-- markdownlint-disable-file -->
+# MVE Context: Synthetic Returns Triage
+
+Synthetic preservation marker: EV07-WEAK-CTX-PRESERVE-001
+
+## Problem statement
+
+Draft only. The synthetic team has not agreed what "returns triage takes too long"
+means, which step is in scope, or which outcome would count as an improvement.
+
+## Customer and stakeholder context
+
+Synthetic internal team. No executive sponsor is recorded, and no owner is
+identified for acting on a result.
+
+## Business case and priority signals
+
+Not established. No priority, budget, or dependent decision is recorded.
+
+## Experiment type
+
+undetermined
+
+## Known constraints
+
+* Synthetic constraint: evaluation sandbox only.
+
+## Assumptions
+
+* Assumed, not observed: manual review is the slowest step.
+
+## Unknowns
+
+* Unknown: who would act on either outcome.
+* Unknown: what happens after success or failure; no next steps are defined.
+* Unknown: whether the synthetic queue sample represents anything.
+
+## Enablement goal
+
+Not recorded.

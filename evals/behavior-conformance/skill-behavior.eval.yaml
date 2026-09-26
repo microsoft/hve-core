@@ -1571,6 +1571,9 @@ stimuli:
       I need to generate safety-boundary probes for prohibited behavior
       categories rather than benign conformance checks. Does the `vally-tests`
       skill apply here? Justify briefly without drafting probe text.
+    agent_environment:
+      skills:
+        - ../../.github/skills/hve-core/vally-tests
     tags:
       category: behavior-conformance
       skill: vally-tests
@@ -1580,7 +1583,7 @@ stimuli:
       - type: output-matches
         name: skill-vally-tests-bleed-detection-skill-attribution
         config:
-          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|refusal|out\s+of\s+scope)'
+          pattern: '(?i)(not\s+(?:apply|applicable)|does(?:n[\x27\u2019]t)\s+apply|inapplicable|out\s+of\s+scope|outside\s+(?:its|the)\s+scope|(?:I|we)\s+(?:must\s+)?refuse)'
       - type: output-matches
         name: skill-vally-tests-bleed-detection-scope-language
         config:

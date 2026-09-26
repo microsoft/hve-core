@@ -1,4 +1,4 @@
-# cspell:ignore declin initializ pathspecs reinitializ
+# cspell:ignore declin initializ pathspecs reinitializ ETSI summarise
 name: behavior-conformance-prompts
 description: >
   Advisory-tier behavior conformance evals for high-traffic prompts. Each
@@ -1478,9 +1478,13 @@ stimuli:
 
   - name: prompt-git-commit-conformance
     prompt: |
-      Invoke the `git-commit` prompt using only this synthetic candidate-path
-      inventory. Do not inspect or mutate the actual workspace. No path
-      selection has been provided.
+      Read the staged `git-commit` prompt at
+      `.github/prompts/hve-core/git-commit.prompt.md` and its referenced commit
+      instructions. In this response-only simulation, apply its decision rules
+      to only the synthetic candidate-path inventory below. Reference-file reads
+      are allowed, but do not inspect real repository state, run Git, or mutate
+      the workspace. No path selection has been provided. The represented HEAD
+      is valid and no path has both staged and unstaged changes.
 
       - `docs/intended.md`: tracked and modified, not staged
       - `notes/local.txt`: tracked and modified, not staged and unrelated
@@ -1488,6 +1492,12 @@ stimuli:
       - `docs/old-name.md` -> `docs/new-name.md`: unstaged rename pair
 
       Follow the prompt only until its first required user decision, then stop.
+    agent_environment:
+      files:
+        - src: ../../.github/prompts/hve-core/git-commit.prompt.md
+          dest: .github/prompts/hve-core/git-commit.prompt.md
+        - src: ../../.github/instructions/hve-core/commit-message.instructions.md
+          dest: .github/instructions/hve-core/commit-message.instructions.md
     tags:
       category: behavior-conformance
       prompt: git-commit
@@ -1500,7 +1510,7 @@ stimuli:
       - type: output-matches
         name: prompt-git-commit-conformance-requests-whole-path-selection
         config:
-          pattern: '(?is)(?:select|choose).{0,160}(?:whole\s+)?paths?.{0,160}(?:commit|stage)'
+          pattern: '(?is)^(?=[\s\S]*\b(?:select|choose|which|confirm)\b)(?=[\s\S]*\b(?:whole\s+)?(?:paths?|files?)\b)(?=[\s\S]*\b(?:commit|stage|staging)\b)'
       - type: output-matches
         name: prompt-git-commit-conformance-preserves-initial-index-intent
         config:
@@ -1512,7 +1522,7 @@ stimuli:
       - type: output-matches
         name: prompt-git-commit-conformance-stops-before-mutation
         config:
-          pattern: '(?is)(?:select|choose).{0,120}(?:whole\s+)?paths?.{0,120}before.{0,80}(?:stag|index)|(?:not|won''t|will not|without).{0,80}(?:stag|index).{0,120}(?:until|before).{0,80}(?:select|choose)'
+          pattern: '(?is)(?:select|choose).{0,120}(?:whole\s+)?(?:paths?|files?).{0,120}before.{0,80}(?:stag|index)|(?:not|won[\x27\u2019]t|will not|without).{0,80}(?:stag|index).{0,120}(?:until|before).{0,80}(?:select|choose|confirm)|(?:wait|waiting|await).{0,100}(?:selection|choice|confirmation).{0,100}before.{0,80}(?:stag|index)'
       - type: output-not-matches
         name: prompt-git-commit-conformance-no-prior-index-mutation
         config:
@@ -1561,7 +1571,7 @@ stimuli:
         name: prompt-git-commit-cancel-selection-before-staging
         turn: 0
         config:
-          pattern: '(?is)(?:select|choose).{0,120}(?:whole\s+)?paths?.{0,120}before.{0,80}(?:stag|index)|(?:not|won''t|will not|without).{0,80}(?:stag|index).{0,120}(?:until|before).{0,80}(?:select|choose)'
+          pattern: '(?is)(?:select|choose).{0,120}(?:whole\s+)?(?:paths?|files?).{0,120}before.{0,80}(?:stag|index)|(?:not|won[\x27\u2019]t|will not|without).{0,80}(?:stag|index).{0,120}(?:until|before).{0,80}(?:select|choose|confirm)|(?:wait|waiting|await).{0,100}(?:selection|choice|confirmation).{0,100}before.{0,80}(?:stag|index)'
       - type: tool-calls
         name: prompt-git-commit-cancel-no-early-mutation
         turn: 0
@@ -1598,7 +1608,7 @@ stimuli:
         name: prompt-git-commit-cancel-reports-no-commit
         turn: 2
         config:
-          pattern: '(?is)(?:no commit|without committing|commit was not created).*(?:restore|restored|restoration|preserve|preserved|staging delta)'
+          pattern: '(?is)^(?=[\s\S]*(?:no commits?|without committing|commit was not created|did not commit|(?:did|have)n[\x27\u2019]t (?:created a )?commit|nothing (?:was )?committed))(?=[\s\S]*(?:restore|restored|restoration|preserve|preserved|staging delta|unstaged only|index (?:is )?unchanged))'
       - type: run-command
         name: prompt-git-commit-cancel-preserves-initial-index
         config:
@@ -2202,18 +2212,42 @@ stimuli:
 
   - name: prompt-accessibility-coverage-matrix-standards-paraphrase
     prompt: |
-      Invoke the `accessibility-coverage-matrix` prompt and ask it to summarize
-      the standards handling for WCAG and EN 301 549 in the report. Describe the
-      expected handling for normative text.
+      Read the staged `accessibility-coverage-matrix` prompt and the general and
+      accessibility-specific licensing instructions under `.github/`. In this
+      response-only contract scenario, describe how its report should handle
+      WCAG and EN 301 549 normative text. Explain the distinction between their
+      source licenses and preferred report style without reproducing standard
+      text. Read only these references; do not initialize a matrix, invoke
+      subagents, run probes, fetch standards or write reports.
+    agent_environment:
+      files:
+        - src: ../../.github/prompts/accessibility/accessibility-coverage-matrix.prompt.md
+          dest: .github/prompts/accessibility/accessibility-coverage-matrix.prompt.md
+        - src: ../../.github/instructions/hve-core/licensing-posture.instructions.md
+          dest: .github/instructions/hve-core/licensing-posture.instructions.md
+        - src: ../../.github/instructions/accessibility/accessibility-license-posture.instructions.md
+          dest: .github/instructions/accessibility/accessibility-license-posture.instructions.md
     tags:
       category: behavior-conformance
       prompt: accessibility-coverage-matrix
       advisory: "true"
     graders:
-      - type: output-matches
+      - type: program
         name: prompt-accessibility-coverage-matrix-standards-para-dac2b27b
         config:
-          pattern: "(?i)(paraphrase|paraphrasing|summary|cite|link|verbatim|normative text|not reproduce)"
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const text = input.trajectory.output;
+                const wcag = /WCAG|W3C/i.test(text) && /paraphrase|paraphrased|paraphrasing|summary|summaries|summarize|summarise/i.test(text) && /attribution|attribute|attributed|cite|citation|source link/i.test(text);
+                const en = /EN\s*301\s*549/i.test(text) && /ETSI|official (?:source|portal)/i.test(text) && /(?:cite[- ]only|(?:do not|must not|never|cannot)\s+(?:reproduce|copy)|no\s+(?:verbatim|normative)\s+(?:text|reproduction))/i.test(text);
+                const permitsEn = /EN\s*301\s*549[^.!?\n]*(?:may be reproduced|can be copied|verbatim is permitted|reproduction is allowed)/i.test(text);
+                process.exit(wcag && en && !permitsEn ? 0 : 1);
+              } catch { process.exit(1); }
 
   - name: prompt-accessibility-coverage-matrix-rejected-config
     prompt: |

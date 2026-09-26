@@ -11,6 +11,12 @@ on:
       - release/prerelease
       - release/stable
   workflow_dispatch:
+    inputs:
+      acceptance-profile:
+        description: "Optional hosted acceptance population and judge calibration"
+        required: false
+        type: string
+        default: ""
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
@@ -403,6 +409,7 @@ jobs:
     with:
       soft-fail: false
       changed-files-only: true
+      acceptance-profile: ${{ inputs.acceptance-profile || '' }}
       base-branch: ${{ github.event.pull_request.base.sha || (github.base_ref && format('origin/{0}', github.base_ref)) || 'origin/main' }}
     secrets:
       copilot-github-token: ${{ secrets.COPILOT_GITHUB_TOKEN }}

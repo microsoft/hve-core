@@ -398,7 +398,8 @@ function New-FakeVsceExecutable {
         ''
     ) -join "`n"
     Set-FixtureFile -Path $Path -Value $script
-    chmod +x $Path
+    # The fake vsce is a POSIX shell script; chmod exists only on Unix-like hosts.
+    if (-not $IsWindows) { chmod +x $Path }
     return (Resolve-Path -LiteralPath $Path).Path
 }
 

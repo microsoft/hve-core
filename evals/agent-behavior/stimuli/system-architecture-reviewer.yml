@@ -16,7 +16,7 @@ stimuli:
       - type: output-matches
         name: system-architecture-reviewer-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
 
   - name: system-architecture-reviewer-research-gate
@@ -38,7 +38,7 @@ stimuli:
       - type: output-matches
         name: arch-research-gate-activation
         config:
-          pattern: '(?is)(?=.*rpi-research)(?=.*(current|service|pricing|cost))(?=.*(evidence criteria|question))(?=.*(scope|non-goal|version|date)).*'
+          pattern: '(?is)(?=.*(?:rpi-research|RPI Research|Research (?:skill|phase|activation|cycle)))(?=.*(current|service|pricing|cost))(?=.*(evidence criteria|question))(?=.*(scope|non-goal|version|date)).*'
       - type: output-matches
         name: arch-research-gate-authority
         config:
@@ -81,7 +81,9 @@ stimuli:
       the staged architecture options, compare both candidates, preserve the
       evidence boundary, and write the canonical primary Research artifact now.
       Return the recommendation to Architecture Reviewer, but do not create the
-      Architecture Review Record or make an ADR decision yet.
+      Architecture Review Record or make an ADR decision yet. Research posture:
+      `focused`. The staged options file is the only source; explicit limit: one
+      research cycle.
     environment:
       files:
         - src: ../../.github/agents/project-planning/system-architecture-reviewer.agent.md
@@ -105,15 +107,34 @@ stimuli:
         name: architecture-convergence-research-compares-options
         config:
           path: .copilot-tracking/research/2026-09-21/synthetic-queue-convergence-research.md
-          pattern: '(?is)(Research Questions|Questions).*Q1.*(Evidence|Evidence Ledger).*C1.*managed queue.*self-hosted broker.*(Recommendation and Alternatives|recommendation).*confidence.*unresolved'
+          pattern: '(?is)^(?=.*(?:^|\n)#{1,6}\s+(?:(?:Research|Scope\s+and)\s+)?Questions\b)(?=.*\bQ1\b)(?=.*(?:^|\n)#{1,6}\s+Evidence\b)(?=.*\bC1\b)(?=.*managed queue)(?=.*self-hosted broker)(?=.*(?:^|\n)#{1,6}\s+Recommendation\b)(?=.*\bconfidence\b)(?=.*\bunresolved\b)(?!.*\b(?:no\s+recommendation|recommendation\s*(?:is\s+|:\s*)(?:none|missing|unavailable))).*'
       - type: file-not-exists
         name: architecture-research-does-not-preempt-review-record
         config:
           path: .copilot-tracking/reviews/architecture/2026-09-21/synthetic-queue-architecture-review.md
-      - type: output-matches
+      - type: program
         name: architecture-research-returns-to-reviewer-authority
         config:
-          pattern: '(?is)(Architecture Reviewer|reviewer).*(retain|own|decide).*(recommendation|trade-off|architecture)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              const reviewer = /(?:Architecture Reviewer|\breviewer\b)/i;
+              const authority = /(?:(?:retain|own|decide)[^.\r\n]{0,200}(?:recommendation|trade-off|architecture)|(?:recommendation|trade-off|architecture)[^.\r\n]{0,200}(?:retain|own|decide))/i;
+              const researchDecides = /\bResearch\b[^|.\r\n]{0,40}\b(?:decides|owns|selects|approves)\b[^|.\r\n]{0,60}\b(?:architecture|recommendation|trade-off)/i;
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const reply = String(input.trajectory.output || '');
+                if (reviewer.test(reply) && authority.test(reply)) process.exit(0);
+                const artifact = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/research/2026-09-21/synthetic-queue-convergence-research.md');
+                if (!fs.existsSync(artifact) || fs.statSync(artifact).size > 1048576) process.exit(1);
+                const lines = fs.readFileSync(artifact, 'utf8').split(/\r?\n/);
+                if (lines.some(line => researchDecides.test(line))) process.exit(1);
+                const returned = lines.some(line => reviewer.test(line) && (authority.test(line) || /\b(?:continuation owner|decision owner|authority)\b/i.test(line)));
+                process.exit(returned ? 0 : 1);
+              } catch { process.exit(1); }
 
   - name: system-architecture-reviewer-writes-record-first-handoffs
     prompt: |

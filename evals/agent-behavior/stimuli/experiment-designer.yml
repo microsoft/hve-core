@@ -1,10 +1,11 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-# cspell:ignore degrad substitut unavailab
+# cspell:ignore degrad substitut unavailab expdes architectur priorit hypothes assum multiedit
 stimuli:
   - name: experiment-designer-class-recipe
     prompt: |
       Design a minimum viable experiment for "Will adding a price slider increase conversion?" Lay out phases, hypothesis, and success metrics. Write the design under `.copilot-tracking/mve/` and report the path.
+      In your response, list the phase headings, hypothesis, and success metrics before reporting the path.
     tags:
       category: agent-behavior
     graders:
@@ -19,7 +20,7 @@ stimuli:
       - type: output-matches
         name: experiment-designer-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
 
   - name: experiment-designer-conditional-ml-route
@@ -28,7 +29,7 @@ stimuli:
       We completed general hypothesis framing and are entering experiment
       design. State which reusable skills you load, what each owns, and what
       you would do if the conditional ML skill were unavailable.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
@@ -67,6 +68,346 @@ stimuli:
         config:
           pattern: '(?is)(degrad|reduced depth|less depth|shallower|without ml|avoid (invent|assert|claim)|not (invent|assert|claim|substitut)|no ml-specific|missing ml-specific|ml-specific (guidance|coverage|detail|infrastructure|recommendation))'
 
+  - name: experiment-designer-supported-classification
+    prompt: |
+      Start a Minimum Viable Experiment session and complete Phase 1 only. Use
+      `2026-03-02` as the session date and `synthetic-checkout-latency` as the
+      experiment name so the tracking path is deterministic.
+
+      Synthetic facts from an internal platform team:
+
+      - A synthetic checkout service returns confirmations slowly at a simulated peak.
+      - The team measured that the slow step is a service-to-service call. It is not
+        model inference and not a user-interface concern.
+      - They want to know whether a proposed caching architecture can hold consistency
+        under that peak.
+      - Nobody has tested the caching approach. That is an assumption, not a measurement.
+
+      Write the Phase 1 tracking artifact. In the final reply, summarize the
+      classification and the evidence needed to resolve it. Do not continue
+      past Phase 1.
+    agent_environment:
+      skills:
+        - '../../.github/skills/project-planning/experiment-design'
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+    tags:
+      category: agent-behavior
+      lifecycle: supported-classification
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-matches
+        name: expdes-supported-classification-type
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+          pattern: '(?is)experiment type.{0,160}architectur'
+      - type: file-matches
+        name: expdes-supported-classification-marker
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+          pattern: '(?m)^<!-- markdownlint-disable-file -->'
+      - type: file-matches
+        name: expdes-supported-classification-evidence-labels
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+          pattern: '(?is)(?=.*assum)(?=.*unknown).'
+      - type: file-not-exists
+        name: expdes-supported-classification-no-hypotheses
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/hypotheses.md
+
+  - name: experiment-designer-ambiguous-classification
+    prompt: |
+      Start a Minimum Viable Experiment session and complete Phase 1 only. Use
+      `2026-03-02` as the session date and `synthetic-signal-routing` as the
+      experiment name so the tracking path is deterministic.
+
+      Synthetic facts, none of them measured:
+
+      - One person suggests a model could rank incoming signals.
+      - Another says the routing service design is the real constraint.
+      - A third thinks throughput at peak is the actual problem.
+      - No measurement, baseline, or user observation exists for any of these.
+
+      Write the Phase 1 tracking artifact. In the final reply, summarize the
+      classification and the evidence needed to resolve it. Do not continue
+      past Phase 1.
+    agent_environment:
+      skills:
+        - '../../.github/skills/project-planning/experiment-design'
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+    tags:
+      category: agent-behavior
+      lifecycle: ambiguous-classification
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-matches
+        name: expdes-ambiguous-classification-undetermined
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-signal-routing/context.md
+          pattern: '(?is)experiment type.{0,160}undetermined'
+      - type: program
+        name: expdes-ambiguous-classification-output
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const context = fs.readFileSync(path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/mve/2026-03-02/synthetic-signal-routing/context.md'), 'utf8');
+                const lines = context.split(/\r?\n/).map(line => line.replace(/[*`]/g, '').trim());
+                const fields = lines.flatMap((line, index) => {
+                  const field = /^(?:#{1,6}\s+)?experiment type\s*(?::\s*)?(.*)$/i.exec(line);
+                  if (!field) return [];
+                  const value = field[1].trim() || lines.slice(index + 1).find(candidate => candidate.length > 0) || '';
+                  return [value];
+                });
+                const unresolved = fields.length === 1 && /^undetermined\b(?!\s+(?:is\s+)?(?:wrong|false|not)\b)/i.test(fields[0]) &&
+                  !/\b(?:classification|experiment type)\s*(?:is|:)\s*(?:AI|ML|architecture|performance)\b/i.test(fields[0]);
+                const reply = input.trajectory.output;
+                const summary = /(?<!\b(?:not|never)\s)\b(?:undetermined|uncertain|ambiguous|unresolved|not yet classified)\b/i.test(reply);
+                const evidence = /\b(?:evidence|measurements?|baselines?|observations?|clarif\w*)\b/i.test(reply);
+                const contradiction = /(?:classification|experiment type)\s*(?:is|:)\s*(?:AI|ML|architecture|performance)\b/i.test(reply);
+                process.exit(unresolved && summary && evidence && !contradiction ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: file-not-exists
+        name: expdes-ambiguous-classification-no-hypotheses
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-signal-routing/hypotheses.md
+
+  - name: experiment-designer-progressive-hypotheses
+    prompt: |
+      Resume the staged Minimum Viable Experiment session at
+      `.copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/`. Phase 1 is
+      confirmed and its recorded context is unchanged.
+
+      Move to hypothesis formation and write that phase's tracking artifact. Do not
+      run vetting or experiment design yet.
+    agent_environment:
+      skills:
+        - '../../.github/skills/project-planning/experiment-design'
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: fixtures/experiment-lifecycle/classified-context.txt
+          dest: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+    tags:
+      category: agent-behavior
+      lifecycle: progressive-write
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-matches
+        name: expdes-progressive-hypotheses-template
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/hypotheses.md
+          pattern: '(?is)we believe.{0,600}we will test this by.{0,600}we will know'
+      - type: file-matches
+        name: expdes-progressive-hypotheses-priority
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/hypotheses.md
+          pattern: '(?i)priorit'
+      - type: file-matches
+        name: expdes-progressive-context-preserved
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+          pattern: 'EV07-CTX-PRESERVE-001'
+      - type: file-not-exists
+        name: expdes-progressive-no-vetting
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/vetting.md
+      - type: file-not-exists
+        name: expdes-progressive-no-design
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/experiment-design.md
+
+  - name: experiment-designer-weak-evidence-rollback
+    prompt: |
+      Resume the staged Minimum Viable Experiment session at
+      `.copilot-tracking/mve/2026-03-02/synthetic-returns-triage/`. You are in the
+      vetting phase.
+
+      New synthetic information from the team: there is no executive sponsor, the
+      team cannot agree what the problem statement means, and nobody has said what
+      happens after either outcome.
+
+      Decide how this session should proceed and update the tracking artifacts to
+      match that decision.
+    agent_environment:
+      skills:
+        - '../../.github/skills/project-planning/experiment-design'
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: fixtures/experiment-lifecycle/weak-evidence-context.txt
+          dest: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/context.md
+        - src: fixtures/experiment-lifecycle/weak-evidence-hypotheses.txt
+          dest: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/hypotheses.md
+        - src: fixtures/experiment-lifecycle/weak-evidence-vetting.txt
+          dest: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/vetting.md
+    tags:
+      category: agent-behavior
+      lifecycle: weak-evidence-rollback
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: output-matches
+        name: expdes-rollback-returns-earlier-phase
+        config:
+          pattern: '(?is)(return|back to|revisit|earlier phase).{0,200}(phase\s*[12]|problem statement|hypothes)'
+      - type: file-matches
+        name: expdes-rollback-vetting-records-gaps
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/vetting.md
+          pattern: '(?is)(?=.*sponsor)(?=.*problem statement)(?=.*next step).'
+      - type: file-matches
+        name: expdes-rollback-context-preserved
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/context.md
+          pattern: 'EV07-WEAK-CTX-PRESERVE-001'
+      - type: file-not-exists
+        name: expdes-rollback-no-design
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/experiment-design.md
+      - type: file-not-exists
+        name: expdes-rollback-no-plan
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/mve-plan.md
+      - type: file-not-exists
+        name: expdes-rollback-no-backlog-brief
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-returns-triage/backlog-brief.md
+
+  - name: experiment-designer-backlog-consent
+    prompt: |
+      Review the completed Minimum Viable Experiment plan staged at
+      `.copilot-tracking/mve/2026-03-02/synthetic-invoice-matching/mve-plan.md` and
+      summarize what it commits to.
+
+      I am not asking for backlog work items, and I do not want any created.
+
+      Report your summary in your response only.
+    agent_environment:
+      skills:
+        - '../../.github/skills/project-planning/experiment-design'
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: fixtures/experiment-lifecycle/completed-mve-plan.txt
+          dest: .copilot-tracking/mve/2026-03-02/synthetic-invoice-matching/mve-plan.md
+    tags:
+      category: agent-behavior
+      lifecycle: backlog-consent
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: file-not-exists
+        name: expdes-consent-no-backlog-brief
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-invoice-matching/backlog-brief.md
+      - type: diff-empty
+        name: expdes-consent-workspace-unchanged
+      - type: tool-calls
+        name: expdes-consent-no-tracker-tool
+        config:
+          disallowed:
+            - name: '(?i)(azure.?devops|github.?issue|jira|backlog|work.?item)'
+
+  - name: experiment-designer-failed-tracking-write
+    prompt: |
+      Resume the staged Minimum Viable Experiment session at
+      `.copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/`. Phase 1 is
+      confirmed.
+
+      Move to hypothesis formation and write that phase's tracking artifact using
+      PowerShell `Set-Content`. If the write fails, report exactly what happened and
+      what durable state remains. Do not claim the artifact was saved.
+    agent_environment:
+      skills:
+        - '../../.github/skills/project-planning/experiment-design'
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: fixtures/experiment-lifecycle/classified-context.txt
+          dest: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+    simulation:
+      # Shell names alias one another, but non-shell writers resolve by exact name,
+      # so every write path is denied or the agent can silently succeed elsewhere.
+      tool_overrides:
+        powershell:
+          patterns:
+            - match: '(Set-Content|Out-File|WriteAllText)'
+              output: Synthetic MVE tracking write failure
+              is_error: true
+        create:
+          output: Synthetic MVE tracking write failure
+          is_error: true
+        edit:
+          output: Synthetic MVE tracking write failure
+          is_error: true
+        write:
+          output: Synthetic MVE tracking write failure
+          is_error: true
+        apply_patch:
+          output: Synthetic MVE tracking write failure
+          is_error: true
+        multiedit:
+          output: Synthetic MVE tracking write failure
+          is_error: true
+    tags:
+      category: agent-behavior
+      lifecycle: failed-tracking-write
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: tool-calls
+        name: expdes-failed-save-writer-error-observed
+        config:
+          required:
+            - name: '^(?:powershell|bash|shell|create|edit|write|apply_patch|multiedit)$'
+              result: '(?i)Synthetic MVE tracking write failure'
+      - type: file-matches
+        name: expdes-failed-save-context-preserved
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/context.md
+          pattern: '(?is)^<!-- markdownlint-disable-file -->.*EV07-CTX-PRESERVE-001'
+      - type: file-not-exists
+        name: expdes-failed-save-no-hypotheses
+        config:
+          path: .copilot-tracking/mve/2026-03-02/synthetic-checkout-latency/hypotheses.md
+      - type: diff-empty
+        name: expdes-failed-save-workspace-unchanged
+      - type: output-matches
+        name: expdes-failed-save-reports-failure
+        config:
+          pattern: '(?is)(?=.*(fail|error|unable))(?=.*(not\s+(?:\w+\s+){0,3}(?:saved|written|persisted|created)|nothing was (?:saved|written|persisted)|no partial)).'
+
   - name: experiment-designer-research-preparation
     prompt: |
       Phase 1 identified a material unknown: we do not know whether a prior
@@ -87,7 +428,7 @@ stimuli:
       - type: output-matches
         name: experiment-research-prep-route
         config:
-          pattern: '(?is)(?=.*rpi-research)(?=.*rpi-research-preparation|Research Preparation)(?=.*context\.md).*'
+          pattern: '(?is)(?=.*(?:\b)rpi-research\b)(?=.*context\.md).*'
       - type: output-matches
         name: experiment-research-prep-status
         config:
@@ -116,11 +457,11 @@ stimuli:
       - type: output-matches
         name: experiment-research-gap-recorded
         config:
-          pattern: '(?is)(unavailable|blocked).*(record|retain|mark).*(gap|unknown|inconclusive)'
+          pattern: '(?is)^(?=[\s\S]*(?:unavailable|blocked))(?=[\s\S]*(?:\b(?:record|retain|mark|note|noting|log|logged|logging|document|capture|flag|track)\w*[^.\r\n]{0,200}(?:gap|unknown|inconclusive)|(?:gap|unknown|inconclusive)[^.\r\n]{0,200}\b(?:record|retain|mark|note|noting|log|logged|logging|document|capture|flag|track)))'
       - type: output-matches
         name: experiment-research-dependent-stop
         config:
-          pattern: '(?is)(stop|pause|cannot proceed).*(dependent|affected|hypothesis).*(continue|proceed|unrelated|other)'
+          pattern: '(?is)^(?![\s\S]*\b(?:cannot|can[\x27\u2019]t|will\s+not|won[\x27\u2019]t|do\s+not)\s+(?:continue|proceed)\b[^.\r\n]{0,160}\b(?:unrelated|other)\b)(?![\s\S]*\b(?:do\s+not|don[\x27\u2019]t|never|will\s+not|won[\x27\u2019]t|should(?:\s+no|n[\x27\u2019])t|must\s+not)\s+(?:stop|pause|block|hold|halt)\b[^.;,\r\n]{0,80}\b(?:dependent|affected|hypothesis))(?=[\s\S]*(?:\b(?:stop|pause|block|hold|halt|cannot proceed)[^.\r\n]{0,200}(?:dependent|affected|hypothesis)|(?:dependent|affected|hypothesis)[^.\r\n]{0,200}\b(?:stop|pause|block|hold|halt|cannot proceed)))(?=[\s\S]*(?:(?:continue|proceed)[^.\r\n]{0,160}(?:unrelated|other)|(?:unrelated|other)[^.\r\n]{0,160}(?:continue|proceed)))'
       - type: output-matches
         name: experiment-research-unavailable-no-validated-claim
         config:
@@ -132,17 +473,26 @@ stimuli:
       Resume synthetic experiment `synthetic-batching` after Phase 1. I confirm
       convergence Research task `synthetic-batching-recommendation` using only
       the staged experiment evidence. Preserve the synthetic session date
-      `2026-09-21`. Perform it now under the session evidence root and update
-      `context.md` with the recommendation, alternative, evidence IDs,
-      confidence, unresolved assumptions, and dispositions.
+      `2026-09-21`. Perform it now under the session evidence root and write
+      the primary Research artifact with the recommendation, alternative,
+      evidence IDs, confidence, and unresolved assumptions. Stop after the
+      Research return; reconciling `context.md` is a separate step. The
+      experiment session directory is the alternate Research evidence root; no
+      execution or hypothesis validation has occurred. Research posture:
+      `focused`. The staged evidence file is the only source; explicit limit:
+      one research cycle.
     environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
-        - src: fixtures/rpi-depth/experiment-evidence.md
+        - src: fixtures/rpi-depth/experiment-context.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
-        - src: fixtures/rpi-depth/experiment-evidence.md
+        - src: fixtures/rpi-depth/experiment-context.md
           dest: evidence/experiment-evidence.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+          dest: .github/instructions/hve-core/copilot-tracking.instructions.md
       skills:
         - ../../.github/skills/project-planning/experiment-design
         - ../../.github/skills/rpi/rpi-research
@@ -162,25 +512,56 @@ stimuli:
         config:
           path: .copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md
           pattern: '(?is)Recommendation and Alternatives.*batching.*caching.*confidence.*unresolved'
+
+  - name: experiment-designer-reconciles-convergence-research
+    prompt: |
+      Resume synthetic experiment `synthetic-batching` after Phase 1.
+      Convergence Research task `synthetic-batching-recommendation` completed
+      and returned the staged primary artifact under the session evidence root
+      for synthetic date `2026-09-21`. Reconcile it into `context.md` now:
+      record the result for each investigated assumption and a disposition for
+      each recommended field, with the artifact path and evidence IDs. No
+      execution or hypothesis validation has occurred. Do not rerun Research.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/experiment-context.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
+        - src: fixtures/rpi-depth/experiment-convergence-research.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+    tags:
+      category: agent-behavior
+      scenario: experiment-rpi-research-reconciliation
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
       - type: file-matches
         name: experiment-context-records-dispositions
         config:
           path: .copilot-tracking/mve/2026-09-21/synthetic-batching/context.md
-          pattern: '(?is)(supported|contradicted|inconclusive).*(accepted|revised|rejected|deferred).*(synthetic-batching-recommendation-research\.md)'
+          pattern: '(?is)^(?=[\s\S]*(?:supported|contradicted|inconclusive))(?=[\s\S]*(?:accepted|revised|rejected|deferred))(?=[\s\S]*synthetic-batching-recommendation-research\.md)'
 
   - name: experiment-designer-starts-explicit-challenge
     prompt: |
       I explicitly invoke `rpi-challenger` for the staged `H1` in experiment
       `synthetic-batching`. The challenge scope is confirmed: test assumptions
       behind the threshold and method, using Phase 3 vetting as focus. Create
-      the canonical challenge record for synthetic date `2026-09-21` and begin
-      with one open-ended question.
+      the canonical challenge record with task slug `synthetic-batching-h1`
+      for synthetic date `2026-09-21` and begin with one open-ended question.
     environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
-        - src: fixtures/rpi-depth/experiment-evidence.md
+        - src: fixtures/rpi-depth/experiment-mve-plan.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/hypotheses.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
       skills:
         - ../../.github/skills/project-planning/experiment-design
         - ../../.github/skills/rpi/rpi-challenger
@@ -202,16 +583,15 @@ stimuli:
         config:
           pattern: '(?s)^[^?]*\?[^?]*$'
 
-  - name: experiment-designer-produces-execution-rpi-artifacts
+  - name: experiment-designer-plans-execution
     prompt: |
       Resume synthetic experiment `synthetic-batching` after the staged MVE
-      plan was approved. I separately confirm Plan, Implement, and Review for
-      bounded execution task `synthetic-batching-execution` using synthetic
-      date `2026-09-21`. Run the confirmed segments in order now: create and
-      critique the execution plan, execute it against the staged run data,
-      write `results.md` and the canonical Changes record, then perform the one
-      execution-conformance Review. Do not write `outcome.md` or decide whether
-      `H1` is validated.
+      plan was approved. I confirm only Plan for bounded execution task
+      `synthetic-batching-execution` using synthetic date `2026-09-21`. Draft
+      the implementation-ready execution plan against the staged run data now,
+      then stop before its critique; I will run the critique as a separate
+      step. Do not execute it, write results or Changes, perform Review, write
+      `outcome.md`, or decide whether `H1` is validated.
     environment:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
@@ -220,14 +600,16 @@ stimuli:
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
         - src: fixtures/rpi-depth/experiment-run-data.md
           dest: evidence/experiment-run-data.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+          dest: .github/instructions/hve-core/copilot-tracking.instructions.md
       skills:
         - ../../.github/skills/project-planning/experiment-design
         - ../../.github/skills/rpi/rpi-plan
-        - ../../.github/skills/rpi/rpi-implement
-        - ../../.github/skills/rpi/rpi-review
     tags:
       category: agent-behavior
-      scenario: experiment-rpi-execution-production
+      scenario: experiment-rpi-execution-plan
     constraints:
       max_agent_duration: 180s
       max_duration: 240s
@@ -236,25 +618,138 @@ stimuli:
         name: experiment-execution-plan-produced
         config:
           path: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+
+  - name: experiment-designer-critiques-execution-plan
+    prompt: |
+      Resume synthetic experiment `synthetic-batching`. The staged execution
+      plan for task `synthetic-batching-execution` (synthetic date
+      `2026-09-21`) is drafted and implementation-ready, and its initial
+      critique has not run. Run that one initial critique now at standard
+      depth, then stop for my acceptance of the plan. Do not implement it,
+      write results or Changes, perform Review, or write `outcome.md`.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/experiment-mve-plan.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+        - src: fixtures/rpi-depth/experiment-run-data.md
+          dest: evidence/experiment-run-data.md
+        - src: fixtures/rpi-depth/experiment-execution-plan-draft.md
+          dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+          dest: .github/instructions/hve-core/copilot-tracking.instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-plan-critique
+    tags:
+      category: agent-behavior
+      scenario: experiment-rpi-execution-critique
+    constraints:
+      max_agent_duration: 180s
+      max_duration: 240s
+    graders:
       - type: file-exists
         name: experiment-execution-critique-produced
         config:
           path: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
+
+  - name: experiment-designer-produces-execution-rpi-artifacts
+    prompt: |
+      Resume synthetic experiment `synthetic-batching`. I accept the staged
+      execution plan for task `synthetic-batching-execution` (synthetic date
+      `2026-09-21`); its staged initial critique is Complete. If the plan's
+      admission prerequisites do not hold, stop and report the gap; this
+      acceptance does not waive them. Otherwise, I confirm Implement against
+      that exact plan. Use the staged run data, write `results.md` and the
+      canonical Changes record, and report Review readiness. Do not perform
+      Review, write `outcome.md`, or decide whether `H1` is validated.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/experiment-mve-plan.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+        - src: fixtures/rpi-depth/experiment-run-data.md
+          dest: evidence/experiment-run-data.md
+        - src: fixtures/rpi-depth/experiment-execution-plan.md
+          dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+        - src: fixtures/rpi-depth/experiment-execution-plan-critique.md
+          dest: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+          dest: .github/instructions/hve-core/copilot-tracking.instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-plan
+        - ../../.github/skills/rpi/rpi-implement
+    tags:
+      category: agent-behavior
+      scenario: experiment-rpi-execution-production
+    constraints:
+      max_agent_duration: 180s
+      max_duration: 240s
+    graders:
       - type: file-exists
         name: experiment-execution-changes-produced
         config:
           path: .copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md
-      - type: file-exists
-        name: experiment-execution-review-produced
-        config:
-          path: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
       - type: file-matches
         name: experiment-results-produced-from-raw-data
         config:
           path: .copilot-tracking/mve/2026-09-21/synthetic-batching/results.md
-          pattern: '(?is)100.*76.*24%.*100.*0\.5%.*(none|no anomalies)'
+          pattern: '(?is)^(?=[\s\S]*(?:unbatched|baseline)[^\n]{0,60}\b100\b)(?=[\s\S]*(?:\b100\b[^\n]{0,40}\b(?:requests?|samples?)\b|\b(?:requests?|samples?|sample size)\b[^\n]{0,40}\b100\b))(?=[\s\S]*\bbatched[^\n]{0,60}\b76\b)(?=[\s\S]*\b24(?:\.0+)?\s*%)(?=[\s\S]*\b0\.5\s*(?:%|percent))(?=[\s\S]*(?:anomalies[^\n]{0,40}\bnone\b|\bnone\b[^\n]{0,40}anomalies|no (?:observed )?anomalies))'
       - type: file-not-exists
         name: experiment-execution-does-not-preempt-outcome
+        config:
+          path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
+
+  - name: experiment-designer-reviews-execution
+    prompt: |
+      Resume synthetic experiment `synthetic-batching`. Implementation of task
+      `synthetic-batching-execution` (synthetic date `2026-09-21`) is
+      Review-ready: the staged plan, critique, Changes and results are the
+      execution evidence. I confirm the one execution-conformance Review
+      against them now. If required evidence is missing, stop and report it.
+      Do not write `outcome.md` or decide whether `H1` is validated.
+    environment:
+      files:
+        - src: ../../.github/agents/experimental/experiment-designer.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/experiment-mve-plan.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
+        - src: fixtures/rpi-depth/experiment-execution-plan.md
+          dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
+        - src: fixtures/rpi-depth/experiment-execution-plan-critique.md
+          dest: .copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md
+        - src: fixtures/rpi-depth/experiment-execution-changes.md
+          dest: .copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md
+        - src: fixtures/rpi-depth/experiment-run-data.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/results.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
+        - src: ../../.github/instructions/hve-core/copilot-tracking.instructions.md
+          dest: .github/instructions/hve-core/copilot-tracking.instructions.md
+      skills:
+        - ../../.github/skills/project-planning/experiment-design
+        - ../../.github/skills/rpi/rpi-review
+    tags:
+      category: agent-behavior
+      scenario: experiment-rpi-execution-review
+    constraints:
+      max_agent_duration: 180s
+      max_duration: 240s
+    graders:
+      - type: file-exists
+        name: experiment-execution-review-produced
+        config:
+          path: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
+      - type: file-not-exists
+        name: experiment-execution-review-does-not-preempt-outcome
         config:
           path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
 
@@ -270,14 +765,18 @@ stimuli:
       files:
         - src: ../../.github/agents/experimental/experiment-designer.agent.md
           dest: .github/copilot-instructions.md
-        - src: fixtures/rpi-depth/experiment-evidence.md
+        - src: fixtures/rpi-depth/experiment-mve-plan.md
           dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md
-        - src: fixtures/rpi-depth/experiment-evidence.md
+        - src: fixtures/rpi-depth/experiment-execution-plan.md
           dest: .copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md
-        - src: fixtures/rpi-depth/experiment-evidence.md
+        - src: fixtures/rpi-depth/experiment-execution-changes.md
           dest: .copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md
-        - src: fixtures/rpi-depth/experiment-evidence.md
+        - src: fixtures/rpi-depth/experiment-execution-review.md
           dest: .copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md
+        - src: fixtures/rpi-depth/experiment-run-data.md
+          dest: .copilot-tracking/mve/2026-09-21/synthetic-batching/results.md
+        - src: ../../.github/instructions/experimental/experiment-designer.instructions.md
+          dest: .github/instructions/experimental/experiment-designer.instructions.md
       skills:
         - ../../.github/skills/project-planning/experiment-design
     tags:
@@ -288,13 +787,88 @@ stimuli:
         name: experiment-outcome-record-exists
         config:
           path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
-      - type: file-matches
+      - type: program
         name: experiment-outcome-binds-evidence
         config:
-          path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
-          pattern: '(?is)mve-plan\.md.*[a-f0-9]{64}.*execution-plan\.md.*[a-f0-9]{64}.*execution-changes\.md.*[a-f0-9]{64}.*execution-review\.md.*[a-f0-9]{64}'
-      - type: file-matches
+          program: node
+          args:
+            - -e
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              const { createHash } = require('node:crypto');
+              let passed = false;
+              try {
+                const root = process.env.EVALUATE_WORKSPACE;
+                const sources = [
+                  '.copilot-tracking/mve/2026-09-21/synthetic-batching/mve-plan.md',
+                  '.copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md',
+                  '.copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md',
+                  '.copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md'
+                ];
+                const text = fs.readFileSync(path.join(root, '.copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md'), 'utf8');
+                if (text.length > 100000) throw new Error('Oversized outcome');
+                const bindings = new Map(sources.map(source => [source, []]));
+                let source;
+                for (const token of text.matchAll(/(\.copilot-tracking\/[^\s|`\])]+\.md)|\b([a-f0-9]{64})\b/gi)) {
+                  if (token[1]) source = token[1];
+                  else if (bindings.has(source)) { bindings.get(source).push(token[2].toLowerCase()); source = undefined; }
+                }
+                passed = sources.every(source => {
+                  const values = bindings.get(source);
+                  return values.length === 1 && values[0] === createHash('sha256').update(fs.readFileSync(path.join(root, source))).digest('hex');
+                });
+              } catch { passed = false; }
+              console.log(JSON.stringify({ name: 'experiment-outcome-binds-evidence', kind: 'code', passed, score: Number(passed), evidence: 'Verify the four outcome bindings against artifact bytes.' }));
+      - type: program
         name: experiment-outcome-separates-status-and-verdict
         config:
-          path: .copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md
-          pattern: '(?is)H1.*validated.*24%.*100.*0\.5%.*(Review execution|execution status).*Complete.*(Review outcome|execution outcome).*Accepted.*(go|Go)'
+          program: node
+          args:
+            - -e
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              let passed = false;
+              try {
+                const root = process.env.EVALUATE_WORKSPACE;
+                const session = '.copilot-tracking/mve/2026-09-21/synthetic-batching/';
+                const read = name => fs.readFileSync(path.join(root, name), 'utf8');
+                const plan = read(session + 'mve-plan.md');
+                const results = read(session + 'results.md');
+                const review = read('.copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md');
+                const text = read(session + 'outcome.md').replace(/[*`]/g, '').replace(/^#{1,6}\s+/gm, '');
+                if (text.length > 100000 || !/at least 20%/i.test(plan) || !/below 1%/i.test(plan)) throw new Error('Invalid criterion boundary');
+                const unique = (value, pattern) => {
+                  const matches = [...value.matchAll(pattern)];
+                  if (matches.length === 0) throw new Error('Missing field');
+                  const values = new Set(matches.map(match => match[1].trim().toLowerCase()));
+                  if (values.size !== 1) throw new Error('Conflicting field');
+                  return matches[0][1];
+                };
+                const baseline = Number(unique(results, /Unbatched median latency:\s*([\d.]+)/gi));
+                const treatment = Number(unique(results, /Batched median latency:\s*([\d.]+)/g));
+                const sample = Number(unique(results, /Synthetic requests:\s*([\d.]+)/gi));
+                const errorRate = Number(unique(results, /Batched errors:\s*([\d.]+)/gi));
+                if (![baseline, treatment, sample, errorRate].every(Number.isFinite) || baseline <= 0 || treatment < 0 || sample <= 0 || errorRate < 0 || errorRate > 100) throw new Error('Invalid measurements');
+                const reduction = (baseline - treatment) / baseline * 100;
+                const latencyPass = reduction >= 20;
+                const errorsPass = errorRate < 1;
+                const expected = latencyPass && errorsPass ? 'validated' : 'invalidated';
+                const decision = expected === 'validated' ? 'go' : 'no-go';
+                const verdict = unique(text, /\bH1\b\s*(?:(?:hypothesis\s+)?outcome\s*)?(?:[|:]|is|\r?\n)\s*(?:(?:hypothesis\s+)?outcome\s*:\s*)?(validated|invalidated|mixed|inconclusive|not-evaluable)\b/gi).toLowerCase();
+                const downstream = unique(text, /(?:downstream decision|decision)\s*(?:[:|]|\r?\n)\s*(go|no-go|adjust)\b/gi).toLowerCase();
+                const reviewExecution = unique(review, /^Review execution:\s*(\w+)/gim);
+                const reviewOutcome = unique(review, /^Review outcome:\s*(\w+)/gim);
+                const reportedExecution = unique(text, /(?:Review execution|execution status)\s*(?:[:|]|\r?\n)\s*(\w+)/gi);
+                const reportedOutcome = unique(text, /(?:Review outcome|execution outcome)\s*(?:[:|]|\r?\n)\s*(\w+)/gi);
+                const reportedReduction = Number(unique(text, /(?:latency (?:reduction|improvement|decrease)|median (?:reduction|improvement|decrease))\s*(?:[:|]|\r?\n)\s*([\d.]+)%/gi));
+                const reportedSample = Number(unique(text, /(?:sample size|synthetic requests)\s*(?:[:|]|\r?\n)\s*([\d.]+)/gi));
+                const reportedErrors = Number(unique(text, /(?:error rate|batched errors)\s*(?:[:|]|\r?\n)\s*([\d.]+)%/gi));
+                passed = verdict === expected && downstream === decision && reportedExecution === reviewExecution && reportedOutcome === reviewOutcome &&
+                  Math.abs(reportedReduction - reduction) < 0.001 && reportedSample === sample && reportedErrors === errorRate &&
+                  /(?:anomalies\s*[:|]\s*none|no anomalies)/i.test(text) && /\bconfidence\b/i.test(text) &&
+                  /20%/.test(text) && /1%/.test(text) && /(?:criteria[^.\n]*(?:unchanged|not changed)|(?:unchanged|pre[- ]?committed) criteria|divergence\s*[:|]\s*none|no (?:criteria )?divergence)/i.test(text) &&
+                  !/criteria[^.\n]*(?:changed to|lowered|relaxed)/i.test(text);
+              } catch { passed = false; }
+              console.log(JSON.stringify({ name: 'experiment-outcome-separates-status-and-verdict', kind: 'code', passed, score: Number(passed), evidence: 'Compare H1 with supplied measurements and preserve independent Review values.' }));

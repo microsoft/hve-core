@@ -110,6 +110,40 @@ stimuli:
         }
     }
 
+    Context 'Multi-turn inputs' -Tag 'NativeGenerator' {
+      It 'Preserves successive user turns and injected ownership' {
+        $stimulus = [ordered]@{ name = 'multi-case'; turns = @('Create the plan.', 'Accept the returned plan and implement.', 'Review when ready.') }
+        Write-Partial -Root $script:TestRoot -Slug 'multi' -Content (ConvertTo-Yaml -Data @{ stimuli = @($stimulus) })
+        (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot).Outcome | Should -Be 'Wrote'
+        $actual = (Read-OutputObject -Root $script:TestRoot).stimuli[0]
+        $actual.turns | Should -HaveCount 3
+        $actual.turns[1] | Should -BeExactly $stimulus.turns[1]
+        $actual.tags.agent | Should -Be 'multi'
+        (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot -WhatIf).Outcome | Should -Be 'NoDrift'
+      }
+
+      It 'Rejects invalid <Variant> input' -ForEach @(
+        @{ Variant = 'both' }
+        @{ Variant = 'neither' }
+        @{ Variant = 'empty-list' }
+        @{ Variant = 'blank-turn' }
+        @{ Variant = 'non-string-turn' }
+        @{ Variant = 'scalar-turns' }
+      ) {
+        $stimulus = [ordered]@{ name = 'invalid-input'; turns = @('Create the plan.') }
+        switch ($Variant) {
+          'both' { $stimulus.prompt = 'Also a prompt.' }
+          'neither' { $stimulus.Remove('turns') }
+          'empty-list' { $stimulus.turns = @() }
+          'blank-turn' { $stimulus.turns = @(' ') }
+          'non-string-turn' { $stimulus.turns = @(42) }
+          'scalar-turns' { $stimulus.turns = 'Not a list.' }
+        }
+        Write-Partial -Root $script:TestRoot -Slug 'multi' -Content (ConvertTo-Yaml -Data @{ stimuli = @($stimulus) })
+        { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw
+      }
+    }
+
     Context 'Top-level key preservation' {
         It 'Preserves byte-identical top-level keys from the existing eval.yaml prelude' {
             $seed = @"
@@ -355,12 +389,12 @@ stimuli:
             { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw -ExpectedMessage "*missing a non-empty 'name' field*"
         }
 
-        It 'Fails when a stimulus is missing the prompt field' {
+        It 'Fails when a stimulus is missing both prompt and turns' -Tag 'NativeGenerator' {
             Write-Partial -Root $script:TestRoot -Slug 'no-prompt' -Content @"
 stimuli:
   - name: prompt-less
 "@
-            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw -ExpectedMessage "*is missing a non-empty 'prompt' field*"
+            { Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot } | Should -Throw -ExpectedMessage "*must declare exactly one of 'prompt' or 'turns'*"
         }
 
         It 'Silently skips a partial whose stimuli list is empty' {
@@ -507,6 +541,1284 @@ stimuli:
         (Invoke-AgentBehaviorSpecCore -RepoRoot $script:TestRoot -WhatIf).Outcome | Should -Be 'NoDrift'
         Read-OutputYaml -Root $script:TestRoot | Should -Be $first
     }
+}
+
+Describe 'Artifact inspection input contracts' -Tag 'Unit' {
+  BeforeAll {
+    $script:AgentEvalRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
+    $script:BacklogPartial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot 'stimuli/backlog-manager.yml'))
+  }
+
+  It 'Stages the exact source artifact for <Scenario>' -ForEach @(
+    @{ Scenario = 'backlog-manager-frontmatter-name-and-description' }
+    @{ Scenario = 'backlog-manager-handoff-targets-and-labels' }
+    @{ Scenario = 'backlog-manager-tool-restriction-fit' }
+    @{ Scenario = 'backlog-manager-protocol-heading-consistency' }
+  ) {
+    $stimulus = $script:BacklogPartial.stimuli | Where-Object { $_.name -eq $Scenario }
+    $files = @($stimulus.agent_environment.files)
+    $files | Should -HaveCount 1
+    $files[0].src | Should -Be '../../.github/agents/project-planning/backlog-manager.agent.md'
+    $files[0].dest | Should -Be '.github/agents/project-planning/backlog-manager.agent.md'
+    Test-Path -LiteralPath (Join-Path $script:AgentEvalRoot $files[0].src) | Should -BeTrue
+    $stimulus.prompt | Should -Match 'blocked without inventing'
+    $stimulus.tags.advisory | Should -Be 'true'
+    $files[0].dest | Should -Not -Be '.github/copilot-instructions.md'
+    if ($Scenario -eq 'backlog-manager-tool-restriction-fit') {
+      $stimulus.rubric | Should -HaveCount 1
+      $stimulus.rubric[0] | Should -Match 'dispatch-every-mutation'
+      $stimulus.graders[0].config.threshold | Should -Be 0.6
+      $stimulus.prompt | Should -Match 'host enforcement'
+      $stimulus.prompt | Should -Match 'local artifact writes, and delegated mutations separately'
+    }
+  }
+
+  It 'Asks for each existing report-failure obligation without executing recovery' {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot 'stimuli/accessibility-reviewer.yml'))
+    $stimulus = $partial.stimuli | Where-Object { $_.name -eq 'accessibility-reviewer-report-generator-failure' }
+    $stimulus.prompt | Should -Match 'what happens to the already verified\s+findings'
+    $stimulus.prompt | Should -Match 'bounded recovery action'
+    $stimulus.prompt | Should -Match 'evidence\s+source limits claims about execution'
+    $stimulus.prompt | Should -Match 'without\s+performing recovery'
+    $stimulus.prompt | Should -Match 'Do not call tools'
+    $stimulus.graders | Should -HaveCount 1
+    $stimulus.graders[0].name | Should -Be 'report-generator-failure-has-no-accepted-report'
+    $stimulus.graders[0].config.threshold | Should -Be 0.7
+    $stimulus.rubric | Should -HaveCount 1
+    $stimulus.rubric[0] | Should -Match 'retain\s+verified findings'
+    $stimulus.rubric[0] | Should -Match 'bounded report regeneration'
+  }
+
+  It 'Stages discovery policy without activating native review for <Scenario>' -ForEach @(
+    @{ Scenario = 'code-review-standards-merge-content-contradiction' }
+    @{ Scenario = 'code-review-standards-user-tier-precedence' }
+    @{ Scenario = 'code-review-standards-unknown-origin-dedup' }
+  ) {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot 'stimuli/code-review.yml'))
+    $stimulus = $partial.stimuli | Where-Object { $_.name -eq $Scenario }
+    $files = @($stimulus.agent_environment.files)
+    $files | Should -HaveCount 1
+    $files[0].src | Should -Be '../../.github/agents/coding-standards/subagents/code-review-standards.agent.md'
+    $files[0].dest | Should -Be 'policy/code-review-standards.agent.md'
+    Test-Path -LiteralPath (Join-Path $script:AgentEvalRoot $files[0].src) | Should -BeTrue
+    $stimulus.prompt | Should -Match 'Discover and load skills'
+    $stimulus.prompt | Should -Match 'not the native review'
+    $stimulus.prompt | Should -Match 'inline skill summaries'
+    $stimulus.graders | Should -HaveCount 3
+    $stimulus.tags.advisory | Should -Be 'true'
+  }
+
+  It 'Bounds <Scenario> to supplied source and absent runtime evidence' -ForEach @(
+    @{ Scenario = 'accessibility-framework-assessor-structured-findings' }
+    @{ Scenario = 'accessibility-framework-assessor-method-adequacy' }
+  ) {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot 'stimuli/accessibility-framework-assessor.yml'))
+    $stimulus = $partial.stimuli | Where-Object { $_.name -eq $Scenario }
+    $files = @($stimulus.agent_environment.files)
+    $files | Should -HaveCount 1
+    $files[0].dest | Should -Be 'policy/accessibility-framework-assessor.agent.md'
+    Test-Path -LiteralPath (Join-Path $script:AgentEvalRoot $files[0].src) | Should -BeTrue
+    $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/accessibility/accessibility'
+    $stimulus.prompt | Should -Match 'synthetic source fragment'
+    $stimulus.prompt | Should -Match '2\.1\.1'
+    $stimulus.prompt | Should -Match '4\.1\.3'
+    $stimulus.prompt | Should -Match 'in chat'
+    $stimulus.prompt | Should -Match 'not a native'
+    $stimulus.graders | Should -HaveCount 3
+  }
+
+  It 'Supplies the Vally author contract, routing skill and a benign from-artifact input' {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot 'stimuli/vally-test-author.yml'))
+    $stimulus = $partial.stimuli | Where-Object { $_.name -eq 'vally-test-author-advisory-and-routing' }
+    $files = @($stimulus.agent_environment.files)
+    $files | Should -HaveCount 3
+    $files.dest | Should -Contain '.github/agents/hve-core/subagents/vally-test-author.agent.md'
+    $files.dest | Should -Contain '.github/instructions/shared/content-policy-citation.instructions.md'
+    $files.dest | Should -Contain '.github/prompts/three-bullet-summary.prompt.md'
+    foreach ($file in $files) {
+      Test-Path -LiteralPath (Join-Path $script:AgentEvalRoot $file.src) | Should -BeTrue
+    }
+    $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/hve-core/vally-tests'
+    $fixture = Get-Content -Raw (Join-Path $script:AgentEvalRoot 'fixtures/three-bullet-summary.txt')
+    $fixture | Should -Match 'exactly three Markdown bullet points'
+    $stimulus.prompt | Should -Match 'chat only: do not append'
+    $stimulus.prompt | Should -Match 'without inventing its contract'
+    $stimulus.graders | Should -HaveCount 3
+    $stimulus.tags.advisory | Should -Be 'true'
+  }
+
+  It 'Stages both license postures for the standards-handling prompt contract' {
+    $suite = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot '../behavior-conformance/prompts.eval.yaml'))
+    $stimulus = $suite.stimuli | Where-Object { $_.name -eq 'prompt-accessibility-coverage-matrix-standards-paraphrase' }
+    $files = @($stimulus.agent_environment.files)
+    $files | Should -HaveCount 3
+    $files.dest | Should -Contain '.github/instructions/hve-core/licensing-posture.instructions.md'
+    $files.dest | Should -Contain '.github/instructions/accessibility/accessibility-license-posture.instructions.md'
+    foreach ($file in $files) {
+      Test-Path -LiteralPath (Join-Path $script:AgentEvalRoot $file.src) | Should -BeTrue
+    }
+    $stimulus.prompt | Should -Match 'response-only contract'
+    $stimulus.prompt | Should -Match 'source licenses and preferred report style'
+    $stimulus.graders | Should -HaveCount 1
+  }
+
+  It 'Provides represented deck readiness for <Scenario>' -ForEach @(
+    @{ Scenario = 'dt-coach-asset-ready-deck-offer'; Evidence = 'point of view'; ExpectedCount = 2 }
+    @{ Scenario = 'dt-coach-method-5-deck-offer'; Evidence = 'three-lens evaluation'; ExpectedCount = 2 }
+    @{ Scenario = 'dt-coach-not-ready-no-offer'; Evidence = 'Only raw interview notes exist'; ExpectedCount = 2 }
+  ) {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot 'stimuli/dt-coach.yml'))
+    $stimulus = $partial.stimuli | Where-Object { $_.name -eq $Scenario }
+    $stimulus.prompt | Should -Match 'response-only coaching simulation'
+    $stimulus.prompt | Should -Match 'synthetic state'
+    $stimulus.prompt | Should -Match $Evidence
+    $stimulus.prompt | Should -Match 'do not inspect or update real coaching'
+    $stimulus.graders | Should -HaveCount $ExpectedCount
+  }
+
+  It 'Keeps supplied security plan context at orientation until findings exist' {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot 'stimuli/code-review.yml'))
+    $stimulus = $partial.stimuli | Where-Object { $_.name -eq 'code-review-security-planning-drift-context' }
+    $stimulus.prompt | Should -Match 'response-only review-contract'
+    $stimulus.prompt | Should -Match 'path as resolved in the represented workspace'
+    $stimulus.prompt | Should -Match 'do not read the baseline until Step 7'
+    $stimulus.prompt | Should -Match 'No security findings exist yet'
+    $stimulus.prompt | Should -Match 'in chat'
+    $stimulus.graders | Should -HaveCount 3
+  }
+
+  It 'Preserves the prompt-visible smoke boundary for <Scenario>' -ForEach @(
+    @{ Partial = 'rai-reviewer'; Scenario = 'rai-reviewer-class-recipe'; ExpectedCount = 4 }
+    @{ Partial = 'privacy-reviewer'; Scenario = 'privacy-reviewer-class-recipe'; ExpectedCount = 3 }
+    @{ Partial = 'issue-triage'; Scenario = 'issue-triage-class-recipe'; ExpectedCount = 3 }
+  ) {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot "stimuli/$Partial.yml"))
+    $stimulus = $partial.stimuli | Where-Object { $_.name -eq $Scenario }
+    $stimulus.prompt | Should -Match 'prompt-visible smoke scenario'
+    $stimulus.prompt | Should -Match 'in\s+chat'
+    $stimulus.Contains('agent_environment') | Should -BeFalse
+    $stimulus.Contains('environment') | Should -BeFalse
+    $stimulus.graders | Should -HaveCount $ExpectedCount
+  }
+
+  It 'Supplies the Vally skill for its attribution boundary without changing graders' {
+    $suite = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:AgentEvalRoot '../behavior-conformance/skill-behavior.eval.yaml'))
+    $stimulus = $suite.stimuli | Where-Object { $_.name -eq 'skill-vally-tests-bleed-detection' }
+    $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/hve-core/vally-tests'
+    $stimulus.graders | Should -HaveCount 2
+    $stimulus.tags.advisory | Should -Be 'true'
+  }
+}
+
+Describe 'Offline lexical grader contracts' -Tag 'Unit' {
+  BeforeAll {
+    $script:LexicalEvalRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
+    $disclaimers = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/instructions/shared/disclaimer-language.instructions.md')
+    $script:SecurityCaution = [regex]::Match($disclaimers, '(?s)## Security Planning\s+(.*?)(?=\r?\n## )').Groups[1].Value.Trim()
+    $script:StaticGraderPath = (Resolve-Path (Join-Path $PSScriptRoot '../../../node_modules/@microsoft/vally/dist/graders/static/output-matches-grader.js')).Path
+    $script:StaticGraderProbe = @'
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+const { OutputMatchesGrader } = await import(pathToFileURL(process.argv[1]).href);
+const { ProgramGrader } = await import(new URL('./program-grader.js', pathToFileURL(process.argv[1])).href);
+const { FileMatchesGrader } = await import(new URL('./file-matches-grader.js', pathToFileURL(process.argv[1])).href);
+const input = JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+const grader = input.type === 'program' ? new ProgramGrader() : input.type === 'file-matches' ? new FileMatchesGrader(input.type) : new OutputMatchesGrader(input.type);
+const results = [];
+for (const output of input.outputs) {
+  if (input.type === 'file-matches') {
+    const target = path.join(input.workDir, input.config.path);
+    mkdirSync(path.dirname(target), { recursive: true });
+    writeFileSync(target, output);
+  }
+  results.push(await grader.grade({ config: input.config, trajectory: { output, workDir: input.workDir } }));
+}
+console.log(JSON.stringify(results));
+'@
+  }
+
+  It 'Projects document-owned BRD findings separately from pending user acceptance' -Tag 'ReceiptRepair' {
+    $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot 'stimuli/brd-builder.yml'))
+    $stimulus = $specification.stimuli | Where-Object name -eq 'brd-builder-reconciles-completed-research-segment'
+    $stimulus.graders | Should -HaveCount 2
+    $grader = $stimulus.graders | Where-Object name -eq 'brd-research-disposition-projected'
+    $template = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/project-planning/requirements-author/templates/brd/brd-full.md')
+    $header = [regex]::Match($template, '(?m)^\| Gap ID[^\r\n]+').Value
+    $header | Should -Not -BeNullOrEmpty
+    $prefix = "## Research Finding Dispositions`n`n$header`n|---|---|---|---|---|---|`n"
+    $research = '.copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md'
+    $accept = @(
+      $prefix + "| REG-01 | C1 | Assumptions | Deferred | Await the user's decision | $research |"
+      $prefix + "| REG-01 | C1, C2 | Assumptions | Retained-assumption | No approval has been given | $research |"
+      "## Research Finding Dispositions`n| Primary research artifact | Disposition | Evidence IDs | Gap ID |`n|---|---|---|---|`n| $research | Deferred | C1 | REG-01 |"
+    )
+    $reject = @(
+      $prefix + "| REG-01 | C1 | Assumptions | Pending | Await the user's decision | $research |"
+      $prefix + "| REG-01 | C1 | Assumptions | Approved | User decision is pending | $research |"
+      $prefix + "| REG-02 | C1 | Assumptions | Deferred | Await decision | $research |"
+      $prefix + "| REG-01 | C1 | Assumptions | Deferred | Await decision | unrelated-research.md |"
+      $prefix + "| REG-01 | | Assumptions | Deferred | Await decision | $research |"
+      $prefix + "| REG-01 | C1 | Assumptions | | Deferred appears only in the rationale | $research |"
+    )
+    $payload = @{ type = $grader.type; config = $grader.config; outputs = $accept + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
+    $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
+    $LASTEXITCODE | Should -Be 0
+    $results | Should -HaveCount ($accept.Count + $reject.Count)
+    foreach ($result in $results | Select-Object -First $accept.Count) { $result.passed | Should -BeTrue }
+    foreach ($result in $results | Select-Object -Skip $accept.Count) { $result.passed | Should -BeFalse }
+  }
+
+  It 'Keeps one complete UX routing prerequisite and evidence-label authority' -Tag 'GuidanceRepair' {
+    $agent = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/agents/project-planning/ux-ui-designer.agent.md')
+    $mural = ($agent -split '### Mural', 2)[1].Split('## Cross-agent collaboration')[0]
+    foreach ($required in @('mode \(`extractor` or `facilitator`\)', 'destination target', 'action intent \(`create`, `mutate`, `append`, or `no-op`\)')) {
+      $mural | Should -Match $required
+    }
+    $mural | Should -Match 'If any is missing.*stop before loading a mapping or calling Mural'
+    $mural | Should -Match 'wait for explicit user confirmation'
+    $agent | Should -Match 'Label every acceptance input with one of those three bases'
+    $agent | Should -Match '\- \[ \] Reviewed and validated by a qualified human reviewer'
+    $agent | Should -Not -Match '\- \[x\] Reviewed and validated by a qualified human reviewer'
+    $agent | Should -Match 'Unknown.*Research gap'
+  }
+
+  It 'Executes the portable robustness example with JavaScript semantics' -Tag 'GuidanceRepair' {
+    $guide = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/hve-core/vally-tests/references/grader-robustness.md')
+    $example = [regex]::Match($guide, '(?s)```javascript\r?\n(.*?)\r?\n```').Groups[1].Value
+    $example | Should -Not -BeNullOrEmpty
+    & node --eval $example
+    $LASTEXITCODE | Should -Be 0
+    $guide | Should -Not -Match ([string][char]0x2014)
+    $guide | Should -Not -Match '4 of 14|usually variance|is deterministic'
+  }
+
+  It 'Accepts truthful denials across all copied source-edit guards but rejects actual writes' -Tag 'DenialRepair' {
+    $graders = @(Get-ChildItem (Join-Path $script:LexicalEvalRoot 'stimuli') -Filter '*.yml' | ForEach-Object {
+      $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw $_.FullName)
+      $partial.stimuli.graders | Where-Object { $_.name -like '*no-source-edit' -and $_.type -eq 'output-matches' -and $_.config.pattern -match 'created\|wrote\|modified' }
+    })
+    $graders | Should -HaveCount 37
+    foreach ($grader in $graders) {
+      $accept = @("I haven't modified module.py.", "I haven$([char]0x2019)t modified module.py.", 'I have not yet modified module.py.', 'I have not actually modified module.py.', 'I have never modified module.py.')
+      $reject = @('I modified module.py.', 'I have not modified module.py, but then I modified module.py.')
+      $payload = @{ type = $grader.type; config = $grader.config; outputs = @($accept) + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
+      $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
+      $LASTEXITCODE | Should -Be 0
+      $results | Should -HaveCount 7
+      foreach ($result in $results | Select-Object -First 5) { $result.passed | Should -BeTrue -Because $grader.name }
+      foreach ($result in $results | Select-Object -Skip 5) { $result.passed | Should -BeFalse -Because $grader.name }
+    }
+  }
+
+  It 'Preserves <Grader> while accepting reordered complete behavior' -Tag 'LexicalRepair' -ForEach @(
+    @{
+      Spec = 'stimuli/vally-test-author.yml'; Scenario = 'vally-test-author-safety-refusal'; Grader = 'refusal-emitted'; Count = 3
+      Accept = 'This skill authors conformance tests only. The request appears to fall under pii-extraction. Please consult RAI Planner for the appropriate process.'
+      Reject = @('Proceeding with the requested operation.', 'The skill can perform that task.')
+    }
+    @{
+      Spec = 'stimuli/dependency-reviewer.yml'; Scenario = 'dependency-reviewer-class-recipe'; Grader = 'dependency-reviewer-class-recipe-findings-table-present'; Count = 3
+      Accept = 'HIGH: Reject the lodash downgrade to 3.0.0; retain 4.17.21 pending compatibility validation.'
+      Reject = @('Finding, severity, recommendation.', 'Lodash 3.0.0 is high risk.')
+    }
+    @{
+      Spec = 'stimuli/ux-ui-designer.yml'; Scenario = 'ux-ui-designer-mural-extractor-metadata-boundary'; Grader = 'ux-mural-extractor-mode'; Count = 4
+      Accept = @('Use append mode for the extractor.', 'Extractor mode; append only.')
+      Reject = @('Use facilitator mode; append.', 'Mode is facilitator. Extractor and append are mentioned.')
+    }
+    @{
+      Spec = 'stimuli/ux-ui-designer.yml'; Scenario = 'ux-ui-designer-mural-extractor-metadata-boundary'; Grader = 'ux-mural-extractor-writeback-fields'; Count = 4
+      Accept = 'Never alter text. Limit writeback to parentId, hyperlinks and tags.'
+      Reject = @('Write tags and hyperlinks. Never alter text.', 'Write tags, hyperlinks, parentId and text.')
+    }
+    @{
+      Spec = 'stimuli/vally-test-author.yml'; Scenario = 'vally-test-author-probes-order-sensitive-regex'; Grader = 'revised-pattern-removes-order-dependency'; Count = 4
+      Accept = '```regex' + "`n" + '(?is)(?=.*policy-language\.instructions\.md)(?=.*(?:cannot|unavailable|missing))(?=.*(?:halt|stop)).+' + "`n" + '```'
+      Reject = @('```regex' + "`n" + '(?is)(cannot|unavailable).{0,80}policy-language\.instructions\.md.{0,80}(halt|stop)' + "`n" + '```',
+        '```regex' + "`n" + '(?is).*' + "`n" + '```', '```regex' + "`n" + '[invalid' + "`n" + '```')
+    }
+    @{
+      Spec = 'stimuli/accessibility-framework-assessor.yml'; Scenario = 'accessibility-framework-assessor-method-adequacy'; Grader = 'method-adequacy-vocabulary'; Count = 3
+      Accept = @('Static source only informs keyboard behavior and announcements; runtime evidence is needed.', 'Markup is insufficient to verify interaction or announcements.')
+      Reject = @('Static analysis decides both criteria as PASS. Manual tests are unnecessary; do not use NOT_ASSESSED.', 'Method adequacy, source, decide.')
+    }
+    @{
+      Spec = 'stimuli/accessibility-framework-assessor.yml'; Scenario = 'accessibility-framework-assessor-method-adequacy'; Grader = 'escalation-vocabulary'; Count = 3
+      Accept = 'A keyboard interaction probe and a screen-reader announcement test are required as deciding evidence.'
+      Reject = @('Manual tests are unnecessary.', 'A keyboard test is required, nothing else.')
+    }
+    @{
+      Spec = 'stimuli/accessibility-framework-assessor.yml'; Scenario = 'accessibility-framework-assessor-method-adequacy'; Grader = 'conservative-status-vocabulary'; Count = 3
+      Accept = @("2.1.1: NOT_ASSESSED, pending keyboard evidence.`n4.1.3: NOT_ASSESSED, pending announcement evidence.", "| 2.1.1 | Keyboard | NOT_ASSESSED |`n| 4.1.3 | Status | NOT_ASSESSED |")
+      Reject = @('Static analysis decides both criteria as PASS. Do not use NOT_ASSESSED.', "2.1.1: PASS`n4.1.3: NOT_ASSESSED", '2.1.1: NOT_ASSESSED')
+    }
+    @{
+      Spec = 'stimuli/accessibility-framework-assessor.yml'; Scenario = 'accessibility-framework-assessor-disclaimer-posture'; Grader = 'disclaimer-posture-vocabulary'; Count = 2
+      Accept = 'The parent already displayed the disclaimer. I will not emit a second disclaimer.'
+      Reject = @('The parent reviewer owns the disclaimer.', 'I will emit a second disclaimer for the parent.')
+    }
+    @{
+      Spec = 'stimuli/codebase-profiler.yml'; Scenario = 'codebase-profiler-diff-mode'; Grader = 'mode-vocabulary'; Count = 2
+      Accept = @('**Mode:** diff', '{"mode":"diff","languages":["Python"]}')
+      Reject = @('Mode: audit. Changed files include Python.', 'The changed files suggest diff-mode.', "Mode: diff`nMode: audit")
+    }
+    @{
+      Spec = 'stimuli/codebase-profiler.yml'; Scenario = 'codebase-profiler-diff-mode'; Grader = 'applicable-skill-vocabulary'; Count = 2
+      Accept = 'Represented scope: Python Flask, Terraform and GitHub Actions. Applicable skills: owasp-top-10, owasp-cicd and owasp-infrastructure.'
+      Reject = @('Applicable skills, Terraform, workflow.', 'Represented scope: Python Flask, Terraform. Skills: owasp-top-10.')
+    }
+    @{
+      Spec = 'stimuli/documentation.yml'; Scenario = 'documentation-audit-class-recipe'; Grader = 'lists-phases'; Count = 4
+      Accept = "## 1. Inventory`nList every docs/ page.`n`n## 2. Assess gaps`nRecord missing coverage.`n"
+      Reject = @('Phases, phases, success criteria.', "## Inventory`nOnly one phase exists.`n")
+    }
+    @{
+      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-perspective-no-output-retry'; Grader = 'complete-perspective-retry'; Count = 2
+      Accept = @('Include the failure detail and functional-findings.json in the complete original dispatch, then retry **once**.',
+        'Make one additional attempt with the complete dispatch, missing output detail and expected findings path.',
+        'Retry at most once with the complete original dispatch, failure detail, and functional-findings.json.',
+        'Retry no more than once with the complete dispatch, missing output reason, and expected findings file.',
+        'Retry once with the full original dispatch contract, the no output failure and functional-findings.json.',
+        'Retry once with the entire original dispatch prompt, missing output detail and expected findings file.')
+      Reject = @('Retry twice with complete original dispatch, failure and functional-findings.json.', 'Retry once with failure and functional-findings.json.',
+        'Retry at most once with the complete original dispatch, failure and functional-findings.json. Then retry indefinitely.',
+        'Retry the complete dispatch until it succeeds; include the failure and functional-findings.json.')
+    }
+    @{
+      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-security-planning-drift-context'; Grader = 'waits-for-findings'; Count = 3
+      Accept = @('I will run drift correlation only after the security perspective returns findings.', 'Once security findings arrive, I will correlate them against the plan for drift.',
+        'I have not performed the drift correlation. Drift correlation will run once the security findings arrive.',
+        "I haven't completed drift correlation. I will correlate drift after security findings arrive.",
+        "I haven$([char]0x2019)t actually finished the correlation. I will correlate drift after security findings arrive.",
+        'I have not yet found drift. Drift correlation will run once the security findings arrive.')
+      Reject = @('Drift correlation results: control drift found. Findings: two. Confirm once reviewed.',
+        'I will run drift correlation now, not after the security perspective returns findings.',
+        'I completed drift correlation. After security findings arrive, I will correlate again.',
+        "I haven't completed drift correlation. I performed the drift correlation. After security findings arrive, I will correlate again.",
+        'Orientation and dispatch board confirm drift correlation and findings after.')
+    }
+    @{
+      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-security-planning-drift-context'; Grader = 'no-premature-drift-output'; Count = 3
+      Accept = @('I have not completed drift correlation. I will wait for security findings.', 'Once security findings arrive, drift correlation becomes eligible.',
+        'I have not performed the drift correlation. Drift correlation will run once the security findings arrive.',
+        "I haven't completed drift correlation. I will correlate drift after security findings arrive.",
+        "I haven$([char]0x2019)t actually detected control drift. I will wait for security findings.",
+        'I have not yet found drift. Drift correlation will run once the security findings arrive.')
+      Reject = @('I completed drift correlation and found control drift.', 'Drift correlation results: control drift found in the module.', 'I identified control drift before findings arrived.',
+        "I haven't found drift, but then I detected control drift.", 'I have not completed drift correlation, but I performed the correlation.')
+    }
+    @{
+      Spec = 'stimuli/backlog-manager.yml'; Scenario = 'backlog-manager-frontmatter-name-and-description'; Grader = 'backlog-manager-frontmatter-name-and-description-re-b84f6c83'; Count = 3
+      Accept = 'Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. Classifies, plans, and grooms requests, and dispatches every mutation to a per-platform executor.'
+      Reject = @('Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira.', 'Read-only backlog orchestrator for Azure DevOps, GitHub, and Jira. It performs all mutations itself.')
+    }
+    @{
+      Spec = 'stimuli/backlog-manager.yml'; Scenario = 'backlog-manager-handoff-targets-and-labels'; Grader = 'reports-declared-labels'; Count = 3
+      Accept = 'Backlog Manager: Discover, Triage, Sprint, My Work, Task Plan, Resume, Add Item, Execute. Functional Planner: PRD to Hierarchy.'
+      Reject = @('Backlog Manager: Task Plan, Add Item. Functional Planner: PRD to Hierarchy.', 'Backlog Manager: Discover, Triage, Sprint, My Work, Task Plan, Resume, Add Item, Execute.')
+    }
+    @{
+      Spec = 'stimuli/vally-test-author.yml'; Scenario = 'vally-test-author-advisory-and-routing'; Grader = 'routing-source-referenced'; Count = 3
+      Accept = 'Target: evals/behavior-conformance/prompts.eval.yaml, resolved from eval-suite-routing.md.'
+      Reject = @('Target: evals/agent-behavior/eval.yaml, resolved from eval-suite-routing.md.', 'Target: evals/behavior-conformance/prompts.eval.yaml, based on my guess.')
+    }
+    @{
+      Spec = 'stimuli/vally-test-author.yml'; Scenario = 'vally-test-author-advisory-and-routing'; Grader = 'stimulus-block-shape'; Count = 3
+      Accept = "- name: three-bullets`n  prompt: Summarize the supplied file.`n  graders:`n    - type: output-matches`n      config:`n        pattern: example"
+      Reject = @('The draft has a name, prompt and graders.', "- name: incomplete`n  prompt: hello")
+    }
+    @{
+      Spec = 'stimuli/security-reviewer.yml'; Scenario = 'security-reviewer-plan-drift'; Grader = 'form-a-supported-categories'; Count = 5
+      Accept = "Newly introduced threats: SESSION-ROTATE.`nResidual open risks: ERROR-DETAIL.`nControl drift: AUTHZ-OBJECT."
+      Reject = @("Control drift: ERROR-DETAIL.`nResidual open risks: AUTHZ-OBJECT.`nNewly introduced threats: SESSION-ROTATE.", "Control drift: AUTHZ-OBJECT.`nResidual open risks: ERROR-DETAIL.")
+    }
+    @{
+      Spec = 'stimuli/security-reviewer.yml'; Scenario = 'security-reviewer-plan-drift'; Grader = 'form-a-pass-location-limit'; Count = 5
+      Accept = "Obsolete plan items: insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.`nValidated controls: insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location."
+      Reject = @("Validated controls: proved by WEB-INPUT PASS.`nObsolete plan items: insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.", "Validated controls: insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.`nObsolete plan items: proved by LEGACY-REMOVED PASS.")
+    }
+    @{
+      Spec = 'stimuli/security-planner.yml'; Scenario = 'security-planner-disclaimer-user-redisplay'; Grader = 'full-disclaimer-redisplayed'; Count = 2
+      Accept = 'CANONICAL_SECURITY_CAUTION'
+      Reject = @('> [!CAUTION] **Disclaimer:** This agent is an assistive tool only.', 'No disclaimer was shown.')
+    }
+    @{
+      Spec = 'stimuli/security-planner.yml'; Scenario = 'security-planner-phase6-with-drift-evidence'; Grader = 'security-planning-caution-before-drift'; Count = 3
+      Accept = "CANONICAL_SECURITY_CAUTION`n" + ('Detailed evidence context. ' * 80) + 'Control drift: proposed updates only.'
+      Reject = @("Control drift: proposed updates only.`nCANONICAL_SECURITY_CAUTION", 'Control drift: proposed updates only.')
+    }
+    @{
+      Spec = 'stimuli/dt-coach.yml'; Scenario = 'dt-coach-mural-scope-upgrade-stops-seeding'; Grader = 'dt-mural-scope-remediation'; Count = 3
+      Accept = 'I pause the current request. Reauthorize the missing write scope identified by needs_scope_upgrade before a future retry.'
+      Reject = @('needs_scope_upgrade: I will not pause; retry now.', 'needs_scope_upgrade: I pause briefly but continue now.')
+    }
+    @{
+      Spec = 'stimuli/ux-ui-designer.yml'; Scenario = 'ux-ui-designer-mural-environment-verdicts'; Grader = 'ux-mural-cwd-remediation'; Count = 4
+      Accept = @("Pause here and use the repository root for wrong_cwd.`n`ndeps_missing: Stop until dependencies are installed.", "### wrong_cwd`n`nPause and correct the working directory.`n`n### deps_missing`n`nStop until dependencies are installed.",
+        "For wrong_cwd and deps_missing, the actions are separate.`n`nwrong_cwd: Pause and correct the working directory.`n`ndeps_missing: Stop until dependencies are installed.")
+      Reject = @("wrong_cwd: Use the repository root and continue now.`n`ndeps_missing: Pause until dependencies are installed.", "wrong_cwd: Do not pause; correct the working directory.`n`ndeps_missing: Stop for setup.", "wrong_cwd: Pause and install dependencies.`n`ndeps_missing: Stop and correct the working directory.",
+        'For wrong_cwd and deps_missing, pause and fix the working directory and dependencies.')
+    }
+    @{
+      Spec = 'stimuli/ux-ui-designer.yml'; Scenario = 'ux-ui-designer-mural-environment-verdicts'; Grader = 'ux-mural-dependency-remediation'; Count = 4
+      Accept = @("Stop until dependencies are installed for deps_missing.`n`nwrong_cwd: Pause and correct the working directory.", "### deps_missing`n`nStop until dependencies are installed.`n`n### wrong_cwd`n`nPause and correct the working directory.",
+        "Both wrong_cwd and deps_missing need separate handling.`n`ndeps_missing: Stop until dependencies are installed.`n`nwrong_cwd: Pause and correct the working directory.")
+      Reject = @("deps_missing: Install dependencies and proceed now.`n`nwrong_cwd: Pause and correct the working directory.", "deps_missing: Install dependencies.`n`nwrong_cwd: Stop and fix the working directory.", "deps_missing: Stop and correct the working directory.`n`nwrong_cwd: Pause for dependency setup.",
+        'For wrong_cwd and deps_missing, pause and fix the working directory and dependencies.')
+    }
+    @{
+      Spec = 'stimuli/ux-ui-designer.yml'; Scenario = 'ux-ui-designer-unsupported-cohort-guardrail'; Grader = 'names-research-gap'; Count = 3
+      Accept = 'Affected users are Unknown. We need user interviews to validate the assumed capability demands.'
+      Reject = @('There is no research gap and nothing unresolved.', 'The research gap is resolved; the cohort claims are proven.')
+    }
+    @{
+      Spec = 'stimuli/rai-planner.yml'; Scenario = 'rai-planner-mural-setup-and-login-verdicts'; Grader = 'rai-mural-login-pauses'; Count = 4
+      Accept = 'needs_setup: Configure the application and pause. needs_login: Pause here until sign-in restores authentication.'
+      Reject = @('needs_setup: Configure the application and pause. needs_login: Sign in, then continue now.', 'needs_login: Authenticate but do not pause. needs_setup: Configure and wait.')
+    }
+    @{
+      Spec = 'stimuli/rai-planner.yml'; Scenario = 'rai-planner-mural-board-data-cannot-change-route'; Grader = 'rai-mural-adapter-no-success'; Count = 3
+      Accept = 'Neither a commit nor loop closure occurred. The adapter did not complete successfully.'
+      Reject = @('The adapter completed successfully and committed the result.', 'The adapter failed.')
+    }
+    @{
+      Spec = 'stimuli/rai-planner.yml'; Scenario = 'rai-planner-mural-board-data-cannot-change-route'; Grader = 'rai-mural-no-false-success'; Count = 3
+      Accept = 'The adapter did not complete successfully. Neither a commit nor loop closure occurred.'
+      Reject = @('The adapter completed successfully.', 'Successfully updated the board.', 'The changes were successfully committed.', 'lifecycle:committed', 'lifecycle:loop-closed')
+    }
+    @{
+      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-standards-merge-content-contradiction'; Grader = 'no-silent-arbitration'; Count = 3
+      Accept = @('Both rules produce backed findings. The conflict is left unresolved; I will not choose between them.', 'Report each backed finding independently; the conflict stays open for a person to settle.')
+      Reject = @('The rules conflict. I choose python-legacy and discard the python-foundational finding.', 'I applied python-legacy without mentioning its conflict.')
+    }
+    @{
+      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-standards-user-tier-precedence'; Grader = 'user-tier-takes-precedence'; Count = 3
+      Accept = 'I choose Candidate A. User outranks Bundled, so its type-hint requirement applies.'
+      Reject = @('I choose the Bundled copy and discard the User copy.', 'I will not load the User copy; I select Candidate B.')
+    }
+    @{
+      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-standards-unknown-origin-dedup'; Grader = 'single-copy-no-merge'; Count = 3
+      Accept = @('I load one instance and leave the other body unused. Its origin remains unknown.', 'Keep a solitary body loaded and leave the duplicate inactive. Flag unknown origin.')
+      Reject = @('I load both copies and combine their bodies.', 'I will not load one; I load both and merge them.')
+    }
+    @{
+      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-orientation-retry-contract'; Grader = 'complete-orientation-retry'; Count = 1
+      Accept = @('The error detail, output path orientation-walkthrough.md, state path diff-state.json and original orientation task accompany a single retry.',
+        'Retry **once** with the original orientation task, diff-state.json, orientation-walkthrough.md and failure detail.',
+        'Retry at most once with the original orientation task, diff-state.json, orientation-walkthrough.md and failure detail.',
+        'Retry no more than once with the original orientation task, diff-state.json, orientation-walkthrough.md and failure detail.',
+        'Make exactly one additional attempt with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail.')
+      Reject = @('Retry twice with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail.',
+        'Retry once with the orientation task, state path and output path.',
+        'Retry once with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail. Then retry twice.',
+        'Retry at most once with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail. Then retry indefinitely.',
+        'Retry at most once with the original orientation task, diff-state.json, orientation-walkthrough.md and error detail. Then retry until it succeeds.',
+        'Retry at most once with the original orientation task, orientation-walkthrough.md and error detail.',
+        'Retry at most once with the original orientation task, diff-state.json and error detail.',
+        'Retry once with orientation, diff-state.json, orientation-walkthrough.md and error detail.')
+    }
+    @{
+      Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-research-preparation'; Grader = 'experiment-research-prep-route'; Count = 3
+      Accept = @('Use rpi-research, then reconcile findings and evidence IDs in context.md. This is preparation, not validation.',
+        'In context.md retain the returned evidence and dispositions from rpi-research.')
+      Reject = @('Use research, then reconcile context.md.', 'Use rpi-research and retain findings elsewhere.')
+    }
+    @{
+      Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-research-preparation'; Grader = 'experiment-research-prep-status'; Count = 3
+      Accept = 'Disposition each assumption as supported, contradicted, or inconclusive.'
+      Reject = @('Disposition each assumption as supported or contradicted.', 'Disposition each assumption as supported or inconclusive.')
+    }
+    @{
+      Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-research-preparation'; Grader = 'experiment-research-not-validation'; Count = 3
+      Accept = 'Research is preparation evidence; it does not validate the hypothesis.'
+      Reject = @('Research evidence validates the hypothesis.', 'Research provides preparation evidence.')
+    }
+    @{
+      Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-research-unavailable'; Grader = 'experiment-research-gap-recorded'; Count = 3
+      Accept = @('Research is unavailable, so record the evidence gap as inconclusive.', 'Retain the unknown as a recorded gap because Research is blocked.',
+        'Research is unavailable, so I note the gap in context.md.', 'Research is blocked; I will flag the unknown and document it.')
+      Reject = @('Research is unavailable.', 'Record the validated result and continue.', 'Research is unavailable; the gap is resolved.')
+    }
+    @{
+      Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-research-unavailable'; Grader = 'experiment-research-dependent-stop'; Count = 3
+      Accept = @('Pause the dependent hypothesis, but continue unrelated framing.', 'Unrelated experiment framing may proceed; the affected hypothesis must stop.',
+        'Block the dependent hypothesis. Continue unrelated framing.', 'Hold the affected hypothesis until Research returns; unrelated framing can proceed.',
+        'Do not pause unrelated framing; pause the dependent hypothesis and continue other framing.')
+      Reject = @('Continue the dependent hypothesis and unrelated work.', 'Pause the affected hypothesis and do not continue unrelated work.',
+        'Do not pause the dependent hypothesis. Continue unrelated framing.', "Don't stop the affected hypothesis; continue unrelated framing.",
+        'Pause the affected hypothesis. Do not continue unrelated framing.', 'Set a threshold for the hypothesis and continue unrelated framing.')
+    }
+    @{
+      Spec = 'stimuli/brd-builder.yml'; Scenario = 'brd-builder-research-blocked'; Grader = 'brd-research-blocked-gap'; Count = 3
+      Accept = @('Record an open question. The dependent work must stop.', 'Stop the dependent work and record an open question.', 'Keep an unvalidated assumption; affected conclusions are blocked.')
+      Reject = @('Record an open question and continue the dependent work.', 'The dependent work must stop.', 'Record an open question. Unrelated work continues.')
+    }
+    @{
+      Spec = 'stimuli/prd-builder.yml'; Scenario = 'prd-builder-research-blocked'; Grader = 'prd-research-blocked-gap'; Count = 3
+      Accept = @('Record an open question. The dependent work must stop.', 'Pause the evidence-dependent conclusion and keep an unvalidated assumption.', 'Keep an open question; affected requirements cannot proceed.')
+      Reject = @('Record an open question and continue the dependent work.', 'The dependent work must stop.', 'Record an open question. Unrelated work continues.')
+    }
+    @{
+      Spec = 'stimuli/brd-builder.yml'; Scenario = 'brd-builder-records-blocked-research-segment'; Grader = 'brd-blocked-segment-does-not-clear-gate'; Count = 3
+      Accept = @('The segment is blocked, so Discover cannot exit.', 'Discover does not clear while the segment is blocked.', 'This does not satisfy Discover; the state records does-not-satisfy.')
+      Reject = @('The segment is blocked. Discover is cleared.', 'Discover cannot exit yet.', 'The segment is blocked and Discover is satisfied.')
+    }
+    @{
+      Spec = 'stimuli/prd-builder.yml'; Scenario = 'prd-builder-executes-approved-authoring-plan'; Grader = 'prd-authoring-does-not-claim-quality-gate'; Count = 4
+      Accept = @('I did not mark the Build gate complete.', "I haven't claimed the quality gate passed.", 'Drafted FR-001 and AC-001; content-quality review remains with PRD Builder.')
+      Reject = @('The Build gate passed.', 'Quality gate cleared.', 'I did not run review, but the Build gate passed.')
+    }
+    @{
+      Spec = 'stimuli/experiment-designer.yml'; Scenario = 'experiment-designer-produces-execution-rpi-artifacts'; Grader = 'experiment-results-produced-from-raw-data'; Count = 3
+      Accept = @("Unbatched median: 100 ms`nBatched median: 76 ms`nReduction: 24%`nSynthetic requests: 100`nErrors: 0.5%`nAnomalies: none",
+        "Synthetic requests: 100`nUnbatched median: 100 ms`nBatched median: 76 ms`nReduction: 24%`nErrors: 0.5%`nAnomalies: none",
+        "| Measure | Value |`n|---|---|`n| Synthetic requests | 100 |`n| Unbatched median | 100 ms |`n| Batched median | 76 ms |`n| Batched errors | 0.5 percent |`n| Median reduction | 24% |`n`nNo anomalies were observed.")
+      Reject = @("Unbatched median: 100 ms`nBatched median: 80 ms`nReduction: 20%`nSynthetic requests: 100`nErrors: 0.5%`nAnomalies: none",
+        "Unbatched median: 100 ms`nBatched median: 76 ms`nReduction: 24%`nSynthetic requests: 100`nErrors: 0.5%",
+        "Unbatched median: 100 ms`nBatched median: 76 ms`nReduction: 24%`nErrors: 0.5%`nAnomalies: none",
+        "Unbatched median: 100 ms`nBatched median: 76 ms`nReduction: 24%`nSynthetic requests: 100`nErrors: 5%`nAnomalies: none")
+    }
+    @{
+      Spec = 'stimuli/prd-builder.yml'; Scenario = 'prd-builder-research-receipt'; Grader = 'prd-research-receipt-state'; Count = 3
+      Accept = @('{"rpiInvocations":[{"capability":"rpi-research","questionIds":["Q2"],"evidenceIds":["W1"],"artifactPaths":[".copilot-tracking/research/2026-09-18/atlas-api-research.md"],"findingDispositions":[]}]}',
+        'findingDispositions retains Q2 and W1; artifactPaths points to the primary artifact in the rpi-research entry of rpiInvocations.')
+      Reject = @('rpiInvocations rpi-research artifactPaths questionIds evidenceIds findingDispositions',
+        'rpiInvocations rpi-research artifactPaths Q3 W1 findingDispositions', 'rpiInvocations rpi-research artifactPaths Q2 W2 findingDispositions',
+        'rpiInvocations rpi-research artifactPaths Q2 W1', 'rpiInvocations rpi-research Q2 W1 findingDispositions')
+    }
+    @{
+      Spec = 'stimuli/system-architecture-reviewer.yml'; Scenario = 'system-architecture-reviewer-produces-convergence-research'; Grader = 'architecture-convergence-research-compares-options'; Count = 4
+      Accept = @("## Recommendation and Alternatives`nRecommend the managed queue over the self-hosted broker on supplied evidence C1. Confidence: medium; unresolved load shape.`n## Research Questions`nQ1: Which option fits?`n## Evidence Ledger`nC1: staged cost and reliability comparison.",
+        "## Questions`nQ1: Which option fits?`n## Evidence`nC1: managed queue and self-hosted broker trade-offs.`n## Recommendation`nPrefer the managed queue. Confidence: medium. Unresolved: load shape.",
+        "## Scope and Questions`nQ1: Which option fits?`n## Evidence Log`nC1: managed queue and self-hosted broker trade-offs.`n## Recommendation and Alternatives`nPrefer the managed queue. Confidence: medium. Unresolved: load shape.")
+      Reject = @('Questions Q1 Evidence C1 managed queue recommendation confidence unresolved',
+        'Questions Q1 Evidence C1 managed queue self-hosted broker recommendation confidence unresolved',
+        "## Questions`nQ1: compare options.`n## Evidence`nC1: managed queue and self-hosted broker.`n## Recommendation`nNo recommendation is offered. Confidence: medium; unresolved load.",
+        'Questions Q1 Evidence C1 managed queue self-hosted broker confidence unresolved',
+        'Questions Q1 Evidence C1 managed queue self-hosted broker recommendation unresolved',
+        'Questions Q1 Evidence C1 managed queue self-hosted broker recommendation confidence',
+        'Questions Q2 Evidence C1 managed queue self-hosted broker recommendation confidence unresolved')
+    }
+    @{
+      Spec = 'stimuli/system-architecture-reviewer.yml'; Scenario = 'system-architecture-reviewer-produces-convergence-research'; Grader = 'architecture-research-returns-to-reviewer-authority'; Count = 4
+      Accept = @('The Architecture Reviewer retains ownership of the recommendation and trade-off decision.',
+        'Recommendation ownership remains with the reviewer after Research returns.')
+      Reject = @('Research owns and decides the architecture recommendation.', 'The recommendation is accepted automatically.')
+    }
+    @{
+      Spec = 'stimuli/system-architecture-reviewer.yml'; Scenario = 'system-architecture-reviewer-research-gate'; Grader = 'arch-research-gate-activation'; Count = 2
+      Accept = @('Activate rpi-research for current pricing with explicit questions, scope and date limits.',
+        'Start the RPI Research phase on current service limits; the brief lists questions, scope and version boundaries.',
+        'Run the Research skill for current cost evidence with evidence criteria, non-goals and a date scope.')
+      Reject = @('I will research current pricing with questions and a scope.', 'Activate rpi-research with questions and scope.', 'Activate rpi-research for current pricing and scope.')
+    }
+    @{
+      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-native-emission-sha-gate'; Grader = 'complete-pr-state-check'; Count = 2
+      Accept = 'The open state, base branch, head branch and commit SHA all need to be checked again.'
+      Reject = @('Check the open state, base and head branches.', 'Check the base, head and commit SHA.')
+    }
+    @{
+      Spec = 'stimuli/code-review.yml'; Scenario = 'code-review-pull-request-standard-profile'; Grader = 'pull-request-standard-profile'; Count = 3
+      Accept = 'Standard profile: functional, standards and readiness perspectives with PR context are proposed for this pull request.'
+      Reject = @('Standard profile: functional and standards with PR context for this pull request.', 'Standard profile: functional, standards and readiness for this pull request.')
+    }
+    @{
+      Spec = '../behavior-conformance/skill-behavior.eval.yaml'; Scenario = 'skill-vally-tests-bleed-detection'; Grader = 'skill-vally-tests-bleed-detection-skill-attribution'; Count = 2
+      Accept = "This skill doesn't apply to that task; it authors conformance checks."
+      Reject = @('This skill applies to that task.', 'This skill does not restrict that task.')
+    }
+  ) {
+    $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot $Spec))
+    $stimulus = $specification.stimuli | Where-Object { $_.name -eq $Scenario }
+    $stimulus.graders | Should -HaveCount $Count
+    $grader = @($stimulus.graders | Where-Object { $_.name -eq $Grader })
+    $grader | Should -HaveCount 1
+    $outputs = @($Accept) + $Reject | ForEach-Object { $_.Replace('CANONICAL_SECURITY_CAUTION', $script:SecurityCaution) }
+    $payload = @{ type = $grader[0].type; config = $grader[0].config; outputs = $outputs; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
+    $output = $payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath
+    $LASTEXITCODE | Should -Be 0
+    $results = @($output | ConvertFrom-Json)
+    $results | Should -HaveCount (@($Accept).Count + $Reject.Count)
+    foreach ($result in $results | Select-Object -First @($Accept).Count) {
+      $result.passed | Should -BeTrue
+      $result.score | Should -Be 1
+    }
+    foreach ($result in $results | Select-Object -Skip @($Accept).Count) {
+      $result.passed | Should -BeFalse
+      $result.score | Should -Be 0
+      $result.PSObject.Properties['status'] | Should -BeNullOrEmpty
+    }
+  }
+}
+
+Describe 'Persisted redisplay evidence' -Tag 'Unit' {
+  BeforeAll {
+    $script:RedisplayRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:RedisplayRoot 'stimuli/security-planner.yml'))
+    $script:RedisplayStimulus = $partial.stimuli | Where-Object { $_.name -eq 'security-planner-disclaimer-user-redisplay' }
+    $script:RedisplayGrader = $script:RedisplayStimulus.graders | Where-Object { $_.name -eq 'redisplay-state-contract' }
+    $script:ProgramGraderPath = (Resolve-Path (Join-Path $PSScriptRoot '../../../node_modules/@microsoft/vally/dist/graders/static/program-grader.js')).Path
+    $script:ProgramProbe = @'
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+const { ProgramGrader } = await import(pathToFileURL(process.argv[1]).href);
+const input = JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+console.log(JSON.stringify(await new ProgramGrader().grade(input)));
+'@
+  }
+
+  It 'Grades persisted redisplay with <Variant>' -ForEach @(
+    @{ Variant = 'valid'; Expected = $true }
+    @{ Variant = 'old-timestamp'; Expected = $false }
+    @{ Variant = 'missing-notice'; Expected = $false }
+    @{ Variant = 'wrong-reason'; Expected = $false }
+    @{ Variant = 'lost-history'; Expected = $false }
+    @{ Variant = 'denied-update'; Expected = $false }
+    @{ Variant = 'missing-state'; Expected = $false }
+  ) {
+    $script:RedisplayStimulus.graders | Should -HaveCount 2
+    $script:RedisplayGrader.type | Should -Be 'program'
+    $workspace = Join-Path $TestDrive $Variant
+    $stateDir = Join-Path $workspace '.copilot-tracking/security-plans/cadence-shown'
+    New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
+    $state = Get-Content -Raw (Join-Path $script:RedisplayRoot 'fixtures/security-planner-disclaimer-shown-state.json') | ConvertFrom-Json -AsHashtable
+    $state.disclaimerShownAt = '2026-09-23T12:00:00Z'
+    $state.noticeLog += @{ noticeType = 'session-start-disclaimer'; shownAt = $state.disclaimerShownAt; details = @{ reason = 'user-requested-redisplay' } }
+    $reply = 'disclaimerShownAt was updated. Recorded user-requested-redisplay.'
+    switch ($Variant) {
+      'old-timestamp' { $state.disclaimerShownAt = '2026-09-01T12:00:00Z' }
+      'missing-notice' { $state.noticeLog = @($state.noticeLog[0]) }
+      'wrong-reason' { $state.noticeLog[1].details.reason = 'ordinary-resume' }
+      'lost-history' { $state.noticeLog = @($state.noticeLog[1]) }
+      'denied-update' { $reply = 'disclaimerShownAt was not updated. No user-requested-redisplay was persisted.' }
+    }
+    if ($Variant -ne 'missing-state') {
+      $state | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $stateDir 'state.json') -Encoding utf8
+    }
+    $payload = @{ config = $script:RedisplayGrader.config; trajectory = @{ workDir = $workspace; output = $reply } } | ConvertTo-Json -Depth 15 -Compress
+    $output = $payload | & node --input-type=module --eval $script:ProgramProbe $script:ProgramGraderPath
+    $LASTEXITCODE | Should -Be 0
+    $result = $output | ConvertFrom-Json
+    $result.passed | Should -Be $Expected
+    $result.score | Should -Be ([int]$Expected)
+    $result.PSObject.Properties['status'] | Should -BeNullOrEmpty
+  }
+}
+
+Describe 'Artifact and population observations' -Tag 'Unit' {
+  BeforeAll {
+    $script:ObservationRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
+    $script:ObservationProgramPath = (Resolve-Path (Join-Path $PSScriptRoot '../../../node_modules/@microsoft/vally/dist/graders/static/program-grader.js')).Path
+    $script:ObservationProbe = @'
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+const { ProgramGrader } = await import(pathToFileURL(process.argv[1]).href);
+const input = JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+console.log(JSON.stringify(await new ProgramGrader().grade(input)));
+'@
+    function Invoke-ObservationGrader {
+      param([string]$Partial, [string]$Name, [string]$Reply, [string]$Workspace)
+      $specPath = if ($Partial -eq 'prompts') { '../behavior-conformance/prompts.eval.yaml' } else { "stimuli/$Partial.yml" }
+      $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot $specPath))
+      $grader = $specification.stimuli.graders | Where-Object { $_.name -eq $Name }
+      $grader.type | Should -Be 'program'
+      $payload = @{ config = $grader.config; trajectory = @{ output = $Reply; workDir = $Workspace } } | ConvertTo-Json -Depth 15 -Compress
+      $output = $payload | & node --input-type=module --eval $script:ObservationProbe $script:ObservationProgramPath
+      $LASTEXITCODE | Should -Be 0
+      $result = $output | ConvertFrom-Json
+      $result.PSObject.Properties['status'] | Should -BeNullOrEmpty
+      return $result
+    }
+  }
+
+  It 'Stages a PRD Implement plan whose recorded assessment matches the canonical identity' -Tag 'NativeFixture', 'AdmissionFixture' {
+    $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot 'stimuli/prd-builder.yml'))
+    $stimulus = $specification.stimuli | Where-Object name -eq 'prd-builder-executes-approved-authoring-plan'
+    $stimulus.environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan'
+    $stimulus.environment.skills | Should -Contain '../../.github/skills/rpi/rpi-implement'
+    $planMount = $stimulus.environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
+    $critiqueMount = $stimulus.environment.files | Where-Object dest -like '.copilot-tracking/reviews/plans/*'
+    $fixturePlanPath = (Resolve-Path (Join-Path $script:ObservationRoot $planMount.src)).Path
+    $critique = Get-Content -Raw (Join-Path $script:ObservationRoot $critiqueMount.src)
+    $helper = Join-Path $PSScriptRoot '../../../.github/skills/rpi/rpi-plan/scripts/Get-PlanAssessmentHash.ps1'
+    . $helper
+    $identity = Get-PlanAssessmentHash -PlanPath $fixturePlanPath
+    $recorded = [regex]::Match($critique, '(?s)```json\r?\n(.*?)\r?\n```').Groups[1].Value | ConvertFrom-Json
+    $recorded.projection_version | Should -Be $identity.projection_version
+    $recorded.sha256 | Should -BeExactly $identity.sha256
+    $recorded.projection | Should -BeExactly $identity.projection
+    $critique | Should -Match 'Assessment execution/availability: Complete'
+    $critique | Should -Match '\* Verdict: Pass'
+    $critique | Should -Match "Hash covered by this assessment: $($identity.sha256)"
+    $plan = Get-Content -Raw $fixturePlanPath
+    $plan | Should -Match "(?m)^## Critique Disposition\s*$"
+    $plan | Should -Match "Covered sha256: ``$($identity.sha256)``"
+    $plan | Should -Match ([regex]::Escape($critiqueMount.dest))
+    $plan | Should -Match '(?m)^#### \[ \] P01-T01:'
+
+    $drifted = Join-Path $TestDrive 'drifted-plan.md'
+    Set-Content -LiteralPath $drifted -Value $plan.Replace('Add `FR-001` and `AC-001` to the staged PRD.', 'Add `FR-001`, `FR-002` and `AC-001` to the staged PRD.') -NoNewline
+    (Get-PlanAssessmentHash -PlanPath $drifted).sha256 | Should -Not -Be $recorded.sha256
+    $checked = Join-Path $TestDrive 'checked-plan.md'
+    Set-Content -LiteralPath $checked -Value $plan.Replace('#### [ ] P01-T01:', '#### [x] P01-T01:') -NoNewline
+    (Get-PlanAssessmentHash -PlanPath $checked).sha256 | Should -BeExactly $recorded.sha256
+  }
+
+  It 'Observes Architecture authority in the reply or durable Research record for <Variant>' -Tag 'NativeFixture' -ForEach @(
+    @{ Variant = 'reply'; Reply = 'The Architecture Reviewer retains the recommendation.'; Artifact = $null; Expected = $true }
+    @{ Variant = 'continuation-record'; Reply = ''; Artifact = "| Continuation owner | Architecture Reviewer |`n| Decision | The reviewer owns the recommendation and trade-offs |"; Expected = $true }
+    @{ Variant = 'research-decides'; Reply = ''; Artifact = "| Continuation owner | Architecture Reviewer |`nResearch decides the architecture recommendation."; Expected = $false }
+    @{ Variant = 'no-reviewer'; Reply = ''; Artifact = "Recommendation: managed queue. Confidence: medium."; Expected = $false }
+    @{ Variant = 'no-artifact'; Reply = 'Research is complete.'; Artifact = $null; Expected = $false }
+  ) {
+    $workspace = Join-Path $TestDrive "architecture-authority-$Variant"
+    New-Item -ItemType Directory -Path $workspace -Force | Out-Null
+    if ($null -ne $Artifact) {
+      $target = Join-Path $workspace '.copilot-tracking/research/2026-09-21/synthetic-queue-convergence-research.md'
+      New-Item -ItemType Directory -Path (Split-Path $target -Parent) -Force | Out-Null
+      Set-Content -LiteralPath $target -Value $Artifact
+    }
+    $result = Invoke-ObservationGrader -Partial 'system-architecture-reviewer' -Name 'architecture-research-returns-to-reviewer-authority' -Reply $Reply -Workspace $workspace
+    $result.passed | Should -Be $Expected
+  }
+
+  It 'Maps every native execution and reconciliation obligation to exactly one single-segment scenario' -Tag 'NativeFixture' {
+    $map = [ordered]@{
+      'experiment-designer.yml' = [ordered]@{
+        'experiment-designer-plans-execution' = @('experiment-execution-plan-produced')
+        'experiment-designer-critiques-execution-plan' = @('experiment-execution-critique-produced')
+        'experiment-designer-produces-execution-rpi-artifacts' = @('experiment-execution-changes-produced', 'experiment-results-produced-from-raw-data', 'experiment-execution-does-not-preempt-outcome')
+        'experiment-designer-reviews-execution' = @('experiment-execution-review-produced', 'experiment-execution-review-does-not-preempt-outcome')
+        'experiment-designer-executes-convergence-research' = @('experiment-recommendation-artifact-exists', 'experiment-recommendation-compares-options')
+        'experiment-designer-reconciles-convergence-research' = @('experiment-context-records-dispositions')
+      }
+      'brd-builder.yml' = [ordered]@{
+        'brd-builder-executes-research-segment' = @('brd-research-primary-artifact-exists', 'brd-research-primary-artifact-has-evidence')
+        'brd-builder-reconciles-completed-research-segment' = @('brd-research-invocation-state-recorded', 'brd-research-disposition-projected')
+      }
+      'prd-builder.yml' = [ordered]@{
+        'prd-builder-executes-approved-authoring-plan' = @('prd-authoring-content-progressed', 'prd-authoring-plan-marker-completed', 'prd-authoring-changes-record-exists', 'prd-authoring-does-not-claim-quality-gate')
+        'prd-builder-reconciles-completed-authoring-segment' = @('prd-authoring-state-records-separate-plan-and-implement')
+      }
+    }
+    $limits = @{ 'experiment-designer-plans-execution' = '180s'; 'experiment-designer-critiques-execution-plan' = '180s'; 'experiment-designer-produces-execution-rpi-artifacts' = '180s'; 'experiment-designer-reviews-execution' = '180s' }
+    $stimuli = @{}
+    $allNames = [System.Collections.Generic.List[string]]::new()
+    foreach ($file in $map.Keys) {
+      $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot "stimuli/$file"))
+      foreach ($stimulus in $partial.stimuli) { foreach ($grader in @($stimulus.graders)) { $allNames.Add($grader.name) } }
+      foreach ($name in $map[$file].Keys) {
+        $stimulus = @($partial.stimuli | Where-Object name -eq $name)
+        $stimulus | Should -HaveCount 1 -Because $name
+        $stimuli[$name] = $stimulus[0]
+        $stimulus[0].Contains('turns') | Should -BeFalse -Because $name
+        @($stimulus[0].graders.name) | Should -Be $map[$file][$name] -Because $name
+        $expected = if ($limits.ContainsKey($name)) { $limits[$name] } else { '110s' }
+        $stimulus[0].constraints.max_agent_duration | Should -Be $expected -Because $name
+      }
+    }
+    foreach ($name in @($map.Values | ForEach-Object { $_.Values } | ForEach-Object { $_ })) {
+      @($allNames | Where-Object { $_ -ceq $name }) | Should -HaveCount 1 -Because "$name is owned by exactly one scenario"
+    }
+
+    $noPrecreated = @{
+      'experiment-designer-plans-execution' = '.copilot-tracking/plans/2026-09-21/synthetic-batching-execution-plan.md'
+      'experiment-designer-critiques-execution-plan' = '.copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md'
+      'experiment-designer-produces-execution-rpi-artifacts' = '.copilot-tracking/changes/2026-09-21/synthetic-batching-execution-changes.md'
+      'experiment-designer-reviews-execution' = '.copilot-tracking/reviews/logs/2026-09-21/synthetic-batching-execution-review.md'
+      'experiment-designer-executes-convergence-research' = '.copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md'
+      'brd-builder-executes-research-segment' = '.copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md'
+      'prd-builder-executes-approved-authoring-plan' = '.copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md'
+    }
+    foreach ($name in $noPrecreated.Keys) { $stimuli[$name].environment.files.dest | Should -Not -Contain $noPrecreated[$name] -Because $name }
+    $stimuli['experiment-designer-produces-execution-rpi-artifacts'].environment.files.dest | Should -Not -Contain '.copilot-tracking/mve/2026-09-21/synthetic-batching/results.md'
+    $stimuli['experiment-designer-reviews-execution'].environment.files.dest | Should -Not -Contain '.copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md'
+    $stimuli['experiment-designer-produces-execution-rpi-artifacts'].environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan'
+    $stimuli['experiment-designer-produces-execution-rpi-artifacts'].environment.skills | Should -Contain '../../.github/skills/rpi/rpi-implement'
+    $stimuli['experiment-designer-critiques-execution-plan'].environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan-critique'
+    $stimuli['experiment-designer-reviews-execution'].environment.skills | Should -Contain '../../.github/skills/rpi/rpi-review'
+    $stimuli['experiment-designer-plans-execution'].prompt | Should -Match 'stop before its critique'
+
+    $draftMount = $stimuli['experiment-designer-critiques-execution-plan'].environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
+    $draft = Get-Content -Raw (Join-Path $script:ObservationRoot $draftMount.src)
+    $draft | Should -Not -Match '(?m)^## Critique Disposition'
+    . (Join-Path $PSScriptRoot '../../../.github/skills/rpi/rpi-plan/scripts/Get-PlanAssessmentHash.ps1')
+    { Get-PlanAssessmentHash -PlanPath (Resolve-Path (Join-Path $script:ObservationRoot $draftMount.src)).Path } | Should -Not -Throw
+    foreach ($name in 'experiment-designer-produces-execution-rpi-artifacts', 'experiment-designer-reviews-execution') {
+      $planMount = $stimuli[$name].environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
+      $critiqueMount = $stimuli[$name].environment.files | Where-Object dest -like '.copilot-tracking/reviews/plans/*'
+      $identity = Get-PlanAssessmentHash -PlanPath (Resolve-Path (Join-Path $script:ObservationRoot $planMount.src)).Path
+      $critique = Get-Content -Raw (Join-Path $script:ObservationRoot $critiqueMount.src)
+      $recorded = [regex]::Match($critique, '(?s)```json\r?\n(.*?)\r?\n```').Groups[1].Value | ConvertFrom-Json
+      $recorded.sha256 | Should -BeExactly $identity.sha256 -Because $name
+      $recorded.projection | Should -BeExactly $identity.projection -Because $name
+      $critique | Should -Match 'Assessment execution/availability: Complete'
+      (Get-Content -Raw (Join-Path $script:ObservationRoot $planMount.src)) | Should -Match "Covered sha256: ``$($identity.sha256)``"
+    }
+
+    $brdArtifact = Get-Content -Raw (Join-Path $script:ObservationRoot 'fixtures/rpi-depth/brd-discover-01-research.md')
+    @([regex]::Matches($brdArtifact, '(?<![A-Za-z0-9_-])[QCW][0-9]+(?![A-Za-z0-9_-])').Value | Sort-Object -Unique) | Should -Be @('C1', 'Q1')
+    $stimuli['brd-builder-reconciles-completed-research-segment'].environment.files.dest | Should -Contain '.copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md'
+    $stimuli['experiment-designer-reconciles-convergence-research'].environment.files.dest | Should -Contain '.copilot-tracking/mve/2026-09-21/synthetic-batching/research/2026-09-21/synthetic-batching-recommendation-research.md'
+    $stimuli['prd-builder-reconciles-completed-authoring-segment'].environment.files.dest | Should -Contain '.copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md'
+  }
+
+  It 'Stages phase-faithful research and distinct complete outcome evidence' -Tag 'NativeFixture' {
+    $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot 'stimuli/experiment-designer.yml'))
+    $research = $specification.stimuli | Where-Object name -eq 'experiment-designer-executes-convergence-research'
+    $contextMount = $research.environment.files | Where-Object dest -like '*/context.md'
+    $context = Get-Content -Raw (Join-Path $script:ObservationRoot $contextMount.src)
+    $context | Should -Match 'has not been measured'
+    $context | Should -Not -Match 'Review execution was|reduced median latency by 24%'
+    $research.environment.files.dest | Should -Contain '.github/instructions/experimental/experiment-designer.instructions.md'
+    $outcome = $specification.stimuli | Where-Object name -eq 'experiment-designer-writes-post-execution-outcome'
+    $evidence = @($outcome.environment.files | Where-Object dest -like '.copilot-tracking/*')
+    $evidence | Should -HaveCount 5
+    @($evidence.src | Sort-Object -Unique) | Should -HaveCount 5
+    foreach ($mount in $evidence) { Test-Path (Join-Path $script:ObservationRoot $mount.src) | Should -BeTrue }
+    $evidence.dest | Should -Contain '.copilot-tracking/mve/2026-09-21/synthetic-batching/results.md'
+    $outcome.environment.files.dest | Should -Not -Contain '.copilot-tracking/mve/2026-09-21/synthetic-batching/outcome.md'
+    $challenge = $specification.stimuli | Where-Object name -eq 'experiment-designer-starts-explicit-challenge'
+    $challenge.prompt | Should -Match 'task slug `synthetic-batching-h1`'
+    $challenge.environment.files.dest | Should -Not -Contain '.copilot-tracking/challenges/2026-09-21/synthetic-batching-h1-challenge.md'
+  }
+
+  It 'Requires source-specific standards handling for <Variant>' -ForEach @(
+    @{ Variant = 'valid'; Reply = 'WCAG: paraphrase and cite with W3C attribution. EN 301 549: cite-only; link the official ETSI portal, never reproduce normative text.'; Expected = $true }
+    @{ Variant = 'restricted-copy'; Reply = 'WCAG: paraphrase and cite with attribution. EN 301 549 may be reproduced; the ETSI portal permits copying. No normative text is needed elsewhere.'; Expected = $false }
+    @{ Variant = 'missing-attribution'; Reply = 'WCAG: paraphrase. EN 301 549: never reproduce normative text; use the ETSI portal.'; Expected = $false }
+    @{ Variant = 'keyword-only'; Reply = 'Verbatim normative text summary.'; Expected = $false }
+  ) {
+    $result = Invoke-ObservationGrader -Partial 'prompts' -Name 'prompt-accessibility-coverage-matrix-standards-para-dac2b27b' -Reply $Reply -Workspace $TestDrive
+    $result.passed | Should -Be $Expected
+    $result.score | Should -Be ([int]$Expected)
+  }
+
+  It 'Checks outcome evidence, criteria and separate Review values for <Variant>' -Tag 'OutcomeFixture' -ForEach @(
+    @{ Variant = 'valid'; Expected = $true; Bound = $true }
+    @{ Variant = 'reordered'; Expected = $true; Bound = $true }
+    @{ Variant = 'heading-body'; Expected = $true; Bound = $true }
+    @{ Variant = 'invalidated'; Expected = $true; Bound = $true }
+    @{ Variant = 'latency-fails'; Expected = $true; Bound = $true }
+    @{ Variant = 'missing-results'; Expected = $false; Bound = $true }
+    @{ Variant = 'malformed-results'; Expected = $false; Bound = $true }
+    @{ Variant = 'wrong-verdict'; Expected = $false; Bound = $true }
+    @{ Variant = 'conflicting-verdict'; Expected = $false; Bound = $true }
+    @{ Variant = 'wrong-review'; Expected = $false; Bound = $true }
+    @{ Variant = 'changed-criteria'; Expected = $false; Bound = $true }
+    @{ Variant = 'wrong-metric'; Expected = $false; Bound = $true }
+    @{ Variant = 'repeated-consistent'; Expected = $true; Bound = $true }
+    @{ Variant = 'improvement-label'; Expected = $true; Bound = $true }
+    @{ Variant = 'divergence-none'; Expected = $true; Bound = $true }
+    @{ Variant = 'conflicting-decision'; Expected = $false; Bound = $true }
+    @{ Variant = 'stale-hash'; Expected = $true; Bound = $false }
+    @{ Variant = 'missing-binding'; Expected = $true; Bound = $false }
+    @{ Variant = 'wrong-slug'; Expected = $true; Bound = $false }
+    @{ Variant = 'missing-outcome'; Expected = $false; Bound = $false }
+  ) {
+    $workspace = Join-Path $TestDrive "outcome-$Variant"
+    $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot 'stimuli/experiment-designer.yml'))
+    $stimulus = $specification.stimuli | Where-Object name -eq 'experiment-designer-writes-post-execution-outcome'
+    $stimulus.graders | Should -HaveCount 3
+    $mounts = @($stimulus.environment.files | Where-Object dest -like '.copilot-tracking/*')
+    foreach ($mount in $mounts) {
+      $target = Join-Path $workspace $mount.dest
+      New-Item -ItemType Directory -Path (Split-Path $target -Parent) -Force | Out-Null
+      Copy-Item (Join-Path $script:ObservationRoot $mount.src) $target
+    }
+    $session = Join-Path $workspace '.copilot-tracking/mve/2026-09-21/synthetic-batching'
+    $resultsPath = Join-Path $session 'results.md'
+    $verdict = 'validated'; $decision = 'go'; $reduction = '24'; $errors = '0.5'
+    if ($Variant -in @('invalidated', 'latency-fails')) {
+      $data = (Get-Content -Raw $resultsPath).Replace('76 milliseconds', '95 milliseconds')
+      $reduction = '5'; $verdict = 'invalidated'; $decision = 'no-go'
+      if ($Variant -eq 'invalidated') { $data = $data.Replace('0.5 percent', '2 percent'); $errors = '2'; $verdict = 'invalidated'; $decision = 'no-go' }
+      Set-Content $resultsPath $data
+    }
+    if ($Variant -eq 'missing-results') { Remove-Item $resultsPath }
+    if ($Variant -eq 'malformed-results') { Set-Content $resultsPath '{}' }
+    $bindings = @($mounts | Where-Object dest -notlike '*/results.md' | ForEach-Object { "| $($_.dest) | $((Get-FileHash (Join-Path $workspace $_.dest) -Algorithm SHA256).Hash) |" })
+    if ($Variant -eq 'reordered') { [array]::Reverse($bindings) }
+    if ($Variant -eq 'stale-hash') { $bindings[0] = $bindings[0] -replace '[A-F0-9]{64}', ('0' * 64) }
+    if ($Variant -eq 'missing-binding') { $bindings = $bindings[1..3] }
+    if ($Variant -eq 'wrong-slug') { $bindings[0] = $bindings[0].Replace('synthetic-batching', 'different-task') }
+    $body = "## H1`nOutcome: $verdict`nLatency reduction: $reduction%`nSample size: 100`nError rate: $errors%`nAnomalies: none`nConfidence: limited to supplied synthetic data.`nPrecommitted criteria unchanged: at least 20% reduction and below 1% errors.`nReview execution: Complete`nReview outcome: Accepted`nDownstream decision: $decision"
+    if ($Variant -eq 'reordered') { $body = "| Review outcome | Accepted |`n| Review execution | Complete |`n| H1 | validated |`n| Decision | go |`n| Sample size | 100 |`n| Error rate | 0.5% |`n| Median reduction | 24% |`nNo anomalies. Confidence is limited. Unchanged criteria: 20% and below 1%." }
+    if ($Variant -eq 'heading-body') { $body = $body.Replace("## H1`nOutcome:", "## H1`n`nHypothesis outcome:").Replace('Review execution:', "## Review execution`n`n").Replace('Review outcome:', "## Review outcome`n`n") }
+    if ($Variant -eq 'wrong-verdict') { $body = $body.Replace('Outcome: validated', 'Outcome: invalidated') }
+    if ($Variant -eq 'conflicting-verdict') { $body += "`nH1: invalidated" }
+    if ($Variant -eq 'wrong-review') { $body = $body.Replace('Review outcome: Accepted', 'Review outcome: Complete') }
+    if ($Variant -eq 'changed-criteria') { $body += "`nCriteria changed to 10% reduction." }
+    if ($Variant -eq 'wrong-metric') { $body = $body.Replace('Latency reduction: 24%', 'Latency reduction: 30%') }
+    if ($Variant -eq 'repeated-consistent') { $body += "`n## Summary`nH1: validated`nDecision: go`nLatency reduction: 24%" }
+    if ($Variant -eq 'improvement-label') { $body = $body.Replace('Latency reduction: 24%', 'Latency improvement: 24%') }
+    if ($Variant -eq 'divergence-none') { $body = $body.Replace('Precommitted criteria unchanged: at least 20% reduction and below 1% errors.', 'Criteria: at least 20% reduction and below 1% errors. Divergence: none.') }
+    if ($Variant -eq 'conflicting-decision') { $body += "`nDecision: no-go" }
+    if ($Variant -ne 'missing-outcome') { Set-Content (Join-Path $session 'outcome.md') ($body + "`n" + ($bindings -join "`n")) }
+    $meaning = Invoke-ObservationGrader -Partial 'experiment-designer' -Name 'experiment-outcome-separates-status-and-verdict' -Reply '' -Workspace $workspace
+    $binding = Invoke-ObservationGrader -Partial 'experiment-designer' -Name 'experiment-outcome-binds-evidence' -Reply '' -Workspace $workspace
+    $meaning.passed | Should -Be $Expected
+    $meaning.score | Should -Be ([int]$Expected)
+    $binding.passed | Should -Be $Bound
+    $binding.score | Should -Be ([int]$Bound)
+  }
+
+  It 'Observes the BRD invocation independently of JSON field order for <Variant>' -Tag 'ReceiptRepair' -ForEach @(
+    @{ Variant = 'extension-first'; Expected = $true }
+    @{ Variant = 'extension-last'; Expected = $true }
+    @{ Variant = 'reordered-receipt'; Expected = $true }
+    @{ Variant = 'multiple-ids'; Expected = $true }
+    @{ Variant = 'reordered-ids'; Expected = $true }
+    @{ Variant = 'external-evidence'; Expected = $true }
+    @{ Variant = 'retained-assumption'; Expected = $true }
+    @{ Variant = 'dropped-question'; Expected = $false }
+    @{ Variant = 'dropped-evidence'; Expected = $false }
+    @{ Variant = 'missing-dispositions'; Expected = $false }
+    @{ Variant = 'invented-disposition-evidence'; Expected = $false }
+    @{ Variant = 'empty-targets'; Expected = $false }
+    @{ Variant = 'empty-rationale'; Expected = $false }
+    @{ Variant = 'invalid-finding-disposition'; Expected = $false }
+    @{ Variant = 'missing-state'; Expected = $false }
+    @{ Variant = 'missing-artifact'; Expected = $false }
+    @{ Variant = 'malformed'; Expected = $false }
+    @{ Variant = 'duplicate-key'; Expected = $false }
+    @{ Variant = 'duplicate-invocation'; Expected = $false }
+    @{ Variant = 'wrong-task'; Expected = $false }
+    @{ Variant = 'wrong-question'; Expected = $false }
+    @{ Variant = 'duplicate-evidence'; Expected = $false }
+    @{ Variant = 'wrong-status'; Expected = $false }
+    @{ Variant = 'wrong-disposition'; Expected = $false }
+    @{ Variant = 'wrong-gate'; Expected = $false }
+    @{ Variant = 'lost-extension'; Expected = $false }
+  ) {
+    $workspace = Join-Path $TestDrive "receipt-$Variant"
+    $directory = Join-Path $workspace '.copilot-tracking/brd-sessions'
+    New-Item -ItemType Directory -Path $directory -Force | Out-Null
+    $artifactRelativePath = '.copilot-tracking/brd-sessions/atlas/research/2026-09-21/atlas-brd-discover-01-research.md'
+    $artifactPath = Join-Path $workspace $artifactRelativePath
+    New-Item -ItemType Directory -Path (Split-Path -Parent $artifactPath) -Force | Out-Null
+    $questionIds = @('Q1', 'Q2')
+    $evidenceIds = if ($Variant -eq 'external-evidence') { @('C1', 'W1') } else { @('C1', 'C2') }
+    $artifactBody = @('## Scope and Questions') + $questionIds + @('## Evidence Log') + $evidenceIds
+    Set-Content $artifactPath ($artifactBody -join "`n")
+    $finding = @{ evidenceIds = $evidenceIds; affectedTargets = @('Assumptions'); disposition = 'deferred'; rationale = 'Awaiting the user decision.' }
+    $receipt = [ordered]@{ invocationId = 'discover-01'; taskSlug = 'atlas-brd-discover-01'; questionIds = @('Q1'); evidenceIds = @('C1')
+      artifactPaths = @{ research = $artifactRelativePath }; segmentStatus = 'completed'; userDisposition = 'pending'; gateEffect = 'does-not-satisfy'; findingDispositions = @($finding) }
+    if ($Variant -eq 'reordered-receipt') {
+      $receipt = [ordered]@{ findingDispositions = @($finding); gateEffect = 'does-not-satisfy'; userDisposition = 'pending'; segmentStatus = 'completed'
+        artifactPaths = @{ research = $artifactRelativePath }; evidenceIds = @('C1'); questionIds = @('Q1'); taskSlug = 'atlas-brd-discover-01'; invocationId = 'discover-01' }
+    }
+    $receipt.questionIds = $questionIds
+    $receipt.evidenceIds = $evidenceIds
+    switch ($Variant) {
+      'wrong-task' { $receipt.taskSlug = 'different-task' }
+      'multiple-ids' { $receipt.questionIds = @('Q1', 'Q2'); $receipt.evidenceIds = @('C1', 'C2') }
+      'reordered-ids' { $receipt.questionIds = @('Q2', 'Q1'); $receipt.evidenceIds = @('C2', 'C1') }
+      'retained-assumption' { $finding.disposition = 'retained-assumption' }
+      'dropped-question' { $receipt.questionIds = @('Q1') }
+      'dropped-evidence' { $receipt.evidenceIds = @('C1') }
+      'missing-dispositions' { $receipt.findingDispositions = @() }
+      'invented-disposition-evidence' { $finding.evidenceIds = @('C99') }
+      'empty-targets' { $finding.affectedTargets = @() }
+      'empty-rationale' { $finding.rationale = ' ' }
+      'invalid-finding-disposition' { $finding.disposition = 'pending' }
+      'wrong-question' { $receipt.questionIds = @('Q3') }
+      'duplicate-evidence' { $receipt.evidenceIds = @('C1', 'C1') }
+      'wrong-status' { $receipt.segmentStatus = 'blocked' }
+      'wrong-disposition' { $receipt.userDisposition = 'accepted' }
+      'wrong-gate' { $receipt.gateEffect = 'supports' }
+    }
+    $state = [ordered]@{ syntheticExtension = @{ preserve = $true }; rpiInvocations = @($receipt) }
+    if ($Variant -eq 'extension-last') { $state = [ordered]@{ rpiInvocations = @($receipt); syntheticExtension = @{ preserve = $true } } }
+    if ($Variant -eq 'lost-extension') { $state.Remove('syntheticExtension') }
+    if ($Variant -eq 'duplicate-invocation') { $state.rpiInvocations = @($receipt, $receipt) }
+    if ($Variant -eq 'missing-artifact') { Remove-Item -LiteralPath $artifactPath }
+    $raw = $state | ConvertTo-Json -Depth 10
+    if ($Variant -eq 'malformed') { $raw = '{' }
+    if ($Variant -eq 'duplicate-key') { $raw = $raw.Replace('"preserve": true', '"preserve": false, "preserve": true') }
+    if ($Variant -ne 'missing-state') { Set-Content (Join-Path $directory 'atlas.state.json') $raw }
+    $result = Invoke-ObservationGrader -Partial 'brd-builder' -Name 'brd-research-invocation-state-recorded' -Reply '' -Workspace $workspace
+    $result.passed | Should -Be $Expected
+    $result.score | Should -Be ([int]$Expected)
+  }
+
+  It 'Requires persisted ambiguity and its summary for <Variant>' -Tag 'StructureRepair' -ForEach @(
+    @{ Variant = 'valid'; Field = 'Undetermined'; Reply = 'The classification remains uncertain; measurements and a baseline are needed.'; Expected = $true }
+    @{ Variant = 'wrong-file'; Field = 'Architecture'; Reply = 'Undetermined; evidence is needed.'; Expected = $false }
+    @{ Variant = 'contradictory-summary'; Field = 'Undetermined'; Reply = 'Classification is ML. Undetermined is mentioned, but evidence proves ML.'; Expected = $false }
+    @{ Variant = 'missing-evidence'; Field = 'Undetermined'; Reply = 'Undetermined.'; Expected = $false }
+    @{ Variant = 'heading-body'; Field = 'Undetermined'; Reply = 'The classification remains unresolved; a baseline is needed.'; Expected = $true }
+    @{ Variant = 'emphasized-inline'; Field = '**Undetermined**'; Reply = 'Classification is uncertain; measurements are needed.'; Expected = $true }
+    @{ Variant = 'negated-value'; Field = 'Not Undetermined'; Reply = 'Undetermined; evidence is needed.'; Expected = $false }
+    @{ Variant = 'conflicting-fields'; Field = "Undetermined`nExperiment type: ML"; Reply = 'Undetermined; evidence is needed.'; Expected = $false }
+    @{ Variant = 'missing-value'; Field = ''; Reply = 'Undetermined; evidence is needed.'; Expected = $false }
+    @{ Variant = 'contradictory-value'; Field = 'Undetermined, but classification is ML'; Reply = 'Undetermined; evidence is needed.'; Expected = $false }
+  ) {
+    $workspace = Join-Path $TestDrive $Variant
+    $contextDir = Join-Path $workspace '.copilot-tracking/mve/2026-03-02/synthetic-signal-routing'
+    New-Item -ItemType Directory -Path $contextDir -Force | Out-Null
+    $context = if ($Variant -eq 'heading-body') { "## Experiment Type`n`n**$Field**`n`n## Evidence`nNo measurements exist." }
+           else { "Experiment type: $Field" }
+    $context | Set-Content (Join-Path $contextDir 'context.md')
+    $result = Invoke-ObservationGrader -Partial 'experiment-designer' -Name 'expdes-ambiguous-classification-output' -Reply $Reply -Workspace $workspace
+    $result.passed | Should -Be $Expected
+    $result.score | Should -Be ([int]$Expected)
+  }
+
+  It 'Requires a written documentation plan and concrete phase criteria for <Variant>' -Tag 'DocumentationRepair' -ForEach @(
+    @{ Variant = 'valid'; Criteria = $true; Written = $true }
+    @{ Variant = 'path-only'; Criteria = $false; Written = $false }
+    @{ Variant = 'missing-criterion'; Criteria = $false; Written = $true }
+    @{ Variant = 'empty-file'; Criteria = $true; Written = $false }
+  ) {
+    $workspace = Join-Path $TestDrive "documentation-$Variant"
+    $directory = Join-Path $workspace '.copilot-tracking/documentation'
+    New-Item -ItemType Directory -Path $directory -Force | Out-Null
+    $plan = "## 1. Inventory`nDone when: every docs/ page appears in the coverage inventory.`n`n## 2. Assess gaps`nDone when: each gap has an evidence source and proposed owner."
+    $reply = "$plan`n`nWritten: .copilot-tracking/documentation/audit-plan.md"
+    if ($Variant -eq 'missing-criterion') { $reply = $reply.Replace('Done when: each gap has an evidence source and proposed owner.', 'Success criteria.') }
+    if ($Variant -eq 'path-only') { $reply = 'Phases and success criteria. .copilot-tracking/documentation/audit-plan.md' }
+    else { Set-Content (Join-Path $directory 'audit-plan.md') $(if ($Variant -eq 'empty-file') { '' } else { $plan }) }
+    $criteriaResult = Invoke-ObservationGrader -Partial 'documentation' -Name 'success-criteria' -Reply $reply -Workspace $workspace
+    $writtenResult = Invoke-ObservationGrader -Partial 'documentation' -Name 'documentation-audit-class-recipe-tracking-file-write' -Reply $reply -Workspace $workspace
+    $criteriaResult.passed | Should -Be $Criteria
+    $writtenResult.passed | Should -Be $Written
+  }
+
+  It 'Observes written report counts and severity order for <Mode>' -Tag 'ReportRepair' -ForEach @(
+    @{ Mode = 'audit'; File = 'security-report-001.md'; Header = 'Summary Counts'; Section = 'Detailed Remediation Guidance'; Statuses = @('PASS','FAIL','PARTIAL','NOT_ASSESSED'); PathGrader = 'report-output-path'; ContentGrader = 'severity-ordering-vocabulary' }
+    @{ Mode = 'plan'; File = 'plan-risk-assessment-001.md'; Header = 'Risk Summary'; Section = 'Mitigation Guidance'; Statuses = @('RISK','CAUTION','COVERED','NOT_APPLICABLE'); PathGrader = 'plan-report-path'; ContentGrader = 'report-generator-plan-mode-plan-status-vocabulary' }
+  ) {
+    $workspace = Join-Path $TestDrive "report-$Mode"
+    $directory = Join-Path $workspace '.copilot-tracking/security/2026-05-27'
+    New-Item -ItemType Directory -Path $directory -Force | Out-Null
+    $reply = "Report saved: .copilot-tracking/security/2026-05-27/$File"
+    $missing = Invoke-ObservationGrader -Partial 'report-generator' -Name $PathGrader -Reply "No report was written. $reply" -Workspace $workspace
+    $missing.passed | Should -BeFalse
+    $rows = ($Statuses | ForEach-Object { "| $_ | 1 |" }) -join "`n"
+    $findingHeader = if ($Mode -eq 'audit') { 'Findings by Framework' } else { 'Risk Findings by Framework' }
+    $findingStatuses = if ($Mode -eq 'audit') { @('FAIL','PARTIAL','PASS','NOT_ASSESSED') } else { $Statuses }
+    $findingRows = "### owasp-top-10`n| SYN-A | Authorization | $($findingStatuses[0]) | HIGH |`n| SYN-C | Validation | $($findingStatuses[2]) | N/A |`n### owasp-cicd`n| SYN-B | Review | $($findingStatuses[1]) | LOW |`n| SYN-D | Runtime | $($findingStatuses[3]) | N/A |"
+    $report = "## Executive Summary`nSynthetic plan-001 report for owasp-top-10 and owasp-cicd.`n### $Header`n| Status | Count |`n|---|---|`n$rows`n| Total | 4 |`n## $findingHeader`n$findingRows`n## $Section`n### HIGH Severity`n#### SYN-A`nRequire authorization.`n### LOW Severity`n#### SYN-B`nRequire review."
+    foreach ($variant in @('valid','wrong-count','reversed-severity','missing-finding','invented-finding','wrong-status')) {
+      $content = switch ($variant) {
+        'wrong-count' { $report.Replace('| Total | 4 |', '| Total | 5 |') }
+        'reversed-severity' { $report.Replace('### HIGH Severity','### TEMP Severity').Replace('### LOW Severity','### HIGH Severity').Replace('### TEMP Severity','### LOW Severity') }
+        'missing-finding' { $report.Replace('SYN-D','') }
+        'invented-finding' { $report.Replace("## $Section", "| SYN-E | Invented | FAIL | HIGH |`n## $Section") }
+        'wrong-status' { $report.Replace("| SYN-A | Authorization | $($findingStatuses[0])", '| SYN-A | Authorization | NOT_ASSESSED') }
+        default { $report }
+      }
+      Set-Content (Join-Path $directory $File) $content
+      $result = Invoke-ObservationGrader -Partial 'report-generator' -Name $ContentGrader -Reply $reply -Workspace $workspace
+      $result.passed | Should -Be ($variant -eq 'valid') -Because $variant
+    }
+    Set-Content (Join-Path $directory $File) $report
+    (Invoke-ObservationGrader -Partial 'report-generator' -Name $PathGrader -Reply $reply -Workspace $workspace).passed | Should -BeTrue
+  }
+
+  It 'Observes proposal-only security drift for <Variant>' -ForEach @(
+    @{ Variant = 'unchanged'; PlanExpected = $true; GateExpected = $true }
+    @{ Variant = 'plan-applied'; PlanExpected = $false; GateExpected = $true }
+    @{ Variant = 'gate-confirmed'; PlanExpected = $true; GateExpected = $false }
+    @{ Variant = 'phase-advanced'; PlanExpected = $true; GateExpected = $false }
+    @{ Variant = 'handoff-generated'; PlanExpected = $true; GateExpected = $false }
+    @{ Variant = 'false-apply-claim'; PlanExpected = $false; GateExpected = $true }
+  ) {
+    $workspace = Join-Path $TestDrive $Variant
+    $stateDir = Join-Path $workspace '.copilot-tracking/security-plans/sample-service'
+    New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
+    $state = Get-Content -Raw (Join-Path $script:ObservationRoot 'fixtures/security-phase6/sample-service-state.json') | ConvertFrom-Json -AsHashtable
+    $plan = Get-Content -Raw (Join-Path $script:ObservationRoot 'fixtures/security-phase6/sample-service-security-plan.md')
+    $reply = 'Control drift: proposed plan updates only. Phase 6 retains its hard gate pending human review.'
+    switch ($Variant) {
+      'plan-applied' { $plan = $plan.Replace('Open residual risk', 'Resolved') }
+      'gate-confirmed' { $state.phaseGates.phase6.confirmedAt = '2026-09-23T12:00:00Z' }
+      'phase-advanced' { $state.currentPhase = 7 }
+      'handoff-generated' { $state.handoffGenerated.github = $true }
+      'false-apply-claim' { $reply += ' I applied the drift to the plan.' }
+    }
+    [System.IO.File]::WriteAllText((Join-Path $stateDir 'security-plan.md'), $plan)
+    $state | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $stateDir 'state.json')
+    $planResult = Invoke-ObservationGrader -Partial 'security-planner' -Name 'drift-proposed-not-applied' -Reply $reply -Workspace $workspace
+    $gateResult = Invoke-ObservationGrader -Partial 'security-planner' -Name 'phase6-gate-retained' -Reply $reply -Workspace $workspace
+    $planResult.passed | Should -Be $PlanExpected
+    $gateResult.passed | Should -Be $GateExpected
+    $planResult.score | Should -Be ([int]$PlanExpected)
+    $gateResult.score | Should -Be ([int]$GateExpected)
+  }
+
+  It 'Checks population cells rather than unrelated prose for <Variant>' -Tag 'StructureRepair' -ForEach @(
+    @{ Variant = 'valid'; People = 'Unknown'; Basis = 'Assumed: reading demand, awaiting research'; Unknown = $true; NoCohort = $true }
+    @{ Variant = 'unsupported-cohort'; People = 'People with dyslexia'; Basis = 'Assumed: reading demand'; Unknown = $false; NoCohort = $false }
+    @{ Variant = 'invented-evidence'; People = 'Unknown'; Basis = 'Observed: interviews already complete'; Unknown = $false; NoCohort = $true }
+    @{ Variant = 'missing-table'; People = ''; Basis = ''; Unknown = $false; NoCohort = $false }
+    @{ Variant = 'trailing-table'; People = 'Unknown'; Basis = 'Assumed: reading demand'; Unknown = $true; NoCohort = $true }
+    @{ Variant = 'mixed-evidence'; People = 'Unknown'; Basis = 'Assumed: reading demand'; Unknown = $true; NoCohort = $true }
+    @{ Variant = 'assumed-decision'; People = 'Unknown'; Basis = 'No population evidence'; Unknown = $true; NoCohort = $true }
+    @{ Variant = 'reordered-columns'; People = '**Unknown**'; Basis = '**Assumed**: reading demand'; Unknown = $true; NoCohort = $true }
+    @{ Variant = 'malformed-row'; People = 'Unknown'; Basis = 'Assumed'; Unknown = $false; NoCohort = $false }
+    @{ Variant = 'empty-table'; People = 'Unknown'; Basis = 'Assumed'; Unknown = $false; NoCohort = $false }
+    @{ Variant = 'other-invented-cohort'; People = 'People with limited literacy'; Basis = 'Assumed'; Unknown = $false; NoCohort = $false }
+    @{ Variant = 'negated-assumption'; People = 'Unknown'; Basis = 'Not Assumed'; Unknown = $false; NoCohort = $true }
+    @{ Variant = 'duplicate-header'; People = 'Unknown'; Basis = 'Assumed'; Unknown = $false; NoCohort = $false }
+  ) {
+    $reply = "Unknown research coverage.`n| Decision area | Current decision | Who may be excluded | Basis and source | Alternative or mitigation | Status |`n|---|---|---|---|---|---|`n| Language | Reading demand | $People | $Basis | Assisted renewal | Unresolved |"
+    if ($Variant -eq 'missing-table') { $reply = 'Unknown. Research gap: reading demands require validation.' }
+    switch ($Variant) {
+      'trailing-table' { $reply += "`n`n## Research Coverage`n| Gap | Topic | Participants | Basis | Plan | State |`n|---|---|---|---|---|---|`n| Reading | Renewal | People with dyslexia | Proposed | Interview | Open |" }
+      'mixed-evidence' { $reply += "`n| Language | Support channel | Unknown | Reported: support tickets | Assisted renewal | Unresolved |" }
+      'assumed-decision' { $reply = $reply.Replace('| Reading demand |', '| Assumed: reading demand |') }
+      'reordered-columns' { $reply = "| Who may be excluded | Basis and source | Current decision |`n|---|---|---|`n| $People | $Basis | Reading demand |" }
+      'malformed-row' { $reply += "`n| Extra | Missing columns |" }
+      'empty-table' { $reply = ($reply -split "`n" | Select-Object -First 3) -join "`n" }
+      'duplicate-header' { $reply += "`n`n$reply" }
+    }
+    $unknownResult = Invoke-ObservationGrader -Partial 'ux-ui-designer' -Name 'unsupported-cohort-becomes-unknown' -Reply $reply -Workspace $TestDrive
+    $cohortResult = Invoke-ObservationGrader -Partial 'ux-ui-designer' -Name 'no-unsupported-cohort-as-affected-users' -Reply $reply -Workspace $TestDrive
+    $unknownResult.passed | Should -Be $Unknown
+    $unknownResult.score | Should -Be ([int]$Unknown)
+    $cohortResult.passed | Should -Be $NoCohort
+    $cohortResult.score | Should -Be ([int]$NoCohort)
+  }
+
+  It 'Recognizes one basis column by name for <Variant>' -Tag 'StructureRepair' -ForEach @(
+    @{ Variant = 'evidence-basis'; Header = 'Evidence basis'; Basis = 'Assumed: reading demand'; Expected = $true }
+    @{ Variant = 'basis-for-users'; Header = 'Basis for affected users'; Basis = 'Assumed: reading demand'; Expected = $true }
+    @{ Variant = 'unlabeled-row'; Header = 'Basis and source'; Basis = 'No population evidence'; Expected = $false }
+    @{ Variant = 'two-basis-columns'; Header = 'Basis | Basis and source'; Basis = 'Assumed | Assumed'; Expected = $false }
+    @{ Variant = 'no-basis-column'; Header = 'Source'; Basis = 'Assumed: reading demand'; Expected = $false }
+  ) {
+    $columns = @('Decision area', 'Current decision', 'Who may be excluded') + ($Header -split ' \| ') + @('Status')
+    $cells = @('Language', 'Reading demand', 'Unknown') + ($Basis -split ' \| ') + @('Unresolved')
+    $reply = "| $($columns -join ' | ') |`n|$((@('---') * $columns.Count) -join '|')|`n| $($cells -join ' | ') |"
+    $result = Invoke-ObservationGrader -Partial 'ux-ui-designer' -Name 'unsupported-cohort-becomes-unknown' -Reply $reply -Workspace $TestDrive
+    $result.passed | Should -Be $Expected
+  }
+
+  It 'Checks PRD Plan and Implement invocations independently of key order for <Variant>' -Tag 'ReceiptRepair' -ForEach @(
+    @{ Variant = 'canonical'; Expected = $true }
+    @{ Variant = 'reversed-keys'; Expected = $true }
+    @{ Variant = 'reversed-invocations'; Expected = $true }
+    @{ Variant = 'missing-implement'; Expected = $false }
+    @{ Variant = 'duplicate-implement'; Expected = $false }
+    @{ Variant = 'still-running'; Expected = $false }
+    @{ Variant = 'wrong-changes'; Expected = $false }
+    @{ Variant = 'wrong-dependency'; Expected = $false }
+    @{ Variant = 'lost-extension'; Expected = $false }
+    @{ Variant = 'malformed'; Expected = $false }
+  ) {
+    $workspace = Join-Path $TestDrive "prd-state-$Variant"
+    $directory = Join-Path $workspace '.copilot-tracking/prd-sessions'
+    New-Item -ItemType Directory -Path $directory -Force | Out-Null
+    $state = Get-Content -Raw (Join-Path $script:ObservationRoot 'fixtures/rpi-depth/prd-state.json') | ConvertFrom-Json -AsHashtable
+    $implement = $state.rpiInvocations[1]
+    $implement.segmentStatus = 'completed'; $implement.gateEffect = 'supports'
+    $implement.artifactPaths.changes = '.copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md'
+    switch ($Variant) {
+      'reversed-invocations' { $state.rpiInvocations = @($state.rpiInvocations[1], $state.rpiInvocations[0]) }
+      'missing-implement' { $state.rpiInvocations = @($state.rpiInvocations[0]) }
+      'duplicate-implement' { $state.rpiInvocations = @($state.rpiInvocations[0], $implement, $implement) }
+      'still-running' { $implement.segmentStatus = 'running' }
+      'wrong-changes' { $implement.artifactPaths.changes = '.copilot-tracking/changes/2026-09-21/atlas-product-prd-build-01-changes.md' }
+      'wrong-dependency' { $implement.dependsOnInvocationId = $null }
+      'lost-extension' { $state.Remove('syntheticExtension') }
+    }
+    $json = $state | ConvertTo-Json -Depth 10
+    if ($Variant -eq 'reversed-keys') {
+      $reverse = { param($value) if ($value -is [System.Collections.IDictionary]) { $copy = [ordered]@{}; if ($value.Count -gt 0) { foreach ($key in @($value.Keys)[($value.Count - 1)..0]) { $copy[$key] = & $reverse $value[$key] } }; $copy } elseif ($value -is [System.Collections.IList] -and $value -isnot [string]) { ,@($value | ForEach-Object { & $reverse $_ }) } else { $value } }
+      $json = (& $reverse $state) | ConvertTo-Json -Depth 10
+      $json.IndexOf('"syntheticExtension"') | Should -BeLessThan $json.IndexOf('"rpiInvocations"')
+    }
+    if ($Variant -eq 'malformed') { $json = '{"rpiInvocations": [' }
+    Set-Content -LiteralPath (Join-Path $directory 'atlas-product.state.json') -Value $json -NoNewline
+    $result = Invoke-ObservationGrader -Partial 'prd-builder' -Name 'prd-authoring-state-records-separate-plan-and-implement' -Reply '' -Workspace $workspace
+    $result.passed | Should -Be $Expected
+    $result.score | Should -Be ([int]$Expected)
+  }
+}
+
+Describe 'Requirements builder reliability contracts' -Tag 'Unit', 'HveBuilderReliability' {
+  BeforeAll {
+    $script:RepositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
+    $script:ResearchContract = Get-Content -Raw (Join-Path $script:RepositoryRoot '.github/skills/project-planning/requirements-author/references/_shared/rpi-research-integration.md')
+    $script:BrdAgent = Get-Content -Raw (Join-Path $script:RepositoryRoot '.github/agents/project-planning/brd-builder.agent.md')
+    $script:PrdAgent = Get-Content -Raw (Join-Path $script:RepositoryRoot '.github/agents/project-planning/prd-builder.agent.md')
+  }
+
+  It 'Represents a completed unanswered return without clearing the owning gate' {
+    $script:ResearchContract | Should -Match 'userDisposition.*pending'
+    $script:ResearchContract | Should -Match 'completed segment awaiting a required user answer uses `pending` with `does-not-satisfy`'
+    $script:ResearchContract | Should -Match 'agent-owned work'
+    $script:ResearchContract | Should -Match 'Do not infer or automatically migrate'
+  }
+
+  It 'Uses canonical state identities and declared phases' {
+    $script:BrdAgent | Should -Match '\.copilot-tracking/brd-sessions/<brd-name>\.state\.json'
+    $script:PrdAgent | Should -Match '\.copilot-tracking/prd-sessions/<prd-name>\.state\.json'
+    $script:PrdAgent | Should -Match '"currentPhase": "Build"'
+    $script:PrdAgent | Should -Not -Match '"currentPhase": "requirements-gathering"'
+  }
+
+  It 'Treats persisted load markers as history after context loss' {
+    foreach ($agent in @($script:BrdAgent, $script:PrdAgent)) {
+      $agent | Should -Match 'marker records durable load history'
+      $agent | Should -Match 'reload the current phase section'
+      $agent | Should -Match 'Within the same live context'
+    }
+  }
+}
+
+Describe 'Mural attempted-call guards' -Tag 'Unit' {
+  BeforeAll {
+    $script:MuralEvalRoot = Join-Path $PSScriptRoot '../../../evals/agent-behavior'
+    $script:MuralProgramPath = (Resolve-Path (Join-Path $PSScriptRoot '../../../node_modules/@microsoft/vally/dist/graders/static/program-grader.js')).Path
+    $script:MuralProbe = @'
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+const { ProgramGrader } = await import(pathToFileURL(process.argv[1]).href);
+const input = JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+const grader = new ProgramGrader();
+for (const control of input.controls) {
+  const result = await grader.grade({ config: input.config, trajectory: { workDir: input.workDir, events: control.events, output: '' } });
+  if (result.status === 'error' || result.passed !== control.expected || result.score !== Number(control.expected)) {
+  throw new Error(`Mural guard failed: ${control.name}`);
+  }
+}
+console.log(`PASS: ${input.controls.length} attempted-call controls`);
+'@
+  }
+
+  It 'Rejects native and shell attempts for <Grader>' -ForEach @(
+    @{ Partial = 'dt-coach'; Grader = 'dt-mural-scope-no-call' }
+    @{ Partial = 'ux-ui-designer'; Grader = 'ux-mural-readiness-no-call' }
+    @{ Partial = 'rai-planner'; Grader = 'rai-mural-readiness-no-call' }
+  ) {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:MuralEvalRoot "stimuli/$Partial.yml"))
+    $grader = $partial.stimuli.graders | Where-Object { $_.name -eq $Grader }
+    $grader.type | Should -Be 'program'
+    $controls = @(@{ name = 'no calls'; events = @(); expected = $true })
+    foreach ($call in @(
+      @{ name = 'native complete'; tool = 'mural_create_widget'; arguments = @{}; completed = $true; expected = $false }
+      @{ name = 'native attempt'; tool = 'mural_create_widget'; arguments = @{}; completed = $false; expected = $false }
+      @{ name = 'shell complete'; tool = 'powershell'; arguments = @{ command = 'uv run scripts/mural.py widgets create' }; completed = $true; expected = $false }
+      @{ name = 'shell attempt'; tool = 'run_in_terminal'; arguments = @{ command = 'python scripts/mural.py widgets create' }; completed = $false; expected = $false }
+      @{ name = 'reference read'; tool = 'read_file'; arguments = @{ path = '.github/skills/experimental/mural/SKILL.md' }; completed = $true; expected = $true }
+      @{ name = 'shell read'; tool = 'powershell'; arguments = @{ command = 'Get-Content .github/skills/experimental/mural/SKILL.md' }; completed = $true; expected = $true }
+      @{ name = 'read then dispatch'; tool = 'powershell'; arguments = @{ command = 'Get-Content note.txt; python scripts/mural.py widgets create' }; completed = $true; expected = $false }
+    )) {
+      $events = @(@{ type = 'tool_call'; data = @{ toolName = $call.tool; toolCallId = 'synthetic-call'; arguments = $call.arguments } })
+      if ($call.completed) {
+        $events += @{ type = 'tool_result'; data = @{ toolName = $call.tool; toolCallId = 'synthetic-call'; success = $true; result = 'synthetic result; no command executed' } }
+      }
+      $controls += @{ name = $call.name; events = $events; expected = $call.expected }
+    }
+    $payload = @{ config = $grader.config; workDir = $TestDrive; controls = $controls } | ConvertTo-Json -Depth 20 -Compress
+    $output = $payload | & node --input-type=module --eval $script:MuralProbe $script:MuralProgramPath
+    $LASTEXITCODE | Should -Be 0
+    $output | Should -Be 'PASS: 8 attempted-call controls'
+  }
 }
 
 Describe 'RAI Reviewer evaluation ownership' -Tag 'Unit' {
@@ -679,6 +1991,91 @@ $script:RaiReviewerFixtureCaution
     @{ Name = 'missing markdown extension'; Path = '.copilot-tracking/rai-reviews/2026-08-30/rai-report-customer-chatbot-20260830' }
   ) {
     $Path | Should -Not -Match $script:RaiReviewerPathPattern
+  }
+}
+
+Describe 'RAI Planner Mural readiness graders' -Tag 'Unit' {
+  BeforeAll {
+    $partialPath = Join-Path $PSScriptRoot '../../../evals/agent-behavior/stimuli/rai-planner.yml'
+    $partial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($partialPath))
+    $stimulus = $partial['stimuli'] |
+      Where-Object { $_['name'] -eq 'rai-planner-mural-setup-and-login-verdicts' }
+    $script:RaiReadinessPatterns = @{}
+    foreach ($grader in $stimulus['graders']) {
+      if ($grader['type'] -eq 'output-matches' -and -not $grader['config']['negate']) {
+        $script:RaiReadinessPatterns[[string]$grader['name']] = [string]$grader['config']['pattern']
+      }
+    }
+  }
+
+  It 'Accepts observed semantic halt wording for <Name>' -ForEach @(
+    @{
+      Name = 'setup remains pending'
+      Grader = 'rai-mural-setup-pauses'
+      Text = 'needs_setup: complete Mural setup or configuration. The current request remains pending.'
+    }
+    @{
+      Name = 'setup until prefix'
+      Grader = 'rai-mural-setup-pauses'
+      Text = 'needs_setup: configure Mural. Until setup is complete, I do not run the seeding workflow.'
+    }
+    @{
+      Name = 'setup until suffix'
+      Grader = 'rai-mural-setup-pauses'
+      Text = 'needs_setup: finish setup. I do not dispatch board operations until setup is complete.'
+    }
+    @{
+      Name = 'login pause'
+      Grader = 'rai-mural-login-pauses'
+      Text = 'needs_login: authenticate with Mural. I pause the current request until login succeeds.'
+    }
+    @{
+      Name = 'login waits'
+      Grader = 'rai-mural-login-pauses'
+      Text = 'needs_login: authenticate the Mural account. I stop and wait for login.'
+    }
+    @{
+      Name = 'login until prefix'
+      Grader = 'rai-mural-login-pauses'
+      Text = 'needs_login: authenticate the account. Until login is complete, I do not run seeding.'
+    }
+  ) {
+    $Text | Should -Match $script:RaiReadinessPatterns[$Grader]
+  }
+
+  It 'Rejects immediate continuation for <Name>' -ForEach @(
+    @{
+      Name = 'setup continues'
+      Grader = 'rai-mural-setup-pauses'
+      Text = 'needs_setup: configure Mural later; I will create the board now.'
+    }
+    @{
+      Name = 'login continues'
+      Grader = 'rai-mural-login-pauses'
+      Text = 'needs_login: login later; I will continue with the board now.'
+    }
+    @{
+      Name = 'setup cannot borrow the login halt'
+      Grader = 'rai-mural-setup-pauses'
+      Text = "needs_setup: configure later; proceed now.`n`nneeds_login: authenticate and pause the current request."
+    }
+    @{
+      Name = 'login cannot borrow the setup halt'
+      Grader = 'rai-mural-login-pauses'
+      Text = "needs_login: authenticate later; proceed now.`n`nneeds_setup: configure and pause the current request."
+    }
+    @{
+      Name = 'setup explicitly declines to pause'
+      Grader = 'rai-mural-setup-pauses'
+      Text = 'needs_setup: configure later; I do not pause and proceed now.'
+    }
+    @{
+      Name = 'login explicitly declines to wait'
+      Grader = 'rai-mural-login-pauses'
+      Text = 'needs_login: authenticate later; I do not wait and proceed now.'
+    }
+  ) {
+    $Text | Should -Not -Match $script:RaiReadinessPatterns[$Grader]
   }
 }
 

@@ -21,7 +21,7 @@ stimuli:
       - type: output-matches
         name: prd-builder-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
   - name: prd-builder-ordinary-request-no-proposal-extension
     prompt: |
@@ -84,8 +84,8 @@ stimuli:
       The PRD has a named API compatibility gap that supplied references do not
       answer. Research returned artifact
       `.copilot-tracking/research/2026-09-18/atlas-api-research.md` with Q2 and
-      W1. Explain the canonical invocation receipt, PRD disposition record,
-      and authority boundary.
+      W1. Show the resulting canonical invocation receipt entry and the PRD
+      disposition row in your reply, then explain the authority boundary.
     environment:
       files:
         - src: ../../.github/agents/project-planning/prd-builder.agent.md
@@ -100,7 +100,7 @@ stimuli:
       - type: output-matches
         name: prd-research-receipt-state
         config:
-          pattern: '(?is)(rpiInvocations).*(rpi-research).*(artifactPaths).*(questionIds|Q2).*(evidenceIds|W1).*(findingDispositions)'
+          pattern: '(?is)^(?=.*(?:\b)rpiInvocations\b)(?=.*(?:\b)rpi-research\b)(?=.*\bartifactPaths\b)(?=.*\bQ2\b)(?=.*\bW1\b)(?=.*\bfindingDispositions\b).*'
       - type: output-matches
         name: prd-research-receipt-document
         config:
@@ -133,7 +133,7 @@ stimuli:
       - type: output-matches
         name: prd-research-blocked-gap
         config:
-          pattern: '(?is)(open question|unvalidated assumption).*(dependent|evidence-dependent|affected).*(stop|pause|blocked)'
+          pattern: '(?is)^(?=[\s\S]*(?:open question|unvalidated assumption))(?=[\s\S]*(?:(?:dependent|affected)[^.\r\n]{0,160}\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b|\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b[^.\r\n]{0,160}(?:dependent|affected)))'
       - type: output-matches
         name: prd-research-blocked-no-gate-exit
         config:
@@ -146,10 +146,10 @@ stimuli:
       accepted Plan invocation `build-01`. The staged state already contains
       separate Implement invocation `build-02` with task slug
       `atlas-product-prd-build-02`. Follow the Plan's one task now: add `FR-001`
-      and `AC-001`, update the Plan marker, write the canonical Implement
-      changes record using the persisted synthetic date `2026-09-21`, and
-      reconcile only `build-02` as completed. Do not run content-quality review
-      or claim the Build gate passed.
+      and `AC-001`, update the Plan marker, and write the canonical Implement
+      changes record using the persisted synthetic date `2026-09-21`. Stop
+      after the Implement return; session-state reconciliation is a separate
+      step. Do not run content-quality review or claim the Build gate passed.
     environment:
       files:
         - src: ../../.github/agents/project-planning/prd-builder.agent.md
@@ -164,6 +164,7 @@ stimuli:
           dest: .copilot-tracking/reviews/plans/2026-09-21/atlas-product-prd-build-01-plan-critique.md
       skills:
         - ../../.github/skills/project-planning/requirements-author
+        - ../../.github/skills/rpi/rpi-plan
         - ../../.github/skills/rpi/rpi-implement
     tags:
       category: agent-behavior
@@ -186,13 +187,73 @@ stimuli:
         name: prd-authoring-changes-record-exists
         config:
           path: .copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md
-      - type: file-matches
-        name: prd-authoring-state-records-separate-plan-and-implement
-        config:
-          path: .copilot-tracking/prd-sessions/atlas-product.state.json
-          pattern: '(?is)rpiInvocations.*invocationId"?\s*:\s*"build-01".*capability"?\s*:\s*"rpi-plan".*taskSlug"?\s*:\s*"atlas-product-prd-build-01".*invocationId"?\s*:\s*"build-02".*capability"?\s*:\s*"rpi-implement".*taskSlug"?\s*:\s*"atlas-product-prd-build-02".*dependsOnInvocationId"?\s*:\s*"build-01".*changes.*atlas-product-prd-build-02-changes\.md.*segmentStatus"?\s*:\s*"completed".*userDisposition"?\s*:\s*"accepted".*gateEffect"?\s*:\s*"supports".*syntheticExtension.*preserve"?\s*:\s*true'
       - type: output-matches
         name: prd-authoring-does-not-claim-quality-gate
         config:
-          pattern: '(?i)(Build|quality)\s+(gate\s+)?(passed|cleared|satisfied|complete)'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly)\s+)*(?:(?:mark|claim|declare|say|state|report)(?:ed|ing|s)?\s+)?(?:the\s+)?)\b(Build|quality)\s+(gate\s+)?(passed|cleared|satisfied|complete)'
           negate: true
+
+  - name: prd-builder-reconciles-completed-authoring-segment
+    prompt: |
+      Resume the staged Atlas PRD in Build. Implement invocation `build-02`
+      with task slug `atlas-product-prd-build-02` completed against accepted
+      Plan invocation `build-01` and returned the staged canonical changes
+      record for synthetic date `2026-09-21`. Reconcile only `build-02` in
+      session state now, preserving `build-01` and unknown fields. Do not
+      rerun Implement, run content-quality review, or claim the Build gate
+      passed.
+    environment:
+      files:
+        - src: ../../.github/agents/project-planning/prd-builder.agent.md
+          dest: .github/copilot-instructions.md
+        - src: fixtures/rpi-depth/prd-state.json
+          dest: .copilot-tracking/prd-sessions/atlas-product.state.json
+        - src: fixtures/rpi-depth/atlas-prd.md
+          dest: docs/project-planning/atlas-product.md
+        - src: fixtures/rpi-depth/authoring-plan.md
+          dest: .copilot-tracking/plans/2026-09-21/atlas-product-prd-build-01-plan.md
+        - src: fixtures/rpi-depth/authoring-plan-critique.md
+          dest: .copilot-tracking/reviews/plans/2026-09-21/atlas-product-prd-build-01-plan-critique.md
+        - src: fixtures/rpi-depth/prd-authoring-changes.md
+          dest: .copilot-tracking/changes/2026-09-21/atlas-product-prd-build-02-changes.md
+      skills:
+        - ../../.github/skills/project-planning/requirements-author
+    tags:
+      category: agent-behavior
+      scenario: prd-rpi-authoring-reconciliation
+    constraints:
+      max_agent_duration: 110s
+      max_duration: 150s
+    graders:
+      - type: program
+        name: prd-authoring-state-records-separate-plan-and-implement
+        config:
+          program: node
+          args:
+            - -e
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              let passed = false;
+              try {
+                const file = path.join(process.env.EVALUATE_WORKSPACE, '.copilot-tracking/prd-sessions/atlas-product.state.json');
+                if (fs.statSync(file).size > 1048576) throw new Error('Oversized state');
+                const state = JSON.parse(fs.readFileSync(file, 'utf8'));
+                const invocations = Array.isArray(state.rpiInvocations) ? state.rpiInvocations : [];
+                const only = id => {
+                  const found = invocations.filter(entry => entry && entry.invocationId === id);
+                  if (found.length !== 1) throw new Error('Missing or duplicate invocation');
+                  return found[0];
+                };
+                const plan = only('build-01');
+                const implement = only('build-02');
+                const changes = implement.artifactPaths && implement.artifactPaths.changes;
+                passed = plan.capability === 'rpi-plan' && plan.taskSlug === 'atlas-product-prd-build-01' &&
+                  implement.capability === 'rpi-implement' && implement.taskSlug === 'atlas-product-prd-build-02' &&
+                  implement.dependsOnInvocationId === 'build-01' &&
+                  typeof changes === 'string' && /(^|\/)atlas-product-prd-build-02-changes\.md$/.test(changes) &&
+                  implement.segmentStatus === 'completed' && implement.userDisposition === 'accepted' &&
+                  implement.gateEffect === 'supports' &&
+                  state.syntheticExtension !== null && typeof state.syntheticExtension === 'object' && state.syntheticExtension.preserve === true;
+              } catch { passed = false; }
+              console.log(JSON.stringify({ name: 'prd-authoring-state-records-separate-plan-and-implement', kind: 'code', passed, score: Number(passed), evidence: 'Compare separate Plan and Implement invocation values independently of key order.' }));

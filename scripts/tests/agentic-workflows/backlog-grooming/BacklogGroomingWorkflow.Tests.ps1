@@ -15,7 +15,6 @@ BeforeAll {
 
     function ConvertTo-NormalizedLineEndings {
         param([Parameter(Mandatory)] [AllowEmptyString()] [string]$Text)
-
         return $Text -replace "`r`n?", "`n"
     }
 

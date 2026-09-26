@@ -4,6 +4,7 @@ stimuli:
   - name: pptx-class-recipe
     prompt: |
       Plan a 5-slide PowerPoint deck about "Q1 engineering velocity highlights." List the three phases of the deck build. Write the plan under `.copilot-tracking/ppt/` and report the path.
+      In your response, list the three phase headings before reporting the path.
     tags:
       category: agent-behavior
     graders:
@@ -18,5 +19,5 @@ stimuli:
       - type: output-matches
         name: pptx-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true

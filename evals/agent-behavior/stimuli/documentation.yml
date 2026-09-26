@@ -3,26 +3,62 @@
 stimuli:
   - name: documentation-audit-class-recipe
     prompt: |
-      Plan a documentation coverage audit across the `docs/` tree. List phases and success criteria. Write the plan under `.copilot-tracking/documentation/` and tell me the path you wrote it to.
+      Plan a documentation coverage audit for the small synthetic `docs/` tree
+      supplied in this workspace. Do not imply coverage of a larger repository.
+      Write the plan to `.copilot-tracking/documentation/audit-plan.md`.
+      In your response, list the ordered phase headings and a concrete completion
+      condition for each phase before reporting the path you wrote. Do not perform
+      the audit or change the documentation itself.
+    agent_environment:
+      files:
+        - src: fixtures/documentation-audit.txt
+          dest: docs/README.md
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
         name: lists-phases
         config:
-          pattern: '(?i)\bphases?\b'
-      - type: output-matches
+          pattern: '(?im)(?:^\s*(?:#{2,3}\s+|\d+[.)]\s+)(?:[^\r\n]*\b(?:inventory|assess|review|prioriti[sz]e|report|validate|discover|define|audit)\b)[^\r\n]*\r?\n[\s\S]+?){2}'
+      - type: program
         name: success-criteria
         config:
-          pattern: '(?i)success\s+criteria|criteria'
-      - type: output-matches
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = input.trajectory.output.replace(/[*`]/g, '');
+                const headings = [...output.matchAll(/^\s*(?:#{2,3}\s+|\d+[.)]\s+)[^\r\n]*\b(?:inventory|assess|review|prioriti[sz]e|report|validate|discover|define|audit)\b[^\r\n]*$/gim)];
+                const complete = headings.length >= 2 && headings.every((heading, index) => {
+                  const section = output.slice(heading.index + heading[0].length, headings[index + 1]?.index ?? output.length);
+                  return /\b(?:success criteria|completion (?:condition|criteria)|done when|complete when|exit criteria)\s*[:\-]?\s*[^\r\n]{15,}/i.test(section) &&
+                    /\b(?:files?|pages?|coverage|gaps?|findings?|evidence|owners?|inventory|links?|documents?|matrix)\b/i.test(section);
+                });
+                process.exit(complete ? 0 : 1);
+              } catch { process.exit(1); }
+      - type: program
         name: documentation-audit-class-recipe-tracking-file-write
         config:
-          pattern: '(?i)\.copilot-tracking[-/\\](documentation|plans)'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              const path = require('node:path');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const relative = '.copilot-tracking/documentation/audit-plan.md';
+                const plan = fs.readFileSync(path.join(process.env.EVALUATE_WORKSPACE, relative), 'utf8');
+                const headings = plan.match(/^\s*(?:#{2,3}\s+|\d+[.)]\s+)\S.+$/gm) || [];
+                process.exit(headings.length >= 2 && plan.length >= 100 && /\bdocs\//i.test(plan) && input.trajectory.output.includes(relative) ? 0 : 1);
+              } catch { process.exit(1); }
       - type: output-matches
         name: documentation-audit-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
 
   - name: documentation-drift-class-recipe

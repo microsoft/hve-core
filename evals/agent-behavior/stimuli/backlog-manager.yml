@@ -11,6 +11,11 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/backlog-manager.agent.md`.
 
       Report the human-readable agent name declared in its frontmatter, then restate its declared description verbatim. Do not paraphrase the description and do not describe the file itself.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/backlog-manager.agent.md
+          dest: .github/agents/project-planning/backlog-manager.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
@@ -22,7 +27,7 @@ stimuli:
       - type: output-matches
         name: backlog-manager-frontmatter-name-and-description-re-b84f6c83
         config:
-          pattern: '(?i)read-only backlog orchestrator.{0,40}Azure DevOps.{0,20}GitHub.{0,20}Jira'
+          pattern: '(?i)Read-only\s+backlog\s+orchestrator\s+for\s+Azure\s+DevOps,\s+GitHub,\s+and\s+Jira\.\s+Classifies,\s+plans,\s+and\s+grooms\s+requests,\s+and\s+dispatches\s+every\s+mutation\s+to\s+a\s+per-platform\s+executor\.'
       - type: output-matches
         name: backlog-manager-frontmatter-name-and-description-do-951e3479
         config:
@@ -34,6 +39,11 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/backlog-manager.agent.md`.
 
       List every agent it can hand off to and the label each handoff entry carries. Identify each target agent the way the artifact identifies it.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/backlog-manager.agent.md
+          dest: .github/agents/project-planning/backlog-manager.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
@@ -45,7 +55,7 @@ stimuli:
       - type: output-matches
         name: reports-declared-labels
         config:
-          pattern: '(?i)(Task Plan|Add Item|PRD to Hierarchy)'
+          pattern: '(?is)^(?=[\s\S]*\bDiscover\b)(?=[\s\S]*\bTriage\b)(?=[\s\S]*\bSprint\b)(?=[\s\S]*\bMy Work\b)(?=[\s\S]*\bTask Plan\b)(?=[\s\S]*\bResume\b)(?=[\s\S]*\bAdd Item\b)(?=[\s\S]*\bExecute\b)(?=[\s\S]*\bPRD to Hierarchy\b)(?=[\s\S]*\bBacklog Manager\b)(?=[\s\S]*\bFunctional Planner\b)'
       - type: output-matches
         name: identifies-targets-by-name-not-path
         config:
@@ -57,9 +67,23 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/backlog-manager.agent.md`.
 
       Read its declared `tools:` list together with its declared description. Assess whether that restriction set is appropriate for the role the description states, and name any tool whose presence or absence you consider inconsistent with that role. Justify the assessment from the artifact rather than from general expectations.
+      Distinguish the declared capability grants from what can actually be
+      concluded about host enforcement. Address direct tracker operations,
+      local artifact writes, and delegated mutations separately.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/backlog-manager.agent.md
+          dest: .github/agents/project-planning/backlog-manager.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
+    rubric:
+      - >
+        Assess the artifact's declared tools against its stated read-only tracker
+        orchestration and dispatch-every-mutation role. Ground claims in the
+        supplied declarations, do not invent tools, and do not claim that a tool
+        grant enforces a boundary the host does not enforce.
     graders:
       - type: prompt
         name: backlog-manager-tool-restriction-fit-tool-restricti-94768515
@@ -84,6 +108,11 @@ stimuli:
       Open the agent artifact at `.github/agents/project-planning/backlog-manager.agent.md`.
 
       List the headings that carry its workflow protocol, in order and exactly as written in the artifact.
+      If the file cannot be read, report the task as blocked without inventing its declarations.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/project-planning/backlog-manager.agent.md
+          dest: .github/agents/project-planning/backlog-manager.agent.md
     tags:
       category: agent-behavior
       advisory: "true"
@@ -161,7 +190,7 @@ stimuli:
       - type: output-matches
         name: no-github-mutation
         config:
-          pattern: '(?i)(updated|closed|commented on)\s+(github\s+)?issue\s*#?\d+'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:updated|closed|commented on)\s+(?:github\s+)?issue\s*#?\d+'
           negate: true
       - type: output-matches
         name: no-aw-contract-dependency
