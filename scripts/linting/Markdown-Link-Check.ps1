@@ -30,6 +30,10 @@
     BaseBranch. Internal links are still validated repository-wide. External links
     in unchanged files are reported as skipped rather than checked.
 
+.PARAMETER ExternalLinksAsWarnings
+    Report dead external links and untrusted external-link results without failing
+    the command. Internal-link and source-report failures remain blocking.
+
 .PARAMETER BaseBranch
     Branch reference used by -ChangedFilesOnly to compute the changed-file set.
 
@@ -64,6 +68,8 @@ param(
     [switch]$Quiet,
 
     [switch]$ChangedFilesOnly,
+
+    [switch]$ExternalLinksAsWarnings,
 
     [string]$BaseBranch = 'origin/main',
 
@@ -839,6 +845,7 @@ function Invoke-MarkdownLinkCheck {
         [string]$ConfigPath,
         [switch]$Quiet,
         [switch]$ChangedFilesOnly,
+        [switch]$ExternalLinksAsWarnings,
         [string]$BaseBranch = 'origin/main',
         [int]$ThrottleLimit = 8
     )
@@ -970,6 +977,12 @@ function Invoke-MarkdownLinkCheck {
             $fileResults += $convertedResults
         }
 
+        $blockingFailedFiles = @(
+            $fileResults |
+                Where-Object Failed |
+                Select-Object -ExpandProperty File -Unique
+        )
+
         $externalUrls = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
         foreach ($fileResult in @($fileResults | Where-Object { -not $_.ParseFailed })) {
             if (-not (Test-MarkdownExternalScope -RelativePath $fileResult.File -Scope $externalScope)) {
@@ -1066,6 +1079,12 @@ function Invoke-MarkdownLinkCheck {
                     if ([string]::IsNullOrWhiteSpace($fileResult.ReportError)) {
                         $fileResult.ReportError = $externalErrorsByUrl[$url]
                     }
+                    if ($ExternalLinksAsWarnings) {
+                        Write-CIAnnotation `
+                            -Message "External link validation was inconclusive for ${url}: $($externalErrorsByUrl[$url])" `
+                            -Level Warning `
+                            -File $fileResult.File
+                    }
                     $link
                     continue
                 }
@@ -1074,6 +1093,12 @@ function Invoke-MarkdownLinkCheck {
                     $fileResult.Failed = $true
                     $fileResult.ParseFailed = $true
                     $fileResult.ReportError = "No trusted aggregate result was available for $url"
+                    if ($ExternalLinksAsWarnings) {
+                        Write-CIAnnotation `
+                            -Message "External link validation was inconclusive for ${url}: $($fileResult.ReportError)" `
+                            -Level Warning `
+                            -File $fileResult.File
+                    }
                     $link
                     continue
                 }
@@ -1123,20 +1148,42 @@ function Invoke-MarkdownLinkCheck {
                     }
                 }
 
+                $isExternal = [regex]::IsMatch([string]$link.Url, '^[Hh][Tt][Tt][Pp][Ss]?://')
+
                 # Process broken links
-                if ($link.Status -eq 'dead') {
+                if (
+                    $link.Status -eq 'dead' -or
+                    ($ExternalLinksAsWarnings -and $isExternal -and $link.Status -eq 'error')
+                ) {
                     $brokenLinks += @{
                         File = $relative
                         Link = $link.Url
-                        Status = "$($link.StatusCode)"
+                        Status = if ($link.Status -eq 'error') { 'error' } else { "$($link.StatusCode)" }
                     }
 
-                    Write-CIAnnotation -Message "Broken link: $($link.Url) (Status: $($link.StatusCode))" -Level Error -File $relative
+                    $annotationLevel = if ($ExternalLinksAsWarnings -and $isExternal) { 'Warning' } else { 'Error' }
+                    $annotationMessage = if ($link.Status -eq 'error') {
+                        "External link check error: $($link.Url)"
+                    }
+                    else {
+                        "Broken link: $($link.Url) (Status: $($link.StatusCode))"
+                    }
+                    Write-CIAnnotation `
+                        -Message $annotationMessage `
+                        -Level $annotationLevel `
+                        -File $relative
                 }
             }
 
             if ($fileResult.Failed -and $failedFiles -notcontains $relative) {
                 $failedFiles += $relative
+            }
+            if (
+                $fileResult.Failed -and
+                -not $ExternalLinksAsWarnings -and
+                $blockingFailedFiles -notcontains $relative
+            ) {
+                $blockingFailedFiles += $relative
             }
         }
 
@@ -1163,7 +1210,7 @@ function Invoke-MarkdownLinkCheck {
         $results | ConvertTo-Json -Depth 10 | Set-Content -Path $resultsPath -Encoding UTF8
 
     # Generate GitHub step summary
-        if ($failedFiles.Count -gt 0) {
+        if ($blockingFailedFiles.Count -gt 0) {
             $summaryContent = @"
 ## ❌ Markdown Link Check Failed
 
@@ -1201,7 +1248,20 @@ For more information, see the [markdown-link-check documentation](https://github
             Write-CIStepSummary -Content $summaryContent
             Set-CIEnv -Name "MARKDOWN_LINK_CHECK_FAILED" -Value "true"
 
-            throw ("markdown-link-check reported failures for: {0}" -f ($failedFiles -join ', '))
+            throw ("markdown-link-check reported blocking failures for: {0}" -f ($blockingFailedFiles -join ', '))
+        }
+        elseif ($failedFiles.Count -gt 0) {
+            $summaryContent = @"
+## ⚠️ Markdown Link Check Completed with Advisory Findings
+
+**Files with advisory findings:** $($failedFiles.Count) / $totalFiles
+**Total broken links:** $($brokenLinks.Count)
+
+External-link findings are advisory for this run. Internal links passed.
+"@
+
+            Write-CIStepSummary -Content $summaryContent
+            Write-Output 'markdown-link-check completed with advisory external-link findings.'
         }
         else {
             $summaryContent = @"
@@ -1227,7 +1287,8 @@ Great job! All markdown links are valid. 🎉
 if ($MyInvocation.InvocationName -ne '.') {
     try {
         Invoke-MarkdownLinkCheck -Path $Path -ConfigPath $ConfigPath -Quiet:$Quiet `
-            -ChangedFilesOnly:$ChangedFilesOnly -BaseBranch $BaseBranch -ThrottleLimit $ThrottleLimit
+            -ChangedFilesOnly:$ChangedFilesOnly -ExternalLinksAsWarnings:$ExternalLinksAsWarnings `
+            -BaseBranch $BaseBranch -ThrottleLimit $ThrottleLimit
         exit 0
     }
     catch {

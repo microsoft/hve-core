@@ -2369,6 +2369,80 @@ Describe 'PR validation hosted conformance boundary' -Tag 'Unit' {
     }
 }
 
+Describe 'Markdown link PR gate contract' -Tag 'Unit' {
+    BeforeAll {
+        $script:MarkdownLinkWorkflow = Get-WorkflowDocument -Name 'markdown-link-check.yml'
+        $script:PrValidation = Get-WorkflowDocument -Name 'pr-validation.yml'
+    }
+
+    It 'Declares advisory external links as an opt-in reusable input' {
+        $workflowInput = $script:MarkdownLinkWorkflow['on']['workflow_call']['inputs']['external-links-as-warnings']
+
+        $workflowInput['type'] | Should -Be 'boolean'
+        $workflowInput['default'] | Should -BeFalse
+    }
+
+    It 'Passes the advisory external-link input to the checker' {
+        $step = Get-NamedJobStep `
+            -Document $script:MarkdownLinkWorkflow `
+            -JobName 'markdown-link-check' `
+            -StepName 'Run markdown link check'
+
+        [string]$step['env']['EXTERNAL_LINKS_AS_WARNINGS'] |
+            Should -Be '${{ inputs.external-links-as-warnings }}'
+        [string]$step['run'] | Should -Match "ExternalLinksAsWarnings"
+    }
+
+    It 'Hard-gates internal links while keeping external PR findings advisory' {
+        $inputs = $script:PrValidation['jobs']['markdown-link-check']['with']
+
+        $inputs['soft-fail'] | Should -BeFalse
+        $inputs['changed-files-only'] | Should -BeTrue
+        $inputs['external-links-as-warnings'] | Should -BeTrue
+    }
+}
+
+Describe 'AI artifact portability gate contract' -Tag 'Unit' {
+    BeforeAll {
+        $script:AiArtifactWorkflow = Get-WorkflowDocument -Name 'ai-artifact-validation.yml'
+    }
+
+    It 'Runs footer and portability validation independently before the final gate' {
+        $footerStep = Get-NamedJobStep `
+            -Document $script:AiArtifactWorkflow `
+            -JobName 'ai-artifact-validation' `
+            -StepName 'Validate AI artifact footers and disclaimers'
+        $portabilityStep = Get-NamedJobStep `
+            -Document $script:AiArtifactWorkflow `
+            -JobName 'ai-artifact-validation' `
+            -StepName 'Validate artifact path portability'
+        $gateStep = Get-NamedJobStep `
+            -Document $script:AiArtifactWorkflow `
+            -JobName 'ai-artifact-validation' `
+            -StepName 'Check results'
+
+        $footerStep['id'] | Should -Be 'planner-artifacts'
+        $footerStep['continue-on-error'] | Should -BeTrue
+        $portabilityStep['id'] | Should -Be 'artifact-portability'
+        $portabilityStep['continue-on-error'] | Should -BeTrue
+        [string]$portabilityStep['run'] | Should -Match 'Test-ArtifactPathPortability\.ps1'
+        [string]$gateStep['if'] | Should -Match "steps\.planner-artifacts\.outcome == 'failure'"
+        [string]$gateStep['if'] | Should -Match "steps\.artifact-portability\.outcome == 'failure'"
+        [string]$gateStep['if'] | Should -Match '!inputs\.soft-fail'
+    }
+
+    It 'Uploads both AI artifact validation result files' {
+        $uploadStep = Get-NamedJobStep `
+            -Document $script:AiArtifactWorkflow `
+            -JobName 'ai-artifact-validation' `
+            -StepName 'Upload results'
+        [string]$paths = $uploadStep['with']['path']
+
+        $paths | Should -Match 'logs/ai-artifact-results\.json'
+        $paths | Should -Match 'logs/artifact-path-portability-results\.json'
+    }
+}
+
 Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
     It 'Runs Scorecard after the consolidated post-tag producer' {
         $scorecard = Get-WorkflowDocument -Name 'scorecard.yml'

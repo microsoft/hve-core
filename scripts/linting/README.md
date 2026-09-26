@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-09-17
+ms.date: 2026-09-25
 ms.topic: reference
 keywords:
   - powershell
@@ -237,6 +237,7 @@ Purpose: Detect broken links before deployment.
 * Discovers tracked and untracked, non-ignored Markdown files so local validation does not require staging
 * Validates internal links repository-wide, because renaming or deleting a target breaks references in files the change never touched
 * Restricts external-link fetching to files changed against a base branch with `-ChangedFilesOnly` and `-BaseBranch`; external links in unchanged files are reported as skipped
+* Supports `-ExternalLinksAsWarnings` so external findings remain visible without weakening internal-link failures
 * Fetches each unique external URL once, no matter how many files reference it
 * Checks files concurrently, bounded by `-ThrottleLimit` (default 8)
 * Configurable via `markdown-link-check.config.json`
@@ -258,9 +259,9 @@ Purpose: Detect broken links before deployment.
 * Workflow: `.github/workflows/markdown-link-check.yml`
 * Configuration: `markdown-link-check.config.json`
 * Artifacts: `markdown-link-check-results` (JSON)
-* Annotations: Error for each broken link
-* Exit Code: Non-zero if broken links found
-* Scope: pull request validation always checks internal links repository-wide and limits external-link fetching to changed files; `weekly-validation.yml` fetches external links across the full repository
+* Annotations: Errors for blocking findings; warnings for external findings when `-ExternalLinksAsWarnings` is active
+* Exit Code: Non-zero for any finding by default, or only for internal and source-report failures with `-ExternalLinksAsWarnings`
+* Scope: pull request validation hard-gates internal links repository-wide, reports external findings from changed files as advisory, and `weekly-validation.yml` fetches external links across the full repository
 
 ### ADR Consistency Validation
 
@@ -713,7 +714,8 @@ blockquote markers, so line wrapping does not affect matching.
 ##### GitHub Actions Integration
 
 * Workflow: `.github/workflows/ai-artifact-validation.yml`
-* Artifacts: `ai-artifact-results` (JSON)
+* Validation: footer and disclaimer validation plus artifact path portability run independently before one blocking result gate
+* Artifacts: `ai-artifact-results` and `artifact-path-portability-results` (JSON)
 * npm script: `npm run lint:ai-artifacts`
 * Exit Code: Non-zero when `-FailOnMissing` is set and issues are found
 
@@ -722,6 +724,7 @@ blockquote markers, so line wrapping does not affect matching.
 | npm Script                       | Description                                                                                                                                                          |
 |----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                        |
+| `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts                |
 | `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds |
 | `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                               |
 | `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                             |
