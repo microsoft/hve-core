@@ -82,7 +82,8 @@ stimuli:
       Discover has a named regulatory gap that the BRD and supplied references
       do not answer. Research returned artifact
       `.copilot-tracking/research/2026-09-18/atlas-research.md` with Q1 and C1.
-      Explain the state receipt, BRD disposition record, and authority boundary.
+      Show the resulting state receipt entry and the BRD disposition row in your
+      reply, then explain the authority boundary.
     environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
@@ -130,7 +131,7 @@ stimuli:
       - type: output-matches
         name: brd-research-blocked-gap
         config:
-          pattern: '(?is)(open question|unvalidated assumption).*(dependent|evidence-dependent|affected).*(stop|pause|blocked)'
+          pattern: '(?is)^(?=[\s\S]*(?:open question|unvalidated assumption))(?=[\s\S]*(?:(?:dependent|affected)[^.\r\n]{0,160}\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b|\b(?:stop|stops|stopped|pause|pauses|paused|block|blocks|blocked|halt|halts|halted|hold|holds|cannot proceed|cannot continue)\b[^.\r\n]{0,160}(?:dependent|affected)))'
       - type: output-matches
         name: brd-research-blocked-no-gate-exit
         config:
@@ -145,6 +146,8 @@ stimuli:
       Use only the staged requirements evidence. Perform the segment now:
       write its primary artifact under the BRD session evidence root, then
       update state and the BRD disposition table. Do not merely explain it.
+      Research posture: `focused`. The staged evidence file is the only source;
+      explicit limit: one research cycle.
     environment:
       files:
         - src: ../../.github/agents/project-planning/brd-builder.agent.md
@@ -286,7 +289,7 @@ stimuli:
       - type: output-matches
         name: brd-blocked-segment-does-not-clear-gate
         config:
-          pattern: '(?is)(blocked|does-not-satisfy).*(Discover).*(not|cannot|does not).*(clear|satisfy|exit)'
+          pattern: '(?is)^(?=[\s\S]*(?:blocked|does-not-satisfy))(?=[\s\S]*(?:Discover[^.\r\n]{0,120}\b(?:not|cannot|can[\x27\u2019]t|does(?:\s+no|n[\x27\u2019])t|must not|won[\x27\u2019]t)\b[^.\r\n]{0,40}\b(?:clear|satisfy|exit|pass)\w*|\b(?:not|cannot|can[\x27\u2019]t|does(?:\s+no|n[\x27\u2019])t|must not|won[\x27\u2019]t)\b[^.\r\n]{0,40}\b(?:clear|satisfy|exit|pass)\w*[^.\r\n]{0,80}Discover))'
 
   - name: brd-builder-records-skipped-research-segment
     prompt: |

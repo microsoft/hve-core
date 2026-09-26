@@ -184,7 +184,8 @@ console.log('PASS safe calibration projection');
         It 'fails closed for <Mutation>' -ForEach @(
             @{ Mutation = 'missing-selection' }, @{ Mutation = 'duplicate-selection' }, @{ Mutation = 'retry' },
             @{ Mutation = 'source' }, @{ Mutation = 'missing-calibration' }, @{ Mutation = 'wrong-control' },
-            @{ Mutation = 'duplicate-control' }, @{ Mutation = 'poisoned-control' }, @{ Mutation = 'missing-grader' }
+            @{ Mutation = 'duplicate-control' }, @{ Mutation = 'poisoned-control' }, @{ Mutation = 'missing-grader' },
+            @{ Mutation = 'agent-timeout' }, @{ Mutation = 'missing-turn' }, @{ Mutation = 'unknown-completion' }
         ) {
             switch ($Mutation) {
                 'missing-selection' { $script:acceptanceSummary.perSpec = @() }
@@ -196,8 +197,20 @@ console.log('PASS safe calibration projection');
                 'duplicate-control' { $script:acceptanceCalibration.controls[1].id = 'positive' }
                 'poisoned-control' { $script:acceptanceCalibration.controls[0].rawOutput = 'private' }
                 'missing-grader' { $script:acceptanceDiagnostics.attempts[0].trials[0].graders = @() }
+                'agent-timeout' { $script:acceptanceDiagnostics.attempts[0].trials[0].endReason = 'agent_timeout' }
+                'missing-turn' { $script:acceptanceDiagnostics.attempts[0].trials[0].configuredTurns = 3 }
+                'unknown-completion' { $script:acceptanceDiagnostics.attempts[0].trials[0].endReason = $null }
             }
             (Test-EvalAcceptanceValue -Summary $script:acceptanceSummary -Acceptance $script:acceptanceContract -Calibration $script:acceptanceCalibration).passed | Should -BeFalse
+        }
+        It 'reports an interrupted required trial as incomplete native execution for <Mutation>' -ForEach @(
+            @{ Mutation = 'agent-timeout' }, @{ Mutation = 'missing-turn' }
+        ) {
+            if ($Mutation -eq 'agent-timeout') { $script:acceptanceDiagnostics.attempts[0].trials[1].endReason = 'agent_timeout' }
+            else { $script:acceptanceDiagnostics.attempts[0].trials[1].configuredTurns = 2 }
+            $result = Test-EvalAcceptanceValue -Summary $script:acceptanceSummary -Acceptance $script:acceptanceContract -Calibration $script:acceptanceCalibration
+            $result.passed | Should -BeFalse
+            $result.issues | Should -Contain 'incomplete-native-execution'
         }
     }
 

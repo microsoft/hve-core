@@ -201,6 +201,16 @@ function Test-EvalAcceptanceValue {
                 [void]$issues.Add('not-clean-first-attempt')
             }
             if (-not $valid.allChecksPassed) { [void]$issues.Add('required-check-failed') }
+            # Task acceptance counts only trials that finished every configured turn; an interrupted run can still pass its graders.
+            foreach ($attempt in @($diagnostics.attempts | Select-Object -First 1)) {
+                foreach ($trial in @($attempt.trials)) {
+                    if (-not $selection.requiredStimuli.Contains([string]$trial.stimulusName)) { continue }
+                    if ($trial.endReason -cne 'completed' -or $trial.configuredTurns -isnot [ValueType] -or
+                        $trial.observedTurns -isnot [ValueType] -or $trial.observedTurns -lt $trial.configuredTurns) {
+                        [void]$issues.Add('incomplete-native-execution')
+                    }
+                }
+            }
             foreach ($name in $selection.requiredStimuli.Keys) {
                 if (-not $diagnostics.expectedStimuli.Contains($name) -or
                     (Get-AgentEvalValueDigest $diagnostics.expectedStimuli[$name]) -cne (Get-AgentEvalValueDigest $selection.requiredStimuli[$name])) {

@@ -236,7 +236,8 @@ stimuli:
                 const header = cells(lines[headers[0]]);
                 if (new Set(header.map(cell => cell.toLowerCase())).size !== header.length) process.exit(1);
                 const people = header.findIndex(cell => /^Who may be excluded$/i.test(cell));
-                const basis = header.findIndex(cell => /^Basis(?: and source)?$/i.test(cell));
+                const basisColumns = header.flatMap((cell, index) => /\bbasis\b/i.test(cell) ? [index] : []);
+                const basis = basisColumns.length === 1 ? basisColumns[0] : -1;
                 const separator = cells(lines[headers[0] + 1] || '');
                 if (basis < 0 || separator.length !== header.length || !separator.every(cell => /^:?-{3,}:?$/.test(cell))) process.exit(1);
                 const data = [];
@@ -405,7 +406,7 @@ stimuli:
               try {
                 const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
                 const lines = input.trajectory.output.replace(/[*`]/g, '').split(/\r?\n/);
-                const boundaries = lines.flatMap((line, index) => /\b(?:wrong_cwd|deps_missing)\b/i.test(line) ? [index] : []);
+                const boundaries = lines.flatMap((line, index) => /\bwrong_cwd\b/i.test(line) !== /\bdeps_missing\b/i.test(line) ? [index] : []);
                 const owners = boundaries.filter(index => /\bwrong_cwd\b/i.test(lines[index]));
                 if (owners.length !== 1 || /\bdeps_missing\b/i.test(lines[owners[0]])) process.exit(1);
                 const end = boundaries.find(index => index > owners[0]) ?? lines.length;
@@ -426,7 +427,7 @@ stimuli:
               try {
                 const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
                 const lines = input.trajectory.output.replace(/[*`]/g, '').split(/\r?\n/);
-                const boundaries = lines.flatMap((line, index) => /\b(?:wrong_cwd|deps_missing)\b/i.test(line) ? [index] : []);
+                const boundaries = lines.flatMap((line, index) => /\bwrong_cwd\b/i.test(line) !== /\bdeps_missing\b/i.test(line) ? [index] : []);
                 const owners = boundaries.filter(index => /\bdeps_missing\b/i.test(lines[index]));
                 if (owners.length !== 1 || /\bwrong_cwd\b/i.test(lines[owners[0]])) process.exit(1);
                 const end = boundaries.find(index => index > owners[0]) ?? lines.length;
