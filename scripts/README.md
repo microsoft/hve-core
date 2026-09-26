@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-09-10
+ms.date: 2026-09-25
 ms.topic: reference
 keywords:
   - powershell
@@ -137,8 +137,9 @@ The `evals/` directory contains PowerShell entry points for agent-behavior, base
 | `Build-AgentInventory.ps1`                | Generate the authoritative agent inventory used by eval suites                      |
 | `Build-GraderLineageMap.ps1`              | Build or check the Vally grader-name lineage map                                    |
 | `Get-AgentDependencyMap.ps1`              | Build a JSON map of agent dependencies for the baseline-equivalence dispatcher      |
-| `Get-ChangedAIArtifact.ps1`               | Emit a JSON manifest of AI customization artifacts changed between two git refs     |
-| `Get-ChangedSpecStimulus.ps1`             | Emit a JSON manifest of synthetic artifacts derived from changed eval specs         |
+| `Get-EvalChangeSet.ps1`                   | Freeze explicit base/head commits, their merge base, and changed paths              |
+| `Get-ChangedAIArtifact.ps1`               | Classify AI customization artifacts from the canonical eval change set              |
+| `Get-ChangedSpecStimulus.ps1`             | Resolve changed stimuli from canonical comparison-base and head content             |
 | `Invoke-AgentMatrix.ps1`                  | Run the agent-behavior matrix and aggregate per-agent summaries                     |
 | `Invoke-ArtifactModeration.ps1`           | Moderate all eval specs plus changed AI artifacts as a pre-job gate                 |
 | `Invoke-BaselineEquivalence.ps1`          | Run baseline-vs-customized equivalence evals for a target agent                     |
@@ -163,10 +164,37 @@ Most of these run through CI-owned `ci:eval:*` package scripts. See
 taxonomy and prerequisites, and [../evals/README.md](../evals/README.md) for the broader
 eval framework documentation.
 
-`Get-AgentDependencyMap.ps1`, `Get-ChangedAIArtifact.ps1`, `Get-ChangedSpecStimulus.ps1`,
+`Get-AgentDependencyMap.ps1`, `Get-EvalChangeSet.ps1`, `Get-ChangedAIArtifact.ps1`, `Get-ChangedSpecStimulus.ps1`,
 `Test-CopilotToken.ps1`, and `Update-AgentMatrixSummariesFromLogs.ps1` have no
 package-script wrapper and are invoked directly by workflows or run ad hoc with
 `pwsh -NoProfile -File`.
+
+### Immutable change selection
+
+Generate the comparison once, then pass its manifest to both selectors:
+
+```powershell
+pwsh -NoProfile -File scripts/evals/Get-EvalChangeSet.ps1 -BaseRef origin/main -HeadRef feature-branch
+pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set.json
+pwsh -NoProfile -File scripts/evals/Get-ChangedSpecStimulus.ps1 -ChangeSetPath logs/eval-change-set.json
+```
+
+The PR workflow passes GitHub's test-merge commit as `-MergeRef` and the pull
+request head SHA as `-HeadRef`. The generator uses the merge commit's first
+parent as the base, which is exactly the base-branch commit the checkout
+integrates, after verifying the merge has two parents and its second parent is
+the head. Any other shape fails rather than guessing. Manual dispatch has no
+merge commit and uses `-BaseRef origin/main`. The merge checkout still executes
+the tooling, but cannot add newer `main` changes to the selection.
+`eval-change-set.json` records resolved `baseRef`, `headRef`, `comparisonBase`,
+and ordered `changes`. Changed-spec content and package patches use
+`comparisonBase` and `headRef`, never the working tree. Renamed and copied
+specs are treated as additions, so every backlinked stimulus runs.
+
+The selectors require this manifest; their former `BaseRef` and `HeadRef`
+parameters are removed. An empty comparison succeeds with `changes: []`.
+Invalid revisions, malformed manifests, and unexpected Git content failures
+terminate explicitly rather than triggering a full evaluation as a fallback.
 
 ## Devcontainer Scripts
 

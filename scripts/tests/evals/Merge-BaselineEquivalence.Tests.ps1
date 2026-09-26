@@ -263,6 +263,71 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
     BeforeAll {
         $script:WorkflowPath = Join-Path $PSScriptRoot '../../../.github/workflows/eval-validation.yml'
         $script:Workflow = Get-Content -LiteralPath $script:WorkflowPath -Raw
+        Import-Module powershell-yaml -ErrorAction Stop
+        $script:EvalWorkflow = ConvertFrom-Yaml $script:Workflow
+        $script:Caller = Get-Content (Join-Path $PSScriptRoot '../../../.github/workflows/pr-validation.yml') -Raw | ConvertFrom-Yaml
+    }
+
+    It 'passes immutable PR revisions with an explicit dispatch fallback' {
+        $inputs = $script:Caller.jobs['eval-validation'].with
+        $inputs['merge-ref'] | Should -BeExactly '${{ github.event_name == ''pull_request'' && github.sha || '''' }}'
+        $inputs['head-ref'] | Should -BeExactly '${{ github.event.pull_request.head.sha || github.sha }}'
+        $inputs.ContainsKey('base-branch') | Should -BeFalse
+        ($inputs.Values -join "`n") | Should -Not -Match 'pull_request\.base\.sha'
+        $script:EvalWorkflow.on.workflow_call.inputs['head-ref'].required | Should -BeTrue
+        $script:EvalWorkflow.on.workflow_call.inputs['base-ref'].default | Should -Be 'origin/main'
+        $script:EvalWorkflow.on.workflow_call.inputs['merge-ref'].required | Should -BeFalse
+        $script:EvalWorkflow.on.workflow_call.inputs['merge-ref'].default | Should -BeExactly ''
+    }
+
+    It 'generates and uploads exactly one canonical comparison before eligibility' {
+        $steps = $script:EvalWorkflow.jobs['eval-validation'].steps
+        $generation = @($steps | Where-Object { $_.run -match 'Get-EvalChangeSet.ps1' })
+        $generation | Should -HaveCount 1
+        $generation[0].run | Should -Match '-BaseRef \$env:INPUT_BASE_REF -HeadRef \$env:INPUT_HEAD_REF'
+        $generation[0].run | Should -Match 'if \(\$env:INPUT_MERGE_REF\)[\s\S]+-MergeRef \$env:INPUT_MERGE_REF -HeadRef \$env:INPUT_HEAD_REF'
+        $generation[0].run | Should -Match 'if \(\$LASTEXITCODE -ne 0\) \{ throw'
+        $upload = @($steps | Where-Object { $_.with.name -eq 'eval-change-set' })
+        $upload | Should -HaveCount 1
+        $upload[0].with.path | Should -Be 'logs/eval-change-set.json'
+        $upload[0].with['if-no-files-found'] | Should -Be 'error'
+        $detect = $steps | Where-Object { $_.id -eq 'detect' }
+        $steps.IndexOf($generation[0]) | Should -BeLessThan $steps.IndexOf($upload[0])
+        $steps.IndexOf($upload[0]) | Should -BeLessThan $steps.IndexOf($detect)
+        $detect.run | Should -Match 'Read-EvalChangeSet'
+        $detect.run | Should -Match 'Test-EvalChangeSetRelevance'
+        $detect.run | Should -Not -Match 'git diff|Could not compute diff|\$null -eq \$changed'
+    }
+
+    It 'carries the same change set through moderation to changed-spec selection' {
+        $moderationSteps = $script:EvalWorkflow.jobs['content-moderation'].steps
+        $download = $moderationSteps | Where-Object { $_.with.name -eq 'eval-change-set' }
+        $artifact = $moderationSteps | Where-Object { $_.id -eq 'artifact-manifest' }
+        $moderationSteps.IndexOf($download) | Should -BeLessThan $moderationSteps.IndexOf($artifact)
+        $artifact.run | Should -Match '-ChangeSetPath logs/eval-change-set.json'
+        $artifact.run | Should -Match 'if \(\$LASTEXITCODE -ne 0\) \{ throw'
+        ($moderationSteps | Where-Object { $_.with.name -eq 'content-moderation-results' }).with.path |
+            Should -Match 'logs/eval-change-set.json'
+        $planSteps = $script:EvalWorkflow.jobs['agent-plan'].steps
+        $planDownload = $planSteps | Where-Object { $_.with.name -eq 'content-moderation-results' }
+        $spec = $planSteps | Where-Object { $_.run -match 'Get-ChangedSpecStimulus.ps1' }
+        $planSteps.IndexOf($planDownload) | Should -BeLessThan $planSteps.IndexOf($spec)
+        $spec.run | Should -Match '-ChangeSetPath logs/eval-change-set.json'
+        $spec.run | Should -Match 'if \(\$LASTEXITCODE -ne 0\) \{ throw'
+        $script:Workflow | Should -Not -Match '-HeadRef HEAD|baseBranch\.\.\.HEAD|inputs\.base-branch'
+    }
+
+    It 'preserves model-job eligibility gates and explicit full-suite mode' {
+        foreach ($name in @('agent-plan', 'eval-execute', 'equivalence-execute', 'equivalence-fan-in', 'eval-fan-in')) {
+            $script:EvalWorkflow.jobs[$name].if |
+                Should -Match "needs\.eval-validation\.outputs\.eval-relevant == 'true'"
+        }
+        $detect = $script:EvalWorkflow.jobs['eval-validation'].steps | Where-Object { $_.id -eq 'detect' }
+        $detect.run | Should -Match "INPUT_CHANGED_FILES_ONLY -ne 'true'"
+        $detect.run | Should -Match '\$relevant = \$true'
+        $checkouts = @($script:EvalWorkflow.jobs['eval-validation'].steps | Where-Object { $_.uses -like 'actions/checkout@*' })
+        $checkouts[0].with['fetch-depth'] | Should -Be 0
+        $checkouts[0].with.ContainsKey('ref') | Should -BeFalse
     }
 
     It 'keeps baseline equivalence out of ordinary eval dispatch' {
