@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 from generate_voiceover import (
+    DEFAULT_RATE,
     _resolve_lexicon,
     apply_acronym_aliases,
     create_parser,
@@ -61,6 +62,13 @@ class TestCreateParser:
         assert args.dry_run is False
         assert args.voice is not None
         assert args.rate is not None
+
+    def test_given_default_rate_when_help_formatted_then_renders_percent(self):
+        # Act
+        help_text = create_parser().format_help()
+
+        # Assert
+        assert f"(default: {DEFAULT_RATE})" in help_text
 
     def test_given_dry_run_flag_when_parsed_then_dry_run_true(self):
         # Act
