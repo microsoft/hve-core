@@ -141,7 +141,8 @@ Describe 'Get-TrackedFilesForSource failures' -Tag 'Unit' {
     }
 }
 
-Describe 'Get-PinnedVsceCommand' -Tag 'Unit' {
+# Skipped on Windows: these cases execute a POSIX shell fake vsce, which Windows cannot run.
+Describe 'Get-PinnedVsceCommand' -Tag 'Unit' -Skip:$IsWindows {
     BeforeEach {
         $script:VsceFixture = New-PackagingFixtureRepo -Path (Join-Path $TestDrive "vsce-$([guid]::NewGuid().ToString('N'))")
         $script:SavedPath = $env:PATH
@@ -202,7 +203,8 @@ Describe 'Get-PinnedVsceCommand' -Tag 'Unit' {
     }
 }
 
-Describe 'Invoke-PackageExtension' -Tag 'Unit' {
+# Skipped on Windows: these cases execute a POSIX shell fake vsce, which Windows cannot run.
+Describe 'Invoke-PackageExtension' -Tag 'Unit' -Skip:$IsWindows {
     BeforeEach {
         $script:RunFixture = New-PackagingFixtureRepo -Path (Join-Path $TestDrive "run-$([guid]::NewGuid().ToString('N'))")
         $script:ManifestPath = Join-Path $script:RunFixture.ExtensionDirectory 'package.json'

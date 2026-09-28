@@ -34,6 +34,9 @@
 .PARAMETER RepoRoot
     Repository root. Defaults to the git toplevel.
 
+.PARAMETER AcceptanceProfilePath
+    Optional checked-in profile whose required owners supplement delta selection.
+
 .EXAMPLE
     pwsh -File scripts/evals/Get-ChangedSpecStimulus.ps1
     Diff origin/main...HEAD and emit logs/changed-spec-stimuli.json.
@@ -54,7 +57,10 @@ param(
     [string]$OutFile,
 
     [Parameter(Mandatory = $false)]
-    [string]$RepoRoot
+    [string]$RepoRoot,
+
+    [Parameter(Mandatory = $false)]
+    [string]$AcceptanceProfilePath
 )
 
 Set-StrictMode -Version Latest
@@ -95,6 +101,16 @@ elseif (-not [System.IO.Path]::IsPathRooted($OutFile)) {
 
 try {
     $artifacts = Get-ChangedSpecStimulusArtifact -BaseRef $BaseRef -HeadRef $HeadRef -RepoRoot $resolvedRepoRoot -EvalRoot $EvalRoot
+    $acceptance = $null
+    if (-not [string]::IsNullOrWhiteSpace($AcceptanceProfilePath)) {
+        Import-Module (Join-Path $PSScriptRoot 'Modules/VallyRunner.psm1') -Force
+        $profilePath = Join-Path $resolvedRepoRoot $AcceptanceProfilePath
+        $inventory = Get-VallyAcceptanceInventory -ProfilePath $profilePath -EvalRoot (Join-Path $resolvedRepoRoot $EvalRoot)
+        $artifacts = Merge-VallyAcceptanceArtifact -Artifact @($artifacts) -Inventory $inventory
+        $checkout = (& git -C $resolvedRepoRoot rev-parse HEAD).Trim()
+        if ($LASTEXITCODE -ne 0 -or $checkout -cnotmatch '^[a-f0-9]{40}$') { throw 'Acceptance checkout identity unavailable.' }
+        $acceptance = [ordered]@{ inventory = $inventory; checkout = $checkout; inputDigest = Get-VallyInputDigest -RepoRoot $resolvedRepoRoot }
+    }
 }
 catch {
     Write-Error $_.Exception.Message
@@ -106,13 +122,14 @@ $manifest = @{
     headRef   = $HeadRef
     artifacts = @($artifacts)
 }
+if ($null -ne $acceptance) { $manifest.acceptance = $acceptance }
 
 $outDir = Split-Path -Path $OutFile -Parent
 if (-not [string]::IsNullOrWhiteSpace($outDir) -and -not (Test-Path -LiteralPath $outDir -PathType Container)) {
     New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 }
 
-$manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutFile -Encoding UTF8
+$manifest | ConvertTo-Json -Depth 50 | Set-Content -LiteralPath $OutFile -Encoding UTF8
 
 Write-Host "Detected $($manifest.artifacts.Count) changed eval-spec stimulus artifact(s) between $BaseRef and $HeadRef."
 Write-Host "Manifest: $OutFile"

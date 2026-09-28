@@ -23,7 +23,7 @@ Adequate supplied evidence skips Research. Do not activate Research to replace s
 
 ## Research Brief
 
-Provide the experiment decision purpose, participants and intended use, explicit questions and evidence criteria, source and date scope, non-goals, licensing, privacy, Responsible AI, cost, and schedule constraints, and the current `context.md` assumptions, unknowns, risks, prior attempts, and relevant artifacts. Use `convergence` mode and pass the experiment session directory as the trusted alternate Research evidence root.
+Provide the experiment decision purpose, participants and intended use, explicit questions and evidence criteria, source and date scope, non-goals, licensing, privacy, Responsible AI, cost, and schedule constraints, and the current `context.md` assumptions, unknowns, risks, prior attempts, and relevant artifacts. Use `convergence` mode, pass the experiment session directory as the trusted alternate Research evidence root, and pass that directory's `{{YYYY-MM-DD}}` date as the evidence-path date.
 
 Complete wider, deeper, and contrarian waves across candidate experiment classes, hypotheses, methods, threshold ranges, controls, scope, resources, enablement approaches, and result-analysis methods. Tie every researched item to a named experiment-design decision or uncertainty rather than producing a generic literature review.
 
@@ -53,7 +53,7 @@ Read the completed primary Research artifact before changing experiment context.
 
 Preserve the primary Research artifact path and evidence IDs. For every material recommended field, record `accepted`, `revised`, `rejected`, or `deferred` and the Experiment Designer or user rationale in the owning experiment artifact. Research findings remain preparation evidence. They never set a hypothesis verdict, count as an experiment run, satisfy success criteria, or prove partner-team enablement.
 
-When Research returns `Blocked` or `Needs clarification`, record the smallest unresolved gap and stop only the dependent hypothesis or design decision. If `rpi-research` or a required lookup capability is unavailable, do not substitute training-data claims.
+When Research returns `Blocked` or `Needs clarification`, record the smallest unresolved gap and stop only the dependent hypothesis or design decision. If `rpi-research` or a required lookup capability is unavailable, do not substitute training-data claims. Record an unresolved gap in `context.md` that names the unavailable capability, the fact needed, and the dependent hypothesis; it is not `inconclusive`, because no evidence was gathered. Mark only that hypothesis `blocked` in `hypotheses.md`, and continue forming and prioritizing hypotheses that do not depend on the missing fact.
 
 Re-enter Research only when a new current-fact gap or a user revision invalidates a material part of the recommendation. Use a new task slug and a complete revised brief rather than an ad hoc lookup. Research completes before `mve-plan.md` is approved.
 

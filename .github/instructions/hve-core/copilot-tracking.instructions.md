@@ -30,7 +30,7 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 
 ## Tracking File Conventions
 
-* Primary research notes stay under `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`.
+* Primary research notes stay under `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`. When the caller supplies a trusted alternate evidence root, they stay at `<root>/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`, with the date resolved as `rpi-research` defines.
 * Planning evidence stays under `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`.
 * Plan critique evidence stays under `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`.
 * Implementation evidence stays under `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`.
@@ -40,7 +40,7 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 * HVE Builder stage evidence stays under `.copilot-tracking/hve-builder/{{YYYY-MM-DD}}/{{artifact_slug}}-{{stage}}-{{attempt}}.md`. Scan existing files and increment `{{attempt}}` rather than overwriting another run.
 * Proposal-response evidence stays under `.copilot-tracking/proposal-responses/{{response_slug}}/response-evidence.yml`. Analyze, contribute, and draft operations update this canonical artifact in place while preserving stable record IDs; requested renderings use stable sibling filenames.
 * Keep `.copilot-tracking/` paths and other internal planning, research, or implementation artifact references out of production code, code comments, documentation strings, and commit messages. Internal artifacts guide implementation logic; comments stay self-contained and may cite public materials such as RFCs, specifications, or official documentation.
-* For the research phase, keep writes inside `.copilot-tracking/research/` except for workflow tracking files that the current execution explicitly requires.
+* For the research phase, keep writes inside `.copilot-tracking/research/`, or inside the caller's trusted alternate evidence root when one is supplied, except for workflow tracking files that the current execution explicitly requires.
 * When material gaps remain, re-enter the current phase and update the dated artifact rather than skipping ahead.
 
 ## RPI Identity and Marker Conventions

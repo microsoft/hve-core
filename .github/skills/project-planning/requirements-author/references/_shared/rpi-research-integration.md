@@ -53,7 +53,7 @@ Provide `rpi-research` with:
 * Relevant conversation, document, state, requirements, stakeholder, and reference evidence.
 * Requested outputs and an output mode of `analysis`, `comparison`, or caller-requested `convergence`.
 
-Pass the builder session directory as the trusted alternate Research evidence root. The builder does not create a second research artifact.
+Pass the builder session directory as the trusted alternate Research evidence root. Pass an evidence-path date only when the user or the brief explicitly supplies one; otherwise `rpi-research` uses the current date. Builder session directories are undated, so never derive the date from `lastAccessed`, `disclaimerShownAt`, or another access timestamp. The builder does not create a second research artifact.
 
 ## Return and Authority
 
@@ -72,7 +72,7 @@ Research cannot approve a requirement, validate user need, grant signoff, overri
 
 For a returning Plan or Implement segment, read the canonical artifact before using its result. A Plan sequences authoring work and dependencies without replacing the BRD or PRD template. Implement tracks drafting against an approved same-phase Plan without issuing a content-quality verdict. Plan and Implement have separate invocation IDs and task slugs; the Implement entry identifies its accepted Plan entry through `dependsOnInvocationId`. The existing BRD or PRD Quality Reviewer remains the sole content-quality verdict owner.
 
-Record the user's return disposition as `accepted`, `revised`, `rejected`, `deferred`, or `not-required`. Record the segment's gate relationship separately as `supports`, `does-not-satisfy`, or `not-applicable`. A segment supplies evidence to the builder but never owns the builder's gate verdict.
+Record the return disposition as `pending`, `accepted`, `revised`, `rejected`, `deferred`, or `not-required`. Use `pending` when a completed return requires a user answer that has not been given. Record the segment's gate relationship separately as `supports`, `does-not-satisfy`, or `not-applicable`. A segment supplies evidence to the builder but never owns the builder's gate verdict.
 
 ## Invocation State Contract
 
@@ -99,7 +99,7 @@ The following field names and values are binding:
         "changes": ""
       },
       "segmentStatus": "proposed|running|completed|blocked|skipped|unresolved",
-      "userDisposition": "accepted|revised|rejected|deferred|not-required",
+      "userDisposition": "pending|accepted|revised|rejected|deferred|not-required",
       "gateEffect": "supports|does-not-satisfy|not-applicable",
       "outcome": "human-readable result",
       "notEstablished": "",
@@ -128,8 +128,12 @@ Field rules:
 * `questionIds` and `evidenceIds` contain the exact stable identifiers from a Research artifact. Use empty arrays for non-Research capabilities; never infer or renumber identifiers during reconciliation.
 * `artifactPaths` is capability-keyed. `rpi-research` may use the builder session directory as a trusted alternate root. Plan, Critique, Implement, Review, and Challenge retain their canonical `.copilot-tracking` roots; the builder stores pointers rather than relocating those artifacts.
 * `segmentStatus` records lifecycle state. `completed` records execution only and does not imply user acceptance or gate satisfaction.
-* `userDisposition` records the user's decision about the returned work. `completed` may pair with any value except `not-required`.
-* `gateEffect` records only the segment's relationship to the owning phase gate. `blocked` and `unresolved` always use `does-not-satisfy`. `skipped` uses `not-applicable` only when the builder records adequate alternate evidence or no material gap; otherwise it uses `does-not-satisfy` and preserves the unresolved item. A completed segment normally uses `supports` or `not-applicable`.
+* `userDisposition` records the decision about returned work. A completed segment awaiting a required user answer uses `pending` with `does-not-satisfy`; resume at that answer without rerunning the completed segment. Update the same invocation after the answer while preserving its IDs, paths, outcome, limits, and prior decisions. Do not infer or automatically migrate an ambiguous historical value.
+* `completed` may pair with `accepted`, `revised`, `rejected`, `deferred`, or `pending`. It may pair with `not-required` only when the owning workflow already assigns that decision to the agent and records that no user disposition is required; this does not add a new approval gate to agent-owned work.
+* `gateEffect` records only the segment's own contribution to the owning phase gate, never whether that gate passed. Choose the value by segment outcome:
+  * `supports`: a completed segment whose returned work is `accepted` or `revised`, or completed agent-owned work recorded as `not-required` that contributes to the gate. It contributes evidence toward the gate and never claims the gate passed; the builder's gate stays open until the builder decides it.
+  * `does-not-satisfy`: a `proposed` or `running` segment; a `blocked` or `unresolved` segment; returned work that is `rejected` or `deferred`; or a completed return that is `pending` a required user answer.
+  * `not-applicable`: a `skipped` segment only when the builder records adequate alternate evidence or no material gap, otherwise `does-not-satisfy` with the unresolved item preserved; or completed agent-owned work recorded as `not-required` that makes no gate contribution.
 * `outcome` is a concise result, not a copied artifact body.
 * `notEstablished` carries the segment's limits with the invocation.
 * `findingDispositions` retains the existing Research disposition shape so document projection remains stable. Use an empty array for non-Research capabilities.

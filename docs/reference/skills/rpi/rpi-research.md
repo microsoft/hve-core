@@ -1,9 +1,9 @@
 ---
 title: rpi-research
-description: "Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first."
+description: "Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/ or a caller's trusted evidence root, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first."
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-09-26
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.
+Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/ or a caller's trusted evidence root, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
