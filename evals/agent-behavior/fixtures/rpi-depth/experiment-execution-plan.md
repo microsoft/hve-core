@@ -68,10 +68,8 @@ Dependencies:
 ## Critique Disposition
 
 * Critique: `.copilot-tracking/reviews/plans/2026-09-21/synthetic-batching-execution-plan-critique.md`
-* Attempt kind: `initial`; depth `standard`
-* Critique execution: Complete; verdict Pass
-* Covered projection version: `rpi-plan-assessment-v1`
-* Covered sha256: `fe69fffb6998280ef39f16d7845fd367c913b5e6fa58293fafe05b0f862b3127`
+* Critique setting and provenance: `standard`; default
+* Critique status: Complete; verdict Pass
 * Findings: none open; no residual risk requires acceptance.
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

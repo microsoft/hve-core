@@ -26,7 +26,7 @@ Keep simple or adequately evidenced work on the builder's direct path. No segmen
 * What the segment will not establish and which builder gate remains authoritative.
 * The direct path available if the user adjusts, defers, rejects, or skips the segment.
 
-Run each accepted capability activation as a distinct RPI task and invocation record. Use `<document-slug>-<document-kind>-<phase>-<sequence>` as the lower-kebab-case task slug, where `sequence` is a session-local, zero-padded monotonic number. Plan and Implement use different sequence values even when they serve the same builder phase. A revised or re-entered phase uses the next sequence and never reuses a task whose critique or Review budget was consumed.
+Run each accepted capability activation as a distinct RPI task and invocation record. Use `<document-slug>-<document-kind>-<phase>-<sequence>` as the lower-kebab-case task slug, where `sequence` is a session-local, zero-padded monotonic number. Plan and Implement use different sequence values even when they serve the same builder phase. A revised or re-entered phase uses the next sequence.
 
 `RPI Researcher` may isolate one bounded source-gathering lane when parallel or high-volume retrieval would crowd out the active `rpi-research` context. Its return is an unverified suggestion. The active Research phase reads every selected source and remains the sole owner of evidence IDs, findings, recommendations, decisions, and the primary Research artifact.
 
@@ -121,7 +121,7 @@ Field rules:
 
 * `invocationId` is stable within one builder session and combines the phase with its sequence.
 * `phase` uses the owning builder's phase name rather than a capability name.
-* `capability` identifies the activated RPI entry point. A Plan's mandatory critique is recorded in `artifactPaths.critique`, not as another invocation.
+* `capability` identifies the activated RPI entry point. A Plan's critique, when it runs, is recorded in `artifactPaths.critique`, not as another invocation.
 * `taskSlug` is unique to the activation and follows the depth-point slug convention.
 * `dependsOnInvocationId` is `null` unless this capability consumes another invocation. An Implement entry names the accepted same-phase Plan invocation it executes.
 * `gapId` is stable for the builder-owned gap or authoring need.
