@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-09-22
+ms.date: 2026-09-25
 ms.topic: overview
 keywords:
   - github actions
@@ -86,7 +86,7 @@ flowchart TD
 | `devcontainer-lockfile-check.yml`    | Reusable                          | Validates devcontainer lockfile integrity and SHA-256 pinning           |
 | `scorecard.yml`                      | Schedule, push, post-tag release  | OpenSSF Scorecard security analysis                                     |
 | `codeql-analysis.yml`                | Schedule                          | Weekly CodeQL security scan (also reusable)                             |
-| `dependency-review.yml`              | Pull request                      | Dependency vulnerability review (also reusable)                         |
+| `dependency-review.yml`              | Push/PR to main/develop           | Dependency vulnerability review (also reusable)                         |
 | `sha-staleness-check.yml`            | Manual                            | SHA reference freshness check (also reusable)                           |
 | `deploy-docs.yml`                    | Push to main, manual              | Docusaurus documentation site deployment                                |
 | `create-stale-docs-issues.yml`       | Schedule                          | Automated stale docs issue creation from ms.date freshness              |
