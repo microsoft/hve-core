@@ -1,8 +1,8 @@
-# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit rederive
+# cspell:ignore reconcil appl assum declin fabricat saturat flexib modif ying rewrit overwrit rederive narrat
 name: behavior-conformance-skills
 description: >
   Advisory-tier behavior conformance evals for skills exercised through
-  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 258
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 261
   stimuli, including engagement-reporting coverage, Outlook HTML guards, and
   complete branch coverage for the RPI, prompt-builder, proposal-response, and
   outcome-hypothesis skill updates. Each tool-trigger stimulus uses at least two
@@ -403,6 +403,62 @@ stimuli:
         name: skill-vscode-playwright-bleed-detection-scope-language
         config:
           pattern: '(?i)(scrape|web|vs\s*code|news)'
+  - name: skill-hve-demo-material-knowledge
+    prompt: |
+      Describe what the `hve-demo-material` skill produces for each level and
+      how it separates level from topic.
+    tags:
+      category: behavior-conformance
+      skill: hve-demo-material
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-hve-demo-material-knowledge-skill-attribution
+        config:
+          pattern: '(?i)(L[1-4]00|deck|pptx|mp4|narrat)'
+      - type: output-matches
+        name: skill-hve-demo-material-knowledge-scope-language
+        config:
+          pattern: '(?i)(level|topic|duration|source)'
+  - name: skill-hve-demo-material-tool-trigger
+    prompt: |
+      I need an L200 training deck and a narrated video about our repository's
+      release process for contributors ready to follow a guided task. Which
+      skill applies?
+    tags:
+      category: behavior-conformance
+      skill: hve-demo-material
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-hve-demo-material-tool-trigger-skill-domain
+        config:
+          pattern: '(?i)(hve-demo-material|demo\s+material)'
+      - type: output-matches
+        name: skill-hve-demo-material-tool-trigger-scope-language
+        config:
+          pattern: '(?i)(L200|deck|video|mp4|narrat)'
+  - name: skill-hve-demo-material-bleed-detection
+    prompt: |
+      I need to convert an existing screen recording into an animated GIF for a
+      README, with no deck or narration involved. Does the `hve-demo-material`
+      skill apply?
+    tags:
+      category: behavior-conformance
+      skill: hve-demo-material
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-hve-demo-material-bleed-detection-skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|video-to-gif)'
+      - type: output-matches
+        name: skill-hve-demo-material-bleed-detection-scope-language
+        config:
+          pattern: '(?i)(gif|recording|video)'
   - name: skill-gh-code-scanning-knowledge
     prompt: |
       What does the `gh-code-scanning` skill retrieve, which CLI does it wrap,
