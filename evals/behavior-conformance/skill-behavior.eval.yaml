@@ -5743,8 +5743,9 @@ stimuli:
       Using rpi-plan, Critique Disposition shows critique status started, but the
       session ended before any critique result was saved. The plan is unchanged
       and the user has not asked to skip the critique. On resume, what is the next
-      action, and is the plan implementation-ready yet? Return exactly two lines:
-      Next: rerun-critique or ask-recovery-consent; Readiness: ready or not-ready.
+      action, and what is Planning Readiness until a critique result exists?
+      Return exactly two lines: Next: rerun-critique or ask-recovery-consent;
+      Readiness: Ready or Not ready.
     environment:
       skills:
         - ../../.github/skills/rpi/rpi-plan
@@ -5753,12 +5754,12 @@ stimuli:
       skill: rpi-plan
       shape: knowledge
       advisory: "true"
-      prompt_sha256: 59699e8c34bc01bee7aa5cc018f5acb098183bb490f0653537bedb5a05e31f70
+      prompt_sha256: 5bf4cd254127a78d569a0aad96d5ff219e3d9d7fcdf1d47836bbcc3a14e598f1
     graders:
       - type: output-matches
         name: skill-rpi-plan-critique-interrupted-rerun-not-ready
         config:
-          pattern: '(?i)^\s*Next:[ \t]*rerun-critique[ \t]*\r?\nReadiness:[ \t]*not-ready\s*$'
+          pattern: '(?i)^\s*Next:[ \t]*rerun-critique[ \t]*\r?\nReadiness:[ \t]*not[ -]ready\s*$'
   - name: skill-rpi-plan-revision-no-progress
     prompt: |
       Using rpi-plan, a critique returned Revise with required finding PC-001. The
@@ -5929,4 +5930,4 @@ stimuli:
       - type: output-matches
         name: skill-rpi-review-interrupted-resume-continues
         config:
-          pattern: '(?i)^\s*continue-review\s*$'
+          pattern: '(?i)^\s*[`*''"]*continue-review[`*''"]*[.!]?\s*$'

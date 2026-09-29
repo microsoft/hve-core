@@ -75,7 +75,7 @@ Use [references/review.md](references/review.md) as the authority for the state-
 
 ## Stop rules
 
-* Stop as Blocked if a reviewable artifact set cannot be formed or evidence is insufficient for a credible verdict. Use final outcome Not accepted for Blocked Review execution.
+* Stop as Blocked if a reviewable artifact set cannot be formed or evidence is insufficient for a credible verdict. Use final outcome Not accepted for Blocked Review execution. An interrupted review is not Blocked: when resumed, continue the `started` review from its saved record.
 * Do not use Conformant or Conformant with justified divergence while material skipped, deferred, or unresolved findings remain. Use Defects found for a credible review with implementation defects, Residual work for distinct non-blocking work, and Not accepted when blocked evidence or unresolved critical boundaries prevent acceptance.
 * Complete a partial review only when the record names the evidence boundary and routes the missing work.
 * Parent decisions and later remediation do not create a review loop. Do not repeat a finished review unless the user asks for a new one.
