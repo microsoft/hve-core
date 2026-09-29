@@ -130,7 +130,7 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * Documentation (`.copilot-tracking/documentation/`) - Documentation workflow session tracking.
 * Challenges (`.copilot-tracking/challenges/YYYY-MM-DD/`) - Challenge session Q&A logs, unresolved items, and scope records from `rpi-challenger` sessions.
 
-RPI and HVE Builder tracking records follow `.github/instructions/hve-core/copilot-tracking.instructions.md`; ADO, Jira, and GitHub backlog tracking follows its domain-specific instructions.
+RPI and HVE Builder tracking records follow `.github/instructions/hve-core/copilot-tracking.instructions.md`; ADO, Jira, and GitHub backlog tracking follows its domain-specific instructions. Every workflow resolves the tracking folder location and searches its gitignored files as `.github/instructions/hve-core/copilot-tracking-location.instructions.md` defines.
 
 ### Agents and Subagents
 

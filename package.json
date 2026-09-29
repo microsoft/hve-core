@@ -146,7 +146,7 @@
     "ip-address": "10.5.1",
     "js-yaml": "4.3.2",
     "linkify-it": "5.0.2",
-    "markdown-it": "14.2.0",
+    "markdown-it": "14.3.1",
     "picomatch@^2": "2.3.2",
     "picomatch@^4": "4.0.4",
     "qs": "6.16.0",
