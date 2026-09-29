@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-09-11
+ms.date: 2026-09-24
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -121,7 +121,7 @@ flowchart TD
 
 ## Workflow Configuration
 
-All six workflows are defined as GitHub Agentic Workflow markdown files under `.github/workflows/` and compiled to lock files using `gh aw compile`:
+These workflows are defined as GitHub Agentic Workflow markdown files under `.github/workflows/` and compiled to lock files using `gh aw compile`:
 
 | Workflow File             | Lock File                       | Trigger                                                                      | Execution Owner          |
 |---------------------------|---------------------------------|------------------------------------------------------------------------------|--------------------------|
@@ -131,6 +131,7 @@ All six workflows are defined as GitHub Agentic Workflow markdown files under `.
 | `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated                                              | Dependency Reviewer      |
 | `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main                                                                 | Documentation Agent      |
 | `vex-draft.md`            | `vex-draft.lock.yml`            | VEX Detection `workflow_run` + dispatch                                      | SSSC Reviewer            |
+| `demo-material-author.md` | `demo-material-author.lock.yml` | Weekly schedule + dispatch; skipped when no level's sources changed          | Workflow-owned procedure |
 
 Each workflow file declares permissions, safe output limits, and activation guards that prevent unintended execution.
 
