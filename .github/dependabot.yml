@@ -49,6 +49,10 @@ updates:
   ignore:
   - dependency-name: "github/gh-aw-actions" # Managed by gh aw compile. Version-locked to the gh-aw compiler; do not bump.
   - dependency-name: "github/gh-aw-actions/**"
+  # The extension provenance signer revision is pinned by the caller, the
+  # release and Marketplace verifiers, the extension tests, and the SBOM
+  # verification docs. Update it deliberately in one coordinated change.
+  - dependency-name: "microsoft/hve-core/.github/workflows/extension-provenance-signer.yml"
   labels:
   - dependencies
   - github-actions

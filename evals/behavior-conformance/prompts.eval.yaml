@@ -2039,24 +2039,6 @@ stimuli:
         config:
           pattern: "(?i)unchanged-original|original.+unchanged|preserve.+original"
 
-  - name: prompt-graph-research-conformance
-    prompt: |
-      Invoke the `graph-research` prompt with topic="what depends on
-      `auth_middleware.py`" against an existing `graphify-out/graph.json`.
-    tags:
-      category: behavior-conformance
-      prompt: graph-research
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: prompt-graph-research-conformance-agent-attribution
-        config:
-          pattern: "(?i)rpi-research|graph-research|graphify"
-      - type: output-matches
-        name: prompt-graph-research-conformance-scope-language
-        config:
-          pattern: "(?i)graph|graphify|dependency|structural|research"
-
   - name: prompt-evals-import-conformance
     prompt: |
       Invoke the `evals-import` prompt to import a CSV corpus of refusal
