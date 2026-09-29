@@ -10,6 +10,7 @@ Apply these conventions whenever an RPI, HVE Builder, or compatibility workflow 
 ## Core Rules
 
 * Default to `.copilot-tracking/` for every intermediate, working, or scratch file a skill produces. This file-based tracking takes precedence over memory: persist durable working state to the dated tracking artifact rather than relying on session, conversation, or working memory.
+* Resolve where `.copilot-tracking/` lives and search its gitignored files as `copilot-tracking-location.instructions.md` defines.
 * Persist research, planning, details, changes, and review outputs under `.copilot-tracking/` using the conventions below.
 * Use `{{task_slug}}` for task slugs and `{{YYYY-MM-DD}}` for dates. Keep `{{task_slug}}` lower-kebab-case.
 * Generated tracking Markdown starts with `<!-- markdownlint-disable-file -->` and never uses `#file:` directives or line-number references.
