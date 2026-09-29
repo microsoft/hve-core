@@ -3,7 +3,7 @@ title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-09-20
+ms.date: 2026-09-28
 ms.topic: overview
 keywords:
   - reference
@@ -36,7 +36,6 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Engagement Reporting/Style Guide](engagement-reporting/style-guide.md)                           | Formatting, tone, and language rules for engagement reports                                                                                                                                                                                                                           |
 | [Engagement Reporting/Terminology](engagement-reporting/terminology.md)                           | Correct spellings and naming conventions for people, products, and teams                                                                                                                                                                                                              |
 | [Experimental/Experiment Designer](experimental/experiment-designer.md)                           | MVE tracking-artifact conventions for session directories, artifact names, and file hygiene; routes MVE methodology to the experiment-design skill                                                                                                                                    |
-| [Experimental/Graphify](experimental/graphify.md)                                                 | Conventions for consuming graphify-out/ knowledge-graph evidence inside the RPI workflow                                                                                                                                                                                              |
 | [Experimental/Mural/Mural Bootstrap](experimental/mural/mural-bootstrap.md)                       | Fresh-session Mural bootstrap requirements for doctor checks, credential backend selection, and safe escalation before Mural tool use.                                                                                                                                                |
 | [Experimental/Mural/Mural Destinations](experimental/mural/mural-destinations.md)                 | Open destination registry for Mural extractor writeback: registered adapters, intent axis, and per-destination loop-closure metrics.                                                                                                                                                  |
 | [Experimental/Mural/Mural Human Record](experimental/mural/mural-human-record.md)                 | Mural is the durable record of human conversation; AI never silently authors decisions and AI contribution must remain visible somewhere durable.                                                                                                                                     |

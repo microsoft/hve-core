@@ -368,6 +368,17 @@ class TestValidateSlideGeometry:
         assert result["overall_quality"] == "needs-attention"
         assert len(result["issues"]) > 0
 
+    def test_off_slide_title_placeholder_is_exempt(self, blank_presentation, tmp_path):
+        from build_deck import build_slide
+
+        content = {"slide": 1, "title": "Hidden title", "elements": []}
+        slide = build_slide(blank_presentation, content, {}, tmp_path)
+        result = validate_slide_geometry(
+            slide, 1, 13.333, 7.5, margin=0.5, gap=0.3, clearance=0.2
+        )
+        assert slide.shapes.title is not None
+        assert result["overall_quality"] == "good"
+
 
 class TestValidateGeometry:
     """Tests for validate_geometry."""

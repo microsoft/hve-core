@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-09-11
+ms.date: 2026-09-28
 ms.topic: reference
 keywords:
   - copilot
@@ -138,11 +138,10 @@ The instructions below are scoped to specific planning agents and their `.copilo
 
 #### Experimental
 
-| File                                                                                                 | Applies To                    | Purpose                                       |
-|------------------------------------------------------------------------------------------------------|-------------------------------|-----------------------------------------------|
-| [experimental/experiment-designer.instructions.md](experimental/experiment-designer.instructions.md) | `**/.copilot-tracking/mve/**` | MVE experiment designer conventions           |
-| [experimental/graphify.instructions.md](experimental/graphify.instructions.md)                       | `**/graphify-out/**`          | Graphify knowledge-graph evidence conventions |
-| [experimental/pptx.instructions.md](experimental/pptx.instructions.md)                               | `**/.copilot-tracking/ppt/**` | PowerPoint builder conventions                |
+| File                                                                                                 | Applies To                    | Purpose                             |
+|------------------------------------------------------------------------------------------------------|-------------------------------|-------------------------------------|
+| [experimental/experiment-designer.instructions.md](experimental/experiment-designer.instructions.md) | `**/.copilot-tracking/mve/**` | MVE experiment designer conventions |
+| [experimental/pptx.instructions.md](experimental/pptx.instructions.md)                               | `**/.copilot-tracking/ppt/**` | PowerPoint builder conventions      |
 
 The `experimental/mural/` directory holds the Mural workflow instruction set (bootstrap, seeding, writeback, and log-hygiene rules) scoped to the DT, RAI, and UX/UI agents; see [experimental/mural/mural-bootstrap.instructions.md](experimental/mural/mural-bootstrap.instructions.md) as the entry point.
 
@@ -228,7 +227,6 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   │   ├── mural-writeback-hygiene.instructions.md
 │   │   └── mural-writing-style.instructions.md
 │   ├── experiment-designer.instructions.md
-│   ├── graphify.instructions.md
 │   └── pptx.instructions.md
 ├── hve-core/                         # HVE Core workflow
 │   ├── commit-message.instructions.md
