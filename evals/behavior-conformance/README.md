@@ -21,13 +21,13 @@ Each tier shares the same advisory contract and manifest-driven gating model as 
 
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
-| `prompts.eval.yaml`        | 3p   | Advisory | 62      | `behavior-conformance` | Active (Phase 9)  |
-| `instructions.eval.yaml`   | 3i   | Advisory | 69      | `behavior-conformance` | Active (Phase 11) |
+| `prompts.eval.yaml`        | 3p   | Advisory | 70      | `behavior-conformance` | Active (Phase 9)  |
+| `instructions.eval.yaml`   | 3i   | Advisory | 75      | `behavior-conformance` | Active (Phase 11) |
 | `skill-behavior.eval.yaml` | 3s   | Advisory | 261     | `behavior-conformance` | Active (Phase 13) |
 
-The maintained `prompts.eval.yaml` inventory contains 62 stimuli across 48 prompt subjects. Coverage includes RPI orchestration, security review and planning, Design Thinking, Git operations, evaluation authoring, and VEX workflows. Backlog, work-item, and HVE Core pull request coverage moved to `skill-behavior.eval.yaml` when those workflows became skills.
+The maintained `prompts.eval.yaml` inventory contains 70 stimuli across 47 prompt subjects. Coverage includes RPI orchestration, security review and planning, Design Thinking, Git operations, evaluation authoring, and VEX workflows. Backlog, work-item, and HVE Core pull request coverage moved to `skill-behavior.eval.yaml` when those workflows became skills.
 
-The maintained `instructions.eval.yaml` inventory contains 69 stimuli: 67 instruction-tagged stimuli across 50 instruction subjects, plus two `backlog-management` skill stimuli. Coverage spans:
+The maintained `instructions.eval.yaml` inventory contains 75 stimuli: 73 instruction-tagged stimuli across 55 instruction subjects, plus two `backlog-management` skill stimuli. Coverage spans:
 
 * Delivery workflows: `ado-create-pull-request`, `ado-get-build-info`, `pull-request`.
 * HVE-Core authoring: `commit-message`, `copilot-tracking`, `hve-builder`, `markdown`, `pull-request`, and `writing-style`.
