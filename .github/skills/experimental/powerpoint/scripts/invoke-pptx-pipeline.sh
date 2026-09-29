@@ -75,26 +75,28 @@ get_venv_python_path() {
 }
 
 assert_build_parameters() {
-  [[ -z "${CONTENT_DIR:-}" ]] && err "Build action requires --content-dir."
-  [[ -z "${STYLE_PATH:-}" ]] && err "Build action requires --style."
-  [[ -z "${OUTPUT_PATH:-}" ]] && err "Build action requires --output."
+  if [[ -z "${CONTENT_DIR:-}" ]]; then err "Build action requires --content-dir."; fi
+  if [[ -z "${STYLE_PATH:-}" ]]; then err "Build action requires --style."; fi
+  if [[ -z "${OUTPUT_PATH:-}" ]]; then err "Build action requires --output."; fi
   if [[ -n "${SLIDES:-}" && -z "${SOURCE_PATH:-}" ]]; then
     err "--slides requires --source for partial rebuilds."
   fi
 }
 
 assert_extract_parameters() {
-  [[ -z "${INPUT_PATH:-}" ]] && err "Extract action requires --input."
-  [[ -z "${OUTPUT_DIR:-}" ]] && err "Extract action requires --output-dir."
+  if [[ -z "${INPUT_PATH:-}" ]]; then err "Extract action requires --input."; fi
+  if [[ -z "${OUTPUT_DIR:-}" ]]; then err "Extract action requires --output-dir."; fi
 }
 
 assert_validate_parameters() {
-  [[ -z "${INPUT_PATH:-}" ]] && err "Validate action requires --input."
+  if [[ -z "${INPUT_PATH:-}" ]]; then err "Validate action requires --input."; fi
 }
 
 assert_export_parameters() {
-  [[ -z "${INPUT_PATH:-}" ]] && err "Export action requires --input."
-  [[ -z "${IMAGE_OUTPUT_DIR:-}" ]] && err "Export action requires --image-output-dir."
+  if [[ -z "${INPUT_PATH:-}" ]]; then err "Export action requires --input."; fi
+  if [[ -z "${IMAGE_OUTPUT_DIR:-}" ]]; then
+    err "Export action requires --image-output-dir."
+  fi
 }
 
 invoke_build_deck() {

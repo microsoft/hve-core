@@ -1,0 +1,5 @@
+resolution: 1920x1080
+captures:
+  - id: ../escape
+    file: plugin.json
+    output: ../../outside.png
