@@ -296,6 +296,33 @@ stimuli:
         config:
           pattern: "(?i)tracking|artifact|research|plan|details|changes|review"
 
+  - name: instruction-copilot-tracking-location-conformance
+    prompt: |
+      You are resuming an RPI task in a multi-root VS Code workspace. The
+      first folder is the product repository and the second folder is an
+      HVE Core clone. The session also offers a host session folder for
+      intermediate files, and `.copilot-tracking/` is gitignored. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path), where should the tracking files live, and how should you
+      search for the existing task state?
+    tags:
+      category: behavior-conformance
+      instruction: copilot-tracking-location
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: tracking-location-instruction
+        config:
+          pattern: "(?i)copilot-tracking-location"
+      - type: output-matches
+        name: tracking-location-primary-root
+        config:
+          pattern: "(?is)(first|primary|default).{0,80}(folder|root)"
+      - type: output-matches
+        name: tracking-location-include-ignored
+        config:
+          pattern: "(?i)include.{0,20}(ignored|excluded)|includeIgnoredFiles|no-ignore"
+
   - name: instruction-pull-request-conformance
     prompt: |
       You are generating a pull request description from branch diffs and
@@ -1608,30 +1635,6 @@ stimuli:
         name: instruction-engagement-reporting-terminology-confor-c0fa4f5c
         config:
           pattern: '(?i)(do not|not|leave|preserve).{0,60}(change|modify|source|record)'
-
-  - name: instruction-hve-core-location-artifact-root-resolution
-    prompt: |
-      An installed HVE Core artifact refers to an operational path beginning
-      with `.github/`, but the consumer workspace does not contain the HVE
-      Core source tree. Which instruction governs path resolution, and what
-      location must be resolved before attempting a workspace-relative lookup?
-    tags:
-      category: behavior-conformance
-      instruction: hve-core-location
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: hve-location-instruction
-        config:
-          pattern: '(?i)hve-core-location\.instructions\.md|HVE Core Location Guidance'
-      - type: output-matches
-        name: hve-location-artifact-root-first
-        config:
-          pattern: '(?is)(artifact root).{0,160}(before|prior).{0,100}(workspace|lookup|resolve)'
-      - type: output-matches
-        name: hve-location-distribution-contexts
-        config:
-          pattern: '(?i)(repository|extension|plugin)'
 
   - name: instruction-mural-log-hygiene-redaction-boundary
     prompt: |

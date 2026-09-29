@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-09-28
+ms.date: 2026-09-29
 ms.topic: reference
 keywords:
   - copilot
@@ -68,12 +68,13 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 
 ### Repository Workflow
 
-| File                                                                                     | Applies To                              | Purpose                                          |
-|------------------------------------------------------------------------------------------|-----------------------------------------|--------------------------------------------------|
-| [hve-core/copilot-tracking.instructions.md](hve-core/copilot-tracking.instructions.md)   | `.copilot-tracking/**`                  | Intermediate tracking artifact conventions       |
-| [hve-core/licensing-posture.instructions.md](hve-core/licensing-posture.instructions.md) | `**/skills/**, **/.copilot-tracking/**` | Licensing, reproduction, and attribution posture |
-| [skill-security-model.instructions.md](skill-security-model.instructions.md)             | `**/.github/skills/**/SECURITY.md`      | Per-skill STRIDE security model rules            |
-| [workflows.instructions.md](workflows.instructions.md)                                   | `**/.github/workflows/*.yml`            | GitHub Actions workflow conventions              |
+| File                                                                                                     | Applies To                                               | Purpose                                          |
+|----------------------------------------------------------------------------------------------------------|----------------------------------------------------------|--------------------------------------------------|
+| [hve-core/copilot-tracking.instructions.md](hve-core/copilot-tracking.instructions.md)                   | RPI, HVE Builder, and proposal-response tracking folders | Intermediate tracking artifact conventions       |
+| [hve-core/copilot-tracking-location.instructions.md](hve-core/copilot-tracking-location.instructions.md) | `**/.copilot-tracking/**`                                | Tracking root and ignored-file search            |
+| [hve-core/licensing-posture.instructions.md](hve-core/licensing-posture.instructions.md)                 | `**/skills/**, **/.copilot-tracking/**`                  | Licensing, reproduction, and attribution posture |
+| [skill-security-model.instructions.md](skill-security-model.instructions.md)                             | `**/.github/skills/**/SECURITY.md`                       | Per-skill STRIDE security model rules            |
+| [workflows.instructions.md](workflows.instructions.md)                                                   | `**/.github/workflows/*.yml`                             | GitHub Actions workflow conventions              |
 
 ### GitHub Integration
 
@@ -126,15 +127,14 @@ The instructions below are scoped to specific planning agents and their `.copilo
 
 #### Shared Planner Scaffolds
 
-| File                                                                                                   | Applies To                                                         | Purpose                                           |
-|--------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|---------------------------------------------------|
-| [shared/hve-core-location.instructions.md](shared/hve-core-location.instructions.md)                   | `**`                                                               | Fallback location guidance for hve-core artifacts |
-| [shared/content-policy-citation.instructions.md](shared/content-policy-citation.instructions.md)       | `**/*.agent.md, **/*.prompt.md, **/*.instructions.md, **/SKILL.md` | Content-policy and terms-of-service guardrails    |
-| [shared/coaching-patterns.instructions.md](shared/coaching-patterns.instructions.md)                   | Planning agents                                                    | Exploration-first coaching patterns               |
-| [shared/planner-identity-base.instructions.md](shared/planner-identity-base.instructions.md)           | Planning agents                                                    | Shared planner identity scaffold                  |
-| [shared/disclaimer-language.instructions.md](shared/disclaimer-language.instructions.md)               | Planning and review agents                                         | Professional-review disclaimer language           |
-| [shared/telemetry-overlay.instructions.md](shared/telemetry-overlay.instructions.md)                   | Planning and review agents                                         | Telemetry vocabulary overlay                      |
-| [shared/untrusted-content-boundary.instructions.md](shared/untrusted-content-boundary.instructions.md) | Planning and DT/UX agents                                          | Untrusted-content boundary rules                  |
+| File                                                                                                   | Applies To                                                         | Purpose                                        |
+|--------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|------------------------------------------------|
+| [shared/content-policy-citation.instructions.md](shared/content-policy-citation.instructions.md)       | `**/*.agent.md, **/*.prompt.md, **/*.instructions.md, **/SKILL.md` | Content-policy and terms-of-service guardrails |
+| [shared/coaching-patterns.instructions.md](shared/coaching-patterns.instructions.md)                   | Planning agents                                                    | Exploration-first coaching patterns            |
+| [shared/planner-identity-base.instructions.md](shared/planner-identity-base.instructions.md)           | Planning agents                                                    | Shared planner identity scaffold               |
+| [shared/disclaimer-language.instructions.md](shared/disclaimer-language.instructions.md)               | Planning and review agents                                         | Professional-review disclaimer language        |
+| [shared/telemetry-overlay.instructions.md](shared/telemetry-overlay.instructions.md)                   | Planning and review agents                                         | Telemetry vocabulary overlay                   |
+| [shared/untrusted-content-boundary.instructions.md](shared/untrusted-content-boundary.instructions.md) | Planning and DT/UX agents                                          | Untrusted-content boundary rules               |
 
 #### Experimental
 
@@ -231,6 +231,7 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 ├── hve-core/                         # HVE Core workflow
 │   ├── commit-message.instructions.md
 │   ├── copilot-tracking.instructions.md
+│   ├── copilot-tracking-location.instructions.md
 │   ├── git-merge.instructions.md
 │   ├── licensing-posture.instructions.md
 │   ├── markdown.instructions.md
@@ -257,7 +258,6 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── coaching-patterns.instructions.md
 │   ├── content-policy-citation.instructions.md
 │   ├── disclaimer-language.instructions.md
-│   ├── hve-core-location.instructions.md
 │   ├── planner-identity-base.instructions.md
 │   ├── telemetry-overlay.instructions.md
 │   └── untrusted-content-boundary.instructions.md

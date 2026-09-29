@@ -3,7 +3,7 @@ title: Utility Reference
 description: Cross-cutting HVE Core utilities for documentation, media, Git workflows, durable workflow state, and diagnostics
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-29
 ms.topic: reference
 keywords:
   - utility
@@ -73,12 +73,6 @@ Git utilities manage commit messages, merge operations, and pull request creatio
 | git-merge          | Merge, rebase, and conflict resolution  | `/git-merge`          |
 | pull-request       | Pull request creation with templates    | `/pull-request`       |
 | git-setup          | Git configuration and environment setup | `/git-setup`          |
-
-### Asset Resolution
-
-When you reference a prompt, instruction, agent, or skill that does not exist in the current project directory, Copilot falls back to the hve-core repository location. This resolution follows the `hve-core-location.instructions.md` pattern, walking up the directory tree until the asset is found.
-
-This fallback activates automatically. No manual configuration is needed.
 
 ## Full Asset Reference
 
