@@ -1312,7 +1312,8 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
     }
 
     It 'stages reports only from immutable provenance bound to a successful publisher run' {
-        $script:DeployDocs | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Publisher\s+branches:\s+- main\s+types:\s+- completed'
+        $script:DeployDocs | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Publisher\s+(?:- [^\r\n]+\s+)*branches:\s+- main\s+types:\s+- completed'
+        $script:DeployDocs | Should -Match "if: \$\{\{ github\.event_name == 'workflow_run' && github\.event\.workflow_run\.conclusion == 'success' && github\.event\.workflow_run\.path == '\.github/workflows/backlog-groom-publisher\.yml' \}\}"
         $script:DeployDocs | Should -Match "github\.event_name == 'workflow_run' && github\.event\.workflow_run\.conclusion == 'success'"
         $script:DeployDocs | Should -Match 'run\.path !== "\.github/workflows/backlog-groom-publisher\.yml"'
         $script:DeployDocs | Should -Match 'github\.rest\.actions\.listWorkflowRunArtifacts'

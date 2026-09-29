@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-"""Generate per-slide TTS voice-over from YAML speaker notes via Azure Speech SDK.
+"""Generate per-slide TTS voice-over from YAML speaker notes.
 
 Part of the tts-voiceover skill. Reads content.yaml files from each slide
-directory, extracts ``speaker_notes``, applies SSML acronym aliases, and
-produces one WAV file per slide.
+directory, extracts ``speaker_notes``, applies acronym aliases, and produces
+one WAV file per slide. The ``azure`` engine synthesizes SSML through the
+Azure Speech SDK; the ``piper`` engine runs a separately installed Piper
+executable locally with plain-text aliases and needs no credentials.
 
 Usage:
     python generate_voiceover.py --dry-run --content-dir content
     python generate_voiceover.py --content-dir content --output-dir voice-over
+    python generate_voiceover.py --engine piper --content-dir content
     python generate_voiceover.py --lexicon custom-acronyms.yaml --content-dir content
 """
 
@@ -20,8 +23,12 @@ import functools
 import logging
 import os
 import re
+import shlex
+import shutil
+import subprocess
 import sys
 import time
+import wave
 import xml.sax.saxutils
 from pathlib import Path
 from typing import Any
@@ -34,11 +41,17 @@ EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_ERROR = 2
 
+ENGINES = ("azure", "piper")
+DEFAULT_ENGINE = "azure"
 DEFAULT_VOICE = "en-US-Andrew:DragonHDLatestNeural"
+DEFAULT_PIPER_VOICE = "en_US-joe-medium"
+DEFAULT_PIPER_COMMAND = "piper"
+PIPER_TIMEOUT_SECONDS = 600
 DEFAULT_RATE = "+10%"
 
 _DEFAULT_ACRONYMS: dict[str, str] = {
     "HVE-Core": "H V E Core",
+    "HVE": "H V E",
     "OWASP": "Oh wasp",
     "SSSC": "S S S C",
     "SPDX": "S P D X",
@@ -126,6 +139,26 @@ def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
     return pattern.sub(_replace, text)
 
 
+_SPACED_LETTERS = re.compile(r"\b[A-Z](?: [A-Z]\b)+")
+
+
+def _hyphenate_letters(alias: str) -> str:
+    """Join spaced single letters with hyphens (``H V E`` -> ``H-V-E``)."""
+    return _SPACED_LETTERS.sub(lambda m: m.group(0).replace(" ", "-"), alias)
+
+
+def apply_plain_aliases(text: str, acronyms: dict[str, str]) -> str:
+    """Replace acronyms with their aliases as plain text for engines without SSML.
+
+    Aliases spelled as spaced single letters are hyphenated, which Piper voices
+    read as one fluent letter run instead of separate slow words.
+    """
+    if not acronyms:
+        return text
+    pattern = _compile_acronym_pattern(tuple(acronyms.keys()))
+    return pattern.sub(lambda m: _hyphenate_letters(acronyms[m.group(0)]), text)
+
+
 def wrap_ssml(text: str, voice: str, rate: str) -> str:
     """Wrap processed text in a full SSML document.
 
@@ -176,6 +209,72 @@ def generate_audio(ssml: str, output_path: Path, speech_config: Any) -> float | 
         "Synthesis failed: %s — %s", cancellation.reason, cancellation.error_details
     )
     return None
+
+
+def _wav_duration(path: Path) -> float:
+    """Return the duration of a PCM WAV file in seconds."""
+    with wave.open(str(path), "rb") as wav:
+        return wav.getnframes() / wav.getframerate()
+
+
+def generate_audio_piper(
+    text: str,
+    output_path: Path,
+    command: list[str],
+    voice: str,
+    data_dir: Path | None,
+) -> float | None:
+    """Generate a WAV file from plain text by running the Piper executable.
+
+    Args:
+        text: Plain narration text with acronym aliases applied.
+        output_path: Destination path for the generated WAV file.
+        command: Piper command as an argument list (no shell is used).
+        voice: Piper voice model name or ``.onnx`` path.
+        data_dir: Directory holding downloaded Piper voices, or ``None``.
+
+    Returns:
+        Duration in seconds on success, or ``None`` on synthesis failure.
+    """
+    cmd = [*command, "--model", voice, "--output-file", str(output_path)]
+    if data_dir is not None:
+        cmd += ["--data-dir", str(data_dir)]
+    try:
+        result = subprocess.run(
+            cmd,
+            input=text,
+            encoding="utf-8",
+            capture_output=True,
+            check=False,
+            timeout=PIPER_TIMEOUT_SECONDS,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        logger.error("Piper synthesis failed: %s", exc)
+        return None
+    if result.returncode != 0 or not output_path.is_file():
+        logger.error(
+            "Piper synthesis failed (exit %d): %s",
+            result.returncode,
+            result.stderr.strip()[-500:],
+        )
+        return None
+    try:
+        return _wav_duration(output_path)
+    except (wave.Error, EOFError, ZeroDivisionError) as exc:
+        logger.error("Piper produced an unreadable WAV: %s", exc)
+        return None
+
+
+def _resolve_piper_command() -> list[str] | None:
+    """Resolve the Piper command from ``PIPER_COMMAND`` or the default name.
+
+    Returns:
+        The command as an argument list, or ``None`` when it cannot be found.
+    """
+    command = shlex.split(os.environ.get("PIPER_COMMAND", DEFAULT_PIPER_COMMAND))
+    if not command or shutil.which(command[0]) is None:
+        return None
+    return command
 
 
 def _make_entra_config(
@@ -231,17 +330,35 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print SSML templates without generating audio",
+        help="Print SSML (azure) or plain text (piper) without generating audio",
+    )
+    parser.add_argument(
+        "--engine",
+        choices=ENGINES,
+        default=DEFAULT_ENGINE,
+        help=(
+            f"Synthesis engine (default: {DEFAULT_ENGINE}). piper runs a "
+            "separately installed Piper executable locally without credentials."
+        ),
     )
     parser.add_argument(
         "--voice",
-        default=DEFAULT_VOICE,
-        help=f"Azure TTS voice name (default: {DEFAULT_VOICE})",
+        default=None,
+        help=(
+            f"Voice name (default: {DEFAULT_VOICE} for azure, "
+            f"{DEFAULT_PIPER_VOICE} for piper)"
+        ),
     )
     parser.add_argument(
         "--rate",
         default=DEFAULT_RATE,
-        help=f"Speech prosody rate (default: {DEFAULT_RATE})",
+        help=f"Azure speech prosody rate (default: {DEFAULT_RATE}); ignored by piper",
+    )
+    parser.add_argument(
+        "--piper-data-dir",
+        type=Path,
+        default=None,
+        help="Directory holding downloaded Piper voices (default: PIPER_DATA_DIR)",
     )
     parser.add_argument(
         "--content-dir",
@@ -300,6 +417,22 @@ def _run(args: argparse.Namespace) -> int:
     lexicon_path = _resolve_lexicon(args.lexicon, content_dir)
     acronyms = load_acronyms(lexicon_path)
 
+    use_piper = args.engine == "piper"
+    voice: str = args.voice or (DEFAULT_PIPER_VOICE if use_piper else DEFAULT_VOICE)
+    piper_command: list[str] = []
+    piper_data_dir: Path | None = args.piper_data_dir
+    if piper_data_dir is None and os.environ.get("PIPER_DATA_DIR"):
+        piper_data_dir = Path(os.environ["PIPER_DATA_DIR"])
+    if use_piper and not args.dry_run:
+        resolved = _resolve_piper_command()
+        if resolved is None:
+            logger.error(
+                "Piper executable not found. Install Piper separately (for "
+                "example the piper-tts package) or set PIPER_COMMAND."
+            )
+            return EXIT_ERROR
+        piper_command = resolved
+
     speech_config = None
     credential = None
     token_expires_at = 0
@@ -308,7 +441,7 @@ def _run(args: argparse.Namespace) -> int:
     speech_region: str = "eastus"
     speech_resource_id: str | None = None
     use_entra_auth = False
-    if not args.dry_run:
+    if not args.dry_run and not use_piper:
         try:
             import azure.cognitiveservices.speech as speechsdk  # noqa: PLC0415
         except ImportError:
@@ -386,14 +519,17 @@ def _run(args: argparse.Namespace) -> int:
             logger.info("SKIP %s: no speaker notes", slide_dir.name)
             continue
 
-        safe_notes = xml.sax.saxutils.escape(notes)
-        processed = apply_acronym_aliases(safe_notes, acronyms)
-        ssml = wrap_ssml(processed, args.voice, args.rate)
+        if use_piper:
+            request = apply_plain_aliases(notes, acronyms)
+        else:
+            safe_notes = xml.sax.saxutils.escape(notes)
+            processed = apply_acronym_aliases(safe_notes, acronyms)
+            request = wrap_ssml(processed, voice, args.rate)
         slide_count += 1
 
         if args.dry_run:
             print(f"\n=== {slide_dir.name}: {title} ===")
-            print(ssml)
+            print(request)
             continue
 
         # Refresh Entra ID token before expiry.
@@ -414,7 +550,12 @@ def _run(args: argparse.Namespace) -> int:
 
         wav_path = output_dir / f"{slide_dir.name}.wav"
         logger.info("Generating %s: %s ...", slide_dir.name, title)
-        duration = generate_audio(ssml, wav_path, speech_config)
+        if use_piper:
+            duration = generate_audio_piper(
+                request, wav_path, piper_command, voice, piper_data_dir
+            )
+        else:
+            duration = generate_audio(request, wav_path, speech_config)
         if duration is not None:
             total_duration += duration
             logger.info("  %s — %.1fs", wav_path.name, duration)

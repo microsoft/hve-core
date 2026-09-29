@@ -1,4 +1,4 @@
-# cspell:ignore declin initializ pathspecs reinitializ ETSI summarise
+# cspell:ignore declin initializ pathspecs reinitializ ETSI summarise worktree
 name: behavior-conformance-prompts
 description: >
   Advisory-tier behavior conformance evals for high-traffic prompts. Each

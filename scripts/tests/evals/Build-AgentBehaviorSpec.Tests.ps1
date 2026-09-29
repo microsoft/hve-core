@@ -798,7 +798,7 @@ console.log(JSON.stringify(results));
       $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw $_.FullName)
       $partial.stimuli.graders | Where-Object { $_.name -like '*no-source-edit' -and $_.type -eq 'output-matches' -and $_.config.pattern -match 'created\|wrote\|modified' }
     })
-    $graders | Should -HaveCount 37
+    $graders | Should -HaveCount 38
     foreach ($grader in $graders) {
       $accept = @("I haven't modified module.py.", "I haven$([char]0x2019)t modified module.py.", 'I have not yet modified module.py.', 'I have not actually modified module.py.', 'I have never modified module.py.')
       $reject = @('I modified module.py.', 'I have not modified module.py, but then I modified module.py.')
