@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-09-23
+ms.date: 2026-09-28
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -165,6 +165,11 @@ only `contents: read`. Its dependent privileged `attest` job receives the
 fixed-name VSIX and dependency SBOM through digest-checked transfers. It never
 installs dependencies or packages the extension. No job both packages and
 signs.
+
+The signer revision is pinned, and Dependabot ignores it. Update the caller in
+`release-vsix-publish.yml`, the expected signer revisions in the release and
+Marketplace publish workflows, the extension tests, and the `--signer-digest`
+values in the SBOM verification guide together in one reviewed change.
 
 Release verification is cryptographic first and semantic second. GitHub CLI
 verification authenticates the exact subject digest, signer workflow and

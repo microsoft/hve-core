@@ -3,7 +3,7 @@ title: Prompts
 description: Reference documentation for HVE Core prompts.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-09-28
 ms.topic: overview
 keywords:
   - reference
@@ -34,7 +34,6 @@ This page lists the generated reference documentation for HVE Core prompts.
 | [Dt Start Project](design-thinking/dt-start-project.md)                                          | Start a new Design Thinking coaching project with state initialization and first coaching interaction                                                                     |
 | [engagement-report-council-critique](engagement-reporting/engagement-report-council-critique.md) | Template prompt for running one independent Council critique against research evidence                                                                                    |
 | [Cspell Config](experimental/cspell-config.md)                                                   | Create or update the project cspell configuration with project words and ignores                                                                                          |
-| [Graph Research](experimental/graph-research.md)                                                 | Research a codebase through rpi-research using an existing graphify knowledge graph, with audit-tagged evidence reporting                                                 |
 | [Ado Create Pull Request](hve-core/ado-create-pull-request.md)                                   | Create an Azure DevOps pull request with generated description, linked work items, and reviewers                                                                          |
 | [Ado Get Build Info](hve-core/ado-get-build-info.md)                                             | Retrieve Azure DevOps build status and logs for a pull request or build number                                                                                            |
 | [Evals Import](hve-core/evals-import.md)                                                         | Imports a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe                                                                                           |
