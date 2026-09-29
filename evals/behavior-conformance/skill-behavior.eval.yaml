@@ -15,6 +15,7 @@ defaults:
   # old cap guaranteed timeouts plus retry storms on every run.
   timeout: 400s
   executor: copilot-sdk
+  judge_model: claude-sonnet-5
 
 scoring:
   threshold: 0.6
