@@ -6,6 +6,7 @@ on:
       - Backlog Grooming Sweep
     branches:
       - main
+      - backlog-grooming-sweep/**
     types:
       - completed
 
@@ -42,14 +43,16 @@ jobs:
             };
             const finalRunId = parsePositiveInteger("final-run-id", String(context.payload.workflow_run?.id));
             const { data: run } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: finalRunId });
+            const workflowPath = ".github/workflows/backlog-groom-orchestrator.yml";
             const { data: repository } = await github.rest.repos.get({ ...context.repo });
-            const { data: defaultRef } = await github.rest.git.getRef({
-              ...context.repo,
-              ref: `heads/${repository.default_branch}`,
-            });
-            if (run.path !== ".github/workflows/backlog-groom-orchestrator.yml" ||
-                run.head_branch !== repository.default_branch || run.head_sha !== defaultRef.object.sha) {
-              throw new Error("Publication requires the current default-branch orchestrator revision");
+            if (run.path !== workflowPath) {
+              throw new Error("Publication requires the backlog grooming orchestrator workflow");
+            }
+            const executionTagMatch = /^backlog-grooming-sweep\/([a-f0-9]{64})$/.exec(run.head_branch ?? "");
+            if (run.head_branch !== repository.default_branch && !executionTagMatch) {
+              core.info("Completed orchestrator run did not originate from the default branch or a sweep execution tag");
+              core.setOutput("terminal", "false");
+              return;
             }
             const artifacts = await github.paginate(
               github.rest.actions.listWorkflowRunArtifacts,
@@ -63,10 +66,46 @@ jobs:
               return;
             }
             if (finals.length !== 1) throw new Error("Completed orchestrator run has ambiguous final artifacts");
+            const sweepId = finals[0].name.match(pattern)[1];
+            if (executionTagMatch) {
+              if (executionTagMatch[1] !== sweepId) {
+                throw new Error("Execution tag does not match the final artifact sweep");
+              }
+              const { data: executionRef } = await github.rest.git.getRef({
+                ...context.repo,
+                ref: `tags/backlog-grooming-sweep/${sweepId}`,
+              });
+              if (executionRef.object?.type !== "commit" || executionRef.object.sha !== run.head_sha) {
+                throw new Error("Execution tag does not pin the completed orchestrator revision");
+              }
+              const snapshotName = `backlog-grooming-sweep-v1-${repository.id}-snapshot-${sweepId}`;
+              const snapshots = (await github.paginate(
+                github.rest.actions.listArtifactsForRepo,
+                { ...context.repo, name: snapshotName, per_page: 100 },
+              )).filter((artifact) => !artifact.expired && artifact.name === snapshotName);
+              if (snapshots.length !== 1 || !snapshots[0].workflow_run?.id) {
+                throw new Error("Execution tag sweep requires exactly one unexpired initiating snapshot");
+              }
+              const { data: initiatingRun } = await github.rest.actions.getWorkflowRun({
+                ...context.repo,
+                run_id: snapshots[0].workflow_run.id,
+              });
+              if (initiatingRun.path !== workflowPath || initiatingRun.head_branch !== repository.default_branch ||
+                  initiatingRun.head_sha !== run.head_sha) {
+                throw new Error("Execution tag sweep did not originate from a default-branch orchestrator run");
+              }
+            }
+            const { data: comparison } = await github.rest.repos.compareCommitsWithBasehead({
+              ...context.repo,
+              basehead: `${run.head_sha}...${repository.default_branch}`,
+            });
+            if (!["identical", "ahead"].includes(comparison.status)) {
+              throw new Error("Publication requires an orchestrator revision contained in the default branch");
+            }
             core.setOutput("terminal", "true");
             core.setOutput("final-run-id", String(finalRunId));
             core.setOutput("final-artifact-id", String(finals[0].id));
-            core.setOutput("sweep-id", finals[0].name.match(pattern)[1]);
+            core.setOutput("sweep-id", sweepId);
             core.setOutput("source-sha", run.head_sha);
 
   publish:

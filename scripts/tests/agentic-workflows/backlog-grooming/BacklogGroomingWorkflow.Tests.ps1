@@ -1203,12 +1203,13 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
         [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
         $script:Publisher | Should -Not -Match '(?m)^  workflow_dispatch:$'
-        $script:Publisher | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Sweep\s+branches:\s+- main\s+types:\s+- completed'
+        $script:Publisher | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Sweep\s+branches:\s+- main\s+- backlog-grooming-sweep/\*\*\s+types:\s+- completed'
         $script:Publisher | Should -Match 'context\.payload\.workflow_run\?\.id'
         $script:Publisher | Should -Not -Match 'manualReplay|inputs\.final-|inputs\.snapshot-digest|inputs\.source-sha|inputs\.sweep-id'
-        $script:Publisher | Should -Match 'run\.head_branch !== repository\.default_branch'
-        $script:Publisher | Should -Match 'run\.head_sha !== defaultRef\.object\.sha'
-        $script:Publisher | Should -Match 'Publication requires the current default-branch orchestrator revision'
+        $script:Publisher | Should -Match 'run\.head_branch !== repository\.default_branch && !executionTagMatch'
+        $script:Publisher | Should -Match 'basehead: `\$\{run\.head_sha\}\.\.\.\$\{repository\.default_branch\}`'
+        $script:Publisher | Should -Match 'Publication requires an orchestrator revision contained in the default branch'
+        $script:Publisher | Should -Match 'Execution tag sweep did not originate from a default-branch orchestrator run'
         $script:Publisher | Should -Match 'Completed orchestrator run is nonterminal; publication is not required'
         $script:Publisher | Should -Match "if: \$\{\{ needs\.discover\.outputs\.terminal == 'true' \}\}"
         $script:Publisher | Should -Match '(?m)^          artifact-ids: \$\{\{ steps\.authenticate\.outputs\.final-artifact-id \}\}$'
@@ -2105,5 +2106,108 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
         $script:HistoryPublisher | Should -Match '\$\{display\(entry\.code\)\}'
         $script:HistoryPublisher | Should -Match '\$\{escapeHtml\(entry\.issue\)\}'
         $script:HistoryPublisher | Should -Match '\[reportPath, detailedReportHtml\]'
+    }
+}
+
+Describe 'Backlog grooming execution-tag github-script behavior' -Tag 'Unit' {
+    BeforeAll {
+        Import-Module powershell-yaml -ErrorAction Stop
+        $script:HarnessPath = Join-Path $PSScriptRoot 'github-script-harness.mjs'
+
+        function Get-StepScript {
+            param(
+                [Parameter(Mandatory)] [string]$WorkflowPath,
+                [Parameter(Mandatory)] [string]$JobName,
+                [Parameter(Mandatory)] [string]$StepId
+            )
+
+            $workflow = ConvertFrom-Yaml -Yaml (Read-RepoFile -Path $WorkflowPath)
+            $step = @($workflow.jobs[$JobName].steps | Where-Object { $_.id -eq $StepId })
+            $step.Count | Should -Be 1
+            $scriptPath = Join-Path $TestDrive "$JobName-$StepId.js"
+            Set-Content -LiteralPath $scriptPath -Value $step[0].with.script -NoNewline
+            return $scriptPath
+        }
+
+        function Invoke-StepScenario {
+            param(
+                [Parameter(Mandatory)] [string]$ScriptPath,
+                [Parameter(Mandatory)] [string]$Scenario
+            )
+
+            $workDir = Join-Path $TestDrive $Scenario
+            $raw = & node $script:HarnessPath $ScriptPath $Scenario $workDir 2>&1
+            $LASTEXITCODE | Should -Be 0 -Because ($raw -join "`n")
+            return (@($raw)[-1] | ConvertFrom-Json)
+        }
+
+        $script:DiscoverScript = Get-StepScript -WorkflowPath '.github/workflows/backlog-groom-publisher.yml' -JobName 'discover' -StepId 'discover'
+        $script:PlanScript = Get-StepScript -WorkflowPath '.github/workflows/backlog-groom-orchestrator.yml' -JobName 'plan' -StepId 'plan'
+    }
+
+    It 'publisher discover accepts <Scenario> as terminal' -TestCases @(
+        @{ Scenario = 'publisher-main-current' }
+        @{ Scenario = 'publisher-main-ancestor' }
+        @{ Scenario = 'publisher-tag-valid' }
+    ) {
+        param($Scenario)
+        $result = Invoke-StepScenario -ScriptPath $script:DiscoverScript -Scenario $Scenario
+        $result.error | Should -BeNullOrEmpty
+        $result.outputs.terminal | Should -Be 'true'
+        $result.outputs.'final-run-id' | Should -Be '900'
+        $result.outputs.'sweep-id' | Should -Be ('b' * 64)
+        $result.outputs.'source-sha' | Should -Be ('a' * 40)
+    }
+
+    It 'publisher discover skips <Scenario> without failing' -TestCases @(
+        @{ Scenario = 'publisher-main-nonterminal'; Message = 'nonterminal' }
+        @{ Scenario = 'publisher-unrelated-branch'; Message = 'did not originate from the default branch or a sweep execution tag' }
+    ) {
+        param($Scenario, $Message)
+        $result = Invoke-StepScenario -ScriptPath $script:DiscoverScript -Scenario $Scenario
+        $result.error | Should -BeNullOrEmpty
+        $result.outputs.terminal | Should -Be 'false'
+        ($result.messages.message -join "`n") | Should -Match $Message
+    }
+
+    It 'publisher discover rejects <Scenario>' -TestCases @(
+        @{ Scenario = 'publisher-main-diverged'; Message = 'contained in the default branch' }
+        @{ Scenario = 'publisher-tag-stale'; Message = 'contained in the default branch' }
+        @{ Scenario = 'publisher-tag-sweep-mismatch'; Message = 'does not match the final artifact sweep' }
+        @{ Scenario = 'publisher-tag-ref-moved'; Message = 'does not pin the completed orchestrator revision' }
+        @{ Scenario = 'publisher-tag-feature-origin'; Message = 'did not originate from a default-branch orchestrator run' }
+        @{ Scenario = 'publisher-tag-snapshot-missing'; Message = 'exactly one unexpired initiating snapshot' }
+    ) {
+        param($Scenario, $Message)
+        $result = Invoke-StepScenario -ScriptPath $script:DiscoverScript -Scenario $Scenario
+        $result.error | Should -Match $Message
+        $result.outputs.terminal | Should -BeNullOrEmpty
+    }
+
+    It 'orchestrator execution-tag recovery fails closed for <Scenario>' -TestCases @(
+        @{ Scenario = 'orchestrator-tag-missing'; Message = 'requires exactly one unexpired snapshot for its sweep' }
+        @{ Scenario = 'orchestrator-tag-invalid'; Message = 'Execution tag recovery snapshot is invalid: Sweep snapshot digest mismatch' }
+    ) {
+        param($Scenario, $Message)
+        $result = Invoke-StepScenario -ScriptPath $script:PlanScript -Scenario $Scenario
+        $result.error | Should -Match $Message
+        $result.outputs.mode | Should -BeNullOrEmpty
+    }
+
+    It 'orchestrator execution-tag recovery no-ops a completed sweep' {
+        $result = Invoke-StepScenario -ScriptPath $script:PlanScript -Scenario 'orchestrator-tag-complete'
+        $result.error | Should -BeNullOrEmpty
+        $result.outputs.mode | Should -Be 'complete-noop'
+        $result.outputs.'shard-matrix' | Should -Be '[]'
+    }
+
+    It 'orchestrator execution-tag recovery resumes the pinned sweep without a fresh snapshot' {
+        $result = Invoke-StepScenario -ScriptPath $script:PlanScript -Scenario 'orchestrator-tag-resume'
+        $result.error | Should -BeNullOrEmpty
+        $result.outputs.mode | Should -Be 'resume'
+        $result.outputs.'sweep-id' | Should -Be ('b' * 64)
+        $result.outputs.'wave-number' | Should -Be '2'
+        $result.outputs.'prior-checkpoint-artifact-id' | Should -Be '2001'
+        Test-Path -LiteralPath (Join-Path $TestDrive 'orchestrator-tag-resume/sweep-output/snapshot.json') | Should -BeFalse
     }
 }

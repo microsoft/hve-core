@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-09-24
+ms.date: 2026-09-29
 ms.topic: reference
 keywords:
   - github actions
@@ -212,9 +212,17 @@ handoff can proceed to GitHub Backlog Executor, and `Close` remains prohibited.
 The reducer retains detailed JSON and Markdown for 30 days and writes the exact
 terminal artifact identity to its job summary. It does not mutate the tracker.
 Completion activates `backlog-groom-publisher.yml` through the platform
-`workflow_run` event. The publisher resolves the terminal artifact from the
-completed run, authenticates its producer and source revision, revalidates the
-final aggregate, and compares the trusted tracker state before any persistence.
+`workflow_run` event. The trigger accepts runs from `main` and from
+`backlog-grooming-sweep/**`, because continuation waves run at the pinned
+execution tag. The publisher resolves the terminal artifact from the completed
+run, authenticates its producer and source revision, revalidates the final
+aggregate, and compares the trusted tracker state before any persistence.
+
+Discovery skips runs from any other ref without failing. A tag-origin run must
+name the final artifact's sweep, the tag must still pin the run's commit, and
+the sweep's single retained snapshot must come from a default-branch
+orchestrator run at that same commit. Every terminal run's source revision must
+be contained in the current default branch.
 
 Core publication revalidates the aggregate and updates or reopens the compact
 bot-owned tracker without report-history or Pages permissions, wording, or
@@ -272,6 +280,11 @@ automatic publisher attempt fails while the exact final artifact remains
 retained, rerun the failed jobs in that original publisher run. When the
 artifact has expired or its source revision is no longer accepted, start a new
 sweep instead of replaying publication from another ref.
+
+A dispatch from `backlog-grooming-sweep/<sweep-id>` with continuation inputs
+empty is recovery only. It resumes that sweep's retained snapshot, no-ops when
+the sweep is already complete, and fails closed when the snapshot is missing,
+expired, or invalid. It never captures a new snapshot.
 
 ### Permissions
 
@@ -395,6 +408,9 @@ account concurrency, and billing limits.
 | Run stops after checkpoint and before dispatch                                   | Later initiation discovers a nonterminal contiguous chain       | Unchanged          | Active sweep resumes at the first missing wave                    | Dispatch the coordinator from the retained sweep tag                                             | Accepted waves are not reassessed         |
 | Active sweep is found by a later initiation                                      | One valid nonterminal snapshot and chain are discovered         | Unchanged          | Coordinator resumes instead of capturing another snapshot         | Let the resumed wave continue                                                                    | Accepted waves are not reassessed         |
 | Snapshot or checkpoint expires                                                   | Artifact metadata reports expiry or download fails              | Unchanged          | Resume and publication fail closed                                | Start a new snapshot after reviewing abandoned evidence                                          | A new snapshot reassesses eligible issues |
+| Tag recovery finds no valid snapshot                                             | Tag dispatch finds no single valid retained snapshot            | Unchanged          | Fails before capture or worker execution                          | Start a new sweep from `main` after reviewing abandoned evidence                                 | A new snapshot reassesses eligible issues |
+| Tag recovery targets a completed sweep                                           | Retained checkpoint chain is already complete                   | Unchanged          | Worker-free no-op                                                 | None; the original terminal run owns publication                                                 | No issue is reassessed                    |
+| Multi-wave sweep finishes without a publisher run                                | No publisher run follows a successful tag-origin terminal run   | Unchanged          | None; the `branches` filter did not match the tag                 | Remove the publisher `branches` filter in a reviewed change; in-script checks still gate refs    | No assessment rerun required              |
 | API or concurrency throttling                                                    | GitHub rejects or delays metadata, download, or dispatch calls  | Unchanged          | Current job fails or remains queued; no partial tracker write     | Wait for limits to reset, then resume from the last accepted checkpoint                          | Only an unaccepted wave may repeat        |
 | Multiple trusted trackers                                                        | Publisher re-resolves more than one trusted bot-owned marker    | Unchanged          | No issue write                                                    | Resolve tracker ambiguity manually, then rerun the failed publisher job                          | No assessment rerun required              |
 | Final reducer fails                                                              | Chain, manifest, aggregate, or exact-set validation fails       | Unchanged          | No final accepted artifact or publication summary                 | Repair or rerun the first invalid or missing wave                                                | Only unaccepted work should repeat        |

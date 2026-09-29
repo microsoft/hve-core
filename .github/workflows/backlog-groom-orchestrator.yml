@@ -278,6 +278,8 @@ jobs:
             if (!isContinuation && Number(process.env.INPUT_WAVE_NUMBER) !== 1) {
               throw new Error("Initial dispatch must use wave one");
             }
+            const executionTagSweepId = isContinuation ? null :
+              (/^refs\/tags\/backlog-grooming-sweep\/([a-f0-9]{64})$/.exec(process.env.GITHUB_REF)?.[1] ?? null);
 
             fs.mkdirSync("sweep-output", { recursive: true });
             let snapshot;
@@ -372,10 +374,15 @@ jobs:
               );
               const snapshotPrefix = `backlog-grooming-sweep-v1-${context.payload.repository.id}-snapshot-`;
               const candidates = allArtifacts.filter(
-                (artifact) => !artifact.expired && artifact.name.startsWith(snapshotPrefix),
+                (artifact) => !artifact.expired && (executionTagSweepId
+                  ? artifact.name === `${snapshotPrefix}${executionTagSweepId}`
+                  : artifact.name.startsWith(snapshotPrefix)),
               );
               if (candidates.length > Number(process.env.SWEEP_DISCOVERY_METADATA_LIMIT)) {
                 throw new Error("Active sweep discovery metadata candidate limit exceeded");
+              }
+              if (executionTagSweepId && candidates.length !== 1) {
+                throw new Error("Execution tag recovery requires exactly one unexpired snapshot for its sweep");
               }
               let discoveryDownloads = 0;
               let discoveryMetadataScans = 0;
@@ -399,6 +406,7 @@ jobs:
                 try {
                   snapshotMetadata = await getArtifactMetadata(artifact.id);
                 } catch (error) {
+                  if (executionTagSweepId) throw error;
                   core.warning(`Ignoring untrusted narrowed snapshot artifact ${artifact.id}: ${error.message}`);
                   continue;
                 }
@@ -424,6 +432,9 @@ jobs:
                     sourceSha: candidateSnapshot.source_sha,
                   });
                 } catch (error) {
+                  if (executionTagSweepId) {
+                    throw new Error(`Execution tag recovery snapshot is invalid: ${error.message}`);
+                  }
                   core.warning(`Ignoring invalid narrowed snapshot artifact ${artifact.id}: ${error.message}`);
                   continue;
                 }
@@ -489,6 +500,11 @@ jobs:
                 const latest = validCheckpoints.at(-1) ?? null;
                 if (!latest?.checkpoint.sweep_complete) {
                   active.push({ artifact, snapshot: candidateSnapshot, latest });
+                } else if (executionTagSweepId) {
+                  core.info("Execution tag sweep is already complete; recovery is a no-op");
+                  core.setOutput("mode", "complete-noop");
+                  core.setOutput("shard-matrix", "[]");
+                  return;
                 }
               }
               if (active.length > 1) throw new Error("Multiple valid active backlog grooming sweeps are ambiguous");
@@ -505,6 +521,9 @@ jobs:
             }
 
             if (!snapshot) {
+              if (executionTagSweepId) {
+                throw new Error("Execution tag recovery cannot capture a new sweep snapshot");
+              }
               const marker = "<!-- gh-aw:backlog-grooming-tracker -->";
               const allIssues = await github.paginate(
                 github.rest.issues.listForRepo,
