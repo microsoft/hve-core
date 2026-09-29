@@ -3,7 +3,7 @@ title: Why the RPI Workflow Works
 description: The psychology and principles behind the evidence-led RPI lifecycle and its entry surfaces
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-09-28
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -83,7 +83,7 @@ When evidence is adequate, Research is reused or satisfied-and-skipped instead o
 * Keeping requirements, details, and linked references under the task they inform, and leaving verification choices to the implementer.
 * Showing the overall change and each phase's slice of it as Mermaid diagrams in the Phase Checklist.
 * Using code as illustrative guidance unless a real interface or requirement makes it binding.
-* Recording independent `rpi-plan-critique` evidence before implementation readiness.
+* Running an independent `rpi-plan-critique` before implementation readiness by default, unless you skip it.
 
 The plan becomes a contract. When implementation begins, the AI follows the plan rather than making decisions on the fly.
 
@@ -94,7 +94,7 @@ The plan becomes a contract. When implementation begins, the AI follows the plan
 * No time wasted rediscovering conventions.
 * Completion checkboxes change only after completion evidence exists.
 * Descriptive change evidence and truthful validation establish what happened.
-* A significant discovery updates the affected plan after its required decision and pauses only dependent work; the existing critique is not repeated.
+* A significant discovery updates the affected plan after its required decision and pauses only dependent work; a follow-up critique is optional.
 
 ### Review Phase: Validating, Not Assuming
 

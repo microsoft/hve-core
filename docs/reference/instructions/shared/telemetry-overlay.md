@@ -1,9 +1,9 @@
 ---
 title: Shared/Telemetry Overlay
 description: "Shared telemetry overlay applying telemetry-foundations vocabulary across planner, ADR, PRD, accessibility, code-review, and implementation artifacts"
-sidebar_position: 6
+sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-27
+ms.date: 2026-09-29
 ms.topic: reference
 keywords:
   - instruction

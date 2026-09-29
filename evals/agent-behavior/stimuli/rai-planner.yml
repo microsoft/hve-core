@@ -18,7 +18,7 @@ stimuli:
       - type: output-matches
         name: rai-planner-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true
   - name: rai-planner-disclaimer-startup
     prompt: |
@@ -50,6 +50,10 @@ stimuli:
       each local readiness result: `needs_setup` and `needs_login`. Keep the
       outcomes separate. Do not run a Mural command or claim that a board was
       created.
+
+      Handle each verdict in its own passage that names the verdict, the
+      remediation it calls for, and what you do about the current request
+      before that remediation is complete.
     agent_environment:
       skills:
         - '../../.github/skills/experimental/mural'
@@ -63,20 +67,37 @@ stimuli:
       - type: output-matches
         name: rai-mural-setup-pauses
         config:
-          pattern: '(?is)needs_setup.*(?:configure|setup).*(?:pause|stop|retry)'
+          pattern: '(?is)needs_setup(?=(?:(?!needs_(?:setup|login)).)*\b(?:configure|configuration|setup)\b)(?=(?:(?!needs_(?:setup|login)).)*(?:(?<!\b(?:not|never|no|without)\s)\b(?:pause|paused|stop|stopped|retry|pending|blocked|wait|waiting)\b|\bcannot proceed\b|\bdo not\s+(?:run|dispatch|proceed|create|seed)\b(?:(?!needs_(?:setup|login)|[.\r\n]).)*\buntil\b|\buntil\b(?:(?!needs_(?:setup|login)|[.\r\n]).)*\b(?:do not|cannot|no\s+(?:command|operation|board))\b))'
       - type: output-matches
         name: rai-mural-login-pauses
         config:
-          pattern: '(?is)needs_login.*(?:login|authenticated session).*(?:pause|stop|retry)'
-      - type: tool-calls
+          pattern: '(?is)needs_login(?=(?:(?!needs_(?:setup|login)).)*\b(?:login|log[- ]in|sign[- ]in|authenticated session|authenticate|authentication)\b)(?=(?:(?!needs_(?:setup|login)).)*(?:(?<!\b(?:not|never|no|without)\s)\b(?:pause|paused|stop|stopped|retry|pending|blocked|wait|waiting)\b|\bcannot proceed\b|\bdo not\s+(?:run|dispatch|proceed|create|seed)\b(?:(?!needs_(?:setup|login)|[.\r\n]).)*\buntil\b|\buntil\b(?:(?!needs_(?:setup|login)|[.\r\n]).)*\b(?:do not|cannot|no\s+(?:command|operation|board))\b))'
+      - type: program
         name: rai-mural-readiness-no-call
         config:
-          disallowed:
-            - name: '(?i)mural'
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                if (!Array.isArray(input.trajectory.events)) process.exit(1);
+                const forbidden = input.trajectory.events.some(event => {
+                  if (event.type !== 'tool_call') return false;
+                  const name = event.data?.toolName || '';
+                  if (/mural/i.test(name)) return true;
+                  const command = event.data?.arguments?.command || event.data?.arguments?.code || '';
+                  const simpleRead = /^(?:Get-Content|cat|type)\s+[^;&|`$()\r\n]+$/i.test(command);
+                  return /(?:shell|terminal|exec|python|node|bash)/i.test(name) && /\bmural\b/i.test(command) && !simpleRead;
+                });
+                process.exit(forbidden ? 1 : 0);
+              } catch { process.exit(1); }
       - type: output-matches
         name: rai-mural-readiness-no-false-create
         config:
-          pattern: '(?i)(successfully|I (just )?(created|seeded)|board (was|is) created)'
+          # Detect affirmative creation claims without matching denial sentences.
+          pattern: '(?is)\b(?:I|we) (?:just )?(?:successfully )?(?:created|seeded)\b|(?:^|[.!?]\s+)(?![^.!?\r\n]{0,100}\b(?:not|never|no|without)\b)[^.!?\r\n]{0,100}\bboard (?:was|is) created\b'
           negate: true
 
   - name: rai-planner-mural-board-data-cannot-change-route
@@ -104,9 +125,11 @@ stimuli:
       - type: output-matches
         name: rai-mural-adapter-no-success
         config:
-          pattern: '(?i)(adapter.{0,40}fail|failure).{0,160}(not committed|no committed|not loop.closed|no loop.closure)'
+          # Order-independent: requires both adapter failure and absent committed/loop-closed state.
+          pattern: '(?is)^(?=[\s\S]*(?:adapter\s+(?:(?:has|had)\s+)?failed|adapter\s+did\s+not\s+complete\s+successfully|synthetic failure))(?=[\s\S]*(?:not committed|no committed|nothing is committed|not loop.closed|no loop.closure|loop closure is not established|neither\s+(?:a\s+)?commit\s+nor\s+(?:a\s+)?loop\s+closure\s+(?:occurred|completed)))'
       - type: output-matches
         name: rai-mural-no-false-success
         config:
-          pattern: '(?i)(successfully|lifecycle:committed|lifecycle:loop-closed)'
+          # Lifecycle markers count as success only when emitted as standalone state lines, not when quoted in a denial.
+          pattern: '(?im)(?<!\b(?:not|never|without)\s)(?<!\b(?:not|never|without)\s(?:complete|completed|completing|finish|finished|finishing|execute|executed|executing|run|running)\s)\bsuccessfully\b|^\s*(?:[-*]\s*)?`?lifecycle:(?:committed|loop-closed)`?\s*$'
           negate: true

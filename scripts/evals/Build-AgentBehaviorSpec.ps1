@@ -170,8 +170,16 @@ function Read-PartialStimuli {
         if (-not $item.Contains('name') -or [string]::IsNullOrWhiteSpace([string]$item['name'])) {
             throw "Partial '$Path' contains a stimulus missing a non-empty 'name' field."
         }
-        if (-not $item.Contains('prompt') -or [string]::IsNullOrWhiteSpace([string]$item['prompt'])) {
-            throw "Partial '$Path' stimulus '$($item['name'])' is missing a non-empty 'prompt' field."
+        if ($item.Contains('prompt') -eq $item.Contains('turns')) {
+            throw "Partial '$Path' stimulus '$($item['name'])' must declare exactly one of 'prompt' or 'turns'."
+        }
+        if ($item.Contains('prompt')) {
+            if ($item['prompt'] -isnot [string] -or [string]::IsNullOrWhiteSpace($item['prompt'])) {
+                throw "Partial '$Path' stimulus '$($item['name'])' is missing a non-empty 'prompt' field."
+            }
+        } elseif ($item['turns'] -isnot [System.Collections.IList] -or $item['turns'].Count -eq 0 -or
+            @($item['turns'] | Where-Object { $_ -isnot [string] -or [string]::IsNullOrWhiteSpace($_) }).Count -gt 0) {
+            throw "Partial '$Path' stimulus '$($item['name'])' must have a non-empty list of non-empty string 'turns'."
         }
 
         $tags = if ($item.Contains('tags')) { $item['tags'] } else { $null }

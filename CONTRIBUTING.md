@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-08-19
+ms.date: 2026-09-25
 ms.topic: guide
 keywords:
   - contributing
@@ -234,7 +234,18 @@ For AI artifact documentation (agents, prompts, instructions, skills), see the [
 
 HVE Core includes specialized contribution guides for AI artifacts that enhance GitHub Copilot functionality. These artifacts define custom agents, reusable prompts, coding guidelines (instructions), and executable skills.
 
-> **Transparency Note updates:** If your change adds or modifies a skill or agent that generates media, personas, or likenesses, or that introduces an external service dependency or a new decision-shaping behavior, update [`TRANSPARENCY-NOTE.md`](./TRANSPARENCY-NOTE.md) (and the relevant appendix).
+> [!IMPORTANT]
+> HVE Core Maintainers review [`TRANSPARENCY-NOTE.md`](./TRANSPARENCY-NOTE.md)
+> at least every 180 days, even when no change-specific review occurs.
+>
+> Also review and update it when intended uses or functionality change, the
+> product moves to a new release stage, or new information about reliability,
+> safety, accuracy, or performance becomes available.
+>
+> Check the relevant sections when changing external services or data handling,
+> saved state or memory, agent actions or decisions, media or personas, handling
+> of untrusted content, supported clients, distribution methods, evaluation
+> coverage, permissions, or review, safety, and privacy responsibilities.
 
 ### Getting Started with AI Artifacts
 

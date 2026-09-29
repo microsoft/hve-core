@@ -180,10 +180,10 @@ stimuli:
       - type: output-matches
         name: advisory-no-mutation
         config:
-          pattern: '(?i)(closed|updated|labeled|assigned|commented on)\s+(github\s+)?issue\s*#?\d+'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:closed|updated|labeled|assigned|commented on)\s+(?:github\s+)?issue\s*#?\d+'
           negate: true
       - type: output-matches
         name: no-sarif
         config:
-          pattern: '(?i)(generated|uploaded|emitted)\s+SARIF|security-events:\s*write'
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:generated|uploaded|emitted)\s+SARIF|security-events:\s*write'
           negate: true

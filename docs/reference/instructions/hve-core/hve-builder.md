@@ -1,9 +1,9 @@
 ---
 title: Hve Core/Hve Builder
 description: "Core authoring conventions for prompts, agents, subagents, instructions, and skills"
-sidebar_position: 4
+sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-31
+ms.date: 2026-09-29
 ms.topic: reference
 keywords:
   - instruction

@@ -86,11 +86,13 @@ if ($env:STUB_VALLY_ARGV_OUT) {
 $specPath  = $null
 $outputDir = $null
 $model = ''
+$tag = ''
 for ($i = 1; $i -lt $args.Count; $i++) {
     switch ($args[$i]) {
         '--eval-spec'  { $specPath  = $args[++$i] }
         '--output-dir' { $outputDir = $args[++$i] }
         '--model'      { $model = [string]$args[++$i] }
+        '--tag'        { $tag = [string]$args[++$i] }
         default        { }
     }
 }
@@ -163,9 +165,16 @@ function New-StubRecord {
         [switch]$Typed
     )
     $record = [ordered]@{
+        type = 'trial-result'
+        status = 'success'
+        stimulus = $Name
+        trialIndex = 0
+        itemId = "synthetic::$Name::0"
         trajectory  = [ordered]@{
-            stimulus = [ordered]@{ name = $Name }
+            stimulus = [ordered]@{ name = $Name; prompt = 'Synthetic prompt' }
             output   = "stub output for $Name"
+            endReason = 'completed'
+            events = @([ordered]@{ type = 'assistant_message'; turn = 0; data = [ordered]@{ content = 'Synthetic response' } })
             metrics  = [ordered]@{
                 wallTimeMs = $WallMs
                 tokenUsage = [ordered]@{ totalTokens = 7 }
@@ -222,6 +231,34 @@ function New-InvocationStubRecord {
 }
 
 $records = switch ($mode) {
+    'diagnostic' {
+        Import-Module powershell-yaml -ErrorAction Stop
+        $configuredSpec = Get-Content -LiteralPath $specPath -Raw | ConvertFrom-Yaml
+        $configuredRuns = if ($configuredSpec.defaults.runs) { [int]$configuredSpec.defaults.runs } else { 1 }
+        $emitted = foreach ($stimulus in $configuredSpec.stimuli) {
+            foreach ($trialIndex in 0..($configuredRuns - 1)) {
+                $record = New-StubRecord -Name $stimulus.name -Passed $true -Typed
+                $record['stimulus'] = $stimulus.name
+                $record['status'] = 'success'
+                $record['trialIndex'] = $trialIndex
+                $record['totalTrials'] = $configuredRuns
+                $record['itemId'] = "synthetic::$($stimulus.name)::$trialIndex"
+                $record.gradeResult.details = @(foreach ($grader in $stimulus.graders) {
+                    [ordered]@{ configuredName = $grader.name; graderType = $grader.type; passed = $true; score = 1.0 }
+                })
+                if ($env:STUB_VALLY_DIAGNOSTIC_CASE -eq 'graded-errors' -and $trialIndex -gt 0) {
+                    $record['status'] = 'error'
+                    $record.Remove('gradeResult')
+                }
+                if ($env:STUB_VALLY_DIAGNOSTIC_CASE -eq 'duplicate' -and $trialIndex -eq 1) {
+                    $record.trialIndex = 0
+                    $record.itemId = "synthetic::$($stimulus.name)::0"
+                }
+                if ($env:STUB_VALLY_DIAGNOSTIC_CASE -ne 'missing' -or $trialIndex -gt 0) { $record }
+            }
+        }
+        @($emitted)
+    }
     'pass'  { @((New-StubRecord -Name 'stim-1' -Passed $true),  (New-StubRecord -Name 'stim-2' -Passed $true)) }
     'typed-pass' {
         @(
@@ -324,6 +361,32 @@ $records = switch ($mode) {
     default {
         Write-Error "stub-vally: unknown mode '$mode'"
         exit 66
+    }
+}
+
+if ($mode -in @('pass', 'fail', 'mixed', 'typed-pass') -and (Test-Path -LiteralPath $specPath)) {
+    Import-Module powershell-yaml -ErrorAction Stop
+    $configuredSpec = Get-Content -LiteralPath $specPath -Raw | ConvertFrom-Yaml
+    if ($configuredSpec.stimuli) {
+        $configuredRuns = if ($configuredSpec.defaults.runs) { [int]$configuredSpec.defaults.runs } else { 1 }
+        $recordOrdinal = 0
+        $records = @(foreach ($stimulus in $configuredSpec.stimuli) {
+            if ($tag) {
+                $tagParts = $tag -split '=', 2
+                if (@($stimulus.tags[$tagParts[0]]) -cnotcontains $tagParts[1]) { continue }
+            }
+            foreach ($trialIndex in 0..($configuredRuns - 1)) {
+                $passed = $mode -ne 'fail' -and ($mode -ne 'mixed' -or $recordOrdinal -eq 0)
+                $record = New-StubRecord -Name $stimulus.name -Passed $passed -Typed
+                $record.trialIndex = $trialIndex
+                $record.itemId = "synthetic::$($stimulus.name)::$trialIndex"
+                $record.gradeResult.details = @(foreach ($grader in $stimulus.graders) {
+                    [ordered]@{ configuredName = $grader.name; graderType = $grader.type; passed = $passed; score = $(if ($passed) { 1.0 } else { 0.0 }) }
+                })
+                $record
+                $recordOrdinal++
+            }
+        })
     }
 }
 
