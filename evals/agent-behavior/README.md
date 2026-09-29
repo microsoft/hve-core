@@ -2,11 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against four class recipes'
 author: HVE Core Team
-<<<<<<< HEAD
-ms.date: 2026-09-24
-=======
-ms.date: 2026-09-28
->>>>>>> origin/main
+ms.date: 2026-09-29
 ---
 
 ## Purpose

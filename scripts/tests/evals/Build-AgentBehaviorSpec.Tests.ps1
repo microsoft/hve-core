@@ -1353,18 +1353,10 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
   It 'Stages a PRD Implement plan whose recorded critique passed' -Tag 'NativeFixture', 'AdmissionFixture' {
     $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot 'stimuli/prd-builder.yml'))
     $stimulus = $specification.stimuli | Where-Object name -eq 'prd-builder-executes-approved-authoring-plan'
-<<<<<<< HEAD
     $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan'
     $stimulus.agent_environment.skills | Should -Contain '../../.github/skills/rpi/rpi-implement'
     $planMount = $stimulus.agent_environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
     $critiqueMount = $stimulus.agent_environment.files | Where-Object dest -like '.copilot-tracking/reviews/plans/*'
-    $fixturePlanPath = (Resolve-Path (Join-Path $script:ObservationRoot $planMount.src)).Path
-=======
-    $stimulus.environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan'
-    $stimulus.environment.skills | Should -Contain '../../.github/skills/rpi/rpi-implement'
-    $planMount = $stimulus.environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
-    $critiqueMount = $stimulus.environment.files | Where-Object dest -like '.copilot-tracking/reviews/plans/*'
->>>>>>> origin/main
     $critique = Get-Content -Raw (Join-Path $script:ObservationRoot $critiqueMount.src)
     $critique | Should -Match 'Critique execution: Complete'
     $critique | Should -Match '\* Verdict: Pass'
@@ -1467,14 +1459,8 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     $draft = Get-Content -Raw (Join-Path $script:ObservationRoot $draftMount.src)
     $draft | Should -Not -Match '(?m)^## Critique Disposition'
     foreach ($name in 'experiment-designer-produces-execution-rpi-artifacts', 'experiment-designer-reviews-execution') {
-<<<<<<< HEAD
       $planMount = $stimuli[$name].agent_environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
       $critiqueMount = $stimuli[$name].agent_environment.files | Where-Object dest -like '.copilot-tracking/reviews/plans/*'
-      $identity = Get-PlanAssessmentHash -PlanPath (Resolve-Path (Join-Path $script:ObservationRoot $planMount.src)).Path
-=======
-      $planMount = $stimuli[$name].environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
-      $critiqueMount = $stimuli[$name].environment.files | Where-Object dest -like '.copilot-tracking/reviews/plans/*'
->>>>>>> origin/main
       $critique = Get-Content -Raw (Join-Path $script:ObservationRoot $critiqueMount.src)
       $critique | Should -Match 'Critique execution: Complete' -Because $name
       $critique | Should -Match '\* Verdict: Pass' -Because $name
