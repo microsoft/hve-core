@@ -1264,24 +1264,6 @@ stimuli:
         config:
           pattern: '(?i)(standard|status|naming|adr|template)'
 
-  - name: instruction-graphify-conformance
-    prompt: |
-      You are preparing a planning note that should connect to the graphify guidance package.
-      Which instruction file applies and what kind of evidence does it help organize?
-    tags:
-      category: behavior-conformance
-      instruction: graphify
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: instruction-graphify-conformance-instruction-attribution
-        config:
-          pattern: '(?i)(graphify|evidence|graph|knowledge)'
-      - type: output-matches
-        name: instruction-graphify-conformance-scope-language
-        config:
-          pattern: '(?i)(graph|evidence|knowledge|planning)'
-
   - name: instruction-vex-generation-conformance
     prompt: |
       You are drafting an AI-assisted VEX assessment for a vulnerability finding.
