@@ -236,7 +236,7 @@ The validation jobs themselves run in parallel with no dependencies between them
 
 For Node projects, discovery inspects both skill directories under `.github/skills` and slide deck directories under `slides/*` containing unit or spec test files (`*.test.*` or `*.spec.*`). While `node-tests` defaults to running only when JS-family files change, slide decks (and the `hve-slides` skill) supply a custom `changed-paths-pattern` to also trigger on HTML, CSS, and JSON source changes.
 
-They are not the merge gate: `pr-validation-success` lists every one of them in its `needs:` and is the single check branch protection requires, so it fails if any of them fails or is skipped. `gate-completeness-check` runs `Test-PrValidationGate.ps1 -FailOnViolation` to enforce that the `needs:` list stays in sync with the job set, so a newly added job cannot silently bypass the gate.
+The validation jobs are not the merge gate: `pr-validation-success` lists every one of them in its `needs:` and is the single check branch protection requires, so it fails if any of them fails or is skipped. `gate-completeness-check` runs `Test-PrValidationGate.ps1 -FailOnViolation` to enforce that the `needs:` list stays in sync with the job set, so a newly added job cannot silently bypass the gate.
 
 ## Release Promotion and Publication
 
