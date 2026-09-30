@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-22
+ms.date: 2026-09-30
 ms.topic: reference
 keywords:
   - security
@@ -422,7 +422,7 @@ An explicit workflow-level `permissions: {}` grants no scopes to jobs without ov
 it is not a missing declaration. Job-level declarations replace that empty default.
 The permissions validator already enforces this distinction. The narrowly acknowledged
 Poutine warning on `pr-review.lock.yml` is an empty-map parser false positive, not a
-waiver of job-level least privilege. See [baseline dispositions](dangerous-workflow-detection#baseline-dispositions).
+waiver of job-level least privilege. See [reviewed acknowledgments](dangerous-workflow-detection#reviewed-acknowledgments).
 
 #### E-2: Branch Protection Bypass
 
