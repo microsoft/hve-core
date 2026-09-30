@@ -344,12 +344,12 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
     It 'defines a reversible compare shard control validated before model work' {
         $shardInput = $script:EvalWorkflow.on.workflow_call.inputs['compare-shard-count']
         $shardInput.type | Should -Be 'number'
-        $shardInput.default | Should -Be 5
+        $shardInput.default | Should -Be 7
         $shardInput.required | Should -BeFalse
         $script:Workflow | Should -Match "COMPARE_SHARD_COUNT -notin @\('1', '5', '7'\)"
         $script:Workflow | Should -Match ([regex]::Escape("compare-shard-count must be 1, 5, or 7; received '"))
-        $script:Workflow | Should -Match '(?s)agent-plan:.*?COMPARE_SHARD_COUNT: \$\{\{ inputs\.compare-shard-count \|\| 5 \}\}.*?equivalence-execute:'
-        $script:Workflow | Should -Match '(?s)equivalence-execute:.*?COMPARE_SHARD_COUNT: \$\{\{ inputs\.compare-shard-count \|\| 5 \}\}.*?-CompareShardCount \(\[int\]\$env:COMPARE_SHARD_COUNT\)'
+        $script:Workflow | Should -Match '(?s)agent-plan:.*?COMPARE_SHARD_COUNT: \$\{\{ inputs\.compare-shard-count \|\| 7 \}\}.*?equivalence-execute:'
+        $script:Workflow | Should -Match '(?s)equivalence-execute:.*?COMPARE_SHARD_COUNT: \$\{\{ inputs\.compare-shard-count \|\| 7 \}\}.*?-CompareShardCount \(\[int\]\$env:COMPARE_SHARD_COUNT\)'
     }
 
     It 'runs the advisory model lane in parallel without any path into gating' {

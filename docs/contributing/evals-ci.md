@@ -170,7 +170,7 @@ The reusable workflow inputs change scheduling without changing evidence semanti
 | `instruction-shard-count` | `2`          | `1`            | Uses the same planner and runner with one instruction shard |
 | `skill-shard-count`       | `2`          | `1`            | Uses the same planner and runner with one skill shard       |
 | `baseline-max-parallel`   | `2`          | `1`            | Serializes the same isolated baseline model producers       |
-| `compare-shard-count`     | `5`          | `1`            | Runs one serial `vally compare` per baseline model producer |
+| `compare-shard-count`     | `7`          | `1`            | Runs one serial `vally compare` per baseline model producer |
 
 Each baseline model producer splits its comparison into `compare-shard-count`
 stimulus-disjoint `vally compare` shards that run concurrently and are merged into one

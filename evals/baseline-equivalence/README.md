@@ -77,7 +77,7 @@ Every stimulus also declares `constraints.max_agent_duration: 285s` beneath the 
 ### Driver output contract
 
 Each `vally compare --eval-spec evals/baseline-equivalence/compare.eval.yml --judge-model <model> --baseline <baseline-input> --treatment <customized-input> --output <path>.jsonl` invocation writes one or more typed `type: "comparison"` records.
-`vally compare` judges pairs one at a time, so the driver splits each model's comparison into `-CompareShardCount` stimulus-disjoint shards (default 5; the reusable workflow exposes this as `compare-shard-count`) and runs them concurrently.
+`vally compare` judges pairs one at a time, so the driver splits each model's comparison into `-CompareShardCount` stimulus-disjoint shards (default 7; the reusable workflow exposes this as `compare-shard-count`) and runs them concurrently.
 Stimuli are assigned round-robin in the declared order of `stimuli.yml`. Each shard reads directories under `evals/results/baseline-equivalence/<model>/<runId>/compare-shards/` that mirror the run directories' top-level `*.jsonl` and `*.trajectory.json` files for its stimuli, and writes `logs/vally-compare-<model>-<runId>-sNN.jsonl` beside a withheld `-sNN.log` console capture.
 The driver concatenates the shard outputs in shard order into `logs/vally-compare-<model>-<runId>.jsonl`, so every consumer still reads one file per model. A shard count of 1, or a corpus with one stimulus, runs one serial compare over the run directories and writes that file directly.
 A shard that exits nonzero without writing any comparison record is retried once; a shard that fails again counts as a run-health failure, and its missing trials surface as data-quality violations.

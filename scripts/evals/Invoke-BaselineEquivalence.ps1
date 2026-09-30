@@ -62,7 +62,7 @@
 
 .PARAMETER CompareShardCount
     Number of concurrent `vally compare` shards per model. Accepts 1, 5, or 7 and
-    defaults to 5. Stimuli are assigned round-robin in the declared order of
+    defaults to 7. Stimuli are assigned round-robin in the declared order of
     `stimuli.yml`, each shard judges only its own pairs, and shard outputs are
     concatenated into the single per-model comparison JSONL before tallying. A value
     of 1, or a corpus with one stimulus, runs one serial compare over the run
@@ -142,7 +142,7 @@ param(
 
     [Parameter(Mandatory = $false)]
     [ValidateSet(1, 5, 7)]
-    [int]$CompareShardCount = 5,
+    [int]$CompareShardCount = 7,
 
     [Parameter(Mandatory = $false)]
     [switch]$NoBaselineCache
