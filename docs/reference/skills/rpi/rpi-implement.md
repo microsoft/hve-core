@@ -31,22 +31,21 @@ Follow an approved RPI plan, keep it current as new information comes to light, 
 Use `rpi-implement` to work through an approved plan. Declare the scope as the full plan, one `Pxx` phase, or one `Pxx-Txx` task; the skill starts at the first unchecked dependency-ready item in that scope and works in plan order. It checks each `Pxx-Txx` marker as soon as its `Requirements:` hold, runs the checks the plan names, and keeps a condensed changes log in `.copilot-tracking/changes/` that describes the behavior or functionality each completed item changed rather than the edits made.
 
 Implementation also keeps the plan current. Checked task markers, implementation-only
-`Guidance:` pointers and out-of-scope `## Follow-Up Items` do not change the assessed-content
-hash, so normal progress can resume. Changes to task wording, references, requirements,
-architecture, capability, safety, dependencies or other assessed content return to planning for
-revision-bound closure before affected work resumes. An unresolved significant or divergent choice
-needs a user decision; an evidence-backed clarification does not. The same candidate's critique is
-not replayed.
+`Guidance:` pointers and out-of-scope `## Follow-Up Items` are annotations, so normal progress
+continues. When evidence changes task wording, references, requirements, architecture, capability,
+safety or dependencies, the implementer updates the affected plan sections directly. An unresolved
+significant or divergent choice needs your decision before affected work resumes; an evidence-backed
+clarification does not. A change that needs replanning beyond the affected tasks returns to
+[rpi-plan](rpi-plan).
 
-Before changing source, the implementer runs the [rpi-plan hashing helper](rpi-plan#verify-a-plans-assessed-content-hash)
-against the saved plan and compares its version, exact projection and SHA-256 with the covering
-assessment. Missing tooling, failed computation or unverifiable identity returns to planning
-without a hand-built projection or another critique from implementation.
+Implementation does not require a plan critique. If you skipped the critique, implementation proceeds
+normally. When the plan is marked not ready or has unresolved blocking critique findings, the
+implementer names them and confirms with you before implementing affected tasks.
 
 Reach for a different asset when:
 
 * No approved plan exists. Run [rpi-plan](rpi-plan) first; do not implement from research alone.
-* The implementation is finished and needs acceptance. Run [rpi-review](rpi-review).
+* The implementation is finished and you want an acceptance review. Run [rpi-review](rpi-review); review is optional.
 * The change is small and isolated. Edit directly instead of creating lifecycle artifacts.
 
 ## Example usage

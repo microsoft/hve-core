@@ -237,6 +237,7 @@ function Get-GraderResultKind {
                 'file-not-matches',
                 'output-contains',
                 'output-matches',
+                'program',
                 'tool-calls',
                 'transcript-matches',
                 'wall-time'
@@ -536,7 +537,9 @@ function Test-CommittedGraderLineageMap {
             throw "Mapped current grader '$($alias.newName)' was not found."
         }
         $target = $targetIndex[$targetKey]
-        if ($target.GraderType -ne $alias.graderType) {
+        $binaryProgramReplacement = $alias.graderType -eq 'output-matches' -and
+            $target.GraderType -eq 'program' -and $target.ResultKind -eq 'code'
+        if ($target.GraderType -ne $alias.graderType -and -not $binaryProgramReplacement) {
             throw "Mapped current grader '$($alias.newName)' has incompatible type drift."
         }
     }

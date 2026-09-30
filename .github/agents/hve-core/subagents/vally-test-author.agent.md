@@ -70,9 +70,10 @@ Always emit three artifacts on every invocation:
 
 1. Read each input artifact (`from-artifact`) or corpus row (`corpus-import`) and detect its `kind`.
 2. Draft one stimulus YAML block per documented behavior, setting `tags.advisory: true`.
-3. Run the Safety Self-Check against each drafted block; refuse or surface blockers per the exit-code contract.
-4. Deduplicate surviving blocks by SHA-256 of the normalized prompt text against the target eval file.
-5. Append non-duplicate blocks to the routed eval file (append-only) and emit the JSON report.
+3. Apply the `vally-tests` skill's grader-robustness reference to each drafted block. Stage every file whose wording a grader asserts, constrain order and proximity only where those are the behavior under test, and verify each pattern offline against answers that must pass and answers that must still fail. Do not append a grader that asserts wording the stimulus does not stage.
+4. Run the Safety Self-Check against each drafted block; refuse or surface blockers per the exit-code contract.
+5. Deduplicate surviving blocks by SHA-256 of the normalized prompt text against the target eval file.
+6. Append non-duplicate blocks to the routed eval file (append-only) and emit the JSON report.
 
 ## Safety Self-Check
 

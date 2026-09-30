@@ -3,7 +3,7 @@ title: Understanding the RPI Workflow
 description: Learn how Research, Plan, Implement, Review, and Follow-up guide evidence-led delivery
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-09-28
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -57,7 +57,7 @@ Reuse supplied or completed evidence when it is adequate. Record why research wa
 
 Use `/rpi-plan` when adequate evidence must become a sequenced, verifiable implementation strategy. Planning focuses on dependencies, acceptance criteria, boundaries, and stable work identifiers instead of changing source files.
 
-The skill creates or revises two coordinated artifacts:
+The skill creates or revises the plan and, unless you skip the critique, a critique artifact:
 
 ```text
 .copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md
@@ -66,7 +66,9 @@ The skill creates or revises two coordinated artifacts:
 
 The task-centered plan uses stable `Pxx` phase IDs and `Pxx-Txx` task IDs with matching `<!-- rpi:... -->` markers. It opens with an executive summary and a Phase Checklist that starts with a Mermaid diagram of the overall change; each phase repeats that diagram with its own portion highlighted.
 
-Every task carries labeled `Goals:`, `Requirements:`, `Details:`, `References:`, and `Dependencies:` blocks, with backticks around code and commands and Markdown links to the files it touches. The `Requirements:` block is the checkable record for the task; how to verify it is left to the implementer. An independent critique records `Pass`, `Revise`, or `Blocked` before implementation readiness.
+Every task carries labeled `Goals:`, `Requirements:`, `Details:`, `References:`, and `Dependencies:` blocks, with backticks around code and commands and Markdown links to the files it touches. The `Requirements:` block is the checkable record for the task; how to verify it is left to the implementer.
+
+The critique runs by default and records `Pass`, `Revise`, or `Blocked` before implementation readiness. Pass `critique=skip` or ask to skip it, and planning records the critique as skipped; the plan's other readiness checks still apply.
 
 ### ⚡ Implement with rpi-implement
 
@@ -78,11 +80,11 @@ Implementation records material work and truthful validation in:
 .copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md
 ```
 
-Completion checkboxes change only after evidence exists. If implementation needs a significant departure from the approved plan, it records the discovery in the changes record, updates the affected plan tasks after the required decision, and pauses only dependent work until the plan is current. The existing critique remains historical evidence and is not repeated.
+Completion checkboxes change only after evidence exists. If implementation needs a significant departure from the approved plan, it records the discovery in the changes record, updates the affected plan tasks after the required decision, and pauses only dependent work until the plan is current. The existing critique remains historical evidence; a follow-up critique is optional.
 
 ### ✅ Review with rpi-review
 
-Use `/rpi-review` when the implementation evidence is ready for acceptance review. Review does not modify the sources under review. It compares requirements, acceptance criteria, plan and task completion, critique dispositions, implementation-time plan updates, changes, and validation evidence in one record, and records the final outcome and routing:
+Use `/rpi-review` when the implementation evidence is ready for acceptance review. Review is optional; skip it when you do not need an acceptance record. Review does not modify the sources under review. It compares requirements, acceptance criteria, plan and task completion, critique dispositions, implementation-time plan updates, changes, and validation evidence in one record, and records the final outcome and routing:
 
 ```text
 .copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md

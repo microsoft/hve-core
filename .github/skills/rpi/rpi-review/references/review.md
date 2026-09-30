@@ -13,7 +13,7 @@ Review one task set using these paths:
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
 
-Read research when it is relevant to an evidence or decision gap. Use markers and stable IDs rather than line references.
+The plan critique is present only when one ran. A new review of the same task adds a numbered suffix to the review path, such as `{{task_slug}}-review-2.md`. Read research when it is relevant to an evidence or decision gap. Use markers and stable IDs rather than line references.
 
 ## Review document contract
 
@@ -39,14 +39,14 @@ The comparison pass:
 
 1. Compare plan requirements and each task's `Requirements:` block with completed `Pxx` and `Pxx-Txx` evidence.
 2. Reconcile implementation-time plan updates with current phase and task Goals, Requirements, Details, Guidance, References, triggering evidence, user decisions, and critique state.
-3. Check critique finding dispositions and whether significant changes preserved confirmed intent before affected work continued.
+3. Check critique finding dispositions when a critique ran, and whether significant changes preserved confirmed intent before affected work continued.
 4. Assess every `## Follow-Up Items` entry for scope separation, rationale, owner, and changes-record parity.
 5. Evaluate completed-work summaries, validation, blockers, remaining work, and intended behavior for material drift.
 6. Write one complete substantive `RV-xxx` finding set, assessed outcome, and proposed routes in the review record.
 
-Inspect existing review state first; `started`, Complete, Partial, or Blocked consumes the task's one Review. An existing record uses its latest participation event and never restores pre-record preference state. If existing review execution lacks a canonical participation event, stop final execution Blocked and outcome Not accepted.
+Inspect existing review state first. Continue a `started` review from its saved record, and reuse a finished review unless the user asks for a new one. An existing record uses its latest participation event.
 
-For a new Review, activate skills whose descriptions say they are used during review and fit the task as scoped review criteria. Exclude `rpi-review` itself and other RPI lifecycle phase entrypoints. Initialize the record, persist opening state with review execution `started`, append the participation event, and replace pre-record preference with the record pointer before comparing. A stranded `started` resolves to final execution Blocked and outcome Not accepted with a later-new-review condition.
+For a new Review, activate skills whose descriptions say they are used during review and fit the task as scoped review criteria. Exclude `rpi-review` itself and other RPI lifecycle phase entrypoints. Initialize the record, persist opening state with review execution `started`, and append the participation event before comparing. When parent state exists, record the review path.
 
 ## Optional helpers
 
@@ -156,7 +156,7 @@ After the evidence body is written, decide:
 * Whether a significant decision returns to `rpi-plan`, an evidence gap returns to `rpi-research`, a defect becomes later `rpi-implement`, or residual work enters the follow-up queue
 * Standalone advisory or parent-orchestrated continuation
 
-Append those decisions only to Decision History within `## Parent Decision Record`, then refresh its Current Disposition from the latest events. Preserve the findings and comparison tables as written. When parent state exists, store one pointer containing the review path, latest decision event ID, and record revision or hash, plus derived `next_action` and accepted follow-up projections.
+Append those decisions only to Decision History within `## Parent Decision Record`, then refresh its Current Disposition from the latest events. Preserve the findings and comparison tables as written. When parent state exists, store the review path plus derived `next_action` and accepted follow-up projections.
 
 Do not duplicate decision payloads in state, redo the comparison, or rewrite findings to fit a preferred outcome.
 

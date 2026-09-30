@@ -12,7 +12,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-09-28
 ms.topic: how-to
 estimated_reading_time: 5
 ---
@@ -26,7 +26,7 @@ From-PRD mode seeds Phase 1 from PRD or BRD artifacts already present in the wor
 ### How It Works
 
 1. The agent scans `.copilot-tracking/prd-sessions/` and `.copilot-tracking/brd-sessions/` for planning artifacts, with a secondary scan for files matching `prd-*.md`, `*-prd.md`, `brd-*.md`, `*-brd.md`, and `product-definition*.md`.
-2. Discovered artifacts are presented with ✅/❌ markers showing which were found.
+2. Discovered candidates are presented for confirmation with ✅/❌ markers: ✅ for an artifact to use, ❌ for a false positive to discard.
 3. The agent extracts project scope, technology stack, deployment targets, data classification levels, compliance requirements, and stakeholder roles. AI/ML component detection happens later in Phase 1.
 4. State is initialized with `entryMode: "from-prd"` and the extracted references stored in `referencesProcessed`.
 5. Phase 1 begins with a checklist of pre-filled items and 3-5 clarifying questions for gaps.

@@ -3,7 +3,7 @@ title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-09-29
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -46,18 +46,17 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 
 All coding standard instructions activate automatically based on file type:
 
-| Instruction       | Activates On              | Purpose                                |
-|-------------------|---------------------------|----------------------------------------|
-| csharp            | `**/*.cs`                 | C# coding standards                    |
-| python-script     | `**/*.py`                 | Python scripting standards             |
-| bash              | `**/*.sh`                 | Bash script standards                  |
-| bicep             | `**/bicep/**`             | Bicep infrastructure standards         |
-| terraform         | `**/*.tf`                 | Terraform infrastructure standards     |
-| workflows         | `.github/workflows/*.yml` | GitHub Actions workflow standards      |
-| markdown          | `**/*.md`                 | Markdown formatting rules              |
-| writing-style     | `**/*.md`                 | Voice and tone conventions             |
-| hve-builder       | AI artifacts              | Prompt engineering authoring standards |
-| hve-core-location | `**`                      | Reference resolution for hve-core      |
+| Instruction   | Activates On              | Purpose                                |
+|---------------|---------------------------|----------------------------------------|
+| csharp        | `**/*.cs`                 | C# coding standards                    |
+| python-script | `**/*.py`                 | Python scripting standards             |
+| bash          | `**/*.sh`                 | Bash script standards                  |
+| bicep         | `**/bicep/**`             | Bicep infrastructure standards         |
+| terraform     | `**/*.tf`                 | Terraform infrastructure standards     |
+| workflows     | `.github/workflows/*.yml` | GitHub Actions workflow standards      |
+| markdown      | `**/*.md`                 | Markdown formatting rules              |
+| writing-style | `**/*.md`                 | Voice and tone conventions             |
+| hve-builder   | AI artifacts              | Prompt engineering authoring standards |
 
 ### Skills
 

@@ -43,6 +43,7 @@ metadata:
   subject: "AI-Assisted Engineering"
   keywords: "HVE, Copilot, AI"
   category: "Presentation"
+  language: "en-US"  # document language, also applied to every text run
 
 # Default element styling
 defaults:

@@ -6,7 +6,7 @@ compatibility: 'Requires FFmpeg on PATH'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-07-09"
+  last_updated: "2026-09-23"
 ---
 
 # Demo Video Assembly Skill
@@ -76,9 +76,9 @@ The assembly step accepts the following high-level controls:
 Narration quality is the single biggest driver of how polished the final video feels. Prioritize neural voices from **Azure AI Speech (part of Azure AI Foundry)** through the `tts-voiceover` skill for any video you intend to share.
 
 * **Recommended:** Use the `tts-voiceover` skill backed by Azure AI Speech neural voices (for example `en-US-Andrew:DragonHDLatestNeural` or `en-US-Jenny:DragonHDLatestNeural`). These produce natural, presentation-grade narration and are the default for shareable output.
-* **Fallback only:** Offline open-source engines such as `espeak-ng` require no credentials but sound noticeably robotic. Treat them as a no-network smoke-test fallback, not a delivery format. Regenerate narration with Azure AI Speech before publishing.
+* **Offline alternative:** The `tts-voiceover` skill's `--engine piper` option synthesizes narration locally with a separately installed Piper executable. It needs no credentials or network access, which suits scheduled CI builds, but it sounds less natural than Azure neural voices. Record which engine produced the narration so reviewers know whether to regenerate it with Azure AI Speech before publishing.
 
-See the `tts-voiceover` skill for the neural voice catalog, `--voice` and `--rate` controls, and Azure authentication (Entra ID or key).
+See the `tts-voiceover` skill for the neural voice catalog, `--voice` and `--rate` controls, Azure authentication (Entra ID or key), and Piper setup.
 
 ## Reuse Bridge
 

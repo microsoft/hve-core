@@ -124,6 +124,35 @@ Describe 'New-StimulusIndex' -Tag 'Unit' {
         $index.coverage[$key] -join ';' | Should -Match 'behavior-conformance/skill-behavior\.eval\.yaml'
     }
 
+    It 'Excludes agent-behavior source partials while retaining generated spec coverage' {
+        $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ([Guid]::NewGuid().ToString())
+        try {
+            $stimuliDir = Join-Path $tempRoot 'agent-behavior/stimuli'
+            New-Item -ItemType Directory -Path $stimuliDir -Force | Out-Null
+            $stimulus = @{
+                name = 'sample-agent-behavior'
+                prompt = 'Exercise the sample agent.'
+                tags = @{ agent = 'sample-agent' }
+                graders = @(@{ type = 'output-matches'; config = @{ pattern = 'sample' } })
+            }
+            @{ stimuli = @($stimulus) } | ConvertTo-Yaml | Set-Content -LiteralPath (Join-Path $stimuliDir 'sample-agent.yml') -Encoding utf8
+            @{
+                name = 'agent-behavior'
+                type = 'capability'
+                defaults = @{ executor = 'copilot-sdk' }
+                stimuli = @($stimulus)
+            } | ConvertTo-Yaml | Set-Content -LiteralPath (Join-Path $tempRoot 'agent-behavior/eval.yaml') -Encoding utf8
+
+            $index = New-StimulusIndex -EvalRoot $tempRoot
+
+            $index.specsScanned | Should -Be 1
+            $index.coverage['agent:sample-agent'] | Should -Be @('agent-behavior/eval.yaml')
+        }
+        finally {
+            Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
     It 'Continues past unparseable spec files and records them under errors' {
         $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ([Guid]::NewGuid().ToString())
         try {

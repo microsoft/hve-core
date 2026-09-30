@@ -7,7 +7,7 @@ compatibility: 'Requires Vally CLI 0.15.0+, PowerShell 7+, bash, and Python 3.11
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-09-16"
+  last_updated: "2026-09-23"
 ---
 <!-- cspell:ignore roleplay doxxing scaffolder -->
 
@@ -23,7 +23,7 @@ The skill ships:
 
 * A canonical authoring workflow used by the Vally prompts and `Vally Test Author` subagent.
 * Per-kind reference files that enumerate every conformance check the skill knows how to express.
-* A grader catalog that maps Vally CLI grader types to the checks they fit.
+* A grader catalog that maps Vally CLI grader types to the checks they fit, and robustness rules that keep an emitted grader from asserting the impossible or failing correct behavior.
 * A safety refusal taxonomy with regex patterns the safety lint script consumes.
 * Helper scripts and asset templates for stimulus emission, corpus import, and dedupe.
 
@@ -44,15 +44,16 @@ Do not invoke this skill to:
 
 ## Authoring Workflow
 
-Each invocation follows the same five-step pipeline:
+Each invocation follows the same six-step pipeline:
 
 1. **Artifact-kind detection.** Resolve the kind from the artifact path or the corpus row's `kind` column. Supported kinds: `prompt`, `instructions`, `agent`, `skill`. Reject unknown kinds with a refusal block.
 2. **Reference lookup.** Load the matching reference file from `references/` and select the check or checks the stimulus exercises.
 3. **Grader selection.** Use `references/grader-catalog.md` as the authoritative selection surface. Pick the registered Vally grader family that directly observes the expected behavior and follow its stimulus-shape guidance.
-4. **Safety self-check.** Run a safety self-check against the refusal taxonomy regex set. Refusing here is the correct outcome for any stimulus that matches a refusal category.
-5. **Dedupe and append.** Compute a SHA-256 hash of the normalized prompt text, compare against existing stimuli in the target eval file, and append only when novel.
+4. **Robustness check.** Apply `references/grader-robustness.md`. Confirm the stimulus stages every file whose wording the grader asserts, that the pattern constrains order and proximity only where those are the behavior under test, and that a compliant agent phrasing the behavior differently still passes. Verify the pattern offline against answers that must pass and answers that must still fail before appending.
+5. **Safety self-check.** Run a safety self-check against the refusal taxonomy regex set. Refusing here is the correct outcome for any stimulus that matches a refusal category.
+6. **Dedupe and append.** Compute a SHA-256 hash of the normalized prompt text, compare against existing stimuli in the target eval file, and append only when novel.
 
-The pipeline is identical for both invocation modes. Corpus-import mode runs steps 2 through 5 once per row.
+The pipeline is identical for both invocation modes. Corpus-import mode runs steps 2 through 6 once per row.
 
 ## Safety Refusal Taxonomy
 
@@ -96,15 +97,16 @@ The helpers emit a JSON run report to `logs/vally-test-author-<timestamp>.json`,
 
 References capture the conformance taxonomy, grader selection rules, eval-suite routing, and the regex source of truth for the refusal taxonomy. Each file targets a specific decision point in the authoring workflow.
 
-| Reference                                                 | Covers                                                                  |
-|-----------------------------------------------------------|-------------------------------------------------------------------------|
-| [prompts.md](references/prompts.md)                       | The 12 conformance checks emitted for `.prompt.md` artifacts.           |
-| [instructions.md](references/instructions.md)             | The 8 conformance checks emitted for `.instructions.md` artifacts.      |
-| [agents.md](references/agents.md)                         | The 9 conformance checks emitted for `.agent.md` artifacts.             |
-| [skills.md](references/skills.md)                         | The 9 conformance checks emitted for `SKILL.md` artifacts.              |
-| [grader-catalog.md](references/grader-catalog.md)         | Vally CLI grader types, selection rules, and gotchas.                   |
-| [refusal-taxonomy.md](references/refusal-taxonomy.md)     | Regex source of truth for the 7 refusal categories and worked examples. |
-| [eval-suite-routing.md](references/eval-suite-routing.md) | Maps artifact kind to the canonical Vally eval file under `evals/`.     |
+| Reference                                                 | Covers                                                                                                         |
+|-----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| [prompts.md](references/prompts.md)                       | The 12 conformance checks emitted for `.prompt.md` artifacts.                                                  |
+| [instructions.md](references/instructions.md)             | The 8 conformance checks emitted for `.instructions.md` artifacts.                                             |
+| [agents.md](references/agents.md)                         | The 9 conformance checks emitted for `.agent.md` artifacts.                                                    |
+| [skills.md](references/skills.md)                         | The 9 conformance checks emitted for `SKILL.md` artifacts.                                                     |
+| [grader-catalog.md](references/grader-catalog.md)         | Vally CLI grader types, selection rules, and gotchas.                                                          |
+| [grader-robustness.md](references/grader-robustness.md)   | Environment mounting, order and proximity constraints, negation guards, and the pre-commit verification probe. |
+| [refusal-taxonomy.md](references/refusal-taxonomy.md)     | Regex source of truth for the 7 refusal categories and worked examples.                                        |
+| [eval-suite-routing.md](references/eval-suite-routing.md) | Maps artifact kind to the canonical Vally eval file under `evals/`.                                            |
 
 ## Asset Index
 
