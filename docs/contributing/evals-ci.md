@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-25
+ms.date: 2026-09-29
 ms.topic: how-to
 keywords:
   - evals
@@ -128,13 +128,15 @@ While a phase is active, logs expose only these bounded fields:
 
 * Event: `phase-start`, `heartbeat`, or `phase-complete`
 * Phase: one declared eval phase such as `ordinary-eval`, `baseline-eval`, or `compare`
-* Sanitized worker identifier
+* Sanitized worker identifier. A baseline compare shard reports `<model>:compare-NN`.
 * Attempt number
 * Elapsed seconds
 * Fixed exit category
 
 The default heartbeat interval is 60 seconds. Aggregate summaries carry diagnostic
-`phaseTimings`; timing does not affect evaluation verdicts.
+`phaseTimings`, with one compare entry per shard attempt; timing does not affect
+evaluation verdicts. A compare shard worker that fails before a process result exists
+records the fixed category `worker-error`.
 
 ## Rollback Controls
 
@@ -146,6 +148,13 @@ The reusable workflow inputs change scheduling without changing evidence semanti
 | `instruction-shard-count` | `2`          | `1`            | Uses the same planner and runner with one instruction shard |
 | `skill-shard-count`       | `2`          | `1`            | Uses the same planner and runner with one skill shard       |
 | `baseline-max-parallel`   | `2`          | `1`            | Serializes the same isolated baseline model producers       |
+| `compare-shard-count`     | `5`          | `1`            | Runs one serial `vally compare` per baseline model producer |
+
+Each baseline model producer splits its comparison into `compare-shard-count`
+stimulus-disjoint `vally compare` shards that run concurrently and are merged into one
+comparison file before tallying. A shard that exits nonzero without any comparison
+record is retried once. The rollback value keeps that retry and runs a single compare
+over the run directories.
 
 The single-process fixed-pair baseline driver remains a deterministic aggregation
 oracle for local tests. It is not a second production rollback path.

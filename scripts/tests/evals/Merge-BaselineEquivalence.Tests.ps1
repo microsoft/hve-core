@@ -341,6 +341,17 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
         $script:Workflow | Should -Match 'CalibrationModel \$env:SELECTED_MODEL'
     }
 
+    It 'defines a reversible compare shard control validated before model work' {
+        $shardInput = $script:EvalWorkflow.on.workflow_call.inputs['compare-shard-count']
+        $shardInput.type | Should -Be 'number'
+        $shardInput.default | Should -Be 5
+        $shardInput.required | Should -BeFalse
+        $script:Workflow | Should -Match "COMPARE_SHARD_COUNT -notin @\('1', '5', '7'\)"
+        $script:Workflow | Should -Match ([regex]::Escape("compare-shard-count must be 1, 5, or 7; received '"))
+        $script:Workflow | Should -Match '(?s)agent-plan:.*?COMPARE_SHARD_COUNT: \$\{\{ inputs\.compare-shard-count \|\| 5 \}\}.*?equivalence-execute:'
+        $script:Workflow | Should -Match '(?s)equivalence-execute:.*?COMPARE_SHARD_COUNT: \$\{\{ inputs\.compare-shard-count \|\| 5 \}\}.*?-CompareShardCount \(\[int\]\$env:COMPARE_SHARD_COUNT\)'
+    }
+
     It 'keeps ordinary manual execution enabled for dispatched callers' {
         $workflow = ConvertFrom-Yaml -Yaml $script:Workflow
         foreach ($jobName in @('agent-plan', 'eval-execute', 'equivalence-execute', 'equivalence-fan-in', 'eval-fan-in')) {
