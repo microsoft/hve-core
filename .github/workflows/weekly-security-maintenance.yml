@@ -209,6 +209,8 @@ jobs:
           2. For unpinned dependencies: Pin them to SHAs immediately (security risk)
           3. For stale SHAs (>$thresholdDays days): Update them when convenient (maintenance task)
           4. Download the JSON report artifacts for detailed analysis
+          $(if ($codeqlResult -ne 'success') { "5. CodeQL analysis result was $codeqlResult; review the codeql-analysis job logs`n" })
+          $(if ($workflowScanResult -ne 'success') { "6. Dangerous workflow scan result was $workflowScanResult; review the dangerous-workflow-scan job's scanner step logs and confirm the poutine-results artifact exists`n" })
           
           "@
           })

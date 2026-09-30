@@ -1247,14 +1247,16 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
         @($document['jobs']['summary']['needs']) | Should -Contain 'dangerous-workflow-scan'
     }
 
-    It 'Reports <ScanResult> advisory execution without claiming a finding-free scan' -ForEach @(
-        @{ ScanResult = 'success' }
-        @{ ScanResult = 'failure' }
-        @{ ScanResult = 'cancelled' }
-        @{ ScanResult = 'skipped' }
+    It 'Reports CodeQL <CodeqlResult> and advisory scan <ScanResult> with targeted next steps' -ForEach @(
+        foreach ($codeqlResult in @('success', 'failure', 'cancelled', 'skipped')) {
+            foreach ($scanResult in @('success', 'failure', 'cancelled', 'skipped')) {
+                @{ CodeqlResult = $codeqlResult; ScanResult = $scanResult }
+            }
+        }
     ) {
         $document = Get-WorkflowDocument -Name 'weekly-security-maintenance.yml'
         $step = Get-NamedJobStep -Document $document -JobName 'summary' -StepName 'Generate summary'
+        $step['env']['CODEQL_RESULT'] | Should -BeExactly '${{ needs.codeql-analysis.result }}'
         $step['env']['WORKFLOW_SCAN_RESULT'] | Should -BeExactly '${{ needs.dangerous-workflow-scan.result }}'
         $step['run'] | Should -Match 'workflowScanResult -ne ''success''.*hasIssues = \$true'
         $step['run'] | Should -Match 'Advisory job success does not establish zero findings'
@@ -1264,13 +1266,13 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
             PINNING_SCORE = '100'
             UNPINNED_COUNT = '0'
             STALE_COUNT = '0'
-            CODEQL_RESULT = 'success'
+            CODEQL_RESULT = $CodeqlResult
             WORKFLOW_SCAN_RESULT = $ScanResult
             EVENT_NAME = 'schedule'
             SERVER_URL = 'https://github.com'
             REPO = 'example/repository'
             RUN_ID = '1'
-            GITHUB_STEP_SUMMARY = (Join-Path $TestDrive "$ScanResult.md")
+            GITHUB_STEP_SUMMARY = (Join-Path $TestDrive "$CodeqlResult-$ScanResult.md")
         }
         $savedEnvironment = @{}
         try {
@@ -1282,11 +1284,25 @@ Describe 'Poutine baseline triage and weekly coverage' -Tag 'Unit', 'Poutine' {
             $summary = Get-Content -LiteralPath $environment['GITHUB_STEP_SUMMARY'] -Raw
             $summary | Should -Match ([regex]::Escape("$ScanResult (advisory; review logs and SARIF)"))
             $summary | Should -Match 'Advisory job success does not establish zero findings'
-            if ($ScanResult -eq 'success') {
+            if ($CodeqlResult -eq 'success' -and $ScanResult -eq 'success') {
                 $summary | Should -Match 'Dependency Checks Clear'
+                $summary | Should -Not -Match 'Next Steps'
             }
             else {
                 $summary | Should -Not -Match 'Dependency Checks Clear|analysis jobs completed'
+                $summary | Should -Match 'Next Steps'
+            }
+            if ($CodeqlResult -eq 'success') {
+                $summary | Should -Not -Match 'CodeQL analysis result was'
+            }
+            else {
+                $summary | Should -Match ([regex]::Escape("CodeQL analysis result was $CodeqlResult; review the codeql-analysis job logs"))
+            }
+            if ($ScanResult -eq 'success') {
+                $summary | Should -Not -Match 'Dangerous workflow scan result was'
+            }
+            else {
+                $summary | Should -Match ([regex]::Escape("Dangerous workflow scan result was $ScanResult; review the dangerous-workflow-scan job's scanner step logs and confirm the poutine-results artifact exists"))
             }
         }
         finally {
