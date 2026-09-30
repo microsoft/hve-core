@@ -3,7 +3,7 @@ title: Dangerous Workflow Detection
 description: How the hybrid dangerous-workflow control combines a homegrown template-injection gate with the Poutine supply-chain scanner for GitHub Actions workflows
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-09-22
+ms.date: 2026-09-30
 ms.topic: reference
 keywords:
   - security
@@ -163,53 +163,34 @@ Review expectations:
 * The configuration entry should be added only after review confirms that the workflow needs the exception.
 * Suppressions should be temporary and removed when the workflow is refactored to a safer pattern.
 
-### Baseline dispositions
+### Reviewed acknowledgments
 
-The baseline used for [issue 2983](https://github.com/microsoft/hve-core/issues/2983)
-contains 12 Poutine v1.1.4 findings across three rules. Analysis `1822021547` scanned
-the synthetic merge commit `8ef91813` for PR 2906. Its Git tree
-`20025492a0cfb71be4dfbdd08ef52336455c7553` matches `main` commit `5e21810e` exactly.
-This proves content equivalence, not execution on `refs/heads/main`; no main-ref Poutine
-analysis was present in the retrieved inventory. Weekly coverage closes that scheduling
-gap once deployed, but the first hosted result must still be confirmed.
-
-* Alerts 788, 789, 601, 593, 719, and 595 identify `astral-sh/setup-uv`.
-  Marketplace verifies the creator, but Poutine's static list omits it, as tracked in
+* `astral-sh/setup-uv`: rule `github_action_from_unverified_creator_used`, selector
+  `purl: pkg:githubactions/astral-sh/setup-uv`. Marketplace verifies the creator, but
+  Poutine's static list omits it, as tracked in
   [upstream issue 452](https://github.com/boostsecurityio/poutine/issues/452).
-  The exact package acknowledgment is handled by the separate setup-uv change; this
-  baseline-triage change does not add it.
-* Alerts 742 and 743 identify `googleapis/release-please-action` in the two release
-  workflows. Its [Marketplace listing](https://github.com/marketplace/actions/release-please-action)
-  verifies the creator. The acknowledgment uses only the exact rule and
-  `pkg:githubactions/googleapis/release-please-action` package identity.
-* Alerts 755 and 756 identify dependency execution in `prepare-publisher` within
-  `extension-marketplace-publish.yml`. Preparation checks out an API-resolved `main`
-  commit, verifies `HEAD` before installation, and has only `contents: read`, with no
-  protected environment or marketplace credential. Publication happens in a separate
-  protected job. The exception relies on the repository's protected-main trust assumption
-  and is restricted to this rule, workflow, and preparation job.
-* Alert 348 uses `default_permissions_on_risky_events` for `pr-review.lock.yml`.
-  The generated workflow declares `permissions: {}`, which grants no scopes to jobs
-  without overrides. Poutine treats the empty map as absent. The exact rule-and-path
-  acknowledgment does not change job grants or the separate permissions hard gate.
+  Remove when a pinned scanner upgrade recognizes the verified publisher.
+* `googleapis/release-please-action`: rule `github_action_from_unverified_creator_used`,
+  selector `purl: pkg:githubactions/googleapis/release-please-action`. Its
+  [Marketplace listing](https://github.com/marketplace/actions/release-please-action)
+  verifies the creator, but Poutine's static list omits it. Remove when a pinned scanner
+  upgrade recognizes the verified publisher.
+* Marketplace preparation: rule `untrusted_checkout_exec`, selectors
+  `path: .github/workflows/extension-marketplace-publish.yml` and `job: prepare-publisher`.
+  Preparation checks out an API-resolved `main` commit, verifies `HEAD` before installation,
+  and has only `contents: read`, with no protected environment or marketplace credential.
+  Publication happens in a separate protected job. Re-review or remove if the protected-main
+  trust assumption, checkout source, digest checks, permissions, or credential separation changes.
+* PR review: rule `default_permissions_on_risky_events`, selector
+  `path: .github/workflows/pr-review.lock.yml`. The generated workflow declares
+  `permissions: {}`, which grants no scopes to jobs without overrides, but Poutine treats
+  the empty map as absent. Remove when the scanner distinguishes empty permissions from
+  missing permissions. The acknowledgment does not change job grants or the permissions hard gate.
 * Alert 340 identifies `EndBug/label-sync`, which lacks a Marketplace verified-creator
   badge. Retain this advisory finding as accepted provenance risk, not a false positive.
   The action remains full-SHA-pinned, with job-scoped permissions and normal staleness
   monitoring. Reassess on action updates or a change in publisher verification.
 
-These three acknowledgments target five baseline occurrences. Six setup-uv occurrences
-remain the responsibility of the separate fix, and EndBug remains visible. These are
-dispositions and expected filter effects, not evidence that remote alerts are resolved.
-
-The job-level permissions opportunity from issue 2527 is already implemented by
-`Test-WorkflowPermissions.ps1`: absent workflow permissions fail, jobs under populated
-workflow grants need explicit permissions, and an empty workflow map grants nothing to
-jobs without overrides. No further validator or generated-workflow edit is needed here.
-
-Remove creator acknowledgments when a pinned scanner upgrade recognizes the verified
-publisher without them. Remove the PR-review acknowledgment when the scanner distinguishes
-empty permissions from missing permissions. Re-review or remove the marketplace exception
-if the checkout source, digest checks, permissions, or credential separation changes.
 Maintainers should verify each removal against hosted SARIF, not job success alone.
 
 ## Triage flow
