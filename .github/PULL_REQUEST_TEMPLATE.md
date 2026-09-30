@@ -4,7 +4,18 @@
 <!-- Provide a clear description of the changes in this PR -->
 
 ## Related Issue(s)
-<!-- Link to the issue(s) this PR addresses using "Fixes #123" or "Closes #123" -->
+<!--
+List each issue this PR will close on its own line, repeating the closing keyword for every issue.
+Do not group multiple issue references after a single keyword.
+Replace these examples with actual issue references outside this comment:
+
+Fixes #123
+Closes #456
+Closes owner/repository#789
+
+Use "Related to #123" for related issues or PRs that should not be closed.
+Issues referenced with closing keywords are automatically closed when this PR is merged into the default branch.
+-->
 
 ## Type of Change
 
