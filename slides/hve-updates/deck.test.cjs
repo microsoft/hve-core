@@ -263,15 +263,17 @@ test('critique and review distinguish missing plan evidence from observed defect
   assert.match(review, /Primary assistant's decision/);
 });
 
-test('built bundle is complete and has no remote runtime assets', () => {
-  const built = fs.readFileSync(path.join(__dirname, 'dist/index.html'), 'utf8');
+test('built bundle is complete and has no remote runtime assets', async () => {
+  const { buildDeck } = await import('./build.mjs');
+  const dist = await buildDeck();
+  const built = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
   for (const match of built.matchAll(/<(?:link|script)\b[^>]*(?:src|href)="([^"]+)"/g)) {
     assert.ok(!/^(?:https?:)?\/\//.test(match[1]), match[1]);
-    assert.ok(fs.existsSync(path.join(__dirname, 'dist', match[1])), match[1]);
+    assert.ok(fs.existsSync(path.join(dist, match[1])), match[1]);
   }
-  assert.ok(fs.existsSync(path.join(__dirname, 'dist/vendor/reveal-LICENSE.txt')));
+  assert.ok(fs.existsSync(path.join(dist, 'vendor/reveal-LICENSE.txt')));
   for (const name of ['index.html', 'theme.css', 'components.css', 'content.js', 'components.js', 'deck.js']) {
-    assert.equal(fs.readFileSync(path.join(__dirname, name), 'utf8'), fs.readFileSync(path.join(__dirname, 'dist', name), 'utf8'));
+    assert.equal(fs.readFileSync(path.join(__dirname, name), 'utf8'), fs.readFileSync(path.join(dist, name), 'utf8'));
   }
 });
 
