@@ -148,6 +148,7 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'Modules/StimulusIndex.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/VallyRunner.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/ArtifactDetection.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/EvalSpecSchema.psm1') -Force
 
 if (-not (Get-Module -Name powershell-yaml)) {
     Import-Module powershell-yaml -ErrorAction Stop
@@ -734,6 +735,36 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             $failedSpecs++
             continue
         }
+    }
+
+    $parsedSpec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $specAbs -Raw -ErrorAction Stop)
+    if ($parsedSpec -isnot [System.Collections.IDictionary]) {
+        throw "Eval spec '$specRel' must be a mapping before source validation."
+    }
+    $repoRelativeSpecPath = [System.IO.Path]::GetRelativePath($resolvedRoot, $specAbs).Replace('\', '/')
+    $sourceErrors = @(Test-EvalSpecSources -Spec $parsedSpec -SpecPath $repoRelativeSpecPath -RepoRoot $resolvedRoot)
+    if ($sourceErrors.Count -gt 0) {
+        foreach ($sourceError in $sourceErrors) {
+            Write-Host "::error file=${repoRelativeSpecPath}::$($sourceError.field): $($sourceError.message)"
+        }
+        $specResults[$runKey] = @{
+            specPath         = $specAbs
+            specRel          = $specRel
+            tag              = $tag
+            exitCode         = 1
+            runDir           = $null
+            assertionsPassed = 0
+            assertionsFailed = 0
+            durationMs       = 0
+            trials           = 0
+            resultsPath      = $null
+            moderationInput  = $inputModeration
+            moderationOutput = $null
+            status           = 'invalid-spec-source'
+        }
+        $failedSpecs++
+        if ($FailFast) { break }
+        continue
     }
 
     $tagBanner = if (-not [string]::IsNullOrWhiteSpace($tag)) { " --tag $tag" } else { '' }
