@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-09-22
+ms.date: 2026-09-29
 ms.topic: overview
 keywords:
   - github actions
@@ -191,48 +191,52 @@ flowchart LR
 
 ### Jobs
 
-| Job                             | Reusable Workflow                     | Validates                                               |
-|---------------------------------|---------------------------------------|---------------------------------------------------------|
-| spell-check                     | `spell-check.yml`                     | Spelling across all files                               |
-| markdown-lint                   | `markdown-lint.yml`                   | Markdown formatting rules                               |
-| table-format                    | `table-format.yml`                    | Markdown table structure                                |
-| psscriptanalyzer                | `ps-script-analyzer.yml`              | PowerShell code quality                                 |
-| discover-python-projects        | Inline                                | Enumerates Python project directories                   |
-| discover-node-projects          | Inline                                | Enumerates Node skill directories                       |
-| python-lint                     | `python-lint.yml`                     | Python code quality, per project                        |
-| copyright-headers               | `copyright-headers.yml`               | Copyright header compliance                             |
-| yaml-lint                       | `yaml-lint.yml`                       | YAML syntax                                             |
-| pester-tests                    | `pester-tests.yml`                    | PowerShell unit tests                                   |
-| pytest                          | `pytest-tests.yml`                    | Python unit tests, per project                          |
-| copilot-otel-runtime-tests      | `pytest-tests.yml`                    | Copilot OTEL runtime tests                              |
-| node-tests                      | `node-tests.yml`                      | Node unit tests, per skill                              |
-| accessibility-browser-smoke     | Inline                                | Accessibility runner contract tests, browser smoke test |
-| fuzz-tests                      | `fuzz-tests.yml`                      | Fuzz harness runs, per project                          |
-| pip-audit                       | `pip-audit.yml`                       | Python dependency vulnerabilities                       |
-| docusaurus-tests                | `docusaurus-tests.yml`                | Documentation site build and tests                      |
-| frontmatter-validation          | `frontmatter-validation.yml`          | AI artifact metadata                                    |
-| adr-consistency-validation      | `adr-consistency-validation.yml`      | ADR consistency                                         |
-| ai-artifact-validation          | `ai-artifact-validation.yml`          | AI artifact structure                                   |
-| asset-docs-validation           | `asset-docs-validation.yml`           | Asset documentation                                     |
-| msdate-freshness                | `msdate-freshness-check.yml`          | `ms.date` freshness                                     |
-| plugin-validation               | `plugin-validation.yml`               | Plugin manifest, locator, hooks                         |
-| skill-validation                | `skill-validation.yml`                | Skill directory structure                               |
-| eval-validation                 | `eval-validation.yml`                 | Eval definitions                                        |
-| link-lang-check                 | `link-lang-check.yml`                 | Link accessibility                                      |
-| markdown-link-check             | `markdown-link-check.yml`             | Broken links                                            |
-| dependency-pinning-check        | `dependency-pinning-scan.yml`         | Dependency pinning                                      |
-| devcontainer-lockfile-check     | `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity                         |
-| workflow-permissions-check      | `workflow-permissions-scan.yml`       | Workflow permission scopes                              |
-| workflow-runner-check           | `workflow-runner-scan.yml`            | Workflow runner labels                                  |
-| dangerous-workflow-check        | `dangerous-workflow-scan.yml`         | Dangerous workflow patterns                             |
-| action-version-consistency-scan | `action-version-consistency-scan.yml` | Action version consistency                              |
-| gitleaks-scan                   | `gitleaks-scan.yml`                   | Secret detection                                        |
-| npm-audit                       | Inline                                | npm dependency vulnerabilities                          |
-| codeql                          | `codeql-analysis.yml`                 | Code security patterns                                  |
-| gate-completeness-check         | Inline                                | That the gate's `needs:` list covers every job          |
-| pr-validation-success           | Inline                                | Aggregates every validation job into one required check |
+| Job                             | Reusable Workflow                     | Validates                                                    |
+|---------------------------------|---------------------------------------|--------------------------------------------------------------|
+| spell-check                     | `spell-check.yml`                     | Spelling across all files                                    |
+| markdown-lint                   | `markdown-lint.yml`                   | Markdown formatting rules                                    |
+| table-format                    | `table-format.yml`                    | Markdown table structure                                     |
+| psscriptanalyzer                | `ps-script-analyzer.yml`              | PowerShell code quality                                      |
+| discover-python-projects        | Inline                                | Enumerates Python project directories                        |
+| discover-node-projects          | Inline                                | Enumerates Node project directories (skills and slide decks) |
+| python-lint                     | `python-lint.yml`                     | Python code quality, per project                             |
+| copyright-headers               | `copyright-headers.yml`               | Copyright header compliance                                  |
+| yaml-lint                       | `yaml-lint.yml`                       | YAML syntax                                                  |
+| pester-tests                    | `pester-tests.yml`                    | PowerShell unit tests                                        |
+| pytest                          | `pytest-tests.yml`                    | Python unit tests, per project                               |
+| copilot-otel-runtime-tests      | `pytest-tests.yml`                    | Copilot OTEL runtime tests                                   |
+| node-tests                      | `node-tests.yml`                      | Node unit tests, per project (skills and slide decks)        |
+| accessibility-browser-smoke     | Inline                                | Accessibility runner contract tests, browser smoke test      |
+| fuzz-tests                      | `fuzz-tests.yml`                      | Fuzz harness runs, per project                               |
+| pip-audit                       | `pip-audit.yml`                       | Python dependency vulnerabilities                            |
+| docusaurus-tests                | `docusaurus-tests.yml`                | Documentation site build and tests                           |
+| frontmatter-validation          | `frontmatter-validation.yml`          | AI artifact metadata                                         |
+| adr-consistency-validation      | `adr-consistency-validation.yml`      | ADR consistency                                              |
+| ai-artifact-validation          | `ai-artifact-validation.yml`          | AI artifact structure                                        |
+| asset-docs-validation           | `asset-docs-validation.yml`           | Asset documentation                                          |
+| msdate-freshness                | `msdate-freshness-check.yml`          | `ms.date` freshness                                          |
+| plugin-validation               | `plugin-validation.yml`               | Plugin manifest, locator, hooks                              |
+| skill-validation                | `skill-validation.yml`                | Skill directory structure                                    |
+| eval-validation                 | `eval-validation.yml`                 | Eval definitions                                             |
+| link-lang-check                 | `link-lang-check.yml`                 | Link accessibility                                           |
+| markdown-link-check             | `markdown-link-check.yml`             | Broken links                                                 |
+| dependency-pinning-check        | `dependency-pinning-scan.yml`         | Dependency pinning                                           |
+| devcontainer-lockfile-check     | `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity                              |
+| workflow-permissions-check      | `workflow-permissions-scan.yml`       | Workflow permission scopes                                   |
+| workflow-runner-check           | `workflow-runner-scan.yml`            | Workflow runner labels                                       |
+| dangerous-workflow-check        | `dangerous-workflow-scan.yml`         | Dangerous workflow patterns                                  |
+| action-version-consistency-scan | `action-version-consistency-scan.yml` | Action version consistency                                   |
+| gitleaks-scan                   | `gitleaks-scan.yml`                   | Secret detection                                             |
+| npm-audit                       | Inline                                | npm dependency vulnerabilities                               |
+| codeql                          | `codeql-analysis.yml`                 | Code security patterns                                       |
+| gate-completeness-check         | Inline                                | That the gate's `needs:` list covers every job               |
+| pr-validation-success           | Inline                                | Aggregates every validation job into one required check      |
 
-The validation jobs themselves run in parallel with no dependencies between them, so feedback stays fast. They are not the merge gate: `pr-validation-success` lists every one of them in its `needs:` and is the single check branch protection requires, so it fails if any of them fails or is skipped. `gate-completeness-check` runs `Test-PrValidationGate.ps1 -FailOnViolation` to enforce that the `needs:` list stays in sync with the job set, so a newly added job cannot silently bypass the gate.
+The validation jobs themselves run in parallel with no dependencies between them, so feedback stays fast. Dynamic test matrix jobs (`pytest`, `node-tests`) fan out across projects discovered by `discover-python-projects` and `discover-node-projects`.
+
+For Node projects, discovery inspects both skill directories under `.github/skills` and slide deck directories under `slides/*` containing unit or spec test files (`*.test.*` or `*.spec.*`). While `node-tests` defaults to running only when JS-family files change, slide decks (and the `hve-slides` skill) supply a custom `changed-paths-pattern` to also trigger on HTML, CSS, and JSON source changes.
+
+The validation jobs are not the merge gate: `pr-validation-success` lists every one of them in its `needs:` and is the single check branch protection requires, so it fails if any of them fails or is skipped. `gate-completeness-check` runs `Test-PrValidationGate.ps1 -FailOnViolation` to enforce that the `needs:` list stays in sync with the job set, so a newly added job cannot silently bypass the gate.
 
 ## Release Promotion and Publication
 
