@@ -3,7 +3,7 @@ title: Copyright Header Guidelines
 description: Standards for copyright and license headers in source files to meet OpenSSF Best Practices badge criteria
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-06-29
+ms.date: 2026-09-28
 ms.topic: reference
 keywords:
   - copyright
@@ -29,7 +29,7 @@ All source files in this repository must include a copyright and license header.
 # SPDX-License-Identifier: MIT
 ```
 
-Applies to: `.ps1` files
+Applies to: `.ps1`, `.psm1`, and `.psd1` files
 
 ### Python Files
 
@@ -40,13 +40,42 @@ Applies to: `.ps1` files
 
 Applies to: `.py` files
 
+### Shell Files
+
+```text
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+```
+
+Applies to: `.sh` files
+
+### JavaScript and TypeScript Files
+
+```text
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
+```
+
+Applies to: `.mjs`, `.cjs`, `.ts`, `.tsx`, and `.jsx` files
+
 ## Placement Rules
 
 The header placement depends on any required directives in the file:
 
+### With a Shebang
+
+In a file that starts with a shebang, place the header directly after it. In a PowerShell script, that puts the header **before** any `#Requires` statements:
+
+```powershell
+#!/usr/bin/env pwsh
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+#Requires -Version 7.4
+```
+
 ### With #Requires Statements
 
-Place the header **after** any `#Requires` statements:
+In files without a shebang, such as Pester tests, place the header **after** any `#Requires` statements:
 
 ```powershell
 #Requires -Version 7.4
@@ -59,7 +88,7 @@ Place the header **after** any `#Requires` statements:
 
 ### Without #Requires Statements
 
-If no `#Requires` statements exist, place the header at the first line:
+If there is no shebang and no `#Requires` statement, place the header at the first line:
 
 ```powershell
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
