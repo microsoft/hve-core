@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-29
+ms.date: 2026-09-30
 ms.topic: how-to
 keywords:
   - evals
@@ -117,6 +117,28 @@ evidence fails closed.
 `eval-report` is presentation-only. It downloads the single `eval-authoritative`
 artifact and renders its `eval-summary.json`; it does not concatenate partial summaries
 or decide whether evidence is complete.
+
+## Advisory Model Lanes
+
+The `equivalence-advisory` job reports how additional models behave on the
+baseline-equivalence suite without gating the pull request. It currently runs Microsoft
+`mai-code-1.1-flash`.
+
+* When it runs: under the same conditions as the gating baseline model lanes, and in
+  parallel with them.
+* What it runs: the equivalence driver in the advisory `devloop` tier with
+  `-Model mai-code-1.1-flash`, `-NoBaselineCache`, and the shared `compare-shard-count`.
+  The model runs at its default reasoning and context settings because GitHub does not
+  list it among models with configurable reasoning or the extended context window.
+* Why it never gates: the job is `continue-on-error`, no fan-in lists it in `needs`, and
+  its artifact name matches no fan-in download pattern. MAI models also receive new
+  checkpoints over time, so their behavior can change independently of this repository.
+* Where results appear: the job's step summary lists the verdict, gate, and key counts,
+  and the `advisory-equivalence-mai` artifact holds only the summary JSON.
+
+To add a model, add a matrix entry to `equivalence-advisory`. If a parallel advisory lane
+causes judge errors in the gating lanes, add `equivalence-execute` to the advisory job's
+`needs` so it runs after them.
 
 ## Trusted Progress
 

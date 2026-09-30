@@ -352,6 +352,47 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
         $script:Workflow | Should -Match '(?s)equivalence-execute:.*?COMPARE_SHARD_COUNT: \$\{\{ inputs\.compare-shard-count \|\| 5 \}\}.*?-CompareShardCount \(\[int\]\$env:COMPARE_SHARD_COUNT\)'
     }
 
+    It 'runs the advisory model lane in parallel without any path into gating' {
+        $jobs = $script:EvalWorkflow.jobs
+        $advisory = $jobs['equivalence-advisory']
+        $advisory | Should -Not -BeNullOrEmpty
+        $advisory['continue-on-error'] | Should -BeTrue
+        $advisory.permissions.contents | Should -Be 'read'
+        ([string]$advisory['if']).Trim() | Should -BeExactly ([string]$jobs['equivalence-execute']['if']).Trim()
+        @($advisory.needs) | Should -Not -Contain 'equivalence-execute'
+        foreach ($jobName in @($jobs.Keys)) {
+            @($jobs[$jobName].needs) | Should -Not -Contain 'equivalence-advisory' -Because "$jobName must not depend on the advisory lane"
+        }
+        @($advisory.strategy.matrix.include | ForEach-Object { $_.model }) | Should -Contain 'mai-code-1.1-flash'
+
+        $run = (@($advisory.steps | Where-Object { $_.name -eq 'Execute advisory model' }))[0].run
+        $run | Should -Match '-Tier devloop'
+        $run | Should -Match '-Model \$env:ADVISORY_MODEL'
+        $run | Should -Match '-CompareShardCount \(\[int\]\$env:COMPARE_SHARD_COUNT\)'
+        $run | Should -Not -Match 'reasoning-effort'
+    }
+
+    It 'publishes only the advisory summary under a name no fan-in downloads' {
+        $jobs = $script:EvalWorkflow.jobs
+        $upload = (@($jobs['equivalence-advisory'].steps | Where-Object { $_.uses -like 'actions/upload-artifact@*' }))[0]
+        $artifactNames = @($jobs['equivalence-advisory'].strategy.matrix.include | ForEach-Object { ([string]$upload.with.name).Replace('${{ matrix.key }}', [string]$_.key) })
+        ([string]$upload.with.path).Trim() | Should -BeExactly 'logs/advisory-equivalence-${{ matrix.model }}.json'
+
+        $downloadFilters = @(foreach ($jobName in @('equivalence-fan-in', 'eval-fan-in', 'eval-report')) {
+                foreach ($step in @($jobs[$jobName].steps | Where-Object { $_.uses -like 'actions/download-artifact@*' })) {
+                    foreach ($key in @('pattern', 'name')) {
+                        if ($step.with -and $step.with.ContainsKey($key)) { [string]$step.with[$key] }
+                    }
+                }
+            })
+        $downloadFilters | Should -Not -BeNullOrEmpty
+        foreach ($artifactName in $artifactNames) {
+            foreach ($filter in $downloadFilters) {
+                $artifactName -like $filter | Should -BeFalse -Because "fan-in filter '$filter' must not match '$artifactName'"
+            }
+        }
+    }
+
     It 'keeps ordinary manual execution enabled for dispatched callers' {
         $workflow = ConvertFrom-Yaml -Yaml $script:Workflow
         foreach ($jobName in @('agent-plan', 'eval-execute', 'equivalence-execute', 'equivalence-fan-in', 'eval-fan-in')) {

@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to measure nominal behavior preservation'
 author: HVE Core Team
-ms.date: 2026-09-29
+ms.date: 2026-09-30
 ---
 
 ## Purpose
@@ -61,6 +61,8 @@ npm run ci:eval:equivalence -- -Agent rpi-agent -WhatIf
 ```
 
 The former `pr` and `nightly` tier names are rejected with a migration message rather than aliased, because they carried different exit policies and a silent alias would let a stale caller select the wrong one.
+
+In CI, the `equivalence-advisory` job also runs the `devloop` tier against `mai-code-1.1-flash` as a non-gating advisory lane; see Advisory Model Lanes in [docs/contributing/evals-ci.md](../../docs/contributing/evals-ci.md).
 
 `rpi-agent` is the only equivalence subject currently selected, because the customized launch target is fixed to that agent and the corpus guards encode that agent's contract. Other agents can be materialized by the driver, but they are not selected and are not meaningfully evaluated: scoring one against this corpus would fail for reasons unrelated to equivalence. Treat the shared-stimulus and scope-guard claims in this document as applying to `rpi-agent` only.
 
