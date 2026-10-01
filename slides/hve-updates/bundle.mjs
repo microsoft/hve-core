@@ -7,11 +7,11 @@ import {
   bundleDeck as bundleDirectory,
   checkBundle as checkDirectory,
   createStandaloneHtml,
-  neutralizeRevealLazySources,
+  neutralizeRevealSinks,
   readRevealVersion
 } from '../../.github/skills/hve-slides/templates/deck/bundle.mjs';
 
-export { createStandaloneHtml, neutralizeRevealLazySources, readRevealVersion };
+export { createStandaloneHtml, neutralizeRevealSinks, readRevealVersion };
 
 export function bundleDeck(options = {}) {
   return bundleDirectory({ build: buildDeck, ...options });

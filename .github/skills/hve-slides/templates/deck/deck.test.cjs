@@ -233,9 +233,9 @@ test('complete bundle has current local assets, derived filename and full librar
     if (asset === 'vendor/reveal.js') continue;
     assert.ok(standalone.includes(fs.readFileSync(path.join(output, asset), 'utf8')), asset);
   }
-  const provenance = standalone.match(/<script type="application\/json" id="hve-slide-provenance">([\s\S]*?)<\/script>/g);
+  const provenance = [...standalone.matchAll(/<script type="application\/json" id="hve-slide-provenance">([\s\S]*?)<\/script>/g)];
   assert.equal(provenance.length, 1);
-  assert.equal(JSON.parse(provenance[0].replace(/^<script[^>]*>|<\/script>$/g, '')).securityCheckResult, 'passed');
+  assert.equal(JSON.parse(provenance[0][1]).securityCheckResult, 'passed');
   assert.match(standalone, /Permission is hereby granted/);
   assert.doesNotMatch(standalone, /<script[^>]+\bsrc=|<link rel="stylesheet"/);
 });
@@ -245,7 +245,8 @@ const revealFixture = [
   'a(e,`source[data-src]`).forEach(e=>{e.setAttribute(`src`,e.getAttribute(`data-src`)),n+=1});',
   'o.split(`,`).forEach(t=>{let n=document.createElement(`source`);n.setAttribute(`src`,t);e.appendChild(n)});',
   'a&&a.getAttribute(`src`)!==r&&a.setAttribute(`src`,r);',
-  'i&&(e.removeEventListener(`load`,f),e.setAttribute(`src`,e.getAttribute(`data-src`)));'
+  'i&&(e.removeEventListener(`load`,f),e.setAttribute(`src`,e.getAttribute(`data-src`)));',
+  '/youtube\\.com\\/embed\\//.test(t.getAttribute(`src`))&&e?p(1):/player\\.vimeo\\.com\\//.test(t.getAttribute(`src`))&&e?p(2):p(3);'
 ].join('\n');
 
 function revealPage() {
@@ -255,13 +256,16 @@ function revealPage() {
   };
 }
 
-test('reveal.js lazy-load sinks are removed from the installed release and every inlined script', async () => {
-  const { neutralizeRevealLazySources, supportedRevealVersion, createStandaloneHtml } = await import('./bundle.mjs');
+test('reveal.js lazy-load sinks and embed host checks are removed from the installed release and every inlined script', async () => {
+  const { neutralizeRevealSinks, supportedRevealVersion, createStandaloneHtml } = await import('./bundle.mjs');
   const flow = /setAttribute\(`src`,(?:e\.getAttribute\(`data-src`\)|t\)|r\))/;
   const installed = path.join(__dirname, 'node_modules/reveal.js/dist/reveal.js');
   for (const source of [revealFixture, ...(fs.existsSync(installed) ? [fs.readFileSync(installed, 'utf8')] : [])]) {
-    const patched = neutralizeRevealLazySources(source, supportedRevealVersion);
+    const patched = neutralizeRevealSinks(source, supportedRevealVersion);
     assert.doesNotMatch(patched, flow);
+    for (const hostCheck of ['/youtube\\.com\\/embed\\//.test(', '/player\\.vimeo\\.com\\//.test(']) {
+      assert.ok(!patched.includes(hostCheck), hostCheck);
+    }
     assert.doesNotThrow(() => new vm.Script(patched));
   }
   const { page, assets } = revealPage();
@@ -273,11 +277,12 @@ test('reveal.js lazy-load sinks are removed from the installed release and every
 });
 
 test('reveal.js patch fails closed on a changed anchor or unsupported version', async () => {
-  const { neutralizeRevealLazySources, supportedRevealVersion } = await import('./bundle.mjs');
-  assert.throws(() => neutralizeRevealLazySources(revealFixture.replace('n.setAttribute(`src`,t);', 'n.src=t;'), supportedRevealVersion), /anchor "background video source" matched 0 times/);
-  assert.throws(() => neutralizeRevealLazySources(`${revealFixture}\na.setAttribute(\`src\`,r)`, supportedRevealVersion), /anchor "background iframe" matched 2 times/);
-  assert.throws(() => neutralizeRevealLazySources(revealFixture, '6.1.0'), /reveal\.js 6\.1\.0 is not supported/);
-  assert.throws(() => neutralizeRevealLazySources(revealFixture, undefined), /is not supported/);
+  const { neutralizeRevealSinks, supportedRevealVersion } = await import('./bundle.mjs');
+  assert.throws(() => neutralizeRevealSinks(revealFixture.replace('n.setAttribute(`src`,t);', 'n.src=t;'), supportedRevealVersion), /anchor "background video source" matched 0 times/);
+  assert.throws(() => neutralizeRevealSinks(`${revealFixture}\na.setAttribute(\`src\`,r)`, supportedRevealVersion), /anchor "background iframe" matched 2 times/);
+  assert.throws(() => neutralizeRevealSinks(revealFixture.replace('/player\\.vimeo\\.com\\//', '/vimeo\\.com\\//'), supportedRevealVersion), /anchor "embedded Vimeo host check" matched 0 times/);
+  assert.throws(() => neutralizeRevealSinks(revealFixture, '6.1.0'), /reveal\.js 6\.1\.0 is not supported/);
+  assert.throws(() => neutralizeRevealSinks(revealFixture, undefined), /is not supported/);
 });
 
 test('provenance block matches its contract, is deterministic, and cannot terminate its script', async () => {
@@ -293,7 +298,7 @@ test('provenance block matches its contract, is deterministic, and cannot termin
   assert.deepEqual(JSON.parse(blocks[0][1]), {
     generator: 'hve-slides',
     revealVersion: '6.0.2',
-    patches: ['reveal-lazy-src-neutralized'],
+    patches: ['reveal-lazy-src-neutralized', 'reveal-embed-host-regex-neutralized'],
     securityChecks: ['raw-text-delimiters', 'inline-styles', 'resource-markup', 'reveal-lazy-src'],
     securityCheckResult: 'passed'
   });

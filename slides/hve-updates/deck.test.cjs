@@ -317,7 +317,7 @@ test('standalone renderer rejects nonembedded resources and paths outside the de
 });
 
 test('standalone output contains the full current deck, vendor code and license', async () => {
-  const { bundleDeck, createStandaloneHtml, neutralizeRevealLazySources, readRevealVersion } = await standaloneModule;
+  const { bundleDeck, createStandaloneHtml, neutralizeRevealSinks, readRevealVersion } = await standaloneModule;
   const destination = await bundleDeck();
   assert.equal(destination, path.join(__dirname, '../../docs/slides/hve-updates.html'));
   const bundled = fs.readFileSync(destination, 'utf8');
@@ -330,7 +330,7 @@ test('standalone output contains the full current deck, vendor code and license'
   assert.equal(bundled, createStandaloneHtml(html, assets, license, metadata, { revealVersion }));
   const catalog = bundled.match(/<script type="application\/json" id="hve-slide-metadata">([\s\S]*?)<\/script>/)[1];
   assert.deepEqual(JSON.parse(catalog), { title: metadata.title, description: metadata.description });
-  assets.set('vendor/reveal.js', neutralizeRevealLazySources(assets.get('vendor/reveal.js'), revealVersion));
+  assets.set('vendor/reveal.js', neutralizeRevealSinks(assets.get('vendor/reveal.js'), revealVersion));
   for (const name of [...styles, ...scripts]) assert.ok(bundled.includes(assets.get(name)), name);
   assert.equal((bundled.match(/<section\b/g) || []).length, 26);
   assert.equal((bundled.match(/<style data-bundled-source=/g) || []).length, 3);

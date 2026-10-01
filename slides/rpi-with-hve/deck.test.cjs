@@ -417,7 +417,7 @@ test('catalog metadata is validated and cannot terminate the inert JSON block', 
 });
 
 test('complete bundle has current local assets, derived filename and full library notice', async t => {
-  const { bundleDeck, neutralizeRevealLazySources, readRevealVersion } = await import('./bundle.mjs');
+  const { bundleDeck, neutralizeRevealSinks, readRevealVersion } = await import('./bundle.mjs');
   const { buildDeck, sourceFiles } = await import('./build.mjs');
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'hve-deck-bundle-'));
   t.after(() => fs.rmSync(temporary, { recursive: true, force: true }));
@@ -442,7 +442,7 @@ test('complete bundle has current local assets, derived filename and full librar
   for (const [, asset] of html.matchAll(/<(?:link|script)\b[^>]*(?:href|src)="([^"]+)"/g)) {
     assert.ok(!/^(?:https?:)?\/\//.test(asset));
     const source = fs.readFileSync(path.join(output, asset), 'utf8');
-    assert.ok(standalone.includes(asset === 'vendor/reveal.js' ? neutralizeRevealLazySources(source, revealVersion) : source), asset);
+    assert.ok(standalone.includes(asset === 'vendor/reveal.js' ? neutralizeRevealSinks(source, revealVersion) : source), asset);
   }
   assert.match(standalone, /id="hve-slide-provenance"/);
   assert.match(standalone, /Permission is hereby granted/);

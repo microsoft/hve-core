@@ -10,16 +10,19 @@ const scriptTag = /(?:^[ \t]*)?<script defer src="([^"]+)"><\/script>/gm;
 
 export const revealAsset = 'vendor/reveal.js';
 export const supportedRevealVersion = '6.0.2';
-export const revealLazySourcePatch = 'reveal-lazy-src-neutralized';
+export const revealPatches = ['reveal-lazy-src-neutralized', 'reveal-embed-host-regex-neutralized'];
 export const securityChecks = ['raw-text-delimiters', 'inline-styles', 'resource-markup', 'reveal-lazy-src'];
 
-// reveal.js copies data-src and background-media attributes into src at runtime. Decks reject
-// those attributes, so the bundler removes these DOM-text-to-URL sinks instead of sanitizing them.
+// Decks reject media, frames, and data-src attributes, so the bundler removes these unused reveal.js
+// paths instead of sanitizing them: DOM-text-to-URL sinks that copy data-src and background-media
+// attributes into src, and unanchored embed-host regexes that pick an iframe postMessage target.
 // Exact anchors and counts fail closed when a reveal.js update changes the minified code.
-const revealLazySourceSinks = [
+const revealSinks = [
   { name: 'lazy-loaded media, source, and iframe data-src', search: 'e.setAttribute(`src`,e.getAttribute(`data-src`))', count: 3, replacement: 'void 0' },
   { name: 'background video source', search: 'n.setAttribute(`src`,t);', count: 1, replacement: 'void 0;' },
-  { name: 'background iframe', search: 'a.setAttribute(`src`,r)', count: 1, replacement: 'void 0' }
+  { name: 'background iframe', search: 'a.setAttribute(`src`,r)', count: 1, replacement: 'void 0' },
+  { name: 'embedded YouTube host check', search: '/youtube\\.com\\/embed\\//.test(t.getAttribute(`src`))', count: 1, replacement: '!1' },
+  { name: 'embedded Vimeo host check', search: '/player\\.vimeo\\.com\\//.test(t.getAttribute(`src`))', count: 1, replacement: '!1' }
 ];
 const lazySourceFlow = /setAttribute\(\s*[`'"]src[`'"]\s*,\s*[\w$.]+\.getAttribute\(\s*[`'"]data-src[`'"]\s*\)\s*\)/;
 
@@ -34,13 +37,13 @@ function localAssetPath(source) {
   return source;
 }
 
-export function neutralizeRevealLazySources(js, revealVersion) {
-  const refresh = 'Review the reveal.js lazy-load code and refresh the anchors in the hve-slides bundler before updating reveal.js.';
+export function neutralizeRevealSinks(js, revealVersion) {
+  const refresh = 'Review the patched reveal.js code and refresh the anchors in the hve-slides bundler before updating reveal.js.';
   if (revealVersion !== supportedRevealVersion) {
-    throw new Error(`reveal.js ${revealVersion} is not supported by the ${revealLazySourcePatch} patch; expected ${supportedRevealVersion}. ${refresh}`);
+    throw new Error(`reveal.js ${revealVersion} is not supported by the bundler security patches; expected ${supportedRevealVersion}. ${refresh}`);
   }
   let patched = js;
-  for (const { name, search, count, replacement } of revealLazySourceSinks) {
+  for (const { name, search, count, replacement } of revealSinks) {
     const found = patched.split(search).length - 1;
     if (found !== count) {
       throw new Error(`reveal.js ${revealVersion} anchor "${name}" matched ${found} times; expected ${count}. ${refresh}`);
@@ -100,7 +103,7 @@ export function createStandaloneHtml(html, assets, license, metadata, { revealVe
   document = document.replace(scriptTag, (_, source) => {
     let js = asset(source);
     if (source === revealAsset) {
-      js = neutralizeRevealLazySources(js, revealVersion);
+      js = neutralizeRevealSinks(js, revealVersion);
       patchedReveal = true;
     }
     if (/<\/script(?=[\s/>])|<!--/i.test(js)) {
@@ -144,7 +147,7 @@ export function createStandaloneHtml(html, assets, license, metadata, { revealVe
     const json = JSON.stringify({
       generator: 'hve-slides',
       revealVersion,
-      patches: [revealLazySourcePatch],
+      patches: revealPatches,
       securityChecks,
       securityCheckResult: 'passed'
     }).replaceAll('<', '\\u003c');
