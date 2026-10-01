@@ -1,0 +1,5 @@
+{
+  "title": "RAI Planner with HVE Core",
+  "description": "How the RAI Planner and its skills, instructions and prompts plan a Responsible AI assessment, and how to extend them for your organization with HVE Builder.",
+  "sourceNote": "Product details reflect the October 1, 2026 snapshot: HVE Core 7e2de1a and the linked VS Code documentation. Both walkthroughs are scripted illustrations, not recorded agent runs. Woodgrove Bank, its policy and its systems are fictional."
+}
