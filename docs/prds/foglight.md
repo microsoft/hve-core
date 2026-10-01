@@ -571,7 +571,7 @@ decision.
 * Kept the picture current by ingesting new evidence and ADRs, so a model or
   data change updates the artifact instead of silently invalidating "green."
 
-Tool reference: [Confidence Dashboard](Tools/confidence-dashboard.md).
+Tool reference: Confidence Dashboard.
 
 ## Contribution and Extension Model
 
