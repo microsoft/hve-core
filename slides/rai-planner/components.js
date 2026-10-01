@@ -117,77 +117,19 @@
     layout.append(findings, edits);
     return layout;
   }
-  function tierExplorer(example, context) {
-    const { depthTier } = globalThis.DeckContent;
-    const root = element('div', 'tier-explorer');
-    const gate = element('div', 'tier-card tier-gate');
-    gate.append(element('span', 'tier-step', 'Step 1'), element('h3', '', 'Prohibited uses gate'),
-      element('p', '', 'Runs first. If a listed use applies, the planner records it and pauses until you acknowledge it.'));
-    const screen = element('div', 'tier-card tier-indicators');
-    const buttons = element('div', 'indicator-buttons');
-    buttons.setAttribute('role', 'group');
-    buttons.setAttribute('aria-label', 'Risk indicators');
-    screen.append(element('span', 'tier-step', 'Step 2'), element('h3', '', 'Risk indicators'), buttons);
-    const result = element('div', 'tier-card tier-result');
-    const count = element('p', 'tier-count');
-    const scale = element('ul', 'tier-scale');
-    scale.setAttribute('aria-label', 'Activated indicators and depth tier');
-    example.tiers.forEach(tier => {
-      const row = element('li');
-      row.dataset.tier = tier.name;
-      row.append(element('span', 'tier-range', tier.activated), element('span', 'sr-only', ' activated: '),
-        element('strong', '', tier.name), element('span', 'tier-flag', ''));
-      scale.append(row);
-    });
-    result.append(element('span', 'tier-step', 'Step 3'), element('h3', '', 'Suggested depth'), count, scale,
-      element('p', 'tier-gate-note', 'Hard gate: you confirm the tier before Phase 3.'));
-    const update = () => {
-      const activated = buttons.querySelectorAll('[aria-pressed="true"]').length;
-      const tier = depthTier(activated);
-      count.replaceChildren(element('strong', '', String(activated)), ` of ${example.indicators.length} activated`);
-      scale.querySelectorAll('li').forEach(row => {
-        const current = row.dataset.tier === tier;
-        if (current) row.setAttribute('aria-current', 'true');
-        else row.removeAttribute('aria-current');
-        row.querySelector('.tier-flag').textContent = current ? 'Suggested' : '';
-      });
-      return { activated, tier };
-    };
-    example.indicators.forEach(indicator => {
-      const button = element('button', 'indicator');
-      button.type = 'button';
-      button.setAttribute('aria-pressed', 'false');
-      const state = hidden('Not activated', 'indicator-state');
-      button.append(element('code', 'indicator-name', indicator.name),
-        element('span', 'indicator-meta', `${indicator.method} / ${indicator.nist.join(', ')}`),
-        element('span', 'indicator-focus', indicator.focus), state);
-      button.addEventListener('click', () => {
-        const pressed = button.getAttribute('aria-pressed') !== 'true';
-        button.setAttribute('aria-pressed', String(pressed));
-        state.textContent = pressed ? 'Activated' : 'Not activated';
-        const { activated, tier } = update();
-        context.announce?.(`${activated} of ${example.indicators.length} indicators activated. Suggested depth: ${tier}.`);
-      });
-      buttons.append(button);
-    });
-    root.append(gate, screen, result);
-    update();
-    return root;
-  }
   const renderers = {
     code: example => codeSurface(example.file, example.body),
     composer,
     chat,
-    review,
-    'tier-explorer': tierExplorer
+    review
   };
-  function renderExample(example, context = {}) {
+  function renderExample(example) {
     if (!example || typeof example.kind !== 'string') throw new Error('Missing example kind.');
     const render = renderers[example.kind];
     if (!render) throw new Error(`Unknown example component: ${example.kind}`);
     if (typeof example.caption !== 'string' || !example.caption.trim()) throw new Error(`Missing fidelity caption: ${example.kind}`);
     const scene = element('div', `example-scene scene-${example.kind}`);
-    scene.append(element('p', 'example-caption', example.caption), render(example, context));
+    scene.append(element('p', 'example-caption', example.caption), render(example));
     return scene;
   }
   globalThis.DeckComponents = { element, renderExample, kinds: Object.keys(renderers) };

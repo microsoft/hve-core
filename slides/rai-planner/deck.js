@@ -48,7 +48,7 @@
     const announce = text => { required('#announcement').textContent = text; };
     document.querySelectorAll('[data-example]').forEach(node => {
       if (!examples[node.dataset.example]) throw new Error(`Missing example: ${node.dataset.example}`);
-      node.replaceChildren(renderExample(examples[node.dataset.example], { announce }));
+      node.replaceChildren(renderExample(examples[node.dataset.example]));
     });
     const previous = required('#previous-slide');
     const next = required('#next-slide');
@@ -128,15 +128,14 @@
       if (!demo?.steps?.length || demo.steps.some(step => !demo.phases.includes(step.phase))) throw new Error(`Invalid walkthrough: ${name}`);
       if (states.has(name)) throw new Error(`Duplicate walkthrough host: ${name}`);
       states.set(name, 0);
-      const rail = element('div', 'demo-rail');
+      const sidebar = element('div', 'demo-sidebar');
       const phases = element('ol', 'demo-phases');
       phases.setAttribute('aria-label', `${demo.label} phases`);
       demo.phases.forEach(phase => phases.append(element('li', '', phase)));
-      rail.append(element('p', 'demo-label', demo.label), phases);
-      const notes = element('div', 'demo-sidebar');
       const state = element('div', 'demo-state');
       state.append(element('span', 'demo-note-label', 'State'), element('strong'));
-      notes.append(state, element('span', 'demo-note-label', 'What to notice'), element('p', 'demo-insight'));
+      sidebar.append(element('p', 'demo-label', demo.label), phases, state,
+        element('span', 'demo-note-label', 'What to notice'), element('p', 'demo-insight'));
       const main = element('div', 'demo-main');
       const header = element('div', 'demo-header');
       header.append(element('h3'), element('output', 'demo-count'));
@@ -150,10 +149,8 @@
         button.addEventListener('click', () => performStep(host, action));
         controls.append(button);
       }
-      main.append(header, element('div', 'demo-body'));
-      const stage = element('div', 'demo-stage');
-      stage.append(main, notes);
-      host.replaceChildren(rail, stage, controls);
+      main.append(header, element('div', 'demo-body'), controls);
+      host.replaceChildren(sidebar, main);
       renderDemo(host);
     });
 

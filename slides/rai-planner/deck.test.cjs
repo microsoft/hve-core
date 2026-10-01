@@ -9,10 +9,24 @@ const vm = require('node:vm');
 const context = vm.createContext({});
 vm.runInContext(fs.readFileSync(path.join(__dirname, 'content.js'), 'utf8'), context);
 vm.runInContext(fs.readFileSync(path.join(__dirname, 'components.js'), 'utf8'), context);
-const { sources, examples, demos, moveStep, diffStats, depthTier } = context.DeckContent;
+const { sources, examples, demos, moveStep, diffStats } = context.DeckContent;
 const { kinds } = context.DeckComponents;
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 const snapshot = '7e2de1aa135133acc4e9592adffc220cad9bdfdf';
+
+test('the condensed talk has nine slides and thirteen walkthrough steps', () => {
+  const ids = [...html.matchAll(/<section\b[^>]*\bid="([^"]+)"/g)].map(match => match[1]);
+  assert.deepEqual(ids, [
+    'opening', 'value', 'entry-modes', 'phases', 'use-walkthrough',
+    'state', 'no-code', 'extend-walkthrough', 'closing'
+  ]);
+  assert.equal(demos.assess.steps.length, 6);
+  assert.equal(demos.extend.steps.length, 7);
+  const readme = fs.readFileSync(path.join(__dirname, 'README.md'), 'utf8');
+  assert.match(readme, /9-slide/);
+  assert.match(readme, /six-step walkthrough/);
+  assert.match(readme, /seven-step hve-builder walkthrough/);
+});
 
 test('slides have unique IDs, headings, chapters, notes and valid citation keys', () => {
   const slides = [...html.matchAll(/<section\b([^>]*)>([\s\S]*?)<\/section>/g)];
@@ -34,6 +48,8 @@ test('slides have unique IDs, headings, chapters, notes and valid citation keys'
 });
 
 test('example mounts and walkthrough contracts match their data', () => {
+  const exampleNames = [...html.matchAll(/data-example="([^"]+)"/g)].map(match => match[1]);
+  assert.deepEqual(exampleNames.sort(), Object.keys(examples).sort());
   for (const [, name] of html.matchAll(/data-example="([^"]+)"/g)) {
     assert.ok(examples[name], name);
     assert.ok(kinds.includes(examples[name].kind), examples[name].kind);
@@ -80,11 +96,24 @@ test('the use walkthrough stays within the planner question limit and gate order
   const questions = scoping.messages.flatMap(message => message.blocks).filter(block => block.type === 'checklist')
     .flatMap(block => block.items).filter(item => item.status === 'pending');
   assert.ok(questions.length >= 1 && questions.length <= 7);
-  const start = steps.filter(step => step.phase === 'Start').map(step => JSON.stringify(step));
-  assert.ok(start.some(text => text.includes('CAUTION')) && start.some(text => text.includes('NIST AI Risk Management Framework 1.0')));
+  const blocks = scoping.messages.flatMap(message => message.blocks);
+  assert.equal(blocks[0].label, 'CAUTION');
+  assert.match(blocks[1].text, /NIST AI Risk Management Framework 1.0/);
+  assert.ok(blocks.findIndex(block => block.type === 'checklist') > 1);
   const risk = JSON.stringify(steps.find(step => step.phase === 'Risk'));
-  assert.ok(risk.indexOf('Prohibited uses gate') < risk.indexOf('safety_reliability'));
-  assert.match(steps.find(step => step.phase === 'Threats').body, /T-RAI-001/);
+  const prohibitedGate = risk.indexOf('Prohibited uses gate');
+  const firstIndicator = risk.indexOf('Rights, fairness and privacy');
+  assert.ok(prohibitedGate >= 0 && firstIndicator > prohibitedGate);
+  assert.match(risk, /comprehensive/);
+  const plan = steps.find(step => step.phase === 'Plan');
+  assert.match(plan.state, /Phase 3 confirmed/);
+  assert.match(plan.body, /T-RAI-001/);
+  const evidence = JSON.stringify(steps.find(step => step.phase === 'Evidence'));
+  assert.match(evidence, /EV-001 -> T-RAI-001/);
+  assert.match(evidence, /unverified/);
+  const handoff = JSON.stringify(steps.at(-1));
+  assert.match(handoff, /EV-001/);
+  assert.match(handoff, /confirm whether to create/);
 });
 
 test('walkthrough boundaries clamp, reset and reject malformed state', () => {
@@ -149,6 +178,46 @@ test('presenter bar ends stay clear of viewer overlays', () => {
   assert.match(theme, /\[data-reading-view="true"\] body \{[^}]*padding-bottom: var\(--presenter-inset\);/);
 });
 
+test('presenter bar, slide footer and walkthrough controls follow the shared bottom chrome', () => {
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  // Returns the declarations of the unprefixed rule for a selector, so assertions do not depend on declaration order.
+  const rule = selector => {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = theme.match(new RegExp(`^${escaped} \\{([^}]*)\\}`, 'm'));
+    assert.ok(match, `Missing rule: ${selector}`);
+    return match[1];
+  };
+  // The bar names the deck and the current chapter before its controls.
+  assert.match(html, /<nav id="presenter-controls"[^>]*>\s*<div class="brand"><span class="brand-dot" aria-hidden="true"><\/span> HVE CORE <span id="chapter-label">/);
+  // Short chapter labels keep the bar on one row at desktop widths.
+  for (const [, chapter] of html.matchAll(/data-chapter="([^"]+)"/g)) assert.ok(chapter.length <= 28, `Chapter label too long for the bar: ${chapter}`);
+  // One variable sizes the bar and the slide area above it, including the stacked layouts.
+  assert.match(theme, /--presenter-height: 64px;/);
+  assert.match(theme, /:root:not\(\[data-reading-view="true"\]\) \{ --presenter-height: 108px; \}/);
+  assert.match(rule('.reveal'), /inset: 0 0 var\(--presenter-height\);/);
+  assert.match(rule('.reveal'), /height: calc\(100% - var\(--presenter-height\)\);/);
+  const bar = rule('#presenter-controls');
+  assert.match(bar, /height: var\(--presenter-height\);/);
+  // reveal.js gives the current slide z-index 11; reading view would otherwise paint scrolled content over the bar.
+  assert.ok(Number(bar.match(/z-index: (\d+);/)?.[1]) > 11);
+  // Footer labels sit above a divider in body text.
+  assert.match(html, /<div class="slide-bottom">/);
+  assert.match(rule('.slide-bottom'), /border-top: 1px solid/);
+  assert.doesNotMatch(rule('.slide-bottom'), /font-mono/);
+  // Step controls are the footer of the example frame, with Next step as the primary action.
+  assert.match(source, /main\.append\(header, element\('div', 'demo-body'\), controls\);/);
+  assert.match(source, /host\.replaceChildren\(sidebar, main\);/);
+  assert.match(rule('.demo-main'), /overflow: hidden;/);
+  assert.match(rule('.demo-main'), /border: 1px solid/);
+  assert.match(rule('.demo-controls'), /border-top: 1px solid/);
+  assert.match(rule('.demo-controls [data-action="next"]'), /font-weight: 600;/);
+  // Compact presenter buttons on the canvas. In reading view, the presenter-specific selector outranks the bar's 40px rule.
+  assert.match(rule('#presenter-controls button'), /min-height: 40px;/);
+  assert.match(theme, /^\[data-reading-view="true"\] button, \[data-reading-view="true"\] #presenter-controls button \{ min-height: 44px; \}$/m);
+  assert.doesNotMatch(theme, /^button \{ min-height: 44px; \}$/m);
+});
+
 test('deck initialization disables the unused cross-window API', () => {
   const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
   assert.match(source, /postMessage:\s*false/);
@@ -163,39 +232,67 @@ test('deck initialization disables the unused cross-window API', () => {
 test('the review correction matches the drafted instruction and keeps NIST active', () => {
   const steps = demos.extend.steps;
   const review = steps.find(step => step.kind === 'review');
-  const draft = steps.find(step => step.kind === 'code' && step.file.endsWith('woodgrove-rai.instructions.md'));
+  const draft = steps.find(step => step.kind === 'code' && step.file.endsWith('contoso-rai.instructions.md'));
   const stats = diffStats(review.diff);
   assert.equal(stats.added, 2);
   assert.equal(stats.removed, 2);
   for (const row of review.diff.filter(row => row.type !== 'add')) assert.ok(draft.body.includes(row.text), row.text);
   assert.match(draft.body, /applyTo: '\*\*\/\.copilot-tracking\/rai-plans\/\*\*'/);
-  const result = steps.at(-1);
-  assert.match(result.body, /"replaceDefaultFramework": false/);
-  assert.match(result.body, /"type": "standard"/);
-  assert.match(result.body, /"type": "prohibited-use-framework"/);
+  const result = steps.find(step => step.phase === 'Use' && step.kind === 'chat');
+  const response = result.messages.find(message => message.role === 'assistant');
+  const fields = JSON.parse(`{${response.blocks.find(block => block.type === 'code').text}}`);
+  assert.equal(fields.riskClassification.framework.id, 'nist-ai-rmf');
+  assert.equal(fields.riskClassification.framework.replaceDefaultFramework, false);
+  assert.equal(fields.userPreferences.targetSystem, 'ado');
+  assert.equal(fields.userPreferences.autonomyTier, 'partial');
+  const processed = response.blocks.find(block => block.type === 'text').text;
+  assert.match(processed, /SR 26-2 as standards/);
+  assert.match(processed, /NIST AI RMF 1\.0 stays active/);
   const skill = steps.find(step => step.kind === 'code' && step.file.endsWith('/SKILL.md'));
   const name = skill.body.match(/^name: (.+)$/m)[1];
   assert.equal(skill.file.split('/').at(-2), name);
   assert.match(name, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+  assert.ok(result.messages[0].blocks[0].text.startsWith(`/${name} `));
+  assert.match(steps[0].body, /^\/hve-builder /);
+  assert.match(draft.body, /^# Conventions for Contoso lending assessments$/m);
+  assert.match(review.caption, /Scripted source review/);
   assert.throws(() => diffStats([{ type: 'invalid', text: '' }]), /Invalid/);
 });
 
-test('depth tier follows the activated indicator count', () => {
-  assert.equal(depthTier(0), 'basic');
-  assert.equal(depthTier(1), 'standard');
-  assert.equal(depthTier(2), 'comprehensive');
-  assert.equal(depthTier(3), 'comprehensive');
-  for (const invalid of [-1, 1.5, 4, '2']) assert.throws(() => depthTier(invalid), /Invalid/);
-  const { indicators, tiers } = examples.tier;
-  assert.deepEqual(Array.from(indicators, item => `${item.name}:${item.method}`), [
-    'safety_reliability:binary', 'rights_fairness_privacy:categorical', 'security_explainability:continuous'
-  ]);
-  assert.deepEqual(Array.from(tiers, tier => tier.name), ['basic', 'standard', 'comprehensive']);
+test('the extension layers real SR 26-2 guidance with its source and scope', () => {
+  const steps = demos.extend.steps;
+  const skill = steps.find(step => step.kind === 'code' && step.file.endsWith('/SKILL.md'));
+  const summary = steps.find(step => step.kind === 'code' && step.file.endsWith('/sr-26-2-summary.md'));
+  assert.equal(summary.file, skill.file.replace(/SKILL\.md$/, 'references/sr-26-2-summary.md'));
+  assert.match(skill.body, /^\* references\/sr-26-2-summary\.md \(standard\)$/m);
+  assert.match(steps[0].body, /SR 26-2/);
+  assert.ok(summary.body.includes(sources['sr-26-2-guidance'].url));
+  assert.match(summary.body, /April 17, 2026/);
+  assert.match(summary.body, /Out of scope: generative and agentic AI models/);
+  assert.match(summary.body, /paraphrase/i);
+  assert.ok(steps.indexOf(summary) < steps.findIndex(step => step.kind === 'review'));
+  for (const step of steps.filter(step => step.kind === 'code')) assert.ok(step.body.split('\n').length <= 11, `${step.title} fits above the controls`);
+  const mapping = steps.at(-1);
+  assert.equal(mapping.phase, 'Use');
+  assert.match(mapping.body, /^Baseline: NIST AI RMF 1\.0$/m);
+  assert.match(mapping.body, /SR 26-2 outcomes analysis/);
+  const statuses = [...mapping.body.matchAll(/ -> ([a-z-]+)$/gm)].map(match => match[1]);
+  assert.ok(statuses.length >= 3);
+  for (const status of statuses) assert.ok(['not-yet-covered', 'partial', 'addressed', 'gap-identified'].includes(status), status);
+  for (const key of ['sr-26-2', 'sr-26-2-guidance', 'occ-2026-13']) {
+    assert.match(sources[key].url, /^https:\/\/www\.(?:federalreserve|occ)\.gov\//, key);
+    assert.match(sources[key].note, /Read October 1, 2026\./, key);
+  }
+  assert.match(html.match(/<section id="extend-walkthrough"[\s\S]*?<\/section>/)[0], /generative and agentic AI/);
+  const deckText = ['index.html', 'content.js', 'README.md', 'deck.json']
+    .map(file => fs.readFileSync(path.join(__dirname, file), 'utf8')).join('\n');
+  assert.doesNotMatch(deckText, /woodgrove/i);
+  assert.match(deckText, /Contoso/);
 });
 
 test('repository citations are pinned to the source snapshot', () => {
   const pinned = Object.entries(sources).filter(([, source]) => /github\.com\/microsoft\/hve-core\/(?:blob|tree)\//.test(source.url));
-  assert.ok(pinned.length > 20);
+  assert.ok(pinned.length > 0);
   for (const [key, source] of pinned) assert.ok(source.url.includes(`/${snapshot}/`) || source.url.endsWith(`/${snapshot}`) || source.url.endsWith(`/${snapshot}/`), key);
   for (const [key, source] of Object.entries(sources)) {
     assert.ok(source.title.trim() && source.note.trim(), key);

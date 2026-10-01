@@ -1,6 +1,6 @@
 ---
 title: RAI Planner with HVE Core deck
-description: An interactive presentation on using the HVE Core RAI Planner and extending it for an organization with HVE Builder.
+description: Use RAI Planner on a support chatbot, then use hve-builder to add your team's policy and plan conventions.
 ms.date: 2026-10-01
 ---
 
@@ -35,19 +35,22 @@ the skip link moves focus to them.
 
 ## Story and audience
 
-The 17-slide talk is for engineers, technical leads and Responsible AI champions who use
-or customize HVE Core. It takes about 25 to 30 minutes:
+The 9-slide talk is for engineers, technical leads and Responsible AI champions who use
+or customize HVE Core. Allow roughly 15 to 20 minutes, depending on time spent in the examples.
 
-* The overview slides explain what the planner provides and how its prompts, agents,
-  skills and instructions load, including how the RAI Reviewer differs.
-* The "How it works" slides cover the six phases and their gates, the three entry modes,
-  the depth-tier rule, the files an assessment writes and the planner's guardrails.
-* An eight-step walkthrough follows a fictional customer support chatbot from the startup
-  disclaimer to a backlog handoff and a declined request for compliance sign-off.
-* The "Extend it" slides cover the reference content the planner already accepts,
-  choosing an artifact by how it loads and the HVE Builder lifecycle.
-* A seven-step walkthrough extends the planner for the fictional Woodgrove Bank with a
-  skill and an instruction, including a review finding that keeps NIST AI RMF active.
+* Start with what the planner provides, how to select it and the three decisions that
+  need your confirmation.
+* A six-step walkthrough follows a support chatbot's linked-page risk through the plan,
+  an unverified control and a draft GitHub issue.
+* A resume request shows how to continue from the saved state and plan in a new chat.
+* A policy example shows what Phase 1 already accepts before you create an extension.
+* A seven-step hve-builder walkthrough creates a skill and instruction for the fictional
+  Contoso. It adds SR 26-2, real model risk guidance that RAI Planner doesn't include,
+  corrects a draft that replaces NIST, and shows the guidance in the plan.
+
+The first walkthrough is the fifth slide. Detailed phase rules and client-version caveats
+are in the notes and Sources dialogs. The talk leaves out the file inventory, the interactive
+depth-tier calculator and the broader artifact-type comparison to make room for the examples.
 
 The talk explains the tooling. It doesn't teach Responsible AI practice or replace review
 by qualified legal, compliance and Responsible AI reviewers.
@@ -62,16 +65,21 @@ consolidation into a single `rai-plan.md` ([PR 2568](https://github.com/microsof
 and still list one file per phase.
 
 VS Code documents prompt files as deprecated for Agent Host sessions; they still work with
-the Local agent. The deck therefore shows RAI Planner selected in the Agent dropdown, lists
-the `/rai-*` prompt files as an option and uses a skill, not a new prompt file, as the
-extension's entry point.
+the Local agent. The deck shows RAI Planner selected in the Agent dropdown. The `/rai-*`
+prompt-file alternatives are in the notes. The extension uses a skill as its entry point.
 
 Both walkthroughs are scripted. Several turns in the chatbot walkthrough are adapted from
 scenarios in the RAI Planner conformance eval suite; the deck cites those scenarios, not
 their run results. The CAUTION disclaimer and framework attribution are excerpts of HVE Core
-source. Woodgrove Bank, its policy, its file contents, the review result and the resulting
-state are fictional. The indicator buttons on the Phase 2 slide compute the documented
-depth-tier rule in the page; they don't run the planner.
+source. Contoso, its policies, its file contents, the review result, the resulting state and
+the plan excerpt are fictional. A source review and lint pass do not establish the extension's
+behavior; the notes call for representative assessment runs before adoption.
+
+SR 26-2 is real. The Federal Reserve, FDIC and OCC issued this revised model risk guidance on
+April 17, 2026, and it replaces SR 11-7. RAI Planner doesn't include it at the snapshot. The
+deck paraphrases it, links the official text and keeps its limits in the notes: it sets no
+enforceable standards, it's expected to be most relevant to banking organizations with more
+than $30 billion in total assets, and it excludes generative and agentic AI models.
 
 ## Presenter controls
 
@@ -89,22 +97,24 @@ depth-tier rule in the page; they don't run the planner.
 | Motion                            | Optional fades; reduced-motion preference takes priority |
 
 Left / Right and Page Up / Page Down keep changing slides after you click a presenter
-button, link or indicator toggle, because those controls don't use the keys. Editable
+button or link, because those controls don't use the keys. Editable
 fields, open dialogs and modifier shortcuts keep their normal behavior, and so does selected
 text unless a button or link has focus. Other shortcuts wait while a control has focus, so
 Space and Enter activate it. Letter, symbol and Space shortcuts run only while the slide
-area has focus. Returning to a walkthrough or the indicator toggles keeps their state;
-reloading keeps the slide but resets them. Nothing advances automatically. The unused
+area has focus. Returning to a walkthrough keeps its state;
+reloading keeps the slide but resets both walkthroughs. Nothing advances automatically. The unused
 reveal.js cross-window `postMessage` API is disabled.
 
-Each indicator toggle reports its pressed state, and the suggested tier is announced
-after a change. In forced-colors mode, the current walkthrough phase, pressed toggles and
-the suggested tier keep a visible outline.
+Slide and step changes have a concise live announcement. In forced-colors mode, the
+current walkthrough phase keeps a visible outline.
 
-The bottom bar keeps the chapter label and slide navigation `--presenter-inset` from the
-window edges, clear of viewer overlays such as the Copilot button SharePoint places at
-the bottom right. With reading view off, the bar stacks centered rows at 1100 pixels
-wide or narrower.
+The bottom bar uses the same layout as the other HVE Core decks: the HVE Core mark and
+current chapter, the presenter buttons, then slide navigation. Its ends stay
+`--presenter-inset` from the window edges, clear of viewer overlays such as the Copilot
+button SharePoint places at the bottom right. With reading view off, the bar compacts at
+1366 pixels wide and stacks centered rows at 1240 pixels or narrower. Each walkthrough keeps
+Back, Next step and Reset in the footer of its example frame, so the controls stay in place
+on every step.
 
 ## Sources, notes and privacy
 
@@ -118,18 +128,18 @@ deck. Recipients need to download the HTML and open it in a browser.
 
 ## Source layout
 
-| File             | Responsibility                                                               |
-|------------------|------------------------------------------------------------------------------|
-| `index.html`     | Slide order, stable IDs, headings, static diagrams, excerpts and notes       |
-| `deck.json`      | Catalog title, description and source qualification                          |
-| `theme.css`      | Presentation type, slide layouts, presenter chrome and reading view          |
-| `components.css` | Code, Chat input, chat transcript, review diff and depth-tier explorer       |
-| `content.js`     | Public citations, walkthrough steps, indicator data and state helpers        |
-| `components.js`  | Rendering for code, Chat input, transcripts, review and the tier explorer    |
-| `deck.js`        | Slide and step navigation, dialogs, focus, announcements and keyboard        |
-| `build.mjs`      | Copy source and reveal.js assets into `dist/` and generate `config.js`       |
-| `bundle.mjs`     | Create `docs/slides/rai-planner.html` and check it against source            |
-| `deck.test.cjs`  | Source, citation, walkthrough, depth-tier, runtime and bundle contracts      |
+| File             | Responsibility                                                          |
+|------------------|-------------------------------------------------------------------------|
+| `index.html`     | Slide order, stable IDs, headings, static diagrams, excerpts and notes  |
+| `deck.json`      | Catalog title, description and source qualification                     |
+| `theme.css`      | Presentation type, slide layouts, presenter chrome and reading view     |
+| `components.css` | Code, Chat input, chat transcript and review diff                       |
+| `content.js`     | Public citations, example requests, walkthrough steps and state helpers |
+| `components.js`  | Rendering for code, Chat input, transcripts and review                  |
+| `deck.js`        | Slide and step navigation, dialogs, focus, announcements and keyboard   |
+| `build.mjs`      | Copy source and reveal.js assets into `dist/` and generate `config.js`  |
+| `bundle.mjs`     | Create `docs/slides/rai-planner.html` and check it against source       |
+| `deck.test.cjs`  | Story size, citations, walkthroughs, runtime and bundle contracts       |
 
 Run `npm run bundle` after edits, then `npm test`. From the repository root,
 `npm run slides:check` verifies that every committed bundle matches its source.

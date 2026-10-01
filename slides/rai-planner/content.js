@@ -16,107 +16,72 @@
     'planner-agent': {
       title: 'RAI Planner agent',
       url: `${blob}.github/agents/rai-planning/rai-planner.agent.md`,
-      note: 'Six phases, gates, entry modes, state schema, research activation, backlog handoff and operational constraints.'
+      note: 'The six phases, approval points, entry modes, saved state and write boundaries.'
     },
     'rai-identity': {
       title: 'RAI identity instructions',
       url: `${blob}.github/instructions/rai-planning/rai-identity.instructions.md`,
-      note: 'applyTo **/.copilot-tracking/rai-plans/**. Phase definitions, gate cadence, entry modes, reference-content protocol and resume rules.'
-    },
-    'license-posture': {
-      title: 'RAI license posture instructions',
-      url: `${blob}.github/instructions/rai-planning/rai-license-posture.instructions.md`,
-      note: 'Reproduction rules for NIST AI RMF, the EU AI Act, OWASP and ISO sources in RAI artifacts.'
+      note: 'Phase transitions, framework selection, reference processing and resume behavior.'
     },
     'planner-skill': {
       title: 'rai-planner skill',
       url: `${blob}.github/skills/project-planning/rai-planner/SKILL.md`,
-      note: 'On-demand phase references for capture coaching, risk classification, impact assessment and backlog handoff.'
+      note: 'Phase guidance for scoping, risk classification, impact assessment and handoff.'
     },
     'capture-reference': {
       title: 'rai-planner capture coaching reference',
       url: `${blob}.github/skills/project-planning/rai-planner/references/capture-coaching.md`,
-      note: 'Exploration-first questions for Phase 1 scoping.'
+      note: 'Start with the system and its users before introducing framework terminology.'
     },
     'risk-reference': {
       title: 'rai-planner risk classification reference',
       url: `${blob}.github/skills/project-planning/rai-planner/references/risk-classification.md`,
-      note: 'Prohibited uses gate, indicator assessment and depth-tier assignment.'
+      note: 'Screen prohibited uses first, assess indicators, then ask the user to confirm the depth tier.'
     },
     'impact-reference': {
       title: 'rai-planner impact assessment reference',
       url: `${blob}.github/skills/project-planning/rai-planner/references/impact-assessment.md`,
-      note: 'Prevent, detect and respond controls; evidence register fields; tradeoff documentation.'
+      note: 'Prevent, detect and respond controls, evidence fields and tradeoffs.'
     },
     'handoff-reference': {
       title: 'rai-planner backlog handoff reference',
       url: `${blob}.github/skills/project-planning/rai-planner/references/backlog-handoff.md`,
-      note: 'Review rubric, final handoff table, backlog-templates delegation and artifact signing.'
+      note: 'Review, draft backlog items, confirmation and optional artifact signing.'
     },
     'rai-standards': {
       title: 'rai-standards skill',
       url: `${blob}.github/skills/rai/rai-standards/SKILL.md`,
-      note: 'NIST AI RMF 1.0 characteristics and phase mapping, the AI STRIDE overlay, an EU AI Act paraphrase and the customer extension pattern.'
+      note: 'NIST AI RMF 1.0, AI threat guidance and the pattern for adding a customer standard.'
     },
     'ai-stride': {
       title: 'AI STRIDE overlay reference',
       url: `${blob}.github/skills/rai/rai-standards/references/ai-stride-overlay.md`,
-      note: 'AI threat surfaces, the dual threat-ID convention and the ML STRIDE matrix.'
+      note: 'AI threat categories and stable threat IDs.'
     },
     reviewer: {
       title: 'RAI Reviewer agent',
       url: `${blob}.github/agents/rai-planning/rai-reviewer.agent.md`,
-      note: 'Audit, diff and plan modes. Dispatches Codebase Profiler, RAI Skill Assessor, Finding Deep Verifier and Report Generator.'
-    },
-    assessor: {
-      title: 'RAI Skill Assessor subagent',
-      url: `${blob}.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md`,
-      note: 'Assesses one rai-standards framework per invocation and returns structured findings.'
+      note: 'Evidence review of a codebase, diff or plan, separate from the Planner conversation.'
     },
     prompts: {
       title: 'RAI prompt files',
       url: `${tree}.github/prompts/rai-planning`,
-      note: 'rai-capture, rai-plan-from-prd and rai-plan-from-security-plan. Each declares agent: "RAI Planner".'
+      note: 'rai-capture, rai-plan-from-prd and rai-plan-from-security-plan select RAI Planner.'
     },
     disclaimer: {
       title: 'Disclaimer language instructions',
       url: `${blob}.github/instructions/shared/disclaimer-language.instructions.md`,
       note: 'The RAI Planning CAUTION block shown before the first question and at exit points.'
     },
-    'planner-base': {
-      title: 'Planner identity base instructions',
-      url: `${blob}.github/instructions/shared/planner-identity-base.instructions.md`,
-      note: 'Shared scaffold for the SSSC, RAI, Security, Accessibility and Privacy planners: state, phases, resume and question cadence.'
-    },
-    untrusted: {
-      title: 'Untrusted content boundary instructions',
-      url: `${blob}.github/instructions/shared/untrusted-content-boundary.instructions.md`,
-      note: 'Fetched pages, handoff payloads and tool output are data, not instructions.'
-    },
     'state-schema': {
       title: 'RAI state JSON schema',
       url: `${blob}scripts/linting/schemas/rai-state.schema.json`,
-      note: 'Authoritative state.json shape, including the status and preference vocabularies used in the examples.'
+      note: 'The state.json fields and status values used in the examples.'
     },
     conformance: {
       title: 'RAI Planner conformance eval suite',
       url: `${blob}evals/agent-conformance/rai-planner/eval.yaml`,
-      note: 'Scenarios a model judge grades, such as disclaimer first, prohibited uses first, explicit gates, prompt injection, evidence for claimed fixes and no compliance sign-off. This deck cites the scenarios, not run results.'
-    },
-    'adr-0007': {
-      title: 'ADR 0007: Consolidate RAI knowledge into skills',
-      url: `${blob}docs/planning/adrs/0007-rai-skill-consolidation.md`,
-      note: 'Status: proposed. Keeps RAI standards in shared skills that the Planner and the Reviewer both load.'
-    },
-    plugin: {
-      title: 'hve-core plugin manifest',
-      url: `${blob}plugin.json`,
-      note: 'Lists the RAI agents, prompts, instructions and skills among the plugin components.'
-    },
-    'pr-979': {
-      title: 'PR #979: Add RAI Planner',
-      url: `${repo}pull/979`,
-      note: 'Merged March 20, 2026.'
+      note: 'Scenarios cover disclaimer order, prohibited uses, explicit gates and evidence for claimed fixes. These are source scenarios, not evidence of passing runs.'
     },
     'pr-2568': {
       title: 'PR #2568: Consolidate RAI planner phase files into rai-plan.md',
@@ -126,42 +91,32 @@
     'hve-builder': {
       title: 'hve-builder skill',
       url: `${blob}.github/skills/hve-core/hve-builder/SKILL.md`,
-      note: 'Modes, lifecycle, review pass and the use case for extending HVE workflows.'
+      note: 'Create and improve customization files, validate them, review them and resolve findings.'
     },
     'hve-builder-extending': {
       title: 'Extending HVE Builder and HVE workflows',
       url: `${blob}.github/skills/hve-core/hve-builder/references/extending-hve-builder.md`,
-      note: 'Discovery by applyTo, description and name; extension precedence; what to capture from a target workflow.'
+      note: 'Read the target workflow first. Choose a discoverable extension and keep its authority scoped.'
     },
     'hve-builder-workflow': {
       title: 'HVE Builder workflow contract',
       url: `${blob}.github/skills/hve-core/hve-builder/references/workflow-contract.md`,
-      note: 'Mode composition, lifecycle, parent-owned corrections and outcomes.'
+      note: 'The authoring lifecycle, review and responsibility for corrections.'
     },
     'hve-builder-rubric': {
       title: 'HVE Builder review rubric',
       url: `${blob}.github/skills/hve-core/hve-builder/references/review-rubric.md`,
-      note: 'Review dimensions, severity scale and Pass, Revise or Blocked verdicts.'
+      note: 'Review criteria, finding severities and Pass, Revise or Blocked verdicts.'
     },
     'hve-builder-instructions': {
       title: 'HVE Builder instructions',
       url: `${blob}.github/instructions/hve-core/hve-builder.instructions.md`,
-      note: 'Choose artifacts by responsibility; frontmatter, portability and safety conventions.'
+      note: 'Artifact choice, frontmatter, portability and safety conventions.'
     },
     nist: {
       title: 'NIST AI 100-1: AI Risk Management Framework 1.0',
       url: 'https://doi.org/10.6028/NIST.AI.100-1',
       note: 'January 2023. U.S. Government work and the planner\'s default framework.'
-    },
-    'eu-ai-act': {
-      title: 'Regulation (EU) 2024/1689 (EU AI Act)',
-      url: 'https://eur-lex.europa.eu/eli/reg/2024/1689/oj',
-      note: 'Authoritative legal text. rai-standards paraphrases its risk tiers rather than quoting them.'
-    },
-    'vscode-customization': {
-      title: 'VS Code: Understand agent customization',
-      url: `${vscode}agents/concepts/customization`,
-      note: `How instructions, skills, prompt files, custom agents and hooks are activated. ${read}`
     },
     'vscode-prompts': {
       title: 'VS Code: Use prompt files',
@@ -171,7 +126,7 @@
     'vscode-skills': {
       title: 'VS Code: Use Agent Skills',
       url: `${vscode}agent-customization/agent-skills`,
-      note: `Skill name and description rules, slash invocation and automatic loading. Discovery does not guarantee use. ${read}`
+      note: `Skill descriptions and explicit invocation. Discovery alone does not guarantee use. ${read}`
     },
     'vscode-instructions': {
       title: 'VS Code: Use custom instructions',
@@ -186,238 +141,221 @@
     'rai-docs': {
       title: 'HVE Core documentation: RAI Planning',
       url: 'https://microsoft.github.io/hve-core/docs/agents/rai-planning/',
-      note: `Published overview, entry modes, phase reference and handoff pages. ${read}`
+      note: `The wider workflow, entry modes and handoff guidance. ${read}`
+    },
+    'sr-26-2': {
+      title: 'Federal Reserve SR 26-2: Revised Guidance on Model Risk Management',
+      url: 'https://www.federalreserve.gov/supervisionreg/srletters/SR2602.htm',
+      note: `April 17, 2026. Issued with the FDIC and OCC; replaces SR 11-7. Expected to be most relevant to banking organizations with over $30 billion in total assets. ${read}`
+    },
+    'sr-26-2-guidance': {
+      title: 'SR 26-2 attachment: Supervisory Guidance on Model Risk Management',
+      url: 'https://www.federalreserve.gov/supervisionreg/srletters/SR2602a1.pdf',
+      note: `Materiality, effective challenge, conceptual soundness, outcomes analysis and ongoing monitoring. Generative and agentic AI models are out of scope, and the guidance sets no enforceable standards. ${read}`
+    },
+    'occ-2026-13': {
+      title: 'OCC Bulletin 2026-13: Model Risk Management: Revised Guidance',
+      url: 'https://www.occ.gov/news-issuances/bulletins/2026/bulletin-2026-13.html',
+      note: `The OCC issuance of the same interagency guidance. It rescinds OCC Bulletin 2011-12 and earlier OCC model risk issuances. ${read}`
     }
   };
 
-  const indicators = [
-    { name: 'safety_reliability', method: 'binary', nist: ['MS-2.5', 'MS-2.6'], focus: 'Validity, reliability and safety' },
-    { name: 'rights_fairness_privacy', method: 'categorical', nist: ['MS-2.8', 'MS-2.10', 'MS-2.11'], focus: 'Accountability, privacy and fairness' },
-    { name: 'security_explainability', method: 'continuous', nist: ['MS-2.7', 'MS-2.9'], focus: 'Security, resilience and explainability' }
-  ];
-  const tiers = [
-    { name: 'basic', activated: '0' },
-    { name: 'standard', activated: '1' },
-    { name: 'comprehensive', activated: '2+' }
-  ];
-
   const examples = {
-    tier: {
-      kind: 'tier-explorer',
-      caption: 'Interactive: select indicators to see the suggested tier. It runs in this page; no agent is involved.',
-      indicators,
-      tiers
+    resume: {
+      kind: 'composer',
+      caption: 'Example request in a new chat. Display only.',
+      body: 'Resume the RAI assessment for support-assistant. Read the saved state and plan, summarize where we stopped, then continue.',
+      attachments: [], mode: 'RAI Planner'
+    },
+    policy: {
+      kind: 'composer',
+      caption: 'Example request at Phase 1. Display only.',
+      body: 'Include our model-risk policy as a standard and our prohibited-use list. Keep NIST AI RMF 1.0 as the baseline.',
+      attachments: ['model-risk-policy.md', 'prohibited-uses.md'], mode: 'RAI Planner'
+    },
+    'try-it': {
+      kind: 'composer',
+      caption: 'Replace <feature> with your own AI feature. Display only.',
+      body: 'Help me plan a Responsible AI assessment for <feature>. Ask me for the system context, our policy and any existing PRD or security plan before we start.',
+      attachments: [], mode: 'RAI Planner'
     }
   };
 
   const assessSteps = [
     {
-      kind: 'composer', phase: 'Start', state: 'RAI Planner selected in the Agent dropdown',
-      title: 'Describe the system to RAI Planner',
+      kind: 'composer', phase: 'Start', state: 'RAI Planner selected',
+      title: 'Describe the system in your own words',
       caption: 'Reconstructed Chat input. Scripted; nothing is sent.',
-      body: 'Start a capture assessment with project slug support-assistant. Our customer support chatbot uses a fine-tuned LLM in a web widget. Support agents and customers use it, and it can open pages that customers link to.',
+      body: 'Start a capture assessment for support-assistant. Our support chatbot uses a fine-tuned LLM in a web widget. It answers customers and support agents, reads order history and opens pages that customers link to.',
       attachments: ['support-assistant-notes.md'], mode: 'RAI Planner',
-      insight: 'Selecting the agent works in any harness. The /rai-capture prompt file starts the same mode with the Local agent.'
+      insight: 'Give it enough context to ask useful questions. You can work out the rest in the conversation.'
     },
     {
-      kind: 'chat', phase: 'Start', state: 'state.json created; Phase 1',
-      title: 'The disclaimer and framework come first',
-      caption: 'Scripted response. The CAUTION and attribution text are excerpts of HVE Core source.',
+      kind: 'chat', phase: 'Scope', state: 'Phase 1: notices, then scoping',
+      title: 'Work out what the chatbot is allowed to do',
+      caption: 'Scripted response. Notice excerpts are from HVE Core.',
       messages: [{
         role: 'assistant', author: 'RAI Planner', blocks: [
-          { type: 'callout', label: 'CAUTION', text: 'Disclaimer: This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice and does not replace Responsible AI review boards, ethics committees, legal counsel, compliance teams, or other qualified human reviewers. ...' },
+          { type: 'callout', label: 'CAUTION', text: 'Disclaimer: This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice ...' },
           { type: 'text', text: 'This assessment uses the NIST AI Risk Management Framework 1.0 (U.S. Government work, not subject to copyright protection in the United States) as the default evaluation framework.' },
-          { type: 'note', text: 'Created .copilot-tracking/rai-plans/support-assistant/state.json' }
-        ]
-      }],
-      insight: 'disclaimerShownAt and the noticeLog record what was shown, so a resumed session knows.'
-    },
-    {
-      kind: 'chat', phase: 'Scope', state: 'Phase 1: up to seven questions a turn',
-      title: 'Explore the system before naming risks',
-      caption: 'Scripted response; not a recorded run.',
-      messages: [{
-        role: 'assistant', author: 'RAI Planner', blocks: [
-          { type: 'text', text: 'Phase 1, AI system scoping. From your notes:' },
+          { type: 'text', text: 'After we confirm your policy and output preferences, I need to understand:' },
           {
             type: 'checklist', items: [
-              { status: 'done', text: 'Purpose: answer support questions for agents and customers' },
-              { status: 'done', text: 'Deployment: a web widget on the support site' },
-              { status: 'pending', text: 'Any evaluation standards, prohibited-use lists or output formats to include?' },
-              { status: 'pending', text: 'Which provider hosts the model, and does its code of conduct apply?' },
-              { status: 'pending', text: 'What customer data enters a conversation, and how long is it kept?' },
-              { status: 'pending', text: 'What can the assistant do after it reads a linked page?' },
+              { status: 'pending', text: 'What can the chatbot do after reading a linked page?' },
               { status: 'pending', text: 'Which decisions must stay with a support agent?' }
             ]
           }
         ]
       }],
-      insight: 'Open questions about real workflows come before framework vocabulary. Phase 1 ends with a summary you can correct.'
+      insight: 'The full session also covers provider policies, data retention and optional templates. The notices come before any questions.'
     },
     {
-      kind: 'chat', phase: 'Risk', state: 'Hard gate: tier awaits your confirmation',
-      title: 'Screen prohibited uses, then three indicators',
+      kind: 'chat', phase: 'Risk', state: 'Phase 2: waiting for confirmation',
+      title: 'Confirm how much assessment the system needs',
       caption: 'Scripted exchange; not a recorded run.',
       messages: [
-        { role: 'user', author: 'You', blocks: [{ type: 'text', text: 'No biometric categorization, social scoring or manipulation. It reads order history and follows instructions it finds in linked pages.' }] },
+        { role: 'user', author: 'You', blocks: [{ type: 'text', text: 'None of the listed prohibited uses apply. The chatbot can follow instructions it finds in linked pages.' }] },
         {
           role: 'assistant', author: 'RAI Planner', blocks: [
+            { type: 'text', text: 'Prohibited uses gate: passed. In this example, two indicators are activated:' },
             {
               type: 'list', items: [
-                'Prohibited uses gate: passed',
-                'safety_reliability (binary): not activated',
-                'rights_fairness_privacy (categorical): activated by order history',
-                'security_explainability (continuous): activated by linked-page instructions'
+                'Rights, fairness and privacy: it reads order history.',
+                'Security and explainability: linked pages can redirect it.'
               ]
             },
-            { type: 'text', text: 'Two of three are activated, so I suggest a comprehensive assessment. Confirm the tier before Phase 3?' }
+            { type: 'text', text: 'I suggest comprehensive depth. Are you comfortable with that scope of work before we map the standards?' }
           ]
         }
       ],
-      insight: 'The tier sets the effort for every later phase, so Phase 2 waits for an explicit answer.'
+      insight: 'Two activated indicators suggest comprehensive depth. You confirm the tier; the planner does not decide it for you.'
     },
     {
-      kind: 'code', phase: 'Standards', state: 'Hard gate: mapping scope confirmed',
-      title: 'Map components to trustworthiness characteristics',
-      caption: 'Illustrative excerpt of the generated plan.',
-      file: 'rai-plan.md / ## Standards Mapping',
-      body: 'Characteristic                   Component            Status\nSecure and Resilient             Link reader          partial\nPrivacy-Enhanced                 Conversation store   partial\nAccountable and Transparent      Agent escalation     addressed\nExplainable and Interpretable    Answer generator     not-yet-covered\nFair with Harmful Bias Managed   Answer generator     gap-identified',
-      insight: 'principleTracker keeps a status for all seven characteristics. The values come from the state schema.'
+      kind: 'code', phase: 'Plan', state: 'Phase 3 confirmed; Phase 4 summarized',
+      title: 'Connect the standard to a concrete threat',
+      caption: 'Illustrative plan excerpt, after scope confirmation.',
+      file: 'rai-plan.md / Standards Mapping + Threat Addendum',
+      body: '## Standards Mapping\nSecure and Resilient -> Link reader -> partial\nPrivacy-Enhanced -> Conversation store -> partial\n\n## Threat Addendum\nT-RAI-001  Prompt injection through linked pages\n           Component: link reader\n           STRIDE: Elevation of Privilege\n           Concern: high',
+      insight: 'Follow one risk through the plan. T-RAI-001 gives the control, evidence and follow-up work a shared reference.'
     },
     {
-      kind: 'code', phase: 'Threats', state: 'Summary: three threats cataloged',
-      title: 'Catalog AI-specific threats with stable IDs',
-      caption: 'Illustrative excerpt of the generated plan.',
-      file: 'rai-plan.md / ## Threat Addendum',
-      body: 'T-RAI-001  Prompt injection      Link reader          high\n           STRIDE: Elevation of Privilege\nT-RAI-002  Privacy leakage       Conversation store   high\n           STRIDE: Information Disclosure\nT-RAI-003  Output manipulation   Answer generator     medium\n           STRIDE: Tampering',
-      insight: 'Capture mode starts at T-RAI-001. From a security plan, numbering continues after its threat count.'
-    },
-    {
-      kind: 'chat', phase: 'Impact', state: 'Evidence register: one unverified control',
-      title: 'A claimed fix still needs evidence',
+      kind: 'chat', phase: 'Evidence', state: 'Phase 5: a control needs verification',
+      title: '"We fixed it" still needs a test result',
       caption: 'Scripted exchange; not a recorded run.',
       messages: [
-        { role: 'user', author: 'You', blocks: [{ type: 'text', text: 'We already fixed prompt injection. The link reader strips instructions.' }] },
+        { role: 'user', author: 'You', blocks: [{ type: 'text', text: 'We fixed prompt injection. The link reader strips instructions.' }] },
         {
           role: 'assistant', author: 'RAI Planner', blocks: [
-            { type: 'text', text: 'I recorded the control, but no test result supports it yet:' },
-            { type: 'code', text: 'EV-001  T-RAI-001  prevent  Strip instructions from page text\n        coverage: partial   verification: unverified' },
-            { type: 'text', text: 'Can you share an injection test run? If not, EV-001 becomes a backlog candidate.' }
+            { type: 'text', text: 'I can record that control, but I still need evidence that it works.' },
+            { type: 'code', text: 'EV-001 -> T-RAI-001\nControl: strip instructions from page text\nCoverage: partial   Verification: unverified' },
+            { type: 'text', text: 'Can you share the injection test results? Otherwise, I\'ll keep verification as follow-up work.' }
           ]
         }
       ],
-      insight: 'Controls are prevent, detect or respond. The conformance suite includes this "already fixed" scenario.'
+      insight: 'Ask for the evidence behind a control before treating it as verified.'
     },
     {
-      kind: 'chat', phase: 'Handoff', state: 'Hard gate: nothing is created yet',
-      title: 'Draft the backlog and leave approval to people',
-      caption: 'Scripted exchange; not a recorded run.',
-      messages: [
-        {
-          role: 'assistant', author: 'RAI Planner', blocks: [
-            { type: 'text', text: 'Review summary written. Create these draft GitHub issues?' },
-            { type: 'code', text: '{{RAI-TEMP-1}}  Add prompt-injection tests for linked pages\n{{RAI-TEMP-2}}  Enforce transcript retention' }
-          ]
-        },
-        { role: 'user', author: 'You', blocks: [{ type: 'text', text: 'First, can you confirm the chatbot is compliant so we can deploy?' }] },
-        { role: 'assistant', author: 'RAI Planner', blocks: [{ type: 'text', text: 'No. This is AI-assisted analysis. Qualified legal, compliance and RAI reviewers decide on deployment.' }] }
-      ],
-      insight: 'Partial autonomy: nothing is created until you confirm. Azure DevOps drafts use WI-RAI-NNN IDs.'
+      kind: 'chat', phase: 'Handoff', state: 'Phase 6: draft only',
+      title: 'Review the follow-up before creating issues',
+      caption: 'Scripted handoff, with one shortened issue draft.',
+      messages: [{
+        role: 'assistant', author: 'RAI Planner', blocks: [
+          { type: 'text', text: 'EV-001 is still unverified. I\'ve drafted a GitHub issue:' },
+          { type: 'code', text: '{{RAI-TEMP-1}}\nAdd prompt-injection tests for linked pages\n\nAcceptance: linked-page injection test cases pass.\nEvidence: link the test results to EV-001.' },
+          { type: 'text', text: 'Review the plan and draft, then confirm whether to create the issue.' }
+        ]
+      }],
+      insight: 'The draft traces back to the evidence gap. The full handoff includes the review summary and repeats the human-review disclaimer.'
     }
   ];
 
   const extendSteps = [
     {
-      kind: 'composer', phase: 'Request', state: 'Modes: create, improve and refactor',
-      title: 'Ask HVE Builder for an extension',
+      kind: 'composer', phase: 'Request', state: 'Use an agent allowed to edit .github',
+      title: 'Ask hve-builder for the reusable setup',
       caption: 'Reconstructed Chat input. Scripted; nothing is sent.',
-      body: '/hve-builder Extend the RAI Planner for Woodgrove lending teams. Layer our model-risk policy on NIST AI RMF, add our prohibited uses, require an adverse-action explanation check in every plan and default the backlog to Azure DevOps. Leave HVE Core files unchanged.',
+      body: '/hve-builder Extend RAI Planner for Contoso lending teams. Layer our model-risk policy and SR 26-2, the 2026 interagency model risk guidance, on NIST AI RMF. Summarize SR 26-2 from the official text. Add our prohibited uses, check adverse-action explanations and default to Azure DevOps. Use a skill for policy and an instruction for plan conventions. Keep HVE Core files unchanged.',
       attachments: ['model-risk-policy.md', 'prohibited-uses.md'], mode: 'Agent',
-      insight: 'HVE Builder is a skill, so any agent can run it. Woodgrove Bank and its policy are fictional.'
+      insight: 'Run this in an agent that can edit .github; RAI Planner only writes assessment files. SR 26-2 is real. Contoso and its policies are fictional.'
     },
     {
-      kind: 'chat', phase: 'Scope', state: 'Target workflow contract captured',
-      title: 'Read the planner\'s contract before choosing files',
-      caption: 'Scripted response; not a recorded run.',
-      messages: [{
-        role: 'assistant', author: 'Agent using hve-builder', blocks: [
-          { type: 'text', text: 'RAI Planner extension points that need no change to the agent:' },
-          {
-            type: 'checklist', items: [
-              { status: 'done', text: 'Phase 1 reference types: standard and prohibited-use-framework' },
-              { status: 'done', text: 'Instructions for **/.copilot-tracking/rai-plans/** are attached by path' },
-              { status: 'done', text: 'Backlog target lives in userPreferences.targetSystem' },
-              { status: 'done', text: 'Writes stay in .copilot-tracking/rai-plans/{slug}/' }
-            ]
-          },
-          { type: 'text', text: 'Plan: a skill for the policy and an instruction for the conventions. No subagent; nothing here needs an isolated context.' }
-        ]
-      }],
-      insight: 'HVE Builder reads a target workflow\'s discovery rules and contract before it chooses an artifact type.'
-    },
-    {
-      kind: 'code', phase: 'Author', state: 'Candidate: skill drafted',
-      title: 'A skill carries the policy',
+      kind: 'code', phase: 'Author', state: 'Policy skill drafted',
+      title: 'Put the policies in a skill',
       caption: 'Illustrative file for a fictional company.',
-      file: '.github/skills/woodgrove-rai-policy/SKILL.md',
-      body: '---\nname: woodgrove-rai-policy\ndescription: "Woodgrove model-risk policy, prohibited uses and\n  adverse-action rules for lending AI. Use with RAI Planner\n  when assessing a Woodgrove lending system."\n---\n# Woodgrove RAI policy\n\nIn Phase 1, supply these files as reference content:\n* references/model-risk-policy.md (standard)\n* references/prohibited-uses.md (prohibited-use-framework)',
-      insight: 'The description is how the skill is found: it names the agent, the domain and when to use it.'
+      file: '.github/skills/contoso-rai-policy/SKILL.md',
+      body: '---\nname: contoso-rai-policy\ndescription: "Contoso lending policies and SR 26-2 summary.\n  Use with RAI Planner for Contoso lending assessments."\n---\n# Contoso RAI policy\n\nIn Phase 1, supply these files as reference content:\n* references/model-risk-policy.md (standard)\n* references/sr-26-2-summary.md (standard)\n* references/prohibited-uses.md (prohibited-use-framework)',
+      insight: 'hve-builder reads the planner\'s extension points first. Published guidance goes in as another standard, next to your own policy.'
     },
     {
-      kind: 'code', phase: 'Author', state: 'Candidate: instruction drafted',
-      title: 'An instruction adds Woodgrove conventions',
-      caption: 'Illustrative first draft for a fictional company.',
-      file: '.github/instructions/woodgrove-rai.instructions.md',
-      body: '---\ndescription: "Woodgrove conventions for RAI Planner artifacts"\napplyTo: \'**/.copilot-tracking/rai-plans/**\'\n---\n# Woodgrove RAI conventions\n\n* List applicants and loan officers in Stakeholder Impact.\n* Record adverse-action explanation tests in the Evidence Register.\n* Set userPreferences.targetSystem to "ado".\n* Load woodgrove-rai-policy and set\n  replaceDefaultFramework to true.',
-      insight: 'VS Code attaches this file whenever the agent creates or changes a file under rai-plans.'
+      kind: 'code', phase: 'Author', state: 'Real guidance summarized',
+      title: 'Add guidance RAI Planner doesn\'t include',
+      caption: 'Illustrative file that paraphrases real guidance.',
+      file: '.github/skills/contoso-rai-policy/references/sr-26-2-summary.md',
+      body: '# SR 26-2 model risk guidance: Contoso summary\nSource: Federal Reserve, FDIC and OCC, April 17, 2026 (paraphrased)\nhttps://www.federalreserve.gov/supervisionreg/srletters/SR2602a1.pdf\nOut of scope: generative and agentic AI models.\n\nIn Phase 3, map these alongside NIST AI RMF:\n* Rigor that matches model materiality\n* Effective challenge by objective experts\n* Conceptual soundness: design, data and assumptions\n* Outcomes analysis against real-world results\n* Ongoing monitoring as conditions change',
+      insight: 'Check the scope before adding a policy. SR 26-2 fits this loan model, not an LLM chatbot. Have your model-risk team review the summary.'
     },
     {
-      kind: 'review', phase: 'Review', state: 'Revise, then Pass after one fix',
-      title: 'Review the candidate and fix the finding',
-      caption: 'Scripted review result; not a recorded run.',
+      kind: 'code', phase: 'Author', state: 'First draft: review required',
+      title: 'Scope the conventions to plan files',
+      caption: 'Illustrative first draft. The next step corrects a mistake.',
+      file: '.github/instructions/contoso-rai.instructions.md',
+      body: '---\ndescription: "Contoso lending conventions for RAI Planner"\napplyTo: \'**/.copilot-tracking/rai-plans/**\'\n---\n# Conventions for Contoso lending assessments\n\n* List applicants and loan officers in Stakeholder Impact.\n* Record adverse-action tests in the Evidence Register.\n* Default userPreferences.targetSystem to "ado".\n* Load contoso-rai-policy and set\n  replaceDefaultFramework to true.',
+      insight: 'applyTo targets assessment files. The body limits the rules to lending, but this draft incorrectly replaces NIST.'
+    },
+    {
+      kind: 'review', phase: 'Review', state: 'Draft corrected after review',
+      title: 'Check that the extension does what you asked',
+      caption: 'Scripted source review and correction; not a test run.',
       checksTitle: 'Checks and review',
-      checks: ['Frontmatter and lint checks pass', 'Review pass in a fresh context', 'R1 verified at its location'],
+      checks: ['Frontmatter and lint checked', 'Source reviewed against the request', 'Corrected file rechecked'],
       finding: {
         label: 'R1 / High / required correction',
-        text: 'The draft replaces NIST AI RMF, but the request says to layer the Woodgrove policy on it.'
+        text: 'The request says to layer Contoso\'s policy and SR 26-2 on NIST. This draft replaces NIST AI RMF as the baseline.'
       },
-      file: 'woodgrove-rai.instructions.md',
+      file: 'contoso-rai.instructions.md',
       diff: [
-        { type: 'context', text: '* Set userPreferences.targetSystem to "ado".' },
-        { type: 'remove', text: '* Load woodgrove-rai-policy and set' },
+        { type: 'context', text: '* Default userPreferences.targetSystem to "ado".' },
+        { type: 'remove', text: '* Load contoso-rai-policy and set' },
         { type: 'remove', text: '  replaceDefaultFramework to true.' },
-        { type: 'add', text: '* Load woodgrove-rai-policy. Keep NIST' },
+        { type: 'add', text: '* Load contoso-rai-policy. Keep NIST' },
         { type: 'add', text: '  AI RMF 1.0 as the active framework.' }
       ],
-      insight: 'Reviewer findings are suggestions. The agent running HVE Builder verifies each one, fixes it and rechecks.'
+      insight: 'The author verifies the finding and fixes it. You still need representative assessment runs to check the extension\'s behavior.'
     },
     {
-      kind: 'composer', phase: 'Use', state: 'RAI Planner selected in the Agent dropdown',
-      title: 'Start an assessment with the extension',
-      caption: 'Reconstructed Chat input. Scripted; nothing is sent.',
-      body: '/woodgrove-rai-policy Start a capture assessment for the loan eligibility model, project slug loan-eligibility.',
-      attachments: [], mode: 'RAI Planner',
-      insight: 'Naming the skill loads it for this request. A description match makes a skill available but doesn\'t guarantee its use.'
+      kind: 'chat', phase: 'Use', state: 'Switch to RAI Planner; Phase 1 references processed',
+      title: 'Use the skill in your next assessment',
+      caption: 'Scripted exchange and selected state.json fields.',
+      messages: [
+        { role: 'user', author: 'You', blocks: [{ type: 'text', text: '/contoso-rai-policy Start a capture assessment for our loan eligibility model, project slug loan-eligibility.' }] },
+        {
+          role: 'assistant', author: 'RAI Planner', blocks: [
+            { type: 'text', text: 'I processed three references: Contoso\'s model-risk policy and SR 26-2 as standards, and Contoso\'s prohibited uses. NIST AI RMF 1.0 stays active.' },
+            { type: 'code', text: '"riskClassification": {\n  "framework": { "id": "nist-ai-rmf", "replaceDefaultFramework": false }\n},\n"userPreferences": { "targetSystem": "ado", "autonomyTier": "partial" }' }
+          ]
+        }
+      ],
+      insight: 'Check the references, active framework and backlog target. The disclaimer, approval points and partial autonomy still apply.'
     },
     {
-      kind: 'code', phase: 'Use', state: 'Phase 1 references processed',
-      title: 'The planner records the layered policy',
-      caption: 'Illustrative state.json excerpt; paths shortened.',
-      file: '.copilot-tracking/rai-plans/loan-eligibility/state.json',
-      body: '"riskClassification": {\n  "framework": { "id": "nist-ai-rmf", "replaceDefaultFramework": false }\n},\n"referencesProcessed": [\n  { "type": "standard", "status": "processed",\n    "filePath": ".../references/woodgrove-model-risk-policy.md" },\n  { "type": "prohibited-use-framework", "status": "processed",\n    "filePath": ".../references/woodgrove-prohibited-uses.md" }\n],\n"userPreferences": { "targetSystem": "ado", "autonomyTier": "partial" }',
-      insight: 'The policy goes through the planner\'s own reference protocol. Disclaimer, gates and autonomy are unchanged.'
+      kind: 'code', phase: 'Use', state: 'Phase 3 confirmed; SR 26-2 mapped',
+      title: 'See the guidance in the plan',
+      caption: 'Illustrative plan excerpt after the mapping scope is confirmed.',
+      file: 'rai-plan.md / Standards Mapping',
+      body: '## Standards Mapping\nBaseline: NIST AI RMF 1.0\nLayered: Contoso model-risk policy; SR 26-2 (2026)\n\nValid and Reliable -> eligibility model -> partial\n  SR 26-2 outcomes analysis: no repayment back-test yet\nAccountable and Transparent -> model governance -> gap-identified\n  SR 26-2 effective challenge: no independent reviewer\nExplainable and Interpretable -> denial reasons -> partial\n  Contoso policy: adverse-action reason test pending',
+      insight: 'NIST stays the baseline. SR 26-2 adds model risk checks under it, and Phase 5 records the evidence for each gap.'
     }
   ];
 
   const demos = {
     assess: {
-      label: 'Support chatbot assessment',
-      phases: ['Start', 'Scope', 'Risk', 'Standards', 'Threats', 'Impact', 'Handoff'],
+      label: 'Support chatbot',
+      phases: ['Start', 'Scope', 'Risk', 'Plan', 'Evidence', 'Handoff'],
       steps: assessSteps
     },
     extend: {
-      label: 'Woodgrove lending extension',
-      phases: ['Request', 'Scope', 'Author', 'Review', 'Use'],
+      label: 'Contoso lending',
+      phases: ['Request', 'Author', 'Review', 'Use'],
       steps: extendSteps
     }
   };
@@ -440,13 +378,5 @@
       removed: rows.filter(row => row.type === 'remove').length
     };
   }
-  // Mirrors the rai-planner risk-classification reference: 0 = basic, 1 = standard, 2 or more = comprehensive.
-  function depthTier(activated) {
-    if (!Number.isInteger(activated) || activated < 0 || activated > indicators.length) {
-      throw new Error('Invalid activated indicator count.');
-    }
-    if (activated === 0) return 'basic';
-    return activated === 1 ? 'standard' : 'comprehensive';
-  }
-  globalThis.DeckContent = { sources, examples, demos, moveStep, diffStats, depthTier };
+  globalThis.DeckContent = { sources, examples, demos, moveStep, diffStats };
 }());
