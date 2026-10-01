@@ -2,7 +2,7 @@
 title: Project Foglight BRD for HVE Core Integration
 description: Business requirements for integrating Project Foglight into HVE Core as an experimental collection of agents, subagents, skills, prompts, instructions, and templates for TPMs and Dev and Data Science leads delivering intelligent systems.
 author: Foglight Working Group
-ms.date: 2026-06-18
+ms.date: 2026-10-01
 ms.topic: overview
 keywords:
   - foglight
@@ -475,6 +475,8 @@ build is mid-flight: some parts are solid, others are not.
 
 ```mermaid
 graph LR
+  accTitle: Foglight pilot use case five-step flow
+  accDescr: An aggregate signal hides risk in Step 1, the TPM asks Foglight in Step 2, the orchestrator frames context and agrees a path in Step 3, a Confidence Dashboard is built from project context in Step 4, and new context updates the dashboard in Step 5.
   S1[Step 1<br/>Aggregate signal<br/>hides the risk]
   S2[Step 2<br/>TPM asks<br/>Foglight]
   S3[Step 3<br/>Orchestrator frames<br/>context, agrees path]
