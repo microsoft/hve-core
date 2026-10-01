@@ -85,6 +85,27 @@ test('fullscreen state and forced-colors behavior are part of the starter contra
   assert.match(theme, /Highlight/);
 });
 
+test('arrow and Page keys page from focused controls but not from text entry or a slide selection', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  // Paging is decided before the focused-control guard, so a clicked presenter button does not end keyboard paging.
+  const selectionGuard = source.indexOf('if (globalThis.getSelection()?.toString() && !onButtonOrLink) return;');
+  const textEntryGuard = source.search(/if \(target\?\.closest\('input, textarea, select, \[contenteditable[^'\]]*\]'\)\) return;/);
+  const paging = source.indexOf('if (Object.hasOwn(pagingKeys, key))');
+  const controlGuard = source.indexOf("if (target?.closest('button, a, summary')) return;");
+  assert.ok(selectionGuard > -1 && textEntryGuard > selectionGuard && paging > textEntryGuard && controlGuard > paging);
+  assert.match(source, /const pagingKeys = \{ arrowright: 1, pagedown: 1, arrowleft: -1, pageup: -1 \}/);
+  // Only a focused button or link overrides a text selection; other shortcuts also wait on a summary.
+  assert.match(source, /const onButtonOrLink = Boolean\(target\?\.closest\('button, a'\)\);/);
+  assert.match(source, /if \(!ready \|\| dialog\.open \|\| event\.defaultPrevented/);
+});
+
+test('presenter bar ends stay clear of viewer overlays', () => {
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  assert.match(theme, /--presenter-inset: clamp\(96px, 8vw, 128px\);/);
+  assert.match(theme, /#presenter-controls \{[^}]*padding: \S+ var\(--presenter-inset\);/);
+  assert.match(theme, /\[data-reading-view="true"\] body \{[^}]*padding-bottom: var\(--presenter-inset\);/);
+});
+
 test('deck initialization disables the unused cross-window API', () => {
   const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
   assert.match(source, /postMessage:\s*false/);
