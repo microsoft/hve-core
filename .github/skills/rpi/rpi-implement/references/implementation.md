@@ -14,12 +14,6 @@ In both artifacts, wrap code, commands, and symbols in backticks. Link an existi
 
 ## Following the plan and checking off work
 
-An approved plan has current evidence-backed readiness and authorization for its declared scope.
-Neither an unchecked implementation task nor an agent self-check creates a human-signature gate.
-Require human attestation only when its actual source applies to the affected action. A historical
-Revise with resolved findings and verified parent closure does not require another critique or a
-rewritten Pass. Keep unresolved material user choices and explicit phase boundaries separate.
-
 1. Resolve declared invocation scope before changing source. With no exact scope, the full plan is in scope. An exact `Pxx` includes that phase and its tasks; an exact `Pxx-Txx` includes that task only. Keep all other active-plan markers outside completion claims.
 2. Read the first unchecked applicable plan item and its labeled blocks: `Goals:`, `Requirements:`, `Details:`, `Guidance:` when present, `References:`, and `Dependencies:`. Open the linked references, the decision and risk table rows that name the task, the latest critique disposition, the prior changes record, and relevant evidence. Select the first dependency-ready item in plan order. Do not advance a dependent item until its plan prerequisites are checked.
 3. Complete the item so that its `Requirements:` hold, then write its changes-record entry.
@@ -39,18 +33,18 @@ Record plan updates, blockers, remaining work, and follow-up items in their own 
 Apply this decision rule when new information comes to light:
 
 1. Use ordinary local judgment without changing the plan when the discovery does not warrant a plan update.
-2. Apply an implementation-only annotation when it changes no assessed content: update marked checklist status, add task-local `Guidance:` pointers, or record evidence in the changes record. These changes preserve the plan's assessed-content hash; no critique is needed.
+2. Apply an implementation-only annotation when it changes no plan requirement or design: update marked checklist status, add task-local `Guidance:` pointers, or record evidence in the changes record.
    * Add a `Guidance:` block to a later task when completed work created something that task needs and the plan did not already name it: a class, API, contract, utility, fixture, script, or path that a future agent would otherwise have to rediscover. Place the block immediately after that task's `Details:` and keep each bullet concrete, for example a bullet that says to consider using the contracts added under `scripts/plugins/contracts/`. Do not restate what the task's existing blocks already say.
 3. Use a follow-up-only update when newly discovered work is outside immediate scope. Add its item to the plan's `## Follow-Up Items` section with the outside-immediate-scope reason, triggering evidence, and owner or next action. Keep it outside active `Pxx` and `Pxx-Txx` completion and acceptance claims.
-4. Return assessed-content changes to the planning owner for the reference's parent-owned closure. Supported factual corrections need a recorded delta, current identity and resolving evidence, not a routine second critique. A materially changed requirement, architecture, capability, safety or evidence boundary needs assessment of the affected scope; an unresolved significant choice also needs user direction. Reconcile diagrams when phase/task structure changes. Corrections and validation work that do not change assessed content remain in Implement.
+4. Apply a plan update when the discovery changes factual `References:`, `Requirements:`, `Details:`, task wording, sequencing, diagrams, scope, architecture, capability, safety, dependencies, or evidence. Update the affected plan sections directly; when the change is a significant or divergent choice without confirmed user direction, obtain the user decision first and pause affected work until it is recorded. When an update adds, merges, splits, or removes phases or tasks, reconcile Phase Checklist diagrams using existing node IDs. Return the current evidence to `rpi-plan` when the change needs replanning beyond the affected tasks. A follow-up critique of the updated plan is optional and never runs from implementation.
 
 For every plan update, add a descriptive changes-record entry that records the affected plan area or `Pxx` or `Pxx-Txx` marker, what changed, why, triggering evidence, user answer or decision when present, reconciliation performed, and planning and critique state when material.
 
-For an assessed-content update, reconcile all affected current-state sections through planning: `## User Decisions and Requirements` only when confirmed user intent changed; executive summary; goals; scope and non-goals; functional and non-functional requirements; the affected task blocks; current phase and task markers and checklist; diagrams; dependencies; critique inputs and disposition; and follow-up items as applicable. Remove superseded active content instead of retaining history in the plan. Keep the rationale and evidence history in the changes record. A `Guidance:` addition needs only a brief changes-record entry naming the task and what was pointed to. It may point to completed work but must not introduce a requirement, design, safety, dependency or validation change; put such changes in assessed content and return to planning.
+For a plan update, reconcile all affected current-state sections: `## User Decisions and Requirements` only when confirmed user intent changed; executive summary; goals; scope and non-goals; functional and non-functional requirements; the affected task blocks; current phase and task markers and checklist; diagrams; dependencies; and follow-up items as applicable. Remove superseded active content instead of retaining history in the plan. Keep the rationale and evidence history in the changes record. A `Guidance:` addition needs only a brief changes-record entry naming the task and what was pointed to. It may point to completed work but must not introduce a requirement, design, safety, dependency or validation change; make such changes as a plan update in the task's own blocks.
 
 For a follow-up-only update, record the item, why it is outside immediate scope, triggering evidence, and owner or next action in `## Follow-Up Items` and mirror it in the changes record. Exclude it from active implementation, completion, and acceptance claims.
 
-Use the native `vscode_askQuestions` tool only when available evidence cannot support a responsible user-owned decision. This includes unresolved significant or divergent plan changes, blockers, and proposed workarounds, but not ordinary local judgment. Immediately before the tool call, send a visible conversation message that states the affected user decision or requirement and plan area, evidence or conflict, viable choices, material consequences, an evidence-backed recommendation when available, and Markdown links to relevant artifacts or sources when available. Ask the smallest decision-critical question set. Persist the answer and resulting decision in `## User Decisions and Requirements`, every affected current synthesized section, and the changes record. Stop affected work as Blocked when required feedback is unavailable. The user's answer resolves the decision; planning owns any revision-bound closure before affected work resumes, never the implementer.
+Use the native `vscode_askQuestions` tool only when available evidence cannot support a responsible user-owned decision. This includes unresolved significant or divergent plan changes, blockers, and proposed workarounds, but not ordinary local judgment. Immediately before the tool call, send a visible conversation message that states the affected user decision or requirement and plan area, evidence or conflict, viable choices, material consequences, an evidence-backed recommendation when available, and Markdown links to relevant artifacts or sources when available. Ask the smallest decision-critical question set. Persist the answer and resulting decision in `## User Decisions and Requirements`, every affected current synthesized section, and the changes record. Stop affected work as Blocked when required feedback is unavailable. The user's answer resolves the decision; bring the plan current before affected work resumes.
 
 ## Review findings and pre-Review reconciliation
 
@@ -60,12 +54,12 @@ Before handoff to Review, reconcile current plan markers and task-local context,
 
 ## Material discovery and resumption
 
-An assessed-content change requires planning closure even without a new user decision. A significant or divergent choice also requires user direction when current direction does not resolve it. Before affected dependent work can resume:
+A significant or divergent choice requires user direction when current direction does not resolve it. Before affected dependent work resumes:
 
 1. Record the discovery, affected `Pxx` or `Pxx-Txx`, current plan state, triggering evidence, impact, and paused work in the changes record.
-2. Return the current plan and evidence to the planning owner when the accepted plan must change.
-3. Reconcile the plan through the planning owner's current-state process. Preserve unrelated completed work and its evidence.
-4. Resume affected work once needed decisions, current plan identity and parent closure are recorded, including actual assessment of any missing or materially changed coverage. Preserve prior critiques and their hash lineage as historical evidence. Ordinary parent correction does not create a human-review or additional-critique gate.
+2. Obtain the needed user decision, then update the plan under the implementation-time update rules. Return to `rpi-plan` when the change needs replanning beyond the affected tasks.
+3. Preserve unrelated completed work and its evidence, and keep earlier critiques as historical evidence.
+4. Resume only affected dependent work once the decision and updated plan state are recorded, and record the resulting decision state in the changes record.
 
 On resumption, continue from the first unchecked dependency-ready item in declared scope. Read the prior changes-record entries, current plan markers and task-local context, and latest critique disposition. Do not resume a task awaiting a user decision or advance a dependent item before its prerequisites are checked.
 
@@ -114,7 +108,7 @@ Qualify every Complete, Partial, or Blocked status by the declared invocation sc
 
 The closeout also states validation coverage, blockers with their owner and clearing action, current planning state, and review readiness or the explicit no-handoff reason. For a user-owned blocker, state that affected work cannot continue until the required response is recorded. For a dependency-owned blocker, name the dependency owner and the evidence needed to clear it.
 
-In standalone use, do not present unchecked work as a retry or start the plan again. Advise `/rpi-review` only when review prerequisites are met; otherwise state the current no-handoff reason. In confirmed automatic RPI Agent mode, return the same scope and readiness facts to the parent, which owns eligible continuation after its gates and required confirmations pass.
+In standalone use, do not present unchecked work as a retry or start the plan again. Advise `/rpi-review` as the optional next step only when review prerequisites are met; otherwise state the current no-handoff reason. In confirmed automatic RPI Agent mode, return the same scope and readiness facts to the parent, which owns eligible continuation after its gates and required confirmations pass.
 
 ## Return to caller
 

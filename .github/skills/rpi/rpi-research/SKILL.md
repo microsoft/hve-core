@@ -1,6 +1,6 @@
 ---
 name: rpi-research
-description: Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.
+description: Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/ or a caller's trusted evidence root, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.
 argument-hint: "[topic=...] [posture={balanced|focused|expansive}] [chat]"
 license: MIT
 user-invocable: true
@@ -16,7 +16,7 @@ Preserve the canonical evidence, decision state, and planning-readiness record b
 
 Use [templates/research.md](templates/research.md) as the primary-artifact skeleton. Read [references/research.md](references/research.md) for detailed research-posture selection, the three-wave cycle, extension registry, optional helpers, participation protocol, evidence contract, and response guidance. Follow the shared conventions in `copilot-tracking.instructions.md`.
 
-Derive `{{task_slug}}` from the primary target with lower-kebab-case and use the current date in `{{YYYY-MM-DD}}`. The default artifact path is `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`. A caller-provided trusted sandbox or evidence root may mirror `research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`; record the resolved root before writing.
+When the invoking agent or the user's request names the Research task or its slug in lower-kebab-case, use that name verbatim as `{{task_slug}}`; otherwise derive `{{task_slug}}` from the primary target with lower-kebab-case. `{{YYYY-MM-DD}}` is an ISO 8601 calendar date: use the date that the invoking agent or the user's request explicitly supplies for evidence paths, such as a dated session directory's date; otherwise use the current date. The default artifact path is `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`. When the caller supplies a trusted sandbox or evidence root, the artifact path is exactly `<root>/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`. Record the resolved root, date source, and path before writing.
 
 ## Flow
 
@@ -79,7 +79,7 @@ Derive `{{task_slug}}` from the primary target with lower-kebab-case and use the
 * Scope, non-goals, criteria, constraints, and relevant workspace or external boundaries
 * Research posture: `balanced` by default; `focused` or `expansive` when the caller passes `posture=` or applicable codebase instructions select it, with provenance, plus any caller-provided or codebase-imposed limits or deadline
 * Decision-participation mode: `user-owned`, `agent-owned`, or `user-retained`, with parent mode and provenance when applicable
-* Trusted alternate evidence root, when supplied
+* Trusted alternate evidence root and evidence-path date, when supplied
 * Existing artifacts, chat context, and known decisions to verify
 
 ## Success Criteria

@@ -37,7 +37,6 @@ param(
         'scripts/tests/fixtures/**',
         'scripts/tests/linting/fixtures/**',
         'evals/baseline-equivalence/seed-workspace/**',
-        'evals/behavior-conformance/fixtures/rpi-recovery/**',
         'extension/README.md',
         'extension/README.*.md',
         'extension/templates/README.template.md',

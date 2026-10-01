@@ -360,7 +360,7 @@ function Write-JsonFile {
     if ($dir -and -not (Test-Path -LiteralPath $dir)) {
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
     }
-    $json = $Value | ConvertTo-Json -Depth 12
+    $json = $Value | ConvertTo-Json -Depth 30
     Set-Content -LiteralPath $Path -Value $json -Encoding utf8NoBOM
 }
 
@@ -635,6 +635,9 @@ $equivalenceRunKeys = @($uniqueSpecRuns.Keys | Where-Object {
 foreach ($equivalenceRunKey in $equivalenceRunKeys) {
     $uniqueSpecRuns.Remove($equivalenceRunKey)
 }
+foreach ($artifactEntry in $artifactPlan) {
+    $artifactEntry.specRuns = @($artifactEntry.specRuns | Where-Object { $_ -notin $equivalenceRunKeys })
+}
 
 if ($assignedShard) {
     $expectedRunKeys = @($assignedShard.runKeys | ForEach-Object { [string]$_ } | Sort-Object -Unique)
@@ -664,6 +667,7 @@ $failedSpecs = 0
 $promotedRunKeys = @{}
 $outputModerationRuns = [System.Collections.Generic.List[hashtable]]::new()
 $phaseTimings = [System.Collections.Generic.List[object]]::new()
+$inputDigest = Get-VallyInputDigest -RepoRoot $resolvedRoot
 
 foreach ($runKey in $uniqueSpecRuns.Keys) {
     $run     = $uniqueSpecRuns[$runKey]
@@ -741,6 +745,8 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         -VallyCommand $VallyCommand `
         -LogPath $specLog `
         -Tag $tag `
+        -RunKey $runKey `
+        -InputDigest $inputDigest `
         -Worker $(if ($assignedShard) { $ShardId } else { $specKey })
     $result['specRel'] = $specRel
     $result['tag'] = $tag
@@ -759,6 +765,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
 
     $result['moderationInput'] = $inputModeration
     $result['moderationOutput'] = $outputModeration
+    $result['integrity'] = Test-VallyDiagnosticEvidence -Diagnostics $result.diagnostics -RunKey $runKey
 
     $isEvaluatorError = $result.exitCode -ne 0 -and
         $result.trials -eq 0 -and
@@ -786,6 +793,9 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         $advisoryFailed = 0
         $authoritativePassed = 0
         $authoritativeFailed = 0
+        $advisoryStimuliFailed = 0
+        $authoritativeStimuliFailed = 0
+        $toleratedFailed = 0
         if ($result.ContainsKey('perStimulus') -and $result.perStimulus) {
             foreach ($stimulusName in $result.perStimulus.Keys) {
                 $bucket = $result.perStimulus[$stimulusName]
@@ -796,10 +806,17 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
                 if ($stimAdvisory) {
                     $advisoryPassed += [int]$bucket.assertionsPassed
                     $advisoryFailed += [int]$bucket.assertionsFailed
+                    if ($false -eq $bucket.aggregatePassed) { $advisoryStimuliFailed++ }
                 }
                 else {
                     $authoritativePassed += [int]$bucket.assertionsPassed
-                    $authoritativeFailed += [int]$bucket.assertionsFailed
+                    if ($false -eq $bucket.aggregatePassed) {
+                        $authoritativeFailed += [int]$bucket.assertionsFailed
+                        $authoritativeStimuliFailed++
+                    }
+                    else {
+                        $toleratedFailed += [int]$bucket.assertionsFailed
+                    }
                 }
             }
         }
@@ -812,31 +829,30 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         # name). Classify the remainder by the spec's overall advisory posture so
         # advisory failures are never silently counted as authoritative (which would
         # gate the build via the exit-code fallback below).
-        $unattributedFailed = [int]$result.assertionsFailed - ($advisoryFailed + $authoritativeFailed)
+        $unattributedFailed = [int]$result.assertionsFailed - ($advisoryFailed + $authoritativeFailed + $toleratedFailed)
         if ($unattributedFailed -gt 0) {
             if ($specAllAdvisory) { $advisoryFailed += $unattributedFailed }
-            else { $authoritativeFailed += $unattributedFailed }
+            else {
+                $authoritativeFailed += $unattributedFailed
+                $authoritativeStimuliFailed++
+            }
         }
 
-        # A zero vally exit means the spec met its aggregate threshold (the author's
-        # runs/threshold contract), so every stimulus passed overall. Any per-trial
-        # dips counted in assertionsFailed are sub-threshold noise, not merge
-        # blockers; demote them to advisory so an aggregate-passing spec never gates.
-        if ($result.exitCode -eq 0 -and $authoritativeFailed -gt 0) {
-            $advisoryFailed += $authoritativeFailed
-            $authoritativeFailed = 0
-        }
+        # Trust the harness threshold verdict; vally exits nonzero for verdicts only with --require-pass.
 
         $result['advisoryPassed'] = $advisoryPassed
         $result['advisoryFailed'] = $advisoryFailed
         $result['authoritativePassed'] = $authoritativePassed
         $result['authoritativeFailed'] = $authoritativeFailed
-        $result['isAdvisory'] = ($authoritativeFailed -eq 0 -and $advisoryFailed -gt 0)
+        $result['advisoryStimuliFailed'] = $advisoryStimuliFailed
+        $result['authoritativeStimuliFailed'] = $authoritativeStimuliFailed
+        $result['toleratedFailed'] = $toleratedFailed
+        $result['isAdvisory'] = ($authoritativeStimuliFailed -eq 0 -and $advisoryFailed -gt 0)
 
         $erroredTrials = if ($result.ContainsKey('erroredTrials')) { [int]$result['erroredTrials'] } else { 0 }
 
         if (-not $result.ContainsKey('status')) {
-            if ($authoritativeFailed -gt 0 -or $outputModeration.flagged) {
+            if ($authoritativeStimuliFailed -gt 0 -or $outputModeration.flagged) {
                 $result['status'] = 'fail'
             }
             elseif ($advisoryFailed -gt 0) {
@@ -855,7 +871,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
 
         $specResults[$runKey] = $result
 
-        $promote = $authoritativeFailed -gt 0 -or $outputModeration.flagged -or $outputModeration.error
+        $promote = $authoritativeStimuliFailed -gt 0 -or $outputModeration.flagged -or $outputModeration.error
         # A nonzero vally exit with no attributed failures gates only when the spec is
         # not wholly advisory; an all-advisory spec surfaces but never blocks merge.
         if (-not $promote -and $result.exitCode -ne 0 -and $advisoryFailed -eq 0 -and $authoritativeFailed -eq 0 -and -not $specAllAdvisory) {
@@ -875,7 +891,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
             if ($outputModeration.error) {
                 Write-Host "::error file=$specRel::Output content moderation could not run (infrastructure error); promoting to CI failure"
             }
-            elseif ($authoritativeFailed -gt 0 -and $advisoryFailed -gt 0) {
+            elseif ($authoritativeStimuliFailed -gt 0 -and $advisoryFailed -gt 0) {
                 Write-Host "::warning file=$specRel::Per-stimulus advisory failures coexist with authoritative failures; promoting to CI failure"
             }
             if ($FailFast) {
@@ -885,6 +901,9 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         }
         elseif ($advisoryFailed -gt 0) {
             Write-Host "::warning file=$specRel::Per-stimulus advisory failures: $advisoryFailed assertion(s) across advisory stimuli; not promoting to CI failure"
+        }
+        elseif ($toleratedFailed -gt 0) {
+            Write-Host "::warning file=$specRel::$toleratedFailed trial dip(s) occurred inside aggregate-passing authoritative stimuli; not promoting to CI failure"
         }
     }
     else {
@@ -900,18 +919,27 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         $isAdvisory = (Test-SpecIsAdvisory -SpecPath $specAbs) -or $specIsEquivalence
         $result['isAdvisory'] = $isAdvisory
 
-        # A zero vally exit means the spec met its aggregate threshold (the author's
-        # runs/threshold contract), so per-trial assertion dips recorded in
-        # assertionsFailed are sub-threshold noise, not merge blockers. Mirror the
-        # advisory-map branch above and gate only on a nonzero vally exit or a
-        # moderation failure. Without this, a spec that carries no advisory-tagged
-        # stimulus would gate the build on a single sub-threshold dip even though
-        # vally reported an aggregate pass.
-        $hardFailure = ($result.exitCode -ne 0) -or $outputModeration.flagged -or $outputModeration.error
-        $subThresholdDip = (-not $hardFailure) -and ($result.assertionsFailed -gt 0)
+        # Gate authoritative failures using the harness threshold verdict, not vally's operational exit.
+        $hardFailure = ($result.exitCode -ne 0) -or $outputModeration.flagged -or
+            $outputModeration.error -or ([int]$result.stimuliFailed -gt 0)
+        $aggregateAuthoritativeFailed = 0
+        $aggregateToleratedFailed = 0
+        foreach ($bucket in @($result.perStimulus.Values)) {
+            if ($false -eq $bucket.aggregatePassed) {
+                $aggregateAuthoritativeFailed += [int]$bucket.assertionsFailed
+            }
+            else {
+                $aggregateToleratedFailed += [int]$bucket.assertionsFailed
+            }
+        }
+        $result['authoritativeFailed'] = $aggregateAuthoritativeFailed
+        $result['authoritativeStimuliFailed'] = [int]$result.stimuliFailed
+        $result['advisoryFailed'] = 0
+        $result['advisoryStimuliFailed'] = 0
+        $result['toleratedFailed'] = $aggregateToleratedFailed
 
         if (-not $result.ContainsKey('status')) {
-            $result['status'] = if ($hardFailure) { 'fail' } elseif ($subThresholdDip) { 'advisory-fail' } else { 'pass' }
+            $result['status'] = if ($hardFailure) { 'fail' } else { 'pass' }
         }
 
         $specResults[$runKey] = $result
@@ -930,9 +958,16 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
                 }
             }
         }
-        elseif ($subThresholdDip) {
-            Write-Host "::warning file=$specRel::Sub-threshold per-trial dips (exit=0, assertionsFailed=$($result.assertionsFailed)); aggregate threshold met, not promoting to CI failure"
+    }
+    if (-not $result.integrity.integrityPassed) {
+        $result['status'] = 'integrity-failure'
+        $result['isAdvisory'] = $false
+        if (-not $promotedRunKeys.ContainsKey($runKey)) {
+            $failedSpecs++
+            $promotedRunKeys[$runKey] = $true
         }
+        Write-Host "::error file=$specRel::Selected evaluation evidence failed integrity validation"
+        if ($FailFast) { break }
     }
 }
 
@@ -1003,6 +1038,10 @@ if (-not $SkipOutputModeration -and $outputModerationRuns.Count -gt 0) {
                 $failedSpecs++
                 $promotedRunKeys[$runKey] = $true
             }
+        }
+        if ($result.ContainsKey('integrity') -and -not $result.integrity.integrityPassed) {
+            $result.status = 'integrity-failure'
+            $result.isAdvisory = $false
         }
     }
 }
@@ -1146,6 +1185,7 @@ if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
 $hardFailStatuses = @(
     'fail',
     'evaluator-error',
+    'integrity-failure',
     'content-moderation-input',
     'content-moderation-error-input',
     'content-moderation-output',
@@ -1159,11 +1199,14 @@ foreach ($plan in $artifactPlan) {
     $artifactExitCode  = 0
     $artifactAuthoritativeFailed = 0
     $artifactAdvisoryFailed      = 0
+    $artifactAuthoritativeStimuliFailed = 0
+    $artifactAdvisoryStimuliFailed = 0
+    $artifactToleratedFailed = 0
     $artifactHasHardFail = $false
     $artifactHasEvaluatorError = $false
     $artifactFailedOrErroredTrials = [System.Collections.Generic.List[object]]::new()
     $specBreakdown     = [System.Collections.Generic.List[object]]::new()
-    $allSpecsRan       = $true
+    $allSpecsRan       = @($plan.specRuns).Count -gt 0
 
     foreach ($runKey in $plan.specRuns) {
         if (-not $specResults.ContainsKey($runKey)) {
@@ -1182,6 +1225,9 @@ foreach ($plan in $artifactPlan) {
         if ($r.ContainsKey('authoritativeFailed') -or $r.ContainsKey('advisoryFailed')) {
             $artifactAuthoritativeFailed += [int]$r['authoritativeFailed']
             $artifactAdvisoryFailed      += [int]$r['advisoryFailed']
+            if ($r.ContainsKey('authoritativeStimuliFailed')) { $artifactAuthoritativeStimuliFailed += [int]$r['authoritativeStimuliFailed'] }
+            if ($r.ContainsKey('advisoryStimuliFailed')) { $artifactAdvisoryStimuliFailed += [int]$r['advisoryStimuliFailed'] }
+            if ($r.ContainsKey('toleratedFailed')) { $artifactToleratedFailed += [int]$r['toleratedFailed'] }
         }
         elseif ($specIsAdvisory -or $specStatus -eq 'advisory-fail') {
             # A spec the main loop already demoted to 'advisory-fail' (an advisory
@@ -1212,12 +1258,16 @@ foreach ($plan in $artifactPlan) {
             exitCode         = $r.exitCode
             assertionsPassed = $r.assertionsPassed
             assertionsFailed = $r.assertionsFailed
+            stimuliPassed     = if ($r.ContainsKey('stimuliPassed')) { $r.stimuliPassed } else { 0 }
+            stimuliFailed     = if ($r.ContainsKey('stimuliFailed')) { $r.stimuliFailed } else { 0 }
             durationMs       = $r.durationMs
             trials           = $r.trials
             runDir           = $r.runDir
             resultsPath      = $r.resultsPath
             status           = $specStatus
             failedOrErroredTrials = if ($r.ContainsKey('failedOrErroredTrials')) { @($r.failedOrErroredTrials) } else { @() }
+            diagnostics      = if ($r.ContainsKey('diagnostics')) { $r.diagnostics } else { $null }
+            integrity        = if ($r.ContainsKey('integrity')) { $r.integrity } else { $null }
         })
     }
 
@@ -1242,6 +1292,9 @@ foreach ($plan in $artifactPlan) {
         assertionsFailed    = $artifactFailed
         authoritativeFailed = $artifactAuthoritativeFailed
         advisoryFailed      = $artifactAdvisoryFailed
+        authoritativeStimuliFailed = $artifactAuthoritativeStimuliFailed
+        advisoryStimuliFailed = $artifactAdvisoryStimuliFailed
+        toleratedFailed     = $artifactToleratedFailed
         failedOrErroredTrials = @($artifactFailedOrErroredTrials)
         specs               = @($specBreakdown)
     }
@@ -1259,6 +1312,9 @@ foreach ($plan in $artifactPlan) {
         assertionsFailed    = $artifactFailed
         authoritativeFailed = $artifactAuthoritativeFailed
         advisoryFailed      = $artifactAdvisoryFailed
+        authoritativeStimuliFailed = $artifactAuthoritativeStimuliFailed
+        advisoryStimuliFailed = $artifactAdvisoryStimuliFailed
+        toleratedFailed     = $artifactToleratedFailed
         failedOrErroredTrials = @($artifactFailedOrErroredTrials)
         specCount           = $specBreakdown.Count
         resultsFile         = "logs/eval-results-$artifactKey.json"
@@ -1274,17 +1330,22 @@ foreach ($runKey in $specResults.Keys) {
         exitCode         = $r.exitCode
         assertionsPassed = $r.assertionsPassed
         assertionsFailed = $r.assertionsFailed
+        stimuliPassed    = if ($r.ContainsKey('stimuliPassed')) { $r.stimuliPassed } else { 0 }
+        stimuliFailed    = if ($r.ContainsKey('stimuliFailed')) { $r.stimuliFailed } else { 0 }
         durationMs       = $r.durationMs
         trials           = $r.trials
     }
     if ($r.ContainsKey('status')) { $record['status'] = $r.status }
     if ($r.ContainsKey('isAdvisory')) { $record['isAdvisory'] = [bool]$r.isAdvisory }
+    $record['diagnostics'] = if ($r.ContainsKey('diagnostics')) { $r.diagnostics } else { $null }
+    $record['integrity'] = if ($r.ContainsKey('integrity')) { $r.integrity } else { $null }
     if ($r.ContainsKey('failedOrErroredTrials')) { $record['failedOrErroredTrials'] = @($r.failedOrErroredTrials) }
+    foreach ($field in @('advisoryFailed', 'authoritativeFailed', 'advisoryStimuliFailed', 'authoritativeStimuliFailed', 'toleratedFailed')) {
+        if ($r.ContainsKey($field)) { $record[$field] = [int]$r[$field] }
+    }
     if ($r.ContainsKey('perStimulusAdvisory') -and $null -ne $r.perStimulusAdvisory) {
         $record['advisoryPassed'] = [int]$r.advisoryPassed
-        $record['advisoryFailed'] = [int]$r.advisoryFailed
         $record['authoritativePassed'] = [int]$r.authoritativePassed
-        $record['authoritativeFailed'] = [int]$r.authoritativeFailed
         $record['perStimulusAdvisory'] = $r.perStimulusAdvisory
     }
     $perSpec.Add($record) | Out-Null

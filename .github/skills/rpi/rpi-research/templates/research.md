@@ -91,7 +91,7 @@ Fill every `{{placeholder}}`. Update this file continuously during research, not
 | Continuation owner               | {{user/manual RPI Agent/confirmed automatic RPI Agent}}                                         |
 | Required gates or confirmations  | {{passed_pending_or_failed_gates}}                                                              |
 | Next action                      | {{advisory_command_automatic_transition_waiting_action_no_handoff_reason_or_targeted_research}} |
-| Primary evidence file            | .copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md                             |
+| Primary evidence file            | {{resolved_primary_artifact_path_and_date_source}}                                              |
 
 ## Research Record
 

@@ -85,6 +85,8 @@ elements:
     width: 13.333
     height: 7.5
     rotation: 0              # optional; degrees 0-360
+    alt: "Describe what the image shows"  # screen-reader text; required unless decorative
+    # decorative: true       # use instead of alt for purely visual images
 
   - type: rich_text
     left: 0.8
@@ -129,7 +131,9 @@ elements:
     height: 1.5
     # Optional element defaults (per-item overrides supported): label_margin (in), gap (in), font, font_size, font_color
     # Per-item overrides: label_margin (in), font, size, color_text
-    # Example: tighten label side margins so labels fit on one line
+    # Labels auto-shrink to one uniform size when a word would otherwise break
+    # mid-character, because a chevron's notch and point consume about `height`
+    # of usable width. An explicit per-item `size` disables auto-fit for that item.
     items:
       - label: "Research"
         color: "#0078D4"
@@ -325,14 +329,14 @@ speaker_notes: |
 
 ## Slide-Level Fields
 
-| Field           | Type     | Description                                                                           |
-|-----------------|----------|---------------------------------------------------------------------------------------|
-| `slide`         | `int`    | 1-based slide number                                                                  |
-| `title`         | `string` | Slide title (informational)                                                           |
-| `section`       | `string` | Optional section grouping                                                             |
-| `layout`        | `string` | Informational layout hint: `title`, `content`, `divider`, `two-column`, `blank`       |
-| `background`    | `object` | Per-slide background; contains `fill` with a color value (`#RRGGBB` or `@theme_name`) |
-| `speaker_notes` | `string` | Speaker notes text; required when `speaker_notes_required` is true                    |
+| Field           | Type     | Description                                                                                                        |
+|-----------------|----------|--------------------------------------------------------------------------------------------------------------------|
+| `slide`         | `int`    | 1-based slide number                                                                                               |
+| `title`         | `string` | Slide title announced by screen readers; reuses the text box with identical text, else an off-slide title is added |
+| `section`       | `string` | Optional section grouping                                                                                          |
+| `layout`        | `string` | Informational layout hint: `title`, `content`, `divider`, `two-column`, `blank`                                    |
+| `background`    | `object` | Per-slide background; contains `fill` with a color value (`#RRGGBB` or `@theme_name`)                              |
+| `speaker_notes` | `string` | Speaker notes text; required when `speaker_notes_required` is true                                                 |
 
 ## Common Element Fields
 
@@ -346,6 +350,8 @@ These optional fields apply to `shape`, `textbox`, and `image` element types:
 | `height`   | `float`  | —       | Element height in inches                                                          |
 | `name`     | `string` | auto    | Shape name for identification                                                     |
 | `rotation` | `float`  | `0`     | Rotation in degrees (0–360); 90 = clockwise quarter turn, 270 = counter-clockwise |
+
+Images also accept `alt` (the text screen readers announce) or `decorative: true` (the image is skipped by assistive technology). Give every meaningful image `alt`; without either field the image file name is used, which describes nothing.
 
 ## Textbox Fields
 

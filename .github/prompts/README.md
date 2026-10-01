@@ -2,7 +2,7 @@
 title: GitHub Copilot Prompts
 description: Coaching and guidance prompts for specific development tasks that provide step-by-step assistance and context-aware support
 author: Edge AI Team
-ms.date: 2026-09-11
+ms.date: 2026-09-28
 ms.topic: hub-page
 estimated_reading_time: 3
 keywords:
@@ -124,7 +124,6 @@ These workflows are skills rather than prompts. Each resolves the active tracker
 
 * **[PowerPoint](./pptx.prompt.md)** - Create, update, or manage PowerPoint slide decks
 * **[cspell Config](./experimental/cspell-config.prompt.md)** - Create or update the project cspell configuration with project words and ignores
-* **[Graph Research](./experimental/graph-research.prompt.md)** - Research a codebase using an existing graphify knowledge graph with audit-tagged evidence
 
 ## Prompts vs Instructions vs Custom Agents
 

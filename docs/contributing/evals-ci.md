@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-22
+ms.date: 2026-09-25
 ms.topic: how-to
 keywords:
   - evals
@@ -239,7 +239,8 @@ Steps to add coverage:
 4. Run the presence check locally to confirm the artifact is covered:
 
    ```pwsh
-   pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -BaseRef origin/main -HeadRef HEAD -OutFile logs/changed-ai-artifacts.json
+   pwsh scripts/evals/Get-EvalChangeSet.ps1 -BaseRef origin/main -HeadRef HEAD -OutFile logs/eval-change-set.json
+   pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set.json -OutFile logs/changed-ai-artifacts.json
    pwsh scripts/evals/Test-StimulusPresence.ps1 -ManifestPath logs/changed-ai-artifacts.json
    ```
 
@@ -247,8 +248,7 @@ Steps to add coverage:
 
    ```pwsh
    pwsh scripts/evals/Get-ChangedSpecStimulus.ps1 `
-     -BaseRef origin/main `
-     -HeadRef HEAD `
+     -ChangeSetPath logs/eval-change-set.json `
      -OutFile logs/changed-spec-stimuli.json
    pwsh scripts/evals/Test-CopilotToken.ps1 -SmokeTest
    pwsh scripts/evals/Invoke-VallyEvals.ps1 `
@@ -294,7 +294,8 @@ The `-FailOnSpecError` switch promotes recoverable YAML parse failures to a hard
 Run the linter locally before pushing artifact changes:
 
 ```pwsh
-pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -BaseRef origin/main -HeadRef HEAD -OutFile logs/changed-ai-artifacts.json
+pwsh scripts/evals/Get-EvalChangeSet.ps1 -BaseRef origin/main -HeadRef HEAD -OutFile logs/eval-change-set.json
+pwsh scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set.json -OutFile logs/changed-ai-artifacts.json
 pwsh scripts/evals/Test-StimulusPresence.ps1 -ManifestPath logs/changed-ai-artifacts.json -FailOnSpecError
 ```
 

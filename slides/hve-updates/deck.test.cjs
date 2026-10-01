@@ -59,6 +59,27 @@ test('fullscreen state and forced-colors behavior remain explicit', () => {
   assert.match(theme, /Highlight/);
 });
 
+test('arrow and Page keys page from focused controls but not from text entry or a slide selection', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  // Paging is decided before the focused-control guard, so a clicked presenter button does not end keyboard paging.
+  const selectionGuard = source.indexOf('if (globalThis.getSelection()?.toString() && !onButtonOrLink) return;');
+  const textEntryGuard = source.search(/if \(target\?\.closest\('input, textarea, select, \[contenteditable[^'\]]*\]'\)\) return;/);
+  const paging = source.indexOf('if (Object.hasOwn(pagingKeys, key))');
+  const controlGuard = source.indexOf("if (target?.closest('button, a, summary')) return;");
+  assert.ok(selectionGuard > -1 && textEntryGuard > selectionGuard && paging > textEntryGuard && controlGuard > paging);
+  assert.match(source, /const pagingKeys = \{ arrowright: 1, pagedown: 1, arrowleft: -1, pageup: -1 \}/);
+  // Only a focused button or link overrides a text selection; other shortcuts also wait on a summary.
+  assert.match(source, /const onButtonOrLink = Boolean\(target\?\.closest\('button, a'\)\);/);
+  assert.match(source, /if \(!ready \|\| dialog\.open \|\| event\.defaultPrevented/);
+});
+
+test('presenter bar ends stay clear of viewer overlays', () => {
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  assert.match(theme, /--presenter-inset: clamp\(96px, 8vw, 128px\);/);
+  assert.match(theme, /#presenter-controls \{[^}]*padding: \S+ var\(--presenter-inset\);/);
+  assert.match(theme, /\[data-reading-view="true"\] body \{[^}]*padding-bottom: var\(--presenter-inset\);/);
+});
+
 test('invalid state and unknown actions are surfaced', () => {
   for (const args of [[-1, 'next', 4], [0, 'next', 0], [4, 'next', 4], [0.5, 'next', 4]]) {
     assert.throws(() => moveStep(...args), RangeError);
@@ -242,15 +263,17 @@ test('critique and review distinguish missing plan evidence from observed defect
   assert.match(review, /Primary assistant's decision/);
 });
 
-test('built bundle is complete and has no remote runtime assets', () => {
-  const built = fs.readFileSync(path.join(__dirname, 'dist/index.html'), 'utf8');
+test('built bundle is complete and has no remote runtime assets', async () => {
+  const { buildDeck } = await import('./build.mjs');
+  const dist = await buildDeck();
+  const built = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
   for (const match of built.matchAll(/<(?:link|script)\b[^>]*(?:src|href)="([^"]+)"/g)) {
     assert.ok(!/^(?:https?:)?\/\//.test(match[1]), match[1]);
-    assert.ok(fs.existsSync(path.join(__dirname, 'dist', match[1])), match[1]);
+    assert.ok(fs.existsSync(path.join(dist, match[1])), match[1]);
   }
-  assert.ok(fs.existsSync(path.join(__dirname, 'dist/vendor/reveal-LICENSE.txt')));
+  assert.ok(fs.existsSync(path.join(dist, 'vendor/reveal-LICENSE.txt')));
   for (const name of ['index.html', 'theme.css', 'components.css', 'content.js', 'components.js', 'deck.js']) {
-    assert.equal(fs.readFileSync(path.join(__dirname, name), 'utf8'), fs.readFileSync(path.join(__dirname, 'dist', name), 'utf8'));
+    assert.equal(fs.readFileSync(path.join(__dirname, name), 'utf8'), fs.readFileSync(path.join(dist, name), 'utf8'));
   }
 });
 

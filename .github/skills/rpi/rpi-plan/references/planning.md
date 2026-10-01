@@ -1,5 +1,5 @@
 ---
-description: "Reference protocol for evidence-based RPI planning, planning extensions, and independent plan critique."
+description: "Reference protocol for evidence-based RPI planning, planning extensions, and the optional independent plan critique."
 ---
 
 # RPI Plan Reference
@@ -14,7 +14,7 @@ Use one date and one lower-kebab-case task slug across the task's durable artifa
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 * `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
 
-The research, changes, and review paths belong to their respective RPI stages. Planning creates or revises only the plan and critique artifact unless a justified research activation is required.
+The research, changes, and review paths belong to their respective RPI stages. Planning creates or revises only the plan and critique artifacts unless a justified research activation is required. A follow-up critique adds a numbered suffix, such as `{{task_slug}}-plan-critique-2.md`, so earlier critiques stay intact.
 
 ## Artifact audience and order
 
@@ -137,7 +137,7 @@ Use `âœ…` only for an evidence-backed settled decision or achieved readiness, `â
 
 ## Implementation-time updates and follow-up items
 
-When `rpi-implement` updates the plan during implementation, update Confirmed User Direction and affected sections when the change affects current confirmed intent. Record unresolved choices in Planning Decisions and Feedback. Reconcile updated Goals, Requirements, Details, References, markers, dependencies, diagrams, and the executive summary. Remove superseded active content rather than retaining plan-state history. Checklist status and task-local `Guidance:` pointers are implementation annotations, not changes to the assessed candidate. A change to any assessed content, including requirements, scope, architecture, capability, safety, dependencies, evidence, or task wording, returns to planning for revision-bound closure before affected work resumes; a significant or divergent choice also needs the appropriate user decision. Never replay the old candidate's critique.
+When `rpi-implement` updates the plan during implementation, update Confirmed User Direction and affected sections when the change affects current confirmed intent. Record unresolved choices in Planning Decisions and Feedback. Reconcile updated Goals, Requirements, Details, References, markers, dependencies, diagrams, and the executive summary. Remove superseded active content rather than retaining plan-state history. Checklist status and task-local `Guidance:` pointers are implementation annotations. A significant or divergent change to requirements, scope, architecture, capability, safety, or dependencies needs the appropriate user decision before affected work resumes. A follow-up critique of the updated plan is optional, as described under Independent critique.
 
 Implementation may also add a `Guidance:` block to a later task. It belongs immediately after that task's `Details:` and names something earlier work created that the later task needs and the plan did not already call out, such as a class, API, contract, utility, fixture, or path. Keep it short and concrete:
 
@@ -185,125 +185,39 @@ Skills and subagents whose descriptions say they are used during planning or wit
 
 ## Independent critique
 
-Activate `rpi-plan-critique` when the primary planner judges the candidate ready for assessment. Reuse completed assessment evidence, close findings through Revision-bound closure, and recover unavailable work through Evidence-based recovery. A reservation coordinates a run; it does not prove assessment or consume a lifetime allowance. Do not critique an initial draft merely because it exists or repeat an assessment to obtain a more favorable verdict.
+The critique is an independent readiness check that runs by default and can be skipped. Activate `rpi-plan-critique` once the primary planner judges the plan implementation-ready. Do not critique an initial draft merely because it exists.
 
-Select one critique depth and record its provenance before the critique runs:
+Resolve the critique setting before the critique would run, and record it with its provenance in Critique Disposition and in parent state when present:
 
-| Depth      | Selection rule                           | Assessment behavior                                                                                                                                                                                                   |
-|------------|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `standard` | Default                                  | Assess the complete material supplied boundary as quickly as evidence permits, returning every evidence-supported implementation blocker and credibility gap without restatement, cosmetics, or low-impact expansion. |
-| `deep`     | Explicit user request to critique deeply | Trace the supplied evidence more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns. It remains one invocation and performs no open-ended research.                    |
+| Setting    | Selection rule                                             | Behavior                                                                                                                                                                                                              |
+|------------|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `standard` | Default                                                    | Assess the complete material supplied boundary as quickly as evidence permits, returning every evidence-supported implementation blocker and credibility gap without restatement, cosmetics, or low-impact expansion. |
+| `deep`     | Explicit user request to critique deeply                   | Trace the supplied evidence more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns. It remains one invocation and performs no open-ended research.                    |
+| `skip`     | User direction, or a parent session that excludes critique | Do not run the critique. Record the critique status as `skipped`; the plan can become implementation-ready without one.                                                                                               |
 
-Do not infer deep mode from plan size, complexity, uncertainty, or risk. Standard optimizes prioritization and output for minimal elapsed work without reducing complete coverage of actionable material concerns in the supplied boundary.
+Do not infer deep mode from plan size, complexity, uncertainty, or risk, and do not skip the critique without user or parent direction. Standard optimizes prioritization and output for minimal elapsed work without reducing complete coverage of actionable material concerns in the supplied boundary.
 
-Before the critique runs, inspect Critique Disposition, parent state when present, and recorded critique paths. Preserve substantive results even when their files are missing. A surviving return may supply evidence; a status label alone cannot establish coverage. Reconcile a prior `started` record before authorizing another run rather than replaying its reservation.
+### Running the critique
 
-Keep invocation outcome, assessment execution and verdict separate. A preflight limitation, interruption or host failure with no assessment records execution `Deferred` and verdict `unavailable`; record an uncertain outcome as `unknown`. A substantive assessment uses execution `Complete`, `Partial` or `Blocked` and its actual verdict. Do not relabel substantive findings as a transport failure. A missing dependency is a prerequisite to repair, not a verdict about the plan.
+When the plan is implementation-ready, lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence in the plan, whether or not the critique runs. Before the critique runs, record its status as `started` in Critique Disposition; when parent state exists, keep `active_phase` on Plan with `next_action` naming the critique. That status is the only run tracking the critique needs.
 
-### Reservation and current-run ownership
+Activate `rpi-plan-critique` with the selected depth, exact task context, confirmed direction, resolved planning decisions, caller requirements, research, evidence, dependencies, task Requirements, plan path, one critique output path, and the latest earlier critique when one exists. Assess the plan against the supplied evidence with fresh eyes rather than the drafting reasoning; running the critique in a subagent is one way to obtain that separation and is not required. The critique reads the plan and directly relevant supplied evidence, writes only the critique artifact, and returns one complete actionable finding set.
 
-Keep append-only attempt records in Critique Disposition: task, unique attempt ID, kind (`initial`, `revision-closure` or `recovery`), candidate identity, assessment scope, depth, distinct output, invocation outcome, execution, verdict and current-run provenance. Append reconciliation, ended-run evidence and findings without deleting earlier observations. When parent state exists, mirror current and original pointers in its single `Planning critique execution` entry; do not add top-level fields. Historical attempt kinds and counters remain evidence, not current retry limits.
+On resume, use a saved critique result as is. When the status is still `started` and no result was saved, run the critique again; no recovery consent is needed. Planning Readiness stays Not ready until a critique result exists and its blocking findings are resolved, or the critique is skipped. When the critique returns no assessment or only part of one, record the limitation and dispose of any findings it did return. Then run it again once the cause is resolved, or record it as skipped when the user directs continuing without it. A missing result is never a Pass.
 
-Before reserving, verify the saved candidate and evidence at exact absolute workspace paths. Compute assessed content with [the canonical helper](#deterministic-assessed-content-identity). Record its resolved path, projection version, exact projection (inline or at an immutable evidence path) and SHA-256. A pointer-only `Guidance:` block is not a place to hide changed requirements or design; assessed edits follow Revision-bound closure. Persist `started`, verify the saved record, then immediately activate the named attempt. If persistence fails, repair that prerequisite before activation. On resume, a saved reservation without a result requires reconciliation, not automatic admission or permanent disqualification.
+The critique is an internal readiness check. Its verdict returns to the planning parent, which owns revision, decision requests, and finalization. It is not a peer lifecycle transition and does not cause a standalone user to invoke another stage.
 
-Give the critique the task, attempt ID/kind, candidate identity, assessment scope, depth, plan/state paths, output and current-run provenance. Use a host invocation identifier when exposed; otherwise record the uninterrupted reservation-to-activation sequence. Matching saved strings alone are not proof of a current run. The just-authorized run may assess its own reservation once. A later caller returns to the planner for reconciliation. Standalone first critique reserves its initial attempt in its output after verifying no earlier run or assessment needs reconciliation.
+### Finding disposition
 
-Supply the resolved canonical path to this reference from the active `rpi-plan` root, not an assumed sibling of the critique skill. The critique verifies admission but does not authorize its own recovery. An unavailable reference returns a preflight limitation to the planner; repair it and apply Evidence-based recovery rather than switching to a standalone invocation.
-
-Lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence. Activate `rpi-plan-critique` once with the selected depth, exact task context, confirmed direction, resolved planning decisions, caller requirements, research, evidence, dependencies, task Requirements, plan path, and one critique output path. Assess the plan against the supplied evidence with fresh eyes rather than the drafting reasoning; running the critique in a subagent is one way to obtain that separation and is not required. The critique reads the plan and directly relevant supplied evidence, writes only the critique artifact, and returns one complete actionable finding set.
-
-The critique is an internal readiness gate. Its verdict returns to the planning parent, which owns revision, decision requests, and finalization. It is not a peer lifecycle transition and does not cause a standalone user to invoke another stage.
-
-Record the latest critique findings and their dispositions in the plan's standalone top-level `## Critique Disposition` section. Use the critique verdict to select the smallest next action:
+Record the critique status, verdict, and each finding's disposition in the plan's standalone top-level `## Critique Disposition` section. Use the verdict to select the smallest next action:
 
 * Revise the plan directly for evidence-backed corrections, applying all planner-owned findings in one coherent batch.
 * Preserve confirmed user requests and answers when critique advice conflicts with them. Reject conflicting advice without re-asking when current user direction already resolves it.
 * Route a significant or divergent finding not resolved by current user direction through the current Planning Decision Walkthrough when it affects requirements, scope, architecture, dependencies, or evidence boundary.
-* Close every `PC-xxx` with its declared owner, disposition and exact resolving evidence. Record changed candidate identity and the parent-owned closure described below.
-* Finalize from complete assessment coverage, closed blocking findings, explicit residual-risk dispositions and a current identity/closure record. Neither an attempted invocation nor approval alone establishes readiness.
+* Close every `PC-xxx` with its declared owner, disposition, and exact resolving evidence, or record it as explicitly accepted residual risk.
+* Finalize after direct corrections and required user decisions are resolved and residual risk is explicitly recorded.
 
-When critique returns, resume the planning parent's authority to revise and finalize. An unresolved evidence gap pauses only affected work with its specific clearing action; it does not create an additional approval or human-review requirement.
-
-### Revision-bound closure
-
-The planning parent owns revisions and finding closure after critique returns. The critique's read-only boundary applies during assessment, not to the parent's subsequent editing. Keep the original assessment and verdict immutable. For each assessed-content edit, record predecessor and revised hashes, exact delta, affected requirements, finding dispositions and resolving evidence.
-
-* For a supported correction that preserves assessed requirements, architecture, capability, safety and evidence boundaries, verify the delta directly and record parent closure. Reuse unaffected coverage with its applicability basis. Do not run a routine second critique or demand a new Pass for a historical Revise whose findings are resolved.
-* For a material boundary change, obtain any unresolved user decision and commission a `revision-closure` assessment of the changed boundary and its affected dependencies. Use a full assessment when the impact cannot be bounded; otherwise retain explicitly applicable prior coverage. A changed hash alone is not a reason for reassessment.
-* Partial or Blocked evidence does not establish complete coverage. Close actual findings against resolving evidence and identify the remaining assessment scope. When its prerequisite is supplied, assess that missing scope through Evidence-based recovery; do not discard the earlier findings or claim the missing work already ran.
-
-For a new assessment, persist a distinct reservation with predecessor, adjacent hashes, delta, affected IDs and full-versus-scoped basis. A failed or interrupted revision assessment follows the same recovery protocol as an initial assessment. No interruption creates a human-assessment requirement.
-
-Before finalization, recompute the delivered identity and verify its lineage to actual assessment evidence and each parent closure. Check complete combined coverage and dispositions, not only hash equality. Stop on missing identity, an unexplained delta, unresolved blocking findings or an unsupported retained-coverage claim. A current closure record can authorize hash B from assessed hash A; hash A alone cannot.
-
-### Deterministic assessed-content identity
-
-Execute [scripts/Get-PlanAssessmentHash.ps1](../scripts/Get-PlanAssessmentHash.ps1) from the
-resolved `rpi-plan` skill root. The planner supplies that absolute helper path to the critic and
-implementation handoff; a standalone consumer discovers `rpi-plan` by stable name, not an assumed
-sibling directory. PowerShell 7.4 is required; the helper has no repository or package dependencies.
-The [Bash entry point](../scripts/get-plan-assessment-hash.sh) forwards the same arguments to
-PowerShell, preserving one implementation rather than duplicating the projection algorithm.
-
-```powershell
-pwsh -NoProfile -File "<resolved-rpi-plan-root>\scripts\Get-PlanAssessmentHash.ps1" -PlanPath "<absolute-saved-plan-path>"
-```
-
-The command emits JSON with `projection_version` (`rpi-plan-assessment-v1`), lowercase `sha256`,
-and `projection`. The digest covers precisely the projection's UTF-8 bytes without BOM, not the
-JSON serialization. It reads a literal path and never rewrites the plan.
-
-The versioned projection follows the canonical plan template:
-
-* Decode strict UTF-8, remove an optional leading BOM, and normalize CRLF and CR to LF. Preserve all
-  other whitespace, including retained blank lines and terminal newlines.
-* Remove the complete level-two `Critique Disposition`, `Artifact Self-Check`,
-  `Planning Readiness and Next Step`, `Follow-Up Items` and `Handoff` sections through the next
-  level-one or level-two heading, or EOF. Names are case-sensitive; optional closing ATX hashes
-  and heading whitespace are recognized. Similarly named and deeper sections remain assessed.
-* Within the single level-two `Phase Checklist`, normalize `[x]` to `[ ]` only in canonical
-  `###` phase and `####` task headings immediately following their matching `rpi:phase` or
-  `rpi:task` marker. Other checkboxes and unmarked headings remain unchanged.
-* Within a marked task, remove `Guidance:` after `Details:` through the line before `References:`,
-  including its trailing blank lines. Preserve the preceding separator. Guidance outside that
-  scope remains assessed; a misplaced or unterminated recognized block is an error.
-* Treat backtick/tilde fenced code and HTML comments as opaque to heading, marker and label
-  recognition. The helper is for canonical ATX RPI plans, not arbitrary Markdown dialects.
-
-Every consumer recomputes with this helper and compares both version and digest with the
-assessment record. Retain its emitted projection for independent verification with a standard
-SHA-256 tool. A missing helper, failed command, unsupported version, missing recorded projection,
-or mismatched identity stops admission for planner reconciliation. Never substitute an agent-written
-projection, invent a match or relabel historical hashes as this version. Reconcile earlier evidence
-without changing its original identity; if coverage cannot be verified, readiness remains blocked.
-Hash equality identifies the assessed bytes, not approval, complete assessment coverage or proof
-that excluded Guidance contains only pointers.
-
-### Evidence-based recovery
-
-The planning parent may recover a deferred, interrupted or incomplete assessment within already-authorized scope without fresh recovery consent. This applies to initial and revision assessments, including repeated interruptions. There is no task-lifetime retry count or human-assessment fallback triggered by exhaustion. Recovery cannot override an explicit user stop or cancellation of the work.
-
-1. Reconcile task-bound plan, state, outputs and available originating-run records. Preserve every result, fragment and finding. Record what was searched, what survives and which coverage is missing. Do not repeatedly request evidence already confirmed unavailable without a new lead. Missing historical budget fields are not a blocker by themselves; unknown candidate identity, unresolved fragments or run activity still require clarification.
-2. Establish that each potentially competing run ended, using a host completion/cancellation record or explicit operator confirmation. Missing output, elapsed time or an empty local process list alone is insufficient. A verified never-dispatched reservation needs no fictional worker-termination proof. If activity is unknown, ask only for that lifecycle evidence; do not start a competing run.
-3. Verify the saved candidate and canonical identity, readable evidence, writable distinct output and the concrete resolving action. Repair a missing reference or persistence failure before retrying. Resolve editor/disk conflicts without overwriting either. A reconstructed candidate needs evidence-backed identity and any decision its changed scope requires, not a routine approval prompt.
-4. Record why the next attempt can advance: a repaired prerequisite, restored execution context after a confirmed interruption, new required evidence, or a bounded missing-coverage assignment. A positive infrastructure diagnosis is not required when the actual missing work and safe continuation are established. If the same failure recurs with no changed prerequisite or resolving action, stop with the diagnostic owner and smallest clearing evidence rather than retrying blindly.
-5. Reuse completed coverage and disposition substantive findings. Authorize only missing or materially changed assessment scope, with predecessor hashes and retained-coverage evidence. If a completed assessment is irrecoverable, record that limitation and all surviving findings; after bounded reconciliation a replacement may reconstruct the missing coverage, but cannot erase known adverse findings or be used to choose a more favorable verdict.
-6. Persist a fresh `recovery` reservation with an attempt-specific output, such as `-recovery-<attempt-id>.md`, and the recorded eligibility basis. Read it back and immediately activate its matching run. Preserve the prior reservation even when it never produced evidence. Reconcile an existing output rather than overwrite it.
-7. Read back the returned assessment and reconcile late results, candidate identity, coverage, verdict and all findings. A late result before dispatch can eliminate the missing work; if both runs produced evidence, retain both and resolve conflicts. Mark readiness only after the combined assessment coverage is complete and blocking findings are closed.
-
-Recovery changes neither the user's progression boundary nor source-write authority. A standalone critic returns to the planning parent; it cannot authorize recovery or Implementation. Operator input establishing liveness or clarifying scope is evidence, not a new human sign-off gate.
-
-### Approval and human-review scope
-
-Ordinary plan self-checks and critique dispositions are agent-owned. A Ready plan means assessment coverage, finding closure and current identity are established; it is not a claim of qualified-human attestation.
-
-Require human review only when an applicable instruction, domain artifact or explicit user requirement names it for the affected action. Record that source, artifact/action, reviewer responsibility and clearing evidence. Leave genuine human-signature checkboxes to a human. Do not infer a signature gate from an unchecked task, an agent self-check, an interruption or the word "review".
-
-Keep material user decisions and manual or before-Implementation advancement separate from human attestation. Automatic progression requires no routine plan-approval prompt. A direct Implementation request authorizes that phase within its declared scope once readiness and applicable gates hold.
-
-An optional human assessment requested by the user remains human-authored and is reconciled with existing evidence; an agent does not write or attest it. It is not a mandatory recovery route.
-
-For existing tasks, use the consistently updated workflow and preserve original records. Source edits do not hot-reload a prior conversation or update an installed snapshot. Reconcile evidence under the active contract rather than treating policy adoption, a historical count or an old readiness label as automatic clearance.
+A follow-up critique is optional. Run one when corrections substantially change requirements, scope, or architecture, or when the user asks. Give it the next numbered output path and the latest earlier critique so it reconciles prior findings rather than repeating them. Stop as Revise with the exact clearing action when the same required findings recur without material progress.
 
 ## Phase and task blocks
 
@@ -329,7 +243,7 @@ Treat examples and illustrative code as guidance unless a requirement or interfa
 
 ## Phase Checklist diagrams
 
-Once the phases are stable and before the critique runs, add Mermaid diagrams so a reader can see the shape of the change without reading every task.
+Once the phases are stable, and before the critique runs or the plan is finalized, add Mermaid diagrams so a reader can see the shape of the change without reading every task.
 
 Place two overall diagrams under `## Phase Checklist`, before the first phase:
 
@@ -348,7 +262,7 @@ Apply this styling to the Before, After, phase, and any conversational decision 
 
 * Inherit the renderer's light or dark Mermaid theme for ordinary nodes, edges, arrowheads, edge labels, and subgraphs. Do not force a light-only theme or canvas background.
 * Use `Arial, Helvetica, sans-serif` with `16px` labels through Mermaid theme variables, as in the example. Keep labels short; split crowded diagrams instead of shrinking text.
-* Reuse the example's initialization line unchanged in each diagram. Before critique, check every emitted initialization object: `themeVariables.fontFamily` is the string `Arial, Helvetica, sans-serif` and `themeVariables.fontSize` is the string `16px`. Correct malformed or nested values in the generated plan, even when the template is correct.
+* Reuse the example's initialization line unchanged in each diagram. Before critique or finalization, check every emitted initialization object: `themeVariables.fontFamily` is the string `Arial, Helvetica, sans-serif` and `themeVariables.fontSize` is the string `16px`. Correct malformed or nested values in the generated plan, even when the template is correct.
 * Pair every custom fill with an explicit text color. For phase highlights use `fill:#fff3bf,color:#1f2328,stroke:#9a6700,stroke-width:2px`; the dark text stays readable on the pale fill in either surrounding theme. Do not inherit dark-mode light text onto a pale highlight.
 * Keep meaning in labels, captions, border patterns, and relationships rather than color alone. If the renderer ignores configuration, retain those cues and disclose the limitation.
 * Inspect rendered text, highlighted and ordinary nodes, edges, edge labels, and subgraphs in both light and dark modes when preview is available. Otherwise record that dual-theme rendering was not verified; source styling alone is not a rendering result.

@@ -32,6 +32,8 @@
   --dialog-header: #232a35;
   --dialog-border: #566477;
   --font-mono: "SF Mono", Menlo, Monaco, Consolas, monospace;
+  /* Clearance from viewer overlays, such as the Copilot button SharePoint places at the bottom right. */
+  --presenter-inset: clamp(96px, 8vw, 128px);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 * { box-sizing: border-box; }
@@ -251,7 +253,7 @@ code { overflow-wrap: anywhere; }
 .demo-controls [data-action="reset"] { margin-left: auto; }
 
 /* Presenter chrome and dialogs */
-#presenter-controls { position: fixed; bottom: 0; left: 0; right: 0; height: 64px; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; gap: 15px; background: #0d0f13; border-top: 1px solid #303744; font-size: 14px; }
+#presenter-controls { position: fixed; bottom: 0; left: 0; right: 0; height: 64px; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 0 var(--presenter-inset); gap: 15px; background: #0d0f13; border-top: 1px solid #303744; font-size: 14px; }
 .brand { display: flex; gap: 12px; align-items: center; font-weight: 650; white-space: nowrap; letter-spacing: .5px; }
 .brand-dot { width: 9px; height: 9px; background: var(--cyan); border-radius: 50%; }
 #chapter-label { font-weight: 400; color: #b6c4d4; padding-left: 15px; border-left: 1px solid #4e6076; }
@@ -283,6 +285,17 @@ kbd { display: inline-block; border: 1px solid #63748b; background: #2a3443; pad
 .slide-index { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .slide-index button { text-align: left; padding: 16px; font-size: 17px; }
 .slide-index button[aria-current="page"] { border-color: #91b9ed; background: #2b3c54; }
+/* Presentation view keeps one inset row down to the reading-view threshold, then stacks centered rows. */
+@media (max-width: 1240px) {
+  :root:not([data-reading-view="true"]) #presenter-controls { gap: 12px; font-size: 13px; }
+  :root:not([data-reading-view="true"]) :is(.utility-controls, .slide-controls) { gap: 6px; }
+  :root:not([data-reading-view="true"]) #presenter-controls button { padding: 7px 9px; font-size: 13px; }
+}
+@media (max-width: 1100px) {
+  :root:not([data-reading-view="true"]) .reveal { bottom: 108px; height: calc(100% - 108px); }
+  :root:not([data-reading-view="true"]) #presenter-controls { height: 108px; flex-wrap: wrap; justify-content: center; padding: 8px; gap: 5px 15px; }
+  :root:not([data-reading-view="true"]) .utility-controls { order: -1; flex-basis: 100%; justify-content: center; }
+}
 @media (max-width: 900px) {
   #presenter-controls { padding: 0 10px; gap: 8px; }
   .brand { font-size: 12px; }
@@ -308,7 +321,7 @@ kbd { display: inline-block; border: 1px solid #63748b; background: #2a3443; pad
 
 /* Reading view: unscaled, single-column content */
 html[data-reading-view="true"], [data-reading-view="true"] body { height: auto; overflow: auto; }
-[data-reading-view="true"] body { padding-top: calc(var(--controls-height, 150px) + 12px); }
+[data-reading-view="true"] body { padding-top: calc(var(--controls-height, 150px) + 12px); padding-bottom: var(--presenter-inset); }
 [data-reading-view="true"] .reveal { position: relative; inset: auto; height: auto; overflow: visible; font-size: 1.125rem; touch-action: auto; }
 [data-reading-view="true"] .reveal :is(button, a, summary, input, [tabindex]) { scroll-margin-top: calc(var(--controls-height, 150px) + 16px); }
 [data-reading-view="true"] .reveal .slides { position: static; width: 100% !important; height: auto !important; transform: none !important; zoom: 1 !important; perspective: none; }
@@ -2037,7 +2050,7 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"How to manag
         title.textContent = 'Keyboard shortcuts';
         const grid = element('div', 'key-grid');
         for (const [key, description] of [
-          ['Left / Right', 'Previous / next slide. Page Up / Page Down also work.'],
+          ['Left / Right', 'Previous / next slide, including from a focused button or link. Page Up / Page Down also work.'],
           ['Space', 'Next slide; Shift+Space goes back.'],
           ['Home / End', 'First / last slide.'],
           ['[ / ] / R', 'Previous step / next step / reset this walkthrough.'],
@@ -2111,18 +2124,29 @@ globalThis.DeckConfig = {"title":"RPI with HVE Core","description":"How to manag
       fullscreenInitiator = null;
       if (document.activeElement === document.body || document.activeElement === null) restoreTarget.focus();
     });
+    // Buttons and links do not use these keys, so paging keeps working after a control is clicked.
+    // Components that need them call preventDefault or stopPropagation on their own element.
+    const pagingKeys = { arrowright: 1, pagedown: 1, arrowleft: -1, pageup: -1 };
     document.addEventListener('keydown', event => {
-      if (!ready || dialog.open || event.altKey || event.ctrlKey || event.metaKey) return;
-      if (event.target instanceof Element && event.target.closest('button, a, input, textarea, select, summary, [contenteditable]')) return;
-      if (globalThis.getSelection()?.toString()) return;
+      if (!ready || dialog.open || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
       const key = event.key.toLowerCase();
-      if (key.length === 1 && event.target !== required('main.slides')) return;
+      const target = event.target instanceof Element ? event.target : null;
+      const onButtonOrLink = Boolean(target?.closest('button, a'));
+      // Selected text keeps its keys unless a button or link has focus.
+      if (globalThis.getSelection()?.toString() && !onButtonOrLink) return;
+      if (target?.closest('input, textarea, select, [contenteditable]')) return;
+      if (Object.hasOwn(pagingKeys, key)) {
+        event.preventDefault();
+        if (pagingKeys[key] > 0) deck.next();
+        else deck.prev();
+        return;
+      }
+      if (target?.closest('button, a, summary')) return;
+      if (key.length === 1 && target !== required('main.slides')) return;
       const demo = deck.getCurrentSlide().querySelector('[data-demo]');
-      if (!['arrowright', 'pagedown', ' ', 'arrowleft', 'pageup', 'home', 'end', 'o', 's', 'n', '?', 'f'].includes(key)
-        && !(demo && ['[', ']', 'r'].includes(key))) return;
+      if (![' ', 'home', 'end', 'o', 's', 'n', '?', 'f'].includes(key) && !(demo && ['[', ']', 'r'].includes(key))) return;
       event.preventDefault();
-      if (['arrowright', 'pagedown', ' '].includes(key)) event.shiftKey && key === ' ' ? deck.prev() : deck.next();
-      else if (['arrowleft', 'pageup'].includes(key)) deck.prev();
+      if (key === ' ') event.shiftKey ? deck.prev() : deck.next();
       else if (key === 'home') deck.slide(0);
       else if (key === 'end') deck.slide(sections.length - 1);
       else if (key === 'f') {
