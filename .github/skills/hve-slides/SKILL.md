@@ -22,6 +22,9 @@ This skill belongs to the HVE Core repository. Keep it directly under
 
 * The requested story is covered with dated sources, accurate terminology and explicit limits.
 * The deck uses discrete slides, readable examples and predictable presenter controls.
+* The presenter bar, slide footers and walkthrough controls follow the shared
+  [bottom chrome](references/design-and-examples.md#bottom-chrome) unless the user approves
+  a different design.
 * Slides and walkthroughs support keyboard use, meaningful reading order, readable reflow,
   sufficient contrast and reduced motion, with evidence from the delivered HTML.
 * Scripted conversations, reconstructed UI and actual execution are distinguishable.

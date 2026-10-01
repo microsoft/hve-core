@@ -76,6 +76,13 @@ Keep inspection batched:
    spacing and .16em word spacing). Do not treat viewport resizing alone as zoom evidence.
 3. Read representative full-size frames and contact sheets for whole-deck composition.
    Compare text baselines, node/edge alignment, content density and bottom-control clearance.
+   Compare the bottom chrome with the starter build or `slides/rpi-with-hve` at the same
+   viewport: bar height and tone, the deck mark and chapter, the footer divider, and step
+   controls inside the walkthrough frame. Check the bar on every slide, because each chapter
+   label changes its width, and confirm the bar's contents stay inside it with reading view
+   off at the compact and stacked widths. In reading view, presenter and walkthrough buttons
+   should be at least 44 CSS pixels tall. For every walkthrough step, confirm from geometry
+   that content ends above the frame footer and that the frame body does not scroll.
    Viewer overlays such as SharePoint's Copilot button do not appear in a local browser, so
    confirm from geometry that the chapter label and slide navigation stay inside the bar inset.
    Computed overflow alone misses obscured elements, wrapping and poor visual hierarchy.

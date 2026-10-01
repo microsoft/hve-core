@@ -106,6 +106,46 @@ test('presenter bar ends stay clear of viewer overlays', () => {
   assert.match(theme, /\[data-reading-view="true"\] body \{[^}]*padding-bottom: var\(--presenter-inset\);/);
 });
 
+test('presenter bar, slide footer and walkthrough controls follow the shared bottom chrome', () => {
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  // Returns the declarations of the unprefixed rule for a selector, so assertions do not depend on declaration order.
+  const rule = selector => {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = theme.match(new RegExp(`^${escaped} \\{([^}]*)\\}`, 'm'));
+    assert.ok(match, `Missing rule: ${selector}`);
+    return match[1];
+  };
+  // The bar names the deck and the current chapter before its controls.
+  assert.match(html, /<nav id="presenter-controls"[^>]*>\s*<div class="brand"><span class="brand-dot" aria-hidden="true"><\/span>[^<]+<span id="chapter-label">/);
+  // Short chapter labels keep the bar on one row at desktop widths.
+  for (const [, chapter] of html.matchAll(/data-chapter="([^"]+)"/g)) assert.ok(chapter.length <= 28, `Chapter label too long for the bar: ${chapter}`);
+  // One variable sizes the bar and the slide area above it, including the stacked layouts.
+  assert.match(theme, /--presenter-height: 64px;/);
+  assert.match(theme, /:root:not\(\[data-reading-view="true"\]\) \{ --presenter-height: 108px; \}/);
+  assert.match(rule('.reveal'), /inset: 0 0 var\(--presenter-height\);/);
+  assert.match(rule('.reveal'), /height: calc\(100% - var\(--presenter-height\)\);/);
+  const bar = rule('#presenter-controls');
+  assert.match(bar, /height: var\(--presenter-height\);/);
+  // reveal.js gives the current slide z-index 11; reading view would otherwise paint scrolled content over the bar.
+  assert.ok(Number(bar.match(/z-index: (\d+);/)?.[1]) > 11);
+  // Footer labels sit above a divider in body text.
+  assert.match(html, /<div class="slide-bottom">/);
+  assert.match(rule('.slide-bottom'), /border-top: 1px solid/);
+  assert.doesNotMatch(rule('.slide-bottom'), /font-mono/);
+  // Step controls are the footer of the example frame, with Next step as the primary action.
+  assert.match(source, /main\.append\(header, element\('div', 'demo-body'\), controls\);/);
+  assert.match(source, /host\.replaceChildren\(sidebar, main\);/);
+  assert.match(rule('.demo-main'), /overflow: hidden;/);
+  assert.match(rule('.demo-main'), /border: 1px solid/);
+  assert.match(rule('.demo-controls'), /border-top: 1px solid/);
+  assert.match(rule('.demo-controls [data-action="next"]'), /font-weight: 600;/);
+  // Compact presenter buttons on the canvas. In reading view, the presenter-specific selector outranks the bar's 40px rule.
+  assert.match(rule('#presenter-controls button'), /min-height: 40px;/);
+  assert.match(theme, /^\[data-reading-view="true"\] button, \[data-reading-view="true"\] #presenter-controls button \{ min-height: 44px; \}$/m);
+  assert.doesNotMatch(theme, /^button \{ min-height: 44px; \}$/m);
+});
+
 test('deck initialization disables the unused cross-window API', () => {
   const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
   assert.match(source, /postMessage:\s*false/);
