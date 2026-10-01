@@ -76,6 +76,8 @@ Keep inspection batched:
    spacing and .16em word spacing). Do not treat viewport resizing alone as zoom evidence.
 3. Read representative full-size frames and contact sheets for whole-deck composition.
    Compare text baselines, node/edge alignment, content density and bottom-control clearance.
+   Viewer overlays such as SharePoint's Copilot button do not appear in a local browser, so
+   confirm from geometry that the chapter label and slide navigation stay inside the bar inset.
    Computed overflow alone misses obscured elements, wrapping and poor visual hierarchy.
 4. Gather all material findings, apply one compatible correction batch, then verify the
    affected final states. Run another pass only for a remaining defect, new evidence or
@@ -93,7 +95,10 @@ Use actual browser inputs, not only calls to internal transition functions.
 * Each walkthrough moves forward/back, reaches its endpoints and resets independently.
 * Local toggles and reconstructed walkthrough buttons perform only their declared local
   behavior; display-only chrome does not become a dead keyboard stop or execute real tools.
-* Focused inputs, buttons, selections and modifier shortcuts are not hijacked by deck keys.
+* Left / Right and Page Up / Page Down still change slides after a presenter button or
+  link is clicked. Text entry, dialogs, components that claim those keys and modifier
+  shortcuts keep them, as does selected text unless a button or link has focus. Focused
+  controls keep Space, Enter and character keys.
 * Dialog Tab/Shift+Tab, Escape, focus return and reopening work. Scrolling one dialog must
   not hide the top of the next view. Close controls remain reachable on narrow screens.
 * Optional motion settles, reduced motion overrides it, and leaving a slide does not leave

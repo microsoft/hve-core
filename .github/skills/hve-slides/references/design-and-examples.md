@@ -41,7 +41,9 @@ comparison or question/answer. Avoid making every section an equal-sized card gr
 Align repeated elements with layout primitives rather than manual offsets. Connect ordered
 phases visibly, keep historical and current flows distinct, and align command/citation rows.
 Separate headings from their examples more than labels from their values. Give the bottom
-controls and notes sufficient clearance.
+controls and notes sufficient clearance. Keep the presenter bar's chapter label and slide
+navigation inset from the window corners, where viewer overlays such as the Copilot button
+SharePoint places at the bottom right can sit; the starter's `--presenter-inset` does this.
 
 The reference deck uses a 1600 by 900 design canvas. Treat these as presentation design
 targets, not host limits: at a 1280 by 720 viewport, main text should render at least 18 CSS
@@ -93,8 +95,12 @@ Keep real local controls distinct from decorative client chrome:
 * Reset affects only its own example. No automatic typing or unattended agent loop.
 * Make local source/preview toggles or install-walkthrough buttons work as labelled.
   Render other fictional controls passively rather than as dead focusable buttons.
-* Do not take slide shortcuts while focus belongs to a button, link, input or dialog.
-  Escape closes the local overlay and restores useful focus.
+* Let Left / Right and Page Up / Page Down change slides from the slide surface and from
+  buttons or links, which do not use those keys, so paging continues after a click on a
+  control. Leave them to text entry, dialogs, components that claim them on their own
+  element, and selected text while no button or link has focus. Take no other slide
+  shortcut while focus belongs to a control or dialog. Escape closes the local overlay
+  and restores useful focus.
 * Keep source and diagram, diff and counts, question and answer, and plan and changes evidence
   consistent through one shared data model where practical.
 
