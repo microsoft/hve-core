@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microsoft.github.io/hve-core/ns/accessibility/evidence-scope.schema.json",
+  "title": "Accessibility evidence scope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profileId", "cadenceClass", "manualEvidencePolicy", "selectors"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "profileId": { "$ref": "#/$defs/id" },
+    "cadenceClass": { "enum": ["pull-request", "scheduled", "release"] },
+    "manualEvidencePolicy": { "enum": ["reviewer-required", "defer", "required"] },
+    "selectors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assetIds", "journeyIds", "states", "methods", "probes", "fixtureIds"],
+      "properties": {
+        "assetIds": { "$ref": "#/$defs/uniqueIds" },
+        "journeyIds": { "$ref": "#/$defs/uniqueIds" },
+        "states": { "$ref": "#/$defs/uniqueStrings" },
+        "methods": { "$ref": "#/$defs/uniqueStrings" },
+        "probes": { "$ref": "#/$defs/uniqueStrings" },
+        "fixtureIds": { "$ref": "#/$defs/uniqueIds" }
+      }
+    },
+    "deferred": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requirementId", "journeyId", "method", "targetCadence", "reason"],
+        "properties": {
+          "requirementId": { "$ref": "#/$defs/id" },
+          "journeyId": { "$ref": "#/$defs/id" },
+          "method": { "type": "string", "minLength": 1 },
+          "targetCadence": { "enum": ["pull-request", "scheduled", "release"] },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "cadenceClass": { "const": "release" } }, "required": ["cadenceClass"] },
+      "then": { "properties": { "manualEvidencePolicy": { "const": "required" } } }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "uniqueIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+    "uniqueStrings": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+  }
+}

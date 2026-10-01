@@ -136,7 +136,7 @@ Next Update: {time}
 **Customer Communication:**
 
 ```text
-We are aware of an issue affecting {service}. 
+We are aware of an issue affecting {service}.
 Our team is actively investigating and working to restore normal operations.
 We will provide updates as more information becomes available.
 ```

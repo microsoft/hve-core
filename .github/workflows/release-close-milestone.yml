@@ -1,0 +1,65 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Close Release Milestone
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Released version whose v<major>.<minor>.0 milestone is closed"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  close-milestone:
+    name: Close Milestone
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close milestone for released version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must use MAJOR.MINOR.PATCH form"
+            exit 1
+          fi
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          TITLE="v${MAJOR}.${MINOR}.0"
+
+          # The open milestone list is paginated, so a repository with
+          # more than one page cannot hide the released milestone. A
+          # transport or parse failure is terminal rather than a silent
+          # no-match.
+          if ! MILESTONE_LIST=$(gh api --paginate "/repos/$REPOSITORY/milestones?state=open&per_page=100"); then
+            echo "::error::Unable to list open milestones for $REPOSITORY"
+            exit 1
+          fi
+          if ! MATCHED=$(printf '%s' "$MILESTONE_LIST" |
+            jq -s --arg title "$TITLE" '[.[][] | select(.title == $title) | .number]'); then
+            echo "::error::Unable to parse the milestone list for $TITLE"
+            exit 1
+          fi
+          MATCH_COUNT=$(printf '%s' "$MATCHED" | jq 'length')
+          if [ "$MATCH_COUNT" -gt 1 ]; then
+            echo "::error::$TITLE matches $MATCH_COUNT open milestones; reconcile the duplicates before rerunning"
+            exit 1
+          fi
+          # Closure is idempotent: a rerun after the milestone is already
+          # closed finds no open match and succeeds.
+          if [ "$MATCH_COUNT" -eq 0 ]; then
+            echo "ℹ️ No open milestone found matching '$TITLE' — skipping"
+            exit 0
+          fi
+          NUMBER=$(printf '%s' "$MATCHED" | jq -r '.[0]')
+          gh api "/repos/$REPOSITORY/milestones/$NUMBER" \
+            -X PATCH -f state=closed
+          echo "✅ Closed milestone $TITLE (#$NUMBER)"

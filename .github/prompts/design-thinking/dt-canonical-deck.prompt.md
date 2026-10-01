@@ -1,5 +1,5 @@
 ---
-description: "Canonical deck workflow: opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build"
+description: "Canonical deck workflow: asset-ready offer, snapshot generation/refresh, and optional customer-card PowerPoint build"
 agent: "DT Coach"
 argument-hint: "[project-slug=...] [action=offer|build|run] [method-context=...] [trigger-context=...]"
 ---
@@ -16,13 +16,13 @@ Single prompt that handles both canonical deck and customer-card build flows.
   - `build`: build customer-card PPTX from canonical artifacts.
   - `run`: execute offer flow, and if accepted, execute optional build flow.
 - `${input:method-context}`: Optional method number.
-- `${input:trigger-context:explicit-request}`: Optional offer context (`explicit-request`, `method-exit`, `session-start-check`).
+- `${input:trigger-context:explicit-request}`: Optional offer context (`explicit-request`, `method-exit`).
 
 ## Workflow Rules
 
-1. Canonical workflow is opt-in. If the team has not opted in, ask first.
+1. Canonical workflow is available on request at any time, and offered automatically only at eligible asset-ready method exits.
 2. Decline is valid and non-blocking. Do not gate method transitions.
-3. Apply canonical workflow rules from `.github/skills/design-thinking/dt-coaching-foundation/references/canonical-deck.md` when active.
+3. Apply canonical workflow rules by loading the `dt-coaching-foundation` skill and its `references/canonical-deck.md`.
 
 ## Step 1: Resolve Project Slug
 
@@ -37,18 +37,14 @@ Once slug is resolved, establish these paths:
 1. Project root: `.copilot-tracking/dt/{project-slug}`
 2. Canonical dir: `{project-root}/canonical`
 3. Render dir: `{project-root}/render`
-4. Customer-card skill root: `.github/skills/experimental/customer-card-render`
-5. PowerPoint skill root: `.github/skills/experimental/powerpoint`
+4. Customer-card skill root: the loaded `customer-card-render` skill root
+5. PowerPoint skill root: the loaded `powerpoint` skill root
 
 ## Step 2: Offer Branch (`action=offer` or `action=run`)
 
-If canonical workflow is not active for this session, ask:
+Run the asset-readiness check from `canonical-deck.md` first. When no DT method outputs map to a supported canonical artifact type, make no offer, say what is missing, and stop.
 
-> I can keep a canonical deck snapshot as we progress and optionally build customer-card slides from it. Want to enable that workflow?
-
-If declined, stop and continue normal coaching.
-
-When active, offer snapshot creation or refresh at natural checkpoints (especially Method 1, 2, 3, and 5 exits):
+When assets are ready, offer snapshot creation or refresh at the Method 3 and Method 5 exits defined in `canonical-deck.md`:
 
 > We can snapshot the canonical deck now so your current artifacts stay traceable. Generate or refresh now?
 
@@ -64,8 +60,8 @@ If accepted:
 
 Before executing build commands, verify the actual command parameters by reading the skill documentation:
 
-1. Check `.github/skills/experimental/customer-card-render/README.md` for the exact flags and parameters for `generate_cards.py`
-2. Check `.github/skills/experimental/powerpoint/SKILL.md` for the exact parameters for `Invoke-PptxPipeline.ps1` (PowerShell) or `invoke-pptx-pipeline.sh` (bash)
+1. Load `customer-card-render` and check its skill instructions under `generate_cards.py CLI Reference` for the exact flags and parameters for `generate_cards.py`
+2. Load `powerpoint` and check its skill instructions for the exact parameters for `Invoke-PptxPipeline.ps1` (PowerShell) or `invoke-pptx-pipeline.sh` (bash)
 3. Confirm parameter names match the commands shown in Step 3 below. If skill interfaces have changed, update commands accordingly and inform the user of any parameter differences
 
 ## Step 3: Build Branch (`action=build` or accepted `action=run`)
@@ -86,7 +82,7 @@ Run the two-command flow using the confirmed parameters from Step 2.5:
 1. Generate slide YAML:
 
 ```bash
-python .github/skills/experimental/customer-card-render/scripts/generate_cards.py \
+python "<customer-card-render-skill-root>/scripts/generate_cards.py" \
   --canonical-dir .copilot-tracking/dt/{project-slug}/canonical \
   --output-dir .copilot-tracking/dt/{project-slug}/render/content
 ```
@@ -94,7 +90,7 @@ python .github/skills/experimental/customer-card-render/scripts/generate_cards.p
 2. Build PPTX using existing PowerPoint pipeline:
 
 ```powershell
-./.github/skills/experimental/powerpoint/scripts/Invoke-PptxPipeline.ps1 -Action Build \
+& "<powerpoint-skill-root>/scripts/Invoke-PptxPipeline.ps1" -Action Build \
   -ContentDir .copilot-tracking/dt/{project-slug}/render/content \
   -StylePath .copilot-tracking/dt/{project-slug}/render/content/global/style.yaml \
   -OutputPath .copilot-tracking/dt/{project-slug}/render/output/customer-cards.pptx
@@ -122,7 +118,7 @@ Success:
 
 Offer declined:
 
-> Skipped for now. We can enable canonical deck workflow any time.
+> Skipped for now. You can ask for the canonical deck any time, and I'll offer again when there's more to capture.
 
 Build failure:
 

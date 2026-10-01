@@ -60,6 +60,7 @@ def test_authenticated_request_happy_path_uses_bearer(
         "/workspaces/ws-1",
         token_store_path=fake_token_store,
         _http=recorded_http,
+        _token_http=recorded_http,
         _now=fake_now,
         _sleep=lambda _s: None,
         _bucket=_fresh_bucket(mural_module),
@@ -69,6 +70,91 @@ def test_authenticated_request_happy_path_uses_bearer(
     assert len(recorded_http.calls) == 1
     auth = recorded_http.calls[0].headers.get("Authorization")
     assert auth == f"Bearer {TEST_ACCESS_TOKEN}"
+
+
+def test_authenticated_request_uses_finite_transport_timeout(
+    mural_module: Any,
+    fake_token_store: pathlib.Path,
+    response_factory: Any,
+    fake_now: Any,
+) -> None:
+    _seed_store(fake_token_store)
+    observed: list[float] = []
+
+    def http(request: Any, *, timeout: float) -> Any:
+        del request
+        observed.append(timeout)
+        return response_factory(b'{"ok":true}', status=200)
+
+    mural_module._authenticated_request(
+        "GET",
+        "/workspaces",
+        token_store_path=fake_token_store,
+        _http=http,
+        _now=fake_now,
+        _sleep=lambda _s: None,
+        _bucket=_fresh_bucket(mural_module),
+    )
+
+    assert observed == [mural_module.REQUEST_TIMEOUT_SECONDS]
+
+
+def test_authenticated_request_rejects_base_before_token_store_load(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _fail_load(_path: object) -> None:
+        raise AssertionError("token store must not be loaded")
+
+    import mural._transport as transport
+
+    monkeypatch.setattr(transport, "_load_token_store", _fail_load)
+    with pytest.raises(mural_module.MuralSecurityError):
+        mural_module._authenticated_request(
+            "GET",
+            "/workspaces",
+            base_url="https://evil.example/api/public/v1",
+            env={"MURAL_CLIENT_ID": "client"},
+        )
+
+
+def test_authenticated_request_uses_distinct_api_and_token_http(
+    mural_module: Any,
+    fake_token_store: pathlib.Path,
+    recorded_http: Any,
+    response_factory: Any,
+    fake_now: Any,
+) -> None:
+    _seed_store(fake_token_store, expires_at=0)
+    token_http = type(recorded_http)()
+    token_http.responses.append(
+        response_factory(
+            json.dumps(
+                {
+                    "access_token": "new-access",
+                    "refresh_token": "new-refresh",
+                    "expires_in": 3600,
+                }
+            ).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+    )
+    recorded_http.responses.append(response_factory(b'{"ok":true}'))
+
+    result = mural_module._authenticated_request(
+        "GET",
+        "/workspaces",
+        token_store_path=fake_token_store,
+        _http=recorded_http,
+        _token_http=token_http,
+        _now=fake_now,
+        _sleep=lambda _s: None,
+        _bucket=_fresh_bucket(mural_module),
+    )
+
+    assert result == {"ok": True}
+    assert len(token_http.calls) == 1
+    assert len(recorded_http.calls) == 1
 
 
 def test_authenticated_request_proactive_refresh_within_leeway(
@@ -102,6 +188,7 @@ def test_authenticated_request_proactive_refresh_within_leeway(
         "/workspaces",
         token_store_path=fake_token_store,
         _http=recorded_http,
+        _token_http=recorded_http,
         _now=fake_now,
         _sleep=lambda _s: None,
         _bucket=_fresh_bucket(mural_module),
@@ -153,6 +240,7 @@ def test_authenticated_request_401_forces_single_refresh_then_retry(
         "/workspaces",
         token_store_path=fake_token_store,
         _http=recorded_http,
+        _token_http=recorded_http,
         _now=fake_now,
         _sleep=lambda _s: None,
         _bucket=_fresh_bucket(mural_module),
@@ -196,6 +284,7 @@ def test_authenticated_request_401_does_not_loop(
             "/workspaces",
             token_store_path=fake_token_store,
             _http=recorded_http,
+            _token_http=recorded_http,
             _now=fake_now,
             _sleep=lambda _s: None,
             _bucket=_fresh_bucket(mural_module),
@@ -432,6 +521,40 @@ def test_parse_rate_limit_drains_bucket_when_remaining_zero(mural_module: Any) -
     assert bucket.tokens == 0.0
 
 
+@pytest.mark.parametrize("code", [301, 302, 303, 307, 308])
+def test_api_no_redirect_handler_refuses_without_location_disclosure(
+    mural_module: Any, code: int
+) -> None:
+    import io
+    import urllib.request
+    from email.message import Message
+
+    request = urllib.request.Request(mural_module.MURAL_BASE_URL_DEFAULT)
+    headers = Message()
+    headers["Location"] = "https://example.invalid/sensitive"
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._NoRedirect("API_REDIRECT", "Mural API request")._block(
+            request, io.BytesIO(), code, "redirect", headers
+        )
+    assert excinfo.value.code == "API_REDIRECT"
+    assert "example.invalid" not in str(excinfo.value)
+
+
+@pytest.mark.parametrize("code", [301, 302, 303, 307, 308])
+def test_sas_no_redirect_handler_refuses(mural_module: Any, code: int) -> None:
+    import io
+    import urllib.request
+    from email.message import Message
+
+    request = urllib.request.Request("https://blob.example.invalid")
+    headers = Message()
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._NoRedirect("ASSET_UPLOAD_REDIRECT", "asset upload")._block(
+            request, io.BytesIO(), code, "redirect", headers
+        )
+    assert excinfo.value.code == "ASSET_UPLOAD_REDIRECT"
+
+
 # ---------------------------------------------------------------------------
 # Phase 4: response-body cap, Retry-After backoff, refresh-lock idempotency
 # ---------------------------------------------------------------------------
@@ -560,6 +683,7 @@ def test_apply_refresh_writes_int_now_when_expires_in_missing(
         "/workspaces",
         token_store_path=fake_token_store,
         _http=recorded_http,
+        _token_http=recorded_http,
         _now=fake_now,
         _sleep=lambda _s: None,
         _bucket=_fresh_bucket(mural_module),
@@ -602,6 +726,7 @@ def test_proactive_refresh_triggers_when_stored_expires_at_is_zero(
         "/workspaces",
         token_store_path=fake_token_store,
         _http=recorded_http,
+        _token_http=recorded_http,
         _now=fake_now,
         _sleep=lambda _s: None,
         _bucket=_fresh_bucket(mural_module),
@@ -710,6 +835,9 @@ def test_concurrent_401_responses_trigger_single_refresh(
 
     monkeypatch.setattr(mural_module, "_apply_refresh", _counting_apply_refresh)
 
+    def _token_http(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("patched refresh must not use the token network")
+
     http_lock = threading.Lock()
     api_calls: list[str] = []
 
@@ -734,6 +862,7 @@ def test_concurrent_401_responses_trigger_single_refresh(
                 "/workspaces/ws-1",
                 token_store_path=fake_token_store,
                 _http=_http,
+                _token_http=_token_http,
                 _now=fake_now,
                 _sleep=lambda _s: None,
                 _bucket=_fresh_bucket(mural_module),
@@ -780,6 +909,9 @@ def test_concurrent_proactive_refreshes_coalesce(
 
     monkeypatch.setattr(mural_module, "_apply_refresh", _counting_apply_refresh)
 
+    def _token_http(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("patched refresh must not use the token network")
+
     http_lock = threading.Lock()
     api_calls: list[str] = []
 
@@ -802,6 +934,7 @@ def test_concurrent_proactive_refreshes_coalesce(
                 "/workspaces/ws-1",
                 token_store_path=fake_token_store,
                 _http=_http,
+                _token_http=_token_http,
                 _now=fake_now,
                 _sleep=lambda _s: None,
                 _bucket=_fresh_bucket(mural_module),
@@ -820,3 +953,210 @@ def test_concurrent_proactive_refreshes_coalesce(
     assert all(result == {"ok": True} for result in results)
     rotated_calls = [auth for auth in api_calls if rotated_token in auth]
     assert len(rotated_calls) == n_threads
+
+
+# ---------------------------------------------------------------------------
+# Issue 2756: ordinary API exceptions carry a bounded, redacted excerpt
+# ---------------------------------------------------------------------------
+
+_EXCERPT_SECRET = "s3cr3t-VALUE.with-symbols_42"
+
+
+def test_error_excerpt_masks_token_shaped_body(mural_module: Any) -> None:
+    body = f'{{"refresh_token": "{_EXCERPT_SECRET}"}}'
+
+    result = mural_module._error_excerpt(body)
+
+    assert _EXCERPT_SECRET not in result
+    assert '"refresh_token": "***"' in result
+
+
+def test_error_excerpt_returns_empty_for_empty_body(mural_module: Any) -> None:
+    assert mural_module._error_excerpt("") == ""
+
+
+def test_error_excerpt_bounds_oversized_body(mural_module: Any) -> None:
+    limit = mural_module.MAX_ERROR_EXCERPT_CHARS
+    body = "A" * (limit * 4)
+
+    result = mural_module._error_excerpt(body)
+
+    assert result.endswith("... (truncated)")
+    assert len(result) == limit + len("... (truncated)")
+
+
+def test_error_excerpt_leaves_short_body_unmarked(mural_module: Any) -> None:
+    body = "upstream rejected the request"
+
+    assert mural_module._error_excerpt(body) == body
+
+
+# ---------------------------------------------------------------------------
+# _build_api_error applies the ordinary API diagnostic bound
+# ---------------------------------------------------------------------------
+
+
+def test_build_api_error_bounds_oversized_body(mural_module: Any) -> None:
+    """Ordinary non-2xx API responses flow through the bounded diagnostic path.
+
+    ``_read_capped`` allows up to ``MURAL_MAX_BODY_BYTES`` (16 MiB by default),
+    four orders of magnitude above the excerpt limit.
+    """
+    limit = mural_module.MAX_ERROR_EXCERPT_CHARS
+    body = ("A" * (limit * 8)).encode("utf-8")
+
+    exc = mural_module._build_api_error(500, body, None)
+
+    assert len(exc.message) == limit + len("... (truncated)")
+    assert exc.message.endswith("... (truncated)")
+
+
+def test_build_api_error_masks_token_in_message(mural_module: Any) -> None:
+    """A secret quoted in the upstream `message` field does not reach the exception."""
+    body = json.dumps(
+        {"code": "BAD_REQUEST", "message": f"rejected access_token={_EXCERPT_SECRET}"}
+    ).encode("utf-8")
+
+    exc = mural_module._build_api_error(400, body, None)
+
+    assert _EXCERPT_SECRET not in exc.message
+    assert exc.code == "BAD_REQUEST"
+
+
+def test_build_api_error_masks_token_in_non_json_body(mural_module: Any) -> None:
+    """The raw-decode fallback is bounded and redacted too."""
+    body = f"gateway failure refresh_token={_EXCERPT_SECRET}".encode("utf-8")
+
+    exc = mural_module._build_api_error(502, body, None)
+
+    assert _EXCERPT_SECRET not in exc.message
+
+
+def test_build_api_error_falls_back_to_status_for_empty_body(
+    mural_module: Any,
+) -> None:
+    """An empty body still yields a usable message rather than a blank string."""
+    exc = mural_module._build_api_error(503, b"", None)
+
+    assert exc.message == "HTTP 503"
+
+
+def test_refresh_http_error_excludes_raw_refresh_token(
+    mural_module: Any,
+    recorded_http: Any,
+    http_error_factory: Any,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A failing refresh must not carry the upstream body into the exception."""
+    recorded_http.responses.append(
+        http_error_factory(
+            f'{{"Access_Token":"{_EXCERPT_SECRET}"}}'.encode(),
+            code=400,
+        )
+    )
+
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._refresh_access_token(
+            _EXCERPT_SECRET,
+            client_id="client-abc",
+            _http=recorded_http,
+        )
+
+    assert excinfo.value.code == "REFRESH_FAILED"
+    assert excinfo.value.message == "token refresh failed"
+    assert _EXCERPT_SECRET not in str(excinfo.value)
+    assert _EXCERPT_SECRET not in capsys.readouterr().err
+
+
+def test_refresh_error_status_excludes_raw_payload(
+    mural_module: Any,
+    recorded_http: Any,
+    response_factory: Any,
+) -> None:
+    """A returned 4xx refresh payload never enters the typed error."""
+    recorded_http.responses.append(
+        response_factory(
+            f'{{"\\u0041ccess_Token":"{_EXCERPT_SECRET}"}}'.encode(),
+            status=400,
+            headers={"Content-Type": "application/json"},
+        )
+    )
+
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._refresh_access_token(
+            _EXCERPT_SECRET,
+            client_id="client-abc",
+            _http=recorded_http,
+        )
+
+    assert excinfo.value.code == "REFRESH_FAILED"
+    assert excinfo.value.message == "token refresh failed"
+    assert _EXCERPT_SECRET not in str(excinfo.value)
+
+
+def test_token_invalid_json_excludes_raw_body(
+    mural_module: Any,
+    response_factory: Any,
+) -> None:
+    """A malformed token response never enters the exception."""
+    resp = response_factory(
+        f'{{"Access_Token":"{_EXCERPT_SECRET}',
+        status=200,
+        headers={"Content-Type": "application/json"},
+    )
+
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._parse_token_response(resp)
+
+    assert excinfo.value.code == "TOKEN_INVALID_JSON"
+    assert excinfo.value.message == "token endpoint returned malformed JSON"
+    assert _EXCERPT_SECRET not in str(excinfo.value)
+
+
+def test_sas_error_status_excludes_response_body(
+    mural_module: Any, response_factory: Any
+) -> None:
+    response = response_factory(
+        f'{{"Access_Token":"{_EXCERPT_SECRET}"}}',
+        status=400,
+    )
+
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._upload_to_sas(
+            url="https://example.blob.core.windows.net/c/b?sig=fixture",
+            headers={},
+            body=b"fixture",
+            content_type="text/plain",
+            _http=lambda *_args, **_kwargs: response,
+        )
+
+    assert excinfo.value.status == 400
+    assert excinfo.value.code == "ASSET_UPLOAD_FAILED"
+    assert excinfo.value.message == "asset upload failed"
+    assert _EXCERPT_SECRET not in str(excinfo.value)
+
+
+def test_sas_http_error_excludes_response_body(
+    mural_module: Any, http_error_factory: Any
+) -> None:
+    error = http_error_factory(
+        f'{{"\\u0041ccess_Token":"{_EXCERPT_SECRET}"}}'.encode(),
+        code=403,
+    )
+
+    def _raise_error(*_args: Any, **_kwargs: Any) -> None:
+        raise error
+
+    with pytest.raises(mural_module.MuralAPIError) as excinfo:
+        mural_module._upload_to_sas(
+            url="https://example.blob.core.windows.net/c/b?sig=fixture",
+            headers={},
+            body=b"fixture",
+            content_type="text/plain",
+            _http=_raise_error,
+        )
+
+    assert excinfo.value.status == 403
+    assert excinfo.value.code == "ASSET_UPLOAD_FAILED"
+    assert excinfo.value.message == "asset upload failed"
+    assert _EXCERPT_SECRET not in str(excinfo.value)

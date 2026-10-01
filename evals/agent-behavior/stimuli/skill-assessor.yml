@@ -19,7 +19,7 @@ stimuli:
         config:
           pattern: '(?i)(skill|framework|version|reference)\s*:'
       - type: output-matches
-        name: findings-table-present
+        name: skill-assessor-audit-mode-format-findings-table-present
         config:
           pattern: '(?i)(\|.*status.*\||findings table|severity)'
       - type: output-matches
@@ -46,7 +46,7 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: plan-status-vocabulary
+        name: skill-assessor-plan-mode-vocabulary-plan-status-vocabulary
         config:
           pattern: '(?i)\b(risk|caution|covered|not[_ ]applicable)\b'
       - type: output-matches

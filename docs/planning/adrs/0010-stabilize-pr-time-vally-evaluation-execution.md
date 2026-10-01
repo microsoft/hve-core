@@ -1,9 +1,9 @@
 ---
 id: "0010"
 title: "Stabilize PR-time Vally evaluation execution"
-description: "Stabilize and accelerate PR-time Vally evaluations through typed-result parsing, shard-batched moderation, self-contained worker stimuli, semantic graders, and GPT-5.6 Luna."
+description: "Stabilize and accelerate PR-time Vally evaluations through typed-result parsing, shard-batched moderation, self-contained worker stimuli, semantic graders, and GPT-6 Luna."
 author: "HVE Core Maintainers"
-ms.date: "2026-07-10"
+ms.date: "2026-09-23"
 ms.topic: "reference"
 status: "proposed"
 proposed_date: "2026-07-10"
@@ -38,6 +38,9 @@ related:
   - path: "0002-adopt-vally-as-agent-and-skill-behavior-evaluation-framework.md"
     relation: "influenced-by"
     note: "Refines the PR-time execution and grading behavior established by ADR 0002."
+  - path: "0011-define-vally-baseline-equivalence-evaluation-policy.md"
+    relation: "influences"
+    note: "ADR 0011 renames this proposal's baseline-equivalence tier vocabulary and extends its typed-record rule to the equivalence results reader; see the reconciliation note in Decision Outcome."
 asr_triggers:
   - kind: "performance"
     evidence: "A 47-trial paired benchmark on 2026-07-10 measured median trial time of 12.8 seconds for Claude Haiku 4.5 and 7.9 seconds for GPT-5.6 Luna."
@@ -61,7 +64,7 @@ success_criteria:
     measurement_window: "every PR evaluation shard"
     source: "scripts/evals/Modules/VallyRunner.psm1 and scripts/evals/Invoke-VallyEvals.ps1"
   - metric: "hve-worker-conformance"
-    target: "all seven HVE Builder worker stimuli pass five of five GPT-5.6 Luna trials"
+    target: "all seven HVE Builder worker stimuli pass five of five GPT-6 Luna trials"
     measurement_window: "before adoption and after material worker-contract changes"
     source: "evals/agent-behavior/eval.yaml"
   - metric: "dispatcher-regression-coverage"
@@ -165,8 +168,32 @@ The decision has five parts:
 4. Use positive lookahead assertions for requirements whose ordering is
   irrelevant, while retaining every semantic signal the grader is intended to
   require.
-5. Use GPT-5.6 Luna as the Low-profile PR evaluation default in the dispatcher,
+5. Use GPT-6 Luna as the Low-profile PR evaluation default in the dispatcher,
    agent matrix, baseline-equivalence PR fallback, and eval workflow.
+
+The current Low-profile default is GPT-6 Luna. The original options, benchmark results, and confirmation retain GPT-5.6 Luna as their measured model; those results do not validate GPT-6 Luna. Repeat target-model evaluation before claiming equivalent quality or performance.
+
+> **Reconciliation note (2026-08-01).** This proposal predates the Vally 0.11
+> migration and ADR 0011. Three of its terms have moved, and the boundary is
+> recorded here rather than by rewriting the proposal above:
+>
+> * The baseline-equivalence tiers named `pr` and `nightly` are renamed
+>   `devloop` and `ci` by ADR 0011. The retired names are rejected rather than
+>   aliased, so "baseline-equivalence PR fallback" in part 5 now reads as the
+>   `devloop` tier default. The model selection itself is unchanged: `devloop`
+>   still resolves GPT-5.6 Luna as its low-cost default. `Invoke-AgentMatrix.ps1`
+>   retains the `pr` and `nightly` vocabulary and is out of scope for that
+>   rename.
+> * The typed-record rule in part 1 remains correct and is now implemented in
+>   both readers. `VallyRunner.psm1` applied it to eval results; the equivalence
+>   results reader in `EquivalenceParsing.psm1` applies the same rule, including
+>   the treatment of an absent or blank `type` as a legacy trial record.
+> * "Backward compatibility with legacy Vally result files" continues to apply
+>   to untyped trial records. It does not extend to the equivalence reporting
+>   summary, which ADR 0011 versions as `schemaVersion: "2.0.0"` and whose
+>   consumers reject an unsupported major version rather than degrading.
+>
+> No decision outcome in this proposal is withdrawn by that note.
 
 ## Moderation Reconciliation Semantics
 
@@ -226,8 +253,10 @@ The implementation was confirmed on 2026-07-10 with the following evidence:
 
 ```mermaid
 flowchart LR
+  accTitle: Pull Request Evaluation and Moderation Reconciliation
+  accDescr: Changed artifacts run through filtered Vally trials, typed-result parsing, grading, and shard moderation before advisory and authoritative outcomes are reconciled.
     changed["Changed AI artifacts and stimuli"] --> plan["Tag-filtered Vally run plan"]
-    plan --> luna["GPT-5.6 Luna trial execution"]
+    plan --> luna["GPT-6 Luna trial execution"]
     luna --> jsonl["Typed results.jsonl"]
     jsonl --> parser["Count trial-result records only"]
     parser --> grades["Vally grader outcomes"]
@@ -246,7 +275,7 @@ flowchart LR
 * Risk: a moderation backend can return a flag count without record identifiers. Mitigation: single-run batches can conservatively receive the unmatched count; multi-run batches fail attribution and block as an infrastructure error.
 * Risk: compact decision rules in worker prompts drift from the actual worker contracts. Mitigation: keep the copied surface limited to public stop and status rules, retain exact artifact backlinks, and remove the workaround when Vally supports direct agent routing.
 * Risk: tolerant regular expressions become too broad. Mitigation: use lookahead assertions to preserve every required semantic signal and keep five-trial target-model checks for the worker suite.
-* Risk: GPT-5.6 Luna availability or behavior changes. Mitigation: keep explicit model-reference validation, an ordered Low-profile fallback in authored agents, and periodic paired-model benchmarks before future default changes.
+* Risk: GPT-6 Luna availability or behavior changes. Mitigation: keep explicit model-reference validation, an ordered Low-profile fallback in authored agents, and periodic paired-model benchmarks before future default changes.
 * Risk: batching changes CI failure accounting. Mitigation: regression tests assert advisory, authoritative, moderation-error, duplicate-promotion, and per-artifact roll-up behavior.
 
 ## Rollback / Exit Strategy

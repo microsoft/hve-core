@@ -138,6 +138,7 @@ function script:Invoke-SutInFixture {
         -RedirectStandardError $stderrPath `
         -Wait -PassThru -NoNewWindow
 
+    # See ../README.md#powershell-7-and-pester-gotchas for these mitigations.
     # Belt-and-suspenders: ensure the process has fully exited and OS file
     # buffers have flushed before we read. Tiny stdout payloads under the
     # Pester runspace can race the file-handle close.

@@ -7,6 +7,12 @@ description: Prioritization guidance, work-item categories, and backlog handoff 
 
 This reference captures the backlog-oriented formats and priorities used to hand off security findings into the implementation workflow.
 
+## Security-test-case work items
+
+When the model includes `security_test_cases[]`, emit a Phase 5 backlog work item for each relevant test case and keep the inline security-test-case matrix in the threat-model output. Security test cases are surfaced both as a backlog handoff artifact and as a structured inline matrix so reviewers can see both the implementation intent and the evidence trail.
+
+Use a category such as `security-test-case` for the backlog handoff, and include the `test_type`, `expected_result`, and the linked target references so the implementation team can trace the case back to the threat-model record.
+
 ## Prioritization posture
 
 Security backlog items should be grouped by:
@@ -32,7 +38,7 @@ A compact backlog entry can use this structure:
 
 ```markdown
 - Area: {bucket or GS concern}
-- Priority: {High/Medium/Low}
+- Priority: {Critical/High/Medium/Low/Informational}
 - Why it matters: {risk statement}
 - Suggested mitigation: {control or action}
 - Related standards: {control family or standards reference}

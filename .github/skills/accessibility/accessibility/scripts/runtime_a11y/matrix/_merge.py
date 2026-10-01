@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from runtime_a11y.matrix._model import (
     METHOD_RANK,
+    OVERWRITE_LOCKED_METHODS,
     STATUS_PRIORITY,
     CandidateUpdate,
     Cell,
@@ -65,7 +66,7 @@ def merge_updates(matrix: Matrix, updates: list[CandidateUpdate]) -> Matrix:
                 continue
             if cell.isApplicable is False and update.status != "not-applicable":
                 continue
-            if cell.verifiedByMethod in {"manual-keyboard", "screen-reader"}:
+            if cell.verifiedByMethod in OVERWRITE_LOCKED_METHODS:
                 continue
             if _should_replace(cell.verifiedByMethod, cell.status, cell.date, update):
                 cells[index] = Cell(

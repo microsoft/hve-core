@@ -1,0 +1,7 @@
+{
+  "name": "@hve-core/accessibility-scanner-runtime",
+  "version": "0.0.0",
+  "private": true,
+  "description": "npm configuration boundary for the accessibility scanner runtime.",
+  "license": "MIT"
+}

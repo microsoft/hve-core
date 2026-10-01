@@ -1,0 +1,11 @@
+output: ./output/demo.mp4
+resolution: 1280x720
+fps: 24
+segments:
+  - type: frame
+    visual: ./fixtures/intro.png
+    narration: ./fixtures/intro.wav
+    duration: 3.0
+  - type: clip
+    clip: ./fixtures/interaction.mp4
+    narration: ./fixtures/interaction.wav

@@ -63,11 +63,22 @@ jobs:
     steps:
       - name: Generate summary
         shell: pwsh
+        env:
+          THRESHOLD_DAYS: ${{ inputs.max-age-days || 30 }}
+          PINNING_SCORE: ${{ needs.validate-pinning.outputs.compliance-score }}
+          UNPINNED_COUNT: ${{ needs.validate-pinning.outputs.unpinned-count }}
+          STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
+          CODEQL_RESULT: ${{ needs.codeql-analysis.result }}
+          EVENT_NAME: ${{ github.event_name }}
+          SERVER_URL: ${{ github.server_url }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
         run: |
-          $pinningScore = '${{ needs.validate-pinning.outputs.compliance-score }}'
-          $unpinnedCount = '${{ needs.validate-pinning.outputs.unpinned-count }}'
-          $staleCount = '${{ needs.check-staleness.outputs.stale-count }}'
-          $codeqlResult = '${{ needs.codeql-analysis.result }}'
+          $pinningScore = $env:PINNING_SCORE
+          $unpinnedCount = $env:UNPINNED_COUNT
+          $staleCount = $env:STALE_COUNT
+          $codeqlResult = $env:CODEQL_RESULT
+          $thresholdDays = $env:THRESHOLD_DAYS
           
           # Determine overall status
           $hasIssues = $false
@@ -78,7 +89,7 @@ jobs:
           # 🔐 Weekly Security Maintenance Report
           
           **Execution Time:** $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-          **Trigger:** ${{ github.event_name }}
+          **Trigger:** $env:EVENT_NAME
           
           ## 📊 Dependency Health
           
@@ -86,7 +97,7 @@ jobs:
           |--------|--------|---------|
           | Dependency Pinning Compliance | $(if ($unpinnedCount -eq '0') { '✅ Pass' } else { '⚠️ Warning' }) | Score: $pinningScore% |
           | Unpinned Dependencies | $(if ($unpinnedCount -eq '0') { '✅ None' } else { "⚠️ $unpinnedCount found" }) | $(if ($unpinnedCount -ne '0') { 'Review warnings above' } else { 'All pinned' }) |
-          | Stale SHAs (>${{ inputs.max-age-days }} days) | $(if ($staleCount -eq '0') { '✅ None' } else { "⚠️ $staleCount found" }) | $(if ($staleCount -ne '0') { 'Review warnings above' } else { 'All current' }) |
+          | Stale SHAs (>$thresholdDays days) | $(if ($staleCount -eq '0') { '✅ None' } else { "⚠️ $staleCount found" }) | $(if ($staleCount -ne '0') { 'Review warnings above' } else { 'All current' }) |
           
           ## 🛡️ Security Analysis
           
@@ -121,11 +132,11 @@ jobs:
               Get-Content 'logs/sha-staleness-results.json' | ConvertFrom-Json
             }
             
-            $thresholdDays = ${{ inputs.max-age-days || 30 }}
+            $staleThreshold = [int]$env:THRESHOLD_DAYS
             $staleDetails = ""
             if ($stalenessReport -and $stalenessReport.Dependencies) {
               foreach ($staleDep in $stalenessReport.Dependencies) {
-                if ($staleDep.DaysOld -gt $thresholdDays) {
+                if ($staleDep.DaysOld -gt $staleThreshold) {
                   $staleDetails += "- **$($staleDep.File)**: $($staleDep.Action)@$($staleDep.CurrentVersion) ($($staleDep.DaysOld) days old, latest: $($staleDep.LatestVersion))`n"
                 }
               }
@@ -135,7 +146,7 @@ jobs:
           
           ## ℹ️ Recommended: Update Stale SHAs
           
-          **$staleCount SHA pins are outdated (>${{ inputs.max-age-days || 30 }} days old).** Consider updating them.
+          **$staleCount SHA pins are outdated (>$thresholdDays days old).** Consider updating them.
           
           $staleDetails
           
@@ -155,7 +166,7 @@ jobs:
           
           Repository security posture is excellent:
           - All dependencies are properly pinned
-          - All SHAs are current (< ${{ inputs.max-age-days || 30 }} days old)
+          - All SHAs are current (< $thresholdDays days old)
           - CodeQL analysis completed successfully
           - GitHub Secret Scanning and Dependabot actively monitoring
           
@@ -165,7 +176,7 @@ jobs:
           ---
           
           📥 **Detailed Reports:** Download artifacts from this workflow run  
-          🔗 **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          🔗 **Workflow Run:** $env:SERVER_URL/$env:REPO/actions/runs/$env:RUN_ID
           
           $(if ($hasIssues) {
             @"
@@ -174,7 +185,7 @@ jobs:
           
           1. Review the build warnings generated in this workflow run
           2. For unpinned dependencies: Pin them to SHAs immediately (security risk)
-          3. For stale SHAs (>${{ inputs.max-age-days }} days): Update them when convenient (maintenance task)
+          3. For stale SHAs (>$thresholdDays days): Update them when convenient (maintenance task)
           4. Download the JSON report artifacts for detailed analysis
           
           "@
@@ -183,9 +194,14 @@ jobs:
 
       - name: Set workflow conclusion
         shell: pwsh
+        env:
+          THRESHOLD_DAYS: ${{ inputs.max-age-days || 30 }}
+          UNPINNED_COUNT: ${{ needs.validate-pinning.outputs.unpinned-count }}
+          STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
         run: |
-          $unpinnedCount = '${{ needs.validate-pinning.outputs.unpinned-count }}'
-          $staleCount = '${{ needs.check-staleness.outputs.stale-count }}'
+          $unpinnedCount = $env:UNPINNED_COUNT
+          $staleCount = $env:STALE_COUNT
+          $thresholdDays = $env:THRESHOLD_DAYS
           
           # Informational output - workflow succeeds but logs warnings
           if ($unpinnedCount -ne '0') {
@@ -193,7 +209,7 @@ jobs:
           }
           
           if ($staleCount -ne '0') {
-            Write-Output "::warning::Found $staleCount stale SHA pins (>${{ inputs.max-age-days || 30 }} days old). Consider updating them."
+            Write-Output "::warning::Found $staleCount stale SHA pins (>$thresholdDays days old). Consider updating them."
           }
           
           if ($unpinnedCount -eq '0' -and $staleCount -eq '0') {

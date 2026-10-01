@@ -49,6 +49,40 @@ The BRD Builder applies MoSCoW in this order:
 
 The BRD Builder records the chosen scheme as a structured field on the BRD so downstream consumers (PRD Builder, planners) can carry the categorization forward without re-deriving it.
 
+## Supporting Lenses (repository-original)
+
+MoSCoW records *what* the priority is. These lenses inform *why* an item earns its label, and are the evidence a reviewer looks for behind a Must. They complement the required scheme rather than replacing it; every item still carries a MoSCoW label.
+
+### Impact versus effort
+
+Assess two dimensions before assigning a label:
+
+* **Impact** — how many users are affected, and how severe is their pain?
+* **Effort** — what is the implementation complexity relative to current team capacity?
+
+| Combination              | Typical disposition                                                     |
+|--------------------------|-------------------------------------------------------------------------|
+| High impact, low effort  | Ships first; a strong Must candidate                                    |
+| High impact, high effort | Decompose into incremental deliverables rather than deferring wholesale |
+| Low impact, low effort   | Could, unless it unblocks something larger                              |
+| Low impact, high effort  | Deprioritized or declined, with the rationale recorded                  |
+
+The high-impact, high-effort row is the one most often mishandled. Deferring the whole item loses the impact; forcing it into one delivery boundary inflates the Must list. Decomposition preserves both.
+
+### Business alignment
+
+Ask whether the item advances a stated business objective or key result. An item with no traceable alignment is a Could at best, regardless of how enthusiastically it is requested.
+
+### Cost of delay
+
+Ask what the cost is if this is deferred one delivery boundary. Cost of delay separates a genuine Must from an urgent-feeling Should: an item whose cost of delay is low is a Should even when a stakeholder wants it now, and an item whose cost of delay compounds is a Must even when it seems small.
+
+Record the cost-of-delay rationale for every Must and every Won't, since those are the two labels a reviewer is most likely to challenge.
+
+### Communicating the outcome
+
+When declining or deferring, state the trade-off transparently: what was chosen instead, and why. A declined item with a recorded rationale can be revisited; one declined silently returns as the same request next boundary.
+
 ## References
 
 Internal:

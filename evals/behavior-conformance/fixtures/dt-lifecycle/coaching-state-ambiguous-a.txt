@@ -1,0 +1,23 @@
+project:
+  name: "Synthetic Service Alpha"
+  slug: "synthetic-service-alpha"
+  created: "2026-09-07"
+  initial_request: "Explore synthetic service flow alpha."
+  initial_classification: "frozen"
+current:
+  method: 2
+  space: "problem"
+  phase: "interviewing"
+  disclaimerShownAt: null
+methods_completed:
+  - 1
+transition_log:
+  - from_method: 1
+    to_method: 2
+    rationale: "Synthetic alpha stakeholders were identified."
+    date: "2026-09-07"
+hint_calibration:
+  level: 1
+  pattern_notes: ""
+session_log: []
+artifacts: []

@@ -1,9 +1,9 @@
 ---
 title: 'DT Implementation Context'
-description: Adjustments augmenting Task Implementor behavior when executing plans that originated from a Design Thinking process.
+description: Adjustments augmenting rpi-implement when executing plans that originated from a Design Thinking process.
 ---
 
-When Task Implementor executes a plan that originated from a Design Thinking process, these adjustments augment standard implementation behavior. The Implementor does not receive direct DT handoffs; DT context arrives through the Researcher→Planner pipeline chain. The plan originates from a Design Thinking process, so fidelity constraints, stakeholder validation, and iteration support shape implementation decisions.
+When `rpi-implement` executes a plan that originated from a Design Thinking process, these adjustments augment the standard implementation workflow. The implementation phase does not receive direct DT handoffs; DT context arrives through `rpi-research` and `rpi-plan`. Fidelity constraints, stakeholder validation, and iteration support shape implementation decisions.
 
 ## Implementation Adjustments
 
@@ -19,7 +19,7 @@ When Task Implementor executes a plan that originated from a Design Thinking pro
 
 * Enforce fidelity constraints from the originating DT space. Problem Space outputs are research-grade, Solution Space outputs are scrappy and concept-grade, and Implementation Space outputs are functionally rigorous without visual polish.
 * Verify implementation against each stakeholder group from the handoff's stakeholder map (an artifact of type `stakeholder-map` in the handoff `artifacts` array). When the handoff contains no stakeholder map artifact, flag this gap before proceeding.
-* Reference DT artifact paths (`.copilot-tracking/dt/{project-slug}/`) in implementation comments and change logs so decisions trace back to research and synthesis outputs.
+* Reference DT artifact paths (`.copilot-tracking/dt/{project-slug}/`) in RPI tracking artifacts, including the changes record, so decisions trace back to research and synthesis outputs. Keep tracking paths out of production code and code comments.
 * Treat handoff items marked `assumed` with explicit verification steps during implementation. Items marked `unknown` or `conflicting` require resolution before the affected implementation proceeds.
 * Support return paths to earlier DT methods as conditional outcomes within phase completion criteria rather than treating all implementation as forward-only.
 * For Solution Space implementations, enforce anti-polish: scope deliverables to scrappy fidelity and flag production-quality requests as out-of-scope for the current space.

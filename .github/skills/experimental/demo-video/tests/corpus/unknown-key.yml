@@ -1,0 +1,3 @@
+segments:
+  - narration: ./examples/fixtures/intro.wav
+    unknown: true

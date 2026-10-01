@@ -31,9 +31,9 @@ $script:ArtifactPatterns = @(
 )
 
 # Repo-root-only artifact patterns: files placed directly under `.github/<kind>/`
-# (skills: `.github/skills/<name>/SKILL.md`) without a collection subdirectory.
+# (skills: `.github/skills/<name>/SKILL.md`) without a package subdirectory.
 # Per `.github/copilot-instructions.md`, these are repo-specific and excluded from
-# collection manifests, packaging, and eval coverage enforcement.
+# marketplace packages and eval coverage enforcement.
 $script:RepoRootArtifactPatterns = @{
     agent       = '^\.github/agents/[^/]+\.agent\.md$'
     prompt      = '^\.github/prompts/[^/]+\.prompt\.md$'
@@ -116,6 +116,9 @@ function ConvertFrom-GitDiffNameStatus {
 
     .PARAMETER Lines
     Lines emitted by `git diff --name-status` (tab-separated).
+
+    .PARAMETER NullTerminated
+    Parse a single raw `git diff --name-status -z` string without path quoting.
     #>
     [CmdletBinding()]
     [OutputType([hashtable[]])]
@@ -123,11 +126,34 @@ function ConvertFrom-GitDiffNameStatus {
         [Parameter(Mandatory = $false)]
         [AllowNull()]
         [AllowEmptyCollection()]
-        [string[]]$Lines
+        [string[]]$Lines,
+
+        [switch]$NullTerminated
     )
 
     $records = [System.Collections.Generic.List[hashtable]]::new()
     if ($null -eq $Lines) { return ,@() }
+
+    if ($NullTerminated) {
+        $Tokens = ($Lines -join '') -split "`0"
+        for ($Index = 0; $Index -lt $Tokens.Count - 1; ) {
+            $RawStatus = $Tokens[$Index++]
+            if ($RawStatus -notmatch '^(?:[AMDT]|[RC][0-9]+)$') { throw "Invalid Git change status '$RawStatus'." }
+            $PreviousPath = $null
+            if ($RawStatus[0] -in @('R', 'C')) {
+                $PreviousPath = $Tokens[$Index++]
+            }
+            if ($Index -ge $Tokens.Count - 1) { throw 'Incomplete null-terminated Git change record.' }
+            $Path = $Tokens[$Index++]
+            $records.Add(@{
+                    status = $RawStatus.Substring(0, 1)
+                    path = $Path
+                    previousPath = $PreviousPath
+                })
+        }
+        if ($Tokens[-1] -ne '') { throw 'Git name-status output is not null-terminated.' }
+        return ,$records.ToArray()
+    }
 
     foreach ($line in $Lines) {
         if ([string]::IsNullOrWhiteSpace($line)) { continue }
@@ -215,10 +241,10 @@ function Test-RepoRootArtifact {
     Determines whether an artifact path is a repo-root (repo-specific) artifact.
 
     .DESCRIPTION
-    Repo-root artifacts live directly under `.github/<kind>/` without a collection
+    Repo-root artifacts live directly under `.github/<kind>/` without a package
     subdirectory (skills: `.github/skills/<name>/SKILL.md`). Per
     `.github/copilot-instructions.md`, these are repo-specific and excluded from
-    collection manifests, packaging, and eval coverage enforcement.
+    marketplace packages and eval coverage enforcement.
 
     .PARAMETER Kind
     Artifact kind: agent, prompt, instruction, or skill.

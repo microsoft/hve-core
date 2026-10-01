@@ -18,16 +18,16 @@ from __future__ import annotations
 
 import argparse
 import ast
-import builtins
 import importlib.util
 import logging
+import math
 import re
 import sys
 from pathlib import Path
 
 from lxml import etree
 from pptx import Presentation
-from pptx.enum.shapes import MSO_CONNECTOR_TYPE, MSO_SHAPE
+from pptx.enum.shapes import MSO_CONNECTOR_TYPE, MSO_SHAPE, MSO_SHAPE_TYPE
 from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
 from pptx_charts import add_chart_element
@@ -61,6 +61,16 @@ CONNECTOR_TYPE_MAP = {
 
 PNS = "http://schemas.openxmlformats.org/presentationml/2006/main"
 ANS = "http://schemas.openxmlformats.org/drawingml/2006/main"
+DECORATIVE_NS = "http://schemas.microsoft.com/office/drawing/2017/decorative"
+DECORATIVE_EXT_URI = "{C183D7F6-B498-43B3-948B-1728B52AA6E4}"
+
+# Text auto-fit. Helvetica metrics understate Segoe UI, the deck default, so
+# measured widths are widened before comparison; calibrated against renders that
+# broke words mid-character and overlapped wrapped bullets.
+SEGOE_WIDTH_FACTOR = 1.15
+CHEVRON_MIN_FONT_PT = 9
+PPTX_DEFAULT_MARGIN_IN = 0.1
+CARD_BULLET_LINE_IN = 0.35
 
 # Stdlib modules blocked in content-extra.py scripts due to security risk.
 # content-extra.py may only import from pptx and safe standard-library modules.
@@ -126,6 +136,20 @@ _INDIRECT_BYPASS_BUILTINS = frozenset(
     }
 )
 
+# Module names whose attribute-form calls are rejected, so the obvious
+# `builtins.eval(...)` shape does not read as permitted.  Only direct name
+# bindings are matched; an aliased binding is not detected, which is why this
+# is a lint rather than the control that keeps a hostile script from running.
+_ATTRIBUTE_CALL_ROOTS = frozenset(
+    {
+        "builtins",
+        "importlib",
+        "os",
+        "subprocess",
+        "sys",
+    }
+)
+
 
 class ContentExtraError(Exception):
     """A content-extra.py script failed security validation."""
@@ -153,11 +177,18 @@ def _check_module_allowed(
 
 
 def _validate_content_extra(script_path: Path) -> None:
-    """Validate a content-extra.py script's AST before execution.
+    """Lint a content-extra.py script's AST before execution.
 
     Parses the script and rejects imports outside of pptx and safe stdlib
     modules, as well as calls to dangerous builtins (exec, eval, __import__,
     compile, breakpoint).  Raises ContentExtraError on any violation.
+
+    This is a lint, not a security boundary.  AST denylisting of Python cannot
+    be made sound: a blocked module reached through a local alias
+    (``b = builtins``), an ``import as`` binding, or tuple unpacking is not
+    detected, and the legitimate drawing API is itself composed of attribute
+    calls so they cannot be banned wholesale.  Execution is gated by explicit
+    operator opt-in; this check only catches obvious mistakes earlier.
     """
     source = script_path.read_text(encoding="utf-8")
     try:
@@ -184,6 +215,13 @@ def _validate_content_extra(script_path: Path) -> None:
                 if func.id in _INDIRECT_BYPASS_BUILTINS:
                     raise ContentExtraError(
                         f"Indirect bypass builtin '{func.id}' in {script_path}"
+                    )
+            elif isinstance(func, ast.Attribute):
+                value = func.value
+                if isinstance(value, ast.Name) and value.id in _ATTRIBUTE_CALL_ROOTS:
+                    raise ContentExtraError(
+                        f"Blocked attribute call '{value.id}.{func.attr}' "
+                        f"in {script_path}"
                     )
 
 
@@ -370,6 +408,7 @@ def add_image_element(slide, elem, content_dir: Path):
     pic = slide.shapes.add_picture(str(img_path), left, top, width, height)
     if "name" in elem:
         pic.name = elem["name"]
+    set_alt_text(pic, elem)
     apply_rotation(pic, elem.get("rotation"))
 
     # Restore blipFill attributes (rotWithShape, dpi, etc.)
@@ -406,6 +445,97 @@ def add_image_element(slide, elem, content_dir: Path):
             amf.set("amt", amt)
 
     return pic
+
+
+def set_alt_text(pic, elem: dict) -> None:
+    """Set a picture's alternative text or mark it decorative.
+
+    ``alt`` becomes the ``descr`` read by screen readers. ``decorative: true``
+    clears it and adds the Office decorative flag so readers skip the image.
+    Without either, python-pptx's default (the image file name) remains.
+    """
+    c_nv_pr = pic._element.find(".//" + qn("p:cNvPr"))
+    if c_nv_pr is None:
+        return
+    if elem.get("decorative"):
+        c_nv_pr.set("descr", "")
+        ext_lst = c_nv_pr.find(qn("a:extLst"))
+        if ext_lst is None:
+            ext_lst = etree.SubElement(c_nv_pr, qn("a:extLst"))
+        ext = etree.SubElement(ext_lst, qn("a:ext"), uri=DECORATIVE_EXT_URI)
+        decorative = etree.SubElement(ext, f"{{{DECORATIVE_NS}}}decorative")
+        decorative.set("val", "1")
+    elif elem.get("alt"):
+        c_nv_pr.set("descr", str(elem["alt"]))
+
+
+def _normalized(text: str) -> str:
+    return " ".join(str(text).split()).casefold()
+
+
+def ensure_slide_title(slide, title: str | None, slide_width) -> None:
+    """Give the slide a title placeholder so assistive technology can find it.
+
+    Reuses the visible text box whose text equals ``title``; otherwise adds an
+    off-slide title that screen readers announce but nothing renders.
+    """
+    if not title or not str(title).strip():
+        return
+    existing = slide.shapes.title
+    if existing is not None and existing.has_text_frame and existing.text.strip():
+        return
+
+    target = None
+    for shape in slide.shapes:
+        if (
+            shape.shape_type == MSO_SHAPE_TYPE.TEXT_BOX
+            and shape.has_text_frame
+            and _normalized(shape.text_frame.text) == _normalized(title)
+        ):
+            target = shape
+            break
+    if target is None:
+        target = slide.shapes.add_textbox(
+            slide_width + Inches(1), Inches(0), Inches(6), Inches(0.5)
+        )
+        target.text_frame.text = str(title)
+        target.name = "Slide Title"
+        sp_tree = slide.shapes._spTree
+        sp_tree.remove(target._element)
+        # Index 2 follows nvGrpSpPr and grpSpPr, so the title is read first.
+        sp_tree.insert(2, target._element)
+
+    sp = target._element
+    c_nv_sp_pr = sp.find(qn("p:nvSpPr") + "/" + qn("p:cNvSpPr"))
+    if c_nv_sp_pr is not None and "txBox" in c_nv_sp_pr.attrib:
+        del c_nv_sp_pr.attrib["txBox"]
+    nv_pr = sp.find(qn("p:nvSpPr") + "/" + qn("p:nvPr"))
+    if nv_pr is not None and nv_pr.find(qn("p:ph")) is None:
+        ph = etree.Element(qn("p:ph"))
+        ph.set("type", "title")
+        nv_pr.insert(0, ph)
+    # A title placeholder inherits the master's centred anchor and alignment;
+    # keep the text box defaults.
+    body_pr = sp.find(qn("p:txBody") + "/" + qn("a:bodyPr"))
+    if body_pr is not None and not body_pr.get("anchor"):
+        body_pr.set("anchor", "t")
+    for paragraph in sp.iter(qn("a:p")):
+        p_pr = paragraph.find(qn("a:pPr"))
+        if p_pr is None:
+            p_pr = etree.Element(qn("a:pPr"))
+            paragraph.insert(0, p_pr)
+        if not p_pr.get("algn"):
+            p_pr.set("algn", "l")
+
+
+def apply_text_language(prs, language: str | None) -> None:
+    """Tag every slide text run with ``language`` where no language is set."""
+    if not language:
+        return
+    for slide in prs.slides:
+        for node in slide._element.iter(qn("a:rPr"), qn("a:endParaRPr")):
+            if not node.get("lang"):
+                node.set("lang", str(language))
 
 
 def add_rich_text_element(slide, elem, colors, typography):
@@ -496,25 +626,92 @@ def add_card_element(slide, elem, colors, typography):
         y_offset += 0.5
 
     # Content bullets
+    text_width = elem["width"] - 0.4 - 2 * PPTX_DEFAULT_MARGIN_IN
     for item in elem.get("content", []):
         bullet_text = (
             f"\u2022 {item['bullet']}" if "bullet" in item else item.get("text", "")
         )
         color = resolve_color(item.get("color", "#F8F8FC"))
+        font_size = item.get("size", 14)
+        # Advance by wrapped height: a fixed pitch overlaps multi-line bullets.
+        lines = wrapped_line_count(bullet_text, font_size, text_width)
+        block_height = CARD_BULLET_LINE_IN * lines
         add_textbox(
             slide,
             elem["left"] + 0.2,
             elem["top"] + y_offset,
             elem["width"] - 0.4,
-            0.35,
+            block_height,
             bullet_text,
             font_name="Segoe UI",
-            font_size=item.get("size", 14),
+            font_size=font_size,
             font_color=color,
         )
-        y_offset += 0.35
+        y_offset += block_height
 
     return shape
+
+
+def _longest_word_width_in(text, font_size_pt):
+    """Approximate the widest word's rendered width in inches.
+
+    Measures with PyMuPDF's Helvetica-Bold metrics and applies a widening factor
+    because Segoe UI Bold, the deck default, runs wider than the metric font.
+    Returns None when measurement is unavailable so callers keep the requested
+    size rather than guessing.
+    """
+    words = text.split()
+    if not words:
+        return None
+    try:
+        import fitz
+    except ImportError:
+        return None
+    widest = max(
+        fitz.get_text_length(word, fontname="hebo", fontsize=font_size_pt)
+        for word in words
+    )
+    return widest / 72 * SEGOE_WIDTH_FACTOR
+
+
+def wrapped_line_count(text, font_size_pt, available_width_in):
+    """Estimate how many lines `text` occupies at the given width.
+
+    Returns 1 when measurement is unavailable, preserving the previous
+    single-line layout rather than guessing a larger block.
+    """
+    if not text or available_width_in <= 0:
+        return 1
+    try:
+        import fitz
+    except ImportError:
+        return 1
+    width = (
+        fitz.get_text_length(text, fontname="helv", fontsize=font_size_pt)
+        / 72
+        * SEGOE_WIDTH_FACTOR
+    )
+    return max(1, math.ceil(width / available_width_in))
+
+
+def fit_chevron_font_size(label, item_width, height, margin, requested_size):
+    """Shrink a chevron label's font until its longest word fits on one line.
+
+    A chevron's notch and point consume roughly `height` of horizontal space, so
+    the usable text width is much narrower than the shape. When a single word
+    exceeds it, renderers break the word mid-character, so shrink instead. Only
+    ever reduces the requested size.
+    """
+    usable = item_width - height - 2 * margin
+    if usable <= 0:
+        return requested_size
+    size = requested_size
+    while size > CHEVRON_MIN_FONT_PT:
+        width = _longest_word_width_in(label, size)
+        if width is None or width <= usable:
+            break
+        size -= 1
+    return size
 
 
 def add_arrow_flow_element(slide, elem, colors, typography):
@@ -524,8 +721,33 @@ def add_arrow_flow_element(slide, elem, colors, typography):
         return
 
     total_width = elem["width"]
-    item_width = total_width / len(items) - 0.3
+    gap = elem.get("gap", 0.3)
+    item_width = total_width / len(items) - gap
     x = elem["left"]
+
+    label_margin = elem.get("label_margin")
+    default_font = elem.get("font", "Segoe UI")
+    default_size = elem.get("font_size", 14)
+    default_color = elem.get("font_color", "#F8F8FC")
+
+    # One size across the flow: a per-item fit renders a visibly ragged row.
+    # An explicit per-item size is author intent and is never auto-fitted.
+    auto_items = [item for item in items if "size" not in item]
+    fitted_size = min(
+        (
+            fit_chevron_font_size(
+                item["label"],
+                item_width,
+                elem["height"],
+                item.get("label_margin", label_margin)
+                if item.get("label_margin", label_margin) is not None
+                else PPTX_DEFAULT_MARGIN_IN,
+                default_size,
+            )
+            for item in auto_items
+        ),
+        default=default_size,
+    )
 
     for item in items:
         shape = slide.shapes.add_shape(
@@ -540,16 +762,22 @@ def add_arrow_flow_element(slide, elem, colors, typography):
 
         tf = shape.text_frame
         tf.word_wrap = True
+        margin = item.get("label_margin", label_margin)
+        if margin is not None:
+            tf.margin_left = Inches(margin)
+            tf.margin_right = Inches(margin)
         p = tf.paragraphs[0]
         p.text = item["label"]
         p.alignment = ALIGNMENT_MAP["center"]
         run = p.runs[0]
-        run.font.name = "Segoe UI"
-        run.font.size = Pt(14)
-        apply_color_to_font(run.font.color, resolve_color("#F8F8FC"))
+        run.font.name = item.get("font", default_font)
+        run.font.size = Pt(item.get("size", fitted_size))
+        apply_color_to_font(
+            run.font.color, resolve_color(item.get("color_text", default_color))
+        )
         run.font.bold = True
 
-        x += item_width + 0.3
+        x += item_width + gap
 
 
 def add_numbered_step_element(slide, elem, colors, typography):
@@ -965,8 +1193,9 @@ def build_slide(
     """Build a single slide from content.yaml data and style context.
 
     When existing_slide is provided, clears its shapes and rebuilds in place
-    instead of appending a new slide.  Set *allow_scripts* to skip AST
-    validation of content-extra.py (use only with trusted content).
+    instead of appending a new slide.  Set *allow_scripts* to authorize
+    execution of a content-extra.py script in *content_dir*; without it, a
+    present script raises ContentExtraError instead of running.
     """
     colors = {}
     typography = {}
@@ -1055,31 +1284,28 @@ def build_slide(
     for elem in elements:
         _build_element(slide, elem, colors, typography, content_dir)
 
-    # Execute content-extra.py if present (validated before loading)
+    # Execute content-extra.py only when the operator explicitly authorized it.
     extra_script = content_dir / "content-extra.py"
     if extra_script.exists():
         if not allow_scripts:
-            _validate_content_extra(extra_script)
+            raise ContentExtraError(
+                f"Refusing to execute '{extra_script}': content-extra.py "
+                "execution is disabled by default. Review the script, then pass "
+                "--allow-scripts to authorize it."
+            )
+        _validate_content_extra(extra_script)
         spec = importlib.util.spec_from_file_location(
             "content_extra", str(extra_script)
         )
         mod = importlib.util.module_from_spec(spec)
-        if not allow_scripts:
-            # __import__ is kept because the import machinery needs it;
-            # the AST checker already blocks direct __import__() calls.
-            stripped = (_DANGEROUS_BUILTINS | _INDIRECT_BYPASS_BUILTINS) - {
-                "__import__"
-            }
-            safe_builtins = {
-                k: v for k, v in builtins.__dict__.items() if k not in stripped
-            }
-            mod.__builtins__ = safe_builtins
         spec.loader.exec_module(mod)
         if hasattr(mod, "render"):
             mod.render(slide, style, content_dir)
 
     if turbo_enabled:
         slide.shapes.turbo_add_enabled = False
+
+    ensure_slide_title(slide, slide_content.get("title"), prs.slide_width)
 
     # Add speaker notes (preserve empty strings when notes slide exists)
     notes = slide_content.get("speaker_notes")
@@ -1125,7 +1351,11 @@ def main():
     parser.add_argument(
         "--allow-scripts",
         action="store_true",
-        help="Skip AST validation of content-extra.py (trusted content only)",
+        help=(
+            "Authorize execution of content-extra.py scripts found in slide"
+            " folders (trusted content only). Without this flag a present"
+            " script is refused and the build fails."
+        ),
     )
     parser.add_argument(
         "--dry-run",
@@ -1164,19 +1394,22 @@ def main():
                 # Check for speaker notes
                 notes = slide_content.get("speaker_notes")
                 notes_status = "✅" if notes else "⚠️ no notes"
-                # Validate content-extra.py if present
+                # Report content-extra.py the same way a real build treats it
                 extra = slide_dir / "content-extra.py"
                 extra_status = ""
                 if extra.exists():
                     if not args.allow_scripts:
+                        extra_status = (
+                            " | extra: ❌ refused, execution requires --allow-scripts"
+                        )
+                        errors += 1
+                    else:
                         try:
                             _validate_content_extra(extra)
                             extra_status = " | extra: ✅"
                         except ContentExtraError as exc:
                             extra_status = f" | extra: ❌ {exc}"
                             errors += 1
-                    else:
-                        extra_status = " | extra: skipped"
                 # Check image references
                 images = slide_dir / "images"
                 img_count = (
@@ -1315,6 +1548,7 @@ def main():
             )
             print(f"Built slide {num}: {slide_content.get('title', 'Untitled')}")
 
+    apply_text_language(prs, (style.get("metadata") or {}).get("language"))
     prs.save(str(output_path))
     print(f"\nDeck saved to {output_path}")
     print(f"Total slides: {len(prs.slides)}")

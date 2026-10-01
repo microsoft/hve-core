@@ -8,7 +8,7 @@ Use this reference during Phase 4 when you build the RAI security model and prep
 
 ## Phase 4 overlay usage
 
-Apply the AI STRIDE overlay as an extension of the existing security-model analysis rather than as a substitute for it. Start from the shared overlay in [AI STRIDE Overlay](../../../rai/rai-standards/references/ai-stride-overlay.md) and use it to surface AI-specific trust boundaries, lifecycle risks, and human-review considerations that are easy to miss in standard software threat modeling.
+Apply the AI STRIDE overlay as an extension of the existing security-model analysis rather than as a substitute for it. Start from the AI STRIDE Overlay reference in the `rai-standards` skill and use it to surface AI-specific trust boundaries, lifecycle risks, and human-review considerations that are easy to miss in standard software threat modeling. When that skill is unavailable, say so and continue with standard software threat modeling rather than substituting another overlay.
 
 * Review each AI component across training, inference, monitoring, and feedback paths.
 * Treat model lifecycle assets as first-class control surfaces, including data provenance, features, checkpoints, and retraining flows.

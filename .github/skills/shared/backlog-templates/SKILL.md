@@ -3,12 +3,11 @@ name: backlog-templates
 description: "Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, Accessibility, and Privacy planners"
 license: MIT
 user-invocable: true
-compatibility:
-  hosts: ["vscode", "github-coding-agent"]
+compatibility: "Hosts: vscode, github-coding-agent. Reference-only templates; the consuming planner supplies tracker access."
 metadata:
-  authors: ["microsoft/hve-core"]
+  authors: "microsoft/hve-core"
   spec_version: "1.0.0"
-  last_updated: "2026-05-09"
+  last_updated: "2026-08-09"
 ---
 
 # Backlog Templates
@@ -22,10 +21,10 @@ Planners that emit Phase-final backlog work items all need the same dual-format 
 Callers:
 
 * RAI Planner (`rai-planner` skill `references/backlog-handoff.md`)
-* Security Planner (`.github/agents/security/security-planner.agent.md`; security-specific handoff details in `.github/skills/project-planning/security-planning/references/backlog-formats.md`)
-* SSSC Planner (`.github/instructions/security/sssc-planner.instructions.md`)
+* Security Planner (`Security Planner` agent; security-specific handoff details in the `security-planning` skill's `references/backlog-formats.md`)
+* SSSC Planner (`SSSC Planner` agent, governed by `sssc-planner.instructions.md`)
 * Accessibility Planner (`accessibility/accessibility` skill `references/phases/backlog-handoff.md`)
-* Privacy Planner (`.github/instructions/privacy/privacy-identity.instructions.md`)
+* Privacy Planner (`Privacy Planner` agent, governed by `privacy-identity.instructions.md`)
 
 What stays per-planner (NOT in this skill):
 
@@ -169,24 +168,27 @@ Debug-mode output retained under `.copilot-tracking/<planner-domain>/{slug}/debu
 
 ## Autonomy-Tier Enumeration
 
-Three tiers control how rendered work items reach the target backlog system. The canonical vocabulary is `manual` / `supervised` / `autonomous`.
+Three tiers control how rendered work items reach the target backlog system. The canonical vocabulary is `manual` / `supervised` / `autonomous`. A fourth value, `coached`, names a capability that emits no work items at all.
 
 * `manual` — The planner emits a backlog handoff file under `.copilot-tracking/`. The user creates each work item in the target system independently. No MCP tool invocations.
 * `supervised` — The planner drafts rendered work items in `.copilot-tracking/`, presents each batch of 5 to 10 items for user review, and only invokes MCP creation tools on user approval. This is the default tier.
 * `autonomous` — The planner invokes MCP creation tools directly on the sanitized batch after the user pre-approves the run. All items are created in a single operation.
+* `coached` — The capability produces a conversation and its own output rather than backlog work items. It renders nothing, invokes no creation tool, and reaches no backlog system, so no tier applies to it. No backlog planner selects this value and no planner state schema accepts it; it exists so a coaching-shaped capability has a name in this vocabulary instead of an undocumented absence. Coaching capabilities record no autonomy field in their own state.
 
 Cross-reference mapping for planners that use divergent vocabularies. Each planner persists the selected value in its session state under `userPreferences.autonomyTier` using its own vocabulary; this table is the single source of truth for cross-planner equivalence.
 
-| Canonical (this skill) | Accessibility (seed schema) | Security | RAI     | SSSC              | Privacy           |
-|------------------------|-----------------------------|----------|---------|-------------------|-------------------|
-| autonomous             | autonomous                  | Full     | Full    | Full              | Full              |
-| supervised (default)   | supervised                  | Partial  | Partial | Partial (default) | Partial (default) |
-| manual                 | manual                      | Manual   | Manual  | Guided            | Manual            |
+| Canonical (this skill) | Accessibility (seed schema) | Security       | RAI            | SSSC              | Privacy           |
+|------------------------|-----------------------------|----------------|----------------|-------------------|-------------------|
+| autonomous             | autonomous                  | Full           | Full           | Full              | Full              |
+| supervised (default)   | supervised                  | Partial        | Partial        | Partial (default) | Partial (default) |
+| manual                 | manual                      | Manual         | Manual         | Guided            | Manual            |
+| coached                | not applicable              | not applicable | not applicable | not applicable    | not applicable    |
 
 Notes:
 
 * Accessibility's vocabulary already matches the canonical names; the seed schema `autonomyTier` field is the persisted form.
 * SSSC uses `Guided` as the lowest-autonomy tier label. Treat `Guided` and `Manual` as equivalent across planners for cross-reference and reporting.
+* `coached` is not a tier and has no planner equivalent. It is not selectable, not persisted in any planner state schema, and carries no severity-to-tier routing. A planner that encounters it should treat it as out of range.
 * Severity-to-tier mapping (which severity routes to which tier) stays in each planner's handoff instruction file.
 
 ## Disclaimer-Block Placement Convention
@@ -195,9 +197,9 @@ Every backlog handoff artifact (handoff summary, ADO output file, GitHub output 
 
 Source-of-truth split for the disclaimer text:
 
-* RAI, Security, SSSC — Read the disclaimer text from `.github/instructions/shared/disclaimer-language.instructions.md` under the corresponding planner section.
-* Privacy — Read the disclaimer text from `.github/instructions/shared/disclaimer-language.instructions.md` under the Privacy Planning section.
-* Accessibility — Read the disclaimer text from `.github/instructions/accessibility/accessibility-identity.instructions.md` under the `Disclaimer Handling` heading. The L7 disclaimer lever pins the accessibility disclaimer to that file. Do not move it to `shared/disclaimer-language.instructions.md`.
+* RAI, Security, SSSC — Read the disclaimer text from the automatically applied `disclaimer-language.instructions.md` under the corresponding planner section.
+* Privacy — Read the disclaimer text from the automatically applied `disclaimer-language.instructions.md` under the Privacy Planning section.
+* Accessibility — Read the disclaimer text from the automatically applied `accessibility-identity.instructions.md` under the `Disclaimer Handling` heading. The L7 disclaimer lever pins the accessibility disclaimer to that file. Do not move it to `disclaimer-language.instructions.md`.
 
 Placement rules:
 

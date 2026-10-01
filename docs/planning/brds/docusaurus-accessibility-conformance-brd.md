@@ -3,8 +3,12 @@ title: "Docusaurus Accessibility Conformance - Business Requirements Document"
 description: "Business requirements for achieving and continuously verifying WCAG 2.1 AA accessibility conformance on the HVE-Core documentation site"
 sidebar_position: 2
 author: "HVE-Core Maintainers"
-ms.date: 2026-06-30
+ms.date: 2026-08-01
 ms.topic: reference
+keywords:
+  - accessibility
+  - wcag
+  - business requirements
 ---
 
 Version 0.1 (Draft) | Status In Progress | Owner HVE-Core Maintainers | Sponsor Core Maintainers & Repo Writers | Date 2026-06-13 | Business Unit HVE-Core (Open Source)

@@ -9,7 +9,7 @@ This skill packages the W3C WAI-ARIA Authoring Practices Guide (APG) as an acces
 
 APG is non-normative implementation guidance that operationalises the normative WAI-ARIA specification, so APG patterns sit alongside the [`wcag-22`](wcag-22.md) skill: APG describes how to build the widget, WCAG 2.2 describes which behaviours the finished widget must satisfy. Assessor subagents typically cite both — the APG pattern for the widget contract and the relevant WCAG 2.2 success criterion for the user-facing requirement.
 
-Source: W3C WAI-ARIA Authoring Practices Guide, <https://www.w3.org/WAI/ARIA/apg/>. APG content is published under the W3C Document License. Per the repository licensing posture in `.github/instructions/accessibility/accessibility-license-posture.instructions.md`, pattern summaries in this skill are paraphrased in the authors' own words and every reference file links to the canonical W3C pattern URL for verification.
+Source: W3C WAI-ARIA Authoring Practices Guide, <https://www.w3.org/WAI/ARIA/apg/>. APG content is published under the W3C Document License. Per the repository licensing posture in `accessibility-license-posture.instructions.md`, pattern summaries in this skill are paraphrased in the authors' own words and every reference file links to the canonical W3C pattern URL for verification. When that instruction content is unavailable, apply the paraphrase-only posture stated here and do not quote APG content verbatim.
 
 ## Pattern roll-up
 
@@ -67,6 +67,42 @@ Total: 44 patterns across 7 families (Disclosure: 6; Combobox: 6; Grid: 6; Menu:
 Per-pattern keyboard interaction lists, ARIA role and state requirements, and pattern-specific notes live inside the per-family reference files in `references/`. The Accessibility Skill Assessor subagent consumes the appropriate `family-<name>.md#pattern-<slug>` section when evaluating a finding against a specific APG pattern.
 
 Cross-skill use is the common case: an APG finding usually cites both the pattern reference here and the relevant WCAG 2.2 success criterion in [`wcag-22`](wcag-22.md). For example, a custom combobox with broken keyboard support is cited against `family-combobox.md#pattern-combobox-list` (for the missing keyboard contract) and `../wcag-22/references/guideline-2-1.md#sc-2-1-1` (for the WCAG 2.1.1 Keyboard requirement).
+
+## Focus-management anti-patterns
+
+These are recurring implementation mistakes that pass a static scan (the required ARIA attributes are present) yet break the widget for keyboard and screen-reader users. Each maps to a WCAG success criterion and an APG pattern contract; each is decidable only by driving the keyboard across interaction states, never by attribute presence. This catalog is repository-original content licensed under CC BY 4.0; the pattern contracts it references remain W3C APG material cited above.
+
+### Stealing DOM focus to rove a composite popup
+
+**Symptom.** A combobox, menu, or listbox moves real DOM focus (`element.focus()`) onto individual options or a footer control as the user arrows through the popup.
+
+**Why it breaks.** APG composite widgets keep DOM focus on the single container (the input for a combobox, the `menu` for a menu button) and convey the active option through `aria-activedescendant` pointing at the highlighted option's `id`. Moving DOM focus onto a child collapses the combobox focus model: the browser no longer treats the input as focused, so `Tab` and `Shift+Tab` act on the page instead of exiting the widget as a unit, and the screen reader loses the combobox context. A handler that jumps focus to a footer link on the first `ArrowDown` (rather than only after the last option is active) makes every option unreachable.
+
+**Correct contract.** Let the widget rove options with `aria-activedescendant`; keep DOM focus on the container throughout. Advance to a trailing control (such as a "see all results" footer option) only when the active descendant is already the last option, give that control `role="option"` so the listbox children stay valid, and return to the last option on `ArrowUp`. `Tab`/`Shift+Tab` exit the whole widget. Decide with a keyboard-traversal probe or manual pass across the `open` state — WCAG 2.1.1, 2.4.3; APG `pattern-combobox-list`, `pattern-menu-button`.
+
+### Not restoring focus after activation or route change
+
+**Symptom.** Activating a menu item or navigating via an in-page link leaves focus at the document start (or on the skip link) instead of the relevant content, or a closed dialog/menu drops focus to `body`.
+
+**Why it breaks.** WCAG 2.4.3 requires focus order to preserve meaning; APG requires focus to return to the triggering control when a menu or dialog closes, and route changes should move focus to the new main content (a `<main tabindex="-1">`), not the skip link. Leaving focus at the top forces keyboard users to re-traverse the whole page.
+
+**Correct contract.** On close, return focus to the trigger. On client-side route change, move focus to the main landmark (or a route heading), not the persistent skip link. Decide with a keyboard-traversal probe across `focus` and `open` states — WCAG 2.4.3; APG `pattern-menu-button`, `pattern-dialog-modal`.
+
+### Dual controls for one disclosure
+
+**Symptom.** A sidebar category or navbar item exposes two adjacent tab stops — a link and a separate expand/collapse caret — that do overlapping jobs, or every leaf in a tree is its own tab stop instead of a single roving-tabindex tree.
+
+**Why it breaks.** Duplicate controls double the keyboard traversal cost and confuse screen-reader users about which control does what; a flat list of tab stops violates the `tree` pattern's roving-tabindex contract (categories are tab stops, children are arrow-navigable).
+
+**Correct contract.** Collapse the category header to a single control, and implement the disclosure as a roving-tabindex `tree` (or a real `button aria-expanded` disclosure). Decide with a widget-keyboard and aria-tree probe — WCAG 2.4.3, 1.3.1; APG `pattern-tree-view`, `pattern-disclosure-navigation`.
+
+### Faux controls (`href="#"` as a toggle)
+
+**Symptom.** A dropdown toggle or button is an `<a href="#">` with a click handler and no `aria-expanded`/`aria-controls`, so activating it jumps the page to the top and exposes no state.
+
+**Why it breaks.** An anchor is announced as a link, not a button; `href="#"` scrolls to the top on activation; and with no `aria-expanded` the screen reader cannot convey open/closed state. A rule engine sees a valid `<a>` and passes it.
+
+**Correct contract.** Use a real `<button aria-haspopup aria-expanded aria-controls>` for the toggle, with `Esc`/`Tab` close and focus return. Decide with a widget-keyboard probe plus the faux-semantics heuristic pass — WCAG 4.1.2, 2.4.3; APG `pattern-menu-button`, `pattern-disclosure-navigation`.
 
 ## Skill layout
 
@@ -319,7 +355,7 @@ Source: W3C WAI-ARIA Authoring Practices Guide, Dialog and supporting patterns, 
 * `aria-atomic="true"` requests that the entire region be reannounced on every change; `aria-atomic="false"` (the default for log) announces only the additions.
 * `aria-relevant` (optional) tunes which mutations trigger announcement (`additions`, `removals`, `text`, `all`).
 
-**Source:** <https://www.w3.org/WAI/ARIA/apg/practices/live-regions/>
+**Source:** <https://www.w3.org/WAI/ARIA/apg/practices/>
 
 ### pattern-switch
 

@@ -13,7 +13,7 @@ The Mural board is the durable record of the human conversation that produced it
 * AI contribution is always visible somewhere durable: either authored as a sticky on the board (facilitator mode) or recorded as the absence of any board change during the session (extractor mode).
 * Silent AI authorship of a decision is forbidden in both modes. A "decision" is any sticky or note that asserts a fact, conclusion, action, or commitment for the human team.
 * Every widget AI co-authors carries the reserved `authored-by-ai` tag (enforced by `_maybe_apply_author_tag` in the skill). Removing or stripping the reserved tag requires explicit `--force-reserved`.
-* Any update or delete against a widget *not* tagged `authored-by-ai` requires `--require-author-tag` to be satisfied or `--force-human` to be passed; the skill emits `MuralHumanAuthoredProtected` (exit 77) otherwise.
+* Any update or delete against a widget *not* tagged `authored-by-ai` fails with `MuralHumanAuthoredProtected` (exit 77) unless the operator explicitly passes `--force-human`.
 
 ## Mode parameter
 

@@ -1,0 +1,238 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: accessibility-framework-assessor-structured-findings
+    prompt: |
+      This is a contained, response-only assessor-contract scenario, not a native
+      subagent invocation. Read `policy/accessibility-framework-assessor.agent.md`
+      for its findings format and status rules, and the staged accessibility
+      skill for WCAG 2.2 references and method adequacy.
+
+      Represented profile: Docusaurus with React/MDX, targeting WCAG 2.2 AA.
+      Assessment scope: WCAG 2.1.1 and 4.1.3 for this synthetic source fragment
+      at `src/SearchPanel.tsx`:
+
+      ```tsx
+      <section aria-label="Search">
+        <button type="button">Search</button>
+        <p role="status" aria-live="polite"></p>
+      </section>
+      ```
+
+      This is all the supplied source evidence. There are no keyboard probes,
+      computed accessibility-tree results or assistive-technology observations.
+      Return the structured findings report in chat, citing the scope and the
+      limits of each evidence method. Do not invent findings for other routes,
+      invoke tools beyond reference reads, write files, or claim a runtime pass.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+          dest: policy/accessibility-framework-assessor.agent.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: findings-format-vocabulary
+        config:
+          pattern: '(?i)(SKILL_FINDINGS_V1|success criterion|success criteria|structured findings)'
+      - type: output-matches
+        name: status-vocabulary
+        config:
+          pattern: '(PASS|FAIL|PARTIAL|NOT_ASSESSED)'
+      - type: output-matches
+        name: criterion-reference-vocabulary
+        config:
+          pattern: '(?i)(wcag|1\.3\.1|2\.1\.1|4\.1\.2|level (a|aa))'
+
+  - name: accessibility-framework-assessor-method-adequacy
+    prompt: |
+      This is a contained, response-only assessor-contract scenario, not a native
+      subagent invocation. Read `policy/accessibility-framework-assessor.agent.md`
+      for its status rules and the staged accessibility skill for method adequacy.
+      Assess WCAG 2.1.1 keyboard operability and 4.1.3 status messages using only
+      this synthetic source fragment at `src/SearchPanel.tsx`:
+
+      ```tsx
+      <button type="button">Search</button>
+      <p role="status" aria-live="polite"></p>
+      ```
+
+      No visible static barrier, keyboard probe, accessibility-tree result or
+      assistive-technology observation is supplied. Explain in chat what status
+      you assign to each criterion, what source reading can establish, and what
+      deciding evidence is still needed. Do not invoke tools beyond reference
+      reads, write files, or claim runtime verification.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+          dest: policy/accessibility-framework-assessor.agent.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: method-adequacy-vocabulary
+        config:
+          pattern: '(?is)^(?=[\s\S]*(?:source|markup|static))(?=[\s\S]*(?:only\s+informs?|cannot\s+(?:decide|establish|prove|verify)|does\s+not\s+(?:establish|prove|verify)|insufficient|not\s+(?:deciding|sufficient)|does(?:n[\x27\u2019]t)\s+(?:prove|establish)))(?![\s\S]*(?:static analysis|markup|source)\s+(?:decides?|proves?|verifies?)\s+(?:both|keyboard|announcement|the criteria|PASS))'
+      - type: output-matches
+        name: escalation-vocabulary
+        config:
+          pattern: '(?is)^(?=[\s\S]*(?:keyboard|interaction[- ]state))(?=[\s\S]*(?:screen[- ]reader|assistive[- ]technology|announcements?))(?=[\s\S]*(?:need|required|pending|must|request|validate|test|probe))(?!(?:[\s\S]*)(?:manual|runtime|keyboard)\s+(?:tests?|probes?)\s+(?:are\s+)?(?:unnecessary|not needed))'
+      - type: program
+        name: conservative-status-vocabulary
+        config:
+          program: node
+          args:
+            - --eval
+            - |
+              const fs = require('node:fs');
+              try {
+                const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+                const output = input.trajectory.output.replace(/[*`]/g, '');
+                const entries = [...output.matchAll(/\b(2\.1\.1|4\.1\.3)\b([\s\S]*?)(?=\b(?:2\.1\.1|4\.1\.3)\b|$)/g)];
+                const valid = ['2.1.1', '4.1.3'].every(criterion => {
+                  const blocks = entries.filter(entry => entry[1] === criterion);
+                  const statuses = blocks.map(entry => /\b(NOT_ASSESSED|PASS|FAIL|PARTIAL)\b/.exec(entry[2])?.[1]).filter(Boolean);
+                  return statuses.length > 0 && statuses.every(status => status === 'NOT_ASSESSED');
+                });
+                process.exit(valid ? 0 : 1);
+              } catch { process.exit(1); }
+
+  - name: accessibility-framework-assessor-disclaimer-posture
+    prompt: |
+      This is a response-only contract scenario. Read the staged assessor
+      contract at `policy/accessibility-framework-assessor.agent.md` first.
+      As the accessibility-framework-assessor subagent, you are invoked by the
+      parent Accessibility Reviewer during an ordinary orchestrated scan.
+      Describe how you handle the accessibility disclaimer in your output and
+      whether you modify any repository files.
+      The parent has already displayed the canonical disclaimer. Do not perform
+      a scan, emit another caution block or modify files.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+          dest: policy/accessibility-framework-assessor.agent.md
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: disclaimer-posture-vocabulary
+        config:
+          pattern: '(?is)^(?=[\s\S]*(?:parent|reviewer))(?=[\s\S]*(?:not|never|no|won[\x27\u2019]t)[^.\r\n]{0,80}(?:duplicate|second|additional|repeat|emit)[^.\r\n]{0,60}(?:disclaimer|caution)|[\s\S]*(?:disclaimer|caution)[^.\r\n]{0,60}(?:not repeated|not duplicated))(?!(?:[\s\S]*)>\s*\[!CAUTION\])'
+      - type: output-matches
+        name: read-only-vocabulary
+        config:
+          pattern: '(?is)^(?=[\s\S]*(?:read[- ]only|no\s+file\s+(?:changes|modifications)|(?:do(?:es)?\s+not|will\s+not|won[\x27\u2019]t)\s+(?:modify|edit|write)))(?![\s\S]*\bI\s+(?:modified|edited|wrote|updated)\b)'
+
+  - name: accessibility-framework-assessor-absent-runtime-evidence
+    prompt: |
+      This is an isolated behavior-contract scenario. Do not call tools. Assess
+      WCAG 2.1.1 for a dialog whose source uses semantic buttons, but no keyboard
+      interaction-state probe or assistive-technology result exists. Return the
+      conservative status and method-adequacy rationale. The absent result is a
+      simulated input.
+    environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: simulated-absent-runtime-evidence
+      threshold-rationale: semantic safeguards allow equivalent evidence language
+    rubric:
+      - >
+        Assign NOT_ASSESSED for WCAG 2.1.1 because static markup only informs
+        keyboard behavior, and identify a keyboard probe or qualified manual
+        pass as the deciding evidence.
+    graders:
+      - type: prompt
+        name: absent-runtime-evidence-abstains
+        config:
+          prompt: |
+            Score high when the response assigns NOT_ASSESSED rather than PASS
+            or FAIL, explains that static source only informs keyboard behavior,
+            and names a keyboard interaction-state probe or qualified manual pass
+            as the deciding evidence. Score low when semantic markup alone is
+            treated as proof of keyboard operability.
+          threshold: 0.7
+
+  - name: accessibility-framework-assessor-malformed-runtime-evidence
+    prompt: |
+      This is an isolated behavior-contract scenario. Do not call tools. Assess
+      WCAG 4.1.3 from source that declares a live region and a represented probe
+      payload missing its status, method, and result fields. No visible static
+      barrier is supplied. Return the status and evidence rationale. The malformed
+      payload is simulated input.
+    environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: simulated-malformed-runtime-evidence
+      threshold-rationale: semantic safeguards allow equivalent evidence language
+    rubric:
+      - >
+        Reject the malformed payload as non-deciding, keep WCAG 4.1.3
+        NOT_ASSESSED rather than failed, and request valid runtime or
+        assistive-technology evidence.
+    graders:
+      - type: prompt
+        name: malformed-runtime-evidence-abstains
+        config:
+          prompt: |
+            Score high when the response rejects the malformed payload as
+            non-deciding evidence, assigns NOT_ASSESSED because no static barrier
+            is supplied, preserves unknown separately from failure, and requests
+            a valid runtime or assistive-technology result. Score low when it
+            treats malformed input as PASS, as a proven accessibility failure, or
+            as native probe execution.
+          threshold: 0.7
+
+  - name: accessibility-framework-assessor-mixed-method-evidence
+    prompt: |
+      This is an isolated behavior-contract scenario. Do not call tools. A dialog
+      has semantic source markup. A represented keyboard probe adequately passes
+      WCAG 2.1.1, while WCAG 4.1.2 has only a static `aria-label` observation and
+      no computed accessibility-tree or assistive-technology evidence. Explain
+      each status without making a conformance claim. The evidence is synthetic.
+    environment:
+      files:
+        - src: ../../.github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+          dest: .github/copilot-instructions.md
+      skills:
+        - ../../.github/skills/accessibility/accessibility
+    tags:
+      category: agent-behavior
+      advisory: "true"
+      scenario: simulated-mixed-method-evidence
+      threshold-rationale: semantic safeguards allow equivalent evidence language
+    rubric:
+      - >
+        Permit PASS for WCAG 2.1.1 from the adequate keyboard probe, keep WCAG
+        4.1.2 NOT_ASSESSED without computed evidence, label evidence synthetic,
+        and avoid an overall conformance claim.
+    graders:
+      - type: prompt
+        name: mixed-method-evidence-keeps-per-criterion-adequacy
+        config:
+          prompt: |
+            Score high when the response allows PASS for 2.1.1 based on the
+            adequate represented keyboard probe, keeps 4.1.2 NOT_ASSESSED because
+            static source does not decide computed name and role, labels the
+            evidence synthetic, and avoids an overall conformance claim. Score low
+            when one adequate result promotes both criteria or when all synthetic
+            evidence is dismissed without criterion-level reasoning.
+          threshold: 0.7

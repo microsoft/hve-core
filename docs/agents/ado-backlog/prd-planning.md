@@ -1,146 +1,35 @@
 ---
-title: PRD Planning Workflow
-description: Convert product requirements documents into Azure DevOps work item hierarchies with structured decomposition
+title: "PRD Planning Workflow"
+description: "Where PRD-to-work-item hierarchy planning moved after the backlog consolidation"
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-08-06
 ms.topic: tutorial
 keywords:
-  - azure devops backlog manager
-  - prd planning
-  - work item hierarchy
-  - github copilot
-estimated_reading_time: 4
-sidebar_position: 6
+  - ado
+  - prd
+  - work items
+  - migration
+estimated_reading_time: 3
+sidebar_position: 11
 ---
 
-The PRD Planning workflow converts product requirements documents into Azure DevOps work item hierarchies, decomposing requirements into a three-level structure (Epic > Feature > User Story) that the `@AzDO PRD to WIT` agent supports.
+PRD planning still exists. The per-platform PRD-to-work-item agents were replaced by one platform-agnostic agent.
 
-## When to Use
+## Where This Went
 
-* 📄 A product requirements document needs conversion to work items
-* 🏗️ Building an initial backlog from a specification or design document
-* 🔗 Requirements need traceability from document to backlog items
-* 📊 Converting a large requirements set into a structured work item hierarchy
+The Functional Planner agent turns a Product Requirements Document into a validated work-item hierarchy for Azure DevOps, GitHub, or Jira. It replaces both `ADO PRD to WIT` and `Jira PRD to WIT`, and it adds GitHub support those agents never had.
 
-## What It Does
+Planning is strictly read-only. The agent validates supported types and required fields with read-only discovery, then produces a reviewable handoff. Nothing reaches your tracker during planning.
 
-1. Accepts a PRD, specification, or requirements document as input
-2. Delegates to the `@AzDO PRD to WIT` agent for parsing and decomposition
-3. Maps requirements to Azure DevOps work item types (Epic, Feature, User Story)
-4. Builds parent-child relationships following the three-level hierarchy
-5. Produces a handoff file with the complete work item hierarchy ready for execution
+## What Changed
 
-> [!NOTE]
-> PRD Planning delegates to a specialized agent (`@AzDO PRD to WIT`) that handles the document parsing and hierarchy construction. The ADO Backlog Manager orchestrates the handoff and provides the execution path.
+Applying the plan is now a separate, explicit step. After you review the handoff, run `/backlog-execute run` to create the hierarchy. That pass carries the autonomy gates, dry-run preview, content sanitization, and operation logging that a mutating run requires.
 
-## Hierarchy Model
+Separating planning from execution means a hierarchy proposal can be reviewed and corrected before any work item exists.
 
-The `@AzDO PRD to WIT` agent maps requirements to three work item types based on scope and granularity:
+## Where to Go Next
 
-| Level   | Work Item Type | Typical Scope                          |
-|---------|----------------|----------------------------------------|
-| Level 1 | Epic           | Business initiative or major objective |
-| Level 2 | Feature        | Functional capability or component     |
-| Level 3 | User Story     | User-facing requirement or scenario    |
+* [Backlog Management overview](../backlog/README.md) explains the consolidated agents and their workflows.
+* [Execution workflow](../backlog/execution.md) describes how a reviewed handoff becomes tracker changes.
 
-Requirements that span multiple features become Epics. Requirements with clear user value become User Stories. Implementation detail is captured within each User Story rather than as separate Task work items.
-
-## Output Artifacts
-
-```text
-.copilot-tracking/workitems/prds/<prd-name>/
-├── artifact-analysis.md  # Extracted requirements and field mappings
-├── work-items.md         # Proposed work item hierarchy
-├── planning-log.md       # Decomposition decisions and progress
-└── handoff.md            # Execution-ready operations
-```
-
-## How to Use
-
-### Option 1: Handoff Button
-
-Click the "PRD" handoff button in the ADO Backlog Manager agent. This delegates to the `@AzDO PRD to WIT` agent with your document context.
-
-### Option 2: Direct Reference
-
-Reference your requirements document in a conversation with the ADO Backlog Manager:
-
-```text
-Convert this PRD to Azure DevOps work items: [path/to/requirements.md]
-```
-
-### Option 3: Inline Content
-
-Paste requirements directly into the chat:
-
-```text
-Create a work item hierarchy from these requirements:
-1. Users can search by keyword
-2. Search results display in a paginated list
-3. Results can be filtered by date range
-```
-
-## Example Prompts
-
-Full PRD conversion to work item hierarchy:
-
-```text
-Parse the product requirements document at docs/prd-v2.md and create
-an Azure DevOps work item hierarchy. Structure as:
-- Epics for major feature areas
-- Features for functional capabilities within each Epic
-- User Stories for user-facing scenarios within each Feature
-
-Include acceptance criteria from the PRD as User Story descriptions.
-```
-
-Incremental update from a revised PRD section:
-
-```text
-Read Section 4 (Search and Filtering) from docs/prd-v3.md and add
-new work items to the existing hierarchy under Epic "Search Platform."
-Do not recreate items that already exist in the backlog. Flag any
-requirement changes that conflict with existing Stories.
-```
-
-Schema-guided decomposition with depth control:
-
-```text
-Convert the requirements in docs/api-spec.md into a two-level hierarchy
-only: Epics and User Stories. Skip Feature-level grouping. Group Stories
-by API endpoint and include the HTTP method and path in each Story title.
-```
-
-**Output artifacts:** PRD planning creates a hierarchy handoff file mapping requirements to proposed work items with parent-child relationships. Review the hierarchy structure and verify parent links before executing.
-
-## Tips
-
-* ✅ Provide a structured document with clear requirement boundaries for best results
-* ✅ Review the proposed hierarchy before executing to verify parent-child relationships
-* ✅ Use the execution workflow to apply the hierarchy after review
-* ✅ Combine with sprint planning to assign the created hierarchy to iterations
-* ❌ Do not mix PRD planning with manual work item creation in the same session
-* ❌ Do not skip hierarchy review before execution (parent-child errors are harder to fix)
-* ❌ Do not expect PRD planning to handle ongoing triage (use the triage workflow instead)
-
-## Common Pitfalls
-
-| Pitfall                                  | Solution                                                      |
-|------------------------------------------|---------------------------------------------------------------|
-| Requirements too vague for decomposition | Add specificity to the source document before conversion      |
-| Hierarchy too deep or too shallow        | Adjust the decomposition level in your prompt                 |
-| Duplicate work items from repeated runs  | Check existing backlog items before re-running PRD conversion |
-| Missing parent-child links               | Verify the handoff file before execution                      |
-
-## Next Steps
-
-1. Review the proposed hierarchy in the handoff file
-2. Use the "Execute" handoff to apply the work item hierarchy to Azure DevOps
-3. Continue with [Sprint Planning](sprint-planning.md) to assign iterations to the new items
-
----
-
-<!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
-then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

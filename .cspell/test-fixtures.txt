@@ -1,0 +1,4 @@
+# Deliberately unmatchable tokens used by test fixtures and probe recipes.
+# These are not words; they exist so a search, lookup, or query provably
+# returns no results. Do not add real vocabulary here.
+zzzqqq

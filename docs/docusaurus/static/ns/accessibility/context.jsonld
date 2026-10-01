@@ -1,0 +1,32 @@
+{
+  "@context": {
+    "hve": "https://microsoft.github.io/hve-core/ns/accessibility#",
+    "earl": "http://www.w3.org/ns/earl#",
+    "dct": "http://purl.org/dc/terms/",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+
+    "aiAssisted": {
+      "@id": "hve:aiAssisted",
+      "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+    },
+    "humanReviewCompleted": {
+      "@id": "hve:humanReviewCompleted",
+      "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+    },
+    "evidenceLimits": { "@id": "hve:evidenceLimits" },
+    "toolVersion": { "@id": "hve:toolVersion" },
+    "criteriaCatalog": { "@id": "hve:criteriaCatalog" },
+    "quarantined": {
+      "@id": "hve:quarantined",
+      "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+    },
+    "quarantineReason": { "@id": "hve:quarantineReason" },
+    "method": { "@id": "hve:method" },
+    "methodAdequacy": { "@id": "hve:methodAdequacy" },
+    "state": { "@id": "hve:state" },
+    "humanJudgmentRequired": {
+      "@id": "hve:humanJudgmentRequired",
+      "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+    }
+  }
+}

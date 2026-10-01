@@ -3,7 +3,12 @@
 stimuli:
   - name: issue-triage-class-recipe
     prompt: |
-      Triage this new GitHub issue: "App is super slow on iPhone." Suggest labels, priority, and assignee. Write the triage record under `.copilot-tracking/github-issues/` and report the path along with the triage decision.
+      This is a prompt-visible smoke scenario, not a native tracker operation.
+      Triage this synthetic issue: "App is super slow on iPhone." Suggest labels,
+      priority and an assignee role, and identify information still needed.
+      Return the triage decision in chat with an intended record path under
+      `.copilot-tracking/github-issues/`. Do not invent a real person's identity,
+      write files, mutate GitHub or claim that an issue was assigned.
     tags:
       category: agent-behavior
     graders:
@@ -12,11 +17,11 @@ stimuli:
         config:
           pattern: '(?i)(title|description|acceptance criteria|priority|label|story|epic)'
       - type: output-matches
-        name: tracking-file-write
+        name: issue-triage-class-recipe-tracking-file-write
         config:
           pattern: '(?i)\.copilot-tracking[-/\\]'
       - type: output-matches
-        name: no-source-edit
+        name: issue-triage-class-recipe-no-source-edit
         config:
-          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          pattern: '(?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b'
           negate: true

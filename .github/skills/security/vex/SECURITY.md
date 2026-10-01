@@ -2,7 +2,7 @@
 title: VEX Skill Security Model
 description: STRIDE threat model for the vex skill runtime (vex_gate.py) organized by assets, adversaries, and trust buckets (untrusted detection-issue body parsing, OpenVEX document parsing, gate decision with an adjacent workflow-owned fetch) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-07-02
+ms.date: 2026-08-09
 ms.topic: reference
 estimated_reading_time: 7
 keywords:
@@ -232,7 +232,7 @@ For an active issue tracker entry covering these gaps, see the [hve-core issues 
 ## References
 
 * [Repository-wide security model](../../../../docs/security/security-model.md)
-* [Skill security model conventions](../../../../.github/instructions/skill-security-model.instructions.md)
+* Skill security model conventions: `skill-security-model.instructions.md`. When it is unavailable, follow the STRIDE structure already present in this document rather than guessing at the convention.
 * [OpenVEX v0.2.0 specification](https://github.com/openvex/spec/blob/main/OPENVEX-SPEC.md)
 * [STRIDE Threat Model](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats)
 

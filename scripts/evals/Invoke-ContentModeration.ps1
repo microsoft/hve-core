@@ -44,7 +44,7 @@
     ./Invoke-ContentModeration.ps1 -Records $records -Scope 'input-artifact-1'
 
 .NOTES
-    Runs via: npm run eval:moderate
+    Runs via: npm run ci:eval:moderate
 
     The HVE_MODERATION_PYTHON environment variable overrides the interpreter
     used to run moderate.py. When unset, the uv-managed moderation venv is

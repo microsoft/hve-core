@@ -1,1 +1,0 @@
-../../../../.github/prompts/jira/jira-setup.prompt.md

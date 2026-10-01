@@ -1,1 +1,0 @@
-../../../../../.github/agents/hve-core/subagents/hve-artifact-validator.agent.md

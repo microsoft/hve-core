@@ -3,7 +3,7 @@ id: "0003"
 title: "Generalize the requirements-author skill as the shared source of truth for BRD and PRD authoring"
 description: "Generalize the existing requirements-author skill (renamed from brd-author) in place into a references/_shared core plus per-type references/brd and references/prd overrides, so both the BRD Builder and PRD Builder agents and both quality reviewers bind to one skill while BRD and PRD content stays deliberately isolated."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-14"
+ms.date: "2026-08-20"
 ms.topic: "reference"
 status: "proposed"
 proposed_date: "2026-06-14"
@@ -227,6 +227,8 @@ the opposite type's subfolder.
 
 ```mermaid
 flowchart LR
+  accTitle: Requirements Skill Reference Routing
+  accDescr: BRD and PRD builders and reviewers share common requirements references while each consumes only its own type-specific reference scope.
     subgraph Skill["requirements-author skill"]
         shared["references/_shared/"]
         brd["references/brd/"]
@@ -265,7 +267,7 @@ If this decision is reversed, the rollback path is:
 
 1. Split the `requirements-author` skill back into separate BRD and PRD skills (or re-inline the PRD Builder protocols), restoring the pre-decision layout.
 2. Repoint the two builder agents and two quality reviewers at their separate sources.
-3. Update any collection manifests that reference the skill and re-run `npm run plugin:generate`, `npm run extension:prepare`, and `npm run extension:prepare:prerelease`.
+3. Re-run `npm run plugin:sync`, `npm run extension:prepare`, and `npm run extension:prepare:prerelease` so the root `plugin.json` and the extension outputs no longer list the skill. At the time of this decision the first of these was `npm run plugin:generate` over collection manifests.
 4. Document the reversal in a superseding ADR that links back to this one and sets `superseded-by` here.
 
 No content migration is required beyond moving reference files; the BRD and PRD document models themselves are unchanged.

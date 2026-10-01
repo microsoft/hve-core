@@ -144,6 +144,145 @@ function Get-ReadFileReferences {
 
 <#
 .SYNOPSIS
+    Resolves a portable skill name to one unique repository-relative SKILL.md path.
+
+.DESCRIPTION
+    Searches package-scoped skill directories by stable folder name. Missing or
+    ambiguous names return null so callers fail closed instead of selecting the
+    first recursive match.
+
+.PARAMETER SkillName
+    Stable skill name used by a dispatch row.
+
+.PARAMETER RepoRoot
+    Absolute repository root.
+
+.OUTPUTS
+    [string] Repository-relative SKILL.md path, or null when resolution is not unique.
+#>
+function Resolve-UniqueSkillReference {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SkillName,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    $skillsRoot = Join-Path -Path $RepoRoot -ChildPath '.github/skills'
+    if (-not (Test-Path -LiteralPath $skillsRoot -PathType Container)) {
+        return $null
+    }
+
+    $SkillMatches = @(Get-ChildItem -LiteralPath $skillsRoot -Recurse -Filter 'SKILL.md' -File |
+            Where-Object { $_.Directory.Name -eq $SkillName })
+    if ($SkillMatches.Count -ne 1) {
+        return $null
+    }
+
+    return [System.IO.Path]::GetRelativePath($RepoRoot, $SkillMatches[0].FullName).Replace('\', '/')
+}
+
+<#
+.SYNOPSIS
+    Resolves a portable instruction filename to one unique repository-relative path.
+
+.DESCRIPTION
+    Searches the instruction tree by filename. Missing or ambiguous filenames
+    return null so dispatch fingerprints never depend on recursive search order.
+
+.PARAMETER FileName
+    Instruction filename used by a dispatch row.
+
+.PARAMETER RepoRoot
+    Absolute repository root.
+
+.OUTPUTS
+    [string] Repository-relative instruction path, or null when resolution is not unique.
+#>
+function Resolve-UniqueInstructionReference {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$FileName,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    $instructionsRoot = Join-Path -Path $RepoRoot -ChildPath '.github/instructions'
+    if (-not (Test-Path -LiteralPath $instructionsRoot -PathType Container)) {
+        return $null
+    }
+
+    $InstructionMatches = @(Get-ChildItem -LiteralPath $instructionsRoot -Recurse -Filter $FileName -File)
+    if ($InstructionMatches.Count -ne 1) {
+        return $null
+    }
+
+    return [System.IO.Path]::GetRelativePath($RepoRoot, $InstructionMatches[0].FullName).Replace('\', '/')
+}
+
+<#
+.SYNOPSIS
+    Resolves a resource path beneath one resolved skill root.
+
+.DESCRIPTION
+    Combines a skill-relative resource with its owning skill directory and
+    rejects missing files and paths that escape the skill root.
+
+.PARAMETER Reference
+    Resource path relative to the skill root.
+
+.PARAMETER SkillPath
+    Repository-relative path to the owning SKILL.md.
+
+.PARAMETER RepoRoot
+    Absolute repository root.
+
+.OUTPUTS
+    [string] Repository-relative resource path, or null when invalid.
+#>
+function Resolve-SkillRelativeReference {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Reference,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SkillPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    $skillFile = Join-Path -Path $RepoRoot -ChildPath $SkillPath
+    $skillRoot = [System.IO.Path]::GetFullPath((Split-Path -Parent $skillFile))
+    $candidate = [System.IO.Path]::GetFullPath((Join-Path -Path $skillRoot -ChildPath $Reference))
+    $containedPrefix = $skillRoot.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+    if (-not $candidate.StartsWith($containedPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $null
+    }
+    if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+        return $null
+    }
+
+    return [System.IO.Path]::GetRelativePath($RepoRoot, $candidate).Replace('\', '/')
+}
+
+<#
+.SYNOPSIS
     Splits an agent file's text into frontmatter and body.
 
 .PARAMETER Content
@@ -278,13 +417,28 @@ function Get-DispatchTableReferences {
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$PhaseToken
+        [string]$PhaseToken,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
     )
 
     $result = [System.Collections.Generic.List[string]]::new()
     $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     $rowPattern = '(?im)^\|\s*[^|]*' + [regex]::Escape($PhaseToken) + '[^|]*\|.*$'
     foreach ($row in [regex]::Matches($Body, $rowPattern)) {
+        $skillPaths = @(
+            foreach ($skillMatch in [regex]::Matches($row.Value, '`([^`]+)`\s+skill')) {
+                $skillPath = Resolve-UniqueSkillReference -SkillName $skillMatch.Groups[1].Value.Trim() -RepoRoot $RepoRoot
+                if ($skillPath) {
+                    if ($seen.Add($skillPath)) {
+                        [void]$result.Add($skillPath)
+                    }
+                    $skillPath
+                }
+            }
+        )
         foreach ($ref in (Get-FileDirectiveReferences -Body $row.Value)) {
             if ($seen.Add($ref)) {
                 [void]$result.Add($ref)
@@ -295,10 +449,29 @@ function Get-DispatchTableReferences {
                 [void]$result.Add($ref)
             }
         }
+        foreach ($m in [regex]::Matches($row.Value, '`([^`]+\.instructions\.md)`')) {
+            $ref = Resolve-UniqueInstructionReference -FileName $m.Groups[1].Value.Trim() -RepoRoot $RepoRoot
+            if ($ref -and $seen.Add($ref)) {
+                [void]$result.Add($ref)
+            }
+        }
         foreach ($m in [regex]::Matches($row.Value, '`([^`]+\.(?:md|py|ps1|psm1|psd1|json|ya?ml|sh|js|ts|txt))(?:#[^`]*)?`')) {
             $ref = $m.Groups[1].Value.Trim()
-            if ($ref -and $ref.Contains('/') -and $seen.Add($ref)) {
+            if (-not $ref -or -not $ref.Contains('/')) {
+                continue
+            }
+
+            $repoCandidate = Join-Path -Path $RepoRoot -ChildPath $ref
+            if ((Test-Path -LiteralPath $repoCandidate -PathType Leaf) -and $seen.Add($ref)) {
                 [void]$result.Add($ref)
+                continue
+            }
+
+            foreach ($skillPath in $skillPaths) {
+                $skillRelative = Resolve-SkillRelativeReference -Reference $ref -SkillPath $skillPath -RepoRoot $RepoRoot
+                if ($skillRelative -and $seen.Add($skillRelative)) {
+                    [void]$result.Add($skillRelative)
+                }
             }
         }
     }
@@ -432,7 +605,7 @@ function Get-AgentActivationFingerprint {
     }
 
     if ($ScenarioName -eq 'GovernEntry') {
-        foreach ($ref in Get-DispatchTableReferences -Body $split.Body -PhaseToken 'Govern') {
+        foreach ($ref in Get-DispatchTableReferences -Body $split.Body -PhaseToken 'Govern' -RepoRoot $RepoRoot) {
             $candidate = Join-Path -Path $RepoRoot -ChildPath $ref
             if (Test-Path -LiteralPath $candidate -PathType Leaf) {
                 $resolved = (Resolve-Path -LiteralPath $candidate).Path
@@ -445,7 +618,7 @@ function Get-AgentActivationFingerprint {
 
     if ($ScenarioName -eq 'AdoptTemplate') {
         foreach ($token in @('Ingest', 'Normalize', 'Derive', 'Fill')) {
-            foreach ($ref in Get-DispatchTableReferences -Body $split.Body -PhaseToken $token) {
+            foreach ($ref in Get-DispatchTableReferences -Body $split.Body -PhaseToken $token -RepoRoot $RepoRoot) {
                 $candidate = Join-Path -Path $RepoRoot -ChildPath $ref
                 if (Test-Path -LiteralPath $candidate -PathType Leaf) {
                     $resolved = (Resolve-Path -LiteralPath $candidate).Path

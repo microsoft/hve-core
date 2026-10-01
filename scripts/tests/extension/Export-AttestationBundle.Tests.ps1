@@ -4,35 +4,74 @@
 
 BeforeAll {
     . (Join-Path $PSScriptRoot '../../extension/Export-AttestationBundle.ps1')
+    Import-Module (Join-Path $PSScriptRoot 'ExtensionTestFixtures.psm1') -Force
+
+    $script:BundleContent = [ordered]@{
+        mediaType    = 'application/vnd.dev.sigstore.bundle+json;version=0.3'
+        dsseEnvelope = [ordered]@{
+            payload     = 'Zml4dHVyZS1wYXlsb2Fk'
+            payloadType = 'application/vnd.in-toto+json'
+            signatures  = @([ordered]@{ sig = 'ZmFrZS1zaWduYXR1cmU=' })
+        }
+    } | ConvertTo-Json -Depth 8
 }
 
 Describe 'Export-AttestationBundle' -Tag 'Unit' {
-    It 'Exports the signature and DSSE envelope to the requested paths' {
-        $tempDir = Join-Path $TestDrive 'bundle'
-        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-        $bundlePath = Join-Path $tempDir 'bundle.json'
-        $payload = [ordered]@{
-            dsseEnvelope = [ordered]@{ payloadType = 'application/vnd.in-toto+json' }
-            predicateType = 'https://example.test/predicate'
+    Context 'when the bundle contains a DSSE envelope' {
+        BeforeAll {
+            $script:WorkDirectory = (New-Item -Path (Join-Path $TestDrive 'attestation') -ItemType Directory -Force).FullName
+            $script:BundlePath = Join-Path $script:WorkDirectory 'attestation.jsonl'
+            Set-FixtureFile -Path $script:BundlePath -Value $script:BundleContent
+            $script:SigstorePath = Join-Path $script:WorkDirectory 'nested/output/hve-core-3.3.106.vsix.sigstore.json'
+            $script:IntotoPath = Join-Path $script:WorkDirectory 'nested/output/hve-core-3.3.106.vsix.intoto.jsonl'
+            $script:Result = Export-AttestationBundle -BundlePath $script:BundlePath `
+                -SigstorePath $script:SigstorePath -IntotoPath $script:IntotoPath
         }
-        $payload | ConvertTo-Json -Depth 10 | Set-Content -Path $bundlePath -Encoding utf8NoBOM
 
-        $sigstorePath = Join-Path $tempDir 'bundle.sigstore.json'
-        $intotoPath = Join-Path $tempDir 'bundle.intoto.jsonl'
+        It 'Creates destination directories that do not exist yet' {
+            Test-Path -LiteralPath (Split-Path -Parent $script:SigstorePath) -PathType Container | Should -BeTrue
+        }
 
-        Export-AttestationBundle -BundlePath $bundlePath -SigstorePath $sigstorePath -IntotoPath $intotoPath
+        It 'Copies the bundle verbatim to the sigstore path' {
+            Get-Content -LiteralPath $script:SigstorePath -Raw | Should -BeExactly $script:BundleContent
+        }
 
-        Test-Path $sigstorePath | Should -BeTrue
-        Test-Path $intotoPath | Should -BeTrue
-        (Get-Content -Path $sigstorePath -Raw) | Should -Match '"dsseEnvelope"'
-        (Get-Content -Path $intotoPath -Raw) | Should -Match 'application/vnd.in-toto\+json'
+        It 'Writes the DSSE envelope as a single compact JSON line' {
+            @(Get-Content -LiteralPath $script:IntotoPath) | Should -HaveCount 1
+            $envelope = Get-Content -LiteralPath $script:IntotoPath -Raw | ConvertFrom-Json
+            $envelope.payloadType | Should -BeExactly 'application/vnd.in-toto+json'
+            $envelope.payload | Should -BeExactly 'Zml4dHVyZS1wYXlsb2Fk'
+            @($envelope.signatures.sig) | Should -Be @('ZmFrZS1zaWduYXR1cmU=')
+        }
+
+        It 'Returns the absolute output paths' {
+            $script:Result.SigstorePath | Should -BeExactly ([System.IO.Path]::GetFullPath($script:SigstorePath))
+            $script:Result.IntotoPath | Should -BeExactly ([System.IO.Path]::GetFullPath($script:IntotoPath))
+        }
     }
 
-    It 'Throws when the bundle file does not exist' {
-        $tempDir = Join-Path $TestDrive 'bundle-missing'
-        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-        $bundlePath = Join-Path $tempDir 'missing.json'
-
-        { Export-AttestationBundle -BundlePath $bundlePath -SigstorePath (Join-Path $tempDir 'out.sigstore.json') -IntotoPath (Join-Path $tempDir 'out.intoto.jsonl') } | Should -Throw '*Bundle file not found*'
+    Context 'when the bundle file is missing' {
+        It 'Throws the missing bundle message' {
+            $missing = Join-Path $TestDrive 'absent-bundle.json'
+            { Export-AttestationBundle -BundlePath $missing `
+                    -SigstorePath (Join-Path $TestDrive 'out.sigstore.json') `
+                    -IntotoPath (Join-Path $TestDrive 'out.intoto.jsonl') } |
+                Should -Throw "Bundle file not found: $missing"
+        }
     }
+
+    Context 'when the bundle omits the DSSE envelope' {
+        It 'Throws the missing envelope message' {
+            $bundlePath = Join-Path $TestDrive 'no-envelope.json'
+            Set-FixtureFile -Path $bundlePath -Value '{"mediaType":"application/vnd.dev.sigstore.bundle+json;version=0.3"}'
+            { Export-AttestationBundle -BundlePath $bundlePath `
+                    -SigstorePath (Join-Path $TestDrive 'no-envelope.sigstore.json') `
+                    -IntotoPath (Join-Path $TestDrive 'no-envelope.intoto.jsonl') } |
+                Should -Throw 'The attestation bundle does not contain a dsseEnvelope property.'
+        }
+    }
+}
+
+AfterAll {
+    Remove-Module ExtensionTestFixtures -Force -ErrorAction SilentlyContinue
 }

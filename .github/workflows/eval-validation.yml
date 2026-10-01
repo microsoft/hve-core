@@ -15,11 +15,40 @@ on:
         required: false
         type: boolean
         default: true
-      base-branch:
-        description: "Base branch or SHA for change detection (defaults to origin/main)"
+      base-ref:
+        description: "Explicit base ref, used only when merge-ref is empty (manual runs)"
+        required: false
+        type: string
+        default: "origin/main"
+      head-ref:
+        description: "PR event head SHA, or workflow SHA for manual runs"
+        required: true
+        type: string
+      merge-ref:
+        description: "PR test-merge commit SHA; its first parent is the base and its second parent must equal head-ref"
         required: false
         type: string
         default: ""
+      ordinary-shard-count:
+        description: "Ordinary agent shard count (1 or 4)"
+        required: false
+        type: number
+        default: 4
+      instruction-shard-count:
+        description: "Instruction shard count (1 or 2)"
+        required: false
+        type: number
+        default: 2
+      skill-shard-count:
+        description: "Skill shard count (1 or 2)"
+        required: false
+        type: number
+        default: 2
+      baseline-max-parallel:
+        description: "Maximum simultaneous isolated baseline model jobs (1 or 2)"
+        required: false
+        type: number
+        default: 2
     secrets:
       copilot-github-token:
         description: "GitHub credential exported as COPILOT_GITHUB_TOKEN for the Copilot CLI used by vally eval"
@@ -29,23 +58,29 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: eval-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   eval-validation:
     name: Eval Validation
     runs-on: ubuntu-latest
+    # Lint-only job; observed ~2 min. Without this it inherits the 6h default.
+    timeout-minutes: 20
     permissions:
       contents: read
     outputs:
       eval-relevant: ${{ steps.detect.outputs.eval-relevant }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
           cache: "npm"
@@ -53,74 +88,48 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install PowerShell-Yaml
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Create logs directory
         run: mkdir -p logs
 
+      - name: Generate immutable eval change set
+        shell: pwsh
+        env:
+          INPUT_BASE_REF: ${{ inputs.base-ref }}
+          INPUT_HEAD_REF: ${{ inputs.head-ref }}
+          INPUT_MERGE_REF: ${{ inputs.merge-ref }}
+        run: |
+          if ($env:INPUT_MERGE_REF) {
+            pwsh -NoProfile -File scripts/evals/Get-EvalChangeSet.ps1 `
+              -MergeRef $env:INPUT_MERGE_REF -HeadRef $env:INPUT_HEAD_REF -OutFile logs/eval-change-set.json
+          } else {
+            pwsh -NoProfile -File scripts/evals/Get-EvalChangeSet.ps1 `
+              -BaseRef $env:INPUT_BASE_REF -HeadRef $env:INPUT_HEAD_REF -OutFile logs/eval-change-set.json
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'Eval change-set generation failed; selection is unavailable.' }
+
+      - name: Upload immutable eval change set
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: eval-change-set
+          path: logs/eval-change-set.json
+          retention-days: 30
+          if-no-files-found: error
+
       - name: Detect eval-relevant changes
         id: detect
         shell: pwsh
+        env:
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
         run: |
-          if ('${{ inputs.changed-files-only }}' -ne 'true') {
-            'EVAL_RELEVANT=true' >> $env:GITHUB_ENV
-            'eval-relevant=true' >> $env:GITHUB_OUTPUT
+          Import-Module ./scripts/evals/Modules/EvalChangeSet.psm1 -Force
+          $changeSet = Read-EvalChangeSet -Path logs/eval-change-set.json
+          $relevant = Test-EvalChangeSetRelevance -ChangeSet $changeSet -RepoRoot $PWD.Path
+          if ($env:INPUT_CHANGED_FILES_ONLY -ne 'true') {
+            $relevant = $true
             Write-Output 'changed-files-only is false; running full eval suite.'
-            exit 0
-          }
-
-          $baseBranch = '${{ inputs.base-branch }}'
-          if ([string]::IsNullOrEmpty($baseBranch)) {
-            $baseBranch = 'origin/main'
-          }
-
-          $changed = & git diff --name-only "$baseBranch...HEAD"
-          if ($LASTEXITCODE -ne 0 -or $null -eq $changed) {
-            Write-Output "Could not compute diff against '$baseBranch'; running full eval suite."
-            'EVAL_RELEVANT=true' >> $env:GITHUB_ENV
-            'eval-relevant=true' >> $env:GITHUB_OUTPUT
-            exit 0
-          }
-
-          $patterns = @(
-            '^evals/',
-            '^scripts/evals/',
-            '^\.github/agents/',
-            '^\.github/prompts/',
-            '^\.github/instructions/',
-            '^\.github/skills/'
-          )
-
-          # package.json and package-lock.json change often for reasons unrelated to
-          # evals. Treat them as eval-relevant only when the change touches the vally
-          # CLI dependency or an eval:* npm script, detected from the diff content.
-          $contentScopedFiles = @('package.json', 'package-lock.json')
-          $evalContentPattern = 'vally|"eval:'
-
-          $relevant = $false
-          foreach ($file in $changed) {
-            foreach ($pattern in $patterns) {
-              if ($file -match $pattern) {
-                $relevant = $true
-                Write-Output "Eval-relevant change: $file"
-                break
-              }
-            }
-            if ($relevant) { break }
-
-            if ($contentScopedFiles -contains $file) {
-              $diff = & git diff "$baseBranch...HEAD" -- $file
-              $changedLines = $diff | Where-Object { $_ -match '^[+-]' -and $_ -notmatch '^(\+\+\+|---)' }
-              if ($changedLines -match $evalContentPattern) {
-                $relevant = $true
-                Write-Output "Eval-relevant change (vally tooling): $file"
-                break
-              }
-              Write-Output "Non-eval change in ${file}; not triggering eval suite."
-            }
           }
 
           if ($relevant) {
@@ -136,28 +145,28 @@ jobs:
       - name: Run eval vally lint
         if: env.EVAL_RELEVANT == 'true'
         run: |
-          npm run eval:lint:vally > eval-vally-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
+          npm run ci:eval:lint:vally > eval-vally-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
           cat eval-vally-output.txt
         continue-on-error: true
 
       - name: Run eval schema lint
         if: env.EVAL_RELEVANT == 'true'
         run: |
-          npm run eval:lint:schema > eval-schema-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
+          npm run ci:eval:lint:schema > eval-schema-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
           cat eval-schema-output.txt
         continue-on-error: true
 
       - name: Run eval text lint
         if: env.EVAL_RELEVANT == 'true'
         run: |
-          npm run eval:lint:text > eval-text-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
+          npm run ci:eval:lint:text > eval-text-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
           cat eval-text-output.txt
         continue-on-error: true
 
       - name: Run eval safety lint
         if: env.EVAL_RELEVANT == 'true'
         run: |
-          npm run eval:lint:safety > eval-safety-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
+          npm run ci:eval:lint:safety > eval-safety-output.txt 2>&1 || echo "EVAL_FAILED=true" >> "$GITHUB_ENV"
           cat eval-safety-output.txt
         continue-on-error: true
 
@@ -181,7 +190,12 @@ jobs:
       - name: Add job summary
         if: always()
         run: |
-          if [ "${{ env.EVAL_RELEVANT }}" != "true" ]; then
+          if [ "${{ env.EVAL_RELEVANT }}" != "true" ] && [ "${{ env.EVAL_RELEVANT }}" != "false" ]; then
+            {
+              echo "## Eval Validation Results"
+              echo "Change selection failed or did not complete. Review the failing step."
+            } >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ env.EVAL_RELEVANT }}" == "false" ]; then
             {
               echo "## Eval Validation Results"
               echo "⏭️ **Status**: Skipped"
@@ -213,18 +227,21 @@ jobs:
   content-moderation:
     name: Content Moderation
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: eval-validation
+    outputs:
+      equivalence-required: ${{ steps.artifact-manifest.outputs.equivalence-required }}
     permissions:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
           cache: "npm"
@@ -232,18 +249,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install PowerShell-Yaml
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.10.9"
 
       - name: Setup Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -254,19 +269,29 @@ jobs:
       - name: Create logs directory
         run: mkdir -p logs
 
+      - name: Download immutable eval change set
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: eval-change-set
+          path: logs
+
       - name: Generate changed-artifact manifest
+        id: artifact-manifest
         shell: pwsh
         run: |
-          $base = '${{ inputs.base-branch }}'
-          if ([string]::IsNullOrWhiteSpace($base)) { $base = 'origin/main' }
           pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
-            -BaseRef $base -HeadRef HEAD -OutFile logs/changed-ai-artifacts.json
+            -ChangeSetPath logs/eval-change-set.json -OutFile logs/changed-ai-artifacts.json
+          if ($LASTEXITCODE -ne 0) { throw 'Changed-artifact selection failed.' }
+          $manifest = Get-Content -LiteralPath logs/changed-ai-artifacts.json -Raw | ConvertFrom-Json
+          $affectedAgents = if ($null -ne $manifest.affectedAgents) { @($manifest.affectedAgents) } else { @() }
+          $required = $affectedAgents -contains 'rpi-agent'
+          "equivalence-required=$($required.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
       - name: Run content moderation
         id: moderate
         shell: pwsh
         run: |
-          npm run eval:moderate:artifacts
+          npm run ci:eval:moderate:artifacts
           if ($LASTEXITCODE -ne 0) {
             'MODERATION_FAILED=true' >> $env:GITHUB_ENV
           }
@@ -278,6 +303,7 @@ jobs:
         with:
           name: content-moderation-results
           path: |
+            logs/eval-change-set.json
             logs/changed-ai-artifacts.json
             logs/moderation-artifacts.json
           retention-days: 30
@@ -308,30 +334,123 @@ jobs:
           echo "Content moderation flagged one or more files"
           exit 1
 
-  eval-execute:
-    name: Eval Execute (${{ matrix.kind }})
+  agent-plan:
+    name: Agent Eval Plan
     runs-on: ubuntu-latest
     needs: [eval-validation, content-moderation]
+    if: needs.eval-validation.outputs.eval-relevant == 'true' && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: read
+    outputs:
+      execution-matrix: ${{ steps.plan.outputs.execution-matrix }}
+      baseline-required: ${{ steps.plan.outputs.baseline-required }}
+      execution-enabled: ${{ steps.plan.outputs.execution-enabled }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      - name: Download changed-artifact manifest
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: content-moderation-results
+          path: logs
+
+      - name: Generate changed-spec stimulus manifest
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File scripts/evals/Get-ChangedSpecStimulus.ps1 `
+            -ChangeSetPath logs/eval-change-set.json -OutFile logs/changed-spec-stimuli.json
+          if ($LASTEXITCODE -ne 0) { throw 'Changed-spec selection failed.' }
+
+      - name: Build canonical plan and matrix
+        id: plan
+        shell: pwsh
+        env:
+          ORDINARY_SHARD_COUNT: ${{ inputs.ordinary-shard-count || 4 }}
+          INSTRUCTION_SHARD_COUNT: ${{ inputs.instruction-shard-count || 2 }}
+          SKILL_SHARD_COUNT: ${{ inputs.skill-shard-count || 2 }}
+          BASELINE_MAX_PARALLEL: ${{ inputs.baseline-max-parallel || 2 }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
+        run: |
+          if ($env:ORDINARY_SHARD_COUNT -notin @('1', '4')) {
+            throw "ordinary-shard-count must be 1 or 4; received '$env:ORDINARY_SHARD_COUNT'."
+          }
+          if ($env:INSTRUCTION_SHARD_COUNT -notin @('1', '2')) {
+            throw "instruction-shard-count must be 1 or 2; received '$env:INSTRUCTION_SHARD_COUNT'."
+          }
+          if ($env:SKILL_SHARD_COUNT -notin @('1', '2')) {
+            throw "skill-shard-count must be 1 or 2; received '$env:SKILL_SHARD_COUNT'."
+          }
+          if ($env:BASELINE_MAX_PARALLEL -notin @('1', '2')) {
+            throw "baseline-max-parallel must be 1 or 2; received '$env:BASELINE_MAX_PARALLEL'."
+          }
+          pwsh -NoProfile -File scripts/evals/New-AgentEvalPlan.ps1 `
+            -ManifestPath logs/changed-ai-artifacts.json `
+            -ChangedSpecManifestPath logs/changed-spec-stimuli.json `
+            -OutputPath logs/agent-eval-plan.json `
+            -OrdinaryShardCount ([int]$env:ORDINARY_SHARD_COUNT) `
+            -InstructionShardCount ([int]$env:INSTRUCTION_SHARD_COUNT) `
+            -SkillShardCount ([int]$env:SKILL_SHARD_COUNT)
+          if ($LASTEXITCODE -ne 0) { throw 'Canonical agent eval planning failed.' }
+          $plan = Get-Content -LiteralPath logs/agent-eval-plan.json -Raw | ConvertFrom-Json -Depth 50
+          $include = [System.Collections.Generic.List[object]]::new()
+          $include.Add([ordered]@{ kind = 'prompt'; producer = 'prompt'; shard = '' })
+          # Matrix order determines job creation order, so emit the heaviest shards before the concurrency cap fills.
+          $orderedShards = @($plan.ordinaryShards | Sort-Object @{ Expression = { [int]$_.expectedTrialWeight }; Descending = $true }, @{ Expression = { [string]$_.id }; Ascending = $true })
+          foreach ($shard in $orderedShards) {
+            $include.Add([ordered]@{ kind = [string]$shard.kind; producer = [string]$shard.id; shard = [string]$shard.id })
+          }
+          $matrix = [ordered]@{ include = @($include) } | ConvertTo-Json -Depth 5 -Compress
+          "execution-matrix=$matrix" >> $env:GITHUB_OUTPUT
+          "baseline-required=$(([bool]$plan.baseline.required).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          "execution-enabled=$((-not [string]::IsNullOrWhiteSpace($env:COPILOT_GITHUB_TOKEN)).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
+      - name: Upload canonical agent eval plan
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: agent-eval-plan
+          path: |
+            logs/changed-ai-artifacts.json
+            logs/changed-spec-stimuli.json
+            logs/agent-eval-plan.json
+          retention-days: 30
+          if-no-files-found: error
+
+  eval-execute:
+    name: Eval Execute (${{ matrix.producer }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: [eval-validation, content-moderation, agent-plan]
     # Repository secrets are not exposed to fork PRs; clean-skip execution there.
     # Only run when eval-relevant paths changed (see eval-validation detect step).
-    if: needs.eval-validation.outputs.eval-relevant == 'true' && github.event.pull_request.head.repo.fork == false
+    if: >-
+      needs.eval-validation.outputs.eval-relevant == 'true' &&
+      needs.agent-plan.outputs.execution-enabled == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+      github.event_name == 'workflow_dispatch')
     permissions:
       contents: read
     strategy:
       fail-fast: false
-      matrix:
-        kind: [agent, prompt, instruction, skill]
+      max-parallel: 6
+      matrix: ${{ fromJSON(needs.agent-plan.outputs.execution-matrix) }}
     env:
       COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
           cache: "npm"
@@ -339,18 +458,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install PowerShell-Yaml
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.10.9"
 
       - name: Setup Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -360,6 +477,12 @@ jobs:
 
       - name: Create logs directory
         run: mkdir -p logs
+
+      - name: Download canonical agent eval plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agent-eval-plan
+          path: logs
 
       - name: Check Copilot token availability
         id: token-guard
@@ -373,24 +496,6 @@ jobs:
             'EVAL_EXECUTE=true' >> $env:GITHUB_ENV
           }
 
-      - name: Generate changed-artifact manifest
-        if: env.EVAL_EXECUTE == 'true'
-        shell: pwsh
-        run: |
-          $base = '${{ inputs.base-branch }}'
-          if ([string]::IsNullOrWhiteSpace($base)) { $base = 'origin/main' }
-          pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
-            -BaseRef $base -HeadRef HEAD -OutFile logs/changed-ai-artifacts.json
-
-      - name: Generate changed-spec stimulus manifest
-        if: env.EVAL_EXECUTE == 'true'
-        shell: pwsh
-        run: |
-          $base = '${{ inputs.base-branch }}'
-          if ([string]::IsNullOrWhiteSpace($base)) { $base = 'origin/main' }
-          pwsh -NoProfile -File scripts/evals/Get-ChangedSpecStimulus.ps1 `
-            -BaseRef $base -HeadRef HEAD -OutFile logs/changed-spec-stimuli.json
-
       - name: Probe Copilot token
         if: env.EVAL_EXECUTE == 'true'
         shell: pwsh
@@ -398,14 +503,26 @@ jobs:
 
       - name: Check stimulus presence
         if: env.EVAL_EXECUTE == 'true'
-        run: npm run eval:presence
+        run: npm run ci:eval:presence
 
       - name: Execute evals
         id: execute
         if: env.EVAL_EXECUTE == 'true'
         shell: pwsh
+        env:
+          MATRIX_KIND: ${{ matrix.kind }}
+          MATRIX_SHARD: ${{ matrix.shard }}
         run: |
-          npm run eval:execute -- -Kind ${{ matrix.kind }} -ChangedSpecManifestPath logs/changed-spec-stimuli.json -Model gpt-5.6-luna -SkipInputModeration
+          $arguments = @(
+            '-Kind', $env:MATRIX_KIND,
+            '-ChangedSpecManifestPath', 'logs/changed-spec-stimuli.json',
+            '-Model', 'gpt-6-luna',
+            '-SkipInputModeration'
+          )
+          if (-not [string]::IsNullOrWhiteSpace($env:MATRIX_SHARD)) {
+            $arguments += @('-PlanPath', 'logs/agent-eval-plan.json', '-ShardId', $env:MATRIX_SHARD)
+          }
+          npm run ci:eval:execute -- @arguments
           if ($LASTEXITCODE -ne 0) {
             'EVAL_EXECUTE_FAILED=true' >> $env:GITHUB_ENV
           }
@@ -415,7 +532,10 @@ jobs:
         if: always() && env.EVAL_EXECUTE == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: eval-execution-results-${{ matrix.kind }}
+          name: eval-execution-results-${{ matrix.producer }}
+          # Aggregate results only. Raw agent transcripts and judge logs are withheld
+          # because artifacts on a public repository are readable by anyone and a
+          # transcript can contain anything the agent printed, including job environment.
           path: |
             logs/changed-ai-artifacts.json
             logs/changed-spec-stimuli.json
@@ -423,7 +543,7 @@ jobs:
             logs/eval-summary.json
             logs/eval-results-*.json
           retention-days: 30
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - name: Fail job if eval execution failed
         if: env.EVAL_EXECUTE == 'true' && env.EVAL_EXECUTE_FAILED == 'true' && !inputs.soft-fail
@@ -431,22 +551,298 @@ jobs:
           echo "Eval execution failed"
           exit 1
 
+  equivalence-execute:
+    name: Baseline Equivalence (${{ matrix.model }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    needs: [eval-validation, content-moderation, agent-plan]
+    if: >-
+      needs.eval-validation.outputs.eval-relevant == 'true' &&
+      needs.agent-plan.outputs.execution-enabled == 'true' &&
+      needs.agent-plan.outputs.baseline-required == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+      github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ inputs.baseline-max-parallel || 2 }}
+      matrix:
+        include:
+          - model: gpt-6-luna
+            key: gpt
+          - model: claude-sonnet-5
+            key: claude
+    env:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      - name: Create logs directory
+        run: mkdir -p logs
+
+      - name: Download canonical agent eval plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agent-eval-plan
+          path: plan-input
+
+      - name: Check Copilot token availability
+        shell: pwsh
+        run: |
+          "COPILOT_HOME=$env:RUNNER_TEMP/copilot-home" >> $env:GITHUB_ENV
+          if ([string]::IsNullOrWhiteSpace($env:COPILOT_GITHUB_TOKEN)) {
+            throw 'COPILOT_GITHUB_TOKEN is required for baseline equivalence.'
+          }
+
+      - name: Probe Copilot token
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/evals/Test-CopilotToken.ps1 -SmokeTest
+
+      - name: Execute isolated model
+        id: execute
+        shell: pwsh
+        env:
+          SELECTED_MODEL: ${{ matrix.model }}
+          WORKFLOW_RUN_ID: ${{ github.run_id }}
+          WORKFLOW_RUN_ATTEMPT: ${{ github.run_attempt }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          $summaryPath = "logs/baseline-equivalence-$env:SELECTED_MODEL.json"
+          Import-Module ./scripts/evals/Modules/VallyRunner.psm1 -Force
+          $plan = Get-Content -LiteralPath plan-input/agent-eval-plan.json -Raw | ConvertFrom-Json -Depth 50
+          if (-not (Test-AgentEvalPlanDigest -Plan $plan) -or -not [bool]$plan.baseline.required -or $env:SELECTED_MODEL -notin @($plan.baseline.models)) {
+            throw 'Selected baseline model is not authorized by the canonical agent eval plan.'
+          }
+          npm run ci:eval:equivalence -- -Agent rpi-agent -Tier calibration `
+            -CalibrationModel $env:SELECTED_MODEL `
+            -RepoRoot $PWD -OutputPath $summaryPath
+          $producerExitCode = $LASTEXITCODE
+          $summary = $null
+          if (Test-Path -LiteralPath $summaryPath -PathType Leaf) {
+            try { $summary = Get-Content -LiteralPath $summaryPath -Raw | ConvertFrom-Json }
+            catch { Write-Output 'Equivalence summary is unreadable; fan-in will fail closed.' }
+          }
+          $driverRunId = if ($null -ne $summary -and $summary.PSObject.Properties['runId']) { [string]$summary.runId } else { $null }
+          [ordered]@{
+            envelopeSchemaVersion = '1.0.0'
+            workflowRunId = $env:WORKFLOW_RUN_ID
+            workflowRunAttempt = [int]$env:WORKFLOW_RUN_ATTEMPT
+            headSha = $env:HEAD_SHA
+            agent = 'rpi-agent'
+            tier = 'calibration'
+            selectedModel = $env:SELECTED_MODEL
+            planDigest = $plan.planDigest
+            driverRunId = $driverRunId
+            producerExitCode = $producerExitCode
+            summary = $summary
+          } | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath "logs/model-evidence-$env:SELECTED_MODEL.json" -Encoding utf8NoBOM
+          if ($producerExitCode -ne 0) { 'EQUIVALENCE_FAILED=true' >> $env:GITHUB_ENV }
+
+      - name: Upload isolated model evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: eval-equivalence-${{ matrix.key }}
+          path: |
+            logs/model-evidence-${{ matrix.model }}.json
+            logs/baseline-equivalence-${{ matrix.model }}.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Fail job if model evidence failed
+        if: env.EQUIVALENCE_FAILED == 'true' && !inputs.soft-fail
+        run: |
+          echo "Baseline equivalence failed for ${{ matrix.model }}"
+          exit 1
+
+  equivalence-fan-in:
+    name: Baseline Equivalence Fan-In
+    runs-on: ubuntu-latest
+    needs: [eval-validation, content-moderation, agent-plan, equivalence-execute]
+    if: >-
+      always() && !cancelled() &&
+      needs.eval-validation.outputs.eval-relevant == 'true' &&
+      needs.agent-plan.outputs.execution-enabled == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+      github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download isolated model evidence
+        if: needs.agent-plan.outputs.baseline-required == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: model-results
+          pattern: eval-equivalence-*
+        continue-on-error: true
+
+      - name: Download canonical agent eval plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agent-eval-plan
+          path: plan-input
+
+      - name: Merge expected model evidence
+        shell: pwsh
+        env:
+          EQUIVALENCE_REQUIRED: ${{ needs.agent-plan.outputs.baseline-required }}
+          WORKFLOW_RUN_ID: ${{ github.run_id }}
+          WORKFLOW_RUN_ATTEMPT: ${{ github.run_attempt }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          SOFT_FAIL: ${{ inputs.soft-fail }}
+        run: |
+          New-Item -ItemType Directory -Path logs -Force | Out-Null
+          $arguments = @(
+            '-NoProfile', '-File', 'scripts/evals/Merge-BaselineEquivalence.ps1',
+            '-PlanPath', 'plan-input/agent-eval-plan.json',
+            '-OutputPath', 'logs/baseline-equivalence-rpi-agent.json',
+            '-EvalSummaryPath', 'logs/eval-summary.json',
+            '-StatusPath', 'logs/merge-status.json'
+          )
+          if ($env:EQUIVALENCE_REQUIRED -notin @('true', 'false')) {
+            throw "Invalid equivalence-required state '$env:EQUIVALENCE_REQUIRED'."
+          }
+          if ($env:EQUIVALENCE_REQUIRED -eq 'true') {
+            $arguments += @(
+              '-EnvelopeDirectory', 'model-results',
+              '-ExpectedWorkflowRunId', $env:WORKFLOW_RUN_ID,
+              '-ExpectedWorkflowRunAttempt', $env:WORKFLOW_RUN_ATTEMPT,
+              '-ExpectedHeadSha', $env:HEAD_SHA
+            )
+          } else {
+            $arguments += '-NotRequired'
+          }
+          & pwsh @arguments
+          $mergeExitCode = $LASTEXITCODE
+          if ($mergeExitCode -ne 0) {
+            $status = if (Test-Path -LiteralPath logs/merge-status.json) { Get-Content -LiteralPath logs/merge-status.json -Raw | ConvertFrom-Json } else { $null }
+            $softEvidenceFailure = $null -ne $status -and $status.category -eq 'evidence' -and $env:SOFT_FAIL -eq 'true'
+            if (-not $softEvidenceFailure) { throw 'Baseline equivalence fan-in failed closed.' }
+          }
+          $fragment = Get-Content -LiteralPath logs/eval-summary.json -Raw | ConvertFrom-Json -Depth 100
+          $plan = Get-Content -LiteralPath plan-input/agent-eval-plan.json -Raw | ConvertFrom-Json -Depth 50
+          $fragment | Add-Member -NotePropertyName producer -NotePropertyValue 'equivalence' -Force
+          $fragment | Add-Member -NotePropertyName planDigest -NotePropertyValue $plan.planDigest -Force
+          $fragment | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath logs/eval-summary.json -Encoding utf8NoBOM
+
+      - name: Upload combined equivalence evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: eval-equivalence-combined
+          path: |
+            logs/baseline-equivalence-rpi-agent.json
+            logs/eval-summary.json
+            logs/merge-status.json
+          retention-days: 30
+          if-no-files-found: error
+
+  eval-fan-in:
+    name: Authoritative Eval Fan-In
+    runs-on: ubuntu-latest
+    needs: [eval-validation, agent-plan, eval-execute, equivalence-fan-in]
+    if: >-
+      always() && !cancelled() &&
+      needs.eval-validation.outputs.eval-relevant == 'true' &&
+      needs.agent-plan.outputs.execution-enabled == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+      github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download canonical agent eval plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agent-eval-plan
+          path: plan-input
+
+      - name: Download eval producer summaries
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: producer-results
+          pattern: eval-execution-results-*
+        continue-on-error: true
+
+      - name: Download combined equivalence summary
+        if: needs.agent-plan.outputs.baseline-required == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: producer-results
+          pattern: eval-equivalence-combined
+        continue-on-error: true
+
+      - name: Merge authoritative eval evidence
+        shell: pwsh
+        env:
+          SOFT_FAIL: ${{ inputs.soft-fail }}
+        run: |
+          New-Item -ItemType Directory -Path logs -Force | Out-Null
+          pwsh -NoProfile -File scripts/evals/Merge-EvalExecution.ps1 `
+            -PlanPath plan-input/agent-eval-plan.json `
+            -SummaryDirectory producer-results `
+            -OutputPath logs/eval-summary.json `
+            -StatusPath logs/eval-fan-in-status.json
+          $mergeExitCode = $LASTEXITCODE
+          if ($mergeExitCode -ne 0) {
+            $status = if (Test-Path -LiteralPath logs/eval-fan-in-status.json) { Get-Content -LiteralPath logs/eval-fan-in-status.json -Raw | ConvertFrom-Json } else { $null }
+            $softEvidenceFailure = $null -ne $status -and $status.category -eq 'evidence' -and $env:SOFT_FAIL -eq 'true'
+            if (-not $softEvidenceFailure) { throw 'Authoritative eval fan-in failed closed.' }
+          }
+
+      - name: Upload authoritative eval result
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: eval-authoritative
+          path: |
+            logs/eval-summary.json
+            logs/eval-fan-in-status.json
+          retention-days: 30
+          if-no-files-found: error
+
   eval-report:
     name: Eval Report
     runs-on: ubuntu-latest
-    needs: [eval-execute]
-    # Aggregate per-kind shard summaries into a single PR comment. Runs even when
-    # individual shards fail so the consolidated result is always reported.
+    timeout-minutes: 10
+    needs: [eval-fan-in]
+    # Present the canonical authoritative summary even when execution failed.
     if: always() && github.event.pull_request.head.repo.fork == false && github.event_name == 'pull_request'
     permissions:
       contents: read
       pull-requests: write
     steps:
-      - name: Download shard results
+      - name: Download authoritative eval result
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          path: shard-results
-          pattern: eval-execution-results-*
+          path: shard-results/eval-authoritative
+          name: eval-authoritative
         continue-on-error: true
 
       - name: Post aggregated eval summary comment
@@ -458,7 +854,7 @@ jobs:
             const marker = '<!-- eval-execute-summary -->';
             const root = 'shard-results';
 
-            // Collect every shard's eval-summary.json (one per kind matrix leg).
+            // Consume the single summary produced by authoritative fan-in.
             const summaries = [];
             if (fs.existsSync(root)) {
               for (const dir of fs.readdirSync(root)) {
@@ -496,20 +892,24 @@ jobs:
                 const failed = Number(a.assertionsFailed || 0);
                 let blocking = Number(a.authoritativeFailed);
                 let advisory = Number(a.advisoryFailed);
+                let tolerated = Number(a.toleratedFailed);
                 if (!Number.isFinite(blocking) || !Number.isFinite(advisory)) {
                   if (a.status === 'advisory-fail') { blocking = 0; advisory = failed; }
                   else if (a.status === 'pass' || a.status === 'skipped') { blocking = 0; advisory = 0; }
                   else { blocking = failed; advisory = 0; }
                 }
-                return { blocking, advisory };
+                if (!Number.isFinite(tolerated)) { tolerated = Math.max(0, failed - blocking - advisory); }
+                return { blocking, advisory, tolerated };
               };
 
               let blockingTotal = 0;
               let advisoryTotal = 0;
+              let toleratedTotal = 0;
               for (const a of artifacts) {
-                const { blocking, advisory } = splitFailures(a);
+                const { blocking, advisory, tolerated } = splitFailures(a);
                 blockingTotal += blocking;
                 advisoryTotal += advisory;
+                toleratedTotal += tolerated;
               }
 
               // Only `failedSpecs` gates the PR. When nothing blocks merge but advisory
@@ -535,17 +935,18 @@ jobs:
                 `- Assertions passed: ${totals.assertionsPassed}`,
                 `- Assertions failed (blocking): ${blockingTotal}`,
                 `- Assertions failed (advisory): ${advisoryTotal}`,
+                `- Trial dips tolerated by per-stimulus aggregate: ${toleratedTotal}`,
                 `- Failed specs (merge-blocking): ${totals.failedSpecs}`,
                 '',
               ];
 
               if (artifacts.length > 0) {
-                lines.push('| Artifact | Kind | Status | Specs | Passed | Failed (blocking) | Failed (advisory) |');
-                lines.push('|----------|------|--------|-------|--------|-------------------|-------------------|');
+                lines.push('| Artifact | Kind | Status | Specs | Passed | Failed (blocking) | Failed (advisory) | Trial dips (tolerated) |');
+                lines.push('|----------|------|--------|-------|--------|-------------------|-------------------|------------------------|');
                 for (const a of artifacts) {
                   const icon = a.status === 'pass' ? '✅' : a.status === 'skipped' ? '⏭️' : a.status === 'advisory-fail' ? '⚠️' : '❌';
-                  const { blocking, advisory } = splitFailures(a);
-                  lines.push(`| \`${a.artifactId}\` | ${a.kind} | ${icon} ${a.status} | ${a.specCount || 0} | ${a.assertionsPassed} | ${blocking} | ${advisory} |`);
+                  const { blocking, advisory, tolerated } = splitFailures(a);
+                  lines.push(`| \`${a.artifactId}\` | ${a.kind} | ${icon} ${a.status} | ${a.specCount || 0} | ${a.assertionsPassed} | ${blocking} | ${advisory} | ${tolerated} |`);
                 }
                 lines.push('');
                 lines.push('> **Legend** — ✅ clean · ⚠️ advisory failures only (non-blocking) · ⏭️ skipped · ❌ merge-blocking failure');

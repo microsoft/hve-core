@@ -1,1 +1,0 @@
-../../../../.github/prompts/experimental/cspell-config.prompt.md

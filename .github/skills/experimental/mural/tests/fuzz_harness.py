@@ -104,6 +104,22 @@ def fuzz_validate_asset_url(data: bytes) -> None:
         mural._validate_asset_url(url)
 
 
+def fuzz_canonicalize_api_base_url(data: bytes) -> None:
+    """Fuzz Mural API base validation with arbitrary text."""
+    provider = atheris.FuzzedDataProvider(data)
+    url = provider.ConsumeUnicodeNoSurrogates(provider.remaining_bytes())
+    with suppress(mural.MuralSecurityError):
+        mural._canonicalize_api_base_url(url, env={})
+
+
+def fuzz_validate_api_path(data: bytes) -> None:
+    """Fuzz API-relative path validation with arbitrary text."""
+    provider = atheris.FuzzedDataProvider(data)
+    path = provider.ConsumeUnicodeNoSurrogates(provider.remaining_bytes())
+    with suppress(mural.MuralValidationError):
+        mural._validate_api_path(path)
+
+
 def fuzz_validate_redirect_uri(data: bytes) -> None:
     """Fuzz the OAuth loopback redirect URI validator.
 
@@ -457,6 +473,8 @@ FUZZ_TARGETS = [
     fuzz_parse_rate_limit_headers,
     fuzz_profile_from_credential_path,
     fuzz_resolve_credential_file,
+    fuzz_canonicalize_api_base_url,
+    fuzz_validate_api_path,
 ]
 
 

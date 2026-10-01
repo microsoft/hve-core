@@ -1,0 +1,10 @@
+{
+  "label": "Backlog Management",
+  "position": 1,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "agents/backlog/README"
+  }
+}

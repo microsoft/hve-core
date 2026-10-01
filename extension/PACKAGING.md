@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-05-20
+ms.date: 2026-09-04
 ms.topic: reference
 ---
 
@@ -12,9 +12,10 @@ This folder contains the VS Code extension configuration for HVE Core.
 
 ```plaintext
 extension/
-├── .github/              # Temporarily copied during packaging (removed after)
-├── docs/templates/       # Temporarily copied during packaging (removed after)
-├── package.json          # Generated extension manifest (gitignored, created by Prepare-Extension.ps1)\n├── templates/            # Source templates for package generation
+├── .github/              # Tracked package sources staged temporarily
+├── docs/templates/       # Explicit shared resources staged temporarily
+├── package.json          # Generated hve-core extension manifest
+├── templates/            # Source templates for package generation
 ├── .vscodeignore         # Controls what gets packaged into the .vsix
 ├── README.md             # Extension marketplace description
 ├── LICENSE               # Copy of root LICENSE
@@ -43,7 +44,8 @@ Install project dependencies (includes the VS Code Extension Manager CLI):
 npm ci
 ```
 
-After installation, use `npx vsce` to invoke the CLI.
+Packaging scripts invoke the repository-pinned `vsce` executable. They do not
+download or install a fallback version.
 
 Install the PowerShell-Yaml module (required for Prepare-Extension.ps1):
 
@@ -55,27 +57,97 @@ Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Scope CurrentUser
 
 The extension is automatically packaged and published through GitHub Actions:
 
-| Workflow                                           | Trigger           | Purpose                                     |
-|----------------------------------------------------|-------------------|---------------------------------------------|
-| `.github/workflows/extension-package.yml`          | Reusable workflow | Packages extension with flexible versioning |
-| `.github/workflows/release-marketplace-stable.yml` | Release/manual    | Publishes to VS Code Marketplace            |
-| `.github/workflows/release-stable.yml`             | Push to main      | Includes extension packaging in CI          |
+| Workflow                                               | Trigger                            | Purpose                                                 |
+|--------------------------------------------------------|------------------------------------|---------------------------------------------------------|
+| `.github/workflows/release-prerelease-prepare.yml`     | Merged PR to `main`; dispatch      | Opens the reviewed `main` to PreRelease promotion       |
+| `.github/workflows/release-prerelease.yml`             | Merged PR to `release/prerelease`  | Prepares metadata or creates the exact tag and draft    |
+| `.github/workflows/release-stable.yml`                 | Published PreRelease; dispatch     | Opens the reviewed PreRelease to Stable promotion       |
+| `.github/workflows/release-stable-publish.yml`         | Merged PR to `release/stable`      | Prepares metadata or creates the exact tag and draft    |
+| `.github/workflows/release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`    | Produces and publishes the release assets from the tag  |
+| `.github/workflows/extension-provenance-signer.yml`    | Reusable workflow                  | Packages, transfers, and attests the VSIX in split jobs |
+| `.github/workflows/release-marketplace-stable.yml`     | Published Stable release; dispatch | Publishes the release VSIX to VS Code Marketplace       |
+| `.github/workflows/release-marketplace-prerelease.yml` | Published PreRelease; dispatch     | Publishes the release VSIX to VS Code Marketplace       |
+
+`release-prerelease-prepare.yml` opens the reviewed, target-based `main` to
+`release/prerelease` promotion. Its merge creates no tag and runs
+`release-prerelease.yml` in PR-only mode. Release-please owns the later managed
+PR. Merging that exact managed head selects tag-only mode. Release-please
+creates the exact odd-minor tag and draft release at its merge commit.
+
+The resulting tag push starts `release-vsix-publish.yml`, the sole post-tag
+producer. It validates the protected exact tag, source commit, channel branch,
+and committed release state, then discovers the exact draft through at most 12
+attempts separated by 10 seconds. It packages one VSIX from the immutable tag,
+attaches SPDX, Sigstore, and in-toto sidecars plus
+`dependencies.spdx.json`, verifies provenance, and publishes the prerelease
+with a release GitHub App token. That published event triggers PreRelease
+Marketplace publication. Release branches, tags, and published GitHub releases
+retain release state and history; publication does not update `main`.
+
+`release-stable.yml` starts from the published PreRelease event or a recovery
+dispatch and opens the reviewed `release/prerelease` to `release/stable`
+promotion. Its merge creates no tag and runs `release-stable-publish.yml` in
+PR-only mode. Merging the later managed Stable PR lets release-please create the
+exact even-minor tag and draft at its merge commit. The tag push starts the same
+post-tag producer, which performs the shared validation, packaging, attestation,
+and publication path. Stable additionally retains OpenVEX, dependency-diff, and
+verification-note behavior. The published event triggers Stable Marketplace
+publication.
+
+If a tag-triggered run fails, classify the tag and release state first. A
+matching draft or published release can use the original immutable tag-push
+workflow. A tag-only state first requires release-please to create the exact
+draft; a draft-only state first requires release-please to materialize the tag.
+Partial assets may be restored while the release remains draft, but publication
+waits for the complete dependency graph and provenance verification. Published
+recovery verifies exact assets and provenance without rebuilding. The producer
+has no default `workflow_dispatch` recovery path. Never move, delete, or
+recreate a release tag, create a replacement release identity, or convert a
+published release back to draft. Bounded discovery fails closed and does not
+guarantee draft visibility.
+
+Release branches and exact tags retain the repository-root plugin source from their selected snapshots. Their reviewed, immutable VSIX assets remain release-gated, SBOM-covered, and attested. The ref-less main catalog represents `main`, receives no post-release synchronization, and requires an explicit marketplace refresh and plugin update; its bytes have no release gate, SBOM, or attestation.
+
+The moving registrations are `microsoft/hve-core#release/prerelease` and
+`microsoft/hve-core#release/stable`; immutable registrations use
+`#prerelease-v<version>` and `#v<version>`.
+
+Tag governance is a mandatory activation prerequisite for this pipeline, but
+it is not yet active or proven. The intended configuration has two rulesets:
+
+* `release-tags-creation-by-release-app` restricts creation only and grants a
+    bypass to the Release App
+* `release-tags-immutable` restricts updates, deletion, and force pushes with
+    no bypass
+
+Do not treat repository configuration or this documentation as evidence that
+either ruleset is installed.
+
+For ordinary promotions, PreRelease reads `release/prerelease` and returns the
+same major, minor plus two, and patch zero. Stable reads the promoted
+PreRelease version and returns its major, its minor plus one, and patch zero.
+The ordinary sequence is `3.3.101` to `3.5.0` to `3.6.0`. Current Stable state
+only rejects a non-advancing candidate. Neither channel classifies commits or
+automatically selects a patch, minor, or major release class. The plugin
+manifest and VSIX use the identical channel version. A major-line transition or Stable
+patch or hotfix needs a separate explicit manifest and release-state decision.
 
 ## Packaging Pipeline Overview
 
-Extension packaging is a two-step process: **Prepare** discovers and filters artifacts into `package.json`, then **Package** copies files, runs `vsce`, and cleans up.
+Extension packaging is a two-step process: **Prepare** maps root `plugin.json`
+into VS Code contributions, then **Package** stages its tracked files, runs the
+pinned `vsce`, and cleans up.
 
 ```mermaid
 flowchart LR
     subgraph Prepare["Step 1 · Prepare-Extension.ps1"]
-        P1[Load Collection Manifests] --> P2[Discover Artifacts]
-        P2 --> P3["Filter by Maturity<br/>+ Collection"]
-        P3 --> P4[Resolve Dependencies]
-        P4 --> P5[Write package.json]
+        P1[Load plugin.json] --> P2[Map component kinds]
+        P2 --> P3[Write package.json]
+        P3 --> P4[Write README.md]
     end
 
     subgraph Package["Step 2 · Package-Extension.ps1"]
-        K1[Resolve Version] --> K2["Copy Assets<br/>to extension/"]
+        K1[Resolve Version] --> K2["Stage Tracked Package Files<br/>to extension/"]
         K2 --> K3[vsce package]
         K3 --> K4[Cleanup & Restore]
     end
@@ -83,36 +155,21 @@ flowchart LR
     Prepare --> Package --> VSIX[".vsix"]
 ```
 
-### Artifact Discovery and Resolution
+### Manifest Projection
 
-The prepare step generates collection package files from `collections/*.collection.yml` manifests, discovers all artifact files on disk, filters them by maturity and collection membership, and resolves transitive handoff and requires dependencies to pull in all needed artifacts.
+The prepare step reads root `plugin.json` and maps each repository-relative `.github/...` component to its VS Code contribution type. Hooks are omitted because VS Code has no declarative hook contribution point. Root `README.md` and `LICENSE` are plugin metadata, not extension contributions; the VSIX retains `extension/README.md` and `extension/LICENSE`.
 
 ```mermaid
 flowchart TB
-    CM["Collection Manifests<br/>collections/*.collection.yml"] -->|Get-CollectionManifest| INPUTS
-    CH[Channel: Stable / PreRelease] -->|Get-AllowedMaturities| INPUTS
-
-    INPUTS[Resolve Inputs] --> DISC[Discover Artifact Files from .github/]
-
-    DISC --> AG["Agents<br/>.github/agents/**/*.agent.md"]
-    DISC --> PR["Prompts<br/>.github/prompts/**/*.prompt.md"]
-    DISC --> IN["Instructions<br/>.github/instructions/**/*.instructions.md"]
-    DISC --> SK["Skills<br/>.github/skills/**/SKILL.md"]
-
-    AG -->|Filter by maturity| FM[Maturity-Filtered Set]
-    PR -->|Filter by maturity| FM
-    IN -->|"Filter by maturity<br/>+ exclude root-level"| FM
-    SK -->|Filter by maturity| FM
-
-    FM --> CF{"Collection<br/>specified?"}
-    CF -->|No| FINAL[Final Artifact Set]
-    CF -->|Yes| PA["Filter by collection + globs<br/>Get-CollectionArtifacts"]
-    PA --> HD["Resolve Handoff Closure<br/>BFS through agent frontmatter"]
-    HD --> RD["Resolve Requires Dependencies<br/>BFS through collection item requires"]
-    RD --> INT["Intersect with<br/>discovered artifacts"]
-    INT --> FINAL
-
-    FINAL --> UPD["Update package.json contributes<br/>chatAgents · chatPromptFiles<br/>chatInstructions · chatSkills"]
+    MANIFEST["Plugin Manifest<br/>plugin.json"] --> AG[Agents]
+    MANIFEST --> PR[Commands to Prompts]
+    MANIFEST --> IN[Rules to Instructions]
+    MANIFEST --> SK[Skills]
+    AG --> FINAL[Canonical Source Set]
+    PR --> FINAL
+    IN --> FINAL
+    SK --> FINAL
+    FINAL --> UPD["Write VS Code Contributions<br/>chatAgents · chatPromptFiles<br/>chatInstructions · chatSkills"]
 ```
 
 ## Packaging the Extension
@@ -121,7 +178,7 @@ flowchart TB
 
 #### Step 1: Prepare the Extension
 
-First, update `package.json` with discovered agents, prompts, and instructions:
+First, prepare the extension manifest from the plugin manifest:
 
 ```bash
 # Discover components and update package.json (Stable channel)
@@ -130,7 +187,7 @@ pwsh ./scripts/extension/Prepare-Extension.ps1
 # Or use npm script
 npm run extension:prepare
 
-# For PreRelease channel (includes preview and experimental artifacts)
+# For PreRelease channel
 pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
 
 # Or use npm script
@@ -139,11 +196,18 @@ npm run extension:prepare:prerelease
 
 The preparation script automatically:
 
-* Discovers and registers all chat agents from `.github/agents/`
-* Discovers and registers all prompts from `.github/prompts/`
-* Discovers and registers all instruction files from `.github/instructions/`
-* Updates `package.json` with discovered components
-* Uses existing version from `package.json` (does not modify it)
+* Reads identity, description, and membership from root `plugin.json`
+* Maps canonical source paths to VS Code contribution kinds
+* Refreshes the one HVE Core extension manifest and README
+* Writes HVE Core's VS Code contribution paths
+* Uses the existing template version without modifying its source
+
+When invoked via the npm scripts (`extension:prepare` and `extension:prepare:prerelease`), a postprocess step also runs after preparation, auto-fixing markdown formatting in `extension/**/*.md`:
+
+* `markdownlint-cli2 --fix`
+* `markdown-table-formatter`
+
+Running `pwsh ./scripts/extension/Prepare-Extension.ps1` directly skips this postprocess step.
 
 #### Step 2: Package the Extension
 
@@ -176,7 +240,8 @@ The packaging script automatically:
 
 * Uses version from `package.json` (or specified version)
 * Optionally appends dev patch number for pre-release builds
-* Copies required directories into `extension/` (or only filtered artifacts in collection mode)
+* Stages only git-tracked files beneath prepared contribution paths
+* Adds the explicit shared resources required by the package
 * Packages the extension using `vsce`
 * Cleans up temporary files and restores all modified files
 
@@ -188,73 +253,58 @@ flowchart TB
     TMPVER -->|No| PREP
     WRITE --> PREP[Prepare Extension Directory]
 
-    PREP --> MODE{"Collection<br/>mode?"}
-    MODE -->|"Full (default)"| FULL["Copy entire .github/<br/>+ scripts/lib/Modules/CIHelpers.psm1<br/>+ docs/templates/<br/>+ .github/skills/"]
-    MODE -->|Collection| COLL["Copy only artifacts listed<br/>in package.json contributes<br/>+ scripts/lib/Modules/CIHelpers.psm1<br/>+ docs/templates/"]
-
-    FULL --> RDM{"Collection<br/>README?"}
-    COLL --> RDM
-    RDM -->|Yes| SWAP["Swap README.md<br/>with README.{id}.md"]
-    RDM -->|No| VSCE
-    SWAP --> VSCE
+    PREP --> STAGE["Stage git-tracked contribution files<br/>+ explicit shared resources"]
+    STAGE --> CHECK[Validate Every Contribution Path]
+    CHECK --> RDM[Use Prepared README]
+    RDM --> VSCE
 
     VSCE["vsce package --no-dependencies"] --> VSIX[".vsix output"]
 
     VSIX --> CLEAN["Finally: Cleanup"]
     CLEAN --> R1["Restore package.json.bak"]
-    CLEAN --> R2["Restore README.md.bak"]
-    CLEAN --> R3["Remove .github/ docs/ scripts/"]
+    CLEAN --> R2[Restore README.md]
+    CLEAN --> R3[Remove Staged Resources]
     CLEAN --> R4["Restore original version"]
-```
-
-### Manual Packaging (Legacy)
-
-If you need to package manually:
-
-```bash
-cd extension
-rm -rf .github scripts && cp -r ../.github . && mkdir -p scripts && vsce package && rm -rf .github scripts
 ```
 
 ## Publishing the Extension
 
-**Important:** Versions are managed by `release-please` via `extension/templates/package.template.json`. The `Prepare-Extension.ps1` script generates all collection package files with the correct version before preparing the extension.
+Production channel publication is workflow-owned. Do not bypass the release
+asset, attestation verification, or Azure OIDC path with a PAT-based direct
+publish.
 
-### Setup Personal Access Token (one-time)
+| Channel    | Release asset selector  | Attestation signer                | Marketplace mode                  |
+|------------|-------------------------|-----------------------------------|-----------------------------------|
+| PreRelease | `prerelease-v<version>` | `extension-provenance-signer.yml` | `vsce --pre-release` through OIDC |
+| Stable     | `v<version>`            | `extension-provenance-signer.yml` | Stable publication through OIDC   |
 
-Set your Azure DevOps PAT as an environment variable:
+The generic publisher receives the exact channel tag, downloads the one matching
+VSIX release asset, verifies its provenance against `extension-provenance-signer.yml`
+at signer revision `3a09401536cef0c4559db1aa64b7d1010638fd67`, and publishes it
+with `--azure-credential`.
 
-```bash
-export VSCE_PAT=your-token-here
-```
+Release verification first authenticates the attestation cryptographically,
+then applies fail-closed semantic policy. The policy checks the exact subject
+name and digest, signer workflow and signer revision, source ref and revision,
+SLSA provenance v1, GitHub Actions `workflow/v1`, the `push` event, a
+GitHub-hosted runner, the complete external-parameter shape, the resolved
+dependency, and builder identity.
 
-To get a PAT:
-
-1. Go to <https://dev.azure.com>
-2. User settings → Personal access tokens → New Token
-3. Set scope to **Marketplace (Manage)**
-4. Copy the token
-
-### Publish command
-
-```bash
-# Publish the packaged extension (replace X.Y.Z with actual version)
-vsce publish --packagePath "extension/hve-core-X.Y.Z.vsix"
-
-# Or use the latest .vsix file
-VSIX_FILE=$(ls -t extension/hve-core-*.vsix | head -1)
-vsce publish --packagePath "$VSIX_FILE"
-```
+This architecture does not establish SLSA Build Level 3. Future Stable and
+PreRelease releases still need successful runtime evidence, active tag
+governance evidence, platform assurance mapping, and qualified human review
+before making that claim.
 
 ## What Gets Included
 
-The `extension/.vscodeignore` file controls what gets packaged. Currently included:
+The prepared manifest and tracked staging allowlist control what gets packaged.
+The archive can include:
 
-* `.github/agents/**` - All custom agent definitions
-* `.github/prompts/**` - All prompt templates
-* `.github/instructions/**` - All instruction files
-* `.github/skills/**` - All skill packages
-* `docs/templates/**` - Document templates used by agents (ADR, BRD, Security Plan)
+* Declared `.github/agents/**` agent definitions
+* Declared `.github/prompts/**` prompt templates
+* Declared `.github/instructions/**` instruction files
+* Declared `.github/skills/**` skill packages
+* Explicit shared resources such as `docs/templates/**`
 * `package.json` - Extension manifest
 * `README.md` - Extension description
 * `LICENSE` - License file
@@ -272,9 +322,30 @@ code --install-extension hve-core-*.vsix
 
 ### How Versions Are Managed
 
-The version source of truth is `extension/templates/package.template.json`. The `release-please` automation updates this file's `version` field on releases. `Prepare-Extension.ps1` generates all `extension/package.json` and `extension/package.*.json` files from the template before performing artifact discovery.
+The Stable channel manifest is `.release-please-manifest.json` on
+`release/stable`. The PreRelease channel manifest is
+`.release-please-prerelease-manifest.json` on `release/prerelease`.
+Promotion preparation writes an exact `release-as` for the intended even-minor
+or odd-minor version. Release-please consumes that intent in its managed PR,
+and postprocessing removes it before merge.
 
-Generated package files are ephemeral build artifacts (gitignored). They are created and consumed by `Prepare-Extension.ps1` and `Package-Extension.ps1` at build time.
+Ordinary release allocation uses the channel formulas rather than commit
+classification. PreRelease advances from its current branch version by two
+minor values and resets patch to zero. Stable advances from the promoted
+PreRelease version by one minor value and resets patch to zero; current Stable
+state only guards against non-advancement. A major-line transition or Stable
+patch or hotfix remains a separate explicit manifest and release-state
+decision.
+
+Each managed PR synchronizes `package.json`, `package-lock.json`,
+`extension/templates/package.template.json`, root `plugin.json`,
+`.github/plugin/marketplace.json`, the channel manifest, and `CHANGELOG.md` on
+its release branch.
+`Prepare-Extension.ps1` generates `extension/package.json` from the template
+before artifact discovery, and release packaging supplies the verified release
+version and release tag explicitly.
+
+`Prepare-Extension.ps1` refreshes the tracked `extension/package.json` and `extension/README.md`. `Package-Extension.ps1` consumes those files and stages temporary shared resources during packaging.
 
 ### Development Builds
 
@@ -300,26 +371,29 @@ pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0"
 
 The extension supports dual-channel publishing to VS Code Marketplace with separate stable and pre-release tracks.
 
-### EVEN/ODD Versioning Strategy
+### Even/Odd Versioning Policy
 
-| Minor Version     | Channel     | Example      | Agent Maturity Included             |
-|-------------------|-------------|--------------|-------------------------------------|
-| EVEN (0, 2, 4...) | Stable      | 1.0.0, 1.2.0 | `stable` only                       |
-| ODD (1, 3, 5...)  | Pre-Release | 1.1.0, 1.3.0 | `stable`, `preview`, `experimental` |
+| Minor Version     | Channel    | Example      | Component Membership |
+|-------------------|------------|--------------|----------------------|
+| EVEN (0, 2, 4...) | Stable     | 1.0.0, 1.2.0 | Complete manifest    |
+| ODD (1, 3, 5...)  | PreRelease | 1.1.0, 1.3.0 | Complete manifest    |
 
-Users can switch between channels in VS Code via the "Switch to Pre-Release Version" button on the extension page.
+Odd/even minor parity is repository policy aligned with VS Code Marketplace
+guidance and behavior, not a requirement of `MAJOR.MINOR.PATCH` syntax. Hosted
+Marketplace selection and installed-client switching remain operator
+observations, not results of local packaging or documentation validation.
 
 ### Pre-Release Packaging
 
 Package for the pre-release channel with the `-PreRelease` switch:
 
 ```bash
-# Prepare with PreRelease channel filtering
+# Prepare the PreRelease channel
 pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
 # Or use npm script
 npm run extension:prepare:prerelease
 
-# Package for pre-release channel (includes experimental agents)
+# Package for the PreRelease channel
 pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0" -PreRelease
 # Or use npm script for default version
 npm run extension:package:prerelease
@@ -329,240 +403,67 @@ The `-PreRelease` switch adds `--pre-release` to the vsce command, marking the p
 
 ### Pre-Release Workflow
 
-Use the manual workflow for publishing pre-releases:
+Use the reviewed two-PR workflow for publishing pre-releases:
 
-1. Go to **Actions** > **Publish Pre-Release Extension**
-2. Enter an ODD minor version (e.g., `1.1.0`, `1.3.0`)
-3. Optionally enable dry-run to test packaging without publishing
-4. Run the workflow
+1. Review the target-based `main` to `release/prerelease` promotion PR from
+    `release-promotion--main--to--release-prerelease`.
+2. Confirm `PR Validation Success` passes and the exact intent is odd-minor.
+3. Merge the promotion. It creates no tag and runs release-please in PR-only
+    mode.
+4. Review the managed PR from
+    `release-please--branches--release/prerelease`, including synchronized
+    version fields, changelog, plugin manifest, and marketplace version parity.
+5. Merge the managed PR. Verify release-please creates the exact
+    `prerelease-v<version>` tag and draft release at that merge commit.
+6. Verify the tag push starts `release-vsix-publish.yml`, which proves the
+    protected tag identity, source commit, target-branch ancestry, committed
+    release state, and matching draft.
+7. Verify extension packaging uses the release tag and attaches one VSIX, its
+    SPDX, Sigstore, and in-toto sidecars, and `dependencies.spdx.json` for the
+    same release SHA.
+8. Verify the release GitHub App token publishes the prerelease. The
+    Marketplace workflow passes the validated tag and
+    `.github/workflows/extension-provenance-signer.yml` signer to the generic
+    publisher for release-asset verification and OIDC publication.
 
-The workflow validates the version is ODD before proceeding.
+### Content Parity
 
-### Agent Maturity Filtering
+Stable and PreRelease package the same complete component set:
 
-When packaging, artifacts are filtered by their `maturity` field in `collections/*.collection.yml` item entries:
+| Content               | Stable | PreRelease |
+|-----------------------|--------|------------|
+| Plugin manifest paths | Same   | Same       |
+| Extension README      | Same   | Same       |
+| VS Code contributions | Same   | Same       |
 
-| Channel    | Included Maturity Levels            |
-|------------|-------------------------------------|
-| Stable     | `stable`                            |
-| PreRelease | `stable`, `preview`, `experimental` |
+See [Plugin Membership](../docs/contributing/ai-artifacts-common.md#plugin-membership) for contributor guidance.
 
-See [Agent Maturity Levels](../docs/contributing/ai-artifacts-common.md#maturity-field-requirements) for contributor guidance on setting maturity levels.
+## Marketplace Build
 
-## Collection-Based Packaging
+Root `plugin.json` defines the complete extension membership. `.github/plugin/marketplace.json` provides one relative `hve-core` locator to the repository root for Copilot CLI registration. Extension preparation consumes only manifest-declared `.github` components and does not add root plugin metadata to contribution membership.
 
-The extension supports building collection-specific packages from a single codebase.
+Prepare and package directly:
 
-### Available Collections
-
-Collection manifests are defined in root `collections/` as YAML files:
-
-| Collection | Manifest                      | Description                            |
-|------------|-------------------------------|----------------------------------------|
-| Full       | `hve-core-all.collection.yml` | All artifacts regardless of collection |
-| Core       | `hve-core.collection.yml`     | Core prompt engineering artifacts      |
-
-### Collection Package Files
-
-All collection package files (`extension/package.json`, `extension/package.*.json`) are generated by `Prepare-Extension.ps1` from the source template and root collection YAML metadata. These files are gitignored build artifacts.
-
-| Generated File      | Source Collection             | Purpose                     |
-|---------------------|-------------------------------|-----------------------------|
-| `package.json`      | `hve-core-all.collection.yml` | Full bundle manifest        |
-| `package.{id}.json` | `{id}.collection.yml`         | Collection edition metadata |
-
-When building a non-default collection, `Prepare-Extension.ps1`:
-
-1. Backs up `package.json` to `package.json.bak`
-2. Copies the collection template (`package.{id}.json`) over `package.json`
-3. Generates `contributes` into the copied file
-4. Serializes the result as `package.json`
-
-After packaging, `Package-Extension.ps1` restores the canonical `package.json` from backup in its `finally` block.
-
-#### Version Synchronization
-
-`release-please` manages the version in `extension/templates/package.template.json`. The `Prepare-Extension.ps1` script generates all collection package files with the propagated version. No manual version updates are needed.
-
-### Building Collection Packages
-
-To build a specific collection package:
-
-```bash
-# Build the full collection (default, no template copy)
-pwsh ./scripts/extension/Prepare-Extension.ps1
+```powershell
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel Stable
 pwsh ./scripts/extension/Package-Extension.ps1
-
-# Build a collection-specific package (copies collection template)
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/hve-core.collection.yml
-pwsh ./scripts/extension/Package-Extension.ps1 -Collection collections/hve-core.collection.yml
 ```
 
-When `-Collection` targets a collection other than `hve-core-all`, the prepare script copies the collection template to `package.json` before generating `contributes`. The packaging script restores the canonical `package.json` after building.
+Preparation consumes the plugin manifest. Packaging stages only git-tracked
+contribution paths plus explicit shared resources and invokes the
+repository-pinned `vsce`.
 
-### Inner Dev Loop
+Remote release, asset, workflow, and installed-client checks in this guide are
+authorized manual actions. Local packaging and documentation checks do not
+execute or verify them.
 
-For rapid iteration without running the full build pipeline:
-
-```bash
-# 1. Prepare the extension (generates package files and discovers artifacts)
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/hve-core.collection.yml
-
-# 2. Inspect the result
-cat extension/package.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['name'], len(d.get('contributes',{}).get('chatAgents',[])),'agents')"
-
-# 3. Regenerate clean package files with a fresh prepare
-pwsh ./scripts/extension/Prepare-Extension.ps1
-```
-
-Generated package files are gitignored. Each `Prepare-Extension.ps1` invocation regenerates them from the template.
-
-### Collection Resolution
-
-When building a collection, the system applies a multi-stage filter pipeline: collection matching, maturity gating, optional glob patterns, and two rounds of dependency resolution.
-
-```mermaid
-flowchart TB
-    CI["Collection Item<br/>path · kind · maturity · requires"] --> PF{"Collection match?<br/>empty items = universal"}
-    CM["Collection Manifest<br/>items array"] --> PF
-    CH["Channel<br/>Stable / PreRelease"] --> MF
-
-    PF -->|Yes| MF{"Maturity<br/>allowed?"}
-    PF -->|No| EXCLUDE[Excluded]
-
-    MF -->|Yes| GLOB{"Passes include/exclude<br/>glob filter?"}
-    MF -->|No| EXCLUDE
-
-    GLOB -->|Yes| SEED[Seed Artifact]
-    GLOB -->|No| EXCLUDE
-
-    SEED --> HANDOFF["Resolve Handoff Closure<br/>BFS through agent frontmatter<br/>handoff targets bypass maturity filter"]
-    HANDOFF --> REQUIRES["Resolve Requires Dependencies<br/>BFS through collection item requires blocks<br/>across agents · prompts · instructions · skills"]
-    REQUIRES --> FINAL[Final Collection Artifact Set]
-```
-
-Key behaviors:
-
-* Artifacts with an empty `items` array are universal and included in every collection
-* Handoff targets bypass maturity filtering by design (an agent must be able to hand off to its declared targets)
-* The `requires` block in collection items supports transitive resolution: if agent A requires agent B, and B requires instruction C, all three are included
-* Optional `include` and `exclude` glob arrays in the collection manifest provide fine-grained control per artifact type
-
-### Testing Collection Builds Locally
-
-To verify artifact inclusion before publishing:
-
-```bash
-# 1. Prepare with collection filtering
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/hve-core.collection.yml -Verbose
-
-# 2. Check package.json for included artifacts
-cat extension/package.json | jq '.contributes.chatAgents'
-
-# 3. Validate collection metadata
-npm run lint:collections-metadata
-
-# 4. Build the package (dry run)
-pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.0-test" -WhatIf
-```
-
-### Troubleshooting Collection Builds
-
-#### Missing artifacts in collection
-
-1. Verify the artifact has an `items[]` entry in the relevant `collections/*.collection.yml` manifest
-2. Check the collection manifest includes the artifact with the correct `kind` and `path`
-3. Run `npm run lint:collections-metadata` to validate collection consistency
-
-#### Dependency not included
-
-1. Check the parent artifact's `requires` field in the collection item
-2. Ensure dependent artifacts exist and have valid collection entries
-3. Dependencies are included regardless of collection filter
-
-#### Validation errors
-
-```bash
-# Run full collection metadata validation
-npm run lint:collections-metadata
-
-# Validate YAML syntax of collection manifests
-npm run lint:yaml
-```
-
-### Collection Manifest Schema
-
-Collection manifests are YAML files in `collections/` following this structure:
-
-```yaml
-id: data-science
-name: hve-data-science
-displayName: "HVE Core - Data Science"
-description: "AI-powered agents for data analysis, notebooks, and dashboards"
-maturity: stable
-items:
-  - kind: agent
-    # path can reference artifacts from any subfolder
-    path: .github/agents/{collection-id}/my-agent.agent.md
-    maturity: stable
-```
-
-| Field         | Required | Description                                                                                           |
-|---------------|----------|-------------------------------------------------------------------------------------------------------|
-| `id`          | Yes      | Unique identifier for the collection                                                                  |
-| `name`        | Yes      | Extension package name                                                                                |
-| `displayName` | Yes      | Marketplace display name                                                                              |
-| `description` | Yes      | Marketplace description text                                                                          |
-| `maturity`    | No       | Release channel eligibility (`stable`, `preview`, `experimental`, `deprecated`). Defaults to `stable` |
-| `items`       | Yes      | Array of collection identifiers to include                                                            |
-
-#### Collection Maturity and Channel Eligibility
-
-The `maturity` field controls which release channels include the collection:
-
-| Collection Maturity | PreRelease Channel | Stable Channel |
-|---------------------|--------------------|----------------|
-| `stable`            | Yes                | Yes            |
-| `preview`           | Yes                | Yes            |
-| `experimental`      | Yes                | No             |
-| `deprecated`        | No                 | No             |
-
-Collection-level maturity is independent of artifact-level maturity. A `stable` collection can contain `preview` artifacts, which are filtered by the existing artifact-level channel logic. The collection maturity gates the entire package, while artifact maturity gates individual files within it.
-
-Omitting the `maturity` field defaults to `stable`, maintaining backward compatibility with existing manifests.
-
-### Adding New Collections
-
-To create a new collection:
-
-1. Create a new collection manifest in `collections/`:
-
-    ```yaml
-    id: my-collection
-    name: hve-my-collection
-    displayName: "HVE Core - My Collection Edition"
-    description: "Description of artifacts included for this collection"
-    maturity: experimental
-    items:
-      - kind: agent
-        # path can reference artifacts from any subfolder
-        path: .github/agents/{collection-id}/my-agent.agent.md
-        maturity: experimental
-    ```
-
-2. Add artifact entries to the `items` array in the manifest
-3. Set `kind`, `path`, and optionally `maturity` for each item
-4. Test the build locally with `-Collection collections/my-collection.collection.yml`
-5. Submit PR with the new collection manifest
-
-> [!TIP]
-> New collections should start with `"maturity": "experimental"` until validated. Change to `"stable"` when the collection is ready for production.
+To add a distributable component, place it under an eligible package-scoped path, run `npm run plugin:sync`, update [HVE Core](../docs/plugins/hve-core.md), run `npm run plugin:validate`, and check both extension preparation channels.
 
 ## Notes
 
-* The `.github` and `docs/templates` folders are temporarily copied during packaging (not permanently stored)
+* Selected tracked source files and shared resources are staged temporarily and removed after packaging
 * `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
-* Only essential extension files are included (agents, prompts, instructions, skills, templates)
+* Only declared plugin files and explicit shared resources are included
 * Repo-specific instructions at the root of `.github/instructions/` are excluded from all builds
 * Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
 * The root `package.json` contains development scripts for the repository

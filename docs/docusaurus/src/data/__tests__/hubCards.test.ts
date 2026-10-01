@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
-import { iconCards, boxCards } from '../hubCards';
+import { iconCards, boxCards } from '../hubCards.tsx';
 
 describe('hubCards data', () => {
   it('exposes non-empty icon cards, each with the required fields', () => {

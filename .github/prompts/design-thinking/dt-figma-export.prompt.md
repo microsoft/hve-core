@@ -30,9 +30,10 @@ FigJam boards are the default output type. They provide a collaborative whiteboa
 
 * The DT project artifacts MUST exist under `.copilot-tracking/dt/{project-slug}/`.
 * The `figma` MCP server MUST be configured in your workspace (see `.vscode/mcp.json`).
-* The user MUST have a Figma account with a Dev or Full seat on a Professional, Organization, or Enterprise plan for sustained usage. Starter plans are limited to 6 tool calls per month.
+* The remote Figma MCP server is available across Figma plans and seats. The desktop MCP server requires a Dev or Full seat on a paid plan. See Figma's [access guide](https://help.figma.com/hc/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server) before choosing a server.
 * Authentication happens automatically via browser OAuth on first use. No credential files or API keys are required.
-* The `figma/use_figma` write tool is currently in beta and free during the beta period. Figma has indicated it will eventually become a usage-based paid feature. The read-only tools (`figma/get_figjam`, `figma/get_screenshot`, `figma/generate_diagram`) are not affected.
+* Usage limits vary by plan, seat, and tool and can change. Check Figma's current [rate limits and access](https://developers.figma.com/docs/figma-mcp-server/rate-limits-access/) before sustained use. `figma/whoami` and `figma/create_new_file` are currently exempt from read-tool limits.
+* `figma/use_figma` and `figma/generate_diagram` are write tools. Write-to-canvas tools are currently in beta; consult Figma's [tool catalog](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/) for current classifications and billing guidance.
 
 ## Workflow Steps
 
@@ -49,12 +50,17 @@ FigJam boards are the default output type. They provide a collaborative whiteboa
    If the `figma` MCP server or tools are unavailable, stop and provide the setup path:
    Add `{"figma": {"type": "http", "url": "https://mcp.figma.com/mcp"}}` to `.vscode/mcp.json` under `servers`, then restart VS Code.
 
-4. Create the Destination File:
+4. Confirm Destination and Write Authority:
+   Present the exact destination title or existing file, output type, and intended create or modify operation. Ask the user to confirm that specific write before calling any write tool.
+   For `both`, name and confirm the FigJam and Figma Design writes independently. A confirmation for one destination does not authorize the other.
+   If the user declines, does not answer, or changes the target, do not write. Return the current scope and ask for confirmation of the revised target when applicable.
+
+5. Create the Destination File:
    Use `figma/create_new_file` to create a new FigJam file (for `figjam` output) or a new Figma Design file (for `design` output) or both (for `both` output).
    Use `${input:board-title}` when provided; otherwise derive a clear title from project and method context.
    If the user specifies an existing Figma URL instead of a title, use `figma/get_figjam` or `figma/get_metadata` to read the existing file before modifying it.
 
-5. Build FigJam Export Layout (when output-type is `figjam` or `both`):
+6. Build FigJam Export Layout (when output-type is `figjam` or `both`):
    Use `figma/use_figma` to create sections, sticky notes, text, shapes, and connectors on the FigJam board.
    Translate artifact content into a left-to-right section layout with grouping areas and labeled sticky notes.
 
@@ -80,7 +86,7 @@ FigJam boards are the default output type. They provide a collaborative whiteboa
    * Method 3: Theme-to-evidence cluster diagram showing how evidence supports themes.
    * Method 8: User testing flow diagrams showing test scenarios and outcomes.
 
-6. Build Figma Design Export Layout (when output-type is `design` or `both`):
+7. Build Figma Design Export Layout (when output-type is `design` or `both`):
    Use `figma/use_figma` to create structured frames with auto-layout in a Figma Design file.
 
    **Frame structure:**
@@ -98,7 +104,7 @@ FigJam boards are the default output type. They provide a collaborative whiteboa
 
    Use consistent typography: title text at 24px, body text at 16px, labels at 12px.
 
-7. Apply Method-Specific Layout:
+8. Apply Method-Specific Layout:
    For Method 1, export request framing, stakeholder map, constraints, and open questions. Generate a stakeholder relationship diagram.
    For Method 2, export research findings, personas, and assumption logs. When persona artifacts are present, use the **Persona Card** template below.
    For Method 3, export synthesis themes, evidence clusters, and how-might-we prompts. Generate a theme-evidence cluster diagram.
@@ -107,7 +113,7 @@ FigJam boards are the default output type. They provide a collaborative whiteboa
    For Method 6, export prototype plan, build decisions, and testing hypotheses. Create a hypothesis tracking board.
    If artifacts span multiple methods, group by method first and then by theme.
 
-8. Report Results:
+9. Report Results:
    Summarize the file title, file URL (provided by `figma/create_new_file` or `figma/use_figma`), output type, and counts of sections, stickies, text elements, and diagrams created.
    Call out any skipped or failed items with actionable reasons.
 

@@ -45,7 +45,7 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             $path = Join-Path $script:RepoRoot $relPath
             $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
             $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath $relPath -RepoRoot $script:RepoRoot
-            ($errors | Where-Object { $_.field -like 'environment.*' }).Count | Should -Be 0
+            @($errors | Where-Object { $_.field -like 'environment.*' }).Count | Should -Be 0
         }
     }
 
@@ -54,42 +54,42 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             $path = Join-Path $script:InvalidFixturesRoot 'missing-executor.yaml'
             $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
             $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'missing-executor.yaml' -RepoRoot $script:RepoRoot
-            ($errors | Where-Object { $_.field -eq 'defaults.executor' }).Count | Should -BeGreaterOrEqual 1
+            @($errors | Where-Object { $_.field -eq 'defaults.executor' }).Count | Should -BeGreaterOrEqual 1
         }
 
         It 'Flags executor not in whitelist' {
             $path = Join-Path $script:InvalidFixturesRoot 'bad-executor.yaml'
             $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
             $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'bad-executor.yaml' -RepoRoot $script:RepoRoot
-            ($errors | Where-Object { $_.message -like '*whitelist*' }).Count | Should -BeGreaterOrEqual 1
+            @($errors | Where-Object { $_.message -like '*whitelist*' }).Count | Should -BeGreaterOrEqual 1
         }
 
         It 'Flags stimulus with empty graders' {
             $path = Join-Path $script:InvalidFixturesRoot 'missing-graders.yaml'
             $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
             $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'missing-graders.yaml' -RepoRoot $script:RepoRoot
-            ($errors | Where-Object { $_.field -like '*.graders' }).Count | Should -BeGreaterOrEqual 1
+            @($errors | Where-Object { $_.field -like '*.graders' }).Count | Should -BeGreaterOrEqual 1
         }
 
         It 'Flags unresolved skill backlink' {
             $path = Join-Path $script:InvalidFixturesRoot 'unresolved-backlink.yaml'
             $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
             $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'unresolved-backlink.yaml' -RepoRoot $script:RepoRoot
-            ($errors | Where-Object { $_.message -like '*does not resolve*' }).Count | Should -BeGreaterOrEqual 1
+            @($errors | Where-Object { $_.message -like '*does not resolve*' }).Count | Should -BeGreaterOrEqual 1
         }
 
         It 'Flags moderation.threshold out of the 0.0-1.0 range' {
             $path = Join-Path $script:InvalidFixturesRoot 'moderation-threshold-out-of-range.yaml'
             $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
             $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'moderation-threshold-out-of-range.yaml' -RepoRoot $script:RepoRoot
-            ($errors | Where-Object { $_.field -eq 'moderation.threshold' }).Count | Should -BeGreaterOrEqual 1
+            @($errors | Where-Object { $_.field -eq 'moderation.threshold' }).Count | Should -BeGreaterOrEqual 1
         }
 
         It 'Flags non-numeric moderation.threshold' {
             $path = Join-Path $script:InvalidFixturesRoot 'moderation-threshold-non-numeric.yaml'
             $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
             $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'moderation-threshold-non-numeric.yaml' -RepoRoot $script:RepoRoot
-            ($errors | Where-Object { $_.field -eq 'moderation.threshold' }).Count | Should -BeGreaterOrEqual 1
+            @($errors | Where-Object { $_.field -eq 'moderation.threshold' }).Count | Should -BeGreaterOrEqual 1
         }
 
         It 'Flags environment paths that do not resolve relative to the spec directory' {
@@ -97,7 +97,77 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             $path = Join-Path $script:RepoRoot $relPath
             $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
             $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath $relPath -RepoRoot $script:RepoRoot
-            ($errors | Where-Object { $_.field -like 'environment.*' -and $_.message -like '*does not resolve*' }).Count | Should -BeGreaterOrEqual 2
+            @($errors | Where-Object { $_.field -like 'environment.*' -and $_.message -like '*does not resolve*' }).Count | Should -BeGreaterOrEqual 2
+        }
+
+        It 'Flags a duplicate grader name across stimuli and identifies the first declaration' {
+            $spec = @{
+                name     = 'duplicate-graders'
+                defaults = @{ executor = 'copilot-sdk' }
+                stimuli  = @(
+                    @{
+                        name    = 'first-stimulus'
+                        prompt  = 'first prompt'
+                        graders = @(@{ type = 'noop'; name = 'shared-grader' })
+                    },
+                    @{
+                        name    = 'second-stimulus'
+                        prompt  = 'second prompt'
+                        graders = @(@{ type = 'noop'; name = 'shared-grader' })
+                    }
+                )
+            }
+
+            $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'inline.yaml' -RepoRoot $script:RepoRoot
+            $duplicate = @($errors | Where-Object { $_.field -eq 'stimuli[1] (second-stimulus).graders[0].name' })
+
+            $duplicate | Should -HaveCount 1
+            $duplicate[0].message | Should -BeExactly "Duplicate grader name 'shared-grader'; first declared in stimulus 'first-stimulus'"
+        }
+
+        It "Flags grader names outside Vally's lexical contract" {
+            $spec = @{
+                name     = 'invalid-grader-names'
+                defaults = @{ executor = 'copilot-sdk' }
+                stimuli  = @(
+                    @{
+                        name    = 'invalid-names'
+                        prompt  = 'test prompt'
+                        graders = @(
+                            @{ type = 'noop'; name = 'grader-applyTo-evidence' },
+                            @{ type = 'noop'; name = 'grader_name' },
+                            @{ type = 'noop'; name = '-leading-hyphen' },
+                            @{ type = 'noop'; name = ('a' * 61) }
+                        )
+                    }
+                )
+            }
+
+            $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'inline.yaml' -RepoRoot $script:RepoRoot
+            $invalidNames = @($errors | Where-Object { $_.message -like 'Invalid grader name*' })
+
+            $invalidNames | Should -HaveCount 4
+            @($invalidNames.field) | Should -Be @(
+                'stimuli[0] (invalid-names).graders[0].name',
+                'stimuli[0] (invalid-names).graders[1].name',
+                'stimuli[0] (invalid-names).graders[2].name',
+                'stimuli[0] (invalid-names).graders[3].name'
+            )
+        }
+
+        It 'Allows a repeated judge name in the canonical comparison spec contract' {
+            $spec = @{
+                name     = 'comparison-contract'
+                defaults = @{ executor = 'copilot-sdk' }
+                stimuli  = @(
+                    @{ name = 'first'; prompt = 'first'; graders = @(@{ type = 'prompt'; name = 'equivalence-judgement' }) },
+                    @{ name = 'second'; prompt = 'second'; graders = @(@{ type = 'prompt'; name = 'equivalence-judgement' }) }
+                )
+            }
+
+            $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'evals/baseline-equivalence/compare.eval.yml' -RepoRoot $script:RepoRoot
+
+            @($errors | Where-Object { $_.message -like 'Duplicate grader name*' }) | Should -HaveCount 0
         }
     }
 
@@ -118,7 +188,7 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
                     stimuli = @(@{ name = 's'; prompt = 'p'; graders = @(@{ type = 'noop' }) })
                 }
                 $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'inline.yaml' -RepoRoot $script:RepoRoot
-                ($errors | Where-Object { $_.field -eq 'moderation.threshold' }).Count | Should -Be 0
+                @($errors | Where-Object { $_.field -eq 'moderation.threshold' }).Count | Should -Be 0
             }
         }
     }
@@ -193,7 +263,7 @@ stimuli:
 
         $exit | Should -Be 1
         $report.orphanedTags.Count | Should -Be 2
-        ($report.orphanedTags | Where-Object { $_.tag -eq 'agent' -and $_.value -eq 'orphaned-agent' }).Count | Should -Be 1
+        @($report.orphanedTags | Where-Object { $_.tag -eq 'agent' -and $_.value -eq 'orphaned-agent' }).Count | Should -Be 1
     }
 
     It 'Passes when all agent and scenario tags are inventoried' {

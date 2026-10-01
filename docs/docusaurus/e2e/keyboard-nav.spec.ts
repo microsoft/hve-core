@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { waitForHydration } from './_helpers/a11yInvariants';
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
@@ -10,6 +11,7 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 test.describe('Keyboard navigation', () => {
   test('navbar links are reachable via Tab from the top of the page', async ({ page }) => {
     await page.goto('/hve-core/docs/getting-started/');
+    await waitForHydration(page);
 
     const docNavLink = page.getByRole('link', { name: 'Documentation', exact: true });
     await expect(docNavLink).toBeVisible();
@@ -29,6 +31,7 @@ test.describe('Keyboard navigation', () => {
 
   test('doc page initial state passes an axe scan', async ({ page }) => {
     await page.goto('/hve-core/docs/getting-started/');
+    await waitForHydration(page);
     await expect(page.getByRole('main')).toBeVisible();
 
     const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();

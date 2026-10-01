@@ -1,0 +1,61 @@
+{
+  "prdFile": "docs/project-planning/atlas-product.md",
+  "lastAccessed": "2026-09-21T08:00:00Z",
+  "currentPhase": "Build",
+  "disclaimerShownAt": "2026-09-21T08:00:00Z",
+  "phaseSkillsLoaded": ["prd-author#build"],
+  "rpiInvocations": [
+    {
+      "invocationId": "build-01",
+      "phase": "build",
+      "capability": "rpi-plan",
+      "taskSlug": "atlas-product-prd-build-01",
+      "dependsOnInvocationId": null,
+      "gapId": "AUTH-01",
+      "questionIds": [],
+      "evidenceIds": [],
+      "artifactPaths": {
+        "research": "",
+        "plan": ".copilot-tracking/plans/2026-09-21/atlas-product-prd-build-01-plan.md",
+        "critique": ".copilot-tracking/reviews/plans/2026-09-21/atlas-product-prd-build-01-plan-critique.md",
+        "changes": ""
+      },
+      "segmentStatus": "completed",
+      "userDisposition": "accepted",
+      "gateEffect": "supports",
+      "outcome": "Dependency-ordered authoring plan accepted.",
+      "notEstablished": "PRD content quality and Build gate",
+      "findingDispositions": [],
+      "unresolvedItems": []
+    },
+    {
+      "invocationId": "build-02",
+      "phase": "build",
+      "capability": "rpi-implement",
+      "taskSlug": "atlas-product-prd-build-02",
+      "dependsOnInvocationId": "build-01",
+      "gapId": "AUTH-01",
+      "questionIds": [],
+      "evidenceIds": [],
+      "artifactPaths": {
+        "research": "",
+        "plan": ".copilot-tracking/plans/2026-09-21/atlas-product-prd-build-01-plan.md",
+        "critique": ".copilot-tracking/reviews/plans/2026-09-21/atlas-product-prd-build-01-plan-critique.md",
+        "changes": ""
+      },
+      "segmentStatus": "running",
+      "userDisposition": "accepted",
+      "gateEffect": "does-not-satisfy",
+      "outcome": "Drafting is in progress against the accepted Plan.",
+      "notEstablished": "PRD content quality and Build gate",
+      "findingDispositions": [],
+      "unresolvedItems": ["Draft FR-001 and AC-001"]
+    }
+  ],
+  "questionsAsked": [],
+  "answeredQuestions": {},
+  "referencesProcessed": [],
+  "nextActions": ["Draft FR-001 and AC-001"],
+  "qualityChecks": [],
+  "syntheticExtension": {"preserve": true}
+}

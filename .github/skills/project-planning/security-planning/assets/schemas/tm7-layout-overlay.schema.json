@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/tm7-layout-overlay.schema.json",
+  "title": "TM7 layout overlay",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "overlay_type",
+    "model_id",
+    "overlay_id",
+    "applies_to",
+    "zone_rules",
+    "node_rules",
+    "connector_rules",
+    "surface_rules",
+    "provenance",
+    "invalidation"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 2
+    },
+    "overlay_type": {
+      "type": "string",
+      "const": "tm7_layout_overlay"
+    },
+    "model_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "overlay_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "applies_to": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["surface_id", "generator_profile"],
+        "properties": {
+          "surface_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "generator_profile": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "zone_rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["surface_id", "zone_id", "region", "label_band_height", "lane_order"],
+        "properties": {
+          "surface_id": {"type": "string", "minLength": 1},
+          "zone_id": {"type": "string", "minLength": 1},
+          "region": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["left", "top", "width", "height"],
+            "properties": {
+              "left": {"type": "number"},
+              "top": {"type": "number"},
+              "width": {"type": "number"},
+              "height": {"type": "number"}
+            }
+          },
+          "label_band_height": {"type": "number"},
+          "lane_order": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "node_rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["surface_id", "node_id", "layout_role"],
+        "properties": {
+          "surface_id": {"type": "string", "minLength": 1},
+          "node_id": {"type": "string", "minLength": 1},
+          "layout_role": {"type": "string", "enum": ["main", "contextual", "suppressed", "connected"]},
+          "absolute_position": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["left", "top", "width", "height"],
+            "properties": {
+              "left": {"type": "number"},
+              "top": {"type": "number"},
+              "width": {"type": "number"},
+              "height": {"type": "number"}
+            }
+          },
+          "relative_placement": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["relative_to", "offset"],
+            "properties": {
+              "relative_to": {"type": "string", "minLength": 1},
+              "offset": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["x", "y"],
+                "properties": {
+                  "x": {"type": "number"},
+                  "y": {"type": "number"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "connector_rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["surface_id", "flow_id", "source_port", "target_port", "handle_point"],
+        "properties": {
+          "surface_id": {"type": "string", "minLength": 1},
+          "flow_id": {"type": "string", "minLength": 1},
+          "source_port": {"type": "string", "minLength": 1},
+          "target_port": {"type": "string", "minLength": 1},
+          "handle_point": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["x", "y"],
+            "properties": {
+              "x": {"type": "number"},
+              "y": {"type": "number"}
+            }
+          },
+          "label_offset": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["x", "y"],
+            "properties": {
+              "x": {"type": "number"},
+              "y": {"type": "number"}
+            }
+          }
+        }
+      }
+    },
+    "surface_rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["surface_id", "zone_order", "orientation", "viewport_target", "outer_margin"],
+        "properties": {
+          "surface_id": {"type": "string", "minLength": 1},
+          "zone_order": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "orientation": {"type": "string", "enum": ["horizontal", "vertical"]},
+          "viewport_target": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["left", "top", "width", "height"],
+            "properties": {
+              "left": {"type": "number"},
+              "top": {"type": "number"},
+              "width": {"type": "number"},
+              "height": {"type": "number"}
+            }
+          },
+          "outer_margin": {"type": "number"}
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_ref", "generated_at", "approval_state"],
+      "properties": {
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generated_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approval_state": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected"]
+        }
+      }
+    },
+    "invalidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "spec_fingerprint",
+        "generator_profile_fingerprint",
+        "surface_identity_fingerprint",
+        "surface_zone_identity_fingerprint",
+        "surface_flow_identity_fingerprint"
+      ],
+      "properties": {
+        "spec_fingerprint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generator_profile_fingerprint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "surface_identity_fingerprint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "surface_zone_identity_fingerprint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "surface_flow_identity_fingerprint": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

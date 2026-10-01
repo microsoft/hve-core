@@ -19,6 +19,7 @@ from build_deck import (
     add_rich_text_element,
     add_shape_element,
     add_textbox,
+    apply_text_language,
     build_element_in_group,
     build_slide,
     clear_slide_shapes,
@@ -719,6 +720,96 @@ class TestAddArrowFlowElement:
         }
         result = add_arrow_flow_element(blank_slide, elem, {}, {})
         assert result is None
+
+    def test_label_margin_and_font_overrides(self, blank_slide):
+        elem = {
+            "left": 1.0,
+            "top": 2.0,
+            "width": 10.0,
+            "height": 1.5,
+            "label_margin": 0.02,
+            "font": "Arial",
+            "font_size": 11,
+            "font_color": "#112233",
+            "items": [
+                {"label": "Ingest", "color": "#0078D4"},
+                {"label": "Transform", "color": "#00B050"},
+            ],
+        }
+        add_arrow_flow_element(blank_slide, elem, {}, {})
+        shapes = [s for s in blank_slide.shapes if s.has_text_frame]
+        assert len(shapes) == 2
+        for shape in shapes:
+            tf = shape.text_frame
+            assert tf.margin_left == Inches(0.02)
+            assert tf.margin_right == Inches(0.02)
+            run = tf.paragraphs[0].runs[0]
+            assert run.font.name == "Arial"
+            assert run.font.size == Pt(11)
+            assert f"#{run.font.color.rgb}".lower() == "#112233"
+
+    def test_long_label_shrinks_to_avoid_mid_word_break(self, blank_slide):
+        # A chevron's notch and point consume about `height` of width, so a long
+        # word overflows and renderers split it mid-character.
+        elem = {
+            "left": 0.9,
+            "top": 2.0,
+            "width": 11.5,
+            "height": 1.1,
+            "items": [
+                {"label": "1. Setup and Exploration"},
+                {"label": "2. Guided Workflow"},
+                {"label": "3. Independent Workflow"},
+                {"label": "4. Autonomous Engineering"},
+            ],
+        }
+        add_arrow_flow_element(blank_slide, elem, {}, {})
+        shapes = [s for s in blank_slide.shapes if s.has_text_frame]
+        sizes = {s.text_frame.paragraphs[0].runs[0].font.size for s in shapes}
+        assert len(sizes) == 1, "flow must render one uniform size"
+        (size,) = sizes
+        assert size < Pt(14), "long label must shrink below the default"
+
+    def test_short_labels_keep_requested_size(self, blank_slide):
+        elem = {
+            "left": 1.0,
+            "top": 2.0,
+            "width": 10.0,
+            "height": 1.5,
+            "items": [{"label": "Plan"}, {"label": "Ship"}],
+        }
+        add_arrow_flow_element(blank_slide, elem, {}, {})
+        for shape in [s for s in blank_slide.shapes if s.has_text_frame]:
+            assert shape.text_frame.paragraphs[0].runs[0].font.size == Pt(14)
+
+    def test_per_item_overrides_take_precedence(self, blank_slide):
+        elem = {
+            "left": 1.0,
+            "top": 2.0,
+            "width": 10.0,
+            "height": 1.5,
+            "font_size": 14,
+            "font_color": "#112233",
+            "items": [
+                {
+                    "label": "Small",
+                    "size": 9,
+                    "label_margin": 0.01,
+                    "color_text": "#AA0000",
+                },
+                {"label": "Default"},
+            ],
+        }
+        add_arrow_flow_element(blank_slide, elem, {}, {})
+        shapes = [s for s in blank_slide.shapes if s.has_text_frame]
+        small = shapes[0].text_frame
+        assert small.paragraphs[0].runs[0].font.size == Pt(9)
+        assert small.margin_left == Inches(0.01)
+        assert f"#{small.paragraphs[0].runs[0].font.color.rgb}".lower() == "#aa0000"
+        # Default item falls back to elem font_size/font_color and default margin
+        default = shapes[1].text_frame
+        assert default.paragraphs[0].runs[0].font.size == Pt(14)
+        assert f"#{default.paragraphs[0].runs[0].font.color.rgb}".lower() == "#112233"
 
 
 class TestAddNumberedStepElement:
@@ -1739,7 +1830,7 @@ class TestContentExtraValidation:
             _validate_content_extra(script)
 
     def test_build_slide_runs_valid_content_extra(self, blank_presentation, tmp_path):
-        """build_slide executes a valid content-extra.py render function."""
+        """build_slide executes a valid content-extra.py when authorized."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
         (content_dir / "content.yaml").write_text("")
@@ -1753,11 +1844,39 @@ class TestContentExtraValidation:
         )
 
         slide_content = {"layout": "Blank", "elements": []}
-        build_slide(blank_presentation, slide_content, {}, content_dir)
+        build_slide(
+            blank_presentation,
+            slide_content,
+            {},
+            content_dir,
+            allow_scripts=True,
+        )
         assert marker_file.read_text() == "yes"
 
+    def test_build_slide_refuses_content_extra_without_opt_in(
+        self, blank_presentation, tmp_path
+    ):
+        """A present content-extra.py fails the build unless authorized."""
+        content_dir = tmp_path / "slide-001"
+        content_dir.mkdir()
+        (content_dir / "content.yaml").write_text("")
+
+        marker_file = tmp_path / "must_not_exist"
+        script = content_dir / "content-extra.py"
+        script.write_text(
+            f"from pathlib import Path\nPath(r'{marker_file}').write_text('executed')\n"
+        )
+
+        slide_content = {"layout": "Blank", "elements": []}
+        with pytest.raises(ContentExtraError, match="--allow-scripts"):
+            build_slide(blank_presentation, slide_content, {}, content_dir)
+
+        # The sentinel proves the module body never ran, which a log
+        # assertion could not establish.
+        assert not marker_file.exists()
+
     def test_build_slide_rejects_bad_content_extra(self, blank_presentation, tmp_path):
-        """build_slide refuses to execute a content-extra.py with blocked imports."""
+        """An authorized content-extra.py is still linted before execution."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
         (content_dir / "content.yaml").write_text("")
@@ -1767,7 +1886,13 @@ class TestContentExtraValidation:
 
         slide_content = {"layout": "Blank", "elements": []}
         with pytest.raises(ContentExtraError, match="Blocked import 'subprocess'"):
-            build_slide(blank_presentation, slide_content, {}, content_dir)
+            build_slide(
+                blank_presentation,
+                slide_content,
+                {},
+                content_dir,
+                allow_scripts=True,
+            )
 
     def test_dangerous_breakpoint(self, tmp_path):
         """Script calling breakpoint() is rejected."""
@@ -1797,8 +1922,8 @@ class TestContentExtraValidation:
         ):
             _validate_content_extra(script)
 
-    def test_allow_scripts_skips_validation(self, blank_presentation, tmp_path):
-        """build_slide skips validation when allow_scripts is True."""
+    def test_allow_scripts_still_validates(self, blank_presentation, tmp_path):
+        """The opt-in authorizes execution but does not skip the lint."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
         (content_dir / "content.yaml").write_text("")
@@ -1813,17 +1938,18 @@ class TestContentExtraValidation:
         )
 
         slide_content = {"layout": "Blank", "elements": []}
-        build_slide(
-            blank_presentation,
-            slide_content,
-            {},
-            content_dir,
-            allow_scripts=True,
-        )
-        assert marker_file.read_text() == "bypassed"
+        with pytest.raises(ContentExtraError, match="Blocked import 'os'"):
+            build_slide(
+                blank_presentation,
+                slide_content,
+                {},
+                content_dir,
+                allow_scripts=True,
+            )
+        assert not marker_file.exists()
 
-    def test_allow_scripts_false_still_validates(self, blank_presentation, tmp_path):
-        """build_slide validates when allow_scripts is explicitly False."""
+    def test_allow_scripts_false_refuses_execution(self, blank_presentation, tmp_path):
+        """An explicit allow_scripts=False refuses rather than linting."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
         (content_dir / "content.yaml").write_text("")
@@ -1832,7 +1958,7 @@ class TestContentExtraValidation:
         script.write_text("import os\ndef render(s,st,d): pass\n")
 
         slide_content = {"layout": "Blank", "elements": []}
-        with pytest.raises(ContentExtraError, match="Blocked import 'os'"):
+        with pytest.raises(ContentExtraError, match="disabled by default"):
             build_slide(
                 blank_presentation,
                 slide_content,
@@ -1841,34 +1967,33 @@ class TestContentExtraValidation:
                 allow_scripts=False,
             )
 
-    def test_restricted_namespace_blocks_eval(self, blank_presentation, tmp_path):
-        """Runtime namespace strips dangerous builtins even after AST pass."""
+    def test_attribute_call_lint_catches_builtins_eval(
+        self, blank_presentation, tmp_path
+    ):
+        """The attribute-call lint rejects the naive builtins.eval shape.
+
+        The previous runtime namespace substitution did not confine this:
+        ``import builtins`` returns the genuine module with ``eval`` intact.
+        Execution is gated by opt-in; this lint only catches the obvious form.
+        """
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
         (content_dir / "content.yaml").write_text("")
 
-        # Script uses no blocked AST patterns but tries eval at runtime
-        # via a string indirection the AST checker cannot catch.
         script = content_dir / "content-extra.py"
-        script.write_text(
-            "def render(slide, style, content_dir):\n"
-            "    fn = __builtins__['eval']\n"
-            "    fn('1+1')\n"
-        )
+        script.write_text("import builtins\nbuiltins.eval('1+1')\n")
 
         slide_content = {"layout": "Blank", "elements": []}
-        with pytest.raises(KeyError, match="eval"):
+        with pytest.raises(ContentExtraError, match="builtins.eval"):
             build_slide(
                 blank_presentation,
                 slide_content,
                 {},
                 content_dir,
-                allow_scripts=False,
+                allow_scripts=True,
             )
 
-    def test_restricted_namespace_allows_safe_builtins(
-        self, blank_presentation, tmp_path
-    ):
+    def test_safe_builtins_remain_available(self, blank_presentation, tmp_path):
         """Safe builtins like len and range remain available."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
@@ -1888,7 +2013,7 @@ class TestContentExtraValidation:
             slide_content,
             {},
             content_dir,
-            allow_scripts=False,
+            allow_scripts=True,
         )
         assert marker.read_text() == "5"
 
@@ -1910,10 +2035,9 @@ class TestAllowScriptsCLI:
         return content_dir, style_file
 
     def test_allow_scripts_flag_propagates(self, mocker, tmp_path):
-        """--allow-scripts lets a blocked-import script run via main()."""
+        """--allow-scripts authorizes execution of a lint-clean script."""
         marker = tmp_path / "executed"
         extra = (
-            "import os\n"
             "from pathlib import Path\n"
             f"def render(slide, style, d): "
             f"Path(r'{marker}').write_text('ok')\n"
@@ -2063,3 +2187,145 @@ class TestDryRun:
         )
         rc = main()
         assert rc == 1
+
+
+class TestAccessibility:
+    """Tests for slide titles, alternative text, and text language."""
+
+    def _slide(self, presentation, tmp_path, elements, title="Deck Title"):
+        content = {"slide": 1, "title": title, "elements": elements}
+        return build_slide(presentation, content, {}, tmp_path)
+
+    def test_given_matching_textbox_when_built_then_it_becomes_the_title(
+        self, blank_presentation, tmp_path
+    ):
+        # Arrange
+        elements = [
+            {
+                "type": "textbox",
+                "left": 1,
+                "top": 1,
+                "width": 6,
+                "height": 1,
+                "text": "Deck  Title",
+            },
+            {
+                "type": "textbox",
+                "left": 1,
+                "top": 3,
+                "width": 6,
+                "height": 1,
+                "text": "Body",
+            },
+        ]
+
+        # Act
+        slide = self._slide(blank_presentation, tmp_path, elements)
+
+        # Assert
+        assert slide.shapes.title is not None
+        assert slide.shapes.title.text == "Deck  Title"
+        assert slide.shapes.title.left == Inches(1)
+        assert slide.shapes.title.text_frame.paragraphs[0]._p.pPr.get("algn") == "l"
+        assert len(slide.shapes) == 2
+
+    def test_given_no_matching_text_when_built_then_off_slide_title_is_first(
+        self, blank_presentation, tmp_path
+    ):
+        # Arrange
+        elements = [
+            {
+                "type": "textbox",
+                "left": 1,
+                "top": 1,
+                "width": 6,
+                "height": 1,
+                "text": "Something else",
+            },
+        ]
+
+        # Act
+        slide = self._slide(blank_presentation, tmp_path, elements)
+
+        # Assert
+        title = slide.shapes.title
+        assert title is not None and title.text == "Deck Title"
+        assert title.left >= blank_presentation.slide_width
+        assert slide.shapes[0].shape_id == title.shape_id
+
+    def test_given_no_title_field_when_built_then_no_title_added(
+        self, blank_presentation, tmp_path
+    ):
+        # Act
+        slide = self._slide(blank_presentation, tmp_path, [], title=None)
+
+        # Assert
+        assert slide.shapes.title is None
+
+    def test_given_alt_when_image_added_then_descr_set(
+        self, blank_slide, sample_image_path
+    ):
+        # Arrange
+        elem = {
+            "type": "image",
+            "path": sample_image_path.name,
+            "left": 1,
+            "top": 1,
+            "width": 2,
+            "height": 2,
+            "alt": "VS Code editor",
+        }
+
+        # Act
+        pic = add_image_element(blank_slide, elem, sample_image_path.parent)
+
+        # Assert
+        assert pic._element.nvPicPr.cNvPr.get("descr") == "VS Code editor"
+
+    def test_given_decorative_when_image_added_then_flagged(
+        self, blank_slide, sample_image_path
+    ):
+        # Arrange
+        elem = {
+            "type": "image",
+            "path": sample_image_path.name,
+            "left": 1,
+            "top": 1,
+            "width": 2,
+            "height": 2,
+            "decorative": True,
+        }
+
+        # Act
+        pic = add_image_element(blank_slide, elem, sample_image_path.parent)
+
+        # Assert
+        c_nv_pr = pic._element.nvPicPr.cNvPr
+        assert c_nv_pr.get("descr") == ""
+        ns = "{http://schemas.microsoft.com/office/drawing/2017/decorative}"
+        assert c_nv_pr.find(f".//{ns}decorative").get("val") == "1"
+
+    def test_given_language_when_applied_then_runs_tagged(
+        self, blank_presentation, tmp_path
+    ):
+        # Arrange
+        elements = [
+            {
+                "type": "textbox",
+                "left": 1,
+                "top": 1,
+                "width": 6,
+                "height": 1,
+                "text": "Hello",
+            },
+        ]
+        slide = self._slide(blank_presentation, tmp_path, elements)
+
+        # Act
+        apply_text_language(blank_presentation, "en-US")
+
+        # Assert
+        runs = slide._element.iter(
+            "{http://schemas.openxmlformats.org/drawingml/2006/main}rPr"
+        )
+        assert all(r.get("lang") == "en-US" for r in runs)

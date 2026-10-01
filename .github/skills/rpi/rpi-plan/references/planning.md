@@ -1,126 +1,306 @@
 ---
-description: "Planning template and protocol detail for the rpi-plan skill"
+description: "Reference protocol for evidence-based RPI planning, planning extensions, and the optional independent plan critique."
 ---
 
 # RPI Plan Reference
 
-Use this reference when the skill needs planning detail beyond the main body in SKILL.md.
+## Artifact paths
 
-Derive `{{task_slug}}` from the primary task or target with lower-kebab-case, and replace `YYYY-MM-DD` with the current date at execution time.
+Use one date and one lower-kebab-case task slug across the task's durable artifacts.
 
-## Implementation Plan sections
+* `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`
+* `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.md`
+* `.copilot-tracking/reviews/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan-critique.md`
+* `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
+* `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task_slug}}-review.md`
 
-Use [../templates/implementation-plan.md](../templates/implementation-plan.md) for `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.instructions.md`.
+The research, changes, and review paths belong to their respective RPI stages. Planning creates or revises only the plan and critique artifacts unless a justified research activation is required. A follow-up critique adds a numbered suffix, such as `{{task_slug}}-plan-critique-2.md`, so earlier critiques stay intact.
 
-Artifact path scheme:
+## Artifact audience and order
 
-* `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md` for the primary research record.
-* `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/<topic>-research.md` for subagent findings.
-* `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.instructions.md` for the implementation plan.
-* `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-details.md` for the step-by-step detail file.
-* `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_slug}}-log.md` for the planning log.
-* `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md` for the downstream implementation handoff path.
+The plan is the user-facing source of truth, implementation handoff, and downstream checklist. A reader should understand what will change and how the work is sequenced before reaching supporting detail, so the sections appear in this order:
 
-Start the file with frontmatter and markdownlint suppression:
+1. `## Task Metadata`
+2. `## Executive Summary` with `### What You May Not Know`
+3. `## Phase Checklist` with Before and After overall diagrams, phases, phase diagrams, and tasks
+4. `## User Decisions and Requirements`
+5. `## Planning Readiness and Next Step`
+6. `## Goals`, `## Scope and Non-Goals`, `## Functional Requirements`, `## Non-Functional Requirements`, `## Risks and Open Questions`, `## Dependencies`, and `## Sources`, each included when it holds content
+7. `## Critique Disposition`, `## Artifact Self-Check`, `## Follow-Up Items`, and `## Handoff`
 
-```yaml
----
-applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md'
----
+Keep each fact in one canonical section; summary prose projects current state without creating another decision authority. Each task's `Requirements:` block is the checkable record for that task: it cites `FR-nnn` and `NFR-nnn` identifiers and adds binding conditions rather than restating the requirement catalog. Open decisions, risks, and questions live in `## User Decisions and Requirements` and `## Risks and Open Questions` with the affected `Pxx-Txx` named, not in per-task status blocks.
+
+## Formatting conventions
+
+The plan is read by people in an editor as well as by agents, so it uses ordinary Markdown navigation aids:
+
+* Wrap code, commands, symbols, option names, and identifiers in backticks: `npm run lint:ps`, `New-PluginFixture`, `--json`.
+* Link an existing file or folder with the workspace-relative path as the link text and a path relative to the plan file as the destination. From `.copilot-tracking/plans/{{YYYY-MM-DD}}/`, a repository file is three levels up and a sibling tracking artifact is two levels up:
+
+  ```markdown
+  * [scripts/tests/plugins/Sync-PluginManifest.Tests.ps1](../../../scripts/tests/plugins/Sync-PluginManifest.Tests.ps1): fixture and validation-test patterns
+  * [.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md](../../research/{{YYYY-MM-DD}}/{{task_slug}}-research.md):
+    * Q2 under `## Findings` established the tracking responsibility boundary.
+  ```
+
+* Keep a path that does not exist yet in backticks rather than a link, and convert it to a link once the file exists.
+* Do not use `#file:` directives or line-number references in the plan.
+
+These conventions apply to the plan and to the changes record that `rpi-implement` maintains. Research, critique, and review records follow their own skills.
+
+## Identity and markers
+
+Use one stable task ID throughout the artifact set. Use `Pxx` for phase IDs and `Pxx-Txx` for task IDs. Put each marker immediately before its matching heading:
+
+```markdown
+<!-- rpi:phase id=P01 -->
+### [ ] P01: Establish the change
+
+<!-- rpi:task id=P01-T01 -->
+#### [ ] P01-T01: Update the primary artifact
 ```
 
-Then add `<!-- markdownlint-disable-file -->` before the H1.
+Do not use line numbers, line ranges, detail-line verification, or separate legacy log artifacts. Navigate by task ID, marker, and heading.
 
-* Overview: one-sentence summary of the implementation approach and expected outcome.
-* User requirements: capture the user-stated goals and record the source of each requirement, including a source reference for every caller-stated constraint.
-* Derived objectives: add planner-derived objectives and the reasoning behind them, citing the research finding or reasoning that created them.
-* Context summary: reference the research artifact, current code paths, and any subagent findings.
-* Risks and mitigations: capture each material research risk, likelihood, impact or magnitude, priority basis, and whether it was resolved, mitigated, deferred with rationale, or recorded as a blocker.
-* Implementation checklist: break work into phases and steps, annotate parallelizable work with `<!-- parallelizable: true -->`, and point each step to the details file lines.
-* Final validation phase: include full project validation, minor fix iteration, and blocking issue reporting.
-* Planning log reference: link to `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_slug}}-log.md` for discrepancy handling, validator findings, implementation paths considered, deferred work, and validation coverage.
-* Dependencies: list toolchain, build, or environment prerequisites.
-* Success criteria: capture verifiable completion markers that trace back to the research or user requirements.
+Use one stable overall task ID. Keep current `Pxx` and `Pxx-Txx` markers for navigation. During planning, the parent may add, update, delete, reorder, split, merge, or replace phases and tasks, and may renumber current IDs so the plan stays coherent. Remove obsolete active content rather than preserving it for identifier history.
 
-## Implementation Details sections
+## User decisions and requirements
 
-Use [../templates/implementation-details.md](../templates/implementation-details.md) for `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-details.md`.
+The plan's `## User Decisions and Requirements` section has two distinct records. Confirmed User Direction is a concise freeform list of current user intent from prompts, user-pointed documents, tasks, issues, prior research, and accepted decisions. Planning Decisions and Feedback holds unresolved, proposed, deferred, and resolved material choices grouped by dependency and decision context. Each row records group, status, owner, rationale or requested input, evidence, and impact.
 
-Start the file with `<!-- markdownlint-disable-file -->`.
+The planner synthesizes confirmed direction and current evidence into separate top-level `## Goals`, `## Scope and Non-Goals`, `## Functional Requirements`, and `## Non-Functional Requirements` sections after `## Phase Checklist`. Number functional requirements `FR-nnn` and non-functional requirements `NFR-nnn` so tasks can cite them. Each task's `Requirements:` block connects those requirements to planned work without duplicating confirmed direction or unresolved decision rows. Move a resolved user-owned choice into Confirmed User Direction and update or close its decision row.
 
-* Context references: cite the primary research file and any relevant subagent outputs.
-* Requirement evidence: cite the source and reasoning that support each planned step.
-* Phase and step details: describe each implementation phase, file operations, and validation scope.
-* File operations: list the exact files to create or modify and the purpose of each change.
-* Discrepancy references: link steps to DR, DD, or RI items recorded in the planning log.
-* Success criteria: list what must be verified after each phase or step.
-* Dependencies: note prerequisites and sequencing rules for each detail entry.
-* Validation commands: name the relevant lint, build, or test commands for the phase.
+When the user makes a clear change, update the list and every affected plan section directly without asking a redundant question. Reconcile the executive summary, phases, task markers, Goals, Requirements, Details, References, Dependencies, diagrams, critique inputs, and follow-up items after the update. Do not silently weaken or contradict a confirmed requirement.
 
-## Planning Log sections
+When a decision-critical change remains unclear, apply the Planning Decision Walkthrough below. The question tool collects a choice; its evidence and explanation remain in the conversation and plan.
 
-Use [../templates/planning-log.md](../templates/planning-log.md) for `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_slug}}-log.md`.
+## Planning decision walkthrough
 
-Start the file with `<!-- markdownlint-disable-file -->`.
+Resolve decision participation before presenting unresolved material planning decisions.
 
-* Discrepancy Log: capture DR/DD/RI items, sources, impact, and resolution status.
-* Validator Findings: record Plan Validator findings, severity, and follow-up actions.
-* Validation Coverage: record coverage, requirement alignment, detail-line verification, and final validation phase checks; if scratch evidence is used, cite its path and summarize the result in the planning log.
-* Implementation Paths Considered: record the selected path and the viable alternatives that were rejected.
-* Suggested Follow-On Work: note any remaining work, research gaps, or validation items outside the current scope, including deferred work with source evidence.
+| Mode                               | Decision owner | Behavior                                                                                                                                                  |
+|------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Standalone or manual RPI           | User           | Walk through unresolved material decision groups and persist each answer before continuing.                                                               |
+| Automatic RPI Agent, default       | Agent          | Resolve supported ordinary planning decisions and critique dispositions; stop on an unsupported material choice rather than asking or guessing.           |
+| Automatic RPI Agent, user-retained | User           | Keep the session automatic, pause Plan for focused decision groups, then resume automatic progression after required answers and planning gates complete. |
 
-## Planning protocol detail
+Build groups from unresolved rows in Planning Decisions and Feedback. Order them by dependency, blocker status, and effect on Planning Readiness. A group contains one decision by default. Combine decisions only when they share the same choice, evidence, and consequences or when answering one independently would be misleading.
 
-1. Follow the four phases in order: Context Assessment, Planning, Plan Validation, Completion.
-2. Use plain-text workspace-relative paths for all planning artifacts and references. Do not convert these paths to markdown links in the planning files.
-3. Implementation details may cite `.copilot-tracking/` research and plan artifacts to guide logic, but must not instruct embedding those paths or other internal references into production code, code comments, documentation strings, or commit messages.
-4. Prefer the Researcher Subagent at `.github/agents/hve-core/subagents/researcher-subagent.agent.md` for deeper research gaps via `runSubagent` or `task`. If dispatch tooling is unavailable, perform the equivalent research inline and record the result in the primary research artifact; do not dead-stop on tooling alone.
-5. Prefer the Plan Validator at `.github/agents/hve-core/subagents/plan-validator.agent.md` after the plan and details files are drafted, via `runSubagent` or `task`. If dispatch tooling is unavailable, perform the equivalent validation inline and record the findings in the Planning Log Validator Findings section. Required input: research path, implementation plan path, implementation details path, planning log path, and a concise user-requirements summary. Expected output: planning log path, validation status, severity-ordered findings, and clarifying questions.
-6. Treat Critical and High findings as blocking. Update the Planning Log Discrepancy Log and Validator Findings section, fix the blocking issues in the plan and details files, then rerun validation until no Critical and High findings remain.
-7. Author `implementation-details.md` first, then cite its line ranges from the implementation plan using the `Details: (Lines X-Y)` convention. This keeps the plan traceable to the detailed step file without redesigning the format.
-8. Re-enter dated planning artifacts when material edits are needed, keep completed work, and refresh line references.
-9. Stop only for genuine blockers, such as missing task context, unwritable research paths, or unresolved Critical and High findings that materially affect implementation readiness.
-10. When a plan affects RPI skills, check `rpi-quick` orchestration references, granular phase-skill boundaries, and RPI templates when those surfaces are relevant. Do not copy the full Task Planner agent protocol.
+For each `user-owned` or `user-retained` group:
 
-## Per-step input and output contract
+1. Persist the pending group and its evidence before conversation.
+2. Present the plan and supporting research, source, or code as Markdown links. Explain the decision, why it matters now, viable choices and consequences, evidence-backed recommendation when available, uncertainty, and readiness effect in plain language.
+3. Add a compact Mermaid diagram in conversation only when architecture, dependency, sequence, or a trade-off would otherwise be difficult to understand. The diagram supplements accessible prose.
+4. Call `vscode_askQuestions` when available with one concise question per decision and fixed options plus freeform input when useful. When unavailable, ask the same question in chat and wait.
+5. Persist the answer, provenance, affected requirements and phases, and readiness effect before presenting the next group.
 
-* Phase 1 input: user request, attached context, current research artifact, and any existing planning files.
-* Phase 1 output: updated research file with scope, findings, gaps, and constraints.
-* Phase 2 input: research findings, requirements summary, and the dated artifact paths.
-* Phase 2 output: implementation plan, implementation details, and planning log files with cross-references and path notes.
-* Phase 3 input: the four planning artifact paths and the user-requirements summary.
-* Phase 3 output: validator findings, severity labels, and any required follow-up questions.
-* Phase 4 input: validated planning files and any remaining follow-up work.
-* Phase 4 output: concise handoff summarizing the implementation plan artifacts created, any scope items deferred for future planning, validation status, and next implementation steps.
+When no unresolved material decision exists, record that no walkthrough is required and do not ask for acknowledgment. In `agent-owned` mode, apply the same group ordering internally, select only evidence-supported options, and persist each rationale. Missing decision-critical evidence produces Not ready or Blocked with the smallest evidence needed.
 
-## Research fallback
+## Planning opening and material updates
 
-When research is absent, incomplete, or stale:
+Before substantive phase drafting, create or revise the plan, then persist canonical planning state in the sections that own it. Record task identity, interpreted planning goal, user decisions and requirements, goals, scope and non-goals, initial evidence and readiness assessment, active boundaries, unresolved decisions or blockers, and the resolved plan path. This persistence gives the opening and later updates a durable planning basis.
 
-* Prefer a completed `/rpi-research` artifact when one exists.
-* Create or extend a lightweight research brief at `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md` for the current task.
-* Use `runSubagent` or `task` for deeper gaps and write the dated subagent output under `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/<topic>-research.md`.
-* Perform the equivalent research inline when deeper research is required but no subagent dispatch tool is available, and record the result in the research artifact.
+After that persistence, send one concise canonical `RPI Plan` opening using this shape:
 
-## Validation and resumption
+```markdown
+## 🧭 RPI Plan: [Task or topic] | [Readiness or planning focus]
 
-* Re-run validation after material edits to planning files.
-* Refresh line references and cross-links whenever the plan, details, or log is updated.
-* Treat Critical and High Plan Validator findings as blocking. Minor findings may remain only when documented as non-blocking in the planning log and recorded in the Validator Findings section.
-* When a decision point remains unresolved, record the selected default in the planning log and note the follow-up work.
+[Interpreted planning goal.]
 
-## Implementation Handoff
+* Starting evidence and readiness: [current basis and readiness state]
+* Initial phase direction: [first outcome or plan section to define]
+* Active boundaries: [scope, non-goals, constraints, or critique boundary]
+* Current decision state: [settled decisions, proposals, or unresolved items]
+* Current blockers: [active blockers]
+* Relevant links: [Markdown links when available]
 
-Use `/rpi-implement` as the implementation handoff in planner output only when the caller expects normal progression.
+These are the starting planning state and may evolve only through the existing evidence, critique, caller-direction, and planning-update rules.
+```
 
-* Return the plan file path, details file path, planning log path, validation status, any scope items deferred for future planning, and next implementation steps.
-* For planning-only, comparison, audit, analysis, or explicitly no-handoff invocations, return the validated planning artifacts and next-step guidance without presenting `/rpi-implement` as an immediate handoff.
-* Keep the response concise and evidence-based, with the most actionable artifact paths last.
-* When the user needs a decision, present the option table, recommendation, and impact if deferred before the final handoff.
+Omit Current blockers when none are active. Omit Relevant links when no valid link is available. Do not invent state, links, or planning certainty.
 
-## Decision-point handling
+Before each potential continual update, persist the item in the canonical plan or critique disposition section that owns it. Chat is a concise projection of that state, not a second history or delivery audit. A continual update is warranted only when the item changes phase direction, a current decision or readiness state, a material result or artifact state, a blocker or decision need, validation state where applicable, handoff, or the user's likely understanding. Suppress low-level actions, routine tool calls, raw extension returns, unchanged state, and minor rows or edits.
 
-* If the research evidence is sufficient, record the decision and rationale in the implementation plan.
-* If multiple approaches remain viable, capture the trade-offs in the planning log and choose one path with explicit justification.
-* If the decision requires user input, note it in the planning log and proceed with the fallback recommendation only when the evidence is strong enough.
-* Use the Planning Decisions format when the user must choose between options, then update the planning files after the answer is recorded.
+Use this compact shape when a message is warranted:
+
+```markdown
+### [Marker when useful] [Planning state]: [Short item]
+
+Basis: [compact evidence, critique, or decision context and relevant Markdown links]
+
+Planning consequence: [effect on goals, scope, requirements, phases, readiness, or unresolved work]
+
+Next planning action: [next draft, revision, critique, decision request, handoff, or stop]
+```
+
+Use `✅` only for an evidence-backed settled decision or achieved readiness, `⚠️` for a proposal, unresolved item, critique concern, or revision need, and `⛔` for a blocker. Preserve factual uncertainty and identify proposals and unresolved items as such rather than presenting them as settled decisions. The pre-question decision-context requirement remains separate: provide it before a focused decision question, not before every tool call.
+
+## Implementation-time updates and follow-up items
+
+When `rpi-implement` updates the plan during implementation, update Confirmed User Direction and affected sections when the change affects current confirmed intent. Record unresolved choices in Planning Decisions and Feedback. Reconcile updated Goals, Requirements, Details, References, markers, dependencies, diagrams, and the executive summary. Remove superseded active content rather than retaining plan-state history. Checklist status and task-local `Guidance:` pointers are implementation annotations. A significant or divergent change to requirements, scope, architecture, capability, safety, or dependencies needs the appropriate user decision before affected work resumes. A follow-up critique of the updated plan is optional, as described under Independent critique.
+
+Implementation may also add a `Guidance:` block to a later task. It belongs immediately after that task's `Details:` and names something earlier work created that the later task needs and the plan did not already call out, such as a class, API, contract, utility, fixture, or path. Keep it short and concrete:
+
+```markdown
+Guidance:
+* Consider using the contracts added under `scripts/plugins/contracts/`.
+* `Get-PluginSyncSummary` in `scripts/plugins/Sync-PluginManifest.ps1` already builds the summary object; extend it rather than adding a second builder.
+```
+
+Persist any user answer that informed an implementation-time update in the freeform list and affected synthesized sections.
+
+Every plan includes `## Follow-Up Items` immediately before `## Handoff`. Initialize it with `* None`. For each newly discovered item that is not immediately related to the approved plan, record the item, why it is outside immediate scope, and its owner or next action. Follow-up items are review-visible but do not become active `Pxx` or `Pxx-Txx` work, completion evidence, or acceptance claims without later planning.
+
+## Executive summary
+
+Every plan checklist includes a user-facing `## Executive Summary` immediately after `## Task Metadata`. It gives readers a useful overview before decisions, readiness, requirements, and phases.
+
+Include these elements when evidence supports them:
+
+* Explain, in approachable language, what the plan will implement and why the outcome matters.
+* Include a `### What You May Not Know` subsection for important context, dependencies, risks, or constraints that a user might otherwise miss.
+* State planning execution status, readiness, confidence, and residual uncertainty in plain language. Keep detailed decisions, blockers, and next actions in their canonical sections.
+
+Keep summary claims synchronized with the evidence and the detailed plan. Do not invent claims, decisions, resources, risks, or links. Link to same-plan sections when navigation helps, and add an authoritative external explanatory link only when supplied evidence supports it and it materially improves comprehension. Follow the Formatting conventions above for paths, code, and commands.
+
+Use readable Markdown selectively: concise paragraphs and lists for structure, bold for essential reader attention, and italics when introducing a term. Plain Markdown has no underline syntax. Use renderer-specific underline only when the generated tracking artifact's renderer is known to support it and the emphasis is essential; pair it with a plain-Markdown fallback, preferably bold. Do not use underline as decoration or repeat it for routine emphasis.
+
+Update the executive summary after every material plan change, including critique-driven revisions, user decisions or their consequences, goals, scope, phases, dependencies, requirements, risks, and readiness. Before critique handoff and finalization, reconcile the summary with confirmed direction, decision rows, synthesized sections, and Planning Readiness and Next Step. Summary synchronization is a readiness condition.
+
+## Research readiness
+
+Read and understand the supplied research before deciding whether to activate `rpi-research`. Additional research is justified only when at least one condition holds:
+
+* Evidence does not cover a requirement, acceptance criterion, dependency, or material risk needed for planning.
+* The task's complexity or uncertainty makes a plan speculative.
+* A decision-critical choice has multiple plausible outcomes without credible supporting evidence.
+
+When none apply, plan from the supplied evidence. When one applies, ask `rpi-research` for the smallest evidence set that closes the gap, then resume planning.
+
+## Overall planning and planning extensions
+
+The primary planner owns Confirmed User Direction, Planning Decisions and Feedback, phase and task blocks, diagrams, phase order, dependencies, follow-up items, critique disposition, the complete plan, and finalization. It drafts every phase itself.
+
+Skills and subagents whose descriptions say they are used during planning or with `rpi-plan` extend the planner. Read each description and follow its guidance on when and how to use it; the description is the contract. Exclude `rpi-plan`, `rpi-plan-critique`, and other RPI lifecycle phase entrypoints. An extension adds evidence, conventions, or proposals; verify what it returns against the evidence and write the plan yourself.
+
+## Independent critique
+
+The critique is an independent readiness check that runs by default and can be skipped. Activate `rpi-plan-critique` once the primary planner judges the plan implementation-ready. Do not critique an initial draft merely because it exists.
+
+Resolve the critique setting before the critique would run, and record it with its provenance in Critique Disposition and in parent state when present:
+
+| Setting    | Selection rule                                             | Behavior                                                                                                                                                                                                              |
+|------------|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `standard` | Default                                                    | Assess the complete material supplied boundary as quickly as evidence permits, returning every evidence-supported implementation blocker and credibility gap without restatement, cosmetics, or low-impact expansion. |
+| `deep`     | Explicit user request to critique deeply                   | Trace the supplied evidence more broadly, stress-test alternatives and boundaries, and include substantive lower-severity concerns. It remains one invocation and performs no open-ended research.                    |
+| `skip`     | User direction, or a parent session that excludes critique | Do not run the critique. Record the critique status as `skipped`; the plan can become implementation-ready without one.                                                                                               |
+
+Do not infer deep mode from plan size, complexity, uncertainty, or risk, and do not skip the critique without user or parent direction. Standard optimizes prioritization and output for minimal elapsed work without reducing complete coverage of actionable material concerns in the supplied boundary.
+
+### Running the critique
+
+When the plan is implementation-ready, lock applicable test ownership, exact removals or `none`, maximum additions, canonical and generated targets, semantic-versus-regression coverage, and validation evidence in the plan, whether or not the critique runs. Before the critique runs, record its status as `started` in Critique Disposition; when parent state exists, keep `active_phase` on Plan with `next_action` naming the critique. That status is the only run tracking the critique needs.
+
+Activate `rpi-plan-critique` with the selected depth, exact task context, confirmed direction, resolved planning decisions, caller requirements, research, evidence, dependencies, task Requirements, plan path, one critique output path, and the latest earlier critique when one exists. Assess the plan against the supplied evidence with fresh eyes rather than the drafting reasoning; running the critique in a subagent is one way to obtain that separation and is not required. The critique reads the plan and directly relevant supplied evidence, writes only the critique artifact, and returns one complete actionable finding set.
+
+On resume, use a saved critique result as is. When the status is still `started` and no result was saved, run the critique again; no recovery consent is needed. Planning Readiness stays Not ready until a critique result exists and its blocking findings are resolved, or the critique is skipped. When the critique returns no assessment or only part of one, record the limitation and dispose of any findings it did return. Then run it again once the cause is resolved, or record it as skipped when the user directs continuing without it. A missing result is never a Pass.
+
+The critique is an internal readiness check. Its verdict returns to the planning parent, which owns revision, decision requests, and finalization. It is not a peer lifecycle transition and does not cause a standalone user to invoke another stage.
+
+### Finding disposition
+
+Record the critique status, verdict, and each finding's disposition in the plan's standalone top-level `## Critique Disposition` section. Use the verdict to select the smallest next action:
+
+* Revise the plan directly for evidence-backed corrections, applying all planner-owned findings in one coherent batch.
+* Preserve confirmed user requests and answers when critique advice conflicts with them. Reject conflicting advice without re-asking when current user direction already resolves it.
+* Route a significant or divergent finding not resolved by current user direction through the current Planning Decision Walkthrough when it affects requirements, scope, architecture, dependencies, or evidence boundary.
+* Close every `PC-xxx` with its declared owner, disposition, and exact resolving evidence, or record it as explicitly accepted residual risk.
+* Finalize after direct corrections and required user decisions are resolved and residual risk is explicitly recorded.
+
+A follow-up critique is optional. Run one when corrections substantially change requirements, scope, or architecture, or when the user asks. Give it the next numbered output path and the latest earlier critique so it reconciles prior findings rather than repeating them. Stop as Revise with the exact clearing action when the same required findings recur without material progress.
+
+## Phase and task blocks
+
+Each phase and task is a heading followed by labeled blocks. A label is a plain line ending in a colon, followed directly by its bullet list. This keeps the plan scannable and gives implementation a predictable place to read and update.
+
+A phase has these blocks, then its diagram, then its tasks:
+
+* `Goals:` states the coherent behavior, capability, or future state the phase establishes and why it matters. It aligns the tasks without dictating their implementation sequence.
+* `Dependencies:` names prerequisite phases or external conditions, or `None`.
+
+A task has these blocks in this order:
+
+* `Goals:` states the observable behavior, capability, or state the task establishes. Write the outcome, not the steps.
+* `Requirements:` is the checkable record for the task. Cite the `FR-nnn`, `NFR-nnn`, PRD, BRD, or ADR identifiers the task satisfies when they exist, then list the binding conditions that must hold when the task is done. When a shape is contractual, such as a JSON summary, an API signature, or a schema, put it in a fenced code block here and state that it is a contract.
+* `Details:` gives the implementer evidence-backed context: what exists today and what it lacks, the approach the evidence supports, boundaries to respect, what to avoid and why, tests to add or remove, repository-owned checks worth running such as `npm run test:ps -- -TestPath <path>`, and where to follow existing patterns. State a supported assumption here when the implementer may resolve it locally. Leave room for judgment; do not script keystrokes or prescribe how to verify.
+* `Guidance:` is optional and usually added by implementation. See Implementation-time updates and follow-up items.
+* `References:` links the files, folders, and tracking artifacts the implementer needs, each with a short reason. Point into research or prior decisions with a nested bullet that names the section and item, such as `Q2 under ## Findings`.
+* `Dependencies:` names prerequisite tasks or `None`.
+
+A task does not carry acceptance, validation, completion, or unresolved-item blocks. Completion is the `[x]` marker plus the changes record. An open decision goes in Planning Decisions and Feedback and a risk or question goes in Risks and Open Questions, each naming the affected `Pxx-Txx`.
+
+Treat examples and illustrative code as guidance unless a requirement or interface contract makes them binding, and say which applies.
+
+## Phase Checklist diagrams
+
+Once the phases are stable, and before the critique runs or the plan is finalized, add Mermaid diagrams so a reader can see the shape of the change without reading every task.
+
+Place two overall diagrams under `## Phase Checklist`, before the first phase:
+
+* `### Before` shows the evidence-backed state before any planned work, including existing relationships and elements that will be modified or removed. Do not show proposed nodes or relationships as existing. For greenfield work, show the existing surrounding context or a clearly labeled absence of the planned capability. Label unknown state and record any decision-critical evidence gap rather than inventing a baseline.
+* `### After` shows the intended result of all phases, not an intermediate state or phase sequence. Include added and retained elements with their final relationships; omit removed elements and obsolete edges. Mark new nodes with a dashed `classDef` and an `Added:` label so they remain distinguishable without color.
+
+Use the same scope, orientation, and short stable node IDs for corresponding elements in both views; change labels and edges when the intended behavior changes. Include the components, files, contracts, tests, or behaviors needed to understand the change, without listing every file. Add a short prose explanation of the difference.
+
+Each phase diagram sits after the phase's `Dependencies:` block and before its first task. Copy the After diagram's nodes and edges, highlight the nodes the phase changes, and retain the default theme styling on other nodes. Identify the highlighted nodes in a short caption so color is not the only cue. Preserve new-node dashed borders when also highlighting them. For a removal, add the affected Before-only nodes as clearly labeled `Removed in Pxx:` context, with any obsolete edges dashed and labeled as removed, rather than implying they survive in After. Highlight endpoints for relationship-only changes.
+
+When the After diagram is large, drop nodes far from the phase but keep immediate neighbors. Reuse stable node IDs across all views. A phase diagram locates work within the final result; it is not a claim that later-phase work already exists.
+
+### Readable styling
+
+Apply this styling to the Before, After, phase, and any conversational decision diagrams:
+
+* Inherit the renderer's light or dark Mermaid theme for ordinary nodes, edges, arrowheads, edge labels, and subgraphs. Do not force a light-only theme or canvas background.
+* Use `Arial, Helvetica, sans-serif` with `16px` labels through Mermaid theme variables, as in the example. Keep labels short; split crowded diagrams instead of shrinking text.
+* Reuse the example's initialization line unchanged in each diagram. Before critique or finalization, check every emitted initialization object: `themeVariables.fontFamily` is the string `Arial, Helvetica, sans-serif` and `themeVariables.fontSize` is the string `16px`. Correct malformed or nested values in the generated plan, even when the template is correct.
+* Pair every custom fill with an explicit text color. For phase highlights use `fill:#fff3bf,color:#1f2328,stroke:#9a6700,stroke-width:2px`; the dark text stays readable on the pale fill in either surrounding theme. Do not inherit dark-mode light text onto a pale highlight.
+* Keep meaning in labels, captions, border patterns, and relationships rather than color alone. If the renderer ignores configuration, retain those cues and disclose the limitation.
+* Inspect rendered text, highlighted and ordinary nodes, edges, edge labels, and subgraphs in both light and dark modes when preview is available. Otherwise record that dual-theme rendering was not verified; source styling alone is not a rendering result.
+
+Illustrative phase view of an After diagram:
+
+```mermaid
+%%{init: {"themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "16px"}}}%%
+flowchart LR
+    sync["scripts/plugins/Sync-PluginManifest.ps1"]
+    summary["Added: PluginSyncSummary class"]
+    tests["scripts/tests/plugins/Sync-PluginManifest.Tests.ps1"]
+    manifest["plugin.json"]
+    sync -->|builds| summary
+    sync -->|writes| manifest
+    tests -->|exercises| sync
+    classDef new stroke-dasharray: 5 5
+    classDef phase fill:#fff3bf,color:#1f2328,stroke:#9a6700,stroke-width:2px
+    class summary new
+    class sync,summary phase
+```
+
+Highlighted work: update the sync script and add the summary class. The dashed border and `Added:` label identify new work.
+
+Keep After and phase diagrams current when phases or tasks change during planning or implementation. Preserve Before as the pre-change baseline; correct it only when evidence about that baseline or the approved comparison scope changes, not as tasks complete.
+
+## Planning conversation and closeout
+
+Use the planning opening and material-update protocol above during planning work. Use the Planning Decision Walkthrough for material choices and critique findings. Keep automatic agent-owned decisions free of routine prompts and keep user-retained automatic sessions automatic while awaiting a decision group.
+
+At closeout, report planning execution status separately from readiness or decision state. Include results, important updates, decisions, and blockers or open items. Advise `/compact` only when stale tool output, superseded reasoning, or completed-stage detail outweighs useful context and the durable plan and critique artifact are current. When advising it, name the state and artifact pointers to retain. Otherwise omit compaction guidance.
+
+For a standalone, implementation-ready plan, report planning execution status and readiness separately, then identify the latest critique disposition and current implementation context: plan, latest critique, relevant research, and the changes record's role as implementation evidence. Advise `/rpi-implement` without invoking it. Do not ask the user to attach artifacts.
+
+If the plan is not ready, state the stop or no-handoff reason. In confirmed automatic RPI Agent mode, return that same context to the parent and state that it continues automatically when the gate and confirmation conditions are met. Do not give the parent attachment instructions.
+
+For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
+
+## Final planning handoff
+
+The final plan identifies the implementation handoff with task IDs, markers, task-local context, and artifact paths. Its Planning Readiness and Next Step record identifies the plan, latest critique, relevant research, downstream changes-record role, decision participation, blockers, gates, and continuation. A standalone planning response advises `/rpi-implement` only when the plan is ready. The parent continues instead in confirmed automatic RPI Agent mode. It does not create a separate details or legacy log artifact or require a line-based verification pass.

@@ -1,1 +1,0 @@
-../../../../.github/prompts/hve-core/task-challenge.prompt.md

@@ -14,7 +14,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -38,6 +38,8 @@ The SSSC Planner agent walks your team through a structured six-phase supply cha
 
 ```mermaid
 flowchart LR
+  accTitle: SSSC Planning Six-Phase Workflow
+  accDescr: Supply-chain planning moves from project scoping through capability assessment, standards mapping, gap analysis, backlog generation, and review handoff, with optional backlog-manager references.
   subgraph Scoping
     A["Phase 1<br/>Project Scoping"]
   end
@@ -127,7 +129,7 @@ The SSSC Planner supports four entry modes, each matched to a prompt file.
 ## Prerequisites
 
 * The SSSC Planner agent installed and enabled in your VS Code workspace.
-* The `Researcher Subagent` available for WAF and CAF runtime lookups.
+* The `rpi-research` skill available for WAF and CAF runtime lookups.
 * For From-PRD/From-BRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
 * For From-Security-Plan mode: A completed Security Planner state file.
 

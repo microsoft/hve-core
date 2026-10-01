@@ -1,0 +1,39 @@
+[project]
+name = "security-planning-tm7"
+version = "0.0.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml==6.0.3",
+    "defusedxml==0.7.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "pytest-cov>=6.0",
+    "ruff>=0.15",
+    # Pillow is a test dependency on every platform, not just Windows. The
+    # harness tests stub the Windows-only UI automation layer and fake the
+    # platform check, so they are designed to run on Linux CI; only the PNG
+    # fixture helper needs a real imaging library. Gating it to Windows made
+    # the whole module fail to import on Linux and silently skipped its tests.
+    "pillow>=11.3.0",
+]
+fuzz = [
+    "atheris>=3.0",
+]
+windows = [
+    "pywinauto>=0.6.8 ; platform_system == 'Windows'",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["scripts"]
+python_files = ["test_*.py", "fuzz_harness.py"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]

@@ -1,32 +1,26 @@
-import { buildProbeResults, emitProbeResult, runProbeWithPage } from './_shared.mjs';
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
+import { liveRegionStatus } from './_core.mjs';
+import { buildProbeResults, emitProbeResult, readLiveRegionSnapshot, runProbeWithPage } from './_shared.mjs';
 
 export async function runProbe() {
   const payload = await runProbeWithPage(async ({ page, surface, state, targetUrl }) => {
-    await page.addInitScript(() => {
-      window.__runtimeA11yLiveRegionState = [];
-      const observer = new MutationObserver((mutations) => {
-        window.__runtimeA11yLiveRegionState = mutations.slice(0, 5).map((mutation) => ({
-          type: mutation.type,
-          target: mutation.target?.nodeName || '',
-        }));
-      });
-      observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-    });
+    // The shared runner installs a live-region observer before navigation and
+    // clears its log immediately before the state trigger, so any recorded
+    // update is a genuine trigger-driven announcement. readLiveRegionSnapshot
+    // settles debounced announcers before reading.
+    const snapshot = await readLiveRegionSnapshot(page);
 
-    const snapshot = await page.evaluate(() => ({
-      liveRegions: document.querySelectorAll('[aria-live], [role="status"], [role="alert"]').length,
-      hasStatus: document.querySelector('[role="status"], [role="alert"]') !== null,
-      mutations: window.__runtimeA11yLiveRegionState || [],
-    }));
-    const expectsStatusMessage = /error|open/i.test(state);
-    const hasDefect = expectsStatusMessage && snapshot.liveRegions === 0;
-
+    // Method adequacy for WCAG 4.1.3: an announcement is decided only when a
+    // live region fires an update in a state that should produce a status
+    // message (pass). A region that exists but never fires only informs
+    // (partial); an absent region in an expecting state fails.
     const results = await buildProbeResults({
       probeId: 'probe-live-region',
       surfaceId: surface?.id || 'unknown',
       state,
       evidence: `${targetUrl} ${JSON.stringify(snapshot)}`,
-      decideStatus: hasDefect ? 'fail' : 'pass',
+      decideStatus: liveRegionStatus(snapshot, state),
       informStatus: 'partial',
     });
 

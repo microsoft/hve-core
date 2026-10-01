@@ -2,7 +2,13 @@
 title: RAI Skill Assessor
 description: "Assesses a single Responsible AI framework from the rai-standards skill against the codebase, reading framework references and returning structured findings"
 sidebar_position: 1
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - rai-planning
+  - rai-skill-assessor
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,10 +28,8 @@ Assesses a single Responsible AI framework from the rai-standards skill against 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+RAI Reviewer dispatches this worker to assess exactly one responsible-AI framework against a supplied codebase profile or plan. It uses the framework's references and returns requirement-level findings. It does not choose the parent's overall scope, publish a report, or grant human acceptance.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies NIST AI RMF as the framework, an AI-system profile, and the plan for a document assistant. The worker returns `RAI_PLAN_FINDINGS_V1` with risk-oriented statuses and evidence gaps. In audit or diff mode it uses `RAI_FINDINGS_V1`; the parent owns verification and reporting, so a plan assessment is not presented as proof of implemented controls.

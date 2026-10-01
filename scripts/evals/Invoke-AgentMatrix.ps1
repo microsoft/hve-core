@@ -50,7 +50,7 @@
 
 .PARAMETER Model
     SDK model id passed to `vally eval --model`. Defaults to
-    `gpt-5.6-luna`.
+    `gpt-6-luna`.
 
 .EXAMPLE
     ./Invoke-AgentMatrix.ps1 -All -Tier nightly -WhatIf
@@ -59,12 +59,12 @@
     tiers, writes a dry-run summary, and exits 0.
 
 .EXAMPLE
-    npm run eval:agent:changed -- -WhatIf
+    npm run ci:eval:agent:changed -- -WhatIf
 
     PR-tier advisory run filtered by git-changed agents.
 
 .NOTES
-    Runs via: npm run eval:agent / npm run eval:agent:matrix / npm run eval:agent:changed
+    Runs via: npm run ci:eval:agent / npm run ci:eval:agent:matrix / npm run ci:eval:agent:changed
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true, DefaultParameterSetName = 'All')]
@@ -91,7 +91,7 @@ param(
     [string]$RepoRoot,
 
     [Parameter(Mandatory = $false)]
-    [string]$Model = 'gpt-5.6-luna'
+    [string]$Model = 'gpt-6-luna'
 )
 
 Set-StrictMode -Version Latest

@@ -1,8 +1,14 @@
 ---
 title: Code Review Walkback
-description: Thin wrapper subagent that dispatches deep Register 2 questions to the generic Researcher Subagent and anchors the output to a board item
+description: Thin wrapper subagent that activates rpi-research for bounded Register 2 investigations and anchors results to a review board item
 sidebar_position: 8
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - coding-standards
+  - code-review-walkback
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -17,15 +23,13 @@ ms.date: 2026-07-05
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Thin wrapper subagent that dispatches deep Register 2 questions to the generic Researcher Subagent and anchors the output to a board item
+Thin wrapper subagent that activates rpi-research for bounded Register 2 investigations and anchors results to a review board item
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Code Review dispatches Walkback when a bookmarked question needs investigation beyond a factual explanation. It activates bounded RPI Research and anchors the result to the originating board item. Use the parent workflow to select the question; the worker does not choose a new review scope.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies the board item, explicit research question and criteria, a trusted review evidence root, and `register2ArtifactPath` for a cancellation-race investigation. The worker returns the research and anchored investigation paths with unresolved evidence. Missing scope or invalid paths require clarification; unavailable research capability is reported as blocked rather than replaced with guessed conclusions.

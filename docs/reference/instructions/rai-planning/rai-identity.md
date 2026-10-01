@@ -2,7 +2,13 @@
 title: Rai Planning/Rai Identity
 description: "RAI Planner identity, 6-phase orchestration, state management, and session recovery"
 sidebar_position: 1
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - rai-planning
+  - rai-planning/rai-identity
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,8 +28,11 @@ RAI Planner identity, 6-phase orchestration, state management, and session recov
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use these instructions when a Responsible AI Planner session scopes, resumes,
+or assesses an AI system under NIST AI RMF or a confirmed custom framework.
+They govern six-phase state, risk and prohibited-use gates, evidence, and
+handoff; use bounded research for external frameworks instead of inferring
+current requirements.
 
 ## Example usage
 

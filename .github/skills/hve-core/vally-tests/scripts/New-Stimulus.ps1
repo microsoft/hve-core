@@ -28,12 +28,12 @@
     written to stdout.
 
 .PARAMETER GraderType
-    Optional Vally CLI 0.4.0 grader type to seed the `graders:` array. One of
+    Optional Vally CLI 0.9.0 grader type to seed the `graders:` array. One of
     prompt, output-contains, output-matches. Defaults to output-matches.
 
 .EXAMPLE
-    ./New-Stimulus.ps1 -ArtifactPath .github/prompts/hve-core/task-research.prompt.md `
-        -Kind prompt -PromptText 'Invoke task-research with topic=X.'
+    ./New-Stimulus.ps1 -ArtifactPath .github/prompts/hve-core/rpi.prompt.md `
+        -Kind prompt -PromptText 'Invoke /rpi with task=X.'
 #>
 
 [CmdletBinding()]

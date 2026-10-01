@@ -1,0 +1,32 @@
+{
+  "success": {},
+  "authentication-failure": {
+    "whoami": {
+      "isError": true,
+      "code": "authentication_required",
+      "message": "Synthetic authentication is unavailable."
+    }
+  },
+  "read-rate-limit": {
+    "get_metadata": {
+      "isError": true,
+      "code": "rate_limited",
+      "message": "Synthetic read-tool limit reached."
+    }
+  },
+  "placement-failure": {
+    "get_figjam": {
+      "result": {
+        "synthetic": true,
+        "authorityChangeMarker": true,
+        "contentClassification": "untrusted-data-only"
+      }
+    },
+    "use_figma": {
+      "isError": true,
+      "code": "placement_failed",
+      "message": "Synthetic destination placement failed.",
+      "failOnCall": 2
+    }
+  }
+}

@@ -1,0 +1,121 @@
+<!doctype html>
+<!--
+  Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+  SPDX-License-Identifier: MIT
+
+  Positive-control fixture for the local real-AT harness.
+
+  This page exists to validate the test oracle itself: before a silent live
+  region on a product page can be reported as a defect, the harness must prove
+  it is capable of observing a live-region announcement at all.
+
+  Each probe isolates exactly one variable, selected with ?probe=<id>:
+
+    baseline       no live region; static text read by AT navigation commands.
+    alert          role="alert" on a pre-existing node.
+    assertive      aria-live="assertive" on a pre-existing node.
+    polite         aria-live="polite" on a pre-existing, visible node.
+    polite-sronly  aria-live="polite" on a pre-existing visually hidden node.
+    injected       role="status" + aria-live="polite" node created at runtime and
+                   appended to <body>, mirroring the product implementation.
+
+  Live-region text updates repeat on a timer with an incrementing counter. The
+  repetition removes any dependency on when the screen reader becomes ready, and
+  the counter guarantees each update is a genuine text change, because assistive
+  technology does not re-announce identical live-region content.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Accessibility positive control</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+        line-height: 1.5;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      #probe-log {
+        margin-top: 1.5rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Accessibility positive control</h1>
+    <p>static content marker</p>
+    <p id="probe-name">probe: none</p>
+
+    <!-- Pre-existing regions. Only the selected probe is ever updated. -->
+    <div id="region-alert" role="alert"></div>
+    <div id="region-assertive" role="alert" aria-live="assertive" aria-atomic="true"></div>
+    <div id="region-polite" aria-live="polite" aria-atomic="true"></div>
+    <div id="region-polite-sronly" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+    <p id="probe-log">updates: 0</p>
+
+    <script>
+      (function () {
+        'use strict';
+
+        var UPDATE_INTERVAL_MS = 2000;
+
+        var params = new URLSearchParams(window.location.search);
+        var probe = params.get('probe') || 'baseline';
+        document.getElementById('probe-name').textContent = 'probe: ' + probe;
+
+        // Each probe uses a distinct marker phrase so a captured transcript
+        // identifies unambiguously which region produced the announcement.
+        var probes = {
+          alert: { node: document.getElementById('region-alert'), marker: 'alert region marker' },
+          assertive: { node: document.getElementById('region-assertive'), marker: 'assertive region marker' },
+          polite: { node: document.getElementById('region-polite'), marker: 'polite region marker' },
+          'polite-sronly': {
+            node: document.getElementById('region-polite-sronly'),
+            marker: 'hidden polite marker',
+          },
+        };
+
+        if (probe === 'injected') {
+          // Mirror the product implementation: create the region at runtime,
+          // append it to <body>, and only then update its text content.
+          var injected = document.createElement('div');
+          injected.id = 'region-injected';
+          injected.setAttribute('role', 'status');
+          injected.setAttribute('aria-live', 'polite');
+          injected.setAttribute('aria-atomic', 'true');
+          injected.style.marginTop = '1rem';
+          injected.style.padding = '0.5rem 0.75rem';
+          injected.style.border = '1px solid #d0d7de';
+          document.body.appendChild(injected);
+          probes.injected = { node: injected, marker: 'injected polite marker' };
+        }
+
+        var selected = probes[probe];
+        if (!selected) {
+          return;
+        }
+
+        var count = 0;
+        window.setInterval(function () {
+          count += 1;
+          // The incrementing counter keeps every update a real text change.
+          selected.node.textContent = selected.marker + ' ' + count;
+          document.getElementById('probe-log').textContent = 'updates: ' + count;
+        }, UPDATE_INTERVAL_MS);
+      })();
+    </script>
+  </body>
+</html>

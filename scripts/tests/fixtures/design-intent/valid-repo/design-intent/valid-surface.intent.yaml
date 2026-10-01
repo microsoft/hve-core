@@ -1,0 +1,94 @@
+# Synthetic contract fixture. Not a product decision and not a production record.
+schemaVersion: "1.1"
+surfaceId: valid-surface
+title: Checkout summary panel
+owner: Design Systems Guild
+status: accepted
+decidedOn: "2026-07-14"
+decidedBy:
+  - A. Designer
+  - B. Engineer
+version: 2
+tooling: Whiteboard session plus component library review
+groundedIn:
+  - id: wcag-22
+    title: Web Content Accessibility Guidelines 2.2
+    url: https://www.w3.org/TR/WCAG22/
+    use: Criterion identifiers referenced by expectations in this record.
+    reproduction: paraphrase-only
+intents:
+  - id: INT-001
+    conveys: Every control in the checkout summary is reachable and operable without a pointing device.
+    rationale: Observed sessions showed keyboard-only shoppers abandoning at the summary step because the edit controls could not be reached.
+    audience:
+      - Keyboard-only shoppers
+      - Screen reader users
+    evidence: observed
+    binding:
+      state: default
+    expectations:
+      - id: EXP-001
+        method: runtime-automation
+        assert: probe-keyboard-traversal
+        detail: Tab order reaches every summary control and never traps focus.
+        criteria:
+          - wcag-22:2.1.1
+          - wcag-22:2.1.2
+        role: decides
+        blocking: true
+      - id: EXP-002
+        method: runtime-automation
+        assert: probe-focus-visible
+        detail: The active control keeps a visible focus indicator against the panel background.
+        criteria:
+          - wcag-22:1.4.11
+        role: informs
+        blocking: false
+  - id: INT-002
+    conveys: The summary communicates its structure and language so assistive technology can describe it accurately.
+    rationale: The panel is built from nested regions, so structural semantics carry the meaning that visual grouping conveys to sighted shoppers.
+    audience:
+      - Screen reader users
+    evidence: reported
+    binding:
+      state: default
+    expectations:
+      - id: EXP-003
+        method: axe-auto
+        assert: probe-axe
+        detail: Automated rules confirm programmatic structure and page language.
+        criteria:
+          - wcag-22:1.3.1
+          - wcag-22:3.1.1
+        role: decides
+        blocking: true
+      - id: EXP-004
+        method: cognitive-walkthrough
+        assert: custom
+        detail: A reviewer walks the summary aloud and confirms the reading order matches the visual grouping.
+        criteria:
+          - wcag-22:1.3.2
+        role: informs
+        blocking: false
+  - id: INT-003
+    conveys: Validation problems are announced when the shopper submits an incomplete summary.
+    rationale: Silent inline errors leave non-visual shoppers believing the submission succeeded.
+    audience:
+      - Screen reader users
+    evidence: assumed
+    binding:
+      state: error
+    expectations:
+      - id: EXP-005
+        method: runtime-automation
+        assert: probe-live-region
+        detail: Validation messaging is announced through a live region when the error state renders.
+        criteria:
+          - wcag-22:4.1.3
+        role: decides
+        blocking: true
+        override:
+          outcome: passed
+          rationale: Manual screen reader review confirmed the announcement on a platform the automated probe cannot drive.
+          reviewedBy: C. Reviewer
+          reviewedOn: "2026-07-20"

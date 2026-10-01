@@ -2,7 +2,13 @@
 title: Project Planning/Adr Handoff
 description: "ADR Creator Govern-phase handoff protocol: compact summary template, peer-agent routing heuristics, and dual-format (ADO + GitHub) work item templates"
 sidebar_position: 2
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-27
+ms.topic: reference
+keywords:
+  - instruction
+  - project-planning
+  - project-planning/adr-handoff
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,8 +28,11 @@ ADR Creator Govern-phase handoff protocol: compact summary template, peer-agent 
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use this protocol at ADR Govern exit when an accepted decision, or an explicit
+proposed-decision handoff, may create downstream engineering, security, RAI,
+ADO, or GitHub work. It does not govern decision drafting; before external
+writes, satisfy the disclaimer, sensitive-content scan, and active autonomy
+tier.
 
 ## Example usage
 

@@ -293,8 +293,8 @@ Users and personas mentioned in transcripts.
 Summary of how the extracted requirements, decisions, and action items translate into backlog work. Identify new epics, features, or stories implied by the analysis and flag updates to existing work items when references were provided.
 
 ### Suggested Downstream Workflows
-* **Create ADO work items**: Use the *ado-prd-to-wit* agent with this analysis and the resulting PRD.
-* **Create or update GitHub issues**: Use the *github-backlog-manager* agent with this analysis.
+* **Create ADO work items**: Use the *Functional Planner* agent with this analysis and the resulting PRD.
+* **Create or update GitHub issues**: Use the *backlog-manager* agent with this analysis.
 
 ## Analysis Notes
 Additional observations, patterns, or context from transcript review.

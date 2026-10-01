@@ -19,17 +19,19 @@ function FooterLinks({links}) {
   if (isMultiColumnFooterLinks(links)) {
     return (
       <div className="row footer__links">
-        {links.map((column, index) => (
-          <div
-            key={index}
-            className={clsx(
-              ThemeClassNames.layout.footer.column,
-              'col footer__col',
-              column.className,
-            )}>
-            <h3 className="footer__title">{column.title}</h3>
-            <ul className="footer__items clean-list">
-              {column.items.map((item, itemIndex) => (
+        {links.map((column, index) => {
+          const headingId = `footer-column-title-${index}`;
+          return (
+            <div
+              key={index}
+              className={clsx(
+                ThemeClassNames.layout.footer.column,
+                'col footer__col',
+                column.className,
+              )}>
+              <h3 id={headingId} className="footer__title">{column.title}</h3>
+              <ul className="footer__items clean-list" aria-labelledby={headingId}>
+                {column.items.map((item, itemIndex) => (
                 <li key={itemIndex} className="footer__item">
                   {item.html ? (
                     <div dangerouslySetInnerHTML={{__html: item.html}} />
@@ -40,7 +42,8 @@ function FooterLinks({links}) {
               ))}
             </ul>
           </div>
-        ))}
+          );
+        })}
       </div>
     );
   }

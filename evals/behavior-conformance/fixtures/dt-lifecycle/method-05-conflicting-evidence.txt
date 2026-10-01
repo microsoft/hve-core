@@ -1,0 +1,15 @@
+# Synthetic Method 5 Evidence
+
+## Observed
+
+The bounded synthetic walkthrough completed in four handoff steps.
+
+## Simulated
+
+The simulated alternate route required seven handoff steps.
+
+## Assumed
+
+Stakeholder preference is unknown because no real stakeholder session occurred.
+
+The observed and simulated records conflict. Preserve both labels and do not infer an outcome.

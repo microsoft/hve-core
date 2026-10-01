@@ -1,7 +1,7 @@
 ---
 title: Code Review Lens Checklists
-description: Perspective-specific review questions for functional, standards, accessibility, PR, security, readiness, and full-review workflows.
-ms.date: 2026-06-26
+description: Perspective-specific review questions for functional, standards, accessibility, security, readiness, and full-review workflows.
+ms.date: 2026-08-25
 ---
 
 ## Functional review
@@ -25,13 +25,6 @@ ms.date: 2026-06-26
 * Are screen-reader labels, announcements, and form error states sufficient?
 * Are contrast, motion, and error messaging accessible and understandable?
 
-## PR review
-
-* Does the change summary explain the purpose and scope clearly?
-* Is the diff understandable, scoped, and appropriately small for the stated risk?
-* Are validation steps, test evidence, and follow-up items included?
-* Are any unrelated or out-of-scope changes called out explicitly?
-
 ## Security review
 
 * Are authentication, authorization, and permission checks present and correct?
@@ -41,7 +34,14 @@ ms.date: 2026-06-26
 
 ## Readiness review
 
-This lens reviews the change as a *deliverable* and covers the non-code surface not owned by the other perspectives. PR-metadata checks apply only when PR context (`prContext`) is supplied; documentation checks apply to changed non-code files.
+This lens reviews the change as a deliverable and covers the target package and non-code surface not owned by the other perspectives. PR-metadata checks apply only to a `pull_request` target with supplied `prContext`; documentation checks apply to changed non-code files.
+
+Change package:
+
+* Does the change brief explain the purpose and scope clearly?
+* Is the diff understandable, scoped, and appropriate for the stated risk?
+* Are validation steps, test evidence, and explicit follow-up items included?
+* Are unrelated or out-of-scope changes called out explicitly?
 
 PR description:
 
@@ -70,4 +70,4 @@ Changed documentation content:
 
 ## Full review
 
-A full review should synthesize the functional, standards, accessibility, PR, security, and readiness lenses into one merged assessment rather than re-running the same checks in parallel.
+A full review should synthesize the functional, standards, accessibility, security, and readiness lenses into one merged assessment rather than re-running the same checks in parallel. The required orientation stage remains separate from findings.

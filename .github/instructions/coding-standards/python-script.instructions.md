@@ -7,6 +7,13 @@ description: 'Python scripting conventions'
 
 Conventions for Python 3.11+ scripts used in automation, tooling, and CLI applications.
 
+## Environment and Dependency Management
+
+1. **Never use `pip install` directly.** All package management must be handled using `uv` (e.g., `uv add <package>`).
+2. **Never run Python scripts or tools outside a virtual environment.** Always execute scripts via `uv run <script.py>` or ensure the 
+`.venv` is activated before running.
+3. Ensure a `.venv` exists in the project root before executing any Python code. If starting from scratch, refer to the `uv-projects.instructions.md` file for environment setup.
+
 ## Entry Points and Exit Codes
 
 ```python

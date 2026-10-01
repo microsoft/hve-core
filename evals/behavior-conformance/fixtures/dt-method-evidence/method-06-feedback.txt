@@ -1,0 +1,101 @@
+fixture:
+  id: synthetic-dt-method-06-feedback
+  fictional: true
+  evidence_ceiling: >-
+    These records test feedback planning and evidence capture only. They do
+    not represent real sessions or establish participant coverage, fairness,
+    field validity, assumption validation, or Method 7 readiness.
+
+project:
+  name: Synthetic Shift Handoff
+  slug: synthetic-shift-handoff
+  created: "2026-09-16"
+  initial_request: Evaluate fictional prototype feedback without real participants.
+  initial_classification: frozen
+
+current:
+  method: 6
+  space: solution
+  phase: feedback evidence exercise
+  disclaimerShownAt: "2026-09-16T00:00:00Z"
+
+methods_completed: [1, 2, 3, 4, 5]
+
+transition_log:
+  - from_method: 5
+    to_method: 6
+    rationale: A synthetic concept was selected for feedback evidence checks.
+    date: "2026-09-16"
+
+hint_calibration:
+  level: 2
+  pattern_notes: Preserve inconclusive states and evidence provenance.
+
+session_log:
+  - date: "2026-09-16"
+    method: 6
+    summary: Synthetic participation gaps and feedback records are staged.
+
+artifacts: []
+
+synthetic_extension:
+  preserve_on_update: true
+  evidence_labels: [observed, simulated, assumed, unknown, conflicting]
+
+participant_plan:
+  included:
+    - id: FP-01
+      category: experienced-friendly-user
+      evidence_label: simulated
+  missing:
+    - category: temporary-worker
+      evidence_label: unknown
+    - category: stressed-user
+      evidence_label: unknown
+
+environment_plan:
+  planned: quiet-connected-office
+  target: intermittent-connectivity-maintenance-area
+  evidence_label: conflicting
+
+opinion_input:
+  id: OP-01
+  statement: I like this checklist.
+  evidence_label: simulated
+  classification: opinion_only
+
+observation_records:
+  - id: OBS-01
+    hypothesis: A-01
+    prototype: PV-01
+    participant_category: experienced-friendly-user
+    environment: quiet-connected-office
+    observed_behavior: The fictional participant paused at the unresolved-owner field.
+    constraint: Ownership wording is unclear in the staged walkthrough.
+    severity: friction
+    assumption_status: inconclusive
+    evidence_label: observed
+    observation_scope: fictional_fixture
+  - id: OBS-02
+    hypothesis: A-01
+    prototype: PV-02
+    participant_category: stressed-user
+    environment: intermittent-connectivity-maintenance-area
+    observed_behavior: No observation was supplied.
+    constraint: Real-environment behavior is unavailable.
+    severity: unknown
+    assumption_status: inconclusive
+    evidence_label: unknown
+    observation_scope: missing_fixture_evidence
+
+expected_handling:
+  retain_opinion_as_opinion: true
+  retain_coverage_gaps: true
+  retain_environment_mismatch: true
+  retain_inconclusive: true
+  prohibited_claims:
+    - representative
+    - fair
+    - validated
+    - successful
+    - method-7-ready

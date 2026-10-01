@@ -1,1 +1,0 @@
-../../../../.github/agents/security/sssc-reviewer.agent.md

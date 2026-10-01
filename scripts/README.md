@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-06-27
+ms.date: 2026-09-25
 ms.topic: reference
 keywords:
   - powershell
@@ -19,15 +19,17 @@ This directory contains PowerShell scripts for automating linting, validation, a
 
 ```text
 scripts/
-├── collections/     Collection validation and shared helpers
+├── agentic-workflows/ Runtime support for compiled Agentic Workflows
+├── lib/             Shared artifact and CI helpers
 ├── agents/          Agent activation harness and baseline snapshots
 ├── evals/           Eval runner and moderation automation
-├── release/         Release version-file update helper
+├── release/         Release version normalization and assurance helpers
 ├── devcontainer/    Devcontainer lockfile and change log validation
+├── docs/            Asset documentation generator, helper modules, and templates
 ├── extension/       VS Code extension packaging utilities
 ├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
-├── plugins/         Copilot CLI plugin generation
+├── plugins/         Copilot CLI plugin manifest synchronization
 ├── security/        Security scanning and dependency pinning scripts
 └── tests/           Pester test organization
 ```
@@ -61,13 +63,45 @@ The `agents/` directory contains the activation harness for Copilot agent cold-s
 
 See [activation-harness/README.md](agents/activation-harness/README.md) for the full harness contract and baseline workflow.
 
+## Agentic Workflows
+
+The `agentic-workflows/` directory contains trusted runtime support invoked by
+compiled Agentic Workflows. Backlog grooming uses these scripts to reconstruct
+candidate-addressed scalar calls, produce canonical shard results, and validate
+unchanged v2 artifacts before deterministic fan-in.
+
+| Script                                                    | Purpose                                                        |
+|-----------------------------------------------------------|----------------------------------------------------------------|
+| `backlog-grooming/Invoke-BacklogGroomResultCollector.ps1` | Collect scalar candidate calls into one canonical shard result |
+| `backlog-grooming/Invoke-BacklogGroomWaveValidator.ps1`   | Validate shard artifacts and produce an ordered wave aggregate |
+| `backlog-grooming/Modules/BacklogGrooming.psm1`           | Reconstruct, validate, normalize, and digest shard results     |
+
+The agent supplies semantic fields and up to five contiguous categorized
+evidence citations. After parsing and binding the call to a planned issue, the
+collector owns its structural encoding:
+
+* Derive evidence cardinality from complete contiguous category-text pairs
+* Include every evidence citation in repository evidence
+* Partition original-delivery and replacement-or-removal lineage by category
+* Construct an empty deferral reason for `Assessed` and require a non-empty reason for `Deferred`
+* Construct canonical rows, counts, cursors, provenance, timestamps, envelopes, and digests
+
+The supported superseded-similarity conversion remains an explicit `{ issue,
+code }` record in `normalizations`. Malformed JSON, missing semantic fields,
+incomplete or noncontiguous evidence pairs, unsupported enum values, duplicate
+candidate calls, and missing deferred reasons remain candidate-local contract
+errors.
+
 ## Release
 
-The `release/` directory contains the repository version-update helper used by release workflows.
+The `release/` directory contains version normalization, promotion resolution, release-asset reconciliation, and provenance verification helpers used by release workflows.
 
-| Script                    | Purpose                                                                                                                    |
-|---------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| `Update-VersionFiles.ps1` | Update version strings across package.json, package-lock.json, extension manifests, plugin metadata, and release manifests |
+| Script                                | Purpose                                                    |
+|---------------------------------------|------------------------------------------------------------|
+| `Set-RepositoryVersion.ps1`           | Normalize the five repository-owned version targets        |
+| `Resolve-ReleasePromotionVersion.ps1` | Calculate the next branch-owned channel version            |
+| `Assert-ReleaseAssetSet.ps1`          | Reconcile one VSIX, sidecars, and channel singleton assets |
+| `Invoke-ProvenanceVerification.ps1`   | Verify release provenance through the GitHub CLI           |
 
 ## Linting Scripts
 
@@ -87,6 +121,9 @@ The `linting/` directory contains scripts for validating code quality and docume
 | `Invoke-PythonLint.ps1`            | Python linting via ruff                                   |
 | `Invoke-PythonTests.ps1`           | Python tests via pytest                                   |
 | `Validate-AdrConsistency.ps1`      | Validate ADR structure and Govern-phase consistency rules |
+| `Validate-AssetDocs.ps1`           | Validate asset documentation coverage and sync            |
+| `Validate-HookManifests.ps1`       | Validate package-scoped hook manifests                    |
+| `Validate-PlannerArtifacts.ps1`    | Validate AI artifact footers and planner disclaimers      |
 
 See [linting/README.md](linting/README.md) for detailed documentation.
 
@@ -94,17 +131,70 @@ See [linting/README.md](linting/README.md) for detailed documentation.
 
 The `evals/` directory contains PowerShell entry points for agent-behavior, baseline-equivalence, moderation, and other eval automation.
 
-| Script                           | Purpose                                                                  |
-|----------------------------------|--------------------------------------------------------------------------|
-| `Build-AgentBehaviorSpec.ps1`    | Regenerate the agent-behavior eval spec from per-agent stimulus partials |
-| `Build-AgentInventory.ps1`       | Generate the authoritative agent inventory used by eval suites           |
-| `Invoke-AgentMatrix.ps1`         | Run the agent-behavior matrix and aggregate per-agent summaries          |
-| `Invoke-BaselineEquivalence.ps1` | Run baseline-vs-customized equivalence evals for a target agent          |
-| `Invoke-ContentModeration.ps1`   | Invoke the content moderation CLI over prompt or output content          |
-| `Invoke-CorpusModeration.ps1`    | Moderate changed AI corpus content from the changed-artifact manifest    |
-| `Invoke-VallyEvals.ps1`          | Execute vally evals for changed AI artifacts                             |
+| Script                                    | Purpose                                                                             |
+|-------------------------------------------|-------------------------------------------------------------------------------------|
+| `Build-AgentBehaviorSpec.ps1`             | Regenerate the agent-behavior eval spec from per-agent stimulus partials            |
+| `Build-AgentInventory.ps1`                | Generate the authoritative agent inventory used by eval suites                      |
+| `Build-GraderLineageMap.ps1`              | Build or check the Vally grader-name lineage map                                    |
+| `Get-AgentDependencyMap.ps1`              | Build a JSON map of agent dependencies for the baseline-equivalence dispatcher      |
+| `Get-EvalChangeSet.ps1`                   | Freeze explicit base/head commits, their merge base, and changed paths              |
+| `Get-ChangedAIArtifact.ps1`               | Classify AI customization artifacts from the canonical eval change set              |
+| `Get-ChangedSpecStimulus.ps1`             | Resolve changed stimuli from canonical comparison-base and head content             |
+| `Invoke-AgentMatrix.ps1`                  | Run the agent-behavior matrix and aggregate per-agent summaries                     |
+| `Invoke-ArtifactModeration.ps1`           | Moderate all eval specs plus changed AI artifacts as a pre-job gate                 |
+| `Invoke-BaselineEquivalence.ps1`          | Run baseline-vs-customized equivalence evals for a target agent                     |
+| `Invoke-ContentModeration.ps1`            | Invoke the content moderation CLI over prompt or output content                     |
+| `Invoke-CorpusModeration.ps1`             | Moderate changed AI corpus content from the changed-artifact manifest               |
+| `Invoke-RustUnitTestNetworkTrace.ps1`     | Run a prepared Rust crate under network-denied containment                          |
+| `Invoke-VallyEvals.ps1`                   | Execute vally evals for changed AI artifacts                                        |
+| `Merge-BaselineEquivalence.ps1`           | Merge isolated baseline-equivalence model summaries                                 |
+| `Merge-EvalExecution.ps1`                 | Merge all planned eval producer summaries into one authoritative result             |
+| `New-AgentEvalPlan.ps1`                   | Build a deterministic execution plan for PR agent evaluations                       |
+| `New-AgentMatrixDashboard.ps1`            | Render a self-contained HTML dashboard for the per-agent behavior matrix            |
+| `New-EquivalenceDashboard.ps1`            | Render a self-contained HTML dashboard for a local baseline-equivalence run         |
+| `Test-CopilotToken.ps1`                   | Pre-flight probe for the `COPILOT_GITHUB_TOKEN` secret used by vally evals          |
+| `Test-EvalSpec.ps1`                       | Validate vally eval spec files against the embedded schema                          |
+| `Test-EvalSpecText.ps1`                   | Run retext-equality and retext-profanities against the AI-artifact markdown corpus  |
+| `Test-StimulusPresence.ps1`               | Verify every changed AI artifact has a matching eval-spec stimulus backlink         |
+| `Test-VallyTestSafety.ps1`                | Repo-wide safety lint flagging eval stimuli and corpora that need refusal coverage  |
+| `Update-AgentMatrixSummariesFromLogs.ps1` | Rebuild per-agent matrix JSON summaries from existing vally logs without re-running |
 
-See [../evals/README.md](../evals/README.md) for the broader eval framework documentation.
+Most of these run through CI-owned `ci:eval:*` package scripts. See
+[../docs/contributing/evals-ci.md](../docs/contributing/evals-ci.md) for the command
+taxonomy and prerequisites, and [../evals/README.md](../evals/README.md) for the broader
+eval framework documentation.
+
+`Get-AgentDependencyMap.ps1`, `Get-EvalChangeSet.ps1`, `Get-ChangedAIArtifact.ps1`, `Get-ChangedSpecStimulus.ps1`,
+`Test-CopilotToken.ps1`, and `Update-AgentMatrixSummariesFromLogs.ps1` have no
+package-script wrapper and are invoked directly by workflows or run ad hoc with
+`pwsh -NoProfile -File`.
+
+### Immutable change selection
+
+Generate the comparison once, then pass its manifest to both selectors:
+
+```powershell
+pwsh -NoProfile -File scripts/evals/Get-EvalChangeSet.ps1 -BaseRef origin/main -HeadRef feature-branch
+pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set.json
+pwsh -NoProfile -File scripts/evals/Get-ChangedSpecStimulus.ps1 -ChangeSetPath logs/eval-change-set.json
+```
+
+The PR workflow passes GitHub's test-merge commit as `-MergeRef` and the pull
+request head SHA as `-HeadRef`. The generator uses the merge commit's first
+parent as the base, which is exactly the base-branch commit the checkout
+integrates, after verifying the merge has two parents and its second parent is
+the head. Any other shape fails rather than guessing. Manual dispatch has no
+merge commit and uses `-BaseRef origin/main`. The merge checkout still executes
+the tooling, but cannot add newer `main` changes to the selection.
+`eval-change-set.json` records resolved `baseRef`, `headRef`, `comparisonBase`,
+and ordered `changes`. Changed-spec content and package patches use
+`comparisonBase` and `headRef`, never the working tree. Renamed and copied
+specs are treated as additions, so every backlinked stimulus runs.
+
+The selectors require this manifest; their former `BaseRef` and `HeadRef`
+parameters are removed. An empty comparison succeeds with `changes: []`.
+Invalid revisions, malformed manifests, and unexpected Git content failures
+terminate explicitly rather than triggering a full evaluation as a fallback.
 
 ## Devcontainer Scripts
 
@@ -122,49 +212,88 @@ npm run validate:devcontainer-lockfile
 npm run validate:devcontainer-changelog
 ```
 
+## Docs
+
+The `docs/` directory contains the asset documentation generator, shared helper modules, and templates.
+
+| Script                     | Purpose                                                                                                                                                                                         |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Generate-AssetDocs.ps1`   | Deterministic generator that creates and refreshes reference pages, safely removes untouched orphan scaffolds, preserves authored or ambiguous orphans, and supports `-WhatIf` drift reporting. |
+| `Modules/DocsHelpers.psm1` | Shared helper module for asset enumeration, path resolution, and generated-region marker split/merge.                                                                                           |
+
+Run locally:
+
+```bash
+npm run docs:generate
+npm run docs:generate:check
+npm run lint:asset-docs
+```
+
+The generator removes an orphan only when its generated markers are intact and
+its human-section tail still matches a canonical scaffold exactly. Other
+orphans are preserved and reported for manual disposition. The asset-doc lint
+fails on orphan pages, missing current pages, and generated-region drift.
+
 ## Security Scripts
 
 The `security/` directory contains scripts for security scanning and dependency management:
 
-| Script                              | Purpose                                   |
-|-------------------------------------|-------------------------------------------|
-| `Test-DependencyPinning.ps1`        | Validate dependency pinning compliance    |
-| `Test-SHAStaleness.ps1`             | Check for outdated SHA pins               |
-| `Update-ActionSHAPinning.ps1`       | Automate updating GitHub Actions SHA pins |
-| `Test-ActionVersionConsistency.ps1` | Validate action version consistency       |
+| Script                              | Purpose                                                              |
+|-------------------------------------|----------------------------------------------------------------------|
+| `Install-PSModules.ps1`             | Install pinned PowerShell modules for local and CI environments      |
+| `Invoke-PipAudit.ps1`               | Audit Python dependencies for known vulnerabilities                  |
+| `Sign-PlannerArtifacts.ps1`         | Generate a SHA-256 manifest for planner artifacts and sign it        |
+| `Test-ActionVersionConsistency.ps1` | Validate action version consistency                                  |
+| `Test-DangerousWorkflow.ps1`        | Detect template-injection patterns in GitHub Actions workflows       |
+| `Test-DependencyPinning.ps1`        | Validate dependency pinning compliance                               |
+| `Test-PrValidationGate.ps1`         | Validate that the PR-validation gate job depends on every other job  |
+| `Test-PSModulePins.ps1`             | Validate PowerShell module version pins against the canonical config |
+| `Test-PublicDependencyFeeds.ps1`    | Validate that committed dependency metadata uses public feeds        |
+| `Test-SHAStaleness.ps1`             | Check for outdated SHA pins                                          |
+| `Test-WorkflowPermissions.ps1`      | Validate least-privilege permissions in workflows                    |
+| `Update-ActionSHAPinning.ps1`       | Automate updating GitHub Actions SHA pins                            |
+
+Run locally:
+
+```bash
+npm run lint:dangerous-workflow
+npm run lint:pr-gate
+npm run lint:ps-module-pins
+npm run lint:public-dependency-feeds
+npm run security:sign
+```
+
+`Install-PSModules.ps1`, `Test-SHAStaleness.ps1`, and `Update-ActionSHAPinning.ps1` have no
+package-script wrapper and are invoked directly by CI: `Install-PSModules.ps1` by the
+`setup-ps-modules` composite action and `copilot-setup-steps.yml`, `Test-SHAStaleness.ps1`
+by `sha-staleness-check.yml`, and `Update-ActionSHAPinning.ps1` by
+`weekly-security-maintenance.yml`. Run them ad hoc with `pwsh -NoProfile -File`.
+
+See [security/README.md](security/README.md) for detailed documentation.
 
 ## Plugins
 
-Copilot CLI plugin generation and validation.
+Copilot CLI plugin manifest synchronization and validation.
 
-| Script                     | Purpose                                   |
-|----------------------------|-------------------------------------------|
-| `Generate-Plugins.ps1`     | Generate plugin packages from collections |
-| `Validate-Marketplace.ps1` | Validate marketplace metadata             |
-
-## Collections
-
-Collection validation and shared helpers.
-
-| Script                     | Purpose                                    |
-|----------------------------|--------------------------------------------|
-| `Validate-Collections.ps1` | Validate collection metadata and structure |
+| Script                    | Purpose                                                            |
+|---------------------------|--------------------------------------------------------------------|
+| `Sync-PluginManifest.ps1` | Write deterministic membership or check manifest and locator drift |
 
 ## Tests
 
 Pester test organization matching the scripts structure.
 
-| Directory       | Tests For                     |
-|-----------------|-------------------------------|
-| `collections/`  | Collection helpers tests      |
-| `devcontainer/` | Devcontainer validation tests |
-| `extension/`    | Extension packaging tests     |
-| `lib/`          | Library utility tests         |
-| `linting/`      | Linting script tests          |
-| `security/`     | Security validation tests     |
-| `plugins/`      | Plugin generation tests       |
-| `Fixtures/`     | Shared test fixtures          |
-| `Mocks/`        | Shared mock data              |
+| Directory            | Tests For                                 |
+|----------------------|-------------------------------------------|
+| `agentic-workflows/` | Compiled Agentic Workflow runtime support |
+| `lib/`               | Shared helper tests                       |
+| `devcontainer/`      | Devcontainer validation tests             |
+| `extension/`         | Extension packaging tests                 |
+| `plugins/`           | Plugin manifest sync tests                |
+| `linting/`           | Linting script tests                      |
+| `security/`          | Security validation tests                 |
+| `Fixtures/`          | Shared test fixtures                      |
+| `Mocks/`             | Shared mock data                          |
 
 Run all tests:
 
@@ -207,7 +336,12 @@ When adding new scripts:
 
 ### Entry Point Guard Pattern
 
-All production scripts use a dot-source guard that enables Pester tests to import functions without executing main logic. Extract main logic into an `Invoke-*` orchestrator function and wrap direct execution in a guard block:
+All production scripts use a dot-source guard that enables Pester tests to import
+functions without executing main logic. Extract main logic into an `Invoke-*`
+orchestrator function and wrap direct execution in a guard block.
+
+Use the simple variant when the orchestrator has no meaningful result beyond success or
+failure:
 
 ```powershell
 #region Functions
@@ -235,20 +369,49 @@ if ($MyInvocation.InvocationName -ne '.') {
 #endregion Main Execution
 ```
 
+Use an `Invoke-*Core` name when the function is a stable in-process test surface. When
+the core returns a result object, keep exit codes and command-line output in the guarded
+main block:
+
+```powershell
+function Invoke-ScriptCore {
+    [CmdletBinding()]
+    param( <# script params #> )
+
+    return [PSCustomObject]@{
+        Outcome = 'Wrote'
+        OutputPath = 'output/example.yml'
+    }
+}
+
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        $result = Invoke-ScriptCore @PSBoundParameters
+        if ($result.Outcome -eq 'Drift') { exit 1 }
+        if ($result.Outcome -in 'Wrote', 'Skipped') { $result.OutputPath }
+        exit 0
+    }
+    catch {
+        Write-Error -ErrorAction Continue "ScriptName failed: $($_.Exception.Message)"
+        exit 1
+    }
+}
+```
+
 Key rules:
 
 * The `if` guard wraps `try`/`catch` (not the reverse)
-* Name the orchestrator `Invoke-*` matching the script noun
+* Name the orchestrator `Invoke-*` matching the script noun; use the `Core` suffix for a function designed for direct dot-sourced tests
+* Keep `exit` calls in the guarded main block so a dot-sourced core can return structured results to Pester
 * Use `#region Functions` and `#region Main Execution` markers
-* See [Package-Extension.ps1](extension/Package-Extension.ps1) for a canonical example
+* See [Package-Extension.ps1](extension/Package-Extension.ps1) for the established result-object pattern and [Build-AgentBehaviorSpec.ps1](evals/Build-AgentBehaviorSpec.ps1) for an `Invoke-*Core` example
 
 ## Related Documentation
 
-* [Collection Scripts Documentation](collections/README.md)
+* [Plugin Scripts Documentation](plugins/README.md)
 * [Extension Packaging Documentation](extension/README.md)
 * [Library Utilities Documentation](lib/README.md)
 * [Linting Scripts Documentation](linting/README.md)
-* [Plugin Generation Documentation](plugins/README.md)
 * [Security Scripts Documentation](security/README.md)
 * [Test Organization Documentation](tests/README.md)
 * [Agent Activation Harness Documentation](agents/activation-harness/README.md)

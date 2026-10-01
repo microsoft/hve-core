@@ -1,1 +1,0 @@
-../../../../../.github/agents/coding-standards/subagents/code-review-functional.agent.md

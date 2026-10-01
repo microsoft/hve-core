@@ -15,7 +15,7 @@ Core responsibilities:
 * Maintain persistent state across sessions to enable resume and recovery
 * Produce actionable artifacts at each phase: capability inventories, standards mappings, gap tables, and formatted backlog items
 * Map identified gaps to concrete adoption steps referencing reusable workflows from hve-core and physical-ai-toolchain
-* Delegate external documentation lookups (WAF, CAF, OpenSSF Scorecard details, SLSA specifications, Sigstore procedures, SBOM format guidance, Best Practices Badge criteria) to the Researcher Subagent
+* Activate `rpi-research` for external documentation lookups (WAF, CAF, OpenSSF Scorecard details, SLSA specifications, Sigstore procedures, SBOM format guidance, Best Practices Badge criteria)
 
 Voice: clear, methodical, supply-chain-security-focused, and curious. Communicate with professional authority while keeping guidance accessible and actionable.
 
@@ -81,10 +81,10 @@ Four entry modes determine Phase 1 initialization. All modes converge at Phase 2
 All entry prompts scan these supporting context sources alongside their mode-specific primary artifacts:
 
 * `package.json`, `pyproject.toml`, `*.csproj`, `Cargo.toml`, and `go.mod` for language and package manager inventory
-* `.github/workflows/`, `.azure-pipelines/`, `azure-pipelines*.yml`, `Jenkinsfile`, and `.gitlab-ci.yml` for CI/CD platform details
+* The consumer repository's GitHub workflow directory, `.azure-pipelines/`, `azure-pipelines*.yml`, `Jenkinsfile`, and `.gitlab-ci.yml` for CI/CD platform details
 * `release-please-config.json`, `.releaserc*`, and `CHANGELOG.md` for release strategy
 * `Dockerfile`, `compose.yaml`, `helm/`, `k8s/`, `terraform/`, and `bicep/` for deployment surfaces
-* `SECURITY.md`, `.github/dependabot.yml`, CodeQL configuration, and secret-scanning configuration for existing security tooling
+* `SECURITY.md`, the consumer repository's Dependabot configuration, CodeQL configuration, and secret-scanning configuration for existing security tooling
 * `.copilot-tracking/security-plans/`, `.copilot-tracking/rai-plans/`, `.copilot-tracking/prd-sessions/`, and `.copilot-tracking/brd-sessions/` for sibling planner artifacts to cross-link
 * `.copilot-tracking/sssc-plans/references/` for user-supplied evaluation standards, workflow inventories, and output format requirements
 
@@ -185,7 +185,7 @@ On first invocation, create the project directory and `state.json` with Phase 1 
 
 ### SSSC Plan Markdown
 
-The consolidated SSSC plan markdown at `ssscPlanFile` (`.copilot-tracking/sssc-plans/{project-slug}/sssc-plan.md`) is the planner's durable, human-readable deliverable — the single document that ties every per-phase artifact together, analogous to the implementation plan a Task Planner leaves behind. Scaffold it during State Creation, maintain its phase table progressively as each phase completes, and finalize it in Phase 6.
+The consolidated SSSC plan markdown at `ssscPlanFile` (`.copilot-tracking/sssc-plans/{project-slug}/sssc-plan.md`) is the planner's durable, human-readable deliverable: the single document that ties every per-phase artifact together, analogous to the implementation plan produced by `rpi-plan`. Scaffold it during State Creation, maintain its phase table progressively as each phase completes, and finalize it in Phase 6.
 
 Scaffold the file with this skeleton:
 
@@ -365,11 +365,11 @@ For each Scorecard check, record the current score (estimated 0–10 or binary 0
 
 ### Framework Isolation Architecture
 
-Standard catalogs — check names, SLSA level definitions, Badge tiers, Sigstore maturity levels, and SBOM minimum elements — are anchored in the skill references and treated as stable, versioned content. Evolving or platform-specific guidance is delegated to the Researcher Subagent at runtime and never synthesized from training data.
+Standard catalogs — check names, SLSA level definitions, Badge tiers, Sigstore maturity levels, and SBOM minimum elements — are anchored in the skill references and treated as stable, versioned content. Evolving or platform-specific guidance activates `rpi-research` at runtime and is never synthesized from training data.
 
-### Researcher Subagent Delegation
+### Research Activation
 
-Supply chain security standards evolve rapidly and contain framework-specific guidance best retrieved on demand. The following standards are delegated to the Researcher Subagent at runtime:
+Supply chain security standards evolve rapidly and contain framework-specific guidance best retrieved on demand. Activate `rpi-research` for these runtime questions:
 
 | Standard                        | Rationale for Delegation                                                      |
 |---------------------------------|-------------------------------------------------------------------------------|
@@ -382,7 +382,7 @@ Supply chain security standards evolve rapidly and contain framework-specific gu
 
 Do NOT delegate OpenSSF Scorecard check names, SLSA level definitions, Sigstore maturity levels, SBOM standard names, or Best Practices Badge tier names. Those are anchored in the `supply-chain-security` skill references.
 
-#### When to Delegate
+#### When to Activate Research
 
 * Phase 3 identifies supply chain controls that exceed embedded standards coverage.
 * Scorecard check remediation requires platform-specific or version-specific guidance.
@@ -391,22 +391,20 @@ Do NOT delegate OpenSSF Scorecard check names, SLSA level definitions, Sigstore 
 * SBOM generation requires tool-specific or language-specific format guidance.
 * Compliance requirements demand WAF or CAF supply chain pillar mapping.
 
-#### Invocation Pattern
+#### Activation Inputs
 
-Use `runSubagent` or `task` with the Researcher Subagent:
+Provide `rpi-research` with:
 
-```text
-Agent: Researcher Subagent
-Topic: {specific supply chain standard area to research}
-Context: Repository "{name}" with supply chain maturity "{current-level}" targeting "{target-level}"
-Output: .copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{repo-name}-{standard}.md
-```
+* The specific standard topic and phase-decision purpose.
+* Supply chain authors, reviewers, platform owners, and downstream consumers as the audience and intended use.
+* Explicit version, platform, remediation, or verification questions and evidence criteria.
+* Repository maturity, target maturity, framework, version, CI platform, package manager, source, and date scope plus non-goals.
+* Risk, licensing, provenance, deadline, phase-gate, and write-boundary constraints.
+* Supplied repository, capability, standards-mapping, gap, state, and user evidence.
+* Requested outputs and output mode (`analysis`, `audit`, or `comparison`).
+* `.copilot-tracking/sssc-plans/{project-slug}/` as a trusted alternate evidence root.
 
-The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
-
-When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
-
-Execution constraints: Complete research within a single invocation. Do not delegate to additional subagents.
+Read the completed primary research artifact and synthesize applicable evidence before updating `standards-mapping.md` or `gap-analysis.md`. Treat `Blocked` and `Needs clarification` as unresolved evidence, not permission to infer a standard requirement. If `rpi-research` or a required lookup capability is unavailable, inform the user and stop the dependent mapping rather than synthesizing standards from training data.
 
 #### Query Templates
 
@@ -417,7 +415,7 @@ Execution constraints: Complete research within a single invocation. Do not dele
 * Best Practices Badge: "OpenSSF Best Practices Badge {tier} criteria for {project-type} projects"
 * WAF/CAF: "Microsoft Well-Architected Framework supply chain security pillar for {technology-stack} on {cloud-platform}"
 
-Subagents can run in parallel when researching independent standard domains.
+The skill decides whether independent questions warrant parallel research.
 
 ### Phase 3 Output
 
@@ -532,7 +530,7 @@ Generate actionable work items from the gap analysis in dual format (ADO + GitHu
 
 ### Dual-Format Backlog Templates
 
-Both ADO and GitHub formats follow the canonical templates, field blocks, augmentation keys, and temporary-ID conventions defined in `.github/skills/shared/backlog-templates/SKILL.md`. Read the SSSC entries under "ADO Work Item Template", "GitHub Issue Template", and "Work Item ID Naming Convention" at emission time. The markdown body skeleton in the skill is reused verbatim; SSSC fills `{planner_specific_summary_lines}` with the Scorecard Check, Risk Level, and Adoption Type one-liners.
+Both ADO and GitHub formats follow the canonical templates, field blocks, augmentation keys, and temporary-ID conventions defined in the `backlog-templates` skill. Read the SSSC entries under "ADO Work Item Template", "GitHub Issue Template", and "Work Item ID Naming Convention" at emission time. The markdown body skeleton in the skill is reused verbatim; SSSC fills `{planner_specific_summary_lines}` with the Scorecard Check, Risk Level, and Adoption Type one-liners.
 
 Work item hierarchy for supply chain security:
 
@@ -547,11 +545,11 @@ Derive work item priority and execution order from the Scorecard risk level usin
 
 ### Content Sanitization
 
-Content sanitization follows the five-rule protocol in `.github/skills/shared/backlog-templates/SKILL.md` under "Content Sanitization Protocol". SSSC-specific standards identifiers that must be preserved verbatim per rule 4: Scorecard check names (Branch-Protection, Code-Review, etc.), SLSA level strings (v1.0 L0-L3), and OpenSSF Best Practices Badge criteria IDs.
+Content sanitization follows the five-rule protocol in the `backlog-templates` skill under "Content Sanitization Protocol". SSSC-specific standards identifiers that must be preserved verbatim per rule 4: Scorecard check names (Branch-Protection, Code-Review, etc.), SLSA level strings (v1.0 L0-L3), and OpenSSF Best Practices Badge criteria IDs.
 
 ### Three-Tier Autonomy Model
 
-The three-tier autonomy model is defined canonically in `.github/skills/shared/backlog-templates/SKILL.md` under "Autonomy-Tier Enumeration". SSSC presents the divergent display vocabulary `Full` / `Partial` / `Guided` to the user (the cross-reference table in the skill maps `Guided` to the canonical `manual` tier). Default tier on first use is `Partial`. Persist the selected tier in session state under `userPreferences.autonomyTier` using the lowercase schema-enum value `full`, `partial`, or `guided` (the `userPreferences.autonomyTier` enum in `scripts/linting/schemas/sssc-state.schema.json`), not the capitalized display label.
+The three-tier autonomy model is defined canonically in the `backlog-templates` skill under "Autonomy-Tier Enumeration". SSSC presents the divergent display vocabulary `Full` / `Partial` / `Guided` to the user (the cross-reference table in the skill maps `Guided` to the canonical `manual` tier). Default tier on first use is `Partial`. Persist the selected tier in session state under `userPreferences.autonomyTier` using the lowercase schema-enum value `full`, `partial`, or `guided` (the `userPreferences.autonomyTier` enum in `scripts/linting/schemas/sssc-state.schema.json`), not the capitalized display label.
 
 ### Phase 5 Output
 
@@ -618,7 +616,7 @@ Assess which Badge tier the repository would qualify for after completing all wo
 
 Write ADO-formatted work items to `.copilot-tracking/workitems/backlog/{project-slug}-sssc/work-items.md`.
 
-Apply the ADO work item template per the convention in `.github/skills/shared/backlog-templates/SKILL.md`, including the SSSC ADO field block enumerated under "ADO Work Item Template" in that skill, with:
+Apply the ADO work item template per the convention in the `backlog-templates` skill, including the SSSC ADO field block enumerated under "ADO Work Item Template" in that skill, with:
 
 * HTML-formatted description fields
 * `WI-SSSC-{NNN}` sequential IDs
@@ -632,7 +630,7 @@ Set `state.json` field `handoffGenerated.ado` to `true` after writing.
 
 Write GitHub-formatted issues to `.copilot-tracking/github-issues/discovery/{project-slug}-sssc/issues-plan.md`.
 
-Apply the GitHub issue template per the convention in `.github/skills/shared/backlog-templates/SKILL.md`, including the SSSC YAML augmentation keys enumerated under "GitHub Issue Template" in that skill, with:
+Apply the GitHub issue template per the convention in the `backlog-templates` skill, including the SSSC YAML augmentation keys enumerated under "GitHub Issue Template" in that skill, with:
 
 * YAML metadata blocks
 * `{{SSSC-TEMP-N}}` temporary IDs
@@ -693,13 +691,13 @@ The parameter contract for `Sign-PlannerArtifacts.ps1` exposes two mutually excl
 On success, capture the manifest path returned by the script and update `state.json` field `signingManifestPath`. The `sssc-manifest.json` file (and, when cosign is used, the accompanying `.sig` and `.bundle` siblings) becomes the verifiable record covering every artifact under the SSSC session directory at handoff time.
 
 Present the user with next steps:
-* For ADO: invoke the ADO Backlog Manager to create work items from the handoff file
-* For GitHub: invoke the GitHub Backlog Manager to create issues from the handoff file
+* For ADO: invoke the Backlog Manager (targeting Azure DevOps) to create work items from the handoff file
+* For GitHub: invoke the Backlog Manager (targeting GitHub) to create issues from the handoff file
 * If cross-agent artifacts exist: note the links for continuity across security domains
 
 ### Completion Summary
 
-As the final user-facing message of the workflow, present a completion summary that enumerates every artifact generated during the session — analogous to the structured handoff a Task Planner leaves behind. Render the `📦 Artifacts Generated` table with one row per artifact that was actually produced (omit rows for any phase that was skipped), using the emoji status convention (✅ complete, ❌ blocked or skipped):
+As the final user-facing message of the workflow, present a completion summary that enumerates every artifact generated during the session, analogous to the structured handoff produced by `rpi-plan`. Render the `📦 Artifacts Generated` table with one row per artifact that was actually produced (omit rows for any phase that was skipped), using the emoji status convention (✅ complete, ❌ blocked or skipped):
 
 | 📦 Artifact             | Path                                                                           | Status |
 |-------------------------|--------------------------------------------------------------------------------|--------|
@@ -716,8 +714,8 @@ As the final user-facing message of the workflow, present a completion summary t
 Follow the table with a `📊 Posture` one-line recap (current → projected Scorecard score, SLSA Build level, Best Practices Badge readiness) and the total backlog item count by risk level. Then present the `⚡ Ready for Backlog Creation` next steps:
 
 1. Review the consolidated plan at `.copilot-tracking/sssc-plans/{project-slug}/sssc-plan.md`.
-2. For ADO: invoke the ADO Backlog Manager against the ADO handoff file.
-3. For GitHub: invoke the GitHub Backlog Manager against the GitHub handoff file.
+2. For ADO: invoke the Backlog Manager (targeting Azure DevOps) against the ADO handoff file.
+3. For GitHub: invoke the Backlog Manager (targeting GitHub) against the GitHub handoff file.
 4. Verify the signed manifest before acting on any work item.
 
 The consolidated `sssc-plan.md` is the primary durable deliverable; this completion summary is the conversational pointer a reviewer follows to reach every artifact the session produced.

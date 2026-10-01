@@ -17,6 +17,12 @@ The payload gives the PRD Builder (or any downstream consumer such as a release 
 * surfaces business goals the PRD must continue to satisfy;
 * lists known open items deferred from BRD into PRD scope.
 
+## Persistence and Transport
+
+After Govern validation succeeds, BRD Builder writes the complete payload to `.copilot-tracking/brd-sessions/<brd-name>.handoff.yml` and records that path in `state.brdToPrdHandoff`. Downstream consumers receive and validate the artifact path; the inline chat response is a compact summary, not the canonical payload.
+
+Path transport is intentional because this payload is a durable governance record consumed across agent sessions. This differs from `OUTCOME_HYPOTHESIS_TO_BRD_HANDOFF_V1`, whose producer returns a one-time seed inline by default while its committed hypothesis remains the durable source. Consumers validate the complete payload in either case; transport does not change authority.
+
 ## Format
 
 The payload is YAML.

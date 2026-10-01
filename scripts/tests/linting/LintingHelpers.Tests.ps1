@@ -190,6 +190,43 @@ Describe 'Get-ChangedFilesFromGit' {
         }
     }
 
+    Context 'Deleted and renamed paths' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('old-name.ps1', 'new-name.ps1', 'deleted.ps1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+        }
+
+        It 'Includes deleted paths when requested' {
+            $result = Get-ChangedFilesFromGit -FileExtensions @('*.ps1') -IncludeDeleted
+
+            $result | Should -Contain 'deleted.ps1'
+        }
+
+        It 'Returns both paths of a rename when requested' {
+            $result = Get-ChangedFilesFromGit -FileExtensions @('*.ps1') -IncludeDeleted
+
+            $result | Should -Contain 'old-name.ps1'
+            $result | Should -Contain 'new-name.ps1'
+        }
+
+        It 'Disables rename detection and includes delete statuses' {
+            Get-ChangedFilesFromGit -FileExtensions @('*.ps1') -IncludeDeleted | Out-Null
+
+            Should -Invoke git -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args[0] -eq 'diff' -and
+                $args -contains '--no-renames' -and
+                $args -contains '--diff-filter=ACMRD'
+            } -Times 2 -Exactly
+        }
+    }
+
     Context 'Empty and whitespace file entries' {
         BeforeEach {
             Mock git {

@@ -3,7 +3,7 @@ title: "Stage 9: Operations"
 description: Monitor production systems, respond to incidents, and maintain documentation post-delivery
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-07-15
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -29,27 +29,30 @@ You enter Operations after completing the final sprint delivery in [Stage 8: Del
 
 ### Primary Agents
 
-| Tool           | Type  | How to Invoke                   | Purpose                                          |
-|----------------|-------|---------------------------------|--------------------------------------------------|
-| documentation  | Agent | Select **documentation** agent  | Audit, drift, author, and validate documentation |
-| prompt-builder | Agent | Select **prompt-builder** agent | Refine and optimize operational prompts          |
+| Tool          | Type  | How to Invoke                  | Purpose                                          |
+|---------------|-------|--------------------------------|--------------------------------------------------|
+| documentation | Agent | Select **documentation** agent | Audit, drift, author, and validate documentation |
 
 ### Prompts
 
-| Tool              | Type   | How to Invoke        | Purpose                               |
-|-------------------|--------|----------------------|---------------------------------------|
-| incident-response | Prompt | `/incident-response` | Document and triage incidents         |
-| prompt-analyze    | Prompt | `/prompt-analyze`    | Evaluate prompt effectiveness         |
-| prompt-refactor   | Prompt | `/prompt-refactor`   | Refactor and improve existing prompts |
-| checkpoint        | Prompt | `/checkpoint`        | Save operational state for continuity |
+| Tool              | Type   | How to Invoke        | Purpose                       |
+|-------------------|--------|----------------------|-------------------------------|
+| incident-response | Prompt | `/incident-response` | Document and triage incidents |
 
 ### Auto-Activated Instructions
 
-| Instruction    | Activates On | Purpose                             |
-|----------------|--------------|-------------------------------------|
-| writing-style  | `**/*.md`    | Enforces voice and tone conventions |
-| markdown       | `**/*.md`    | Enforces Markdown formatting rules  |
-| prompt-builder | AI artifacts | Enforces authoring standards        |
+| Instruction   | Activates On | Purpose                             |
+|---------------|--------------|-------------------------------------|
+| writing-style | `**/*.md`    | Enforces voice and tone conventions |
+| markdown      | `**/*.md`    | Enforces Markdown formatting rules  |
+| hve-builder   | AI artifacts | Enforces authoring standards        |
+
+### Skills
+
+| Skill        | Purpose                                                 |
+|--------------|---------------------------------------------------------|
+| hve-builder  | Review, refactor, or validate operational AI artifacts  |
+| rpi-research | Investigate decision-critical operational evidence gaps |
 
 ### Templates
 
@@ -97,38 +100,31 @@ and the setup guides may reference outdated flags or file paths.
 ### Prompt Refinement
 
 ```text
-/prompt-analyze .github/prompts/hve-core/task-research.prompt.md
+Use hve-builder with mode=review and
+targets=.github/prompts/security/incident-response.prompt.md. Evaluate its
+activation, operational safeguards, output contract, and host compatibility.
 ```
 
-After analysis, apply the suggested improvements:
+After review, use `hve-builder` improve or refactor mode only when source
+changes are approved.
+
+To create a new prompt from an existing implementation file, use
+`hve-builder` create mode:
 
 ```text
-/prompt-refactor .github/prompts/hve-core/task-research.prompt.md Remove
-duplicate input declarations and consolidate the research scope section
-into a single structured list.
-```
-
-To create a new prompt from an existing implementation file, select **prompt-builder** agent:
-
-```text
-Create a prompt from src/api/handlers/search.py that generates search
+Use hve-builder with mode=create. Create a prompt from
+src/api/handlers/search.py that generates search
 handler implementations following the same query parsing, pagination,
 and response envelope patterns.
 ```
 
 ### Operational Continuity
 
-Save conversation state before ending a session:
-
-```text
-/checkpoint mode=save description=incident-response-playbook-updates
-```
-
-Resume a previous session:
-
-```text
-/checkpoint mode=continue description=incident-response
-```
+Resume operational work from the artifacts owned by the active workflow. For
+incident response, reopen the current incident report or runbook and continue
+from its recorded status and next actions. For documentation work, resume from
+the Documentation workflow's session record and target files. For HVE Builder,
+resume from its author, review, behavior, and validation evidence.
 
 ## Stage Outputs and Next Stage
 

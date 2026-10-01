@@ -2,7 +2,13 @@
 title: Code Review Functional
 description: Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings
 sidebar_position: 3
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - coding-standards
+  - code-review-functional
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,10 +28,8 @@ Thin skill-backed perspective subagent that reviews a precomputed diff for funct
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Code Review dispatches this perspective for logic, edge cases, error handling, concurrency, and behavioral contracts in a precomputed diff. It leaves naming and formatting rules to the Standards perspective. Users invoke the parent review workflow, not this delegated worker.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+For a retry-loop change, the parent supplies a `perspective_batch` task, diff and untracked-file evidence, depth, hotspots, exclusions, and `task.outputs.functional`. The worker returns JSON findings with exact code evidence and suggested fixes, plus severity counts and the output path. It does not modify the implementation or turn cosmetic preferences into functional defects.

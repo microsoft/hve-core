@@ -2,7 +2,13 @@
 title: SSSC Reviewer
 description: "Evidence-based reviewer for repository supply-chain security posture with audit, diff, and plan review modes"
 sidebar_position: 4
-ms.date: 2026-07-03
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - security
+  - sssc-reviewer
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,15 +28,17 @@ Evidence-based reviewer for repository supply-chain security posture with audit,
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Use SSSC Reviewer to assess supply-chain posture across repository configuration, dependencies, CI/CD, release integrity, provenance, and SBOM evidence. It supports full audits, change-focused reviews, and plan reviews. Use Security Reviewer for broader application-security concerns or SSSC Planner for a guided remediation plan.
 
 ## How to use it
 
-<!-- asset-docs:stub -->
-Walk through invoking this asset step by step. Remove this section when the asset is not interactive.
+1. Select `SSSC Reviewer` and supply `audit`, `diff`, or `plan` mode with the repository scope, PR context, changed files, or plan.
+2. Provide existing supply-chain evidence and any prior report for comparison.
+3. Review the assessment, verification limits, and prioritized recommendations. Keep plan risks distinct from observed repository findings.
+4. If requesting a VEX assessment, provide the affected product and vulnerability evidence and retain the separate human acceptance and document-mutation gates.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+Ask: "Review the release-workflow changes in diff mode. Assess action pinning, permissions, provenance, and artifact integrity. Keep the report scoped to current evidence and do not publish a VEX document."
+
+Expect a supply-chain-specific report with actionable findings, evidence, and exclusions. Success means the review does not infer release assurance or vulnerability applicability from missing data.

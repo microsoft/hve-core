@@ -8,6 +8,10 @@ set -euo pipefail
 
 # Set based on user's earlier choice: 'code' or 'code-insiders'
 code_cli="${code_cli:-code}"
+if [[ "$code_cli" != "code" && "$code_cli" != "code-insiders" ]]; then
+    echo "❌ Invalid code_cli '$code_cli'. Allowed values: code, code-insiders." >&2
+    exit 1
+fi
 
 # Check if extension is installed
 if "$code_cli" --list-extensions 2>/dev/null | grep -q "ise-hve-essentials.hve-core"; then

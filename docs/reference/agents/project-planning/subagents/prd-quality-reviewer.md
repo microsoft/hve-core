@@ -1,8 +1,14 @@
 ---
 title: PRD Quality Reviewer
 description: Read-only PRD quality reviewer that emits both PRD_STANDARD_FINDINGS_V1 and PRD_QUALITY_REPORT_V1 payloads
-sidebar_position: 2
-ms.date: 2026-07-05
+sidebar_position: 5
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - project-planning
+  - prd-quality-reviewer
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,10 +28,8 @@ Read-only PRD quality reviewer that emits both PRD_STANDARD_FINDINGS_V1 and PRD_
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+PRD Builder dispatches this read-only worker during Validate or Finalize to assess testability, product-goal traceability, constraints, and the separation of requirements from design decisions. It returns quality evidence to the builder rather than editing the document or approving it on behalf of stakeholders.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies a PRD draft and active `Validate` phase with the applicable taxonomy and rubric inputs. The reviewer returns `PRD_STANDARD_FINDINGS_V1` and `PRD_QUALITY_REPORT_V1` with evidence, coverage, gate decisions, and prioritized corrections. Success means the builder can identify what blocks advancement without treating a worker verdict as human approval.

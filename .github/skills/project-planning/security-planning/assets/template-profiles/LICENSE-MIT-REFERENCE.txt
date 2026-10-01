@@ -1,0 +1,3 @@
+The default profile metadata in this directory is a neutral, independently authored reference scaffold and does not itself include upstream copyrighted template assets.
+
+If a future iteration redistributes propagated template files from Microsoft threat-modeling templates, preserve the original MIT license text and attribution from the upstream source repository.

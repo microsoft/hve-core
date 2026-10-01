@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/schemas/design-intent-verification.schema.json",
+  "title": "Design Intent Verification Artifact",
+  "description": "Machine-generated verification result for one Design Intent Record, written to design-intent/.verification/<surface-id>.earl.json during a CI run and never committed. EARL-shaped vocabulary reuse only; this is not an EARL, RDF, or JSON-LD conformance claim.",
+  "type": "object",
+  "required": ["schemaVersion", "surfaceId", "intentDigest", "assertedBy", "timestamp", "assertions"],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.1",
+      "description": "Contract version of this generated artifact."
+    },
+    "surfaceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "description": "Equals the artifact filename stem and the authored record's surfaceId."
+    },
+    "intentDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "Lowercase SHA-256 of the authored record's UTF-8 content after CRLF-to-LF normalization. Proves which authored revision these results describe."
+    },
+    "assertedBy": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Tool or runner that produced these results."
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 1,
+      "description": "RFC 3339 date-time of generation. The validator parses this semantically because the schema engine does not enforce the date-time format."
+    },
+    "assertions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/assertion" },
+      "description": "Exactly one assertion per authored expectation."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "assertion": {
+      "type": "object",
+      "required": ["intentId", "expectationId", "outcome", "effectiveOutcome", "overrideConflict", "mode", "pointer", "info"],
+      "properties": {
+        "intentId": {
+          "type": "string",
+          "pattern": "^INT-\\d{3,}$"
+        },
+        "expectationId": {
+          "type": "string",
+          "pattern": "^EXP-\\d{3,}$"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": ["passed", "failed", "cantTell", "inapplicable", "untested"],
+          "description": "EARL-derived outcome vocabulary. Always the observed probe result; an authored override never replaces it."
+        },
+        "effectiveOutcome": {
+          "type": "string",
+          "enum": ["passed", "failed", "cantTell", "inapplicable", "untested"],
+          "description": "Contract-level effective outcome. Either observed or human failed yields failed; a human pass settles only unresolved observations; otherwise the observed outcome remains. This is the value the gate applies."
+        },
+        "overrideConflict": {
+          "type": "boolean",
+          "description": "True only when observed outcome and authored override outcome are each passed or failed and differ. A human override that settles an untested, cantTell, or inapplicable expectation is not a conflict."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["automatic", "manual", "semiAuto", "undisclosed", "unknownMode"],
+          "description": "EARL-derived test mode vocabulary."
+        },
+        "pointer": {
+          "type": ["string", "null"],
+          "description": "Optional location of the evidence, such as a selector or source reference."
+        },
+        "info": {
+          "type": ["string", "null"],
+          "description": "Optional machine-generated detail. Required and non-empty when the outcome is inapplicable."
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": { "outcome": { "const": "inapplicable" } },
+            "required": ["outcome"]
+          },
+          "then": {
+            "properties": { "info": { "type": "string", "minLength": 1 } },
+            "required": ["info"]
+          },
+          "$comment": "An inapplicable result must say why it did not apply."
+        }
+      ],
+      "$comment": "No human-authored field appears here. 'outcome' records observedOutcome only. 'effectiveOutcome' applies fail-safe precedence across observation and authored override. 'overrideConflict' marks a conclusive disagreement between observed and authored outcomes."
+    }
+  }
+}

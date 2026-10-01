@@ -1,0 +1,14 @@
+{
+  "name": "hve-core-marketplace-publisher",
+  "version": "0.0.0",
+  "description": "Minimal pinned toolchain for VS Code Marketplace publication",
+  "private": true,
+  "license": "MIT",
+  "dependencies": {
+    "@vscode/vsce": "4.0.0"
+  },
+  "overrides": {
+    "fast-uri": "3.1.7",
+    "qs": "6.16.0"
+  }
+}

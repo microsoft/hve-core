@@ -9,8 +9,8 @@ import {
   DesignThinkingIcon,
   TemplatesExamplesIcon,
   VsCodeExtensionIcon
-} from '../components/Icons';
-import { labelRegistry } from '../data/labelRegistry';
+} from '../components/Icons/index.tsx';
+import { labelRegistry } from '../data/labelRegistry.ts';
 
 export interface IconCardData {
   icon: React.ReactNode;

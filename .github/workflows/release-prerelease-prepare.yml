@@ -1,0 +1,484 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Pre-Release Promotion Preparation
+
+# Opens or refreshes the reviewed main -> release/prerelease promotion pull
+# request. Release preparation and creation begin only after that promotion
+# merges, when release-prerelease.yml runs release-please on release/prerelease.
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+  workflow_dispatch:
+
+# One promotion at a time per target branch. A cancelled run could leave the
+# stable per-hop promotion head half-refreshed.
+concurrency:
+  group: ${{ github.workflow }}-release/prerelease
+  cancel-in-progress: false
+
+# Minimal permissions for security
+permissions:
+  contents: read
+
+env:
+  SOURCE_BRANCH: main
+  BASE_BRANCH: release/prerelease
+  PROMOTION_HEAD: release-promotion--main--to--release-prerelease
+  TARGET_CONFIG: release-please-prerelease-config.json
+  TARGET_MANIFEST: .release-please-prerelease-manifest.json
+
+jobs:
+  prepare-promotion:
+    name: Prepare Pre-Release Promotion
+    if: >
+      github.event_name == 'workflow_dispatch'
+      || (
+        github.event.pull_request.merged == true
+        && github.event.pull_request.base.ref == 'main'
+        && github.event.pull_request.head.repo.full_name == github.repository
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      promote: ${{ steps.promote.outputs.promote }}
+      version: ${{ steps.resolve.outputs.version }}
+      source-sha: ${{ steps.state.outputs.source-sha }}
+      prerelease-baseline: ${{ steps.state.outputs.prerelease-baseline }}
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      # Executable release tooling always comes from main, never from the
+      # promotion head or from the release branch being prepared.
+      - name: Checkout trusted release tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          sparse-checkout: |
+            scripts/release/Resolve-ReleasePromotionVersion.ps1
+            scripts/release/Set-RepositoryVersion.ps1
+            scripts/plugins/Sync-PluginManifest.ps1
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      # Full history: the promotion merges the whole range between main
+      # and the target branch, which shallow history cannot express.
+      - name: Checkout promotion working tree
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          path: promotion
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
+
+      - name: Resolve promotion state
+        id: state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/promotion"
+
+          # The anchor is both the changelog commit cutoff and the seed identity,
+          # so it is captured from the current source configuration before any
+          # target-owned restore can replace that file with a copy the seeded
+          # branch predates or never carried.
+          BOOTSTRAP_SHA=$(jq -r '.packages["."]["bootstrap-sha"] // ""' "$TARGET_CONFIG")
+          if ! printf '%s' "$BOOTSTRAP_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::$TARGET_CONFIG carries no lowercase 40-character bootstrap-sha anchor"
+            exit 1
+          fi
+
+          # A release branch is seeded and protected by hand. The config anchor
+          # names the exact commit it is created at; this workflow never creates
+          # or moves a branch.
+          if ! git ls-remote --exit-code --heads origin "$BASE_BRANCH" >/dev/null 2>&1; then
+            echo "::notice::$BASE_BRANCH does not exist yet; create it at $TARGET_CONFIG bootstrap-sha $BOOTSTRAP_SHA and protect it before promotions can open"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git fetch --no-tags origin \
+            "+refs/heads/$SOURCE_BRANCH:refs/remotes/origin/$SOURCE_BRANCH" \
+            "+refs/heads/$BASE_BRANCH:refs/remotes/origin/$BASE_BRANCH"
+
+          SOURCE_SHA=$(git rev-parse "refs/remotes/origin/$SOURCE_BRANCH")
+
+          if [ "$(git rev-list --count "refs/remotes/origin/$BASE_BRANCH..refs/remotes/origin/$SOURCE_BRANCH")" -eq 0 ]; then
+            echo "::notice::$SOURCE_BRANCH has no commits ahead of $BASE_BRANCH"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Interlock: a managed release pull request owns the target
+          # branch until it merges, and a foreign promotion head would
+          # race this one.
+          managed_release_pr_count=$(gh pr list --base "$BASE_BRANCH" --state open \
+            --json headRefName --jq '[.[] | select(.headRefName | startswith("release-please--"))] | length' \
+            -R "$REPOSITORY")
+          if [ "$managed_release_pr_count" -ne 0 ]; then
+            echo "::notice::A managed release pull request is still open on $BASE_BRANCH"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          foreign_promotion_pr_count=$(gh pr list --base "$BASE_BRANCH" --state open \
+            --json headRefName --jq '[.[] | select(.headRefName | startswith("release-promotion--")) | select(.headRefName != env.PROMOTION_HEAD)] | length' \
+            -R "$REPOSITORY")
+          if [ "$foreign_promotion_pr_count" -ne 0 ]; then
+            echo "::notice::Another promotion pull request is still open on $BASE_BRANCH"
+            echo "continue=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # The seed commit predates branch-local PreRelease release-please
+          # state, and the first reviewed promotion is what introduces it from
+          # the merged source. Until then the baseline comes from the seeded
+          # catalog, and only while the branch still sits on the exact anchor.
+          if TARGET_MANIFEST_JSON=$(git show "refs/remotes/origin/$BASE_BRANCH:$TARGET_MANIFEST" 2>/dev/null); then
+            PRERELEASE_BASELINE=$(printf '%s' "$TARGET_MANIFEST_JSON" | jq -r '.["."] // ""')
+          else
+            BASE_TIP=$(git rev-parse "refs/remotes/origin/$BASE_BRANCH")
+            if [ "$BASE_TIP" != "$BOOTSTRAP_SHA" ]; then
+              echo "::error::$BASE_BRANCH carries no $TARGET_MANIFEST and its tip $BASE_TIP is not the $TARGET_CONFIG bootstrap-sha $BOOTSTRAP_SHA"
+              exit 1
+            fi
+            PRERELEASE_BASELINE=$(git show "refs/remotes/origin/$BASE_BRANCH:.github/plugin/marketplace.json" | jq -r '
+              (.metadata.version // "") as $version
+              | [.plugins[] | (.version // "")] as $versions
+              | if ($version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))
+                   and ($versions | length) > 0
+                   and ($versions | all(. == $version))
+                then $version
+                else ""
+                end
+            ')
+            if [ -z "$PRERELEASE_BASELINE" ]; then
+              echo "::error::$BASE_BRANCH seed .github/plugin/marketplace.json carries no complete MAJOR.MINOR.PATCH catalog version"
+              exit 1
+            fi
+          fi
+          if [[ "$PRERELEASE_BASELINE" == *$'\n'* || "$PRERELEASE_BASELINE" == *$'\r'* || ! "$PRERELEASE_BASELINE" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::$BASE_BRANCH resolved no MAJOR.MINOR.PATCH PreRelease baseline version"
+            exit 1
+          fi
+          PRERELEASE_MINOR=${PRERELEASE_BASELINE#*.}
+          PRERELEASE_MINOR=${PRERELEASE_MINOR%%.*}
+          if (( 10#$PRERELEASE_MINOR % 2 == 0 )); then
+            echo "::error::PreRelease baseline $PRERELEASE_BASELINE has an even minor"
+            exit 1
+          fi
+
+          {
+            echo "continue=true"
+            echo "bootstrap-sha=$BOOTSTRAP_SHA"
+            echo "source-sha=$SOURCE_SHA"
+            echo "prerelease-baseline=$PRERELEASE_BASELINE"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Resolve exact PreRelease version
+        id: resolve
+        if: ${{ steps.state.outputs.continue == 'true' }}
+        env:
+          PRERELEASE_BASELINE: ${{ steps.state.outputs.prerelease-baseline }}
+        run: |
+          set -euo pipefail
+          RESOLVED=$(pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Resolve-ReleasePromotionVersion.ps1" \
+              -Channel PreRelease \
+              -CurrentPreReleaseVersion "$PRERELEASE_BASELINE" \
+              -AsJson)
+
+          VERSION=$(printf '%s' "$RESOLVED" | jq -r '.Version // ""')
+          if [[ "$VERSION" == *$'\n'* || "$VERSION" == *$'\r'* || ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Resolved PreRelease version $VERSION is not MAJOR.MINOR.PATCH"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Promoting $SOURCE_BRANCH to $BASE_BRANCH as $VERSION"
+
+      # Read-only pre-flight before any promotion branch mutation or
+      # release intent write: an already occupied tag or GitHub release
+      # is immutable, so release-please could never issue this candidate.
+      - name: Validate candidate release identity is unoccupied
+        if: ${{ steps.state.outputs.continue == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/promotion"
+
+          # A transport or authentication failure aborts under set -e
+          # instead of reporting the identity as available.
+          CANDIDATE_REF="refs/tags/prerelease-v$VERSION"
+          OCCUPIED=$(git ls-remote origin "$CANDIDATE_REF")
+          if [ -n "$OCCUPIED" ]; then
+            echo "::error::Candidate release identity $CANDIDATE_REF already exists"
+            exit 1
+          fi
+
+          # Only an explicit not-found response proves the release
+          # identity is free. A success means it is occupied, and every
+          # auth, rate-limit, or transport outcome fails closed.
+          set +e
+          PROBE=$(gh api --include "/repos/$REPOSITORY/releases/tags/prerelease-v$VERSION" 2>&1)
+          PROBE_EXIT=$?
+          set -e
+          if [ "$PROBE_EXIT" -eq 0 ]; then
+            echo "::error::A GitHub release already exists for prerelease-v$VERSION"
+            exit 1
+          fi
+          if ! printf '%s\n' "$PROBE" | grep -Eq '^HTTP/[0-9.]+ 404|\(HTTP 404\)'; then
+            STATUS_LINE=$(printf '%s\n' "$PROBE" | grep -m1 -E '^HTTP/[0-9.]+ [0-9]{3}' || true)
+            echo "::error::Release lookup for prerelease-v$VERSION returned no explicit not-found result: ${STATUS_LINE:-no HTTP status}"
+            exit 1
+          fi
+
+          echo "Release identity prerelease-v$VERSION is unoccupied"
+
+      - name: Refresh the promotion head
+        id: promote
+        if: ${{ steps.state.outputs.continue == 'true' }}
+        env:
+          BOOTSTRAP_SHA: ${{ steps.state.outputs.bootstrap-sha }}
+          PRERELEASE_BASELINE: ${{ steps.state.outputs.prerelease-baseline }}
+          SOURCE_SHA: ${{ steps.state.outputs.source-sha }}
+          VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/promotion"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          ALLOWLIST=$(printf '%s\n' \
+            'CHANGELOG.md' \
+            "$TARGET_CONFIG" \
+            "$TARGET_MANIFEST" \
+            'package.json' \
+            'package-lock.json' \
+            'extension/templates/package.template.json' \
+            'plugin.json' \
+            '.github/plugin/marketplace.json')
+
+          merge_ref() {
+            local ref="$1"
+            local favor="$2"
+            if git merge --no-edit "$ref"; then
+              return 0
+            fi
+            local conflicts unexpected
+            conflicts=$(git diff --name-only --diff-filter=U)
+            unexpected=$(printf '%s\n' "$conflicts" | grep -vxF "$ALLOWLIST" || true)
+            git merge --abort
+            if [ -n "$unexpected" ]; then
+              echo "::error::Merging $ref conflicts outside release-owned files:"
+              printf '%s\n' "$unexpected"
+              exit 1
+            fi
+            # Every remaining conflict is release-owned state that the
+            # restore below rewrites from the target branch.
+            git merge --no-edit -X "$favor" "$ref"
+          }
+
+          if git ls-remote --exit-code --heads origin "$PROMOTION_HEAD" >/dev/null 2>&1; then
+            git fetch --no-tags origin "+refs/heads/$PROMOTION_HEAD:refs/remotes/origin/$PROMOTION_HEAD"
+            git checkout -B "$PROMOTION_HEAD" "refs/remotes/origin/$PROMOTION_HEAD"
+          else
+            git checkout -B "$PROMOTION_HEAD" "refs/remotes/origin/$BASE_BRANCH"
+          fi
+
+          # The per-hop head is stable: fast-forward it from the target,
+          # then merge the current source. Neither step force-updates it.
+          merge_ref "refs/remotes/origin/$BASE_BRANCH" theirs
+          merge_ref "$SOURCE_SHA" theirs
+
+          # Target-owned release state is restored whole, so a promotion
+          # never carries a source changelog or catalog forward.
+          # A seeded branch can predate its branch-local manifest, so that one
+          # is restored only when the base already carries it and the first
+          # reviewed promotion introduces it from the merged source instead of
+          # failing on an absent path. The channel config is restored further
+          # below, once the seed anchor establishes who owns it.
+          restore_from_base() {
+            local mode="$1"
+            shift
+            local path
+            local present=()
+            for path in "$@"; do
+              if git cat-file -e "refs/remotes/origin/$BASE_BRANCH:$path" 2>/dev/null; then
+                present+=("$path")
+              elif [ "$mode" = 'required' ]; then
+                echo "::error::$BASE_BRANCH carries no $path"
+                exit 1
+              else
+                echo "::notice::$BASE_BRANCH carries no $path; the merged source copy becomes its first branch-local state"
+              fi
+            done
+            if [ "${#present[@]}" -gt 0 ]; then
+              git checkout "refs/remotes/origin/$BASE_BRANCH" -- "${present[@]}"
+            fi
+          }
+
+          restore_from_base required CHANGELOG.md .github/plugin/marketplace.json
+          restore_from_base optional "$TARGET_MANIFEST"
+
+          TARGET_VERSION=$(jq -r '.["."] // ""' "$TARGET_MANIFEST")
+          if [ "$TARGET_VERSION" != "$PRERELEASE_BASELINE" ]; then
+            echo "::error::Restored $TARGET_MANIFEST is $TARGET_VERSION but the resolved baseline is $PRERELEASE_BASELINE"
+            exit 1
+          fi
+
+          # The captured config anchor owns the seeded branch identity. It comes
+          # from the current source configuration, never from the restored
+          # target copy the seed can predate.
+          if ! printf '%s' "$BOOTSTRAP_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::Captured bootstrap-sha anchor is not a lowercase 40-character commit id"
+            exit 1
+          fi
+          # The seed anchor decides who owns the channel config. A branch still
+          # sitting on its bootstrap commit is the hand-seeded first cutover,
+          # and that historical seed predates current tag, draft, and versioning
+          # policy, so the merged source config is what establishes it. Every
+          # later promotion restores the target-owned config instead, keeping
+          # ordinary steady-state release settings on the branch.
+          BASE_TIP=$(git rev-parse "refs/remotes/origin/$BASE_BRANCH")
+          if [ "$BASE_TIP" = "$BOOTSTRAP_SHA" ]; then
+            echo "::notice::$BASE_BRANCH is still at its bootstrap seed; the merged source $TARGET_CONFIG becomes its first branch-local release configuration"
+          else
+            restore_from_base optional "$TARGET_CONFIG"
+          fi
+
+          # The merged source decides component membership, and the target
+          # baseline decides the version. Neither transforms a source ref,
+          # records a release candidate, nor generates a plugin root.
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/release/Set-RepositoryVersion.ps1" \
+              -Version "$TARGET_VERSION" \
+              -RepoRoot "$PWD"
+            pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
+              -RepoRoot "$PWD"
+
+          # The captured changelog cutoff and the exact release intent are
+          # written last, so the effective target configuration carries both
+          # whether it was restored from the branch or merged from the source.
+          jq --arg version "$VERSION" --arg bootstrap "$BOOTSTRAP_SHA" '
+            .packages["."]["bootstrap-sha"] = $bootstrap
+            | .packages["."]["release-as"] = $version
+          ' "$TARGET_CONFIG" > "$TARGET_CONFIG.promotion"
+          mv "$TARGET_CONFIG.promotion" "$TARGET_CONFIG"
+          WRITTEN_INTENT=$(jq -r '.packages["."]["release-as"] // ""' "$TARGET_CONFIG")
+          if [ "$WRITTEN_INTENT" != "$VERSION" ]; then
+            echo "::error::$TARGET_CONFIG carries release-as $WRITTEN_INTENT instead of $VERSION"
+            exit 1
+          fi
+          WRITTEN_ANCHOR=$(jq -r '.packages["."]["bootstrap-sha"] // ""' "$TARGET_CONFIG")
+          if [ "$WRITTEN_ANCHOR" != "$BOOTSTRAP_SHA" ]; then
+            echo "::error::$TARGET_CONFIG carries bootstrap-sha $WRITTEN_ANCHOR instead of $BOOTSTRAP_SHA"
+            exit 1
+          fi
+
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/scripts/plugins/Sync-PluginManifest.ps1" \
+              -RepoRoot "$PWD" \
+              -Check
+
+          git add --all
+          if git diff --cached --quiet; then
+            git reset --quiet
+          else
+            git commit -m "chore(release): promote $SOURCE_BRANCH to $BASE_BRANCH as $VERSION"
+          fi
+
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse "refs/remotes/origin/$BASE_BRANCH")" ]; then
+            echo "::notice::$PROMOTION_HEAD matches $BASE_BRANCH; nothing to promote"
+            echo "promote=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git push origin "HEAD:refs/heads/$PROMOTION_HEAD"
+          echo "promote=true" >> "$GITHUB_OUTPUT"
+
+  open-promotion-pr:
+    name: Open Pre-Release Promotion PR
+    needs: [prepare-promotion]
+    if: ${{ needs.prepare-promotion.outputs.promote == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      # Auto-merge is deliberately never enabled. A human must review and
+      # merge this promotion before release-please prepares the PreRelease
+      # release pull request.
+      - name: Open or update the promotion pull request
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          VERSION: ${{ needs.prepare-promotion.outputs.version }}
+          HEAD_BRANCH: release-promotion--main--to--release-prerelease
+          BASE_BRANCH: release/prerelease
+          SOURCE_BRANCH: main
+          SOURCE_SHA: ${{ needs.prepare-promotion.outputs.source-sha }}
+          PRERELEASE_BASELINE: ${{ needs.prepare-promotion.outputs.prerelease-baseline }}
+        run: |
+          set -euo pipefail
+          TITLE="chore(release): promote ${SOURCE_BRANCH} to ${BASE_BRANCH} as ${VERSION}"
+          BODY="## Pre-Release promotion ${VERSION}
+
+          Promotes \`${SOURCE_BRANCH}\` into \`${BASE_BRANCH}\` on the odd-minor pre-release line.
+
+          | Input | Value |
+          |-------|-------|
+          | Source commit | \`${SOURCE_SHA}\` |
+          | PreRelease baseline | \`${PRERELEASE_BASELINE}\` |
+          | Exact release intent | \`${VERSION}\` |
+
+          Target-owned changelog, release-please config, and manifest come from
+          \`${BASE_BRANCH}\`. The plugin manifest is resynchronized from the
+          merged source and every version field is normalized to the target
+          baseline.
+
+          After this pull request merges, \`release-prerelease.yml\` runs
+          release-please on \`${BASE_BRANCH}\`. Release-please then opens its
+          separately reviewed release pull request, and merging that pull request
+          is the immutable \`prerelease-v${VERSION}\` tag boundary.
+
+          ---
+          *Managed automatically by the pre-release promotion workflow. Auto-merge is not enabled.*"
+
+          PR_NUMBER=$(gh pr list --head "$HEAD_BRANCH" --base "$BASE_BRANCH" --state open \
+            --json number --jq '.[0].number // empty' \
+            -R "$REPO")
+
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY" -R "$REPO"
+            echo "Updated promotion PR #$PR_NUMBER for $VERSION"
+          else
+            gh pr create \
+              --head "$HEAD_BRANCH" \
+              --base "$BASE_BRANCH" \
+              --title "$TITLE" \
+              --body "$BODY" \
+              -R "$REPO"
+            echo "Created promotion PR for $VERSION"
+          fi

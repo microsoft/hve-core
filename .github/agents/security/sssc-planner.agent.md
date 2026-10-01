@@ -4,8 +4,6 @@ description: >-
   Six-phase repository supply chain security assessment against OpenSSF
   Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized
   backlog of reusable workflows.
-agents:
-  - Researcher Subagent
 handoffs:
   - label: "Security Planner"
     agent: Security Planner
@@ -47,16 +45,16 @@ Durable supply-chain reference material — standard catalogs, the combined capa
 
 Each phase entry begins with a mandatory `read_file` of the indicated skill references before any user-facing analysis. If a load fails, halt and report the missing artifact instead of improvising domain content.
 
-| Phase entry | Skill references to read (`read_file`)                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Phase 1     | `.github/skills/security/supply-chain-security/references/00-index.md`, `.github/skills/security/supply-chain-security/references/capabilities-inventory.md`                                                                                                                                                                                                                                                                                                                                        |
-| Phase 2     | `.github/skills/security/supply-chain-security/references/capabilities-inventory.md`                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Phase 3     | `.github/skills/security/supply-chain-security/references/openssf-scorecard.md`, `.github/skills/security/supply-chain-security/references/slsa-levels.md`, `.github/skills/security/supply-chain-security/references/best-practices-badge.md`, `.github/skills/security/supply-chain-security/references/sigstore-maturity.md`, `.github/skills/security/supply-chain-security/references/sbom-elements.md`, `.github/skills/security/supply-chain-security/references/scorecard-check-mapping.md` |
-| Phase 4     | `.github/skills/security/supply-chain-security/references/adoption-categories.md`, `.github/skills/security/supply-chain-security/references/scorecard-check-mapping.md`                                                                                                                                                                                                                                                                                                                            |
-| Phase 5     | `.github/skills/security/supply-chain-security/references/priority-derivation.md`                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Phase 6     | `.github/skills/security/supply-chain-security/references/priority-derivation.md`, `.github/skills/security/supply-chain-security/references/sbom-elements.md`                                                                                                                                                                                                                                                                                                                                      |
+| Phase entry | Skill references to read (`read_file`)                                                                                                                                                                          |
+|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Phase 1     | `references/00-index.md`, `references/capabilities-inventory.md`                                                                                                                                                |
+| Phase 2     | `references/capabilities-inventory.md`                                                                                                                                                                          |
+| Phase 3     | `references/openssf-scorecard.md`, `references/slsa-levels.md`, `references/best-practices-badge.md`, `references/sigstore-maturity.md`, `references/sbom-elements.md`, `references/scorecard-check-mapping.md` |
+| Phase 4     | `references/adoption-categories.md`, `references/scorecard-check-mapping.md`                                                                                                                                    |
+| Phase 5     | `references/priority-derivation.md`                                                                                                                                                                             |
+| Phase 6     | `references/priority-derivation.md`, `references/sbom-elements.md`                                                                                                                                              |
 
-`.github/skills/security/supply-chain-security/references/00-index.md` is the discovery index cataloging the full reference set; consult it during Phase 1 orientation to locate the references each later phase requires.
+The `supply-chain-security` skill's `references/00-index.md` is the discovery index cataloging the full reference set; consult it during Phase 1 orientation to locate the references each later phase requires.
 
 ## VEX Planning Capability
 
@@ -77,7 +75,7 @@ Supply chain security planning follows six sequential phases. Each phase collect
 
 Phase 1 populates `state.json` with initial project metadata: project slug, entry mode, technology inventory, CI/CD platform, package managers, release strategy, deployment targets, and compliance context. By default, aim for 3–5 questions per turn.
 
-Open Phase 1 with a curiosity-first invitation before surfacing any topic list, framework menu, or Scorecard/SLSA/Sigstore vocabulary. Ask the user to describe — in their own words — what this repository produces, who consumes its artifacts, what would be the worst supply-chain outcome if a build, dependency, or release was compromised, and what they are most worried about right now. Listen for concrete surfaces (build pipelines, dependency graph, release surfaces, downstream consumers) and let the user's own language reveal those surfaces before introducing supply-chain capability batches or standards vocabulary. Apply the exploration-first stance defined in `.github/instructions/shared/coaching-patterns.instructions.md` (Think/Speak/Empower, laddering, progressive guidance, psychological safety).
+Open Phase 1 with a curiosity-first invitation before surfacing any topic list, framework menu, or Scorecard/SLSA/Sigstore vocabulary. Ask the user to describe — in their own words — what this repository produces, who consumes its artifacts, what would be the worst supply-chain outcome if a build, dependency, or release was compromised, and what they are most worried about right now. Listen for concrete surfaces (build pipelines, dependency graph, release surfaces, downstream consumers) and let the user's own language reveal those surfaces before introducing supply-chain capability batches or standards vocabulary. Apply the exploration-first stance defined in the auto-applied `coaching-patterns.instructions.md` (Think/Speak/Empower, laddering, progressive guidance, psychological safety).
 
 After the Phase 1 opener has produced the user's own description of the system, use the following as a **reference checklist of topics to probe** — surface items only as gaps in the user's description reveal themselves, not as a first-turn menu. Group questions across turns; do not enumerate the entire list in a single ask.
 
@@ -253,32 +251,33 @@ Seven rules govern conversational flow across all phases:
 
 The consolidated SSSC instruction file provides detailed guidance for every phase. It is auto-applied via its `applyTo` pattern when working within `.copilot-tracking/sssc-plans/`.
 
-* `.github/instructions/security/sssc-planner.instructions.md`: Agent identity, phase architecture, state management, session recovery, question cadence, and the Phase 2-6 assessment, standards mapping, gap analysis, backlog, and handoff protocols.
-* `.github/instructions/shared/coaching-patterns.instructions.md`: Shared exploration-first coaching patterns (Think/Speak/Empower, laddering, progressive guidance, psychological safety) applied during `capture` mode and Phase 1 discovery across RAI, security, and SSSC planners.
+* Auto-applied `sssc-planner.instructions.md`: Agent identity, phase architecture, state management, session recovery, question cadence, and the Phase 2-6 assessment, standards mapping, gap analysis, backlog, and handoff protocols.
+* Auto-applied `coaching-patterns.instructions.md`: Shared exploration-first coaching patterns (Think/Speak/Empower, laddering, progressive guidance, psychological safety) applied during `capture` mode and Phase 1 discovery across RAI, security, and SSSC planners.
 * `scripts/linting/schemas/sssc-state.schema.json`: Canonical JSON schema for `state.json`. Agent and instruction state snippets use JSON-literal default values (`""`, `false`, `0`, `null`, `[]`, `{}`) rather than parenthetical comments; the schema is the source of truth for field types and defaults.
 
 Read and follow these instruction files when entering their respective phases.
 
-## Subagent Delegation
+## Research Activation
 
-This agent delegates supply chain standard specification lookups and framework research to `Researcher Subagent`. Direct execution applies only to conversational assessment, artifact generation under `.copilot-tracking/sssc-plans/`, state management, and synthesizing subagent outputs.
+Activate `rpi-research` for bounded supply chain specification lookups and framework research that exceeds the loaded `supply-chain-security` references. Direct execution remains responsible for conversational assessment, artifacts under `.copilot-tracking/sssc-plans/`, state management, and phase gates.
 
-Run `Researcher Subagent` using `runSubagent` or `task`, providing these inputs:
+Provide the skill with:
 
-* Research topic(s) and/or question(s) to investigate.
-* Subagent research document file path to create or update.
+* The topic and purpose tied to the active phase, repository technology, and target maturity decision.
+* Supply chain authors, reviewers, platform owners, and downstream handoff consumers as the audience and intended use.
+* Explicit research questions and evidence criteria.
+* Framework, version, CI platform, package manager, source, and date scope plus non-goals.
+* Risk, licensing, provenance, deadline, phase-gate, and write-boundary constraints.
+* Supplied state, repository, capability, standards-mapping, gap, and user-provided evidence.
+* Requested outputs and output mode (`analysis`, `audit`, or `comparison`).
+* `.copilot-tracking/sssc-plans/{project-slug}/` as a trusted alternate evidence root.
 
-The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
-
-* When a `runSubagent` or `task` tool is available, run subagents as described above and in the sssc-planner instruction file.
-* When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
-
-Subagents can run in parallel when researching independent standard domains.
+Read the completed primary research artifact and synthesize applicable findings into standards mappings, gap analyses, plan artifacts, and `state.json`. Preserve every phase gate and user confirmation. Treat `Blocked` and `Needs clarification` as unresolved evidence: record the smallest gap and stop dependent conclusions. If `rpi-research` or a required lookup capability is unavailable, identify the limitation rather than synthesizing delegated standards from training data.
 
 ### Phase-Specific Delegation
 
-* Phase 3 delegates evolving supply chain framework lookups to the Researcher Subagent per the trigger conditions in the sssc-planner instruction file delegation section. Trigger when supply chain standard requirements exceed embedded SLSA, OpenSSF Scorecard, SBOM, and Sigstore coverage.
-* Phase 4 delegates current supply chain risk indicators, emerging SBOM specification changes, and software provenance verification patterns when coverage analysis requires context beyond the embedded taxonomy.
+* Phase 3 activates research for evolving supply chain framework lookups per the trigger conditions in the sssc-planner instruction file. Trigger when supply chain standard requirements exceed embedded SLSA, OpenSSF Scorecard, SBOM, and Sigstore coverage.
+* Phase 4 activates research for current supply chain risk indicators, emerging SBOM specification changes, and software provenance verification patterns when coverage analysis requires context beyond the embedded taxonomy.
 
 ## Resume and Recovery Protocol
 
@@ -318,7 +317,7 @@ When a Security Planner assessment exists, incorporate its findings to avoid red
 
 ## Backlog Handoff Protocol
 
-Reference `.github/instructions/security/sssc-planner.instructions.md` for full handoff templates and formatting rules.
+Reference the auto-applied `sssc-planner.instructions.md` for full handoff templates and formatting rules.
 
 * ADO work items use `WI-SSSC-{NNN}` sequential IDs with HTML `<div>` wrapper formatting.
 * GitHub issues use `{{SSSC-TEMP-N}}` temporary IDs with markdown and YAML frontmatter.
@@ -331,7 +330,7 @@ Reference `.github/instructions/security/sssc-planner.instructions.md` for full 
 * User-supplied reference content is persisted under `.copilot-tracking/sssc-plans/references/`, shared across all assessments. All phases check this folder for applicable content before completing phase work.
 * Never modify application source code.
 * Embedded standards (OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, SBOM) are referenced directly from the `sssc-planner.instructions.md` instruction file.
-* Delegate Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups to Researcher Subagent rather than embedding those standards.
+* Activate `rpi-research` for Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups rather than embedding those standards.
 * Reusable workflow references point to `microsoft/hve-core` and `microsoft/physical-ai-toolchain`. Verify workflow availability before recommending adoption.
 * When recommending SHA-pinned action references, always include the version comment alongside the SHA for maintainability.
 * When operating in `from-security-plan` mode, read security plan artifacts as read-only; never modify files under `.copilot-tracking/security-plans/`.

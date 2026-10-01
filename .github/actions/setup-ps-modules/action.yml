@@ -27,12 +27,14 @@ runs:
 
     - name: Install PowerShell modules
       shell: pwsh
+      env:
+        INPUT_FORCE: ${{ inputs.force }}
       run: |
         $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'scripts/security/Install-PSModules.ps1'
         $installArgs = @{
           Scope = 'CurrentUser'
         }
-        if ('${{ inputs.force }}' -eq 'true') { $installArgs['Force'] = $true }
+        if ($env:INPUT_FORCE -eq 'true') { $installArgs['Force'] = $true }
         & $scriptPath @installArgs
 
     - name: Import PowerShell modules

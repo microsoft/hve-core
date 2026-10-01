@@ -814,13 +814,14 @@ Describe 'Test-GitHubResourceFileFields' -Tag 'Unit' {
 
 Describe 'Test-DocsFileFields' -Tag 'Unit' {
     Context 'Valid frontmatter' {
-        It 'Returns only warnings for complete frontmatter' {
+        It 'Returns no errors for complete frontmatter' {
             $frontmatter = @{
                 title = 'Getting Started'
                 description = 'How to get started with the project'
                 author = 'docs-team'
                 'ms.date' = '2025-01-16'
                 'ms.topic' = 'overview'
+                keywords = @('getting started', 'onboarding')
             }
 
             $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath 'docs/getting-started.md'
@@ -848,10 +849,8 @@ Describe 'Test-DocsFileFields' -Tag 'Unit' {
             $errors = $issues | Where-Object { $_.Type -eq 'Error' -and $_.Field -eq 'description' }
             $errors.Count | Should -Be 1
         }
-    }
 
-    Context 'Missing suggested fields' {
-        It 'Returns warnings for missing author, ms.date, ms.topic' {
+        It 'Returns an error for each of author, ms.date, ms.topic, and keywords' {
             $frontmatter = @{
                 title = 'Test'
                 description = 'Test'
@@ -859,8 +858,58 @@ Describe 'Test-DocsFileFields' -Tag 'Unit' {
 
             $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath 'docs/test.md'
 
-            $warnings = $issues | Where-Object { $_.Type -eq 'Warning' }
-            $warnings.Count | Should -BeGreaterOrEqual 3
+            foreach ($field in @('author', 'ms.date', 'ms.topic', 'keywords')) {
+                $fieldErrors = $issues | Where-Object { $_.Type -eq 'Error' -and $_.Field -eq $field }
+                $fieldErrors.Count | Should -Be 1 -Because "'$field' is required for docs files"
+            }
+        }
+
+        It 'Returns error for an empty keywords array' {
+            $frontmatter = @{
+                title = 'Test'
+                description = 'Test'
+                author = 'docs-team'
+                'ms.date' = '2025-01-16'
+                'ms.topic' = 'overview'
+                keywords = @()
+            }
+
+            $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath 'docs/test.md'
+
+            $keywordErrors = $issues | Where-Object { $_.Type -eq 'Error' -and $_.Field -eq 'keywords' }
+            $keywordErrors.Count | Should -Be 1
+        }
+    }
+
+    Context 'ADR pages' {
+        It 'Does not require keywords because the ADR schema forbids it' {
+            $frontmatter = @{
+                title = 'Adopt something'
+                description = 'An architecture decision'
+                author = 'HVE Core Maintainers'
+                'ms.date' = '2026-07-16'
+                'ms.topic' = 'reference'
+            }
+
+            $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath 'docs/planning/adrs/0001-adopt-something.md'
+
+            $errors = $issues | Where-Object { $_.Type -eq 'Error' }
+            $errors.Count | Should -Be 0
+        }
+
+        It 'Still requires keywords for non-ADR pages under docs/planning' {
+            $frontmatter = @{
+                title = 'A PRD'
+                description = 'A product requirements document'
+                author = 'HVE Core Maintainers'
+                'ms.date' = '2026-07-16'
+                'ms.topic' = 'reference'
+            }
+
+            $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath 'docs/planning/prds/a-prd.md'
+
+            $keywordErrors = $issues | Where-Object { $_.Type -eq 'Error' -and $_.Field -eq 'keywords' }
+            $keywordErrors.Count | Should -Be 1
         }
     }
 
@@ -880,7 +929,7 @@ Describe 'Test-DocsFileFields' -Tag 'Unit' {
         }
 
         It 'Returns no warning for valid topic types' {
-            $validTopics = @('overview', 'concept', 'tutorial', 'reference', 'how-to', 'troubleshooting')
+            $validTopics = @('overview', 'concept', 'tutorial', 'reference', 'how-to', 'troubleshooting', 'architecture')
 
             foreach ($topic in $validTopics) {
                 $frontmatter = @{
@@ -1200,6 +1249,8 @@ description: A test file description
 ms.date: 01/15/2025
 author: testuser
 ms.topic: concept
+keywords:
+  - test
 ---
 
 # Content

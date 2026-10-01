@@ -278,8 +278,9 @@ jobs:
         $sarif.runs[0].results | Should -HaveCount 1
         $sarif.runs[0].results[0].ruleId | Should -Be 'dangerous-workflow/template-injection'
         $sarif.runs[0].results[0].level | Should -Be 'error'
-        $sarif.runs[0].tool.driver.rules | Should -HaveCount 1
-        $sarif.runs[0].tool.driver.rules[0].id | Should -Be 'dangerous-workflow/template-injection'
+        $sarif.runs[0].tool.driver.rules | Should -HaveCount 2
+        @($sarif.runs[0].tool.driver.rules.id) | Should -Contain 'dangerous-workflow/template-injection'
+        @($sarif.runs[0].tool.driver.rules.id) | Should -Contain 'dangerous-workflow/direct-input-interpolation'
     }
 
     It 'writes console output for violations' {
@@ -339,5 +340,484 @@ jobs:
         $exitCode = Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath -FailOnViolation
 
         $exitCode | Should -Be 1
+    }
+
+    Context 'CQ-6 caller-controlled input isolation' {
+        It 'flags a workflow_call string input interpolated into a pwsh run block' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-string-pwsh' -WorkflowContent @'
+name: test
+on:
+  workflow_call:
+    inputs:
+      base-branch:
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - shell: pwsh
+        run: |
+          $base = '${{ inputs.base-branch }}'
+          git diff --name-only "$base...HEAD"
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-string-pwsh.json'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations | Should -HaveCount 1
+            $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/direct-input-interpolation'
+            $report.Violations[0].Line | Should -Be 13
+            $report.Violations[0].Description | Should -Match "inputs.base-branch"
+            $report.Violations[0].Description | Should -Match 'type string'
+            $report.Violations[0].Remediation | Should -Match 'INPUT_BASE_BRANCH'
+        }
+
+        It 'flags a workflow_call number input interpolated into a bash run block' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-number-bash' -WorkflowContent @'
+name: test
+on:
+  workflow_call:
+    inputs:
+      max-age-days:
+        type: number
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - shell: bash
+        run: echo "threshold ${{ inputs.max-age-days }}"
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-number-bash.json'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations | Should -HaveCount 1
+            $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/direct-input-interpolation'
+            $report.Violations[0].Description | Should -Match 'type number'
+        }
+
+        It 'flags a workflow_dispatch string input interpolated into a run block' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-dispatch-string' -WorkflowContent @'
+name: test
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "${{ inputs.target }}"
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-dispatch-string.json'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations | Should -HaveCount 1
+            $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/direct-input-interpolation'
+        }
+
+        It 'fails closed when the referenced input is not declared' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-undeclared' -WorkflowContent @'
+name: test
+on:
+  workflow_call:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "${{ inputs.mystery }}"
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-undeclared.json'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations | Should -HaveCount 1
+            $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/direct-input-interpolation'
+            $report.Violations[0].Description | Should -Match 'type undeclared'
+        }
+
+        It 'flags an input interpolated into a github-script body' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-github-script' -WorkflowContent @'
+name: test
+on:
+  workflow_call:
+    inputs:
+      label:
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            console.log("${{ inputs.label }}")
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-github-script.json'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations | Should -HaveCount 1
+            $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/direct-input-interpolation'
+        }
+
+        It 'flags an input reached through a compound expression' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-compound' -WorkflowContent @'
+name: test
+on:
+  workflow_call:
+    inputs:
+      threshold:
+        type: number
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - shell: pwsh
+        run: $days = ${{ inputs.threshold || 30 }}
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-compound.json'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations | Should -HaveCount 1
+            $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/direct-input-interpolation'
+        }
+
+        It 'does not flag a boolean input compared inside a run block' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-boolean-exception' -WorkflowContent @'
+name: test
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        type: boolean
+      changed-files-only:
+        type: boolean
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - shell: pwsh
+        run: |
+          if ('${{ inputs.soft-fail }}' -ne 'true') { throw 'strict' }
+          if ('${{ inputs.changed-files-only }}' -eq 'true') { Write-Host 'scoped' }
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-boolean-exception.json'
+            $exitCode = Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath -FailOnViolation
+
+            $exitCode | Should -Be 0
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            @($report.Violations) | Should -HaveCount 0
+        }
+
+        It 'does not flag a string input delivered through a step-level env mapping' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-env-mapping' -WorkflowContent @'
+name: test
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - shell: bash
+        env:
+          INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        run: echo "$INPUT_WORKING_DIRECTORY"
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-env-mapping.json'
+            $exitCode = Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath -FailOnViolation
+
+            $exitCode | Should -Be 0
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            @($report.Violations) | Should -HaveCount 0
+        }
+
+        It 'does not flag inputs used outside code execution contexts' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-non-code-context' -WorkflowContent @'
+name: test
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+      changed-files-only:
+        type: boolean
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - if: inputs.changed-files-only
+        working-directory: ${{ inputs.working-directory }}
+        run: npm test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: results
+          path: ${{ inputs.working-directory }}/coverage.xml
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-non-code-context.json'
+            $exitCode = Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath -FailOnViolation
+
+            $exitCode | Should -Be 0
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            @($report.Violations) | Should -HaveCount 0
+        }
+
+        It 'reports both rules when a workflow carries an untrusted expression and a string input' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-mixed' -WorkflowContent @'
+name: test
+on:
+  workflow_call:
+    inputs:
+      label:
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "${{ github.event.pull_request.title }}"
+      - run: echo "${{ inputs.label }}"
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-mixed.sarif'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format sarif -OutputPath $outputPath | Out-Null
+
+            $sarif = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $sarif.runs[0].results | Should -HaveCount 2
+            @($sarif.runs[0].results.ruleId) | Should -Contain 'dangerous-workflow/template-injection'
+            @($sarif.runs[0].results.ruleId) | Should -Contain 'dangerous-workflow/direct-input-interpolation'
+        }
+    }
+
+    Context 'CQ-6 composite action coverage' {
+        It 'flags an action input interpolated into a composite run body' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-composite-action' -WorkflowContent @'
+name: Sample composite
+description: fixture
+inputs:
+  force:
+    description: 'Force reinstall'
+    required: false
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - name: Install
+      shell: pwsh
+      run: |
+        if ('${{ inputs.force }}' -eq 'true') { Write-Host 'forced' }
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-composite-action.json'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations | Should -HaveCount 1
+            $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/direct-input-interpolation'
+            $report.Violations[0].Metadata.Job | Should -Be 'runs'
+            $report.Violations[0].Description | Should -Match 'type untyped'
+            $report.Violations[0].Remediation | Should -Match 'INPUT_FORCE'
+        }
+
+        It 'flags an untrusted event expression in a composite run body' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'composite-template-injection' -WorkflowContent @'
+name: Sample composite
+description: fixture
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: echo "${{ github.event.issue.title }}"
+'@
+
+            $outputPath = Join-Path $TestDrive 'composite-template-injection.json'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations | Should -HaveCount 1
+            $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/template-injection'
+        }
+
+        It 'does not flag a composite action that delivers its input through env' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'composite-env-mapping' -WorkflowContent @'
+name: Sample composite
+description: fixture
+inputs:
+  force:
+    description: 'Force reinstall'
+    required: false
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - shell: pwsh
+      env:
+        INPUT_FORCE: ${{ inputs.force }}
+      run: |
+        if ($env:INPUT_FORCE -eq 'true') { Write-Host 'forced' }
+'@
+
+            $outputPath = Join-Path $TestDrive 'composite-env-mapping.json'
+            $exitCode = Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath -FailOnViolation
+
+            $exitCode | Should -Be 0
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            @($report.Violations) | Should -HaveCount 0
+        }
+
+        It 'ignores a non-composite action metadata file' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'javascript-action' -WorkflowContent @'
+name: Sample JS action
+description: fixture
+inputs:
+  force:
+    description: 'Force reinstall'
+    default: 'false'
+runs:
+  using: node24
+  main: index.js
+'@
+
+            $outputPath = Join-Path $TestDrive 'javascript-action.json'
+            $exitCode = Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath -FailOnViolation
+
+            $exitCode | Should -Be 0
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            @($report.Violations) | Should -HaveCount 0
+        }
+
+        It 'scans several roots and skips an absent default root' {
+            $workflowRoot = New-DangerousWorkflowFixture -Name 'multi-root-workflows' -WorkflowContent @'
+name: test
+on:
+  workflow_call:
+    inputs:
+      label:
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "${{ inputs.label }}"
+'@
+
+            $actionRoot = New-DangerousWorkflowFixture -Name 'multi-root-actions' -WorkflowContent @'
+name: Sample composite
+description: fixture
+inputs:
+  force:
+    description: 'Force reinstall'
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - shell: pwsh
+      run: Write-Host '${{ inputs.force }}'
+'@
+
+            $outputPath = Join-Path $TestDrive 'multi-root.json'
+            Invoke-DangerousWorkflowCheck -Path @($workflowRoot, $actionRoot) -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations | Should -HaveCount 2
+            @($report.Violations.Metadata.RuleId) | Should -Contain 'dangerous-workflow/direct-input-interpolation'
+        }
+
+        It 'throws when an explicitly supplied root does not exist' {
+            $missingRoot = Join-Path $TestDrive 'no-such-root'
+            $outputPath = Join-Path $TestDrive 'missing-root.json'
+
+            { Invoke-DangerousWorkflowCheck -Path $missingRoot -Format json -OutputPath $outputPath } | Should -Throw
+        }
+    }
+
+    Context 'Expressions spanning multiple lines' {
+        It 'flags an input reference in an expression whose body spans lines' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'multiline-expression-input' -WorkflowContent @'
+name: test
+on:
+  workflow_call:
+    inputs:
+      flag:
+        type: boolean
+      target:
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - shell: bash
+        run: |
+          echo "${{ inputs.flag
+            && inputs.target
+            || inputs.target }}"
+'@
+
+            $outputPath = Join-Path $TestDrive 'multiline-expression-input.json'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations | Should -HaveCount 1
+            $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/direct-input-interpolation'
+            $report.Violations[0].Description | Should -Match 'inputs.target'
+        }
+
+        It 'flags an untrusted event value in an expression whose body spans lines' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'multiline-expression-event' -WorkflowContent @'
+name: test
+on:
+  pull_request_target:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "${{ github.event.pull_request.title
+            || 'fallback' }}"
+'@
+
+            $outputPath = Join-Path $TestDrive 'multiline-expression-event.json'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations | Should -HaveCount 1
+            $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/template-injection'
+        }
+
+        It 'reports a multi-line expression on a single line' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'multiline-expression-report' -WorkflowContent @'
+name: test
+on:
+  pull_request_target:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "${{ github.event.issue.title
+            || 'fallback' }}"
+'@
+
+            $outputPath = Join-Path $TestDrive 'multiline-expression-report.json'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations[0].Description | Should -Not -Match "`n"
+            $report.Violations[0].Description | Should -Match "github.event.issue.title \|\| 'fallback'"
+        }
     }
 }

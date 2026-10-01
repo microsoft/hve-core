@@ -8,7 +8,7 @@
 # canonical activation scenarios (CleanWorkspace, SteadyState, GovernEntry,
 # AdoptTemplate) via Get-AgentActivationFingerprint and asserts:
 #   * baseline.json remains a well-formed reference for explicit drift audits
-#   * CleanWorkspace cold-start byte budget < 44,000 bytes (PD-04=A)
+#   * CleanWorkspace cold-start byte range from budgets.json (PD-04=A)
 #   * Lifecycle Dispatch load-set composition (always-attach vs on-demand)
 #   * pester runner emits logs/pester-summary.json + logs/pester-failures.json
 
@@ -37,7 +37,12 @@ BeforeAll {
     $script:Baseline = Get-Content -LiteralPath $baselinePath -Raw -Encoding UTF8 |
         ConvertFrom-Json -AsHashtable
 
-    $script:ColdStartBudget = 44000
+    $budgetsPath = Join-Path $script:RepoRoot 'scripts/agents/activation-harness/budgets.json'
+    $script:Budgets = Get-Content -LiteralPath $budgetsPath -Raw -Encoding UTF8 |
+        ConvertFrom-Json -AsHashtable
+    $script:ColdStartRange = $script:Budgets['agents'][$script:AgentRelPath]['scenarios']['CleanWorkspace']
+    $script:ColdStartTarget = [int]$script:ColdStartRange['target']
+    $script:ColdStartCeiling = [int]$script:ColdStartRange['ceiling']
 
     $script:Fingerprints = @{}
     foreach ($name in @('CleanWorkspace', 'SteadyState', 'GovernEntry', 'AdoptTemplate')) {
@@ -104,11 +109,28 @@ Describe '@adr-creation activation baseline reference is well formed' -Tag 'Unit
 }
 
 Describe '@adr-creation cold-start byte budget' -Tag 'Unit' {
-    It 'CleanWorkspace ColdStartBytes is below the PD-04 budget' {
+    It 'declares a well-formed cold-start range' {
+        $script:ColdStartTarget | Should -BeGreaterThan 0
+        $script:ColdStartCeiling | Should -BeGreaterOrEqual $script:ColdStartTarget -Because 'ceiling is the hard limit and cannot sit below the soft target'
+        $script:ColdStartRange['rationale'] | Should -Match '\S' -Because 'a range that widens the original budget must record why'
+    }
+
+    It 'CleanWorkspace ColdStartBytes is within the PD-04 range' {
         $current = $script:Fingerprints['CleanWorkspace']
-        $current.ColdStartBytes | Should -BeLessThan $script:ColdStartBudget -Because @"
+
+        if ($current.ColdStartBytes -gt $script:ColdStartTarget) {
+            Write-Warning @"
+Cold-start payload is above target but within tolerance (PD-04=A).
+Target  : $($script:ColdStartTarget) bytes
+Ceiling : $($script:ColdStartCeiling) bytes
+Actual  : $($current.ColdStartBytes) bytes
+"@
+        }
+
+        $current.ColdStartBytes | Should -BeLessOrEqual $script:ColdStartCeiling -Because @"
 Cold-start byte budget violation (PD-04=A).
-Target  : less than $($script:ColdStartBudget) bytes
+Target  : $($script:ColdStartTarget) bytes
+Ceiling : $($script:ColdStartCeiling) bytes
 Actual  : $($current.ColdStartBytes) bytes
 Loaded  : $($current.LoadedFiles | ForEach-Object { "$($_.Path) ($($_.Bytes))" } | Join-String -Separator '; ')
 "@
@@ -173,6 +195,124 @@ Describe '@adr-creation activation scenarios produce distinct fingerprints' -Tag
 
     It 'CleanWorkspace hash differs from SteadyState (cold-start vs steady)' {
         $script:Fingerprints['CleanWorkspace'].Hash | Should -Not -Be $script:Fingerprints['SteadyState'].Hash
+    }
+}
+
+Describe '@adr-creation portable dispatch reference resolution' -Tag 'Unit' {
+    BeforeAll {
+        function New-PortableDispatchFixture {
+            param(
+                [Parameter(Mandatory = $true)][string]$Root,
+                [Parameter(Mandatory = $true)][string]$SkillName,
+                [Parameter(Mandatory = $true)][string]$ResourcePath
+            )
+
+            $agentDirectory = Join-Path $Root '.github/agents/project-planning'
+            New-Item -ItemType Directory -Path $agentDirectory -Force | Out-Null
+            $agentPath = Join-Path $agentDirectory 'fixture.agent.md'
+            @"
+# Fixture Agent
+
+## Lifecycle Dispatch
+
+| Phase | Required skill | Required resource |
+|-------|----------------|-------------------|
+| Govern | Load the ``$SkillName`` skill | None |
+| Normalize | Load the ``$SkillName`` skill | Read the skill's ``$ResourcePath`` |
+"@ | Set-Content -LiteralPath $agentPath -Encoding utf8NoBOM
+            return $agentPath
+        }
+
+        $script:PortableRoot = Join-Path $TestDrive 'portable'
+        $portableSkillRoot = Join-Path $script:PortableRoot '.github/skills/test/portable-skill'
+        New-Item -ItemType Directory -Path (Join-Path $portableSkillRoot 'scripts') -Force | Out-Null
+        "---`nname: portable-skill`n---`n# Portable Skill" |
+            Set-Content -LiteralPath (Join-Path $portableSkillRoot 'SKILL.md') -Encoding utf8NoBOM
+        'print("fixture")' |
+            Set-Content -LiteralPath (Join-Path $portableSkillRoot 'scripts/tool.py') -Encoding utf8NoBOM
+        $script:PortableAgent = New-PortableDispatchFixture `
+            -Root $script:PortableRoot `
+            -SkillName 'portable-skill' `
+            -ResourcePath 'scripts/tool.py'
+
+        $script:MissingRoot = Join-Path $TestDrive 'missing'
+        $script:MissingAgent = New-PortableDispatchFixture `
+            -Root $script:MissingRoot `
+            -SkillName 'missing-skill' `
+            -ResourcePath 'scripts/tool.py'
+
+        $script:AmbiguousRoot = Join-Path $TestDrive 'ambiguous'
+        foreach ($package in @('one', 'two')) {
+            $skillRoot = Join-Path $script:AmbiguousRoot ".github/skills/$package/duplicate-skill"
+            New-Item -ItemType Directory -Path $skillRoot -Force | Out-Null
+            "---`nname: duplicate-skill`n---`n# Duplicate Skill" |
+                Set-Content -LiteralPath (Join-Path $skillRoot 'SKILL.md') -Encoding utf8NoBOM
+        }
+        $script:AmbiguousAgent = New-PortableDispatchFixture `
+            -Root $script:AmbiguousRoot `
+            -SkillName 'duplicate-skill' `
+            -ResourcePath 'scripts/tool.py'
+
+        $script:EscapeRoot = Join-Path $TestDrive 'escape'
+        $escapeSkillRoot = Join-Path $script:EscapeRoot '.github/skills/test/contained-skill'
+        New-Item -ItemType Directory -Path $escapeSkillRoot -Force | Out-Null
+        "---`nname: contained-skill`n---`n# Contained Skill" |
+            Set-Content -LiteralPath (Join-Path $escapeSkillRoot 'SKILL.md') -Encoding utf8NoBOM
+        $outsidePath = Join-Path $script:EscapeRoot '.github/skills/test/outside.py'
+        'print("outside")' | Set-Content -LiteralPath $outsidePath -Encoding utf8NoBOM
+        $script:EscapeAgent = New-PortableDispatchFixture `
+            -Root $script:EscapeRoot `
+            -SkillName 'contained-skill' `
+            -ResourcePath '../outside.py'
+    }
+
+    It 'loads a uniquely named skill for GovernEntry' {
+        $fingerprint = Get-AgentActivationFingerprint `
+            -AgentPath $script:PortableAgent `
+            -ScenarioName 'GovernEntry' `
+            -RepoRoot $script:PortableRoot
+
+        $fingerprint.LoadedFiles.Path | Should -Contain '.github/skills/test/portable-skill/SKILL.md'
+    }
+
+    It 'loads a resource beneath the named skill for AdoptTemplate' {
+        $fingerprint = Get-AgentActivationFingerprint `
+            -AgentPath $script:PortableAgent `
+            -ScenarioName 'AdoptTemplate' `
+            -RepoRoot $script:PortableRoot
+
+        $fingerprint.LoadedFiles.Path | Should -Contain '.github/skills/test/portable-skill/scripts/tool.py'
+    }
+
+    It 'does not resolve a missing skill name' {
+        $fingerprint = Get-AgentActivationFingerprint `
+            -AgentPath $script:MissingAgent `
+            -ScenarioName 'GovernEntry' `
+            -RepoRoot $script:MissingRoot
+
+        $fingerprint.LoadedFiles.Path | Should -Not -Contain '.github/skills/test/missing-skill/SKILL.md'
+        $fingerprint.LoadedFiles | Should -HaveCount 1
+    }
+
+    It 'does not resolve an ambiguous skill name' {
+        $fingerprint = Get-AgentActivationFingerprint `
+            -AgentPath $script:AmbiguousAgent `
+            -ScenarioName 'GovernEntry' `
+            -RepoRoot $script:AmbiguousRoot
+
+        $fingerprint.LoadedFiles.Path | Should -Not -Contain '.github/skills/one/duplicate-skill/SKILL.md'
+        $fingerprint.LoadedFiles.Path | Should -Not -Contain '.github/skills/two/duplicate-skill/SKILL.md'
+        $fingerprint.LoadedFiles | Should -HaveCount 1
+    }
+
+    It 'does not load a skill-relative resource outside the resolved skill root' {
+        $fingerprint = Get-AgentActivationFingerprint `
+            -AgentPath $script:EscapeAgent `
+            -ScenarioName 'AdoptTemplate' `
+            -RepoRoot $script:EscapeRoot
+
+        $fingerprint.LoadedFiles.Path | Should -Contain '.github/skills/test/contained-skill/SKILL.md'
+        $fingerprint.LoadedFiles.Path | Should -Not -Contain '.github/skills/test/outside.py'
     }
 }
 

@@ -13,7 +13,7 @@ Source: W3C, Making Content Usable for People with Cognitive and Learning Disabi
 
 ## Licensing posture
 
-COGA is published under the W3C Document License as a Working Group Note. This skill paraphrases pattern intent rather than reproducing the source verbatim, in line with the paraphrase-preferred posture defined in [accessibility-license-posture.instructions.md](../../../../../instructions/accessibility/accessibility-license-posture.instructions.md). Every per-objective reference file cites the canonical W3C URL anchor for each pattern, and any future verbatim quotation must carry the W3C copyright attribution line specified in that instruction file.
+COGA is published under the W3C Document License as a Working Group Note. This skill paraphrases pattern intent rather than reproducing the source verbatim, in line with the paraphrase-preferred posture defined in `accessibility-license-posture.instructions.md`. Every per-objective reference file cites the canonical W3C URL anchor for each pattern, and any future verbatim quotation must carry the W3C copyright attribution line specified in that instruction file. When that instruction content is unavailable, apply the paraphrase-only posture stated here and do not quote the source verbatim, because the required attribution line cannot be confirmed.
 
 ## Pattern roll-up
 

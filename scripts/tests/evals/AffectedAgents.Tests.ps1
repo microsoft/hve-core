@@ -41,13 +41,13 @@ Describe 'AffectedAgents module' -Tag 'Unit' {
 
     Context 'Direct agent classification' {
         It 'Returns the slug for a changed parent agent (frontmatter user-invocable: true)' {
-            New-AgentFile -RelativePath '.github/agents/hve-core/task-planner.agent.md' -UserInvocable $true
+            New-AgentFile -RelativePath '.github/agents/hve-core/sample-agent.agent.md' -UserInvocable $true
             $result = Get-AffectedAgentSlugs `
-                -ChangedFiles @('.github/agents/hve-core/task-planner.agent.md') `
+                -ChangedFiles @('.github/agents/hve-core/sample-agent.agent.md') `
                 -RepoRoot $script:TestRoot `
                 -DepMapPath $script:DepMapPath `
                 -SkipDepMapRefresh
-            $result | Should -Be @('task-planner')
+            $result | Should -Be @('sample-agent')
         }
 
         It 'Treats agent files with no frontmatter user-invocable key as parents' {
@@ -70,18 +70,18 @@ Describe 'AffectedAgents module' -Tag 'Unit' {
         }
 
         It 'Maps a subagent change (user-invocable: false) to every parent that lists it' {
-            New-AgentFile -RelativePath '.github/agents/hve-core/subagents/researcher-subagent.agent.md' -UserInvocable $false
+            New-AgentFile -RelativePath '.github/agents/hve-core/subagents/example-subagent.agent.md' -UserInvocable $false
             New-DepMap -Map @{
-                'task-planner' = @{ subagents = @('.github/agents/hve-core/subagents/researcher-subagent.agent.md') }
-                'task-implementor' = @{ subagents = @('.github/agents/hve-core/subagents/researcher-subagent.agent.md') }
-                'task-reviewer' = @{ subagents = @() }
+                'sample-agent' = @{ subagents = @('.github/agents/hve-core/subagents/example-subagent.agent.md') }
+                'example-agent' = @{ subagents = @('.github/agents/hve-core/subagents/example-subagent.agent.md') }
+                'other-agent' = @{ subagents = @() }
             }
             $result = Get-AffectedAgentSlugs `
-                -ChangedFiles @('.github/agents/hve-core/subagents/researcher-subagent.agent.md') `
+                -ChangedFiles @('.github/agents/hve-core/subagents/example-subagent.agent.md') `
                 -RepoRoot $script:TestRoot `
                 -DepMapPath $script:DepMapPath `
                 -SkipDepMapRefresh
-            $result | Should -Be @('researcher-subagent', 'task-implementor', 'task-planner')
+            $result | Should -Be @('example-agent', 'example-subagent', 'sample-agent')
         }
 
         It 'Returns the parent slug and the subagent slug when a parent lists the subagent by display name' {
@@ -150,54 +150,54 @@ Describe 'AffectedAgents module' -Tag 'Unit' {
     Context 'Stimulus YAML changes' {
         It 'Returns the slug encoded in the stimulus filename' {
             $result = Get-AffectedAgentSlugs `
-                -ChangedFiles @('evals/agent-behavior/stimuli/task-planner.yml') `
+                -ChangedFiles @('evals/agent-behavior/stimuli/sample-agent.yml') `
                 -RepoRoot $script:TestRoot `
                 -DepMapPath $script:DepMapPath `
                 -SkipDepMapRefresh
-            $result | Should -Be @('task-planner')
+            $result | Should -Be @('sample-agent')
         }
 
         It 'Accepts .yaml extension as well as .yml' {
             $result = Get-AffectedAgentSlugs `
-                -ChangedFiles @('evals/agent-behavior/stimuli/task-reviewer.yaml') `
+                -ChangedFiles @('evals/agent-behavior/stimuli/example-agent.yaml') `
                 -RepoRoot $script:TestRoot `
                 -DepMapPath $script:DepMapPath `
                 -SkipDepMapRefresh
-            $result | Should -Be @('task-reviewer')
+            $result | Should -Be @('example-agent')
         }
     }
 
     Context 'Indirect artifact expansion via dep-map reverse lookup' {
         It 'Expands an instruction change to every parent that references it' {
             New-DepMap -Map @{
-                'task-planner' = @{ instructions = @('.github/instructions/coding-standards/powershell/powershell.instructions.md') }
-                'task-implementor' = @{ instructions = @('.github/instructions/coding-standards/powershell/powershell.instructions.md') }
-                'task-reviewer' = @{ instructions = @('.github/instructions/hve-core/markdown.instructions.md') }
+                'sample-agent' = @{ instructions = @('.github/instructions/coding-standards/powershell/powershell.instructions.md') }
+                'example-agent' = @{ instructions = @('.github/instructions/coding-standards/powershell/powershell.instructions.md') }
+                'other-agent' = @{ instructions = @('.github/instructions/hve-core/markdown.instructions.md') }
             }
             $result = Get-AffectedAgentSlugs `
                 -ChangedFiles @('.github/instructions/coding-standards/powershell/powershell.instructions.md') `
                 -RepoRoot $script:TestRoot `
                 -DepMapPath $script:DepMapPath `
                 -SkipDepMapRefresh
-            $result | Should -Be @('task-implementor', 'task-planner')
+            $result | Should -Be @('example-agent', 'sample-agent')
         }
 
         It 'Expands a skill SKILL.md change to every parent that references it' {
             New-DepMap -Map @{
-                'task-planner' = @{ skills = @('.github/skills/shared/pr-reference/SKILL.md') }
-                'task-reviewer' = @{ skills = @('.github/skills/shared/pr-reference/SKILL.md') }
+                'sample-agent' = @{ skills = @('.github/skills/shared/pr-reference/SKILL.md') }
+                'example-agent' = @{ skills = @('.github/skills/shared/pr-reference/SKILL.md') }
             }
             $result = Get-AffectedAgentSlugs `
                 -ChangedFiles @('.github/skills/shared/pr-reference/SKILL.md') `
                 -RepoRoot $script:TestRoot `
                 -DepMapPath $script:DepMapPath `
                 -SkipDepMapRefresh
-            $result | Should -Be @('task-planner', 'task-reviewer')
+            $result | Should -Be @('example-agent', 'sample-agent')
         }
 
         It 'Returns an empty array for an indirect artifact with no references' {
             New-DepMap -Map @{
-                'task-planner' = @{ instructions = @('.github/instructions/other.instructions.md') }
+                'sample-agent' = @{ instructions = @('.github/instructions/other.instructions.md') }
             }
             $result = Get-AffectedAgentSlugs `
                 -ChangedFiles @('.github/instructions/coding-standards/powershell/powershell.instructions.md') `
@@ -211,20 +211,20 @@ Describe 'AffectedAgents module' -Tag 'Unit' {
 
     Context 'Mixed and edge inputs' {
         It 'De-duplicates and sorts slugs across direct and indirect inputs' {
-            New-AgentFile -RelativePath '.github/agents/hve-core/task-planner.agent.md' -UserInvocable $true
+            New-AgentFile -RelativePath '.github/agents/hve-core/sample-agent.agent.md' -UserInvocable $true
             New-DepMap -Map @{
-                'task-planner' = @{ instructions = @('.github/instructions/x.instructions.md') }
-                'task-implementor' = @{ instructions = @('.github/instructions/x.instructions.md') }
+                'sample-agent' = @{ instructions = @('.github/instructions/x.instructions.md') }
+                'example-agent' = @{ instructions = @('.github/instructions/x.instructions.md') }
             }
             $result = Get-AffectedAgentSlugs `
                 -ChangedFiles @(
-                    '.github/agents/hve-core/task-planner.agent.md',
+                    '.github/agents/hve-core/sample-agent.agent.md',
                     '.github/instructions/x.instructions.md'
                 ) `
                 -RepoRoot $script:TestRoot `
                 -DepMapPath $script:DepMapPath `
                 -SkipDepMapRefresh
-            $result | Should -Be @('task-implementor', 'task-planner')
+            $result | Should -Be @('example-agent', 'sample-agent')
         }
 
         It 'Ignores paths that are not artifacts' {
@@ -248,13 +248,13 @@ Describe 'AffectedAgents module' -Tag 'Unit' {
         }
 
         It 'Normalizes backslash separators before classification' {
-            New-AgentFile -RelativePath '.github/agents/hve-core/task-planner.agent.md' -UserInvocable $true
+            New-AgentFile -RelativePath '.github/agents/hve-core/sample-agent.agent.md' -UserInvocable $true
             $result = Get-AffectedAgentSlugs `
-                -ChangedFiles @('.github\agents\hve-core\task-planner.agent.md') `
+                -ChangedFiles @('.github\agents\hve-core\sample-agent.agent.md') `
                 -RepoRoot $script:TestRoot `
                 -DepMapPath $script:DepMapPath `
                 -SkipDepMapRefresh
-            $result | Should -Be @('task-planner')
+            $result | Should -Be @('sample-agent')
         }
     }
 }

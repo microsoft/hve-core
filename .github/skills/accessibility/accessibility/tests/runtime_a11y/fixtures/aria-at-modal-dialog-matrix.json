@@ -1,0 +1,28 @@
+{
+  "criteria": [
+    {
+      "id": "4.1.2",
+      "framework": "wcag-22",
+      "title": "Name, Role, Value",
+      "adequateMethods": ["screen-reader"]
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "dialog",
+      "name": "Dialog",
+      "platform": "web",
+      "widgetPattern": "dialog-modal",
+      "states": ["open"]
+    }
+  ],
+  "cells": [
+    {
+      "criterionId": "4.1.2",
+      "surfaceId": "dialog",
+      "state": "open",
+      "status": "partial",
+      "adequateMethods": ["screen-reader"]
+    }
+  ]
+}

@@ -238,3 +238,59 @@ def _list_widgets_with_context_impl(
         chain = walk_area_chain(mural_id, widget_parent) if widget_parent else []
         enriched.append({"widget": widget, "area_chain": chain, "cluster": None})
     return enriched
+
+
+def _hydrate_destination_context_impl(
+    mural_id: str,
+    context: dict[str, Any],
+    widget_url: str,
+    *,
+    cache: dict[tuple[str, str], Any],
+    get_mural: Callable[[str], dict[str, Any]],
+    get_room: Callable[[str], dict[str, Any]],
+    get_workspace: Callable[[str], dict[str, Any]],
+    list_tags: Callable[[str], list[dict[str, Any]]],
+    hydrate_destination_record: Callable[..., dict[str, Any]],
+) -> dict[str, Any]:
+    """Hydrate hierarchy and tags with one invocation-scoped resource cache."""
+
+    def cached(kind: str, identifier: str, loader: Callable[[str], Any]) -> Any:
+        key = (kind, identifier)
+        if key not in cache:
+            cache[key] = loader(identifier)
+        return cache[key]
+
+    mural = cached("mural", mural_id, get_mural)
+    room_id = mural.get("roomId") if isinstance(mural, dict) else None
+    room = cached("room", room_id, get_room) if isinstance(room_id, str) else {}
+    workspace_id = mural.get("workspaceId") if isinstance(mural, dict) else None
+    if not isinstance(workspace_id, str) and isinstance(room, dict):
+        workspace_id = room.get("workspaceId")
+    workspace = (
+        cached("workspace", workspace_id, get_workspace)
+        if isinstance(workspace_id, str)
+        else {}
+    )
+    tag_records = cached("tags", mural_id, list_tags)
+    tag_text_by_id = {
+        record["id"]: record.get("title") or record.get("name")
+        for record in tag_records
+        if isinstance(record, dict)
+        and isinstance(record.get("id"), str)
+        and isinstance(record.get("title") or record.get("name"), str)
+    }
+    missing = []
+    if not isinstance(room_id, str):
+        missing.append("room")
+    if not isinstance(workspace_id, str):
+        missing.append("workspace")
+    prepared_context = dict(context)
+    prepared_context["hydration_missing"] = missing
+    return hydrate_destination_record(
+        prepared_context,
+        room=room,
+        mural=mural,
+        workspace=workspace,
+        tag_text_by_id=tag_text_by_id,
+        widget_url=widget_url,
+    )

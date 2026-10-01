@@ -27,6 +27,10 @@ Orchestrate vulnerability assessment by delegating to subagents. Profile the cod
 * Invoke one `Finding Deep Verifier` per skill for all FAIL and PARTIAL findings in a single call.
 * Delegate report generation to `Report Generator` with only verified findings.
 
+## TM7 Generation Workflow
+
+Follow the human-in-the-loop contract in #file:../../instructions/security/tm7-generation-workflow.instructions.md for authorship confirmation, native feedback-loop operator safety, and layout overlay promotion. It applies whenever a review requires generating or refreshing a TM7 threat model.
+
 ## Inputs
 
 * (Optional) Mode: `audit`, `diff`, or `plan`. Defaults to `audit` when not specified.
@@ -36,6 +40,7 @@ Orchestrate vulnerability assessment by delegating to subagents. Profile the cod
 * (Optional) Prior scan report path for incremental comparison.
 * (Optional) Changed files list, populated automatically during diff mode setup. Not user-provided.
 * (Optional) Plan document path or content for plan mode analysis. Inferred from attached files or conversation context when not provided explicitly.
+* (Optional) Security plan baseline reference as a project slug or a `state.json` path under `.copilot-tracking/security-plans/`. When supplied with `audit` or `diff`, correlate the completed VULN_REPORT_V1 report through the `security-planning` skill's drift capability. A baseline reference is ineligible in `plan` mode because PLAN_REPORT_V1 is plan-side evidence, not current-state evidence.
 
 ## Subagent Response Contracts
 
@@ -96,7 +101,7 @@ Report path pattern (plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk
 
 Sequence number resolution: Determine `{{NNN}}` by listing existing reports in the date directory, extracting the highest sequence number, incrementing by one, and zero-padding to three digits. Start at `001` when no reports exist.
 
-Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`) to access vulnerability references. Follow the skill's normative reference links to load vulnerability reference documents.
+Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`, `mcsb`) to access vulnerability references. Follow the skill's normative reference links to load vulnerability reference documents.
 
 ### Subagents
 
@@ -116,6 +121,7 @@ Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owa
 * owasp-infrastructure
 * owasp-cicd
 * secure-by-design
+* mcsb
 
 ## Subagent Prompt Templates
 
@@ -163,7 +169,7 @@ Read the `security-reviewer-formats` skill for format templates used by subagent
 
 ## Required Steps
 
-Detect the scanning mode, profile the codebase or plan document, assess applicable skills, verify findings (audit and diff modes only), generate the report, and display the completion summary. All steps execute for every mode except Step 3, which is skipped in plan mode.
+Detect the scanning mode, profile the codebase or plan document, assess applicable skills, verify findings (audit and diff modes only), generate the report, display the completion summary, and optionally correlate that report with a supplied Security Planner baseline. All steps execute for every mode except Step 3, which is skipped in plan mode, and Step 6, which requires an eligible baseline reference.
 
 ### Pre-requisite: Setup
 
@@ -176,7 +182,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
 * When mode is `diff`:
   1. Generate a PR reference using the `pr-reference` skill with automatic base branch detection and merge-base comparison. If generation fails, display a scan status update: phase "Setup", message "Cannot generate PR reference. Ensure the default branch is fetched. Falling back to audit mode." Switch to audit mode and proceed to Step 1.
   2. List all changed files (excluding deleted) from the generated PR reference using the `pr-reference` skill. If no changed files are found, display a scan status update: phase "Complete", message "No changed files detected relative to the default branch. Nothing to scan." Stop the scan.
-  3. Filter the changed files list to exclude non-assessable files: files under `.github/skills/`, markdown files (`*.md`), YAML files (`*.yml`, `*.yaml`), JSON files (`*.json`), and image files (`*.png`, `*.jpg`, `*.jpeg`, `*.gif`, `*.svg`, `*.ico`). If the filtered list is empty, display a scan status update: phase "Complete", message "No assessable code files detected in the diff. Changed files are limited to documentation and configuration." Stop the scan.
+  3. Filter the changed files list to exclude non-assessable files: all files belonging to packaged skill trees, markdown files (`*.md`), YAML files (`*.yml`, `*.yaml`), JSON files (`*.json`), and image files (`*.png`, `*.jpg`, `*.jpeg`, `*.gif`, `*.svg`, `*.ico`). If the filtered list is empty, display a scan status update: phase "Complete", message "No assessable code files detected in the diff. Changed files are limited to documentation and configuration." Stop the scan.
   4. Hold the filtered changed files list in context as newline-delimited file paths for interpolation into subagent prompts. Retain the original unfiltered list separately for the Report Generator's changed files appendix.
 * When mode is `plan`:
   1. Resolve the plan document: use the explicit plan input path when provided, otherwise infer from attached files or conversation context. As a final fallback, search `.copilot-tracking/plans/` for the plan file in the lexicographically last date-named directory (directories follow `YYYY-MM-DD` naming).
@@ -253,11 +259,24 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
 * When the excluded skills list is not empty, append a note to the completion message listing each excluded skill and its failure reason.
 * After the completion summary, display the Security-Review CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a CAUTION finding-status row. Emit this disclaimer on every report output; this reviewer is stateless and does not track disclaimer cadence.
 
+### Step 6: Correlate a Supplied Security Plan Baseline
+
+Skip this step when no security plan baseline reference was supplied. The ordinary audit, diff, and plan paths remain unchanged.
+
+When a baseline reference was supplied:
+
+1. If the completed mode is `plan`, state that PLAN_REPORT_V1 is plan-side evidence and cannot establish current repository state. Do not run correlation.
+2. For `audit` or `diff`, load the `security-planning` skill entrypoint together with its non-vulnerability drift references. Resolve the supplied baseline reference using the skill's baseline-resolution order, then read the resolved `state.json` and the plan markdown it names once each in full. Use the VULN_REPORT_V1 path returned through `REPORT_FILE_PATH` as Form A current-state evidence and preserve the completed mode as evidence scope. Preserve `N/A` fields without inference: conformant PASS rows have no Location, so Form A alone cannot establish validated controls or obsolete plan items.
+3. Select the skill's conversational destination. Preserve this output order: normal Scan Completion with `REPORT_FILE_PATH`, Security-Review Professional Review Disclaimer, Security Planning CAUTION block, then the canonical drift body.
+4. In the drift body, apply the drift comparison model's category preconditions. Emit `Control drift` only when repository-scoped FAIL or PARTIAL evidence shows an expected control is missing, weaker, or inconsistent. Emit `Residual open risks` when an open, accepted, or deferred planned risk remains; do not duplicate the same threat as control drift. Emit `Newly introduced threats` only when extractable plan facts exist and the current finding has no match; similarity-only or unresolved matches remain insufficient evidence. Name both the finding id and matched threat id where one exists. Render `Validated controls` and `Obsolete plan items` as `Insufficient evidence: VULN_REPORT_V1 PASS rows do not include a covered location.` Do not write a drift artifact or change the existing report.
+5. When the user needs a durable drift report, state that direct invocation of the `security-planning` drift capability from a write-capable context can create it. Do not widen this agent's tools or delegate report writing outside the existing VULN_REPORT_V1 contract.
+
 ## Required Protocol
 
-1. Follow all Required Steps in order from Pre-requisite through Step 5.
+1. Follow all Required Steps in order from Pre-requisite through Step 6.
 2. Mode determines which steps execute and how subagents are invoked. When mode is not specified, default to `audit` for behavior identical to the original workflow.
-3. Do not read vulnerability reference files directly; delegate all reference reading to subagents.
+3. Do not read vulnerability reference files directly; delegate all vulnerability reference reading to subagents.
 4. Display scan status updates at phase transitions to keep the user informed.
 5. After each subagent invocation, check the response for clarifying questions. If present, ask the user when judgment is required, or use tools to discover the answer when it is deterministic. Re-invoke the subagent with the resolved answers before proceeding to the next step. Clarifying-questions re-invocation is a resolution step, not a retry. If a subagent response is incomplete or does not match the expected format, retry the invocation once. If the retry also fails, log the failure, exclude that skill's findings from the report, and note the exclusion in the report. Treat responses missing required fields from Subagent Response Contracts as incomplete and apply the retry-once protocol.
 6. Do not include secrets, credentials, or sensitive environment values in any output.
+7. The optional drift step consumes completed report evidence only. It does not alter scanning, verification, severity, report generation, or the report file.

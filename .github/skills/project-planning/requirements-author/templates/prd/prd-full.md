@@ -246,6 +246,16 @@ Patterns from `requirements-quality` skill: Gherkin Given/When/Then format (see 
 
 *Guidance*: Maintain the traceability matrix as part of the PRD. Use [traceability-matrix.md](../../references/_shared/traceability-matrix.md) for the canonical table shapes and formulas.
 
+### Feasibility Candidate Disposition
+
+{{feasibility_candidate_disposition_table}}
+
+*Guidance*: Include this register when a feasibility-to-PRD handoff is consumed. Each forward-verdict candidate appears exactly once. Record source handoff ID, source candidate ID, evidence references, disposition, rationale, and the resulting final PRD ID when accepted. Allowed dispositions are `accepted-fr`, `accepted-nfr`, `accepted-constraint`, `retained-gap`, `rejected`, and `deferred`. Negative feasibility verdicts have no candidate rows. Concern hints are advisory and never assign a final category or downstream planner.
+
+| Source handoff ID     | Source candidate ID     | Evidence references      | Disposition               | Resulting PRD ID           | Rationale                 |
+|-----------------------|-------------------------|--------------------------|---------------------------|----------------------------|---------------------------|
+| {{source_handoff_id}} | {{source_candidate_id}} | {{source_evidence_refs}} | {{candidate_disposition}} | {{resulting_prd_id_or_na}} | {{disposition_rationale}} |
+
 ### FR-to-AC Coverage
 
 {{fr_to_ac_traceability_table}}
@@ -291,11 +301,21 @@ Target: `{{fr_to_goal_coverage_threshold_pct}}%`. Any gap requires an active wai
 
 {{assumptions}}
 
-*Guidance*: List assumptions about users, resources, dependencies, technical feasibility, etc. For each:
+*Guidance*: List assumptions about users, resources, dependencies, technical feasibility, and other load-bearing beliefs. Preserve evidence status and source when an assumption comes from an upstream handoff, product discovery, or Research.
 
-* Assumption statement.
-* Impact if false: High, medium, or low.
-* Mitigation strategy.
+| ID     | Assumption    | Evidence status                                | Impact if false | Mitigation     | Source                                  |
+|--------|---------------|------------------------------------------------|-----------------|----------------|-----------------------------------------|
+| `<ID>` | `<Statement>` | `<Untested / Partially supported / Evidenced>` | `<Impact>`      | `<Mitigation>` | `<Handoff, discovery, or evidence IDs>` |
+
+### Research Finding Dispositions
+
+{{research_finding_dispositions}}
+
+*Guidance*: Include this table when bounded `rpi-research` evidence was considered. Record one row per material finding. Keep the primary Research artifact authoritative for evidence and the PRD authoritative for requirement decisions.
+
+| Gap ID     | Evidence IDs | Affected targets              | Disposition                                                            | Rationale     | Primary research artifact   |
+|------------|--------------|-------------------------------|------------------------------------------------------------------------|---------------|-----------------------------|
+| `<Gap ID>` | `<C# / W#>`  | `<Section or requirement ID>` | `<Incorporated / Revised / Rejected / Deferred / Retained-assumption>` | `<Rationale>` | `<Workspace-relative path>` |
 
 ### Risk Register
 

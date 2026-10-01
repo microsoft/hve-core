@@ -13,7 +13,7 @@ tags:
   - agents
   - accessibility
 author: Microsoft
-ms.date: 2026-07-08
+ms.date: 2026-08-20
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -39,11 +39,15 @@ The Accessibility Reviewer is an orchestrator agent that audits a codebase again
 
 ## Modes and Inputs
 
+:::table{caption="Review modes and the inputs each mode accepts"}
+
 | Mode    | Behavior                                                                      | Key inputs                           |
 |---------|-------------------------------------------------------------------------------|--------------------------------------|
 | `audit` | Profiles the full codebase, assesses applicable skills, and verifies findings | Optional path focus, skills override |
 | `diff`  | Assesses only the changed files, then verifies findings                       | Changed files                        |
 | `plan`  | Assesses a plan document and passes findings through without verification     | Plan document                        |
+
+:::
 
 Additional inputs accepted across modes include an optional path focus, a skills-list override, a target skill (which fast-paths past the profiler), and a prior scan report.
 
@@ -51,6 +55,8 @@ Additional inputs accepted across modes include an optional path focus, a skills
 
 ```mermaid
 flowchart LR
+  accTitle: Accessibility Review Pipeline
+  accDescr: Review moves from setup through codebase profiling, applicable-skill assessment, finding verification, report generation, and summary computation.
   A["Setup"] --> B["Profile Codebase"]
   B --> C["Assess Applicable Skills"]
   C --> D["Verify Findings"]

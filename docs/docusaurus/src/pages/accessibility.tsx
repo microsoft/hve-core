@@ -11,9 +11,6 @@ export default function AccessibilityStatementPage(): React.ReactElement {
       title="Accessibility statement"
       description="Accessibility statement and conformance information for HVE Core documentation and resources"
     >
-      <a className={styles.skipLink} href="#main-content">
-        Skip to main content
-      </a>
       <main id="main-content" className={styles.main}>
         <header className={styles.hero}>
           <p className={styles.eyebrow}>Accessibility</p>
@@ -23,7 +20,7 @@ export default function AccessibilityStatementPage(): React.ReactElement {
             We aim to meet the WCAG 2.2 Level AA conformance target for the documentation site and related public content.
           </p>
           <p className={styles.reviewNote}>
-            This statement and its companion VPAT are a self-assessment authored with AI assistance and validated by automated accessibility testing. They have not been independently audited; we welcome corrections.
+            This statement and its companion VPAT are a self-assessment authored with AI assistance and informed by configured automated accessibility testing. They have not been independently audited; we welcome corrections.
           </p>
         </header>
 
@@ -35,9 +32,9 @@ export default function AccessibilityStatementPage(): React.ReactElement {
           </p>
           <ul>
             <li><strong>Target:</strong> WCAG 2.2 Level AA</li>
-            <li><strong>Status:</strong> Self-assessment &mdash; automated accessibility checks pass site-wide and remediation is complete for identified issues; not independently audited</li>
-            <li><strong>Assessment date:</strong> 2026-07-03</li>
-            <li><strong>Assessment method:</strong> Automated accessibility testing (axe-core across the site) plus keyboard and screen-reader exploration tests in continuous integration, with AI-assisted review. This is not an independent third-party audit.</li>
+            <li><strong>Status:</strong> Capability statement &mdash; automated checks are configured for the declared site inventory; current revision-bound validation is required before publishing a completed result</li>
+            <li><strong>Assessment currency:</strong> A date is published only with a current validation projection that identifies the tested revision, scope, methods, and limitations</li>
+            <li><strong>Assessment method:</strong> Automated accessibility testing (axe-core across the site), deterministic keyboard and accessibility-tree tests in continuous integration, and advisory local NVDA sampling with AI-assisted review. This is not an independent third-party audit.</li>
           </ul>
         </section>
 
@@ -45,6 +42,12 @@ export default function AccessibilityStatementPage(): React.ReactElement {
           <h2 id="limitations">Known limitations</h2>
           <p>
             We continue to review and improve the site. Some older content and a small number of third-party or legacy examples may still present inconsistent interaction patterns or wording until we complete further remediation.
+          </p>
+          <p>
+            This statement describes the accessibility capabilities the site is built and configured for. It is a self-assessment: it has not been independently audited or certified, and it is not an attestation of conformance.
+          </p>
+          <p>
+            Manual and assistive-technology review is incomplete. Automated checks run against every release, while screen-reader review covers a representative sample of journeys rather than the whole site, so untested areas may behave differently from the areas described here.
           </p>
           <p>
             We welcome feedback so we can prioritize fixes and keep the documentation experience usable for more readers.

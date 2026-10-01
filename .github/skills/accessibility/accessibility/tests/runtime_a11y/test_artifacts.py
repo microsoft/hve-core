@@ -1,0 +1,559 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+
+from __future__ import annotations
+
+import contextlib
+import hashlib
+import json
+import threading
+from pathlib import Path
+
+import pytest
+
+import runtime_a11y.matrix._artifacts as artifact_module
+from runtime_a11y.matrix._coverage import compute_coverage
+from runtime_a11y.matrix._model import Cell, Criterion, Matrix, Surface
+from runtime_a11y.matrix._render_test_plan import (
+    _yaml_scalar,
+    build_manual_test_cases,
+    render_manual_test_plan_markdown,
+    render_manual_test_plan_yaml,
+)
+
+
+def _matrix() -> Matrix:
+    return Matrix(
+        criteria=[
+            Criterion(
+                id="4.1.2",
+                framework="wcag-22",
+                title="Name, Role, Value",
+                adequateMethods={"screen-reader"},
+            ),
+            Criterion(
+                id="2.4.7",
+                framework="wcag-22",
+                title="Focus Visible",
+                adequateMethods={"manual-keyboard"},
+            ),
+            Criterion(
+                id="1.4.3",
+                framework="wcag-22",
+                title="Contrast",
+                adequateMethods={"axe-auto"},
+            ),
+        ],
+        surfaces=[
+            Surface(
+                id="search",
+                name="Search dialog",
+                platform="web",
+                states=["open"],
+                widgetPattern="dialog-modal",
+            )
+        ],
+        cells=[
+            Cell(
+                criterionId="4.1.2",
+                surfaceId="search",
+                state="open",
+                status="pass",
+                verifiedByMethod="axe-auto",
+                evidence="axe.json",
+                rationale="Static evidence only",
+                adequateMethods={"screen-reader"},
+            ),
+            Cell(
+                criterionId="2.4.7",
+                surfaceId="search",
+                state="open",
+                status="pass",
+                verifiedByMethod="manual-keyboard",
+                adequateMethods={"manual-keyboard"},
+            ),
+            Cell(
+                criterionId="1.4.3",
+                surfaceId="search",
+                state="open",
+                status="unknown",
+                adequateMethods={"axe-auto"},
+            ),
+            Cell(
+                criterionId="4.1.2",
+                surfaceId="search",
+                state="default",
+                status="not-applicable",
+                adequateMethods={"screen-reader"},
+                isApplicable=False,
+            ),
+        ],
+    )
+
+
+def _bundle_digests(paths: artifact_module.ArtifactPaths) -> dict[str, str]:
+    return {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in (
+            paths.coverage_json,
+            paths.coverage_markdown,
+            paths.earl_jsonld,
+            paths.manual_plan_markdown,
+            paths.manual_plan_yaml,
+            paths.manifest_json,
+        )
+    }
+
+
+def _staging_directories(output_dir: Path) -> list[Path]:
+    prefix = f".{output_dir.name}-"
+    return [
+        path
+        for path in output_dir.parent.iterdir()
+        if path.is_dir() and path.name.startswith(prefix)
+    ]
+
+
+def test_given_rendered_payload_when_deserialized_then_matrix_round_trips() -> None:
+    # Arrange
+    source = _matrix()
+
+    # Act
+    restored = Matrix.from_dict(source.to_dict())
+
+    # Assert
+    assert restored.to_dict() == source.to_dict()
+
+
+def test_given_surface_widget_pattern_when_round_tripping_then_value_is_preserved() -> (
+    None
+):
+    # Arrange
+    source = Matrix(
+        criteria=[Criterion(id="4.1.2", framework="wcag-22", title="Name")],
+        surfaces=[
+            Surface(
+                id="search",
+                name="Search",
+                platform="web",
+                widgetPattern="dialog-modal",
+            )
+        ],
+        cells=[Cell(criterionId="4.1.2", surfaceId="search", state="open")],
+    )
+
+    # Act
+    restored = Matrix.from_dict(source.to_dict())
+
+    # Assert
+    assert restored.surfaces[0].widgetPattern == "dialog-modal"
+
+
+def test_given_minimal_payload_when_deserialized_then_defaults_are_applied() -> None:
+    # Arrange
+    payload = {
+        "criteria": [{"id": "1.1.1", "framework": "wcag-22"}],
+        "surfaces": [{"id": "home"}],
+        "cells": [{"criterionId": "1.1.1", "surfaceId": "home"}],
+    }
+
+    # Act
+    restored = Matrix.from_dict(payload)
+
+    # Assert
+    assert restored.criteria[0].title == "1.1.1"
+    assert restored.surfaces[0].name == "home"
+    assert restored.surfaces[0].platform == "web"
+    assert restored.cells[0].state == "default"
+    assert restored.cells[0].status == "unknown"
+
+
+def test_given_unresolved_human_method_when_building_plan_then_case_is_emitted() -> (
+    None
+):
+    # Act
+    cases = build_manual_test_cases(_matrix())
+
+    # Assert
+    assert len(cases) == 1
+    assert cases[0]["id"] == "manual-4-1-2-search-open"
+    assert cases[0]["recommendedMethod"] == "screen-reader"
+    assert cases[0]["currentStatus"] == "pass"
+
+
+def test_runtime_config_and_catalog_mapping_rendering_plans_has_metadata(
+    tmp_path: Path,
+) -> None:
+    # Arrange
+    matrix = Matrix(
+        criteria=[
+            Criterion(id="4.1.2", framework="wcag-22", title="Name, Role, Value")
+        ],
+        surfaces=[
+            Surface(
+                id="dialog",
+                name="Dialog",
+                platform="web",
+                widgetPattern="dialog-modal",
+            )
+        ],
+        cells=[
+            Cell(
+                criterionId="4.1.2",
+                surfaceId="dialog",
+                state="open",
+                status="unknown",
+            )
+        ],
+    )
+    runtime_config = {
+        "surfaces": [
+            {
+                "id": "dialog",
+                "widgetPattern": "dialog-modal",
+                "states": [
+                    {
+                        "state": "open",
+                        "ariaAt": {
+                            "commands": [
+                                {"kind": "key", "value": "Escape"},
+                                {"kind": "pause", "durationMs": 100},
+                            ],
+                            "assertions": [{"type": "contains", "value": "dialog"}],
+                        },
+                    }
+                ],
+            }
+        ]
+    }
+    markdown_path = tmp_path / "plan.md"
+    yaml_path = tmp_path / "plan.yaml"
+
+    # Act
+    render_manual_test_plan_markdown(matrix, markdown_path, "octo/repo", runtime_config)
+    render_manual_test_plan_yaml(matrix, yaml_path, "octo/repo", runtime_config)
+
+    # Assert
+    markdown = markdown_path.read_text(encoding="utf-8")
+    yaml = yaml_path.read_text(encoding="utf-8")
+    assert "ariaAt" in markdown
+    assert "ARIA-AT mapping ID: aria-at-modal-dialog" in markdown
+    assert "Immutable source:" in markdown
+    assert "Upstream SHA:" in markdown
+    assert "#### Mapping Commands" in markdown
+    assert "#### Executable NVDA Variants" in markdown
+    assert "#### Manual JAWS Variants" in markdown
+    assert 'mappingStatus: "mapped"' in yaml
+    assert "automationEligible: false" in yaml
+    assert 'upstreamTestId: "openModalDialog"' in yaml
+    assert 'kind: "key"' in yaml
+    assert 'value: "Escape"' in yaml
+    assert "durationMs: 100" in yaml
+    assert "manualEvidenceRequired: true" in yaml
+    assert "runbookReference: " in yaml
+    assert "          commands: []" in yaml
+    assert "          assertions: []" in yaml
+
+
+def test_given_manual_cases_when_rendering_plans_then_markdown_and_yaml_align(
+    tmp_path: Path,
+) -> None:
+    # Arrange
+    markdown_path = tmp_path / "plan.md"
+    yaml_path = tmp_path / "plan.yaml"
+
+    # Act
+    render_manual_test_plan_markdown(_matrix(), markdown_path, "octo/repo")
+    render_manual_test_plan_yaml(_matrix(), yaml_path, "octo/repo")
+
+    # Assert
+    markdown = markdown_path.read_text(encoding="utf-8")
+    yaml = yaml_path.read_text(encoding="utf-8")
+    assert markdown.startswith("<!-- markdownlint-disable-file -->")
+    assert "# Manual Accessibility Test Plan" in markdown
+    assert "manual-4-1-2-search-open" in markdown
+    assert "- [ ] Reviewed and validated by a qualified human reviewer" in markdown
+    assert "nvda-open" in markdown
+    assert "Executable NVDA Variants" in markdown
+    assert "Manual JAWS Variants" in markdown
+    assert 'repository: "octo/repo"' in yaml
+    assert 'recommendedMethod: "screen-reader"' in yaml
+    assert 'outcome: "not-run"' in yaml
+
+
+def test_given_no_pending_human_cases_when_rendering_then_empty_layout_is_valid(
+    tmp_path: Path,
+) -> None:
+    # Arrange
+    matrix = _matrix()
+    matrix.cells = [matrix.cells[1]]
+    markdown_path = tmp_path / "plan.md"
+    yaml_path = tmp_path / "plan.yaml"
+
+    # Act
+    render_manual_test_plan_markdown(matrix, markdown_path, "octo/repo")
+    render_manual_test_plan_yaml(matrix, yaml_path, "octo/repo")
+
+    # Assert
+    assert "* None" in markdown_path.read_text(encoding="utf-8")
+    assert "cases: []" in yaml_path.read_text(encoding="utf-8")
+
+
+def test_given_repository_slug_when_resolving_paths_then_names_are_portable(
+    tmp_path: Path,
+) -> None:
+    # Act
+    paths = artifact_module.artifact_paths(tmp_path, "Microsoft/HVE Core")
+    fallback = artifact_module.artifact_paths(tmp_path, "///")
+
+    # Assert
+    assert (
+        paths.earl_jsonld.name == "accessibility-results-microsoft-hve-core.earl.jsonld"
+    )
+    assert paths.manual_plan_yaml.name == "manual-at-testplan-microsoft-hve-core.yaml"
+    assert fallback.manifest_json.name == "accessibility-artifacts-repository.json"
+
+
+def test_given_matrix_when_rendering_bundle_then_manifest_lists_all_artifacts(
+    tmp_path: Path,
+) -> None:
+    # Arrange
+    matrix = _matrix()
+    coverage = compute_coverage(matrix)
+    output_dir = tmp_path / "artifacts"
+
+    # Act
+    paths = artifact_module.render_artifact_bundle(
+        matrix, coverage, output_dir, "octo/repo"
+    )
+
+    # Assert
+    manifest = json.loads(paths.manifest_json.read_text(encoding="utf-8"))
+    assert all(
+        path.exists()
+        for path in (
+            paths.coverage_json,
+            paths.coverage_markdown,
+            paths.earl_jsonld,
+            paths.manual_plan_markdown,
+            paths.manual_plan_yaml,
+            paths.manifest_json,
+        )
+    )
+    assert manifest["repository"] == "octo/repo"
+    assert set(manifest["artifacts"]) == {
+        "coverageJson",
+        "coverageMarkdown",
+        "earlJsonLd",
+        "manualTestPlanMarkdown",
+        "manualTestPlanYaml",
+    }
+    assert _staging_directories(output_dir) == []
+
+
+def test_given_renderer_failure_when_replacing_bundle_then_destination_is_unchanged(
+    tmp_path: Path,
+    mocker,
+) -> None:
+    # Arrange
+    matrix = _matrix()
+    coverage = compute_coverage(matrix)
+    output_dir = tmp_path / "artifacts"
+    existing_paths = artifact_module.render_artifact_bundle(
+        matrix, coverage, output_dir, "octo/repo"
+    )
+    existing_digests = _bundle_digests(existing_paths)
+    mocker.patch.object(
+        artifact_module, "render_earl", side_effect=RuntimeError("render failed")
+    )
+
+    # Act and Assert
+    with pytest.raises(RuntimeError, match="render failed"):
+        artifact_module.render_artifact_bundle(
+            matrix, coverage, output_dir, "octo/repo"
+        )
+
+    assert _bundle_digests(existing_paths) == existing_digests
+    assert _staging_directories(output_dir) == []
+
+
+def test_given_manifest_invalidation_failure_when_rendering_then_promotion_stops(
+    tmp_path: Path,
+    mocker,
+) -> None:
+    # Arrange
+    matrix = _matrix()
+    coverage = compute_coverage(matrix)
+    output_dir = tmp_path / "artifacts"
+    existing_paths = artifact_module.render_artifact_bundle(
+        matrix, coverage, output_dir, "octo/repo"
+    )
+    existing_digests = _bundle_digests(existing_paths)
+    original_unlink = Path.unlink
+
+    def fail_manifest_unlink(path: Path, *args, **kwargs) -> None:
+        if path == existing_paths.manifest_json:
+            raise OSError("manifest invalidation failed")
+        original_unlink(path, *args, **kwargs)
+
+    mocker.patch.object(Path, "unlink", autospec=True, side_effect=fail_manifest_unlink)
+    replace = mocker.patch.object(artifact_module.os, "replace")
+
+    # Act and Assert
+    with pytest.raises(OSError, match="manifest invalidation failed"):
+        artifact_module.render_artifact_bundle(
+            matrix, coverage, output_dir, "octo/repo"
+        )
+
+    replace.assert_not_called()
+    assert _bundle_digests(existing_paths) == existing_digests
+    assert _staging_directories(output_dir) == []
+
+
+def test_given_child_promotion_failure_when_rerun_then_bundle_recovers(
+    tmp_path: Path,
+    mocker,
+) -> None:
+    # Arrange
+    matrix = _matrix()
+    coverage = compute_coverage(matrix)
+    output_dir = tmp_path / "artifacts"
+    paths = artifact_module.render_artifact_bundle(
+        matrix, coverage, output_dir, "octo/repo"
+    )
+    original_replace = artifact_module.os.replace
+    failure_pending = True
+
+    def fail_one_child_promotion(source: Path, destination: Path) -> None:
+        nonlocal failure_pending
+        assert not paths.manifest_json.exists()
+        if Path(destination) == paths.coverage_markdown and failure_pending:
+            failure_pending = False
+            raise OSError("child promotion failed")
+        original_replace(source, destination)
+
+    mocker.patch.object(
+        artifact_module.os, "replace", side_effect=fail_one_child_promotion
+    )
+
+    # Act and Assert
+    with pytest.raises(OSError, match="child promotion failed"):
+        artifact_module.render_artifact_bundle(
+            matrix, coverage, output_dir, "octo/repo"
+        )
+
+    assert not paths.manifest_json.exists()
+    assert _staging_directories(output_dir) == []
+
+    recovered_paths = artifact_module.render_artifact_bundle(
+        matrix, coverage, output_dir, "octo/repo"
+    )
+    manifest = json.loads(recovered_paths.manifest_json.read_text(encoding="utf-8"))
+    assert len(_bundle_digests(recovered_paths)) == 6
+    assert len(manifest["artifacts"]) == 5
+    assert _staging_directories(output_dir) == []
+
+
+def test_given_two_writers_when_publication_overlaps_then_bundle_is_one_generation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Arrange
+    first_matrix = _matrix()
+    second_matrix = _matrix()
+    second_matrix.cells[2].status = "fail"
+    first_coverage = compute_coverage(first_matrix)
+    second_coverage = compute_coverage(second_matrix)
+    output_dir = tmp_path / "artifacts"
+    metadata = artifact_module.build_artifact_metadata(
+        repository="octo/repo", generated_at="2026-09-18T00:00:00+00:00"
+    )
+    expected_paths = artifact_module.render_artifact_bundle(
+        second_matrix,
+        second_coverage,
+        tmp_path / "expected",
+        "octo/repo",
+        metadata=metadata,
+    )
+    expected_digests = _bundle_digests(expected_paths)
+    first_child_promoted = threading.Event()
+    release_first_writer = threading.Event()
+    second_writer_waiting = threading.Event()
+    second_writer_entered = threading.Event()
+    failures: list[Exception] = []
+    original_lock = artifact_module._artifact_publication_lock
+    original_replace = artifact_module.os.replace
+
+    @contextlib.contextmanager
+    def observed_lock(destination: Path):
+        if threading.current_thread().name == "second-writer":
+            second_writer_waiting.set()
+        with original_lock(destination):
+            if threading.current_thread().name == "second-writer":
+                second_writer_entered.set()
+            yield
+
+    def coordinated_replace(source: Path, destination: Path) -> None:
+        original_replace(source, destination)
+        if (
+            threading.current_thread().name == "first-writer"
+            and Path(destination).parent == output_dir
+            and Path(destination).suffix != ".json"
+            and not first_child_promoted.is_set()
+        ):
+            first_child_promoted.set()
+            assert release_first_writer.wait(timeout=5)
+
+    def render(matrix: Matrix, coverage: dict[str, object]) -> None:
+        try:
+            artifact_module.render_artifact_bundle(
+                matrix,
+                coverage,
+                output_dir,
+                "octo/repo",
+                metadata=metadata,
+            )
+        except Exception as error:
+            failures.append(error)
+
+    monkeypatch.setattr(artifact_module, "_artifact_publication_lock", observed_lock)
+    monkeypatch.setattr(artifact_module.os, "replace", coordinated_replace)
+    first_writer = threading.Thread(
+        target=render,
+        args=(first_matrix, first_coverage),
+        name="first-writer",
+    )
+    second_writer = threading.Thread(
+        target=render,
+        args=(second_matrix, second_coverage),
+        name="second-writer",
+    )
+
+    # Act
+    first_writer.start()
+    assert first_child_promoted.wait(timeout=5)
+    second_writer.start()
+    assert second_writer_waiting.wait(timeout=5)
+    assert not second_writer_entered.is_set()
+    release_first_writer.set()
+    first_writer.join(timeout=5)
+    second_writer.join(timeout=5)
+
+    # Assert
+    assert not first_writer.is_alive()
+    assert not second_writer.is_alive()
+    assert failures == []
+    assert second_writer_entered.is_set()
+    assert (
+        _bundle_digests(artifact_module.artifact_paths(output_dir, "octo/repo"))
+        == expected_digests
+    )
+    assert _staging_directories(output_dir) == []
+
+
+def test_given_scalar_types_when_rendering_yaml_then_values_are_valid() -> None:
+    # Act and Assert
+    assert _yaml_scalar(True) == "true"
+    assert _yaml_scalar(False) == "false"
+    assert _yaml_scalar(None) == "null"
+    assert _yaml_scalar("text") == '"text"'

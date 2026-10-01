@@ -353,3 +353,113 @@ def test_logout_all_oserror_omits_transparency(
     err = capsys.readouterr().err
     for line in mural_module._LOGOUT_TRANSPARENCY_LINES:
         assert line not in err
+
+
+# ---------------------------------------------------------------------------
+# removed_keys names the credentials that were actually deleted
+#
+# Every test above passes --keep-credentials, so none of them reach
+# ``_logout_remove_credentials``. The tests below close that gap: they pin the
+# *content* of ``removed_keys`` rather than only the presence of transparency
+# lines. ``_KNOWN_CREDENTIAL_KEYS`` holds env-style identifiers, not secret
+# values, so masking them discloses nothing and only hides which credentials an
+# operator just deleted.
+# ---------------------------------------------------------------------------
+
+
+class _RecordingBackend:
+    """Backend stub holding every known credential key for one service."""
+
+    name = "stub"
+
+    def __init__(self) -> None:
+        self.deleted: list[str] = []
+
+    def get(self, service: str, key: str) -> str | None:
+        return "stored-value"
+
+    def delete(self, service: str, key: str) -> None:
+        self.deleted.append(key)
+
+
+def test_logout_removed_keys_are_real_credential_key_names(
+    mural_module: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``removed_keys`` reports the deleted key names, never a mask."""
+    backend = _RecordingBackend()
+    monkeypatch.setattr(mural_module, "resolve_backend", lambda profile: backend)
+
+    entry = mural_module._logout_remove_credentials(
+        "default", require_force_for_file=False
+    )
+
+    assert entry["status"] == "removed"
+    assert entry["removed_keys"] == list(mural_module._KNOWN_CREDENTIAL_KEYS)
+    assert "MURAL_CLIENT_SECRET" in entry["removed_keys"]
+    assert "***" not in entry["removed_keys"]
+    assert backend.deleted == list(mural_module._KNOWN_CREDENTIAL_KEYS)
+
+
+def test_logout_summary_names_each_removed_key(
+    mural_module: Any, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The operator-facing summary spells out which keys were removed."""
+    mural_module._emit_logout_credential_summary(
+        {
+            "profile": "default",
+            "backend": "keyring",
+            "status": "removed",
+            "removed_keys": list(mural_module._KNOWN_CREDENTIAL_KEYS),
+        }
+    )
+
+    err = capsys.readouterr().err
+    for key in mural_module._KNOWN_CREDENTIAL_KEYS:
+        assert key in err
+    assert "***" not in err
+
+
+def test_logout_partial_summary_names_removed_and_errored_keys(
+    mural_module: Any, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A partial removal distinguishes what was removed from what failed."""
+    mural_module._emit_logout_credential_summary(
+        {
+            "profile": "default",
+            "backend": "keyring",
+            "status": "partial",
+            "removed_keys": ["MURAL_CLIENT_ID"],
+            "errors": {"MURAL_CLIENT_SECRET": "delete failed: locked"},
+        }
+    )
+
+    err = capsys.readouterr().err
+    assert "MURAL_CLIENT_ID" in err
+    assert "MURAL_CLIENT_SECRET" in err
+    assert "***" not in err
+
+
+def test_logout_json_envelope_preserves_removed_key_names(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    fake_token_store: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Key names survive the stdout redaction barrier in ``_emit_json``.
+
+    ``removed_keys`` is not a sensitive mapping key and its values are bare
+    identifiers, so neither the key-aware nor the pattern-based arm of
+    ``_redact_payload`` should touch them.
+    """
+    _seed_envelope(fake_token_store, {"alpha": _profile("cid-alpha")}, active="alpha")
+    monkeypatch.setattr(
+        mural_module, "resolve_backend", lambda profile: _RecordingBackend()
+    )
+
+    rc = mural_module.main(["auth", "logout", "--profile", "alpha", "--json"])
+
+    assert rc == mural_module.EXIT_SUCCESS
+    payload = json.loads(capsys.readouterr().out)
+    removed = payload["credentials_removed"][0]["removed_keys"]
+    assert removed == list(mural_module._KNOWN_CREDENTIAL_KEYS)
+    assert "MURAL_CLIENT_SECRET" in removed

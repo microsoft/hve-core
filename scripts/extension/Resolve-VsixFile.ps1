@@ -38,7 +38,6 @@ function Resolve-VsixFile {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [Alias('Path')]
         [string]$DirectoryPath
     )
 

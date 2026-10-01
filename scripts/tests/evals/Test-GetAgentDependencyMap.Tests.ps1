@@ -77,7 +77,7 @@ Describe 'Get-AgentDependencyMap.ps1' -Tag 'Unit' {
         It 'Resolves glob subagent references via recursive enumeration' {
             # The minimal-agent-a body declares a glob `subagents/*.agent.md` that should
             # resolve to the single fixture subagent file.
-            ($script:Record.subagents | Where-Object { $_ -like '*subagents/minimal-subagent.agent.md' }).Count |
+            @($script:Record.subagents | Where-Object { $_ -like '*subagents/minimal-subagent.agent.md' }).Count |
                 Should -BeGreaterThan 0
         }
     }

@@ -2,7 +2,13 @@
 title: Code Review Standards
 description: Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings
 sidebar_position: 7
-ms.date: 2026-07-05
+author: Microsoft
+ms.date: 2026-08-12
+ms.topic: reference
+keywords:
+  - agent
+  - coding-standards
+  - code-review-standards
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
@@ -22,10 +28,8 @@ Thin skill-backed perspective subagent that reviews a precomputed diff against p
 
 ## When to use it
 
-<!-- asset-docs:stub -->
-Describe the situations where this asset is the right choice, and when to reach for a different asset instead.
+Code Review dispatches Standards to check a precomputed diff against applicable coding-standards skills. Findings must trace to a loaded skill, not the worker's stylistic preferences. Functional correctness stays with the Functional perspective; users invoke Code Review rather than this worker directly.
 
 ## Example usage
 
-<!-- asset-docs:stub -->
-Provide a concrete example that shows the asset in action, including representative input and the resulting output.
+The parent supplies changed extensions and files, depth, exclusions, the diff, and `task.outputs.standards`. The worker loads matching skills, records each finding's skill provenance, and writes JSON results. If no skill matches, it returns the normal empty findings structure with the coverage limitation instead of inventing project rules.

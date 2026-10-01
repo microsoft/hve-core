@@ -1,0 +1,62 @@
+schema: RESPONSE_EVIDENCE_V1
+operation: contribute
+response_status: internal_review_draft
+external_use_status: internal_review_only
+release_decision: outside_skill_scope
+approved_sources:
+  - id: SRC-001
+    origin: user_supplied
+    path: null
+    kind: brd
+    named_by: user
+    read_date: 2026-08-12
+    source_version: unknown
+    sections_used: [BG-001]
+  - id: SRC-002
+    origin: user_supplied
+    path: null
+    kind: prd
+    named_by: user
+    read_date: 2026-08-12
+    source_version: unknown
+    sections_used: [NFR-014]
+source_questions:
+  - id: SQ-001
+    source_ref: rfp.docx#Q1
+    text: What onboarding cycle time do you commit to?
+    classification: business
+    response_state: unaddressed
+    claim_ids: [CLM-001]
+  - id: SQ-002
+    source_ref: rfp.docx#Q2
+    text: What monthly availability does the platform provide?
+    classification: product
+    response_state: unaddressed
+    claim_ids: [CLM-002]
+claims:
+  - id: CLM-001
+    owner_domain: business
+    statement: Supplier onboarding targets a four-day cycle time.
+    source_question_ids: [SQ-001]
+    evidence_refs: [SRC-001#BG-001]
+    evidence_review: supported
+    qualification: null
+  - id: CLM-002
+    owner_domain: product
+    statement: The platform targets 99.9% monthly availability.
+    source_question_ids: [SQ-002]
+    evidence_refs: [SRC-002#NFR-014]
+    evidence_review: supported
+    qualification: null
+responses: []
+unresolved_items: []
+coverage:
+  question_count: 2
+  addressed_count: 0
+  qualified_count: 0
+  unresolved_count: 0
+  addressed_percent: 0.0
+structural_readiness:
+  status: not_ready
+  blocking_ids: [SQ-001, SQ-002]
+  advisory_only: true
