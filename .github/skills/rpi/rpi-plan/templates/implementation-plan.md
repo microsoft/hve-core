@@ -190,7 +190,7 @@ Record the critique setting, status, verdict, finding dispositions, and any expl
 * Critique status: {{not_run_started_skipped_or_Complete_Partial_Blocked_or_not_produced}}
 * Latest critique and verdict: {{critique_path_with_Pass_Revise_Blocked_or_unavailable_or_not_applicable_when_skipped}}
 * Earlier critiques: {{none_or_earlier_critique_paths}}
-* Limitations: {{none_or_run_limitation_and_next_action}}
+* Limitations: {{none_or_run_limitation_interruption_kind_and_next_action}}
 
 <!-- Keep every finding row. A follow-up critique adds rows or updates dispositions without deleting earlier findings. -->
 
