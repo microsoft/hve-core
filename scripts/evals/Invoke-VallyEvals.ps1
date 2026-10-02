@@ -907,9 +907,9 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         # not wholly advisory; an all-advisory spec surfaces but never blocks merge.
         if (-not $promote -and $result.exitCode -ne 0 -and $advisoryFailed -eq 0 -and $authoritativeFailed -eq 0 -and -not $specAllAdvisory) {
             if ($erroredTrials -gt 0) {
-                # The nonzero exit is explained solely by transient errored trials that
-                # persisted after retries; surface it but do not gate the build.
-                Write-Host "::warning file=$specRel::$erroredTrials trial(s) errored (transient executor failure) with no grader failures after retries; not promoting to CI failure"
+                # The nonzero exit is explained solely by errored trials that persisted
+                # after retries; evidence-integrity validation still decides the gate.
+                Write-Host "::warning file=$specRel::$erroredTrials trial(s) errored after retries with no grader failures; final evidence-integrity validation decides whether this spec blocks CI"
             }
             else {
                 $promote = $true

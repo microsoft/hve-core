@@ -478,7 +478,7 @@ stimuli:
         name: data-science-rpi-clean-scan-observed
         config:
           required:
-            - name: '^powershell$'
+            - name: '^(?:bash|shell|powershell)$'
               command: 'scan_sensitive_content\.py'
               result: '\\?"status\\?"\s*:\s*\\?"completed\\?"'
       - type: file-exists
@@ -498,11 +498,45 @@ stimuli:
         config:
           path: docs/data/synthetic-pipeline-output.md
           pattern: '(?is)event identifier.*quarantine.*invalid.*rejected-record count'
-      - type: file-matches
+      - type: program
         name: data-science-rpi-produced-pointers-preserve-job
         config:
-          path: .copilot-tracking/ds/synthetic-pipeline/session-state.md
-          pattern: '(?is)current:.*job:\s*pipeline.*class:\s*episodic.*artifacts:.*synthetic-pipeline-delivery-plan\.md.*synthetic-pipeline-delivery-changes\.md.*synthetic-pipeline-delivery-review\.md.*synthetic_extension:.*preserve:\s*true'
+          program: pwsh
+          args:
+            - -NoProfile
+            - -Command
+            - |
+              $ErrorActionPreference = 'Stop'
+              $codes = [System.Collections.Generic.List[string]]::new()
+              function Get-Scalars($Node, [int]$Depth = 0) {
+                if ($Depth -gt 64) { throw 'Nesting limit' }
+                if ($Node -is [System.Collections.IDictionary]) { foreach ($key in $Node.Keys) { [string]$key; Get-Scalars $Node[$key] ($Depth + 1) } }
+                elseif ($Node -is [System.Collections.IList]) { foreach ($item in $Node) { Get-Scalars $item ($Depth + 1) } }
+                elseif ($null -ne $Node) { [string]$Node }
+              }
+              try {
+                & {
+                  $item = Get-Item -LiteralPath (Join-Path $env:EVALUATE_WORKSPACE '.copilot-tracking/ds/synthetic-pipeline/session-state.md')
+                  if ($item.Length -gt 1MB) { $codes.Add('oversized-input'); return }
+                  $blocks = [regex]::Matches([System.IO.File]::ReadAllText($item.FullName), '(?ms)^[ \t]*```[ \t]*ya?ml[ \t]*\r?\n(.*?)^[ \t]*```[ \t]*\r?$')
+                  if ($blocks.Count -ne 1) { $codes.Add('ambiguous-input'); return }
+                  Import-Module powershell-yaml
+                  try { $documents = @(ConvertFrom-Yaml -Yaml $blocks[0].Groups[1].Value -AllDocuments) } catch { $codes.Add('invalid-yaml'); return }
+                  if ($documents.Count -ne 1) { $codes.Add('ambiguous-input'); return }
+                  $state = $documents[0]
+                  if ($state -isnot [System.Collections.IDictionary]) { $codes.Add('invalid-yaml'); return }
+                  if (-not ($state.project.slug -is [string] -and $state.project.slug -ceq 'synthetic-pipeline' -and
+                    $state.current.job -is [string] -and $state.current.job -ceq 'pipeline' -and
+                    $state.current.class -is [string] -and $state.current.class -ceq 'episodic')) { $codes.Add('state-mismatch') }
+                  if (-not ($state.synthetic_extension.preserve -is [bool] -and $state.synthetic_extension.preserve)) { $codes.Add('extension-mismatch') }
+                  $pointers = @(Get-Scalars $state.artifacts) + @(Get-Scalars $state.jobs.pipeline)
+                  foreach ($kind in 'plan', 'changes', 'review') {
+                    if (@($pointers -match "(?:^|[\\/])synthetic-pipeline-delivery-$kind\.md$").Count -eq 0) { $codes.Add('pointer-mismatch') }
+                  }
+                }
+              } catch { if ($codes.Count -eq 0) { $codes.Add('read-error') } }
+              $passed = $codes.Count -eq 0
+              @{ name = 'data-science-rpi-produced-pointers-preserve-job'; kind = 'code'; passed = [bool]$passed; score = [int]$passed; evidence = 'Validate parsed coach state values, extension and delivery artifact pointers.'; metadata = @{ failureCodes = @($codes | Sort-Object -Unique) } } | ConvertTo-Json -Compress -Depth 4
 
   - name: data-science-engineering-coach-reconciles-rpi-pipeline-results
     prompt: |
@@ -585,7 +619,7 @@ stimuli:
         name: data-science-rpi-scanner-failure-observed
         config:
           required:
-            - name: '^powershell$'
+            - name: '^(?:bash|shell|powershell)$'
               command: 'scan_sensitive_content\.py'
               result: 'scanner-unavailable'
       - type: file-matches
@@ -593,11 +627,52 @@ stimuli:
         config:
           path: docs/data/synthetic-pipeline-output.md
           pattern: 'ORIGINAL-CONTENT-PRESERVED'
-      - type: file-matches
+      - type: program
         name: data-science-rpi-blocked-state-preserves-job
         config:
-          path: .copilot-tracking/ds/synthetic-pipeline/session-state.md
-          pattern: '(?is)current:.*job:\s*pipeline.*class:\s*episodic.*(blocked|scanner-unavailable).*synthetic_extension:.*preserve:\s*true'
+          program: pwsh
+          args:
+            - -NoProfile
+            - -Command
+            - |
+              $ErrorActionPreference = 'Stop'
+              $codes = [System.Collections.Generic.List[string]]::new()
+              function Get-Scalars($Node, [int]$Depth = 0) {
+                if ($Depth -gt 64) { throw 'Nesting limit' }
+                if ($Node -is [System.Collections.IDictionary]) { foreach ($key in $Node.Keys) { [string]$key; Get-Scalars $Node[$key] ($Depth + 1) } }
+                elseif ($Node -is [System.Collections.IList]) { foreach ($item in $Node) { Get-Scalars $item ($Depth + 1) } }
+                elseif ($null -ne $Node) { [string]$Node }
+              }
+              try {
+                & {
+                  $item = Get-Item -LiteralPath (Join-Path $env:EVALUATE_WORKSPACE '.copilot-tracking/ds/synthetic-pipeline/session-state.md')
+                  if ($item.Length -gt 1MB) { $codes.Add('oversized-input'); return }
+                  $blocks = [regex]::Matches([System.IO.File]::ReadAllText($item.FullName), '(?ms)^[ \t]*```[ \t]*ya?ml[ \t]*\r?\n(.*?)^[ \t]*```[ \t]*\r?$')
+                  if ($blocks.Count -ne 1) { $codes.Add('ambiguous-input'); return }
+                  Import-Module powershell-yaml
+                  try { $documents = @(ConvertFrom-Yaml -Yaml $blocks[0].Groups[1].Value -AllDocuments) } catch { $codes.Add('invalid-yaml'); return }
+                  if ($documents.Count -ne 1) { $codes.Add('ambiguous-input'); return }
+                  $state = $documents[0]
+                  if ($state -isnot [System.Collections.IDictionary]) { $codes.Add('invalid-yaml'); return }
+                  if (-not ($state.project.slug -is [string] -and $state.project.slug -ceq 'synthetic-pipeline' -and
+                    $state.current.job -is [string] -and $state.current.job -ceq 'pipeline' -and
+                    $state.current.class -is [string] -and $state.current.class -ceq 'episodic')) { $codes.Add('state-mismatch') }
+                  if (-not ($state.synthetic_extension.preserve -is [bool] -and $state.synthetic_extension.preserve)) { $codes.Add('extension-mismatch') }
+                  $blocked = $false
+                  foreach ($source in @(@{ Items = $state.jobs.pipeline.invocations; Correlated = $true }, @{ Items = $state.job_log; Correlated = $false }, @{ Items = $state.session_log; Correlated = $false })) {
+                    if ($source.Items -isnot [System.Collections.IList]) { continue }
+                    foreach ($record in $source.Items) {
+                      if ($record -isnot [System.Collections.IDictionary]) { continue }
+                      $values = @(Get-Scalars $record)
+                      if (@($values -match '(?i)(?<![\w-])(?:blocked|scanner-unavailable)(?![\w-])').Count -gt 0 -and
+                        ($source.Correlated -or @($values -match '(?i)(?<![\w-])(?:pipeline|implement)(?![\w-])|synthetic-pipeline-output\.md').Count -gt 0)) { $blocked = $true }
+                    }
+                  }
+                  if (-not $blocked) { $codes.Add('missing-blocked-record') }
+                }
+              } catch { if ($codes.Count -eq 0) { $codes.Add('read-error') } }
+              $passed = $codes.Count -eq 0
+              @{ name = 'data-science-rpi-blocked-state-preserves-job'; kind = 'code'; passed = [bool]$passed; score = [int]$passed; evidence = 'Validate parsed coach state values, extension and a correlated blocked-write record.'; metadata = @{ failureCodes = @($codes | Sort-Object -Unique) } } | ConvertTo-Json -Compress -Depth 4
       - type: output-matches
         name: data-science-rpi-reports-no-write
         config:

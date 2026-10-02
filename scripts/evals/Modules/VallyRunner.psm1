@@ -13,6 +13,62 @@
 
 Set-StrictMode -Version Latest
 
+$script:VallyTrialErrorCategories = @('none', 'timeout', 'authentication', 'rate-limited', 'connection', 'model-unavailable', 'cancelled', 'unknown')
+$script:VallyShellTools = @('bash', 'powershell', 'shell')
+$script:VallyFailureCodeVocabulary = [System.Collections.Generic.Dictionary[string, string[]]]::new([StringComparer]::Ordinal)
+foreach ($stateGrader in @('data-science-rpi-blocked-state-preserves-job', 'data-science-rpi-produced-pointers-preserve-job')) {
+    $script:VallyFailureCodeVocabulary[$stateGrader] = @('read-error', 'oversized-input', 'invalid-yaml', 'ambiguous-input', 'state-mismatch',
+        'missing-blocked-record', 'extension-mismatch', 'pointer-mismatch')
+}
+$script:VallyFailureCodeVocabulary['experiment-outcome-separates-status-and-verdict'] = @('read-error', 'oversized-input', 'ambiguous-input',
+    'missing-field', 'conflicting-field', 'invalid-measurement', 'wrong-verdict', 'wrong-decision', 'review-mismatch', 'metric-mismatch',
+    'anomaly-mismatch', 'missing-confidence', 'criteria-mismatch')
+
+function Test-VallyBoundedCodeList {
+    [OutputType([bool])]
+    param([AllowNull()]$Value, [string[]]$Allowed)
+
+    if ($Value -isnot [array] -or $Value.Count -gt $Allowed.Count) { return $false }
+    $previous = $null
+    foreach ($code in $Value) {
+        if ($code -isnot [string] -or $code -cnotin $Allowed) { return $false }
+        if ($null -ne $previous -and [string]::CompareOrdinal($previous, $code) -ge 0) { return $false }
+        $previous = $code
+    }
+    return $true
+}
+
+function ConvertTo-VallyFailureCodeList {
+    # Only allowlisted program graders may report codes; anything else normalizes to null.
+    param([string]$GraderName, [AllowNull()]$Detail, [AllowNull()]$Passed)
+
+    if (-not $script:VallyFailureCodeVocabulary.ContainsKey($GraderName) -or $null -eq $Detail -or
+        -not $Detail.PSObject.Properties['metadata'] -or $Detail.metadata -isnot [pscustomobject] -or
+        -not $Detail.metadata.PSObject.Properties['failureCodes']) { return $null }
+    $raw = $Detail.metadata.failureCodes
+    $vocabulary = $script:VallyFailureCodeVocabulary[$GraderName]
+    if ($raw -isnot [array] -or $raw.Count -gt $vocabulary.Count) { return $null }
+    $codes = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
+    foreach ($code in $raw) {
+        if ($code -isnot [string] -or $code -cnotin $vocabulary) { return $null }
+        [void]$codes.Add($code)
+    }
+    if ($Passed -eq $true -and $codes.Count -gt 0) { return $null }
+    return , ([string[]]@($codes))
+}
+
+function Get-VallyTrialErrorCategory {
+    param([string]$ExecutionStatus, [AllowNull()]$ErrorText)
+
+    if ($ExecutionStatus -ceq 'success') { return 'none' }
+    if ($ExecutionStatus -ceq 'cancelled') { return 'cancelled' }
+    if ($ErrorText -isnot [string] -or [string]::IsNullOrWhiteSpace($ErrorText)) { return 'unknown' }
+    $bounded = $ErrorText.Substring(0, [Math]::Min(4096, $ErrorText.Length))
+    $category = Get-VallyExitCategory -ExitCode 1 -OutputText $bounded
+    if ($category -ceq 'unknown' -and $bounded -match '(?i)\b(cancell?ed|aborted)\b') { return 'cancelled' }
+    return $category
+}
+
 function Resolve-VallyRunDir {
     <#
     .SYNOPSIS
@@ -255,7 +311,7 @@ function Test-VallyDiagnosticEvidence {
         if ($data -isnot [System.Collections.IDictionary] -or
             @($required | Where-Object { -not $data.Contains($_) }).Count -gt 0 -or
             @($data.Keys | Where-Object { $_ -cnotin $required }).Count -gt 0 -or
-            $data.schemaVersion -cne '1.0.0' -or ($RunKey -and $data.runKey -cne $RunKey)) {
+            $data.schemaVersion -cne '2.0.0' -or ($RunKey -and $data.runKey -cne $RunKey)) {
             throw 'Invalid diagnostic contract.'
         }
         if ($data.configurationStatus -cne 'available') { [void]$issues.Add('configuration-unavailable') }
@@ -319,7 +375,7 @@ function Test-VallyDiagnosticEvidence {
             $scores = @{}
             foreach ($trial in $attempt.trials) {
                 $trialFields = @('stimulusName', 'trialIndex', 'itemIdDigest', 'identitySource', 'executionStatus', 'score',
-                    'thresholdPassed', 'allGradersPassed', 'gradeStatus', 'graders')
+                    'thresholdPassed', 'allGradersPassed', 'gradeStatus', 'graders', 'errorCategory', 'elapsedMs', 'observedShellTools')
                 $completionFields = @('endReason', 'configuredTurns', 'observedTurns', 'responseTurns', 'wallTimeMs')
                 $presentCompletionFields = @($completionFields | Where-Object { $trial.Contains($_) })
                 if (@($trialFields | Where-Object { -not $trial.Contains($_) }).Count -gt 0 -or
@@ -328,6 +384,12 @@ function Test-VallyDiagnosticEvidence {
                 if ($trial.executionStatus -cnotin @('success', 'error', 'skipped', 'cancelled', 'unknown', 'invalid') -or
                     $trial.gradeStatus -cnotin @('success', 'error', 'missing', 'invalid') -or
                     $trial.identitySource -cnotin @('native-item-id', 'stimulus-trial-index', 'missing')) { throw 'Invalid trial category.' }
+                if ($trial.errorCategory -cnotin $script:VallyTrialErrorCategories -or
+                    ($trial.errorCategory -ceq 'none') -ne ($trial.executionStatus -ceq 'success')) { throw 'Invalid error category.' }
+                if ($null -ne $trial.elapsedMs -and
+                    (($trial.elapsedMs -isnot [long] -and $trial.elapsedMs -isnot [int]) -or $trial.elapsedMs -lt 0)) { throw 'Invalid elapsed time.' }
+                if ($null -ne $trial.observedShellTools -and
+                    -not (Test-VallyBoundedCodeList -Value $trial.observedShellTools -Allowed $script:VallyShellTools)) { throw 'Invalid shell observation.' }
                 if ($presentCompletionFields.Count -eq $completionFields.Count) {
                     if ($null -ne $trial.endReason -and $trial.endReason -cnotin @('completed', 'agent_timeout', 'simulation_cap', 'invalid')) {
                         throw 'Invalid trajectory end reason.'
@@ -381,10 +443,14 @@ function Test-VallyDiagnosticEvidence {
                 if (@($trial.graders).Count -ne @($expected.graders).Count) { $checksPass = $false }
                 $graderIndex = 0
                 foreach ($grader in $trial.graders) {
-                    $graderFields = @('name', 'graderType', 'score', 'passed', 'status')
+                    $graderFields = @('name', 'graderType', 'score', 'passed', 'status', 'failureCodes')
                     if (@($graderFields | Where-Object { -not $grader.Contains($_) }).Count -gt 0 -or
                         @($grader.Keys | Where-Object { $_ -cnotin $graderFields }).Count -gt 0) { throw 'Invalid grader contract.' }
                     if ($grader.status -cnotin @('success', 'error', 'missing', 'duplicate', 'invalid')) { throw 'Invalid grader category.' }
+                    if ($null -ne $grader.failureCodes -and
+                        (-not $script:VallyFailureCodeVocabulary.ContainsKey([string]$grader.name) -or
+                        -not (Test-VallyBoundedCodeList -Value $grader.failureCodes -Allowed $script:VallyFailureCodeVocabulary[[string]$grader.name]) -or
+                        ($grader.passed -eq $true -and $grader.failureCodes.Count -gt 0))) { throw 'Invalid failure codes.' }
                     if ($graderIndex -ge @($expected.graders).Count -or
                         $grader.name -cne $expected.graders[$graderIndex].name -or $grader.graderType -cne $expected.graders[$graderIndex].type) {
                         [void]$attemptIssues.Add('grader-population-mismatch')
@@ -659,12 +725,14 @@ function Read-VallyResultsJsonl {
                             $detailScore = $numericScore
                         }
                     }
+                    $detailPassed = if ($detail -and $detail.PSObject.Properties['passed'] -and $detail.passed -is [bool]) { $detail.passed } else { $null }
                     [ordered]@{
                         name = [string]$configured.name
                         graderType = [string]$configured.type
                         score = $detailScore
-                        passed = if ($detail -and $detail.PSObject.Properties['passed'] -and $detail.passed -is [bool]) { $detail.passed } else { $null }
+                        passed = $detailPassed
                         status = $detailStatus
+                        failureCodes = ConvertTo-VallyFailureCodeList -GraderName ([string]$configured.name) -Detail $detail -Passed $detailPassed
                     }
                 }
             }
@@ -690,6 +758,25 @@ function Read-VallyResultsJsonl {
         elseif ([string]$obj.status -cin @('success', 'error', 'skipped', 'cancelled')) { [string]$obj.status }
         else { 'invalid' }
         $trajectory = if ($obj.PSObject.Properties['trajectory']) { $obj.trajectory } else { $null }
+        $errorText = if ($obj.PSObject.Properties['error']) { $obj.error } else { $null }
+        $errorCategory = Get-VallyTrialErrorCategory -ExecutionStatus $executionStatus -ErrorText $errorText
+        $elapsedMs = $null
+        if ($obj.PSObject.Properties['durationMs'] -and ($obj.durationMs -is [long] -or $obj.durationMs -is [int]) -and $obj.durationMs -ge 0) {
+            $elapsedMs = [long]$obj.durationMs
+        }
+        $observedShellTools = $null
+        if ($trajectory -and $trajectory.PSObject.Properties['events'] -and $trajectory.events -is [array]) {
+            $shells = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
+            foreach ($trajectoryEvent in $trajectory.events) {
+                if ($trajectoryEvent -is [pscustomobject] -and $trajectoryEvent.PSObject.Properties['type'] -and
+                    $trajectoryEvent.type -ceq 'tool_call' -and $trajectoryEvent.PSObject.Properties['data'] -and
+                    $trajectoryEvent.data -is [pscustomobject] -and $trajectoryEvent.data.PSObject.Properties['toolName'] -and
+                    $trajectoryEvent.data.toolName -is [string] -and $trajectoryEvent.data.toolName -cin $script:VallyShellTools) {
+                    [void]$shells.Add($trajectoryEvent.data.toolName)
+                }
+            }
+            $observedShellTools = [string[]]@($shells)
+        }
         $endReason = $null
         $configuredTurns = $null
         $observedTurns = [System.Collections.Generic.HashSet[int]]::new()
@@ -743,6 +830,9 @@ function Read-VallyResultsJsonl {
             observedTurns = $observedTurns.Count
             responseTurns = $responseTurns.Count
             wallTimeMs = $trialWallMs
+            errorCategory = $errorCategory
+            elapsedMs = $elapsedMs
+            observedShellTools = $observedShellTools
         })
 
         if ($trialErrored -or -not $trialPassed) {
@@ -1406,7 +1496,7 @@ function Invoke-VallySpec {
         perStimulus      = $aggregate.perStimulus
         failedOrErroredTrials = $aggregate.failedOrErroredTrials
         diagnostics = [ordered]@{
-            schemaVersion = '1.0.0'
+            schemaVersion = '2.0.0'
             runKey = $RunKey
             configurationStatus = $configuration.status
             specDigest = $configuration.specDigest

@@ -1539,26 +1539,37 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
   }
 
   It 'Checks outcome evidence, criteria and separate Review values for <Variant>' -Tag 'OutcomeFixture' -ForEach @(
-    @{ Variant = 'valid'; Expected = $true; Bound = $true }
-    @{ Variant = 'reordered'; Expected = $true; Bound = $true }
-    @{ Variant = 'heading-body'; Expected = $true; Bound = $true }
-    @{ Variant = 'invalidated'; Expected = $true; Bound = $true }
-    @{ Variant = 'latency-fails'; Expected = $true; Bound = $true }
-    @{ Variant = 'missing-results'; Expected = $false; Bound = $true }
-    @{ Variant = 'malformed-results'; Expected = $false; Bound = $true }
-    @{ Variant = 'wrong-verdict'; Expected = $false; Bound = $true }
-    @{ Variant = 'conflicting-verdict'; Expected = $false; Bound = $true }
-    @{ Variant = 'wrong-review'; Expected = $false; Bound = $true }
-    @{ Variant = 'changed-criteria'; Expected = $false; Bound = $true }
-    @{ Variant = 'wrong-metric'; Expected = $false; Bound = $true }
-    @{ Variant = 'repeated-consistent'; Expected = $true; Bound = $true }
-    @{ Variant = 'improvement-label'; Expected = $true; Bound = $true }
-    @{ Variant = 'divergence-none'; Expected = $true; Bound = $true }
-    @{ Variant = 'conflicting-decision'; Expected = $false; Bound = $true }
-    @{ Variant = 'stale-hash'; Expected = $true; Bound = $false }
-    @{ Variant = 'missing-binding'; Expected = $true; Bound = $false }
-    @{ Variant = 'wrong-slug'; Expected = $true; Bound = $false }
-    @{ Variant = 'missing-outcome'; Expected = $false; Bound = $false }
+    @{ Variant = 'valid'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'reordered'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'heading-body'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'invalidated'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'latency-fails'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'missing-results'; Expected = $false; Bound = $true; Codes = 'read-error' }
+    @{ Variant = 'malformed-results'; Expected = $false; Bound = $true; Codes = 'invalid-measurement' }
+    @{ Variant = 'wrong-verdict'; Expected = $false; Bound = $true; Codes = 'wrong-verdict' }
+    @{ Variant = 'conflicting-verdict'; Expected = $false; Bound = $true; Codes = 'conflicting-field' }
+    @{ Variant = 'wrong-review'; Expected = $false; Bound = $true; Codes = 'review-mismatch' }
+    @{ Variant = 'changed-criteria'; Expected = $false; Bound = $true; Codes = 'criteria-mismatch' }
+    @{ Variant = 'wrong-metric'; Expected = $false; Bound = $true; Codes = 'metric-mismatch' }
+    @{ Variant = 'repeated-consistent'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'improvement-label'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'divergence-none'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'conflicting-decision'; Expected = $false; Bound = $true; Codes = 'conflicting-field' }
+    @{ Variant = 'stale-hash'; Expected = $true; Bound = $false; Codes = '' }
+    @{ Variant = 'missing-binding'; Expected = $true; Bound = $false; Codes = '' }
+    @{ Variant = 'wrong-slug'; Expected = $true; Bound = $false; Codes = '' }
+    @{ Variant = 'missing-outcome'; Expected = $false; Bound = $false; Codes = 'read-error' }
+    @{ Variant = 'percent-word'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'percent-space'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'verdict-label'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'execution-status-label'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'other-hypothesis'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'negated-criteria-change'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'crlf'; Expected = $true; Bound = $true; Codes = '' }
+    @{ Variant = 'conflicting-alias'; Expected = $false; Bound = $true; Codes = 'conflicting-field' }
+    @{ Variant = 'summary-conflict'; Expected = $false; Bound = $true; Codes = 'conflicting-field' }
+    @{ Variant = 'lowered-threshold'; Expected = $false; Bound = $true; Codes = 'criteria-mismatch' }
+    @{ Variant = 'conflicting-boundary'; Expected = $false; Bound = $true; Codes = 'criteria-mismatch' }
   ) {
     $workspace = Join-Path $TestDrive "outcome-$Variant"
     $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot 'stimuli/experiment-designer.yml'))
@@ -1598,13 +1609,95 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     if ($Variant -eq 'improvement-label') { $body = $body.Replace('Latency reduction: 24%', 'Latency improvement: 24%') }
     if ($Variant -eq 'divergence-none') { $body = $body.Replace('Precommitted criteria unchanged: at least 20% reduction and below 1% errors.', 'Criteria: at least 20% reduction and below 1% errors. Divergence: none.') }
     if ($Variant -eq 'conflicting-decision') { $body += "`nDecision: no-go" }
-    if ($Variant -ne 'missing-outcome') { Set-Content (Join-Path $session 'outcome.md') ($body + "`n" + ($bindings -join "`n")) }
+    if ($Variant -eq 'percent-word') { $body = $body.Replace('Error rate: 0.5%', 'Error rate: 0.5 percent').Replace('Latency reduction: 24%', 'Latency reduction: 24 percent') }
+    if ($Variant -eq 'percent-space') { $body = $body.Replace('Error rate: 0.5%', 'Error rate: 0.5 %') }
+    if ($Variant -eq 'verdict-label') { $body = $body.Replace('Outcome: validated', 'Verdict: validated') }
+    if ($Variant -eq 'execution-status-label') { $body = $body.Replace('Review execution:', 'Review execution status:') }
+    if ($Variant -eq 'other-hypothesis') { $body += "`n## H2`nOutcome: invalidated" }
+    if ($Variant -eq 'negated-criteria-change') { $body += "`nThe criteria were not changed after execution began." }
+    if ($Variant -eq 'conflicting-alias') { $body = $body.Replace('Outcome: validated', "Outcome: validated`nHypothesis outcome: invalidated") }
+    if ($Variant -eq 'summary-conflict') { $body += "`n## Summary`nOutcome: invalidated" }
+    if ($Variant -eq 'lowered-threshold') { $body += "`nThe latency threshold was lowered to 10% after execution began." }
+    if ($Variant -eq 'conflicting-boundary') { $body += "`nSuccess criteria: at least 15% reduction." }
+    $document = $body + "`n" + ($bindings -join "`n")
+    if ($Variant -eq 'crlf') { $document = $document.Replace("`n", "`r`n") }
+    if ($Variant -ne 'missing-outcome') { [System.IO.File]::WriteAllText((Join-Path $session 'outcome.md'), $document) }
     $meaning = Invoke-ObservationGrader -Partial 'experiment-designer' -Name 'experiment-outcome-separates-status-and-verdict' -Reply '' -Workspace $workspace
     $binding = Invoke-ObservationGrader -Partial 'experiment-designer' -Name 'experiment-outcome-binds-evidence' -Reply '' -Workspace $workspace
     $meaning.passed | Should -Be $Expected
     $meaning.score | Should -Be ([int]$Expected)
+    (@($meaning.metadata.failureCodes) -join ',') | Should -BeExactly $Codes
     $binding.passed | Should -Be $Bound
     $binding.score | Should -Be ([int]$Bound)
+  }
+
+  It 'Checks parsed coach state for <Grader> with <Variant>' -ForEach @(
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'pipeline invocation record'; Edits = @('pipeline-blocked'); Append = ''; Expected = $true; Codes = '' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'job log record'; Edits = @('job-log-blocked'); Append = ''; Expected = $true; Codes = '' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'session log record'; Edits = @('session-log-blocked'); Append = ''; Expected = $true; Codes = '' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'reordered quoted current'; Edits = @('pipeline-blocked', 'current-reordered'); Append = ''; Expected = $true; Codes = '' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'uncorrelated log record'; Edits = @('session-log-uncorrelated'); Append = ''; Expected = $false; Codes = 'missing-blocked-record' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'no blocked record'; Edits = @(); Append = ''; Expected = $false; Codes = 'missing-blocked-record' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'prose-only record'; Edits = @(); Append = 'prose-blocked'; Expected = $false; Codes = 'missing-blocked-record' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'comment-only record'; Edits = @('comment-only'); Append = ''; Expected = $false; Codes = 'missing-blocked-record' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'changed job'; Edits = @('pipeline-blocked', 'current-job-changed'); Append = ''; Expected = $false; Codes = 'state-mismatch' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'string extension flag'; Edits = @('pipeline-blocked', 'preserve-string'); Append = ''; Expected = $false; Codes = 'extension-mismatch' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'malformed YAML'; Edits = @('pipeline-blocked', 'malformed'); Append = ''; Expected = $false; Codes = 'invalid-yaml' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'duplicate key'; Edits = @('pipeline-blocked', 'duplicate-key'); Append = ''; Expected = $false; Codes = 'invalid-yaml' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'multiple documents'; Edits = @('pipeline-blocked', 'multi-document'); Append = ''; Expected = $false; Codes = 'ambiguous-input' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'second YAML block'; Edits = @('pipeline-blocked'); Append = 'second-block'; Expected = $false; Codes = 'ambiguous-input' }
+    @{ Grader = 'data-science-rpi-blocked-state-preserves-job'; Variant = 'oversized state'; Edits = @('pipeline-blocked'); Append = 'oversized'; Expected = $false; Codes = 'oversized-input' }
+    @{ Grader = 'data-science-rpi-produced-pointers-preserve-job'; Variant = 'reordered top-level artifacts'; Edits = @('artifacts-top'); Append = ''; Expected = $true; Codes = '' }
+    @{ Grader = 'data-science-rpi-produced-pointers-preserve-job'; Variant = 'quoted invocation artifacts with extension'; Edits = @('artifacts-invocation', 'extension-extra', 'current-reordered'); Append = ''; Expected = $true; Codes = '' }
+    @{ Grader = 'data-science-rpi-produced-pointers-preserve-job'; Variant = 'missing review pointer'; Edits = @('artifacts-missing-review'); Append = ''; Expected = $false; Codes = 'pointer-mismatch' }
+    @{ Grader = 'data-science-rpi-produced-pointers-preserve-job'; Variant = 'prose-only pointers'; Edits = @(); Append = 'prose-pointers'; Expected = $false; Codes = 'pointer-mismatch' }
+    @{ Grader = 'data-science-rpi-produced-pointers-preserve-job'; Variant = 'other project'; Edits = @('artifacts-top', 'project-changed'); Append = ''; Expected = $false; Codes = 'state-mismatch' }
+  ) {
+    $delivery = '.copilot-tracking/{0}/2026-09-21/synthetic-pipeline-delivery-{1}.md'
+    $plan = $delivery -f 'plans', 'plan'
+    $changes = $delivery -f 'changes', 'changes'
+    $review = $delivery -f 'reviews/logs', 'review'
+    $pipeline = "  pipeline:`n    class: episodic`n    status: active`n    invocations: []"
+    $snippets = @{
+      'pipeline-blocked' = @($pipeline, "  pipeline:`n    class: episodic`n    status: active`n    invocations:`n      - segment: implement`n        status: blocked`n        error_code: scanner-unavailable")
+      'job-log-blocked' = @('job_log: []', "job_log:`n  - job: pipeline`n    event: durable-write`n    result: scanner-unavailable")
+      'session-log-blocked' = @('session_log: []', "session_log:`n  - event: Implement segment blocked by scanner-unavailable")
+      'session-log-uncorrelated' = @('session_log: []', "session_log:`n  - job: catalog`n    event: blocked")
+      'comment-only' = @('session_log: []', 'session_log: [] # pipeline Implement blocked scanner-unavailable')
+      'current-reordered' = @("current:`n  job: pipeline`n  class: episodic", "current:`n  class: `"episodic`"`n  job: 'pipeline'")
+      'current-job-changed' = @("current:`n  job: pipeline", "current:`n  job: analysis")
+      'preserve-string' = @('  preserve: true', '  preserve: "true"')
+      'malformed' = @('cross_agent_refs: []', 'cross_agent_refs: [')
+      'duplicate-key' = @('cross_agent_refs: []', "cross_agent_refs: []`nartifacts: []")
+      'multi-document' = @('  preserve: true', "  preserve: true`n---`nother: 1")
+      'artifacts-top' = @('artifacts: []', "artifacts:`n  - $review`n  - $plan`n  - $changes")
+      'artifacts-missing-review' = @('artifacts: []', "artifacts:`n  - $plan`n  - $changes")
+      'artifacts-invocation' = @($pipeline, "  pipeline:`n    class: episodic`n    status: active`n    invocations:`n      - task: synthetic-pipeline-delivery`n        artifacts:`n          review: `"$review`"`n          plan: '$plan'`n          changes: $changes")
+      'extension-extra' = @('synthetic_extension:', "other_extension:`n  keep: 1`nsynthetic_extension:")
+      'project-changed' = @('  slug: synthetic-pipeline', '  slug: other-pipeline')
+    }
+    $appends = @{
+      '' = ''
+      'prose-blocked' = "`nThe pipeline Implement write was blocked: scanner-unavailable.`n"
+      'prose-pointers' = "`nProduced $plan, $changes and $review.`n"
+      'second-block' = "`n``````yaml`nother: 1`n```````n"
+      'oversized' = "`n" + ('#' * 1100000) + "`n"
+    }
+    $fixture = Join-Path $script:ObservationRoot 'fixtures/rpi-depth/ds-session-state.md'
+    $text = [System.IO.File]::ReadAllText($fixture).Replace("`r`n", "`n")
+    foreach ($name in $Edits) {
+      $text.Contains($snippets[$name][0]) | Should -BeTrue -Because $name
+      $text = $text.Replace($snippets[$name][0], $snippets[$name][1])
+    }
+    $text += $appends[$Append]
+    $workspace = Join-Path $TestDrive ('state-' + [guid]::NewGuid().ToString('N'))
+    $target = Join-Path $workspace '.copilot-tracking/ds/synthetic-pipeline/session-state.md'
+    New-Item -ItemType Directory -Path (Split-Path $target -Parent) -Force | Out-Null
+    [System.IO.File]::WriteAllText($target, $text)
+    $result = Invoke-ObservationGrader -Partial 'data-science-engineering-coach' -Name $Grader -Reply '' -Workspace $workspace
+    $result.passed | Should -Be $Expected
+    $result.score | Should -Be ([int]$Expected)
+    (@($result.metadata.failureCodes) -join ',') | Should -BeExactly $Codes
   }
 
   It 'Observes the BRD invocation independently of JSON field order for <Variant>' -Tag 'ReceiptRepair' -ForEach @(
@@ -2220,7 +2313,8 @@ Describe 'Data Science Coach RPI evaluation contracts' -Tag 'Unit' {
         $stimulus.graders | Should -HaveCount 6
         @($stimulus.graders | Where-Object { $_.type -eq 'tool-calls' }) | Should -HaveCount 1
         @($stimulus.graders | Where-Object { $_.type -eq 'file-exists' }) | Should -HaveCount 3
-        @($stimulus.graders | Where-Object { $_.type -eq 'file-matches' }) | Should -HaveCount 2
+        @($stimulus.graders | Where-Object { $_.type -eq 'file-matches' }) | Should -HaveCount 1
+        @($stimulus.graders | Where-Object { $_.type -eq 'program' }) | Should -HaveCount 1
     }
 
     It 'Keeps generated DS scenarios equivalent to their canonical partials' {
@@ -2254,6 +2348,54 @@ Describe 'Data Science Coach scanner evaluation setup' -Tag 'Unit' {
         $stimulus = $partial.stimuli | Where-Object { $_.name -eq 'data-science-engineering-coach-produces-rpi-pipeline-delivery' }
         $grader = $stimulus.graders | Where-Object { $_.name -eq 'data-science-rpi-clean-scan-observed' }
         [bool]($Result -match $grader.config.required[0].result) | Should -Be $Expected
+    }
+
+    It 'Grades <Grader> for <Variant> through the installed tool-call grader' -ForEach @(
+        foreach ($case in @(
+                @{ Grader = 'data-science-rpi-clean-scan-observed'; Stimulus = 'data-science-engineering-coach-produces-rpi-pipeline-delivery'; Wrong = '{"status":"error","error":{"code":"scanner-unavailable"}}' }
+                @{ Grader = 'data-science-rpi-scanner-failure-observed'; Stimulus = 'data-science-engineering-coach-blocks-rpi-customer-write-when-scanner-unavailable'; Wrong = '{"status":"completed"}' }
+            )) {
+            $scan = 'python .github/skills/adr-author/scripts/scan_sensitive_content.py --data docs/data/synthetic-pipeline-output.md'
+            foreach ($tool in 'bash', 'shell', 'powershell') {
+                $case + @{ Variant = "$tool scanner call"; Calls = @(@{ Tool = $tool; Command = $scan; Result = 'expected' }); Expected = $true }
+            }
+            $case + @{ Variant = 'wrong result'; Calls = @(@{ Tool = 'bash'; Command = $scan; Result = $case.Wrong }); Expected = $false }
+            $case + @{ Variant = 'expected result on another call'; Calls = @(@{ Tool = 'bash'; Command = $scan; Result = $case.Wrong }, @{ Tool = 'bash'; Command = 'cat docs/data/synthetic-pipeline-output.md'; Result = 'expected' }); Expected = $false }
+            if ($case.Grader -eq 'data-science-rpi-clean-scan-observed') {
+                $case + @{ Variant = 'absent call'; Calls = @(); Expected = $false }
+                $case + @{ Variant = 'wrong script'; Calls = @(@{ Tool = 'bash'; Command = 'python scripts/other_scan.py --data docs/data/synthetic-pipeline-output.md'; Result = 'expected' }); Expected = $false }
+                $case + @{ Variant = 'unrelated tool'; Calls = @(@{ Tool = 'write_bash'; Command = $scan; Result = 'expected' }); Expected = $false }
+            }
+        }
+    ) {
+        $partialPath = Join-Path $PSScriptRoot '../../../evals/agent-behavior/stimuli/data-science-engineering-coach.yml'
+        $partial = ConvertFrom-Yaml -Yaml ([System.IO.File]::ReadAllText($partialPath))
+        $stimulus = $partial.stimuli | Where-Object { $_.name -eq $Stimulus }
+        $grader = $stimulus.graders | Where-Object { $_.name -eq $Grader }
+        $grader.type | Should -Be 'tool-calls'
+        $simulated = $stimulus.simulation.tool_overrides.powershell.patterns[0].output
+        $events = [System.Collections.Generic.List[object]]::new()
+        $index = 0
+        foreach ($call in $Calls) {
+            $index++
+            $result = if ($call.Result -eq 'expected') { $simulated } else { $call.Result }
+            $events.Add(@{ type = 'tool_call'; data = @{ toolCallId = "call-$index"; toolName = $call.Tool; arguments = @{ command = $call.Command } } })
+            $events.Add(@{ type = 'tool_result'; data = @{ toolCallId = "call-$index"; toolName = $call.Tool; result = $result } })
+        }
+        $probe = @'
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+const { ToolCallGrader } = await import(pathToFileURL(process.argv[1]).href);
+const input = JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+console.log(JSON.stringify(await new ToolCallGrader().grade(input)));
+'@
+        $graderPath = (Resolve-Path (Join-Path $PSScriptRoot '../../../node_modules/@microsoft/vally/dist/graders/static/tool-call-grader.js')).Path
+        $payload = @{ config = $grader.config; trajectory = @{ output = ''; workDir = $TestDrive; events = $events.ToArray() } } | ConvertTo-Json -Depth 15 -Compress
+        $output = $payload | & node --input-type=module --eval $probe $graderPath
+        $LASTEXITCODE | Should -Be 0
+        $verdict = $output | ConvertFrom-Json
+        $verdict.passed | Should -Be $Expected
+        $verdict.score | Should -Be ([int]$Expected)
     }
 
     It 'Supplies scanner preconditions and bounds the durable-write trial' {
