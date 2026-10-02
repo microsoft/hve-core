@@ -3,7 +3,7 @@ title: Copilot CLI Plugin
 description: Register an HVE Core catalog ref and install the complete hve-core plugin
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - copilot cli
@@ -122,23 +122,22 @@ project's `.github/instructions/` directory.
 
 ## Using Agents After Installation
 
-After installing a plugin, agents and named commands are available in your CLI session.
+After installing a plugin, agents and skills are available in your CLI session.
 
-### Named Commands vs Agent Mode
+### Skills vs Agent Mode
 
 CLI plugins provide two distinct interaction patterns:
 
-| Mode          | Command                     | Behavior                                                     |
-|---------------|-----------------------------|--------------------------------------------------------------|
-| Named Command | `/git-commit`               | Executes a predefined workflow, then returns to default mode |
-| Skill         | `/rpi-research`             | Activates one reusable RPI phase capability                  |
-| Agent Mode    | `/agent hve-core:rpi-agent` | Switches to the coordinated RPI lifecycle                    |
+| Mode       | Command                     | Behavior                                                |
+|------------|-----------------------------|---------------------------------------------------------|
+| Skill      | `/rpi-research`             | Activates one reusable capability from the default mode |
+| Agent Mode | `/agent hve-core:rpi-agent` | Switches to the coordinated RPI lifecycle               |
 
-Named commands (prompts) run a specific workflow and produce structured output. Agent mode enables freeform conversation with a specialized agent until you exit.
+Skills run a specific workflow and produce structured output. Agent mode enables freeform conversation with a specialized agent until you exit.
 
 > [!IMPORTANT]
-> The CLI does not switch to a custom agent on behalf of an agent-bound
-> prompt. Select `hve-core:rpi-agent` when you want lifecycle coordination, or invoke a
+> The CLI does not switch to a custom agent on behalf of a skill. Select
+> `hve-core:rpi-agent` when you want lifecycle coordination, or invoke a
 > direct phase skill such as `/rpi-research`:
 >
 > ```text
@@ -146,8 +145,13 @@ Named commands (prompts) run a specific workflow and produce structured output. 
 > Research API authentication patterns before deciding whether planning is ready.
 > ```
 >
-> Prompts that do not require an agent context (e.g., `/git-commit`,
-> `/git-merge`) work directly from the default mode.
+> Skills that do not require an agent context work directly from the default mode.
+
+Manual-only skills such as `git-commit`, `git-merge`, and `git-setup` set
+`disable-model-invocation: true`. Copilot CLI does not currently run skills
+with that setting
+([github/copilot-cli#4438](https://github.com/github/copilot-cli/issues/4438)),
+so use them from VS Code until that issue is resolved.
 
 ### Example: Research Workflow
 
@@ -184,10 +188,9 @@ For the complete list, run `/help` in a CLI session to see all available command
 
 ### When to Use Each Mode
 
-* Use **named commands** (`/git-commit-message`, `/git-merge`) directly from default mode for workflows that do not require a custom agent.
-* Use direct skills (`/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`) for one bounded RPI responsibility.
+* Use direct skills (`/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`) from default mode for one bounded responsibility that does not require a custom agent.
 * Use **agent mode** with `/agent hve-core:rpi-agent` for lifecycle coordination.
-* Stay in **agent mode** for exploratory conversations, follow-up questions, or tasks that don't fit a predefined prompt.
+* Stay in **agent mode** for exploratory conversations, follow-up questions, or tasks that don't fit a predefined skill.
 
 ---
 

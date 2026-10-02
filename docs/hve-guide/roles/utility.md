@@ -3,7 +3,7 @@ title: Utility Reference
 description: Cross-cutting HVE Core utilities for documentation, media, Git workflows, durable workflow state, and diagnostics
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-09-29
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - utility
@@ -66,13 +66,13 @@ Refer to the [video-to-gif skill](https://github.com/microsoft/hve-core/blob/mai
 
 Git utilities manage commit messages, merge operations, and pull request creation across all roles.
 
-| Prompt             | Purpose                                 | Invoke                |
-|--------------------|-----------------------------------------|-----------------------|
-| git-commit         | Conventional commit message generation  | `/git-commit`         |
-| git-commit-message | Commit message from staged changes      | `/git-commit-message` |
-| git-merge          | Merge, rebase, and conflict resolution  | `/git-merge`          |
-| pull-request       | Pull request creation with templates    | `/pull-request`       |
-| git-setup          | Git configuration and environment setup | `/git-setup`          |
+| Skill        | Purpose                                                     | Invoke                          |
+|--------------|-------------------------------------------------------------|---------------------------------|
+| git-commit   | Stage selected paths and commit with a conventional message | `/git-commit`                   |
+| git-commit   | Commit message from staged changes, without committing      | `/git-commit mode=message-only` |
+| git-merge    | Merge, rebase, and conflict resolution                      | `/git-merge`                    |
+| pull-request | Pull request creation with templates                        | `/pull-request`                 |
+| git-setup    | Git configuration and environment setup                     | `/git-setup`                    |
 
 ## Full Asset Reference
 
@@ -84,21 +84,20 @@ Git utilities manage commit messages, merge operations, and pull request creatio
 
 ### Prompts
 
-| Prompt             | Category    | Invoke                | Description                                      |
-|--------------------|-------------|-----------------------|--------------------------------------------------|
-| git-commit         | Git         | `/git-commit`         | Conventional commit message generation           |
-| git-commit-message | Git         | `/git-commit-message` | Commit message from staged changes               |
-| git-merge          | Git         | `/git-merge`          | Merge, rebase, and conflict resolution workflows |
-| pull-request       | Git         | `/pull-request`       | Pull request creation with template support      |
-| git-setup          | Git         | `/git-setup`          | Git configuration and environment setup          |
-| ado-get-build-info | Diagnostics | `/ado-get-build-info` | Azure DevOps build status and log retrieval      |
+| Prompt             | Category    | Invoke                | Description                                 |
+|--------------------|-------------|-----------------------|---------------------------------------------|
+| ado-get-build-info | Diagnostics | `/ado-get-build-info` | Azure DevOps build status and log retrieval |
 
 ### Skills
 
-| Skill        | Category     | Description                             |
-|--------------|--------------|-----------------------------------------|
-| installer    | Installation | HVE Core customized installation        |
-| video-to-gif | Media        | FFmpeg two-pass video-to-GIF conversion |
+| Skill        | Category     | Invoke          | Description                                                |
+|--------------|--------------|-----------------|------------------------------------------------------------|
+| git-commit   | Git          | `/git-commit`   | Selected-path conventional commits, or a message-only mode |
+| git-merge    | Git          | `/git-merge`    | Merge, rebase, and conflict resolution workflows           |
+| git-setup    | Git          | `/git-setup`    | Git configuration and environment setup                    |
+| pull-request | Git          | `/pull-request` | Pull request creation with template support                |
+| installer    | Installation |                 | HVE Core customized installation                           |
+| video-to-gif | Media        |                 | FFmpeg two-pass video-to-GIF conversion                    |
 
 ## Tips
 

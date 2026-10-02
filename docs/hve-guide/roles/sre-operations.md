@@ -3,7 +3,7 @@ title: SRE / Operations Guide
 description: HVE Core support for SRE and operations engineers managing infrastructure, incidents, and deployment workflows
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-03
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - SRE
@@ -115,9 +115,9 @@ encryption at rest. Output the connection string to the Vault KV store.
 | **sssc-planner**     | Supply chain security assessment for infrastructure | Agent file                 |
 | **code-review**      | Pull request review for infrastructure changes      | Agent file                 |
 
-Prompts complement the agents for operational workflows:
+Prompts and skills complement the agents for operational workflows:
 
-| Prompt            | Purpose                                  | Invoke               |
+| Prompt or skill   | Purpose                                  | Invoke               |
 |-------------------|------------------------------------------|----------------------|
 | incident-response | Incident response runbook creation       | `/incident-response` |
 | git-commit        | Conventional commit message generation   | `/git-commit`        |

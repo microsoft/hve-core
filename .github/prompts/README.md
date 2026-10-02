@@ -22,7 +22,7 @@ Backlog and work item workflows are not prompts. They are user-invocable skills 
 
 ## How to Use Prompts
 
-Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (for example, `/rpi` or `/git-commit`). They provide:
+Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (for example, `/rpi`). They provide:
 
 * **Educational Guidance**: Step-by-step coaching approach
 * **Context-Aware Assistance**: Project-specific guidance and examples
@@ -39,10 +39,7 @@ Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when you ne
 
 ### Source Control & Commit Quality
 
-* **[Git Commit (Select + Commit)](./hve-core/git-commit.prompt.md)** - Stages selected whole paths and confirms the exact staged set before creating a Conventional Commit
-* **[Git Commit Message Generator](./hve-core/git-commit-message.prompt.md)** - Generates a compliant commit message for currently staged changes
-* **[Git Merge](./hve-core/git-merge.prompt.md)** - Git merge, rebase, and rebase --onto workflows with conflict handling
-* **[Git Setup](./hve-core/git-setup.prompt.md)** - Verification-first Git configuration assistant
+Git workflows are user-invocable skills: [Git Commit](../skills/hve-core/git-commit/SKILL.md) (`/git-commit`, with `mode=message-only` for a message alone), [Git Merge](../skills/hve-core/git-merge/SKILL.md) (`/git-merge`), and [Git Setup](../skills/hve-core/git-setup/SKILL.md) (`/git-setup`).
 
 ### Pull Requests & Code Review
 
@@ -104,9 +101,9 @@ These workflows are skills rather than prompts. Each resolves the active tracker
 1. **Coordinating a complete task?** Use [RPI](./hve-core/rpi.prompt.md) with `/rpi task="<outcome>"`
 2. **Working on one RPI phase?** Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review`
 3. **Authoring an HVE artifact?** Use `hve-builder`; use the Vally prompts above only for conformance-test authoring or corpus import
-4. **Committing changes?** Use [Git Commit Message Generator](./hve-core/git-commit-message.prompt.md) or [Git Commit](./hve-core/git-commit.prompt.md)
-5. **Handling merge conflicts?** Use [Git Merge](./hve-core/git-merge.prompt.md)
-6. **Setting up Git?** Use [Git Setup](./hve-core/git-setup.prompt.md)
+4. **Committing changes?** Use the [Git Commit](../skills/hve-core/git-commit/SKILL.md) skill, or `/git-commit mode=message-only` for a message alone
+5. **Handling merge conflicts?** Use the [Git Merge](../skills/hve-core/git-merge/SKILL.md) skill
+6. **Setting up Git?** Use the [Git Setup](../skills/hve-core/git-setup/SKILL.md) skill
 7. **Tracking your work?** Use the [Backlog Plan](../skills/project-planning/backlog-plan/SKILL.md) skill in `my-work` mode, then `task-plan` mode
 8. **Creating Azure DevOps PRs?** Use [ADO Create Pull Request](./hve-core/ado-create-pull-request.prompt.md)
 9. **Checking build status?** Use [ADO Get Build Info](./hve-core/ado-get-build-info.prompt.md)

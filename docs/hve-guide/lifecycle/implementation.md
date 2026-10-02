@@ -3,7 +3,7 @@ title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-09-29
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -34,13 +34,13 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 | RPI Agent                          | Agent | Select **RPI Agent**                          | Coordinate the applicable RPI phase skills       |
 | Data Science and Engineering Coach | Agent | Select **Data Science and Engineering Coach** | Produce notebooks, dashboards, and pipeline code |
 
-### Prompts
+### Prompts and Skills
 
-| Tool               | Type   | How to Invoke         | Purpose                                      |
-|--------------------|--------|-----------------------|----------------------------------------------|
-| rpi                | Prompt | `/rpi`                | Coordinate the full RPI lifecycle            |
-| git-commit         | Prompt | `/git-commit`         | Stage and commit changes                     |
-| git-commit-message | Prompt | `/git-commit-message` | Generate a commit message for staged changes |
+| Tool       | Type   | How to Invoke                   | Purpose                                      |
+|------------|--------|---------------------------------|----------------------------------------------|
+| rpi        | Prompt | `/rpi`                          | Coordinate the full RPI lifecycle            |
+| git-commit | Skill  | `/git-commit`                   | Stage and commit changes                     |
+| git-commit | Skill  | `/git-commit mode=message-only` | Generate a commit message for staged changes |
 
 ### Auto-Activated Instructions
 

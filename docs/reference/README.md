@@ -16,7 +16,7 @@ This page lists the generated reference documentation, grouped by asset kind.
 | Category                               | Assets |
 |----------------------------------------|--------|
 | [Agents](agents/README.md)             | 60     |
-| [Instructions](instructions/README.md) | 59     |
-| [Prompts](prompts/README.md)           | 16     |
-| [Skills](skills/README.md)             | 80     |
+| [Instructions](instructions/README.md) | 58     |
+| [Prompts](prompts/README.md)           | 12     |
+| [Skills](skills/README.md)             | 83     |
 <!-- END AUTO-GENERATED: index -->

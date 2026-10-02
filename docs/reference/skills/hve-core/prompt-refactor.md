@@ -1,9 +1,9 @@
 ---
 title: prompt-refactor
 description: Compatibility alias for behavior-preserving prompt artifact cleanup. Routes refactoring to hve-builder refactor mode.
-sidebar_position: 7
+sidebar_position: 10
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill

@@ -4,8 +4,8 @@
 
 BeforeAll {
     $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
-    $script:PromptPath = Join-Path $script:RepoRoot '.github/prompts/hve-core/git-commit.prompt.md'
-    $script:EvalSpecPath = Join-Path $script:RepoRoot 'evals/behavior-conformance/prompts.eval.yaml'
+    $script:SkillPath = Join-Path $script:RepoRoot '.github/skills/hve-core/git-commit/SKILL.md'
+    $script:EvalSpecPath = Join-Path $script:RepoRoot 'evals/behavior-conformance/skill-behavior.eval.yaml'
     Import-Module powershell-yaml -ErrorAction Stop
 
     function Invoke-FixtureGit {
@@ -38,7 +38,7 @@ BeforeAll {
         param([Parameter(Mandatory)][string]$Name)
 
         $Spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $script:EvalSpecPath -Raw)
-        $Stimulus = @($Spec.stimuli | Where-Object { $_.name -eq 'prompt-git-commit-conformance' })
+        $Stimulus = @($Spec.stimuli | Where-Object { $_.name -eq 'skill-git-commit-conformance' })
         return @($Stimulus.graders | Where-Object { $_.name -eq $Name })
     }
 
@@ -86,11 +86,11 @@ BeforeAll {
     }
 }
 
-Describe 'Git commit prompt contract' -Tag 'Unit' {
+Describe 'Git commit skill contract' -Tag 'Unit' {
     It 'Grades cancellation narration with installed Vally independently of sentence order' {
         $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $script:EvalSpecPath -Raw)
-        $stimulus = $spec.stimuli | Where-Object { $_.name -eq 'prompt-git-commit-cancellation' }
-        $grader = $stimulus.graders | Where-Object { $_.name -eq 'prompt-git-commit-cancel-reports-no-commit' }
+        $stimulus = $spec.stimuli | Where-Object { $_.name -eq 'skill-git-commit-cancellation' }
+        $grader = $stimulus.graders | Where-Object { $_.name -eq 'skill-git-commit-cancel-reports-no-commit' }
         $grader.turn | Should -Be 2
         $grader.type | Should -Be 'output-matches'
         $probe = @'
@@ -126,10 +126,10 @@ console.log(`PASS: ${input.controls.length} cancellation narrative controls`);
 
     It 'Stages the selection contract while preserving the simulated inventory boundary' {
         $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $script:EvalSpecPath -Raw)
-        $stimulus = $spec.stimuli | Where-Object { $_.name -eq 'prompt-git-commit-conformance' }
+        $stimulus = $spec.stimuli | Where-Object { $_.name -eq 'skill-git-commit-conformance' }
         $files = @($stimulus.agent_environment.files)
         $files | Should -HaveCount 2
-        $files.dest | Should -Contain '.github/prompts/hve-core/git-commit.prompt.md'
+        $files.dest | Should -Contain '.github/skills/hve-core/git-commit'
         $files.dest | Should -Contain '.github/instructions/hve-core/commit-message.instructions.md'
         foreach ($file in $files) {
             Test-Path -LiteralPath (Join-Path (Split-Path $script:EvalSpecPath -Parent) $file.src) | Should -BeTrue
@@ -141,38 +141,38 @@ console.log(`PASS: ${input.controls.length} cancellation narrative controls`);
     }
 
     It 'Requires selected-path staging and both confirmation boundaries' {
-        $Prompt = Get-Content -LiteralPath $script:PromptPath -Raw
+        $Skill = Get-Content -LiteralPath $script:SkillPath -Raw
 
-        $Prompt | Should -Match 'git status --porcelain=v1 -z --untracked-files=all'
-        $Prompt | Should -Match 'git --literal-pathspecs add -- <safely quoted selected paths>'
-        $Prompt | Should -Match 'whole paths intended for this commit'
-        $Prompt | Should -Match 'exact staged path set'
-        $Prompt | Should -Match 'never unstage prior user work'
-        $Prompt | Should -Match 'only an `R` or `C` status record'
-        $Prompt | Should -Match 'separate deletion and untracked addition as independent candidates'
-        $Prompt | Should -Match 'status-reported rename or copy'
-        $Prompt | Should -Match 'git --literal-pathspecs reset -- <safely quoted staging-delta paths>'
-        $Prompt | Should -Match 'no push'
+        $Skill | Should -Match 'git status --porcelain=v1 -z --untracked-files=all'
+        $Skill | Should -Match 'git --literal-pathspecs add -- <safely quoted selected paths>'
+        $Skill | Should -Match 'whole paths intended for this commit'
+        $Skill | Should -Match 'exact staged path set'
+        $Skill | Should -Match 'never unstage prior user work'
+        $Skill | Should -Match 'only an `R` or `C` status record'
+        $Skill | Should -Match 'separate deletion and untracked addition as independent candidates'
+        $Skill | Should -Match 'status-reported rename or copy'
+        $Skill | Should -Match 'git --literal-pathspecs reset -- <safely quoted staging-delta paths>'
+        $Skill | Should -Match 'no push'
     }
 
     It 'Rejects executable legacy staging and no-confirmation branches' {
-        $Prompt = Get-Content -LiteralPath $script:PromptPath -Raw
+        $Skill = Get-Content -LiteralPath $script:SkillPath -Raw
         $BroadStagingLines = @(
-            $Prompt -split "`r?`n" |
+            $Skill -split "`r?`n" |
                 Where-Object { $_ -match '`git add -(?:A|u)`' }
         )
 
         $BroadStagingLines | Should -HaveCount 1
         $BroadStagingLines[0] | Should -Match 'Never use an unscoped'
-        $Prompt | Should -Not -Match 'Pre-staging safety check'
-        $Prompt | Should -Not -Match 'verify the repository has a `.gitignore` file'
-        $Prompt | Should -Not -Match 'Never wait for confirmation'
-        $Prompt | Should -Match 'Wait only for the two required user decisions'
+        $Skill | Should -Not -Match 'Pre-staging safety check'
+        $Skill | Should -Not -Match 'verify the repository has a `.gitignore` file'
+        $Skill | Should -Not -Match 'Never wait for confirmation'
+        $Skill | Should -Match 'Wait only for the two required user decisions'
     }
 
     It 'Requires selection before staging and rejects prior index mutation claims' {
-        $BeforeMutation = Get-GitCommitGrader -Name 'prompt-git-commit-conformance-stops-before-mutation'
-        $NoPriorMutation = Get-GitCommitGrader -Name 'prompt-git-commit-conformance-no-prior-index-mutation'
+        $BeforeMutation = Get-GitCommitGrader -Name 'skill-git-commit-conformance-stops-before-mutation'
+        $NoPriorMutation = Get-GitCommitGrader -Name 'skill-git-commit-conformance-no-prior-index-mutation'
 
         $BeforeMutation | Should -HaveCount 1
         $NoPriorMutation | Should -HaveCount 1

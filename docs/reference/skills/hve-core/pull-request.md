@@ -1,9 +1,9 @@
 ---
 title: pull-request
 description: "Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs. Use when a user asks to prepare, create, or update a pull request."
-sidebar_position: 8
+sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill
