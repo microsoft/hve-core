@@ -417,13 +417,14 @@ test('catalog metadata is validated and cannot terminate the inert JSON block', 
 });
 
 test('complete bundle has current local assets, derived filename and full library notice', async t => {
-  const { bundleDeck } = await import('./bundle.mjs');
+  const { bundleDeck, neutralizeRevealSinks, readRevealVersion } = await import('./bundle.mjs');
   const { buildDeck, sourceFiles } = await import('./build.mjs');
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'hve-deck-bundle-'));
   t.after(() => fs.rmSync(temporary, { recursive: true, force: true }));
   const name = path.basename(__dirname);
   const output = path.join(temporary, 'slides', name, 'dist');
   const filename = await bundleDeck({
+    dependencyRoot: __dirname,
     build: async () => {
       fs.cpSync(await buildDeck(), output, { recursive: true });
       return output;
@@ -437,10 +438,13 @@ test('complete bundle has current local assets, derived filename and full librar
   for (const file of sourceFiles) {
     assert.equal(fs.readFileSync(path.join(__dirname, file), 'utf8'), fs.readFileSync(path.join(output, file), 'utf8'));
   }
+  const revealVersion = await readRevealVersion(__dirname);
   for (const [, asset] of html.matchAll(/<(?:link|script)\b[^>]*(?:href|src)="([^"]+)"/g)) {
     assert.ok(!/^(?:https?:)?\/\//.test(asset));
-    assert.ok(standalone.includes(fs.readFileSync(path.join(output, asset), 'utf8')), asset);
+    const source = fs.readFileSync(path.join(output, asset), 'utf8');
+    assert.ok(standalone.includes(asset === 'vendor/reveal.js' ? neutralizeRevealSinks(source, revealVersion) : source), asset);
   }
+  assert.match(standalone, /id="hve-slide-provenance"/);
   assert.match(standalone, /Permission is hereby granted/);
   assert.doesNotMatch(standalone, /<script[^>]+\bsrc=|<link rel="stylesheet"/);
 });

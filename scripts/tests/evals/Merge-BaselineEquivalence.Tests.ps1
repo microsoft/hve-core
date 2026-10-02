@@ -341,6 +341,82 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
         $script:Workflow | Should -Match 'CalibrationModel \$env:SELECTED_MODEL'
     }
 
+    It 'defines a reversible compare shard control validated before model work' {
+        $shardInput = $script:EvalWorkflow.on.workflow_call.inputs['compare-shard-count']
+        $shardInput.type | Should -Be 'number'
+        $shardInput.default | Should -Be 7
+        $shardInput.required | Should -BeFalse
+        $script:Workflow | Should -Match "COMPARE_SHARD_COUNT -notin @\('1', '5', '7'\)"
+        $script:Workflow | Should -Match ([regex]::Escape("compare-shard-count must be 1, 5, or 7; received '"))
+        $script:Workflow | Should -Match '(?s)agent-plan:.*?COMPARE_SHARD_COUNT: \$\{\{ inputs\.compare-shard-count \|\| 7 \}\}.*?equivalence-execute:'
+        $script:Workflow | Should -Match '(?s)equivalence-execute:.*?COMPARE_SHARD_COUNT: \$\{\{ inputs\.compare-shard-count \|\| 7 \}\}.*?-CompareShardCount \(\[int\]\$env:COMPARE_SHARD_COUNT\)'
+    }
+
+    It 'defines a non-gating advisory lane control that defaults on' {
+        $advisoryInput = $script:EvalWorkflow.on.workflow_call.inputs['advisory-equivalence']
+        $advisoryInput.type | Should -Be 'boolean'
+        $advisoryInput.default | Should -BeTrue
+        $advisoryInput.required | Should -BeFalse
+    }
+
+    It 'runs the advisory model lane in parallel without any path into gating' {
+        $jobs = $script:EvalWorkflow.jobs
+        $advisory = $jobs['equivalence-advisory']
+        $advisory | Should -Not -BeNullOrEmpty
+        $advisory['continue-on-error'] | Should -BeTrue
+        $advisory.permissions.contents | Should -Be 'read'
+        $guard = 'inputs.advisory-equivalence != false && '
+        $advisoryCondition = ([string]$advisory['if']).Trim()
+        $advisoryCondition | Should -BeLike "$guard*"
+        $advisoryCondition.Substring($guard.Length) | Should -BeExactly ([string]$jobs['equivalence-execute']['if']).Trim()
+        @($advisory.needs) | Should -Not -Contain 'equivalence-execute'
+        foreach ($jobName in @($jobs.Keys)) {
+            @($jobs[$jobName].needs) | Should -Not -Contain 'equivalence-advisory' -Because "$jobName must not depend on the advisory lane"
+        }
+        @($advisory.strategy.matrix.include | ForEach-Object { $_.model }) | Should -Contain 'mai-code-1.1-flash'
+
+        $run = (@($advisory.steps | Where-Object { $_.name -eq 'Execute advisory model' }))[0].run
+        $run | Should -Match '-Tier devloop'
+        $run | Should -Match '-Model \$env:ADVISORY_MODEL'
+        $run | Should -Match '-CompareShardCount \(\[int\]\$env:COMPARE_SHARD_COUNT\)'
+        $run | Should -Not -Match 'reasoning-effort'
+    }
+
+    It 'runs only catalogued models in the equivalence matrices' {
+        $catalogPath = Join-Path $PSScriptRoot '../../linting/model-catalog.json'
+        $catalogIds = @((Get-Content -LiteralPath $catalogPath -Raw | ConvertFrom-Json).models | ForEach-Object {
+                (([string]$_.name -replace '\s*\(copilot\)\s*$', '').Trim().ToLowerInvariant() -replace '\s+', '-')
+            })
+        $models = @(foreach ($jobName in @('equivalence-execute', 'equivalence-advisory')) {
+                @($script:EvalWorkflow.jobs[$jobName].strategy.matrix.include | ForEach-Object { [string]$_.model })
+            })
+        $models | Should -Not -BeNullOrEmpty
+        foreach ($model in $models) {
+            $catalogIds | Should -Contain $model -Because "workflow model '$model' must match an entry in scripts/linting/model-catalog.json"
+        }
+    }
+
+    It 'publishes only the advisory summary under a name no fan-in downloads' {
+        $jobs = $script:EvalWorkflow.jobs
+        $upload = (@($jobs['equivalence-advisory'].steps | Where-Object { $_.uses -like 'actions/upload-artifact@*' }))[0]
+        $artifactNames = @($jobs['equivalence-advisory'].strategy.matrix.include | ForEach-Object { ([string]$upload.with.name).Replace('${{ matrix.key }}', [string]$_.key) })
+        ([string]$upload.with.path).Trim() | Should -BeExactly 'logs/advisory-equivalence-${{ matrix.model }}.json'
+
+        $downloadFilters = @(foreach ($jobName in @('equivalence-fan-in', 'eval-fan-in', 'eval-report')) {
+                foreach ($step in @($jobs[$jobName].steps | Where-Object { $_.uses -like 'actions/download-artifact@*' })) {
+                    foreach ($key in @('pattern', 'name')) {
+                        if ($step.with -and $step.with.ContainsKey($key)) { [string]$step.with[$key] }
+                    }
+                }
+            })
+        $downloadFilters | Should -Not -BeNullOrEmpty
+        foreach ($artifactName in $artifactNames) {
+            foreach ($filter in $downloadFilters) {
+                $artifactName -like $filter | Should -BeFalse -Because "fan-in filter '$filter' must not match '$artifactName'"
+            }
+        }
+    }
+
     It 'keeps ordinary manual execution enabled for dispatched callers' {
         $workflow = ConvertFrom-Yaml -Yaml $script:Workflow
         foreach ($jobName in @('agent-plan', 'eval-execute', 'equivalence-execute', 'equivalence-fan-in', 'eval-fan-in')) {

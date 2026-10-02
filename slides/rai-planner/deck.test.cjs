@@ -8,8 +8,25 @@ const os = require('node:os');
 const vm = require('node:vm');
 const context = vm.createContext({});
 vm.runInContext(fs.readFileSync(path.join(__dirname, 'content.js'), 'utf8'), context);
+vm.runInContext(fs.readFileSync(path.join(__dirname, 'components.js'), 'utf8'), context);
 const { sources, examples, demos, moveStep, diffStats } = context.DeckContent;
+const { kinds } = context.DeckComponents;
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+const snapshot = '7e2de1aa135133acc4e9592adffc220cad9bdfdf';
+
+test('the condensed talk has nine slides and thirteen walkthrough steps', () => {
+  const ids = [...html.matchAll(/<section\b[^>]*\bid="([^"]+)"/g)].map(match => match[1]);
+  assert.deepEqual(ids, [
+    'opening', 'value', 'entry-modes', 'phases', 'use-walkthrough',
+    'state', 'no-code', 'extend-walkthrough', 'closing'
+  ]);
+  assert.equal(demos.assess.steps.length, 6);
+  assert.equal(demos.extend.steps.length, 7);
+  const readme = fs.readFileSync(path.join(__dirname, 'README.md'), 'utf8');
+  assert.match(readme, /9-slide/);
+  assert.match(readme, /six-step walkthrough/);
+  assert.match(readme, /seven-step hve-builder walkthrough/);
+});
 
 test('slides have unique IDs, headings, chapters, notes and valid citation keys', () => {
   const slides = [...html.matchAll(/<section\b([^>]*)>([\s\S]*?)<\/section>/g)];
@@ -31,17 +48,72 @@ test('slides have unique IDs, headings, chapters, notes and valid citation keys'
 });
 
 test('example mounts and walkthrough contracts match their data', () => {
-  for (const [, name] of html.matchAll(/data-example="([^"]+)"/g)) assert.ok(examples[name], name);
+  const exampleNames = [...html.matchAll(/data-example="([^"]+)"/g)].map(match => match[1]);
+  assert.deepEqual(exampleNames.sort(), Object.keys(examples).sort());
+  for (const [, name] of html.matchAll(/data-example="([^"]+)"/g)) {
+    assert.ok(examples[name], name);
+    assert.ok(kinds.includes(examples[name].kind), examples[name].kind);
+    assert.ok(examples[name].caption.trim(), name);
+  }
   const hosts = [...html.matchAll(/data-demo="([^"]+)"/g)].map(match => match[1]);
-  assert.equal(new Set(hosts).size, hosts.length);
+  assert.deepEqual(hosts, ['assess', 'extend']);
+  assert.deepEqual(Object.keys(demos).sort(), [...hosts].sort());
   for (const name of hosts) {
     const demo = demos[name];
     assert.ok(demo?.steps.length);
+    assert.equal(new Set(demo.phases).size, demo.phases.length);
+    for (const phase of demo.phases) assert.ok(demo.steps.some(step => step.phase === phase), `${name} phase ${phase} has no step`);
+    let lastPhase = 0;
     for (const step of demo.steps) {
       assert.ok(demo.phases.includes(step.phase));
-      for (const field of ['kind', 'title', 'state', 'insight']) assert.equal(typeof step[field], 'string');
+      assert.ok(demo.phases.indexOf(step.phase) >= lastPhase, `${name} steps move backward at ${step.title}`);
+      lastPhase = demo.phases.indexOf(step.phase);
+      assert.ok(kinds.includes(step.kind), step.kind);
+      for (const field of ['kind', 'title', 'state', 'insight', 'caption']) assert.ok(typeof step[field] === 'string' && step[field].trim(), `${step.title}: ${field}`);
     }
   }
+});
+
+test('scripted chat steps use supported roles, blocks and checklist statuses', () => {
+  const chats = Object.values(demos).flatMap(demo => demo.steps).filter(step => step.kind === 'chat');
+  assert.ok(chats.length > 0);
+  for (const step of chats) {
+    assert.ok(step.messages.length > 0);
+    for (const message of step.messages) {
+      assert.ok(['user', 'assistant'].includes(message.role));
+      assert.ok(message.author.trim());
+      for (const block of message.blocks) {
+        assert.ok(['text', 'note', 'code', 'callout', 'list', 'checklist'].includes(block.type), block.type);
+        if (block.type === 'checklist') for (const item of block.items) assert.ok(['done', 'pending', 'skipped'].includes(item.status));
+      }
+    }
+  }
+});
+
+test('the use walkthrough stays within the planner question limit and gate order', () => {
+  const steps = demos.assess.steps;
+  const scoping = steps.find(step => step.phase === 'Scope');
+  const questions = scoping.messages.flatMap(message => message.blocks).filter(block => block.type === 'checklist')
+    .flatMap(block => block.items).filter(item => item.status === 'pending');
+  assert.ok(questions.length >= 1 && questions.length <= 7);
+  const blocks = scoping.messages.flatMap(message => message.blocks);
+  assert.equal(blocks[0].label, 'CAUTION');
+  assert.match(blocks[1].text, /NIST AI Risk Management Framework 1.0/);
+  assert.ok(blocks.findIndex(block => block.type === 'checklist') > 1);
+  const risk = JSON.stringify(steps.find(step => step.phase === 'Risk'));
+  const prohibitedGate = risk.indexOf('Prohibited uses gate');
+  const firstIndicator = risk.indexOf('Rights, fairness and privacy');
+  assert.ok(prohibitedGate >= 0 && firstIndicator > prohibitedGate);
+  assert.match(risk, /comprehensive/);
+  const plan = steps.find(step => step.phase === 'Plan');
+  assert.match(plan.state, /Phase 3 confirmed/);
+  assert.match(plan.body, /T-RAI-001/);
+  const evidence = JSON.stringify(steps.find(step => step.phase === 'Evidence'));
+  assert.match(evidence, /EV-001 -> T-RAI-001/);
+  assert.match(evidence, /unverified/);
+  const handoff = JSON.stringify(steps.at(-1));
+  assert.match(handoff, /EV-001/);
+  assert.match(handoff, /confirm whether to create/);
 });
 
 test('walkthrough boundaries clamp, reset and reject malformed state', () => {
@@ -117,7 +189,7 @@ test('presenter bar, slide footer and walkthrough controls follow the shared bot
     return match[1];
   };
   // The bar names the deck and the current chapter before its controls.
-  assert.match(html, /<nav id="presenter-controls"[^>]*>\s*<div class="brand"><span class="brand-dot" aria-hidden="true"><\/span>[^<]+<span id="chapter-label">/);
+  assert.match(html, /<nav id="presenter-controls"[^>]*>\s*<div class="brand"><span class="brand-dot" aria-hidden="true"><\/span> HVE CORE <span id="chapter-label">/);
   // Short chapter labels keep the bar on one row at desktop widths.
   for (const [, chapter] of html.matchAll(/data-chapter="([^"]+)"/g)) assert.ok(chapter.length <= 28, `Chapter label too long for the bar: ${chapter}`);
   // One variable sizes the bar and the slide area above it, including the stacked layouts.
@@ -157,12 +229,77 @@ test('deck initialization disables the unused cross-window API', () => {
   assert.match(source, /section\.inert = section !== current/);
 });
 
-test('displayed diff counts and question selections are consistent', () => {
-  const stats = diffStats(examples.implementation.diff);
+test('the review correction matches the drafted instruction and keeps NIST active', () => {
+  const steps = demos.extend.steps;
+  const review = steps.find(step => step.kind === 'review');
+  const draft = steps.find(step => step.kind === 'code' && step.file.endsWith('contoso-rai.instructions.md'));
+  const stats = diffStats(review.diff);
   assert.equal(stats.added, 2);
-  assert.equal(stats.removed, 1);
+  assert.equal(stats.removed, 2);
+  for (const row of review.diff.filter(row => row.type !== 'add')) assert.ok(draft.body.includes(row.text), row.text);
+  assert.match(draft.body, /applyTo: '\*\*\/\.copilot-tracking\/rai-plans\/\*\*'/);
+  const result = steps.find(step => step.phase === 'Use' && step.kind === 'chat');
+  const response = result.messages.find(message => message.role === 'assistant');
+  const fields = JSON.parse(`{${response.blocks.find(block => block.type === 'code').text}}`);
+  assert.equal(fields.riskClassification.framework.id, 'nist-ai-rmf');
+  assert.equal(fields.riskClassification.framework.replaceDefaultFramework, false);
+  assert.equal(fields.userPreferences.targetSystem, 'ado');
+  assert.equal(fields.userPreferences.autonomyTier, 'partial');
+  const processed = response.blocks.find(block => block.type === 'text').text;
+  assert.match(processed, /SR 26-2 as standards/);
+  assert.match(processed, /NIST AI RMF 1\.0 stays active/);
+  const skill = steps.find(step => step.kind === 'code' && step.file.endsWith('/SKILL.md'));
+  const name = skill.body.match(/^name: (.+)$/m)[1];
+  assert.equal(skill.file.split('/').at(-2), name);
+  assert.match(name, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+  assert.ok(result.messages[0].blocks[0].text.startsWith(`/${name} `));
+  assert.match(steps[0].body, /^\/hve-builder /);
+  assert.match(draft.body, /^# Conventions for Contoso lending assessments$/m);
+  assert.match(review.caption, /Scripted source review/);
   assert.throws(() => diffStats([{ type: 'invalid', text: '' }]), /Invalid/);
-  assert.ok(examples.question.selected >= 0 && examples.question.selected < examples.question.options.length);
+});
+
+test('the extension layers real SR 26-2 guidance with its source and scope', () => {
+  const steps = demos.extend.steps;
+  const skill = steps.find(step => step.kind === 'code' && step.file.endsWith('/SKILL.md'));
+  const summary = steps.find(step => step.kind === 'code' && step.file.endsWith('/sr-26-2-summary.md'));
+  assert.equal(summary.file, skill.file.replace(/SKILL\.md$/, 'references/sr-26-2-summary.md'));
+  assert.match(skill.body, /^\* references\/sr-26-2-summary\.md \(standard\)$/m);
+  assert.match(steps[0].body, /SR 26-2/);
+  assert.ok(summary.body.includes(sources['sr-26-2-guidance'].url));
+  assert.match(summary.body, /April 17, 2026/);
+  assert.match(summary.body, /Out of scope: generative and agentic AI models/);
+  assert.match(summary.body, /paraphrase/i);
+  assert.ok(steps.indexOf(summary) < steps.findIndex(step => step.kind === 'review'));
+  for (const step of steps.filter(step => step.kind === 'code')) assert.ok(step.body.split('\n').length <= 11, `${step.title} fits above the controls`);
+  const mapping = steps.at(-1);
+  assert.equal(mapping.phase, 'Use');
+  assert.match(mapping.body, /^Baseline: NIST AI RMF 1\.0$/m);
+  assert.match(mapping.body, /SR 26-2 outcomes analysis/);
+  const statuses = [...mapping.body.matchAll(/ -> ([a-z-]+)$/gm)].map(match => match[1]);
+  assert.ok(statuses.length >= 3);
+  for (const status of statuses) assert.ok(['not-yet-covered', 'partial', 'addressed', 'gap-identified'].includes(status), status);
+  for (const key of ['sr-26-2', 'sr-26-2-guidance', 'occ-2026-13']) {
+    assert.match(sources[key].url, /^https:\/\/www\.(?:federalreserve|occ)\.gov\//, key);
+    assert.match(sources[key].note, /Read October 1, 2026\./, key);
+  }
+  assert.match(html.match(/<section id="extend-walkthrough"[\s\S]*?<\/section>/)[0], /generative and agentic AI/);
+  const deckText = ['index.html', 'content.js', 'README.md', 'deck.json']
+    .map(file => fs.readFileSync(path.join(__dirname, file), 'utf8')).join('\n');
+  assert.doesNotMatch(deckText, /woodgrove/i);
+  assert.match(deckText, /Contoso/);
+});
+
+test('repository citations are pinned to the source snapshot', () => {
+  const pinned = Object.entries(sources).filter(([, source]) => /^https:\/\/github\.com\/microsoft\/hve-core\/(?:blob|tree)\//.test(source.url));
+  assert.ok(pinned.length > 0);
+  for (const [key, source] of pinned) assert.ok(source.url.includes(`/${snapshot}/`) || source.url.endsWith(`/${snapshot}`) || source.url.endsWith(`/${snapshot}/`), key);
+  for (const [key, source] of Object.entries(sources)) {
+    assert.ok(source.title.trim() && source.note.trim(), key);
+    assert.equal(new URL(source.url).protocol, 'https:', key);
+  }
+  const used = new Set([...html.matchAll(/data-sources="([^"]*)"/g)].flatMap(match => match[1].split(',')));
+  for (const key of Object.keys(sources)) assert.ok(used.has(key), `Unused source: ${key}`);
 });
 
 test('configuration serialization rejects missing fields and escapes HTML delimiters', async () => {
@@ -247,7 +384,7 @@ test('catalog metadata is validated and cannot terminate the inert JSON block', 
 });
 
 test('complete bundle has current local assets, derived filename and full library notice', async t => {
-  const { bundleDeck } = await import('./bundle.mjs');
+  const { bundleDeck, neutralizeRevealSinks, readRevealVersion } = await import('./bundle.mjs');
   const { buildDeck, sourceFiles } = await import('./build.mjs');
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'hve-deck-bundle-'));
   t.after(() => fs.rmSync(temporary, { recursive: true, force: true }));
@@ -268,93 +405,13 @@ test('complete bundle has current local assets, derived filename and full librar
   for (const file of sourceFiles) {
     assert.equal(fs.readFileSync(path.join(__dirname, file), 'utf8'), fs.readFileSync(path.join(output, file), 'utf8'));
   }
+  const revealVersion = await readRevealVersion(__dirname);
   for (const [, asset] of html.matchAll(/<(?:link|script)\b[^>]*(?:href|src)="([^"]+)"/g)) {
     assert.ok(!/^(?:https?:)?\/\//.test(asset));
-    if (asset === 'vendor/reveal.js') continue;
-    assert.ok(standalone.includes(fs.readFileSync(path.join(output, asset), 'utf8')), asset);
+    const source = fs.readFileSync(path.join(output, asset), 'utf8');
+    assert.ok(standalone.includes(asset === 'vendor/reveal.js' ? neutralizeRevealSinks(source, revealVersion) : source), asset);
   }
-  const provenance = [...standalone.matchAll(/<script type="application\/json" id="hve-slide-provenance">([\s\S]*?)<\/script>/g)];
-  assert.equal(provenance.length, 1);
-  assert.equal(JSON.parse(provenance[0][1]).securityCheckResult, 'passed');
+  assert.match(standalone, /id="hve-slide-provenance"/);
   assert.match(standalone, /Permission is hereby granted/);
   assert.doesNotMatch(standalone, /<script[^>]+\bsrc=|<link rel="stylesheet"/);
-});
-
-const revealFixture = [
-  'a(e,`img[data-src]`).forEach(e=>{(e.setAttribute(`src`,e.getAttribute(`data-src`)),e.removeAttribute(`data-src`))});',
-  'a(e,`source[data-src]`).forEach(e=>{e.setAttribute(`src`,e.getAttribute(`data-src`)),n+=1});',
-  'o.split(`,`).forEach(t=>{let n=document.createElement(`source`);n.setAttribute(`src`,t);e.appendChild(n)});',
-  'a&&a.getAttribute(`src`)!==r&&a.setAttribute(`src`,r);',
-  'i&&(e.removeEventListener(`load`,f),e.setAttribute(`src`,e.getAttribute(`data-src`)));',
-  '/youtube\\.com\\/embed\\//.test(t.getAttribute(`src`))&&e?p(1):/player\\.vimeo\\.com\\//.test(t.getAttribute(`src`))&&e?p(2):p(3);'
-].join('\n');
-
-function revealPage() {
-  return {
-    page: '<html><head><link rel="stylesheet" href="theme.css"><script defer src="vendor/reveal.js"></script><script defer src="deck.js"></script></head><body></body></html>',
-    assets: new Map([['theme.css', 'body { color: white; }'], ['vendor/reveal.js', revealFixture], ['deck.js', 'globalThis.ready = true;']])
-  };
-}
-
-test('reveal.js lazy-load sinks and embed host checks are removed from the installed release and every inlined script', async () => {
-  const { neutralizeRevealSinks, supportedRevealVersion, createStandaloneHtml } = await import('./bundle.mjs');
-  const flow = /setAttribute\(`src`,(?:e\.getAttribute\(`data-src`\)|t\)|r\))/;
-  const installed = path.join(__dirname, 'node_modules/reveal.js/dist/reveal.js');
-  for (const source of [revealFixture, ...(fs.existsSync(installed) ? [fs.readFileSync(installed, 'utf8')] : [])]) {
-    const patched = neutralizeRevealSinks(source, supportedRevealVersion);
-    assert.doesNotMatch(patched, flow);
-    for (const hostCheck of ['/youtube\\.com\\/embed\\//.test(', '/player\\.vimeo\\.com\\//.test(']) {
-      assert.ok(!patched.includes(hostCheck), hostCheck);
-    }
-    assert.doesNotThrow(() => new vm.Script(patched));
-  }
-  const { page, assets } = revealPage();
-  const firstParty = 'el.setAttribute("src", el.getAttribute("data-src"));';
-  assert.throws(
-    () => createStandaloneHtml(page, new Map([...assets, ['deck.js', firstParty]]), 'Fixture', undefined, { revealVersion: supportedRevealVersion }),
-    /copies a data-src attribute into src/
-  );
-});
-
-test('reveal.js patch fails closed on a changed anchor or unsupported version', async () => {
-  const { neutralizeRevealSinks, supportedRevealVersion } = await import('./bundle.mjs');
-  assert.throws(() => neutralizeRevealSinks(revealFixture.replace('n.setAttribute(`src`,t);', 'n.src=t;'), supportedRevealVersion), /anchor "background video source" matched 0 times/);
-  assert.throws(() => neutralizeRevealSinks(`${revealFixture}\na.setAttribute(\`src\`,r)`, supportedRevealVersion), /anchor "background iframe" matched 2 times/);
-  assert.throws(() => neutralizeRevealSinks(revealFixture.replace('/player\\.vimeo\\.com\\//', '/vimeo\\.com\\//'), supportedRevealVersion), /anchor "embedded Vimeo host check" matched 0 times/);
-  assert.throws(() => neutralizeRevealSinks(revealFixture, '6.1.0'), /reveal\.js 6\.1\.0 is not supported/);
-  assert.throws(() => neutralizeRevealSinks(revealFixture, undefined), /is not supported/);
-});
-
-test('provenance block matches its contract, is deterministic, and cannot terminate its script', async () => {
-  const { createStandaloneHtml, supportedRevealVersion } = await import('./bundle.mjs');
-  const { page, assets } = revealPage();
-  const metadata = { title: 'Deck', description: 'Description' };
-  const options = { revealVersion: supportedRevealVersion };
-  const first = createStandaloneHtml(page, assets, 'Fixture notice', metadata, options);
-  assert.equal(createStandaloneHtml(page, assets, 'Fixture notice', metadata, options), first);
-  const blocks = [...first.matchAll(/<script type="application\/json" id="hve-slide-provenance">([\s\S]*?)<\/script>/g)];
-  assert.equal(blocks.length, 1);
-  assert.doesNotMatch(blocks[0][1], /</);
-  assert.deepEqual(JSON.parse(blocks[0][1]), {
-    generator: 'hve-slides',
-    revealVersion: '6.0.2',
-    patches: ['reveal-lazy-src-neutralized', 'reveal-embed-host-regex-neutralized'],
-    securityChecks: ['raw-text-delimiters', 'inline-styles', 'resource-markup', 'reveal-lazy-src'],
-    securityCheckResult: 'passed'
-  });
-  assert.ok(first.indexOf('id="hve-slide-provenance"') > first.indexOf('id="hve-slide-metadata"'));
-  assert.doesNotMatch(createStandaloneHtml(page.replace('vendor/reveal.js', 'deck.js'), assets, 'Fixture notice', metadata), /hve-slide-provenance/);
-});
-
-test('installed reveal.js must match the deck pin before bundling', async t => {
-  const { readRevealVersion } = await import('./bundle.mjs');
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hve-deck-reveal-'));
-  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ dependencies: { 'reveal.js': '6.0.2' } }));
-  await assert.rejects(readRevealVersion(root), /reveal\.js is missing/);
-  fs.mkdirSync(path.join(root, 'node_modules/reveal.js'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'node_modules/reveal.js/package.json'), JSON.stringify({ version: '6.1.0' }));
-  await assert.rejects(readRevealVersion(root), /Installed reveal\.js 6\.1\.0 does not match the deck pin 6\.0\.2/);
-  fs.writeFileSync(path.join(root, 'node_modules/reveal.js/package.json'), JSON.stringify({ version: '6.0.2' }));
-  assert.equal(await readRevealVersion(root), '6.0.2');
 });

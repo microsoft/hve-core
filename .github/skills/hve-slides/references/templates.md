@@ -10,7 +10,10 @@ The [deck starter](../templates/deck/README.md) is a runnable, neutral reveal.js
 with four example slides and a four-step scripted walkthrough. It includes local
 navigation, source/notes dialogs, keyboard and focus handling, unscaled reading view,
 reduced motion, build/bundle
-scripts, a pinned lockfile and Node tests.
+scripts, a pinned lockfile and Node tests. It also carries the shared
+[bottom chrome](design-and-examples.md#bottom-chrome): a presenter bar with the HVE Core
+mark and chapter, a divided slide footer and a framed walkthrough with its step controls
+in the frame footer.
 
 From the repository root:
 
@@ -130,6 +133,12 @@ The canonical bundler lives in `templates/deck/bundle.mjs`. New decks copy it. H
 has a thin wrapper passing its own build function, so there is no second maintained parser.
 Keep imported modules free of build side effects. Do not introduce cross-deck browser
 imports, automatic template upgrades or an overwrite option to the scaffold script.
+
+Keep the starter's bottom chrome in step with the finished HVE decks. When that shared
+treatment changes, update the starter in the same change. Its `deck.test.cjs` checks the
+contract and is copied into every new deck, so a later layout edit that drops the deck
+mark, desynchronizes the bar height or moves walkthrough controls out of their frame fails
+that deck's tests.
 
 The skill's `scripts/` and `tests/` are maintenance tooling, not copied into a new deck.
 Run the bounded checks after changing the starter, scaffold script or build-all script:

@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-25
+ms.date: 2026-10-01
 ms.topic: how-to
 keywords:
   - evals
@@ -118,6 +118,31 @@ evidence fails closed.
 artifact and renders its `eval-summary.json`; it does not concatenate partial summaries
 or decide whether evidence is complete.
 
+## Advisory Model Lanes
+
+The `equivalence-advisory` job reports how additional models behave on the
+baseline-equivalence suite without gating the pull request. It currently runs Microsoft
+`mai-code-1.1-flash`.
+
+* When it runs: under the same conditions as the gating baseline model lanes, and in
+  parallel with them.
+* What it runs: the equivalence driver in the advisory `devloop` tier with
+  `-Model mai-code-1.1-flash`, `-NoBaselineCache`, and the shared `compare-shard-count`.
+  The model runs at its default reasoning and context settings because GitHub does not
+  list it among models with configurable reasoning or the extended context window.
+* Why it never gates: the job is `continue-on-error`, no fan-in lists it in `needs`, and
+  its artifact name matches no fan-in download pattern. MAI models also receive new
+  checkpoints over time, so their behavior can change independently of this repository.
+* Where results appear: the job's step summary lists the verdict, gate, and key counts,
+  and the `advisory-equivalence-mai` artifact holds only the summary JSON.
+
+To add a model, add a matrix entry to `equivalence-advisory` and confirm the model is listed
+in `scripts/linting/model-catalog.json`; the workflow contract tests reject an uncatalogued
+model. If a parallel advisory lane causes judge errors in the gating lanes, add
+`equivalence-execute` to the advisory job's `needs` so it runs after them. To stop the advisory
+lanes without a workflow edit, set the reusable workflow input `advisory-equivalence` to
+`false`; see Rollback Controls.
+
 ## Trusted Progress
 
 Vally stdout and stderr can contain prompts, responses, trajectories, arbitrary errors,
@@ -128,13 +153,15 @@ While a phase is active, logs expose only these bounded fields:
 
 * Event: `phase-start`, `heartbeat`, or `phase-complete`
 * Phase: one declared eval phase such as `ordinary-eval`, `baseline-eval`, or `compare`
-* Sanitized worker identifier
+* Sanitized worker identifier. A baseline compare shard reports `<model>:compare-NN`.
 * Attempt number
 * Elapsed seconds
 * Fixed exit category
 
 The default heartbeat interval is 60 seconds. Aggregate summaries carry diagnostic
-`phaseTimings`; timing does not affect evaluation verdicts.
+`phaseTimings`, with one compare entry per shard attempt; timing does not affect
+evaluation verdicts. A compare shard worker that fails before a process result exists
+records the fixed category `worker-error`.
 
 ## Rollback Controls
 
@@ -146,6 +173,14 @@ The reusable workflow inputs change scheduling without changing evidence semanti
 | `instruction-shard-count` | `2`          | `1`            | Uses the same planner and runner with one instruction shard |
 | `skill-shard-count`       | `2`          | `1`            | Uses the same planner and runner with one skill shard       |
 | `baseline-max-parallel`   | `2`          | `1`            | Serializes the same isolated baseline model producers       |
+| `compare-shard-count`     | `7`          | `1`            | Runs one serial `vally compare` per baseline model producer |
+| `advisory-equivalence`    | `true`       | `false`        | Skips the non-gating advisory model lanes                   |
+
+Each baseline model producer splits its comparison into `compare-shard-count`
+stimulus-disjoint `vally compare` shards that run concurrently and are merged into one
+comparison file before tallying. A shard that exits nonzero without any comparison
+record is retried once. The rollback value keeps that retry and runs a single compare
+over the run directories.
 
 The single-process fixed-pair baseline driver remains a deterministic aggregation
 oracle for local tests. It is not a second production rollback path.
