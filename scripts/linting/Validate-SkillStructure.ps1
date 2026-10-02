@@ -481,6 +481,79 @@ function Test-SkillSecurityClassification {
     return [string[]]$errors.ToArray()
 }
 
+function Get-SkillClassificationCoverageError {
+    <#
+    .SYNOPSIS
+    Checks skill security classification coverage across every skill directory.
+
+    .DESCRIPTION
+    Runs Test-SkillSecurityClassification for each skill directory under the
+    skills root, skipping directories that were already validated in this run
+    and installed dependency or virtual-environment trees. Changed-files-only
+    validation uses this so a classification change cannot pass by leaving
+    unchanged skills unchecked.
+
+    .PARAMETER SkillsRoot
+    Absolute path to the skills root directory.
+
+    .PARAMETER Classification
+    Valid classification entries keyed by skill path.
+
+    .PARAMETER RepoRoot
+    Repository root used to build repository-relative paths in messages.
+
+    .PARAMETER ExcludeDirectory
+    Full paths of skill directories already validated in this run.
+
+    .OUTPUTS
+    [string[]] Classification coverage errors (empty when every skill conforms).
+
+    .EXAMPLE
+    $errs = Get-SkillClassificationCoverageError -SkillsRoot '/repo/.github/skills' -Classification $entries -RepoRoot '/repo'
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$SkillsRoot,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [hashtable]$Classification,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
+        [string[]]$ExcludeDirectory = @()
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    if (-not (Test-Path -LiteralPath $SkillsRoot -PathType Container)) {
+        return [string[]]$errors.ToArray()
+    }
+
+    $skillFiles = Get-ChildItem -LiteralPath $SkillsRoot -Filter 'SKILL.md' -File -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.venv)[\\/]' }
+    foreach ($skillFile in $skillFiles) {
+        $directory = $skillFile.Directory
+        if ($directory.FullName -in $ExcludeDirectory) {
+            continue
+        }
+        $skillKey = [System.IO.Path]::GetRelativePath($SkillsRoot, $directory.FullName) -replace '\\', '/'
+        $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $directory.FullName) -replace '\\', '/'
+        foreach ($err in (Test-SkillSecurityClassification -Directory $directory -SkillKey $skillKey `
+                    -Classification $Classification -RelativePath $relativePath)) {
+            $errors.Add($err)
+        }
+    }
+
+    return [string[]]$errors.ToArray()
+}
+
 function Test-NodeSkillConfig {
     <#
     .SYNOPSIS
@@ -936,9 +1009,10 @@ function Invoke-SkillStructureValidation {
     .PARAMETER SecurityClassificationPath
     Optional repository-relative path to the skill security classification file.
     When supplied, the file must exist and be valid, every entry must name an
-    existing skill, and each validated skill that ships scripts must have a
-    SECURITY.md or an entry. File-level errors are reported in both full and
-    changed-files-only modes.
+    existing skill, and every skill that ships scripts must have a SECURITY.md
+    or an entry. File-level errors and skill coverage are checked across the
+    whole skills tree in both full and changed-files-only modes, so a
+    classification change cannot pass by leaving unchanged skills unchecked.
 
     .OUTPUTS
     [int] Exit code: 0 for success, 1 for failure.
@@ -979,7 +1053,8 @@ function Invoke-SkillStructureValidation {
 
         # Load the security classification first so file-level errors surface even when no skill changed
         $classificationEntries = $null
-        $classificationResult = $null
+        $classificationErrors = [System.Collections.Generic.List[string]]::new()
+        $classificationRelativePath = $null
         if (-not [string]::IsNullOrWhiteSpace($SecurityClassificationPath)) {
             $classificationFullPath = if ([System.IO.Path]::IsPathRooted($SecurityClassificationPath)) {
                 $SecurityClassificationPath
@@ -987,8 +1062,8 @@ function Invoke-SkillStructureValidation {
             else {
                 Join-Path -Path $repoRoot -ChildPath $SecurityClassificationPath
             }
+            $classificationRelativePath = [System.IO.Path]::GetRelativePath($repoRoot, $classificationFullPath) -replace '\\', '/'
             $classification = Get-SkillSecurityClassification -Path $classificationFullPath
-            $classificationErrors = [System.Collections.Generic.List[string]]::new()
             foreach ($err in $classification.Errors) { $classificationErrors.Add($err) }
             foreach ($key in $classification.Skills.Keys) {
                 if (-not (Test-Path -LiteralPath (Join-Path (Join-Path $fullSkillsPath $key) 'SKILL.md') -PathType Leaf)) {
@@ -998,33 +1073,16 @@ function Invoke-SkillStructureValidation {
             if (Test-Path -LiteralPath $classificationFullPath -PathType Leaf) {
                 $classificationEntries = $classification.Skills
             }
-            if ($classificationErrors.Count -gt 0) {
-                $classificationResult = [PSCustomObject]@{
-                    SkillName = 'skill-security-classification'
-                    SkillPath = [System.IO.Path]::GetRelativePath($repoRoot, $classificationFullPath) -replace '\\', '/'
-                    IsValid   = $false
-                    Errors    = [string[]]$classificationErrors.ToArray()
-                    Warnings  = [string[]]@()
-                }
-            }
         }
         $resolvedSkillsRoot = [System.IO.Path]::GetFullPath($fullSkillsPath)
 
         if ($ChangedFilesOnly) {
             Write-Host "🔍 Detecting changed skill directories..." -ForegroundColor Cyan
-            $changedSkills = Get-ChangedSkillDirectories -BaseBranch $BaseBranch -SkillsPath $SkillsPath
+            $changedSkills = @(Get-ChangedSkillDirectories -BaseBranch $BaseBranch -SkillsPath $SkillsPath)
 
-            if (@($changedSkills).Count -eq 0) {
-                if ($null -eq $classificationResult) {
-                    Write-Host "✅ No changed skill directories found - validation complete" -ForegroundColor Green
-                    return 0
-                }
-                $changedSkills = @()
+            if ($changedSkills.Count -gt 0) {
+                Write-Host "Found $($changedSkills.Count) changed skill path(s) to validate" -ForegroundColor Cyan
             }
-        }
-
-        if ($ChangedFilesOnly) {
-            Write-Host "Found $($changedSkills.Count) changed skill path(s) to validate" -ForegroundColor Cyan
 
             $results = @()
             $validatedDirs = @{}
@@ -1060,8 +1118,20 @@ function Invoke-SkillStructureValidation {
                 }
             }
 
-            if ($results.Count -eq 0 -and $null -eq $classificationResult) {
-                Write-Host "✅ No skill directories to validate after filtering - success" -ForegroundColor Green
+            # Changed collections may not include every classified skill, so check coverage for the rest
+            if ($null -ne $classificationEntries) {
+                $coverageErrors = Get-SkillClassificationCoverageError -SkillsRoot $resolvedSkillsRoot `
+                    -Classification $classificationEntries -RepoRoot $repoRoot -ExcludeDirectory @($validatedDirs.Keys)
+                foreach ($err in $coverageErrors) { $classificationErrors.Add($err) }
+            }
+
+            if ($results.Count -eq 0 -and $classificationErrors.Count -eq 0) {
+                if ($changedSkills.Count -eq 0) {
+                    Write-Host "✅ No changed skill directories found - validation complete" -ForegroundColor Green
+                }
+                else {
+                    Write-Host "✅ No skill directories to validate after filtering - success" -ForegroundColor Green
+                }
                 return 0
             }
         }
@@ -1087,7 +1157,14 @@ function Invoke-SkillStructureValidation {
             }
         }
 
-        if ($null -ne $classificationResult) {
+        if ($classificationErrors.Count -gt 0) {
+            $classificationResult = [PSCustomObject]@{
+                SkillName = 'skill-security-classification'
+                SkillPath = $classificationRelativePath
+                IsValid   = $false
+                Errors    = [string[]]$classificationErrors.ToArray()
+                Warnings  = [string[]]@()
+            }
             $results = @($classificationResult) + @($results)
         }
 

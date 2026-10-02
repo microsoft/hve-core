@@ -21,6 +21,14 @@
       "status": "pending",
       "issue": 3026
     },
+    "experimental/hve-demo-material": {
+      "status": "pending",
+      "issue": 3102
+    },
+    "experimental/vscode-playwright": {
+      "status": "pending",
+      "issue": 3103
+    },
     "hve-core/architecture-diagrams": {
       "status": "exempt",
       "reason": "Renders an operator-authored DS_CATALOG_V1 catalog with a SafeLoader-based YAML loader under a 5 MB input cap and writes only to stdout; no network, credentials, or subprocess."

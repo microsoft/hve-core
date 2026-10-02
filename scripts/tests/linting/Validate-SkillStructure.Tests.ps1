@@ -2159,6 +2159,69 @@ Describe 'Skill security classification' -Tag 'Unit' {
         $exitCode | Should -Be 1
         (Get-Content (Join-Path $repoRoot 'logs/results.json') -Raw | ConvertFrom-Json).results[0].errors | Should -Match 'classification file not found'
     }
+
+    Context 'Changed-files-only classification coverage' {
+        BeforeAll {
+            function New-CoverageRepo {
+                param([string]$Name, [string]$ClassificationJson)
+                $root = Join-Path $script:ClassRoot $Name
+                foreach ($key in 'pkg/changed', 'other/unclassified') {
+                    $skillDir = Join-Path $root "skills/$key"
+                    New-Item -ItemType Directory -Path (Join-Path $skillDir 'scripts') -Force | Out-Null
+                    Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value "---`nname: $(Split-Path -Leaf $key)`ndescription: test`n---`n# S"
+                    Set-Content -Path (Join-Path $skillDir 'scripts/run.py') -Value 'print("x")'
+                }
+                Set-Content -Path (Join-Path $root 'classification.json') -Value $ClassificationJson -NoNewline
+                return $root
+            }
+        }
+
+        It 'Fails a skill in an unchanged collection that has no SECURITY.md or entry' {
+            $repoRoot = New-CoverageRepo -Name 'coverage-gap' -ClassificationJson '{"schemaVersion": 1, "skills": {"pkg/changed": {"status": "exempt", "reason": "stdout only"}}}'
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return $repoRoot
+            } -ParameterFilter { $args[0] -eq 'rev-parse' }
+            Mock Get-ChangedSkillDirectories { return @() }
+
+            $exitCode = Invoke-SkillStructureValidation -SkillsPath 'skills' -ChangedFilesOnly -SecurityClassificationPath 'classification.json' -OutputPath 'logs/results.json'
+
+            $exitCode | Should -Be 1
+            $json = Get-Content (Join-Path $repoRoot 'logs/results.json') -Raw | ConvertFrom-Json
+            ($json.results | Where-Object { $_.skillName -eq 'skill-security-classification' }).errors |
+                Should -Match "'skills/other/unclassified' ships scripts but has neither"
+        }
+
+        It 'Passes when every skill is classified and no collection changed' {
+            $repoRoot = New-CoverageRepo -Name 'coverage-clean' -ClassificationJson '{"schemaVersion": 1, "skills": {"pkg/changed": {"status": "exempt", "reason": "stdout only"}, "other/unclassified": {"status": "pending", "issue": 42}}}'
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return $repoRoot
+            } -ParameterFilter { $args[0] -eq 'rev-parse' }
+            Mock Get-ChangedSkillDirectories { return @() }
+
+            $exitCode = Invoke-SkillStructureValidation -SkillsPath 'skills' -ChangedFilesOnly -SecurityClassificationPath 'classification.json' -OutputPath 'logs/results.json'
+
+            $exitCode | Should -Be 0
+        }
+
+        It 'Reports a changed skill once, on its own result rather than the classification result' {
+            $repoRoot = New-CoverageRepo -Name 'coverage-changed' -ClassificationJson '{"schemaVersion": 1, "skills": {"other/unclassified": {"status": "pending", "issue": 42}}}'
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return $repoRoot
+            } -ParameterFilter { $args[0] -eq 'rev-parse' }
+            Mock Get-ChangedSkillDirectories { return [string[]]@('pkg') }
+
+            $exitCode = Invoke-SkillStructureValidation -SkillsPath 'skills' -ChangedFilesOnly -SecurityClassificationPath 'classification.json' -OutputPath 'logs/results.json'
+
+            $exitCode | Should -Be 1
+            $json = Get-Content (Join-Path $repoRoot 'logs/results.json') -Raw | ConvertFrom-Json
+            $json.results | Where-Object { $_.skillName -eq 'skill-security-classification' } | Should -BeNullOrEmpty
+            $allErrors = @($json.results | ForEach-Object { $_.errors })
+            @($allErrors | Where-Object { $_ -match "'skills/pkg/changed' ships scripts" }).Count | Should -Be 1
+        }
+    }
 }
 #endregion Skill Security Classification Tests
 

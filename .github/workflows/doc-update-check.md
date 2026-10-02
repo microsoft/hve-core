@@ -121,7 +121,7 @@ stale.
    command that would surface commit message text for file discovery.
 2. Filter out documentation-only changes.
 3. For each code file changed, use the imported Documentation agent guidance to identify the relevant documentation references and drift signals.
-   * For a changed file under a skill's `scripts/` directory, treat that skill's `SECURITY.md` as mapped documentation when it exists. Apply the "Keeping a Model Current" definition in `.github/instructions/skill-security-model.instructions.md` to decide whether the change is significant. When the skill has no `SECURITY.md`, apply "When a Model Is Required" and check `scripts/linting/skill-security-classification.json` for an exempt or pending entry.
+   * For a changed script file anywhere in a skill outside its `tests/` directory, treat that skill's `SECURITY.md` as mapped documentation when it exists. Apply the "Keeping a Model Current" definition in `.github/instructions/skill-security-model.instructions.md` to decide whether the change is significant. When the skill has no `SECURITY.md`, apply "When a Model Is Required" and check `scripts/linting/skill-security-classification.json` for an exempt or pending entry.
 4. Read each referenced documentation file.
 5. Compare the documentation against the current implementation.
 6. For documentation that no longer accurately describes the implementation, search for existing open issues about the same documentation file.
