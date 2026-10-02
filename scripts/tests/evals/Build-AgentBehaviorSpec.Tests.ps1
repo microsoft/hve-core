@@ -817,11 +817,12 @@ console.log(JSON.stringify(results));
   }
 
   It 'Distinguishes affirmative false values across executor user-invocable graders' -Tag 'LexicalRepair' {
-    $patterns = @('ado-backlog-executor', 'github-backlog-executor', 'jira-backlog-executor' | ForEach-Object {
+    $stimuli = @('ado-backlog-executor', 'github-backlog-executor', 'jira-backlog-executor' | ForEach-Object {
       $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot "stimuli/$_.yml"))
-      $stimulus = $partial.stimuli | Where-Object name -like '*-user-invocable-flag'
-      ($stimulus.graders | Where-Object name -like '*-reports-*').config.pattern
+      $partial.stimuli | Where-Object name -like '*-user-invocable-flag'
     })
+    $patterns = @($stimuli | ForEach-Object { ($_.graders | Where-Object name -like '*-reports-*').config.pattern })
+    $patterns | Should -HaveCount 3
     @($patterns | Select-Object -Unique) | Should -HaveCount 1
 
     $guide = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/hve-core/vally-tests/references/agents.md')
@@ -847,6 +848,10 @@ console.log(JSON.stringify(results));
       'It is not a top-level agent: user-invocable is false.'
       'The flag is not true and `user-invocable: false`.'
       'It is not `true`; `user-invocable` is `false`.'
+      # Causal explanation of how a user reaches the agent
+      'It is not selectable because `user-invocable: false`.'
+      'It is not listed since `user-invocable: false`.'
+      'The subagent does not appear because user-invocable: false hides it.'
     )
     $reject = @(
       # Reviewer example and negated values
@@ -864,7 +869,9 @@ console.log(JSON.stringify(results));
       '`user-invocable: false` is absent.'
       # Later-sentence contradiction
       '`user-invocable: false` appears in the example. The actual value is not `false`.'
-    )
+      # Echo and unavailable replies
+      'I can''t find that agent file in this workspace, so I can''t report what it declares.'
+    ) + @($stimuli.prompt)
     $payload = @{ type = 'output-matches'; config = @{ pattern = $patterns[0] }; outputs = $accept + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
     $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
     $LASTEXITCODE | Should -Be 0
@@ -906,6 +913,10 @@ console.log(JSON.stringify(results));
       'When required variables are missing, stop. Once they are configured, continue planning.'
       'If all required variables are present, the CLI proceeds; if any are missing, it stops.'
       'When required variables are configured, planning continues; when any are missing, the agent stops.'
+      'If required variables are missing, the agent stops. Continue planning only after the user sets them.'
+      "If required variables are missing, the agent stops.`n- Continue once the user has fixed ~/.jira.env."
+      'If required variables are missing, the agent stops. Continuing requires the user to configure them.'
+      'If required variables are missing, the agent stops. Proceeding without them is not allowed.'
       # Dotted paths and Markdown
       'If required variables are missing in ~/.jira.env, stop and ask the user to configure them.'
       'The CLI reads `~/.jira.env` in-process. If any required variable is missing, the agent stops and lists the missing variable names.'
@@ -937,8 +948,13 @@ console.log(JSON.stringify(results));
       # Sentence-initial continuation after a stop
       'When required variables are missing, stop. Continue planning with defaults.'
       "When required variables are missing, stop.`n- Then continue planning."
+      'If required variables are missing, the agent stops. Continue planning with the defaults.'
+      'If required variables are missing, the agent stops. Proceed with partial configuration.'
       # Stop not tied to the condition
       'The response says stop here. Required variables are missing.'
+      # Echo and unavailable replies
+      'I can''t find that agent file in this workspace, so I can''t report what it declares.'
+      $stimulus.prompt
     )
     $payload = @{ type = $grader.type; config = $grader.config; outputs = $accept + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
     $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
