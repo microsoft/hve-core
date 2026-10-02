@@ -1,0 +1,59 @@
+/* Copyright (c) Microsoft Corporation. Licensed under the MIT License. */
+.example-scene { display: flex; flex-direction: column; min-height: 0; }
+.reveal .example-caption { font: 19px/1.4 var(--font-mono); letter-spacing: .4px; color: var(--faint); margin: 0 0 10px; }
+
+/* Editor surface */
+.code-surface { background: var(--editor); border: 1px solid var(--line); border-radius: 8px; overflow: auto; }
+.file-header { padding: 11px 18px; background: var(--chrome); border-bottom: 1px solid var(--line); color: var(--muted); font: 20px/1.4 var(--font-mono); }
+.reveal .code-surface pre { width: auto; margin: 0; padding: 18px 22px; box-shadow: none; white-space: pre-wrap; overflow-wrap: anywhere; font: 24px/1.5 var(--font-mono); color: var(--editor-text); }
+.reveal .code-surface code { max-height: none; padding: 0; background: transparent; white-space: pre-wrap; font: inherit; }
+
+/* Reconstructed Chat input */
+.copilot-composer { background: #24262b; border: 1px solid #606978; border-radius: 12px; padding: 22px 24px; }
+.context-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.context-chip { padding: 5px 10px; border: 1px solid #4a505d; border-radius: 5px; background: #30343c; color: #d9e0ea; font: 20px/1.4 var(--font-mono); }
+.composer-text { font-size: 28px; line-height: 1.5; color: #e9ebef; white-space: pre-wrap; }
+.composer-toolbar { display: flex; align-items: center; gap: 16px; margin-top: 22px; color: #d0d5df; font-size: 21px; }
+.composer-agent { padding: 2px 10px; border: 1px solid #4a505d; border-radius: 5px; }
+.composer-send { margin-left: auto; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: white; background: #006dbf; }
+
+/* Scripted chat transcript */
+.chat-transcript { display: grid; gap: 10px; }
+.chat-message { display: grid; gap: 4px; }
+.chat-author { font: 600 19px/1.3 var(--font-mono); letter-spacing: .6px; color: var(--cyan); }
+.chat-message.user .chat-author { color: var(--muted); }
+.chat-body { display: grid; gap: 8px; padding: 12px 20px; border: 1px solid var(--line-soft); border-radius: 10px; background: var(--panel); }
+.chat-message.user .chat-body { justify-self: start; background: #252b35; border-color: #3d4655; }
+.reveal .chat-text { font-size: 26px; line-height: 1.38; }
+.reveal .chat-note { font: 23px/1.4 var(--font-mono); color: var(--faint); }
+.chat-callout { padding: 10px 16px; border-left: 5px solid var(--amber); border-radius: 6px; background: var(--amber-wash); }
+.chat-callout strong { display: block; font: 700 18px/1.4 var(--font-mono); letter-spacing: 1px; color: var(--amber); }
+.reveal .chat-callout p { font-size: 26px; line-height: 1.38; margin-top: 2px; }
+.reveal .chat-list { padding-left: 30px; display: grid; gap: 2px; }
+.reveal .chat-list li { font-size: 26px; line-height: 1.36; }
+.reveal .chat-checklist { list-style: none; padding: 0; display: grid; gap: 2px; }
+.chat-checklist li { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: baseline; font-size: 26px; line-height: 1.36; }
+.chat-checklist li.done { color: var(--muted); }
+.check-icon { font-size: 22px; }
+.reveal .chat-code { margin: 0; padding: 10px 16px; border-radius: 6px; background: var(--editor); border: 1px solid var(--line-soft); font: 23px/1.5 var(--font-mono); color: var(--editor-text); white-space: pre-wrap; overflow-wrap: anywhere; box-shadow: none; width: auto; }
+.reveal .chat-code code { padding: 0; background: transparent; font: inherit; max-height: none; }
+
+/* Review and correction */
+.review-scene { display: grid; grid-template-columns: minmax(0, .78fr) minmax(0, 1.22fr); gap: 18px; align-items: start; }
+.review-scene > * { min-width: 0; }
+.review-findings { display: grid; gap: 14px; }
+.review-card { padding: 14px 20px; background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px; }
+.review-card.finding { border-left: 5px solid var(--amber); background: var(--amber-wash); }
+.reveal .review-label { font: 600 18px/1.4 var(--font-mono); letter-spacing: .8px; color: var(--faint); text-transform: uppercase; }
+.review-card.finding .review-label { color: var(--amber); }
+.reveal .review-text { font-size: 26px; line-height: 1.38; margin-top: 4px; }
+.reveal .task-list { padding: 0; margin: 6px 0 0; list-style: none; display: grid; gap: 2px; }
+.task-list li { display: grid; grid-template-columns: 30px minmax(0, 1fr); font-size: 26px; line-height: 1.38; }
+.task-check { color: var(--lime); font-weight: 700; }
+.diff-summary { display: flex; gap: 16px; justify-content: space-between; font: 20px/1.4 var(--font-mono); padding: 12px 16px; background: #232831; border: 1px solid var(--line); border-radius: 8px 8px 0 0; }
+.diff-lines { background: var(--editor); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 8px 8px; font: 23px/1.55 var(--font-mono); }
+.diff-row { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 8px; padding: 4px 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.diff-row.add { color: #c6edbb; background: #213b27; }
+.diff-row.remove { color: #ffd0d0; background: #47272a; }
+
+[data-reading-view="true"] .reveal .slides section .chat-checklist li { grid-template-columns: 28px minmax(0, 1fr); }

@@ -1,0 +1,192 @@
+<!doctype html>
+<!-- Copyright (c) Microsoft Corporation. Licensed under the MIT License. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Use RAI Planner on a support chatbot, then use hve-builder to add your team's policy and plan conventions.">
+  <title>RAI Planner with HVE Core</title>
+  <link rel="stylesheet" href="vendor/reveal.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="components.css">
+  <script defer src="vendor/reveal.js"></script>
+  <script defer src="config.js"></script>
+  <script defer src="content.js"></script>
+  <script defer src="components.js"></script>
+  <script defer src="deck.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#presenter-controls">Skip to presentation controls</a>
+  <div id="startup" role="status">Loading the presentation. If this remains visible, run npm ci and npm run build in slides/rai-planner, then open dist/index.html.</div>
+  <noscript>Enable JavaScript to use the presentation controls. The examples run locally without an agent or service.</noscript>
+  <div class="reveal">
+    <main class="slides" tabindex="0" aria-label="RAI Planner with HVE Core presentation">
+      <h1 class="sr-only">RAI Planner with HVE Core</h1>
+
+      <section id="opening" data-title="RAI Planner with HVE Core" data-chapter="Opening" data-sources="snapshot,planner-agent,hve-builder">
+        <div class="eyebrow">MICROSOFT / HVE CORE <span class="separator">/</span> RESPONSIBLE AI</div>
+        <div class="hero-grid">
+          <div>
+            <h2 class="deck-title">RAI Planner<br><em>with HVE Core</em></h2>
+            <p class="lead">Plan an AI feature, then make the workflow fit your team.</p>
+            <div class="date-pill">OCTOBER 1, 2026 / SOURCE: 7e2de1a</div>
+          </div>
+          <ol class="hero-agenda" aria-label="Two worked examples">
+            <li><span class="num" aria-hidden="true">01</span><div><strong>Use the planner</strong><p>Assess a support chatbot and see what needs follow-up.</p></div></li>
+            <li><span class="num" aria-hidden="true">02</span><div><strong>Add your team's policy</strong><p>Use hve-builder to create a lending-team extension.</p></div></li>
+          </ol>
+        </div>
+        <div class="slide-bottom"><span>microsoft/hve-core</span><span>Both examples are scripted</span></div>
+        <aside class="notes">I want to focus on two things: how I'd start an assessment, and how I'd make the same workflow useful for a team with its own policy. We'll use a support chatbot first, then a fictional lending team. RAI Planner is an HVE Core agent for Responsible AI assessment planning. Product details describe commit 7e2de1a, read on October 1, 2026. Both examples are scripted, so the responses show the intended workflow rather than a recorded agent run.</aside>
+      </section>
+
+      <section id="value" data-title="What I'd use it for" data-chapter="Use RAI Planner" data-sources="planner-agent,planner-skill,rai-standards,reviewer,handoff-reference,disclaimer">
+        <div class="eyebrow">USE RAI PLANNER</div>
+        <h2>What I'd use it for</h2>
+        <div class="value-grid">
+          <article class="value-card"><span class="label">The conversation</span><h3>Get specific about the system</h3><p>Who uses it, what data it sees and where a bad answer could cause harm. NIST AI RMF 1.0 gives the assessment its structure.</p></article>
+          <article class="value-card"><span class="label">The output</span><h3>Make the remaining work visible</h3><p>A plan that connects risks to controls and evidence, plus backlog drafts for the gaps.</p></article>
+        </div>
+        <div class="banner amber"><p>A qualified human still reviews the result. The planner can't certify compliance or approve a deployment.</p></div>
+        <p class="footnote">Already have code, a diff or a plan to assess? RAI Reviewer is the separate evidence-review workflow.</p>
+        <aside class="notes">What I'd look for is a useful review conversation and a record of the reasoning. Which controls do we have evidence for? Which risks still need work? The planner uses rai-planner for phase guidance and rai-standards for the framework material. NIST AI RMF 1.0 is the default. It covers seven trustworthiness characteristics and uses seven AI threat categories, but we don't need to memorize either list to start. RAI Reviewer is a different agent for reviewing code, diffs and plans. Neither agent replaces qualified legal, compliance or Responsible AI reviewers.</aside>
+      </section>
+
+      <section id="entry-modes" data-title="Start with what you already have" data-chapter="Use RAI Planner" data-sources="prompts,rai-identity,planner-agent,vscode-prompts,vscode-agents">
+        <div class="eyebrow">GET STARTED</div>
+        <h2>Start with what you already have</h2>
+        <div class="banner"><p>Select <strong>RAI Planner</strong> in the Agent dropdown, then name your starting point.</p></div>
+        <div class="mode-grid">
+          <article class="mode-card">
+            <div class="mode-head"><h3>A conversation</h3></div>
+            <span class="chip">capture</span>
+            <p>"I want to assess our support chatbot. Start a new assessment."</p>
+          </article>
+          <article class="mode-card">
+            <div class="mode-head"><h3>A PRD</h3></div>
+            <span class="chip">from-prd</span>
+            <p>"Use the attached PRD and ask me about the missing AI context."</p>
+          </article>
+          <article class="mode-card recommended">
+            <div class="mode-head"><h3>A security plan</h3><span class="badge">IF YOU HAVE ONE</span></div>
+            <span class="chip">from-security-plan</span>
+            <p>"Start from our Security Planner session and reuse its AI component inventory."</p>
+          </article>
+        </div>
+        <p class="footnote">The security-plan mode reads that plan without changing it.</p>
+        <aside class="notes">I'd reuse the context we already have. Capture starts a conversation. From-prd reads the requirements and asks about the gaps. From-security-plan is recommended when a Security Planner session is complete: it imports the AI components and continues the threat numbering. All three reach the same Phase 2 workflow. The Local agent also supports /rai-capture, /rai-plan-from-prd and /rai-plan-from-security-plan. The cited VS Code documentation marks prompt files as deprecated for Agent Host sessions, so this talk uses the Agent dropdown. The planner shows its disclaimer and framework attribution before the first question.</aside>
+      </section>
+
+      <section id="phases" data-title="Six phases, with three approval points" data-chapter="Use RAI Planner" data-sources="planner-agent,rai-identity,risk-reference,nist">
+        <div class="eyebrow">HOW THE SESSION WORKS</div>
+        <h2>Six phases, with three approval points</h2>
+        <ol class="phase-spine" aria-label="RAI Planner phases and approval points">
+          <li class="summary"><span class="num" aria-hidden="true">01</span><h3>AI system scoping</h3><span class="gate summary">SUMMARY</span><p class="phase-question">What are we assessing?</p></li>
+          <li class="hard"><span class="num" aria-hidden="true">02</span><h3>Risk classification</h3><span class="gate hard">CONFIRM</span><p class="phase-question">How deep should we go?</p></li>
+          <li class="hard"><span class="num" aria-hidden="true">03</span><h3>Standards mapping</h3><span class="gate hard">CONFIRM</span><p class="phase-question">What needs to be covered?</p></li>
+          <li class="summary"><span class="num" aria-hidden="true">04</span><h3>Security model analysis</h3><span class="gate summary">SUMMARY</span><p class="phase-question">Which threats matter here?</p></li>
+          <li class="summary"><span class="num" aria-hidden="true">05</span><h3>Impact assessment</h3><span class="gate summary">SUMMARY</span><p class="phase-question">Do the controls have evidence?</p></li>
+          <li class="hard"><span class="num" aria-hidden="true">06</span><h3>Review and handoff</h3><span class="gate hard">CONFIRM</span><p class="phase-question">What work should we create?</p></li>
+        </ol>
+        <div class="legend">
+          <p><span class="gate hard">CONFIRM</span>Waits for your answer.</p>
+          <p><span class="gate summary">SUMMARY</span>Continues unless you object.</p>
+        </div>
+        <p class="footnote">Prohibited uses are screened before the risk indicators. A match pauses the session.</p>
+        <aside class="notes">You don't need to drive every phase manually. The planner summarizes Phases 1, 4 and 5 and continues unless you object. Phases 2, 3 and 6 are hard gates: you confirm the depth, mapping scope and final handoff. The prohibited uses check runs before risk indicators and pauses for explicit acknowledgment if a listed use applies. With the default profile, zero activated indicators suggests basic, one suggests standard, and two or more suggests comprehensive. You still confirm the tier. These are instructions the agent follows, not enforced permissions, so review what it does. The phases map to NIST Govern, Map, Measure and Manage; the source has the detailed mapping.</aside>
+      </section>
+
+      <section id="use-walkthrough" class="demo-slide" data-title="Example: assess a support chatbot" data-chapter="Example: use it" data-sources="planner-agent,rai-identity,capture-reference,risk-reference,ai-stride,impact-reference,handoff-reference,disclaimer,conformance,state-schema">
+        <div class="eyebrow">WORKED EXAMPLE <span class="separator">/</span> SCRIPTED</div>
+        <h2>Assess a support chatbot</h2>
+        <div class="demo" data-demo="assess"></div>
+        <aside class="notes">The important thread is the link reader. A customer can send a page, the chatbot reads it, and the team needs evidence that page content can't redirect the assistant. Follow that concern from scoping through T-RAI-001, EV-001 and a draft issue. We combine the standards and threat excerpts into one step after the mapping scope is confirmed. The full session has more questions, template preflight and gate confirmations than this six-step example. The startup notice and framework attribution are excerpts; the full disclaimer also appears at exit points. Some exchanges draw on conformance scenarios, not their test results. Back, Next step and Reset are local presentation controls.</aside>
+      </section>
+
+      <section id="state" data-title="Pick it up again in a new chat" data-chapter="Use RAI Planner" data-sources="planner-agent,rai-identity,state-schema,handoff-reference,pr-2568">
+        <div class="eyebrow">KEEP THE WORK</div>
+        <h2>Pick it up again in a new chat</h2>
+        <div class="state-layout">
+          <figure class="code-surface tree">
+            <figcaption class="file-header">Assessment folder</figcaption>
+            <pre><code>.copilot-tracking/rai-plans/
+└── support-assistant/
+    ├── <span class="key">state.json</span>
+    ├── <span class="key">rai-plan.md</span>
+    └── github-backlog-handoff.md</code></pre>
+          </figure>
+          <div class="side-stack">
+            <div class="state-panel">
+              <h3>Keep these files with the project</h3>
+              <p><code>state.json</code> tracks progress. <code>rai-plan.md</code> holds the assessment and its evidence.</p>
+            </div>
+            <div data-example="resume"></div>
+          </div>
+        </div>
+        <p class="footnote">The handoff file holds draft issues. Creating them still needs your confirmation.</p>
+        <aside class="notes">The conversation can end without losing the assessment. In a new chat, select RAI Planner and give it the project slug or saved state. It reads state.json and the plan, checks the saved context and resumes from the next incomplete action. The planner writes progress before responding. The handoff file depends on the selected tracker; this example uses GitHub. Optional templates and signing add other files, which aren't needed for this example. Some published guides still list separate files per phase. At this snapshot the assessment is consolidated in rai-plan.md, following PR 2568.</aside>
+      </section>
+
+      <section id="no-code" data-title="Use your policy before you build an extension" data-chapter="Adapt it for your team" data-sources="rai-identity,rai-standards,hve-builder,hve-builder-extending,vscode-skills,vscode-instructions">
+        <div class="eyebrow">ADAPT IT FOR YOUR TEAM</div>
+        <h2>Use your policy before you build an extension</h2>
+        <div class="ref-layout">
+          <div>
+            <h3>For one assessment, supply the references</h3>
+            <div data-example="policy"></div>
+          </div>
+          <div class="side-stack">
+            <div class="side-card"><h3>A skill holds reusable policy</h3><p>Package your references, including published guidance the planner doesn't include, and say when to load them.</p></div>
+            <div class="side-card"><h3>An instruction adds conventions</h3><p>Use <code>applyTo</code> to target plan files, with checks and backlog preferences your team repeats.</p></div>
+          </div>
+        </div>
+        <p class="footnote">I'd start with the references. Once the setup repeats, I'd ask hve-builder to package it.</p>
+        <aside class="notes">RAI Planner already asks for reference content in Phase 1, so I wouldn't start by changing the agent. Supply a policy as a standard and a prohibited-use list as a prohibited-use-framework. The planner uses rpi-research to analyze them, writes shared summaries and records them in state.json. Verify those summaries against the originals. It also accepts risk indicators, output formats and provider codes of conduct. Published guidance that RAI Planner doesn't include works the same way, and the next example adds some. Be explicit about layering a policy on NIST; replacing the framework is a different decision. For reuse across assessments or repositories, hve-builder can create a skill and a scoped instruction alongside HVE Core. The skill's description makes it discoverable; naming it explicitly makes the intended use clear.</aside>
+      </section>
+
+      <section id="extend-walkthrough" class="demo-slide" data-title="Example: extend RAI Planner with hve-builder" data-chapter="Example: extend it" data-sources="hve-builder,hve-builder-workflow,hve-builder-extending,hve-builder-rubric,hve-builder-instructions,rai-identity,rai-standards,sr-26-2,sr-26-2-guidance,occ-2026-13,vscode-skills,vscode-instructions,state-schema">
+        <div class="eyebrow">WORKED EXAMPLE <span class="separator">/</span> SCRIPTED</div>
+        <h2>Use hve-builder for the repeatable parts</h2>
+        <div class="demo" data-demo="extend"></div>
+        <aside class="notes">Contoso and its policies are fictional, but SR 26-2 is real. The Federal Reserve, FDIC and OCC issued this revised model risk guidance on April 17, 2026, replacing SR 11-7, and RAI Planner doesn't include it. That makes it a good test of the extension path. Read the scope before you add guidance like this. It isn't an enforceable standard, it's expected to matter most for banking organizations with more than $30 billion in assets, and it excludes generative and agentic AI. It fits Contoso's loan eligibility model, but it wouldn't cover the chatbot from the first example. Run the request in an authoring agent that can edit .github; RAI Planner itself only writes assessment artifacts. hve-builder reads the planner's extension points, summarizes the official text in its own words and links back to it. I'd still have someone from the model-risk team check that summary before the planner relies on it. The review catches a draft that replaces NIST even though the request says to layer the policies. The fix keeps NIST as the baseline, which is the extension pattern rai-standards describes. In the plan, SR 26-2 adds model risk checks under the NIST characteristics, and Phase 5 records the evidence for each gap. The agent running HVE Builder verifies findings and owns the fixes. A source review and lint pass aren't evidence that the extension works in a real session, so test it with representative assessments before you adopt it. Plugin installations may prefix the command, for example /hve-core:hve-builder. The file contents, finding, state and plan excerpt are illustrations, not executed results.</aside>
+      </section>
+
+      <section id="closing" data-title="Start with one AI feature" data-chapter="Try it" data-sources="rai-docs,planner-agent,hve-builder,snapshot">
+        <div class="eyebrow">TRY IT</div>
+        <h2>Start with one AI feature</h2>
+        <p class="lead">Select RAI Planner and attach the context you already have.</p>
+        <div data-example="try-it"></div>
+        <p class="footnote">Review the open questions and evidence gaps with your team before turning the drafts into work.</p>
+        <div class="closing-links">
+          <p><a href="https://microsoft.github.io/hve-core/docs/agents/rai-planning/" target="_blank" rel="noopener noreferrer">RAI Planning documentation</a></p>
+          <p><a href="https://github.com/microsoft/hve-core/tree/7e2de1aa135133acc4e9592adffc220cad9bdfdf/.github/agents/rai-planning" target="_blank" rel="noopener noreferrer">RAI agent source at 7e2de1a</a></p>
+        </div>
+        <div class="slide-bottom"><span>microsoft/hve-core</span><span>Scripted examples / fictional Contoso</span></div>
+        <aside class="notes">I'd try this on a feature the team can describe well enough to challenge the output. Replace the placeholder with your feature and attach the useful context. Look at what the planner asks, which controls have evidence and which gaps need an owner. If the same policy setup keeps coming back, that's a good next request for hve-builder. Keep human review in the process. The documentation has the wider workflow; the pinned agent source defines the behavior shown here.</aside>
+      </section>
+    </main>
+  </div>
+  <nav id="presenter-controls" aria-label="Presentation controls">
+    <div class="brand"><span class="brand-dot" aria-hidden="true"></span> HVE CORE <span id="chapter-label">Opening</span></div>
+    <div class="utility-controls">
+      <button type="button" id="overview-button">Slides</button>
+      <button type="button" data-dialog="sources">Sources</button>
+      <button type="button" data-dialog="notes">Notes</button>
+      <button type="button" data-dialog="help">Keys</button>
+      <button type="button" id="motion-button" aria-pressed="false">Motion off</button>
+      <button type="button" id="fullscreen-button" aria-pressed="false">Full screen</button>
+    </div>
+    <div class="slide-controls">
+      <button type="button" id="previous-slide" aria-label="Previous slide">&#8592;</button>
+      <output id="slide-count" aria-label="Current slide"></output>
+      <button type="button" id="next-slide" aria-label="Next slide">&#8594;</button>
+    </div>
+  </nav>
+  <div id="announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <dialog id="detail-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-header"><h2 id="dialog-title"></h2><button type="button" id="close-dialog">Close <kbd>Esc</kbd></button></div>
+    <div id="dialog-content" tabindex="0"></div>
+  </dialog>
+</body>
+</html>

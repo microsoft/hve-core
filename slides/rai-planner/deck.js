@@ -45,6 +45,7 @@
     });
     document.querySelectorAll('[data-deck-title]').forEach(node => { node.textContent = config.title; });
     document.querySelectorAll('[data-deck-description]').forEach(node => { node.textContent = config.description; });
+    const announce = text => { required('#announcement').textContent = text; };
     document.querySelectorAll('[data-example]').forEach(node => {
       if (!examples[node.dataset.example]) throw new Error(`Missing example: ${node.dataset.example}`);
       node.replaceChildren(renderExample(examples[node.dataset.example]));
@@ -67,7 +68,6 @@
     let returnFocus = null;
     let motionEnabled = false;
     let ready = false;
-    const announce = text => { required('#announcement').textContent = text; };
 
     // Replacing the demo body moves focus, and a screen reader speaks that focus
     // change immediately. A polite region updated in the same task is superseded
@@ -90,9 +90,11 @@
       const demo = demos[host.dataset.demo];
       const index = states.get(host.dataset.demo);
       const step = demo.steps[index];
-      host.querySelectorAll('.demo-phases li').forEach(item => {
-        if (item.textContent === step.phase) item.setAttribute('aria-current', 'step');
+      const currentPhase = demo.phases.indexOf(step.phase);
+      host.querySelectorAll('.demo-phases li').forEach((item, position) => {
+        if (position === currentPhase) item.setAttribute('aria-current', 'step');
         else item.removeAttribute('aria-current');
+        item.dataset.state = position < currentPhase ? 'done' : position === currentPhase ? 'current' : 'next';
       });
       host.querySelector('.demo-state strong').textContent = step.state;
       host.querySelector('.demo-insight').textContent = step.insight;
@@ -131,8 +133,9 @@
       phases.setAttribute('aria-label', `${demo.label} phases`);
       demo.phases.forEach(phase => phases.append(element('li', '', phase)));
       const state = element('div', 'demo-state');
-      state.append(element('strong'));
-      sidebar.append(element('div', 'demo-label', demo.label), phases, state, element('p', 'demo-insight'));
+      state.append(element('span', 'demo-note-label', 'State'), element('strong'));
+      sidebar.append(element('p', 'demo-label', demo.label), phases, state,
+        element('span', 'demo-note-label', 'What to notice'), element('p', 'demo-insight'));
       const main = element('div', 'demo-main');
       const header = element('div', 'demo-header');
       header.append(element('h3'), element('output', 'demo-count'));
@@ -217,7 +220,7 @@
       } else if (kind === 'notes') {
         title.textContent = `Notes / ${current.dataset.title}`;
         dialogContent.append(element('p', '', current.querySelector('.notes')?.textContent || 'No presenter notes for this slide.'));
-        dialogContent.append(element('p', 'source-note', 'Anyone with this HTML file can read these notes.'));
+        dialogContent.append(element('p', 'source-note', 'Recipients can read all bundled notes.'));
       } else if (kind === 'overview') {
         title.textContent = 'Slide index';
         const list = element('div', 'slide-index');
@@ -230,19 +233,19 @@
         });
         dialogContent.append(list);
       } else if (kind === 'help') {
-        title.textContent = 'Keyboard shortcuts';
+        title.textContent = 'Presentation keys';
         const grid = element('div', 'key-grid');
         for (const [key, description] of [
           ['Left / Right', 'Previous / next slide, including from a focused button or link. Page Up / Page Down also work.'],
           ['Space', 'Next slide; Shift+Space goes back.'],
           ['Home / End', 'First / last slide.'],
-          ['[ / ] / R', 'Previous step / next step / reset this walkthrough.'],
+          ['[ / ] / R', 'Back / next / reset the current walkthrough.'],
           ['O / S / N', 'Slide index / sources / notes.'],
           ['? / F', 'This help / full screen.'],
-          ['Escape', 'Close the dialog and return focus.'],
-          ['Tab / Enter', 'Move between controls / activate the focused control.']
+          ['Escape', 'Close an overlay and return focus.'],
+          ['Tab / Enter', 'Reach and activate controls; focused controls keep their other keys.']
         ]) grid.append(element('kbd', '', key), element('span', '', description));
-        dialogContent.append(grid, element('p', 'source-note', 'Returning to a slide keeps your walkthrough step. Reloading keeps the slide but resets the walkthrough. Letter, symbol and Space shortcuts work while the slide area has focus. Reading view uses full-size, scrollable text and turns on automatically on smaller screens. Slide fades are optional and follow your reduced-motion preference.'));
+        dialogContent.append(grid, element('p', 'source-note', 'Walkthroughs keep their step on slide revisits. Reload preserves the slide hash but resets walkthroughs. Motion is optional and respects reduced motion. Character shortcuts work only when the presentation surface has focus. Reading view provides unscaled, scrollable content and starts automatically on compact screens.'));
       } else throw new Error(`Unknown dialog: ${kind}`);
       if (!dialog.open) dialog.showModal();
       dialogContent.scrollTop = 0;
