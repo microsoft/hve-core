@@ -3,7 +3,7 @@ title: Troubleshooting
 description: Solutions for common HVE Core extension, plugin, and selective clone installation problems
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-10-02
 ms.topic: troubleshooting
 keywords: [troubleshooting, FAQ, installation, hve-core, selective clone, registry, proxy]
 estimated_reading_time: 6
@@ -26,14 +26,14 @@ The extension appears in the Extensions sidebar but HVE Core agents and prompts 
 
 ### Agent or Prompt Not Appearing in Copilot
 
-Some agents or prompts are missing from the `@` mention list or `/` command list in Copilot Chat.
+Some agents or skills are missing from the agent picker or `/` command list in Copilot Chat.
 
 #### Solutions
 
-1. Agents and prompts load from `.github/` directories in the open workspace. Verify that `.github/agents/` and `.github/prompts/` folders exist and contain `.agent.md` or `.prompt.md` files.
+1. Agents and skills load from `.github/` directories in the open workspace. Verify that `.github/agents/` and `.github/skills/` folders exist and contain `.agent.md` files or skill folders with a `SKILL.md`.
 2. Copilot Chat loads workspace-scoped agents only when a folder or workspace is open. Opening a single file does not activate workspace agents.
-3. If you used selective clone adoption, inspect `.hve-tracking.json` schema version 2 and confirm that the selected agents, prompts, instructions, and complete skills were copied.
-4. Ensure your `.gitignore` does not exclude `.github/agents/` or `.github/prompts/` directories.
+3. If you used selective clone adoption, inspect `.hve-tracking.json` schema version 2 and confirm that the selected agents, instructions, and complete skills were copied.
+4. Ensure your `.gitignore` does not exclude `.github/agents/` or `.github/skills/` directories.
 
 ### Duplicate Components from Managed and Copied Installations
 

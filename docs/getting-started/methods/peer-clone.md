@@ -90,13 +90,6 @@ Create or update `.vscode/settings.json` in your project:
     "../hve-core/.github/agents/hve-core/subagents": true,
     "../hve-core/.github/agents/security": true
   },
-  "chat.promptFilesLocations": {
-    "../hve-core/.github/prompts/ado": true,
-    "../hve-core/.github/prompts/design-thinking": true,
-    "../hve-core/.github/prompts/github": true,
-    "../hve-core/.github/prompts/hve-core": true,
-    "../hve-core/.github/prompts/security": true
-  },
   "chat.instructionsFilesLocations": {
     "../hve-core/.github/instructions/ado": true,
     "../hve-core/.github/instructions/coding-standards": true,

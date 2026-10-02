@@ -113,14 +113,6 @@ Use the absolute clone path:
       "/workspaces/hve-core/.github/agents/security": true,
       "My Project/.github/agents": true
     },
-    "chat.promptFilesLocations": {
-      "/workspaces/hve-core/.github/prompts/ado": true,
-      "/workspaces/hve-core/.github/prompts/design-thinking": true,
-      "/workspaces/hve-core/.github/prompts/github": true,
-      "/workspaces/hve-core/.github/prompts/hve-core": true,
-      "/workspaces/hve-core/.github/prompts/security": true,
-      "My Project/.github/prompts": true
-    },
     "chat.instructionsFilesLocations": {
       "/workspaces/hve-core/.github/instructions/ado": true,
       "/workspaces/hve-core/.github/instructions/coding-standards": true,

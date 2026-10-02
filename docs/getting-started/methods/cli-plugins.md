@@ -86,7 +86,6 @@ Each plugin includes:
 | Component    | CLI Discovery | Description                                        |
 |--------------|---------------|----------------------------------------------------|
 | Agents       | Yes           | Custom chat agents for specialized workflows       |
-| Commands     | Yes           | Task prompts accessible via the CLI                |
 | Skills       | Yes           | Self-contained skill packages                      |
 | Instructions | No            | Included for `#file:` references, not auto-applied |
 

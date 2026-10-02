@@ -10,7 +10,7 @@ description: Twelve conformance checks the vally-tests skill emits for .prompt.m
 
 This reference enumerates the twelve conformance checks the `vally-tests` skill knows how to express for `.prompt.md` artifacts. Each check exercises a behavior the prompt's authoring contract already claims, then routes the resulting stimulus block to the canonical Vally eval file declared in `eval-suite-routing.md`.
 
-The canonical eval target for this kind is `evals/behavior-conformance/prompts.eval.yaml`. New stimulus blocks are appended to its `stimuli:` array and tagged `tags.advisory: true` per `eval-suite-routing.md`. Authors MUST run every candidate stimulus through `refusal-taxonomy.md` before emission and refuse any match.
+The canonical eval target for this kind is `evals/behavior-conformance/prompts.eval.yaml`. New stimulus blocks are appended to its `stimuli:` array, creating the file on first use, and tagged `tags.advisory: true` per `eval-suite-routing.md`. Authors MUST run every candidate stimulus through `refusal-taxonomy.md` before emission and refuse any match.
 
 Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`, `contains`, `regex`, `json_schema`) per `grader-catalog.md`. Where the research phrasing recommended `output-matches`, the equivalent here is `regex`; where it recommended `output-contains`, the equivalent is `contains`; where it recommended `llm-grader`, the equivalent is `semantic_similarity`.
 

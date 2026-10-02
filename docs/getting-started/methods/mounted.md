@@ -166,13 +166,6 @@ After rebuild, update `.vscode/settings.json`:
     "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
     "/workspaces/hve-core/.github/agents/security": true
   },
-  "chat.promptFilesLocations": {
-    "/workspaces/hve-core/.github/prompts/ado": true,
-    "/workspaces/hve-core/.github/prompts/design-thinking": true,
-    "/workspaces/hve-core/.github/prompts/github": true,
-    "/workspaces/hve-core/.github/prompts/hve-core": true,
-    "/workspaces/hve-core/.github/prompts/security": true
-  },
   "chat.instructionsFilesLocations": {
     "/workspaces/hve-core/.github/instructions/ado": true,
     "/workspaces/hve-core/.github/instructions/coding-standards": true,
@@ -213,13 +206,6 @@ After rebuild, update `.vscode/settings.json`:
           "/workspaces/hve-core/.github/agents/hve-core": true,
           "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
           "/workspaces/hve-core/.github/agents/security": true
-        },
-        "chat.promptFilesLocations": {
-          "/workspaces/hve-core/.github/prompts/ado": true,
-          "/workspaces/hve-core/.github/prompts/design-thinking": true,
-          "/workspaces/hve-core/.github/prompts/github": true,
-          "/workspaces/hve-core/.github/prompts/hve-core": true,
-          "/workspaces/hve-core/.github/prompts/security": true
         },
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,
@@ -283,13 +269,6 @@ ls /workspaces/hve-core/.github/agents
           "/workspaces/hve-core/.github/agents/hve-core": true,
           "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
           "/workspaces/hve-core/.github/agents/security": true
-        },
-        "chat.promptFilesLocations": {
-          "/workspaces/hve-core/.github/prompts/ado": true,
-          "/workspaces/hve-core/.github/prompts/design-thinking": true,
-          "/workspaces/hve-core/.github/prompts/github": true,
-          "/workspaces/hve-core/.github/prompts/hve-core": true,
-          "/workspaces/hve-core/.github/prompts/security": true
         },
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,

@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE Core as a VS Code extension from the marketplace
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - extension
@@ -41,7 +41,6 @@ The marketplace extension ships the complete active HVE Core component set. Stab
 VS Code Extension System
 ├── Extension installed via marketplace
 │   ├── .github/agents/         # All chat agents
-│   ├── .github/prompts/        # All prompt templates
 │   ├── .github/instructions/   # All coding guidelines
 │   └── .github/skills/         # All skill packages
 └── Only optional workspace configuration needed!

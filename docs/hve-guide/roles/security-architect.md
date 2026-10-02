@@ -3,7 +3,7 @@ title: Security Architect Guide
 description: HVE Core support for security architects building security models, security plans, and compliance verification
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-04
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - security
@@ -112,9 +112,9 @@ arguments.
 | **rpi-research**     | Security-focused codebase and threat research              | [RPI workflow](../../rpi/) |
 | **rpi-review**       | Implementation review against approved security plans      | [RPI workflow](../../rpi/) |
 
-Prompts complement the agents for targeted security workflows:
+Skills complement the agents for targeted security workflows:
 
-| Prompt            | Purpose                                     | Invoke               |
+| Skill             | Purpose                                     | Invoke               |
 |-------------------|---------------------------------------------|----------------------|
 | risk-register     | Component risk assessment and documentation | `/risk-register`     |
 | incident-response | Incident response runbook creation          | `/incident-response` |

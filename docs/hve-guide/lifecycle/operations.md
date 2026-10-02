@@ -3,7 +3,7 @@ title: "Stage 9: Operations"
 description: Monitor production systems, respond to incidents, and maintain documentation post-delivery
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-07-15
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -33,12 +33,6 @@ You enter Operations after completing the final sprint delivery in [Stage 8: Del
 |---------------|-------|--------------------------------|--------------------------------------------------|
 | documentation | Agent | Select **documentation** agent | Audit, drift, author, and validate documentation |
 
-### Prompts
-
-| Tool              | Type   | How to Invoke        | Purpose                       |
-|-------------------|--------|----------------------|-------------------------------|
-| incident-response | Prompt | `/incident-response` | Document and triage incidents |
-
 ### Auto-Activated Instructions
 
 | Instruction   | Activates On | Purpose                             |
@@ -49,10 +43,11 @@ You enter Operations after completing the final sprint delivery in [Stage 8: Del
 
 ### Skills
 
-| Skill        | Purpose                                                 |
-|--------------|---------------------------------------------------------|
-| hve-builder  | Review, refactor, or validate operational AI artifacts  |
-| rpi-research | Investigate decision-critical operational evidence gaps |
+| Skill             | Purpose                                                 |
+|-------------------|---------------------------------------------------------|
+| hve-builder       | Review, refactor, or validate operational AI artifacts  |
+| rpi-research      | Investigate decision-critical operational evidence gaps |
+| incident-response | Document and triage incidents with `/incident-response` |
 
 ### Templates
 
@@ -101,7 +96,7 @@ and the setup guides may reference outdated flags or file paths.
 
 ```text
 Use hve-builder with mode=review and
-targets=.github/prompts/security/incident-response.prompt.md. Evaluate its
+targets=.github/skills/security/incident-response/SKILL.md. Evaluate its
 activation, operational safeguards, output contract, and host compatibility.
 ```
 

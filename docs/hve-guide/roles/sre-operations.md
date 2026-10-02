@@ -115,9 +115,9 @@ encryption at rest. Output the connection string to the Vault KV store.
 | **sssc-planner**     | Supply chain security assessment for infrastructure | Agent file                 |
 | **code-review**      | Pull request review for infrastructure changes      | Agent file                 |
 
-Prompts and skills complement the agents for operational workflows:
+Skills complement the agents for operational workflows:
 
-| Prompt or skill   | Purpose                                  | Invoke               |
+| Skill             | Purpose                                  | Invoke               |
 |-------------------|------------------------------------------|----------------------|
 | incident-response | Incident response runbook creation       | `/incident-response` |
 | git-commit        | Conventional commit message generation   | `/git-commit`        |

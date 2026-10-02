@@ -1,7 +1,7 @@
 ---
 title: Engagement Reporting Contract
 description: Synthesis, traceability, review, output, talk-track, and retention requirements for engagement reports.
-ms.date: 2026-09-04
+ms.date: 2026-10-02
 ms.topic: reference
 ---
 
@@ -93,10 +93,10 @@ cross-report discrepancies, or unclear directionality.
    canonically confines its own synthesis path.
 3. Use distinct model selections when supported and record model provenance;
    otherwise label the runs as same-model independent critiques
-4. If independent agent runs are unavailable, use
-   `engagement-report-council-critique` manually in separate model sessions.
+4. If independent agent runs are unavailable, run the manual-only
+   `engagement-report-council-critique` skill in separate model sessions.
    Supply the reporting date, report-type slug, critic-run slug, and confirmed
-   effective-ignore protection so the prompt derives each confined
+   effective-ignore protection so the skill derives each confined
    `synthesis/critique-{critic-run-id}.md` artifact path.
 5. Treat one critique as ordinary review rather than Council validation
 6. Dispatch `Engagement Report Council Arbiter` in `proposal` mode to reconcile

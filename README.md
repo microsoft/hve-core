@@ -36,9 +36,8 @@ The central principle driving HVE Core is **"AI carries the rules, humans keep t
 HVE Core provides structured workflow building blocks:
 
 * Agents for specialized tasks such as research, planning, implementation, and review
-* Prompts for repeatable workflow entry points
 * Instructions that apply coding standards automatically
-* Skills that add reusable tool capabilities
+* Skills that add reusable workflows and tool capabilities, including entry points you run as slash commands
 
 > [!CAUTION]
 > HVE Core is a highly opinionated, rapidly evolving agentic SDLC framework. It is best treated as a source of patterns and learning rather than a stable platform, foundation, or production dependency.
@@ -84,7 +83,6 @@ HVE Core provides structured workflow building blocks:
 | Browse docs by topic         | [docs/README.md](docs/README.md)                                   |
 | Explore agents               | [.github/CUSTOM-AGENTS.md](.github/CUSTOM-AGENTS.md)               |
 | Explore instructions         | [.github/instructions/README.md](.github/instructions/README.md)   |
-| Explore prompts              | [.github/prompts/README.md](.github/prompts/README.md)             |
 | Explore skills               | [.github/skills/](.github/skills/)                                 |
 
 ## Documentation
