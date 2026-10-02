@@ -92,6 +92,33 @@ test('fullscreen state and forced-colors behavior are part of the starter contra
   assert.match(theme, /Highlight/);
 });
 
+test('arrow and Page keys page from focused controls but not from text entry or a slide selection', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  // Paging is decided before the focused-control guard, so a clicked presenter button does not end keyboard paging.
+  const selectionGuard = source.indexOf('if (globalThis.getSelection()?.toString() && !onButtonOrLink) return;');
+  const textEntryGuard = source.search(/if \(target\?\.closest\('input, textarea, select, \[contenteditable[^'\]]*\]'\)\) return;/);
+  const paging = source.indexOf('if (Object.hasOwn(pagingKeys, key))');
+  const controlGuard = source.indexOf("if (target?.closest('button, a, summary')) return;");
+  assert.ok(selectionGuard > -1 && textEntryGuard > selectionGuard && paging > textEntryGuard && controlGuard > paging);
+  assert.match(source, /const pagingKeys = \{ arrowright: 1, pagedown: 1, arrowleft: -1, pageup: -1 \}/);
+  // Only a focused button or link overrides a text selection; other shortcuts also wait on a summary.
+  assert.match(source, /const onButtonOrLink = Boolean\(target\?\.closest\('button, a'\)\);/);
+  assert.match(source, /if \(!ready \|\| dialog\.open \|\| event\.defaultPrevented/);
+});
+
+test('flow chart keeps its own arrow keys ahead of slide paging', () => {
+  const components = fs.readFileSync(path.join(__dirname, 'components.js'), 'utf8');
+  assert.match(components, /details\.addEventListener\('keydown', event => \{\s*if \(\['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End'\]\.includes\(event\.key\)\) \{\s*event\.stopPropagation\(\);/);
+  assert.match(components, /const delta = \{ ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 \}\[event\.key\];[\s\S]{0,160}event\.preventDefault\(\);\s*event\.stopPropagation\(\);/);
+});
+
+test('presenter bar ends stay clear of viewer overlays', () => {
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  assert.match(theme, /--presenter-inset: clamp\(96px, 8vw, 128px\);/);
+  assert.match(theme, /#presenter-controls \{[^}]*padding: \S+ var\(--presenter-inset\);/);
+  assert.match(theme, /\[data-reading-view="true"\] body \{[^}]*padding-bottom: var\(--presenter-inset\);/);
+});
+
 test('deck initialization disables the unused cross-window API', () => {
   const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
   assert.match(source, /postMessage:\s*false/);
@@ -390,13 +417,14 @@ test('catalog metadata is validated and cannot terminate the inert JSON block', 
 });
 
 test('complete bundle has current local assets, derived filename and full library notice', async t => {
-  const { bundleDeck } = await import('./bundle.mjs');
+  const { bundleDeck, neutralizeRevealSinks, readRevealVersion } = await import('./bundle.mjs');
   const { buildDeck, sourceFiles } = await import('./build.mjs');
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'hve-deck-bundle-'));
   t.after(() => fs.rmSync(temporary, { recursive: true, force: true }));
   const name = path.basename(__dirname);
   const output = path.join(temporary, 'slides', name, 'dist');
   const filename = await bundleDeck({
+    dependencyRoot: __dirname,
     build: async () => {
       fs.cpSync(await buildDeck(), output, { recursive: true });
       return output;
@@ -410,10 +438,13 @@ test('complete bundle has current local assets, derived filename and full librar
   for (const file of sourceFiles) {
     assert.equal(fs.readFileSync(path.join(__dirname, file), 'utf8'), fs.readFileSync(path.join(output, file), 'utf8'));
   }
+  const revealVersion = await readRevealVersion(__dirname);
   for (const [, asset] of html.matchAll(/<(?:link|script)\b[^>]*(?:href|src)="([^"]+)"/g)) {
     assert.ok(!/^(?:https?:)?\/\//.test(asset));
-    assert.ok(standalone.includes(fs.readFileSync(path.join(output, asset), 'utf8')), asset);
+    const source = fs.readFileSync(path.join(output, asset), 'utf8');
+    assert.ok(standalone.includes(asset === 'vendor/reveal.js' ? neutralizeRevealSinks(source, revealVersion) : source), asset);
   }
+  assert.match(standalone, /id="hve-slide-provenance"/);
   assert.match(standalone, /Permission is hereby granted/);
   assert.doesNotMatch(standalone, /<script[^>]+\bsrc=|<link rel="stylesheet"/);
 });

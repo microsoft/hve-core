@@ -129,6 +129,127 @@ Describe 'Measure-CompareTrials' -Tag 'Unit' {
     }
 }
 
+Describe 'Measure-CompareTrials population statistics across comparison records' -Tag 'Unit' {
+    BeforeAll {
+        function New-ScoredRecord {
+            param(
+                [hashtable[]]$Stimulus,
+                [hashtable]$Summary = @{ meanScore = 0.9; ciLow = 0.8; ciHigh = 1.0; winRate = 1.0 }
+            )
+            $stimuli = foreach ($entry in $Stimulus) {
+                $index = 0
+                $trials = foreach ($score in @($entry.Scores)) {
+                    $trial = [ordered]@{ trialIndex = $index; errored = $false }
+                    if ($null -ne $score) {
+                        $trial.score = $score
+                        $trial.winner = if ($score -gt 0) { 'treatment' } elseif ($score -lt 0) { 'baseline' } else { 'tie' }
+                    }
+                    else {
+                        $trial.winner = 'tie'
+                    }
+                    $index++
+                    $trial
+                }
+                [ordered]@{ stimulusName = $entry.Name; trials = @($trials) }
+            }
+            return ([ordered]@{ type = 'comparison'; summary = $Summary; stimuli = @($stimuli) } | ConvertTo-Json -Depth 10 -Compress)
+        }
+    }
+
+    # Expected values come from vally-cli 0.17.0 `meanWithCi` over the same scores.
+    It 'Recomputes the mean, Student-t interval, and win rate over every shard trial' {
+        $records = @(
+            (New-ScoredRecord -Stimulus @(@{ Name = 'a'; Scores = @(1, 0, -1) })),
+            (New-ScoredRecord -Stimulus @(@{ Name = 'b'; Scores = @(1, 1, 0) }))
+        )
+        $result = Measure-CompareTrials -Lines $records
+
+        $result.SummaryCount | Should -Be 2
+        $result.MeanScore | Should -Be 0.3333
+        $result.CiLow | Should -Be -0.5237
+        $result.CiHigh | Should -Be 1.1903
+        $result.WinRate | Should -Be 0.5
+    }
+
+    It 'Uses the Cornish-Fisher critical value above twenty degrees of freedom' {
+        $scores = @(for ($index = 0; $index -lt 24; $index++) { @(-1, 0, 0.5, 1)[$index % 4] })
+        $records = @(
+            (New-ScoredRecord -Stimulus @(@{ Name = 'a'; Scores = $scores[0..11] })),
+            (New-ScoredRecord -Stimulus @(@{ Name = 'b'; Scores = $scores[12..23] }))
+        )
+        $result = Measure-CompareTrials -Lines $records
+
+        $result.MeanScore | Should -Be 0.125
+        $result.CiLow | Should -Be -0.194
+        $result.CiHigh | Should -Be 0.444
+        $result.WinRate | Should -Be 0.5
+    }
+
+    It 'Counts every stimulus regardless of policy, as vally does' {
+        $records = @(
+            (New-ScoredRecord -Stimulus @(@{ Name = 'equivalent-stimulus'; Scores = @(0, -0.4, 0.4) })),
+            (New-ScoredRecord -Stimulus @(@{ Name = 'expected-divergence'; Scores = @(1, 1, 1) }))
+        )
+        $policies = @{ 'equivalent-stimulus' = 'equivalent'; 'expected-divergence' = 'documented-divergence' }
+        $result = Measure-CompareTrials -Lines $records -StimulusPolicy $policies
+
+        $result.MeanScore | Should -Be 0.5
+        $result.CiLow | Should -Be -0.1333
+        $result.CiHigh | Should -Be 1.1333
+        $result.WinRate | Should -Be 0.6667
+        $result.EquivalentMeanScore | Should -Be 0.0
+    }
+
+    It 'Excludes errored trials from the population' {
+        $erroredRecord = [ordered]@{
+            type    = 'comparison'
+            summary = [ordered]@{ meanScore = 0.9; ciLow = 0.8; ciHigh = 1.0; winRate = 1.0 }
+            stimuli = @([ordered]@{
+                    stimulusName = 'b'
+                    trials       = @(
+                        [ordered]@{ trialIndex = 0; winner = 'treatment'; score = 1; errored = $false },
+                        [ordered]@{ trialIndex = 1; winner = 'treatment'; score = 1; errored = $false },
+                        [ordered]@{ trialIndex = 2; winner = 'tie'; score = 0; errored = $false },
+                        [ordered]@{ trialIndex = 3; errored = $true }
+                    )
+                })
+        } | ConvertTo-Json -Depth 10 -Compress
+        $records = @((New-ScoredRecord -Stimulus @(@{ Name = 'a'; Scores = @(1, 0, -1) })), $erroredRecord)
+        $result = Measure-CompareTrials -Lines $records
+
+        $result.JudgeErrors | Should -Be 1
+        $result.MeanScore | Should -Be 0.3333
+        $result.CiLow | Should -Be -0.5237
+        $result.CiHigh | Should -Be 1.1903
+    }
+
+    It 'Falls back to the conservative combination rather than recomputing a scored subset' {
+        $records = @(
+            (New-ScoredRecord -Stimulus @(@{ Name = 'a'; Scores = @(1, 0, -1) }) -Summary @{ meanScore = -0.1; ciLow = -0.4; ciHigh = 0.2; winRate = 0.4 }),
+            (New-ScoredRecord -Stimulus @(@{ Name = 'b'; Scores = @(1, $null) }) -Summary @{ meanScore = 0.1; ciLow = -0.1; ciHigh = 0.5; winRate = 0.6 })
+        )
+        $result = Measure-CompareTrials -Lines $records
+
+        $result.MeanScore | Should -Be 0.0
+        $result.WinRate | Should -Be 0.5
+        $result.CiLow | Should -Be -0.1
+        $result.CiHigh | Should -Be 0.2
+    }
+
+    It 'Describes only the observed trials when a shard record is missing' {
+        $records = @(
+            (New-ScoredRecord -Stimulus @(@{ Name = 'a'; Scores = @(1, 0, -1) })),
+            (New-ScoredRecord -Stimulus @(@{ Name = 'b'; Scores = @(1, 1, 0) }))
+        )
+        $result = Measure-CompareTrials -Lines $records -ExpectedStimulusName @('a', 'b', 'c') -ExpectedTrialCount 3
+
+        $result.MissingTrials | Should -Be 3
+        $result.MeanScore | Should -Be 0.3333
+        $result.CiLow | Should -Be -0.5237
+        $result.CiHigh | Should -Be 1.1903
+    }
+}
+
 Describe 'Measure-CompareTrials against captured Vally 0.10 output' -Tag 'Unit' {
     # Fixture provenance: captured from Vally CLI 0.10.0 by running two temporary
     # eval specs (benign arithmetic and geography prompts, executor copilot-sdk,

@@ -544,8 +544,10 @@ Triggers: `schedule` (Sundays at 4 AM UTC), `workflow_call`
 Features:
 
 * Languages: `actions` (GitHub Actions workflows), `python` (Python scripts), and `javascript-typescript` (VS Code extension source)
+* Generated slides: the `analyze-generated-slides` job scans the delivered `docs/slides/*.html` decks, including the inlined and bundler-patched reveal.js, with `.github/codeql/generated-slides.yml` under category `/language:javascript-typescript/generated-slides`. The authored-source categories keep ignoring those generated files, so third-party findings stay separate from the authored-source baseline
 * Queries: security-extended and security-and-quality query suites
 * Coverage: Detects SQL injection, XSS, command injection, path traversal, and 200+ other vulnerabilities
+* Not analyzed: CodeQL does not analyze Markdown, generic YAML, PowerShell, shell, or PPTX content; markdownlint, YAML lint, PSScriptAnalyzer, shellcheck, and the dependency and workflow security lints cover those formats
 * Integration: Results appear in Security > Code Scanning tab
 * Auto-build: Prepares compiled code where required for each language target; Actions analysis needs no compilation
 
