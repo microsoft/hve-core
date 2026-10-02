@@ -1,12 +1,12 @@
 ---
 title: Code Review Depth Tiers
 description: Basic, standard, and comprehensive review rigor dials for code review perspectives.
-ms.date: 2026-08-29
+ms.date: 2026-10-02
 ---
 
 ## Tier model
 
-Review depth is a verification-rigor dial, not a lane-selection mechanism. The selected perspectives determine which review lanes run; the human-selected depth tier determines how deeply each lane verifies the confirmed change scope. Use the [Change-Risk Evidence Checklist](change-risk-model.md) to make an advisory recommendation before the human selects a tier.
+Review depth is a verification-rigor dial, not a lane-selection mechanism. The selected perspectives determine which review lanes run; the resolved depth tier determines how deeply each lane verifies the change scope. Use the [Change-Risk Evidence Checklist](change-risk-model.md) to make an advisory recommendation before the human selects a tier or explicit invocation preauthorization accepts the recommendation.
 
 ## Tier 1 — Basic
 
@@ -36,4 +36,4 @@ Recommend Tier 3 when observed or qualitative evidence identifies critical paths
 
 ## Interaction with perspective selection
 
-The orchestrator should ask for perspective selection and depth level independently. Present the checklist and recommendation first, then record the human-selected depth and rationale. For example, a basic review might run the functional and standards lanes, while a comprehensive run might run the same lanes with deeper verification of confirmed hotspots.
+The orchestrator should resolve perspective selection and depth level independently. Present the checklist and recommendation first, then record the selected depth, rationale, and provenance. In default interactive mode the human selects the tier. With explicit invocation preauthorization, use the recommended tier and label the selection automation-derived. For example, a basic review might run the functional and standards lanes, while a comprehensive run might run the same lanes with deeper verification of confirmed hotspots.

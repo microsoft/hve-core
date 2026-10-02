@@ -1,12 +1,12 @@
 ---
 title: Code Review Dispatch Loop
 description: Human-steered review loop, dispatch board contract, and manifest-backed walk-back rules.
-ms.date: 2026-08-26
+ms.date: 2026-10-02
 ---
 
 ## Purpose
 
-The dispatch loop turns the walkthrough into a human-steered review experience. It keeps the review grounded in a single orientation pass while letting the human choose what to inspect next.
+The dispatch loop turns the walkthrough into a review experience grounded in a single orientation pass. Default interactive runs let the human choose what to inspect next; explicitly preauthorized runs accept the recommended defaults and proceed to the batch sweep.
 
 ## Dispatch board contract
 
@@ -38,6 +38,8 @@ supporting file or symbol references in each signal. After the table, present on
 * one prompt that lets the human edit the board, perspective set, or depth, or
   approve the complete recommendation
 
+With `autoApprove=true`, present the same surface as a decision record, state that the recommended defaults are preauthorized, and proceed without asking the prompt.
+
 Keep target and profile selection independent. The profile supplies the starting
 perspective set; the confirmed change surface and specialist signals explain any
 additions or omissions. Depth remains an independent rigor choice.
@@ -55,6 +57,10 @@ Use a canonical `dispatch-manifest.json` file to track the loop state across the
     "headSha": "0123456789abcdef"
   },
   "reviewProfile": "standard",
+  "emissionAuthorization": {
+    "mode": "interactive",
+    "source": "human-confirmation"
+  },
   "recommendedPerspectives": ["functional", "standards", "readiness"],
   "selectedPerspectives": ["functional", "standards", "readiness"],
   "recommendedDepth": "standard",
@@ -93,7 +99,8 @@ Use a canonical `dispatch-manifest.json` file to track the loop state across the
 
 1. Scrape orientation
    - Present the walkthrough and the initial dispatch board.
-   - Pause for a human confirmation before deeper dispatch.
+  - Pause for a human confirmation before deeper dispatch in default interactive mode.
+  - With `autoApprove=true`, record authorization mode `preauthorized` and source `invocation-input`, accept the recommended defaults without a pause, and keep their provenance automation-derived.
 
 2. Curiosity bookmarking
    - Let the human bookmark or reject board items.

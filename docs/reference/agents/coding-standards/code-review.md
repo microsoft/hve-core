@@ -1,9 +1,9 @@
 ---
 title: Code Review
-description: "Human-gated code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report"
+description: "Code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report with human-gated or explicitly preauthorized emission"
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-12
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - agent
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Human-gated code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report
+Code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report with human-gated or explicitly preauthorized emission
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it
@@ -33,9 +33,10 @@ Use Code Review for a pull request, an explicit branch comparison, or local work
 ## How to use it
 
 1. Select `Code Review` and identify the PR, base and head references, or local changes. The checked-out HEAD must match a resolved PR or branch target.
-2. Read the change brief and orientation, then confirm scope, perspectives, and depth. Choosing every perspective does not itself choose a deeper assessment.
-3. Bookmark areas to explore or request the selected review sweep. The agent consolidates evidence-backed findings into a local review draft.
-4. Open and edit the draft before acting on it. External submission requires explicit confirmation and a fresh target-state check; required human-review checkboxes remain yours to complete.
+2. By default, read the change brief and orientation, then confirm scope, perspectives, and depth. Choosing every perspective does not itself choose a deeper assessment.
+3. Bookmark areas to explore or request the selected review sweep. To accept the recommended scope and depth and preauthorize normalized external emission for this invocation, explicitly set `autoApprove=true`; it does not force an `APPROVE` verdict.
+4. The agent consolidates evidence-backed findings into a local review draft. Default external submission requires explicit confirmation. Preauthorized submission skips that pause, but both paths require a fresh provider, target, ref, and reviewed-head check.
+5. Complete required human-review checkboxes yourself. Invocation preauthorization permits emission but does not claim that a qualified human validated the generated review.
 
 ## Example usage
 
