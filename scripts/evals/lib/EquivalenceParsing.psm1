@@ -16,13 +16,91 @@
 
 Set-StrictMode -Version Latest
 
+# Two-sided 95% Student-t critical values for df 1 to 20, matching `vally compare`.
+$script:StudentT95 = @{
+    1 = 12.706; 2 = 4.303; 3 = 3.182; 4 = 2.776; 5 = 2.571; 6 = 2.447; 7 = 2.365
+    8 = 2.306; 9 = 2.262; 10 = 2.228; 11 = 2.201; 12 = 2.179; 13 = 2.16; 14 = 2.145
+    15 = 2.131; 16 = 2.12; 17 = 2.11; 18 = 2.101; 19 = 2.093; 20 = 2.086
+}
+
+function Get-StudentT95CriticalValue {
+    <#
+    .SYNOPSIS
+        Returns the two-sided 95% critical value `vally compare` uses for a degree of freedom.
+    .DESCRIPTION
+        Uses the exact table for df 20 and below and a Cornish-Fisher expansion of the t
+        quantile around the normal above it, so recomputed intervals match the intervals
+        vally reports for the same scores.
+    .PARAMETER DegreesOfFreedom
+        Degrees of freedom, one less than the sample size.
+    .OUTPUTS
+        [double] The critical value.
+    #>
+    [CmdletBinding()]
+    [OutputType([double])]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateRange(1, [int]::MaxValue)]
+        [int]$DegreesOfFreedom
+    )
+
+    if ($script:StudentT95.ContainsKey($DegreesOfFreedom)) { return [double]$script:StudentT95[$DegreesOfFreedom] }
+    $z = 1.959963984540054
+    $z2 = $z * $z
+    $g1 = ($z * ($z2 + 1)) / 4
+    $g2 = ($z * (5 * $z2 * $z2 + 16 * $z2 + 3)) / 96
+    $g3 = ($z * (3 * $z2 * $z2 * $z2 + 19 * $z2 * $z2 + 17 * $z2 - 15)) / 384
+    $df = [double]$DegreesOfFreedom
+    return $z + $g1 / $df + $g2 / ($df * $df) + $g3 / ($df * $df * $df)
+}
+
+function Measure-MeanWithConfidenceInterval {
+    <#
+    .SYNOPSIS
+        Computes a sample mean with the 95% Student-t interval `vally compare` reports.
+    .PARAMETER Value
+        Sample values.
+    .OUTPUTS
+        [hashtable] Count, Mean, CiLow, and CiHigh. A single value yields a zero-width interval.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [double[]]$Value
+    )
+
+    $count = $Value.Count
+    if ($count -eq 0) { return @{ Count = 0; Mean = 0.0; CiLow = 0.0; CiHigh = 0.0 } }
+    $mean = ($Value | Measure-Object -Average).Average
+    if ($count -lt 2) { return @{ Count = $count; Mean = $mean; CiLow = $mean; CiHigh = $mean } }
+    $variance = ($Value | ForEach-Object { [math]::Pow($_ - $mean, 2) } | Measure-Object -Sum).Sum / ($count - 1)
+    $margin = (Get-StudentT95CriticalValue -DegreesOfFreedom ($count - 1)) * ([math]::Sqrt($variance) / [math]::Sqrt($count))
+    return @{ Count = $count; Mean = $mean; CiLow = $mean - $margin; CiHigh = $mean + $margin }
+}
+
 function Measure-CompareTrials {
     <#
     .SYNOPSIS
         Aggregates comparison trials, summary statistics, and data-quality signals.
     .DESCRIPTION
-        Tallies recognized winners and combines complete confidence-interval pairs
-        conservatively by taking the maximum lower and minimum upper bounds.
+        Tallies recognized winners and reports the comparison's mean score, 95% confidence
+        interval, and win rate.
+
+        A single comparison record carries those statistics in its `summary`, computed by
+        vally over every non-errored trial in the comparison. A sharded comparison
+        concatenates one record per shard, and each shard's summary covers only its own
+        trials. Combining per-shard intervals or averaging per-shard means would not
+        describe the full population and would not be comparable with an unsharded run,
+        so when more than one record is present and every non-errored trial carries a
+        numeric score, the statistics are recomputed from those scores using vally's own
+        formula: the arithmetic mean, a two-sided 95% Student-t interval, and the share of
+        trials with a positive score. The scores of every stimulus count regardless of
+        policy, as they do in vally. When any non-errored trial lacks a numeric score,
+        complete summary pairs are combined conservatively instead by taking the maximum
+        lower and minimum upper bounds. The statistics always describe the trials that
+        were observed; a run with missing trials is flagged through MissingTrials.
 
         Records that cannot be scored are counted rather than skipped. A trial marked
         `errored` is a judge error, an unparseable line is a malformed record, and a
@@ -91,6 +169,8 @@ function Measure-CompareTrials {
     $winRates = [System.Collections.Generic.List[double]]::new()
     $ciLows = [System.Collections.Generic.List[double]]::new()
     $ciHighs = [System.Collections.Generic.List[double]]::new()
+    $populationScores = [System.Collections.Generic.List[double]]::new()
+    $populationTrials = 0
     $diagnostics = [System.Collections.Generic.List[string]]::new()
 
     foreach ($line in $Lines) {
@@ -148,6 +228,13 @@ function Measure-CompareTrials {
                     $perStimulus[$name].JudgeErrors += 1
                     $diagnostics.Add("Judge error on stimulus '$name'.")
                     continue
+                }
+
+                $populationTrials++
+                $rawScore = if ($trial.PSObject.Properties['score']) { $trial.score } else { $null }
+                if (($rawScore -is [int] -or $rawScore -is [long] -or $rawScore -is [double] -or $rawScore -is [decimal]) -and
+                    [double]::IsFinite([double]$rawScore)) {
+                    $populationScores.Add([double]$rawScore)
                 }
 
                 $winner = if ($trial.PSObject.Properties['winner']) { [string]$trial.winner } else { '' }
@@ -213,9 +300,6 @@ function Measure-CompareTrials {
         if ($summary.PSObject.Properties['winRate'] -and $null -ne $summary.winRate) { $winRates.Add([double]$summary.winRate) }
     }
 
-    $meanScore = if ($meanScores.Count -gt 0) { ($meanScores | Measure-Object -Average).Average } else { 0.0 }
-    $winRate = if ($winRates.Count -gt 0) { ($winRates | Measure-Object -Average).Average } else { 0.0 }
-
     # Reconcile the observed population against the expected Cartesian set. A stimulus
     # that produced no record at all is invisible to every structural counter above,
     # so absence is only detectable by comparing against what was supposed to run.
@@ -247,8 +331,20 @@ function Measure-CompareTrials {
             }
         }
     }
-    $ciLow = if ($ciLows.Count -gt 0) { ($ciLows | Measure-Object -Maximum).Maximum } else { 0.0 }
-    $ciHigh = if ($ciHighs.Count -gt 0) { ($ciHighs | Measure-Object -Minimum).Minimum } else { 0.0 }
+    $hasCompletePopulation = $populationScores.Count -gt 0 -and $populationScores.Count -eq $populationTrials
+    if ($comparisonRecords -gt 1 -and $hasCompletePopulation) {
+        $population = Measure-MeanWithConfidenceInterval -Value $populationScores.ToArray()
+        $meanScore = $population.Mean
+        $ciLow = $population.CiLow
+        $ciHigh = $population.CiHigh
+        $winRate = @($populationScores | Where-Object { $_ -gt 0 }).Count / $populationScores.Count
+    }
+    else {
+        $meanScore = if ($meanScores.Count -gt 0) { ($meanScores | Measure-Object -Average).Average } else { 0.0 }
+        $winRate = if ($winRates.Count -gt 0) { ($winRates | Measure-Object -Average).Average } else { 0.0 }
+        $ciLow = if ($ciLows.Count -gt 0) { ($ciLows | Measure-Object -Maximum).Maximum } else { 0.0 }
+        $ciHigh = if ($ciHighs.Count -gt 0) { ($ciHighs | Measure-Object -Minimum).Minimum } else { 0.0 }
+    }
 
     # The judge-error rate is computed from every trial that was attempted, including
     # the ones that failed, so the denominator is not silently reduced by the failures

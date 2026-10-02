@@ -7,6 +7,8 @@ BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../evals/Get-ChangedAIArtifact.ps1'
 
     Import-Module $script:ModulePath -Force
+    Import-Module (Join-Path $PSScriptRoot '../../evals/Modules/EvalChangeSet.psm1') -Force
+    . $script:ScriptPath
 }
 
 Describe 'ArtifactDetection module' -Tag 'Unit' {
@@ -159,7 +161,7 @@ Describe 'ArtifactDetection module' -Tag 'Unit' {
     }
 }
 
-Describe 'Get-ChangedAIArtifact.ps1 entry script' -Tag 'Integration' {
+Describe 'Get-ChangedAIArtifact.ps1 entry script' -Tag 'Unit' {
     BeforeAll {
         $script:gitAvailable = $null -ne (Get-Command git -ErrorAction SilentlyContinue)
     }
@@ -195,8 +197,11 @@ Describe 'Get-ChangedAIArtifact.ps1 entry script' -Tag 'Integration' {
             $headSha = (& git rev-parse HEAD).Trim()
 
             $outFile = Join-Path $TestDrive ('manifest-' + [Guid]::NewGuid() + '.json')
+            $changeSetPath = Join-Path $TestDrive 'change-set.json'
+            New-EvalChangeSet -BaseRef $baseSha -HeadRef $headSha -RepoRoot $repo |
+                ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $changeSetPath
             & pwsh -NoProfile -File $script:ScriptPath `
-                -BaseRef $baseSha -HeadRef $headSha -OutFile $outFile -RepoRoot $repo *> $null
+                -ChangeSetPath $changeSetPath -OutFile $outFile -RepoRoot $repo *> $null
             $LASTEXITCODE | Should -Be 0
 
             $manifest = Get-Content -LiteralPath $outFile -Raw | ConvertFrom-Json
@@ -219,6 +224,43 @@ Describe 'Get-ChangedAIArtifact.ps1 entry script' -Tag 'Integration' {
         }
         finally {
             Pop-Location
+            Get-ChildItem -LiteralPath $repo -Recurse -Force -File | ForEach-Object { $_.IsReadOnly = $false }
         }
+    }
+}
+
+Describe 'AI artifact canonical input' -Tag 'Unit' {
+    BeforeEach {
+        $script:ChangeSetPath = Join-Path $TestDrive 'selection.json'
+        $script:Selection = @{
+            schemaVersion = '1.0'; baseRef = 'a' * 40; headRef = 'b' * 40; comparisonBase = 'c' * 40
+            changes = @()
+        }
+    }
+
+    It 'preserves resolved revision metadata in an empty artifact manifest' {
+        $script:Selection | ConvertTo-Json -Depth 6 | Set-Content $script:ChangeSetPath
+        $result = Invoke-ChangedArtifactScan -ChangeSetPath $script:ChangeSetPath -RepoRoot $TestDrive
+        $result.artifacts | Should -HaveCount 0
+        $result.affectedAgents | Should -HaveCount 0
+        $result.baseRef | Should -Be ('a' * 40)
+        $result.headRef | Should -Be ('b' * 40)
+    }
+
+    It 'does not select upstream artifacts present only in the checkout' {
+        $script:Selection.changes = @(@{ status = 'M'; path = 'CONTRIBUTING.md'; previousPath = $null })
+        $script:Selection | ConvertTo-Json -Depth 6 | Set-Content $script:ChangeSetPath
+        $agentDir = Join-Path $TestDrive '.github/agents/core'
+        $null = New-Item -ItemType Directory -Path $agentDir -Force
+        Set-Content (Join-Path $agentDir 'upstream.agent.md') 'upstream'
+        $result = Invoke-ChangedArtifactScan -ChangeSetPath $script:ChangeSetPath -RepoRoot $TestDrive
+        $result.artifacts | Should -HaveCount 0
+        $result.affectedAgents | Should -HaveCount 0
+    }
+
+    It 'rejects malformed and missing manifests rather than creating empty evidence' {
+        '{"schemaVersion":"1.0"}' | Set-Content $script:ChangeSetPath
+        { Invoke-ChangedArtifactScan -ChangeSetPath $script:ChangeSetPath -RepoRoot $TestDrive } | Should -Throw
+        { Invoke-ChangedArtifactScan -ChangeSetPath (Join-Path $TestDrive 'missing.json') -RepoRoot $TestDrive } | Should -Throw
     }
 }

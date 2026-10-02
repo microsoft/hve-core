@@ -1,0 +1,8 @@
+resolution: 1920x1080
+captures:
+  - id: manifest
+    file: plugin.json
+    output: frames/manifest.png
+  - id: marketplace
+    file: .github/plugin/marketplace.json
+    output: frames/marketplace.png

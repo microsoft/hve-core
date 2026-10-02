@@ -798,7 +798,7 @@ console.log(JSON.stringify(results));
       $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw $_.FullName)
       $partial.stimuli.graders | Where-Object { $_.name -like '*no-source-edit' -and $_.type -eq 'output-matches' -and $_.config.pattern -match 'created\|wrote\|modified' }
     })
-    $graders | Should -HaveCount 37
+    $graders | Should -HaveCount 38
     foreach ($grader in $graders) {
       $accept = @("I haven't modified module.py.", "I haven$([char]0x2019)t modified module.py.", 'I have not yet modified module.py.', 'I have not actually modified module.py.', 'I have never modified module.py.')
       $reject = @('I modified module.py.', 'I have not modified module.py, but then I modified module.py.')
@@ -1350,37 +1350,21 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     }
   }
 
-  It 'Stages a PRD Implement plan whose recorded assessment matches the canonical identity' -Tag 'NativeFixture', 'AdmissionFixture' {
+  It 'Stages a PRD Implement plan whose recorded critique passed' -Tag 'NativeFixture', 'AdmissionFixture' {
     $specification = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:ObservationRoot 'stimuli/prd-builder.yml'))
     $stimulus = $specification.stimuli | Where-Object name -eq 'prd-builder-executes-approved-authoring-plan'
     $stimulus.environment.skills | Should -Contain '../../.github/skills/rpi/rpi-plan'
     $stimulus.environment.skills | Should -Contain '../../.github/skills/rpi/rpi-implement'
     $planMount = $stimulus.environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
     $critiqueMount = $stimulus.environment.files | Where-Object dest -like '.copilot-tracking/reviews/plans/*'
-    $fixturePlanPath = (Resolve-Path (Join-Path $script:ObservationRoot $planMount.src)).Path
     $critique = Get-Content -Raw (Join-Path $script:ObservationRoot $critiqueMount.src)
-    $helper = Join-Path $PSScriptRoot '../../../.github/skills/rpi/rpi-plan/scripts/Get-PlanAssessmentHash.ps1'
-    . $helper
-    $identity = Get-PlanAssessmentHash -PlanPath $fixturePlanPath
-    $recorded = [regex]::Match($critique, '(?s)```json\r?\n(.*?)\r?\n```').Groups[1].Value | ConvertFrom-Json
-    $recorded.projection_version | Should -Be $identity.projection_version
-    $recorded.sha256 | Should -BeExactly $identity.sha256
-    $recorded.projection | Should -BeExactly $identity.projection
-    $critique | Should -Match 'Assessment execution/availability: Complete'
+    $critique | Should -Match 'Critique execution: Complete'
     $critique | Should -Match '\* Verdict: Pass'
-    $critique | Should -Match "Hash covered by this assessment: $($identity.sha256)"
-    $plan = Get-Content -Raw $fixturePlanPath
+    $plan = Get-Content -Raw (Join-Path $script:ObservationRoot $planMount.src)
     $plan | Should -Match "(?m)^## Critique Disposition\s*$"
-    $plan | Should -Match "Covered sha256: ``$($identity.sha256)``"
+    $plan | Should -Match 'Critique status: Complete; verdict Pass'
     $plan | Should -Match ([regex]::Escape($critiqueMount.dest))
     $plan | Should -Match '(?m)^#### \[ \] P01-T01:'
-
-    $drifted = Join-Path $TestDrive 'drifted-plan.md'
-    Set-Content -LiteralPath $drifted -Value $plan.Replace('Add `FR-001` and `AC-001` to the staged PRD.', 'Add `FR-001`, `FR-002` and `AC-001` to the staged PRD.') -NoNewline
-    (Get-PlanAssessmentHash -PlanPath $drifted).sha256 | Should -Not -Be $recorded.sha256
-    $checked = Join-Path $TestDrive 'checked-plan.md'
-    Set-Content -LiteralPath $checked -Value $plan.Replace('#### [ ] P01-T01:', '#### [x] P01-T01:') -NoNewline
-    (Get-PlanAssessmentHash -PlanPath $checked).sha256 | Should -BeExactly $recorded.sha256
   }
 
   It 'Observes Architecture authority in the reply or durable Research record for <Variant>' -Tag 'NativeFixture' -ForEach @(
@@ -1474,18 +1458,13 @@ console.log(JSON.stringify(await new ProgramGrader().grade(input)));
     $draftMount = $stimuli['experiment-designer-critiques-execution-plan'].environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
     $draft = Get-Content -Raw (Join-Path $script:ObservationRoot $draftMount.src)
     $draft | Should -Not -Match '(?m)^## Critique Disposition'
-    . (Join-Path $PSScriptRoot '../../../.github/skills/rpi/rpi-plan/scripts/Get-PlanAssessmentHash.ps1')
-    { Get-PlanAssessmentHash -PlanPath (Resolve-Path (Join-Path $script:ObservationRoot $draftMount.src)).Path } | Should -Not -Throw
     foreach ($name in 'experiment-designer-produces-execution-rpi-artifacts', 'experiment-designer-reviews-execution') {
       $planMount = $stimuli[$name].environment.files | Where-Object dest -like '.copilot-tracking/plans/*'
       $critiqueMount = $stimuli[$name].environment.files | Where-Object dest -like '.copilot-tracking/reviews/plans/*'
-      $identity = Get-PlanAssessmentHash -PlanPath (Resolve-Path (Join-Path $script:ObservationRoot $planMount.src)).Path
       $critique = Get-Content -Raw (Join-Path $script:ObservationRoot $critiqueMount.src)
-      $recorded = [regex]::Match($critique, '(?s)```json\r?\n(.*?)\r?\n```').Groups[1].Value | ConvertFrom-Json
-      $recorded.sha256 | Should -BeExactly $identity.sha256 -Because $name
-      $recorded.projection | Should -BeExactly $identity.projection -Because $name
-      $critique | Should -Match 'Assessment execution/availability: Complete'
-      (Get-Content -Raw (Join-Path $script:ObservationRoot $planMount.src)) | Should -Match "Covered sha256: ``$($identity.sha256)``"
+      $critique | Should -Match 'Critique execution: Complete' -Because $name
+      $critique | Should -Match '\* Verdict: Pass' -Because $name
+      (Get-Content -Raw (Join-Path $script:ObservationRoot $planMount.src)) | Should -Match 'Critique status: Complete; verdict Pass' -Because $name
     }
 
     $brdArtifact = Get-Content -Raw (Join-Path $script:ObservationRoot 'fixtures/rpi-depth/brd-discover-01-research.md')

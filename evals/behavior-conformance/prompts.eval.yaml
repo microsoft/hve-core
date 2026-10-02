@@ -1,4 +1,4 @@
-# cspell:ignore declin initializ pathspecs reinitializ ETSI summarise
+# cspell:ignore declin initializ pathspecs reinitializ ETSI summarise worktree
 name: behavior-conformance-prompts
 description: >
   Advisory-tier behavior conformance evals for high-traffic prompts. Each
@@ -2038,24 +2038,6 @@ stimuli:
         name: prompt-synth-data-generate-stale-replacement-unchan-80015458
         config:
           pattern: "(?i)unchanged-original|original.+unchanged|preserve.+original"
-
-  - name: prompt-graph-research-conformance
-    prompt: |
-      Invoke the `graph-research` prompt with topic="what depends on
-      `auth_middleware.py`" against an existing `graphify-out/graph.json`.
-    tags:
-      category: behavior-conformance
-      prompt: graph-research
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: prompt-graph-research-conformance-agent-attribution
-        config:
-          pattern: "(?i)rpi-research|graph-research|graphify"
-      - type: output-matches
-        name: prompt-graph-research-conformance-scope-language
-        config:
-          pattern: "(?i)graph|graphify|dependency|structural|research"
 
   - name: prompt-evals-import-conformance
     prompt: |
