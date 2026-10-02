@@ -26,6 +26,8 @@ This skill belongs to the HVE Core repository. Keep it directly under
   sufficient contrast and reduced motion, with evidence from the delivered HTML.
 * Scripted conversations, reconstructed UI and actual execution are distinguishable.
 * Source edits, generated output, local checks and browser evidence describe the same revision.
+* Generated bundles pass the bundler's security checks and carry its provenance block;
+  the checks are never bypassed and generated HTML is never hand-edited.
 * The handoff names the viewable file and exact build or sharing command; unfinished checks remain visible.
 
 ## Inputs and Scope
