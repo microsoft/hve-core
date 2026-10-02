@@ -382,6 +382,20 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
         $run | Should -Not -Match 'reasoning-effort'
     }
 
+    It 'runs only catalogued models in the equivalence matrices' {
+        $catalogPath = Join-Path $PSScriptRoot '../../linting/model-catalog.json'
+        $catalogIds = @((Get-Content -LiteralPath $catalogPath -Raw | ConvertFrom-Json).models | ForEach-Object {
+                (([string]$_.name -replace '\s*\(copilot\)\s*$', '').Trim().ToLowerInvariant() -replace '\s+', '-')
+            })
+        $models = @(foreach ($jobName in @('equivalence-execute', 'equivalence-advisory')) {
+                @($script:EvalWorkflow.jobs[$jobName].strategy.matrix.include | ForEach-Object { [string]$_.model })
+            })
+        $models | Should -Not -BeNullOrEmpty
+        foreach ($model in $models) {
+            $catalogIds | Should -Contain $model -Because "workflow model '$model' must match an entry in scripts/linting/model-catalog.json"
+        }
+    }
+
     It 'publishes only the advisory summary under a name no fan-in downloads' {
         $jobs = $script:EvalWorkflow.jobs
         $upload = (@($jobs['equivalence-advisory'].steps | Where-Object { $_.uses -like 'actions/upload-artifact@*' }))[0]

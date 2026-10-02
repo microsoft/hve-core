@@ -136,10 +136,12 @@ baseline-equivalence suite without gating the pull request. It currently runs Mi
 * Where results appear: the job's step summary lists the verdict, gate, and key counts,
   and the `advisory-equivalence-mai` artifact holds only the summary JSON.
 
-To add a model, add a matrix entry to `equivalence-advisory`. If a parallel advisory lane
-causes judge errors in the gating lanes, add `equivalence-execute` to the advisory job's
-`needs` so it runs after them. To stop the advisory lanes without a workflow edit, set the
-reusable workflow input `advisory-equivalence` to `false`; see Rollback Controls.
+To add a model, add a matrix entry to `equivalence-advisory` and confirm the model is listed
+in `scripts/linting/model-catalog.json`; the workflow contract tests reject an uncatalogued
+model. If a parallel advisory lane causes judge errors in the gating lanes, add
+`equivalence-execute` to the advisory job's `needs` so it runs after them. To stop the advisory
+lanes without a workflow edit, set the reusable workflow input `advisory-equivalence` to
+`false`; see Rollback Controls.
 
 ## Trusted Progress
 
