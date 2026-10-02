@@ -34,14 +34,6 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 | RPI Agent                          | Agent | Select **RPI Agent**                          | Coordinate the applicable RPI phase skills       |
 | Data Science and Engineering Coach | Agent | Select **Data Science and Engineering Coach** | Produce notebooks, dashboards, and pipeline code |
 
-### Prompts and Skills
-
-| Tool       | Type   | How to Invoke                   | Purpose                                      |
-|------------|--------|---------------------------------|----------------------------------------------|
-| rpi        | Prompt | `/rpi`                          | Coordinate the full RPI lifecycle            |
-| git-commit | Skill  | `/git-commit`                   | Stage and commit changes                     |
-| git-commit | Skill  | `/git-commit mode=message-only` | Generate a commit message for staged changes |
-
 ### Auto-Activated Instructions
 
 All coding standard instructions activate automatically based on file type:
@@ -60,14 +52,16 @@ All coding standard instructions activate automatically based on file type:
 
 ### Skills
 
-| Tool          | How to Invoke      | Purpose                                                    |
-|---------------|--------------------|------------------------------------------------------------|
-| rpi-research  | `/rpi-research`    | Close a demonstrated evidence gap                          |
-| rpi-plan      | `/rpi-plan`        | Create a task-centered plan and independent critique       |
-| rpi-implement | `/rpi-implement`   | Execute approved work and record change evidence           |
-| rpi-review    | `/rpi-review`      | Reconcile implementation evidence and route follow-up      |
-| hve-builder   | Use `hve-builder`  | Author or review prompts, instructions, agents, and skills |
-| video-to-gif  | Use `video-to-gif` | Convert video to optimized GIFs                            |
+| Tool          | How to Invoke                   | Purpose                                                    |
+|---------------|---------------------------------|------------------------------------------------------------|
+| rpi-research  | `/rpi-research`                 | Close a demonstrated evidence gap                          |
+| rpi-plan      | `/rpi-plan`                     | Create a task-centered plan and independent critique       |
+| rpi-implement | `/rpi-implement`                | Execute approved work and record change evidence           |
+| rpi-review    | `/rpi-review`                   | Reconcile implementation evidence and route follow-up      |
+| hve-builder   | Use `hve-builder`               | Author or review prompts, instructions, agents, and skills |
+| video-to-gif  | Use `video-to-gif`              | Convert video to optimized GIFs                            |
+| git-commit    | `/git-commit`                   | Stage and commit changes                                   |
+| git-commit    | `/git-commit mode=message-only` | Generate a commit message for staged changes               |
 
 ## Role-Specific Guidance
 
@@ -83,11 +77,13 @@ Engineers are the primary users of Implementation, spending the majority of thei
 
 ### Full RPI Workflow
 
+Select **RPI Agent**, then enter:
+
 ```text
-/rpi task="Implement the pagination logic for the /api/v2/search endpoint.
+Implement the pagination logic for the /api/v2/search endpoint.
 Add cursor-based pagination with a default page size of 50 and a maximum
 of 200 results per request. Follow the existing pagination pattern in
-src/api/handlers/list-resources.py."
+src/api/handlers/list-resources.py.
 ```
 
 ### Step-by-Step RPI Skills

@@ -33,8 +33,10 @@ Use these cross-cutting utilities when your workflow spans multiple roles or lif
 
 Resume a workflow from the state and evidence files it owns. For RPI, reference the dated research, task-centered plan, changes, and review artifacts with the same stable task ID. Backlog managers and planning agents use their domain-specific state files and handoff records.
 
+Select **RPI Agent** and ask it to resume:
+
 ```text
-/rpi Continue task authentication-refactor from the latest dated plan,
+Continue task authentication-refactor from the latest dated plan,
 changes record, and review evidence. Resume the next incomplete task
 without repeating completed research.
 ```
@@ -82,22 +84,17 @@ Git utilities manage commit messages, merge operations, and pull request creatio
 |-------------------|---------------|-------------------------------------------------------|
 | **documentation** | Documentation | Documentation audit, drift, authoring, and validation |
 
-### Prompts
-
-| Prompt             | Category    | Invoke                | Description                                 |
-|--------------------|-------------|-----------------------|---------------------------------------------|
-| ado-get-build-info | Diagnostics | `/ado-get-build-info` | Azure DevOps build status and log retrieval |
-
 ### Skills
 
-| Skill        | Category     | Invoke          | Description                                                |
-|--------------|--------------|-----------------|------------------------------------------------------------|
-| git-commit   | Git          | `/git-commit`   | Selected-path conventional commits, or a message-only mode |
-| git-merge    | Git          | `/git-merge`    | Merge, rebase, and conflict resolution workflows           |
-| git-setup    | Git          | `/git-setup`    | Git configuration and environment setup                    |
-| pull-request | Git          | `/pull-request` | Pull request creation with template support                |
-| installer    | Installation |                 | HVE Core customized installation                           |
-| video-to-gif | Media        |                 | FFmpeg two-pass video-to-GIF conversion                    |
+| Skill              | Category     | Invoke                            | Description                                                |
+|--------------------|--------------|-----------------------------------|------------------------------------------------------------|
+| git-commit         | Git          | `/git-commit`                     | Selected-path conventional commits, or a message-only mode |
+| git-merge          | Git          | `/git-merge`                      | Merge, rebase, and conflict resolution workflows           |
+| git-setup          | Git          | `/git-setup`                      | Git configuration and environment setup                    |
+| pull-request       | Git          | `/pull-request`                   | Pull request creation with template support                |
+| backlog-management | Diagnostics  | Ask for Azure DevOps build status | Azure DevOps build status and log retrieval                |
+| installer          | Installation |                                   | HVE Core customized installation                           |
+| video-to-gif       | Media        |                                   | FFmpeg two-pass video-to-GIF conversion                    |
 
 ## Tips
 

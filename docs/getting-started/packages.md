@@ -3,7 +3,7 @@ title: HVE Core Identity and Channels
 description: Understand the single HVE Core identity and its development, PreRelease, and Stable channels
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-02
 ms.topic: overview
 keywords:
   - packages
@@ -112,7 +112,7 @@ Copilot CLI plugins expose agents, commands, and skills, but plugin-contained
 instructions are not auto-applied. See [Copilot CLI Plugin](methods/cli-plugins#instructions-are-not-auto-applied-from-plugins)
 for the host-specific limitation.
 
-The `hve-core` plugin includes `RPI Agent` and the `/rpi`, `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` entry points.
+The `hve-core` plugin includes `RPI Agent` and the `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` entry points.
 
 ---
 

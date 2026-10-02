@@ -164,8 +164,8 @@ Determine the build to query based on user input:
 
 **Generic references**:
 
-* Current context (my pull request, this branch, current branch): Derive {{prNumber}} from the current git branch, then construct the branch name.
-* Latest build (latest, current, failing, recent): Use `mcp_ado_pipelines_get_builds` with `top` set to 1 and `queryOrder` set to `queueTimeDescending`.
+* Current context (my pull request, my PR, current PR, this branch, current branch): Derive {{prNumber}} from the current git branch, then construct the branch name.
+* Latest build (latest, most recent, current, failing, recent): Use `mcp_ado_pipelines_get_builds` with `top` set to 1 and `queryOrder` set to `queueTimeDescending`.
 
 **Query parameters**:
 

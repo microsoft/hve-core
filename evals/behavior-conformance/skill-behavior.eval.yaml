@@ -7144,3 +7144,89 @@ stimuli:
         name: skill-git-setup-conformance-scope-language
         config:
           pattern: "(?i)setup|config|user|email|remote"
+
+  - name: skill-vally-tests-from-artifact
+    prompt: |
+      Use the `vally-tests` skill in from-artifact mode to author a conformance
+      stimulus from a target artifact's documented behavior.
+    agent_environment:
+      skills:
+        - ../../.github/skills/hve-core/vally-tests
+    tags:
+      category: behavior-conformance
+      skill: vally-tests
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-vally-tests-from-artifact-agent-attribution
+        config:
+          pattern: "(?i)vally\\s+test\\s+author|vally-tests|from-artifact"
+      - type: output-matches
+        name: skill-vally-tests-from-artifact-scope-language
+        config:
+          pattern: "(?i)stimul|conformance|safety\\s+self-check|advisory|grader"
+
+  - name: skill-vally-tests-corpus-import
+    prompt: |
+      Use the `vally-tests` skill in corpus-import mode to import a CSV corpus
+      of refusal examples into the Vally conformance eval suite.
+    agent_environment:
+      skills:
+        - ../../.github/skills/hve-core/vally-tests
+    tags:
+      category: behavior-conformance
+      skill: vally-tests
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-vally-tests-corpus-import-agent-attribution
+        config:
+          pattern: "(?i)vally\\s+test\\s+author|vally-tests|corpus-import"
+      - type: output-matches
+        name: skill-vally-tests-corpus-import-scope-language
+        config:
+          pattern: "(?i)corpus|import|CSV|XLSX|stimul|dedupe|append"
+
+  - name: skill-pull-request-ado-routing
+    prompt: |
+      Use the `pull-request` skill to create a draft Azure DevOps pull request
+      for this branch: generate the PR description, discover work items, and
+      identify reviewers.
+    agent_environment:
+      skills:
+        - ../../.github/skills/hve-core/pull-request
+        - ../../.github/skills/project-planning/backlog-management
+    tags:
+      category: behavior-conformance
+      skill: pull-request
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-pull-request-ado-routing-agent-attribution
+        config:
+          pattern: "(?i)backlog-management|Azure\\s+DevOps|ado-pull-request"
+      - type: output-matches
+        name: skill-pull-request-ado-routing-scope-language
+        config:
+          pattern: "(?i)pull\\s+request|work\\s+item|reviewer|Azure\\s+DevOps"
+
+  - name: skill-backlog-management-build-info
+    prompt: |
+      Use the `backlog-management` skill's Azure DevOps build-info workflow
+      with minimal arguments and explain how it coordinates the workflow.
+    agent_environment:
+      skills:
+        - ../../.github/skills/project-planning/backlog-management
+    tags:
+      category: behavior-conformance
+      skill: backlog-management
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-backlog-management-build-info-agent-attribution
+        config:
+          pattern: "(?i)ADO|build|pipeline"
+      - type: output-matches
+        name: skill-backlog-management-build-info-scope-language
+        config:
+          pattern: "(?i)build|status|logs|pipeline|definition"

@@ -22,7 +22,7 @@ Backlog and work item workflows are not prompts. They are user-invocable skills 
 
 ## How to Use Prompts
 
-Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (for example, `/rpi`). They provide:
+Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (for example, `/risk-register`). They provide:
 
 * **Educational Guidance**: Step-by-step coaching approach
 * **Context-Aware Assistance**: Project-specific guidance and examples
@@ -33,9 +33,7 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (for e
 
 ### Onboarding, Research & Planning
 
-* **[RPI](./hve-core/rpi.prompt.md)** - Coordinates one task through Research, Plan, Implement, Review, and Follow-up with the RPI Agent and matching `rpi-*` skills
-
-Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when you need one bounded RPI phase. Resume longer work from the durable artifacts owned by that workflow rather than from a generic conversation checkpoint.
+Select **RPI Agent** to coordinate one task through Research, Plan, Implement, Review, and Follow-up. Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when you need one bounded RPI phase. Resume longer work from the durable artifacts owned by that workflow rather than from a generic conversation checkpoint.
 
 ### Source Control & Commit Quality
 
@@ -43,15 +41,13 @@ Git workflows are user-invocable skills: [Git Commit](../skills/hve-core/git-com
 
 ### Pull Requests & Code Review
 
-* **[Pull Request](../skills/hve-core/pull-request/SKILL.md)** - Prepare, create, or update a concise pull request with targeted preflight checks
-* **[PR Review](./hve-core/pr-review.prompt.md)** - Review a pull request or local change set via the consolidated Code Review agent
+* **[Pull Request](../skills/hve-core/pull-request/SKILL.md)** - Prepare, create, or update a concise GitHub or Azure DevOps pull request with targeted preflight checks
+
+Select the **Code Review** agent to review a pull request or local change set.
 
 ### Prompt Engineering & Evaluation
 
-* **[Vally Test Write](./hve-core/vally-test-write.prompt.md)** - Author Vally conformance test stimuli for an existing prompt, instructions, agent, or skill
-* **[Evals Import](./hve-core/evals-import.prompt.md)** - Import a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe
-
-Use the `hve-builder` skill to create, improve, refactor, review, or validate prompt-engineering artifacts. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills are compatibility aliases that route legacy requests to `hve-builder`; they are not prompt files or independent lifecycle owners. Vally conformance authoring remains owned by `Vally Test Author` and the `vally-tests` skill.
+Use the `hve-builder` skill to create, improve, refactor, review, or validate prompt-engineering artifacts. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills are compatibility aliases that route legacy requests to `hve-builder`; they are not prompt files or independent lifecycle owners. Vally conformance authoring and corpus import run through the [`vally-tests`](../skills/hve-core/vally-tests/SKILL.md) skill and the `Vally Test Author` subagent.
 
 ### Backlog & Work Item Management
 
@@ -66,11 +62,6 @@ These workflows are skills rather than prompts. Each resolves the active tracker
 
 * **[Jira Skill](../skills/project-planning/jira/SKILL.md)** - Configure local Jira access and use the CLI directly
 * **[GitLab Skill](../skills/project-planning/gitlab/SKILL.md)** - Inspect merge requests, comments, pipelines, jobs, and logs for GitLab-hosted delivery workflows
-
-### Azure DevOps Pull Requests & Builds
-
-* **[ADO Create Pull Request](./hve-core/ado-create-pull-request.prompt.md)** - Create Azure DevOps PRs with generated description, linked work items, and reviewers
-* **[ADO Get Build Info](./hve-core/ado-get-build-info.prompt.md)** - Retrieve build status and logs for a PR or build number
 
 ### Security
 
@@ -87,7 +78,6 @@ These workflows are skills rather than prompts. Each resolves the active tracker
 
 ### Experimental & Tools
 
-* **[PowerPoint](./pptx.prompt.md)** - Create, update, or manage PowerPoint slide decks
 * **[cspell Config](./experimental/cspell-config.prompt.md)** - Create or update the project cspell configuration with project words and ignores
 
 ## Prompts vs Instructions vs Custom Agents
@@ -98,15 +88,15 @@ These workflows are skills rather than prompts. Each resolves the active tracker
 
 ## Quick Start
 
-1. **Coordinating a complete task?** Use [RPI](./hve-core/rpi.prompt.md) with `/rpi task="<outcome>"`
+1. **Coordinating a complete task?** Select **RPI Agent**
 2. **Working on one RPI phase?** Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review`
-3. **Authoring an HVE artifact?** Use `hve-builder`; use the Vally prompts above only for conformance-test authoring or corpus import
+3. **Authoring an HVE artifact?** Use `hve-builder`; use `vally-tests` only for conformance-test authoring or corpus import
 4. **Committing changes?** Use the [Git Commit](../skills/hve-core/git-commit/SKILL.md) skill, or `/git-commit mode=message-only` for a message alone
 5. **Handling merge conflicts?** Use the [Git Merge](../skills/hve-core/git-merge/SKILL.md) skill
 6. **Setting up Git?** Use the [Git Setup](../skills/hve-core/git-setup/SKILL.md) skill
 7. **Tracking your work?** Use the [Backlog Plan](../skills/project-planning/backlog-plan/SKILL.md) skill in `my-work` mode, then `task-plan` mode
-8. **Creating Azure DevOps PRs?** Use [ADO Create Pull Request](./hve-core/ado-create-pull-request.prompt.md)
-9. **Checking build status?** Use [ADO Get Build Info](./hve-core/ado-get-build-info.prompt.md)
+8. **Creating Azure DevOps PRs?** Use the [Pull Request](../skills/hve-core/pull-request/SKILL.md) skill
+9. **Checking build status?** Ask for the Azure DevOps build status, which loads the `backlog-management` build reference
 10. **Creating or updating tracker items?** Use the [Backlog Execute](../skills/project-planning/backlog-execute/SKILL.md) skill
 11. **Working on PRs?** Use the [Pull Request](../skills/hve-core/pull-request/SKILL.md) skill
 12. **Responding to Azure incidents?** Use [Incident Response](./security/incident-response.prompt.md)

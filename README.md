@@ -2,7 +2,7 @@
 title: HVE Core
 description: Agentic SDLC framework for context management, governance, shift-left engineering, reusable organizational knowledge, and consistent practices across teams
 author: Microsoft
-ms.date: 2026-09-23
+ms.date: 2026-10-02
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -54,7 +54,7 @@ HVE Core provides structured workflow building blocks:
 
 1. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace.
 2. Open any project and launch GitHub Copilot Chat (`Ctrl+Alt+I`).
-3. Select **RPI Agent** from the agent picker or run `/rpi`, then describe the task you want to complete.
+3. Select **RPI Agent** from the agent picker, then describe the task you want to complete.
 
 > [!TIP]
 > Using GitHub Copilot CLI? Register the consolidated HVE Core marketplace and

@@ -1,14 +1,14 @@
 ---
 name: pull-request
-description: 'Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs. Use when a user asks to prepare, create, or update a pull request.'
+description: 'Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs, and routes Azure DevOps repositories to the backlog-management pull request protocol. Use when a user asks to prepare, create, or update a pull request on GitHub or Azure DevOps.'
 argument-hint: '[base=auto] [draft=false] [action=prepare|create|update]'
 license: MIT
 user-invocable: true
-compatibility: 'Requires git on PATH and a GitHub integration for create or update actions'
+compatibility: 'Requires git on PATH, plus a GitHub integration or the Azure DevOps MCP server for create or update actions'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0.0"
-  last_updated: "2026-09-04"
+  last_updated: "2026-10-02"
 ---
 
 # Pull Request
@@ -33,6 +33,16 @@ after one final approval.
 
 Use the current checked-out branch as the head. Ask only for an input that cannot be inferred and
 changes the resulting pull request.
+
+## Platform Routing
+
+When the push remote is hosted on Azure DevOps (`dev.azure.com` or `*.visualstudio.com`), or the user
+explicitly asks for an Azure DevOps pull request, load the `backlog-management` skill and follow its
+Azure DevOps pull request reference instead of the Flow below. Run that reference's Mandatory
+Preflight first, and pass through any Azure DevOps inputs the user supplies, such as project,
+repository, work item IDs, area path, or iteration path. When `backlog-management` does not resolve,
+report that the Azure DevOps protocol is unavailable and stop before any Azure DevOps call. Every other
+remote uses the GitHub flow below unchanged.
 
 ## Flow
 

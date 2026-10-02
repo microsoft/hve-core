@@ -3,7 +3,7 @@ title: Migrate to the HVE Core Identity
 description: Move retired package installations to the single HVE Core plugin or extension
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - migration
@@ -139,17 +139,12 @@ Each replacement resolves your tracker from the workspace, so you no longer choo
 
 ### Commands absorbed elsewhere
 
-| Retired command    | Replacement                                      |
-|--------------------|--------------------------------------------------|
-| `/jira-prd-to-wit` | The `Functional Planner` agent                   |
-| `/jira-setup`      | The Credential Setup section of the `jira` skill |
-
-### Relocated, not retired
-
-| Command                    | Now ships in |
-|----------------------------|--------------|
-| `/ado-create-pull-request` | `hve-core`   |
-| `/ado-get-build-info`      | `hve-core`   |
+| Retired command            | Replacement                                                                                               |
+|----------------------------|-----------------------------------------------------------------------------------------------------------|
+| `/jira-prd-to-wit`         | The `Functional Planner` agent                                                                            |
+| `/jira-setup`              | The Credential Setup section of the `jira` skill                                                          |
+| `/ado-create-pull-request` | `/pull-request`, which routes Azure DevOps repositories to the `backlog-management` pull request protocol |
+| `/ado-get-build-info`      | The Azure DevOps build reference in the `backlog-management` skill, loaded when you ask for build status  |
 
 ### Relocated skills within HVE Core
 

@@ -19,7 +19,7 @@ estimated_reading_time: 6
 Delivery takes approved pull requests through merge, build verification, and work item updates. This stage closes the loop between implementation and tracking systems, ensuring that completed work is accurately reflected across all project management surfaces.
 
 > [!IMPORTANT]
-> Delivery is the only stage with zero agents. All operations at this stage are driven by skills, prompts, and auto-activated instructions. This reflects the procedural, checklist-oriented nature of delivery workflows.
+> Delivery is the only stage with zero agents. All operations at this stage are driven by skills and auto-activated instructions. This reflects the procedural, checklist-oriented nature of delivery workflows.
 
 ## When You Enter This Stage
 
@@ -30,13 +30,13 @@ You enter Delivery after [Stage 7: Review](review.md) with an approved pull requ
 
 ## Available Tools
 
-### Prompts and Skills
+### Skills
 
-| Tool               | Type   | How to Invoke         | Purpose                                      |
-|--------------------|--------|-----------------------|----------------------------------------------|
-| git-merge          | Skill  | `/git-merge`          | Merge approved PRs into the target branch    |
-| ado-get-build-info | Prompt | `/ado-get-build-info` | Check build status for the current branch    |
-| backlog-execute    | Skill  | `/backlog-execute`    | Apply reviewed work item and backlog updates |
+| Tool               | Type  | How to Invoke                         | Purpose                                      |
+|--------------------|-------|---------------------------------------|----------------------------------------------|
+| git-merge          | Skill | `/git-merge`                          | Merge approved PRs into the target branch    |
+| backlog-management | Skill | Ask for the Azure DevOps build status | Check build status for the current branch    |
+| backlog-execute    | Skill | `/backlog-execute`                    | Apply reviewed work item and backlog updates |
 
 ### Auto-Activated Instructions
 
@@ -63,7 +63,7 @@ Engineers merge their approved PRs and verify builds. TPMs update work item stat
 ```
 
 ```text
-/ado-get-build-info Check build status for the current branch
+Check the Azure DevOps build status for the current branch's pull request.
 ```
 
 ```text

@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for prompts, instructions, and skill behavior'
 author: HVE Core Team
-ms.date: 2026-09-29
+ms.date: 2026-10-02
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -29,7 +29,7 @@ The maintained `prompts.eval.yaml` inventory contains 70 stimuli across 47 promp
 
 The maintained `instructions.eval.yaml` inventory contains 75 stimuli: 73 instruction-tagged stimuli across 55 instruction subjects, plus two `backlog-management` skill stimuli. Coverage spans:
 
-* Delivery workflows: `ado-create-pull-request`, `ado-get-build-info`, `pull-request`.
+* Delivery workflows: the Azure DevOps pull request and build-info protocols in `backlog-management`, and `pull-request`.
 * HVE-Core authoring: `commit-message`, `copilot-tracking`, `hve-builder`, `markdown`, `pull-request`, and `writing-style`.
 * RAI, Accessibility, and Security planning: `accessibility-identity`, `rai-identity`, `rai-risk-classification`, `backlog-handoff`, `sssc-assessment`, and `standards-mapping`.
 * Additional: `docusaurus-edits`, `dt-coach-telemetry`, `experiment-designer`, `disclaimer-language`.
