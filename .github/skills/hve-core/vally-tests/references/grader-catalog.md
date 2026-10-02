@@ -69,14 +69,14 @@ Select the grader that observes the behavior directly. The `shape` values below 
 
 | Shape or behavior                                                                  | Preferred families                                                                                          |
 |------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| `knowledge`                                                                        | `prompt`, `output-contains`, or `output-matches`; no workspace artifact exists to inspect                   |
+| `knowledge`                                                                        | `prompt`, `output-contains`, or `output-matches`; stage a repository skill in `agent_environment.skills`    |
 | `tool-trigger`, `operation`                                                        | `skill-invocation`, `tool-calls`, then file or diff graders for the resulting artifact                      |
 | `bleed-detection`, `injected-directive`, `authority-boundary`, `boundary`          | Negated output or transcript graders, `tool-calls` with `disallowed`, `diff-empty`                          |
 | `read-only-status`, `source-immutability`, `source-intake`                         | `diff-empty`, `file-not-exists`, `tool-calls` with `disallowed`, plus a narrow output assertion when needed |
 | `blocking-derivation`, `invalid-continuation`, `routing`, `continuation`           | `skill-invocation`, output or transcript assertions, and absence checks for forbidden outputs               |
 | `cross-domain-draft`, `end-to-end`, `rendering-separation`, `outcome-evidence-gap` | File, diff, command, or program graders for artifacts; prompt/output graders only for semantic claims       |
 
-`skill-invocation` and `tool-calls` are registered by Vally 0.15.0 but are not yet used by this repository's committed eval specs. Treat them as available but locally unproven: the first adopter should validate one bounded stimulus before broad migration. This catalog does not authorize migration of existing stimuli.
+A knowledge question about a repository skill needs that skill staged: without it the agent has no access to the skill and can only report that it is unavailable. `tool-calls` is in use in this repository, for example in `skill-dt-rpi-integration-validation-and-dispatch-failure`. `skill-invocation` reads the trajectory's `skill_activation` events, which record each staged skill the agent activates. It is validated here by `skill-vally-tests-tool-trigger` (`required: [vally-tests]`), which passed on every hosted trial that activated the skill. A run with no `skill_activation` event would fail the requirement, per the grader's required-entry logic; that negative case has not yet been observed in a hosted run. Validate it again before relying on it under a different executor. This catalog does not authorize migration of existing stimuli.
 
 ## Conceptual Compatibility Table
 

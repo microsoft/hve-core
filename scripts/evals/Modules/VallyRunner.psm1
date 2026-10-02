@@ -846,6 +846,60 @@ function Get-VallyExitCategory {
     return $category
 }
 
+function Resolve-VallyCommandPath {
+    <#
+    .SYNOPSIS
+    Resolves a vally command name to the path every invocation path runs.
+
+    .DESCRIPTION
+    Aliases and functions exist only in the session that defined them, so a child
+    process or parallel runspace that looked up the command by name could miss a
+    session alias and fall back to whatever else is on PATH. Resolving once here, and
+    from every invocation path, makes serial and sharded runs start the same
+    executable.
+
+    An alias resolves to its target's path when the target is an application or
+    script, and to its definition otherwise. An application or script resolves to its
+    path. Any other command type returns the input name. A missing command writes a
+    non-terminating error and returns the input name, so callers choose whether that
+    is fatal through -ErrorAction.
+
+    .PARAMETER Name
+    Command name or path to resolve.
+
+    .OUTPUTS
+    [string] Executable or script path, alias definition, or the input name.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Name = 'vally'
+    )
+
+    $pathTypes = @(
+        [System.Management.Automation.CommandTypes]::Application,
+        [System.Management.Automation.CommandTypes]::ExternalScript
+    )
+    $info = Get-Command -Name $Name -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $info) {
+        Write-Error -Message "Command '$Name' was not found." -Category ObjectNotFound -TargetObject $Name
+        return $Name
+    }
+    if ($info.CommandType -eq [System.Management.Automation.CommandTypes]::Alias) {
+        $target = $info.ResolvedCommand
+        if ($target -and $target.CommandType -in $pathTypes -and $target.Source) {
+            return [string]$target.Source
+        }
+        return [string]$info.Definition
+    }
+    if ($info.CommandType -in $pathTypes) {
+        return [string]$info.Source
+    }
+    return $Name
+}
+
 function Invoke-VallyProcess {
     <#
     .SYNOPSIS
@@ -892,18 +946,7 @@ catch {
 exit $exitCode
 '@
 
-    $commandInfo = Get-Command -Name $Command -ErrorAction Stop
-    $resolvedCommand = if ($commandInfo.CommandType -eq [System.Management.Automation.CommandTypes]::Alias) {
-        [string]$commandInfo.Definition
-    }
-    elseif ($commandInfo.CommandType -in @(
-            [System.Management.Automation.CommandTypes]::Application,
-            [System.Management.Automation.CommandTypes]::ExternalScript)) {
-        [string]$commandInfo.Source
-    }
-    else {
-        $Command
-    }
+    $resolvedCommand = Resolve-VallyCommandPath -Name $Command -ErrorAction Stop
 
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
     $startInfo.FileName = (Get-Command pwsh -ErrorAction Stop).Source
@@ -983,6 +1026,186 @@ exit $exitCode
         if ($stopwatch -and $stopwatch.IsRunning) { $stopwatch.Stop() }
         $process.Dispose()
     }
+}
+
+function Get-VallyComparisonRecordCount {
+    <#
+    .SYNOPSIS
+    Counts parseable comparison records in a `vally compare --output` JSONL file.
+
+    .DESCRIPTION
+    Returns zero for a missing or unreadable file. Unparseable lines and records of
+    any other type are ignored, so the count answers only whether the judge produced
+    at least one usable comparison record.
+
+    .PARAMETER Path
+    Comparison JSONL path.
+
+    .OUTPUTS
+    [int] Number of `type: "comparison"` records.
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return 0 }
+    $count = 0
+    try {
+        foreach ($line in [System.IO.File]::ReadLines($Path)) {
+            if ([string]::IsNullOrWhiteSpace($line)) { continue }
+            try {
+                $record = ConvertFrom-Json -InputObject $line -AsHashtable -Depth 100 -ErrorAction Stop
+            }
+            catch {
+                continue
+            }
+            if ($record -is [System.Collections.IDictionary] -and $record['type'] -eq 'comparison') { $count++ }
+        }
+    }
+    catch {
+        return 0
+    }
+    return $count
+}
+
+function Test-VallyCompareRetryEligibility {
+    <#
+    .SYNOPSIS
+    Decides whether one failed compare attempt may be repeated.
+
+    .DESCRIPTION
+    A retry is allowed only for the first attempt, only when it failed, and only when
+    it produced no comparison record. A partial result is never replaced, so a retry
+    cannot hide a judged outcome; it only recovers a process that yielded nothing.
+
+    .PARAMETER Attempt
+    Attempt ordinal that just completed.
+
+    .PARAMETER ExitCode
+    Exit code of that attempt, or a negative sentinel when the worker failed before
+    a process result existed.
+
+    .PARAMETER ComparisonRecordCount
+    Parseable comparison records the attempt wrote.
+
+    .OUTPUTS
+    [bool] True when exactly one further attempt is allowed.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)][int]$Attempt,
+        [Parameter(Mandatory = $true)][int]$ExitCode,
+        [Parameter(Mandatory = $true)][int]$ComparisonRecordCount
+    )
+
+    return ($Attempt -eq 1 -and $ExitCode -ne 0 -and $ComparisonRecordCount -eq 0)
+}
+
+function Invoke-VallyCompareShard {
+    <#
+    .SYNOPSIS
+    Runs one `vally compare` shard with at most one retry and returns structured attempts.
+
+    .DESCRIPTION
+    Every attempt returns a result object even when the process could not be started
+    or the wrapper threw, so the caller can account for timing, logs, and run health
+    from data rather than from an exception that escaped a parallel worker. Output is
+    removed before each attempt so a stale file cannot be counted as fresh evidence,
+    and a retry appends to the same withheld log.
+
+    .PARAMETER Command
+    Resolved vally executable or script path.
+
+    .PARAMETER Arguments
+    Complete compare arguments, including `--output` for this shard.
+
+    .PARAMETER OutputPath
+    The shard's `--output` path.
+
+    .PARAMETER LogPath
+    Withheld runner-local log for the shard.
+
+    .PARAMETER Worker
+    Sanitized worker identifier for trusted progress.
+
+    .PARAMETER Shard
+    One-based shard number.
+
+    .PARAMETER HeartbeatIntervalSeconds
+    Trusted heartbeat interval.
+
+    .OUTPUTS
+    [pscustomobject[]] One object per attempt with Shard, Attempt, Worker, ExitCode,
+    ExitCategory, ElapsedSeconds, LogPath, OutputPath, and ComparisonRecords.
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject[]])]
+    param(
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Command,
+        [Parameter(Mandatory = $true)][string[]]$Arguments,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$OutputPath,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$LogPath,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Worker,
+        [Parameter(Mandatory = $true)][ValidateRange(1, 100)][int]$Shard,
+        [ValidateRange(1, 3600)][int]$HeartbeatIntervalSeconds = 60
+    )
+
+    $attempts = [System.Collections.Generic.List[object]]::new()
+    for ($attempt = 1; $attempt -le 2; $attempt++) {
+        if (Test-Path -LiteralPath $OutputPath -PathType Leaf) {
+            Remove-Item -LiteralPath $OutputPath -Force -ErrorAction SilentlyContinue
+        }
+        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+        $exitCode = -1
+        $exitCategory = 'worker-error'
+        $safeWorker = $Worker
+        try {
+            $processResult = Invoke-VallyProcess `
+                -Command $Command `
+                -Arguments $Arguments `
+                -LogPath $LogPath `
+                -AppendLog:($attempt -gt 1) `
+                -Phase 'compare' `
+                -Worker $Worker `
+                -Attempt $attempt `
+                -HeartbeatIntervalSeconds $HeartbeatIntervalSeconds
+            $exitCode = [int]$processResult.ExitCode
+            $exitCategory = [string]$processResult.ExitCategory
+            $safeWorker = [string]$processResult.Worker
+        }
+        catch {
+            # The exception text can carry arbitrary paths or child output, so only the
+            # fixed category is retained.
+            $exitCode = -1
+            $exitCategory = 'worker-error'
+        }
+        finally {
+            $stopwatch.Stop()
+        }
+
+        $records = Get-VallyComparisonRecordCount -Path $OutputPath
+        $attempts.Add([pscustomobject]@{
+                Shard             = $Shard
+                Attempt           = $attempt
+                Worker            = $safeWorker
+                ExitCode          = $exitCode
+                ExitCategory      = $exitCategory
+                ElapsedSeconds    = [math]::Round($stopwatch.Elapsed.TotalSeconds, 3)
+                LogPath           = $LogPath
+                OutputPath        = $OutputPath
+                ComparisonRecords = $records
+            })
+
+        if (-not (Test-VallyCompareRetryEligibility -Attempt $attempt -ExitCode $exitCode -ComparisonRecordCount $records)) {
+            break
+        }
+    }
+    return $attempts.ToArray()
 }
 
 function Invoke-VallySpec {
@@ -1947,7 +2170,11 @@ Export-ModuleMember -Function @(
     'Test-VallyDiagnosticEvidence',
     'Read-VallyResultsJsonl',
     'Get-VallyExitCategory',
+    'Resolve-VallyCommandPath',
     'Invoke-VallyProcess',
+    'Get-VallyComparisonRecordCount',
+    'Test-VallyCompareRetryEligibility',
+    'Invoke-VallyCompareShard',
     'Invoke-VallySpec',
     'Test-SpecInputModeration',
     'Test-SpecOutputModerationBatch',

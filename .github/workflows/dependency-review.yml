@@ -236,6 +236,9 @@ jobs:
           # pkg:npm/rpi-with-hve is the private root package of the
           # slides/rpi-with-hve deck (never published to npm) and is locally
           # MIT; the dependency graph cannot resolve a license for it.
+          # pkg:npm/rai-planner is the private root package of the
+          # slides/rai-planner deck (never published to npm) and is locally
+          # MIT; the dependency graph cannot resolve a license for it.
           # pkg:npm/%40vscode/vsce-sign is first-party Microsoft build-time
           # publisher tooling under a non-SPDX reference ("SEE LICENSE IN
           # LICENSE.txt") that resolves to the Microsoft Software License
@@ -315,6 +318,7 @@ jobs:
             pkg:npm/hve-core,
             pkg:npm/hve-core-marketplace-publisher,
             pkg:npm/rpi-with-hve,
+            pkg:npm/rai-planner,
             pkg:npm/%40vscode/vsce-sign,
             pkg:npm/binaryextensions,
             pkg:npm/editions,

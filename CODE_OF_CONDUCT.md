@@ -2,7 +2,7 @@
 title: Code of Conduct
 description: Microsoft Open Source Code of Conduct and community behavior expectations
 author: Microsoft Open Source Programs Office
-ms.date: 2026-06-26
+ms.date: 2026-09-28
 ms.topic: reference
 keywords:
   - code of conduct

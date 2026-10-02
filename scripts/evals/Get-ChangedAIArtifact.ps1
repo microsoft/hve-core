@@ -5,11 +5,11 @@
 
 <#
 .SYNOPSIS
-    Emits a JSON manifest of AI customization artifacts changed between two git refs.
+    Emits a JSON manifest of AI customization artifacts from a canonical change set.
 
 .DESCRIPTION
-    Runs `git diff --name-status <BaseRef>...<HeadRef>` (three-dot diff to use the merge base)
-    and classifies each entry as an agent / prompt / instruction / skill artifact via the
+    Reads a required immutable eval change set and classifies each entry
+    as an agent / prompt / instruction / skill artifact via the
     ArtifactDetection module. Writes a manifest JSON array to `-OutFile` (default
     `logs/changed-ai-artifacts.json`) where each entry has `kind`, `path`, `artifactId`,
     `status`, and (for renames/copies) `previousPath`. Repo-root-only artifacts and nested
@@ -17,13 +17,10 @@
 
     Exit codes:
       0 = manifest written successfully (manifest may be empty).
-      2 = git invocation failed.
+      2 = input processing or manifest generation failed.
 
-.PARAMETER BaseRef
-    Base git ref for the diff. Defaults to `origin/main`.
-
-.PARAMETER HeadRef
-    Head git ref for the diff. Defaults to `HEAD`.
+.PARAMETER ChangeSetPath
+    Required canonical manifest written by Get-EvalChangeSet.ps1, relative to RepoRoot.
 
 .PARAMETER OutFile
     Output JSON path. Defaults to `logs/changed-ai-artifacts.json` (relative to RepoRoot).
@@ -32,12 +29,8 @@
     Repository root. Defaults to the git toplevel or this script's parent directory.
 
 .EXAMPLE
-    pwsh -File scripts/evals/Get-ChangedAIArtifact.ps1
-    Diff origin/main...HEAD and emit logs/changed-ai-artifacts.json.
-
-.EXAMPLE
-    pwsh -File scripts/evals/Get-ChangedAIArtifact.ps1 -BaseRef origin/main -HeadRef feature/branch
-    Diff a specific branch pair.
+    pwsh -File scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath logs/eval-change-set.json
+    Classify the frozen comparison and emit logs/changed-ai-artifacts.json.
 
 .NOTES
     Used by the PR-time eval coverage workflow to feed Test-StimulusPresence.ps1.
@@ -46,10 +39,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [string]$BaseRef = 'origin/main',
-
-    [Parameter(Mandatory = $false)]
-    [string]$HeadRef = 'HEAD',
+    [string]$ChangeSetPath = 'logs/eval-change-set.json',
 
     [Parameter(Mandatory = $false)]
     [string]$OutFile,
@@ -63,6 +53,7 @@ $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/ArtifactDetection.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/AffectedAgents.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/EvalChangeSet.psm1') -Force
 
 function Resolve-RepoRoot {
     [CmdletBinding()]
@@ -89,7 +80,7 @@ function Resolve-RepoRoot {
 function Invoke-ChangedArtifactScan {
     <#
     .SYNOPSIS
-    Runs git diff and classifies the results into an artifact manifest.
+    Classifies canonical change records into an artifact manifest.
 
     .OUTPUTS
     [hashtable] `@{ baseRef; headRef; artifacts = @(...) }`.
@@ -98,30 +89,15 @@ function Invoke-ChangedArtifactScan {
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true)]
-        [string]$BaseRef,
-
-        [Parameter(Mandatory = $true)]
-        [string]$HeadRef,
+        [string]$ChangeSetPath,
 
         [Parameter(Mandatory = $true)]
         [string]$RepoRoot
     )
 
-    Push-Location -LiteralPath $RepoRoot
-    try {
-        $diffOutput = & git diff --name-status "$BaseRef...$HeadRef" 2>&1
-        $exit = $LASTEXITCODE
-    }
-    finally {
-        Pop-Location
-    }
-
-    if ($exit -ne 0) {
-        throw "git diff failed (exit $exit): $($diffOutput -join [Environment]::NewLine)"
-    }
-
-    $lines = @($diffOutput | Where-Object { $_ -is [string] -and -not [string]::IsNullOrWhiteSpace($_) })
-    $changes = ConvertFrom-GitDiffNameStatus -Lines $lines
+    if (-not [System.IO.Path]::IsPathRooted($ChangeSetPath)) { $ChangeSetPath = Join-Path $RepoRoot $ChangeSetPath }
+    $changeSet = Read-EvalChangeSet -Path $ChangeSetPath
+    $changes = $changeSet.changes
 
     $artifacts = [System.Collections.Generic.List[hashtable]]::new()
     $changedPaths = [System.Collections.Generic.List[string]]::new()
@@ -136,18 +112,12 @@ function Invoke-ChangedArtifactScan {
 
     $affectedAgents = [string[]]@()
     if ($changedPaths.Count -gt 0) {
-        try {
-            $affectedAgents = Get-AffectedAgentSlugs -ChangedFiles $changedPaths.ToArray() -RepoRoot $RepoRoot
-        }
-        catch {
-            Write-Warning "Failed to resolve affected agents: $($_.Exception.Message)"
-            $affectedAgents = [string[]]@()
-        }
+        $affectedAgents = Get-AffectedAgentSlugs -ChangedFiles $changedPaths.ToArray() -RepoRoot $RepoRoot
     }
 
     return @{
-        baseRef        = $BaseRef
-        headRef        = $HeadRef
+        baseRef        = $changeSet.baseRef
+        headRef        = $changeSet.headRef
         artifacts      = $artifacts.ToArray()
         affectedAgents = [string[]]$affectedAgents
     }
@@ -164,10 +134,10 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
 
     try {
-        $manifest = Invoke-ChangedArtifactScan -BaseRef $BaseRef -HeadRef $HeadRef -RepoRoot $resolvedRepoRoot
+        $manifest = Invoke-ChangedArtifactScan -ChangeSetPath $ChangeSetPath -RepoRoot $resolvedRepoRoot
     }
     catch {
-        Write-Error $_.Exception.Message
+        Write-Error -ErrorAction Continue $_.Exception.Message
         exit 2
     }
 
@@ -178,7 +148,7 @@ if ($MyInvocation.InvocationName -ne '.') {
 
     $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutFile -Encoding UTF8
 
-    Write-Host "Detected $($manifest.artifacts.Count) changed AI artifact(s) between $BaseRef and $HeadRef."
+    Write-Host "Detected $($manifest.artifacts.Count) changed AI artifact(s) between $($manifest.baseRef) and $($manifest.headRef)."
     Write-Host "Affected agent slugs: $($manifest.affectedAgents.Count)"
     Write-Host "Manifest: $OutFile"
     exit 0

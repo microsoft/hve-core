@@ -1,0 +1,19 @@
+## Level Contracts
+
+| Level | Audience | Target duration  | Capture fidelity |
+|-------|----------|------------------|------------------|
+| L100  | New      | 4 to 6 minutes   | deck             |
+| L200  | Guided   | 6 to 8 minutes   | deck             |
+| L300  | Applied  | 8 to 10 minutes  | live             |
+| L400  | Extend   | 10 to 12 minutes | live             |
+
+## Topic Resolution
+
+### Pinned Sources for `hve-core-general`
+
+| Level | Purpose | Required local sources   |
+|-------|---------|--------------------------|
+| L100  | Intro   | `docs/a.md`; `docs/b.md` |
+| L200  | Guided  | `docs/c.md`              |
+| L300  | Applied | `docs/d.md`              |
+| L400  | Extend  | `docs/e.md`              |

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import shutil
 import subprocess
 import sys
@@ -25,6 +26,9 @@ import yaml
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_ERROR = 2
+
+DEFAULT_TIMEOUT_SECONDS = 600
+MAX_TIMEOUT_SECONDS = 86400
 
 
 class ManifestError(ValueError):
@@ -55,6 +59,15 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--resolution",
         help="Output resolution in WIDTHxHEIGHT format, for example 1280x720",
+    )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=DEFAULT_TIMEOUT_SECONDS,
+        help=(
+            "Maximum seconds for each ffprobe or ffmpeg invocation "
+            f"(1-{MAX_TIMEOUT_SECONDS}, default {DEFAULT_TIMEOUT_SECONDS})"
+        ),
     )
     parser.add_argument(
         "-v",
@@ -240,7 +253,25 @@ def _resolve_path(path_value: str, *, base_dir: Path) -> Path:
     return (base_dir / candidate).resolve()
 
 
-def _probe_duration(audio_path: Path) -> float:
+def _run_bounded(
+    command: list[str], *, timeout: int, step: str
+) -> subprocess.CompletedProcess[str]:
+    """Run a command with captured text output under a wall-clock timeout.
+
+    ``subprocess.run`` kills the child when the timeout expires or when any
+    exception, including ``KeyboardInterrupt``, interrupts the wait.
+    """
+    try:
+        return subprocess.run(
+            command, capture_output=True, text=True, check=False, timeout=timeout
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ManifestError(f"{step} timed out after {timeout} seconds") from exc
+
+
+def _probe_duration(
+    audio_path: Path, *, timeout: int = DEFAULT_TIMEOUT_SECONDS
+) -> float:
     """Get the duration of a WAV file via ffprobe."""
     ffprobe = _require_command("ffprobe")
     command = [
@@ -253,7 +284,9 @@ def _probe_duration(audio_path: Path) -> float:
         "default=noprint_wrappers=1:nokey=1",
         str(audio_path),
     ]
-    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    result = _run_bounded(
+        command, timeout=timeout, step=f"ffprobe for {audio_path.name}"
+    )
     if result.returncode != 0:
         raise ManifestError(
             "Unable to determine narration duration for "
@@ -283,6 +316,7 @@ def _render_segment(
     resolution: str,
     fps: int,
     ffmpeg_path: str,
+    timeout: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> None:
     """Render a single segment to a normalized MP4 file."""
     visual_source = segment.get("visual")
@@ -346,13 +380,18 @@ def _render_segment(
             str(output_path),
         ]
 
-    _run_ffmpeg(command)
+    _run_ffmpeg(command, timeout=timeout, step=f"FFmpeg render of {output_path.name}")
 
 
-def _run_ffmpeg(command: list[str]) -> None:
+def _run_ffmpeg(
+    command: list[str],
+    *,
+    timeout: int = DEFAULT_TIMEOUT_SECONDS,
+    step: str = "FFmpeg command",
+) -> None:
     """Run an FFmpeg command and raise a clear error on failure."""
     logging.debug("Running FFmpeg: %s", " ".join(command))
-    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    result = _run_bounded(command, timeout=timeout, step=step)
     if result.returncode != 0:
         stderr = (
             result.stderr.strip() or result.stdout.strip() or "unknown FFmpeg error"
@@ -361,14 +400,32 @@ def _run_ffmpeg(command: list[str]) -> None:
         raise ManifestError(f"FFmpeg command failed: {joined_command}\n{stderr}")
 
 
+def _concat_entry(path: Path) -> str:
+    """Return a concat demuxer ``file`` line with FFmpeg single-quote escaping."""
+    escaped = path.as_posix().replace("'", "'\\''")
+    return f"file '{escaped}'"
+
+
 def assemble_video(
     *,
     manifest_path: Path,
     output_path: Path | None,
     fps: int | None,
     resolution: str | None,
+    timeout: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> Path:
-    """Assemble the final MP4 from the manifest."""
+    """Assemble the final MP4 from the manifest.
+
+    The concatenated file is written inside the temporary directory and moved
+    to ``output_path`` only after FFmpeg succeeds, so a failed or interrupted
+    run never leaves a partial file and keeps any existing output unchanged.
+    """
+    if not 1 <= timeout <= MAX_TIMEOUT_SECONDS:
+        raise ManifestError(
+            f"Timeout must be between 1 and {MAX_TIMEOUT_SECONDS} seconds, "
+            f"got {timeout}"
+        )
+
     ffmpeg_path = _require_command("ffmpeg")
 
     manifest_data = _read_manifest(manifest_path)
@@ -416,7 +473,7 @@ def assemble_video(
                     raise ManifestError(f"Clip file not found: {clip_path}")
 
             if segment.get("duration") is None:
-                duration = _probe_duration(narration_path)
+                duration = _probe_duration(narration_path, timeout=timeout)
             else:
                 duration = segment["duration"]
             logging.debug(
@@ -438,14 +495,16 @@ def assemble_video(
                 resolution=selected_resolution,
                 fps=int(selected_fps),
                 ffmpeg_path=ffmpeg_path,
+                timeout=timeout,
             )
             normalized_paths.append(normalized_path)
 
         concat_list_path = temp_dir / "concat.txt"
         with concat_list_path.open("w", encoding="utf-8") as handle:
             for normalized_path in normalized_paths:
-                handle.write(f"file '{normalized_path.as_posix()}'\n")
+                handle.write(_concat_entry(normalized_path) + "\n")
 
+        staged_output = temp_dir / f"assembled{output_path.suffix or '.mp4'}"
         concat_command = [
             ffmpeg_path,
             "-y",
@@ -457,9 +516,12 @@ def assemble_video(
             str(concat_list_path),
             "-c",
             "copy",
-            str(output_path),
+            str(staged_output),
         ]
-        _run_ffmpeg(concat_command)
+        _run_ffmpeg(concat_command, timeout=timeout, step="FFmpeg concat")
+        if not staged_output.is_file():
+            raise ManifestError("FFmpeg concat reported success but wrote no output")
+        os.replace(staged_output, output_path)
 
     return output_path.resolve()
 
@@ -476,6 +538,7 @@ def main() -> int:
             output_path=args.output,
             fps=args.fps,
             resolution=args.resolution,
+            timeout=args.timeout,
         )
     except KeyboardInterrupt:
         print("Interrupted by user", file=sys.stderr)
