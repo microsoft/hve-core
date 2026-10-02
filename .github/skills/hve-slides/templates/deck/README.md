@@ -96,10 +96,19 @@ viewports and can be toggled at any size. Character shortcuts, including Space, 
 while the presentation surface itself has focus; Tab reaches that surface and its controls.
 New layouts must preserve reading-view reflow as well as the projected layout.
 
-The bottom bar keeps its ends `--presenter-inset` from the window edges, so viewer
-overlays such as the Copilot button SharePoint places at the bottom right do not cover
-the chapter label or slide navigation. With reading view off, the bar tightens its
-spacing at 1240 pixels wide and stacks centered rows at 1100 pixels or narrower.
+The bottom bar shows the HVE Core mark and current chapter, the presenter buttons, then
+slide navigation. `--presenter-height` sizes both the bar and the slide area above it. The
+bar keeps its ends `--presenter-inset` from the window edges, so viewer overlays such as the
+Copilot button SharePoint places at the bottom right do not cover the chapter label or slide
+navigation. With reading view off, the bar compacts at 1366 pixels wide and stacks
+centered rows at 1240 pixels or narrower. Keep chapter labels short: the bottom-chrome
+test allows 28 characters, which keeps the bar on one row at desktop widths.
+
+Opening and closing slides use `.slide-bottom` for repository and fidelity labels above a
+divider. Each walkthrough keeps Back, Next step and Reset in the footer of its example
+frame, so the controls stay in place between steps. Fit every step inside that frame
+without internal scrolling. The bottom-chrome test in `deck.test.cjs` records this
+contract; change it only with a deliberate redesign.
 
 ## Verify and share
 
