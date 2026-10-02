@@ -1,123 +1,9 @@
 ---
-description: 'Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server'
-agent: 'DT Coach'
-argument-hint: "project-slug=... [board-title=...] [method=latest] [output-type=figjam]"
-tools:
-  - read_file
-  - figma/whoami
-  - figma/create_new_file
-  - figma/use_figma
-  - figma/get_figjam
-  - figma/get_metadata
-  - figma/generate_diagram
+title: 'DT Figma Export Exercise Templates'
+description: FigJam layouts, reference Figma Plugin API code, and data mappings for the Project Details card and Persona Card exercises.
 ---
 
-# DT Figma Export
-
-Export Design Thinking artifacts from `.copilot-tracking/dt/{project-slug}/` to a FigJam board or Figma Design file using the official `figma` MCP server.
-Use this prompt after a team has produced Method 1, 3, 4, 5, or 6 artifacts that would benefit from collaborative visual review.
-
-FigJam boards are the default output type. They provide a collaborative whiteboarding surface for sticky notes, text, shapes, connectors, and diagrams. Figma Design files are available for teams that want structured frames with auto-layout for higher-fidelity visual outputs.
-
-## Inputs
-
-* ${input:project-slug}: (Required) Kebab-case Design Thinking project identifier.
-* ${input:board-title}: (Optional) Explicit board or file title. If omitted, derive a concise title from the project context and exported method.
-* ${input:method}: (Optional, defaults to `latest`) Method number or `latest` to export the most recent DT method artifacts.
-* ${input:output-type}: (Optional, defaults to `figjam`) Output type: `figjam` for a FigJam whiteboard, `design` for a Figma Design file, or `both` for one of each.
-
-## Prerequisites
-
-* The DT project artifacts MUST exist under `.copilot-tracking/dt/{project-slug}/`.
-* The `figma` MCP server MUST be configured in your workspace (see `.vscode/mcp.json`).
-* The remote Figma MCP server is available across Figma plans and seats. The desktop MCP server requires a Dev or Full seat on a paid plan. See Figma's [access guide](https://help.figma.com/hc/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server) before choosing a server.
-* Authentication happens automatically via browser OAuth on first use. No credential files or API keys are required.
-* Usage limits vary by plan, seat, and tool and can change. Check Figma's current [rate limits and access](https://developers.figma.com/docs/figma-mcp-server/rate-limits-access/) before sustained use. `figma/whoami` and `figma/create_new_file` are currently exempt from read-tool limits.
-* `figma/use_figma` and `figma/generate_diagram` are write tools. Write-to-canvas tools are currently in beta; consult Figma's [tool catalog](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/) for current classifications and billing guidance.
-
-## Workflow Steps
-
-1. Resolve Project State:
-   Read `.copilot-tracking/dt/{project-slug}/coaching-state.md` and confirm the project exists. If it does not, stop and explain how to start or resume a DT project first.
-
-2. Select Export Scope:
-   Determine which method artifacts to export based on `${input:method}`.
-   If `${input:method}` is `latest`, infer the latest completed or active method from the coaching state and recent artifacts.
-   Prefer explicit artifact files referenced in the coaching state over directory guessing.
-
-3. Validate Figma Availability:
-   Call `figma/whoami` to confirm the Figma MCP server is connected and the user is authenticated.
-   If the `figma` MCP server or tools are unavailable, stop and provide the setup path:
-   Add `{"figma": {"type": "http", "url": "https://mcp.figma.com/mcp"}}` to `.vscode/mcp.json` under `servers`, then restart VS Code.
-
-4. Confirm Destination and Write Authority:
-   Present the exact destination title or existing file, output type, and intended create or modify operation. Ask the user to confirm that specific write before calling any write tool.
-   For `both`, name and confirm the FigJam and Figma Design writes independently. A confirmation for one destination does not authorize the other.
-   If the user declines, does not answer, or changes the target, do not write. Return the current scope and ask for confirmation of the revised target when applicable.
-
-5. Create the Destination File:
-   Use `figma/create_new_file` to create a new FigJam file (for `figjam` output) or a new Figma Design file (for `design` output) or both (for `both` output).
-   Use `${input:board-title}` when provided; otherwise derive a clear title from project and method context.
-   If the user specifies an existing Figma URL instead of a title, use `figma/get_figjam` or `figma/get_metadata` to read the existing file before modifying it.
-
-6. Build FigJam Export Layout (when output-type is `figjam` or `both`):
-   Use `figma/use_figma` to create sections, sticky notes, text, shapes, and connectors on the FigJam board.
-   Translate artifact content into a left-to-right section layout with grouping areas and labeled sticky notes.
-
-   **FIRST: Build the Project Details card** at position (0, 0) using the Universal: Project Details Card template below. All exercise sections must be offset below it.
-
-   **Section structure:**
-   * Header section: Project name, method name, date, and current status.
-   * Theme/category sections: One section per theme or category, arranged left to right.
-   * Footer section: Summary, open questions, or how-might-we prompts.
-
-   **Sticky note conventions:**
-   * Yellow stickies: Evidence, facts, and observations.
-   * Blue stickies: Implications, insights, and interpretations.
-   * Green stickies: How-might-we questions and open questions.
-   * Pink stickies: Decisions and validation targets.
-   * Orange stickies: Constraints and risks.
-
-   Keep sticky content concise: 1-3 short sentences per sticky.
-
-   **Diagram generation:**
-   Where structured relationships exist in the artifacts, use `figma/generate_diagram` to create Mermaid-based diagrams:
-   * Method 1: Stakeholder relationship flowchart showing influence and impact.
-   * Method 3: Theme-to-evidence cluster diagram showing how evidence supports themes.
-   * Method 8: User testing flow diagrams showing test scenarios and outcomes.
-
-7. Build Figma Design Export Layout (when output-type is `design` or `both`):
-   Use `figma/use_figma` to create structured frames with auto-layout in a Figma Design file.
-
-   **Frame structure:**
-   * Main frame: Named after the project and method, using auto-layout (vertical, 40px gap).
-   * Header frame: Project title, method name, date, status as text layers.
-   * Content frames: One frame per theme or category with auto-layout (vertical, 20px gap).
-   * Card components: Each artifact item as a card frame (rounded corners, padding, fill).
-
-   **Card conventions:**
-   * Evidence cards: Light yellow background (#FFF9C4), dark text.
-   * Insight cards: Light blue background (#BBDEFB), dark text.
-   * Question cards: Light green background (#C8E6C9), dark text.
-   * Decision cards: Light pink background (#F8BBD0), dark text.
-   * Constraint cards: Light orange background (#FFE0B2), dark text.
-
-   Use consistent typography: title text at 24px, body text at 16px, labels at 12px.
-
-8. Apply Method-Specific Layout:
-   For Method 1, export request framing, stakeholder map, constraints, and open questions. Generate a stakeholder relationship diagram.
-   For Method 2, export research findings, personas, and assumption logs. When persona artifacts are present, use the **Persona Card** template below.
-   For Method 3, export synthesis themes, evidence clusters, and how-might-we prompts. Generate a theme-evidence cluster diagram.
-   For Method 4, export idea clusters and convergence candidates. Arrange ideas by category in columns.
-   For Method 5, export concepts, evaluation notes, and stakeholder reactions. Create concept comparison cards.
-   For Method 6, export prototype plan, build decisions, and testing hypotheses. Create a hypothesis tracking board.
-   If artifacts span multiple methods, group by method first and then by theme.
-
-9. Report Results:
-   Summarize the file title, file URL (provided by `figma/create_new_file` or `figma/use_figma`), output type, and counts of sections, stickies, text elements, and diagrams created.
-   Call out any skipped or failed items with actionable reasons.
-
-## Exercise Templates
+# DT Figma Export Exercise Templates
 
 The following structured templates define precise FigJam layouts for specific DT exercises.
 When artifacts match a template type, use the template layout instead of the generic section/sticky approach.
@@ -125,13 +11,13 @@ Each template specifies sections, rows, sticky colors, and spatial arrangement.
 
 Universal components appear first and apply to every board. Exercise-specific templates follow.
 
-### Universal: Project Details Card
+## Universal: Project Details Card
 
-Place this component at the top-left of EVERY FigJam board before any exercise-specific content.
+Place this component at the top-left of every FigJam board before any exercise-specific content.
 It provides engagement context so all board viewers know the project scope at a glance.
-Create it ONCE per board. All exercise sections are positioned below or to the right of it.
+Create it once per board. All exercise sections are positioned below or to the right of it.
 
-**Reference layout:**
+Reference layout:
 
 ```text
 +============================================================+
@@ -155,10 +41,10 @@ Create it ONCE per board. All exercise sections are positioned below or to the r
 +============================================================+
 ```
 
-**Reference implementation (Figma Plugin API):**
+Reference implementation (Figma Plugin API):
 
-The following code is the EXACT construction pattern to follow. Substitute actual project data for the placeholder values.
-Do NOT deviate from the layout constants, color values, or positioning logic.
+The following code is the exact construction pattern to follow. Substitute actual project data for the placeholder values.
+Do not deviate from the layout constants, color values, or positioning logic.
 
 All elements use `createShapeWithText` (FigJam shapes) inside a `createSection` with a blue fill.
 Each field row uses mixed font ranges: bold label, regular value.
@@ -233,18 +119,18 @@ function buildProjectDetails(fields, x, y) {
 // ], 0, 0);
 ```
 
-**Strict rules:**
+Rules:
 
-1. **Always first.** Build the Project Details card before any exercise template on the board. Position it at (0, 0).
-2. **One per board.** Only one Project Details card per FigJam file, regardless of how many exercise templates follow.
-3. **Section with blue fill.** Use `createSection` with `#0078D4` fill, not a standalone shape. This keeps all field rows grouped and movable.
-4. **Fixed field order:** Customer, Project, Sprint, Workstream, Prototype. Do not reorder.
-5. **Colors are fixed.** Section fill `#0078D4`, row fill `#2196F3`, text white. Do not substitute.
-6. **Mixed font ranges.** Each row uses bold for the label portion and regular for the value. Use `setRangeFontName` for the label substring.
-7. **Offset templates below.** All exercise sections must start at `y = detailsSection.height + 80` (or greater) to avoid overlap.
-8. **Omit empty fields.** If a project detail field has no data, skip that row. Do not create placeholder rows.
+1. Build the Project Details card before any exercise template on the board and position it at (0, 0).
+2. Create only one Project Details card per FigJam file, regardless of how many exercise templates follow.
+3. Use `createSection` with a `#0078D4` fill, not a standalone shape, so all field rows stay grouped and movable.
+4. Keep the field order fixed: Customer, Project, Sprint, Workstream, Prototype.
+5. Keep the colors fixed: section fill `#0078D4`, row fill `#2196F3`, and white text.
+6. Use bold for each row's label portion and regular for its value, applying `setRangeFontName` to the label substring.
+7. Start every exercise section at `y = detailsSection.height + 80` or greater to avoid overlap.
+8. Skip any project detail field that has no data rather than creating a placeholder row.
 
-**Data mapping:**
+Data mapping:
 
 Pull project details from `.copilot-tracking/dt/{project-slug}/coaching-state.md` and any associated metadata. Map fields:
 
@@ -258,13 +144,13 @@ Pull project details from `.copilot-tracking/dt/{project-slug}/coaching-state.md
 
 If the coaching state does not contain a field, check the project README or ask the user. Never invent placeholder values.
 
-### Persona Card (Method 2)
+## Persona Card (Method 2)
 
 Use this template when exporting persona artifacts from Design Research.
 Create one Persona Card per persona found in the project artifacts.
-Follow the reference implementation EXACTLY. Do not improvise layout, colors, spacing, or structure.
+Follow the reference implementation exactly. Do not improvise layout, colors, spacing, or structure.
 
-**Reference layout:**
+Reference layout:
 
 ```text
 +============================================================================+
@@ -309,13 +195,13 @@ Follow the reference implementation EXACTLY. Do not improvise layout, colors, sp
 +============================================================================+
 ```
 
-**Reference implementation (Figma Plugin API):**
+Reference implementation (Figma Plugin API):
 
-The following code is the EXACT construction pattern to follow. Substitute persona data for the placeholder arrays.
-Do NOT deviate from the layout constants, color values, or positioning logic.
+The following code is the exact construction pattern to follow. Substitute persona data for the placeholder arrays.
+Do not deviate from the layout constants, color values, or positioning logic.
 
-All elements use `createShapeWithText` (FigJam shapes), NOT `createSticky`.
-Headings sit ABOVE their card rows, not in a left column.
+All elements use `createShapeWithText` (FigJam shapes), not `createSticky`.
+Headings sit above their card rows, not in a left column.
 The intro text block combines name, role, and description in a single shape with mixed font ranges.
 
 ```javascript
@@ -443,20 +329,20 @@ function buildPersona(personaName, roleTitle, bodyText, rows, offsetX) {
 // const p2 = buildPersona("Alex", "Field Auditor", bodyText2, rows2, p1.width + 80);
 ```
 
-**Strict rules:**
+Rules:
 
-1. **One section per persona.** Section name = `PERSONA - {ROLE NAME}` (uppercase). All shapes go inside this section.
-2. **Row order is fixed:** Primary Tools, Other Tools, Responsibilities, Behavioural Traits, Desires, Goals, Needs, Hacks and Workarounds, Key Findings. Do not reorder.
-3. **Color is fixed:** All card shapes use `#FFE0C2`. Do not substitute or vary by category.
-4. **Use shapes, not stickies.** All elements use `createShapeWithText` with `ROUNDED_RECTANGLE` (cards) or `SQUARE` (headings/intro). Never use `createSticky`.
-5. **Headings above rows.** Each category heading sits above its card grid as a transparent `SQUARE` shape, not in a left column.
-6. **Intro layout:** Name, role, and description are a single `SQUARE` shape with mixed font ranges positioned to the left. The avatar ellipse is positioned to the right.
-7. **Grid coordinates are fixed:** Use the constants from the reference code. Do not freestyle positioning.
-8. **Wrapping:** Rows with more than 5 items wrap at column 6 to a new line within the same category.
-9. **Omit empty rows:** If a persona has no data for a category, skip that row entirely. Do not create empty rows.
-10. **Multiple personas:** Arrange persona sections left to right with 80px horizontal gaps using the `offsetX` parameter.
+1. Create one section per persona named `PERSONA - {ROLE NAME}` in uppercase, and place all of its shapes inside that section.
+2. Keep the row order fixed: Primary Tools, Other Tools, Responsibilities, Behavioural Traits, Desires, Goals, Needs, Hacks and Workarounds, Key Findings.
+3. Fill every card shape with `#FFE0C2`; do not vary the color by category.
+4. Build every element with `createShapeWithText`, using `ROUNDED_RECTANGLE` for cards and `SQUARE` for headings and the intro; never use `createSticky`.
+5. Place each category heading above its card grid as a transparent `SQUARE` shape, not in a left column.
+6. Combine the name, role, and description in a single left-hand `SQUARE` shape with mixed font ranges, and position the avatar ellipse to the right.
+7. Use the constants from the reference code for grid coordinates rather than freestyle positioning.
+8. Wrap rows with more than five items at column six onto a new line within the same category.
+9. Skip any category with no persona data rather than creating an empty row.
+10. Arrange multiple persona sections left to right with 80px horizontal gaps using the `offsetX` parameter.
 
-**Data mapping:**
+Data mapping:
 
 Pull persona data from artifact files under `.copilot-tracking/dt/{project-slug}/`. Map fields:
 
@@ -476,45 +362,3 @@ Pull persona data from artifact files under `.copilot-tracking/dt/{project-slug}
 | `findings`, `key_findings`       | Key Findings                       | Each item: research finding statement     |
 
 If a field is missing from the artifact, omit that row. Do not invent placeholder data.
-
-## Success Criteria
-
-* [ ] DT artifacts were read from `.copilot-tracking/dt/{project-slug}/`.
-* [ ] The `figma` MCP server was available and used successfully.
-* [ ] A new or updated FigJam board or Figma Design file contains readable sections aligned to the DT artifact structure.
-* [ ] The user received the file URL and a concise export summary.
-
-## Examples
-
-```text
-/dt-figma-export project-slug=factory-floor-maintenance
-```
-
-```text
-/dt-figma-export project-slug=customer-support-ai board-title="Customer Support AI - Stakeholder Map" method=1
-```
-
-```text
-/dt-figma-export project-slug=warehouse-onboarding method=3 output-type=both
-```
-
-```text
-/dt-figma-export project-slug=incident-response output-type=design
-```
-
-## Error Handling
-
-* If the DT project directory or coaching state is missing, stop and direct the user to create or resume the project before export.
-* If the `figma` MCP server is not configured, stop and provide the setup instructions rather than attempting a partial export.
-* If `figma/whoami` indicates a Starter plan, warn the user about the 6-call monthly limit and suggest batching exports.
-* If artifacts are incomplete for the requested method, explain the gap and ask whether to export the available subset or return to coaching.
-* If file creation or widget placement fails, report exactly which sections or elements failed and preserve the successfully created content.
-
-## Rate Limits
-
-The Figma MCP server applies rate limits based on your Figma plan:
-
-* **Starter plan or View/Collab seats**: Up to 6 tool calls per month. DT export will likely exhaust this in a single session.
-* **Dev or Full seats on Professional/Organization/Enterprise**: Per-minute rate limits matching Figma REST API Tier 1.
-
-For best results, ensure team members have Dev or Full seats on a paid Figma plan.

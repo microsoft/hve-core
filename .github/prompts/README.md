@@ -75,19 +75,6 @@ These workflows are skills rather than prompts. Each resolves the active tracker
 * **[ADO Create Pull Request](./hve-core/ado-create-pull-request.prompt.md)** - Create Azure DevOps PRs with generated description, linked work items, and reviewers
 * **[ADO Get Build Info](./hve-core/ado-get-build-info.prompt.md)** - Retrieve build status and logs for a PR or build number
 
-### Design Thinking
-
-* **[DT Start Project](./design-thinking/dt-start-project.prompt.md)** - Start a new Design Thinking coaching project with state initialization
-* **[DT Resume Coaching](./design-thinking/dt-resume-coaching.prompt.md)** - Resume a coaching session by reading state and re-establishing context
-* **[DT Method Next](./design-thinking/dt-method-next.prompt.md)** - Assess project state and recommend the next method with sequencing validation
-* **[DT Canonical Deck](./design-thinking/dt-canonical-deck.prompt.md)** - Canonical deck workflow with snapshot generation and optional customer-card PowerPoint build
-* **[DT Figma Export](./design-thinking/dt-figma-export.prompt.md)** - Export Design Thinking artifacts to a FigJam board or Figma Design file
-* **[DT Handoff - Problem Space](./design-thinking/dt-handoff-problem-space.prompt.md)** - Compile Methods 1-3 outputs into an RPI-ready artifact for `rpi-research`
-* **[DT Handoff - Solution Space](./design-thinking/dt-handoff-solution-space.prompt.md)** - Compile Methods 4-6 outputs into an RPI-ready artifact for `rpi-research`
-* **[DT Handoff - Implementation Space](./design-thinking/dt-handoff-implementation-space.prompt.md)** - Compile Methods 7-9 outputs into an RPI-ready artifact for `rpi-research`
-
-> **Note:** The per-method coaching prompts (`dt-method-04-*`, `dt-method-05-*`, `dt-method-06-*`) are driven by the DT Coach agent mid-session and are not typically invoked directly.
-
 ### Security
 
 * **[Incident Response](./security/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases

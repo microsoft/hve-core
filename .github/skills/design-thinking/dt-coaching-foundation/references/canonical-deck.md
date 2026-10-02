@@ -22,7 +22,7 @@ Do not duplicate transition gates or non-waivable checks in:
 
 - Method instructions (for example Method 1 or sequencing)
 - DT Coach agent behavior text
-- Other prompt files
+- Other DT skill references
 
 ## Activation Rule
 
