@@ -16,11 +16,12 @@
 #          diff-scoped to the changed stimuli.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 Set-StrictMode -Version Latest
 
 Import-Module (Join-Path $PSScriptRoot 'StimulusIndex.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'EvalChangeSet.psm1') -Force
 
 if (-not (Get-Module -ListAvailable -Name 'powershell-yaml')) {
     throw "ChangedSpecStimulus requires the 'powershell-yaml' module."
@@ -231,19 +232,14 @@ function Get-ChangedSpecStimulusArtifact {
     Resolves changed eval-spec stimuli into synthetic artifact descriptors.
 
     .DESCRIPTION
-    Diffs `EvalRoot` between two git refs, and for each changed spec compares the
-    base and head stimulus signatures to find added or modified stimuli. Each
+    Selects `EvalRoot` records from a canonical change set and compares content
+    at its comparisonBase and headRef commits to find changed stimuli. Each
     changed stimulus's `tags.<kind>: <slug>` backlink becomes a synthetic artifact
     `@{ kind; artifactId; path; status; stimulusName; source }` that the executor
     runs scoped to that stimulus. Results are deduplicated by `kind:artifactId`.
 
-    .PARAMETER BaseRef
-    Base git ref for the diff. Defaults to `origin/main`.
-
-    .PARAMETER HeadRef
-    Head git ref for the diff. Defaults to `HEAD`. Change detection uses the
-    three-dot `BaseRef...HeadRef` diff (matching `Get-ChangedAIArtifact.ps1`), so
-    the head change must be committed (as it always is for a PR head).
+    .PARAMETER ChangeSetPath
+    Required canonical eval change-set manifest path, relative to RepoRoot.
 
     .PARAMETER RepoRoot
     Repository root. Defaults to `git rev-parse --show-toplevel`.
@@ -260,78 +256,63 @@ function Get-ChangedSpecStimulusArtifact {
     [CmdletBinding()]
     [OutputType([hashtable[]])]
     param(
-        [string]$BaseRef = 'origin/main',
-        [string]$HeadRef = 'HEAD',
+        [Parameter(Mandatory = $true)]
+        [string]$ChangeSetPath,
         [string]$RepoRoot,
         [string]$EvalRoot = 'evals',
         [string]$GitCommand = 'git'
     )
 
     if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
-        $top = & $GitCommand rev-parse --show-toplevel 2>$null
-        $RepoRoot = if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($top)) {
-            (Resolve-Path -LiteralPath $top.Trim()).ProviderPath
-        }
-        else {
-            (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../../..')).ProviderPath
-        }
+        $RepoRoot = (Invoke-EvalGit -RepoRoot $PWD.Path -GitCommand $GitCommand -Arguments @('rev-parse', '--show-toplevel')).Trim()
     }
 
     $evalPrefix = ($EvalRoot.TrimEnd('/', '\') -replace '\\', '/') + '/'
 
-    Push-Location -LiteralPath $RepoRoot
-    try {
-        $diff = & $GitCommand diff --name-only "$BaseRef...$HeadRef" -- $EvalRoot 2>&1
-        $exit = $LASTEXITCODE
-        if ($exit -ne 0) {
-            throw "git diff failed (exit $exit): $($diff -join [Environment]::NewLine)"
+    if (-not [System.IO.Path]::IsPathRooted($ChangeSetPath)) { $ChangeSetPath = Join-Path $RepoRoot $ChangeSetPath }
+    $changeSet = Read-EvalChangeSet -Path $ChangeSetPath
+    $git = @{ RepoRoot = $RepoRoot; GitCommand = $GitCommand }
+
+    $specChanges = @($changeSet.changes |
+            Where-Object { $_.path -match '\.ya?ml$' -and $_.path.StartsWith($evalPrefix) })
+
+    $artifacts = [System.Collections.Generic.List[hashtable]]::new()
+    $seen = @{}
+
+    foreach ($change in $specChanges) {
+        if ($change.status -eq 'D') { continue }
+        $spec = $change.path
+        $headYaml = Invoke-EvalGit @git -Arguments @('show', "$($changeSet.headRef):$spec")
+        $baseYaml = ''
+        # Renamed and copied specs are treated as additions so every backlinked stimulus runs.
+        if ($change.status -notin @('A', 'R', 'C')) {
+            $baseYaml = Invoke-EvalGit @git -Arguments @('show', "$($changeSet.comparisonBase):$spec")
         }
 
-        $specFiles = @($diff |
-                Where-Object { $_ -is [string] -and -not [string]::IsNullOrWhiteSpace($_) } |
-                ForEach-Object { ($_ -replace '\\', '/').Trim() } |
-                Where-Object { $_ -match '\.ya?ml$' -and $_.StartsWith($evalPrefix) })
+        $baseMap = Get-SpecStimulusSignatureMap -Yaml $baseYaml
+        $headMap = Get-SpecStimulusSignatureMap -Yaml $headYaml
+        $changedNames = Get-ChangedStimulusName -BaseMap $baseMap -HeadMap $headMap
+        if ($changedNames.Count -eq 0) { continue }
 
-        $artifacts = [System.Collections.Generic.List[hashtable]]::new()
-        $seen = @{}
-
-        foreach ($spec in $specFiles) {
-            $headPath = Join-Path -Path $RepoRoot -ChildPath $spec
-            if (-not (Test-Path -LiteralPath $headPath -PathType Leaf)) { continue }
-            $headYaml = Get-Content -LiteralPath $headPath -Raw -Encoding utf8
-
-            $baseYaml = & $GitCommand show "$BaseRef`:$spec" 2>$null
-            if ($LASTEXITCODE -ne 0) { $baseYaml = '' }
-            else { $baseYaml = ($baseYaml -join [Environment]::NewLine) }
-
-            $baseMap = Get-SpecStimulusSignatureMap -Yaml $baseYaml
-            $headMap = Get-SpecStimulusSignatureMap -Yaml $headYaml
-            $changedNames = Get-ChangedStimulusName -BaseMap $baseMap -HeadMap $headMap
-            if ($changedNames.Count -eq 0) { continue }
-
-            foreach ($link in (Get-StimulusBacklinkForName -Yaml $headYaml -Name $changedNames)) {
-                $kind = [string]$link['kind']
-                $slug = [string]$link['slug']
-                if ([string]::IsNullOrWhiteSpace($kind) -or [string]::IsNullOrWhiteSpace($slug)) { continue }
-                $key = "$kind`:$slug"
-                if ($seen.ContainsKey($key)) { continue }
-                $seen[$key] = $true
-                $artifacts.Add(@{
-                        kind         = $kind
-                        artifactId   = $slug
-                        path         = $spec
-                        status       = 'M'
-                        stimulusName = [string]$link['name']
-                        source       = 'changed-spec'
-                    })
-            }
+        foreach ($link in (Get-StimulusBacklinkForName -Yaml $headYaml -Name $changedNames)) {
+            $kind = [string]$link['kind']
+            $slug = [string]$link['slug']
+            if ([string]::IsNullOrWhiteSpace($kind) -or [string]::IsNullOrWhiteSpace($slug)) { continue }
+            $key = "$kind`:$slug"
+            if ($seen.ContainsKey($key)) { continue }
+            $seen[$key] = $true
+            $artifacts.Add(@{
+                    kind         = $kind
+                    artifactId   = $slug
+                    path         = $spec
+                    status       = 'M'
+                    stimulusName = [string]$link['name']
+                    source       = 'changed-spec'
+                })
         }
+    }
 
-        return , $artifacts.ToArray()
-    }
-    finally {
-        Pop-Location
-    }
+    return , $artifacts.ToArray()
 }
 
 Export-ModuleMember -Function @(

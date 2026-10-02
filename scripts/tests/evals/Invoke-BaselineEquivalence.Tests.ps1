@@ -1286,3 +1286,417 @@ Describe 'Get-InvariantFailureCount' -Tag 'Unit' {
         Get-InvariantFailureCount -RunDir $dir | Should -Be 0
     }
 }
+
+Describe 'Compare shard planning' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+    }
+
+    It 'Assigns stimuli round-robin in declared order' {
+        $plan = Get-CompareShardAssignment -StimulusName @('a', 'b', 'c', 'd', 'e', 'f', 'g') -ShardCount 5
+
+        $plan.EffectiveShardCount | Should -Be 5
+        @('a', 'b', 'c', 'd', 'e', 'f', 'g' | ForEach-Object { $plan.Assignment[$_] }) | Should -Be @(1, 2, 3, 4, 5, 1, 2)
+    }
+
+    It 'Produces the same assignment on repeated planning' {
+        $names = @('s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8')
+        $first = Get-CompareShardAssignment -StimulusName $names -ShardCount 7
+        $second = Get-CompareShardAssignment -StimulusName $names -ShardCount 7
+
+        foreach ($name in $names) { $second.Assignment[$name] | Should -Be $first.Assignment[$name] }
+    }
+
+    It 'Never plans more shards than stimuli (<Count> stimuli, K=<K>)' -ForEach @(
+        @{ Count = 0; K = 5; Expected = 1 }
+        @{ Count = 1; K = 5; Expected = 1 }
+        @{ Count = 3; K = 7; Expected = 3 }
+        @{ Count = 35; K = 7; Expected = 7 }
+    ) {
+        $names = @(if ($Count -gt 0) { 1..$Count | ForEach-Object { "stimulus-$_" } })
+        (Get-CompareShardAssignment -StimulusName $names -ShardCount $K).EffectiveShardCount | Should -Be $Expected
+    }
+
+    It 'Reads the canonical stimulus order from the library' {
+        $canonical = Get-CanonicalStimulusPolicy -RepoRoot $script:RepoRoot
+
+        @($canonical.Order) | Should -HaveCount $canonical.Policy.Count
+        $canonical.Order[0] | Should -BeExactly 'factual-arithmetic-basic'
+    }
+
+    It 'Rejects an unsupported shard count before any model-backed work' {
+        $output = Join-Path $TestDrive 'bad-shards.json'
+        {
+            & $script:ScriptPath -Tier 'devloop' -RepoRoot $script:RepoRoot -OutputPath $output -CompareShardCount 3 -WhatIf *> $null
+        } | Should -Throw
+        Test-Path -LiteralPath $output | Should -BeFalse
+    }
+}
+
+Describe 'Split-CompareShardInput' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+
+        function New-TrialLine {
+            param([string]$Name, [int]$Index)
+            [ordered]@{
+                type       = 'trial-result'
+                stimulus   = $Name
+                trialIndex = $Index
+                trajectory = [ordered]@{ stimulus = [ordered]@{ name = $Name }; output = "out-$Name-$Index" }
+            } | ConvertTo-Json -Depth 10 -Compress
+        }
+    }
+
+    BeforeEach {
+        $script:RunDir = Join-Path $TestDrive "run-$([guid]::NewGuid())"
+        New-Item -ItemType Directory -Path $script:RunDir -Force | Out-Null
+        $script:Lines = @(
+            foreach ($name in @('a', 'b', 'c', 'd')) { foreach ($index in 0, 1) { New-TrialLine -Name $name -Index $index } }
+            '{"type":"trial-result","trajectory":{"output":"no name"}}'
+            'not json at all'
+            (New-TrialLine -Name 'zzz-unknown' -Index 0)
+            '{"type":"trial-result","stimulus":"b","trialIndex":2,"status":"error","trajectory":null}'
+        )
+        Set-Content -LiteralPath (Join-Path $script:RunDir 'results.jsonl') -Value $script:Lines -Encoding utf8NoBOM
+        '{"stimulus":{"name":"c"},"output":"standalone"}' | Set-Content -LiteralPath (Join-Path $script:RunDir 'c-1.trajectory.json') -Encoding utf8NoBOM
+        $script:Plan = Get-CompareShardAssignment -StimulusName @('a', 'b', 'c', 'd') -ShardCount 3
+        $script:Dest = Join-Path $TestDrive "shards-$([guid]::NewGuid())"
+        $script:ShardDirs = @(Split-CompareShardInput -RunDir $script:RunDir -Assignment $script:Plan.Assignment -ShardCount 3 -DestinationRoot $script:Dest)
+    }
+
+    It 'Places every input line in exactly one shard, verbatim' {
+        $script:ShardDirs | Should -HaveCount 3
+        $sharded = @(foreach ($dir in $script:ShardDirs) {
+                $file = Join-Path $dir 'results.jsonl'
+                if (Test-Path -LiteralPath $file) { Get-Content -LiteralPath $file }
+            })
+        $sharded | Should -HaveCount $script:Lines.Count
+        (@($sharded | Sort-Object) -join "`n") | Should -BeExactly (@($script:Lines | Sort-Object) -join "`n")
+    }
+
+    It 'Routes each known stimulus to its assigned shard' {
+        foreach ($name in @('a', 'b', 'c', 'd')) {
+            $owner = $script:Plan.Assignment[$name]
+            $ownerText = Get-Content -LiteralPath (Join-Path $script:ShardDirs[$owner - 1] 'results.jsonl') -Raw
+            $ownerText | Should -Match ('"out-{0}-0"' -f $name)
+        }
+        Get-Content -LiteralPath (Join-Path $script:ShardDirs[1] 'results.jsonl') -Raw | Should -Match '"trialIndex":2'
+    }
+
+    It 'Routes nameless, malformed, and unknown-stimulus lines to shard 1' {
+        $first = Get-Content -LiteralPath (Join-Path $script:ShardDirs[0] 'results.jsonl')
+        $first | Should -Contain 'not json at all'
+        $first | Should -Contain '{"type":"trial-result","trajectory":{"output":"no name"}}'
+        ($first -join "`n") | Should -Match 'zzz-unknown'
+    }
+
+    It 'Copies standalone trajectory files to the owning shard' {
+        $owner = $script:Plan.Assignment['c']
+        Test-Path -LiteralPath (Join-Path $script:ShardDirs[$owner - 1] 'c-1.trajectory.json') | Should -BeTrue
+        @(Get-ChildItem -LiteralPath $script:Dest -Recurse -Filter '*.trajectory.json') | Should -HaveCount 1
+    }
+
+    It 'Fails when the run directory is missing or holds no comparison input' {
+        { Split-CompareShardInput -RunDir (Join-Path $TestDrive 'absent') -Assignment $script:Plan.Assignment -ShardCount 3 -DestinationRoot (Join-Path $TestDrive 'x') } | Should -Throw
+        $empty = Join-Path $TestDrive "empty-$([guid]::NewGuid())"
+        New-Item -ItemType Directory -Path $empty -Force | Out-Null
+        { Split-CompareShardInput -RunDir $empty -Assignment $script:Plan.Assignment -ShardCount 3 -DestinationRoot (Join-Path $TestDrive 'y') } | Should -Throw
+    }
+}
+
+Describe 'Sharded compare pairing fidelity' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+        $script:StubPath = Join-Path $PSScriptRoot 'fixtures/stub-vally.ps1'
+        $script:Names = @('s1', 's2', 's3', 's4', 's5')
+        $script:Policy = @{}
+        foreach ($name in $script:Names) { $script:Policy[$name] = 'equivalent' }
+
+        function New-PairedRunDir {
+            param([string]$Path)
+            New-Item -ItemType Directory -Path $Path -Force | Out-Null
+            $lines = foreach ($name in $script:Names) {
+                foreach ($index in 0, 1) {
+                    [ordered]@{
+                        type = 'trial-result'; stimulus = $name; trialIndex = $index
+                        trajectory = [ordered]@{ stimulus = [ordered]@{ name = $name }; output = "o-$name-$index" }
+                    } | ConvertTo-Json -Depth 10 -Compress
+                }
+            }
+            Set-Content -LiteralPath (Join-Path $Path 'results.jsonl') -Value $lines -Encoding utf8NoBOM
+        }
+
+        function Invoke-StubCompare {
+            param([string]$Baseline, [string]$Treatment, [string]$Output)
+            & pwsh -NoProfile -File $script:StubPath compare --baseline $Baseline --treatment $Treatment --output $Output *> $null
+            return @(Get-Content -LiteralPath $Output)
+        }
+    }
+
+    BeforeEach {
+        $env:STUB_VALLY_COMPARE_MODE = 'echo'
+        $root = Join-Path $TestDrive "pair-$([guid]::NewGuid())"
+        $script:BaselineDir = Join-Path $root 'baseline'
+        $script:TreatmentDir = Join-Path $root 'treatment'
+        New-PairedRunDir -Path $script:BaselineDir
+        New-PairedRunDir -Path $script:TreatmentDir
+        $script:Root = $root
+        $script:Plan = Get-CompareShardAssignment -StimulusName $script:Names -ShardCount 3
+        $script:BaselineShards = @(Split-CompareShardInput -RunDir $script:BaselineDir -Assignment $script:Plan.Assignment -ShardCount 3 -DestinationRoot (Join-Path $root 'shards/baseline'))
+        $script:TreatmentShards = @(Split-CompareShardInput -RunDir $script:TreatmentDir -Assignment $script:Plan.Assignment -ShardCount 3 -DestinationRoot (Join-Path $root 'shards/treatment'))
+    }
+
+    AfterEach {
+        Remove-Item Env:STUB_VALLY_COMPARE_MODE -ErrorAction SilentlyContinue
+    }
+
+    It 'Produces the same tally and summary statistics sharded as unsharded' {
+        $env:STUB_VALLY_COMPARE_MODE = 'echo-scored'
+        $serial = Invoke-StubCompare -Baseline $script:BaselineDir -Treatment $script:TreatmentDir -Output (Join-Path $script:Root 'serial.jsonl')
+        $merged = @(for ($shard = 0; $shard -lt 3; $shard++) {
+                Invoke-StubCompare -Baseline $script:BaselineShards[$shard] -Treatment $script:TreatmentShards[$shard] -Output (Join-Path $script:Root "s$shard.jsonl")
+            })
+
+        $serialTally = Measure-CompareTrials -Lines $serial -StimulusPolicy $script:Policy -ExpectedStimulusName $script:Names -ExpectedTrialCount 2
+        $mergedTally = Measure-CompareTrials -Lines $merged -StimulusPolicy $script:Policy -ExpectedStimulusName $script:Names -ExpectedTrialCount 2
+
+        $merged | Should -HaveCount 3
+        foreach ($field in @('Total', 'Ties', 'BaselineWins', 'TreatmentWins', 'EquivalentTotal', 'EquivalentTies', 'JudgeErrors', 'MissingTrials', 'UnexpectedTrials', 'UnmatchedBaseline', 'UnmatchedTreatment', 'DuplicateTrials', 'MeanScore', 'CiLow', 'CiHigh', 'WinRate')) {
+            $mergedTally[$field] | Should -Be $serialTally[$field] -Because $field
+        }
+        $mergedTally.Total | Should -Be 10
+        $mergedTally.MissingTrials | Should -Be 0
+        # A degenerate all-tie population would make the statistic comparison vacuous.
+        $serialTally.CiLow | Should -BeLessThan $serialTally.CiHigh
+        $serialTally.Ties | Should -BeLessThan $serialTally.Total
+    }
+
+    It 'Surfaces a treatment-side shard mismatch as missing and unmatched trials' {
+        $shardFile = Join-Path $script:TreatmentShards[0] 'results.jsonl'
+        $kept = @(Get-Content -LiteralPath $shardFile | Select-Object -Skip 1)
+        Set-Content -LiteralPath $shardFile -Value $kept -Encoding utf8NoBOM
+
+        $merged = @(for ($shard = 0; $shard -lt 3; $shard++) {
+                Invoke-StubCompare -Baseline $script:BaselineShards[$shard] -Treatment $script:TreatmentShards[$shard] -Output (Join-Path $script:Root "m$shard.jsonl")
+            })
+        $tally = Measure-CompareTrials -Lines $merged -StimulusPolicy $script:Policy -ExpectedStimulusName $script:Names -ExpectedTrialCount 2
+
+        $tally.Total | Should -Be 9
+        $tally.MissingTrials | Should -Be 1
+        $tally.UnmatchedBaseline | Should -Be 1
+    }
+}
+
+Describe 'Compare shard retry' -Tag 'Unit' {
+    BeforeAll {
+        . $script:ScriptPath
+        $script:StubPath = Join-Path $PSScriptRoot 'fixtures/stub-vally.ps1'
+        Mock Write-Host {} -ModuleName VallyRunner
+    }
+
+    AfterEach {
+        Remove-Item Env:STUB_VALLY_COMPARE_MODE, Env:STUB_VALLY_COMPARE_COUNT_DIR -ErrorAction SilentlyContinue
+    }
+
+    It 'Allows a retry only after a failed first attempt with no records (attempt <Attempt>, exit <ExitCode>, records <Records>)' -ForEach @(
+        @{ Attempt = 1; ExitCode = 1; Records = 0; Expected = $true }
+        @{ Attempt = 1; ExitCode = -1; Records = 0; Expected = $true }
+        @{ Attempt = 1; ExitCode = 1; Records = 1; Expected = $false }
+        @{ Attempt = 1; ExitCode = 0; Records = 0; Expected = $false }
+        @{ Attempt = 2; ExitCode = 1; Records = 0; Expected = $false }
+    ) {
+        Test-VallyCompareRetryEligibility -Attempt $Attempt -ExitCode $ExitCode -ComparisonRecordCount $Records | Should -Be $Expected
+    }
+
+    It 'Counts only parseable comparison records' {
+        $path = Join-Path $TestDrive 'records.jsonl'
+        Get-VallyComparisonRecordCount -Path $path | Should -Be 0
+        Set-Content -LiteralPath $path -Value @('{"type":"comparison"}', 'garbage', '{"type":"log"}', '', '{"type":"comparison","stimuli":[]}') -Encoding utf8NoBOM
+        Get-VallyComparisonRecordCount -Path $path | Should -Be 2
+    }
+
+    It 'Retries a shard that failed without records and keeps the retry authoritative' {
+        $env:STUB_VALLY_COMPARE_MODE = 'fail-first'
+        $env:STUB_VALLY_COMPARE_COUNT_DIR = Join-Path $TestDrive "counts-$([guid]::NewGuid())"
+        $output = Join-Path $TestDrive "retry-$([guid]::NewGuid()).jsonl"
+        $log = Join-Path $TestDrive "retry-$([guid]::NewGuid()).log"
+        $emptyInput = Join-Path $TestDrive "empty-$([guid]::NewGuid()).jsonl"
+        Set-Content -LiteralPath $emptyInput -Value '' -Encoding utf8NoBOM
+
+        $attempts = @(Invoke-VallyCompareShard -Command $script:StubPath -Arguments @('compare', '--baseline', $emptyInput, '--treatment', $emptyInput, '--output', $output) `
+                -OutputPath $output -LogPath $log -Worker 'gpt-6-luna:compare-01' -Shard 1 -HeartbeatIntervalSeconds 60)
+
+        $attempts | Should -HaveCount 2
+        $attempts[0].ExitCode | Should -Be 1
+        $attempts[0].ComparisonRecords | Should -Be 0
+        $attempts[1].Attempt | Should -Be 2
+        $attempts[1].ExitCode | Should -Be 0
+        $attempts[1].ComparisonRecords | Should -Be 1
+        $attempts[1].Worker | Should -BeExactly 'gpt-6-luna:compare-01'
+    }
+
+    It 'Returns structured failed attempts when the worker cannot start the command' {
+        $output = Join-Path $TestDrive "worker-$([guid]::NewGuid()).jsonl"
+        $attempts = @(Invoke-VallyCompareShard -Command 'definitely-not-a-vally-command' -Arguments @('compare') `
+                -OutputPath $output -LogPath (Join-Path $TestDrive 'worker.log') -Worker 'claude-sonnet-5:compare-02' -Shard 2)
+
+        $attempts | Should -HaveCount 2
+        foreach ($attempt in $attempts) {
+            $attempt.Shard | Should -Be 2
+            $attempt.ExitCode | Should -Be -1
+            $attempt.ExitCategory | Should -BeExactly 'worker-error'
+            $attempt.ComparisonRecords | Should -Be 0
+        }
+    }
+
+    It 'Resolves a session alias to its script path for parallel workers' {
+        Set-Alias -Name vally -Value $script:StubPath -Scope Global
+        try {
+            Resolve-VallyCommandPath | Should -BeExactly $script:StubPath
+        }
+        finally {
+            Remove-Item Alias:vally -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Resolves an alias to an application name to the application path' {
+        $pwshPath = (Get-Command pwsh -CommandType Application | Select-Object -First 1).Source
+        Set-Alias -Name vally-pwsh-alias -Value pwsh -Scope Global
+        try {
+            Resolve-VallyCommandPath -Name 'vally-pwsh-alias' | Should -BeExactly $pwshPath
+        }
+        finally {
+            Remove-Item Alias:vally-pwsh-alias -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Lets the caller decide whether a missing command is fatal' {
+        { Resolve-VallyCommandPath -Name 'definitely-not-a-vally-command' -ErrorAction Stop } | Should -Throw -ExpectedMessage "*definitely-not-a-vally-command*"
+        Resolve-VallyCommandPath -Name 'definitely-not-a-vally-command' -ErrorAction SilentlyContinue | Should -BeExactly 'definitely-not-a-vally-command'
+    }
+
+    It 'Keeps Invoke-VallyProcess failing fast for a missing command' {
+        {
+            Invoke-VallyProcess -Command 'definitely-not-a-vally-command' -Arguments @('compare') -Phase 'compare' -Worker 'gpt-6-luna'
+        } | Should -Throw -ExpectedMessage "*definitely-not-a-vally-command*"
+    }
+}
+
+Describe 'Invoke-BaselineEquivalence.ps1 (sharded compare)' -Tag 'Unit' {
+    BeforeAll {
+        $script:ShardStimuli = @('st-1', 'st-2', 'st-3', 'st-4', 'st-5', 'st-6')
+
+        function Invoke-ShardedDriver {
+            param([int]$ShardCount, [string]$CompareMode)
+            $env:STUB_VALLY_COMPARE_MODE = $CompareMode
+            $env:STUB_VALLY_CALL_LOG = Join-Path $TestDrive "calls-$([guid]::NewGuid()).jsonl"
+            $outputPath = Join-Path $script:ShardRepoRoot "logs/summary-$([guid]::NewGuid()).json"
+            # The driver passes repository-relative spec paths, so the stub resolves them
+            # from the working directory exactly as vally does from the repository root.
+            # Child processes inherit the process working directory, not the PowerShell
+            # location, so both move for the duration of the run.
+            $savedDirectory = [System.Environment]::CurrentDirectory
+            Push-Location -LiteralPath $script:ShardRepoRoot
+            [System.Environment]::CurrentDirectory = $script:ShardRepoRoot
+            try {
+                & $script:ScriptPath -Tier 'devloop' -Model 'gpt-6-luna' -RepoRoot $script:ShardRepoRoot -OutputPath $outputPath `
+                    -CompareShardCount $ShardCount -NoBaselineCache *> $null
+            }
+            finally {
+                [System.Environment]::CurrentDirectory = $savedDirectory
+                Pop-Location
+            }
+            $summary = Get-Content -LiteralPath $outputPath -Raw | ConvertFrom-Json
+            $calls = @(Get-Content -LiteralPath $env:STUB_VALLY_CALL_LOG | ForEach-Object { , ($_ | ConvertFrom-Json) })
+            return @{ Summary = $summary; Calls = $calls }
+        }
+    }
+
+    BeforeEach {
+        $script:ShardRepoRoot = Join-Path $TestDrive "shard-repo-$([guid]::NewGuid())"
+        $baselineRoot = Join-Path $script:ShardRepoRoot 'evals/baseline-equivalence'
+        New-Item -ItemType Directory -Path (Join-Path $baselineRoot 'customized/workspace') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $script:ShardRepoRoot '.github/skills') -Force | Out-Null
+        $agentsDir = Join-Path $script:ShardRepoRoot '.github/agents/hve-core'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $agentsDir 'rpi-agent.agent.md') -Encoding UTF8 -Value "---`nname: RPI Agent`n---`n`nStub agent."
+        New-Item -ItemType Directory -Path (Join-Path $baselineRoot 'seed-workspace') -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $baselineRoot 'seed-workspace/README.md') -Encoding UTF8 -Value '# seed'
+
+        $stimulusYaml = ($script:ShardStimuli | ForEach-Object {
+                "  - name: $_`n    prompt: `"Prompt $_.`"`n    tags: {category: baseline-equivalence, policy: equivalent}"
+            }) -join "`n"
+        Set-Content -LiteralPath (Join-Path $baselineRoot 'stimuli.yml') -Encoding UTF8 -Value "stimuli:`n$stimulusYaml"
+        Set-Content -LiteralPath (Join-Path $baselineRoot 'compare.eval.yml') -Encoding UTF8 -Value "name: stub-compare`ntype: capability`nstimuli:`n$stimulusYaml"
+        foreach ($variantDir in @('baseline', 'customized')) {
+            $variantPath = Join-Path $baselineRoot $variantDir
+            New-Item -ItemType Directory -Path $variantPath -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $variantPath 'eval.yaml') -Encoding UTF8 -Value "name: stub-spec`ntype: capability`ndefaults:`n  runs: 2`n  executor: copilot-sdk`nstimuli:`n$stimulusYaml"
+        }
+
+        Set-Alias -Name vally -Value (Join-Path $PSScriptRoot 'fixtures/stub-vally.ps1') -Scope Global
+        $env:STUB_VALLY_MODE = 'diagnostic'
+    }
+
+    AfterEach {
+        Remove-Item Alias:vally -Force -ErrorAction SilentlyContinue
+        Remove-Item Env:STUB_VALLY_MODE, Env:STUB_VALLY_COMPARE_MODE, Env:STUB_VALLY_CALL_LOG, Env:STUB_VALLY_COMPARE_COUNT_DIR -ErrorAction SilentlyContinue
+    }
+
+    It 'Matches the serial comparison tally and summary statistics with five concurrent shards' {
+        $serial = Invoke-ShardedDriver -ShardCount 1 -CompareMode 'echo-scored'
+        $sharded = Invoke-ShardedDriver -ShardCount 5 -CompareMode 'echo-scored'
+
+        foreach ($field in @('runs', 'ties', 'baselineWins', 'treatmentWins', 'equivalentTrials', 'equivalentTies', 'judgeErrors', 'meanScore', 'ciLow', 'ciHigh', 'winRate')) {
+            $sharded.Summary.$field | Should -Be $serial.Summary.$field -Because $field
+        }
+        $sharded.Summary.runs | Should -Be 12
+        $serial.Summary.ciLow | Should -BeLessThan $serial.Summary.ciHigh
+        $sharded.Summary.dataQualityViolations | Should -Be $serial.Summary.dataQualityViolations
+        $sharded.Summary.runHealthFailures | Should -Be $serial.Summary.runHealthFailures
+    }
+
+    It 'Runs five compare shards and merges them into the per-model JSONL' {
+        $result = Invoke-ShardedDriver -ShardCount 5 -CompareMode 'echo'
+        $summary = $result.Summary
+
+        # Concurrent shards append to one call log, so counts come from phaseTimings.
+        $compareWorkers = @($summary.phaseTimings | Where-Object phase -EQ 'compare' | ForEach-Object worker | Sort-Object)
+        $compareWorkers | Should -Be @(1..5 | ForEach-Object { 'gpt-6-luna:compare-{0:D2}' -f $_ })
+        @($summary.compareLogs) | Should -HaveCount 5
+        $merged = Join-Path $script:ShardRepoRoot "logs/vally-compare-gpt-6-luna-$($summary.runId).jsonl"
+        @(Get-Content -LiteralPath $merged) | Should -HaveCount 5
+    }
+
+    It 'Keeps one serial run-directory compare when the shard count is 1' {
+        $result = Invoke-ShardedDriver -ShardCount 1 -CompareMode 'echo'
+
+        $compareCalls = @($result.Calls | Where-Object { $_[0] -eq 'compare' })
+        $compareCalls | Should -HaveCount 1
+        $baselineArgument = $compareCalls[0][([Array]::IndexOf([object[]]$compareCalls[0], '--baseline') + 1)]
+        Test-Path -LiteralPath $baselineArgument -PathType Container | Should -BeTrue
+        $baselineArgument | Should -Not -Match 'compare-shards'
+        @($result.Summary.phaseTimings | Where-Object phase -EQ 'compare' | ForEach-Object worker) | Should -Be @('gpt-6-luna')
+    }
+
+    It 'Retries each shard that failed without records and keeps the retried result' {
+        $env:STUB_VALLY_COMPARE_COUNT_DIR = Join-Path $TestDrive "shard-counts-$([guid]::NewGuid())"
+        $result = Invoke-ShardedDriver -ShardCount 5 -CompareMode 'fail-first'
+        $compareTimings = @($result.Summary.phaseTimings | Where-Object phase -EQ 'compare')
+
+        $compareTimings | Should -HaveCount 10
+        @($compareTimings | Where-Object attempt -EQ 2) | Should -HaveCount 5
+        @($compareTimings | Where-Object attempt -EQ 2 | ForEach-Object exitCategory | Sort-Object -Unique) | Should -Be @('success')
+        $result.Summary.runs | Should -Be 12
+    }
+
+    It 'Fails closed when shards fail permanently' {
+        $result = Invoke-ShardedDriver -ShardCount 5 -CompareMode 'fail-empty'
+
+        $result.Summary.runs | Should -Be 0
+        $result.Summary.runHealthFailures | Should -BeGreaterOrEqual 5
+        $result.Summary.dataQualityViolations | Should -BeGreaterThan 0
+        $result.Summary.verdict | Should -Be 'fail'
+    }
+}

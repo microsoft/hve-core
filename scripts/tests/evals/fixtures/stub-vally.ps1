@@ -13,7 +13,17 @@
 #   STUB_VALLY_MODE            Default mode for any spec ('pass' when unset).
 #   STUB_VALLY_MODES_JSON      Optional JSON object mapping spec basenames to
 #                              modes; overrides STUB_VALLY_MODE per-spec.
-#   STUB_VALLY_COMPARE_MODE    Compare mode: pass or fail-empty.
+#   STUB_VALLY_COMPARE_MODE    Compare mode: pass, fail-empty, echo, echo-scored, or
+#                              fail-first. echo pairs --baseline and --treatment
+#                              trials by stimulus name and trial index and emits a
+#                              tie per matched pair plus unmatched lists.
+#                              echo-scored pairs the same way but assigns each pair
+#                              a deterministic signed score and computes the summary
+#                              over those scores with vally's formula, so it serves
+#                              as an oracle for summary statistics. fail-first exits
+#                              1 with no output on the first call per --output path
+#                              (tracked under STUB_VALLY_COMPARE_COUNT_DIR), then
+#                              behaves like echo.
 #
 # Supported modes:
 #   pass   - two passing trials, exit 0
@@ -51,8 +61,15 @@ if ($env:STUB_VALLY_CALL_LOG) {
 
 if ($args[0] -eq 'compare') {
     $outputPath = $null
+    $baselineInput = $null
+    $treatmentInput = $null
     for ($i = 1; $i -lt $args.Count; $i++) {
-        if ($args[$i] -eq '--output') { $outputPath = $args[++$i] }
+        switch ($args[$i]) {
+            '--output' { $outputPath = $args[++$i] }
+            '--baseline' { $baselineInput = $args[++$i] }
+            '--treatment' { $treatmentInput = $args[++$i] }
+            default { }
+        }
     }
     if (-not $outputPath) {
         Write-Error "stub-vally: compare requires --output."
@@ -62,6 +79,122 @@ if ($args[0] -eq 'compare') {
     if ($env:STUB_VALLY_COMPARE_MODE -eq 'fail-empty') {
         [System.IO.File]::WriteAllText($outputPath, '')
         exit 1
+    }
+
+    if ($env:STUB_VALLY_COMPARE_MODE -eq 'fail-first') {
+        $countDir = [string]$env:STUB_VALLY_COMPARE_COUNT_DIR
+        if (-not $countDir) {
+            Write-Error "stub-vally: fail-first compare mode requires STUB_VALLY_COMPARE_COUNT_DIR."
+            exit 71
+        }
+        New-Item -ItemType Directory -Path $countDir -Force | Out-Null
+        $sha = [System.Security.Cryptography.SHA256]::Create()
+        try {
+            $key = -join ($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes([string]$outputPath)) | ForEach-Object { $_.ToString('x2') })
+        }
+        finally { $sha.Dispose() }
+        $marker = Join-Path $countDir $key
+        if (-not (Test-Path -LiteralPath $marker)) {
+            Set-Content -LiteralPath $marker -Value '1' -Encoding ascii
+            exit 1
+        }
+    }
+
+    if ($env:STUB_VALLY_COMPARE_MODE -in @('echo', 'echo-scored', 'fail-first')) {
+        # Mirrors the pairing contract of `vally compare`: both inputs are loaded from a
+        # JSONL file or the top-level *.jsonl and *.trajectory.json files of a directory,
+        # and trials pair on trajectory stimulus name plus trial index. Matched pairs
+        # become tie trials; one-sided trials are reported as unmatched.
+        $readTrials = {
+            param([string]$InputPath)
+            $trials = [System.Collections.Generic.List[object]]::new()
+            if (-not $InputPath -or -not (Test-Path -LiteralPath $InputPath)) { return , $trials }
+            $texts = [System.Collections.Generic.List[string]]::new()
+            if (Test-Path -LiteralPath $InputPath -PathType Leaf) {
+                foreach ($line in [System.IO.File]::ReadLines($InputPath)) { $texts.Add($line) }
+            }
+            else {
+                foreach ($file in @(Get-ChildItem -LiteralPath $InputPath -File -Filter '*.jsonl' | Sort-Object Name)) {
+                    foreach ($line in [System.IO.File]::ReadLines($file.FullName)) { $texts.Add($line) }
+                }
+                foreach ($file in @(Get-ChildItem -LiteralPath $InputPath -File -Filter '*.trajectory.json' | Sort-Object Name)) {
+                    $texts.Add(('{{"type":"trial-result","trialIndex":0,"trajectory":{0}}}' -f ([System.IO.File]::ReadAllText($file.FullName) -replace '\r?\n', '')))
+                }
+            }
+            foreach ($text in $texts) {
+                if ([string]::IsNullOrWhiteSpace($text)) { continue }
+                try { $record = $text | ConvertFrom-Json -AsHashtable -Depth 100 -ErrorAction Stop } catch { continue }
+                if ($record -isnot [System.Collections.IDictionary]) { continue }
+                if ($record['type'] -and $record['type'] -ne 'trial-result') { continue }
+                $trajectory = $record['trajectory']
+                if ($trajectory -isnot [System.Collections.IDictionary] -or $trajectory['stimulus'] -isnot [System.Collections.IDictionary]) { continue }
+                $name = [string]$trajectory['stimulus']['name']
+                if (-not $name) { continue }
+                $index = if ($record['trialIndex'] -is [int] -or $record['trialIndex'] -is [long]) { [int]$record['trialIndex'] } else { 0 }
+                $trials.Add([pscustomobject]@{ Name = $name; Index = $index })
+            }
+            return , $trials
+        }
+
+        $baselineTrials = & $readTrials $baselineInput
+        $treatmentTrials = & $readTrials $treatmentInput
+        $treatmentKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+        foreach ($trial in $treatmentTrials) { [void]$treatmentKeys.Add("$($trial.Name)#$($trial.Index)") }
+        $baselineKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+        foreach ($trial in $baselineTrials) { [void]$baselineKeys.Add("$($trial.Name)#$($trial.Index)") }
+
+        $byStimulus = [ordered]@{}
+        $unmatchedBaseline = [System.Collections.Generic.List[string]]::new()
+        $scores = [System.Collections.Generic.List[double]]::new()
+        $scored = $env:STUB_VALLY_COMPARE_MODE -eq 'echo-scored'
+        foreach ($trial in $baselineTrials) {
+            $key = "$($trial.Name)#$($trial.Index)"
+            if (-not $treatmentKeys.Contains($key)) { $unmatchedBaseline.Add($key); continue }
+            if (-not $byStimulus.Contains($trial.Name)) { $byStimulus[$trial.Name] = [System.Collections.Generic.List[object]]::new() }
+            $score = 0.0
+            if ($scored) {
+                $seed = $trial.Index
+                foreach ($character in $trial.Name.ToCharArray()) { $seed += [int]$character }
+                $score = @(-1.0, 0.0, 0.5, 1.0)[$seed % 4]
+            }
+            $winner = if ($score -gt 0) { 'treatment' } elseif ($score -lt 0) { 'baseline' } else { 'tie' }
+            $scores.Add($score)
+            $byStimulus[$trial.Name].Add([ordered]@{ trialIndex = $trial.Index; winner = $winner; score = $score; errored = $false })
+        }
+        $unmatchedTreatment = @($treatmentTrials | Where-Object { -not $baselineKeys.Contains("$($_.Name)#$($_.Index)") } | ForEach-Object { "$($_.Name)#$($_.Index)" })
+
+        $summary = [ordered]@{ meanScore = 0.0; ciLow = -0.2; ciHigh = 0.2; winRate = 0.0 }
+        if ($scored -and $scores.Count -gt 0) {
+            # Independent oracle for the vally summary: mean, two-sided 95% Student-t
+            # interval (exact table to df 20, Cornish-Fisher above), and positive share.
+            $count = $scores.Count
+            $mean = ($scores | Measure-Object -Average).Average
+            $low = $mean; $high = $mean
+            if ($count -gt 1) {
+                $table = @(0, 12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228, 2.201, 2.179, 2.16, 2.145, 2.131, 2.12, 2.11, 2.101, 2.093, 2.086)
+                $df = $count - 1
+                $critical = if ($df -le 20) { $table[$df] } else {
+                    $z = 1.959963984540054; $z2 = $z * $z
+                    $z + ($z * ($z2 + 1) / 4) / $df + ($z * (5 * $z2 * $z2 + 16 * $z2 + 3) / 96) / ($df * $df) +
+                    ($z * (3 * $z2 * $z2 * $z2 + 19 * $z2 * $z2 + 17 * $z2 - 15) / 384) / ($df * $df * $df)
+                }
+                $sumSquares = 0.0
+                foreach ($value in $scores) { $sumSquares += ($value - $mean) * ($value - $mean) }
+                $margin = $critical * [math]::Sqrt($sumSquares / ($count - 1)) / [math]::Sqrt($count)
+                $low = $mean - $margin; $high = $mean + $margin
+            }
+            $summary = [ordered]@{ meanScore = $mean; ciLow = $low; ciHigh = $high; winRate = @($scores | Where-Object { $_ -gt 0 }).Count / $count }
+        }
+
+        $comparison = [ordered]@{
+            type               = 'comparison'
+            stimuli            = @(foreach ($name in $byStimulus.Keys) { [ordered]@{ stimulusName = $name; trials = @($byStimulus[$name]) } })
+            unmatchedBaseline  = @($unmatchedBaseline)
+            unmatchedTreatment = $unmatchedTreatment
+            summary            = $summary
+        }
+        Set-Content -LiteralPath $outputPath -Value ($comparison | ConvertTo-Json -Depth 10 -Compress) -Encoding utf8NoBOM
+        exit 0
     }
 
     $comparison = [ordered]@{
