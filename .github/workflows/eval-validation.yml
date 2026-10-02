@@ -54,6 +54,11 @@ on:
         required: false
         type: number
         default: 7
+      advisory-equivalence:
+        description: "Run the non-gating advisory baseline-equivalence model lanes"
+        required: false
+        type: boolean
+        default: true
     secrets:
       copilot-github-token:
         description: "GitHub credential exported as COPILOT_GITHUB_TOKEN for the Copilot CLI used by vally eval"
@@ -693,6 +698,7 @@ jobs:
     continue-on-error: true
     needs: [eval-validation, content-moderation, agent-plan]
     if: >-
+      inputs.advisory-equivalence != false &&
       needs.eval-validation.outputs.eval-relevant == 'true' &&
       needs.agent-plan.outputs.execution-enabled == 'true' &&
       needs.agent-plan.outputs.baseline-required == 'true' &&

@@ -352,13 +352,23 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
         $script:Workflow | Should -Match '(?s)equivalence-execute:.*?COMPARE_SHARD_COUNT: \$\{\{ inputs\.compare-shard-count \|\| 7 \}\}.*?-CompareShardCount \(\[int\]\$env:COMPARE_SHARD_COUNT\)'
     }
 
+    It 'defines a non-gating advisory lane control that defaults on' {
+        $advisoryInput = $script:EvalWorkflow.on.workflow_call.inputs['advisory-equivalence']
+        $advisoryInput.type | Should -Be 'boolean'
+        $advisoryInput.default | Should -BeTrue
+        $advisoryInput.required | Should -BeFalse
+    }
+
     It 'runs the advisory model lane in parallel without any path into gating' {
         $jobs = $script:EvalWorkflow.jobs
         $advisory = $jobs['equivalence-advisory']
         $advisory | Should -Not -BeNullOrEmpty
         $advisory['continue-on-error'] | Should -BeTrue
         $advisory.permissions.contents | Should -Be 'read'
-        ([string]$advisory['if']).Trim() | Should -BeExactly ([string]$jobs['equivalence-execute']['if']).Trim()
+        $guard = 'inputs.advisory-equivalence != false && '
+        $advisoryCondition = ([string]$advisory['if']).Trim()
+        $advisoryCondition | Should -BeLike "$guard*"
+        $advisoryCondition.Substring($guard.Length) | Should -BeExactly ([string]$jobs['equivalence-execute']['if']).Trim()
         @($advisory.needs) | Should -Not -Contain 'equivalence-execute'
         foreach ($jobName in @($jobs.Keys)) {
             @($jobs[$jobName].needs) | Should -Not -Contain 'equivalence-advisory' -Because "$jobName must not depend on the advisory lane"

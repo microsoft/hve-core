@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-30
+ms.date: 2026-10-01
 ms.topic: how-to
 keywords:
   - evals
@@ -138,7 +138,8 @@ baseline-equivalence suite without gating the pull request. It currently runs Mi
 
 To add a model, add a matrix entry to `equivalence-advisory`. If a parallel advisory lane
 causes judge errors in the gating lanes, add `equivalence-execute` to the advisory job's
-`needs` so it runs after them.
+`needs` so it runs after them. To stop the advisory lanes without a workflow edit, set the
+reusable workflow input `advisory-equivalence` to `false`; see Rollback Controls.
 
 ## Trusted Progress
 
@@ -171,6 +172,7 @@ The reusable workflow inputs change scheduling without changing evidence semanti
 | `skill-shard-count`       | `2`          | `1`            | Uses the same planner and runner with one skill shard       |
 | `baseline-max-parallel`   | `2`          | `1`            | Serializes the same isolated baseline model producers       |
 | `compare-shard-count`     | `7`          | `1`            | Runs one serial `vally compare` per baseline model producer |
+| `advisory-equivalence`    | `true`       | `false`        | Skips the non-gating advisory model lanes                   |
 
 Each baseline model producer splits its comparison into `compare-shard-count`
 stimulus-disjoint `vally compare` shards that run concurrently and are merged into one
