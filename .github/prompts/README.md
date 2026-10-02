@@ -2,7 +2,7 @@
 title: GitHub Copilot Prompts
 description: Coaching and guidance prompts for specific development tasks that provide step-by-step assistance and context-aware support
 author: Edge AI Team
-ms.date: 2026-09-28
+ms.date: 2026-10-02
 ms.topic: hub-page
 estimated_reading_time: 3
 keywords:
@@ -96,19 +96,6 @@ These workflows are skills rather than prompts. Each resolves the active tracker
 
 ### Security
 
-* **[Security Capture](./security/security-capture.prompt.md)** - Start security planning from existing notes (capture mode)
-* **[Security Plan from PRD](./security/security-plan-from-prd.prompt.md)** - Start security planning from PRD/BRD artifacts (from-prd mode)
-* **[Security Review](./security/security-review.prompt.md)** - OWASP vulnerability assessment against the current codebase with configurable mode, scope, and skill selection
-* **[Security Review - Web](./security/security-review-web.prompt.md)** - OWASP Top 10 web vulnerability assessment without codebase profiling
-* **[Security Review - LLM](./security/security-review-llm.prompt.md)** - OWASP LLM and Agentic vulnerability assessments with codebase profiling
-* **[Security Review - Secure by Design](./security/security-review-sbd.prompt.md)** - Secure by Design principles assessment per UK and Australian government guidance
-* **[SSSC Capture](./security/sssc-capture.prompt.md)** - Start supply chain security planning from existing knowledge (capture mode)
-* **[SSSC from BRD](./security/sssc-from-brd.prompt.md)** - Start supply chain security planning from BRD artifacts
-* **[SSSC from PRD](./security/sssc-from-prd.prompt.md)** - Start supply chain security planning from PRD artifacts
-* **[SSSC from Security Plan](./security/sssc-from-security-plan.prompt.md)** - Extend a Security Planner assessment with supply chain coverage
-* **[VEX Scan](./security/vex-scan.prompt.md)** - Full VEX pipeline: scan dependencies, enrich CVEs, analyze exploitability, and draft an OpenVEX document
-* **[VEX Triage](./security/vex-triage.prompt.md)** - Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document
-* **[VEX Implement](./security/vex-implement.prompt.md)** - Plan the work to stand up VEX in a target project as a backlog for `rpi-implement`
 * **[Incident Response](./security/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
 * **[Risk Register](./security/risk-register.prompt.md)** - Generate a qualitative risk assessment with a P×I matrix and mitigation plans
 
@@ -147,7 +134,7 @@ These workflows are skills rather than prompts. Each resolves the active tracker
 12. **Responding to Azure incidents?** Use [Incident Response](./security/incident-response.prompt.md)
 13. **Discovering or triaging a backlog?** Use the [Backlog Plan](../skills/project-planning/backlog-plan/SKILL.md) skill in `discover` or `triage` mode
 14. **Need GitLab delivery context?** Review the [GitLab Skill](../skills/project-planning/gitlab/SKILL.md) for setup and command guidance
-15. **Running a security review?** Use [Security Review](./security/security-review.prompt.md) for full OWASP assessment
+15. **Running a security review?** Select the **Security Reviewer** agent for a full OWASP assessment, or the **Security Planner** and **SSSC Planner** agents for security and supply chain planning
 
 ## Related Resources
 

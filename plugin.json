@@ -113,20 +113,7 @@
     ".github/prompts/rai-planning/rai-plan-from-prd.prompt.md",
     ".github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md",
     ".github/prompts/security/incident-response.prompt.md",
-    ".github/prompts/security/risk-register.prompt.md",
-    ".github/prompts/security/security-capture.prompt.md",
-    ".github/prompts/security/security-plan-from-prd.prompt.md",
-    ".github/prompts/security/security-review-llm.prompt.md",
-    ".github/prompts/security/security-review-sbd.prompt.md",
-    ".github/prompts/security/security-review-web.prompt.md",
-    ".github/prompts/security/security-review.prompt.md",
-    ".github/prompts/security/sssc-capture.prompt.md",
-    ".github/prompts/security/sssc-from-brd.prompt.md",
-    ".github/prompts/security/sssc-from-prd.prompt.md",
-    ".github/prompts/security/sssc-from-security-plan.prompt.md",
-    ".github/prompts/security/vex-implement.prompt.md",
-    ".github/prompts/security/vex-scan.prompt.md",
-    ".github/prompts/security/vex-triage.prompt.md"
+    ".github/prompts/security/risk-register.prompt.md"
   ],
   "rules": [
     ".github/instructions/accessibility/accessibility-identity.instructions.md",
