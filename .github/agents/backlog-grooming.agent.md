@@ -22,13 +22,13 @@ referenced by that policy.
 
 The final response contains the compact Markdown report defined by the shared
 policy. Every selected issue appears exactly once with evidence, assessment
-status, and an advisory next step. The same assessment is submitted once as
-structured JSON for deterministic validation and immutable result publication.
+status, and an advisory next step. Each assessment is submitted once through
+structured safe output for deterministic validation and immutable publication.
 
 ## Success Criteria
 
-* Validate and assess only the caller-supplied issue numbers, preserving their
-  order and representing post-snapshot unavailable entries as `Deferred`.
+* Assess only the caller-supplied issue numbers, preserving their order and
+  representing post-snapshot unavailable entries as `Deferred`.
 * Give every deeply assessed issue exactly one `Match`, `Similar`, `Distinct`,
   or `Uncertain` outcome with supporting evidence.
 * Reconcile every deeply assessed issue with default-branch content, pull
@@ -37,11 +37,6 @@ structured JSON for deterministic validation and immutable result publication.
   with cited paths, issue or pull-request numbers, commits, or releases.
 * Include one result row for every selected issue, including no-change and
   deferred outcomes.
-* Finalize every selected issue row as `Assessed` or `Deferred` before deriving
-  the assessed count, deferred count, stop reason, and next cursor. Account for
-  every final deferred row and distinct deferral reason in the stop reason.
-* Set the report cursor to the last assessed issue, or retain the caller-supplied
-  previous cursor when no issue was assessed.
 * Keep sensitive issue details out of the report.
 
 ## Stop Rules
@@ -50,11 +45,9 @@ Stop assessment early enough to preserve the workflow time and AI-credit budget
 needed to render the final report. Mark selected but incomplete issues as
 `Deferred` and state the reason.
 
-When candidate validation, repository access, or required evidence is
-unavailable, report the missing evidence and use the fail-closed `noop` path
-defined by the calling workflow. A fail-closed `noop` does not emit
-or advance report cursor state. Do not invent candidate, assessment, or cursor
-state.
+When repository access or required evidence is unavailable, finalize every
+affected supplied candidate as `Deferred` with a factual non-empty reason. Do
+not invent candidate or assessment state.
 
 ## Constraints
 
@@ -72,8 +65,8 @@ state.
 
 ## Assessment Procedure
 
-1. Validate the caller-supplied ordered candidate IDs, then retrieve exactly
-   those open non-pull-request issues.
+1. Retrieve exactly the caller-supplied ordered candidate IDs as open
+  non-pull-request issues.
 2. Hydrate selected issues, including their title, body, comments, activity,
    ownership, labels, milestone, and linked development context.
 3. Extract the concrete requested outcomes and acceptance signals from each
@@ -97,16 +90,15 @@ state.
 8. Finalize every selected issue row as `Assessed` or `Deferred`. Preserve a
   non-empty reason on every deferred row; the isolated result job derives all
   structural run state from the validated final rows and trusted caller input.
-9. Render the compact report and request one validated shard result after
-   every successful assessment. Request `noop` only when the assessment cannot
-   complete according to the calling workflow.
+9. Submit one final validated result for every supplied candidate, then render
+  the compact report after all safe output calls succeed.
 
 ## Response Format
 
 Render the compact issue index and labeled per-issue details defined by the
-shared policy. Include the run timestamp, total open inventory, assessed count,
-priority cohort count, round-robin cohort count, deferred count, stop reason,
-and next cursor in a short labeled run summary before the issue index.
+shared policy. The isolated result job derives the authoritative timestamp,
+counts, stop reason, cursor, and cohort summary from trusted input and validated
+rows; do not calculate or present a separate model-authored run summary.
 
 For shard-result publication, make exactly one final
 `publish-backlog-grooming-result` call for each candidate in
@@ -115,8 +107,8 @@ integer issue number. This scalar field is the sole call identity. Do not
 depend on call order, and do not use the publication call to inspect or test
 its schema.
 
-Supply semantic scalar values for `title`, `selection-reason`,
-`activity-and-ownership-context`, `acceptance-signals`,
+Supply semantic scalar values for `title`, `activity-and-ownership-context`,
+`acceptance-signals`,
 `similarity-outcome`, `disposition`, `grooming-finding`,
 `recommended-next-step`, `assessment-status`, and `deferral-reason`. Use
 exactly `Match`, `Similar`, `Distinct`, or `Uncertain` for
