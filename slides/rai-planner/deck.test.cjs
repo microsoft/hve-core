@@ -291,7 +291,7 @@ test('the extension layers real SR 26-2 guidance with its source and scope', () 
 });
 
 test('repository citations are pinned to the source snapshot', () => {
-  const pinned = Object.entries(sources).filter(([, source]) => /github\.com\/microsoft\/hve-core\/(?:blob|tree)\//.test(source.url));
+  const pinned = Object.entries(sources).filter(([, source]) => /^https:\/\/github\.com\/microsoft\/hve-core\/(?:blob|tree)\//.test(source.url));
   assert.ok(pinned.length > 0);
   for (const [key, source] of pinned) assert.ok(source.url.includes(`/${snapshot}/`) || source.url.endsWith(`/${snapshot}`) || source.url.endsWith(`/${snapshot}/`), key);
   for (const [key, source] of Object.entries(sources)) {
