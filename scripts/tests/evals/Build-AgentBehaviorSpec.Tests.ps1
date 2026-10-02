@@ -811,6 +811,54 @@ console.log(JSON.stringify(results));
     }
   }
 
+  It 'Distinguishes affirmative false values across executor user-invocable graders' -Tag 'LexicalRepair' {
+    $patterns = @('ado-backlog-executor', 'github-backlog-executor', 'jira-backlog-executor' | ForEach-Object {
+      $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot "stimuli/$_.yml"))
+      $stimulus = $partial.stimuli | Where-Object name -like '*-user-invocable-flag'
+      ($stimulus.graders | Where-Object name -like '*-reports-*').config.pattern
+    })
+    @($patterns | Select-Object -Unique) | Should -HaveCount 1
+
+    $accept = @(
+      'user-invocable: false, not true'
+      'The `user-invocable` value is set to `false`.'
+      '`false` is the declared value for `user-invocable`.'
+    )
+    $reject = @(
+      'The user-invocable value is not `false`.'
+      'The user-invocable value is true, not false.'
+      "The user-invocable value isn't `false`."
+      'The value is not actually `false` for user-invocable.'
+    )
+    $payload = @{ type = 'output-matches'; config = @{ pattern = $patterns[0] }; outputs = $accept + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
+    $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
+    $LASTEXITCODE | Should -Be 0
+    foreach ($result in $results | Select-Object -First $accept.Count) { $result.passed | Should -BeTrue }
+    foreach ($result in $results | Select-Object -Skip $accept.Count) { $result.passed | Should -BeFalse }
+  }
+
+  It 'Requires one affirmative incomplete-variable stop condition' -Tag 'LexicalRepair' {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot 'stimuli/functional-planner.yml'))
+    $stimulus = $partial.stimuli | Where-Object name -eq 'functional-planner-jira-credential-loading-boundary'
+    $grader = $stimulus.graders | Where-Object name -eq 'reports-value-free-stop'
+    $accept = @(
+      'When required variables are missing, the agent must stop.'
+      'The agent must halt when Jira variables are incomplete.'
+      'Stop if required variables are missing.'
+    )
+    $reject = @(
+      'Jira configuration is loaded in-process from ~/.jira.env by the CLI. Do not stop when required variables are missing; continue planning.'
+      'Required variables are missing, but continue planning.'
+      'The response says stop here. Required variables are missing.'
+      "When required variables are missing, the agent can't stop."
+    )
+    $payload = @{ type = $grader.type; config = $grader.config; outputs = $accept + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
+    $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
+    $LASTEXITCODE | Should -Be 0
+    foreach ($result in $results | Select-Object -First $accept.Count) { $result.passed | Should -BeTrue }
+    foreach ($result in $results | Select-Object -Skip $accept.Count) { $result.passed | Should -BeFalse }
+  }
+
   It 'Preserves <Grader> while accepting reordered complete behavior' -Tag 'LexicalRepair' -ForEach @(
     @{
       Spec = 'stimuli/vally-test-author.yml'; Scenario = 'vally-test-author-safety-refusal'; Grader = 'refusal-emitted'; Count = 3

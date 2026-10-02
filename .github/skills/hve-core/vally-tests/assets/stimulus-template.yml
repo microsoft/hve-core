@@ -9,9 +9,10 @@
 # * `name`              — unique kebab-case identifier per stimulus.
 # * `prompt`            — block scalar holding the literal user prompt.
 # * `agent_environment` — files and skills staged into the sandbox. Stage the
-#   artifact under test with `src` relative to the routed eval file and `dest`
-#   at the repo path the prompt names; a `skill` kind stages its directory under
-#   `skills:` instead. See references/grader-robustness.md.
+#   artifact under test with `src` relative to the compiled suite file
+#   (`evals/agent-behavior/eval.yaml` for agents) and `dest` at the repo path
+#   the prompt names; a `skill` kind stages its directory under `skills:`
+#   instead. See references/grader-robustness.md.
 # * `tags.category`     — fixed value `behavior-conformance` or `agent-behavior`.
 # * `tags.kind`         — one of `prompt`, `instructions`, `agent`, `skill`.
 # * `tags.target_artifact` — repo-relative path to the artifact under test.

@@ -83,6 +83,14 @@ staged_path_for() {
     while [[ "$path" == ./* ]]; do
         path="${path#./}"
     done
+    if [[ -z "${path}" ]]; then
+        printf 'ArtifactPath must not be empty.\n' >&2
+        return 1
+    fi
+    if [[ "${path}" == *$'\r'* || "${path}" == *$'\n'* ]]; then
+        printf 'ArtifactPath must be a single-line path.\n' >&2
+        return 1
+    fi
     if [[ "$path" == /* || "$path" =~ ^[A-Za-z]: ]]; then
         printf "ArtifactPath must be repository-relative: '%s'.\n" "$1" >&2
         return 1
@@ -94,15 +102,22 @@ staged_path_for() {
     printf '%s' "$path"
 }
 
-# Routed eval files sit two levels below the repository root, so sources ascend twice.
+# Agent sources resolve from the compiled suite, two levels below the repository root.
 environment_block() {
     local staged="$1"
     if [[ "$2" == "skill" ]]; then
         local skill_dir="${staged%/SKILL.md}"
+        local skill_source
         skill_dir="${skill_dir%/}"
-        printf '    agent_environment:\n      skills:\n        - ../../%s' "$skill_dir"
+        skill_source="$(yaml_dquote "../../${skill_dir}")"
+        printf '    agent_environment:\n      skills:\n        - %s' "${skill_source}"
     else
-        printf '    agent_environment:\n      files:\n        - src: ../../%s\n          dest: %s' "$staged" "$staged"
+        local source
+        local destination
+        source="$(yaml_dquote "../../${staged}")"
+        destination="$(yaml_dquote "${staged}")"
+        printf '    agent_environment:\n      files:\n        - src: %s\n          dest: %s' \
+            "${source}" "${destination}"
     fi
 }
 

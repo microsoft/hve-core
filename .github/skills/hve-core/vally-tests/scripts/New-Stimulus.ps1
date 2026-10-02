@@ -101,6 +101,12 @@ function ConvertTo-StagedArtifactPath {
     $normalized = $Path -replace '\\', '/'
     while ($normalized.StartsWith('./')) { $normalized = $normalized.Substring(2) }
 
+    if ([string]::IsNullOrEmpty($normalized)) {
+        throw 'ArtifactPath must not be empty.'
+    }
+    if ($normalized -match '[\r\n]') {
+        throw 'ArtifactPath must be a single-line path.'
+    }
     if ($normalized -match '^(/|[A-Za-z]:)') {
         throw "ArtifactPath must be repository-relative: '$Path'."
     }
@@ -110,19 +116,28 @@ function ConvertTo-StagedArtifactPath {
     $normalized
 }
 
+function ConvertTo-YamlDoubleQuoted {
+    param([Parameter(Mandatory)][string]$Value)
+
+    '"' + ($Value -replace '\\', '\\' -replace '"', '\"') + '"'
+}
+
 function Get-EnvironmentBlock {
     param(
         [Parameter(Mandatory)][string]$StagedPath,
         [Parameter(Mandatory)][string]$Kind
     )
 
-    # Routed eval files sit two levels below the repository root, so sources ascend twice.
+    # Agent sources resolve from the compiled suite, two levels below the repository root.
     if ($Kind -eq 'skill') {
         $skillDir = ($StagedPath -replace '/SKILL\.md$', '').TrimEnd('/')
-        "    agent_environment:`n      skills:`n        - ../../$skillDir"
+        $skillSource = ConvertTo-YamlDoubleQuoted -Value "../../$skillDir"
+        "    agent_environment:`n      skills:`n        - $skillSource"
     }
     else {
-        "    agent_environment:`n      files:`n        - src: ../../$StagedPath`n          dest: $StagedPath"
+        $source = ConvertTo-YamlDoubleQuoted -Value "../../$StagedPath"
+        $destination = ConvertTo-YamlDoubleQuoted -Value $StagedPath
+        "    agent_environment:`n      files:`n        - src: $source`n          dest: $destination"
     }
 }
 
@@ -168,7 +183,7 @@ $graderBlock = switch ($GraderType) {
     }
 }
 
-$artifactPathYaml = '"' + ($ArtifactPath -replace '\\', '\\' -replace '"', '\"') + '"'
+$artifactPathYaml = ConvertTo-YamlDoubleQuoted -Value $ArtifactPath
 
 $block = @"
   - name: $name

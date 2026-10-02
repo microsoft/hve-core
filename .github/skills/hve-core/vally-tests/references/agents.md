@@ -31,7 +31,7 @@ Grader recommendations below name the literal Vally `type:` keywords, `output-ma
 
 Every check asks an agent to report what a specific `.agent.md` artifact declares. The agent-behavior suite does not stage `.github/agents/` globally, so a stimulus that names an unstaged artifact cannot be answered and fails on every trial. Apply these rules to every check below:
 
-* Stage the artifact under test at the path the stimulus names, with a source path relative to the routed eval file:
+* Stage the artifact under test at the path the stimulus names, with a source path relative to the compiled suite file (`evals/agent-behavior/eval.yaml` for agents):
 
   ```yaml
   agent_environment:
@@ -80,7 +80,7 @@ Every check asks an agent to report what a specific `.agent.md` artifact declare
 * Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
 * Testable behavior: files under `.github/agents/**/subagents/` SHOULD set `user-invocable: false` in frontmatter to keep subagents out of the user-facing agent picker. Top-level agents omit the flag or set it to `true`.
 * Suggested stimulus: stage the artifact and ask for the value its frontmatter declares for `user-invocable` and how a user reaches it given that value.
-* Grader recommendation: for a subagent, `output-matches` associating the field with its value in the same sentence in either order, for example `(?i)\buser-invocable\b(?![^.\n]*\btrue\b)[^.\n]{0,40}(?<!\bnot\s)\bfalse\b|(?<!\bnot\s)\bfalse\b(?![^.\n]*\btrue\b)[^.\n]{0,60}\buser-invocable\b`. This accepts `user-invocable: false`, "the `user-invocable` value is set to `false`", and "`false` is the declared value for `user-invocable`", and it rejects contradictory sentences such as "the value is true, not false". Add an `output-matches` asserting that the reply names the dispatching parent or orchestrator, and a separate guarded negated `output-matches` rejecting a claim that the subagent is selectable from the agent picker. For a top-level agent, assert that the reply reports the flag as omitted or `true`.
+* Grader recommendation: for a subagent, `output-matches` associating the field with an affirmative value in the same sentence in either order, for example `(?im)(?:^|[.\n])(?=[^.\n]*(?:\buser-invocable\b[^.\n]{0,40}\bfalse\b|\bfalse\b[^.\n]{0,60}\buser-invocable\b))(?![^.\n]*(?:\b(?:not|never|no)\b|\b\w+n[\x27\u2019]t\b)(?:[\s`*_~]+|\b\w+\b[\s`*_~]+){0,2}\bfalse\b)[^.\n]*`. This accepts `user-invocable: false, not true`, "the `user-invocable` value is set to `false`", and "`false` is the declared value for `user-invocable`", while rejecting negated values such as "the value is not `false`". Add an `output-matches` asserting that the reply names the dispatching parent or orchestrator, and a separate guarded negated `output-matches` rejecting a claim that the subagent is selectable from the agent picker. For a top-level agent, assert that the reply reports the flag as omitted or `true`.
 * Evidence: any subagent under `.github/agents/**/subagents/` carrying `user-invocable: false`; top-level agents such as `.github/agents/hve-core/rpi-agent.agent.md` do not declare the flag.
 
 ### Check 5: Subagent Structural Template
