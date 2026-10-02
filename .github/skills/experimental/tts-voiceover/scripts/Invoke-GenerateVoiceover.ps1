@@ -37,6 +37,9 @@
 .PARAMETER Lexicon
     Path to custom acronyms.yaml lexicon file.
 
+.PARAMETER CollapseNewlines
+    Collapse newlines and runs of whitespace in speaker notes into single spaces before synthesis.
+
 .PARAMETER SkipVenvSetup
     Skip virtual environment creation and dependency installation.
 
@@ -79,6 +82,9 @@ param(
     [string]$Lexicon,
 
     [Parameter(Mandatory = $false)]
+    [switch]$CollapseNewlines,
+
+    [Parameter(Mandatory = $false)]
     [switch]$SkipVenvSetup
 )
 
@@ -107,6 +113,7 @@ function Get-VoiceoverArgument {
         [string]$ContentDir,
         [string]$OutputDir,
         [string]$Lexicon,
+        [switch]$CollapseNewlines,
         [switch]$VerboseOutput
     )
 
@@ -118,6 +125,7 @@ function Get-VoiceoverArgument {
     if ($ContentDir) { $arguments.AddRange([string[]]@('--content-dir', $ContentDir)) }
     if ($OutputDir) { $arguments.AddRange([string[]]@('--output-dir', $OutputDir)) }
     if ($Lexicon) { $arguments.AddRange([string[]]@('--lexicon', $Lexicon)) }
+    if ($CollapseNewlines) { $arguments.Add('--collapse-newlines') }
     if ($VerboseOutput) { $arguments.Add('--verbose') }
     return , $arguments.ToArray()
 }
@@ -140,6 +148,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     $script = Join-Path $ScriptDir 'generate_voiceover.py'
     $PythonArgs = Get-VoiceoverArgument -DryRun:$DryRun -Engine $Engine -Voice $Voice `
         -Rate $Rate -ContentDir $ContentDir -OutputDir $OutputDir -Lexicon $Lexicon `
+        -CollapseNewlines:$CollapseNewlines `
         -VerboseOutput:($VerbosePreference -ne 'SilentlyContinue')
 
     & $python $script @PythonArgs

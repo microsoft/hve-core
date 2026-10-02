@@ -4,10 +4,15 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import assemble_video
 import pytest
+
+
+def _write_command_output(command, **_kwargs):
+    Path(command[-1]).write_bytes(b"mp4")
 
 
 @pytest.fixture()
@@ -17,7 +22,9 @@ def mock_ffmpeg_dependencies(mocker):
         "_require_command",
         side_effect=lambda command: f"/usr/bin/{command}",
     )
-    mocker.patch.object(assemble_video, "_run_ffmpeg")
+    mocker.patch.object(
+        assemble_video, "_run_ffmpeg", side_effect=_write_command_output
+    )
 
 
 class TestAssembleVideo:
@@ -85,7 +92,9 @@ class TestAssembleVideo:
 
         render_calls = []
 
-        def fake_render_segment(*, segment, output_path, resolution, fps, ffmpeg_path):
+        def fake_render_segment(
+            *, segment, output_path, resolution, fps, ffmpeg_path, **_
+        ):
             render_calls.append(segment["duration"])
 
         mocker.patch.object(assemble_video, "_probe_duration", return_value=2.5)
@@ -130,7 +139,9 @@ class TestAssembleVideo:
 
         render_calls = []
 
-        def fake_render_segment(*, segment, output_path, resolution, fps, ffmpeg_path):
+        def fake_render_segment(
+            *, segment, output_path, resolution, fps, ffmpeg_path, **_
+        ):
             render_calls.append(segment["duration"])
 
         probe_mock = mocker.patch.object(
@@ -165,7 +176,7 @@ class TestAssembleVideo:
         mocker.patch.object(
             assemble_video,
             "_run_ffmpeg",
-            side_effect=lambda command: command_calls.append(command),
+            side_effect=lambda command, **_: command_calls.append(command),
         )
 
         # Act
@@ -196,7 +207,7 @@ class TestAssembleVideo:
         mocker.patch.object(
             assemble_video,
             "_run_ffmpeg",
-            side_effect=lambda command: command_calls.append(command),
+            side_effect=lambda command, **_: command_calls.append(command),
         )
 
         # Act
