@@ -150,7 +150,7 @@ Describe 'Invoke-BoundedProcess' -Tag 'Unit' {
     }
 }
 
-Describe 'Same-path output refusal' -Tag 'Unit' {
+Describe 'Same-path output safety' -Tag 'Unit' {
     BeforeEach {
         Mock Test-FFmpegAvailable { $true }
         Mock Test-HDRContent { $false }
@@ -172,6 +172,66 @@ Describe 'Same-path output refusal' -Tag 'Unit' {
         { Invoke-VideoConversion -InputPath $script:GifInput } | Should -Throw '*same as the input*'
 
         Should -Invoke Invoke-TwoPassConversion -Times 0 -Exactly
+    }
+
+    Context 'when the output parent is a directory link' {
+        BeforeEach {
+            $script:RealDirectory = Join-Path $TestDrive 'real'
+            $script:LinkedDirectory = Join-Path $TestDrive 'linked'
+            New-Item -ItemType Directory -Path $script:RealDirectory -Force | Out-Null
+            $script:LinkedSource = Join-Path $script:RealDirectory 'source.gif'
+            Set-Content -LiteralPath $script:LinkedSource -Value 'original-gif' -NoNewline
+            $script:LinkCreated = $false
+            $script:LinkCreationError = $null
+
+            try {
+                $linkType = if ($IsWindows) { 'Junction' } else { 'SymbolicLink' }
+                New-Item -ItemType $linkType -Path $script:LinkedDirectory -Target $script:RealDirectory -ErrorAction Stop | Out-Null
+                $script:LinkCreated = $true
+            }
+            catch {
+                $script:LinkCreationError = $_.Exception.Message
+            }
+        }
+
+        AfterEach {
+            if ($script:LinkCreated) {
+                [System.IO.Directory]::Delete($script:LinkedDirectory, $false)
+            }
+        }
+
+        It 'Refuses an output alias to the input through the linked parent' {
+            if (-not $script:LinkCreated) {
+                Set-ItResult -Skipped -Because "Directory links are unavailable: $script:LinkCreationError"
+                return
+            }
+            $aliasedOutput = Join-Path $script:LinkedDirectory 'source.gif'
+
+            { Invoke-VideoConversion -InputPath $script:LinkedSource -OutputPath $aliasedOutput } |
+                Should -Throw '*same as the input*'
+
+            Should -Invoke Invoke-TwoPassConversion -Times 0 -Exactly
+            Get-Content -LiteralPath $script:LinkedSource -Raw | Should -Be 'original-gif'
+        }
+
+        It 'Allows a distinct output beneath the linked parent' {
+            if (-not $script:LinkCreated) {
+                Set-ItResult -Skipped -Because "Directory links are unavailable: $script:LinkCreationError"
+                return
+            }
+            $distinctOutput = Join-Path $script:LinkedDirectory 'converted.gif'
+            Mock Invoke-TwoPassConversion {
+                Set-Content -LiteralPath $DestinationPath -Value 'converted-gif' -NoNewline
+                return $true
+            }
+
+            { Invoke-VideoConversion -InputPath $script:LinkedSource -OutputPath $distinctOutput } |
+                Should -Not -Throw
+
+            Should -Invoke Invoke-TwoPassConversion -Times 1 -Exactly
+            Test-Path -LiteralPath $distinctOutput -PathType Leaf | Should -BeTrue
+            Get-Content -LiteralPath $script:LinkedSource -Raw | Should -Be 'original-gif'
+        }
     }
 }
 

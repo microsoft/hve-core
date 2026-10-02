@@ -194,6 +194,55 @@ function Find-VideoFile {
     return $null
 }
 
+function Resolve-PhysicalPath {
+    <#
+    .SYNOPSIS
+        Resolve existing path segments through symbolic links and junctions.
+    .DESCRIPTION
+        Returns an absolute filesystem path while preserving any nonexistent
+        trailing segments, such as a new output filename.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    $fullPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
+    $pathRoot = [System.IO.Path]::GetPathRoot($fullPath)
+    $current = $pathRoot
+    $segments = $fullPath.Substring($pathRoot.Length).Split(
+        [System.IO.Path]::DirectorySeparatorChar,
+        [System.StringSplitOptions]::RemoveEmptyEntries
+    )
+
+    for ($index = 0; $index -lt $segments.Length; $index++) {
+        $candidate = Join-Path -Path $current -ChildPath $segments[$index]
+        if (-not (Test-Path -LiteralPath $candidate -ErrorAction Stop)) {
+            for ($tailIndex = $index; $tailIndex -lt $segments.Length; $tailIndex++) {
+                $current = Join-Path -Path $current -ChildPath $segments[$tailIndex]
+            }
+            break
+        }
+
+        $item = Get-Item -LiteralPath $candidate -Force -ErrorAction Stop
+        if ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+            $target = $item.ResolveLinkTarget($true)
+            if (-not $target) {
+                throw "Unable to resolve symbolic link or junction: $candidate"
+            }
+            $current = $target.FullName
+        }
+        else {
+            $current = $item.FullName
+        }
+    }
+
+    return [System.IO.Path]::GetFullPath($current)
+}
+
 function Test-HDRContent {
     <#
     .SYNOPSIS
@@ -518,9 +567,8 @@ function Invoke-VideoConversion {
     }
 
     # Refuse to overwrite the source, for example the default output of a .gif input.
-    $resolvedOutput = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath)
     $pathComparison = if ($IsLinux) { [System.StringComparison]::Ordinal } else { [System.StringComparison]::OrdinalIgnoreCase }
-    if ([string]::Equals([System.IO.Path]::GetFullPath($resolvedOutput), [System.IO.Path]::GetFullPath($resolvedInput), $pathComparison)) {
+    if ([string]::Equals((Resolve-PhysicalPath -Path $OutputPath), (Resolve-PhysicalPath -Path $resolvedInput), $pathComparison)) {
         throw "Output path is the same as the input path: $resolvedInput. Specify a different -OutputPath."
     }
 
