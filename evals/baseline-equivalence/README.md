@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to measure nominal behavior preservation'
 author: HVE Core Team
-ms.date: 2026-09-30
+ms.date: 2026-10-01
 ---
 
 ## Purpose
@@ -81,7 +81,11 @@ Each `vally compare --eval-spec evals/baseline-equivalence/compare.eval.yml --ju
 Stimuli are assigned round-robin in the declared order of `stimuli.yml`. Each shard reads directories under `evals/results/baseline-equivalence/<model>/<runId>/compare-shards/` that mirror the run directories' top-level `*.jsonl` and `*.trajectory.json` files for its stimuli, and writes `logs/vally-compare-<model>-<runId>-sNN.jsonl` beside a withheld `-sNN.log` console capture.
 The driver concatenates the shard outputs in shard order into `logs/vally-compare-<model>-<runId>.jsonl`, so every consumer still reads one file per model. A shard count of 1, or a corpus with one stimulus, runs one serial compare over the run directories and writes that file directly.
 A shard that exits nonzero without writing any comparison record is retried once; a shard that fails again counts as a run-health failure, and its missing trials surface as data-quality violations.
-`Measure-CompareTrials` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1) reads that JSONL, tallies each non-errored trial's `winner` (`baseline` / `treatment` / `tie`), and carries forward the record's `summary` statistics (signed mean score, 95% confidence interval, win rate).
+`Measure-CompareTrials` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1) reads that JSONL, tallies each non-errored trial's `winner` (`baseline` / `treatment` / `tie`), and reports the comparison's summary statistics (signed mean score, 95% confidence interval, win rate).
+A single comparison record carries those statistics in its `summary`, which vally computes over every non-errored trial.
+When the file holds one record per shard, each shard's `summary` covers only its own trials, so `Measure-CompareTrials` recomputes the statistics from the per-trial scores across all records with vally's formula: the arithmetic mean, a two-sided 95% Student-t interval, and the share of trials with a positive score.
+A complete sharded run therefore reports the same per-model statistics as a serial run. If any non-errored trial lacks a numeric score, complete `summary` intervals are instead combined conservatively.
+The statistics always describe the trials that were observed; missing trials fail the run as data-quality violations.
 The driver aggregates one JSONL per model into a single JSON summary; the summary is the contract every downstream consumer reads. It carries `schemaVersion: "2.1.0"`, and consumers reject an unsupported major version rather than reading absent fields as zeros.
 The compare invocation deliberately omits `--fail-on-regression`. Comparison is report-only calibration evidence until a later decision defines a degradation margin, confidence level, inequality, and missing-bound behavior from valid post-launch data.
 
@@ -95,10 +99,10 @@ The compare invocation deliberately omits `--fail-on-regression`. Comparison is 
 | `ties`                                                               | int          | Trials with `winner: "tie"`; neither environment showed a clear preference                                                                                                                      |
 | `baselineWins`                                                       | int          | Trials with `winner: "baseline"`; the customization underperformed                                                                                                                              |
 | `treatmentWins`                                                      | int          | Trials with `winner: "treatment"`; the customization outperformed                                                                                                                               |
-| `meanScore`                                                          | number       | Unweighted average, across records and models, of signed treatment-relative `summary.meanScore` values (positive favors the customization); reporting only                                      |
-| `ciLow`                                                              | number       | Conservative maximum lower bound of `summary.ciLow` across records and models; reporting only, not a gate input                                                                                 |
-| `ciHigh`                                                             | number       | Conservative minimum upper bound of `summary.ciHigh` across records and models; reporting only, not a gate input                                                                                |
-| `winRate`                                                            | number       | Unweighted average, across records and models, of `summary.winRate` values; reporting only                                                                                                      |
+| `meanScore`                                                          | number       | Signed treatment-relative mean score per model (positive favors the customization), unweighted average across models; the workflow fan-in weights models by `runs`; reporting only              |
+| `ciLow`                                                              | number       | 95% confidence lower bound per model; conservative maximum across models; reporting only, not a gate input                                                                                      |
+| `ciHigh`                                                             | number       | 95% confidence upper bound per model; conservative minimum across models; reporting only, not a gate input                                                                                      |
+| `winRate`                                                            | number       | Share of trials favoring the customization per model, unweighted average across models; the workflow fan-in weights models by `runs`; reporting only                                            |
 | `invariantFailures`                                                  | int          | Declared-invariant violations read from the baseline run's structured results                                                                                                                   |
 | `runHealthFailures`                                                  | int          | Run-integrity signals: missing run directories, unparseable compare output, a nonzero compare shard's exit, and a nonzero `vally eval` exit only when that run produced no usable grader signal |
 | `invocationEvidence`, `invocationFailures`                           | list, int    | Per-model expected and observed successful agent-file reads plus failed, missing, duplicate, wrong-path, and malformed evidence; any failure is structural                                      |

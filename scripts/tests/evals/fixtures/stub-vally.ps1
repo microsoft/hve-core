@@ -13,11 +13,15 @@
 #   STUB_VALLY_MODE            Default mode for any spec ('pass' when unset).
 #   STUB_VALLY_MODES_JSON      Optional JSON object mapping spec basenames to
 #                              modes; overrides STUB_VALLY_MODE per-spec.
-#   STUB_VALLY_COMPARE_MODE    Compare mode: pass, fail-empty, echo, or fail-first.
-#                              echo pairs --baseline and --treatment trials by
-#                              stimulus name and trial index and emits a tie per
-#                              matched pair plus unmatched lists. fail-first exits 1
-#                              with no output on the first call per --output path
+#   STUB_VALLY_COMPARE_MODE    Compare mode: pass, fail-empty, echo, echo-scored, or
+#                              fail-first. echo pairs --baseline and --treatment
+#                              trials by stimulus name and trial index and emits a
+#                              tie per matched pair plus unmatched lists.
+#                              echo-scored pairs the same way but assigns each pair
+#                              a deterministic signed score and computes the summary
+#                              over those scores with vally's formula, so it serves
+#                              as an oracle for summary statistics. fail-first exits
+#                              1 with no output on the first call per --output path
 #                              (tracked under STUB_VALLY_COMPARE_COUNT_DIR), then
 #                              behaves like echo.
 #
@@ -96,7 +100,7 @@ if ($args[0] -eq 'compare') {
         }
     }
 
-    if ($env:STUB_VALLY_COMPARE_MODE -in @('echo', 'fail-first')) {
+    if ($env:STUB_VALLY_COMPARE_MODE -in @('echo', 'echo-scored', 'fail-first')) {
         # Mirrors the pairing contract of `vally compare`: both inputs are loaded from a
         # JSONL file or the top-level *.jsonl and *.trajectory.json files of a directory,
         # and trials pair on trajectory stimulus name plus trial index. Matched pairs
@@ -141,20 +145,53 @@ if ($args[0] -eq 'compare') {
 
         $byStimulus = [ordered]@{}
         $unmatchedBaseline = [System.Collections.Generic.List[string]]::new()
+        $scores = [System.Collections.Generic.List[double]]::new()
+        $scored = $env:STUB_VALLY_COMPARE_MODE -eq 'echo-scored'
         foreach ($trial in $baselineTrials) {
             $key = "$($trial.Name)#$($trial.Index)"
             if (-not $treatmentKeys.Contains($key)) { $unmatchedBaseline.Add($key); continue }
             if (-not $byStimulus.Contains($trial.Name)) { $byStimulus[$trial.Name] = [System.Collections.Generic.List[object]]::new() }
-            $byStimulus[$trial.Name].Add([ordered]@{ trialIndex = $trial.Index; winner = 'tie'; score = 0.0; errored = $false })
+            $score = 0.0
+            if ($scored) {
+                $seed = $trial.Index
+                foreach ($character in $trial.Name.ToCharArray()) { $seed += [int]$character }
+                $score = @(-1.0, 0.0, 0.5, 1.0)[$seed % 4]
+            }
+            $winner = if ($score -gt 0) { 'treatment' } elseif ($score -lt 0) { 'baseline' } else { 'tie' }
+            $scores.Add($score)
+            $byStimulus[$trial.Name].Add([ordered]@{ trialIndex = $trial.Index; winner = $winner; score = $score; errored = $false })
         }
         $unmatchedTreatment = @($treatmentTrials | Where-Object { -not $baselineKeys.Contains("$($_.Name)#$($_.Index)") } | ForEach-Object { "$($_.Name)#$($_.Index)" })
+
+        $summary = [ordered]@{ meanScore = 0.0; ciLow = -0.2; ciHigh = 0.2; winRate = 0.0 }
+        if ($scored -and $scores.Count -gt 0) {
+            # Independent oracle for the vally summary: mean, two-sided 95% Student-t
+            # interval (exact table to df 20, Cornish-Fisher above), and positive share.
+            $count = $scores.Count
+            $mean = ($scores | Measure-Object -Average).Average
+            $low = $mean; $high = $mean
+            if ($count -gt 1) {
+                $table = @(0, 12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228, 2.201, 2.179, 2.16, 2.145, 2.131, 2.12, 2.11, 2.101, 2.093, 2.086)
+                $df = $count - 1
+                $critical = if ($df -le 20) { $table[$df] } else {
+                    $z = 1.959963984540054; $z2 = $z * $z
+                    $z + ($z * ($z2 + 1) / 4) / $df + ($z * (5 * $z2 * $z2 + 16 * $z2 + 3) / 96) / ($df * $df) +
+                    ($z * (3 * $z2 * $z2 * $z2 + 19 * $z2 * $z2 + 17 * $z2 - 15) / 384) / ($df * $df * $df)
+                }
+                $sumSquares = 0.0
+                foreach ($value in $scores) { $sumSquares += ($value - $mean) * ($value - $mean) }
+                $margin = $critical * [math]::Sqrt($sumSquares / ($count - 1)) / [math]::Sqrt($count)
+                $low = $mean - $margin; $high = $mean + $margin
+            }
+            $summary = [ordered]@{ meanScore = $mean; ciLow = $low; ciHigh = $high; winRate = @($scores | Where-Object { $_ -gt 0 }).Count / $count }
+        }
 
         $comparison = [ordered]@{
             type               = 'comparison'
             stimuli            = @(foreach ($name in $byStimulus.Keys) { [ordered]@{ stimulusName = $name; trials = @($byStimulus[$name]) } })
             unmatchedBaseline  = @($unmatchedBaseline)
             unmatchedTreatment = $unmatchedTreatment
-            summary            = [ordered]@{ meanScore = 0.0; ciLow = -0.2; ciHigh = 0.2; winRate = 0.0 }
+            summary            = $summary
         }
         Set-Content -LiteralPath $outputPath -Value ($comparison | ConvertTo-Json -Depth 10 -Compress) -Encoding utf8NoBOM
         exit 0

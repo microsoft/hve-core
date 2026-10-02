@@ -1451,7 +1451,8 @@ Describe 'Sharded compare pairing fidelity' -Tag 'Unit' {
         Remove-Item Env:STUB_VALLY_COMPARE_MODE -ErrorAction SilentlyContinue
     }
 
-    It 'Produces the same tally sharded as unsharded' {
+    It 'Produces the same tally and summary statistics sharded as unsharded' {
+        $env:STUB_VALLY_COMPARE_MODE = 'echo-scored'
         $serial = Invoke-StubCompare -Baseline $script:BaselineDir -Treatment $script:TreatmentDir -Output (Join-Path $script:Root 'serial.jsonl')
         $merged = @(for ($shard = 0; $shard -lt 3; $shard++) {
                 Invoke-StubCompare -Baseline $script:BaselineShards[$shard] -Treatment $script:TreatmentShards[$shard] -Output (Join-Path $script:Root "s$shard.jsonl")
@@ -1461,11 +1462,14 @@ Describe 'Sharded compare pairing fidelity' -Tag 'Unit' {
         $mergedTally = Measure-CompareTrials -Lines $merged -StimulusPolicy $script:Policy -ExpectedStimulusName $script:Names -ExpectedTrialCount 2
 
         $merged | Should -HaveCount 3
-        foreach ($field in @('Total', 'Ties', 'EquivalentTotal', 'EquivalentTies', 'JudgeErrors', 'MissingTrials', 'UnexpectedTrials', 'UnmatchedBaseline', 'UnmatchedTreatment', 'DuplicateTrials')) {
+        foreach ($field in @('Total', 'Ties', 'BaselineWins', 'TreatmentWins', 'EquivalentTotal', 'EquivalentTies', 'JudgeErrors', 'MissingTrials', 'UnexpectedTrials', 'UnmatchedBaseline', 'UnmatchedTreatment', 'DuplicateTrials', 'MeanScore', 'CiLow', 'CiHigh', 'WinRate')) {
             $mergedTally[$field] | Should -Be $serialTally[$field] -Because $field
         }
         $mergedTally.Total | Should -Be 10
         $mergedTally.MissingTrials | Should -Be 0
+        # A degenerate all-tie population would make the statistic comparison vacuous.
+        $serialTally.CiLow | Should -BeLessThan $serialTally.CiHigh
+        $serialTally.Ties | Should -BeLessThan $serialTally.Total
     }
 
     It 'Surfaces a treatment-side shard mismatch as missing and unmatched trials' {
@@ -1618,14 +1622,15 @@ Describe 'Invoke-BaselineEquivalence.ps1 (sharded compare)' -Tag 'Unit' {
         Remove-Item Env:STUB_VALLY_MODE, Env:STUB_VALLY_COMPARE_MODE, Env:STUB_VALLY_CALL_LOG, Env:STUB_VALLY_COMPARE_COUNT_DIR -ErrorAction SilentlyContinue
     }
 
-    It 'Matches the serial comparison tally with five concurrent shards' {
-        $serial = Invoke-ShardedDriver -ShardCount 1 -CompareMode 'echo'
-        $sharded = Invoke-ShardedDriver -ShardCount 5 -CompareMode 'echo'
+    It 'Matches the serial comparison tally and summary statistics with five concurrent shards' {
+        $serial = Invoke-ShardedDriver -ShardCount 1 -CompareMode 'echo-scored'
+        $sharded = Invoke-ShardedDriver -ShardCount 5 -CompareMode 'echo-scored'
 
-        foreach ($field in @('runs', 'ties', 'equivalentTrials', 'equivalentTies', 'judgeErrors')) {
+        foreach ($field in @('runs', 'ties', 'baselineWins', 'treatmentWins', 'equivalentTrials', 'equivalentTies', 'judgeErrors', 'meanScore', 'ciLow', 'ciHigh', 'winRate')) {
             $sharded.Summary.$field | Should -Be $serial.Summary.$field -Because $field
         }
         $sharded.Summary.runs | Should -Be 12
+        $serial.Summary.ciLow | Should -BeLessThan $serial.Summary.ciHigh
         $sharded.Summary.dataQualityViolations | Should -Be $serial.Summary.dataQualityViolations
         $sharded.Summary.runHealthFailures | Should -Be $serial.Summary.runHealthFailures
     }
