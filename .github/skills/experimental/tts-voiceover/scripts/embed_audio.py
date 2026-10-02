@@ -178,6 +178,9 @@ def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
         ``True`` on success, ``False`` on failure.
     """
     try:
+        # Read the duration before touching the slide so an unreadable WAV
+        # never leaves an audio shape without narration timing.
+        duration_ms = get_wav_duration_ms(wav_path)
         movie_shape = slide.shapes.add_movie(
             str(wav_path),
             left=0,
@@ -187,7 +190,6 @@ def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
             mime_type=AUDIO_MIME_TYPE,
         )
         shape_id: int = movie_shape.shape_id
-        duration_ms = get_wav_duration_ms(wav_path)
         _add_narration_timing(slide, shape_id, duration_ms)
         _set_slide_transition(slide, duration_ms)
         return True
@@ -260,20 +262,45 @@ def _run(args: argparse.Namespace) -> int:
         )
         return EXIT_ERROR
 
+    # Map slide numbers to WAV paths using the directory names written by
+    # generate_voiceover.py. Refuse ambiguous mappings before loading the deck
+    # so a stale or duplicate file never silently replaces another.
+    wav_candidates: dict[int, list[Path]] = {}
+    for wav in sorted(audio_dir.glob("slide-*.wav")):
+        try:
+            num = int(wav.stem.split("-")[1])
+        except (IndexError, ValueError):
+            logger.warning("Ignoring unexpected file: %s", wav.name)
+            continue
+        wav_candidates.setdefault(num, []).append(wav)
+
+    collisions = {num: paths for num, paths in wav_candidates.items() if len(paths) > 1}
+    if collisions:
+        for num, paths in sorted(collisions.items()):
+            logger.error(
+                "Multiple WAV files map to slide %d: %s",
+                num,
+                ", ".join(path.name for path in paths),
+            )
+        logger.error("Remove the duplicate WAV files and rerun; no output written")
+        return EXIT_ERROR
+
+    wav_files: dict[int, Path] = {
+        num: paths[0] for num, paths in wav_candidates.items()
+    }
+
     prs = Presentation(str(input_path))
     embedded_count = 0
     failed_count = 0
 
-    # Build a mapping from slide number to WAV path so embedding matches
-    # the directory names used by generate_voiceover.py rather than
-    # re-deriving names from the enumerate index.
-    wav_files: dict[int, Path] = {}
-    for wav in sorted(audio_dir.glob("slide-*.wav")):
-        try:
-            num = int(wav.stem.split("-")[1])
-            wav_files[num] = wav
-        except (IndexError, ValueError):
-            logger.warning("Ignoring unexpected file: %s", wav.name)
+    slide_count = len(prs.slides)
+    orphans = sorted(num for num in wav_files if num < 1 or num > slide_count)
+    if orphans:
+        logger.warning(
+            "Ignoring WAV files with no matching slide (deck has %d slides): %s",
+            slide_count,
+            ", ".join(wav_files[num].name for num in orphans),
+        )
 
     for idx, slide in enumerate(prs.slides, start=1):
         wav_path = wav_files.get(idx)
