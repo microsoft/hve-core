@@ -109,9 +109,6 @@
     ".github/prompts/hve-core/pr-review.prompt.md",
     ".github/prompts/hve-core/rpi.prompt.md",
     ".github/prompts/hve-core/vally-test-write.prompt.md",
-    ".github/prompts/rai-planning/rai-capture.prompt.md",
-    ".github/prompts/rai-planning/rai-plan-from-prd.prompt.md",
-    ".github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md",
     ".github/prompts/security/incident-response.prompt.md",
     ".github/prompts/security/risk-register.prompt.md"
   ],

@@ -13,7 +13,7 @@ handoffs:
     send: true
   - label: "RAI Planner"
     agent: RAI Planner
-    prompt: /rai-capture
+    prompt: "Start a Responsible AI assessment in capture entry mode for this project."
     send: true
   - label: "SSSC Planner"
     agent: SSSC Planner

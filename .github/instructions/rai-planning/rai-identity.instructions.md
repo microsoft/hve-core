@@ -106,7 +106,7 @@ Fresh assessment. Display the disclaimer and attribution notices, initialize bla
 
 ### `from-prd`
 
-PRD-seeded assessment. Display the disclaimer and attribution notices, resolve the user-identified PRD session or supplied PRD path without reading its content, then enter the Phase 1 preflight. Inspect the PRD during project-material discovery and extract the following fields to pre-populate Phase 1 state:
+PRD-seeded assessment. Display the disclaimer and attribution notices, resolve the user-identified PRD session or supplied PRD path without reading its content, then enter the Phase 1 preflight. When the user identifies no PRD session or path, discover candidates under `.copilot-tracking/prd-sessions/` and `.copilot-tracking/brd-sessions/`; when those paths are empty, search the workspace for files named `*prd*`, `*brd*`, `*product-requirements*`, or `*business-requirements*`. Present the candidates and ask the user to confirm which artifact to use before inspecting it. Inspect the PRD during project-material discovery and extract the following fields to pre-populate Phase 1 state:
 
 - `projectSlug` — derived from the PRD session directory name (kebab-case).
 - AI system purpose, technology stack, model types, deployment model — used to seed scoping interview answers (not stored as discrete state fields; carried forward as conversational context for confirmation).
@@ -116,11 +116,13 @@ PRD-seeded assessment. Display the disclaimer and attribution notices, resolve t
 
 Present the extracted information to the user for confirmation or refinement before advancing past Phase 1. Initialize `state.json` with `entryMode: "from-prd"`.
 
-**Error handling**: when the PRD file is missing, unreadable, or contains insufficient AI-system context, log a `nextActions` entry, fall back to `capture` mode (the user is asked to confirm the downgrade), and proceed with the standard exploration-first scoping interview. Do not silently advance with empty state.
+**Error handling**: when no PRD or BRD candidate is found, or the PRD file is missing, unreadable, or contains insufficient AI-system context, log a `nextActions` entry, fall back to `capture` mode (the user is asked to confirm the downgrade), and proceed with the standard exploration-first scoping interview. Do not silently advance with empty state.
 
 ### `from-security-plan`
 
-Security plan-seeded assessment. Display the disclaimer and attribution notices, validate and persist the workspace-contained `securityPlanRef` without reading its content, then enter the Phase 1 preflight. Inspect the security plan during project-material discovery. Extract AI components from its `aiComponents` array, pre-populate the AI element inventory, and set the `raiThreatCount` start offset from its threat count. Present extracted information to the user for confirmation or refinement before advancing.
+Security plan-seeded assessment. Display the disclaimer and attribution notices, validate and persist the workspace-contained `securityPlanRef` without reading its content, then enter the Phase 1 preflight. When the user supplies no security plan reference, discover Security Planner projects by looking for `state.json` in each subdirectory of `.copilot-tracking/security-plans/`, and present them with their project slug and current phase so the user can select one when several exist. Inspect the security plan during project-material discovery. Extract AI components from its `aiComponents` array, pre-populate the AI element inventory, and set the `raiThreatCount` start offset from its threat count. Present extracted information to the user for confirmation or refinement before advancing.
+
+**Error handling**: when no Security Planner project exists, log a `nextActions` entry, fall back to `capture` mode after the user confirms the switch, and proceed with the exploration-first scoping interview.
 
 ## State Management
 

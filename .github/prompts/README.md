@@ -88,12 +88,6 @@ These workflows are skills rather than prompts. Each resolves the active tracker
 
 > **Note:** The per-method coaching prompts (`dt-method-04-*`, `dt-method-05-*`, `dt-method-06-*`) are driven by the DT Coach agent mid-session and are not typically invoked directly.
 
-### Responsible AI
-
-* **[RAI Capture](./rai-planning/rai-capture.prompt.md)** - Start RAI assessment planning from existing knowledge (capture mode)
-* **[RAI Plan from PRD](./rai-planning/rai-plan-from-prd.prompt.md)** - Start RAI assessment planning from PRD/BRD artifacts (from-prd mode)
-* **[RAI Plan from Security Plan](./rai-planning/rai-plan-from-security-plan.prompt.md)** - Start RAI assessment planning from a completed Security Plan (recommended)
-
 ### Security
 
 * **[Incident Response](./security/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
