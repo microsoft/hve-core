@@ -845,12 +845,18 @@ console.log(JSON.stringify(results));
       'When required variables are missing, the agent must stop.'
       'The agent must halt when Jira variables are incomplete.'
       'Stop if required variables are missing.'
+      'When required variables are missing, do not continue planning; stop.'
+      'If required variables are missing, the agent is not allowed to proceed and must halt.'
+      "When required variables are missing, the agent can't safely continue and must pause."
+      'When required variables are missing, never proceed; halt.'
     )
     $reject = @(
       'Jira configuration is loaded in-process from ~/.jira.env by the CLI. Do not stop when required variables are missing; continue planning.'
       'Required variables are missing, but continue planning.'
       'The response says stop here. Required variables are missing.'
       "When required variables are missing, the agent can't stop."
+      'When required variables are missing, stop and then continue planning.'
+      'When required variables are missing, halt but keep going.'
     )
     $payload = @{ type = $grader.type; config = $grader.config; outputs = $accept + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
     $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
