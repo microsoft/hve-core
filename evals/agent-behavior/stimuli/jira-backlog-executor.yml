@@ -53,7 +53,7 @@ stimuli:
       - type: output-matches
         name: jira-backlog-executor-user-invocable-flag-reports-d-faabdd22
         config:
-          pattern: '(?im)(?:^|[.\n])(?=[^.\n]*(?:\buser-invocable\b[^.\n]{0,40}\bfalse\b|\bfalse\b[^.\n]{0,60}\buser-invocable\b))(?![^.\n]*(?:\b(?:not|never|no)\b|\b\w+n[\x27\u2019]t\b)(?:[\s`*_~]+|\b\w+\b[\s`*_~]+){0,2}\bfalse\b)[^.\n]*'
+          pattern: '(?im)(?<![\s\S])(?![\s\S]*(?:\b(?:not|never|no|omits?|omitted|lacks?)\b|\b\w+n[\x27\u2019]t\b)[\s`*_~]+(?:(?!true\b)\w+[\s`*_~]+){0,2}(?:user-invocable[\s`*_~]*:[\s`*_~]*)?\bfalse\b)[\s\S]*?(?:^|[.!?](?=\s|$))(?=(?:[^.!?\n]|[.!?](?=\S))*(?:\buser-invocable\b(?:[^.!?\n]|[.!?](?=\S)){0,40}\bfalse\b|\bfalse\b(?:[^.!?\n]|[.!?](?=\S)){0,60}\buser-invocable\b))(?!(?:[^.!?\n]|[.!?](?=\S))*\bfalse\b[\s`*_~]*(?:is|are)\s+(?:absent|not\s+(?:set|declared|present))\b)(?:[^.!?\n]|[.!?](?=\S))*'
       - type: output-matches
         name: jira-backlog-executor-user-invocable-flag-reaches-t-3a1c6be6
         config:
