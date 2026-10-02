@@ -5,8 +5,32 @@
 Describe 'New-Stimulus' -Tag 'Unit' {
     BeforeAll {
         $script:scriptPath = Join-Path $PSScriptRoot '../scripts/New-Stimulus.ps1'
+        $script:bashScriptPath = Join-Path $PSScriptRoot '../scripts/new-stimulus.sh'
+        $script:bashScript = ((Get-Content -Raw -LiteralPath $script:bashScriptPath) -replace "`r`n", "`n").TrimEnd() + "`n#"
         $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "vally-stimulus-$([guid]::NewGuid().ToString('N'))"
         New-Item -ItemType Directory -Path $script:testRoot -Force | Out-Null
+        Import-Module powershell-yaml -ErrorAction Stop
+        Get-Command bash -ErrorAction Stop | Out-Null
+
+        function Invoke-StimulusScaffolder {
+            param(
+                [Parameter(Mandatory)][string]$Implementation,
+                [Parameter(Mandatory)][string]$ArtifactPath,
+                [Parameter(Mandatory)][string]$Kind
+            )
+
+            if ($Implementation -eq 'PowerShell') {
+                return (& $script:scriptPath -ArtifactPath $ArtifactPath -Kind $Kind `
+                        -PromptText 'Exercise the artifact.' | Out-String).TrimEnd()
+            }
+
+            $output = $script:bashScript | & bash -s -- --artifact-path $ArtifactPath `
+                --kind $Kind --prompt-text 'Exercise the artifact.' 2>&1 | Out-String
+            if ($LASTEXITCODE -ne 0) {
+                throw $output.Trim()
+            }
+            return $output.TrimEnd()
+        }
     }
 
     AfterAll {
@@ -104,6 +128,74 @@ Describe 'New-Stimulus' -Tag 'Unit' {
 
             $hashA | Should -Not -BeNullOrEmpty
             $hashA | Should -Be $hashB
+        }
+    }
+
+    Context 'Artifact staging' {
+        It 'Stages a file artifact at its repository path with a two-level source' {
+            $block = & $script:scriptPath `
+                -ArtifactPath '.github/agents/hve-core/rpi-agent.agent.md' `
+                -Kind agent -PromptText 'Exercise the agent.' | Out-String
+
+            $block | Should -Match '(?m)^    agent_environment:\r?\n      files:\r?\n        - src: "\.\./\.\./\.github/agents/hve-core/rpi-agent\.agent\.md"\r?\n          dest: "\.github/agents/hve-core/rpi-agent\.agent\.md"\r?$'
+            $block.IndexOf('agent_environment:') | Should -BeLessThan $block.IndexOf('    tags:')
+        }
+
+        It 'Stages a skill artifact as its skill directory' {
+            $block = & $script:scriptPath `
+                -ArtifactPath '.github/skills/hve-core/vally-tests/SKILL.md' `
+                -Kind skill -PromptText 'Exercise the skill.' | Out-String
+
+            $block | Should -Match '(?m)^    agent_environment:\r?\n      skills:\r?\n        - "\.\./\.\./\.github/skills/hve-core/vally-tests"\r?$'
+            $block | Should -Not -Match 'files:'
+        }
+
+        It 'Normalizes backslash separators in staged paths' {
+            $block = & $script:scriptPath -ArtifactPath '.github\prompts\hve-core\rpi.prompt.md' `
+                -Kind prompt -PromptText 'hi' | Out-String
+
+            $block | Should -Match 'src: "\.\./\.\./\.github/prompts/hve-core/rpi\.prompt\.md"'
+            $block | Should -Match 'dest: "\.github/prompts/hve-core/rpi\.prompt\.md"'
+        }
+
+        It 'Round-trips <Implementation> <Kind> path <Case> exactly' -ForEach @(
+            @{ Implementation = 'PowerShell'; Kind = 'prompt'; Case = 'with hash'; Path = '.github/prompts/team #1/example.prompt.md'; Expected = '.github/prompts/team #1/example.prompt.md' }
+            @{ Implementation = 'Bash'; Kind = 'prompt'; Case = 'with hash'; Path = '.github/prompts/team #1/example.prompt.md'; Expected = '.github/prompts/team #1/example.prompt.md' }
+            @{ Implementation = 'PowerShell'; Kind = 'skill'; Case = 'with hash'; Path = '.github/skills/team #1/example/SKILL.md'; Expected = '.github/skills/team #1/example/SKILL.md' }
+            @{ Implementation = 'Bash'; Kind = 'skill'; Case = 'with hash'; Path = '.github/skills/team #1/example/SKILL.md'; Expected = '.github/skills/team #1/example/SKILL.md' }
+            @{ Implementation = 'PowerShell'; Kind = 'prompt'; Case = 'with quote'; Path = '.github/prompts/team "blue"/example.prompt.md'; Expected = '.github/prompts/team "blue"/example.prompt.md' }
+            @{ Implementation = 'Bash'; Kind = 'prompt'; Case = 'with quote'; Path = '.github/prompts/team "blue"/example.prompt.md'; Expected = '.github/prompts/team "blue"/example.prompt.md' }
+            @{ Implementation = 'PowerShell'; Kind = 'prompt'; Case = 'with backslashes'; Path = '.github\prompts\team #1\example.prompt.md'; Expected = '.github/prompts/team #1/example.prompt.md' }
+            @{ Implementation = 'Bash'; Kind = 'prompt'; Case = 'with backslashes'; Path = '.github\prompts\team #1\example.prompt.md'; Expected = '.github/prompts/team #1/example.prompt.md' }
+        ) {
+            $block = Invoke-StimulusScaffolder -Implementation $Implementation `
+                -ArtifactPath $Path -Kind $Kind
+            $document = ConvertFrom-Yaml -Yaml "stimuli:`n$block"
+            $stimulus = @($document.stimuli)[0]
+
+            if ($Kind -eq 'skill') {
+                $skillDir = $Expected -replace '/SKILL\.md$', ''
+                $stimulus.agent_environment.skills[0] | Should -Be "../../$skillDir"
+            }
+            else {
+                $stimulus.agent_environment.files[0].src | Should -Be "../../$Expected"
+                $stimulus.agent_environment.files[0].dest | Should -Be $Expected
+            }
+        }
+
+        It 'Rejects <Case> artifact paths in <Implementation>' -ForEach @(
+            @{ Implementation = 'PowerShell'; Case = 'rooted'; Path = '/etc/x.prompt.md' }
+            @{ Implementation = 'Bash'; Case = 'rooted'; Path = '/etc/x.prompt.md' }
+            @{ Implementation = 'PowerShell'; Case = 'drive-rooted'; Path = 'C:\repo\x.prompt.md' }
+            @{ Implementation = 'Bash'; Case = 'drive-rooted'; Path = 'C:\repo\x.prompt.md' }
+            @{ Implementation = 'PowerShell'; Case = 'traversal'; Path = '.github/../../x.prompt.md' }
+            @{ Implementation = 'Bash'; Case = 'traversal'; Path = '.github/../../x.prompt.md' }
+            @{ Implementation = 'PowerShell'; Case = 'multi-line'; Path = ".github/prompts/team`nname/example.prompt.md" }
+            @{ Implementation = 'Bash'; Case = 'multi-line'; Path = ".github/prompts/team`nname/example.prompt.md" }
+        ) {
+            { Invoke-StimulusScaffolder -Implementation $Implementation `
+                    -ArtifactPath $Path -Kind prompt } |
+                Should -Throw
         }
     }
 
