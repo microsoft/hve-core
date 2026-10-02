@@ -81,9 +81,9 @@ Work through each phase with me to add Azure Blob Storage output to the pipeline
 The agent uses manual mode, walks you through the Research findings, and asks whether to refine them or advance:
 
 ```text
-* Mode: manual; session: n/a; phase: Research; task: blob-storage
-* Research: executed; Planning Readiness Ready
-* Decisions: managed identity for production (confirmed)
+Research is complete. Use the azure-storage-blob async client with managed identity in production, as you confirmed. Nothing else is waiting on you, so Planning can start whenever you're ready.
+
+Session: manual mode, Research phase, task blob-storage
 
 | Artifact                                                                                                                         | Description               |
 |----------------------------------------------------------------------------------------------------------------------------------|---------------------------|

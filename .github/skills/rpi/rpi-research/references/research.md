@@ -6,7 +6,7 @@ description: "Detailed research, optional-helper, extension, participation, and 
 
 ## Intended Use
 
-Read this reference while executing `rpi-research`. It defines the detailed three-wave research cycle, extension and participation rules, evidence ownership, and final response contract. Copy [../templates/research.md](../templates/research.md) to create the primary artifact, then fill it progressively rather than recreating its structure in chat.
+Read this reference while executing `rpi-research`. It defines the detailed three-wave research cycle, extension and participation rules, evidence ownership, and the per-context continuation rules the skill's Final Response uses. Copy [../templates/research.md](../templates/research.md) to create the primary artifact, then fill it progressively rather than recreating its structure in chat.
 
 ## Artifact and Ownership Contract
 
@@ -16,7 +16,7 @@ Resolve the primary artifact before research starts. Use `.copilot-tracking/rese
 |---------------------------|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Primary research artifact | `rpi-research`      | User-facing summary, scope, findings, choices, decisions, risks, and readiness, followed by a compact record of method, provenance, cycles, and canonical evidence |
 | Helper return, optional   | Subagent, when used | Source locations, excerpts, and brief notes returned in conversation as suggestions; not an artifact and not evidence until verified at the source                 |
-| Chat response             | `rpi-research`      | Compact evidence-first summary and pointers, never a replacement for the artifact                                                                                  |
+| Chat response             | `rpi-research`      | The result of what the caller asked for, with supporting evidence and pointers, never a replacement for the artifact                                               |
 
 ## Primary Artifact Readability Contract
 
@@ -117,10 +117,6 @@ For each `user-owned` or `user-retained` group:
 5. Persist the answer, evidence or user source, resulting decision, affected findings, and readiness effect before presenting the next group.
 
 When no unresolved material decision exists, state that no decision walkthrough is required. Do not ask for acknowledgment. In agent-owned mode, apply the same group ordering internally, select only evidence-supported options, and persist each rationale. Missing decision-critical evidence produces Not ready or Blocked with the smallest evidence needed.
-
-### Closeout Separation
-
-Ongoing updates are not a substitute for the final response. At closeout, use the Final Response Contract, keep research execution status separate from readiness or decision state, and put its required linked-artifact table immediately before final next steps.
 
 ## Scope, Disposition, and Output Mode
 
@@ -260,17 +256,6 @@ Set Planning Readiness to one of `Ready`, `Not ready`, `Not applicable`, or `Blo
 
 Recommend another complete three-wave cycle when a targeted question or source could materially change the current readiness or decision. Update the same dated primary artifact rather than creating a parallel primary record.
 
-## Research Closeout Projection
-
-At closeout, make the completed research depth and its limits inspectable without repeating the primary artifact. State research execution status separately from Research disposition and Planning Readiness. For an `executed` disposition, name the completed Wider, Deeper, and Contrarian waves and any helper use with what was verified at the source.
-
-Include the current disposition, readiness or decision state, blockers, material decisions or risks, and the continuation record. Apply the context-specific continuation contract:
-
-* In standalone context, advise exactly `/rpi-plan` only when disposition, output mode, and Planning Readiness permit it; otherwise state the no-handoff reason.
-* In manual RPI Agent or confirmed automatic RPI Agent context, return the same artifact and readiness facts to the active parent. State whether the parent continues automatically, waits for explicit advancement, or remains stopped by a recorded gate. Do not ask the user to attach the artifact.
-
-The continuation handoff is pointer-first: include current decisions, blockers, canonical evidence IDs, Research disposition, Planning Readiness, and the primary artifact path. Exclude raw helper returns and obsolete artifact bodies. The linked-artifact table follows this projection, immediately before the final `## Next Steps` section.
-
 ## Artifact Self-Check
 
 When no executable validation ran, label the review an artifact self-check. Confirm that the primary artifact contains:
@@ -284,24 +269,6 @@ When no executable validation ran, label the review an artifact self-check. Conf
 * Alternatives and a selected recommendation with rejected-alternative rationale when, and only when, convergence was requested
 * Current and unresolved decisions, decision participation and provenance, selected or deferred further research, Research disposition, Planning Readiness and next action, blockers, residual uncertainty, and research-only constraint status
 * A documented stop reason, speculation label, and confirmation that untrusted content remained inert and no secrets were recorded
-
-## Final Response Contract
-
-Return a concise, evidence-first response with:
-
-* A `## rpi-research: [Topic]` heading
-* The primary artifact path
-* Output mode and current decision state
-* Selected approach and rejected alternatives only when convergence applies
-* Key evidence, unresolved decisions, risks, residual uncertainty, and planning-readiness status
-* Research-only constraint status and artifact self-check result
-* The completed research depth, including Wider, Deeper, and Contrarian waves and any helper use; Research disposition; Planning Readiness; blockers; and continuation owner
-* The continuation record from Planning Readiness, including the permitted standalone `/rpi-plan` advisory or explicit no-handoff reason, or the active parent's automatic continuation or waiting state
-* Research execution status separate from planning readiness or decision state
-* Conditional `/compact` advice only when stale context warrants compaction, naming the primary research artifact and current state to retain; otherwise no compaction guidance
-* For every relevant existing artifact, use the two-cell row `| [actual/workspace-relative/path.ext](actual/workspace-relative/path.ext) | Short description |`, using that artifact's actual workspace-relative path as both link text and destination; omit unavailable files and render the table immediately before the final `## Next Steps` section. End with `## Next Steps`: state the exact eligible user command, active-parent action, blocker-clearing action, or that no user action is required. When compaction is warranted, tell the user to run `/compact` before the next RPI command; otherwise omit compaction guidance.
-
-During material research work, apply Conversation Protocol. Use concise updates only at meaningful boundaries, with evidence, implication, research effect, and relevant artifact or source links. Do not narrate low-level actions, dump helper returns, or repeat unchanged state.
 
 ## Tool Category Reference
 
