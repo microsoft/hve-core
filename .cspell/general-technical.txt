@@ -782,6 +782,9 @@ powerskills
 ppac
 prd
 preapproved
+preauthorization
+preauthorize
+preauthorized
 precommitment
 precommitments
 preconfigured
