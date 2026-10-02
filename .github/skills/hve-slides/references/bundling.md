@@ -97,7 +97,7 @@ These edits create a deck-local build pair with one maintained source to start f
 Do not write a second, less strict string-replacement bundler from the short snippets here.
 When the source shape changes, adapt the maintained implementation and its tests together.
 
-HVE Updates and RPI with HVE use a thin build-time wrapper that imports this canonical
+HVE Updates, RPI with HVE and RAI Planner use a thin build-time wrapper that imports this canonical
 bundler and passes their own `buildDeck` function. That keeps one maintained implementation,
 including its security checks, for every deck in this repository. Scaffolded decks copy the
 complete module and remain independent of the skill directory; do not copy the wrapper as
