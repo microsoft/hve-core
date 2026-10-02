@@ -846,6 +846,60 @@ function Get-VallyExitCategory {
     return $category
 }
 
+function Resolve-VallyCommandPath {
+    <#
+    .SYNOPSIS
+    Resolves a vally command name to the path every invocation path runs.
+
+    .DESCRIPTION
+    Aliases and functions exist only in the session that defined them, so a child
+    process or parallel runspace that looked up the command by name could miss a
+    session alias and fall back to whatever else is on PATH. Resolving once here, and
+    from every invocation path, makes serial and sharded runs start the same
+    executable.
+
+    An alias resolves to its target's path when the target is an application or
+    script, and to its definition otherwise. An application or script resolves to its
+    path. Any other command type returns the input name. A missing command writes a
+    non-terminating error and returns the input name, so callers choose whether that
+    is fatal through -ErrorAction.
+
+    .PARAMETER Name
+    Command name or path to resolve.
+
+    .OUTPUTS
+    [string] Executable or script path, alias definition, or the input name.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Name = 'vally'
+    )
+
+    $pathTypes = @(
+        [System.Management.Automation.CommandTypes]::Application,
+        [System.Management.Automation.CommandTypes]::ExternalScript
+    )
+    $info = Get-Command -Name $Name -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $info) {
+        Write-Error -Message "Command '$Name' was not found." -Category ObjectNotFound -TargetObject $Name
+        return $Name
+    }
+    if ($info.CommandType -eq [System.Management.Automation.CommandTypes]::Alias) {
+        $target = $info.ResolvedCommand
+        if ($target -and $target.CommandType -in $pathTypes -and $target.Source) {
+            return [string]$target.Source
+        }
+        return [string]$info.Definition
+    }
+    if ($info.CommandType -in $pathTypes) {
+        return [string]$info.Source
+    }
+    return $Name
+}
+
 function Invoke-VallyProcess {
     <#
     .SYNOPSIS
@@ -892,18 +946,7 @@ catch {
 exit $exitCode
 '@
 
-    $commandInfo = Get-Command -Name $Command -ErrorAction Stop
-    $resolvedCommand = if ($commandInfo.CommandType -eq [System.Management.Automation.CommandTypes]::Alias) {
-        [string]$commandInfo.Definition
-    }
-    elseif ($commandInfo.CommandType -in @(
-            [System.Management.Automation.CommandTypes]::Application,
-            [System.Management.Automation.CommandTypes]::ExternalScript)) {
-        [string]$commandInfo.Source
-    }
-    else {
-        $Command
-    }
+    $resolvedCommand = Resolve-VallyCommandPath -Name $Command -ErrorAction Stop
 
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
     $startInfo.FileName = (Get-Command pwsh -ErrorAction Stop).Source
@@ -2127,6 +2170,7 @@ Export-ModuleMember -Function @(
     'Test-VallyDiagnosticEvidence',
     'Read-VallyResultsJsonl',
     'Get-VallyExitCategory',
+    'Resolve-VallyCommandPath',
     'Invoke-VallyProcess',
     'Get-VallyComparisonRecordCount',
     'Test-VallyCompareRetryEligibility',

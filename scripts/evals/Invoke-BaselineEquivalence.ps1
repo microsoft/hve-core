@@ -787,42 +787,6 @@ function Test-CustomizedInvocationRetryEligibility {
         [int]$InvocationTally.Malformed -eq $erroredTrials
 }
 
-function Resolve-VallyCommandPath {
-    <#
-    .SYNOPSIS
-        Resolves the vally command to a path that parallel runspaces can invoke.
-    .DESCRIPTION
-        Aliases and functions exist only in the session that defined them, so a worker
-        runspace that looked up `vally` by name would miss a session alias and fall
-        back to whatever else is on PATH. Resolving once, before any worker starts,
-        makes every shard invoke the same executable the serial path would.
-    .OUTPUTS
-        [string] Executable or script path, or the literal name when unresolvable.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
-        [string]$Name = 'vally'
-    )
-
-    $info = Get-Command -Name $Name -ErrorAction SilentlyContinue | Select-Object -First 1
-    if (-not $info) { return $Name }
-    if ($info.CommandType -eq [System.Management.Automation.CommandTypes]::Alias) {
-        if ($info.ResolvedCommand -and $info.ResolvedCommand.PSObject.Properties['Source'] -and $info.ResolvedCommand.Source) {
-            return [string]$info.ResolvedCommand.Source
-        }
-        return [string]$info.Definition
-    }
-    if ($info.CommandType -in @(
-            [System.Management.Automation.CommandTypes]::Application,
-            [System.Management.Automation.CommandTypes]::ExternalScript)) {
-        return [string]$info.Source
-    }
-    return $Name
-}
-
 function Get-CompareShardAssignment {
     <#
     .SYNOPSIS
@@ -1687,7 +1651,9 @@ if ($MyInvocation.InvocationName -ne '.') {
                 }
 
                 if ($compareJobs.Count -gt 0) {
-                    if ($null -eq $vallyCommandPath) { $vallyCommandPath = Resolve-VallyCommandPath }
+                    # A missing command is not fatal here: each shard then fails as a
+                    # worker error and is accounted for as a run-health failure.
+                    if ($null -eq $vallyCommandPath) { $vallyCommandPath = Resolve-VallyCommandPath -ErrorAction SilentlyContinue }
                     $shardAttempts = @(Invoke-CompareShardSet `
                             -Job $compareJobs.ToArray() `
                             -Command $vallyCommandPath `

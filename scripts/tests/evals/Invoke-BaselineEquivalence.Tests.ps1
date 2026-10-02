@@ -1559,6 +1559,28 @@ Describe 'Compare shard retry' -Tag 'Unit' {
             Remove-Item Alias:vally -Force -ErrorAction SilentlyContinue
         }
     }
+
+    It 'Resolves an alias to an application name to the application path' {
+        $pwshPath = (Get-Command pwsh -CommandType Application | Select-Object -First 1).Source
+        Set-Alias -Name vally-pwsh-alias -Value pwsh -Scope Global
+        try {
+            Resolve-VallyCommandPath -Name 'vally-pwsh-alias' | Should -BeExactly $pwshPath
+        }
+        finally {
+            Remove-Item Alias:vally-pwsh-alias -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Lets the caller decide whether a missing command is fatal' {
+        { Resolve-VallyCommandPath -Name 'definitely-not-a-vally-command' -ErrorAction Stop } | Should -Throw -ExpectedMessage "*definitely-not-a-vally-command*"
+        Resolve-VallyCommandPath -Name 'definitely-not-a-vally-command' -ErrorAction SilentlyContinue | Should -BeExactly 'definitely-not-a-vally-command'
+    }
+
+    It 'Keeps Invoke-VallyProcess failing fast for a missing command' {
+        {
+            Invoke-VallyProcess -Command 'definitely-not-a-vally-command' -Arguments @('compare') -Phase 'compare' -Worker 'gpt-6-luna'
+        } | Should -Throw -ExpectedMessage "*definitely-not-a-vally-command*"
+    }
 }
 
 Describe 'Invoke-BaselineEquivalence.ps1 (sharded compare)' -Tag 'Unit' {
