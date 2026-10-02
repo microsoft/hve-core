@@ -5,6 +5,21 @@ name: Markdown Link Check
 on:
   workflow_call:
     inputs:
+      change-mode:
+        description: 'Use an exact immutable range or run full validation'
+        required: false
+        type: string
+        default: full
+      base-sha:
+        description: 'Immutable base commit used in range mode'
+        required: false
+        type: string
+        default: ''
+      head-sha:
+        description: 'Immutable head commit used in range mode'
+        required: false
+        type: string
+        default: ''
       soft-fail:
         description: 'Whether to continue on broken links'
         required: false
@@ -15,11 +30,6 @@ on:
         required: false
         type: boolean
         default: true
-      base-branch:
-        description: 'Base branch or SHA for change detection (defaults to origin/main)'
-        required: false
-        type: string
-        default: ''
       throttle-limit:
         description: 'Maximum number of markdown-link-check processes run concurrently'
         required: false
@@ -41,6 +51,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: ${{ inputs.change-mode == 'range' && inputs.head-sha || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -60,16 +71,17 @@ jobs:
         id: link-check
         shell: pwsh
         env:
-          BASE_BRANCH: ${{ inputs.base-branch }}
-          CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
+          INPUT_BASE_SHA: ${{ inputs.base-sha }}
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
           THROTTLE_LIMIT: ${{ inputs.throttle-limit }}
         run: |
           $params = @{ ThrottleLimit = [int]$env:THROTTLE_LIMIT }
-          if ($env:CHANGED_FILES_ONLY -eq 'true') {
+          if ($env:INPUT_CHANGE_MODE -notin @('full', 'range')) { throw 'Unsupported change mode.' }
+          if ($env:INPUT_CHANGED_FILES_ONLY -eq 'true' -and $env:INPUT_CHANGE_MODE -eq 'range') {
+            if (-not $env:INPUT_BASE_SHA) { throw 'Range mode requires an immutable base commit ID.' }
             $params['ChangedFilesOnly'] = $true
-            if (-not [string]::IsNullOrEmpty($env:BASE_BRANCH)) {
-              $params['BaseBranch'] = $env:BASE_BRANCH
-            }
+            $params['BaseBranch'] = $env:INPUT_BASE_SHA
           }
           & scripts/linting/Markdown-Link-Check.ps1 @params
         continue-on-error: ${{ inputs.soft-fail }}

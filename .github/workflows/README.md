@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-09-21
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - github actions
@@ -47,20 +47,64 @@ Modular reusable workflows following Single Responsibility Principle. Each workf
 
 Compose multiple reusable workflows for comprehensive validation and security scanning.
 
-| Workflow                          | Triggers                                                | Mode                          | Purpose                                                                           |
-|-----------------------------------|---------------------------------------------------------|-------------------------------|-----------------------------------------------------------------------------------|
-| `pr-validation.yml`               | PR to main, develop, or either release branch; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator |
-| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                           | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                 |
-| `release-prerelease.yml`          | Merged PR to `release/prerelease`                       | Managed PreRelease release    | Prepare the managed release PR or create the exact odd-minor tag and draft        |
-| `release-stable.yml`              | Published PreRelease; dispatch                          | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR       |
-| `release-stable-publish.yml`      | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or create the exact even-minor tag and draft       |
-| `release-vsix-publish.yml`        | Push of `v*` or `prerelease-v*`                         | Post-tag release producer     | Validate, package, attest, verify, and publish the exact immutable release        |
-| `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                  | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate       |
-| `backlog-groom-publisher.yml`     | Completed sweep                                         | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history |
-| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                           |
-| `scorecard.yml`                   | Push to main, post-tag release, schedule (Sun 3AM UTC)  | SARIF upload                  | OpenSSF Scorecard security posture                                                |
+| Workflow                          | Triggers                                                                     | Mode                          | Purpose                                                                           |
+|-----------------------------------|------------------------------------------------------------------------------|-------------------------------|-----------------------------------------------------------------------------------|
+| `pr-validation.yml`               | PR to main, develop, or either release branch; merge group to main; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator |
+| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                                                | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                 |
+| `release-prerelease.yml`          | Merged PR to `release/prerelease`                                            | Managed PreRelease release    | Prepare the managed release PR or create the exact odd-minor tag and draft        |
+| `release-stable.yml`              | Published PreRelease; dispatch                                               | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR       |
+| `release-stable-publish.yml`      | Merged PR to `release/stable`                                                | Managed Stable release        | Prepare the managed release PR or create the exact even-minor tag and draft       |
+| `release-vsix-publish.yml`        | Push of `v*` or `prerelease-v*`                                              | Post-tag release producer     | Validate, package, attest, verify, and publish the exact immutable release        |
+| `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                                       | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate       |
+| `backlog-groom-publisher.yml`     | Completed sweep                                                              | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history |
+| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                                       | Soft-fail warnings            | Weekly security posture                                                           |
+| `scorecard.yml`                   | Push to main, post-tag release, schedule (Sun 3AM UTC)                       | SARIF upload                  | OpenSSF Scorecard security posture                                                |
 
 The validation jobs in `pr-validation.yml` feed the `pr-validation-success` aggregator, which is the required merge signal. The `gate-completeness-check` job verifies that every validation job appears in that gate's `needs:` list.
+
+### Merge Queue Contract
+
+`pr-validation.yml` owns both pull-request validation and the `merge_group`
+`checks_requested` event for candidates targeting `main`. Reusable workflows do
+not subscribe to merge-group events independently. The aggregate resolves one
+immutable base and head pair, then passes that decision to every changed-file
+selector.
+
+Range mode validates the exact resolved commits. If either commit cannot be
+trusted, the checkout does not match the resolved head, or Git cannot compute
+the diff, the resolver selects full mode. Full mode runs each owning validation
+across its complete scope. It is a conservative safety fallback, not an error or
+an empty-change result.
+
+`PR Validation Success` is the sole stable required status context for hosted
+branch and queue policy. Do not require individual validation or matrix-job
+contexts because those names and cardinalities can change. The aggregate gate
+must continue to depend on every non-gate job, as enforced by
+`npm run lint:pr-gate`.
+
+Merge-group evals run unprivileged relevance and lint validation without
+`COPILOT_GITHUB_TOKEN`. The aggregate passes an empty custom token for this
+event, and privileged eval jobs remain limited to eligible pull requests and
+manual dispatch. Gitleaks scans the immutable commit range when available and
+falls back to full-history scanning.
+
+Workflow compatibility must reach `main` before maintainers activate or change
+the hosted ruleset. The confirmed initial hosted policy is intentionally
+serial:
+
+| Hosted setting           | Confirmed value         |
+|--------------------------|-------------------------|
+| Merge method             | Squash                  |
+| Build concurrency        | `1`                     |
+| Minimum merge group size | `1`                     |
+| Maximum merge group size | `1`                     |
+| Strict branch freshness  | Disabled                |
+| Required status context  | `PR Validation Success` |
+
+These values describe the activation target, not evidence that Merge Queue is
+active. After the compatible workflow is on `main`, apply the hosted policy and
+queue one pull request to prove that the merge-group run reports the stable
+context and completes a squash merge.
 
 release-stable.yml jobs: prepare-promotion, open-promotion-pr
 
