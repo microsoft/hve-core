@@ -13,7 +13,7 @@ keywords:
 estimated_reading_time: 12
 ---
 
-This guide helps you get started with HVE Core from your first install through independent, AI-assisted engineering. HVE Core provides 10 addressable assets tailored for new contributors. Follow the four milestones below to progressively build fluency with agents, prompts, and workflows.
+This guide helps you get started with HVE Core from your first install through independent, AI-assisted engineering. HVE Core provides 10 addressable assets tailored for new contributors. Follow the four milestones below to progressively build fluency with agents, skills, and workflows.
 
 ## Recommended Installation
 
@@ -26,7 +26,7 @@ This guide helps you get started with HVE Core from your first install through i
 > help me customize hve-core installation
 > ```
 >
-> Choose the complete manifest unless you already know which agents, prompts, instructions, and distributable skills your repository needs.
+> Choose the complete manifest unless you already know which agents, instructions, and distributable skills your repository needs.
 
 ## What HVE Core Does for You
 

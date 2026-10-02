@@ -16,7 +16,7 @@ estimated_reading_time: 10
 This guide is for you if you manage infrastructure, handle incidents, deploy systems, maintain CI/CD pipelines, or ensure production reliability. SRE and operations engineers have 13+ addressable assets spanning infrastructure as code, incident response, security operations, and deployment automation.
 
 > [!CAUTION]
-> The security agents and prompts referenced in this guide are **assistive tools only**.
+> The security agents and skills referenced in this guide are **assistive tools only**.
 > They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review.
 > All AI-generated security plans, security models, risk registers, and incident response runbooks **must** be reviewed and validated by qualified security professionals before use.
 > AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.

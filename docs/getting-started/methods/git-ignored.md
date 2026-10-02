@@ -3,7 +3,7 @@ title: Git-Ignored Folder Installation
 description: Install HVE Core in a git-ignored folder for devcontainer environments
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - git-ignored

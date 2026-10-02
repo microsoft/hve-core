@@ -184,7 +184,7 @@ migration commands.
 
 ## Verify the Result
 
-Confirm the plugin's agents, prompts, instructions, and skills are available in the host. For selective clones, verify `.hve-tracking.json` records the intended profile and components. Review the [HVE Core identity and channels](packages) and [installation guide](install) for the current distribution contract.
+Confirm the plugin's agents, instructions, and skills are available in the host. For selective clones, verify `.hve-tracking.json` records the intended profile and components. Review the [HVE Core identity and channels](packages) and [installation guide](install) for the current distribution contract.
 
 ---
 

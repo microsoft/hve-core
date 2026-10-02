@@ -16,7 +16,7 @@ estimated_reading_time: 10
 This guide is for you if you perform security model analysis, build security plans, assess risks, define compliance requirements, or review system security posture. Security architects have focused but deep tooling, with 9 addressable assets centered on security planning and risk management.
 
 > [!CAUTION]
-> The security agents and prompts in HVE Core are **assistive tools only**.
+> The security agents and skills in HVE Core are **assistive tools only**.
 > They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review.
 > All AI-generated security plans, security models, risk registers, and incident response runbooks **must** be reviewed and validated by qualified security professionals before use.
 > AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.

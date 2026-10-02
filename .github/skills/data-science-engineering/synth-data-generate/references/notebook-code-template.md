@@ -2,6 +2,7 @@
 title: Synthetic Data Notebook Code Template
 description: Starter Python cell template for generated synthetic data notebooks
 ---
+<!-- cspell:ignore figsize kwargs pyplot randn scipy timedelta xlabel ylabel -->
 
 ## Template
 

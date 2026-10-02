@@ -21,7 +21,7 @@ The HVE Guide combines two complementary perspectives on AI-assisted engineering
 
 ### AI-Assisted Project Lifecycle
 
-A 9-stage lifecycle from initial setup through ongoing operations, with AI-assisted tooling at each stage. Every stage maps to specific agents, prompts, instructions, and skills that accelerate your work.
+A 9-stage lifecycle from initial setup through ongoing operations, with AI-assisted tooling at each stage. Every stage maps to specific agents, instructions, and skills that accelerate your work.
 
 ```mermaid
 flowchart LR

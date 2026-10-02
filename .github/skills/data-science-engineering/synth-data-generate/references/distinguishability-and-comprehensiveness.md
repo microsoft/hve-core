@@ -2,6 +2,7 @@
 title: Distinguishability and Comprehensiveness Protocol
 description: Detailed AUC-based distinguishability and comprehensiveness measurement procedure for authorized real-versus-synthetic comparisons
 ---
+<!-- cspell:ignore distinguishability featurization vectorizer -->
 
 ## When to run
 

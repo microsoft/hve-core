@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
+# cspell:ignore couldn
 stimuli:
   - name: rai-planner-class-recipe
     prompt: |

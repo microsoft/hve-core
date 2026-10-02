@@ -16,7 +16,7 @@ estimated_reading_time: 8
 
 ## Overview
 
-HVE Core supports a 9-stage project lifecycle, from initial setup through ongoing operations, with AI-assisted tooling at each stage. Every stage maps to specific agents, prompts, instructions, and skills that accelerate your work and reduce friction. Use this guide to navigate the full lifecycle and find the right tools for your current project phase.
+HVE Core supports a 9-stage project lifecycle, from initial setup through ongoing operations, with AI-assisted tooling at each stage. Every stage maps to specific agents, instructions, and skills that accelerate your work and reduce friction. Use this guide to navigate the full lifecycle and find the right tools for your current project phase.
 
 ## Stage Overview
 
@@ -92,7 +92,7 @@ flowchart LR
 
 Implementation has the broadest tooling surface because it combines RPI,
 language standards, AI-artifact authoring, data science, and infrastructure
-work. Delivery relies mainly on prompts and auto-applied instructions, while
+work. Delivery relies mainly on skills and auto-applied instructions, while
 Setup remains intentionally narrow.
 
 Each stage page follows a consistent structure covering purpose, key

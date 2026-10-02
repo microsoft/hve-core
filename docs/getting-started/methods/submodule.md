@@ -3,7 +3,7 @@ title: Git Submodule Installation
 description: Set up HVE Core as a git submodule for version-controlled team consumption
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - git submodule

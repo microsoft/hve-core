@@ -3,7 +3,7 @@ title: Peer Directory Clone Installation
 description: Install HVE Core as a sibling directory for local VS Code development
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - peer directory

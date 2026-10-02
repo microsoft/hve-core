@@ -1,3 +1,4 @@
+# cspell:ignore analy exploitab
 stimuli:
   - name: sssc-reviewer-class-recipe
     prompt: |

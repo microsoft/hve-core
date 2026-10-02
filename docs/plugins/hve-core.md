@@ -3,7 +3,7 @@ title: HVE Core
 description: Complete HVE Core plugin identity, distribution channels, membership policy, and capability inventory
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - package
@@ -18,8 +18,8 @@ HVE Core is the single plugin and extension identity for all distributable HVE C
 
 Root `plugin.json` owns complete membership. `.github/plugin/marketplace.json` contains one `hve-core` entry whose relative source is the repository root; it does not repeat component membership. The plugin details view resolves root `README.md` and `LICENSE`, while the VSIX retains its own generated README and license.
 
-Stable and PreRelease contain the same complete agents, prompts, instructions,
-and skills. Channel selection changes source ownership, cadence, version,
+Stable and PreRelease contain the same complete agents, instructions, and
+skills. Channel selection changes source ownership, cadence, version,
 release assurance, and VS Code Marketplace behavior, not membership.
 
 The channels differ in cadence, version, and source ownership. `main` provides ref-less development-tip delivery. PreRelease follows a reviewed promotion from `main` to `release/prerelease`. Stable follows a reviewed promotion from `release/prerelease` to `release/stable`.
@@ -36,7 +36,7 @@ copilot plugin install hve-core@hve-core
 
 Install the extension as `ise-hve-essentials.hve-core`. For a repository-owned subset, use `hve-core-installer` to choose all manifest components or a custom selection. The installer records `selection.profile` and `selection.components` in `.hve-tracking.json` and does not copy hooks.
 
-The full repository-relative path inventory remains machine-readable in root `plugin.json`. Agent, prompt, instruction, and skill reference pages are available under `docs/reference/`.
+The full repository-relative path inventory remains machine-readable in root `plugin.json`. Agent, instruction, and skill reference pages are available under `docs/reference/`.
 
 ## Component Inventory
 

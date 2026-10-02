@@ -6,6 +6,7 @@ license: MIT
 user-invocable: true
 disable-model-invocation: true
 ---
+<!-- cspell:ignore pathspecs unstages -->
 
 # Git Commit
 
