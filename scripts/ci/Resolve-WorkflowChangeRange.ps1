@@ -7,17 +7,36 @@
 .SYNOPSIS
     Resolves an immutable workflow change range or selects full validation.
 .DESCRIPTION
-    Verifies explicit base and head commit IDs, confirms the checked-out HEAD
-    matches the requested head, and proves the range can be diffed. Any missing,
-    malformed, unavailable, mismatched, or non-diffable input returns full mode.
+    Derives the range base from commit structure for the triggering event and
+    verifies it before any workflow lane trusts it:
+
+    - pull_request: the base is the first parent of the checked-out test-merge
+      commit, which must have exactly two parents with the second equal to the
+      pull request head.
+    - merge_group: the base and head come from the merge-group payload.
+    - workflow_dispatch: the base is the merge base of the checked-out commit
+      and origin/<default branch>.
+
+    Every range requires a well-formed, available base that is an ancestor of
+    the head, a head equal to the checked-out HEAD, and a diffable pair. Any
+    unknown event or failed check returns full mode with empty commit IDs.
+.PARAMETER EventName
+    GitHub Actions event that triggered the calling workflow.
 .PARAMETER BaseSha
-    Candidate immutable base commit ID supplied by the calling workflow.
+    Candidate immutable base commit ID; used for merge_group events.
 .PARAMETER HeadSha
-    Candidate immutable head commit ID supplied by the calling workflow.
+    Candidate immutable head commit ID; must equal the checked-out HEAD.
+.PARAMETER PullRequestHeadSha
+    Pull request head commit ID; must be the second parent of the checked-out
+    test-merge commit for pull_request events.
+.PARAMETER DefaultBranch
+    Repository default branch name; used for workflow_dispatch events.
 .PARAMETER RepoRoot
     Repository directory containing the checked-out head commit.
 .EXAMPLE
-    ./scripts/ci/Resolve-WorkflowChangeRange.ps1 -BaseSha $BaseSha -HeadSha $HeadSha
+    ./scripts/ci/Resolve-WorkflowChangeRange.ps1 -EventName 'merge_group' -BaseSha $BaseSha -HeadSha $HeadSha
+.EXAMPLE
+    ./scripts/ci/Resolve-WorkflowChangeRange.ps1 -EventName 'pull_request' -HeadSha $MergeSha -PullRequestHeadSha $PrHeadSha
 .NOTES
     Writes mode, base-sha, and head-sha as GitHub Actions step outputs.
 #>
@@ -26,11 +45,23 @@
 param(
     [Parameter(Mandatory = $false)]
     [AllowEmptyString()]
+    [string]$EventName = '',
+
+    [Parameter(Mandatory = $false)]
+    [AllowEmptyString()]
     [string]$BaseSha = '',
 
     [Parameter(Mandatory = $false)]
     [AllowEmptyString()]
     [string]$HeadSha = '',
+
+    [Parameter(Mandatory = $false)]
+    [AllowEmptyString()]
+    [string]$PullRequestHeadSha = '',
+
+    [Parameter(Mandatory = $false)]
+    [AllowEmptyString()]
+    [string]$DefaultBranch = '',
 
     [Parameter(Mandatory = $false)]
     [string]$RepoRoot = (Join-Path $PSScriptRoot '../..')
@@ -95,6 +126,134 @@ function Resolve-GitCommit {
     return $ResolvedCommit.Trim()
 }
 
+function Resolve-PullRequestBase {
+    <#
+    .SYNOPSIS
+        Derives a pull request range base from the test-merge commit parents.
+    .DESCRIPTION
+        Returns the first parent of the merge commit only when the commit has
+        exactly two parents and the second equals the pull request head. The
+        payload base commit is not used because it can be stale.
+    .PARAMETER RepoRoot
+        Repository directory containing the commits.
+    .PARAMETER MergeSha
+        Canonical test-merge commit ID.
+    .PARAMETER PullRequestHeadSha
+        Candidate pull request head commit ID.
+    .OUTPUTS
+        [string] containing the first-parent commit ID, or no output when unproven.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$MergeSha,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$PullRequestHeadSha
+    )
+
+    $ResolvedPullRequestHead = Resolve-GitCommit -RepoRoot $RepoRoot -Candidate $PullRequestHeadSha
+    if ([string]::IsNullOrWhiteSpace($ResolvedPullRequestHead)) {
+        return
+    }
+
+    $ParentLine = & git -C $RepoRoot rev-list --parents -n 1 --end-of-options $MergeSha 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($ParentLine)) {
+        return
+    }
+
+    $Parents = @(([string]$ParentLine).Trim() -split '\s+' | Select-Object -Skip 1)
+    if ($Parents.Count -ne 2 -or $Parents[1] -ne $ResolvedPullRequestHead) {
+        return
+    }
+
+    return $Parents[0]
+}
+
+function Resolve-DispatchBase {
+    <#
+    .SYNOPSIS
+        Derives a manual-dispatch range base from the default branch.
+    .PARAMETER RepoRoot
+        Repository directory containing the commits.
+    .PARAMETER HeadSha
+        Canonical checked-out head commit ID.
+    .PARAMETER DefaultBranch
+        Repository default branch name.
+    .OUTPUTS
+        [string] containing the single merge base, or no output when unproven.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$HeadSha,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$DefaultBranch
+    )
+
+    if ($DefaultBranch -notmatch '^[A-Za-z0-9][A-Za-z0-9._/-]*$') {
+        return
+    }
+
+    & git -C $RepoRoot check-ref-format --branch $DefaultBranch *> $null
+    if ($LASTEXITCODE -ne 0) {
+        return
+    }
+
+    $DefaultBranchCommit = & git -C $RepoRoot rev-parse --verify --quiet --end-of-options "refs/remotes/origin/$DefaultBranch`^{commit}" 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($DefaultBranchCommit)) {
+        return
+    }
+
+    $MergeBases = @(& git -C $RepoRoot merge-base --all $HeadSha $DefaultBranchCommit.Trim() 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $MergeBases.Count -ne 1) {
+        return
+    }
+
+    return $MergeBases[0].Trim()
+}
+
+function Test-WorkflowGitAncestor {
+    <#
+    .SYNOPSIS
+        Tests whether the base commit is an ancestor of the head commit.
+    .PARAMETER RepoRoot
+        Repository directory containing the commits.
+    .PARAMETER BaseSha
+        Canonical base commit ID.
+    .PARAMETER HeadSha
+        Canonical head commit ID.
+    .OUTPUTS
+        [bool] indicating whether Git proved the ancestry.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseSha,
+
+        [Parameter(Mandatory = $true)]
+        [string]$HeadSha
+    )
+
+    & git -C $RepoRoot merge-base --is-ancestor $BaseSha $HeadSha *> $null
+    return $LASTEXITCODE -eq 0
+}
+
 function Test-WorkflowGitDiff {
     <#
     .SYNOPSIS
@@ -129,10 +288,16 @@ function Resolve-WorkflowChangeRange {
     <#
     .SYNOPSIS
         Resolves a verified immutable range or selects full validation.
+    .PARAMETER EventName
+        GitHub Actions event that triggered the calling workflow.
     .PARAMETER BaseSha
-        Candidate immutable base commit ID.
+        Candidate immutable base commit ID; used for merge_group events.
     .PARAMETER HeadSha
-        Candidate immutable head commit ID.
+        Candidate immutable head commit ID; must equal the checked-out HEAD.
+    .PARAMETER PullRequestHeadSha
+        Pull request head commit ID; used for pull_request events.
+    .PARAMETER DefaultBranch
+        Repository default branch name; used for workflow_dispatch events.
     .PARAMETER RepoRoot
         Repository directory containing the checked-out head commit.
     .OUTPUTS
@@ -143,25 +308,57 @@ function Resolve-WorkflowChangeRange {
     param(
         [Parameter(Mandatory = $true)]
         [AllowEmptyString()]
-        [string]$BaseSha,
+        [string]$EventName,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
+        [string]$BaseSha = '',
 
         [Parameter(Mandatory = $true)]
         [AllowEmptyString()]
         [string]$HeadSha,
 
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
+        [string]$PullRequestHeadSha = '',
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
+        [string]$DefaultBranch = '',
+
         [Parameter(Mandatory = $true)]
         [string]$RepoRoot
     )
 
-    $ResolvedBase = Resolve-GitCommit -RepoRoot $RepoRoot -Candidate $BaseSha
     $ResolvedHead = Resolve-GitCommit -RepoRoot $RepoRoot -Candidate $HeadSha
-    $CheckedOutHead = Resolve-GitCommit -RepoRoot $RepoRoot -Candidate (& git -C $RepoRoot rev-parse HEAD 2>$null)
+    $CheckedOutHead = Resolve-GitCommit -RepoRoot $RepoRoot -Candidate ([string](& git -C $RepoRoot rev-parse HEAD 2>$null))
+
+    if (
+        [string]::IsNullOrWhiteSpace($ResolvedHead) -or
+        [string]::IsNullOrWhiteSpace($CheckedOutHead) -or
+        $CheckedOutHead -ne $ResolvedHead
+    ) {
+        return New-FullValidationResult
+    }
+
+    $ResolvedBase = switch -CaseSensitive ($EventName) {
+        'pull_request' {
+            Resolve-PullRequestBase -RepoRoot $RepoRoot -MergeSha $ResolvedHead -PullRequestHeadSha $PullRequestHeadSha
+        }
+        'merge_group' {
+            Resolve-GitCommit -RepoRoot $RepoRoot -Candidate $BaseSha
+        }
+        'workflow_dispatch' {
+            Resolve-DispatchBase -RepoRoot $RepoRoot -HeadSha $ResolvedHead -DefaultBranch $DefaultBranch
+        }
+        default {
+            $null
+        }
+    }
 
     if (
         [string]::IsNullOrWhiteSpace($ResolvedBase) -or
-        [string]::IsNullOrWhiteSpace($ResolvedHead) -or
-        [string]::IsNullOrWhiteSpace($CheckedOutHead) -or
-        $CheckedOutHead -ne $ResolvedHead -or
+        -not (Test-WorkflowGitAncestor -RepoRoot $RepoRoot -BaseSha $ResolvedBase -HeadSha $ResolvedHead) -or
         -not (Test-WorkflowGitDiff -RepoRoot $RepoRoot -BaseSha $ResolvedBase -HeadSha $ResolvedHead)
     ) {
         return New-FullValidationResult
@@ -179,13 +376,21 @@ function Resolve-WorkflowChangeRange {
 #region Main Execution
 
 if ($MyInvocation.InvocationName -ne '.') {
-    $Result = Resolve-WorkflowChangeRange -BaseSha $BaseSha -HeadSha $HeadSha -RepoRoot $RepoRoot
+    $ResolveParams = @{
+        EventName          = $EventName
+        BaseSha            = $BaseSha
+        HeadSha            = $HeadSha
+        PullRequestHeadSha = $PullRequestHeadSha
+        DefaultBranch      = $DefaultBranch
+        RepoRoot           = $RepoRoot
+    }
+    $Result = Resolve-WorkflowChangeRange @ResolveParams
 
     Set-CIOutput -Name 'mode' -Value $Result.mode
     Set-CIOutput -Name 'base-sha' -Value $Result.'base-sha'
     Set-CIOutput -Name 'head-sha' -Value $Result.'head-sha'
 
-    Write-Host "Workflow change-range mode: $($Result.mode)"
+    Write-Host "Workflow change-range event: $EventName; mode: $($Result.mode)"
 }
 
 #endregion Main Execution

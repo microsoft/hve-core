@@ -46,9 +46,18 @@ jobs:
         id: resolve
         shell: pwsh
         env:
-          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || '' }}
-          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.sha || github.event_name == 'merge_group' && github.event.merge_group.head_sha || '' }}
-        run: ./scripts/ci/Resolve-WorkflowChangeRange.ps1 -BaseSha "$env:BASE_SHA" -HeadSha "$env:HEAD_SHA"
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event_name == 'merge_group' && github.event.merge_group.base_sha || '' }}
+          HEAD_SHA: ${{ github.event_name == 'merge_group' && github.event.merge_group.head_sha || github.sha }}
+          PR_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: >-
+          ./scripts/ci/Resolve-WorkflowChangeRange.ps1
+          -EventName "$env:EVENT_NAME"
+          -BaseSha "$env:BASE_SHA"
+          -HeadSha "$env:HEAD_SHA"
+          -PullRequestHeadSha "$env:PR_HEAD_SHA"
+          -DefaultBranch "$env:DEFAULT_BRANCH"
 
   spell-check:
     name: Spell Check
