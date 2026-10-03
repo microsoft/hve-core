@@ -98,6 +98,28 @@ Use `.github/skills/{package}/{skill}/references/file.md`.
         $result.Findings[0].Reference | Should -Be './.github/skills/example/scripts/Invoke-Example.ps1'
     }
 
+    It 'Allows legitimate slash-prefixed runtime values that do not assume source layout' {
+        $repo = Join-Path $TestDrive 'runtime-values'
+        $content = @'
+# Fixture
+
+Run `/caveman full`.
+Call `/widgets/{area}`.
+Install under `/workspaces/hve-core`.
+Remove `/tmp/palette.png` after conversion.
+On Windows, use `$env:TEMP\palette.png`.
+'@
+        New-PortableArtifactFixture `
+            -RepoRoot $repo `
+            -RelativePath '.github/skills/example/sample/SKILL.md' `
+            -Content $content
+
+        $result = Test-ArtifactPathPortability -RepoRoot $repo
+
+        $result.Passed | Should -BeTrue
+        $result.Findings | Should -HaveCount 0
+    }
+
     It 'Allows only the exact persisted provenance literal in its approved files' {
         $repo = Join-Path $TestDrive 'provenance'
         $literal = 'source: .github/skills/rai/rai-standards/SKILL.md'

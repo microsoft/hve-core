@@ -126,8 +126,8 @@ Resolve a dynamic topic with these rules:
 * Activate the `rpi-research` skill. It is this repository's sole sanctioned
   route for open-ended codebase exploration, so do not scan directly and do not
   create a local research worker. Search the `source_roots` input. Its default
-  is whichever of `docs/`, `.github/skills/`, and `.github/agents/` exist in the
-  workspace, or the repository root when none of them do.
+  is the workspace's `docs/` folder and its skill and agent artifact folders,
+  those that exist, or the repository root when none of them do.
 * Resolve autonomously. Source-set resolution is never gated on human approval
   in any autonomy mode, so an unattended run can complete it.
 * Record every resolved path, and `pinned` or `dynamic` as the resolution mode,

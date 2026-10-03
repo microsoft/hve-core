@@ -495,18 +495,18 @@ and cannot start or continue a sweep.
 
 ### Validation Workflows
 
-| Workflow                     | Tool                     | Purpose                              | Key Inputs                                                                                                      | Artifacts                      |
-|------------------------------|--------------------------|--------------------------------------|-----------------------------------------------------------------------------------------------------------------|--------------------------------|
-| `spell-check.yml`            | cspell                   | Validate spelling across all files   | `soft-fail` (false)                                                                                             | spell-check-results            |
-| `markdown-lint.yml`          | markdownlint-cli         | Enforce markdown standards           | `soft-fail` (false)                                                                                             | markdown-lint-results          |
-| `table-format.yml`           | markdown-table-formatter | Verify table formatting (check-only) | `soft-fail` (false)                                                                                             | table-format-results           |
-| `ps-script-analyzer.yml`     | PSScriptAnalyzer         | PowerShell static analysis           | `soft-fail` (false), `changed-files-only` (true)                                                                | psscriptanalyzer-results       |
-| `frontmatter-validation.yml` | Custom PS script         | YAML frontmatter validation          | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true) | frontmatter-validation-results |
-| `skill-validation.yml`       | Custom PS script         | Skill directory structure validation | `soft-fail` (false), `changed-files-only` (true)                                                                | skill-validation-results       |
-| `link-lang-check.yml`        | Custom PS script         | Detect language-specific URLs        | `soft-fail` (false)                                                                                             | link-lang-check-results        |
-| `markdown-link-check.yml`    | markdown-link-check      | Validate internal and external links | `soft-fail` (false), `changed-files-only` (true, external links only), `throttle-limit` (8)                     | markdown-link-check-results    |
+| Workflow                     | Tool                     | Purpose                              | Key Inputs                                                                                                                        | Artifacts                      |
+|------------------------------|--------------------------|--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|--------------------------------|
+| `spell-check.yml`            | cspell                   | Validate spelling across all files   | `soft-fail` (false)                                                                                                               | spell-check-results            |
+| `markdown-lint.yml`          | markdownlint-cli         | Enforce markdown standards           | `soft-fail` (false)                                                                                                               | markdown-lint-results          |
+| `table-format.yml`           | markdown-table-formatter | Verify table formatting (check-only) | `soft-fail` (false)                                                                                                               | table-format-results           |
+| `ps-script-analyzer.yml`     | PSScriptAnalyzer         | PowerShell static analysis           | `soft-fail` (false), `changed-files-only` (true)                                                                                  | psscriptanalyzer-results       |
+| `frontmatter-validation.yml` | Custom PS script         | YAML frontmatter validation          | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true)                   | frontmatter-validation-results |
+| `skill-validation.yml`       | Custom PS script         | Skill directory structure validation | `soft-fail` (false), `changed-files-only` (true)                                                                                  | skill-validation-results       |
+| `link-lang-check.yml`        | Custom PS script         | Detect language-specific URLs        | `soft-fail` (false)                                                                                                               | link-lang-check-results        |
+| `markdown-link-check.yml`    | markdown-link-check      | Validate internal and external links | `soft-fail` (false), `changed-files-only` (true, external links only), `external-links-as-warnings` (false), `throttle-limit` (8) | markdown-link-check-results    |
 
-Parenthesized values are the defaults declared by each reusable workflow, not the values its callers pass. Callers override them per lane: `pr-validation.yml` and `weekly-validation.yml` both invoke `markdown-link-check.yml` with `soft-fail: true`, and `weekly-validation.yml` additionally sets `changed-files-only: false` for the full-repository sweep.
+Parenthesized values are the defaults declared by each reusable workflow, not the values its callers pass. `pr-validation.yml` sets `soft-fail: false` and `external-links-as-warnings: true`, so internal failures block while external findings remain advisory. `weekly-validation.yml` sets `soft-fail: true` and `changed-files-only: false` for an advisory full-repository sweep.
 
 All validation workflows use `permissions: contents: read`, publish PR annotations, and retain artifacts for 30 days.
 
@@ -593,9 +593,12 @@ Features:
 * Coverage: Detects SQL injection, XSS, command injection, path traversal, and 200+ other vulnerabilities
 * Not analyzed: CodeQL does not analyze Markdown, generic YAML, PowerShell, shell, or PPTX content; markdownlint, YAML lint, PSScriptAnalyzer, shellcheck, and the dependency and workflow security lints cover those formats
 * Integration: Results appear in Security > Code Scanning tab
+* Threshold gate: after each analysis uploads its SARIF, `scripts/security/Test-CodeQLSarifThreshold.ps1` fails the job on any result with `security-severity` of 4.0 or higher, or any error- or warning-level result from a rule without a security severity. Because the gate runs inside the job, it also blocks merge-queue groups, which ruleset code-scanning protection does not cover.
+  A finding is excused only by a tracked entry in `security/code-scanning-exceptions.yml`; the alert stays open and the gate lists it.
+  Alerts are never dismissed. See the [code-scanning alert lifecycle](../../docs/security/code-scanning-alert-lifecycle.md)
 * Auto-build: Prepares compiled code where required for each language target; Actions analysis needs no compilation
 
-Outputs: SARIF results uploaded to GitHub Security tab, job summary with analysis details
+Outputs: SARIF results uploaded to GitHub Security tab, job summary with analysis details and the threshold gate result
 
 #### `dangerous-workflow-scan.yml`
 

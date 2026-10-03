@@ -504,8 +504,9 @@ jobs:
       change-mode: ${{ needs.change-range.outputs.mode }}
       base-sha: ${{ needs.change-range.outputs.base-sha }}
       head-sha: ${{ needs.change-range.outputs.head-sha }}
-      soft-fail: true
+      soft-fail: false
       changed-files-only: true
+      external-links-as-warnings: true
 
   dependency-pinning-check:
     name: Validate Dependency Pinning

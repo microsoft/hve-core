@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-09-29
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - copilot
@@ -73,7 +73,7 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 | [hve-core/copilot-tracking.instructions.md](hve-core/copilot-tracking.instructions.md)                   | RPI, HVE Builder, and proposal-response tracking folders | Intermediate tracking artifact conventions       |
 | [hve-core/copilot-tracking-location.instructions.md](hve-core/copilot-tracking-location.instructions.md) | `**/.copilot-tracking/**`                                | Tracking root and ignored-file search            |
 | [hve-core/licensing-posture.instructions.md](hve-core/licensing-posture.instructions.md)                 | `**/skills/**, **/.copilot-tracking/**`                  | Licensing, reproduction, and attribution posture |
-| [skill-security-model.instructions.md](skill-security-model.instructions.md)                             | `**/.github/skills/**/SECURITY.md`                       | Per-skill STRIDE security model rules            |
+| [skill-security-model.instructions.md](skill-security-model.instructions.md)                             | Skill `SECURITY.md`, skill scripts, classification JSON  | Per-skill STRIDE security model rules            |
 | [workflows.instructions.md](workflows.instructions.md)                                                   | `**/.github/workflows/*.yml`                             | GitHub Actions workflow conventions              |
 
 ### GitHub Integration

@@ -73,6 +73,15 @@ jobs:
         uses: github/codeql-action/analyze@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
         with:
           category: "/language:${{ matrix.language }}"
+          output: ${{ runner.temp }}/codeql-sarif
+
+      # Results are uploaded above first, so alerts appear even when the gate fails.
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      - name: Enforce CodeQL threshold gate
+        shell: pwsh
+        run: ./scripts/security/Test-CodeQLSarifThreshold.ps1 -SarifPath (Join-Path $env:RUNNER_TEMP 'codeql-sarif')
 
       - name: Add job summary
         if: always()
@@ -114,6 +123,15 @@ jobs:
         uses: github/codeql-action/analyze@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
         with:
           category: "/language:javascript-typescript/generated-slides"
+          output: ${{ runner.temp }}/codeql-sarif
+
+      # Results are uploaded above first, so alerts appear even when the gate fails.
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      - name: Enforce CodeQL threshold gate
+        shell: pwsh
+        run: ./scripts/security/Test-CodeQLSarifThreshold.ps1 -SarifPath (Join-Path $env:RUNNER_TEMP 'codeql-sarif')
 
       - name: Add job summary
         if: always()

@@ -30,6 +30,11 @@ on:
         required: false
         type: boolean
         default: true
+      external-links-as-warnings:
+        description: 'Report external-link findings without failing while keeping internal-link failures blocking'
+        required: false
+        type: boolean
+        default: false
       throttle-limit:
         description: 'Maximum number of markdown-link-check processes run concurrently'
         required: false
@@ -74,10 +79,14 @@ jobs:
           INPUT_BASE_SHA: ${{ inputs.base-sha }}
           INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
           INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
+          EXTERNAL_LINKS_AS_WARNINGS: ${{ inputs.external-links-as-warnings }}
           THROTTLE_LIMIT: ${{ inputs.throttle-limit }}
         run: |
           $params = @{ ThrottleLimit = [int]$env:THROTTLE_LIMIT }
           if ($env:INPUT_CHANGE_MODE -notin @('full', 'range')) { throw 'Unsupported change mode.' }
+          if ($env:EXTERNAL_LINKS_AS_WARNINGS -eq 'true') {
+            $params['ExternalLinksAsWarnings'] = $true
+          }
           if ($env:INPUT_CHANGED_FILES_ONLY -eq 'true' -and $env:INPUT_CHANGE_MODE -eq 'range') {
             if (-not $env:INPUT_BASE_SHA) { throw 'Range mode requires an immutable base commit ID.' }
             $params['ChangedFilesOnly'] = $true

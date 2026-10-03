@@ -113,6 +113,49 @@ function Assert-WithinTargetRoot {
     return $full
 }
 
+# The source clone can be a fork or a substituted local checkout, so a link
+# anywhere from the source root down to a component would copy content from
+# outside the clone into the target repository. Walks ancestors the same way as
+# Assert-WithinTargetRoot so the refusal also covers Windows junctions.
+function Assert-SourceWithoutLink {
+    param(
+        [Parameter(Mandatory)][string]$Base,
+        [Parameter(Mandatory)][string]$RelativePath,
+        [Parameter(Mandatory)][string]$Component
+    )
+
+    $current = $Base
+    foreach ($segment in ($RelativePath -split '[\\/]')) {
+        if ([string]::IsNullOrEmpty($segment)) { continue }
+        $current = Join-Path $current $segment
+        if (-not (Test-Path -LiteralPath $current)) { break }
+        $entry = Get-Item -LiteralPath $current -Force
+        if ($entry.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+            throw "Component '$Component' source resolves through a link at '$current', which may read outside the HVE-Core source."
+        }
+    }
+}
+
+# The tracking manifest is read and rewritten in place, so a link at its path
+# would redirect that write outside the target root. The link is inspected
+# directly instead of through Test-Path, whose handling of a dangling link
+# varies across PowerShell 7 releases.
+function Assert-ManifestNotLink {
+    param(
+        [Parameter(Mandatory)][string]$Path
+    )
+
+    $info = [System.IO.FileInfo]::new($Path)
+    $isLink = ($info.PSObject.Properties.Name -contains 'LinkTarget') -and ($null -ne $info.LinkTarget)
+    if (-not $isLink) {
+        $entry = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+        $isLink = [bool]($entry -and ($entry.Attributes -band [System.IO.FileAttributes]::ReparsePoint))
+    }
+    if ($isLink) {
+        throw "Tracking manifest '$Path' is a link, which may redirect writes outside the target root."
+    }
+}
+
 $schemaVersion = 2
 # Local environment, cache, and test directories are never distributed, matching
 # the extension skill-materialization exclusions.
@@ -167,6 +210,7 @@ function ConvertTo-PackageComponentPath {
 $sourceRoot = (Resolve-Path -LiteralPath $HveCoreBasePath).Path
 $targetBase = (Resolve-Path -LiteralPath $TargetRoot).Path
 $manifestPath = Join-Path $targetBase '.hve-tracking.json'
+Assert-ManifestNotLink -Path $manifestPath
 
 $pluginManifestPath = Join-Path $sourceRoot 'plugin.json'
 if (-not (Test-Path -LiteralPath $pluginManifestPath -PathType Leaf)) {
@@ -252,6 +296,7 @@ foreach ($raw in $Component) {
     }
     $sourceRelative = "$($descriptor.Root)/$relative"
     $sourceFull = Join-Path $sourceRoot $sourceRelative
+    Assert-SourceWithoutLink -Base $sourceRoot -RelativePath $sourceRelative -Component $normalized
     # Preflight bounds the component; the resolved path is recomputed at the
     # write site, so only the assertion's failure behaviour is needed here.
     Assert-WithinTargetRoot -Base $targetBase -RelativePath $sourceRelative -Component $normalized | Out-Null
