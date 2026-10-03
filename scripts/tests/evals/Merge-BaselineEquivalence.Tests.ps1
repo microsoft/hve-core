@@ -302,10 +302,10 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
     }
 
     It 'carries the same change set through moderation to changed-spec selection' {
-        $script:EvalWorkflow.jobs['content-moderation']['if'] | Should -BeExactly "inputs.change-mode == 'range'"
         $moderationSteps = $script:EvalWorkflow.jobs['content-moderation'].steps
         $download = $moderationSteps | Where-Object { $_.with.name -eq 'eval-change-set' }
         $artifact = $moderationSteps | Where-Object { $_.id -eq 'artifact-manifest' }
+        $download.if | Should -BeExactly "inputs.change-mode == 'range'"
         $moderationSteps.IndexOf($download) | Should -BeLessThan $moderationSteps.IndexOf($artifact)
         $artifact.run | Should -Match '-ChangeSetPath logs/eval-change-set.json'
         $artifact.run | Should -Match 'if \(\$LASTEXITCODE -ne 0\) \{ throw'

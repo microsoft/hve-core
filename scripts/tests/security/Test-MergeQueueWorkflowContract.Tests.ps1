@@ -327,7 +327,34 @@ jobs:
         $UploadStep['if'] | Should -BeExactly "inputs.change-mode == 'range'"
         $DetectStep['run'] | Should -Match "INPUT_CHANGE_MODE -eq 'full'"
         $DetectStep['run'] | Should -Match '\$relevant = \$true'
-        $Workflow['jobs']['content-moderation']['if'] | Should -BeExactly "inputs.change-mode == 'range'"
+    }
+
+    It 'Moderates content in both modes with a full-scope manifest when no range exists' {
+        $WorkflowPath = Join-Path $PSScriptRoot '../../../.github/workflows/eval-validation.yml'
+        $Workflow = Get-Content -Raw -Path $WorkflowPath | ConvertFrom-Yaml
+        $ModerationJob = $Workflow['jobs']['content-moderation']
+        $ModerationSteps = @($ModerationJob['steps'])
+        $DownloadStep = $ModerationSteps | Where-Object { $_['name'] -eq 'Download immutable eval change set' }
+        $ManifestStep = $ModerationSteps | Where-Object { $_['id'] -eq 'artifact-manifest' }
+
+        $ModerationJob.Contains('if') | Should -BeFalse
+        $DownloadStep['if'] | Should -BeExactly "inputs.change-mode == 'range'"
+        $ManifestStep['env']['INPUT_CHANGE_MODE'] | Should -BeExactly '${{ inputs.change-mode }}'
+        $ManifestStep['run'] | Should -Match "(?s)'range' \{\s+pwsh [^}]*-ChangeSetPath logs/eval-change-set\.json"
+        $ManifestStep['run'] | Should -Match "(?s)'full' \{\s+pwsh [^}]*-AllTracked"
+        $ManifestStep['run'] | Should -Match "default \{ throw 'Unsupported change mode\.' \}"
+    }
+
+    It 'Fails agent-eval selection before any code runs when no verified range exists' {
+        $WorkflowPath = Join-Path $PSScriptRoot '../../../.github/workflows/eval-validation.yml'
+        $Workflow = Get-Content -Raw -Path $WorkflowPath | ConvertFrom-Yaml
+        $FirstStep = @($Workflow['jobs']['agent-plan']['steps'])[0]
+
+        $FirstStep.Contains('uses') | Should -BeFalse
+        $FirstStep.Contains('if') | Should -BeFalse
+        $FirstStep['env']['INPUT_CHANGE_MODE'] | Should -BeExactly '${{ inputs.change-mode }}'
+        $FirstStep['run'] | Should -Match 'INPUT_CHANGE_MODE\}" != ''range'''
+        $FirstStep['run'] | Should -Match 'exit 1'
     }
 
     It 'Keeps every custom-token eval job outside merge-group execution' {

@@ -256,7 +256,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: eval-validation
-    if: inputs.change-mode == 'range'
     outputs:
       equivalence-required: ${{ steps.artifact-manifest.outputs.equivalence-required }}
     permissions:
@@ -311,6 +310,7 @@ jobs:
         run: mkdir -p logs
 
       - name: Download immutable eval change set
+        if: inputs.change-mode == 'range'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: eval-change-set
@@ -319,9 +319,20 @@ jobs:
       - name: Generate changed-artifact manifest
         id: artifact-manifest
         shell: pwsh
+        env:
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
         run: |
-          pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
-            -ChangeSetPath logs/eval-change-set.json -OutFile logs/changed-ai-artifacts.json
+          switch -CaseSensitive ($env:INPUT_CHANGE_MODE) {
+            'range' {
+              pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
+                -ChangeSetPath logs/eval-change-set.json -OutFile logs/changed-ai-artifacts.json
+            }
+            'full' {
+              pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
+                -AllTracked -OutFile logs/changed-ai-artifacts.json
+            }
+            default { throw 'Unsupported change mode.' }
+          }
           if ($LASTEXITCODE -ne 0) { throw 'Changed-artifact selection failed.' }
           $manifest = Get-Content -LiteralPath logs/changed-ai-artifacts.json -Raw | ConvertFrom-Json
           $affectedAgents = if ($null -ne $manifest.affectedAgents) { @($manifest.affectedAgents) } else { @() }
@@ -387,6 +398,16 @@ jobs:
       baseline-required: ${{ steps.plan.outputs.baseline-required }}
       execution-enabled: ${{ steps.plan.outputs.execution-enabled }}
     steps:
+      - name: Require a verified change range
+        shell: bash
+        env:
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
+        run: |
+          if [[ "${INPUT_CHANGE_MODE}" != 'range' ]]; then
+            echo "::error::Agent eval selection requires a verified change range; the change-range resolver selected full mode. Investigate the change-range job before rerunning."
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
