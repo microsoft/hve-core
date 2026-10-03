@@ -241,12 +241,11 @@ def _enable_windows_vt() -> bool:  # pragma: no cover - Windows console only
     fall back to plain text instead of printing raw escape codes.
     """
     try:
-        import ctypes
-        from ctypes import wintypes
+        import ctypes.wintypes
 
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
         handle = kernel32.GetStdHandle(-12)  # STD_ERROR_HANDLE
-        mode = wintypes.DWORD()
+        mode = ctypes.wintypes.DWORD()
         if not kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
             return True
         vt_processing = 0x0004  # ENABLE_VIRTUAL_TERMINAL_PROCESSING
