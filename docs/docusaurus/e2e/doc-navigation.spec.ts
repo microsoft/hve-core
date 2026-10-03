@@ -38,9 +38,9 @@ test.describe('Document navigation', () => {
   });
 
   test('pagination navigates to an adjacent doc', async ({ page }) => {
-    // Start from the docs landing page, whose "next" link targets a distinct
-    // adjacent doc (deeper category-index pages can emit a self-referential
-    // next link, which would never change the URL).
+    // Start from the docs landing page and follow its "next" link to an
+    // adjacent doc. Category landing pages are covered separately by the
+    // landing-page pagination check in the sidebar disclosure spec.
     await page.goto('/hve-core/docs/');
     await waitForHydration(page);
 
