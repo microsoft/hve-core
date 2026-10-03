@@ -14,6 +14,7 @@ tools:
   - search/fileSearch
   - read/readFile
 user-invocable: true
+disable-model-invocation: true
 ---
 
 # SSSC Reviewer
