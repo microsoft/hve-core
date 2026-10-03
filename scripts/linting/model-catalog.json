@@ -203,6 +203,13 @@
             "multiplier": 0.33,
             "status": "ga",
             "provider": "Microsoft"
+        },
+        {
+            "name": "MAI-Code-1.1-Flash (copilot)",
+            "tier": "fast",
+            "multiplier": 0.25,
+            "status": "ga",
+            "provider": "Microsoft"
         }
     ],
     "providerAllowlist": [

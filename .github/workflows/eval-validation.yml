@@ -49,6 +49,16 @@ on:
         required: false
         type: number
         default: 2
+      compare-shard-count:
+        description: "Concurrent vally compare shards per baseline model job (1, 5, or 7)"
+        required: false
+        type: number
+        default: 7
+      advisory-equivalence:
+        description: "Run the non-gating advisory baseline-equivalence model lanes"
+        required: false
+        type: boolean
+        default: true
     secrets:
       copilot-github-token:
         description: "GitHub credential exported as COPILOT_GITHUB_TOKEN for the Copilot CLI used by vally eval"
@@ -376,6 +386,7 @@ jobs:
           INSTRUCTION_SHARD_COUNT: ${{ inputs.instruction-shard-count || 2 }}
           SKILL_SHARD_COUNT: ${{ inputs.skill-shard-count || 2 }}
           BASELINE_MAX_PARALLEL: ${{ inputs.baseline-max-parallel || 2 }}
+          COMPARE_SHARD_COUNT: ${{ inputs.compare-shard-count || 7 }}
           COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
         run: |
           if ($env:ORDINARY_SHARD_COUNT -notin @('1', '4')) {
@@ -389,6 +400,9 @@ jobs:
           }
           if ($env:BASELINE_MAX_PARALLEL -notin @('1', '2')) {
             throw "baseline-max-parallel must be 1 or 2; received '$env:BASELINE_MAX_PARALLEL'."
+          }
+          if ($env:COMPARE_SHARD_COUNT -notin @('1', '5', '7')) {
+            throw "compare-shard-count must be 1, 5, or 7; received '$env:COMPARE_SHARD_COUNT'."
           }
           pwsh -NoProfile -File scripts/evals/New-AgentEvalPlan.ps1 `
             -ManifestPath logs/changed-ai-artifacts.json `
@@ -620,6 +634,7 @@ jobs:
         shell: pwsh
         env:
           SELECTED_MODEL: ${{ matrix.model }}
+          COMPARE_SHARD_COUNT: ${{ inputs.compare-shard-count || 7 }}
           WORKFLOW_RUN_ID: ${{ github.run_id }}
           WORKFLOW_RUN_ATTEMPT: ${{ github.run_attempt }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -632,6 +647,7 @@ jobs:
           }
           npm run ci:eval:equivalence -- -Agent rpi-agent -Tier calibration `
             -CalibrationModel $env:SELECTED_MODEL `
+            -CompareShardCount ([int]$env:COMPARE_SHARD_COUNT) `
             -RepoRoot $PWD -OutputPath $summaryPath
           $producerExitCode = $LASTEXITCODE
           $summary = $null
@@ -671,6 +687,120 @@ jobs:
         run: |
           echo "Baseline equivalence failed for ${{ matrix.model }}"
           exit 1
+
+  # Advisory only: this job reports how additional models behave on the baseline
+  # equivalence suite. It never gates the PR, no fan-in lists it in `needs`, and its
+  # artifact name matches no fan-in download pattern.
+  equivalence-advisory:
+    name: Advisory Equivalence (${{ matrix.model }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    continue-on-error: true
+    needs: [eval-validation, content-moderation, agent-plan]
+    if: >-
+      inputs.advisory-equivalence != false &&
+      needs.eval-validation.outputs.eval-relevant == 'true' &&
+      needs.agent-plan.outputs.execution-enabled == 'true' &&
+      needs.agent-plan.outputs.baseline-required == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+      github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - model: mai-code-1.1-flash
+            key: mai
+    env:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      - name: Create logs directory
+        run: mkdir -p logs
+
+      - name: Check Copilot token availability
+        shell: pwsh
+        run: |
+          "COPILOT_HOME=$env:RUNNER_TEMP/copilot-home" >> $env:GITHUB_ENV
+          if ([string]::IsNullOrWhiteSpace($env:COPILOT_GITHUB_TOKEN)) {
+            throw 'COPILOT_GITHUB_TOKEN is required for advisory equivalence.'
+          }
+
+      - name: Probe Copilot token
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/evals/Test-CopilotToken.ps1 -SmokeTest
+
+      - name: Execute advisory model
+        shell: pwsh
+        env:
+          ADVISORY_MODEL: ${{ matrix.model }}
+          COMPARE_SHARD_COUNT: ${{ inputs.compare-shard-count || 7 }}
+        run: |
+          npm run ci:eval:equivalence -- -Agent rpi-agent -Tier devloop `
+            -Model $env:ADVISORY_MODEL `
+            -CompareShardCount ([int]$env:COMPARE_SHARD_COUNT) `
+            -NoBaselineCache `
+            -RepoRoot $PWD -OutputPath "logs/advisory-equivalence-$env:ADVISORY_MODEL.json"
+
+      - name: Summarize advisory result
+        if: always()
+        shell: pwsh
+        env:
+          ADVISORY_MODEL: ${{ matrix.model }}
+        run: |
+          $summaryPath = "logs/advisory-equivalence-$env:ADVISORY_MODEL.json"
+          $lines = [System.Collections.Generic.List[string]]::new()
+          $lines.Add("## Advisory Equivalence: $env:ADVISORY_MODEL")
+          $lines.Add('')
+          $lines.Add('> Advisory only. This result does not gate the pull request.')
+          $lines.Add('')
+          $summary = $null
+          if (Test-Path -LiteralPath $summaryPath -PathType Leaf) {
+            try { $summary = Get-Content -LiteralPath $summaryPath -Raw | ConvertFrom-Json }
+            catch { $summary = $null }
+          }
+          if ($null -eq $summary) {
+            $lines.Add('No readable advisory summary was produced.')
+          }
+          else {
+            # Only fixed field values and fixed diagnostic categories are rendered;
+            # diagnostic text can carry model output and is never published.
+            $categories = @($summary.executionDiagnostics | ForEach-Object { @($_.errors) } | ForEach-Object { [string]$_.category } | Sort-Object -Unique)
+            $lines.Add('| Field | Value |')
+            $lines.Add('|-------|-------|')
+            foreach ($field in @('verdict', 'equivalenceGate', 'runs', 'ties', 'baselineWins', 'treatmentWins', 'equivalentTies', 'equivalentTrials', 'invariantFailures', 'invocationFailures', 'judgeErrors', 'dataQualityViolations', 'runHealthFailures')) {
+              $lines.Add("| $field | $($summary.$field) |")
+            }
+            $lines.Add("| executionErrorCategories | $(if ($categories.Count -gt 0) { $categories -join ', ' } else { 'none' }) |")
+          }
+          $lines -join "`n" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload advisory summary
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: advisory-equivalence-${{ matrix.key }}
+          path: logs/advisory-equivalence-${{ matrix.model }}.json
+          retention-days: 30
+          if-no-files-found: warn
 
   equivalence-fan-in:
     name: Baseline Equivalence Fan-In

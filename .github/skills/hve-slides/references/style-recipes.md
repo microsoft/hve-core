@@ -63,6 +63,47 @@ The fixed presentation canvas scales these values when displayed. Choose readabl
 sizes and measure their actual rendered size, rather than assuming `font-size: 18px`
 on a 1600-pixel-wide slide remains 18 pixels on a smaller screen.
 
+## Bottom Chrome
+
+To bring an older deck into line with the shared
+[bottom chrome](design-and-examples.md#bottom-chrome), port the starter's rules from
+`templates/deck/theme.css`, `index.html` and `deck.js` instead of restyling them by hand.
+These excerpts show only the parts that keep the treatment consistent.
+
+The presenter bar names the deck and the current chapter before its controls:
+
+```html
+<nav id="presenter-controls" aria-label="Presentation controls">
+  <div class="brand"><span class="brand-dot" aria-hidden="true"></span> HVE CORE
+    <span id="chapter-label">Opening</span></div>
+  <div class="utility-controls"><!-- Slides, Sources, Notes, Keys, Motion, Full screen --></div>
+  <div class="slide-controls"><!-- Previous slide, count, Next slide --></div>
+</nav>
+```
+
+One variable sizes the bar and the slide area above it. Change the variable at the stacked
+breakpoint; reading view moves the bar to the top and lets it size itself.
+
+```css
+:root { --presenter-height: 64px; }
+.reveal { inset: 0 0 var(--presenter-height); height: calc(100% - var(--presenter-height)); }
+#presenter-controls { position: fixed; inset: auto 0 0; height: var(--presenter-height); z-index: 20; }
+@media (max-width: 1100px) {
+  :root:not([data-reading-view="true"]) { --presenter-height: 108px; }
+}
+```
+
+Keep the bar's `z-index` above the `z-index: 11` that reveal.js gives the current slide.
+Otherwise scrolled reading-view content paints over the bar.
+
+Walkthrough step controls belong to the example frame. Append them after the body in
+`deck.js` so the frame's footer holds them:
+
+```javascript
+main.append(header, element('div', 'demo-body'), controls);
+host.replaceChildren(sidebar, main);
+```
+
 ## A Point Beside Its Evidence
 
 Use a narrower explanation and a wider source/example panel. The `minmax(0, ...)` tracks

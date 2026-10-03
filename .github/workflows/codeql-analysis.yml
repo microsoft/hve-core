@@ -84,3 +84,44 @@ jobs:
             echo ""
             echo "📊 View results in the Security tab under Code Scanning"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  analyze-generated-slides:
+    name: CodeQL Analysis (generated slides)
+    needs: verify-slide-bundles
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Delivered single-file decks inline third-party reveal.js, so they use a
+      # separate category that keeps generated findings out of the authored-source baseline.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          queries: security-extended,security-and-quality
+          config-file: ./.github/codeql/generated-slides.yml
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        with:
+          category: "/language:javascript-typescript/generated-slides"
+
+      - name: Add job summary
+        if: always()
+        run: |
+          {
+            echo "## CodeQL Security Analysis Complete"
+            echo "**Scope:** generated slide decks (docs/slides/*.html)"
+            echo "**Queries:** security-extended, security-and-quality"
+            echo ""
+            echo "📊 View results in the Security tab under Code Scanning"
+          } >> "$GITHUB_STEP_SUMMARY"

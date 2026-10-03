@@ -8,6 +8,11 @@
 # Field reference:
 # * `name`              — unique kebab-case identifier per stimulus.
 # * `prompt`            — block scalar holding the literal user prompt.
+# * `agent_environment` — files and skills staged into the sandbox. Stage the
+#   artifact under test with `src` relative to the compiled suite file
+#   (`evals/agent-behavior/eval.yaml` for agents) and `dest` at the repo path
+#   the prompt names; a `skill` kind stages its directory under `skills:`
+#   instead. See references/grader-robustness.md.
 # * `tags.category`     — fixed value `behavior-conformance` or `agent-behavior`.
 # * `tags.kind`         — one of `prompt`, `instructions`, `agent`, `skill`.
 # * `tags.target_artifact` — repo-relative path to the artifact under test.
@@ -21,6 +26,10 @@ stimuli:
   - name: example-prompt-conformance-stub
     prompt: |
       Invoke <prompt-name> with <argument>. Produce the standard handoff.
+    agent_environment:
+      files:
+        - src: ../../.github/prompts/hve-core/<prompt-name>.prompt.md
+          dest: .github/prompts/hve-core/<prompt-name>.prompt.md
     tags:
       category: behavior-conformance
       kind: prompt

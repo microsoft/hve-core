@@ -2026,3 +2026,202 @@ Describe 'Test-SecurityModelStructure' -Tag 'Unit' {
 }
 #endregion SECURITY.md Structure Tests
 
+#region Skill Security Classification Tests
+
+Describe 'Skill security classification' -Tag 'Unit' {
+    BeforeAll {
+        $script:ClassRoot = Join-Path $script:TempTestDir "classification_$([guid]::NewGuid().ToString('N'))"
+        $script:ClassSkillsRoot = Join-Path $script:ClassRoot 'skills'
+        New-Item -ItemType Directory -Path $script:ClassSkillsRoot -Force | Out-Null
+
+        function New-ClassifiedSkill {
+            param([string]$Key, [switch]$WithScript, [switch]$WithSecurityModel)
+            $skillDir = Join-Path $script:ClassSkillsRoot $Key
+            New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+            $name = Split-Path -Leaf $Key
+            Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value "---`nname: $name`ndescription: test`n---`n# S"
+            if ($WithScript) {
+                New-Item -ItemType Directory -Path (Join-Path $skillDir 'scripts') -Force | Out-Null
+                Set-Content -Path (Join-Path $skillDir 'scripts/run.py') -Value 'print("x")'
+            }
+            if ($WithSecurityModel) {
+                Set-Content -Path (Join-Path $skillDir 'SECURITY.md') -Value "# M`n`n## Bucket B1: x`n`n### Spoofing`n`n* n/a`n"
+            }
+            return Get-Item $skillDir
+        }
+
+        function New-ClassificationFile {
+            param([string]$Text)
+            $path = Join-Path $script:ClassRoot "classification-$([guid]::NewGuid().ToString('N')).json"
+            Set-Content -Path $path -Value $Text -NoNewline
+            return $path
+        }
+
+        function Invoke-ClassifiedSkillCheck {
+            param([System.IO.DirectoryInfo]$Directory, [hashtable]$Entries)
+            return Test-SkillDirectory -Directory $Directory -RepoRoot $script:ClassRoot `
+                -SecurityClassification $Entries -SkillsRoot $script:ClassSkillsRoot
+        }
+    }
+
+    It 'Rejects a classification file that is not strictly valid JSON' {
+        $path = New-ClassificationFile -Text '{"schemaVersion": 1, "skills": {},}'
+        $result = Get-SkillSecurityClassification -Path $path
+        ($result.Errors -join "`n") | Should -Match 'not strictly valid JSON'
+    }
+
+    It 'Rejects a schemaVersion other than the integer 1' {
+        $path = New-ClassificationFile -Text '{"schemaVersion": 2, "skills": {}}'
+        $result = Get-SkillSecurityClassification -Path $path
+        ($result.Errors -join "`n") | Should -Match 'schemaVersion must be the integer 1'
+    }
+
+    It 'Rejects an entry whose status is neither exempt nor pending' {
+        $path = New-ClassificationFile -Text '{"schemaVersion": 1, "skills": {"a/b": {"status": "ignored"}}}'
+        $result = Get-SkillSecurityClassification -Path $path
+        ($result.Errors -join "`n") | Should -Match "status 'ignored'"
+        $result.Skills.ContainsKey('a/b') | Should -BeFalse
+    }
+
+    It 'Rejects an exempt entry without a reason' {
+        $path = New-ClassificationFile -Text '{"schemaVersion": 1, "skills": {"a/b": {"status": "exempt", "reason": " "}}}'
+        $result = Get-SkillSecurityClassification -Path $path
+        ($result.Errors -join "`n") | Should -Match 'exempt but has no reason'
+    }
+
+    It 'Rejects a pending entry without a positive integer issue number' {
+        $path = New-ClassificationFile -Text '{"schemaVersion": 1, "skills": {"a/b": {"status": "pending", "issue": "3026"}, "a/c": {"status": "pending"}}}'
+        $result = Get-SkillSecurityClassification -Path $path
+        @($result.Errors | Where-Object { $_ -match 'pending but has no positive integer issue number' }).Count | Should -Be 2
+    }
+
+    It 'Fails a skill that ships scripts without a SECURITY.md or a classification entry' {
+        $dir = New-ClassifiedSkill -Key 'pkg/unclassified' -WithScript
+        $result = Invoke-ClassifiedSkillCheck -Directory $dir -Entries @{}
+        $result.IsValid | Should -BeFalse
+        ($result.Errors -join "`n") | Should -Match 'neither a SECURITY.md nor a skill security classification entry'
+    }
+
+    It 'Passes a skill that ships scripts and has a SECURITY.md' {
+        $dir = New-ClassifiedSkill -Key 'pkg/modeled' -WithScript -WithSecurityModel
+        $result = Invoke-ClassifiedSkillCheck -Directory $dir -Entries @{}
+        ($result.Errors -join "`n") | Should -Not -Match 'classification'
+    }
+
+    It 'Passes a skill that ships scripts and is declared exempt' {
+        $dir = New-ClassifiedSkill -Key 'pkg/exempt' -WithScript
+        $result = Invoke-ClassifiedSkillCheck -Directory $dir -Entries @{ 'pkg/exempt' = @{ status = 'exempt'; reason = 'stdout only' } }
+        ($result.Errors -join "`n") | Should -Not -Match 'classification'
+    }
+
+    It 'Passes a skill that ships scripts and has a pending model with an issue' {
+        $dir = New-ClassifiedSkill -Key 'pkg/pending' -WithScript
+        $result = Invoke-ClassifiedSkillCheck -Directory $dir -Entries @{ 'pkg/pending' = @{ status = 'pending'; issue = 42 } }
+        ($result.Errors -join "`n") | Should -Not -Match 'classification'
+    }
+
+    It 'Fails a stale entry for a skill that now has a SECURITY.md' {
+        $dir = New-ClassifiedSkill -Key 'pkg/stale' -WithScript -WithSecurityModel
+        $result = Invoke-ClassifiedSkillCheck -Directory $dir -Entries @{ 'pkg/stale' = @{ status = 'pending'; issue = 42 } }
+        $result.IsValid | Should -BeFalse
+        ($result.Errors -join "`n") | Should -Match 'still listed as .pending.'
+    }
+
+    It 'Fails validation when the classification lists a path that is not a skill' {
+        $repoRoot = Join-Path $script:ClassRoot 'repo-nonexistent'
+        $skillDir = Join-Path $repoRoot 'skills/pkg/real'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value "---`nname: real`ndescription: test`n---`n# S"
+        Set-Content -Path (Join-Path $repoRoot 'classification.json') -Value '{"schemaVersion": 1, "skills": {"pkg/ghost": {"status": "exempt", "reason": "gone"}}}' -NoNewline
+        Mock git {
+            $global:LASTEXITCODE = 0
+            return $repoRoot
+        } -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+        $exitCode = Invoke-SkillStructureValidation -SkillsPath 'skills' -SecurityClassificationPath 'classification.json' -OutputPath 'logs/results.json'
+
+        $exitCode | Should -Be 1
+        $json = Get-Content (Join-Path $repoRoot 'logs/results.json') -Raw | ConvertFrom-Json
+        ($json.results | Where-Object { $_.skillName -eq 'skill-security-classification' }).errors | Should -Match "'pkg/ghost', which is not a skill directory"
+    }
+
+    It 'Fails a missing classification file even when no skill changed' {
+        $repoRoot = Join-Path $script:ClassRoot 'repo-missing'
+        New-Item -ItemType Directory -Path (Join-Path $repoRoot 'skills') -Force | Out-Null
+        Mock git {
+            $global:LASTEXITCODE = 0
+            return $repoRoot
+        } -ParameterFilter { $args[0] -eq 'rev-parse' }
+        Mock Get-ChangedSkillDirectories { return @() }
+
+        $exitCode = Invoke-SkillStructureValidation -SkillsPath 'skills' -ChangedFilesOnly -SecurityClassificationPath 'missing.json' -OutputPath 'logs/results.json'
+
+        $exitCode | Should -Be 1
+        (Get-Content (Join-Path $repoRoot 'logs/results.json') -Raw | ConvertFrom-Json).results[0].errors | Should -Match 'classification file not found'
+    }
+
+    Context 'Changed-files-only classification coverage' {
+        BeforeAll {
+            function New-CoverageRepo {
+                param([string]$Name, [string]$ClassificationJson)
+                $root = Join-Path $script:ClassRoot $Name
+                foreach ($key in 'pkg/changed', 'other/unclassified') {
+                    $skillDir = Join-Path $root "skills/$key"
+                    New-Item -ItemType Directory -Path (Join-Path $skillDir 'scripts') -Force | Out-Null
+                    Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value "---`nname: $(Split-Path -Leaf $key)`ndescription: test`n---`n# S"
+                    Set-Content -Path (Join-Path $skillDir 'scripts/run.py') -Value 'print("x")'
+                }
+                Set-Content -Path (Join-Path $root 'classification.json') -Value $ClassificationJson -NoNewline
+                return $root
+            }
+        }
+
+        It 'Fails a skill in an unchanged collection that has no SECURITY.md or entry' {
+            $repoRoot = New-CoverageRepo -Name 'coverage-gap' -ClassificationJson '{"schemaVersion": 1, "skills": {"pkg/changed": {"status": "exempt", "reason": "stdout only"}}}'
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return $repoRoot
+            } -ParameterFilter { $args[0] -eq 'rev-parse' }
+            Mock Get-ChangedSkillDirectories { return @() }
+
+            $exitCode = Invoke-SkillStructureValidation -SkillsPath 'skills' -ChangedFilesOnly -SecurityClassificationPath 'classification.json' -OutputPath 'logs/results.json'
+
+            $exitCode | Should -Be 1
+            $json = Get-Content (Join-Path $repoRoot 'logs/results.json') -Raw | ConvertFrom-Json
+            ($json.results | Where-Object { $_.skillName -eq 'skill-security-classification' }).errors |
+                Should -Match "'skills/other/unclassified' ships scripts but has neither"
+        }
+
+        It 'Passes when every skill is classified and no collection changed' {
+            $repoRoot = New-CoverageRepo -Name 'coverage-clean' -ClassificationJson '{"schemaVersion": 1, "skills": {"pkg/changed": {"status": "exempt", "reason": "stdout only"}, "other/unclassified": {"status": "pending", "issue": 42}}}'
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return $repoRoot
+            } -ParameterFilter { $args[0] -eq 'rev-parse' }
+            Mock Get-ChangedSkillDirectories { return @() }
+
+            $exitCode = Invoke-SkillStructureValidation -SkillsPath 'skills' -ChangedFilesOnly -SecurityClassificationPath 'classification.json' -OutputPath 'logs/results.json'
+
+            $exitCode | Should -Be 0
+        }
+
+        It 'Reports a changed skill once, on its own result rather than the classification result' {
+            $repoRoot = New-CoverageRepo -Name 'coverage-changed' -ClassificationJson '{"schemaVersion": 1, "skills": {"other/unclassified": {"status": "pending", "issue": 42}}}'
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return $repoRoot
+            } -ParameterFilter { $args[0] -eq 'rev-parse' }
+            Mock Get-ChangedSkillDirectories { return [string[]]@('pkg') }
+
+            $exitCode = Invoke-SkillStructureValidation -SkillsPath 'skills' -ChangedFilesOnly -SecurityClassificationPath 'classification.json' -OutputPath 'logs/results.json'
+
+            $exitCode | Should -Be 1
+            $json = Get-Content (Join-Path $repoRoot 'logs/results.json') -Raw | ConvertFrom-Json
+            $json.results | Where-Object { $_.skillName -eq 'skill-security-classification' } | Should -BeNullOrEmpty
+            $allErrors = @($json.results | ForEach-Object { $_.errors })
+            @($allErrors | Where-Object { $_ -match "'skills/pkg/changed' ships scripts" }).Count | Should -Be 1
+        }
+    }
+}
+#endregion Skill Security Classification Tests
+

@@ -78,6 +78,49 @@ category_for() {
     esac
 }
 
+staged_path_for() {
+    local path="${1//\\//}"
+    while [[ "$path" == ./* ]]; do
+        path="${path#./}"
+    done
+    if [[ -z "${path}" ]]; then
+        printf 'ArtifactPath must not be empty.\n' >&2
+        return 1
+    fi
+    if [[ "${path}" == *$'\r'* || "${path}" == *$'\n'* ]]; then
+        printf 'ArtifactPath must be a single-line path.\n' >&2
+        return 1
+    fi
+    if [[ "$path" == /* || "$path" =~ ^[A-Za-z]: ]]; then
+        printf "ArtifactPath must be repository-relative: '%s'.\n" "$1" >&2
+        return 1
+    fi
+    if [[ "/$path/" == */../* ]]; then
+        printf "ArtifactPath must not contain '..' segments: '%s'.\n" "$1" >&2
+        return 1
+    fi
+    printf '%s' "$path"
+}
+
+# Agent sources resolve from the compiled suite, two levels below the repository root.
+environment_block() {
+    local staged="$1"
+    if [[ "$2" == "skill" ]]; then
+        local skill_dir="${staged%/SKILL.md}"
+        local skill_source
+        skill_dir="${skill_dir%/}"
+        skill_source="$(yaml_dquote "../../${skill_dir}")"
+        printf '    agent_environment:\n      skills:\n        - %s' "${skill_source}"
+    else
+        local source
+        local destination
+        source="$(yaml_dquote "../../${staged}")"
+        destination="$(yaml_dquote "${staged}")"
+        printf '    agent_environment:\n      files:\n        - src: %s\n          dest: %s' \
+            "${source}" "${destination}"
+    fi
+}
+
 emit_prompt_block() {
     while IFS= read -r line; do
         printf '      %s\n' "$line"
@@ -126,6 +169,7 @@ EOF
     esac
 }
 
+staged_path="$(staged_path_for "$artifact_path")" || exit 2
 hash="$(normalize_and_hash "$prompt_text")"
 leaf="$(leaf_for "$artifact_path")"
 name="${leaf}-conformance-${hash:0:8}"
@@ -136,6 +180,7 @@ block=$(cat <<EOF
   - name: ${name}
     prompt: |
 $(emit_prompt_block "$prompt_text")
+$(environment_block "$staged_path" "$kind")
     tags:
       category: ${category}
       kind: ${kind}

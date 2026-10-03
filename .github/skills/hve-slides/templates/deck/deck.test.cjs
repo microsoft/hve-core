@@ -106,6 +106,46 @@ test('presenter bar ends stay clear of viewer overlays', () => {
   assert.match(theme, /\[data-reading-view="true"\] body \{[^}]*padding-bottom: var\(--presenter-inset\);/);
 });
 
+test('presenter bar, slide footer and walkthrough controls follow the shared bottom chrome', () => {
+  const theme = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf8');
+  const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
+  // Returns the declarations of the unprefixed rule for a selector, so assertions do not depend on declaration order.
+  const rule = selector => {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = theme.match(new RegExp(`^${escaped} \\{([^}]*)\\}`, 'm'));
+    assert.ok(match, `Missing rule: ${selector}`);
+    return match[1];
+  };
+  // The bar names the deck and the current chapter before its controls.
+  assert.match(html, /<nav id="presenter-controls"[^>]*>\s*<div class="brand"><span class="brand-dot" aria-hidden="true"><\/span>[^<]+<span id="chapter-label">/);
+  // Short chapter labels keep the bar on one row at desktop widths.
+  for (const [, chapter] of html.matchAll(/data-chapter="([^"]+)"/g)) assert.ok(chapter.length <= 28, `Chapter label too long for the bar: ${chapter}`);
+  // One variable sizes the bar and the slide area above it, including the stacked layouts.
+  assert.match(theme, /--presenter-height: 64px;/);
+  assert.match(theme, /:root:not\(\[data-reading-view="true"\]\) \{ --presenter-height: 108px; \}/);
+  assert.match(rule('.reveal'), /inset: 0 0 var\(--presenter-height\);/);
+  assert.match(rule('.reveal'), /height: calc\(100% - var\(--presenter-height\)\);/);
+  const bar = rule('#presenter-controls');
+  assert.match(bar, /height: var\(--presenter-height\);/);
+  // reveal.js gives the current slide z-index 11; reading view would otherwise paint scrolled content over the bar.
+  assert.ok(Number(bar.match(/z-index: (\d+);/)?.[1]) > 11);
+  // Footer labels sit above a divider in body text.
+  assert.match(html, /<div class="slide-bottom">/);
+  assert.match(rule('.slide-bottom'), /border-top: 1px solid/);
+  assert.doesNotMatch(rule('.slide-bottom'), /font-mono/);
+  // Step controls are the footer of the example frame, with Next step as the primary action.
+  assert.match(source, /main\.append\(header, element\('div', 'demo-body'\), controls\);/);
+  assert.match(source, /host\.replaceChildren\(sidebar, main\);/);
+  assert.match(rule('.demo-main'), /overflow: hidden;/);
+  assert.match(rule('.demo-main'), /border: 1px solid/);
+  assert.match(rule('.demo-controls'), /border-top: 1px solid/);
+  assert.match(rule('.demo-controls [data-action="next"]'), /font-weight: 600;/);
+  // Compact presenter buttons on the canvas. In reading view, the presenter-specific selector outranks the bar's 40px rule.
+  assert.match(rule('#presenter-controls button'), /min-height: 40px;/);
+  assert.match(theme, /^\[data-reading-view="true"\] button, \[data-reading-view="true"\] #presenter-controls button \{ min-height: 44px; \}$/m);
+  assert.doesNotMatch(theme, /^button \{ min-height: 44px; \}$/m);
+});
+
 test('deck initialization disables the unused cross-window API', () => {
   const source = fs.readFileSync(path.join(__dirname, 'deck.js'), 'utf8');
   assert.match(source, /postMessage:\s*false/);
@@ -214,6 +254,7 @@ test('complete bundle has current local assets, derived filename and full librar
   const name = path.basename(__dirname);
   const output = path.join(temporary, 'slides', name, 'dist');
   const filename = await bundleDeck({
+    dependencyRoot: __dirname,
     build: async () => {
       fs.cpSync(await buildDeck(), output, { recursive: true });
       return output;
@@ -229,8 +270,91 @@ test('complete bundle has current local assets, derived filename and full librar
   }
   for (const [, asset] of html.matchAll(/<(?:link|script)\b[^>]*(?:href|src)="([^"]+)"/g)) {
     assert.ok(!/^(?:https?:)?\/\//.test(asset));
+    if (asset === 'vendor/reveal.js') continue;
     assert.ok(standalone.includes(fs.readFileSync(path.join(output, asset), 'utf8')), asset);
   }
+  const provenance = [...standalone.matchAll(/<script type="application\/json" id="hve-slide-provenance">([\s\S]*?)<\/script>/g)];
+  assert.equal(provenance.length, 1);
+  assert.equal(JSON.parse(provenance[0][1]).securityCheckResult, 'passed');
   assert.match(standalone, /Permission is hereby granted/);
   assert.doesNotMatch(standalone, /<script[^>]+\bsrc=|<link rel="stylesheet"/);
+});
+
+const revealFixture = [
+  'a(e,`img[data-src]`).forEach(e=>{(e.setAttribute(`src`,e.getAttribute(`data-src`)),e.removeAttribute(`data-src`))});',
+  'a(e,`source[data-src]`).forEach(e=>{e.setAttribute(`src`,e.getAttribute(`data-src`)),n+=1});',
+  'o.split(`,`).forEach(t=>{let n=document.createElement(`source`);n.setAttribute(`src`,t);e.appendChild(n)});',
+  'a&&a.getAttribute(`src`)!==r&&a.setAttribute(`src`,r);',
+  'i&&(e.removeEventListener(`load`,f),e.setAttribute(`src`,e.getAttribute(`data-src`)));',
+  '/youtube\\.com\\/embed\\//.test(t.getAttribute(`src`))&&e?p(1):/player\\.vimeo\\.com\\//.test(t.getAttribute(`src`))&&e?p(2):p(3);'
+].join('\n');
+
+function revealPage() {
+  return {
+    page: '<html><head><link rel="stylesheet" href="theme.css"><script defer src="vendor/reveal.js"></script><script defer src="deck.js"></script></head><body></body></html>',
+    assets: new Map([['theme.css', 'body { color: white; }'], ['vendor/reveal.js', revealFixture], ['deck.js', 'globalThis.ready = true;']])
+  };
+}
+
+test('reveal.js lazy-load sinks and embed host checks are removed from the installed release and every inlined script', async () => {
+  const { neutralizeRevealSinks, supportedRevealVersion, createStandaloneHtml } = await import('./bundle.mjs');
+  const flow = /setAttribute\(`src`,(?:e\.getAttribute\(`data-src`\)|t\)|r\))/;
+  const installed = path.join(__dirname, 'node_modules/reveal.js/dist/reveal.js');
+  for (const source of [revealFixture, ...(fs.existsSync(installed) ? [fs.readFileSync(installed, 'utf8')] : [])]) {
+    const patched = neutralizeRevealSinks(source, supportedRevealVersion);
+    assert.doesNotMatch(patched, flow);
+    for (const hostCheck of ['/youtube\\.com\\/embed\\//.test(', '/player\\.vimeo\\.com\\//.test(']) {
+      assert.ok(!patched.includes(hostCheck), hostCheck);
+    }
+    assert.doesNotThrow(() => new vm.Script(patched));
+  }
+  const { page, assets } = revealPage();
+  const firstParty = 'el.setAttribute("src", el.getAttribute("data-src"));';
+  assert.throws(
+    () => createStandaloneHtml(page, new Map([...assets, ['deck.js', firstParty]]), 'Fixture', undefined, { revealVersion: supportedRevealVersion }),
+    /copies a data-src attribute into src/
+  );
+});
+
+test('reveal.js patch fails closed on a changed anchor or unsupported version', async () => {
+  const { neutralizeRevealSinks, supportedRevealVersion } = await import('./bundle.mjs');
+  assert.throws(() => neutralizeRevealSinks(revealFixture.replace('n.setAttribute(`src`,t);', 'n.src=t;'), supportedRevealVersion), /anchor "background video source" matched 0 times/);
+  assert.throws(() => neutralizeRevealSinks(`${revealFixture}\na.setAttribute(\`src\`,r)`, supportedRevealVersion), /anchor "background iframe" matched 2 times/);
+  assert.throws(() => neutralizeRevealSinks(revealFixture.replace('/player\\.vimeo\\.com\\//', '/vimeo\\.com\\//'), supportedRevealVersion), /anchor "embedded Vimeo host check" matched 0 times/);
+  assert.throws(() => neutralizeRevealSinks(revealFixture, '6.1.0'), /reveal\.js 6\.1\.0 is not supported/);
+  assert.throws(() => neutralizeRevealSinks(revealFixture, undefined), /is not supported/);
+});
+
+test('provenance block matches its contract, is deterministic, and cannot terminate its script', async () => {
+  const { createStandaloneHtml, supportedRevealVersion } = await import('./bundle.mjs');
+  const { page, assets } = revealPage();
+  const metadata = { title: 'Deck', description: 'Description' };
+  const options = { revealVersion: supportedRevealVersion };
+  const first = createStandaloneHtml(page, assets, 'Fixture notice', metadata, options);
+  assert.equal(createStandaloneHtml(page, assets, 'Fixture notice', metadata, options), first);
+  const blocks = [...first.matchAll(/<script type="application\/json" id="hve-slide-provenance">([\s\S]*?)<\/script>/g)];
+  assert.equal(blocks.length, 1);
+  assert.doesNotMatch(blocks[0][1], /</);
+  assert.deepEqual(JSON.parse(blocks[0][1]), {
+    generator: 'hve-slides',
+    revealVersion: '6.0.2',
+    patches: ['reveal-lazy-src-neutralized', 'reveal-embed-host-regex-neutralized'],
+    securityChecks: ['raw-text-delimiters', 'inline-styles', 'resource-markup', 'reveal-lazy-src'],
+    securityCheckResult: 'passed'
+  });
+  assert.ok(first.indexOf('id="hve-slide-provenance"') > first.indexOf('id="hve-slide-metadata"'));
+  assert.doesNotMatch(createStandaloneHtml(page.replace('vendor/reveal.js', 'deck.js'), assets, 'Fixture notice', metadata), /hve-slide-provenance/);
+});
+
+test('installed reveal.js must match the deck pin before bundling', async t => {
+  const { readRevealVersion } = await import('./bundle.mjs');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hve-deck-reveal-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ dependencies: { 'reveal.js': '6.0.2' } }));
+  await assert.rejects(readRevealVersion(root), /reveal\.js is missing/);
+  fs.mkdirSync(path.join(root, 'node_modules/reveal.js'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'node_modules/reveal.js/package.json'), JSON.stringify({ version: '6.1.0' }));
+  await assert.rejects(readRevealVersion(root), /Installed reveal\.js 6\.1\.0 does not match the deck pin 6\.0\.2/);
+  fs.writeFileSync(path.join(root, 'node_modules/reveal.js/package.json'), JSON.stringify({ version: '6.0.2' }));
+  assert.equal(await readRevealVersion(root), '6.0.2');
 });

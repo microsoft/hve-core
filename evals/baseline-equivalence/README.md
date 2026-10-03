@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to measure nominal behavior preservation'
 author: HVE Core Team
-ms.date: 2026-09-23
+ms.date: 2026-10-01
 ---
 
 ## Purpose
@@ -31,7 +31,7 @@ evals/baseline-equivalence/
 ├── stimuli.yml         # 35 equivalent-policy prompts across 7 subcategories
 ```
 
-The baseline and customized specs are self-contained vally `eval` documents. The PowerShell driver invokes each spec in turn with `vally eval --eval-spec` and then joins the two run directories with `vally compare --eval-spec evals/baseline-equivalence/compare.eval.yml --judge-model <model> --baseline <baseline-run-dir> --treatment <customized-run-dir> --output <path>.jsonl`.
+The baseline and customized specs are self-contained vally `eval` documents. The PowerShell driver invokes each spec in turn with `vally eval --eval-spec` and then joins the two run directories with `vally compare --eval-spec evals/baseline-equivalence/compare.eval.yml --judge-model <model> --baseline <baseline-run-dir> --treatment <customized-run-dir> --output <path>.jsonl`, split into concurrent stimulus shards as described in the driver output contract below.
 
 Comparison judging reads `compare.eval.yml`, supplied explicitly through `--eval-spec`. Without it, `vally compare` falls back to the rubric
 embedded in the baseline trajectory and then to a general-purpose preference rubric that asks which response is better. Preference judging cannot
@@ -62,6 +62,8 @@ npm run ci:eval:equivalence -- -Agent rpi-agent -WhatIf
 
 The former `pr` and `nightly` tier names are rejected with a migration message rather than aliased, because they carried different exit policies and a silent alias would let a stale caller select the wrong one.
 
+In CI, the `equivalence-advisory` job also runs the `devloop` tier against `mai-code-1.1-flash` as a non-gating advisory lane; see Advisory Model Lanes in [docs/contributing/evals-ci.md](../../docs/contributing/evals-ci.md).
+
 `rpi-agent` is the only equivalence subject currently selected, because the customized launch target is fixed to that agent and the corpus guards encode that agent's contract. Other agents can be materialized by the driver, but they are not selected and are not meaningfully evaluated: scoring one against this corpus would fail for reasons unrelated to equivalence. Treat the shared-stimulus and scope-guard claims in this document as applying to `rpi-agent` only.
 
 Corpus backlinks identify related artifacts for indexing; they do not select subjects. The corpus is excluded from generic tag-filtered dispatch, which previously produced partial and zero-stimulus
@@ -74,8 +76,16 @@ Every stimulus also declares `constraints.max_agent_duration: 285s` beneath the 
 
 ### Driver output contract
 
-Each `vally compare --eval-spec evals/baseline-equivalence/compare.eval.yml --judge-model <model> --baseline <baseline-run-dir> --treatment <customized-run-dir> --output <path>.jsonl` invocation writes one or more typed `type: "comparison"` records to `logs/vally-compare-<model>-<runId>.jsonl` (a console `.log` capture of the same invocation is kept alongside for troubleshooting, at the paths listed in `compareLogs`).
-`Measure-CompareTrials` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1) reads that JSONL, tallies each non-errored trial's `winner` (`baseline` / `treatment` / `tie`), and carries forward the record's `summary` statistics (signed mean score, 95% confidence interval, win rate).
+Each `vally compare --eval-spec evals/baseline-equivalence/compare.eval.yml --judge-model <model> --baseline <baseline-input> --treatment <customized-input> --output <path>.jsonl` invocation writes one or more typed `type: "comparison"` records.
+`vally compare` judges pairs one at a time, so the driver splits each model's comparison into `-CompareShardCount` stimulus-disjoint shards (default 7; the reusable workflow exposes this as `compare-shard-count`) and runs them concurrently.
+Stimuli are assigned round-robin in the declared order of `stimuli.yml`. Each shard reads directories under `evals/results/baseline-equivalence/<model>/<runId>/compare-shards/` that mirror the run directories' top-level `*.jsonl` and `*.trajectory.json` files for its stimuli, and writes `logs/vally-compare-<model>-<runId>-sNN.jsonl` beside a withheld `-sNN.log` console capture.
+The driver concatenates the shard outputs in shard order into `logs/vally-compare-<model>-<runId>.jsonl`, so every consumer still reads one file per model. A shard count of 1, or a corpus with one stimulus, runs one serial compare over the run directories and writes that file directly.
+A shard that exits nonzero without writing any comparison record is retried once; a shard that fails again counts as a run-health failure, and its missing trials surface as data-quality violations.
+`Measure-CompareTrials` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1) reads that JSONL, tallies each non-errored trial's `winner` (`baseline` / `treatment` / `tie`), and reports the comparison's summary statistics (signed mean score, 95% confidence interval, win rate).
+A single comparison record carries those statistics in its `summary`, which vally computes over every non-errored trial.
+When the file holds one record per shard, each shard's `summary` covers only its own trials, so `Measure-CompareTrials` recomputes the statistics from the per-trial scores across all records with vally's formula: the arithmetic mean, a two-sided 95% Student-t interval, and the share of trials with a positive score.
+A complete sharded run therefore reports the same per-model statistics as a serial run. If any non-errored trial lacks a numeric score, complete `summary` intervals are instead combined conservatively.
+The statistics always describe the trials that were observed; missing trials fail the run as data-quality violations.
 The driver aggregates one JSONL per model into a single JSON summary; the summary is the contract every downstream consumer reads. It carries `schemaVersion: "2.1.0"`, and consumers reject an unsupported major version rather than reading absent fields as zeros.
 The compare invocation deliberately omits `--fail-on-regression`. Comparison is report-only calibration evidence until a later decision defines a degradation margin, confidence level, inequality, and missing-bound behavior from valid post-launch data.
 
@@ -89,12 +99,12 @@ The compare invocation deliberately omits `--fail-on-regression`. Comparison is 
 | `ties`                                                               | int          | Trials with `winner: "tie"`; neither environment showed a clear preference                                                                                                                      |
 | `baselineWins`                                                       | int          | Trials with `winner: "baseline"`; the customization underperformed                                                                                                                              |
 | `treatmentWins`                                                      | int          | Trials with `winner: "treatment"`; the customization outperformed                                                                                                                               |
-| `meanScore`                                                          | number       | Unweighted average, across records and models, of signed treatment-relative `summary.meanScore` values (positive favors the customization); reporting only                                      |
-| `ciLow`                                                              | number       | Conservative maximum lower bound of `summary.ciLow` across records and models; reporting only, not a gate input                                                                                 |
-| `ciHigh`                                                             | number       | Conservative minimum upper bound of `summary.ciHigh` across records and models; reporting only, not a gate input                                                                                |
-| `winRate`                                                            | number       | Unweighted average, across records and models, of `summary.winRate` values; reporting only                                                                                                      |
+| `meanScore`                                                          | number       | Signed treatment-relative mean score per model (positive favors the customization), unweighted average across models; the workflow fan-in weights models by `runs`; reporting only              |
+| `ciLow`                                                              | number       | 95% confidence lower bound per model; conservative maximum across models; reporting only, not a gate input                                                                                      |
+| `ciHigh`                                                             | number       | 95% confidence upper bound per model; conservative minimum across models; reporting only, not a gate input                                                                                      |
+| `winRate`                                                            | number       | Share of trials favoring the customization per model, unweighted average across models; the workflow fan-in weights models by `runs`; reporting only                                            |
 | `invariantFailures`                                                  | int          | Declared-invariant violations read from the baseline run's structured results                                                                                                                   |
-| `runHealthFailures`                                                  | int          | Run-integrity signals: missing run directories, unparseable compare output, a nonzero `vally compare` exit, and a nonzero `vally eval` exit only when that run produced no usable grader signal |
+| `runHealthFailures`                                                  | int          | Run-integrity signals: missing run directories, unparseable compare output, a nonzero compare shard's exit, and a nonzero `vally eval` exit only when that run produced no usable grader signal |
 | `invocationEvidence`, `invocationFailures`                           | list, int    | Per-model expected and observed successful agent-file reads plus failed, missing, duplicate, wrong-path, and malformed evidence; any failure is structural                                      |
 | `divergenceGuardFailures`                                            | int          | Declared `customized_disallow` guards that failed in the customized run                                                                                                                         |
 | `divergenceGuardsEvaluated`                                          | int          | Declared guards actually evaluated; current guards detect persona bleed on equivalent-policy stimuli                                                                                            |
@@ -108,7 +118,7 @@ The compare invocation deliberately omits `--fail-on-regression`. Comparison is 
 | `documentedDivergenceGate`                                           | string       | `report-only`; retained in the 2.x summary contract after boundary-corpus removal                                                                                                               |
 | `verdict`                                                            | string       | Authoritative deterministic and structural outcome; comparison cannot change it                                                                                                                 |
 | `variants`                                                           | list         | Per-model variant metadata (model id, baseline run directory, customized run directory)                                                                                                         |
-| `compareLogs`                                                        | list         | Absolute paths to every captured `vally compare` console log; the sibling `--output` JSONL lives at `logs/vally-compare-<model>-<runId>.jsonl`                                                  |
+| `compareLogs`                                                        | list         | Absolute paths to every captured `vally compare` console log, one per shard; the merged JSONL lives at `logs/vally-compare-<model>-<runId>.jsonl`                                               |
 
 Authoritative evidence is derived by `Get-EquivalenceGateResults` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1); the exact rule is documented below.
 

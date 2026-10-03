@@ -40,10 +40,31 @@ comparison or question/answer. Avoid making every section an equal-sized card gr
 
 Align repeated elements with layout primitives rather than manual offsets. Connect ordered
 phases visibly, keep historical and current flows distinct, and align command/citation rows.
-Separate headings from their examples more than labels from their values. Give the bottom
-controls and notes sufficient clearance. Keep the presenter bar's chapter label and slide
-navigation inset from the window corners, where viewer overlays such as the Copilot button
-SharePoint places at the bottom right can sit; the starter's `--presenter-inset` does this.
+Separate headings from their examples more than labels from their values.
+
+### Bottom Chrome
+
+HVE decks share one treatment for the bottom of the screen. The starter implements it, and
+[RPI with HVE Core](../../../../slides/rpi-with-hve/README.md) shows it in a finished talk:
+
+* The presenter bar is a dark band close to the canvas tone. It starts with the HVE Core
+  mark and current chapter, then the utility buttons, then slide navigation. Its ends stay
+  `--presenter-inset` from the window corners, where viewer overlays such as the Copilot
+  button SharePoint places at the bottom right can sit. Keep chapter labels short so the bar
+  stays on one row at desktop widths; the starter's test allows 28 characters.
+* `--presenter-height` sizes both the bar and the slide area above it. Change that variable,
+  including at the stacked breakpoint, instead of adding a second hard-coded height.
+* Opening and closing slides put repository and fidelity labels in `.slide-bottom`: muted
+  body text above a divider.
+* A walkthrough frames its example. The step title and count form the header, the content
+  follows, and Back, Next step and Reset sit in the footer with Next step as the primary
+  button. The frame keeps one height, so the controls stay in place between steps. Fit every
+  step inside it without internal scrolling and leave clear space above the footer.
+
+Keep this treatment when adding layouts or restyling a deck. A presentation that needs a
+different bottom design should change it deliberately and update that deck's bottom-chrome
+test in the same edit. Controls moved outside the walkthrough frame, or a bar without the
+deck mark and chapter, are regressions.
 
 The reference deck uses a 1600 by 900 design canvas. Treat these as presentation design
 targets, not host limits: at a 1280 by 720 viewport, main text should render at least 18 CSS
