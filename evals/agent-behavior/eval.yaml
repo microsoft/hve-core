@@ -9,7 +9,10 @@ description: >
 type: capability
 defaults:
   runs: 5
-  timeout: 120s
+  # Raised from 120s: the security-reviewer-plan-drift stimulus, whose inputs
+  # did not change, measured 75s to 118s per completed trial, and the rest timed
+  # out, so the old cap failed integrity on every attempt.
+  timeout: 180s
   executor: copilot-sdk
   judge_model: claude-sonnet-5
 
