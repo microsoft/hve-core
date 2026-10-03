@@ -239,6 +239,7 @@ def run_scan(
         "--yes",
         f"--registry={NPM_REGISTRY}",
         "@axe-core/cli@4.12.1",
+        "--stdout",
         "--",
         resolved_target,
     ]
@@ -264,6 +265,10 @@ def run_scan(
         raw_payload = json.loads(completed.stdout)
     except json.JSONDecodeError as exc:
         raise ScriptError("Scanner returned invalid JSON output", EXIT_FAILURE) from exc
+
+    # axe --stdout prints a JSON array with one result object per scanned URL.
+    if isinstance(raw_payload, list) and len(raw_payload) == 1:
+        raw_payload = raw_payload[0]
 
     if not isinstance(raw_payload, dict):
         raise ScriptError("Scanner returned unexpected payload format", EXIT_FAILURE)

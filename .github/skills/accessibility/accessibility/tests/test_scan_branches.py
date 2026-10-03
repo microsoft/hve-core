@@ -53,6 +53,17 @@ def test_run_scan_raises_on_non_dict_payload() -> None:
             scan.run_scan("https://example.com", allow_external=True)
 
 
+@pytest.mark.parametrize(
+    "stdout",
+    ['["not-a-result"]', '[{"violations": []}, {"violations": []}]'],
+)
+def test_run_scan_raises_on_result_list_not_single_object(stdout: str) -> None:
+    with patch("scan.subprocess.run") as mock_run:
+        mock_run.return_value = SimpleNamespace(stdout=stdout, stderr="")
+        with pytest.raises(scan.ScriptError, match="unexpected payload"):
+            scan.run_scan("https://example.com", allow_external=True)
+
+
 def test_write_output_prints_to_stdout_when_no_path(capsys) -> None:
     scan.write_output({"a": 1}, None)
 
