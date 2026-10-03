@@ -49,7 +49,7 @@ stimuli:
       The current PRD session has no `proposalResponseArtifacts` field. Read
       and validate the supplied evidence artifact, report the skill result and
       the PRD extension state, and do not replace the invalid artifact.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -88,7 +88,7 @@ stimuli:
       Read it, then show the resulting canonical invocation receipt entry and
       the PRD disposition row in your reply, then explain the authority
       boundary.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -123,7 +123,7 @@ stimuli:
       Integrate depends on a bounded comparable-product question, but Research
       returned `Needs clarification`. Can that result clear the phase gate?
       Explain the durable state and the smallest work that stops.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -158,7 +158,7 @@ stimuli:
       changes record using the persisted synthetic date `2026-09-21`. Stop
       after the Implement return; session-state reconciliation is a separate
       step. Do not run content-quality review or claim the Build gate passed.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md
@@ -211,7 +211,7 @@ stimuli:
       and unknown fields; `gateEffect` records the segment's own contribution,
       while the Build gate itself stays open. Do not rerun Implement, run
       content-quality review, or claim the Build gate passed.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/project-planning/prd-builder.agent.md
           dest: .github/copilot-instructions.md

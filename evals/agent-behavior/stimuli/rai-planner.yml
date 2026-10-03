@@ -23,7 +23,7 @@ stimuli:
   - name: rai-planner-disclaimer-startup
     prompt: |
       Use the workspace fixture at `eval-fixtures/rai-planner-disclaimer-startup.txt` as the startup scenario and required disclaimer text. Start exactly as that fixture requires.
-    environment:
+    agent_environment:
       files:
         - src: fixtures/rai-planner-disclaimer-startup.txt
           dest: eval-fixtures/rai-planner-disclaimer-startup.txt

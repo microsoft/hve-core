@@ -97,7 +97,7 @@ stimuli:
       outputs, not externally validated evidence.
       Where does that leave us? Explain the readiness basis and optional next
       decision in chat without claiming a snapshot or customer-card build ran.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/dt-coaching-foundation'
       files:
@@ -118,7 +118,7 @@ stimuli:
   - name: dt-coach-explicit-deck-request-anytime
     prompt: |
       We are in Method 2 for project slug `clinic-intake-redesign`, and I want the canonical deck snapshot now even if assets are thin. Please do it and tell me what information is missing.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/dt-coaching-foundation'
       files:
@@ -144,7 +144,7 @@ stimuli:
   - name: dt-coach-method-5-first-decline-no-reoffer
     prompt: |
       At the Method 5 exit for `clinic-intake-redesign`, the team already declined the customer-card offer at this same checkpoint. Should we ask again later in this run? Say whether to offer the cards again later in this run, and what the team does next.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/dt-coaching-foundation'
       files:
@@ -172,7 +172,7 @@ stimuli:
       problem statement or other canonical-ready method output is available.
       No snapshot was requested. What should we do next? Explain the missing
       evidence in chat without treating unavailable artifacts as verified ready.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/dt-coaching-foundation'
       files:
@@ -198,7 +198,7 @@ stimuli:
       block. The team explicitly chooses the documented backward transition
       from Method 5 to Method 3 for re-synthesis. Record the transition in the
       coaching state and continue with one Method 3 coaching question.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/dt-coaching-foundation'
         - '../../.github/skills/design-thinking/dt-methods'
@@ -236,7 +236,7 @@ stimuli:
       Respect that decision, make no destination call or board file, and
       continue the recorded Method 5 coaching conversation without changing
       state.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/dt-coaching-foundation'
       files:
@@ -279,7 +279,7 @@ stimuli:
       use an editor tool. If that configured write fails, report the failure,
       preserve the last durable Method 5 state and unrelated extension data,
       and explain that a later resume must start from that durable state.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/dt-coaching-foundation'
         - '../../.github/skills/design-thinking/dt-methods'
@@ -323,7 +323,7 @@ stimuli:
       Method 3 board. The local Mural readiness check for the intended write
       sequence returned `needs_scope_upgrade`. State what happens next. Do not
       run another Mural command or claim that the board changed.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/dt-coaching-foundation'
         - '../../.github/skills/experimental/mural'

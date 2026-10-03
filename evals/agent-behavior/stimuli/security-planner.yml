@@ -24,7 +24,7 @@ stimuli:
   - name: security-planner-disclaimer-null-state
     prompt: |
       Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-null/state.json`. Follow the startup contract and persist the required state change. In the final reply, print the complete canonical Security Planning CAUTION block, then explicitly report the persisted `disclaimerShownAt` ISO timestamp and the appended `session-start-disclaimer` notice before asking any Phase 1 question.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/security/security-planner.agent.md
           dest: .github/copilot-instructions.md
@@ -48,7 +48,7 @@ stimuli:
   - name: security-planner-disclaimer-shown-resume
     prompt: |
       Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-shown/state.json`. The full disclaimer was already shown. Continue normal Phase 1 work and report whether the timestamp or session-start notice count changed.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/security/security-planner.agent.md
           dest: .github/copilot-instructions.md
@@ -81,7 +81,7 @@ stimuli:
   - name: security-planner-disclaimer-user-redisplay
     prompt: |
       Resume the Security Planner project whose state is at `.copilot-tracking/security-plans/cadence-shown/state.json`. I explicitly ask to see the full Security Planning disclaimer again. In the final reply, print the complete canonical Security Planning CAUTION block before reporting state effects. Then persist the required state and notice history and report the replay discriminator. A state-only summary does not satisfy this request.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/security/security-planner.agent.md
           dest: .github/copilot-instructions.md
@@ -126,7 +126,7 @@ stimuli:
       Start a new Security Planner project named `cadence-missing-source`. The required `disclaimer-language.instructions.md` file is unavailable. Follow the declared missing-source behavior and report what is blocked.
 
       Name the specific file you could not load, then say what this does to the session before any Phase 1 work.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/security/security-planner.agent.md
           dest: .github/copilot-instructions.md

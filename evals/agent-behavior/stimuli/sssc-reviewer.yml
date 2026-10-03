@@ -38,7 +38,7 @@ stimuli:
       Before assessing anything, state how you resolved the changed files for
       this run, which of those two files stay in scope for assessment, and how
       the report records the reduced evidence quality.
-    environment:
+    agent_environment:
       files:
         - src: ../../.github/agents/security/sssc-reviewer.agent.md
           dest: .github/copilot-instructions.md

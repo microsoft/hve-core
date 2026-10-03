@@ -94,7 +94,7 @@ stimuli:
       `.copilot-tracking/ux-artifacts/{project-slug}/{subject-slug}/{mode}.md`
       path shape on every line; do not abbreviate it, replace segments with an
       ellipsis, or omit `ux-artifacts`.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -136,7 +136,7 @@ stimuli:
       shape it produces, then note which destination inputs are still missing
       and which part of the work belongs to the executing agent rather than the
       asset mapping.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -173,7 +173,7 @@ stimuli:
       Before doing anything, restate in one sentence which destination target
       you understood and what change you intend to make to it, then tell me what
       you need from me first.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -211,7 +211,7 @@ stimuli:
       columns in chat, including `Basis and source`. Include the capability
       assumptions and the matching research gaps; a saved path alone is not the
       requested output.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -295,7 +295,7 @@ stimuli:
       Show the handoff content in your reply, not only a file path. Include its
       review checklist exactly as it stands, and state the basis behind each
       acceptance input.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -330,7 +330,7 @@ stimuli:
 
       In one sentence, tell me exactly which inputs you still need before this
       can proceed.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -360,7 +360,7 @@ stimuli:
       which ARIA role to apply.
 
       Before you answer, name which capability owns this question.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/design-thinking/ux-coaching'
@@ -388,7 +388,7 @@ stimuli:
       not publish anything or run another Mural command. For each result,
       write one line that starts with the result name, says that you stop and
       wait for a retry, and names the fix.
-    environment:
+    agent_environment:
       skills:
         - '../../.github/skills/design-thinking/ux-artifacts'
         - '../../.github/skills/experimental/mural'
