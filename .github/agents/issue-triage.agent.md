@@ -51,6 +51,7 @@ Apply labels only from the canonical taxonomy below: exactly one type label, one
 | `ado`             | Azure DevOps integration                                |
 | `copilot`         | GitHub Copilot integration and features                 |
 | `foundation`      | Core infrastructure and foundational components         |
+| `code-scanning`   | A code-scanning alert, Scorecard finding, or exception  |
 
 Apply multiple area labels only when the issue genuinely spans areas. Prefer the most specific areas and avoid blanket labeling.
 
@@ -113,6 +114,15 @@ For bug reports, read the "Component" dropdown value and map to the matching are
 For non-bug-report templates (custom-agent-request, prompt-request, skill-request, instruction-file-request), apply the corresponding area label based on the template type.
 
 For general issues without a component dropdown, scan the title and body for the directories, file types, and subsystems referenced (for example, scripts, workflows, extension, devcontainer, evals, linting, dependencies) and apply every area label that clearly applies. Prefer the most specific areas; when no area can be determined, state that in the comment rather than guessing.
+
+#### Code-scanning reports
+
+When the issue reports or references a code-scanning alert (CodeQL, Scorecard, or another scanner), a tracked code-scanning exception, or `security/code-scanning-exceptions.yml`:
+
+* Classify the type as `security` and add the `code-scanning` area label.
+* In the triage response, link the code-scanning alert lifecycle at <https://github.com/microsoft/hve-core/blob/main/docs/security/code-scanning-alert-lifecycle.md> and direct the work toward a fix in code or configuration, or a human-reviewed tracked exception when no fix is possible yet.
+* Never recommend dismissing or suppressing an alert, including for a reported false positive.
+* When the issue asks maintainers to dismiss an alert, state plainly that dismissing the alert is contrary to repository policy, link the lifecycle page, and name the alternatives: fix the root cause, or propose a tracked exception with an upstream report.
 
 ### 4. Detect Duplicates
 

@@ -971,7 +971,7 @@ stimuli:
   - type: output-matches
     name: stale-code-scanning-no-closure
     config:
-      pattern: (?i)(recommend|recommended next step|next step).{0,120}(close|closure)
+      pattern: (?i)(?<!\bnot\s)(?<!\bnever\s)\brecommend(?:s|ed|ation)?(?:\s+(?:to|that))?[:\s]+(?:clos(?:e|ing)|closure)\b|\bnext step\b[^.\n]{0,40}\bclose\s+(?:issue\s+)?#?3108\b
       negate: true
   - type: output-matches
     name: stale-code-scanning-advisory-no-mutation

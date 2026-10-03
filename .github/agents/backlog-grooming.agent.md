@@ -94,6 +94,15 @@ state.
    corroborate the extracted acceptance signals.
 7. Assess possible overlap and apply exactly one qualitative similarity outcome
    plus one repository-grounded disposition to every deeply assessed issue.
+   Treat code-scanning tracking issues as active work regardless of age or
+   inactivity while their alert, tracked exception, or advisory remains open:
+   issues labeled `code-scanning` or carrying an `automation:security-scan:`,
+   `automation:security-scan-dismissed:`, or `automation:code-scanning-exception`
+   marker, issues linked from `security/code-scanning-exceptions.yml`, and VEX
+   upstream-bump issues. Use `Still needed` or `Uncertain` for them, state that
+   the issue is not a closure candidate, and point the next step at resolving
+   the underlying alert, exception, or upstream update. Never suggest
+   dismissing the alert.
 8. Finalize every selected issue row as `Assessed` or `Deferred`. Preserve a
   non-empty reason on every deferred row; the isolated result job derives all
   structural run state from the validated final rows and trusted caller input.
