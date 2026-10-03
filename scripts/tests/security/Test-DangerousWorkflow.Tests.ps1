@@ -222,6 +222,61 @@ jobs:
         $report.Violations | Should -HaveCount 0
     }
 
+    It 'flags template injection written with index syntax' {
+        $fixturePath = New-DangerousWorkflowFixture -Name 'index-syntax-injection' -WorkflowContent @'
+name: test
+on:
+  push:
+  gollum:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "safe"
+      - run: echo "${{ github.event.commits[0].message }}"
+      - run: echo "${{ github.event.commits[0].author.name }}"
+      - run: echo "${{ github.event.pages[0].page_name }}"
+'@
+
+        $outputPath = Join-Path $TestDrive 'index-syntax-injection.json'
+        $exitCode = Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath -FailOnViolation
+
+        $exitCode | Should -Be 1
+        $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+        $report.Violations | Should -HaveCount 3
+        $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/template-injection'
+        $report.Violations[0].Description | Should -Match ([regex]::Escape('github.event.commits[0].message'))
+        # Each finding lands on its own interpolation line, not on the first run step.
+        $report.Violations[0].Line | Should -Be 10
+        $report.Violations[1].Line | Should -Be 11
+        $report.Violations[2].Line | Should -Be 12
+    }
+
+    It 'does not flag index syntax on event fields an attacker cannot set' {
+        $fixturePath = New-DangerousWorkflowFixture -Name 'index-syntax-trusted' -WorkflowContent @'
+name: test
+on:
+  push:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "${{ github.event.commits[0].id }} ${{ github.event.commits[0].url }}"
+          echo "${{ github.event.pages[0].sha }} ${{ github.event.pull_request.labels[0].name }}"
+          echo "${{ steps.setup.outputs['title'] }} ${{ needs.prepare.outputs['x'] }}"
+          echo "${{ fromJSON(steps.setup.outputs.list)[0] }}"
+          echo "${{ contains(github.event.head_commit.id, '[skip ci]') }} ${{ github.sha }}"
+'@
+
+        $outputPath = Join-Path $TestDrive 'index-syntax-trusted.json'
+        $exitCode = Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath -FailOnViolation
+
+        $exitCode | Should -Be 0
+        $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+        @($report.Violations) | Should -HaveCount 0
+    }
+
     It 'continues scanning when one workflow file is malformed YAML' {
         $fixturePath = Join-Path $TestDrive 'malformed-yaml'
         New-Item -ItemType Directory -Path $fixturePath -Force | Out-Null
@@ -421,6 +476,36 @@ jobs:
             $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/direct-input-interpolation'
         }
 
+        It 'flags a string input read with bracket syntax' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-bracket-string' -WorkflowContent @'
+name: test
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "safe"
+      - run: echo "${{ inputs['target'] }}"
+      - run: echo "${{ github.event.inputs['target'] }}"
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-bracket-string.json'
+            Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath | Out-Null
+
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            $report.Violations | Should -HaveCount 2
+            $report.Violations[0].Metadata.RuleId | Should -Be 'dangerous-workflow/direct-input-interpolation'
+            $report.Violations[0].Description | Should -Match 'inputs.target'
+            $report.Violations[0].Description | Should -Match 'type string'
+            $report.Violations[0].Line | Should -Be 12
+            $report.Violations[1].Metadata.RuleId | Should -Be 'dangerous-workflow/direct-input-interpolation'
+            $report.Violations[1].Line | Should -Be 13
+        }
+
         It 'fails closed when the referenced input is not declared' {
             $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-undeclared' -WorkflowContent @'
 name: test
@@ -513,6 +598,32 @@ jobs:
 '@
 
             $outputPath = Join-Path $TestDrive 'cq6-boolean-exception.json'
+            $exitCode = Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath -FailOnViolation
+
+            $exitCode | Should -Be 0
+            $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+            @($report.Violations) | Should -HaveCount 0
+        }
+
+        It 'does not flag a boolean input read with bracket syntax' {
+            $fixturePath = New-DangerousWorkflowFixture -Name 'cq6-bracket-boolean' -WorkflowContent @'
+name: test
+on:
+  workflow_dispatch:
+    inputs:
+      soft-fail:
+        type: boolean
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - shell: pwsh
+        run: |
+          if ('${{ inputs['soft-fail'] }}' -ne 'true') { throw 'strict' }
+          if ('${{ github.event.inputs['soft-fail'] }}' -ne 'true') { throw 'strict' }
+'@
+
+            $outputPath = Join-Path $TestDrive 'cq6-bracket-boolean.json'
             $exitCode = Invoke-DangerousWorkflowFixture -FixturePath $fixturePath -Format json -OutputPath $outputPath -FailOnViolation
 
             $exitCode | Should -Be 0

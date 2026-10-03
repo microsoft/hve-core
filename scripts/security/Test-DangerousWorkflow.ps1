@@ -114,6 +114,23 @@ function Get-ExpressionMatches {
     return @($expressionMatchList | ForEach-Object { $_.Groups[1].Value.Trim() })
 }
 
+function ConvertTo-CanonicalExpression {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Expression
+    )
+
+    # Index and bracket syntax reach the same attacker-controlled fields as the dotted
+    # and wildcard spellings the patterns are written for (commits[0].message and
+    # commits.*.message, inputs['name'] and inputs.name). Rewrite quoted keys as property
+    # access and numeric or wildcard indexes as .* so one set of patterns covers both.
+    # The result is for matching only; line lookup still needs the expression as written.
+    return $Expression -replace "\[\s*'([^']*)'\s*\]", '.$1' -replace '\[\s*(\d+|\*)\s*\]', '.*'
+}
+
 function Test-IsUntrustedInjectionExpression {
     [CmdletBinding()]
     param(
@@ -121,7 +138,7 @@ function Test-IsUntrustedInjectionExpression {
         [string]$Expression
     )
 
-    $expression = $Expression.Trim()
+    $expression = ConvertTo-CanonicalExpression -Expression $Expression.Trim()
     if ([string]::IsNullOrWhiteSpace($expression)) {
         return $false
     }
@@ -255,9 +272,10 @@ function Get-InputReference {
         'github\.event\.inputs\.([A-Za-z0-9_-]+)'
     )
 
+    $canonicalExpression = ConvertTo-CanonicalExpression -Expression $Expression
     $names = [System.Collections.Generic.List[string]]::new()
     foreach ($pattern in $referencePatterns) {
-        foreach ($referenceMatch in [System.Text.RegularExpressions.Regex]::Matches($Expression, $pattern)) {
+        foreach ($referenceMatch in [System.Text.RegularExpressions.Regex]::Matches($canonicalExpression, $pattern)) {
             $name = $referenceMatch.Groups[1].Value
             if (-not $names.Contains($name)) {
                 $names.Add($name)
