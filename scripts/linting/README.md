@@ -107,7 +107,7 @@ Purpose: Validate GitHub Actions workflow YAML syntax and best practices.
 
 ##### Parameters
 
-* `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch
+* `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch, or every workflow file when `.github/actionlint.yaml` changed
 * `-BaseBranch` (string) - Base branch for comparison (default: `origin/main`)
 * `-OutputPath` (string) - Output path for JSON results (default: `logs/yaml-lint-results.json`)
 
@@ -129,7 +129,7 @@ Purpose: Validate GitHub Actions workflow YAML syntax and best practices.
 * Workflow: `.github/workflows/yaml-lint.yml`
 * Configuration: `.github/actionlint.yaml`
 * Artifacts: `yaml-lint-results` (JSON)
-* Exit Code: Non-zero if violations found
+* Exit Code: Non-zero if violations are found or actionlint itself fails (invalid options or an unreadable configuration)
 
 ### Markdown Validation
 

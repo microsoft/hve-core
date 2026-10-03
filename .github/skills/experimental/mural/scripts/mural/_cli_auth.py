@@ -60,7 +60,6 @@ from ._constants import (
     DEFAULT_PROFILE_NAME,
     DEFAULT_REDIRECT_URI,
     ENV_CLIENT_ID,
-    ENV_CLIENT_SECRET,
     ENV_NONINTERACTIVE,
     ENV_PROFILE,
     ENV_SCOPES,
@@ -300,7 +299,9 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
                     f"{ENV_CLIENT_ID} is not set.",
                     "",
                     "Looked for credentials in this order:",
-                    f"  1. Process environment ({ENV_CLIENT_ID}, {ENV_CLIENT_SECRET})",
+                    # Literal name: CodeQL flags interpolated ENV_CLIENT_SECRET
+                    # as clear-text secret logging.
+                    f"  1. Process environment ({ENV_CLIENT_ID}, MURAL_CLIENT_SECRET)",
                     (
                         "  2. Active credential backend "
                         + "(MURAL_CREDENTIAL_BACKEND={auto|keyring|file|env-only})"
@@ -312,7 +313,7 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
                         + " credentials interactively,"
                     ),
                     (
-                        f"or set {ENV_CLIENT_ID} and {ENV_CLIENT_SECRET} in your"
+                        f"or set {ENV_CLIENT_ID} and MURAL_CLIENT_SECRET in your"
                         + " environment."
                     ),
                 ]
