@@ -228,34 +228,34 @@ These commands became skills with the same name, so the slash command still work
 
 ### Design Thinking
 
-| Retired command                    | Replacement                                                                                          |
-|------------------------------------|------------------------------------------------------------------------------------------------------|
-| `/dt-start-project`                | The `DT Coach` agent; describe the project you want coaching on                                      |
-| `/dt-resume-coaching`              | The `DT Coach` agent; ask to resume, and it lists your existing projects                             |
-| `/dt-method-next`                  | The `DT Coach` agent; ask which method comes next, or use its Method Next handoff                    |
-| `/dt-method-04-ideation`           | The `DT Coach` agent; ask for Method 4 (Brainstorming) ideation                                      |
-| `/dt-method-04-convergence`        | The `DT Coach` agent; ask to cluster Method 4 ideas into themes                                      |
-| `/dt-method-05-concepts`           | The `DT Coach` agent; ask to turn brainstorming themes into Method 5 (User Concepts) concepts        |
-| `/dt-method-05-evaluation`         | The `DT Coach` agent; ask to evaluate Method 5 concepts with stakeholders                            |
-| `/dt-method-06-planning`           | The `DT Coach` agent; ask to plan a Method 6 (Low-Fidelity Prototypes) prototype                     |
-| `/dt-method-06-building`           | The `DT Coach` agent; ask to build the Method 6 prototype                                            |
-| `/dt-method-06-testing`            | The `DT Coach` agent; ask to test the Method 6 prototype                                             |
-| `/dt-canonical-deck`               | The `DT Coach` agent; ask to create or refresh the canonical deck, or use its Canonical Deck handoff |
-| `/dt-handoff-problem-space`        | The `DT Coach` agent; ask to hand off the Problem Space to RPI                                       |
-| `/dt-handoff-solution-space`       | The `DT Coach` agent; ask to hand off the Solution Space to RPI                                      |
-| `/dt-handoff-implementation-space` | The `DT Coach` agent; ask to hand off the Implementation Space to RPI                                |
+| Retired command                    | Replacement                                                                                                                                                                |
+|------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `/dt-start-project`                | The `DT Coach` agent; describe the project you want coaching on                                                                                                            |
+| `/dt-resume-coaching`              | The `DT Coach` agent; ask to resume, and it lists your existing projects                                                                                                   |
+| `/dt-method-next`                  | The `DT Coach` agent; ask which method comes next, or use its Method Next handoff                                                                                          |
+| `/dt-method-04-ideation`           | The `DT Coach` agent; ask for Method 4 (Brainstorming) ideation                                                                                                            |
+| `/dt-method-04-convergence`        | The `DT Coach` agent; ask to cluster Method 4 ideas into themes                                                                                                            |
+| `/dt-method-05-concepts`           | The `DT Coach` agent; ask to turn brainstorming themes into Method 5 (User Concepts) concepts                                                                              |
+| `/dt-method-05-evaluation`         | The `DT Coach` agent; ask to evaluate Method 5 concepts with stakeholders                                                                                                  |
+| `/dt-method-06-planning`           | The `DT Coach` agent; ask to plan a Method 6 (Low-Fidelity Prototypes) prototype                                                                                           |
+| `/dt-method-06-building`           | The `DT Coach` agent; ask to build the Method 6 prototype                                                                                                                  |
+| `/dt-method-06-testing`            | The `DT Coach` agent; ask to test the Method 6 prototype                                                                                                                   |
+| `/dt-canonical-deck`               | The `DT Coach` agent; ask to create or refresh the canonical deck or to build the customer-card PowerPoint, or use its Canonical Deck or Build Customer Cards PPTX handoff |
+| `/dt-handoff-problem-space`        | The `DT Coach` agent; ask to hand off the Problem Space to RPI                                                                                                             |
+| `/dt-handoff-solution-space`       | The `DT Coach` agent; ask to hand off the Solution Space to RPI                                                                                                            |
+| `/dt-handoff-implementation-space` | The `DT Coach` agent; ask to hand off the Implementation Space to RPI                                                                                                      |
 
 ### Development workflow
 
-| Retired command            | Replacement                                                                                               |
-|----------------------------|-----------------------------------------------------------------------------------------------------------|
-| `/rpi`                     | The `RPI Agent`; describe the task                                                                        |
-| `/pr-review`               | The `Code Review` agent, which reviews the pull request you name or the open one for your branch          |
-| `/git-commit-message`      | `/git-commit mode=message-only`, which writes a message for your staged changes without committing        |
-| `/vally-test-write`        | `/vally-tests mode=from-artifact`, with `files=<path>`                                                    |
-| `/evals-import`            | `/vally-tests mode=corpus-import`, with `path=<corpus>`                                                   |
-| `/ado-create-pull-request` | `/pull-request`, which routes Azure DevOps repositories to the `backlog-management` pull request protocol |
-| `/ado-get-build-info`      | The Azure DevOps build reference in the `backlog-management` skill, loaded when you ask for build status  |
+| Retired command            | Replacement                                                                                                                                         |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `/rpi`                     | The `RPI Agent`; describe the task                                                                                                                  |
+| `/pr-review`               | The `Code Review` agent, which reviews the pull request you name or the open one for your branch, and otherwise a branch diff or your local changes |
+| `/git-commit-message`      | `/git-commit mode=message-only`, which writes a message for your staged changes without committing                                                  |
+| `/vally-test-write`        | `/vally-tests mode=from-artifact`, with `files=<path>`                                                                                              |
+| `/evals-import`            | `/vally-tests mode=corpus-import`, with `path=<corpus>`                                                                                             |
+| `/ado-create-pull-request` | `/pull-request`, which routes Azure DevOps repositories to the `backlog-management` pull request protocol                                           |
+| `/ado-get-build-info`      | The Azure DevOps build reference in the `backlog-management` skill, loaded when you ask for build status                                            |
 
 ## Historical Catalog Support
 
