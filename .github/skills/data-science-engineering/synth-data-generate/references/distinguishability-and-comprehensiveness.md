@@ -57,4 +57,3 @@ Compute average AUC with standard error across all bootstraps.
 Repeat the bootstraps with the labels randomly shuffled to compute a baseline AUC distribution. If the baseline AUC mean is above `0.55` or below `0.45`, report a warning that the comprehensiveness measurement may be unreliable.
 
 Report `1-2*abs(0.5-AUC)` as the comprehensiveness score. Rescale the standard error properly. Include the score in the final notebook summary cell.
-

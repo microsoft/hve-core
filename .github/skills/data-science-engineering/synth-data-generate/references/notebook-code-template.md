@@ -88,4 +88,3 @@ print("=== DATA SUMMARY ===")
 print(data.describe())
 print(f"\\nGeneration timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 ```
-

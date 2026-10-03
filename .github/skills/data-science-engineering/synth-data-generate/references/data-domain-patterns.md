@@ -50,4 +50,3 @@ Include social or behavioral structures where applicable:
 * Social network effects and clustering.
 * Temporal patterns, including time of day, day of week, and season.
 * Behavioral preferences and decision patterns.
-
