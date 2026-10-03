@@ -18,8 +18,12 @@
 .PARAMETER DryRun
     Print SSML templates without generating audio.
 
+.PARAMETER Engine
+    Synthesis engine: azure (default) or piper. Piper must be installed separately.
+
 .PARAMETER Voice
-    Azure TTS voice name. Defaults to en-US-Andrew:DragonHDLatestNeural.
+    Voice name. Defaults to en-US-Andrew:DragonHDLatestNeural for azure and
+    en_US-joe-medium for piper.
 
 .PARAMETER Rate
     Speech prosody rate. Defaults to +10%.
@@ -32,6 +36,9 @@
 
 .PARAMETER Lexicon
     Path to custom acronyms.yaml lexicon file.
+
+.PARAMETER CollapseNewlines
+    Collapse newlines and runs of whitespace in speaker notes into single spaces before synthesis.
 
 .PARAMETER SkipVenvSetup
     Skip virtual environment creation and dependency installation.
@@ -56,6 +63,10 @@ param(
     [switch]$DryRun,
 
     [Parameter(Mandatory = $false)]
+    [ValidateSet('azure', 'piper')]
+    [string]$Engine,
+
+    [Parameter(Mandatory = $false)]
     [string]$Voice,
 
     [Parameter(Mandatory = $false)]
@@ -71,6 +82,9 @@ param(
     [string]$Lexicon,
 
     [Parameter(Mandatory = $false)]
+    [switch]$CollapseNewlines,
+
+    [Parameter(Mandatory = $false)]
     [switch]$SkipVenvSetup
 )
 
@@ -81,6 +95,40 @@ $SkillRoot = Split-Path $ScriptDir
 $VenvDir = Join-Path $SkillRoot '.venv'
 
 Import-Module (Join-Path $ScriptDir 'Modules/TtsVoiceoverHelpers.psm1') -Force
+
+function Get-VoiceoverArgument {
+    <#
+    .SYNOPSIS
+        Builds the generate_voiceover.py argument list from wrapper parameters.
+    .OUTPUTS
+        [string[]] Discrete arguments; an omitted parameter adds nothing.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [switch]$DryRun,
+        [string]$Engine,
+        [string]$Voice,
+        [string]$Rate,
+        [string]$ContentDir,
+        [string]$OutputDir,
+        [string]$Lexicon,
+        [switch]$CollapseNewlines,
+        [switch]$VerboseOutput
+    )
+
+    $arguments = [System.Collections.Generic.List[string]]::new()
+    if ($DryRun) { $arguments.Add('--dry-run') }
+    if ($Engine) { $arguments.AddRange([string[]]@('--engine', $Engine)) }
+    if ($Voice) { $arguments.AddRange([string[]]@('--voice', $Voice)) }
+    if ($Rate) { $arguments.AddRange([string[]]@('--rate', $Rate)) }
+    if ($ContentDir) { $arguments.AddRange([string[]]@('--content-dir', $ContentDir)) }
+    if ($OutputDir) { $arguments.AddRange([string[]]@('--output-dir', $OutputDir)) }
+    if ($Lexicon) { $arguments.AddRange([string[]]@('--lexicon', $Lexicon)) }
+    if ($CollapseNewlines) { $arguments.Add('--collapse-newlines') }
+    if ($VerboseOutput) { $arguments.Add('--verbose') }
+    return , $arguments.ToArray()
+}
 
 #region Main
 
@@ -98,15 +146,10 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
 
     $script = Join-Path $ScriptDir 'generate_voiceover.py'
-    $PythonArgs = @()
-
-    if ($DryRun) { $PythonArgs += '--dry-run' }
-    if ($Voice) { $PythonArgs += '--voice', $Voice }
-    if ($Rate) { $PythonArgs += '--rate', $Rate }
-    if ($ContentDir) { $PythonArgs += '--content-dir', $ContentDir }
-    if ($OutputDir) { $PythonArgs += '--output-dir', $OutputDir }
-    if ($Lexicon) { $PythonArgs += '--lexicon', $Lexicon }
-    if ($VerbosePreference -ne 'SilentlyContinue') { $PythonArgs += '--verbose' }
+    $PythonArgs = Get-VoiceoverArgument -DryRun:$DryRun -Engine $Engine -Voice $Voice `
+        -Rate $Rate -ContentDir $ContentDir -OutputDir $OutputDir -Lexicon $Lexicon `
+        -CollapseNewlines:$CollapseNewlines `
+        -VerboseOutput:($VerbosePreference -ne 'SilentlyContinue')
 
     & $python $script @PythonArgs
     if ($LASTEXITCODE -ne 0) {

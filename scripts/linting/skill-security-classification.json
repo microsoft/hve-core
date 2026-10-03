@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "skills": {
+    "data-science-engineering/data-catalog": {
+      "status": "exempt",
+      "reason": "Validates an operator-authored DS_CATALOG_V1 catalog with a SafeLoader-based YAML loader under a 5 MB input cap and writes only to stdout; no network, credentials, or subprocess."
+    },
+    "data-science-engineering/dataops": {
+      "status": "pending",
+      "issue": 3027
+    },
+    "data-science-engineering/evaluation-design": {
+      "status": "exempt",
+      "reason": "Validates an operator-authored evaluation dataset with strict JSON and CSV parsers and writes only to stdout; no network, credentials, or subprocess."
+    },
+    "data-science-engineering/feasibility": {
+      "status": "exempt",
+      "reason": "Validates an operator-authored feasibility study and handoff with a SafeLoader-based YAML loader under a 5 MB input cap and writes only to stdout; no network, credentials, or subprocess."
+    },
+    "experimental/demo-video": {
+      "status": "pending",
+      "issue": 3026
+    },
+    "experimental/hve-demo-material": {
+      "status": "pending",
+      "issue": 3102
+    },
+    "experimental/vscode-playwright": {
+      "status": "pending",
+      "issue": 3103
+    },
+    "hve-core/architecture-diagrams": {
+      "status": "exempt",
+      "reason": "Renders an operator-authored DS_CATALOG_V1 catalog with a SafeLoader-based YAML loader under a 5 MB input cap and writes only to stdout; no network, credentials, or subprocess."
+    },
+    "hve-core/pull-request": {
+      "status": "exempt",
+      "reason": "Context collection runs read-only, fixed-argument git against the local repository and writes only to stdout; pull request creation is performed by the host GitHub integration, not by a shipped script."
+    },
+    "hve-core/vally-tests": {
+      "status": "exempt",
+      "reason": "Reads operator-authored artifacts and a corpus that follows the shipped template, runs a fixed safety-lint script, and writes only to its declared eval output paths; no network or credentials."
+    },
+    "hve-slides": {
+      "status": "exempt",
+      "reason": "Build scripts read repository deck sources and write only to the declared slides/<slug>/ and docs/slides/ outputs; no network, credentials, or subprocess."
+    },
+    "project-planning/adr-author": {
+      "status": "exempt",
+      "reason": "Reads operator-supplied ADR templates and records and writes ADRs within declared allow-roots; the sensitive-content scanner reports redacted previews only; no network or subprocess."
+    },
+    "rpi/rpi-plan": {
+      "status": "exempt",
+      "reason": "The assessment-hash helper reads one plan file and writes JSON to stdout; no network, credentials, or subprocess beyond the PowerShell forwarder."
+    },
+    "shared/pr-reference": {
+      "status": "exempt",
+      "reason": "Runs read-only local git and text tools on caller-supplied refs and writes only to .copilot-tracking/pr/ or stdout; no network or credentials."
+    }
+  }
+}

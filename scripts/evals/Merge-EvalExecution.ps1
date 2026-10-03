@@ -96,6 +96,15 @@ function Merge-EvalSummaryValue {
         if (@(Compare-Object -ReferenceObject @($shard.runKeys | Sort-Object) -DifferenceObject @($runOwners.Keys | Where-Object { $runOwners[$_] -eq $shard.id } | Sort-Object)).Count -gt 0) {
             throw "Shard '$($shard.id)' run-key evidence is incomplete."
         }
+        $trialWeight = 0
+        foreach ($spec in @($summaryItem.perSpec)) {
+            if (-not $spec.PSObject.Properties['diagnostics'] -or $null -eq $spec.diagnostics) { throw "Producer '$($shard.id)' has an invalid diagnostic contract." }
+            $inventory = $spec.diagnostics.expectedStimuli
+            $entries = if ($inventory -is [System.Collections.IDictionary]) { @($inventory.Values) }
+            else { @($inventory.PSObject.Properties | ForEach-Object Value) }
+            foreach ($entry in $entries) { $trialWeight += [int]$entry.runs }
+        }
+        if ($trialWeight -ne [int]$shard.expectedTrialWeight) { throw "Shard '$($shard.id)' configured trial population differs from the canonical plan." }
     }
 
     $totals = [ordered]@{ artifacts = 0; specs = 0; assertionsPassed = 0; assertionsFailed = 0; durationMs = 0; failedSpecs = 0 }
@@ -105,7 +114,24 @@ function Merge-EvalSummaryValue {
     $phaseTimings = [System.Collections.Generic.List[object]]::new()
     foreach ($producer in @($expectedFanIn | Sort-Object)) {
         $summaryItem = $byProducer[$producer]
+        $integrityFailures = 0
+        if ($producer -cne 'equivalence') {
+            foreach ($spec in @($summaryItem.perSpec)) {
+                $runKey = [string]$spec.specPath
+                if (-not [string]::IsNullOrWhiteSpace([string]$spec.tag)) { $runKey = "$runKey|$($spec.tag)" }
+                $diagnostics = if ($spec.PSObject.Properties['diagnostics']) { $spec.diagnostics } else { $null }
+                $evidence = Test-VallyDiagnosticEvidence -Diagnostics $diagnostics -RunKey $runKey
+                if (-not $evidence.contractValid) { throw "Producer '$producer' has an invalid diagnostic contract." }
+                $spec | Add-Member -NotePropertyName integrity -NotePropertyValue $evidence -Force
+                if (-not $evidence.integrityPassed) {
+                    $integrityFailures++
+                    $spec | Add-Member -NotePropertyName status -NotePropertyValue 'integrity-failure' -Force
+                    $spec | Add-Member -NotePropertyName isAdvisory -NotePropertyValue $false -Force
+                }
+            }
+        }
         foreach ($name in @($totals.Keys)) { $totals[$name] += [int]$summaryItem.totals.$name }
+        $totals.failedSpecs += [Math]::Max(0, $integrityFailures - [int]$summaryItem.totals.failedSpecs)
         foreach ($item in @($summaryItem.perArtifact)) { $perArtifact.Add($item) }
         foreach ($item in @($summaryItem.perSpec)) { $perSpec.Add($item) }
         foreach ($item in @($summaryItem.equivalence)) { $equivalence.Add($item) }

@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-09-25
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - powershell
@@ -107,7 +107,7 @@ Purpose: Validate GitHub Actions workflow YAML syntax and best practices.
 
 ##### Parameters
 
-* `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch
+* `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch, or every workflow file when `.github/actionlint.yaml` changed
 * `-BaseBranch` (string) - Base branch for comparison (default: `origin/main`)
 * `-OutputPath` (string) - Output path for JSON results (default: `logs/yaml-lint-results.json`)
 
@@ -129,7 +129,7 @@ Purpose: Validate GitHub Actions workflow YAML syntax and best practices.
 * Workflow: `.github/workflows/yaml-lint.yml`
 * Configuration: `.github/actionlint.yaml`
 * Artifacts: `yaml-lint-results` (JSON)
-* Exit Code: Non-zero if violations found
+* Exit Code: Non-zero if violations are found or actionlint itself fails (invalid options or an unreadable configuration)
 
 ### Markdown Validation
 
@@ -321,8 +321,9 @@ Purpose: Ensure all skill packages comply with the agentskills.io specification 
 * Validates Python skills with `tests/` include `tests/fuzz_harness.py` for Scorecard compliance
 * Warns when a Python skill has `pyproject.toml` without a committed `uv.lock` (required for Dependabot uv ecosystem coverage)
 * When `SECURITY.md` is present, validates the canonical per-skill security-model headings: trust buckets at H2 and STRIDE categories plus Risk Rating at H3
+* Requires every skill that ships non-test scripts to have a `SECURITY.md` or an exempt or pending entry in `scripts/linting/skill-security-classification.json`, and rejects entries that name a missing skill or a skill that already has a model
 * Warns on unrecognized directories
-* Supports changed-files-only mode via Git
+* Supports changed-files-only mode via Git; the skill security classification coverage check still runs across every skill so a classification change cannot pass unchecked
 * Creates CI annotations for violations
 * Exports JSON results to `logs/skill-validation-results.json`
 
@@ -330,8 +331,9 @@ Purpose: Ensure all skill packages comply with the agentskills.io specification 
 
 * `-SkillsPath` (string) - Root path containing skill directories (default: `.github/skills`)
 * `-WarningsAsErrors` (switch) - Treat warnings as errors
-* `-ChangedFilesOnly` (switch) - Validate only skills with changed files
+* `-ChangedFilesOnly` (switch) - Validate only skills with changed files, plus repository-wide skill security classification coverage
 * `-BaseBranch` (string) - Git reference for changed file detection (default: `origin/main`)
+* `-SecurityClassificationPath` (string) - Skill security classification file (default: `scripts/linting/skill-security-classification.json`)
 
 ##### Usage
 

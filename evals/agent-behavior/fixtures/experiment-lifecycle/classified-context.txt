@@ -1,0 +1,43 @@
+<!-- markdownlint-disable-file -->
+# MVE Context: Synthetic Checkout Latency
+
+Synthetic preservation marker: EV07-CTX-PRESERVE-001
+
+## Problem statement
+
+A synthetic internal checkout service returns order confirmations slowly under a
+simulated peak load. This record is evaluation fixture data only and does not
+describe a real service, customer, or engagement.
+
+## Customer and stakeholder context
+
+Synthetic internal platform team. No real customer, stakeholder, or partner team
+is represented, and no stakeholder interview or observation has occurred.
+
+## Business case and priority signals
+
+Synthetic priority signal: medium. Recorded to exercise tracking behavior only.
+No executive sponsor, budget, or committed decision is represented.
+
+## Experiment type
+
+architectural feasibility
+
+## Known constraints
+
+* Synthetic constraint: the evaluation sandbox has no external network access.
+* Synthetic constraint: no production data may be used.
+
+## Assumptions
+
+* Assumed, not observed: a read-through cache would absorb repeat lookups.
+* Assumed, not observed: the current index layout is the dominant cost.
+
+## Unknowns
+
+* Unknown: whether cache invalidation can hold consistency at the simulated peak.
+* Unknown: whether the simulated peak reflects any real traffic shape.
+
+## Enablement goal
+
+Not applicable. This fixture represents no partner-team ownership arrangement.

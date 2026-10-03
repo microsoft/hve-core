@@ -1,7 +1,7 @@
 ---
 title: RPI with HVE Core deck
 description: An interactive presentation on managing context and carrying evidence through the HVE Core RPI workflow.
-ms.date: 2026-09-24
+ms.date: 2026-09-30
 ---
 
 ## Build and present
@@ -113,7 +113,7 @@ some tasks. These are editing considerations, not tests of who wrote the text.
 
 | Control                           | Behavior                                                 |
 |-----------------------------------|----------------------------------------------------------|
-| Left / Right, Page Up / Page Down | Previous / next slide                                    |
+| Left / Right, Page Up / Page Down | Previous / next slide, including from a focused button   |
 | Space / Shift+Space               | Next / previous slide                                    |
 | Home / End                        | First / last slide                                       |
 | Back / Next step, \[ / \]         | Previous / next walkthrough step                         |
@@ -124,12 +124,20 @@ some tasks. These are editing considerations, not tests of who wrote the text.
 | Tab / Enter                       | Reach and activate controls                              |
 | Motion                            | Optional fades; reduced-motion preference takes priority |
 
-Focused controls, editable fields, text selections and modifier shortcuts keep their
-normal behavior. Letter, symbol and Space shortcuts run only while the slide area has
-focus. Returning to either walkthrough keeps its step; reloading keeps the slide but resets
-both walkthroughs. Back, Next step and Reset affect only the current example.
+Left / Right and Page Up / Page Down keep changing slides after you click a presenter
+button or link, because those controls do not use the keys. Editable fields, open dialogs,
+modifier shortcuts and the flow chart described below keep their normal behavior, and so
+does selected text unless a button or link has focus. Other shortcuts wait while a control
+has focus, so Space and Enter activate it. Letter, symbol and Space shortcuts run only while
+the slide area has focus. Returning to either walkthrough keeps its step; reloading keeps the
+slide but resets both walkthroughs. Back, Next step and Reset affect only the current example.
 Nothing advances automatically.
 The unused reveal.js cross-window `postMessage` API is disabled.
+
+The bottom bar keeps the chapter label and slide navigation `--presenter-inset` from the
+window edges, clear of viewer overlays such as the Copilot button SharePoint places at
+the bottom right. With reading view off, the bar stacks centered rows at 1100 pixels
+wide or narrower.
 
 In the flow chart, Tab reaches event nodes, and arrow keys or Home/End move focus among
 the displayed nodes. Enter or Space selects a node without advancing the walkthrough.

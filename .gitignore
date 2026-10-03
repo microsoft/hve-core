@@ -511,3 +511,6 @@ docs/docusaurus/node_modules/
 
 # Playwright test output
 test-results/
+
+# Playwright MCP session output
+.playwright-mcp/

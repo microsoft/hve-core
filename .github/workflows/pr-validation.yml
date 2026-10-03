@@ -403,7 +403,8 @@ jobs:
     with:
       soft-fail: false
       changed-files-only: true
-      base-branch: ${{ github.event.pull_request.base.sha || (github.base_ref && format('origin/{0}', github.base_ref)) || 'origin/main' }}
+      merge-ref: ${{ github.event_name == 'pull_request' && github.sha || '' }}
+      head-ref: ${{ github.event.pull_request.head.sha || github.sha }}
     secrets:
       copilot-github-token: ${{ secrets.COPILOT_GITHUB_TOKEN }}
 
