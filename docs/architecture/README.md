@@ -2,8 +2,10 @@
 title: Architecture Overview
 description: HVE Core system design and component relationships
 sidebar_position: 1
+sidebar_label: Overview
+pagination_label: Architecture Overview
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-03
 ms.topic: concept
 keywords:
   - architecture

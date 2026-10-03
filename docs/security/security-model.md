@@ -1,9 +1,9 @@
 ---
 title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
-sidebar_position: 2
+sidebar_position: 3
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-03
 ms.topic: reference
 keywords:
   - security

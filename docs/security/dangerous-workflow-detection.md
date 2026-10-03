@@ -1,9 +1,9 @@
 ---
 title: Dangerous Workflow Detection
 description: How the hybrid dangerous-workflow control combines a homegrown template-injection gate with the Poutine supply-chain scanner for GitHub Actions workflows
-sidebar_position: 6
+sidebar_position: 8
 author: Microsoft
-ms.date: 2026-08-30
+ms.date: 2026-10-03
 ms.topic: reference
 keywords:
   - security

@@ -2,8 +2,10 @@
 title: Understanding the RPI Workflow
 description: Learn how Research, Plan, Implement, Review, and Follow-up guide evidence-led delivery
 sidebar_position: 1
+sidebar_label: Overview
+pagination_label: Understanding the RPI Workflow
 author: Microsoft
-ms.date: 2026-09-28
+ms.date: 2026-10-03
 ms.topic: concept
 keywords:
   - rpi workflow

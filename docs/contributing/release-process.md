@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-09-28
+ms.date: 2026-10-03
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -26,9 +26,10 @@ The ref-less `microsoft/hve-core` registration follows `main`. The Dependency
 Review workflow keeps the GitHub dependency graph current for vulnerability and
 dependency review. That current-state inventory is not published release
 evidence. Main bytes have no release gate, published artifact SBOM, or release
-attestation. Release channels remain the reviewed path through moving branch
-registrations and exact `prerelease-v<version>` or `v<version>` refs: they are
-release-gated, SBOM-covered, and attested.
+attestation. Release channels remain the reviewed VSIX path through exact
+`prerelease-v<version>` or `v<version>` tags: they are release-gated,
+SBOM-covered, and attested. The Copilot CLI plugin has no release-channel
+registrations.
 
 ### Continuous Main SBOM
 

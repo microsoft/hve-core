@@ -57,7 +57,7 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: a playbook-style skill that delegates execution to subagents MUST present its sections in the order Title (H1), Goal, Flow (or Execution), Inputs, Success criteria, Constraints, Stop rules, Handoff, and an optional response contract; a script-bearing skill MAY instead use the legacy script-oriented order (Overview, Prerequisites, Quick Start, or Architecture plus Workflow Steps, then Parameters Reference or Troubleshooting).
 * Suggested stimulus: ask the assistant to list the section headings of a named skill in order and confirm they follow the playbook shape for a delegating skill or the script-oriented shape for a script-bearing skill.
 * Grader recommendation: `semantic_similarity` with rubric "For a delegating playbook skill, do the section headings follow the playbook order (Goal, Flow, Inputs, Success criteria, Constraints, Stop rules, Handoff); for a script-bearing skill, do they follow the Overview/Prerequisites/Quick Start order?".
-* Evidence: a playbook-style skill such as `.github/skills/hve-core/prompt-analyze/SKILL.md` exhibits the Goal/Flow/Inputs/Success-criteria/Constraints/Stop-rules/Handoff order.
+* Evidence: a playbook-style skill such as `.github/skills/engagement-reporting/engagement-reporting/SKILL.md` exhibits the Goal/Flow/Inputs/Success-criteria/Constraints/Stop-rules/Handoff order.
 
 ### Check 6: Relative Path Portability
 

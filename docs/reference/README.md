@@ -2,8 +2,10 @@
 title: Reference
 description: Generated reference documentation for HVE Core GenAI assets.
 sidebar_position: 0
+sidebar_label: Overview
+pagination_label: Reference
 author: Microsoft
-ms.date: 2026-09-29
+ms.date: 2026-10-03
 ms.topic: overview
 keywords:
   - reference
@@ -18,5 +20,5 @@ This page lists the generated reference documentation, grouped by asset kind.
 | [Agents](agents/README.md)             | 60     |
 | [Instructions](instructions/README.md) | 59     |
 | [Prompts](prompts/README.md)           | 47     |
-| [Skills](skills/README.md)             | 79     |
+| [Skills](skills/README.md)             | 76     |
 <!-- END AUTO-GENERATED: index -->
