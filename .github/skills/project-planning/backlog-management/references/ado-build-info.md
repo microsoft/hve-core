@@ -147,7 +147,7 @@ Identify whether the user requests persistent tracking or conversational output.
 
 ### Step 2: Identify Build Information Type
 
-Determine what information to retrieve based on user keywords:
+Determine what information to retrieve based on user keywords. When the request names no information type, retrieve build status:
 
 * **Status keywords** (status, state, summary, error, information, issue): Retrieve build status using `mcp_ado_pipelines_get_build_status`.
 * **Log keywords** (logs, stack trace, detailed, output): Retrieve logs using `mcp_ado_pipelines_get_build_log` and `mcp_ado_pipelines_get_build_log_by_id`.

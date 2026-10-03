@@ -58,7 +58,7 @@ The `supply-chain-security` skill's `references/00-index.md` is the discovery in
 
 ## VEX Planning Capability
 
-When the request concerns standing up VEX in a target project, use the `vex` skill as the reference source for the implement playbook and the VEX standards. The SSSC Planner does not implement VEX directly in the target project. Instead:
+When the request concerns standing up VEX in a target project, use the `vex` skill as the reference source for the implement playbook and the VEX standards. Honor an optional directory `scope` for the target project, defaulting to the current repository context, and an optional `product` identifier in the PURL format the `vex` skill defines; when the user supplies no product, infer it from the repository's package metadata where possible and confirm it with the user. When the target project already has VEX-related assets, such as an OpenVEX document under `security/vex` or VEX workflows, incorporate them as context and plan only the missing stand-up steps. The SSSC Planner does not implement VEX directly in the target project. Instead:
 
 1. Consult the `vex` skill's "Implement VEX in a target project" playbook to understand the stand-up steps, including scaffolding the OpenVEX document under `security/vex`, wiring the `vex-detect` and `vex-draft` workflows plus the PR-body scaffold asset, wiring release attestation, and setting CODEOWNERS where appropriate.
 2. Encode those steps as backlog work items and planning outputs in the normal SSSC planning flow, with enough detail for downstream Task-* implementors to execute them.

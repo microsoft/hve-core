@@ -24,7 +24,7 @@ Generate every message by following the [commit-message instructions](../../../i
 
 ## Message-Only Mode
 
-1. Read the staged changes with `git --no-pager diff --staged`, or with the host's staged-changes tool when no terminal is available.
+1. Read the staged changes with `git --no-pager diff --staged`. Use the host's staged-changes tool instead when the user asks to avoid the terminal or no terminal is available.
 2. When nothing is staged, output `No changes to commit.` and stop.
 3. Generate the message from the complete staged diff.
 4. Output the message in a fenced code block and tell the user to copy it as-is or edit it before committing.
