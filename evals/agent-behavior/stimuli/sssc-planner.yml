@@ -60,6 +60,7 @@ stimuli:
           dest: .copilot-tracking/security-plans/ledger-service/state.json
     tags:
       category: agent-behavior
+      advisory: "true"
       scenario: from-security-plan-selection
     graders:
       - type: output-matches

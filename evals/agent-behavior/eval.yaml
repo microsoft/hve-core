@@ -6003,6 +6003,7 @@ stimuli:
       dest: .github/instructions/rai-planning/rai-identity.instructions.md
   tags:
     category: agent-behavior
+    advisory: "true"
     scenario: from-security-plan-no-plans
     agent: rai-planner
   graders:
@@ -6619,6 +6620,7 @@ stimuli:
       dest: .github/instructions/security/identity.instructions.md
   tags:
     category: agent-behavior
+    advisory: "true"
     scenario: from-prd-no-artifacts
     agent: security-planner
   graders:
@@ -6706,13 +6708,14 @@ stimuli:
       negate: true
 - name: security-reviewer-llm-agentic-preset
   prompt: |
-    Run an LLM and agentic security review of this repository in audit mode. Reply in chat only before running any tool or command: state which security skills you will assess, whether codebase profiling still runs, and how the findings from each skill are combined into the final report.
+    A user asks you for an LLM and agentic security review of this repository in audit mode. Do not start the review and do not run any tool or command. Answer in chat: which security skills you will assess, whether codebase profiling still runs, and how the findings from each skill are combined into the final report.
   environment:
     files:
     - src: ../../.github/agents/security/security-reviewer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
+    advisory: "true"
     scenario: llm-agentic-preset
     agent: security-reviewer
   graders:
@@ -6730,13 +6733,14 @@ stimuli:
       pattern: (?is)(single|one|unified|consolidat\w*|combin\w*|merg\w*|aggregat\w*|collat\w*|compil\w*)[^.]{0,80}report|report[^.]{0,80}(consolidat\w*|combin\w*|merg\w*|aggregat\w*|collat\w*|compil\w*|generator)
 - name: security-reviewer-web-fast-path
   prompt: |
-    Run a web application vulnerability review of this repository without codebase profiling. Reply in chat only before running any tool or command: state which single security skill you will assess, which pipeline stage you skip, and which scan mode (audit, diff, or plan) you will use.
+    A user asks you for a web application vulnerability review of this repository without codebase profiling. Do not start the review and do not run any tool or command. Answer in chat: which single security skill you will assess, which pipeline stage you skip, and which scan mode (audit, diff, or plan) you will use.
   environment:
     files:
     - src: ../../.github/agents/security/security-reviewer.agent.md
       dest: .github/copilot-instructions.md
   tags:
     category: agent-behavior
+    advisory: "true"
     scenario: web-fast-path
     agent: security-reviewer
   graders:
@@ -6866,6 +6870,7 @@ stimuli:
       dest: .copilot-tracking/security-plans/ledger-service/state.json
   tags:
     category: agent-behavior
+    advisory: "true"
     scenario: from-security-plan-selection
     agent: sssc-planner
   graders:
@@ -6965,6 +6970,7 @@ stimuli:
     - ../../.github/skills/security/vex
   tags:
     category: agent-behavior
+    advisory: "true"
     scenario: vex-full-scan
     agent: sssc-reviewer
   graders:
@@ -6993,6 +6999,7 @@ stimuli:
     - ../../.github/skills/security/vex
   tags:
     category: agent-behavior
+    advisory: "true"
     scenario: vex-triage-from-report
     agent: sssc-reviewer
   graders:

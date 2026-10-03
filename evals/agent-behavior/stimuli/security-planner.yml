@@ -274,6 +274,7 @@ stimuli:
           dest: .github/instructions/security/identity.instructions.md
     tags:
       category: agent-behavior
+      advisory: "true"
       scenario: from-prd-no-artifacts
     graders:
       - type: output-matches

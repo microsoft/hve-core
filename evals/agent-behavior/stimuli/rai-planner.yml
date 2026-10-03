@@ -147,6 +147,7 @@ stimuli:
           dest: .github/instructions/rai-planning/rai-identity.instructions.md
     tags:
       category: agent-behavior
+      advisory: "true"
       scenario: from-security-plan-no-plans
     graders:
       - type: output-matches

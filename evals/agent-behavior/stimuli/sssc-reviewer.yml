@@ -84,6 +84,7 @@ stimuli:
         - ../../.github/skills/security/vex
     tags:
       category: agent-behavior
+      advisory: "true"
       scenario: vex-full-scan
     graders:
       - type: output-matches
@@ -112,6 +113,7 @@ stimuli:
         - ../../.github/skills/security/vex
     tags:
       category: agent-behavior
+      advisory: "true"
       scenario: vex-triage-from-report
     graders:
       - type: output-matches
