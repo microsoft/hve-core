@@ -15,6 +15,11 @@ on:
         required: false
         type: boolean
         default: true
+      external-links-as-warnings:
+        description: 'Report external-link findings without failing while keeping internal-link failures blocking'
+        required: false
+        type: boolean
+        default: false
       base-branch:
         description: 'Base branch or SHA for change detection (defaults to origin/main)'
         required: false
@@ -62,9 +67,13 @@ jobs:
         env:
           BASE_BRANCH: ${{ inputs.base-branch }}
           CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
+          EXTERNAL_LINKS_AS_WARNINGS: ${{ inputs.external-links-as-warnings }}
           THROTTLE_LIMIT: ${{ inputs.throttle-limit }}
         run: |
           $params = @{ ThrottleLimit = [int]$env:THROTTLE_LIMIT }
+          if ($env:EXTERNAL_LINKS_AS_WARNINGS -eq 'true') {
+            $params['ExternalLinksAsWarnings'] = $true
+          }
           if ($env:CHANGED_FILES_ONLY -eq 'true') {
             $params['ChangedFilesOnly'] = $true
             if (-not [string]::IsNullOrEmpty($env:BASE_BRANCH)) {
