@@ -10,7 +10,7 @@ user-invocable: true
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0.0"
-  last_updated: "2026-08-29"
+  last_updated: "2026-09-26"
 ---
 
 # HVE Artifact Authoring
@@ -48,8 +48,13 @@ entry point. Delegate isolated work only when the dispatch cost is justified.
 4. Replace every placeholder and remove unused optional fields. Do not copy a starter unchanged.
 5. Write the artifact outcome-first. State the goal, scored success criteria, constraints, stop
    rules, workflow, and response contract. Add delegation and tracking only when needed.
-6. Synchronize current distribution and documentation projections.
-7. Run the checks owned by the changed artifact type and record evidence.
+6. When a skill ships scripts, classify it against the triggers in the `skill-security-model`
+   instructions ("When a Model Is Required"). If a trigger applies, or the change is significant
+   under "Keeping a Model Current", create or update the skill's `SECURITY.md`, its security
+   registry row, or its classification entry in the same change. When those instructions are
+   unavailable, skip this step and say so rather than failing the authoring task.
+7. Synchronize current distribution and documentation projections.
+8. Run the checks owned by the changed artifact type and record evidence.
 
 ## Frontmatter Contract
 

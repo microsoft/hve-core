@@ -1,8 +1,8 @@
 ---
 title: PowerPoint Skill Security Model
-description: STRIDE threat model for the powerpoint skill organized by assets, adversaries, and trust buckets (sandboxed content-extra execution, external converter subprocess, untrusted document parsing, CLI caller process) with in-code mitigations and acknowledged enterprise readiness gaps
+description: STRIDE threat model for the powerpoint skill organized by assets, adversaries, and trust buckets (opt-in content-extra execution, external converter subprocess, untrusted document parsing, CLI caller process) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
-ms.date: 2026-06-30
+ms.date: 2026-09-26
 ms.topic: reference
 estimated_reading_time: 11
 keywords:
@@ -15,7 +15,7 @@ keywords:
 <!-- markdownlint-disable-file -->
 # PowerPoint Skill Security Model
 
-This document records the STRIDE threat model for the powerpoint skill (`scripts/build_deck.py`, `scripts/export_slides.py`, `scripts/export_svg.py`, `scripts/render_pdf_images.py`, and the `scripts/pdf_safety.py` helper). The model is organized by trust bucket: Sandboxed `content-extra.py` execution (B1), External converter subprocess (B2), Untrusted document parsing (B3), and CLI caller process and filesystem (B4). Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them. Assets and adversaries are enumerated first. Acknowledged enterprise readiness gaps are listed at the end.
+This document records the STRIDE threat model for the powerpoint skill (`scripts/build_deck.py`, `scripts/export_slides.py`, `scripts/export_svg.py`, `scripts/render_pdf_images.py`, and the `scripts/pdf_safety.py` helper). The model is organized by trust bucket: Opt-in `content-extra.py` execution (B1), External converter subprocess (B2), Untrusted document parsing (B3), and CLI caller process and filesystem (B4). Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them. Assets and adversaries are enumerated first. Acknowledged enterprise readiness gaps are listed at the end.
 
 The skill builds and validates PPTX decks from YAML content, optionally executes author-supplied `content-extra.py` helper scripts to add advanced slide content, and exports decks to PDF/SVG/PNG using LibreOffice and PyMuPDF. The highest-risk behavior is **executing author-supplied Python**, which requires explicit operator opt-in via `--allow-scripts`; the second is invoking external document converters on potentially untrusted documents.
 
@@ -41,7 +41,7 @@ The powerpoint skill builds decks from YAML, optionally **executes author-suppli
 * [Trust Boundaries](#trust-boundaries)
 * [Assets](#assets)
 * [Adversaries](#adversaries)
-* [Bucket B1: Sandboxed content-extra.py execution](#bucket-b1-sandboxed-content-extrapy-execution)
+* [Bucket B1: Opt-in content-extra.py execution](#bucket-b1-opt-in-content-extrapy-execution)
 * [Bucket B2: External converter subprocess](#bucket-b2-external-converter-subprocess)
 * [Bucket B3: Untrusted document parsing](#bucket-b3-untrusted-document-parsing)
 * [Bucket B4: CLI caller process and filesystem](#bucket-b4-cli-caller-process-and-filesystem)
@@ -105,11 +105,11 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary                      | Assets Protected       | Controls Enforced                                                                  |
-|-------------------------------|------------------------|------------------------------------------------------------------------------------|
-| Operator Workstation / Runner | Host process, outputs  | Denylist-confined author exec; argv (no shell); tempfile outputs                   |
-| External parsers              | Host process integrity | `pdf_safety` bounds before MuPDF; python-pptx entity resolution disabled; no shell |
-| Inputs                        | Build integrity        | Denylist validation of `content-extra.py`; type-checked YAML; bounded PDF          |
+| Boundary                      | Assets Protected       | Controls Enforced                                                                                               |
+|-------------------------------|------------------------|-----------------------------------------------------------------------------------------------------------------|
+| Operator Workstation / Runner | Host process, outputs  | Opt-in author exec (`--allow-scripts`; no OS sandbox); argv (no shell); tempfile outputs                        |
+| External parsers              | Host process integrity | `pdf_safety` bounds before MuPDF; python-pptx entity resolution disabled; no shell                              |
+| Inputs                        | Build integrity        | AST denylist lint of authorized `content-extra.py` (not a confinement boundary); type-checked YAML; bounded PDF |
 
 ## Assets
 
@@ -131,7 +131,7 @@ flowchart TD
 | ADV-d | Hostile or substituted LibreOffice binary | Located via `shutil.which` and known platform paths; invoked with an argument list (no shell). Trust in the installed binary is an operator responsibility.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ADV-e | Hostile caller process controlling argv   | All converter subprocesses use argument lists (no shell); output paths are operator-controlled.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
-## Bucket B1: Sandboxed `content-extra.py` execution
+## Bucket B1: Opt-in `content-extra.py` execution
 
 ### Spoofing
 
