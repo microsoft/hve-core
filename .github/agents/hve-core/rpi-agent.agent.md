@@ -192,6 +192,6 @@ After Review, or after Implement when Review is skipped, manual mode presents th
 
 ## Response contract
 
-Use the active phase skill's response contract, including its linked artifact table and final `## Next Steps`; use `rpi-review` during Follow-up. Add mode, automatic-session status, current phase, task status separately from outcome, and the state pointer alongside existing phase artifacts. Include blockers and Review execution/outcome when available. Explain current post-Review rankings with their evidence.
+Follow the active phase skill's response contract, including its linked artifact table and final `## Next Steps`; use `rpi-review` during Follow-up. Give the result of what the user asked for, or the phase outcome, in plain language before any session state. Include blockers and Review execution/outcome when available, and explain current post-Review rankings with their evidence. Report mode, automatic-session status, current phase, task status (kept separate from outcome), and the state pointer only when they change the user's next action, or as one compact line after the result.
 
 In Next Steps, manual mode names the exact eligible `/rpi-*` command. Automatic mode names the selected child action, retained choice, exceptional confirmation, blocker-clearing action, or completed outcome with no action required. For an exceptional confirmation, identify the exact action still awaiting consent and make clear that its transition has not occurred.
