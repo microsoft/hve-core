@@ -234,6 +234,7 @@ from ._output import (  # noqa: E402,F401
     _emit_json,
     _emit_json_error,
     _redact_payload,
+    _stderr_color_enabled,
 )
 
 # isort: split
@@ -1202,7 +1203,9 @@ def main(argv: list[str] | None = None) -> int:
     _state.set_cli_flags(
         quiet=bool(getattr(args, "quiet", False)),
         force_json=force_json,
-        color=_color_mode(getattr(args, "color", "auto")),
+        color=_stderr_color_enabled(
+            getattr(args, "color", "auto"), force_json=force_json
+        ),
         profile=getattr(args, "profile", None) or None,
     )
     profile_name = (

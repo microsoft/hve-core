@@ -64,13 +64,39 @@ _HTML_TAG_RE = re.compile(r"<[^>]+>")
 # the same regardless of which mechanism produced it.
 _MASK = "***"
 
+# ANSI SGR styles for human-readable stderr messages, highest level first.
+# Levels below the last threshold use the last (dim) style.
+_LEVEL_STYLES: tuple[tuple[int, str], ...] = (
+    (logging.ERROR, "1;31"),
+    (logging.WARNING, "33"),
+    (logging.INFO, "36"),
+    (logging.DEBUG, "2"),
+)
+_SGR_RESET = "\x1b[0m"
+
+
+def _colorize(text: str, level: int) -> str:
+    """Wrap ``text`` in the ANSI style assigned to ``level``."""
+    style = _LEVEL_STYLES[-1][1]
+    for threshold, sgr in _LEVEL_STYLES:
+        if level >= threshold:
+            style = sgr
+            break
+    return f"\x1b[{style}m{text}{_SGR_RESET}"
+
 
 def _emit(message: str, *, level: int = logging.INFO) -> None:
-    """Write a redacted message to stderr and the module logger."""
+    """Write a redacted message to stderr and the module logger.
+
+    When stderr color is enabled the stderr copy is styled by ``level``.
+    Redaction runs first so masking sees plain text; the logger record stays
+    uncolored.
+    """
     redacted = _pkg()._redact(message)
     LOGGER.log(level, redacted)
     if level >= logging.ERROR or not _state.cli_quiet():
-        print(redacted, file=sys.stderr)
+        text = _colorize(redacted, level) if _state.cli_color() else redacted
+        print(text, file=sys.stderr)
 
 
 def _emit_json(payload: Any) -> None:
@@ -204,6 +230,44 @@ def _color_mode(cli_choice: str | None) -> bool:
         return bool(sys.stderr.isatty())
     except (AttributeError, ValueError):
         return False
+
+
+def _enable_windows_vt() -> bool:  # pragma: no cover - Windows console only
+    """Enable ANSI sequence processing on the Windows stderr console.
+
+    Returns ``True`` when stderr is not a console (redirected output passes
+    sequences through unchanged) or when virtual-terminal processing is on.
+    Returns ``False`` when the console cannot process sequences, so callers
+    fall back to plain text instead of printing raw escape codes.
+    """
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        handle = kernel32.GetStdHandle(-12)  # STD_ERROR_HANDLE
+        mode = wintypes.DWORD()
+        if not kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+            return True
+        vt_processing = 0x0004  # ENABLE_VIRTUAL_TERMINAL_PROCESSING
+        if mode.value & vt_processing:
+            return True
+        return bool(kernel32.SetConsoleMode(handle, mode.value | vt_processing))
+    except (AttributeError, OSError):
+        return False
+
+
+def _stderr_color_enabled(cli_choice: str | None, *, force_json: bool) -> bool:
+    """Resolve whether human-readable stderr messages are colored.
+
+    Color follows :func:`_color_mode`, is always off under ``--json``, and on
+    Windows requires a console that can process ANSI sequences.
+    """
+    if force_json or not _color_mode(cli_choice):
+        return False
+    if sys.platform == "win32":
+        return _enable_windows_vt()
+    return True
 
 
 def _pkg() -> Any:
