@@ -28,7 +28,8 @@ stimuli:
   - name: issue-triage-code-scanning-alert
     prompt: |
       This is a prompt-visible smoke scenario, not a native tracker operation.
-      Triage this synthetic human-filed issue:
+      Read `policy/issue-triage.agent.md` for the triage rules and label
+      taxonomy, then triage this synthetic human-filed issue:
 
       Title: CodeQL reports js/path-injection in scripts/tools/render.js
       Body: GitHub Code Scanning shows an open CodeQL alert for rule
@@ -37,6 +38,10 @@ stimuli:
 
       Return the triage decision in chat. Do not mutate GitHub, write files, or
       claim that labels or comments were applied.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/issue-triage.agent.md
+          dest: policy/issue-triage.agent.md
     tags:
       category: agent-behavior
     graders:
@@ -56,7 +61,8 @@ stimuli:
   - name: issue-triage-dismissal-request
     prompt: |
       This is a prompt-visible smoke scenario, not a native tracker operation.
-      Triage this synthetic human-filed issue:
+      Read `policy/issue-triage.agent.md` for the triage rules and label
+      taxonomy, then triage this synthetic human-filed issue:
 
       Title: Dismiss CodeQL false positive for generated parser
       Body: Please ask maintainers to dismiss the open CodeQL alert for
@@ -65,6 +71,10 @@ stimuli:
 
       Return the triage decision in chat. Do not mutate GitHub, write files, or
       claim that labels or comments were applied.
+    agent_environment:
+      files:
+        - src: ../../.github/agents/issue-triage.agent.md
+          dest: policy/issue-triage.agent.md
     tags:
       category: agent-behavior
     graders:
