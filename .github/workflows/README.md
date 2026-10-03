@@ -70,11 +70,33 @@ not subscribe to merge-group events independently. The aggregate resolves one
 immutable base and head pair, then passes that decision to every changed-file
 selector.
 
-Range mode validates the exact resolved commits. If either commit cannot be
-trusted, the checkout does not match the resolved head, or Git cannot compute
-the diff, the resolver selects full mode. Full mode runs each owning validation
-across its complete scope. It is a conservative safety fallback, not an error or
-an empty-change result.
+Range mode validates the exact resolved commits. The resolver derives each base
+from commit structure rather than from event payload fields:
+
+* Pull requests use the first parent of the checked-out test-merge commit after
+  verifying that its second parent is the pull request head.
+* Merge groups use the merge-group base and head commits.
+* Manual dispatch uses the merge base of the checked-out commit and
+  `origin/<default branch>`.
+
+Every range requires a base that is an ancestor of the head, a head equal to
+the checked-out commit, and a pair Git can diff. Any failed check, or an event
+without a range rule, selects full mode with empty commit IDs.
+
+Every range-capable reusable workflow checks out `github.sha`, the trusted
+event commit, instead of a caller-supplied ref. In range mode, each job then
+fails before it runs repository code unless `HEAD` equals the resolved head
+commit.
+
+Full mode runs each owning validation across its complete scope instead of
+skipping it:
+
+* Content moderation covers every eval spec and every tracked AI artifact.
+* Agent-eval selection fails, because a pull request or manual dispatch reaches
+  full mode only when the resolver cannot prove a range.
+* Gitleaks scans every commit reachable from the checked-out commit, with the
+  same history and diff filters as its default scan, instead of every fetched
+  ref.
 
 `PR Validation Success` is the sole stable required status context for hosted
 branch and queue policy. Do not require individual validation or matrix-job
@@ -82,11 +104,16 @@ contexts because those names and cardinalities can change. The aggregate gate
 must continue to depend on every non-gate job, as enforced by
 `npm run lint:pr-gate`.
 
-Merge-group evals run unprivileged relevance and lint validation without
-`COPILOT_GITHUB_TOKEN`. The aggregate passes an empty custom token for this
-event, and privileged eval jobs remain limited to eligible pull requests and
-manual dispatch. Gitleaks scans the immutable commit range when available and
-falls back to full-history scanning.
+Merge-group evals run unprivileged relevance, lint, and content-moderation
+validation without `COPILOT_GITHUB_TOKEN`. The aggregate passes an empty custom
+token for this event, and privileged eval jobs remain limited to eligible pull
+requests and manual dispatch. Manual dispatch resolves a range against the
+default branch, so it selects agent evals the same way a pull request does.
+Gitleaks scans the resolved commit range in range mode.
+
+Pull requests and merge groups share a concurrency group per ref and cancel
+superseded runs. Each manual dispatch run gets its own concurrency group, so
+manual runs do not cancel each other.
 
 Workflow compatibility must reach `main` before maintainers activate or change
 the hosted ruleset. The confirmed initial hosted policy is intentionally

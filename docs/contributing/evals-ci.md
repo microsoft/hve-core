@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-01
+ms.date: 2026-10-02
 ms.topic: how-to
 keywords:
   - evals
@@ -246,6 +246,18 @@ jobs:
 The `eval-execute` job is also skipped for non-eval-relevant PRs (those that change only documentation or other non-AI-artifact paths) through the `eval-relevant` output gate, independent of the fork policy.
 
 The `eval-presence` and `eval-lint` jobs do run on fork PRs because they require no secrets. Structural problems with eval specs (missing coverage, schema violations, profanity in stimulus text) surface immediately. Eval execution itself runs only after a maintainer merges the fork branch into a trusted topic branch on the upstream repository.
+
+## Merge Groups and Full-Mode Validation
+
+The eval lane receives one change-range decision from `pr-validation.yml`. In range mode, it validates the exact resolved commits. Full mode occurs when the resolver cannot prove a range, so the lane validates everything it can without the token, and fails instead of skipping the steps that need a proven range.
+
+| Run                             | Content moderation                             | Agent-eval selection and execution                                                      |
+|---------------------------------|------------------------------------------------|-----------------------------------------------------------------------------------------|
+| Pull request or manual dispatch | Changed artifacts plus every eval spec         | Runs for eligible changes; dispatch resolves against `main`                             |
+| Merge group                     | Changed artifacts plus every eval spec         | Skipped; merge groups never receive `COPILOT_GITHUB_TOKEN`                              |
+| Any run in full mode            | Every tracked AI artifact plus every eval spec | Fails for eligible pull requests and manual dispatch; merge groups and forks still skip |
+
+Merge groups run relevance, lint, and content moderation unprivileged. A full-mode failure in agent-eval selection means the change-range job could not verify the commits; investigate that job before rerunning.
 
 ## Published Artifacts and the Transcript Boundary
 
