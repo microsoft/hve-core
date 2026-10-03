@@ -2,7 +2,7 @@
 title: Demo Material
 description: Levelled HVE Core training decks, narrated videos, and browser slides from L100 to L400, rebuilt weekly when their source documents change
 author: Microsoft
-ms.date: 2026-09-24
+ms.date: 2026-10-03
 ms.topic: overview
 keywords:
   - demo material
@@ -12,6 +12,8 @@ keywords:
   - L100
   - L400
 sidebar_position: 1
+sidebar_label: Overview
+pagination_label: Demo Material
 estimated_reading_time: 3
 ---
 

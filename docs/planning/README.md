@@ -2,9 +2,11 @@
 title: Planning
 description: Public-safe planning documents and runbooks for the HVE Core documentation project.
 author: Microsoft
-ms.date: 2026-07-29
+ms.date: 2026-10-03
 ms.topic: overview
 sidebar_position: 1
+sidebar_label: Overview
+pagination_label: Planning
 keywords:
   - planning
   - documentation

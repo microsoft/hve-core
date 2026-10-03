@@ -2,9 +2,11 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-03
 ms.topic: overview
 sidebar_position: 1
+sidebar_label: Overview
+pagination_label: Customizing HVE Core
 keywords:
   - customization
   - github copilot
