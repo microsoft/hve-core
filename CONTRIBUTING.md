@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-09-25
+ms.date: 2026-10-02
 ms.topic: guide
 keywords:
   - contributing
@@ -273,7 +273,6 @@ Before contributing AI artifacts, review these resources:
 
 * Agents directory: [`.github/agents/`](./.github/agents/)
 * Instructions directory: [`.github/instructions/`](./.github/instructions/)
-* Prompts directory: [`.github/prompts/`](./.github/prompts/)
 * Skills directory: [`.github/skills/`](./.github/skills/)
 
 ## Dependabot Pull Requests

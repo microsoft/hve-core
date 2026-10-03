@@ -669,7 +669,7 @@ All checks **MUST** pass before merge.
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/{package-id}/` (the conventional location for prompt files).
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. HVE Core does not ship any prompt files today, so use the examples on this page as your structural reference. The [hve-builder](../reference/skills/hve-core/hve-builder) skill can draft and validate a new prompt for you.
 
 ---
 

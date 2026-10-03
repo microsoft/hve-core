@@ -3,7 +3,7 @@ title: Contributing AI Artifacts
 description: Guides for contributing agents, instructions, and prompts to hve-core
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-07-16
+ms.date: 2026-10-02
 ms.topic: overview
 keywords:
   - contributing
@@ -62,7 +62,6 @@ Use this table to navigate to the appropriate guide based on what you want to co
 
 * [Agents Directory](https://github.com/microsoft/hve-core/blob/main/.github/agents/)
 * [Instructions Directory](https://github.com/microsoft/hve-core/blob/main/.github/instructions/)
-* [Prompts Directory](https://github.com/microsoft/hve-core/blob/main/.github/prompts/)
 * [Skills Directory](https://github.com/microsoft/hve-core/blob/main/.github/skills/)
 
 ---
