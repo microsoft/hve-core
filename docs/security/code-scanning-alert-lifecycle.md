@@ -27,6 +27,8 @@ When a finding truly cannot be fixed yet, it goes through a [tracked exception](
 
 ```mermaid
 flowchart LR
+    accTitle: Code-Scanning Alert Lifecycle
+    accDescr: Findings from CodeQL, Scorecard, and OSV-Scanner are blocked by the threshold gate and tracked by the weekly filer. Agentic workflows help resolve them in code or configuration, and a finding that cannot be fixed yet becomes a tracked exception that the weekly filer keeps following up.
     detect["Detect<br/>CodeQL, Scorecard,<br/>OSV-Scanner"]
     gate["Block<br/>CodeQL threshold gate<br/>and ruleset rule"]
     file["Track<br/>weekly filer issues"]
