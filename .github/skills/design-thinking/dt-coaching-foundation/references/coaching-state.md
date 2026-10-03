@@ -162,6 +162,10 @@ Update the state file at these events:
 * Phase change within a method: update `current.phase`.
 * Hint calibration shift: update `hint_calibration.level` when the team's responsiveness to hints changes. Record observations in `hint_calibration.pattern_notes`.
 
+### Write Failures
+
+When a state write fails, report the failure and its cause, state that the recorded state is unchanged, and ask the team how to proceed. Do not retry the write through another path on your own, and do not describe a transition or update as complete when its write failed.
+
 ### Space Derivation
 
 Always derive `current.space` from `current.method`:

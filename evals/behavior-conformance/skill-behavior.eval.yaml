@@ -11,9 +11,10 @@ description: >
 type: capability
 defaults:
   runs: 3
-  # Raised from 120s: file-producing stimuli measured at 158s and 267s, so the
-  # old cap guaranteed timeouts plus retry storms on every run.
-  timeout: 400s
+  # Raised from 120s and then from 400s: file-producing stimuli measured at 158s
+  # and 267s, and the canonical deck build-failure stimulus at up to 350s, so a
+  # lower cap guaranteed timeouts plus retry storms on every run.
+  timeout: 600s
   executor: copilot-sdk
   judge_model: claude-sonnet-5
 
