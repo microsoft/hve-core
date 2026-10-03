@@ -102,11 +102,11 @@ Three entry modes determine Phase 1 initialization. All modes converge at Phase 
 
 ### `capture`
 
-Fresh assessment. Display the disclaimer and attribution notices, initialize blank `state.json` with `entryMode: "capture"`, and enter the Phase 1 preflight. After preflight and reference discovery, conduct an exploration-first AI system scoping interview using the Think/Speak/Empower coaching framework, curiosity-driven opening questions, laddering, critical incident anchoring, and projective techniques. Follow the full capture coaching protocol in the `rai-planner` skill.
+Fresh assessment. Display the disclaimer and attribution notices, initialize blank `state.json` with `entryMode: "capture"`, and enter the Phase 1 preflight. After preflight and reference discovery, open with one sentence summarizing the assessment scope, then conduct an exploration-first AI system scoping interview using the Think/Speak/Empower coaching framework, curiosity-driven opening questions, laddering, critical incident anchoring, and projective techniques. Follow the full capture coaching protocol in the `rai-planner` skill.
 
 ### `from-prd`
 
-PRD-seeded assessment. Display the disclaimer and attribution notices, resolve the user-identified PRD session or supplied PRD path without reading its content, then enter the Phase 1 preflight. Inspect the PRD during project-material discovery and extract the following fields to pre-populate Phase 1 state:
+PRD-seeded assessment. Display the disclaimer and attribution notices, resolve the user-identified PRD session or supplied PRD path without reading its content, then enter the Phase 1 preflight. When the user identifies no PRD session or path, discover candidates under `.copilot-tracking/prd-sessions/` and `.copilot-tracking/brd-sessions/`; when those paths are empty, search the workspace for files named `*prd*`, `*brd*`, `*product-requirements*`, or `*business-requirements*`. Present the candidates as ✅ found artifacts with file paths and brief descriptions and ❌ searched locations that held none, and ask the user to confirm which artifact to use before inspecting it. Inspect the PRD during project-material discovery and extract the following fields to pre-populate Phase 1 state:
 
 - `projectSlug` — derived from the PRD session directory name (kebab-case).
 - AI system purpose, technology stack, model types, deployment model — used to seed scoping interview answers (not stored as discrete state fields; carried forward as conversational context for confirmation).
@@ -114,13 +114,15 @@ PRD-seeded assessment. Display the disclaimer and attribution notices, resolve t
 - Intended use contexts and out-of-scope/prohibited use contexts — surfaced for Phase 2's Prohibited Uses Gate.
 - `userPreferences` fields — pre-populated when the PRD declares output preferences (otherwise left at defaults).
 
-Present the extracted information to the user for confirmation or refinement before advancing past Phase 1. Initialize `state.json` with `entryMode: "from-prd"`.
+Present the extracted scope as a checklist with ✅ for items confirmed from the PRD or BRD and ❓ for items that need clarification or are missing, then ask 3 to 5 questions that target AI-specific gaps the requirements documents leave open, such as model selection rationale, training data provenance, fairness considerations, and unintended use scenarios. Confirm or refine the extracted information before advancing past Phase 1. Initialize `state.json` with `entryMode: "from-prd"`.
 
-**Error handling**: when the PRD file is missing, unreadable, or contains insufficient AI-system context, log a `nextActions` entry, fall back to `capture` mode (the user is asked to confirm the downgrade), and proceed with the standard exploration-first scoping interview. Do not silently advance with empty state.
+**Error handling**: when no PRD or BRD candidate is found, or the PRD file is missing, unreadable, or contains insufficient AI-system context, log a `nextActions` entry, fall back to `capture` mode (the user is asked to confirm the downgrade), and proceed with the standard exploration-first scoping interview. Do not silently advance with empty state.
 
 ### `from-security-plan`
 
-Security plan-seeded assessment. Display the disclaimer and attribution notices, validate and persist the workspace-contained `securityPlanRef` without reading its content, then enter the Phase 1 preflight. Inspect the security plan during project-material discovery. Extract AI components from its `aiComponents` array, pre-populate the AI element inventory, and set the `raiThreatCount` start offset from its threat count. Present extracted information to the user for confirmation or refinement before advancing.
+Security plan-seeded assessment. Display the disclaimer and attribution notices, validate and persist the workspace-contained `securityPlanRef` without reading its content, then enter the Phase 1 preflight. When the user supplies no security plan reference, discover Security Planner projects by looking for `state.json` in each subdirectory of `.copilot-tracking/security-plans/`, and present them with their project slug, current phase, and completion status so the user can select one when several exist. Inspect the security plan during project-material discovery. Extract AI components from its `aiComponents` array, pre-populate the AI element inventory, and set the `raiThreatCount` start offset from its threat count. Present the extracted AI system scope as a checklist, highlight what the security plan already covers, and identify the AI-specific context it does not address, such as model architecture and training data provenance, fairness and bias assessment needs, transparency and explainability requirements, intended versus unintended use, and vulnerable populations and downstream effects. Ask 3 to 5 questions on those gaps, and confirm or refine the extracted information before advancing.
+
+**Error handling**: when no Security Planner project exists, log a `nextActions` entry, fall back to `capture` mode after the user confirms the switch, and proceed with the exploration-first scoping interview.
 
 ## State Management
 

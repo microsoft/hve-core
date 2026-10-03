@@ -1,9 +1,9 @@
 ---
 title: prompt-builder
 description: Compatibility alias for legacy prompt-building requests. Routes creation and improvement to the hve-builder skill.
-sidebar_position: 6
+sidebar_position: 9
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill

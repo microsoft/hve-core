@@ -166,6 +166,6 @@ Transition readiness signals:
 Next-step pathways:
 
 * Proceed to Method 4 when synthesis artifacts are complete and stable
-* Hand off to the RPI workflow via `dt-handoff-problem-space.prompt.md` when the team wants a Researcher/Planner/Implementor to continue from validated problem understanding
+* Hand off to the RPI workflow through the Problem Space exit procedure in the `dt-rpi-integration` skill when the team wants a Researcher/Planner/Implementor to continue from validated problem understanding
 * Return to Methods 1-2 when synthesis exposes research gaps, conflicting narratives, or missing constraints
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

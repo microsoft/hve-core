@@ -1,9 +1,9 @@
 ---
 title: pull-request
-description: "Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs. Use when a user asks to prepare, create, or update a pull request."
-sidebar_position: 8
+description: "Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs, and routes Azure DevOps repositories to the backlog-management pull request protocol. Use when a user asks to prepare, create, or update a pull request on GitHub or Azure DevOps."
+sidebar_position: 11
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - skill
@@ -23,7 +23,7 @@ keywords:
 ## What it does
 
 <!-- BEGIN AUTO-GENERATED: overview -->
-Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs. Use when a user asks to prepare, create, or update a pull request.
+Drafts or opens a GitHub pull request, runs changed-area preflight checks, and commits validated preflight repairs, and routes Azure DevOps repositories to the backlog-management pull request protocol. Use when a user asks to prepare, create, or update a pull request on GitHub or Azure DevOps.
 <!-- END AUTO-GENERATED: overview -->
 
 ## When to use it

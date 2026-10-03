@@ -3,7 +3,7 @@ title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-10-02
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -35,9 +35,8 @@ This guide walks you through four steps, each building on the last:
 > Already comfortable with AI-assisted development? Skip to
 > [First Full Workflow](first-workflow.md) or select
 > [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
-> for a coordinated lifecycle. Use `/rpi` for the same full lifecycle from a
-> prompt, or `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review`
-> for direct phase work.
+> for a coordinated lifecycle, or use `/rpi-research`, `/rpi-plan`,
+> `/rpi-implement`, and `/rpi-review` for direct phase work.
 
 Need installation help? See the [Installation Guide](install.md) for all
 methods, or install the

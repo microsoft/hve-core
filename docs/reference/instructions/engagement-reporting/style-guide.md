@@ -3,7 +3,7 @@ title: Engagement Reporting/Style Guide
 description: "Formatting, tone, and language rules for engagement reports"
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-24
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - instruction
@@ -12,12 +12,12 @@ keywords:
 ---
 
 <!-- BEGIN AUTO-GENERATED: metadata -->
-| Field       | Value                                                                                                                                                       |
-|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Kind        | instruction                                                                                                                                                 |
-| Source      | `.github/instructions/engagement-reporting/style-guide.instructions.md`                                                                                     |
-| Invocation  | Applied automatically to `**/.github/agents/engagement-reporting/**, **/.github/prompts/engagement-reporting/**, **/.github/skills/engagement-reporting/**` |
-| Interactive | No                                                                                                                                                          |
+| Field       | Value                                                                                                           |
+|-------------|-----------------------------------------------------------------------------------------------------------------|
+| Kind        | instruction                                                                                                     |
+| Source      | `.github/instructions/engagement-reporting/style-guide.instructions.md`                                         |
+| Invocation  | Applied automatically to `**/.github/agents/engagement-reporting/**, **/.github/skills/engagement-reporting/**` |
+| Interactive | No                                                                                                              |
 <!-- END AUTO-GENERATED: metadata -->
 
 ## What it does

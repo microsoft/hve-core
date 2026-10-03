@@ -4,7 +4,7 @@ description: "Responsible AI assessment planner evaluating against NIST AI RMF 1
 handoffs:
   - label: "Security Planner"
     agent: Security Planner
-    prompt: /security-capture
+    prompt: "Start security planning in capture entry mode for this project."
     send: true
 tools:
   - read
