@@ -506,7 +506,7 @@ _LOGOUT_TRANSPARENCY_LINES: tuple[str, ...] = (
 
 def _cmd_auth_setup(args: argparse.Namespace) -> int:
     """Provision a new profile non-interactively from env or CLI args."""
-    json_mode = bool(getattr(args, "json", False)) or _state._CLI_FORCE_JSON
+    json_mode = bool(getattr(args, "json", False)) or _state.cli_force_json()
     if not json_mode:
         redacted = _pkg()._redact(_OAUTH_SETUP_WALKTHROUGH)
         print(redacted)
@@ -839,7 +839,7 @@ def _cmd_auth_list(_args: argparse.Namespace) -> int:
                 "active": name == active,
             }
         )
-    if _state._CLI_FORCE_JSON or getattr(_args, "format", "json") != "table":
+    if _state.cli_force_json() or getattr(_args, "format", "json") != "table":
         print(
             json.dumps(
                 {"token_store": str(path), "active_profile": active, "profiles": rows},
@@ -878,7 +878,7 @@ def _cmd_auth_list(_args: argparse.Namespace) -> int:
 
 def _cmd_auth_use(args: argparse.Namespace) -> int:
     """Set the active profile in the v2 envelope."""
-    json_mode = bool(getattr(args, "json", False)) or _state._CLI_FORCE_JSON
+    json_mode = bool(getattr(args, "json", False)) or _state.cli_force_json()
     try:
         name = _validate_profile_name(args.name)
     except MuralError as exc:
@@ -1002,7 +1002,7 @@ def _cmd_auth_logout(args: argparse.Namespace) -> int:
     state untouched. ``--force`` is required to delete from the
     :class:`FileBackend` (since it removes the on-disk credential file).
     """
-    json_mode = bool(getattr(args, "json", False)) or _state._CLI_FORCE_JSON
+    json_mode = bool(getattr(args, "json", False)) or _state.cli_force_json()
     keep_credentials = bool(getattr(args, "keep_credentials", False))
     force = bool(getattr(args, "force", False))
     path = _resolve_token_store_path()
@@ -1289,7 +1289,7 @@ def _cmd_auth_migrate(args: argparse.Namespace) -> int:
     successful round-trip; ``--yes`` skips the confirmation prompt
     (required when ``MURAL_NONINTERACTIVE=1``).
     """
-    json_mode = bool(getattr(args, "json", False)) or _state._CLI_FORCE_JSON
+    json_mode = bool(getattr(args, "json", False)) or _state.cli_force_json()
     direction = getattr(args, "to", None)
     if direction not in {"keyring", "file"}:
         _emit("--to must be one of 'keyring' or 'file'", level=logging.ERROR)
