@@ -549,7 +549,9 @@ Features:
 * Coverage: Detects SQL injection, XSS, command injection, path traversal, and 200+ other vulnerabilities
 * Not analyzed: CodeQL does not analyze Markdown, generic YAML, PowerShell, shell, or PPTX content; markdownlint, YAML lint, PSScriptAnalyzer, shellcheck, and the dependency and workflow security lints cover those formats
 * Integration: Results appear in Security > Code Scanning tab
-* Threshold gate: after each analysis uploads its SARIF, `scripts/security/Test-CodeQLSarifThreshold.ps1` fails the job on any result with `security-severity` of 4.0 or higher, or any error- or warning-level result from a rule without a security severity. Because the gate runs inside the job, it also blocks merge-queue groups, which ruleset code-scanning protection does not cover. A finding is excused only by a tracked entry in `security/code-scanning-exceptions.yml`; the alert stays open and the gate lists it. Alerts are never dismissed. See the [code-scanning alert lifecycle](../../docs/security/code-scanning-alert-lifecycle.md)
+* Threshold gate: after each analysis uploads its SARIF, `scripts/security/Test-CodeQLSarifThreshold.ps1` fails the job on any result with `security-severity` of 4.0 or higher, or any error- or warning-level result from a rule without a security severity. Because the gate runs inside the job, it also blocks merge-queue groups, which ruleset code-scanning protection does not cover.
+  A finding is excused only by a tracked entry in `security/code-scanning-exceptions.yml`; the alert stays open and the gate lists it.
+  Alerts are never dismissed. See the [code-scanning alert lifecycle](../../docs/security/code-scanning-alert-lifecycle.md)
 * Auto-build: Prepares compiled code where required for each language target; Actions analysis needs no compilation
 
 Outputs: SARIF results uploaded to GitHub Security tab, job summary with analysis details and the threshold gate result
