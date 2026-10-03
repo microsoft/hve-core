@@ -54,7 +54,19 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: ${{ inputs.change-mode == 'range' && inputs.head-sha || github.sha }}
+          ref: ${{ github.sha }}
+
+      - name: Verify resolved head commit
+        if: inputs.change-mode == 'range'
+        shell: pwsh
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+        run: |
+          $actualHeadSha = (git rev-parse HEAD).Trim()
+          if ($env:EXPECTED_HEAD_SHA -cnotmatch '^[0-9a-f]{40,64}$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
+            Write-Output "::error::Checked-out commit $actualHeadSha does not match the resolved head commit."
+            exit 1
+          }
 
       - name: Derive artifact name
         id: meta

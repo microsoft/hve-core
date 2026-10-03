@@ -2,6 +2,30 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
+BeforeDiscovery {
+    $TrustedCheckoutSites = @(
+        @{ Workflow = 'adr-consistency-validation.yml'; Job = 'detect-changes' }
+        @{ Workflow = 'adr-consistency-validation.yml'; Job = 'validate' }
+        @{ Workflow = 'asset-docs-validation.yml'; Job = 'validate' }
+        @{ Workflow = 'docusaurus-tests.yml'; Job = 'detect-changes' }
+        @{ Workflow = 'docusaurus-tests.yml'; Job = 'docusaurus' }
+        @{ Workflow = 'eval-validation.yml'; Job = 'content-moderation' }
+        @{ Workflow = 'eval-validation.yml'; Job = 'eval-validation' }
+        @{ Workflow = 'frontmatter-validation.yml'; Job = 'frontmatter-validation' }
+        @{ Workflow = 'fuzz-tests.yml'; Job = 'fuzz' }
+        @{ Workflow = 'gitleaks-scan.yml'; Job = 'scan' }
+        @{ Workflow = 'markdown-link-check.yml'; Job = 'markdown-link-check' }
+        @{ Workflow = 'msdate-freshness-check.yml'; Job = 'msdate-freshness' }
+        @{ Workflow = 'node-tests.yml'; Job = 'node-tests' }
+        @{ Workflow = 'pip-audit.yml'; Job = 'pip-audit' }
+        @{ Workflow = 'ps-script-analyzer.yml'; Job = 'psscriptanalyzer' }
+        @{ Workflow = 'pytest-tests.yml'; Job = 'pytest' }
+        @{ Workflow = 'python-lint.yml'; Job = 'python-lint' }
+        @{ Workflow = 'skill-validation.yml'; Job = 'validate' }
+        @{ Workflow = 'yaml-lint.yml'; Job = 'yaml-lint' }
+    )
+}
+
 BeforeAll {
 Import-Module powershell-yaml -ErrorAction Stop
 
@@ -63,8 +87,88 @@ function Get-WorkflowRangeContractViolation {
     return $Violations.ToArray()
 }
 
+function Get-CheckoutTrustViolation {
+    <#
+    .SYNOPSIS
+        Finds checkout steps whose ref is derived from caller inputs.
+    .PARAMETER WorkflowPath
+        Workflow YAML file to inspect.
+    .OUTPUTS
+        [string[]] containing input-derived checkout violations.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$WorkflowPath
+    )
+
+    $Workflow = Get-Content -Raw -Path $WorkflowPath | ConvertFrom-Yaml
+    $Violations = [System.Collections.Generic.List[string]]::new()
+    if ($null -eq $Workflow -or -not $Workflow.Contains('jobs')) {
+        return $Violations.ToArray()
+    }
+
+    foreach ($Job in $Workflow['jobs'].GetEnumerator()) {
+        foreach ($Step in @($Job.Value['steps'])) {
+            if ($null -eq $Step -or [string]$Step['uses'] -notlike 'actions/checkout@*' -or $null -eq $Step['with']) {
+                continue
+            }
+
+            if ([string]$Step['with']['ref'] -match '(?<![\w.-])inputs\.') {
+                $Violations.Add("input-derived-checkout:$($Job.Key)")
+            }
+        }
+    }
+
+    return $Violations.ToArray()
+}
+
+    $script:WorkflowRoot = Join-Path $PSScriptRoot '../../../.github/workflows'
     $script:AggregateWorkflowPath = Join-Path $PSScriptRoot '../../../.github/workflows/pr-validation.yml'
     $script:AggregateWorkflow = Get-Content -Raw -Path $script:AggregateWorkflowPath | ConvertFrom-Yaml
+}
+
+Describe 'Trusted checkout contract' -Tag 'Unit' {
+    It 'Reports a checkout ref derived from caller inputs, including compound expressions' {
+        $WorkflowPath = Join-Path $TestDrive 'input-derived-checkout.yml'
+        @'
+jobs:
+    selector:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@0000000000000000000000000000000000000000
+              with:
+                  ref: ${{ inputs.change-mode == 'range' && inputs.head-sha || github.sha }}
+'@ | Set-Content -Path $WorkflowPath -Encoding utf8NoBOM
+
+        Get-CheckoutTrustViolation -WorkflowPath $WorkflowPath | Should -Contain 'input-derived-checkout:selector'
+    }
+
+    It 'Never derives a checkout ref from caller inputs in any workflow' {
+        $Violations = foreach ($WorkflowFile in Get-ChildItem -Path $script:WorkflowRoot -Filter '*.yml') {
+            Get-CheckoutTrustViolation -WorkflowPath $WorkflowFile.FullName | ForEach-Object { "$($WorkflowFile.Name):$_" }
+        }
+
+        $Violations | Should -BeNullOrEmpty
+    }
+
+    It 'Checks out the event commit and verifies the resolved head before other steps in <Workflow> job <Job>' -ForEach $TrustedCheckoutSites {
+        $Document = Get-Content -Raw -Path (Join-Path $script:WorkflowRoot $Workflow) | ConvertFrom-Yaml
+        $Steps = @($Document['jobs'][$Job]['steps'])
+        $CheckoutIndex = [array]::FindIndex($Steps, [Predicate[object]] { param($Step) [string]$Step['uses'] -like 'actions/checkout@*' })
+        $CheckoutStep = $Steps[$CheckoutIndex]
+        $VerifyStep = $Steps[$CheckoutIndex + 1]
+
+        $CheckoutStep['with']['ref'] | Should -BeExactly '${{ github.sha }}'
+        $CheckoutStep['with']['persist-credentials'] | Should -BeFalse
+        $VerifyStep['if'] | Should -BeExactly "inputs.change-mode == 'range'"
+        $VerifyStep['env']['EXPECTED_HEAD_SHA'] | Should -BeExactly '${{ inputs.head-sha }}'
+        $VerifyStep.Contains('uses') | Should -BeFalse
+        [string]$VerifyStep['run'] | Should -Match 'git rev-parse HEAD'
+        [string]$VerifyStep['run'] | Should -Match 'exit 1'
+        [string]$VerifyStep['run'] | Should -Not -Match '\$\{\{'
+    }
 }
 
 Describe 'Aggregate changed-file workflow contract' -Tag 'Unit' {
@@ -143,7 +247,6 @@ jobs:
                     $Inputs.Contains('base-sha') | Should -BeTrue
                     $Inputs.Contains('head-sha') | Should -BeTrue
                     $WorkflowText | Should -Match 'inputs\.base-sha'
-                    $WorkflowText | Should -Match 'inputs\.head-sha'
                     $WorkflowText | Should -Not -Match 'github\.base_ref|github\.event\.before|origin/main|origin/\$'
                 }
             }
@@ -185,7 +288,6 @@ jobs:
                     $Inputs.Contains('base-sha') | Should -BeTrue
                     $Inputs.Contains('head-sha') | Should -BeTrue
                     $WorkflowText | Should -Match 'inputs\.base-sha'
-                    $WorkflowText | Should -Match 'inputs\.head-sha'
                     $WorkflowText | Should -Not -Match 'inputs\.base-branch|github\.base_ref|github\.event\.before|origin/main|origin/\$'
                 }
             }
@@ -281,8 +383,7 @@ jobs:
             $RangeJob['outputs']['mode'] | Should -BeExactly '${{ steps.resolve.outputs.mode }}'
             $RangeJob['outputs']['base-sha'] | Should -BeExactly '${{ steps.resolve.outputs.base-sha }}'
             $RangeJob['outputs']['head-sha'] | Should -BeExactly '${{ steps.resolve.outputs.head-sha }}'
-            $CheckoutStep['with']['fetch-depth'] | Should -Be 0
-            $CheckoutStep['with']['ref'] | Should -BeExactly '${{ github.sha }}'
+                $CheckoutStep['with']['ref'] | Should -BeExactly '${{ github.sha }}'
             $ResolveStep['env']['EVENT_NAME'] | Should -BeExactly '${{ github.event_name }}'
             $ResolveStep['env']['BASE_SHA'] | Should -Match "event_name == 'merge_group'.*merge_group\.base_sha"
             $ResolveStep['env']['BASE_SHA'] | Should -Not -Match 'pull_request\.base'
