@@ -545,6 +545,7 @@ iscsi
 isfile
 isilon
 iskg
+isnot
 isnotempty
 ispf
 isql
