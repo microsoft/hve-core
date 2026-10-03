@@ -37,6 +37,7 @@
     "audit:npm:root": "audit-ci --config audit-ci.json",
     "audit:npm:docs": "audit-ci --config audit-ci.json --directory docs/docusaurus",
     "rai:sign": "pwsh -NoProfile -File scripts/security/Sign-PlannerArtifacts.ps1",
+    "security:codeql-gate": "pwsh -NoProfile -File scripts/security/Test-CodeQLSarifThreshold.ps1",
     "security:sign": "pwsh -NoProfile -File scripts/security/Sign-PlannerArtifacts.ps1",
     "sssc:sign": "pwsh -NoProfile -File scripts/security/Sign-PlannerArtifacts.ps1",
     "lint:ai-artifacts": "pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing",

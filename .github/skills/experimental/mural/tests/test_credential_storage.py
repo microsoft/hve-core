@@ -9,6 +9,7 @@ import importlib
 import logging
 import os
 import pathlib
+import stat
 from typing import Any
 
 import pytest
@@ -122,6 +123,50 @@ def test_resolve_credential_file_falls_back_to_home_config(
 # ---------------------------------------------------------------------------
 
 
+def _report_loose_mode(
+    monkeypatch: pytest.MonkeyPatch, path: pathlib.Path, mode: int = 0o100644
+) -> None:
+    """Make ``path.stat()`` report ``mode`` while the real file stays 0600.
+
+    The permission gate reads ``st_mode`` from ``Path.stat``. Simulating the
+    loose mode tests the gate without ever creating a group- or
+    world-readable credential file. Other paths, and every other stat field,
+    keep their real values.
+    """
+    real_stat = pathlib.Path.stat
+    target = os.fspath(path)
+
+    def fake_stat(self: pathlib.Path, *args: Any, **kwargs: Any) -> os.stat_result:
+        result = real_stat(self, *args, **kwargs)
+        if os.fspath(self) != target:
+            return result
+        fields = list(result)
+        fields[stat.ST_MODE] = mode
+        return os.stat_result(fields)
+
+    monkeypatch.setattr(pathlib.Path, "stat", fake_stat)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX-only permission semantics")
+def test_report_loose_mode_leaves_the_real_file_owner_only(
+    tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "creds.env"
+    path.write_bytes(b"MURAL_CLIENT_ID=x\n")
+    os.chmod(path, 0o600)
+    other = tmp_path / "other.env"
+    other.write_bytes(b"")
+    os.chmod(other, 0o600)
+    real_uid = path.stat().st_uid
+
+    _report_loose_mode(monkeypatch, path)
+
+    assert stat.S_IMODE(path.stat().st_mode) == 0o644
+    assert path.stat().st_uid == real_uid
+    assert stat.S_IMODE(os.stat(path).st_mode) == 0o600
+    assert stat.S_IMODE(other.stat().st_mode) == 0o600
+
+
 @pytest.mark.skipif(os.name == "nt", reason="POSIX-only permission semantics")
 def test_check_credential_file_perms_accepts_0600(
     mural_module: Any, tmp_path: pathlib.Path
@@ -134,11 +179,12 @@ def test_check_credential_file_perms_accepts_0600(
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX-only permission semantics")
 def test_check_credential_file_perms_rejects_loose_mode(
-    mural_module: Any, tmp_path: pathlib.Path
+    mural_module: Any, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     path = tmp_path / "creds.env"
     path.write_bytes(b"MURAL_CLIENT_ID=x\n")
-    os.chmod(path, 0o644)
+    os.chmod(path, 0o600)
+    _report_loose_mode(monkeypatch, path)
     with pytest.raises(mural_module.MuralError) as excinfo:
         mural_module._check_credential_file_perms(path, {})
     message = str(excinfo.value)
@@ -149,11 +195,12 @@ def test_check_credential_file_perms_rejects_loose_mode(
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX-only permission semantics")
 def test_check_credential_file_perms_relaxed_override(
-    mural_module: Any, tmp_path: pathlib.Path
+    mural_module: Any, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     path = tmp_path / "creds.env"
     path.write_bytes(b"MURAL_CLIENT_ID=x\n")
-    os.chmod(path, 0o644)
+    os.chmod(path, 0o600)
+    _report_loose_mode(monkeypatch, path)
     mural_module._check_credential_file_perms(path, {"MURAL_ENV_FILE_RELAXED": "1"})
 
 
@@ -240,7 +287,8 @@ def test_autoload_credentials_propagates_perm_error(
 ) -> None:
     path = tmp_path / "creds.env"
     path.write_text("MURAL_CLIENT_ID=loose\n", encoding="utf-8")
-    os.chmod(path, 0o644)
+    os.chmod(path, 0o600)
+    _report_loose_mode(monkeypatch, path)
     monkeypatch.setenv("MURAL_CREDENTIAL_BACKEND", "file")
     monkeypatch.setenv("MURAL_ENV_FILE", str(path))
     env: dict[str, str] = {"MURAL_ENV_FILE": str(path)}
@@ -929,10 +977,12 @@ class TestCredentialFileHygiene:
         mural_module: Any,
         tmp_path: pathlib.Path,
         caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         path = tmp_path / "creds.env"
         path.write_bytes(b"MURAL_CLIENT_ID=x\n")
-        os.chmod(path, 0o644)
+        os.chmod(path, 0o600)
+        _report_loose_mode(monkeypatch, path)
         environ = {"MURAL_ENV_FILE_RELAXED": "1"}
         caplog.set_level(logging.WARNING, logger="mural")
         for _ in range(3):

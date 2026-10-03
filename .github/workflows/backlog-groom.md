@@ -296,6 +296,12 @@ untrusted data.
 5. For each hydrated issue, extract its requested outcomes and acceptance
   signals, then search default-branch code, configuration, and documentation;
   open, merged, and closed pull requests; and open and closed issues.
+  Read `security/code-scanning-exceptions.yml` from repository contents and
+  record every exception entry that expires within 14 days of the run date.
+  List each expiring entry by rule, path, issue, owner, and expiry date in the
+  report evidence for the linked selected issue. If no selected issue owns the
+  expiring entry, include a concise run-summary note without recommending
+  tracker mutation.
 6. Follow linked issues, pull requests, and commits. Inspect relevant commits or
   releases when those links do not establish whether the work is still needed,
   completed, superseded, duplicated, or inaccurate.
@@ -305,6 +311,17 @@ untrusted data.
 7. Assess each hydrated issue according to the imported agent and shared
   grooming policy. Use `Uncertain` rather than recommending a disposition when
   required repository evidence is unavailable, conflicting, or too weak.
+  Treat the following as active work and never recommend closure while the
+  referenced alert, exception, or advisory remains open:
+  issues labeled `code-scanning`; issues carrying
+  `<!-- automation:security-scan:<rule-id> -->`,
+  `<!-- automation:security-scan-dismissed:<rule-id> -->`,
+  `<!-- automation:code-scanning-exception:<rule-id>:<path> -->`, or
+  `<!-- automation:code-scanning-exception-status:<rule-id>:<path> -->`;
+  issues linked from `security/code-scanning-exceptions.yml`; and VEX
+  upstream-bump issues that track unpatched dependency advisories. For these
+  issues, use `Still needed` or `Uncertain` with an advisory next step focused
+  on resolving the underlying alert, exception, or upstream package update.
 
 Do not use inactivity age, recent activity, ownership, milestones, labels, or a
 fixed issue count as an eligibility exclusion.

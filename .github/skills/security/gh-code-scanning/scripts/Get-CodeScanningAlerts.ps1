@@ -29,11 +29,22 @@
     - Json: Full grouped alert objects as JSON array.
     - GroupedJson: Alias for Json; produces the same output.
 
+.PARAMETER IncludeDismissedStillDetected
+    Also report alerts that were dismissed but are still detected on the branch,
+    meaning their most recent instance on the branch is not fixed. These groups
+    are appended after the open-alert groups and carry
+    Kind = 'dismissed-still-detected' and the DismissedReason of their first alert.
+    Open-alert groups are unchanged. A dismissal never resolves an alert, so these
+    alerts need to be reopened and resolved.
+
 .EXAMPLE
     ./Get-CodeScanningAlerts.ps1 -Owner microsoft -Repo edge-ai
 
 .EXAMPLE
     ./Get-CodeScanningAlerts.ps1 -Owner microsoft -Repo edge-ai -Branch develop -OutputFormat Json
+
+.EXAMPLE
+    ./Get-CodeScanningAlerts.ps1 -Owner microsoft -Repo edge-ai -OutputFormat Json -IncludeDismissedStillDetected
 #>
 [CmdletBinding()]
 param(
@@ -51,38 +62,33 @@ param(
 
     [Parameter()]
     [ValidateSet('Table', 'Json', 'GroupedJson')]
-    [string]$OutputFormat = 'Table'
+    [string]$OutputFormat = 'Table',
+
+    [Parameter()]
+    [switch]$IncludeDismissedStillDetected
 )
 
 $ErrorActionPreference = 'Stop'
 
-#region Main Execution
+function Get-AlertPage {
+    param([Parameter(Mandatory = $true)][string]$Url)
 
-if ($MyInvocation.InvocationName -ne '.') {
-    $env:GH_PAGER = ''
-
-    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
-        Write-Error "gh CLI not found. Install it from https://cli.github.com and re-run this script."
-    }
-
-    gh auth status 2>&1 | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "gh CLI is not authenticated. Run 'gh auth login' and ensure the 'security_events' scope is granted, then re-run this script."
-    }
-
-    $Url = "repos/$Owner/$Repo/code-scanning/alerts?state=open&ref=refs/heads/$Branch&per_page=100"
-    $Raw = gh api $Url --paginate --jq '.[]'
+    $raw = gh api $Url --paginate --jq '.[]'
 
     if ($LASTEXITCODE -ne 0) {
-        if ($Raw -match '403|Resource not accessible by integration') {
+        if ($raw -match '403|Resource not accessible by integration') {
             Write-Error "gh api call failed: missing required scope. Run 'gh auth refresh -s security_events' and re-run this script."
         }
-        Write-Error "gh api call failed (exit $LASTEXITCODE): $Raw"
+        Write-Error "gh api call failed (exit $LASTEXITCODE): $raw"
     }
 
-    $Alerts = @($Raw | ConvertFrom-Json)
+    return , @($raw | ConvertFrom-Json)
+}
 
-    $Grouped = $Alerts |
+function ConvertTo-AlertGroup {
+    param([Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Alerts)
+
+    $Alerts |
         Group-Object { $_.rule.description } |
         ForEach-Object {
             $paths = @(
@@ -105,10 +111,45 @@ if ($MyInvocation.InvocationName -ne '.') {
             }
         } |
         Sort-Object -Property Count -Descending
+}
+
+#region Main Execution
+
+if ($MyInvocation.InvocationName -ne '.') {
+    $env:GH_PAGER = ''
+
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+        Write-Error "gh CLI not found. Install it from https://cli.github.com and re-run this script."
+    }
+
+    gh auth status 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "gh CLI is not authenticated. Run 'gh auth login' and ensure the 'security_events' scope is granted, then re-run this script."
+    }
+
+    $Url = "repos/$Owner/$Repo/code-scanning/alerts?state=open&ref=refs/heads/$Branch&per_page=100"
+    $Alerts = Get-AlertPage -Url $Url
+    $Grouped = @(ConvertTo-AlertGroup -Alerts $Alerts)
+
+    if ($IncludeDismissedStillDetected) {
+        # The ref filter scopes most_recent_instance to the branch. A dismissed alert
+        # whose instance there is not 'fixed' is still being detected.
+        $DismissedUrl = "repos/$Owner/$Repo/code-scanning/alerts?state=dismissed&ref=refs/heads/$Branch&per_page=100"
+        $Dismissed = Get-AlertPage -Url $DismissedUrl
+        $StillDetected = @($Dismissed | Where-Object { $_.most_recent_instance.state -ne 'fixed' })
+        foreach ($group in @(ConvertTo-AlertGroup -Alerts $StillDetected)) {
+            $first = $StillDetected | Where-Object { $_.rule.id -eq $group.RuleId } | Select-Object -First 1
+            $group | Add-Member -NotePropertyName Kind -NotePropertyValue 'dismissed-still-detected'
+            $group | Add-Member -NotePropertyName DismissedReason -NotePropertyValue $first.dismissed_reason
+            $Grouped += $group
+        }
+    }
 
     switch ($OutputFormat) {
         'Table' {
-            $Grouped | Format-Table -AutoSize -Property Count, SecuritySeverity, RuleId, RuleDescription
+            $columns = @('Count', 'SecuritySeverity', 'RuleId', 'RuleDescription')
+            if ($IncludeDismissedStillDetected) { $columns += 'Kind' }
+            $Grouped | Format-Table -AutoSize -Property $columns
         }
         { $_ -in 'Json', 'GroupedJson' } {
             # The array wrapper keeps the output a JSON array for every result size.

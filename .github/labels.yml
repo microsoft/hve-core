@@ -41,6 +41,9 @@
 - name: security
   color: "D93F0B"
   description: "Security-related changes or concerns"
+- name: code-scanning
+  color: "B60205"
+  description: "Tracks a code-scanning alert or exception to resolution; never resolved by dismissing the alert"
 - name: accessibility
   color: "ededed"
   description: "Accessibility improvements and compliance"

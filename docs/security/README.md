@@ -3,7 +3,7 @@ title: Security Documentation
 description: Index of security documentation including security model and assurance case for HVE Core
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-09-26
+ms.date: 2026-10-02
 ms.topic: overview
 keywords:
   - security
@@ -22,6 +22,7 @@ This directory contains security documentation for HVE Core, demonstrating defen
 |----------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
 | [Security Model](security-model.md)                                        | Comprehensive security model and security assurance case                                                                  |
 | [Branch Protection](branch-protection.md)                                  | Main branch protection requirements and repository controls                                                               |
+| [Code-Scanning Alert Lifecycle](code-scanning-alert-lifecycle.md)          | How code-scanning alerts are detected, blocked, tracked, and resolved without dismissal                                   |
 | [Dependency Pinning](dependency-pinning.md)                                | Pinning strategies and CI enforcement for all dependency types                                                            |
 | [SBOM Verification](sbom-verification.md)                                  | SBOM attestation verification and consumption guide                                                                       |
 | [VEX Verification](vex-verification.md)                                    | Download, verify, and interpret the published OpenVEX document                                                            |

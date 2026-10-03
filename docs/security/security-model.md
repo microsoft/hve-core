@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-26
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - security
@@ -2103,17 +2103,25 @@ The merge commit author is the accountable author of record, never the agent.
 
 ### Code Quality Controls
 
-| ID   | Control                       | Implementation                                          | Validates Against |
-|------|-------------------------------|---------------------------------------------------------|-------------------|
-| CQ-1 | CodeQL Analysis               | codeql-analysis.yml                                     | T-1, E-1          |
-| CQ-2 | Markdown Linting              | lint:md npm script                                      | T-2, RAI-4        |
-| CQ-3 | Frontmatter Validation        | Validate-MarkdownFrontmatter.ps1                        | T-2               |
-| CQ-4 | PowerShell Analysis           | Invoke-PSScriptAnalyzer.ps1                             | T-1               |
-| CQ-5 | YAML Linting                  | Invoke-YamlLint.ps1                                     | T-1               |
-| CQ-6 | Workflow Input Isolation      | Step-level `env:` mappings for caller-controlled inputs | T-3               |
-| CQ-7 | Project Path Validation       | Assert-WorkflowProjectDirectory.ps1                     | T-3               |
-| CQ-8 | Input Interpolation Detection | Test-DangerousWorkflow.ps1                              | T-3               |
-| CQ-9 | Fork Workflow Approval        | Repository Actions settings                             | T-3               |
+| ID   | Control                       | Implementation                                              | Validates Against |
+|------|-------------------------------|-------------------------------------------------------------|-------------------|
+| CQ-1 | CodeQL Analysis               | codeql-analysis.yml with Test-CodeQLSarifThreshold.ps1 gate | T-1, E-1          |
+| CQ-2 | Markdown Linting              | lint:md npm script                                          | T-2, RAI-4        |
+| CQ-3 | Frontmatter Validation        | Validate-MarkdownFrontmatter.ps1                            | T-2               |
+| CQ-4 | PowerShell Analysis           | Invoke-PSScriptAnalyzer.ps1                                 | T-1               |
+| CQ-5 | YAML Linting                  | Invoke-YamlLint.ps1                                         | T-1               |
+| CQ-6 | Workflow Input Isolation      | Step-level `env:` mappings for caller-controlled inputs     | T-3               |
+| CQ-7 | Project Path Validation       | Assert-WorkflowProjectDirectory.ps1                         | T-3               |
+| CQ-8 | Input Interpolation Detection | Test-DangerousWorkflow.ps1                                  | T-3               |
+| CQ-9 | Fork Workflow Approval        | Repository Actions settings                                 | T-3               |
+
+CQ-1 fails each CodeQL job when its SARIF holds a security result with `security-severity` of 4.0
+or higher, or an error- or warning-level result from a rule without a security severity. The gate
+runs inside pull-request validation, so it also covers merge-queue groups that ruleset
+code-scanning protection does not evaluate. Alerts are resolved in code or configuration and never
+dismissed; a finding that cannot be fixed yet is excused only by a reviewed, expiring entry in
+`security/code-scanning-exceptions.yml` while its alert stays open. The
+[code-scanning alert lifecycle](code-scanning-alert-lifecycle.md) describes the full process.
 
 CQ-6 keeps GitHub expression evaluation out of shell command text. A workflow maps an
 input such as `${{ inputs.version }}` to an environment variable, then reads the shell's
