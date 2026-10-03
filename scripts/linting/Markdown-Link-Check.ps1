@@ -1146,6 +1146,9 @@ function Invoke-MarkdownLinkCheck {
                     elseif ($link.Status -eq 'dead') {
                         Write-Host "  ✖ $($link.Url) → Status: $($link.StatusCode)" -ForegroundColor Red
                     }
+                    elseif ($link.Status -eq 'error') {
+                        Write-Host "  ✖ $($link.Url) → Status: error" -ForegroundColor Red
+                    }
                 }
 
                 $isExternal = [regex]::IsMatch([string]$link.Url, '^[Hh][Tt][Tt][Pp][Ss]?://')
@@ -1153,7 +1156,7 @@ function Invoke-MarkdownLinkCheck {
                 # Process broken links
                 if (
                     $link.Status -eq 'dead' -or
-                    ($ExternalLinksAsWarnings -and $isExternal -and $link.Status -eq 'error')
+                    ($isExternal -and $link.Status -eq 'error')
                 ) {
                     $brokenLinks += @{
                         File = $relative

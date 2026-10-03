@@ -1085,6 +1085,45 @@ Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
             }
         }
 
+        It 'Reports an external check error with its URL in default mode' {
+            $errorUrl = 'https://example.test/error'
+            $env:MARKDOWN_LINK_CHECK_TEST_URL_MODE = 'true'
+            $targetPath = Join-Path (Split-Path $script:BatchTargets[0] -Parent) 'external-error.md'
+            Set-Content -LiteralPath $targetPath -Value "[External]($errorUrl)" -Encoding utf8
+            $script:BatchTargets = @($targetPath)
+            Mock ConvertFrom-MarkdownExternalLinkReport {
+                return [pscustomobject]@{
+                    Trusted = $true
+                    Links = @(
+                        [pscustomobject]@{
+                            Url = $errorUrl
+                            Status = 'error'
+                            StatusCode = $null
+                        }
+                    )
+                }
+            }
+
+            $captured = @(& {
+                try {
+                    Invoke-MarkdownLinkCheck -Path @('unused') -ConfigPath $script:FixtureConfig -ThrottleLimit 1 -Quiet
+                }
+                catch {
+                    Write-Output "THREW: $($_.Exception.Message)"
+                }
+            })
+
+            $result = Get-Content -LiteralPath $script:ResultsPath -Raw | ConvertFrom-Json
+            @($captured | Where-Object { $_ -like 'THREW:*' }).Count | Should -Be 1
+            $result.summary.files_with_broken_links | Should -Be 1
+            $result.summary.total_broken_links | Should -Be 1
+            $result.broken_links[0].Link | Should -Be $errorUrl
+            $result.broken_links[0].Status | Should -Be 'error'
+            Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+                $Level -eq 'Error' -and $Message -eq "External link check error: $errorUrl"
+            }
+        }
+
         It 'Keeps internal-link failures blocking in advisory-external mode' {
             $targetPath = Join-Path (Split-Path $script:BatchTargets[0] -Parent) 'internal-dead.md'
             Set-Content -LiteralPath $targetPath -Value '[Missing](missing.md)' -Encoding utf8

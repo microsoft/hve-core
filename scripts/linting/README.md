@@ -717,8 +717,8 @@ blockquote markers, so line wrapping does not affect matching.
 
 * Workflow: `.github/workflows/ai-artifact-validation.yml`
 * Validation: footer and disclaimer validation plus artifact path portability run independently before one blocking result gate
-* Artifacts: `ai-artifact-results` and `artifact-path-portability-results` (JSON)
-* npm script: `npm run lint:ai-artifacts`
+* Artifacts: `ai-artifact-results` (contains `ai-artifact-results.json` and `artifact-path-portability-results.json`)
+* npm scripts: `npm run lint:ai-artifacts` and `npm run lint:artifact-portability`
 * Exit Code: Non-zero when `-FailOnMissing` is set and issues are found
 
 ## npm Scripts

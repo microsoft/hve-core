@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-09-29
+ms.date: 2026-10-02
 ms.topic: overview
 keywords:
   - github actions
@@ -102,38 +102,38 @@ GitHub Agentic Workflow markdown files (`issue-triage.md`, `issue-implement.md`,
 
 Individual validation workflows called by orchestration workflows:
 
-| Workflow                              | Purpose                                        | npm Script                               |
-|---------------------------------------|------------------------------------------------|------------------------------------------|
-| `markdown-lint.yml`                   | Markdownlint validation                        | `npm run lint:md`                        |
-| `spell-check.yml`                     | cspell dictionary check                        | `npm run spell-check`                    |
-| `frontmatter-validation.yml`          | AI artifact frontmatter schemas                | `npm run lint:frontmatter`               |
-| `markdown-link-check.yml`             | Broken link detection                          | `npm run lint:md-links`                  |
-| `link-lang-check.yml`                 | Link language validation                       | `npm run lint:links`                     |
-| `yaml-lint.yml`                       | YAML syntax validation                         | `npm run lint:yaml`                      |
-| `ps-script-analyzer.yml`              | PowerShell static analysis                     | `npm run lint:ps`                        |
-| `table-format.yml`                    | Markdown table formatting                      | `npm run format:tables`                  |
-| `pester-tests.yml`                    | PowerShell unit tests                          | `npm run test:ps`                        |
-| `skill-validation.yml`                | Skill structure validation                     | `npm run validate:skills`                |
-| `dependency-pinning-scan.yml`         | Dependency pinning validation                  | N/A (PowerShell direct)                  |
-| `sha-staleness-check.yml`             | SHA reference freshness*                       | N/A (PowerShell direct)                  |
-| `codeql-analysis.yml`                 | CodeQL security scanning*                      | N/A (GitHub native)                      |
-| `dependency-review.yml`               | Dependency vulnerability review*               | N/A (GitHub native)                      |
-| `gh-code-scanning.yml`                | GitHub code scanning alert retrieval           | N/A (PowerShell direct)                  |
-| `create-gh-code-scanning-issues.yml`  | Create GitHub code scanning issues from alerts | N/A (bash + gh CLI direct)               |
-| `extension-provenance-signer.yml`     | Split VSIX packaging, attestation, and upload  | N/A                                      |
-| `copyright-headers.yml`               | Copyright header validation                    | `npm run validate:copyright`             |
-| `gitleaks-scan.yml`                   | Secret detection scanning                      | N/A (gitleaks direct)                    |
-| `plugin-validation.yml`               | Plugin manifest, locator, and hook validation  | `npm run plugin:validate`                |
-| `extension-marketplace-publish.yml`   | Extension marketplace publishing               | N/A                                      |
-| `python-lint.yml`                     | Python lint and format checks (ruff)           | `npm run lint:py`                        |
-| `pytest-tests.yml`                    | Python unit tests                              | `npm run test:py`                        |
-| `pip-audit.yml`                       | Python dependency auditing                     | N/A (pip-audit direct)                   |
-| `fuzz-tests.yml`                      | Python fuzz testing                            | N/A (pytest direct)                      |
-| `docusaurus-tests.yml`                | Docusaurus test suite                          | N/A (npm test)                           |
-| `model-validation.yml`                | Model reference validation                     | `npm run lint:models`                    |
-| `ai-artifact-validation.yml`          | AI artifact structure validation               | `npm run lint:ai-artifacts`              |
-| `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity                | `npm run validate:devcontainer-lockfile` |
-| `action-version-consistency-scan.yml` | Action version consistency                     | `npm run lint:version-consistency`       |
+| Workflow                              | Purpose                                        | npm Script                                                       |
+|---------------------------------------|------------------------------------------------|------------------------------------------------------------------|
+| `markdown-lint.yml`                   | Markdownlint validation                        | `npm run lint:md`                                                |
+| `spell-check.yml`                     | cspell dictionary check                        | `npm run spell-check`                                            |
+| `frontmatter-validation.yml`          | AI artifact frontmatter schemas                | `npm run lint:frontmatter`                                       |
+| `markdown-link-check.yml`             | Broken link detection                          | `npm run lint:md-links`                                          |
+| `link-lang-check.yml`                 | Link language validation                       | `npm run lint:links`                                             |
+| `yaml-lint.yml`                       | YAML syntax validation                         | `npm run lint:yaml`                                              |
+| `ps-script-analyzer.yml`              | PowerShell static analysis                     | `npm run lint:ps`                                                |
+| `table-format.yml`                    | Markdown table formatting                      | `npm run format:tables`                                          |
+| `pester-tests.yml`                    | PowerShell unit tests                          | `npm run test:ps`                                                |
+| `skill-validation.yml`                | Skill structure validation                     | `npm run validate:skills`                                        |
+| `dependency-pinning-scan.yml`         | Dependency pinning validation                  | N/A (PowerShell direct)                                          |
+| `sha-staleness-check.yml`             | SHA reference freshness*                       | N/A (PowerShell direct)                                          |
+| `codeql-analysis.yml`                 | CodeQL security scanning*                      | N/A (GitHub native)                                              |
+| `dependency-review.yml`               | Dependency vulnerability review*               | N/A (GitHub native)                                              |
+| `gh-code-scanning.yml`                | GitHub code scanning alert retrieval           | N/A (PowerShell direct)                                          |
+| `create-gh-code-scanning-issues.yml`  | Create GitHub code scanning issues from alerts | N/A (bash + gh CLI direct)                                       |
+| `extension-provenance-signer.yml`     | Split VSIX packaging, attestation, and upload  | N/A                                                              |
+| `copyright-headers.yml`               | Copyright header validation                    | `npm run validate:copyright`                                     |
+| `gitleaks-scan.yml`                   | Secret detection scanning                      | N/A (gitleaks direct)                                            |
+| `plugin-validation.yml`               | Plugin manifest, locator, and hook validation  | `npm run plugin:validate`                                        |
+| `extension-marketplace-publish.yml`   | Extension marketplace publishing               | N/A                                                              |
+| `python-lint.yml`                     | Python lint and format checks (ruff)           | `npm run lint:py`                                                |
+| `pytest-tests.yml`                    | Python unit tests                              | `npm run test:py`                                                |
+| `pip-audit.yml`                       | Python dependency auditing                     | N/A (pip-audit direct)                                           |
+| `fuzz-tests.yml`                      | Python fuzz testing                            | N/A (pytest direct)                                              |
+| `docusaurus-tests.yml`                | Docusaurus test suite                          | N/A (npm test)                                                   |
+| `model-validation.yml`                | Model reference validation                     | `npm run lint:models`                                            |
+| `ai-artifact-validation.yml`          | AI artifact structure validation               | `npm run lint:ai-artifacts`, `npm run lint:artifact-portability` |
+| `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity                | `npm run validate:devcontainer-lockfile`                         |
+| `action-version-consistency-scan.yml` | Action version consistency                     | `npm run lint:version-consistency`                               |
 
 Workflows marked with `*` are dual-purpose: they accept `workflow_call` for reuse by orchestration workflows and also run independently via their own triggers.
 
@@ -441,6 +441,7 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `lint:py`                       | `ruff check` + `ruff format --check`                                                                       | python-lint.yml                             |
 | `lint:models`                   | `Validate-ModelReferences.ps1`                                                                             | model-validation.yml                        |
 | `lint:ai-artifacts`             | `Validate-PlannerArtifacts.ps1 -FailOnMissing`                                                             | ai-artifact-validation.yml                  |
+| `lint:artifact-portability`     | `Test-ArtifactPathPortability.ps1`                                                                         | ai-artifact-validation.yml                  |
 | `lint:permissions`              | `Test-WorkflowPermissions.ps1`                                                                             | workflow-permissions-scan.yml               |
 | `lint:ps-module-pins`           | `Test-PSModulePins.ps1`                                                                                    | Local                                       |
 | `lint:dependency-pinning`       | `Test-DependencyPinning.ps1`                                                                               | dependency-pinning-scan.yml                 |
