@@ -118,7 +118,8 @@ jobs:
             SCAN_ARGS+=("--log-opts=${INPUT_BASE_SHA}..${INPUT_HEAD_SHA}")
             echo 'Scanning the verified immutable workflow range.'
           elif [ "$INPUT_CHANGE_MODE" = 'full' ]; then
-            echo 'Full validation mode selected; scanning repository history.'
+            SCAN_ARGS+=("--log-opts=--full-history --diff-filter=tuxdb HEAD")
+            echo 'Full validation mode selected; scanning the full history of the checked-out commit.'
           else
             echo "::error::Unsupported change mode: $INPUT_CHANGE_MODE"
             exit 1

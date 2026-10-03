@@ -372,7 +372,7 @@ jobs:
         }
     }
 
-    It 'Scopes gitleaks to exact SHAs in range mode and omits log options in full mode' {
+    It 'Scopes gitleaks to exact SHAs in range mode and to candidate history in full mode' {
         $WorkflowPath = Join-Path $PSScriptRoot '../../../.github/workflows/gitleaks-scan.yml'
         $WorkflowText = Get-Content -Raw -Path $WorkflowPath
         $Workflow = $WorkflowText | ConvertFrom-Yaml
@@ -383,6 +383,8 @@ jobs:
         $Inputs.Contains('log-opts') | Should -BeFalse
         $ScanStep['run'] | Should -Match '\$\{INPUT_BASE_SHA\}\.\.\$\{INPUT_HEAD_SHA\}'
         $ScanStep['run'] | Should -Match "INPUT_CHANGE_MODE.*= 'full'"
+        $ScanStep['run'] | Should -Match '"--log-opts=--full-history --diff-filter=tuxdb HEAD"'
+        $ScanStep['run'] | Should -Not -Match '--all'
         $WorkflowText | Should -Not -Match 'github\.event\.pull_request'
     }
 }
@@ -398,7 +400,7 @@ jobs:
         It 'Uses event-safe concurrency without pull-request-only fields' {
             $ConcurrencyGroup = $script:AggregateWorkflow['concurrency']['group']
 
-            $ConcurrencyGroup | Should -BeExactly '${{ github.workflow }}-${{ github.ref }}'
+            $ConcurrencyGroup | Should -BeExactly '${{ github.workflow }}-${{ github.event_name == ''workflow_dispatch'' && github.run_id || github.ref }}'
             $ConcurrencyGroup | Should -Not -Match 'pull_request'
         }
 
