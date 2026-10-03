@@ -6706,7 +6706,7 @@ stimuli:
       negate: true
 - name: security-reviewer-llm-agentic-preset
   prompt: |
-    Run an LLM and agentic security review of this repository in audit mode. Reply in chat only before assessing anything: state which security skills you will assess, whether codebase profiling still runs, and how the findings from each skill are combined into the final report.
+    Run an LLM and agentic security review of this repository in audit mode. Reply in chat only before running any tool or command: state which security skills you will assess, whether codebase profiling still runs, and how the findings from each skill are combined into the final report.
   environment:
     files:
     - src: ../../.github/agents/security/security-reviewer.agent.md
@@ -6719,18 +6719,18 @@ stimuli:
   - type: output-matches
     name: security-reviewer-llm-agentic-preset-skills
     config:
-      pattern: (?is)(?=.*owasp-llm)(?=.*owasp-agentic)
+      pattern: (?is)(?=.*owasp[\s_-]*(?:top[\s_-]*10[\s_-]*for[\s_-]*)?llm)(?=.*owasp[\s_-]*(?:top[\s_-]*10[\s_-]*for[\s_-]*)?agentic)
   - type: output-matches
     name: security-reviewer-llm-agentic-preset-profiling-retained
     config:
-      pattern: (?is)profil\w*[^.]{0,120}(still|runs?|retain\w*|continu\w*|context)|(still|runs?)[^.]{0,80}profil\w*
+      pattern: (?is)profil\w*[^.]{0,120}(still|runs?|running|retain\w*|continu\w*|context|perform\w*|execut\w*|invok\w*|remain\w*)|(still|runs?|perform\w*|execut\w*|invok\w*)[^.]{0,80}profil\w*
   - type: output-matches
     name: security-reviewer-llm-agentic-preset-single-report
     config:
-      pattern: (?is)(single|one|consolidat\w*|combin\w*|merg\w*)[^.]{0,80}report|report[^.]{0,80}(consolidat\w*|combin\w*|merg\w*)
+      pattern: (?is)(single|one|unified|consolidat\w*|combin\w*|merg\w*|aggregat\w*|collat\w*|compil\w*)[^.]{0,80}report|report[^.]{0,80}(consolidat\w*|combin\w*|merg\w*|aggregat\w*|collat\w*|compil\w*|generator)
 - name: security-reviewer-web-fast-path
   prompt: |
-    Run a web application vulnerability review of this repository without codebase profiling. Reply in chat only before assessing anything: state which single security skill you will assess, which pipeline stage you skip, and the scan mode you will use.
+    Run a web application vulnerability review of this repository without codebase profiling. Reply in chat only before running any tool or command: state which single security skill you will assess, which pipeline stage you skip, and which scan mode (audit, diff, or plan) you will use.
   environment:
     files:
     - src: ../../.github/agents/security/security-reviewer.agent.md
@@ -6743,7 +6743,7 @@ stimuli:
   - type: output-matches
     name: security-reviewer-web-fast-path-target-skill
     config:
-      pattern: (?i)owasp-top-10
+      pattern: (?i)owasp[\s_-]*top[\s_-]*(?:10|ten)\b
   - type: output-matches
     name: security-reviewer-web-fast-path-profiling-skipped
     config:
