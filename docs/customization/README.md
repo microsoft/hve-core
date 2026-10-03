@@ -94,10 +94,6 @@ failures or chasing advisory polish. Known target files and caller-supplied
 canonical references remain bounded lifecycle reads; open-ended exploration and
 decision-critical research activate `rpi-research`.
 
-The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills
-remain compatibility aliases for legacy requests. They route to `hve-builder`
-and do not own separate authoring workflows.
-
 Each artifact guide below includes an "Authoring with HVE Builder" section
 with type-specific examples.
 
