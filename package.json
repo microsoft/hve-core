@@ -5,9 +5,6 @@
   "private": true,
   "scripts": {
     "test:ps": "pwsh -NoProfile -File scripts/tests/Invoke-PesterTests.ps1",
-    "test:activation": "pwsh -NoProfile -File scripts/tests/Invoke-PesterTests.ps1 -TestPath scripts/tests/agents/activation-harness/",
-    "test:activation:baseline": "pwsh -NoProfile -File scripts/agents/activation-harness/Update-AgentActivationBaseline.ps1",
-    "test:activation:baseline:check": "pwsh -NoProfile -File scripts/agents/activation-harness/Update-AgentActivationBaseline.ps1 -DryRun",
     "spell-check": "cspell \"**/*.{md,ts,js,json,yaml,yml}\"",
     "spell-check:fix": "cspell \"**/*.{md,ts,js,json,yaml,yml}\" --show-suggestions",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",

@@ -458,6 +458,11 @@ function Read-VallyResultsJsonl {
     trials plus aggregate wall time. Malformed lines are skipped rather than
     thrown so a partial run still yields counts.
 
+    Native token usage from `trajectory.metrics.tokenUsage` is summed across
+    trials whose input and output token counts are finite and non-negative.
+    Trials without valid usage add nothing to the token totals and are not
+    counted in `tokenTrials`; they never affect pass, fail, or record issues.
+
     .PARAMETER RunDir
     Directory returned by `Resolve-VallyRunDir`.
 
@@ -466,7 +471,7 @@ function Read-VallyResultsJsonl {
     Diagnostic identities come only from this configuration.
 
     .OUTPUTS
-    [hashtable] `@{ assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus; failedOrErroredTrials }`.
+    [hashtable] `@{ assertionsPassed; assertionsFailed; durationMs; inputTokens; outputTokens; cacheReadTokens; tokenTrials; trials; resultsPath; perStimulus; failedOrErroredTrials }`.
     `perStimulus` is an ordered map keyed by stimulus name with `@{ assertionsPassed; assertionsFailed; durationMs; trials }`.
     #>
     [CmdletBinding()]
@@ -485,6 +490,10 @@ function Read-VallyResultsJsonl {
         assertionsFailed = 0
         errored          = 0
         durationMs       = 0
+        inputTokens      = [long]0
+        outputTokens     = [long]0
+        cacheReadTokens  = [long]0
+        tokenTrials      = 0
         trials           = 0
         stimuliPassed    = 0
         stimuliFailed    = 0
@@ -507,6 +516,19 @@ function Read-VallyResultsJsonl {
     $failed = 0
     $errored = 0
     $durationMs = 0
+    $inputTokens = [long]0
+    $outputTokens = [long]0
+    $cacheReadTokens = [long]0
+    $tokenTrials = 0
+    $readTokenCount = {
+        param($Usage, [string]$Name)
+        if ($null -eq $Usage -or -not $Usage.PSObject.Properties[$Name]) { return $null }
+        $value = $Usage.$Name
+        if ($null -eq $value -or $value -isnot [ValueType] -or $value -is [bool]) { return $null }
+        $number = [double]$value
+        if (-not [double]::IsFinite($number) -or $number -lt 0) { return $null }
+        return [long]$number
+    }
     $trials = 0
     $perStimulus = [ordered]@{}
     $failedOrErroredTrials = [System.Collections.Generic.List[object]]::new()
@@ -583,6 +605,23 @@ function Read-VallyResultsJsonl {
             $null -ne $obj.trajectory.metrics.wallTimeMs) {
             $trialWallMs = [int]$obj.trajectory.metrics.wallTimeMs
             $durationMs += $trialWallMs
+        }
+
+        if ($obj.PSObject.Properties['trajectory'] -and $obj.trajectory -and
+            $obj.trajectory.PSObject.Properties['metrics'] -and $obj.trajectory.metrics -and
+            $obj.trajectory.metrics.PSObject.Properties['tokenUsage'] -and $obj.trajectory.metrics.tokenUsage) {
+            $usage = $obj.trajectory.metrics.tokenUsage
+            $trialInputTokens = & $readTokenCount $usage 'inputTokens'
+            $trialOutputTokens = & $readTokenCount $usage 'outputTokens'
+            $trialCacheReadTokens = & $readTokenCount $usage 'cacheReadTokens'
+            $cacheReadInvalid = $null -eq $trialCacheReadTokens -and
+                $usage.PSObject.Properties['cacheReadTokens'] -and $null -ne $usage.cacheReadTokens
+            if ($null -ne $trialInputTokens -and $null -ne $trialOutputTokens -and -not $cacheReadInvalid) {
+                $tokenTrials++
+                $inputTokens += $trialInputTokens
+                $outputTokens += $trialOutputTokens
+                if ($null -ne $trialCacheReadTokens) { $cacheReadTokens += $trialCacheReadTokens }
+            }
         }
 
         $stimulusName = $null
@@ -811,6 +850,10 @@ function Read-VallyResultsJsonl {
         assertionsFailed = $failed
         errored          = $errored
         durationMs       = $durationMs
+        inputTokens      = $inputTokens
+        outputTokens     = $outputTokens
+        cacheReadTokens  = $cacheReadTokens
+        tokenTrials      = $tokenTrials
         trials           = $trials
         stimuliPassed    = $stimuliPassed
         stimuliFailed    = $stimuliFailed
@@ -1248,7 +1291,7 @@ function Invoke-VallySpec {
     past that product yields nothing.
 
     .OUTPUTS
-    [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus; failedOrErroredTrials; tag }`.
+    [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; inputTokens; outputTokens; cacheReadTokens; tokenTrials; trials; resultsPath; perStimulus; failedOrErroredTrials; tag }`.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -1399,6 +1442,10 @@ function Invoke-VallySpec {
         assertionsFailed = $aggregate.assertionsFailed
         erroredTrials    = $aggregate.errored
         durationMs       = $durationMs
+        inputTokens      = if ($aggregate.ContainsKey('inputTokens')) { [long]$aggregate.inputTokens } else { [long]0 }
+        outputTokens     = if ($aggregate.ContainsKey('outputTokens')) { [long]$aggregate.outputTokens } else { [long]0 }
+        cacheReadTokens  = if ($aggregate.ContainsKey('cacheReadTokens')) { [long]$aggregate.cacheReadTokens } else { [long]0 }
+        tokenTrials      = if ($aggregate.ContainsKey('tokenTrials')) { [int]$aggregate.tokenTrials } else { 0 }
         trials           = $aggregate.trials
         stimuliPassed    = $aggregate.stimuliPassed
         stimuliFailed    = $aggregate.stimuliFailed

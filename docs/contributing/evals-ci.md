@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-01
+ms.date: 2026-10-03
 ms.topic: how-to
 keywords:
   - evals
@@ -117,6 +117,14 @@ evidence fails closed.
 `eval-report` is presentation-only. It downloads the single `eval-authoritative`
 artifact and renders its `eval-summary.json`; it does not concatenate partial summaries
 or decide whether evidence is complete.
+
+The per-artifact table includes `Input tokens / trial` and `Cache-read tokens / trial`
+columns. Each value is the artifact's summed token count divided by the trials that
+reported usage, taken from Vally's native `trajectory.metrics.tokenUsage` for the
+selected attempt of each spec. The columns are advisory and never gate a pull request.
+Model-backed trials vary from run to run, so compare a value against several runs
+rather than one. A dash means no trial reported usable token counts, or the summary
+predates token reporting.
 
 ## Advisory Model Lanes
 
