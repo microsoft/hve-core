@@ -169,3 +169,22 @@ expectations:
     priority: high
     applies_when: "stimulus asks for technical accessibility conformance detail"
     contract_ref: "agent §Technical accessibility and inclusion"
+
+  - expectation_id: mural-readiness-and-extractor-boundary
+    summary: Mural routing, readiness, and extractor writeback stay inside the explicit mode, verdict, and stable-channel boundaries.
+    signal: Missing mode, target, or intent stops before Mural; non-ready verdicts stop with remediation; extractor writeback names only tags, hyperlink, and parentId.
+    pass_criteria: |
+      `ux-ui-designer-mural-explicit-routing-required` names the missing value and
+      stops before loading a mapping or calling Mural.
+      `ux-ui-designer-mural-environment-verdicts` repeats each verdict token and its
+      remediation and stops. `ux-ui-designer-mural-extractor-metadata-boundary`
+      limits extractor writes to `tags`, `hyperlink`, and `parentId` on existing
+      AI-authored widgets, keeps widget text unchanged, and requires explicit
+      confirmation of the exact target before execution.
+    failure_modes:
+      - Mode or destination is inferred.
+      - A Mural verb runs after a non-ready verdict.
+      - Extractor mode creates widgets or edits widget text.
+    priority: high
+    applies_when: "stimulus involves Mural routing, readiness, or extractor writeback"
+    contract_ref: "agent §Mural; mural skill references/bootstrap.md and references/writeback-hygiene.md"
