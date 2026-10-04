@@ -69,6 +69,8 @@ Note-level quality results pass the gate but still appear as alerts, and you sti
 
 The gate accepts SARIF from any code-scanning tool and attributes each result to its tool name. Scanners gated at zero findings run it with `-Threshold All`, which fails every result regardless of level or severity.
 
+A newly adopted scanner's gate becomes blocking only once each of its findings is fixed or registered as a tracked exception with its upstream report. Until then its findings still upload and appear as alerts; nothing is suppressed while the gate waits.
+
 The gate runs inside the CodeQL job, which feeds `PR Validation Success`. That matters for the merge queue: GitHub's ruleset code-scanning protection does not evaluate merge-queue groups, but the gate does, because the queue runs the same validation. The gate counts every finding at the threshold, not only new ones, so a red gate on `main` means the baseline is no longer clean.
 
 To reproduce a gate result locally, download the analysis SARIF and run:
