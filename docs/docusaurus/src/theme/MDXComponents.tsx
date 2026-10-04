@@ -36,14 +36,14 @@ function Table(props: React.ComponentProps<'table'>): React.ReactElement {
 
   return (
     // The scroll container is non-interactive but must be keyboard focusable
-    // (WCAG 2.1.1). jsx-a11y/no-noninteractive-tabindex does not model the
+    // (WCAG 2.1.1). jsx-a11y-x/no-noninteractive-tabindex does not model the
     // scrollable-region case, so it is disabled here with intent.
     <div
       className="tableWrapper"
       ref={wrapperRef}
       role="group"
       aria-label="Scrollable table"
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      // eslint-disable-next-line jsx-a11y-x/no-noninteractive-tabindex
       tabIndex={0}
     >
       <table {...props} />
