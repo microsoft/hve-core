@@ -1659,3 +1659,96 @@ stimuli:
         name: mural-log-hygiene-redacted-evidence
         config:
           pattern: '(?is)(_redact|redact|masked).{0,120}(evidence|log|output|copy)'
+
+  - name: instruction-typescript-doc-comments-contract-content
+    prompt: |
+      Apply the staged TypeScript documentation instruction to this exported
+      helper from `src/config/read-config-files.ts`. Show the complete
+      documented code in your reply, not only a file path.
+
+      ```typescript
+      import { existsSync, promises as fs } from 'node:fs';
+      import path from 'node:path';
+
+      export async function readConfigFiles(dir: string, names: string[]): Promise<Map<string, string>> {
+        const root = path.resolve(dir);
+        const result = new Map<string, string>();
+        for (const name of [...names].sort()) {
+          const full = path.resolve(root, name);
+          if (!full.startsWith(root + path.sep)) {
+            throw new Error('Refusing to read outside ' + root + ': ' + name);
+          }
+          if (existsSync(full)) {
+            result.set(name, await fs.readFile(full, 'utf8'));
+          }
+        }
+        return result;
+      }
+      ```
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/coding-standards/typescript-doc-comments.instructions.md
+          dest: .github/instructions/coding-standards/typescript-doc-comments.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: typescript-doc-comments
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: typescript-doc-comments-block-precedes-declaration
+        config:
+          pattern: '(?s)/\*\*[\s\S]*?\*/\s*export\s+async\s+function\s+readConfigFiles\b'
+      - type: output-matches
+        name: typescript-doc-comments-missing-and-failure-contract
+        config:
+          pattern: '(?is)/\*\*(?=(?:(?!\*/)[\s\S])*?(?:missing|not exist|n.t exist|nonexistent|absent|skip|omit))(?=(?:(?!\*/)[\s\S])*?(?:reject|throw))'
+      - type: output-matches
+        name: typescript-doc-comments-ordering-contract
+        config:
+          pattern: '(?is)/\*\*(?=(?:(?!\*/)[\s\S])*?(?:\bsort|alphabetical|lexicographic|ascending|by name))'
+      - type: output-not-matches
+        name: typescript-doc-comments-no-redundant-type-tags
+        config:
+          pattern: '/\*\*(?:(?!\*/)[\s\S])*?(?:@(?:param|returns?|type|throws)\s*\{(?!@)|@(?:async|private|static)\b)'
+
+  - name: instruction-typescript-doc-comments-coverage-decisions
+    prompt: |
+      Using the staged TypeScript documentation instruction, decide whether
+      each new declaration below needs a documentation block. Answer with one
+      line per letter in the form `X: doc: yes` or `X: doc: no`, followed by a
+      short reason.
+
+      A. An exported `useDebouncedValue(value, delayMs)` hook in
+         `src/hooks/use-debounced-value.ts`, used by many components.
+      B. An exported `renderWithProviders(ui, options)` helper in
+         `test/utils/render.tsx`, imported by most component test files.
+      C. `export declare function parseManifest(text: string): Manifest;` in a
+         hand-written `types/manifest.d.ts`.
+      D. A non-exported `normalizeKey(key: string): string` in
+         `src/cache.ts`; cache lookups rely on it lowercasing the key and
+         removing one leading `@`.
+      E. The `export default defineConfig({ ... })` in `playwright.config.ts`,
+         read only by the test runner.
+      F. An `it('renders the empty state', () => { ... })` callback and a
+         `vi.fn()` mock used only inside that test.
+      G. `export * from './chunk';` in a package `index.ts` barrel.
+      H. `export const MAX_RETRIES = 3;` in `src/http/retry.ts`.
+      I. `src/generated/api-client.ts`, regenerated from an OpenAPI document
+         on every build.
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/coding-standards/typescript-doc-comments.instructions.md
+          dest: .github/instructions/coding-standards/typescript-doc-comments.instructions.md
+    tags:
+      category: behavior-conformance
+      instruction: typescript-doc-comments
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: typescript-doc-comments-required-declarations
+        config:
+          pattern: '(?m)(?=[\s\S]*^[^\w\n]*A\b[^\n]*[Dd]oc:[ *_\x60]*[Yy]es)(?=[\s\S]*^[^\w\n]*B\b[^\n]*[Dd]oc:[ *_\x60]*[Yy]es)(?=[\s\S]*^[^\w\n]*C\b[^\n]*[Dd]oc:[ *_\x60]*[Yy]es)(?=[\s\S]*^[^\w\n]*D\b[^\n]*[Dd]oc:[ *_\x60]*[Yy]es)'
+      - type: output-matches
+        name: typescript-doc-comments-exempt-declarations
+        config:
+          pattern: '(?m)(?=[\s\S]*^[^\w\n]*E\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*F\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*G\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*H\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)(?=[\s\S]*^[^\w\n]*I\b[^\n]*[Dd]oc:[ *_\x60]*[Nn]o\b)'

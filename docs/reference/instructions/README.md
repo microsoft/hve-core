@@ -3,7 +3,7 @@ title: Instructions
 description: Reference documentation for HVE Core instructions.
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-09-29
+ms.date: 2026-10-03
 ms.topic: overview
 keywords:
   - reference
@@ -30,6 +30,7 @@ This page lists the generated reference documentation for HVE Core instructions.
 | [Coding Standards/Rust/Rust Tests](coding-standards/rust/rust-tests.md)                           | Rust test code authoring conventions                                                                                                                                                                                                                                                  |
 | [Coding Standards/Rust/Rust](coding-standards/rust/rust.md)                                       | Rust code authoring conventions                                                                                                                                                                                                                                                       |
 | [Coding Standards/Terraform/Terraform](coding-standards/terraform/terraform.md)                   | Terraform infrastructure-as-code authoring conventions                                                                                                                                                                                                                                |
+| [Coding Standards/Typescript Doc Comments](coding-standards/typescript-doc-comments.md)           | Contract-focused TSDoc conventions for TypeScript. Use when adding or changing reusable functions, classes, types, components, hooks, props, callbacks, or test helpers                                                                                                               |
 | [Coding Standards/Uv Projects](coding-standards/uv-projects.md)                                   | Create and manage Python virtual environments using uv commands                                                                                                                                                                                                                       |
 | [Design Thinking/Dt Coach Telemetry](design-thinking/dt-coach-telemetry.md)                       | Applies Design Thinking telemetry expectations to DT session artifacts                                                                                                                                                                                                                |
 | [Engagement Reporting/Data Handling](engagement-reporting/data-handling.md)                       | Protects sensitive engagement sources, working files, reports, transcripts, and configuration.                                                                                                                                                                                        |
