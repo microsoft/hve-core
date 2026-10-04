@@ -3,7 +3,7 @@ title: Validation Commands and CI-Owned Lanes
 description: Choose local-safe validation defaults and reproduce CI-owned documentation and evaluation lanes when their prerequisites are available
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-03
 ms.topic: how-to
 keywords:
   - validation
@@ -326,7 +326,8 @@ npm run security:codeql-gate -- -SarifPath ./python.sarif
 
 The gate reads `security/code-scanning-exceptions.yml` and needs the pinned
 `PowerShell-Yaml` module. It makes no network calls and does not change alert
-state.
+state. It accepts SARIF from any code-scanning tool; pass `-Threshold All` to
+fail every result, as scanners gated at zero findings do.
 
 ## Rust unit-test network-isolation lane
 

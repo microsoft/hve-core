@@ -42,9 +42,10 @@ BeforeAll {
             [Parameter(Mandatory)][string]$Name,
             [object[]]$DriverRules = @(),
             [object[]]$ExtensionRules = @(),
-            [object[]]$Results = @()
+            [object[]]$Results = @(),
+            [string]$ToolName = 'CodeQL'
         )
-        $tool = [ordered]@{ driver = [ordered]@{ name = 'CodeQL'; rules = @($DriverRules) } }
+        $tool = [ordered]@{ driver = [ordered]@{ name = $ToolName; rules = @($DriverRules) } }
         if ($ExtensionRules.Count -gt 0) {
             $tool.extensions = @([ordered]@{ name = 'codeql/python-queries'; rules = @($ExtensionRules) })
         }
@@ -65,9 +66,9 @@ BeforeAll {
     }
 
     function script:Invoke-Gate {
-        param([string[]]$Sarif, [string]$Exceptions)
+        param([string[]]$Sarif, [string]$Exceptions, [string]$Threshold = 'Default')
         $summary = Join-Path $TestDrive "summary-$([guid]::NewGuid()).md"
-        $params = @{ SarifPath = $Sarif; CheckDate = $script:CheckDate; SummaryPath = $summary }
+        $params = @{ SarifPath = $Sarif; CheckDate = $script:CheckDate; SummaryPath = $summary; Threshold = $Threshold }
         if ($Exceptions) { $params.ExceptionsPath = $Exceptions }
         else { $params.ExceptionsPath = (Write-Exceptions -Yaml 'exceptions: []' -Name "empty-$([guid]::NewGuid())") }
         return Invoke-CodeQLSarifGate @params
@@ -86,7 +87,7 @@ Describe 'Threshold contract' {
         $gate = Invoke-Gate -Sarif (Get-MediumSecuritySarif)
         $gate.ExitCode | Should -Be 1
         $gate.Failing.RuleId | Should -Be 'js/missing-origin-check'
-        $gate.Summary | Should -Match 'js/missing-origin-check \(security-severity 5\) at docs/slides/deck.html:10'
+        $gate.Summary | Should -Match '\[CodeQL\] js/missing-origin-check \(security-severity 5\) at docs/slides/deck.html:10'
     }
 
     It 'passes a low security-severity result even at warning level' {
@@ -153,6 +154,45 @@ Describe 'Threshold contract' {
     }
 }
 
+Describe 'Threshold All' {
+    It 'fails a note-level result that the default threshold passes' {
+        $sarif = Write-Sarif -Name 'all-note' -ToolName 'poutine' `
+            -DriverRules @(New-SarifRule -Id 'github_action_from_unverified_creator_used' -DefaultLevel 'note') `
+            -Results @(New-SarifResult -RuleId 'github_action_from_unverified_creator_used' -Path '.github/workflows/label-sync.yml')
+        (Invoke-Gate -Sarif $sarif).ExitCode | Should -Be 0
+        $gate = Invoke-Gate -Sarif $sarif -Threshold 'All'
+        $gate.ExitCode | Should -Be 1
+        $gate.Failing.Tool | Should -Be 'poutine'
+        $gate.Summary | Should -Match 'Threshold: every result'
+    }
+
+    It 'fails a low security-severity result' {
+        $sarif = Write-Sarif -Name 'all-low' `
+            -DriverRules @(New-SarifRule -Id 'py/low' -SecuritySeverity '1.0') `
+            -Results @(New-SarifResult -RuleId 'py/low' -Level 'note')
+        (Invoke-Gate -Sarif $sarif -Threshold 'All').ExitCode | Should -Be 1
+    }
+
+    It 'passes when every tool reports zero results' {
+        $sarif = Write-Sarif -Name 'all-clean' -ToolName 'zizmor' -DriverRules @(New-SarifRule -Id 'template-injection')
+        (Invoke-Gate -Sarif $sarif -Threshold 'All').ExitCode | Should -Be 0
+    }
+}
+
+Describe 'Multiple tools' {
+    It 'attributes results to each tool and names every tool in the summary' {
+        $codeql = Get-MediumSecuritySarif -Name 'multi-codeql'
+        $zizmor = Write-Sarif -Name 'multi-zizmor' -ToolName 'zizmor' `
+            -DriverRules @(New-SarifRule -Id 'artipacked' -DefaultLevel 'warning') `
+            -Results @(New-SarifResult -RuleId 'artipacked' -Path '.github/workflows/ci.yml')
+        $gate = Invoke-Gate -Sarif $codeql, $zizmor
+        $gate.ExitCode | Should -Be 1
+        @($gate.Failing).Count | Should -Be 2
+        ($gate.Failing.Tool | Sort-Object) -join ',' | Should -Be 'CodeQL,zizmor'
+        $gate.Summary | Should -Match '## Code-scanning threshold gate \(CodeQL, zizmor\)'
+    }
+}
+
 Describe 'Fail-closed inputs' {
     It 'fails when the SARIF file is missing' {
         $gate = Invoke-Gate -Sarif (Join-Path $TestDrive 'missing.sarif')
@@ -191,7 +231,7 @@ Describe 'Fail-closed inputs' {
         $summary = Join-Path $TestDrive 'job-summary.md'
         $exceptions = Write-Exceptions -Yaml 'exceptions: []' -Name 'summary-empty'
         $null = Invoke-CodeQLSarifGate -SarifPath (Get-MediumSecuritySarif -Name 'summary') -ExceptionsPath $exceptions -CheckDate $script:CheckDate -SummaryPath $summary
-        Get-Content -Raw -LiteralPath $summary | Should -Match '## CodeQL threshold gate'
+        Get-Content -Raw -LiteralPath $summary | Should -Match '## Code-scanning threshold gate \(CodeQL\)'
     }
 }
 
@@ -199,18 +239,26 @@ Describe 'Tracked exceptions' {
     BeforeAll {
         function script:New-ExceptionYaml {
             param(
+                [string]$Tool = 'CodeQL',
                 [string]$Rule = 'js/missing-origin-check',
                 [string]$Path = 'docs/slides/deck.html',
+                [string]$Count = '1',
+                [string]$Kind = 'false-positive',
+                [string]$Upstream = 'https://github.com/github/codeql/issues/1',
                 [string]$Expires = '2026-11-15',
                 [string[]]$Omit = @()
             )
             $fields = [ordered]@{
-                rule    = $Rule
-                path    = $Path
-                issue   = '1234'
-                owner   = 'octocat'
-                reason  = 'upstream analyzer false positive, reported at example'
-                expires = $Expires
+                tool     = $Tool
+                rule     = $Rule
+                path     = $Path
+                count    = $Count
+                kind     = $Kind
+                upstream = $Upstream
+                issue    = '1234'
+                owner    = 'octocat'
+                reason   = 'upstream analyzer false positive'
+                expires  = $Expires
             }
             $lines = @('exceptions:')
             $first = $true
@@ -228,7 +276,79 @@ Describe 'Tracked exceptions' {
         $gate = Invoke-Gate -Sarif (Get-MediumSecuritySarif -Name 'excused') -Exceptions (Write-Exceptions -Yaml (New-ExceptionYaml) -Name 'match')
         $gate.ExitCode | Should -Be 0
         @($gate.Excepted).Count | Should -Be 1
-        $gate.Summary | Should -Match 'excepted \(issue #1234, expires 2026-11-15\)'
+        $gate.Summary | Should -Match 'excepted as false-positive \(issue #1234, upstream https://github.com/github/codeql/issues/1, expires 2026-11-15\)'
+    }
+
+    It 'fails when more results match than the pinned count' {
+        $sarif = Write-Sarif -Name 'count-more' `
+            -DriverRules @(New-SarifRule -Id 'js/missing-origin-check' -SecuritySeverity '5.0') `
+            -Results (New-SarifResult -RuleId 'js/missing-origin-check' -Path 'docs/slides/deck.html' -Line 10), (New-SarifResult -RuleId 'js/missing-origin-check' -Path 'docs/slides/deck.html' -Line 20)
+        $gate = Invoke-Gate -Sarif $sarif -Exceptions (Write-Exceptions -Yaml (New-ExceptionYaml) -Name 'count-more')
+        $gate.ExitCode | Should -Be 1
+        @($gate.Failing).Count | Should -Be 2
+        @($gate.Excepted).Count | Should -Be 0
+        $gate.ExceptionErrors | Should -Match 'expects 1 result\(s\) but found 2'
+    }
+
+    It 'fails when fewer results match than the pinned count' {
+        $gate = Invoke-Gate -Sarif (Get-MediumSecuritySarif -Name 'count-fewer') -Exceptions (Write-Exceptions -Yaml (New-ExceptionYaml -Count '3') -Name 'count-fewer')
+        $gate.ExitCode | Should -Be 1
+        $gate.ExceptionErrors | Should -Match 'expects 3 result\(s\) but found 1'
+    }
+
+    It 'excuses several results when the count matches exactly' {
+        $sarif = Write-Sarif -Name 'count-two' `
+            -DriverRules @(New-SarifRule -Id 'js/missing-origin-check' -SecuritySeverity '5.0') `
+            -Results (New-SarifResult -RuleId 'js/missing-origin-check' -Path 'docs/slides/deck.html' -Line 10), (New-SarifResult -RuleId 'js/missing-origin-check' -Path 'docs/slides/deck.html' -Line 20)
+        $gate = Invoke-Gate -Sarif $sarif -Exceptions (Write-Exceptions -Yaml (New-ExceptionYaml -Count '2') -Name 'count-two')
+        $gate.ExitCode | Should -Be 0
+        @($gate.Excepted).Count | Should -Be 2
+    }
+
+    It 'does not excuse the same rule and path from a different tool' {
+        $sarif = Write-Sarif -Name 'tool-scope' -ToolName 'zizmor' `
+            -DriverRules @(New-SarifRule -Id 'js/missing-origin-check' -SecuritySeverity '5.0') `
+            -Results @(New-SarifResult -RuleId 'js/missing-origin-check' -Level 'warning' -Path 'docs/slides/deck.html')
+        $gate = Invoke-Gate -Sarif $sarif -Exceptions (Write-Exceptions -Yaml (New-ExceptionYaml) -Name 'tool-scope')
+        $gate.ExitCode | Should -Be 1
+        $gate.Failing.Tool | Should -Be 'zizmor'
+        $gate.ExceptionErrors | Should -BeNullOrEmpty
+    }
+
+    It 'excuses a matching result in a multi-tool run and fails the other tool' {
+        $zizmor = Write-Sarif -Name 'multi-excuse-zizmor' -ToolName 'zizmor' `
+            -DriverRules @(New-SarifRule -Id 'artipacked' -DefaultLevel 'warning') `
+            -Results @(New-SarifResult -RuleId 'artipacked' -Path '.github/workflows/ci.yml')
+        $gate = Invoke-Gate -Sarif (Get-MediumSecuritySarif -Name 'multi-excuse-codeql'), $zizmor -Exceptions (Write-Exceptions -Yaml (New-ExceptionYaml) -Name 'multi-excuse')
+        $gate.ExitCode | Should -Be 1
+        @($gate.Excepted).Count | Should -Be 1
+        $gate.Failing.Tool | Should -Be 'zizmor'
+    }
+
+    It 'fails an exception with an unknown kind' {
+        $gate = Invoke-Gate -Sarif (Get-MediumSecuritySarif -Name 'bad-kind') -Exceptions (Write-Exceptions -Yaml (New-ExceptionYaml -Kind 'wont-fix') -Name 'bad-kind')
+        $gate.ExitCode | Should -Be 1
+        $gate.ExceptionErrors | Should -Match "'kind' must be one of"
+    }
+
+    It 'fails an exception whose upstream is not an https URL' {
+        $gate = Invoke-Gate -Sarif (Get-MediumSecuritySarif -Name 'bad-upstream') -Exceptions (Write-Exceptions -Yaml (New-ExceptionYaml -Upstream 'reported') -Name 'bad-upstream')
+        $gate.ExitCode | Should -Be 1
+        $gate.ExceptionErrors | Should -Match "'upstream' must be an https URL"
+    }
+
+    It 'fails an exception with a non-positive count' {
+        $gate = Invoke-Gate -Sarif (Get-MediumSecuritySarif -Name 'zero-count') -Exceptions (Write-Exceptions -Yaml (New-ExceptionYaml -Count '0') -Name 'zero-count')
+        $gate.ExitCode | Should -Be 1
+        $gate.ExceptionErrors | Should -Match "'count' must be a positive number"
+    }
+
+    It 'fails an exception missing each v2 field' -ForEach @(
+        @{ Field = 'tool' }, @{ Field = 'count' }, @{ Field = 'kind' }, @{ Field = 'upstream' }
+    ) {
+        $gate = Invoke-Gate -Sarif (Get-MediumSecuritySarif -Name "missing-$Field") -Exceptions (Write-Exceptions -Yaml (New-ExceptionYaml -Omit $Field) -Name "missing-$Field")
+        $gate.ExitCode | Should -Be 1
+        $gate.ExceptionErrors | Should -Match "missing required field '$Field'"
     }
 
     It 'does not excuse a result in a different path' {
@@ -273,7 +393,7 @@ Describe 'Tracked exceptions' {
         $sarif = Write-Sarif -Name 'stale' -DriverRules @(New-SarifRule -Id 'js/missing-origin-check' -SecuritySeverity '5.0')
         $gate = Invoke-Gate -Sarif $sarif -Exceptions (Write-Exceptions -Yaml (New-ExceptionYaml) -Name 'stale')
         $gate.ExitCode | Should -Be 1
-        $gate.ExceptionErrors | Should -Match 'Stale exception: js/missing-origin-check'
+        $gate.ExceptionErrors | Should -Match 'Stale exception: CodeQL js/missing-origin-check'
     }
 
     It 'ignores an exception for a rule this analysis did not run' {

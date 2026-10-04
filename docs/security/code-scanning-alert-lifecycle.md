@@ -2,7 +2,7 @@
 title: Code-Scanning Alert Lifecycle
 description: How HVE Core detects, blocks, tracks, and resolves code-scanning alerts without ever dismissing them
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-03
 ms.topic: concept
 keywords:
   - security
@@ -67,6 +67,8 @@ After each CodeQL analysis uploads its results, `scripts/security/Test-CodeQLSar
 
 Note-level quality results pass the gate but still appear as alerts, and you still resolve them. Inline SARIF suppressions do not exempt a result, and a missing or unreadable SARIF file fails the job.
 
+The gate accepts SARIF from any code-scanning tool and attributes each result to its tool name. Scanners gated at zero findings run it with `-Threshold All`, which fails every result regardless of level or severity.
+
 The gate runs inside the CodeQL job, which feeds `PR Validation Success`. That matters for the merge queue: GitHub's ruleset code-scanning protection does not evaluate merge-queue groups, but the gate does, because the queue runs the same validation. The gate counts every finding at the threshold, not only new ones, so a red gate on `main` means the baseline is no longer clean.
 
 To reproduce a gate result locally, download the analysis SARIF and run:
@@ -113,19 +115,24 @@ Do not add paths to `.github/codeql/` ignore lists, add query filters, or restru
 
 ## Tracked Exceptions
 
-An exception is the only way to let the gate pass while a finding remains. It applies only to a demonstrated analyzer false positive or to third-party code this repository cannot patch, after the problem is reported upstream.
+An exception is the only way to let the gate pass while a finding remains. It applies to any tool the gate evaluates, and only to one of these kinds, after the problem is reported upstream:
 
-1. Open an issue that explains the evidence and links the upstream report.
-2. Add an entry to [`security/code-scanning-exceptions.yml`](https://github.com/microsoft/hve-core/blob/main/security/code-scanning-exceptions.yml) with the exact rule ID, the exact repository-relative path, the issue number, an owner, a one-line reason, and an `expires` date no more than 90 days out.
+* `false-positive`: the analyzer is demonstrably wrong.
+* `generated-code`: the finding is in output of a generator this repository does not author.
+* `third-party`: code or behavior this repository cannot patch.
+* `platform-limitation`: the platform cannot yet support the fix.
+
+1. File the upstream report, then open an issue that explains the evidence and links it.
+2. Add an entry to [`security/code-scanning-exceptions.yml`](https://github.com/microsoft/hve-core/blob/main/security/code-scanning-exceptions.yml) with the exact SARIF tool name, the exact rule ID, the exact repository-relative path, the exact number of matching results (`count`), the `kind`, the `upstream` report URL, the issue number, an owner, a one-line reason, and an `expires` date no more than 90 days out.
 3. Get the change reviewed like any other pull request.
 
 While the exception is active:
 
 * the alert stays open on GitHub;
-* the gate lists the result as excepted, with its issue and expiry;
+* the gate lists each result as excepted, with its kind, issue, upstream report, and expiry;
 * the weekly workflow keeps a status comment current on the issue, and files a new issue if the linked one is closed while the finding persists.
 
-The gate fails when an entry has expired, expires more than 90 days out, is missing a field, has an unknown field, or no longer matches a result. Renewing an exception is a new review, not an edit to the date alone; restate why the fix is still blocked.
+The gate fails when an entry has expired, expires more than 90 days out, is missing a field, has an unknown field or kind, matches a different number of results than its `count` in either direction, or no longer matches a result. Pinning the count means a new finding cannot hide under an existing entry. Renewing an exception is a new review, not an edit to the date alone; restate why the fix is still blocked.
 
 ## Unpatched Dependency Advisories
 
