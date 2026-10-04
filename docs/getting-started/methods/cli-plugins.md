@@ -64,7 +64,7 @@ copilot plugin marketplace add microsoft/hve-core
 copilot plugin install hve-core@hve-core
 ```
 
-The `--force` option also uninstalls plugins installed from that marketplace.
+In some Copilot CLI versions, `--force` also uninstalls plugins installed from that marketplace. Check `copilot plugin marketplace remove --help` for your version.
 
 If you previously registered or installed a retired package identity, the
 [retired package identities](../package-migration#retired-package-identities)
