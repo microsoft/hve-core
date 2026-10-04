@@ -134,6 +134,8 @@ Individual validation workflows called by orchestration workflows:
 | `ai-artifact-validation.yml`          | AI artifact structure validation                              | `npm run lint:ai-artifacts`, `npm run lint:artifact-portability` |
 | `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity                               | `npm run validate:devcontainer-lockfile`                         |
 | `action-version-consistency-scan.yml` | Action version consistency                                    | `npm run lint:version-consistency`                               |
+| `tool-version-consistency-scan.yml`   | Tool, runtime, and tool-lock versions against the manifest    | `npm run lint:tool-version-consistency`                          |
+| `action-pin-provenance-scan.yml`      | Action pin comments and commits against upstream tags         | `npm run lint:action-pin-provenance`                             |
 
 Workflows marked with `*` are dual-purpose: they accept `workflow_call` for reuse by orchestration workflows and also run independently via their own triggers.
 
@@ -230,6 +232,8 @@ flowchart LR
 | workflow-runner-check           | `workflow-runner-scan.yml`            | Workflow runner labels                                       |
 | dangerous-workflow-check        | `dangerous-workflow-scan.yml`         | Dangerous workflow patterns                                  |
 | action-version-consistency-scan | `action-version-consistency-scan.yml` | Action version consistency                                   |
+| tool-version-consistency-scan   | `tool-version-consistency-scan.yml`   | Tool, runtime, and tool-lock versions                        |
+| action-pin-provenance-scan      | `action-pin-provenance-scan.yml`      | Action pins against upstream tags and history                |
 | gitleaks-scan                   | `gitleaks-scan.yml`                   | Secret detection                                             |
 | npm-audit                       | Inline                                | npm dependency vulnerabilities                               |
 | codeql                          | `codeql-analysis.yml`                 | Code security patterns                                       |
@@ -357,14 +361,16 @@ The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, pro
 
 ### Security Validation Tools
 
-| Tool               | Script                                         | Checks                                                                         |
-|--------------------|------------------------------------------------|--------------------------------------------------------------------------------|
-| Dependency Pinning | `Test-DependencyPinning.ps1`                   | Actions use SHA refs; npm uses exact versions                                  |
-| SHA Staleness      | `Test-SHAStaleness.ps1`                        | SHAs reference recent commits                                                  |
-| audit-ci           | `audit-ci --config audit-ci.json`              | Known vulnerabilities in dependencies, using the allowlist in `audit-ci.json`  |
-| CodeQL             | GitHub native; `Test-CodeQLSarifThreshold.ps1` | Code patterns indicating security issues; fails at the code-scanning threshold |
-| Gitleaks           | `gitleaks`                                     | Secret detection in repository history                                         |
-| Dependency Review  | GitHub native                                  | Dependency vulnerability analysis                                              |
+| Tool                     | Script                                         | Checks                                                                                                    |
+|--------------------------|------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| Dependency Pinning       | `Test-DependencyPinning.ps1`                   | Actions use SHA refs; npm uses exact versions                                                             |
+| SHA Staleness            | `Test-SHAStaleness.ps1`                        | SHAs reference recent commits                                                                             |
+| Tool Version Consistency | `Test-ToolVersionConsistency.ps1`              | Hard-coded tool versions, runtime pins, and tool locks match the manifest                                 |
+| Action Pin Provenance    | `Test-ActionPinProvenance.ps1`                 | Each pin comment names the release tag at the pinned commit; the commit is on a tag or the default branch |
+| audit-ci                 | `audit-ci --config audit-ci.json`              | Known vulnerabilities in dependencies, using the allowlist in `audit-ci.json`                             |
+| CodeQL                   | GitHub native; `Test-CodeQLSarifThreshold.ps1` | Code patterns indicating security issues; fails at the code-scanning threshold                            |
+| Gitleaks                 | `gitleaks`                                     | Secret detection in repository history                                                                    |
+| Dependency Review        | GitHub native                                  | Dependency vulnerability analysis                                                                         |
 
 The CodeQL threshold gate, the weekly code-scanning issue filer, and tracked exceptions follow the [code-scanning alert lifecycle](../security/code-scanning-alert-lifecycle.md). Alerts are resolved in code or configuration and never dismissed.
 
@@ -429,6 +435,8 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `lint:ps`                       | `Invoke-PSScriptAnalyzer.ps1`                                                                              | ps-script-analyzer.yml                      |
 | `lint:plugin-manifest`          | `Sync-PluginManifest.ps1 -Check`                                                                           | plugin-validation.yml                       |
 | `lint:version-consistency`      | `Test-ActionVersionConsistency.ps1`                                                                        | Local                                       |
+| `lint:tool-version-consistency` | `Test-ToolVersionConsistency.ps1`                                                                          | tool-version-consistency-scan.yml           |
+| `lint:action-pin-provenance`    | `Test-ActionPinProvenance.ps1`                                                                             | action-pin-provenance-scan.yml              |
 | `validate:local`                | Local-safe repository validation aggregate                                                                 | Local-safe default                          |
 | `validate:docs`                 | Docusaurus lint, label registry, typecheck, and component tests                                            | Local-safe docs default                     |
 | `ci:docs:test:e2e`              | Delegates to the Docusaurus Playwright E2E suite                                                           | CI-owned browser lane                       |

@@ -45,6 +45,7 @@ The security scripts share common modules and follow a consistent pattern:
 * [`Get-CodeScanningExceptionStatus.ps1`](#get-codescanningexceptionstatusps1): tracked exception status for the weekly job
 * [`Get-UpstreamWatchStatus.ps1`](#get-upstreamwatchstatusps1): upstream catch-up watches
 * [`Test-ToolVersionConsistency.ps1`](#test-toolversionconsistencyps1): hard-coded tool versions against the manifest
+* [`Test-ActionPinProvenance.ps1`](#test-actionpinprovenanceps1): action pin comments and commits against upstream
 * [`Install-PSModules.ps1`](#install-psmodulesps1): centralized PS module install with retry
 * [`Test-PSModulePins.ps1`](#test-psmodulepinsps1): PS module version pin enforcement
 * [`Sign-PlannerArtifacts.ps1`](#sign-plannerartifactsps1): planner artifact manifest and signing
@@ -547,6 +548,43 @@ devcontainer, Copilot setup steps, and workflows cannot drift apart.
 This gate requires the `PowerShell-Yaml` module at the version pinned in
 `ps-module-versions.json` when the exceptions file is present.
 
+### `Test-ActionPinProvenance.ps1`
+
+Verifies every SHA-pinned action against its upstream repository.
+
+Purpose: Catch version comments that misdescribe a pin, and pins of commits
+that no upstream tag or default-branch history contains, which is how an
+impostor commit from a fork looks.
+
+#### Features
+
+* Scans `uses:` pins in `.github/workflows/` and `.github/actions/`, plus the
+  `Update-ActionSHAPinning.ps1` remediation table
+* Reads each upstream repository's tags and default branch once per run with
+  `git ls-remote` (no API rate limit), peeling annotated tags to their commit
+* Rules:
+  * `action-pin/comment-mismatch`: the comment names a tag at another commit, a
+    moving major or minor tag, a version that is not a tag at the commit, free
+    text on a commit that has a release tag, or a remediation entry outside its
+    key's major
+  * `action-pin/comment-missing`: the pin has no comment
+  * `action-pin/tag-object`: the pin names an annotated tag object, not a commit
+  * `action-pin/unreachable-commit`: no tag points at the commit and the
+    compare API shows it outside the default branch history, or the repository
+    does not contain it
+  * `action-pin/upstream-unavailable`: tags or history could not be read; the
+    check fails closed
+* Calls the compare API only for untagged commits; a free-text comment is
+  allowed only for such a commit in the default branch history
+* Writes SARIF (tool `hve-action-pin-provenance`) with `-SarifPath`;
+  `action-pin-provenance-scan.yml` runs it in PR validation
+
+#### Usage
+
+```powershell
+./scripts/security/Test-ActionPinProvenance.ps1 -SarifPath logs/action-pin-provenance.sarif
+```
+
 ### `Install-PSModules.ps1`
 
 Installs PowerShell modules declared in `ps-module-versions.json` with
@@ -751,6 +789,7 @@ Security scripts integrate with these workflows:
 |-------------------------------------|----------------------------------------------------------------------|-------------------------------|
 | `dependency-pinning-scan.yml`       | `Test-DependencyPinning.ps1`                                         | PR, schedule                  |
 | `tool-version-consistency-scan.yml` | `Test-ToolVersionConsistency.ps1`                                    | Called by `pr-validation.yml` |
+| `action-pin-provenance-scan.yml`    | `Test-ActionPinProvenance.ps1`                                       | Called by `pr-validation.yml` |
 | `gh-code-scanning.yml`              | `Get-CodeScanningExceptionStatus.ps1`, `Get-UpstreamWatchStatus.ps1` | Weekly                        |
 | `sha-staleness-check.yml`           | `Test-SHAStaleness.ps1`                                              | Schedule                      |
 | `pr-validation.yml`                 | `Test-DependencyPinning.ps1`                                         | Pull request                  |

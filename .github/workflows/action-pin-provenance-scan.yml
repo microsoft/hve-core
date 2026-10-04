@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-name: Tool Version Consistency Scan
+name: Action Pin Provenance Scan
 
 on:
   workflow_call:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   scan:
-    name: Validate Tool Version Consistency
+    name: Verify Action Pins Against Upstream
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -21,12 +21,16 @@ jobs:
         with:
           persist-credentials: false
 
-      # Every hard-coded tool version and checksum must match the single source in
-      # scripts/security/tool-checksums.json. Findings are reported to code scanning
-      # before the step fails.
-      - name: Check tool versions against the manifest
+      # Every SHA-pinned action must carry a comment naming a release tag that
+      # points at the pinned commit, and the commit must be on an upstream tag or
+      # in the default branch history. Findings are reported to code scanning
+      # before the step fails. The read-only job token only raises the compare
+      # API rate limit.
+      - name: Verify action pins against upstream tags and history
         shell: pwsh
-        run: ./scripts/security/Test-ToolVersionConsistency.ps1 -SarifPath logs/tool-version-consistency.sarif
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./scripts/security/Test-ActionPinProvenance.ps1 -SarifPath logs/action-pin-provenance.sarif
 
       # Uploading needs security-events: write, which a fork pull request never
       # receives. Skip the step for forks rather than attempt it; the check above
@@ -35,5 +39,5 @@ jobs:
         if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
-          sarif_file: logs/tool-version-consistency.sarif
-          category: tool-version-consistency
+          sarif_file: logs/action-pin-provenance.sarif
+          category: action-pin-provenance

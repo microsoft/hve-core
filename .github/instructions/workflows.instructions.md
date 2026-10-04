@@ -10,7 +10,7 @@ These instructions define required conventions and security requirements for Git
 
 ## Dependency Pinning
 
-All third-party GitHub Actions MUST be pinned to a full commit SHA. Version tags MUST NOT be used as the reference. A semantic version MAY be included as a trailing comment for readability.
+All third-party GitHub Actions MUST be pinned to a full commit SHA. Version tags MUST NOT be used as the reference. Each pin MUST carry a trailing comment naming the exact release tag that points at the pinned commit (for example `# v4.2.2`, not a moving `# v4`). The commit MUST be a commit, not an annotated tag object, and MUST be on an upstream tag or in the upstream default branch history. A reusable workflow pinned to an untagged commit on the default branch may use a free-text comment that records its origin.
 
 **Required pattern:**
 
@@ -27,7 +27,7 @@ uses: actions/checkout@v4.2.2
 
 Local reusable workflows referenced via relative paths are excluded from SHA pinning requirements.
 
-**Enforcement:** Violations are detected by `scripts/security/Test-DependencyPinning.ps1` and `scripts/security/Test-SHAStaleness.ps1`. CI will fail on SHA pinning violations.
+**Enforcement:** Violations are detected by `scripts/security/Test-DependencyPinning.ps1` and `scripts/security/Test-SHAStaleness.ps1`. `scripts/security/Test-ActionPinProvenance.ps1` resolves each comment and commit against the upstream repository with `git ls-remote` and the compare API, and fails on a mislabeled comment, a tag-object pin, or a commit that is on no tag and not in the default branch history (a possible impostor commit). CI will fail on SHA pinning violations.
 
 ## Permissions
 
@@ -288,6 +288,12 @@ All workflows MUST pass the following validation checks:
 * **Script:** `scripts/security/Test-DependencyPinning.ps1`
 * **What it enforces:** All third-party actions use full SHA pins
 * **CI blocking:** Failures block CI when configured to enforce compliance
+
+### Action Pin Provenance Validation
+
+* **Script:** `scripts/security/Test-ActionPinProvenance.ps1` (`npm run lint:action-pin-provenance`)
+* **What it enforces:** Every pin comment names the release tag at the pinned commit, and every pinned commit is on an upstream tag or in the default branch history. The `Update-ActionSHAPinning.ps1` remediation table is held to the same rules, and each entry must map to a release in its key's major version
+* **CI blocking:** `action-pin-provenance-scan.yml` runs it in PR validation and fails closed when upstream cannot be read
 
 ### SHA Staleness Validation
 

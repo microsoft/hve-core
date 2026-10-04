@@ -588,6 +588,13 @@ jobs:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
 
+  action-pin-provenance-scan:
+    name: Action Pin Provenance Scan
+    uses: ./.github/workflows/action-pin-provenance-scan.yml
+    permissions:
+      contents: read
+      security-events: write # Required for SARIF upload to Security tab
+
   gitleaks-scan:
     name: Gitleaks Secret Scan
     needs: change-range
@@ -900,6 +907,7 @@ jobs:
       - dangerous-workflow-check
       - action-version-consistency-scan
       - tool-version-consistency-scan
+      - action-pin-provenance-scan
       - gitleaks-scan
       - npm-audit
       - codeql
