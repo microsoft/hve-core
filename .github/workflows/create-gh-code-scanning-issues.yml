@@ -174,36 +174,54 @@ jobs:
 
             CHECK_DATE=$(date -u '+%Y-%m-%d')
             while IFS= read -r entry; do
+            TOOL=$(echo "$entry" | jq -r '.Tool')
             RULE_ID=$(echo "$entry" | jq -r '.Rule')
             ALERT_PATH=$(echo "$entry" | jq -r '.Path')
+            PINNED_COUNT=$(echo "$entry" | jq -r '.Count')
+            OPEN_COUNT=$(echo "$entry" | jq -r '.OpenAlertCount')
+            EXCEPTION_KIND=$(echo "$entry" | jq -r '.Kind')
+            UPSTREAM=$(echo "$entry" | jq -r '.Upstream')
+            UPSTREAM_STATE=$(echo "$entry" | jq -r '.UpstreamState')
             ISSUE=$(echo "$entry" | jq -r '.Issue')
             EXCEPTION_OWNER=$(echo "$entry" | jq -r '.Owner')
             EXPIRES=$(echo "$entry" | jq -r '.Expires')
             DAYS_LEFT=$(echo "$entry" | jq -r '.DaysLeft // "unknown"')
             ALERT_OPEN=$(echo "$entry" | jq -r '.AlertOpen')
             ALERT_URL=$(echo "$entry" | jq -r '.AlertUrl // ""')
-            STATUS_MARKER="automation:code-scanning-exception-status:${RULE_ID}:${ALERT_PATH}"
+            STATUS_MARKER="automation:code-scanning-exception-status:${TOOL}:${RULE_ID}:${ALERT_PATH}"
 
             STATE=$(gh issue view "${ISSUE}" --repo "${OWNER}/${REPO}" --json state --jq '.state' 2>/dev/null || echo "MISSING")
 
             if [[ "$STATE" == "OPEN" ]]; then
               if [[ "$ALERT_OPEN" == "true" ]]; then
-                ALERT_STATE="still open${ALERT_URL:+ (${ALERT_URL})}"
+                ALERT_STATE="${OPEN_COUNT} open on \`main\`${ALERT_URL:+ (${ALERT_URL})}"
+                if [[ "$OPEN_COUNT" != "$PINNED_COUNT" ]]; then
+                  ALERT_STATE="${ALERT_STATE}; the entry pins ${PINNED_COUNT}, so fix the new results or correct the count in review"
+                fi
               else
                 ALERT_STATE="no longer open on \`main\`; remove the exception entry"
               fi
+              case "$UPSTREAM_STATE" in
+                closed) UPSTREAM_NOTE="closed; check whether the upstream fix has shipped and retire this exception" ;;
+                open) UPSTREAM_NOTE="open" ;;
+                *) UPSTREAM_NOTE="state unknown; check the report manually" ;;
+              esac
               STATUS_BODY=$(cat <<EOF
             <!-- ${STATUS_MARKER} -->
             ### Tracked code-scanning exception status
 
             | Field | Value |
             |-------|-------|
+            | Tool | \`${TOOL}\` |
             | Rule | \`${RULE_ID}\` |
             | Path | \`${ALERT_PATH}\` |
+            | Kind | ${EXCEPTION_KIND} |
+            | Pinned count | ${PINNED_COUNT} |
+            | Upstream | ${UPSTREAM} (${UPSTREAM_NOTE}) |
             | Owner | ${EXCEPTION_OWNER} |
             | Expires | ${EXPIRES} |
             | Days left | ${DAYS_LEFT} |
-            | Alert | ${ALERT_STATE} |
+            | Alerts | ${ALERT_STATE} |
 
             Updated ${CHECK_DATE} by the weekly code-scanning workflow. The alert stays open while it is excused; see the [code-scanning alert lifecycle](${LIFECYCLE_URL}).
             EOF
@@ -216,7 +234,7 @@ jobs:
                 gh issue comment "${ISSUE}" --repo "${OWNER}/${REPO}" --body "${STATUS_BODY}"
               fi
             elif [[ "$ALERT_OPEN" == "true" ]]; then
-              MARKER="automation:code-scanning-exception:${RULE_ID}:${ALERT_PATH}"
+              MARKER="automation:code-scanning-exception:${TOOL}:${RULE_ID}:${ALERT_PATH}"
               existing=$(gh issue list \
                 --repo "${OWNER}/${REPO}" \
                 --search "\"${MARKER}\" in:body" \
@@ -225,9 +243,10 @@ jobs:
             <!-- ${MARKER} -->
             ## Tracked exception outlived its issue
 
-            The tracked exception for \`${RULE_ID}\` in \`${ALERT_PATH}\` links issue #${ISSUE}, which is no longer open, but the alert is still open${ALERT_URL:+: ${ALERT_URL}}.
+            The tracked exception for \`${TOOL}\` rule \`${RULE_ID}\` in \`${ALERT_PATH}\` links issue #${ISSUE}, which is no longer open, but the alert is still open${ALERT_URL:+: ${ALERT_URL}}.
 
             **Owner:** ${EXCEPTION_OWNER}
+            **Upstream report:** ${UPSTREAM}
             **Exception expires:** ${EXPIRES}
 
             ### Action Required
@@ -240,7 +259,7 @@ jobs:
               if [[ -z "$existing" ]]; then
                 gh issue create \
                   --repo "${OWNER}/${REPO}" \
-                  --title "[Security][Exception] ${RULE_ID} still detected in ${ALERT_PATH}" \
+                  --title "[Security][Exception] ${TOOL} ${RULE_ID} still detected in ${ALERT_PATH}" \
                   --label "security,automated,code-scanning" \
                   --body "${FOLLOW_UP_BODY}"
               else
@@ -249,6 +268,81 @@ jobs:
                   --body "Weekly scan update: the alert is still open as of ${CHECK_DATE}."
               fi
             else
-              echo "Exception ${RULE_ID} in ${ALERT_PATH}: issue #${ISSUE} is ${STATE} and the alert is no longer open."
+              echo "Exception ${TOOL} ${RULE_ID} in ${ALERT_PATH}: issue #${ISSUE} is ${STATE} and the alert is no longer open."
             fi
             done < <(jq -c '.[]' exceptions.json)
+
+      # A triggered watch means an upstream condition now allows retiring a
+      # workaround or tracked exception. One issue per watch, keyed by marker.
+      - name: Open issues for triggered upstream watches
+        shell: bash
+        run: |
+            set -euo pipefail
+            if [[ ! -f watches.json ]]; then
+              echo "No upstream watch status in the artifact; nothing to report."
+              exit 0
+            fi
+            if ! jq -e 'type == "array"' watches.json > /dev/null; then
+              echo "::error::watches.json is not a JSON array. The upstream watch step produced a malformed artifact."
+              exit 1
+            fi
+
+            CHECK_DATE=$(date -u '+%Y-%m-%d')
+            while IFS= read -r watch; do
+            WATCH_ID=$(echo "$watch" | jq -r '.Id')
+            WATCH_KIND=$(echo "$watch" | jq -r '.Kind')
+            WATCH_STATE=$(echo "$watch" | jq -r '.State')
+            SUBJECT=$(echo "$watch" | jq -r '.Subject')
+            DETAIL=$(echo "$watch" | jq -r '.Detail')
+            ACTION=$(echo "$watch" | jq -r '.Action')
+            TRACKING_ISSUE=$(echo "$watch" | jq -r '.Issue')
+            MARKER=$(echo "$watch" | jq -r '.Marker')
+
+            if [[ "$WATCH_STATE" == "unknown" ]]; then
+              echo "::warning::Upstream watch ${WATCH_ID} could not be evaluated: ${DETAIL}"
+              continue
+            fi
+            if [[ "$WATCH_STATE" != "triggered" ]]; then
+              echo "Upstream watch ${WATCH_ID} is waiting: ${DETAIL}"
+              continue
+            fi
+
+            existing=$(gh issue list \
+              --repo "${OWNER}/${REPO}" \
+              --search "\"${MARKER}\" in:body" \
+              --state open --json number --jq '.[0].number // empty')
+            if [[ -n "$existing" ]]; then
+              gh issue comment "${existing}" \
+                --repo "${OWNER}/${REPO}" \
+                --body "Weekly scan update: still triggered as of ${CHECK_DATE} (${DETAIL})."
+              continue
+            fi
+
+            WATCH_BODY=$(cat <<EOF
+            <!-- ${MARKER} -->
+            ## Upstream watch triggered: ${WATCH_ID}
+
+            An upstream condition that a workaround or tracked exception waits on is now met.
+
+            | Field | Value |
+            |-------|-------|
+            | Kind | ${WATCH_KIND} |
+            | Subject | ${SUBJECT} |
+            | Observed | ${DETAIL} |
+            | Tracking issue | #${TRACKING_ISSUE} |
+
+            ### Action Required
+            - [ ] ${ACTION}
+            - [ ] Remove the watch from \`security/upstream-watches.yml\` in the same change
+
+            **Detection Date:** ${CHECK_DATE}
+
+            See the [code-scanning alert lifecycle](${LIFECYCLE_URL}).
+            EOF
+            )
+            gh issue create \
+              --repo "${OWNER}/${REPO}" \
+              --title "[Security][Upstream watch] ${WATCH_ID} can be retired" \
+              --label "security,automated,code-scanning" \
+              --body "${WATCH_BODY}"
+            done < <(jq -c '.[]' watches.json)

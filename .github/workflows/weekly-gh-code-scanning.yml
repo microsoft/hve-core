@@ -15,6 +15,7 @@ permissions:
   contents: read
   issues: write
   security-events: read
+  actions: read
 
 jobs:
   gh-code-scanning:
@@ -23,6 +24,7 @@ jobs:
     permissions:
       contents: read
       security-events: read
+      actions: read
 
   create-gh-code-scanning-issues:
     name: Create GitHub Code Scanning Issues

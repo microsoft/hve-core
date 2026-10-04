@@ -1,0 +1,32 @@
+# Upstream catch-up watches read by scripts/security/Get-UpstreamWatchStatus.ps1.
+#
+# A watch records an upstream condition that, once met, lets this repository
+# retire a workaround or a tracked exception. The weekly code-scanning workflow
+# evaluates every watch and opens or updates one issue per triggered watch, so a
+# workaround never outlives its reason silently. Add a watch in the same change
+# that adds the workaround it retires.
+#
+# Every watch needs id, kind, issue, and action, plus the fields for its kind:
+#
+#   - id: firewall-runner-repo-root-refs   # unique, lowercase kebab-case
+#     kind: runner-version                 # one of the kinds below
+#     issue: 1234                          # hve-core issue that tracks the workaround
+#     action: one line describing what to change once the watch triggers
+#
+# Kinds and their fields:
+#
+#   issue-closed     url: https://github.com/org/repo/issues/123
+#                    Triggers when the upstream issue or pull request is closed.
+#   release-newer    repo: org/repo
+#                    pinned: 1.2.3
+#                    Triggers when the latest release is newer than pinned.
+#   runner-version   label: ubuntu-24.04-firewall
+#                    minimum: 2.336.0
+#                    Triggers when a job on label reports at least minimum.
+#   probe-outcome    probe: probe-id
+#                    baseline: fail
+#                    Triggers when the named capability probe reports an
+#                    outcome (pass or fail) different from baseline.
+#
+# See docs/security/code-scanning-alert-lifecycle.md for how watches are tracked.
+watches: []

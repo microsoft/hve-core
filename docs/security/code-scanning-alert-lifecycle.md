@@ -86,13 +86,19 @@ The rule has no exception concept. If a [tracked exception](#tracked-exceptions)
 
 The [Weekly GitHub Code Scanning](https://github.com/microsoft/hve-core/blob/main/.github/workflows/weekly-gh-code-scanning.yml) workflow runs Mondays at 3 AM UTC and files or updates one issue per rule. Every issue it files is labeled `security`, `automated`, and `code-scanning`, so no automated issue waits on a triage pass. A hidden body marker identifies the kind of issue and keeps reruns updating the same issue instead of filing duplicates.
 
-| Issue kind                   | Marker                                             | What it asks for                                                                                          |
-|------------------------------|----------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| Open alert                   | `automation:security-scan:<rule>`                  | Find the root cause and resolve it in code or configuration                                               |
-| Dismissed but still detected | `automation:security-scan-dismissed:<rule>`        | Reopen the alert, then resolve it; the earlier dismissal does not count as a resolution                   |
-| Tracked exception follow-up  | `automation:code-scanning-exception:<rule>:<path>` | The exception's issue was closed while the finding persists; fix it or renew the exception through review |
+| Issue kind                   | Marker                                                    | What it asks for                                                                                          |
+|------------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| Open alert                   | `automation:security-scan:<rule>`                         | Find the root cause and resolve it in code or configuration                                               |
+| Dismissed but still detected | `automation:security-scan-dismissed:<rule>`               | Reopen the alert, then resolve it; the earlier dismissal does not count as a resolution                   |
+| Tracked exception follow-up  | `automation:code-scanning-exception:<tool>:<rule>:<path>` | The exception's issue was closed while the finding persists; fix it or renew the exception through review |
+| Upstream watch triggered     | `automation:upstream-watch:<id>`                          | An upstream condition a workaround waits on is met; retire the workaround and remove the watch            |
 
-For each tracked exception, the same run also keeps one status comment current on the exception's issue, showing the rule, path, expiry, days left, and whether the alert is still open.
+For each tracked exception, the same run also keeps one status comment current on the exception's issue, showing the tool, rule, path, kind, pinned count, upstream report and whether it is still open, expiry, days left, and how many alerts are still open. A closed upstream report is the cue to check whether the fix has shipped and retire the exception.
+
+### Upstream watches
+
+[`security/upstream-watches.yml`](https://github.com/microsoft/hve-core/blob/main/security/upstream-watches.yml) lists the upstream conditions that let a workaround or tracked exception retire: an upstream issue closing, a newer upstream release, a runner label reaching a minimum runner version, or a capability probe changing outcome.
+Add a watch in the same change that adds the workaround. The weekly run evaluates every watch, starts one short job on each runner label a watch names to read its runner version, and opens one issue per triggered watch. A watch it cannot evaluate is reported as a warning, never as triggered.
 
 ## Agentic Workflows
 

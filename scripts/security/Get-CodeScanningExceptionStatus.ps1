@@ -12,17 +12,19 @@
 
 <#
 .SYNOPSIS
-    Reports each tracked code-scanning exception with its expiry and alert state.
+    Reports each tracked code-scanning exception with its expiry, alert, and upstream state.
 
 .DESCRIPTION
     Reads security/code-scanning-exceptions.yml and, for each entry, reports the
-    rule, path, linked issue, owner, expiry, days left, and whether an open
-    code-scanning alert for that rule and path still exists on the branch.
+    tool, rule, path, pinned count, kind, upstream report, linked issue, owner,
+    expiry, days left, how many open code-scanning alerts for that tool, rule, and
+    path exist on the branch, and whether the upstream report is still open.
 
     The weekly code-scanning issue workflow uses this output to update one status
-    comment on each exception's issue, and to file a new issue when the linked
-    issue is closed while the alert is still open. Validation of the entries is
-    owned by Test-CodeQLSarifThreshold.ps1; entries without a rule, path, or issue
+    comment on each exception's issue, to flag an exception whose upstream report
+    has closed, and to file a new issue when the linked issue is closed while the
+    alert is still open. Validation of the entries is owned by
+    Test-CodeQLSarifThreshold.ps1; entries without a tool, rule, path, or issue
     number are skipped here with a warning.
 
     Writes a JSON array to standard output. An empty exceptions list produces [].
@@ -69,13 +71,50 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Read-ExceptionEntry {
+    [CmdletBinding()]
+    [OutputType([object[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExceptionsPath
+    )
+
+    if (-not (Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue)) {
+        Import-Module powershell-yaml -ErrorAction Stop
+    }
+    $document = Get-Content -Raw -LiteralPath $ExceptionsPath | ConvertFrom-Yaml
+    if ($document -is [System.Collections.IDictionary] -and $null -ne $document['exceptions']) {
+        return , @($document['exceptions'])
+    }
+    return , @()
+}
+
+function Get-GitHubIssueApiPath {
+    <#
+    .SYNOPSIS
+        Converts a GitHub issue or pull request URL to its REST API path, or returns $null.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyString()]
+        [string]$Url
+    )
+
+    if ($Url -match '^https://github\.com/([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)/(?:issues|pull)/(\d+)/?$') {
+        return "repos/$($Matches[1])/$($Matches[2])/issues/$($Matches[3])"
+    }
+    return $null
+}
+
 function Get-CodeScanningExceptionStatus {
     <#
     .SYNOPSIS
         Builds a status record for each tracked exception.
     .OUTPUTS
-        PSCustomObject[] with Rule, Path, Issue, Owner, Reason, Expires, DaysLeft,
-        AlertOpen, and AlertUrl.
+        PSCustomObject[] with Tool, Rule, Path, Count, Kind, Upstream, UpstreamState,
+        Issue, Owner, Reason, Expires, DaysLeft, AlertOpen, OpenAlertCount, and AlertUrl.
     #>
     [CmdletBinding()]
     [OutputType([pscustomobject[]])]
@@ -88,24 +127,19 @@ function Get-CodeScanningExceptionStatus {
         [object[]]$OpenAlerts,
 
         [Parameter(Mandatory = $true)]
-        [datetime]$CheckDate
+        [datetime]$CheckDate,
+
+        # Upstream URL to state ('open', 'closed', or 'unknown'). Missing URLs report 'unknown'.
+        [Parameter(Mandatory = $false)]
+        [hashtable]$UpstreamStates = @{}
     )
 
-    if (-not (Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue)) {
-        Import-Module powershell-yaml -ErrorAction Stop
-    }
-    $document = Get-Content -Raw -LiteralPath $ExceptionsPath | ConvertFrom-Yaml
-    $entries = @()
-    if ($document -is [System.Collections.IDictionary] -and $null -ne $document['exceptions']) {
-        $entries = @($document['exceptions'])
-    }
-
     $records = [System.Collections.Generic.List[object]]::new()
-    foreach ($entry in $entries) {
+    foreach ($entry in (Read-ExceptionEntry -ExceptionsPath $ExceptionsPath)) {
         if ($entry -isnot [System.Collections.IDictionary]) { continue }
         $issue = 0
-        if (-not $entry['rule'] -or -not $entry['path'] -or -not [int]::TryParse("$($entry['issue'])", [ref]$issue) -or $issue -le 0) {
-            Write-Warning "Skipping exception without a rule, path, or issue number: $($entry['rule']) $($entry['path'])"
+        if (-not $entry['tool'] -or -not $entry['rule'] -or -not $entry['path'] -or -not [int]::TryParse("$($entry['issue'])", [ref]$issue) -or $issue -le 0) {
+            Write-Warning "Skipping exception without a tool, rule, path, or issue number: $($entry['tool']) $($entry['rule']) $($entry['path'])"
             continue
         }
 
@@ -125,26 +159,65 @@ function Get-CodeScanningExceptionStatus {
             $daysLeft = [int]($expires - $CheckDate.Date).TotalDays
         }
 
+        $tool = [string]$entry['tool']
         $rule = [string]$entry['rule']
         $path = [string]$entry['path']
-        $alert = $OpenAlerts | Where-Object {
-            $_.rule.id -ceq $rule -and $_.most_recent_instance.location.path -ceq $path
-        } | Select-Object -First 1
+        $alerts = @($OpenAlerts | Where-Object {
+                $_.tool.name -ceq $tool -and $_.rule.id -ceq $rule -and $_.most_recent_instance.location.path -ceq $path
+            })
+        $count = 0
+        [void][int]::TryParse("$($entry['count'])", [ref]$count)
+        $upstream = [string]$entry['upstream']
+        $upstreamState = if ($UpstreamStates.ContainsKey($upstream)) { [string]$UpstreamStates[$upstream] } else { 'unknown' }
 
         $records.Add([pscustomobject]@{
-                Rule      = $rule
-                Path      = $path
-                Issue     = $issue
-                Owner     = [string]$entry['owner']
-                Reason    = [string]$entry['reason']
-                Expires   = if ($null -ne $expires) { $expires.ToString('yyyy-MM-dd') } else { [string]$rawExpires }
-                DaysLeft  = $daysLeft
-                AlertOpen = [bool]$alert
-                AlertUrl  = if ($alert) { [string]$alert.html_url } else { '' }
+                Tool           = $tool
+                Rule           = $rule
+                Path           = $path
+                Count          = $count
+                Kind           = [string]$entry['kind']
+                Upstream       = $upstream
+                UpstreamState  = $upstreamState
+                Issue          = $issue
+                Owner          = [string]$entry['owner']
+                Reason         = [string]$entry['reason']
+                Expires        = if ($null -ne $expires) { $expires.ToString('yyyy-MM-dd') } else { [string]$rawExpires }
+                DaysLeft       = $daysLeft
+                AlertOpen      = $alerts.Count -gt 0
+                OpenAlertCount = $alerts.Count
+                AlertUrl       = if ($alerts.Count -gt 0) { [string]$alerts[0].html_url } else { '' }
             })
     }
 
     return , $records.ToArray()
+}
+
+function Get-UpstreamState {
+    <#
+    .SYNOPSIS
+        Looks up the state of each GitHub issue or pull request URL with the gh CLI.
+    .OUTPUTS
+        Hashtable of URL to 'open', 'closed', or 'unknown'.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [string[]]$Url
+    )
+
+    $states = @{}
+    foreach ($item in ($Url | Where-Object { $_ } | Sort-Object -Unique)) {
+        $apiPath = Get-GitHubIssueApiPath -Url $item
+        $state = 'unknown'
+        if ($apiPath) {
+            $raw = gh api $apiPath --jq '.state' 2>$null
+            if ($LASTEXITCODE -eq 0 -and "$raw".Trim() -in @('open', 'closed')) { $state = "$raw".Trim() }
+        }
+        $states[$item] = $state
+    }
+    return $states
 }
 
 if ($MyInvocation.InvocationName -ne '.') {
@@ -168,7 +241,9 @@ if ($MyInvocation.InvocationName -ne '.') {
             throw "gh api call failed (exit $LASTEXITCODE): $raw"
         }
         $alerts = @($raw | ConvertFrom-Json)
-        $status = Get-CodeScanningExceptionStatus -ExceptionsPath $ExceptionsPath -OpenAlerts $alerts -CheckDate $CheckDate
+        $upstreamUrls = @(Read-ExceptionEntry -ExceptionsPath $ExceptionsPath | Where-Object { $_ -is [System.Collections.IDictionary] } | ForEach-Object { [string]$_['upstream'] })
+        $upstreamStates = Get-UpstreamState -Url $upstreamUrls
+        $status = Get-CodeScanningExceptionStatus -ExceptionsPath $ExceptionsPath -OpenAlerts $alerts -CheckDate $CheckDate -UpstreamStates $upstreamStates
         # The array wrapper keeps the output a JSON array for every result size.
         ConvertTo-Json -InputObject @($status) -Depth 3
         exit 0

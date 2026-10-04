@@ -316,9 +316,11 @@ untrusted data.
   issues labeled `code-scanning`; issues carrying
   `<!-- automation:security-scan:<rule-id> -->`,
   `<!-- automation:security-scan-dismissed:<rule-id> -->`,
-  `<!-- automation:code-scanning-exception:<rule-id>:<path> -->`, or
-  `<!-- automation:code-scanning-exception-status:<rule-id>:<path> -->`;
-  issues linked from `security/code-scanning-exceptions.yml`; and VEX
+  `<!-- automation:code-scanning-exception:<tool>:<rule-id>:<path> -->`,
+  `<!-- automation:code-scanning-exception-status:<tool>:<rule-id>:<path> -->`, or
+  `<!-- automation:upstream-watch:<id> -->`;
+  issues linked from `security/code-scanning-exceptions.yml` or
+  `security/upstream-watches.yml`; and VEX
   upstream-bump issues that track unpatched dependency advisories. For these
   issues, use `Still needed` or `Uncertain` with an advisory next step focused
   on resolving the underlying alert, exception, or upstream package update.

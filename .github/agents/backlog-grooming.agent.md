@@ -97,8 +97,9 @@ state.
    Treat code-scanning tracking issues as active work regardless of age or
    inactivity while their alert, tracked exception, or advisory remains open:
    issues labeled `code-scanning` or carrying an `automation:security-scan:`,
-   `automation:security-scan-dismissed:`, or `automation:code-scanning-exception`
-   marker, issues linked from `security/code-scanning-exceptions.yml`, and VEX
+   `automation:security-scan-dismissed:`, `automation:code-scanning-exception`,
+   or `automation:upstream-watch:` marker, issues linked from
+   `security/code-scanning-exceptions.yml` or `security/upstream-watches.yml`, and VEX
    upstream-bump issues. Use `Still needed` or `Uncertain` for them, state that
    the issue is not a closure candidate, and point the next step at resolving
    the underlying alert, exception, or upstream update. Never suggest
