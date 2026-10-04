@@ -55,7 +55,7 @@ For asynchronous APIs, describe what the returned promise resolves to and when i
 
 ## Comment Syntax and Placement
 
-* Use a `/** ... */` block immediately before the declaration it documents, above any decorators, with nothing between them.
+* Place a `/** ... */` block directly above the declaration it documents. When the declaration has decorators, place the block above the first decorator. Leave only whitespace between the block and the decorators or declaration.
 * Start with a one-sentence summary written from the caller's perspective. Do not restate the declaration name.
 * Put longer explanation after the summary or under `@remarks`.
 * Use `//` comments inside function bodies for implementation reasoning. Keep caller contracts in the documentation block, where editors surface them.
