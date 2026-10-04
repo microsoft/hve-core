@@ -143,10 +143,11 @@ Workflows marked with `*` are dual-purpose: they accept `workflow_call` for reus
 
 Composite actions package reusable step sequences that workflows invoke directly. Unlike reusable workflows (called via `uses:` at the job level with `workflow_call`), composite actions are referenced as steps within a job.
 
-| Action             | Purpose                                             | Reference                                  |
-|--------------------|-----------------------------------------------------|--------------------------------------------|
-| `setup-ps-modules` | Cached PowerShell module install with retry         | `uses: ./.github/actions/setup-ps-modules` |
-| `setup-uv`         | Checksum-verified uv install from the tool manifest | `uses: ./.github/actions/setup-uv`         |
+| Action             | Purpose                                                     | Reference                                  |
+|--------------------|-------------------------------------------------------------|--------------------------------------------|
+| `setup-ps-modules` | Cached PowerShell module install with retry                 | `uses: ./.github/actions/setup-ps-modules` |
+| `setup-uv`         | Checksum-verified uv install from the tool manifest         | `uses: ./.github/actions/setup-uv`         |
+| `setup-shellcheck` | Checksum-verified shellcheck install from the tool manifest | `uses: ./.github/actions/setup-shellcheck` |
 
 The `setup-ps-modules` action caches modules keyed on `scripts/security/ps-module-versions.json` and retries installation with exponential backoff on PSGallery failures. Workflows that need PowerShell modules must use `uses: ./.github/actions/setup-ps-modules` instead of inline `Install-Module` steps, consistent with the convention recorded in `.github/copilot-instructions.md`.
 
@@ -432,6 +433,7 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `lint:md-links`                 | `Markdown-Link-Check.ps1`                                                                                  | markdown-link-check.yml                     |
 | `lint:links`                    | `Invoke-LinkLanguageCheck.ps1`                                                                             | link-lang-check.yml                         |
 | `lint:yaml`                     | `Invoke-YamlLint.ps1`                                                                                      | yaml-lint.yml                               |
+| `lint:workflows`                | `workflow-validator/validate-workflows.mjs`                                                                | Local                                       |
 | `lint:ps`                       | `Invoke-PSScriptAnalyzer.ps1`                                                                              | ps-script-analyzer.yml                      |
 | `lint:plugin-manifest`          | `Sync-PluginManifest.ps1 -Check`                                                                           | plugin-validation.yml                       |
 | `lint:version-consistency`      | `Test-ActionVersionConsistency.ps1`                                                                        | Local                                       |

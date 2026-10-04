@@ -71,7 +71,7 @@ jobs:
         run: |
           {
             echo "## Table Format Check Results"
-            if [ "${{ env.TABLE_FORMAT_FAILED }}" == "true" ]; then
+            if [ "${TABLE_FORMAT_FAILED:-}" == "true" ]; then
               echo "❌ **Status**: Failed"
               echo ""
               echo "⚠️ **Note**: This check does NOT auto-fix tables."

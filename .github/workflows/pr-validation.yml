@@ -154,13 +154,16 @@ jobs:
         id: find
         shell: pwsh
         run: |
-          # A Node project is any skill (dir containing SKILL.md) or slide deck
-          # (direct child of slides/) that ships at least one *.test.* / *.spec.*
-          # (mjs/cjs/js). The project root is the node --test working dir.
+          # A Node project is any skill (dir containing SKILL.md), slide deck
+          # (direct child of slides/), or the workflow validator that ships at
+          # least one *.test.* / *.spec.* (mjs/cjs/js). The project root is the
+          # node --test working dir.
           $candidates = @(Get-ChildItem -Path .github/skills -Recurse -Force -Filter SKILL.md -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -notmatch 'node_modules' } |
             ForEach-Object { $_.DirectoryName }) +
             @(Get-ChildItem -Path slides -Directory -Force -ErrorAction SilentlyContinue |
+            ForEach-Object { $_.FullName }) +
+            @(Get-Item -Path scripts/linting/workflow-validator -Force -ErrorAction SilentlyContinue |
             ForEach-Object { $_.FullName })
           $projects = @($candidates |
             Where-Object { @(Get-ChildItem -Path $_ -Recurse -Force -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '\.(test|spec)\.(mjs|cjs|js)$' -and $_.FullName -notmatch 'node_modules' }).Count -gt 0 } |

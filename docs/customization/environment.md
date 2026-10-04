@@ -264,7 +264,7 @@ The coding agent environment includes:
 * Node.js 24.21.0 (from `.node-version`) with npm dependencies from `package.json`
 * Python 3.12.15 (from `.python-version`)
 * PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
-* shellcheck (pre-installed on the ubuntu-24.04 runner image)
+* shellcheck 0.11.0, pinned and checksum-verified from `scripts/security/tool-checksums.json`
 * actionlint for GitHub Actions workflow validation
 * cosign for artifact signing and verification
 * osv-scanner for dependency vulnerability scanning

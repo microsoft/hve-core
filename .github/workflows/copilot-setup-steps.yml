@@ -45,7 +45,9 @@ jobs:
       # so it can fix package.json/package-lock.json issues itself
       - name: Install JavaScript dependencies
         continue-on-error: true
-        run: npm ci
+        run: |
+          npm ci
+          npm ci --prefix scripts/linting/workflow-validator --ignore-scripts
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -76,6 +78,31 @@ jobs:
           sudo install /tmp/actionlint /usr/local/bin/actionlint
           rm /tmp/actionlint.tar.gz /tmp/actionlint
           actionlint --version
+
+      # The workflow validator requires this exact version; the runner image's
+      # shellcheck is older and unpinned.
+      - name: Install shellcheck
+        env:
+          SHELLCHECK_VERSION: '0.11.0'
+          SHELLCHECK_X86_64_SHA256: '8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198'
+          SHELLCHECK_AARCH64_SHA256: '12b331c1d2db6b9eb13cfca64306b1b157a86eb69db83023e261eaa7e7c14588'
+          GITHUB_RELEASES_URL: ${{ vars.HVE_GITHUB_RELEASES_URL || 'https://github.com' }}
+        run: |
+          ARCH=$(uname -m)
+          if [[ "${ARCH}" == "x86_64" ]]; then
+            SHELLCHECK_SHA256="${SHELLCHECK_X86_64_SHA256}"
+          elif [[ "${ARCH}" == "aarch64" ]]; then
+            SHELLCHECK_SHA256="${SHELLCHECK_AARCH64_SHA256}"
+          else
+            echo "ERROR: Unsupported architecture for shellcheck: ${ARCH}" >&2
+            exit 1
+          fi
+          curl -sSfL "${GITHUB_RELEASES_URL}/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.${ARCH}.tar.xz" -o /tmp/shellcheck.tar.xz
+          echo "${SHELLCHECK_SHA256}  /tmp/shellcheck.tar.xz" | sha256sum -c -
+          tar -xJf /tmp/shellcheck.tar.xz -C /tmp --strip-components=1 "shellcheck-v${SHELLCHECK_VERSION}/shellcheck"
+          sudo install /tmp/shellcheck /usr/local/bin/shellcheck
+          rm /tmp/shellcheck.tar.xz /tmp/shellcheck
+          shellcheck --version
 
       - name: Install PowerShell modules
         shell: pwsh

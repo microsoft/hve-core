@@ -62,7 +62,7 @@ jobs:
       - name: Add job summary
         if: always()
         run: |
-          if [ "${{ env.MARKDOWN_LINT_FAILED }}" == "true" ]; then
+          if [ "${MARKDOWN_LINT_FAILED:-}" == "true" ]; then
             {
               echo "## Markdown Lint Results"
               echo "❌ **Status**: Failed"

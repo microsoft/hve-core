@@ -69,7 +69,7 @@ jobs:
       - name: Add job summary
         if: always()
         run: |
-          if [ "${{ env.SPELL_CHECK_FAILED }}" == "true" ]; then
+          if [ "${SPELL_CHECK_FAILED:-}" == "true" ]; then
             {
               echo "## Spell Check Results"
               echo "❌ **Status**: Failed"

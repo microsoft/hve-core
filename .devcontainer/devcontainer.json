@@ -41,7 +41,7 @@
     }
   },
   "onCreateCommand": "bash .devcontainer/scripts/on-create.sh",
-  "updateContentCommand": "npm ci",
+  "updateContentCommand": "npm ci && npm ci --prefix scripts/linting/workflow-validator --ignore-scripts",
   "postCreateCommand": "bash .devcontainer/scripts/post-create.sh",
   "remoteEnv": {
     "HVE_GITHUB_RELEASES_URL": "${localEnv:HVE_GITHUB_RELEASES_URL}",

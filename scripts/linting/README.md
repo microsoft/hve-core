@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-10-02
+ms.date: 2026-10-04
 ms.topic: reference
 keywords:
   - powershell
@@ -130,6 +130,43 @@ Purpose: Validate GitHub Actions workflow YAML syntax and best practices.
 * Configuration: `.github/actionlint.yaml`
 * Artifacts: `yaml-lint-results` (JSON)
 * Exit Code: Non-zero if violations are found or actionlint itself fails (invalid options or an unreadable configuration)
+
+#### `workflow-validator/validate-workflows.mjs`
+
+Validates every workflow and composite action with GitHub's own parser
+(`@actions/workflow-parser`) and runs the pinned shellcheck over every bash and
+sh `run:` script. It is built to replace actionlint, needs no ignore rules, and
+accepts current syntax such as `concurrency.queue`, `job.workflow_sha`, and `$/`.
+
+##### Features
+
+* Parses `.github/workflows/*.yml` and `.yaml` with the workflow schema and
+  `.github/actions/**/action.yml` with the action schema, reporting schema,
+  expression, and semantic errors such as unknown `needs` jobs
+* Resolves each step's shell from the step, job defaults, and workflow defaults,
+  and checks bash and sh scripts with shellcheck. `${{ }}` expressions are masked
+  with same-length placeholders, so findings map to the exact workflow line and
+  column, and sourced repository files are followed from the repository root
+* Requires the shellcheck version in `scripts/security/tool-checksums.json` and
+  stops with exit code 2 for any other version
+* Writes SARIF (tool `hve-workflow-validator`) with `--sarif`
+* Loads the parser's JSON schemas through a Node resolve hook
+  (`json-import-hooks.mjs`) instead of a bundler
+* Pins `@actions/workflow-parser` and `yaml` exactly in its own
+  `package-lock.json`, covered by Dependabot and `npm run audit:npm`
+
+##### Usage
+
+```bash
+npm ci --prefix scripts/linting/workflow-validator --ignore-scripts
+npm run lint:workflows
+node scripts/linting/workflow-validator/validate-workflows.mjs --shellcheck /path/to/shellcheck --sarif logs/workflow-validation.sarif
+```
+
+Install the pinned shellcheck with the `.github/actions/setup-shellcheck`
+composite in workflows; the devcontainer and Copilot setup steps install the same
+version. Tests run with `npm test` in the validator directory and in the PR
+`node-tests` lane.
 
 ### Markdown Validation
 
@@ -723,13 +760,14 @@ blockquote markers, so line wrapping does not affect matching.
 
 ## npm Scripts
 
-| npm Script                       | Description                                                                                                                                                          |
-|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                        |
-| `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts                |
-| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds |
-| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                               |
-| `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                             |
+| npm Script                       | Description                                                                                                                                                                                        |
+|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                                                      |
+| `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts                                              |
+| `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds                               |
+| `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                                                             |
+| `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                                                           |
+| `lint:workflows`                 | Run `node scripts/linting/workflow-validator/validate-workflows.mjs --sarif logs/workflow-validation.sarif` to validate workflows and composite actions with GitHub's parser and pinned shellcheck |
 
 ## Shared Module
 

@@ -82,7 +82,7 @@ endpoints and credentials out of repository files.
 
 * Markdown: markdownlint, markdown-table-formatter
 * Spelling: Code Spell Checker (VS Code extension)
-* Shell: shellcheck
+* Shell: shellcheck 0.11.0, pinned and checksum-verified from `scripts/security/tool-checksums.json`
 
 ### Security
 

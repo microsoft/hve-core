@@ -50,9 +50,12 @@ main() {
   PSGALLERY_SOURCE="${HVE_PSGALLERY_SOURCE_URL:-}"
 
   echo "Installing system dependencies..."
-  
-  sudo apt update
-  sudo apt install -y shellcheck
+
+  # The pinned shellcheck release is a .tar.xz archive; only xz comes from the distribution.
+  if ! command -v xz >/dev/null 2>&1; then
+    sudo apt update
+    sudo apt install -y xz-utils
+  fi
   
   # Dependencies are pinned for stability. Dependabot and security workflows manage updates.
   echo "Installing actionlint..."
@@ -78,6 +81,31 @@ main() {
   fi
   sudo tar -xzf /tmp/actionlint.tar.gz -C /usr/local/bin actionlint
   rm /tmp/actionlint.tar.gz
+
+  echo "Installing shellcheck..."
+  # The workflow validator requires this exact version; the distribution
+  # package is older and unpinned.
+  SHELLCHECK_VERSION="0.11.0"
+  if [[ "${ARCH}" == "x86_64" ]]; then
+    SHELLCHECK_ARCH="x86_64"
+    SHELLCHECK_SHA256="8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198"
+  elif [[ "${ARCH}" == "aarch64" ]]; then
+    SHELLCHECK_ARCH="aarch64"
+    SHELLCHECK_SHA256="12b331c1d2db6b9eb13cfca64306b1b157a86eb69db83023e261eaa7e7c14588"
+  else
+    echo "ERROR: Unsupported architecture for shellcheck: ${ARCH}" >&2
+    exit 1
+  fi
+  curl -sSfL "${GITHUB_RELEASES_URL}/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.${SHELLCHECK_ARCH}.tar.xz" -o /tmp/shellcheck.tar.xz
+
+  echo "Checking shellcheck tarball integrity..."
+  if ! echo "${SHELLCHECK_SHA256}  /tmp/shellcheck.tar.xz" | sha256sum -c --quiet -; then
+    echo "ERROR: SHA256 checksum verification failed for shellcheck tarball" >&2
+    rm /tmp/shellcheck.tar.xz
+    exit 1
+  fi
+  sudo tar -xJf /tmp/shellcheck.tar.xz -C /usr/local/bin --strip-components=1 "shellcheck-v${SHELLCHECK_VERSION}/shellcheck"
+  rm /tmp/shellcheck.tar.xz
 
   echo "Installing PowerShell modules..."
   if [[ -n "${PSGALLERY_SOURCE}" ]]; then

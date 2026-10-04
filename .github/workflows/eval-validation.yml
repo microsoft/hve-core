@@ -217,19 +217,19 @@ jobs:
       - name: Add job summary
         if: always()
         run: |
-          if [ "${{ env.EVAL_RELEVANT }}" != "true" ] && [ "${{ env.EVAL_RELEVANT }}" != "false" ]; then
+          if [ "${EVAL_RELEVANT:-}" != "true" ] && [ "${EVAL_RELEVANT:-}" != "false" ]; then
             {
               echo "## Eval Validation Results"
               echo "Change selection failed or did not complete. Review the failing step."
             } >> "$GITHUB_STEP_SUMMARY"
-          elif [ "${{ env.EVAL_RELEVANT }}" == "false" ]; then
+          elif [ "${EVAL_RELEVANT:-}" == "false" ]; then
             {
               echo "## Eval Validation Results"
               echo "⏭️ **Status**: Skipped"
               echo ""
               echo "No eval-relevant paths changed."
             } >> "$GITHUB_STEP_SUMMARY"
-          elif [ "${{ env.EVAL_FAILED }}" == "true" ]; then
+          elif [ "${EVAL_FAILED:-}" == "true" ]; then
             {
               echo "## Eval Validation Results"
               echo "❌ **Status**: Failed"
@@ -362,7 +362,7 @@ jobs:
       - name: Add job summary
         if: always()
         run: |
-          if [ "${{ env.MODERATION_FAILED }}" == "true" ]; then
+          if [ "${MODERATION_FAILED:-}" == "true" ]; then
             {
               echo "## Content Moderation Results"
               echo "❌ **Status**: Flagged"
