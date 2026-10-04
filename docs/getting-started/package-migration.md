@@ -33,7 +33,7 @@ Register the repository as a marketplace. The registration tracks `main`:
 copilot plugin marketplace add microsoft/hve-core
 ```
 
-There are no PreRelease or Stable plugin channels. If you registered a release-channel or tag ref such as `microsoft/hve-core#release/stable` or `microsoft/hve-core#v<version>`, remove it and register again:
+There are no PreRelease or Stable plugin channels. A release-channel or tag ref such as `microsoft/hve-core#release/stable` or `microsoft/hve-core#v<version>` resolves release-gated, attested content, and switching to `microsoft/hve-core` gives that up. To follow `main`, remove the earlier registration and register again:
 
 ```bash
 copilot plugin marketplace remove hve-core --force
