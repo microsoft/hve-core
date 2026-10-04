@@ -609,7 +609,7 @@ jobs:
 
           RELEASE_FILE="$RUNNER_TEMP/current-draft.json"
           gh api "/repos/$REPOSITORY/releases/$RELEASE_ID" > "$RELEASE_FILE"
-          if ! jq -e --arg tag "$RELEASE_TAG" --arg sha "${{ github.sha }}" \
+          if ! jq -e --arg tag "$RELEASE_TAG" --arg sha "$GITHUB_SHA" \
             '.tag_name == $tag and .target_commitish == $sha and .draft == true' "$RELEASE_FILE" >/dev/null; then
             echo "::error::Release identity or draft state changed before extension upload"
             exit 1

@@ -816,6 +816,8 @@ jobs:
           PRIOR_CHECKPOINT_RUN_ID: ${{ needs.plan.outputs.prior-checkpoint-run-id }}
           PRIOR_CHECKPOINT_ARTIFACT_ID: ${{ needs.plan.outputs.prior-checkpoint-artifact-id }}
           PRIOR_CHECKPOINT_DIGEST: ${{ needs.plan.outputs.prior-checkpoint-digest }}
+          PLAN_WAVE_NUMBER: ${{ needs.plan.outputs.wave-number }}
+          PLAN_MANIFEST_DIGEST: ${{ needs.plan.outputs.manifest-digest }}
         with:
           script: |
             const crypto = require("crypto");
@@ -838,7 +840,7 @@ jobs:
             const contractErrorIds = JSON.parse(process.env.CONTRACT_ERROR_IDS);
             const acceptedIds = [...assessedIds, ...deferredIds].sort((a, b) => a - b);
             const waveIds = [...acceptedIds, ...contractErrorIds].sort((a, b) => a - b);
-            const waveNumber = Number("${{ needs.plan.outputs.wave-number }}");
+            const waveNumber = Number(process.env.PLAN_WAVE_NUMBER);
             const expectedIds = snapshot.cursor_candidate_ids.slice(
               (waveNumber - 1) * snapshot.wave_capacity,
               waveNumber * snapshot.wave_capacity,
@@ -862,7 +864,7 @@ jobs:
                 manifest.sweep_id !== snapshot.sweep_id || manifest.snapshot_digest !== snapshot.snapshot_digest ||
                 manifest.wave_number !== waveNumber || manifest.run_id !== String(context.runId) ||
                 JSON.stringify(manifest.ordered_issue_ids) !== JSON.stringify(expectedIds) ||
-                recordedManifestDigest !== "${{ needs.plan.outputs.manifest-digest }}" ||
+                recordedManifestDigest !== process.env.PLAN_MANIFEST_DIGEST ||
                 !exactKeys(aggregate, aggregateKeys) || digest(aggregateMaterial) !== recordedAggregateDigest ||
                 aggregate.schema_version !== "backlog-grooming-wave-aggregate/v2" ||
                 aggregate.sweep_id !== snapshot.sweep_id || aggregate.snapshot_digest !== snapshot.snapshot_digest ||
@@ -899,7 +901,7 @@ jobs:
               source_run_id: String(context.runId),
               source_attempt: Number(process.env.GITHUB_RUN_ATTEMPT),
               source_manifest_artifact_id: String(process.env.MANIFEST_ARTIFACT_ID),
-              source_manifest_digest: "${{ needs.plan.outputs.manifest-digest }}",
+              source_manifest_digest: process.env.PLAN_MANIFEST_DIGEST,
               source_aggregate_run_id: String(context.runId),
               source_aggregate_artifact_id: String(process.env.AGGREGATE_ARTIFACT_ID),
               source_aggregate_digest: process.env.AGGREGATE_DIGEST,
@@ -952,22 +954,31 @@ jobs:
     steps:
       - name: Dispatch exact successor
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SOURCE_REF_NAME: ${{ needs.plan.outputs.source-ref-name }}
+          SWEEP_ID: ${{ needs.plan.outputs.sweep-id }}
+          WAVE_NUMBER: ${{ needs.plan.outputs.wave-number }}
+          SNAPSHOT_RUN_ID: ${{ needs.plan.outputs.snapshot-run-id }}
+          SNAPSHOT_ARTIFACT_ID: ${{ needs.plan.outputs.snapshot-artifact-id }}
+          SNAPSHOT_DIGEST: ${{ needs.plan.outputs.snapshot-digest }}
+          CHECKPOINT_ARTIFACT_ID: ${{ needs.checkpoint.outputs.artifact-id }}
+          CHECKPOINT_DIGEST: ${{ needs.checkpoint.outputs.checkpoint-digest }}
         with:
           script: |
             await github.rest.actions.createWorkflowDispatch({
               ...context.repo,
               workflow_id: "backlog-groom-orchestrator.yml",
-              ref: "${{ needs.plan.outputs.source-ref-name }}",
+              ref: process.env.SOURCE_REF_NAME,
               inputs: {
                 "protocol-version": process.env.SWEEP_PROTOCOL_VERSION,
-                "sweep-id": "${{ needs.plan.outputs.sweep-id }}",
-                "wave-number": String(Number("${{ needs.plan.outputs.wave-number }}") + 1),
-                "snapshot-run-id": "${{ needs.plan.outputs.snapshot-run-id }}",
-                "snapshot-artifact-id": "${{ needs.plan.outputs.snapshot-artifact-id }}",
-                "snapshot-digest": "${{ needs.plan.outputs.snapshot-digest }}",
+                "sweep-id": process.env.SWEEP_ID,
+                "wave-number": String(Number(process.env.WAVE_NUMBER) + 1),
+                "snapshot-run-id": process.env.SNAPSHOT_RUN_ID,
+                "snapshot-artifact-id": process.env.SNAPSHOT_ARTIFACT_ID,
+                "snapshot-digest": process.env.SNAPSHOT_DIGEST,
                 "checkpoint-run-id": String(context.runId),
-                "checkpoint-artifact-id": "${{ needs.checkpoint.outputs.artifact-id }}",
-                "checkpoint-digest": "${{ needs.checkpoint.outputs.checkpoint-digest }}",
+                "checkpoint-artifact-id": process.env.CHECKPOINT_ARTIFACT_ID,
+                "checkpoint-digest": process.env.CHECKPOINT_DIGEST,
               },
             });
 
@@ -1004,6 +1015,8 @@ jobs:
           SNAPSHOT_RUN_ID: ${{ needs.plan.outputs.snapshot-run-id }}
           SNAPSHOT_ARTIFACT_ID: ${{ needs.plan.outputs.snapshot-artifact-id }}
           TERMINAL_CHECKPOINT_ARTIFACT_ID: ${{ needs.checkpoint.outputs.artifact-id }}
+          PLAN_SWEEP_ID: ${{ needs.plan.outputs.sweep-id }}
+          PLAN_SNAPSHOT_DIGEST: ${{ needs.plan.outputs.snapshot-digest }}
         with:
           script: |
             const crypto = require("crypto");
@@ -1059,8 +1072,8 @@ jobs:
             const snapshot = JSON.parse(fs.readFileSync("reduction-snapshot/snapshot.json", "utf8"));
             const { snapshot_digest: recordedSnapshotDigest, ...snapshotMaterial } = snapshot;
             if (digest(snapshotMaterial) !== recordedSnapshotDigest ||
-                snapshot.sweep_id !== "${{ needs.plan.outputs.sweep-id }}" ||
-                recordedSnapshotDigest !== "${{ needs.plan.outputs.snapshot-digest }}") {
+                snapshot.sweep_id !== process.env.PLAN_SWEEP_ID ||
+                recordedSnapshotDigest !== process.env.PLAN_SNAPSHOT_DIGEST) {
               throw new Error("Reduction snapshot identity or digest validation failed");
             }
             await authenticateArtifact(
@@ -1282,6 +1295,12 @@ jobs:
           retention-days: 30
       - name: Record automatic publication inputs
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          FINAL_ARTIFACT_ID: ${{ steps.final.outputs.artifact-id }}
+          FINAL_DIGEST: ${{ steps.reduce.outputs.final-digest }}
+          SWEEP_ID: ${{ needs.plan.outputs.sweep-id }}
+          SNAPSHOT_DIGEST: ${{ needs.plan.outputs.snapshot-digest }}
+          SOURCE_SHA: ${{ needs.plan.outputs.source-sha }}
         with:
           script: |
             await core.summary
@@ -1289,11 +1308,11 @@ jobs:
               .addTable([
                 [{ data: "Publisher input", header: true }, { data: "Value", header: true }],
                 ["final-run-id", String(context.runId)],
-                ["final-artifact-id", "${{ steps.final.outputs.artifact-id }}"],
-                ["final-digest", "${{ steps.reduce.outputs.final-digest }}"],
-                ["sweep-id", "${{ needs.plan.outputs.sweep-id }}"],
-                ["snapshot-digest", "${{ needs.plan.outputs.snapshot-digest }}"],
-                ["source-sha", "${{ needs.plan.outputs.source-sha }}"],
+                ["final-artifact-id", process.env.FINAL_ARTIFACT_ID],
+                ["final-digest", process.env.FINAL_DIGEST],
+                ["sweep-id", process.env.SWEEP_ID],
+                ["snapshot-digest", process.env.SNAPSHOT_DIGEST],
+                ["source-sha", process.env.SOURCE_SHA],
               ])
               .addRaw("\nThe completed run activates Backlog Grooming Publisher automatically. These values also support an exact manual replay.\n")
               .write();

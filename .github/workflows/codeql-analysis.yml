@@ -85,10 +85,12 @@ jobs:
 
       - name: Add job summary
         if: always()
+        env:
+          MATRIX_LANGUAGE: ${{ matrix.language }}
         run: |
           {
             echo "## CodeQL Security Analysis Complete"
-            echo "**Language:** ${{ matrix.language }}"
+            echo "**Language:** ${MATRIX_LANGUAGE}"
             echo "**Queries:** security-extended, security-and-quality"
             echo ""
             echo "📊 View results in the Security tab under Code Scanning"

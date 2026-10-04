@@ -34,18 +34,20 @@ jobs:
 
       - name: Write infrastructure change summary
         shell: pwsh
+        env:
+          EVENT_BEFORE_SHA: ${{ github.event.before }}
         run: |
           $params = @{
-            EventName = '${{ github.event_name }}'
+            EventName = $env:GITHUB_EVENT_NAME
           }
-          if ('${{ github.sha }}') {
-            $params['CommitSha'] = '${{ github.sha }}'
+          if ($env:GITHUB_SHA) {
+            $params['CommitSha'] = $env:GITHUB_SHA
           }
           if ($env:GITHUB_REF_NAME) {
             $params['BranchName'] = $env:GITHUB_REF_NAME
           }
-          if ('${{ github.event.before }}') {
-            $params['BeforeSha'] = '${{ github.event.before }}'
+          if ($env:EVENT_BEFORE_SHA) {
+            $params['BeforeSha'] = $env:EVENT_BEFORE_SHA
           }
           & scripts/devcontainer/Write-DevcontainerChangeLog.ps1 @params
 

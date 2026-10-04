@@ -732,8 +732,10 @@ jobs:
 
       - name: Fail job if model evidence failed
         if: env.EQUIVALENCE_FAILED == 'true' && !inputs.soft-fail
+        env:
+          MATRIX_MODEL: ${{ matrix.model }}
         run: |
-          echo "Baseline equivalence failed for ${{ matrix.model }}"
+          echo "Baseline equivalence failed for ${MATRIX_MODEL}"
           exit 1
 
   # Advisory only: this job reports how additional models behave on the baseline
