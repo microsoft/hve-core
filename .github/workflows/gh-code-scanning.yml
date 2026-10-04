@@ -8,58 +8,14 @@ on:
 permissions:
   contents: read
   security-events: read
-  actions: read
 
 jobs:
-  watch-targets:
-    name: Resolve Upstream Watch Targets
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      runner-labels: ${{ steps.labels.outputs.runner-labels }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
-
-      - name: List runner labels to probe
-        id: labels
-        shell: pwsh
-        run: |
-          $labels = & ./scripts/security/Get-UpstreamWatchStatus.ps1 -ListRunnerLabels
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          "runner-labels=$labels" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-
-  # Each probe job only needs to start: the runner writes its version to the job
-  # log at setup, and the scan job reads it from there.
-  runner-probe:
-    name: Runner probe (${{ matrix.label }})
-    needs: [watch-targets]
-    if: needs.watch-targets.outputs.runner-labels != '[]'
-    runs-on: ${{ matrix.label }}
-    permissions: {}
-    strategy:
-      fail-fast: false
-      matrix:
-        label: ${{ fromJSON(needs.watch-targets.outputs.runner-labels) }}
-    steps:
-      - name: Report runner start
-        run: echo "Runner probe started."
-
   scan:
     name: Fetch Code Scanning Alerts
-    needs: [watch-targets, runner-probe]
-    if: ${{ !cancelled() && needs.watch-targets.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: read
-      actions: read
     env:
       GH_TOKEN: ${{ github.token }}
       OWNER: ${{ github.repository_owner }}

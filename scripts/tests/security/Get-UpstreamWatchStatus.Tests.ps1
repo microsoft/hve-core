@@ -175,3 +175,36 @@ Describe 'Get-WatchLookup' -Tag 'Unit' {
         $lookup.LatestReleases['github/gh-aw'] | Should -Be ''
     }
 }
+
+Describe 'Runner probe jobs in gh-code-scanning.yml' -Tag 'Unit' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+        $root = Join-Path $PSScriptRoot '../../..'
+        $script:Workflow = Get-Content -Raw (Join-Path $root '.github/workflows/gh-code-scanning.yml') | ConvertFrom-Yaml
+        $read = Read-UpstreamWatch -Path (Join-Path $root 'security/upstream-watches.yml')
+        $script:RunnerLabels = @($read.Watches | Where-Object { $_['kind'] -eq 'runner-version' } | ForEach-Object { [string]$_['label'] } | Sort-Object -Unique)
+        $script:ProbeJobs = @($script:Workflow.jobs.GetEnumerator() | Where-Object { [string]$_.Value['name'] -match '^Runner probe \(' })
+    }
+
+    It 'gives every runner-version watch a static, permissionless probe job that the scan job waits for' {
+        foreach ($label in $script:RunnerLabels) {
+            $job = @($script:ProbeJobs | Where-Object { $_.Value['name'] -eq "Runner probe ($label)" })
+            $job | Should -HaveCount 1 -Because "the runner-version watch on $label needs a probe job"
+            $job[0].Value['runs-on'] | Should -BeExactly $label
+            $job[0].Value['permissions'].Count | Should -Be 0
+            @($script:Workflow.jobs['scan']['needs']) | Should -Contain $job[0].Key
+        }
+    }
+
+    It 'has no probe job without a runner-version watch' {
+        foreach ($job in $script:ProbeJobs) {
+            (Get-RunnerProbeLabel -JobName $job.Value['name']) | Should -BeIn $script:RunnerLabels
+        }
+    }
+
+    It 'keeps every runs-on value literal so the runner policy check can verify it' {
+        foreach ($job in $script:Workflow.jobs.Values) {
+            [string]$job['runs-on'] | Should -Not -Match '\$\{\{'
+        }
+    }
+}

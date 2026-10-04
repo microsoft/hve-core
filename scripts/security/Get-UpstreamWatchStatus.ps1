@@ -26,12 +26,13 @@
     could not be observed). Unknown is reported, never treated as triggered.
     An invalid watches file fails the script.
 
-    Runner versions come from the job logs of runner probe jobs in a workflow run
-    (-RunId), read from the "Current runner version" line the runner writes at job
-    start. Probe outcomes come from an observations file (-ObservationsPath).
+    Runner versions come from the job logs of the static "Runner probe (<label>)"
+    jobs in gh-code-scanning.yml (-RunId), read from the "Current runner version"
+    line the runner writes at job start. Each runner-version watch needs one such
+    job with a literal runs-on label so the runner policy check can verify it.
+    Probe outcomes come from an observations file (-ObservationsPath).
 
-    Writes a JSON array to standard output, or with -ListRunnerLabels, a JSON array
-    of the distinct runner labels that runner-version watches need probed.
+    Writes a JSON array to standard output.
 
 .PARAMETER Owner
     GitHub organization or user name of this repository.
@@ -48,15 +49,10 @@
 
 .PARAMETER RunId
     Optional workflow run whose "Runner probe (<label>)" jobs supply runner versions.
-
-.PARAMETER ListRunnerLabels
-    Output the runner labels to probe instead of evaluating watches.
+    Jobs are listed only when a runner-version watch exists.
 
 .EXAMPLE
     ./scripts/security/Get-UpstreamWatchStatus.ps1 -Owner microsoft -Repo hve-core
-
-.EXAMPLE
-    ./scripts/security/Get-UpstreamWatchStatus.ps1 -ListRunnerLabels
 #>
 [CmdletBinding()]
 param(
@@ -76,10 +72,7 @@ param(
 
     [Parameter(Mandatory = $false)]
     [ValidateRange(1, [long]::MaxValue)]
-    [long]$RunId,
-
-    [Parameter(Mandatory = $false)]
-    [switch]$ListRunnerLabels
+    [long]$RunId
 )
 
 $ErrorActionPreference = 'Stop'
@@ -454,12 +447,6 @@ if ($MyInvocation.InvocationName -ne '.') {
             throw "Invalid watches file: $($read.Errors -join ' ')"
         }
 
-        if ($ListRunnerLabels) {
-            $labels = @($read.Watches | Where-Object { $_['kind'] -eq 'runner-version' } | ForEach-Object { [string]$_['label'] } | Sort-Object -Unique)
-            ConvertTo-Json -InputObject @($labels) -Compress
-            exit 0
-        }
-
         $env:GH_PAGER = ''
         $probeOutcomes = @{}
         $runnerVersions = @{}
@@ -468,7 +455,8 @@ if ($MyInvocation.InvocationName -ne '.') {
             if ($observations['probes'] -is [System.Collections.IDictionary]) { $probeOutcomes = [hashtable]$observations['probes'] }
             if ($observations['runnerVersions'] -is [System.Collections.IDictionary]) { $runnerVersions = [hashtable]$observations['runnerVersions'] }
         }
-        if ($RunId) {
+        $hasRunnerWatch = @($read.Watches | Where-Object { $_['kind'] -eq 'runner-version' }).Count -gt 0
+        if ($RunId -and $hasRunnerWatch) {
             if (-not $Owner -or -not $Repo) { throw 'Owner and Repo are required with RunId.' }
             $observed = Get-RunnerVersionObservation -Owner $Owner -Repo $Repo -RunId $RunId
             foreach ($key in $observed.Keys) { $runnerVersions[$key] = $observed[$key] }
