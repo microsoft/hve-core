@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-10-02
+ms.date: 2026-10-03
 ms.topic: reference
 keywords:
   - github actions
@@ -105,11 +105,16 @@ must continue to depend on every non-gate job, as enforced by
 `npm run lint:pr-gate`.
 
 Merge-group evals run unprivileged relevance, lint, and content-moderation
-validation without `COPILOT_GITHUB_TOKEN`. The aggregate passes an empty custom
-token for this event, and privileged eval jobs remain limited to eligible pull
-requests and manual dispatch. Manual dispatch resolves a range against the
-default branch, so it selects agent evals the same way a pull request does.
-Gitleaks scans the resolved commit range in range mode.
+validation without `COPILOT_GITHUB_TOKEN`. The aggregate passes the custom
+token only for manual dispatch and for pull requests whose head repository
+`full_name` equals `github.repository`, and passes an empty value for merge
+groups, fork pull requests, and every other event. Every eval job that uses
+the token, or needs a job that does, repeats that same-repository check. The
+`full_name` comparison fails closed when the head repository is missing, unlike
+a `fork == false` check, which GitHub's type coercion treats as true for a
+missing value. Manual dispatch resolves a range against the default branch, so
+it selects agent evals the same way a pull request does. Gitleaks scans the
+resolved commit range in range mode.
 
 Pull requests and merge groups share a concurrency group per ref and cancel
 superseded runs. Each manual dispatch run gets its own concurrency group, so

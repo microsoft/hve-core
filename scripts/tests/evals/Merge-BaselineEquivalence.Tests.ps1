@@ -426,7 +426,8 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
         foreach ($jobName in @('agent-plan', 'eval-execute', 'equivalence-execute', 'equivalence-fan-in', 'eval-fan-in')) {
             $condition = [string]$workflow.jobs[$jobName]['if']
             $condition | Should -Match "github.event_name == 'workflow_dispatch'"
-            $condition | Should -Match "github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false"
+            $condition | Should -Match ([regex]::Escape("github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository"))
+            $condition | Should -Not -Match 'head\.repo\.fork'
         }
     }
 
