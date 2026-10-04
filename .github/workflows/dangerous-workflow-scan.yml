@@ -52,6 +52,11 @@ jobs:
         with:
           persist-credentials: false
 
+      # Test-DangerousWorkflow.ps1 parses YAML with powershell-yaml; without it every
+      # file is reported as unparsed and the scan fails.
+      - name: Setup PowerShell modules
+        uses: $/.github/actions/setup-ps-modules
+
       - name: Run Dangerous Workflow Validation
         id: scan
         shell: pwsh
