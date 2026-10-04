@@ -9,12 +9,12 @@ on:
         description: 'Compliance threshold percentage (0-100)'
         required: false
         type: number
-        default: 95
+        default: 100
       dependency-types:
         description: 'Comma-separated list of dependency types to check'
         required: false
         type: string
-        default: 'github-actions,npm,workflow-npm-commands'
+        default: 'github-actions,npm,pip,workflow-npm-commands,shell-downloads,setup-action-versions,python-tool-runs,container-images,install-hints'
       soft-fail:
         description: 'Whether to continue on compliance violations'
         required: false
@@ -133,13 +133,15 @@ jobs:
             exit 1
           }
 
+      # Uploading needs security-events: write, which a fork pull request never
+      # receives. Skip the step for forks rather than attempt it; the scan above
+      # still gates every pull request.
       - name: Upload SARIF to Security tab
-        if: inputs.upload-sarif && always()
+        if: inputs.upload-sarif && always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           sarif_file: logs/dependency-pinning-results.sarif
           category: dependency-pinning
-        continue-on-error: true
 
       - name: Upload validation report
         if: inputs.upload-artifact && always()

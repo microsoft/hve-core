@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-02
+ms.date: 2026-10-04
 ms.topic: reference
 keywords:
   - security
@@ -2337,7 +2337,7 @@ When a new skill meets a trigger, or a change alters a triggered surface or a ci
 
 | Metric                        | Threshold | Source                      |
 |-------------------------------|-----------|-----------------------------|
-| Dependency Pinning Compliance | ≥95%      | dependency-pinning-scan.yml |
+| Dependency Pinning Compliance | 100%      | dependency-pinning-scan.yml |
 | SHA Staleness                 | ≤30 days  | sha-staleness-check.yml     |
 | Dependency Review Fail        | moderate  | dependency-review.yml       |
 | npm Audit Fail Level          | moderate  | pr-validation.yml           |

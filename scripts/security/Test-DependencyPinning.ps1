@@ -41,7 +41,7 @@
 .PARAMETER Threshold
     Minimum compliance score percentage required for passing grade (0-100).
     Script will exit with code 1 if compliance falls below threshold when -FailOnUnpinned is set.
-    Default is 95%.
+    Default is 100%, so any unpinned dependency fails.
 
 .PARAMETER Remediate
     Generate remediation suggestions with specific SHA pins for unpinned dependencies.
@@ -112,7 +112,7 @@ param(
 
     [Parameter(Mandatory = $false)]
     [ValidateRange(0, 100)]
-    [int]$Threshold = 95,
+    [int]$Threshold = 100,
 
     [Parameter(Mandatory = $false)]
     [switch]$Remediate
@@ -1468,7 +1468,7 @@ function Invoke-DependencyPinningAnalysis {
         [switch]$FailOnUnpinned,
 
         [Parameter()]
-        [int]$Threshold = 95,
+        [int]$Threshold = 100,
 
         [Parameter()]
         [switch]$Remediate

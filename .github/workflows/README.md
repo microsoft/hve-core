@@ -705,12 +705,12 @@ Behavior: Blocks PRs introducing vulnerable dependencies (moderate+ severity)
 
 #### `dependency-pinning-scan.yml`
 
-Purpose: Validates that all GitHub Actions use SHA-pinned versions
+Purpose: Validates dependency pinning across every rule type in `Test-DependencyPinning.ps1`
 
 Inputs:
 
-* `threshold` (number, default: 95): Minimum compliance percentage
-* `dependency-types` (string, default: 'actions,containers'): Types to validate
+* `threshold` (number, default: 100): Minimum compliance percentage
+* `dependency-types` (string, default: all nine types): Types to validate (`github-actions,npm,pip,workflow-npm-commands,shell-downloads,setup-action-versions,python-tool-runs,container-images,install-hints`)
 * `soft-fail` (boolean, default: false): Continue on failures
 * `upload-sarif` (boolean, default: false): Upload to Security tab
 * `upload-artifact` (boolean, default: true): Upload JSON results
@@ -827,8 +827,8 @@ jobs:
   pinning-check:
     uses: ./.github/workflows/dependency-pinning-scan.yml
     with:
-      threshold: 95
-      dependency-types: 'actions,containers'
+      threshold: 100
+      dependency-types: 'github-actions,npm,pip,workflow-npm-commands,shell-downloads,setup-action-versions,python-tool-runs,container-images,install-hints'
       soft-fail: true
       upload-sarif: true
       upload-artifact: true

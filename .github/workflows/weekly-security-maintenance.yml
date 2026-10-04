@@ -29,6 +29,8 @@ jobs:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
     with:
+      threshold: 100
+      dependency-types: 'github-actions,npm,pip,workflow-npm-commands,shell-downloads,setup-action-versions,python-tool-runs,container-images,install-hints'
       soft-fail: true
       upload-sarif: true
       upload-artifact: true
