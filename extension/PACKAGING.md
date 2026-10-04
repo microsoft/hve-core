@@ -106,7 +106,7 @@ recreate a release tag, create a replacement release identity, or convert a
 published release back to draft. Bounded discovery fails closed and does not
 guarantee draft visibility.
 
-Release VSIX assets built from release branches and exact tags are reviewed, immutable, release-gated, SBOM-covered, and attested. The Copilot CLI plugin has one registration, `microsoft/hve-core`, which tracks `main`, receives no post-release synchronization, and requires an explicit marketplace refresh and plugin update; its bytes have no release gate, SBOM, or attestation. There are no release-channel plugin registrations.
+Release VSIX assets built from release branches and exact tags are reviewed, immutable, release-gated, SBOM-covered, and attested. The Copilot CLI plugin has one registration, `microsoft/hve-core`, which tracks `main`, receives no post-release synchronization, and requires an explicit marketplace refresh and plugin update. Its bytes have no release gate or release attestation. Each push to `main` publishes an unattested dependency SBOM, described in [Continuous Main SBOM](../docs/contributing/release-process.md#continuous-main-sbom). There are no release-channel plugin registrations.
 
 Tag governance is a mandatory activation prerequisite for this pipeline, but
 it is not yet active or proven. The intended configuration has two rulesets:
