@@ -25,7 +25,7 @@ Register the repository as a plugin marketplace:
 copilot plugin marketplace add microsoft/hve-core
 ```
 
-The registration tracks the `main` branch. HVE Core publishes one consolidated plugin, so there are no separate PreRelease or Stable channels to register.
+The registration tracks the `main` branch, which has no release gate or release attestation. Each push to `main` publishes an unattested dependency SBOM, described in [Continuous Main SBOM](../../contributing/release-process.md#continuous-main-sbom). PreRelease and Stable are VS Code extension channels, so the plugin has no channel to select.
 
 ## Browse Available Plugins
 
