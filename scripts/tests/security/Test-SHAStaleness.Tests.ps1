@@ -231,6 +231,47 @@ Describe 'Get-ToolStaleness' -Tag 'Integration', 'RequiresNetwork' {
     }
 }
 
+Describe 'Get-ToolLatestVersion' -Tag 'Unit' {
+    BeforeAll {
+        $script:GitHubHeaders = @{ Accept = 'application/vnd.github+json'; Authorization = 'token-value' }
+    }
+
+    It 'reads the latest GitHub release and strips a v prefix' {
+        Mock Invoke-GitHubAPIWithRetry { [pscustomobject]@{ tag_name = 'v1.31.0' } }
+        Get-ToolLatestVersion -Tool ([pscustomobject]@{ repo = 'zizmorcore/zizmor' }) -GitHubHeaders $script:GitHubHeaders | Should -Be '1.31.0'
+        Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/repos/zizmorcore/zizmor/releases/latest' -and $Headers.Authorization }
+    }
+
+    It 'reads PyPI without sending the GitHub token' {
+        Mock Invoke-GitHubAPIWithRetry { [pscustomobject]@{ info = [pscustomobject]@{ version = '1.9.0' } } }
+        Get-ToolLatestVersion -Tool ([pscustomobject]@{ registry = 'pypi'; package = 'piper-tts' }) -GitHubHeaders $script:GitHubHeaders | Should -Be '1.9.0'
+        Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -eq 'https://pypi.org/pypi/piper-tts/json' -and -not $Headers.ContainsKey('Authorization') }
+    }
+
+    It 'reads the VS Code update service without sending the GitHub token' {
+        Mock Invoke-GitHubAPIWithRetry { [pscustomobject]@{ productVersion = '1.140.0' } }
+        Get-ToolLatestVersion -Tool ([pscustomobject]@{ registry = 'vscode-update' }) -GitHubHeaders $script:GitHubHeaders | Should -Be '1.140.0'
+        Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like 'https://update.code.visualstudio.com/*' -and -not $Headers.ContainsKey('Authorization') }
+    }
+
+    It 'returns null when the registry does not respond' {
+        Mock Invoke-GitHubAPIWithRetry { $null }
+        Get-ToolLatestVersion -Tool ([pscustomobject]@{ repo = 'o/r' }) -GitHubHeaders $script:GitHubHeaders | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Repository tool manifest' -Tag 'Unit' {
+    It 'gives every tool a name, repo, version, and verification' {
+        $manifest = Get-Content -Raw (Join-Path $PSScriptRoot '../../security/tool-checksums.json') | ConvertFrom-Json
+        foreach ($tool in $manifest.tools) {
+            $tool.name | Should -Not -BeNullOrEmpty
+            $tool.repo | Should -Match '^[^/]+/[^/]+$'
+            $tool.version | Should -Not -BeNullOrEmpty
+            $tool.verification | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
 Describe 'Get-PSModuleStaleness' -Tag 'Unit' {
     Context 'With mock manifest and mocked PSGallery' {
         BeforeEach {
@@ -324,6 +365,9 @@ Describe 'Get-PSModuleStaleness' -Tag 'Unit' {
 
 Describe 'Main Script Execution' {
     BeforeAll {
+        # The script reads the repository manifest; count the tools it checks through GitHub Releases.
+        $script:GitHubToolCount = @((Get-Content -Raw (Join-Path $PSScriptRoot '../../security/tool-checksums.json') | ConvertFrom-Json).tools | Where-Object { -not $_.registry }).Count
+
         # Create test repo structure (script expects .github/workflows from current directory)
         $script:TestRepo = Join-Path $TestDrive 'test-repo'
         $script:WorkflowDir = Join-Path $script:TestRepo '.github' 'workflows'
@@ -365,7 +409,7 @@ Describe 'Main Script Execution' {
                         'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
                         'cosign'     { 'v3.0.5' }
-                        default      { 'v1.0.0' }
+                        default      { 'v0.0.1' }
                     }
                     published_at = (Get-Date).AddMonths(-1).ToString('o')
                 }
@@ -429,6 +473,8 @@ Describe 'Main Script Execution' {
                     }
                 }
             }
+            elseif ($Uri -like 'https://pypi.org/*') { return @{ info = @{ version = '0.0.1' } } }
+            elseif ($Uri -like 'https://update.code.visualstudio.com/*') { return @{ productVersion = '0.0.1' } }
             elseif ($Uri -like '*/releases/latest') {
                 $repoName = ($Uri -split '/')[-3]
                 return @{
@@ -436,7 +482,7 @@ Describe 'Main Script Execution' {
                         'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
                         'cosign'     { 'v3.0.5' }
-                        default      { 'v1.0.0' }
+                        default      { 'v0.0.1' }
                     }
                     published_at = (Get-Date).AddMonths(-1).ToString('o')
                 }
@@ -475,6 +521,8 @@ Describe 'Main Script Execution' {
                     }
                 }
             }
+            elseif ($Uri -like 'https://pypi.org/*') { return @{ info = @{ version = '0.0.1' } } }
+            elseif ($Uri -like 'https://update.code.visualstudio.com/*') { return @{ productVersion = '0.0.1' } }
             elseif ($Uri -like '*/releases/latest') {
                 $repoName = ($Uri -split '/')[-3]
                 return @{
@@ -482,7 +530,7 @@ Describe 'Main Script Execution' {
                         'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
                         'cosign'     { 'v3.0.5' }
-                        default      { 'v1.0.0' }
+                        default      { 'v0.0.1' }
                     }
                     published_at = (Get-Date).AddMonths(-1).ToString('o')
                 }
@@ -541,7 +589,7 @@ jobs:
 
             # Verify mock API calls: 2 GraphQL batches (repos + commits) + 2 tool release checks
             Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*graphql*' } -Times 2 -Exactly
-            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 2 -Exactly
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times $script:GitHubToolCount -Exactly
         }
 
         It 'Processes stale dependencies with array count operations' {
@@ -606,7 +654,7 @@ jobs:
 
             # Verify API calls: 2 GraphQL batches + 2 tool release checks
             Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*graphql*' } -Times 2 -Exactly
-            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 2 -Exactly
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times $script:GitHubToolCount -Exactly
         }
 
         It 'Executes result formatting with array operations' {
@@ -756,7 +804,7 @@ jobs:
 
             # No actions found so no GraphQL calls, but tool staleness still runs
             Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*graphql*' } -Times 0 -Exactly
-            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 2 -Exactly
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times $script:GitHubToolCount -Exactly
         }
 
         It 'Processes single stale dependency with array coercion' {

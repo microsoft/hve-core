@@ -93,9 +93,9 @@ jobs:
 
       - name: Install uv package manager
         env:
-          UV_VERSION: '0.10.8'
-          UV_X86_64_SHA256: 'f0c566b55683395a62fefb9261a060fa09824914b5682c3b9629fa154762ae2f'
-          UV_AARCH64_SHA256: '661860e954f87dcd823251191866af3486484d1a9df60eed56f4586ed7559e3d'
+          UV_VERSION: '0.10.9'
+          UV_X86_64_SHA256: '20d79708222611fa540b5c9ed84f352bcd3937740e51aacc0f8b15b271c57594'
+          UV_AARCH64_SHA256: 'cc0c5a8573e7d6d78aecb954e0a62b5c0d18217bb81f1e19363b428c57a9962a'
           GITHUB_RELEASES_URL: ${{ vars.HVE_GITHUB_RELEASES_URL || 'https://github.com' }}
         run: |
           ARCH=$(uname -m)

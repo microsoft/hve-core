@@ -642,6 +642,49 @@ function Compare-ToolVersion {
     return $normLatest -ne $normCurrent
 }
 
+function Get-ToolLatestVersion {
+    <#
+    .SYNOPSIS
+        Returns the latest published version of a manifest tool, or $null.
+
+    .DESCRIPTION
+        Uses the tool's registry: GitHub Releases (default), PyPI, or the VS Code
+        update service. The GitHub token is sent only to the GitHub API.
+
+    .PARAMETER Tool
+        Manifest tool entry.
+
+    .PARAMETER GitHubHeaders
+        Headers for GitHub API requests.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)]
+        [object]$Tool,
+
+        [Parameter(Mandatory)]
+        [hashtable]$GitHubHeaders
+    )
+
+    $plainHeaders = @{ 'Accept' = 'application/json' }
+    switch ($Tool.registry) {
+        'pypi' {
+            $response = Invoke-GitHubAPIWithRetry -Uri "https://pypi.org/pypi/$($Tool.package)/json" -Method GET -Headers $plainHeaders
+            if ($response) { return [string]$response.info.version }
+        }
+        'vscode-update' {
+            $response = Invoke-GitHubAPIWithRetry -Uri 'https://update.code.visualstudio.com/api/update/cli-linux-x64/stable/latest' -Method GET -Headers $plainHeaders
+            if ($response) { return [string]$response.productVersion }
+        }
+        default {
+            $response = Invoke-GitHubAPIWithRetry -Uri "$(Get-GitHubApiBase)/repos/$($Tool.repo)/releases/latest" -Method GET -Headers $GitHubHeaders
+            if ($response) { return ([string]$response.tag_name) -replace '^v', '' }
+        }
+    }
+    return $null
+}
+
 function Get-ToolStaleness {
     <#
     .SYNOPSIS
@@ -682,15 +725,10 @@ function Get-ToolStaleness {
         $headers['Authorization'] = "Bearer $GitHubToken"
     }
 
-    $apiBase = Get-GitHubApiBase
-
     foreach ($tool in $manifest.tools) {
-        $uri = "$apiBase/repos/$($tool.repo)/releases/latest"
-        $latestRelease = Invoke-GitHubAPIWithRetry -Uri $uri -Method GET -Headers $headers
+        $latestVersion = Get-ToolLatestVersion -Tool $tool -GitHubHeaders $headers
 
-        if ($latestRelease) {
-            $latestVersion = $latestRelease.tag_name -replace '^v', ''
-
+        if ($latestVersion) {
             $isStale = Compare-ToolVersion -Current $tool.version -Latest $latestVersion
 
             $results += [PSCustomObject]@{

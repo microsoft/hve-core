@@ -581,6 +581,13 @@ jobs:
       upload-sarif: true
       upload-artifact: false
 
+  tool-version-consistency-scan:
+    name: Tool Version Consistency Scan
+    uses: ./.github/workflows/tool-version-consistency-scan.yml
+    permissions:
+      contents: read
+      security-events: write # Required for SARIF upload to Security tab
+
   gitleaks-scan:
     name: Gitleaks Secret Scan
     needs: change-range
@@ -892,6 +899,7 @@ jobs:
       - workflow-runner-check
       - dangerous-workflow-check
       - action-version-consistency-scan
+      - tool-version-consistency-scan
       - gitleaks-scan
       - npm-audit
       - codeql

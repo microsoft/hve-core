@@ -1,0 +1,39 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Tool Version Consistency Scan
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Validate Tool Version Consistency
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # Required for SARIF upload to Security tab
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Every hard-coded tool version and checksum must match the single source in
+      # scripts/security/tool-checksums.json. Findings are reported to code scanning
+      # before the step fails.
+      - name: Check tool versions against the manifest
+        shell: pwsh
+        run: ./scripts/security/Test-ToolVersionConsistency.ps1 -SarifPath logs/tool-version-consistency.sarif
+
+      # Uploading needs security-events: write, which a fork pull request never
+      # receives. Skip the step for forks rather than attempt it; the check above
+      # still gates every pull request.
+      - name: Upload SARIF to Security tab
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        with:
+          sarif_file: logs/tool-version-consistency.sarif
+          category: tool-version-consistency

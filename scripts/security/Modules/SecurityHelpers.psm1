@@ -644,6 +644,96 @@ function Invoke-GitHubAPIWithRetry {
     return $null
 }
 
+function ConvertTo-SecuritySarif {
+    <#
+    .SYNOPSIS
+        Builds a SARIF 2.1.0 document for a homegrown security control.
+
+    .DESCRIPTION
+        Every rule is listed in tool.driver.rules so the threshold gate can tell
+        a rule that ran clean from one that did not run. Each finding becomes one
+        result with a physical location.
+
+    .PARAMETER ToolName
+        SARIF tool.driver.name. The threshold gate and the exception register key on it.
+
+    .PARAMETER Rules
+        Hashtables with id, name, description, and level (error, warning, or note).
+
+    .PARAMETER Findings
+        Objects with RuleId, Message, File, and optional Line.
+
+    .OUTPUTS
+        Hashtable ready for ConvertTo-Json -Depth 20.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ToolName,
+
+        [Parameter(Mandatory)]
+        [hashtable[]]$Rules,
+
+        [Parameter()]
+        [AllowEmptyCollection()]
+        [object[]]$Findings = @(),
+
+        [Parameter()]
+        [string]$ToolVersion = '1.0.0'
+    )
+
+    $ruleIds = @($Rules | ForEach-Object { $_.id })
+    $driverRules = foreach ($rule in $Rules) {
+        @{
+            id                   = $rule.id
+            name                 = $rule.name
+            shortDescription     = @{ text = $rule.description }
+            fullDescription      = @{ text = $rule.description }
+            defaultConfiguration = @{ level = $rule.level }
+        }
+    }
+
+    $results = foreach ($finding in $Findings) {
+        if ($finding.RuleId -notin $ruleIds) {
+            throw "Finding uses undeclared rule '$($finding.RuleId)'."
+        }
+        $level = ($Rules | Where-Object { $_.id -eq $finding.RuleId } | Select-Object -First 1).level
+        $line = if ($finding.Line -and [int]$finding.Line -gt 0) { [int]$finding.Line } else { 1 }
+        @{
+            ruleId    = $finding.RuleId
+            level     = $level
+            message   = @{ text = $finding.Message }
+            locations = @(
+                @{
+                    physicalLocation = @{
+                        artifactLocation = @{ uri = ($finding.File -replace '\\', '/') }
+                        region           = @{ startLine = $line }
+                    }
+                }
+            )
+        }
+    }
+
+    return @{
+        version   = '2.1.0'
+        '$schema' = 'https://json.schemastore.org/sarif-2.1.0.json'
+        runs      = @(
+            @{
+                tool    = @{
+                    driver = @{
+                        name           = $ToolName
+                        version        = $ToolVersion
+                        informationUri = 'https://github.com/microsoft/hve-core'
+                        rules          = @($driverRules)
+                    }
+                }
+                results = @($results)
+            }
+        )
+    }
+}
+
 Export-ModuleMember -Function @(
     'Write-SecurityLog'
     'New-SecurityIssue'
@@ -652,4 +742,5 @@ Export-ModuleMember -Function @(
     'Get-PSGalleryApiBase'
     'Test-GitHubToken'
     'Invoke-GitHubAPIWithRetry'
+    'ConvertTo-SecuritySarif'
 )

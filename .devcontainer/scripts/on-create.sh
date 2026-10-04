@@ -88,13 +88,13 @@ main() {
 
   echo "Installing gitleaks..."
   # Download gitleaks tarball and verify checksum before extracting
-  GITLEAKS_VERSION="8.18.2"
+  GITLEAKS_VERSION="8.30.0"
   if [[ "${ARCH}" == "x86_64" ]]; then
     GITLEAKS_ARCH="x64"
-    GITLEAKS_SHA256="6298c9235dfc9278c14b28afd9b7fa4e6f4a289cb1974bd27949fc1e9122bdee"
+    GITLEAKS_SHA256="79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e"
   elif [[ "${ARCH}" == "aarch64" ]]; then
     GITLEAKS_ARCH="arm64"
-    GITLEAKS_SHA256="4df25683f95b9e1dbb8cc71dac74d10067b8aba221e7f991e01cafa05bcbd030"
+    GITLEAKS_SHA256="b4cbbb6ddf7d1b2a603088cd03a4e3f7ce48ee7fd449b51f7de6ee2906f5fa2f"
   else
     echo "ERROR: Unsupported architecture for gitleaks: ${ARCH}" >&2
     exit 1
@@ -158,13 +158,13 @@ main() {
 
   echo "Installing uv package manager..."
   # Dependencies are pinned for stability. Dependabot and security workflows manage updates.
-  UV_VERSION="0.10.8"
+  UV_VERSION="0.10.9"
   if [[ "${ARCH}" == "x86_64" ]]; then
     UV_ARCH="x86_64-unknown-linux-gnu"
-    UV_SHA256="f0c566b55683395a62fefb9261a060fa09824914b5682c3b9629fa154762ae2f"
+    UV_SHA256="20d79708222611fa540b5c9ed84f352bcd3937740e51aacc0f8b15b271c57594"
   elif [[ "${ARCH}" == "aarch64" ]]; then
     UV_ARCH="aarch64-unknown-linux-gnu"
-    UV_SHA256="661860e954f87dcd823251191866af3486484d1a9df60eed56f4586ed7559e3d"
+    UV_SHA256="cc0c5a8573e7d6d78aecb954e0a62b5c0d18217bb81f1e19363b428c57a9962a"
   else
     echo "ERROR: Unsupported architecture for uv: ${ARCH}" >&2
     exit 1

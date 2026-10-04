@@ -291,6 +291,7 @@ path the agent reads, so no caching or elevation is required.
 ### Environment Synchronization
 
 The `copilot-setup-steps.yml` and `.devcontainer/scripts/on-create.sh` share most tools but differ intentionally: gitleaks is devcontainer-only (not needed during agent-driven development). When adding or removing tools in either environment, evaluate whether both need the change and update accordingly.
+Every downloaded tool's version and checksums come from `scripts/security/tool-checksums.json`; register a new tool there first, because `scripts/security/Test-ToolVersionConsistency.ps1` fails PR validation when a hard-coded copy disagrees.
 <!-- </coding-agent-environment> -->
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
