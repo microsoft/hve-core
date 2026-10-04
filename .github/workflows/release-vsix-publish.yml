@@ -663,6 +663,7 @@ jobs:
           TAG: ${{ needs.validate-release.outputs.tag-name }}
           MISSING_JSON: ${{ steps.occupancy.outputs.missing-json }}
           VERSION: ${{ needs.validate-release.outputs.version }}
+          NEEDS_VALIDATE_RELEASE_OUTPUTS_RELEASE_ID: ${{ needs.validate-release.outputs.release-id }}
         run: |
           set -euo pipefail
           VSIX="hve-core-$VERSION.vsix"
@@ -692,7 +693,7 @@ jobs:
           fi
 
           REMOTE_ASSETS="$RUNNER_TEMP/final-draft-assets.txt"
-          gh api --paginate "/repos/$REPOSITORY/releases/${{ needs.validate-release.outputs.release-id }}/assets?per_page=100" \
+          gh api --paginate "/repos/$REPOSITORY/releases/${NEEDS_VALIDATE_RELEASE_OUTPUTS_RELEASE_ID}/assets?per_page=100" \
             --jq '.[].name' | sort > "$REMOTE_ASSETS"
           EXPECTED=(dependencies.spdx.json "${EXTENSION_ASSETS[@]}")
           if [ "$CHANNEL" = 'Stable' ]; then

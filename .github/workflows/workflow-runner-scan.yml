@@ -64,7 +64,7 @@ jobs:
             Format          = 'sarif'
             OutputPath      = 'logs/workflow-runner-results.sarif'
           }
-          if ('${{ inputs.soft-fail }}' -ne 'true') {
+          if ($env:INPUT_SOFT_FAIL -ne 'true') {
             $params['FailOnViolation'] = $true
           }
           ./scripts/security/Test-WorkflowRunner.ps1 @params
@@ -89,6 +89,8 @@ jobs:
             "violation-count=$violationCount" >> $env:GITHUB_OUTPUT
             "is-compliant=$($isCompliant.ToString().ToLower())" >> $env:GITHUB_OUTPUT
           }
+        env:
+          INPUT_SOFT_FAIL: ${{ inputs.soft-fail }}
 
       - name: Upload SARIF results
         if: always() && inputs.upload-sarif

@@ -69,8 +69,9 @@ jobs:
           INPUT_BASE_SHA: ${{ inputs.base-sha }}
           INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
           INPUT_HEAD_SHA: ${{ inputs.head-sha }}
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
         run: |
-          if ('${{ inputs.changed-files-only }}' -ne 'true' -or $env:INPUT_CHANGE_MODE -eq 'full') {
+          if ($env:INPUT_CHANGED_FILES_ONLY -ne 'true' -or $env:INPUT_CHANGE_MODE -eq 'full') {
             'has-docs-changes=true' >> $env:GITHUB_OUTPUT
             Write-Output 'Docusaurus tests requested for all files.'
           } else {

@@ -79,8 +79,9 @@ jobs:
           INPUT_BASE_SHA: ${{ inputs.base-sha }}
           INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
           INPUT_HEAD_SHA: ${{ inputs.head-sha }}
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
         run: |
-          if ('${{ inputs.changed-files-only }}' -ne 'true' -or $env:INPUT_CHANGE_MODE -eq 'full') {
+          if ($env:INPUT_CHANGED_FILES_ONLY -ne 'true' -or $env:INPUT_CHANGE_MODE -eq 'full') {
             'has-adr-changes=true' >> $env:GITHUB_OUTPUT
             Write-Output 'ADR validation requested for all configured ADR files.'
           } else {
@@ -154,6 +155,8 @@ jobs:
         env:
           INPUT_BASE_SHA: ${{ inputs.base-sha }}
           INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
+          INPUT_UPLOAD_SARIF: ${{ inputs.upload-sarif }}
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
           $params = @{
@@ -161,12 +164,12 @@ jobs:
             OutputPath = 'logs/adr-consistency-results.json'
           }
 
-          if ('${{ inputs.changed-files-only }}' -eq 'true' -and $env:INPUT_CHANGE_MODE -eq 'range') {
+          if ($env:INPUT_CHANGED_FILES_ONLY -eq 'true' -and $env:INPUT_CHANGE_MODE -eq 'range') {
             $params['ChangedFilesOnly'] = $true
             $params['BaseBranch'] = $env:INPUT_BASE_SHA
           }
 
-          if ('${{ inputs.upload-sarif }}' -eq 'true') {
+          if ($env:INPUT_UPLOAD_SARIF -eq 'true') {
             $params['SarifOutputPath'] = 'logs/adr-consistency-results.sarif'
           }
 

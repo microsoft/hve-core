@@ -155,9 +155,9 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $complianceScore = '${{ steps.pinning.outputs.compliance-score }}'
-          $unpinnedCount = '${{ steps.pinning.outputs.unpinned-count }}'
-          $isCompliant = '${{ steps.pinning.outputs.is-compliant }}'
+          $complianceScore = $env:STEPS_PINNING_OUTPUTS_COMPLIANCE_SCORE
+          $unpinnedCount = $env:STEPS_PINNING_OUTPUTS_UNPINNED_COUNT
+          $isCompliant = $env:STEPS_PINNING_OUTPUTS_IS_COMPLIANT
           
           @"
           ## Dependency Pinning Scan Results
@@ -188,3 +188,7 @@ jobs:
           "@
           })
           "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+        env:
+          STEPS_PINNING_OUTPUTS_COMPLIANCE_SCORE: ${{ steps.pinning.outputs.compliance-score }}
+          STEPS_PINNING_OUTPUTS_UNPINNED_COUNT: ${{ steps.pinning.outputs.unpinned-count }}
+          STEPS_PINNING_OUTPUTS_IS_COMPLIANT: ${{ steps.pinning.outputs.is-compliant }}

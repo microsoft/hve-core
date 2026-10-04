@@ -41,8 +41,8 @@ jobs:
           if ('${{ github.sha }}') {
             $params['CommitSha'] = '${{ github.sha }}'
           }
-          if ('${{ github.ref_name }}') {
-            $params['BranchName'] = '${{ github.ref_name }}'
+          if ($env:GITHUB_REF_NAME) {
+            $params['BranchName'] = $env:GITHUB_REF_NAME
           }
           if ('${{ github.event.before }}') {
             $params['BeforeSha'] = '${{ github.event.before }}'
