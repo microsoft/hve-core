@@ -102,13 +102,14 @@ Workflows MUST run on dated GitHub-hosted Ubuntu runners. Windows, macOS, self-h
 
 **Allowed `runs-on` labels** (dated GitHub-hosted Ubuntu images only):
 
-* `ubuntu-24.04` (and other dated GitHub-hosted Ubuntu labels such as `ubuntu-22.04` or `ubuntu-26.04`)
+* `ubuntu-24.04` (and the other known dated GitHub-hosted Ubuntu images, `ubuntu-22.04` and `ubuntu-26.04`)
 * ARM variants of dated labels, such as `ubuntu-24.04-arm`
 * Firewall variants of dated labels, such as `ubuntu-24.04-firewall`, which run behind GitHub's native egress firewall
 
 **Disallowed `runs-on` values:**
 
 * `ubuntu-latest` and `ubuntu-slim`: their image changes without a workflow change, so an image upgrade would skip review.
+* Dated labels for an Ubuntu version GitHub does not host, such as `ubuntu-25.04`. Add a new image version to `$script:KnownUbuntuVersions` in `scripts/security/Test-WorkflowRunner.ps1` when GitHub publishes it.
 * `windows-*`, `macos-*`, `self-hosted`, and any custom or third-party runner label.
 * Expressions such as `${{ matrix.os }}`: the runner cannot be verified from the workflow file.
 

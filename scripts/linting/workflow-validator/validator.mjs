@@ -7,8 +7,10 @@ import './json-import-hooks.mjs';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, relative } from 'node:path';
+import { dirname, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { isMap, isScalar, isSeq, LineCounter, parseDocument } from 'yaml';
+import { CHECK_RULES, fetchTextFromGitHub, getCheckFindings } from './checks.mjs';
 
 // The parser's JSON schema imports resolve only after the hook above is
 // registered, so the parser is loaded dynamically rather than statically.
@@ -217,16 +219,24 @@ export function getManifestShellcheckVersion(repoRoot) {
 
 /**
  * Validates every workflow and composite action under repoRoot.
+ * Remote action metadata is read at its pinned commit and cached under
+ * options.cacheDir; options.fetchText replaces the network for tests.
  * @param {string} repoRoot
- * @param {{ shellcheck: string, run?: typeof spawnSync }} options
+ * @param {{ shellcheck: string, run?: typeof spawnSync, fetchText?: (url: string) => Promise<string | null>, cacheDir?: string }} options
  */
 export async function validateRepository(repoRoot, options) {
   const files = discoverFiles(repoRoot);
   const findings = [];
   const entries = [];
+  const checkOptions = {
+    repoRoot,
+    fetchText: options.fetchText ?? fetchTextFromGitHub,
+    cacheDir: options.cacheDir ?? join(dirname(fileURLToPath(import.meta.url)), 'node_modules', '.cache', 'hve-workflow-validator'),
+  };
   for (const file of files) {
     const content = readFileSync(join(repoRoot, file.path), 'utf8');
     findings.push(...(await getParserFindings(file.path, content, file.kind)));
+    findings.push(...(await getCheckFindings(file.path, content, file.kind, checkOptions)));
     for (const script of extractRunScripts(content, file.kind)) {
       entries.push({ file: file.path, script });
     }
@@ -242,14 +252,18 @@ export async function validateRepository(repoRoot, options) {
  * @param {string} version Tool version.
  */
 export function toSarif(findings, version) {
-  const ruleIds = [...new Set([PARSER_RULE, ...findings.map((finding) => finding.ruleId)])].sort();
+  const ruleIds = [...new Set([PARSER_RULE, ...Object.keys(CHECK_RULES), ...findings.map((finding) => finding.ruleId)])].sort();
+  const describe = (id) => {
+    if (id === PARSER_RULE) return { text: 'GitHub workflow parser error', help: 'https://github.com/actions/languageservices' };
+    if (CHECK_RULES[id]) return { text: CHECK_RULES[id], help: 'https://github.com/microsoft/hve-core/blob/main/scripts/linting/README.md' };
+    const code = id.slice('shellcheck/'.length);
+    return { text: `shellcheck ${code} in a run: script`, help: `https://www.shellcheck.net/wiki/${code}` };
+  };
   const rules = ruleIds.map((id) => ({
     id,
     name: id.replace(/[^A-Za-z0-9]+/g, ''),
-    shortDescription: {
-      text: id === PARSER_RULE ? 'GitHub workflow parser error' : `shellcheck ${id.slice('shellcheck/'.length)} in a run: script`,
-    },
-    helpUri: id === PARSER_RULE ? 'https://github.com/actions/languageservices' : `https://www.shellcheck.net/wiki/${id.slice('shellcheck/'.length)}`,
+    shortDescription: { text: describe(id).text },
+    helpUri: describe(id).help,
   }));
   return {
     version: '2.1.0',

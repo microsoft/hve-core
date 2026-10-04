@@ -66,7 +66,7 @@ supply chain security.
 
 | Type                    | Flags                                                                                                                                                                                          |
 |-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `github-actions`        | A `uses:` reference that is not a full commit SHA                                                                                                                                              |
+| `github-actions`        | A `uses:` reference that is not a full commit SHA, including a reference with no `@ref`. `docker://` references belong to `container-images`                                                   |
 | `npm`                   | A `package.json` dependency without an exact version                                                                                                                                           |
 | `pip`                   | A Python requirement without `==`                                                                                                                                                              |
 | `workflow-npm-commands` | `npm install` or `npm update` in a workflow instead of `npm ci`                                                                                                                                |
@@ -77,8 +77,10 @@ supply chain security.
 | `install-hints`         | Messages, help, or comments that pipe a download into a shell or `Invoke-Expression`, install a floating latest tag, or name a pip package without a version                                   |
 
 Floating runner labels and Node and Python versions are enforced by
-`Test-WorkflowRunner.ps1` and `Test-ToolVersionConsistency.ps1`. Tests and
-fixtures are excluded from the script-based rules.
+`Test-WorkflowRunner.ps1` and `Test-ToolVersionConsistency.ps1`. The runner
+check also rejects a dated Ubuntu label whose version is not a known
+GitHub-hosted image (`22.04`, `24.04`, or `26.04`). Tests and fixtures are
+excluded from the script-based rules.
 
 #### Features
 
@@ -500,6 +502,11 @@ exception waits on is met.
 * Reads runner versions from the job logs of the static `Runner probe (<label>)`
   jobs in `gh-code-scanning.yml`, only when a `runner-version` watch exists, and
   probe outcomes from an observations file
+* In the weekly scan, the observations come from the unprivileged
+  `capability-probes` job, which runs the workflow validator's
+  `run-probes.mjs` against the newest `@actions/workflow-parser` release. When
+  that job fails, no file is passed and every `probe-outcome` watch reports
+  `unknown`
 * Each `runner-version` watch needs a `Runner probe (<label>)` job with a
   literal `runs-on: <label>` so the runner policy check can verify the label
 

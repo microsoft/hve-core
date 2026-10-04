@@ -17,6 +17,7 @@ import {
   getShellcheckFindings,
   toSarif,
 } from '../validator.mjs';
+import { CHECK_RULES } from '../checks.mjs';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 
@@ -204,7 +205,9 @@ describe('toSarif', () => {
     const sarif = toSarif([{ ruleId: 'shellcheck/SC2086', level: 'note', message: 'm', file: 'w.yml', line: 0, column: 0 }], '0.0.0');
     assert.equal(sarif.version, '2.1.0');
     assert.equal(sarif.runs[0].tool.driver.name, TOOL_NAME);
-    assert.deepEqual(sarif.runs[0].tool.driver.rules.map((rule) => rule.id), ['shellcheck/SC2086', PARSER_RULE]);
+    const ruleIds = sarif.runs[0].tool.driver.rules.map((rule) => rule.id);
+    for (const id of ['shellcheck/SC2086', PARSER_RULE, ...Object.keys(CHECK_RULES)]) assert.ok(ruleIds.includes(id), id);
+    assert.equal(sarif.runs[0].tool.driver.rules.find((rule) => rule.id === 'workflow-check/undefined-step').shortDescription.text, CHECK_RULES['workflow-check/undefined-step']);
     assert.deepEqual(sarif.runs[0].results[0].locations[0].physicalLocation.region, { startLine: 1, startColumn: 1 });
   });
 });

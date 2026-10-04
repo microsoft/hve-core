@@ -87,7 +87,11 @@ Import-Module powershell-yaml -ErrorAction Stop
 # their -arm variants, and the -firewall variants behind GitHub's native egress
 # firewall. Anchored so partial matches (for example "ubuntu-24.04-custom") do
 # not slip through.
-$script:UbuntuRunnerPattern = '^ubuntu-\d{2}\.\d{2}(-arm|-firewall)?$'
+$script:UbuntuRunnerPattern = '^ubuntu-(?<version>\d{2}\.\d{2})(-arm|-firewall)?$'
+
+# Ubuntu images GitHub publishes. A dated label for any other version names no
+# runner, so its job never starts. Test-SHAStaleness.ps1 reports a newer image.
+$script:KnownUbuntuVersions = @('22.04', '24.04', '26.04')
 
 # GitHub-hosted Ubuntu labels whose image moves without a workflow change.
 $script:FloatingRunnerPattern = '^ubuntu-(latest|slim)$'
@@ -105,7 +109,8 @@ function Test-UbuntuRunnerLabel {
         [string]$Label
     )
 
-    return $Label -match $script:UbuntuRunnerPattern
+    $match = [regex]::Match($Label, $script:UbuntuRunnerPattern)
+    return $match.Success -and ($script:KnownUbuntuVersions -contains $match.Groups['version'].Value)
 }
 
 function Get-JobDeclarationLine {

@@ -10,8 +10,69 @@ permissions:
   security-events: read
 
 jobs:
+  # Runs the workflow validator's capability probes against the newest
+  # @actions/workflow-parser release, so a parser change that makes a custom
+  # check redundant (or drops coverage) is reported through the upstream
+  # watches. It reads only public packages and holds no secrets.
+  capability-probes:
+    name: Workflow Parser Capability Probes
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+
+      - name: Install locked validator dependencies
+        run: npm ci --prefix scripts/linting/workflow-validator --ignore-scripts
+
+      # npm pack verifies each tarball against the registry's integrity hash.
+      # Only the parser and its companion expressions package are replaced; the
+      # rest of the tree stays at the locked versions.
+      - name: Stage the newest parser release
+        id: stage
+        run: |
+          set -euo pipefail
+          version="$(npm view @actions/workflow-parser version)"
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Unexpected parser version '${version}'."
+            exit 1
+          fi
+          root="${RUNNER_TEMP}/newest-parser"
+          mkdir -p "${root}/packs"
+          cp -R scripts/linting/workflow-validator/node_modules "${root}/node_modules"
+          for package in workflow-parser expressions; do
+            tarball="$(cd "${root}/packs" && npm pack --silent "@actions/${package}@${version}")"
+            rm -rf "${root}/node_modules/@actions/${package}"
+            mkdir -p "${root}/node_modules/@actions/${package}"
+            tar -xzf "${root}/packs/${tarball}" -C "${root}/node_modules/@actions/${package}" --strip-components=1
+          done
+          echo "root=${root}" >> "${GITHUB_OUTPUT}"
+          echo "Staged @actions/workflow-parser ${version}"
+
+      - name: Run capability probes
+        env:
+          PARSER_ROOT: ${{ steps.stage.outputs.root }}
+        run: node scripts/linting/workflow-validator/run-probes.mjs --parser-root "${PARSER_ROOT}" --out probe-observations.json
+
+      - name: Upload probe observations
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: probe-observations
+          path: probe-observations.json
+          retention-days: 30
+
   scan:
     name: Fetch Code Scanning Alerts
+    needs: capability-probes
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -48,12 +109,22 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $status | Set-Content exceptions.json -Encoding utf8
 
+      # A failed probe job leaves no observations, so every probe watch reports
+      # unknown instead of a stale outcome.
+      - name: Download probe observations
+        if: needs.capability-probes.result == 'success'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: probe-observations
+
       - name: Evaluate upstream watches
         shell: pwsh
         env:
           RUN_ID: ${{ github.run_id }}
         run: |
-          $status = & ./scripts/security/Get-UpstreamWatchStatus.ps1 -Owner $env:OWNER -Repo $env:REPO -RunId $env:RUN_ID
+          $params = @{ Owner = $env:OWNER; Repo = $env:REPO; RunId = $env:RUN_ID }
+          if (Test-Path probe-observations.json) { $params['ObservationsPath'] = 'probe-observations.json' }
+          $status = & ./scripts/security/Get-UpstreamWatchStatus.ps1 @params
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $status | Set-Content watches.json -Encoding utf8
 

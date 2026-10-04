@@ -132,9 +132,16 @@ $DependencyPatterns = @{
         FilePatterns    = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml')
         VersionPatterns = @(
             @{
-                Pattern     = 'uses:\s*([^@\s]+)@([^#\s]+)'
+                Pattern     = 'uses:\s*(?!docker://)([^@\s]+)@([^#\s]+)'
                 Groups      = @{ Action = 1; Version = 2 }
                 Description = 'GitHub Actions uses statements'
+            }
+            @{
+                # A remote action or reusable workflow with no ref runs the default
+                # branch; the empty second group never matches the SHA pin pattern.
+                Pattern     = '^[ \t]*(?:-[ \t]+)?uses:[ \t]*[''"]?((?!\.{1,2}/|docker://|\$/)[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+?)()[''"]?[ \t]*(?:#[^\r\n]*)?\r?$'
+                Groups      = @{ Action = 1; Version = 2 }
+                Description = 'GitHub Actions uses statements without a ref'
             }
         )
         PinPattern      = '^[a-fA-F0-9]{40}$'

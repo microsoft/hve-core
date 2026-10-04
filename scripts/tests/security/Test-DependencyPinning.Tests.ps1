@@ -437,6 +437,32 @@ dependencies = [
             $result.Violations[0].Severity | Should -Be 'High'
             $result.Violations[0].ViolationType | Should -Be 'Unpinned'
         }
+
+        It 'Detects a remote uses: with no ref and ignores local, docker, and pinned references' {
+            $path = Join-Path $TestDrive 'no-ref.yml'
+            Set-Content -Path $path -Value @(
+                'jobs:'
+                '  a:'
+                '    steps:'
+                '      - uses: actions/checkout'
+                "      - uses: 'owner/repo/sub/path' # no ref"
+                '      - uses: ./.github/actions/local'
+                '      - uses: docker://alpine@sha256:0000000000000000000000000000000000000000000000000000000000000000'
+                "      - uses: actions/setup-node@$('a' * 40) # v1.0.0"
+                '  b:'
+                '    uses: org/repo/.github/workflows/x.yml'
+            )
+            $result = Get-DependencyViolation -FileInfo @{ Path = $path; Type = 'github-actions'; RelativePath = 'no-ref.yml' }
+            @($result.Violations | ForEach-Object Name) | Should -Be @('actions/checkout', 'owner/repo/sub/path', 'org/repo/.github/workflows/x.yml')
+            @($result.Violations | ForEach-Object Line) | Should -Be @(4, 5, 10)
+        }
+
+        It 'Catches the workflow validator uses-without-ref capability probe' {
+            # The parser misses this case, and the probe watch relies on this rule to cover it.
+            $probe = Join-Path $PSScriptRoot '../../linting/workflow-validator/probes/uses-without-ref.yml'
+            $result = Get-DependencyViolation -FileInfo @{ Path = $probe; Type = 'github-actions'; RelativePath = 'uses-without-ref.yml' }
+            @($result.Violations | ForEach-Object Name) | Should -Be @('actions/checkout')
+        }
     }
 
     Context 'Mixed workflows' {

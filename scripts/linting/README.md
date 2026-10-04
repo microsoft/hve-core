@@ -154,6 +154,46 @@ accepts current syntax such as `concurrency.queue`, `job.workflow_sha`, and `$/`
   (`json-import-hooks.mjs`) instead of a bundler
 * Pins `@actions/workflow-parser` and `yaml` exactly in its own
   `package-lock.json`, covered by Dependabot and `npm run audit:npm`
+* Runs custom checks (`checks.mjs`) for errors the parser accepts:
+
+  | Rule                                         | Flags                                                                                                                 |
+  |----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+  | `workflow-check/undefined-need`              | A `needs.<job>` reference to a job the current job does not list in `needs`                                           |
+  | `workflow-check/undefined-step`              | A `steps.<id>` reference to a step id the job does not define                                                         |
+  | `workflow-check/undefined-matrix-key`        | A `matrix.<key>` reference to a key the job's literal matrix does not define                                          |
+  | `workflow-check/undefined-input`             | An `inputs.<name>` reference to an input the workflow or action does not declare                                      |
+  | `workflow-check/unknown-context-property`    | A property that the `github`, `runner`, `job`, or `strategy` context, a step, or a `needs` entry does not provide     |
+  | `workflow-check/always-true-if`              | An `if:` that mixes `${{ }}` with other text, so it is a non-empty string and always true                             |
+  | `workflow-check/invalid-env-name`            | An `env` name that is not a shell identifier                                                                          |
+  | `workflow-check/invalid-path-filter`         | A branch, tag, or path filter that is not a valid glob                                                                |
+  | `workflow-check/deprecated-workflow-command` | A `run:` script that uses the disabled `set-output`, `save-state`, `set-env`, or `add-path` workflow commands         |
+  | `workflow-check/unknown-action-input`        | A `with:` input or `secrets:` entry the referenced action or reusable workflow does not declare                       |
+  | `workflow-check/missing-required-input`      | A required reusable-workflow input or secret that is not passed; `secrets: inherit` satisfies secrets                 |
+  | `workflow-check/action-metadata-unavailable` | An action or reusable workflow whose metadata cannot be read, so its inputs were not verified; the check fails closed |
+
+  Remote action metadata is fetched by commit SHA from
+  `raw.githubusercontent.com` and cached in
+  `node_modules/.cache/hve-workflow-validator`. Remote references that are not
+  a full commit SHA are left to the pinning check.
+
+##### Capability probes
+
+`probes/` holds one small workflow per known-bad pattern plus a `modern-syntax`
+sample that must stay clean. `probes/probes.json` records each probe's expected
+parser outcome and which check covers the gap today (`parser`, a
+`workflow-check/*` rule, `pinning`, `runner-policy`, or `zizmor`).
+`run-probes.mjs` runs the probes against the parser alone and writes
+observations for `Get-UpstreamWatchStatus.ps1`:
+
+```bash
+node scripts/linting/workflow-validator/run-probes.mjs --parser-root <dir> --out probe-observations.json
+```
+
+The weekly `capability-probes` job in `gh-code-scanning.yml` stages the newest
+`@actions/workflow-parser` release with `npm pack` and runs the probes. Each
+probe has a `probe-outcome` watch in `security/upstream-watches.yml`, so a
+parser release that starts catching a pattern (retire the custom check) or
+stops catching one (add a custom check) opens a tracking issue.
 
 ##### Usage
 

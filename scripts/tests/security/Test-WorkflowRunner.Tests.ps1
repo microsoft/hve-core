@@ -47,6 +47,19 @@ Describe 'Test-UbuntuRunnerLabel' -Tag 'Unit' {
         Test-UbuntuRunnerLabel -Label 'ubuntu-24.04-firewall' | Should -BeTrue
     }
 
+    It 'Should reject a dated label for an image GitHub does not publish' {
+        Test-UbuntuRunnerLabel -Label 'ubuntu-99.99' | Should -BeFalse
+        Test-UbuntuRunnerLabel -Label 'ubuntu-23.10' | Should -BeFalse
+    }
+
+    It 'Catches the workflow validator unknown-runner-label capability probe' {
+        # The parser misses this case, and the probe watch relies on this policy to cover it.
+        $probe = Join-Path $PSScriptRoot '../../linting/workflow-validator/probes/unknown-runner-label.yml'
+        $violations = @(Test-WorkflowRunner -FilePath $probe)
+        $violations | Should -HaveCount 1
+        $violations[0].ViolationType | Should -Be 'NonUbuntuRunner'
+    }
+
     It 'Should reject the floating label <Label>' -TestCases @(
         @{ Label = 'ubuntu-latest' }
         @{ Label = 'ubuntu-slim' }
