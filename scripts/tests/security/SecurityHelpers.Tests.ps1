@@ -829,3 +829,55 @@ Describe 'ConvertTo-SecuritySarif' -Tag 'Unit' {
         { ConvertTo-SecuritySarif -ToolName 'hve-test' -Rules $script:Rules -Findings @($finding) } | Should -Throw '*undeclared rule*'
     }
 }
+
+Describe 'Get-WorkflowActionStep' -Tag 'Unit' {
+    It 'returns each matching step with its line, ref, and direct with: inputs' {
+        $content = @(
+            'jobs:'
+            '  build:'
+            '    steps:'
+            '      - name: Setup Node.js'
+            '        uses: actions/setup-node@abc123 # v7.0.0'
+            '        with:'
+            '          node-version-file: .node-version # pinned'
+            "          cache: 'npm'"
+            '          nested:'
+            '            ignored: value'
+            '      - uses: actions/setup-python@def456'
+            '        with:'
+            '          python-version: "3.12.15"'
+            '      - run: echo done'
+        ) -join "`n"
+
+        $steps = @(Get-WorkflowActionStep -Content $content -ActionPattern '^actions/setup-')
+
+        $steps | Should -HaveCount 2
+        $steps[0].Action | Should -Be 'actions/setup-node'
+        $steps[0].Ref | Should -Be 'abc123'
+        $steps[0].Line | Should -Be 5
+        $steps[0].Inputs['node-version-file'] | Should -Be '.node-version'
+        $steps[0].Inputs['cache'] | Should -Be 'npm'
+        $steps[0].Inputs.Contains('ignored') | Should -BeFalse
+        $steps[1].Line | Should -Be 11
+        $steps[1].Inputs['python-version'] | Should -Be '3.12.15'
+    }
+
+    It 'does not attribute a later step input to an earlier step' {
+        $content = @(
+            'steps:'
+            '  - uses: actions/setup-python@def456'
+            '  - uses: example/other@abc'
+            '    with:'
+            '      python-version: "3.12.15"'
+        ) -join "`n"
+
+        $steps = @(Get-WorkflowActionStep -Content $content -ActionPattern '^actions/setup-python$')
+
+        $steps | Should -HaveCount 1
+        $steps[0].Inputs.Count | Should -Be 0
+    }
+
+    It 'returns nothing when no step matches' {
+        @(Get-WorkflowActionStep -Content "steps:`n  - run: echo hi" -ActionPattern '^actions/') | Should -HaveCount 0
+    }
+}

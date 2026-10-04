@@ -29,7 +29,8 @@
     Requires actionlint to be installed. Install via:
     - Windows: choco install actionlint -or- scoop install actionlint -or- winget install actionlint
     - macOS: brew install actionlint
-    - Linux: go install github.com/rhysd/actionlint/cmd/actionlint@latest
+    - Linux: download the release archive from https://github.com/rhysd/actionlint/releases and check it
+      against the published checksums file, as .github/workflows/yaml-lint.yml does
 #>
 
 [CmdletBinding()]

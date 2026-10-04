@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-10-03
+ms.date: 2026-10-04
 ms.topic: reference
 keywords:
   - powershell
@@ -53,16 +53,34 @@ The security scripts share common modules and follow a consistent pattern:
 
 ### `Test-DependencyPinning.ps1`
 
-Verifies dependency pinning compliance for all dependencies in GitHub Actions
-workflows and composite actions.
+Verifies dependency pinning compliance across workflows, composite actions,
+package manifests, container definitions, and scripts.
 
 Purpose: Detect unpinned or improperly pinned dependencies to maintain
 supply chain security.
 
+#### Rule types
+
+`-IncludeTypes` selects these rules; the default runs all of them.
+
+| Type                    | Flags                                                                                                                                                                                          |
+|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `github-actions`        | A `uses:` reference that is not a full commit SHA                                                                                                                                              |
+| `npm`                   | A `package.json` dependency without an exact version                                                                                                                                           |
+| `pip`                   | A Python requirement without `==`                                                                                                                                                              |
+| `workflow-npm-commands` | `npm install` or `npm update` in a workflow instead of `npm ci`                                                                                                                                |
+| `shell-downloads`       | A `curl` or `wget` download in any shell script or workflow without checksum verification within 10 lines, including downloads from variable URLs with an output flag                          |
+| `setup-action-versions` | A setup or installer action with no version, a floating version, or an expression version, and any setup action missing from `$SetupActionVersionInputs`                                       |
+| `python-tool-runs`      | `uvx`, `uv tool`, or `pipx` runs, which resolve transitive dependencies without a lock. Run tools from a locked uv project under `scripts/tools/` with `uv run --locked` or `uv sync --locked` |
+| `container-images`      | A Dockerfile `FROM`, compose or workflow `image:`, `container:`, `docker://`, or registry image on a `docker pull` or `run` line without an `@sha256:` digest                                  |
+| `install-hints`         | Messages, help, or comments that pipe a download into a shell or `Invoke-Expression`, install a floating latest tag, or name a pip package without a version                                   |
+
+Floating runner labels and Node and Python versions are enforced by
+`Test-WorkflowRunner.ps1` and `Test-ToolVersionConsistency.ps1`. Tests and
+fixtures are excluded from the script-based rules.
+
 #### Features
 
-* Scans workflow files and composite actions (`.github/actions/`) for GitHub
-  Actions, Docker images, and other dependency types
 * Categorizes violations by type (Unpinned, Stale, VersionMismatch,
   MissingVersionComment)
 * Outputs results in JSON, SARIF, CSV, Markdown, or table format
@@ -213,7 +231,8 @@ reach production.
 
 * Discovers Python projects via `pyproject.toml` file search
 * Exports locked dependencies via `uv export` before auditing
-* Runs pip-audit against each project's dependency set
+* Runs pip-audit from the locked `scripts/tools/pip-audit` project
+  (`uv run --locked`), so pip-audit's own dependencies are hash-verified
 * Writes JSON results to the `logs/` directory
 * Configurable path exclusions
 
@@ -508,6 +527,14 @@ devcontainer, Copilot setup steps, and workflows cannot drift apart.
   the `.github/actions/setup-uv` composite instead
 * Checks each gh-aw lock file's `compiler_version` and gh-aw-firewall image tags
   and digests
+* For each PyPI tool with a `lockProject`, requires its `pyproject.toml` to pin
+  `package==version` and its `uv.lock` to resolve that version and contain every
+  manifest digest
+* Requires `.node-version` and `.python-version` to hold one exact `X.Y.Z`
+  version, every `actions/setup-node` and `actions/setup-python` step to read
+  that file (or, without a checkout, use an equal literal), and the devcontainer
+  runtime features to match (`runtime-invalid`, `runtime-mismatch`,
+  `runtime-unpinned`)
 * Writes SARIF (tool `hve-tool-version-consistency`) with `-SarifPath` and exits
   1 on any finding; `tool-version-consistency-scan.yml` runs it in PR validation
 
@@ -680,6 +707,7 @@ Shared utility functions used across security scripts:
 |---------------------------|---------------------------------------------------------------------------|
 | `Write-SecurityLog`       | Outputs timestamped, color-coded log entries with optional CI annotations |
 | `ConvertTo-SecuritySarif` | Builds a SARIF 2.1.0 document for a homegrown security control            |
+| `Get-WorkflowActionStep`  | Returns matching workflow steps with their line, ref, and `with:` inputs  |
 
 ## tool-checksums.json schema
 
@@ -705,6 +733,13 @@ Each `tools` entry has:
   variables that hard-code this tool
 * Optional `registry` (`pypi` or `vscode-update`) for tools whose latest
   version is not a GitHub release, and `commit` for downloads pinned by commit
+* Optional `lockProject` for a PyPI tool: the `scripts/tools/<name>` uv project
+  whose committed `uv.lock` pins the tool and its transitive dependencies with
+  hashes. Workflows run the tool with `uv run --locked` or `uv sync --locked`
+
+Node.js and Python versions are not in the manifest. They live in the root
+`.node-version` and `.python-version` files, which `actions/setup-node`,
+`actions/setup-python`, uv, and the devcontainer read directly.
 
 `psModules` lists pinned PowerShell modules for `Install-PSModules.ps1`.
 

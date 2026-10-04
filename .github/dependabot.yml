@@ -67,6 +67,7 @@ updates:
   directories:
   - /.github/skills/**
   - /scripts/evals/moderation
+  - /scripts/tools/*
   groups:
     security-updates:
       applies-to: security-updates

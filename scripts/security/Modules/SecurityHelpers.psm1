@@ -734,6 +734,92 @@ function ConvertTo-SecuritySarif {
     }
 }
 
+function Get-WorkflowActionStep {
+    <#
+    .SYNOPSIS
+        Finds workflow or composite-action steps whose uses: matches a pattern and returns their inputs.
+
+    .DESCRIPTION
+        Line-based and indentation-aware, so it needs no YAML module. A step is
+        bounded by its list item; inputs are the direct children of its with:
+        key. Values are unquoted and stripped of trailing comments. Block-scalar
+        inputs (| or >) are returned as their indicator.
+
+    .PARAMETER Content
+        File content with LF line endings.
+
+    .PARAMETER ActionPattern
+        Regular expression matched against the uses: value before '@'.
+
+    .OUTPUTS
+        PSCustomObject with Action, Ref, Line, and Inputs (ordered hashtable).
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject[]])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [string]$Content,
+
+        [Parameter(Mandatory)]
+        [string]$ActionPattern
+    )
+
+    $lines = $Content -split "`n"
+    $steps = [System.Collections.Generic.List[object]]::new()
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $match = [regex]::Match($lines[$i], '^(?<indent>\s*)(?<dash>-\s+)?uses:\s*[''"]?(?<action>[^@''"\s#]+)(?:@(?<ref>[^''"\s#]+))?')
+        if (-not $match.Success -or $match.Groups['action'].Value -notmatch $ActionPattern) { continue }
+
+        $start = $i
+        $itemIndent = $match.Groups['indent'].Length
+        if (-not $match.Groups['dash'].Success) {
+            for ($j = $i - 1; $j -ge 0; $j--) {
+                $item = [regex]::Match($lines[$j], '^(\s*)-\s')
+                if ($item.Success -and $item.Groups[1].Length -lt $itemIndent) {
+                    $start = $j
+                    $itemIndent = $item.Groups[1].Length
+                    break
+                }
+            }
+        }
+        $end = $lines.Count
+        for ($k = $start + 1; $k -lt $lines.Count; $k++) {
+            if ($lines[$k] -match '^\s*(#.*)?$') { continue }
+            if (([regex]::Match($lines[$k], '^\s*')).Length -le $itemIndent) { $end = $k; break }
+        }
+
+        $inputs = [ordered]@{}
+        for ($k = $start; $k -lt $end; $k++) {
+            $with = [regex]::Match($lines[$k], '^(\s*)(?:-\s+)?with:\s*(?:#.*)?$')
+            if (-not $with.Success) { continue }
+            $withIndent = $lines[$k].IndexOf('with:')
+            $childIndent = -1
+            for ($m = $k + 1; $m -lt $end; $m++) {
+                if ($lines[$m] -match '^\s*(#.*)?$') { continue }
+                $indent = ([regex]::Match($lines[$m], '^\s*')).Length
+                if ($indent -le $withIndent) { break }
+                if ($childIndent -lt 0) { $childIndent = $indent }
+                if ($indent -ne $childIndent) { continue }
+                $pair = [regex]::Match($lines[$m], '^\s*(?<key>[A-Za-z0-9_.-]+):\s*(?<value>.*?)\s*$')
+                if (-not $pair.Success) { continue }
+                $value = $pair.Groups['value'].Value
+                if ($value -notmatch '^[''"]') { $value = ($value -replace '\s+#.*$', '') }
+                $inputs[$pair.Groups['key'].Value] = $value.Trim().Trim('''', '"')
+            }
+            break
+        }
+
+        $steps.Add([pscustomobject]@{
+                Action = $match.Groups['action'].Value
+                Ref    = $match.Groups['ref'].Value
+                Line   = $i + 1
+                Inputs = $inputs
+            })
+    }
+    return $steps.ToArray()
+}
+
 Export-ModuleMember -Function @(
     'Write-SecurityLog'
     'New-SecurityIssue'
@@ -743,4 +829,5 @@ Export-ModuleMember -Function @(
     'Test-GitHubToken'
     'Invoke-GitHubAPIWithRetry'
     'ConvertTo-SecuritySarif'
+    'Get-WorkflowActionStep'
 )

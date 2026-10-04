@@ -240,6 +240,49 @@ jobs:
     }
 }
 
+Describe 'Lock project checks' -Tag 'Unit' {
+    BeforeAll {
+        $script:Wheel = 'e' * 64
+        $script:LockTool = [ordered]@{
+            name = 'pip-audit'; repo = 'pypa/pip-audit'; version = '2.10.0'; verification = 'pypi'; registry = 'pypi'; package = 'pip-audit'
+            lockProject = 'scripts/tools/pip-audit'; sha256ByArch = @{ linux_amd64 = $script:Wheel }
+        }
+        function script:New-LockFiles {
+            param([string]$Pin = 'pip-audit==2.10.0', [string]$Locked = '2.10.0', [string]$Digest = $script:Wheel)
+            return @{
+                'scripts/tools/pip-audit/pyproject.toml' = "[project]`nname = `"x`"`ndependencies = [`n    `"$Pin`",`n]"
+                'scripts/tools/pip-audit/uv.lock'        = "version = 1`n`n[[package]]`nname = `"pip-audit`"`nversion = `"$Locked`"`nwheels = [`n    { url = `"https://x`", hash = `"sha256:$Digest`" },`n]"
+            }
+        }
+    }
+
+    It 'accepts a lock project that pins the manifest version and digest' {
+        $result = Invoke-Check (New-Repo -Manifest (New-Manifest -ExtraTools @($script:LockTool)) -Files (New-LockFiles))
+        $result.Findings | Should -BeNullOrEmpty
+        $result.ScannedFiles | Should -Contain 'scripts/tools/pip-audit/uv.lock'
+    }
+
+    It 'reports <Name>' -ForEach @(
+        @{ Name = 'a pyproject pin that differs'; Files = @{ Pin = 'pip-audit==2.9.0' }; Rule = 'tool-version/version-mismatch'; File = 'scripts/tools/pip-audit/pyproject.toml' }
+        @{ Name = 'a pyproject range'; Files = @{ Pin = 'pip-audit>=2.10' }; Rule = 'tool-version/version-mismatch'; File = 'scripts/tools/pip-audit/pyproject.toml' }
+        @{ Name = 'a lock that resolves another version'; Files = @{ Locked = '2.10.1' }; Rule = 'tool-version/version-mismatch'; File = 'scripts/tools/pip-audit/uv.lock' }
+        @{ Name = 'a lock without the manifest digest'; Files = @{ Digest = ('f' * 64) }; Rule = 'tool-version/checksum-mismatch'; File = 'scripts/tools/pip-audit/uv.lock' }
+    ) {
+        $result = Invoke-Check (New-Repo -Manifest (New-Manifest -ExtraTools @($script:LockTool)) -Files (New-LockFiles @Files))
+        @($result.Findings).Count | Should -Be 1
+        $result.Findings[0].RuleId | Should -Be $Rule
+        $result.Findings[0].File | Should -Be $File
+    }
+
+    It 'reports a missing lock project and a lockProject on a non-PyPI tool' {
+        $bad = [ordered]@{ name = 't'; repo = 'o/r'; version = '1.0.0'; verification = 'published-checksums'; lockProject = 'scripts/tools/t'
+            sha256ByArch = @{ linux_amd64 = ('e' * 64) }; assetTemplateByArch = @{ linux_amd64 = 'u' } }
+        $result = Invoke-Check (New-Repo -Manifest (New-Manifest -ExtraTools @($script:LockTool, $bad)))
+        ($result.Findings | Where-Object RuleId -EQ 'tool-version/manifest-invalid').Message -join ' ' | Should -Match "needs registry 'pypi'"
+        ($result.Findings | Where-Object RuleId -EQ 'tool-version/manifest-invalid').Message -join ' ' | Should -Match 'needs pyproject.toml and uv.lock'
+    }
+}
+
 Describe 'SARIF output' -Tag 'Unit' {
     It 'writes every rule and each finding to SARIF' {
         $sarif = Join-Path $TestDrive 'out/tool.sarif'

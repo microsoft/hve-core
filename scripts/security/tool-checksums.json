@@ -171,11 +171,25 @@
       "envPrefix": "PIPER",
       "registry": "pypi",
       "package": "piper-tts",
+      "lockProject": "scripts/tools/piper",
       "sha256ByArch": {
         "linux_amd64": "25b4d3f31ff70c8fa7151908e00aaa5650cbdf16bca8fcf21299f3941b89a7d3",
         "linux_arm64": "3f60c1917de6d8e8033f395878ad3f88f6dfee88a8b05f98971a275f76a38484"
       },
-      "notes": "Text-to-speech for demo-material-render.yml, installed with uv tool install. Digests are the PyPI manylinux wheel hashes."
+      "notes": "Text-to-speech for demo-material-render.yml, installed with uv sync --locked from lockProject, whose uv.lock pins every transitive dependency with hashes. Digests are the PyPI manylinux wheel hashes and must appear in that uv.lock."
+    },
+    {
+      "name": "pip-audit",
+      "repo": "pypa/pip-audit",
+      "version": "2.10.0",
+      "verification": "pypi",
+      "registry": "pypi",
+      "package": "pip-audit",
+      "lockProject": "scripts/tools/pip-audit",
+      "sha256ByArch": {
+        "linux_amd64": "16e02093872fac97580303f0848fa3ad64f7ecf600736ea7835a2b24de49613f"
+      },
+      "notes": "Python dependency audits in pip-audit.yml and Invoke-PipAudit.ps1, run with uv run --locked from lockProject. The digest is the PyPI py3-none-any wheel hash and must appear in that uv.lock."
     },
     {
       "name": "vscode-cli",

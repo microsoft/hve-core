@@ -138,7 +138,7 @@ jobs:
             foreach ($vuln in $vulns) { $ignoreArgs += '--ignore-vuln'; $ignoreArgs += $vuln }
             Write-Output "Ignoring $($vulns.Count) known vulnerability ID(s)"
           }
-          uvx pip-audit@2.10.0 `
+          uv run --locked --project "$env:GITHUB_WORKSPACE/scripts/tools/pip-audit" pip-audit `
             -r "$env:RUNNER_TEMP/requirements.txt" `
             --no-deps `
             --format json `

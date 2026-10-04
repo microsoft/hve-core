@@ -31,7 +31,6 @@ concurrency:
 permissions: {}
 
 env:
-  PIPER_VERSION: '1.8.0'
   PIPER_VOICE: en_US-joe-medium
   PIPER_VOICE_BASE: https://huggingface.co/rhasspy/piper-voices/resolve/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/joe/medium
   PIPER_VOICE_ONNX_SHA256: 58afce0321b8d9c46d7cdf9c16500cc55a793b4220212dba6b70fb788b3baf06
@@ -265,12 +264,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libreoffice-impress ffmpeg
 
+      # Piper and its transitive dependencies install from a locked uv project
+      # whose uv.lock pins every package with hashes.
       - name: Install Piper and its voice
         shell: bash
         run: |
           set -euo pipefail
-          uv tool install "piper-tts==${PIPER_VERSION}"
-          uv tool dir --bin >> "${GITHUB_PATH}"
+          uv sync --locked --project scripts/tools/piper
+          echo "${GITHUB_WORKSPACE}/scripts/tools/piper/.venv/bin" >> "${GITHUB_PATH}"
           mkdir -p "${PIPER_DATA_DIR}"
           cd "${PIPER_DATA_DIR}"
           curl --fail --location --silent --show-error \

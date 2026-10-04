@@ -34,7 +34,8 @@ sync_python_environments() {
       -type d \( \
         -name node_modules -o \
         -path "${repo_root}/plugins" -o \
-        -path "${repo_root}/scripts/evals/moderation" \
+        -path "${repo_root}/scripts/evals/moderation" -o \
+        -path "${repo_root}/scripts/tools" \
       \) -prune -o \
       -type f -name pyproject.toml -print0
   )

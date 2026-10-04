@@ -112,9 +112,11 @@ function Invoke-PipAuditForProject {
         Pop-Location
     }
 
-    # Run pip-audit; finally block ensures temp file cleanup on terminating errors
+    # Run pip-audit from its locked project so every transitive dependency is
+    # hash-verified; finally block ensures temp file cleanup on terminating errors
+    $pipAuditProject = Join-Path (Split-Path -Parent $PSScriptRoot) 'tools/pip-audit'
     try {
-        uvx pip-audit@2.10.0 `
+        uv run --locked --project $pipAuditProject pip-audit `
             -r $requirementsFile `
             --no-deps `
             --format json `

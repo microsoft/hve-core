@@ -1,0 +1,14 @@
+# Locked environment for pip-audit. uv.lock pins every transitive dependency
+# with hashes; run with `uv run --locked --project scripts/tools/pip-audit`.
+# The pip-audit version must match scripts/security/tool-checksums.json.
+[project]
+name = "hve-core-pip-audit"
+version = "0.0.0"
+description = "Locked pip-audit environment for hve-core dependency audits"
+requires-python = ">=3.12"
+dependencies = [
+    "pip-audit==2.10.0",
+]
+
+[tool.uv]
+package = false

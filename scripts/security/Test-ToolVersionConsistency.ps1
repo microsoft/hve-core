@@ -20,9 +20,10 @@
     composite actions, and devcontainer scripts:
 
       tool-version/manifest-invalid      the manifest entry is malformed
-      tool-version/version-mismatch      <PREFIX>_VERSION or a gh-aw lock
-                                         compiler_version differs
-      tool-version/checksum-mismatch     <PREFIX>[_<ARCH>]_SHA256 is not a manifest digest
+      tool-version/version-mismatch      <PREFIX>_VERSION, a gh-aw lock compiler_version,
+                                         or a lockProject's pyproject.toml or uv.lock differs
+      tool-version/checksum-mismatch     <PREFIX>[_<ARCH>]_SHA256 is not a manifest digest, or a
+                                         manifest digest is missing from a lockProject's uv.lock
       tool-version/commit-mismatch       <PREFIX>_URL lacks the manifest commit
       tool-version/image-mismatch        a gh-aw-firewall image tag or digest differs
       tool-version/unregistered-tool     a file pins <NAME>_VERSION with a matching
@@ -167,11 +168,75 @@ function Get-ToolManifestFinding {
             }
             if ($tool.verification -eq 'pypi' -and -not $tool.package) { $problems.Add("'package' is required for pypi") }
         }
+        if ($tool.lockProject -and ($tool.registry -ne 'pypi' -or -not $tool.package)) { $problems.Add("'lockProject' needs registry 'pypi' and a 'package'") }
         if ($problems.Count -gt 0) {
             $findings.Add((New-Finding -RuleId 'tool-version/manifest-invalid' -Message "Tool '$label': $($problems -join '; ')." -File $ManifestFile))
         }
     }
     return $findings.ToArray()
+}
+
+function Get-LockProjectFinding {
+    <#
+    .SYNOPSIS
+        Checks that each PyPI tool's locked uv project pins the manifest version and wheel digests.
+    .DESCRIPTION
+        For every manifest tool with a lockProject, pyproject.toml must pin
+        package==version, and uv.lock must resolve that version and contain every
+        manifest sha256, so the manifest, the lock, and staleness checks agree.
+    .OUTPUTS
+        PSCustomObject with Findings and the scanned relative paths.
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject])]
+    param(
+        [Parameter(Mandatory)][object]$Manifest,
+        [Parameter(Mandatory)][string]$RepoRoot,
+        [Parameter(Mandatory)][string]$ManifestFile
+    )
+
+    $findings = [System.Collections.Generic.List[object]]::new()
+    $scanned = [System.Collections.Generic.List[string]]::new()
+    foreach ($tool in @($Manifest.tools | Where-Object { $_.lockProject -and $_.package })) {
+        $project = ([string]$tool.lockProject).TrimEnd('/')
+        $pyprojectRelative = "$project/pyproject.toml"
+        $lockRelative = "$project/uv.lock"
+        $pyprojectPath = Join-Path $RepoRoot $pyprojectRelative
+        $lockPath = Join-Path $RepoRoot $lockRelative
+        if (-not (Test-Path -LiteralPath $pyprojectPath) -or -not (Test-Path -LiteralPath $lockPath)) {
+            $findings.Add((New-Finding -RuleId 'tool-version/manifest-invalid' -File $ManifestFile `
+                        -Message "Tool '$($tool.name)': lockProject '$project' needs pyproject.toml and uv.lock."))
+            continue
+        }
+        $scanned.Add($pyprojectRelative)
+        $scanned.Add($lockRelative)
+        $package = [regex]::Escape([string]$tool.package)
+
+        $pyproject = (Get-Content -Raw -LiteralPath $pyprojectPath) -replace "`r`n", "`n"
+        $pin = [regex]::Match($pyproject, "[""']$package==(?<v>[^""';\s]+)[""']", 'IgnoreCase')
+        if (-not $pin.Success -or $pin.Groups['v'].Value -cne $tool.version) {
+            $found = if ($pin.Success) { "pins $($pin.Groups['v'].Value)" } else { 'does not pin it with ==' }
+            $line = if ($pin.Success) { Get-LineNumber $pyproject $pin.Index } else { 1 }
+            $findings.Add((New-Finding -RuleId 'tool-version/version-mismatch' -File $pyprojectRelative -Line $line `
+                        -Message "$($tool.package) $found here but scripts/security/tool-checksums.json pins $($tool.version)."))
+        }
+
+        $lock = (Get-Content -Raw -LiteralPath $lockPath) -replace "`r`n", "`n"
+        $entry = [regex]::Match($lock, "(?m)^\[\[package\]\]\nname = ""$package""\nversion = ""(?<v>[^""]+)""", 'IgnoreCase')
+        if (-not $entry.Success -or $entry.Groups['v'].Value -cne $tool.version) {
+            $found = if ($entry.Success) { "resolves $($entry.Groups['v'].Value)" } else { 'does not resolve it' }
+            $line = if ($entry.Success) { Get-LineNumber $lock $entry.Index } else { 1 }
+            $findings.Add((New-Finding -RuleId 'tool-version/version-mismatch' -File $lockRelative -Line $line `
+                        -Message "$($tool.package) $found here but scripts/security/tool-checksums.json pins $($tool.version). Run uv lock."))
+        }
+        foreach ($digest in @($tool.sha256ByArch.PSObject.Properties)) {
+            if (-not $lock.Contains("sha256:$($digest.Value)")) {
+                $findings.Add((New-Finding -RuleId 'tool-version/checksum-mismatch' -File $lockRelative `
+                            -Message "$($tool.package) $($digest.Name) digest $($digest.Value) from scripts/security/tool-checksums.json is not in this uv.lock."))
+            }
+        }
+    }
+    return [pscustomobject]@{ Findings = $findings.ToArray(); Scanned = $scanned.ToArray() }
 }
 
 function Get-ToolFileFinding {
@@ -304,9 +369,9 @@ function Get-RuntimeStepFinding {
     .SYNOPSIS
         Checks every setup-node and setup-python step in one workflow or action file.
     .DESCRIPTION
-        Finds each step whose uses: names a runtime setup action, bounds the step
-        by indentation, and requires the runtime's *-version-file input to name
-        the root version file or a literal version input to equal its pin.
+        Uses Get-WorkflowActionStep to read each runtime setup step's with: inputs
+        and requires the runtime's *-version-file input to name the root version
+        file or a literal version input to equal its pin.
     #>
     [CmdletBinding()]
     [OutputType([object[]])]
@@ -317,42 +382,13 @@ function Get-RuntimeStepFinding {
     )
 
     $findings = [System.Collections.Generic.List[object]]::new()
-    $lines = $Content -split "`n"
-    for ($i = 0; $i -lt $lines.Count; $i++) {
-        $match = [regex]::Match($lines[$i], '^(?<indent>\s*)(?<dash>-\s+)?uses:\s*[''"]?(?<action>actions/setup-(?:node|python))@')
-        if (-not $match.Success) { continue }
-        $runtime = $script:Runtimes | Where-Object Action -EQ $match.Groups['action'].Value | Select-Object -First 1
-
-        $start = $i
-        $itemIndent = $match.Groups['indent'].Length
-        if (-not $match.Groups['dash'].Success) {
-            for ($j = $i - 1; $j -ge 0; $j--) {
-                $item = [regex]::Match($lines[$j], '^(\s*)-\s')
-                if ($item.Success -and $item.Groups[1].Length -lt $itemIndent) {
-                    $start = $j
-                    $itemIndent = $item.Groups[1].Length
-                    break
-                }
-            }
-        }
-        $end = $lines.Count
-        for ($k = $i + 1; $k -lt $lines.Count; $k++) {
-            if ($lines[$k] -match '^\s*(#.*)?$') { continue }
-            if (([regex]::Match($lines[$k], '^\s*')).Length -le $itemIndent) { $end = $k; break }
-        }
-        $step = $lines[$start..($end - 1)]
-
-        $fileValue = $null
-        $versionValue = $null
-        foreach ($line in $step) {
-            $inputMatch = [regex]::Match($line, "^\s*(?<key>$([regex]::Escape($runtime.FileKey))|$([regex]::Escape($runtime.VersionKey))):\s*(?<value>.*?)\s*(?:#.*)?$")
-            if (-not $inputMatch.Success) { continue }
-            $value = $inputMatch.Groups['value'].Value.Trim('''', '"')
-            if ($inputMatch.Groups['key'].Value -eq $runtime.FileKey) { $fileValue = $value } else { $versionValue = $value }
-        }
+    foreach ($step in @(Get-WorkflowActionStep -Content $Content -ActionPattern '^actions/setup-(?:node|python)$')) {
+        $runtime = $script:Runtimes | Where-Object Action -EQ $step.Action | Select-Object -First 1
+        $fileValue = $step.Inputs[$runtime.FileKey]
+        $versionValue = $step.Inputs[$runtime.VersionKey]
 
         $pin = $Pins[$runtime.Name]
-        $lineNumber = $i + 1
+        $lineNumber = $step.Line
         if (-not $pin) {
             $findings.Add((New-Finding -RuleId 'tool-version/runtime-unpinned' -File $RelativePath -Line $lineNumber `
                         -Message "$($runtime.Action) has no exact version source: $($runtime.File) is missing or invalid."))
@@ -461,6 +497,8 @@ function Invoke-ToolVersionConsistency {
 
     $findings = [System.Collections.Generic.List[object]]::new()
     $findings.AddRange([object[]]@(Get-ToolManifestFinding -Manifest $manifest -ManifestFile $manifestRelative))
+    $lockProjects = Get-LockProjectFinding -Manifest $manifest -RepoRoot $RepoRoot -ManifestFile $manifestRelative
+    $findings.AddRange([object[]]@($lockProjects.Findings))
     $runtimePins = Get-RuntimePin -RepoRoot $RepoRoot
     $findings.AddRange([object[]]@($runtimePins.Findings))
     $scanned = @(Get-ScannedFile -RepoRoot $RepoRoot)
@@ -486,7 +524,7 @@ function Invoke-ToolVersionConsistency {
 
     return [pscustomobject]@{
         Findings     = $findings.ToArray()
-        ScannedFiles = $scanned
+        ScannedFiles = @($scanned) + @($lockProjects.Scanned)
         ExitCode     = $(if ($findings.Count -eq 0) { 0 } else { 1 })
     }
 }
