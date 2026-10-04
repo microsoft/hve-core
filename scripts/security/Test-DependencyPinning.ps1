@@ -518,7 +518,7 @@ function Get-SetupActionVersionViolations {
 
     $content = (Get-Content -LiteralPath $FileInfo.Path -Raw) -replace "`r`n", "`n"
     if ($null -eq $content) { $content = '' }
-    $steps = @(Get-WorkflowActionStep -Content $content -ActionPattern '^[^./][^@]*/(?:setup-[A-Za-z0-9-]+|[A-Za-z0-9-]+-installer)$')
+    $steps = @(Get-WorkflowActionStep -Content $content -ActionPattern '^[^./$][^@]*/(?:setup-[A-Za-z0-9-]+|[A-Za-z0-9-]+-installer)$')
     $violations = @()
 
     foreach ($step in $steps) {

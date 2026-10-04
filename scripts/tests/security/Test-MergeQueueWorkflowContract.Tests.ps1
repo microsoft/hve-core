@@ -769,7 +769,7 @@ jobs:
         $CheckStep = @($Workflow['jobs']['msdate-freshness']['steps']) | Where-Object { $_['name'] -eq 'Run ms.date freshness check' }
         $WeeklyWorkflow = Get-Content -Raw -Path (Join-Path $WorkflowRoot 'weekly-validation.yml') | ConvertFrom-Yaml
         $AggregateCaller = $script:AggregateWorkflow['jobs']['msdate-freshness']['with']
-        $WeeklyCaller = @($WeeklyWorkflow['jobs'].Values | Where-Object { $_['uses'] -eq './.github/workflows/msdate-freshness-check.yml' })
+        $WeeklyCaller = @($WeeklyWorkflow['jobs'].Values | Where-Object { $_['uses'] -eq '$/.github/workflows/msdate-freshness-check.yml' })
 
         $CheckStep['run'] | Should -Match "(?s)CHANGED_FILES_ONLY -eq 'true' -and \`$env:INPUT_CHANGE_MODE -eq 'full'\) \{\s+Write-Output '::warning::[^']+'\s+& scripts/linting/Invoke-MsDateFreshnessCheck\.ps1 @params\s+exit 0\s+\}"
         $AggregateCaller['changed-files-only'] | Should -BeTrue
@@ -1002,6 +1002,7 @@ Describe 'Aggregate merge-group ownership' -Tag 'Unit' {
     It 'Bounds the write scopes and secrets reachable from merge_group' {
         # merge_group runs fork-originated code in the base-repository context, so every write grant is deliberate.
         $ExpectedWriteGrants = @(
+            'action-pin-provenance-scan=security-events'
             'action-version-consistency-scan=security-events'
             'adr-consistency-validation=security-events'
             'codeql=security-events'
@@ -1014,8 +1015,10 @@ Describe 'Aggregate merge-group ownership' -Tag 'Unit' {
             'node-tests=id-token'
             'pester-tests=id-token'
             'pytest=id-token'
+            'tool-version-consistency-scan=security-events'
             'workflow-permissions-check=security-events'
             'workflow-runner-check=security-events'
+            'workflow-validation-scan=security-events'
         )
         $TopLevelPermissions = $script:AggregateWorkflow['permissions']
         $NonMapPermissionJobs = [System.Collections.Generic.List[string]]::new()

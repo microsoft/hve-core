@@ -2114,6 +2114,7 @@ Describe 'Expanded pinning rules' -Tag 'Unit' {
             $result = Invoke-Rule Get-SetupActionVersionViolations 'setup-action-versions' 'local.yml' @(
                 'jobs:', '  build:', '    steps:'
                 '      - uses: ./.github/actions/setup-uv'
+                '      - uses: $/.github/actions/setup-uv'
                 "      - uses: actions/checkout@$script:Sha"
             )
             $result.TotalCount | Should -Be 0
