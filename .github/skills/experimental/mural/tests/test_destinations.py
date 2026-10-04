@@ -282,15 +282,14 @@ def test_registry_override_rejects_malformed_duplicate_and_unsafe_input(
         )
 
 
-def test_default_override_resolves_only_under_destination_instructions() -> None:
+def test_default_override_resolves_only_under_skill_destinations() -> None:
     module = destinations_module()
 
     path = module._default_override_path()
 
-    assert path.parts[-5:] == (
-        "instructions",
-        "experimental",
+    assert path.parts[-4:] == (
         "mural",
+        "assets",
         "destinations",
         "dt-sections.yml",
     )

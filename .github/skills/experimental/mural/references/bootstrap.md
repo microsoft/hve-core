@@ -1,9 +1,8 @@
 ---
 description: 'Fresh-session Mural bootstrap requirements for doctor checks, credential backend selection, and safe escalation before Mural tool use.'
-applyTo: '**/.github/agents/design-thinking/dt-coach.agent.md, **/.github/agents/rai-planning/rai-planner.agent.md, **/.github/agents/project-planning/ux-ui-designer.agent.md, **/.github/instructions/experimental/mural/**'
 ---
 
-## Mural Bootstrap
+# Mural Bootstrap
 
 Before any Mural verb in a fresh session, call `mural doctor`. Add one repeatable `--require-scope <scope>` argument for every scope required by the intended verb sequence. No `--require-scope` argument means read-only readiness. Act on the verdict before proceeding. A fresh session is any agent turn where no successful `mural doctor` or Mural command has already confirmed readiness for the current workspace, credential backend, working directory, and intended scopes.
 
@@ -20,7 +19,7 @@ Use the command scope policy exported by the Mural skill. Common sequences requi
 | Room creation                                                   | `--require-scope rooms:write`                                 |
 | DT board bootstrap                                              | `--require-scope rooms:write --require-scope murals:write`    |
 
-## Credential Backend Defaults
+# Credential Backend Defaults
 
 | Host environment | Credential backend             |
 |------------------|--------------------------------|
@@ -29,7 +28,7 @@ Use the command scope policy exported by the Mural skill. Common sequences requi
 | Remote-SSH       | `file`                         |
 | WSL2             | `auto` with fallback to `file` |
 
-## Verdict Handling
+# Verdict Handling
 
 If `mural doctor` returns `ready`, continue with the requested Mural workflow.
 
@@ -63,6 +62,6 @@ If `mural doctor` returns `deps_missing`, pause and say:
 The Mural tool dependencies are not installed in this environment. Please run the repository's documented dependency setup for the Mural skill, then ask me to retry.
 ```
 
-## Sensitive Data Hygiene
+# Sensitive Data Hygiene
 
 Never print, summarize, or ask the user to paste secrets into chat. This includes raw authentication URLs, OAuth tokens, authorization headers, Azure SAS query strings, refresh tokens, and credential file contents. When escalation is needed, name the verdict and the remediation path without exposing sensitive values.
