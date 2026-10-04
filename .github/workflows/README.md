@@ -111,7 +111,7 @@ fail-closed safety control, not a draft-visibility guarantee.
 
 The Copilot CLI plugin has one registration, `microsoft/hve-core`, which tracks `main`. Release channels apply to the VSIX only; there are no release-channel plugin registrations.
 
-Publication does not synchronize release metadata or changelog history back to `main`. An explicit marketplace refresh and plugin update are required for the `main` registration, which has no release gate, SBOM, or attestation. Release-channel VSIX assets remain release-gated, SBOM-covered, and attested.
+Publication does not synchronize release metadata or changelog history back to `main`. An explicit marketplace refresh and plugin update are required for the `main` registration, which has no release gate or release attestation. Each push to `main` publishes an unattested dependency SBOM, described in [Continuous Main SBOM](../../docs/contributing/release-process.md#continuous-main-sbom). Release-channel VSIX assets remain release-gated, SBOM-covered, and attested.
 
 Both release channels preserve one VSIX, its SPDX, Sigstore, and in-toto
 sidecars, `dependencies.spdx.json`, provenance verification, and Azure OIDC
