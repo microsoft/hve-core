@@ -56,7 +56,7 @@ copilot plugin update hve-core@hve-core
 
 ## Replace an Earlier Registration
 
-If you registered a release-channel or tag ref, such as `microsoft/hve-core#release/stable` or `microsoft/hve-core#v<version>`, remove that registration and register the repository again:
+If you registered a release-channel or tag ref, such as `microsoft/hve-core#release/stable` or `microsoft/hve-core#v<version>`, and want to follow `main`, remove that registration and register the repository again. Switching replaces release-gated, attested content with `main` content:
 
 ```bash
 copilot plugin marketplace remove hve-core --force
