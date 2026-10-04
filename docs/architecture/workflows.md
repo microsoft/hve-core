@@ -336,7 +336,7 @@ PreRelease releases still need successful runtime evidence, active governance
 evidence, platform assurance mapping, and qualified human review before making
 that claim.
 
-The `microsoft/hve-core` plugin registration sources canonical content from `.github` through the main catalog. An explicit marketplace refresh and plugin update are required for that catalog, which has no release gate, SBOM, or attestation. There are no release-channel plugin registrations; PreRelease and Stable retain reviewed, release-gated, SBOM-covered, and attested immutable VSIX delivery through exact tags.
+The `microsoft/hve-core` plugin registration sources canonical content from `.github` through the main catalog. An explicit marketplace refresh and plugin update are required for that catalog, which has no release gate or release attestation. Each push to `main` publishes an unattested dependency SBOM, described in [Continuous Main SBOM](../contributing/release-process.md#continuous-main-sbom). There are no release-channel plugin registrations; PreRelease and Stable retain reviewed, release-gated, SBOM-covered, and attested immutable VSIX delivery through exact tags.
 
 ## Security Workflows
 
