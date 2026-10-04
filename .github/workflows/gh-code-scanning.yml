@@ -88,7 +88,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
+        uses: $/.github/actions/setup-ps-modules
 
       # Dismissed alerts that are still detected are reported too: a dismissal
       # never resolves an alert, so they get an issue that asks for a reopen.

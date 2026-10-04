@@ -22,8 +22,7 @@ BeforeDiscovery {
         @{ Workflow = 'pytest-tests.yml'; Job = 'pytest' }
         @{ Workflow = 'python-lint.yml'; Job = 'python-lint' }
         @{ Workflow = 'skill-validation.yml'; Job = 'validate' }
-        @{ Workflow = 'yaml-lint.yml'; Job = 'yaml-lint' }
-    )
+        )
 
     # Trusted events may receive the custom eval token; every other event must not.
     $script:CredentialEventScenarios = @(

@@ -106,7 +106,7 @@ watches:
     kind: probe-outcome
     issue: 3112
     action: >-
-      The parser stopped catching this (current syntax is accepted (concurrency.queue, job.workflow_sha)); add a custom check to scripts/linting/workflow-validator/checks.mjs
+      The parser now rejects current syntax (concurrency.queue, job.workflow_sha, or $/ self-repository uses); keep the validator's parser pin, which accepts it, and report the regression upstream before updating the pin
     probe: modern-syntax
     baseline: pass
   - id: workflow-parser-probe-unknown-context-property

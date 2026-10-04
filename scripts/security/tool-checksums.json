@@ -3,23 +3,6 @@
   "description": "Single source of truth for downloaded tool versions and checksums. Test-ToolVersionConsistency.ps1 fails when a hard-coded copy disagrees, and Test-SHAStaleness.ps1 reports newer releases.",
   "tools": [
     {
-      "name": "actionlint",
-      "repo": "rhysd/actionlint",
-      "version": "1.7.10",
-      "verification": "published-checksums",
-      "envPrefix": "ACTIONLINT",
-      "sha256": "f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f",
-      "sha256ByArch": {
-        "linux_amd64": "f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f",
-        "linux_arm64": "cd3dfe5f66887ec6b987752d8d9614e59fd22f39415c5ad9f28374623f41773a"
-      },
-      "assetTemplateByArch": {
-        "linux_amd64": "https://github.com/rhysd/actionlint/releases/download/v{version}/actionlint_{version}_linux_amd64.tar.gz",
-        "linux_arm64": "https://github.com/rhysd/actionlint/releases/download/v{version}/actionlint_{version}_linux_arm64.tar.gz"
-      },
-      "notes": "Workflow linting in the devcontainer, Copilot setup steps, and yaml-lint.yml."
-    },
-    {
       "name": "gitleaks",
       "repo": "gitleaks/gitleaks",
       "version": "8.30.0",
@@ -221,7 +204,7 @@
     {
       "name": "PowerShell-Yaml",
       "version": "0.4.7",
-      "notes": "YAML parser used by lint:yaml and artifact metadata validation; pinned to known-good stable per ADR in docs/security/dependency-pinning.md"
+      "notes": "YAML parser used by workflow, frontmatter, and artifact metadata validation; pinned to known-good stable per ADR in docs/security/dependency-pinning.md"
     },
     {
       "name": "Pester",

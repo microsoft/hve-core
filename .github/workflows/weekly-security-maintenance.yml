@@ -24,7 +24,7 @@ jobs:
     # Job 1: Validate dependency pinning
   validate-pinning:
     name: Validate Dependency Pinning Compliance
-    uses: ./.github/workflows/dependency-pinning-scan.yml
+    uses: $/.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
@@ -38,7 +38,7 @@ jobs:
   # Job 2: Check for stale SHA pins
   check-staleness:
     name: Check SHA Staleness
-    uses: ./.github/workflows/sha-staleness-check.yml
+    uses: $/.github/workflows/sha-staleness-check.yml
     permissions:
       contents: read
     with:
@@ -47,7 +47,7 @@ jobs:
   # Job 3: Run CodeQL security analysis
   codeql-analysis:
     name: CodeQL Security Analysis
-    uses: ./.github/workflows/codeql-analysis.yml
+    uses: $/.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab

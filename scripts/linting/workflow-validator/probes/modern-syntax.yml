@@ -11,3 +11,4 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - run: echo "${{ job.workflow_sha }}"
+      - uses: $/.github/actions/example

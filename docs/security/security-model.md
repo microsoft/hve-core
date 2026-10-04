@@ -2109,7 +2109,7 @@ The merge commit author is the accountable author of record, never the agent.
 | CQ-2 | Markdown Linting              | lint:md npm script                                          | T-2, RAI-4        |
 | CQ-3 | Frontmatter Validation        | Validate-MarkdownFrontmatter.ps1                            | T-2               |
 | CQ-4 | PowerShell Analysis           | Invoke-PSScriptAnalyzer.ps1                                 | T-1               |
-| CQ-5 | YAML Linting                  | Invoke-YamlLint.ps1                                         | T-1               |
+| CQ-5 | Workflow Validation           | workflow-validator/validate-workflows.mjs                   | T-1               |
 | CQ-6 | Workflow Input Isolation      | Step-level `env:` mappings for caller-controlled inputs     | T-3               |
 | CQ-7 | Project Path Validation       | Assert-WorkflowProjectDirectory.ps1                         | T-3               |
 | CQ-8 | Input Interpolation Detection | Test-DangerousWorkflow.ps1                                  | T-3               |

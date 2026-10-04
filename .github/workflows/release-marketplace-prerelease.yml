@@ -142,7 +142,7 @@ jobs:
     name: Publish Pre-Release Extension
     needs: [validate-version, verify-catalog]
     if: ${{ !inputs.dry-run }}
-    uses: ./.github/workflows/extension-marketplace-publish.yml
+    uses: $/.github/workflows/extension-marketplace-publish.yml
     with:
       tag: ${{ needs.validate-version.outputs.tag }}
       pre-release: true

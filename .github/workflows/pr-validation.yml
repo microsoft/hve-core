@@ -61,7 +61,7 @@ jobs:
 
   spell-check:
     name: Spell Check
-    uses: ./.github/workflows/spell-check.yml
+    uses: $/.github/workflows/spell-check.yml
     permissions:
       contents: read
     with:
@@ -69,7 +69,7 @@ jobs:
 
   markdown-lint:
     name: Markdown Lint
-    uses: ./.github/workflows/markdown-lint.yml
+    uses: $/.github/workflows/markdown-lint.yml
     permissions:
       contents: read
     with:
@@ -77,7 +77,7 @@ jobs:
 
   table-format:
     name: Table Format Check
-    uses: ./.github/workflows/table-format.yml
+    uses: $/.github/workflows/table-format.yml
     permissions:
       contents: read
     with:
@@ -86,7 +86,7 @@ jobs:
   psscriptanalyzer:
     name: PowerShell Lint
     needs: change-range
-    uses: ./.github/workflows/ps-script-analyzer.yml
+    uses: $/.github/workflows/ps-script-analyzer.yml
     permissions:
       contents: read
     with:
@@ -191,7 +191,7 @@ jobs:
       fail-fast: false
       matrix:
         directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
-    uses: ./.github/workflows/python-lint.yml
+    uses: $/.github/workflows/python-lint.yml
     permissions:
       contents: read
     with:
@@ -204,28 +204,22 @@ jobs:
 
   copyright-headers:
     name: Copyright Headers
-    uses: ./.github/workflows/copyright-headers.yml
+    uses: $/.github/workflows/copyright-headers.yml
     permissions:
       contents: read
     with:
       soft-fail: false
 
-  yaml-lint:
-    name: YAML Lint
-    needs: change-range
-    uses: ./.github/workflows/yaml-lint.yml
+  workflow-validation-scan:
+    name: Workflow Validation Scan
+    uses: $/.github/workflows/workflow-validation-scan.yml
     permissions:
       contents: read
-    with:
-      change-mode: ${{ needs.change-range.outputs.mode }}
-      base-sha: ${{ needs.change-range.outputs.base-sha }}
-      head-sha: ${{ needs.change-range.outputs.head-sha }}
-      soft-fail: false
-      changed-files-only: true
+      security-events: write # Required for SARIF upload to Security tab
 
   pester-tests:
     name: PowerShell Tests
-    uses: ./.github/workflows/pester-tests.yml
+    uses: $/.github/workflows/pester-tests.yml
     permissions:
       contents: read
       id-token: write
@@ -238,7 +232,7 @@ jobs:
     name: "Python Tests (${{ matrix.directory }})"
     needs: [change-range, discover-python-projects]
     if: needs.discover-python-projects.outputs.has-projects == 'true'
-    uses: ./.github/workflows/pytest-tests.yml
+    uses: $/.github/workflows/pytest-tests.yml
     permissions:
       contents: read
       id-token: write
@@ -260,7 +254,7 @@ jobs:
   copilot-otel-runtime-tests:
     name: Copilot OTEL Runtime Tests
     needs: change-range
-    uses: ./.github/workflows/pytest-tests.yml
+    uses: $/.github/workflows/pytest-tests.yml
     permissions:
       contents: read
       id-token: write
@@ -282,7 +276,7 @@ jobs:
     name: "Node Tests (${{ matrix.directory }})"
     needs: [change-range, discover-node-projects]
     if: needs.discover-node-projects.outputs.has-projects == 'true'
-    uses: ./.github/workflows/node-tests.yml
+    uses: $/.github/workflows/node-tests.yml
     permissions:
       contents: read
       id-token: write
@@ -347,7 +341,7 @@ jobs:
     name: "Fuzz Tests (${{ matrix.directory }})"
     needs: [change-range, discover-python-projects]
     if: needs.discover-python-projects.outputs.has-projects == 'true'
-    uses: ./.github/workflows/fuzz-tests.yml
+    uses: $/.github/workflows/fuzz-tests.yml
     permissions:
       contents: read
     with:
@@ -370,7 +364,7 @@ jobs:
       fail-fast: false
       matrix:
         directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
-    uses: ./.github/workflows/pip-audit.yml
+    uses: $/.github/workflows/pip-audit.yml
     permissions:
       contents: read
     with:
@@ -384,7 +378,7 @@ jobs:
   docusaurus-tests:
     name: Docusaurus Tests
     needs: change-range
-    uses: ./.github/workflows/docusaurus-tests.yml
+    uses: $/.github/workflows/docusaurus-tests.yml
     permissions:
       contents: read
       id-token: write # Required for Codecov OIDC in the reusable workflow
@@ -398,7 +392,7 @@ jobs:
   frontmatter-validation:
     name: Frontmatter Validation
     needs: change-range
-    uses: ./.github/workflows/frontmatter-validation.yml
+    uses: $/.github/workflows/frontmatter-validation.yml
     permissions:
       contents: read
     with:
@@ -413,7 +407,7 @@ jobs:
   adr-consistency-validation:
     name: ADR Consistency Validation
     needs: change-range
-    uses: ./.github/workflows/adr-consistency-validation.yml
+    uses: $/.github/workflows/adr-consistency-validation.yml
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
@@ -428,7 +422,7 @@ jobs:
 
   ai-artifact-validation:
     name: AI Artifact Validation
-    uses: ./.github/workflows/ai-artifact-validation.yml
+    uses: $/.github/workflows/ai-artifact-validation.yml
     permissions:
       contents: read
     with:
@@ -437,7 +431,7 @@ jobs:
   asset-docs-validation:
     name: Asset Docs Validation
     needs: change-range
-    uses: ./.github/workflows/asset-docs-validation.yml
+    uses: $/.github/workflows/asset-docs-validation.yml
     permissions:
       contents: read
     with:
@@ -450,7 +444,7 @@ jobs:
   msdate-freshness:
     name: ms.date Freshness Check
     needs: change-range
-    uses: ./.github/workflows/msdate-freshness-check.yml
+    uses: $/.github/workflows/msdate-freshness-check.yml
     permissions:
       contents: read
     with:
@@ -463,7 +457,7 @@ jobs:
 
   plugin-validation:
     name: Plugin Validation
-    uses: ./.github/workflows/plugin-validation.yml
+    uses: $/.github/workflows/plugin-validation.yml
     permissions:
       contents: read
     with:
@@ -472,7 +466,7 @@ jobs:
   skill-validation:
     name: Skill Validation
     needs: change-range
-    uses: ./.github/workflows/skill-validation.yml
+    uses: $/.github/workflows/skill-validation.yml
     permissions:
       contents: read
     with:
@@ -485,7 +479,7 @@ jobs:
   eval-validation:
     name: Eval Validation
     needs: change-range
-    uses: ./.github/workflows/eval-validation.yml
+    uses: $/.github/workflows/eval-validation.yml
     permissions:
       contents: read
       pull-requests: write
@@ -500,7 +494,7 @@ jobs:
 
   link-lang-check:
     name: Link Language Check
-    uses: ./.github/workflows/link-lang-check.yml
+    uses: $/.github/workflows/link-lang-check.yml
     permissions:
       contents: read
     with:
@@ -509,7 +503,7 @@ jobs:
   markdown-link-check:
     name: Markdown Link Check
     needs: change-range
-    uses: ./.github/workflows/markdown-link-check.yml
+    uses: $/.github/workflows/markdown-link-check.yml
     permissions:
       contents: read
     with:
@@ -522,7 +516,7 @@ jobs:
 
   dependency-pinning-check:
     name: Validate Dependency Pinning
-    uses: ./.github/workflows/dependency-pinning-scan.yml
+    uses: $/.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
@@ -535,7 +529,7 @@ jobs:
 
   devcontainer-lockfile-check:
     name: Devcontainer Lockfile Integrity
-    uses: ./.github/workflows/devcontainer-lockfile-check.yml
+    uses: $/.github/workflows/devcontainer-lockfile-check.yml
     permissions:
       contents: read
     with:
@@ -543,7 +537,7 @@ jobs:
 
   workflow-permissions-check:
     name: Workflow Permissions Check
-    uses: ./.github/workflows/workflow-permissions-scan.yml
+    uses: $/.github/workflows/workflow-permissions-scan.yml
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
@@ -554,7 +548,7 @@ jobs:
 
   workflow-runner-check:
     name: Workflow Runner Check
-    uses: ./.github/workflows/workflow-runner-scan.yml
+    uses: $/.github/workflows/workflow-runner-scan.yml
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
@@ -565,7 +559,7 @@ jobs:
 
   dangerous-workflow-check:
     name: Dangerous Workflow Check
-    uses: ./.github/workflows/dangerous-workflow-scan.yml
+    uses: $/.github/workflows/dangerous-workflow-scan.yml
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
@@ -577,7 +571,7 @@ jobs:
 
   action-version-consistency-scan:
     name: Action Version Consistency Scan
-    uses: ./.github/workflows/action-version-consistency-scan.yml
+    uses: $/.github/workflows/action-version-consistency-scan.yml
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
@@ -588,14 +582,14 @@ jobs:
 
   tool-version-consistency-scan:
     name: Tool Version Consistency Scan
-    uses: ./.github/workflows/tool-version-consistency-scan.yml
+    uses: $/.github/workflows/tool-version-consistency-scan.yml
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
 
   action-pin-provenance-scan:
     name: Action Pin Provenance Scan
-    uses: ./.github/workflows/action-pin-provenance-scan.yml
+    uses: $/.github/workflows/action-pin-provenance-scan.yml
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
@@ -603,7 +597,7 @@ jobs:
   gitleaks-scan:
     name: Gitleaks Secret Scan
     needs: change-range
-    uses: ./.github/workflows/gitleaks-scan.yml
+    uses: $/.github/workflows/gitleaks-scan.yml
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
@@ -645,7 +639,7 @@ jobs:
 
   codeql:
     name: CodeQL Security Analysis
-    uses: ./.github/workflows/codeql-analysis.yml
+    uses: $/.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
@@ -666,7 +660,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
+        uses: $/.github/actions/setup-ps-modules
 
       - name: Validate PR gate completeness
         shell: pwsh
@@ -885,7 +879,7 @@ jobs:
       - discover-python-projects
       - python-lint
       - copyright-headers
-      - yaml-lint
+      - workflow-validation-scan
       - pester-tests
       - pytest
       - copilot-otel-runtime-tests

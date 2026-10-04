@@ -184,9 +184,11 @@ describe('action and reusable workflow inputs', () => {
 
   it('checks local composite action inputs case-insensitively', async () => {
     const files = { '.github/actions/local/action.yml': 'name: l\ninputs:\n  Known:\n    description: k\nruns:\n  using: composite\n  steps: []\n' };
-    const findings = await check(step('./.github/actions/local', '          known: 1\n          unknown: 2\n'), { files });
-    assert.deepEqual(rules(findings), ['workflow-check/unknown-action-input']);
-    assert.match(findings[0].message, /'unknown'/);
+    for (const prefix of ['./', '$/']) {
+      const findings = await check(step(`${prefix}.github/actions/local`, '          known: 1\n          unknown: 2\n'), { files });
+      assert.deepEqual(rules(findings), ['workflow-check/unknown-action-input'], prefix);
+      assert.match(findings[0].message, /'unknown'/);
+    }
   });
 
   it('reads remote metadata at the pinned commit, allows docker args, and caches by commit', async () => {
@@ -208,6 +210,7 @@ describe('action and reusable workflow inputs', () => {
     assert.deepEqual(rules(await check(step(`org/repo@${SHA}`, '          a: 1\n'))), ['workflow-check/action-metadata-unavailable']);
     assert.deepEqual(rules(await check(step('org/repo@v1', '          a: 1\n'))), []);
     assert.deepEqual(rules(await check(step('./.github/actions/missing', '          a: 1\n'))), ['workflow-check/action-metadata-unavailable']);
+    assert.deepEqual(rules(await check(step('$/.github/actions/missing', '          a: 1\n'))), ['workflow-check/action-metadata-unavailable']);
   });
 
   it('checks reusable workflow inputs and secrets, including required ones', async () => {
@@ -229,9 +232,10 @@ describe('action and reusable workflow inputs', () => {
         'jobs: {}',
       ].join('\n'),
     };
-    const caller = (extra) => `on: push\njobs:\n  call:\n    uses: ./.github/workflows/callee.yml\n${extra}`;
+    const caller = (extra, prefix = './') => `on: push\njobs:\n  call:\n    uses: ${prefix}.github/workflows/callee.yml\n${extra}`;
     const findings = await check(caller('    with:\n      bogus: 1\n'), { files });
     assert.deepEqual(rules(findings), ['workflow-check/unknown-action-input', 'workflow-check/missing-required-input', 'workflow-check/missing-required-input']);
+    assert.deepEqual(rules(await check(caller('    with:\n      bogus: 1\n', '$/'), { files })), rules(findings));
     assert.deepEqual(rules(await check(caller('    with:\n      needed: 1\n    secrets: inherit\n'), { files })), []);
   });
 });

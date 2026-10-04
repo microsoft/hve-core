@@ -140,7 +140,7 @@ jobs:
     name: Publish Extension
     needs: [normalize-version, verify-catalog]
     if: ${{ !inputs.dry-run }}
-    uses: ./.github/workflows/extension-marketplace-publish.yml
+    uses: $/.github/workflows/extension-marketplace-publish.yml
     with:
       tag: ${{ needs.normalize-version.outputs.tag }}
       pre-release: false

@@ -74,7 +74,7 @@
     "file": "modern-syntax.yml",
     "expect": "clean",
     "coveredBy": "parser",
-    "description": "Current syntax is accepted (concurrency.queue, job.workflow_sha)"
+    "description": "Current syntax is accepted (concurrency.queue, job.workflow_sha, $/ self-repository uses)"
   },
   {
     "id": "unknown-context-property",

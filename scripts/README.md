@@ -115,7 +115,7 @@ The `linting/` directory contains scripts for validating code quality and docume
 | `Invoke-LinkLanguageCheck.ps1`     | Detect en-us language paths in URLs                       |
 | `Link-Lang-Check.ps1`              | Link language checking entry point                        |
 | `Markdown-Link-Check.ps1`          | Validate markdown links                                   |
-| `Invoke-YamlLint.ps1`              | YAML file validation                                      |
+| `workflow-validator/`              | Validate workflows and composite actions                  |
 | `Test-CopyrightHeaders.ps1`        | Validate copyright headers in source files                |
 | `Invoke-MsDateFreshnessCheck.ps1`  | Check ms.date frontmatter freshness                       |
 | `Invoke-PythonLint.ps1`            | Python linting via ruff                                   |

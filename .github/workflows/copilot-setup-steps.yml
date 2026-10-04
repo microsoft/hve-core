@@ -54,31 +54,6 @@ jobs:
         with:
           python-version-file: .python-version
 
-      - name: Install actionlint
-        env:
-          ACTIONLINT_VERSION: '1.7.10'
-          ACTIONLINT_AMD64_SHA256: 'f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f'
-          ACTIONLINT_ARM64_SHA256: 'cd3dfe5f66887ec6b987752d8d9614e59fd22f39415c5ad9f28374623f41773a'
-          GITHUB_RELEASES_URL: ${{ vars.HVE_GITHUB_RELEASES_URL || 'https://github.com' }}
-        run: |
-          ARCH=$(uname -m)
-          if [[ "${ARCH}" == "x86_64" ]]; then
-            ACTIONLINT_ARCH="amd64"
-            ACTIONLINT_SHA256="${ACTIONLINT_AMD64_SHA256}"
-          elif [[ "${ARCH}" == "aarch64" ]]; then
-            ACTIONLINT_ARCH="arm64"
-            ACTIONLINT_SHA256="${ACTIONLINT_ARM64_SHA256}"
-          else
-            echo "ERROR: Unsupported architecture for actionlint: ${ARCH}" >&2
-            exit 1
-          fi
-          curl -sSfL "${GITHUB_RELEASES_URL}/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${ACTIONLINT_ARCH}.tar.gz" -o /tmp/actionlint.tar.gz
-          echo "${ACTIONLINT_SHA256}  /tmp/actionlint.tar.gz" | sha256sum -c -
-          tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint
-          sudo install /tmp/actionlint /usr/local/bin/actionlint
-          rm /tmp/actionlint.tar.gz /tmp/actionlint
-          actionlint --version
-
       # The workflow validator requires this exact version; the runner image's
       # shellcheck is older and unpinned.
       - name: Install shellcheck
@@ -216,7 +191,6 @@ jobs:
           python3 --version
           pwsh --version
           shellcheck --version
-          actionlint --version
           uv --version
           uvx --version
           cosign version

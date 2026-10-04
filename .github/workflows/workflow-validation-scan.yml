@@ -1,0 +1,50 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: Workflow Validation Scan
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Validate Workflows and Actions
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write # Required for SARIF upload to Security tab
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+
+      - name: Install locked validator dependencies
+        run: npm ci --prefix scripts/linting/workflow-validator --ignore-scripts
+
+      - name: Install pinned shellcheck
+        uses: $/.github/actions/setup-shellcheck
+
+      # Parses every workflow and composite action with GitHub's workflow parser,
+      # runs the custom checks, and runs shellcheck over every bash and sh run:
+      # script. The validator exits 2 unless shellcheck is the manifest version,
+      # and reports findings to SARIF before it fails.
+      - name: Validate workflows and composite actions
+        run: npm run lint:workflows
+
+      # Uploading needs security-events: write, which a fork pull request never
+      # receives. Skip the step for forks rather than attempt it; the check above
+      # still gates every pull request.
+      - name: Upload SARIF to Security tab
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          sarif_file: logs/workflow-validation.sarif
+          category: workflow-validation

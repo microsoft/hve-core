@@ -245,7 +245,7 @@ jobs:
 
       - name: Setup PowerShell modules for published verification
         if: ${{ steps.release.outputs.release-state == 'published' }}
-        uses: ./.github/actions/setup-ps-modules
+        uses: $/.github/actions/setup-ps-modules
 
       - name: Verify published release assets
         if: ${{ steps.release.outputs.release-state == 'published' }}
@@ -323,7 +323,7 @@ jobs:
     name: Attest and Upload Stable VEX
     needs: [validate-release, extension-provenance]
     if: ${{ needs.validate-release.outputs.release-state == 'draft' && needs.validate-release.outputs.channel == 'Stable' }}
-    uses: ./.github/workflows/vex-attest.yml
+    uses: $/.github/workflows/vex-attest.yml
     with:
       version: ${{ needs.validate-release.outputs.tag-name }}
       sbom-artifact: sbom-dependencies
@@ -726,7 +726,7 @@ jobs:
           && needs.validate-release.outputs.release-state == 'published'
         )
       )
-    uses: ./.github/workflows/release-close-milestone.yml
+    uses: $/.github/workflows/release-close-milestone.yml
     with:
       version: ${{ needs.validate-release.outputs.version }}
     permissions:

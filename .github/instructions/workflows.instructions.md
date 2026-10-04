@@ -25,7 +25,7 @@ uses: actions/checkout@v4
 uses: actions/checkout@v4.2.2
 ```
 
-Local reusable workflows referenced via relative paths are excluded from SHA pinning requirements.
+Same-repository actions and reusable workflows use the self-repository syntax, `uses: $/.github/actions/<name>` or `uses: $/.github/workflows/<name>.yml`. It resolves to the running commit, needs no checkout, and can't load code a job cloned at runtime, so these references are excluded from SHA pinning requirements. Don't use the workspace-relative `./` form; it loads whatever is checked out in the workspace.
 
 **Enforcement:** Violations are detected by `scripts/security/Test-DependencyPinning.ps1` and `scripts/security/Test-SHAStaleness.ps1`. `scripts/security/Test-ActionPinProvenance.ps1` resolves each comment and commit against the upstream repository with `git ls-remote` and the compare API, and fails on a mislabeled comment, a tag-object pin, or a commit that is on no tag and not in the default branch history (a possible impostor commit). CI will fail on SHA pinning violations.
 
@@ -265,7 +265,7 @@ permissions:
 jobs:
   validate-pinning:
     name: Validate Dependency Pinning
-    uses: ./.github/workflows/dependency-pinning-scan.yml
+    uses: $/.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
       security-events: write
@@ -278,11 +278,11 @@ jobs:
 
 All workflows MUST pass the following validation checks:
 
-### actionlint Validation
+### Workflow Validation
 
-* **What it enforces:** Syntax validation, best practices, and security checks
-* **Configuration:** Uses actionlint with SHA256 verification
-* **CI blocking:** Workflows fail CI if violations are detected
+* **Script:** `scripts/linting/workflow-validator/validate-workflows.mjs` (`npm run lint:workflows`)
+* **What it enforces:** GitHub's own workflow parser validates every workflow and composite action, custom checks catch undefined references and undeclared action inputs, and the manifest-pinned shellcheck checks every bash and sh `run:` script. Nothing is ignored or disabled.
+* **CI blocking:** `workflow-validation-scan.yml` fails PR validation on any finding and reports SARIF to code scanning
 
 ### Dependency Pinning Validation
 
@@ -386,7 +386,7 @@ The following scripts enforce compliance:
 * `scripts/security/Test-SHAStaleness.ps1` - Checks for stale dependencies
 * `scripts/security/Test-WorkflowPermissions.ps1` - Validates workflow permissions declarations
 * `scripts/security/Test-WorkflowRunner.ps1` - Validates `runs-on` values against the dated GitHub-hosted Ubuntu allow-list
-* `scripts/linting/Invoke-YamlLint.ps1` - Runs actionlint validation
+* `scripts/linting/workflow-validator/validate-workflows.mjs` - Validates workflows and composite actions with GitHub's parser, custom checks, and pinned shellcheck
 * `scripts/security/Test-PrValidationGate.ps1` - Validates the PR validation gate `needs:` completeness
 
 All workflows must pass these validation checks to be merged into the repository.

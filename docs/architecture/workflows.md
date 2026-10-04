@@ -109,7 +109,7 @@ Individual validation workflows called by orchestration workflows:
 | `frontmatter-validation.yml`          | AI artifact frontmatter schemas                               | `npm run lint:frontmatter`                                       |
 | `markdown-link-check.yml`             | Broken link detection                                         | `npm run lint:md-links`                                          |
 | `link-lang-check.yml`                 | Link language validation                                      | `npm run lint:links`                                             |
-| `yaml-lint.yml`                       | YAML syntax validation                                        | `npm run lint:yaml`                                              |
+| `workflow-validation-scan.yml`        | Workflow and composite action validation                      | `npm run lint:workflows`                                         |
 | `ps-script-analyzer.yml`              | PowerShell static analysis                                    | `npm run lint:ps`                                                |
 | `table-format.yml`                    | Markdown table formatting                                     | `npm run format:tables`                                          |
 | `pester-tests.yml`                    | PowerShell unit tests                                         | `npm run test:ps`                                                |
@@ -145,11 +145,11 @@ Composite actions package reusable step sequences that workflows invoke directly
 
 | Action             | Purpose                                                     | Reference                                  |
 |--------------------|-------------------------------------------------------------|--------------------------------------------|
-| `setup-ps-modules` | Cached PowerShell module install with retry                 | `uses: ./.github/actions/setup-ps-modules` |
-| `setup-uv`         | Checksum-verified uv install from the tool manifest         | `uses: ./.github/actions/setup-uv`         |
-| `setup-shellcheck` | Checksum-verified shellcheck install from the tool manifest | `uses: ./.github/actions/setup-shellcheck` |
+| `setup-ps-modules` | Cached PowerShell module install with retry                 | `uses: $/.github/actions/setup-ps-modules` |
+| `setup-uv`         | Checksum-verified uv install from the tool manifest         | `uses: $/.github/actions/setup-uv`         |
+| `setup-shellcheck` | Checksum-verified shellcheck install from the tool manifest | `uses: $/.github/actions/setup-shellcheck` |
 
-The `setup-ps-modules` action caches modules keyed on `scripts/security/ps-module-versions.json` and retries installation with exponential backoff on PSGallery failures. Workflows that need PowerShell modules must use `uses: ./.github/actions/setup-ps-modules` instead of inline `Install-Module` steps, consistent with the convention recorded in `.github/copilot-instructions.md`.
+The `setup-ps-modules` action caches modules keyed on `scripts/security/ps-module-versions.json` and retries installation with exponential backoff on PSGallery failures. Workflows that need PowerShell modules must use `uses: $/.github/actions/setup-ps-modules` instead of inline `Install-Module` steps, consistent with the convention recorded in `.github/copilot-instructions.md`.
 
 The `setup-uv` action installs the uv version and per-architecture SHA-256 recorded in `scripts/security/tool-checksums.json`, fails when the download or the installed version does not match, and caches the uv cache directory with `actions/cache`.
 Its default `enable-cache: auto` caches on GitHub-hosted runners except for `release`, tag `push`, `pull_request_target`, and `workflow_run` events, and `merge_group` runs restore without saving. Workflows must use it instead of `astral-sh/setup-uv`; `Test-ToolVersionConsistency.ps1` fails PR validation on any `astral-sh/setup-uv` step.
@@ -166,7 +166,7 @@ flowchart LR
         ML[markdown-lint]
         SC[spell-check]
         TF[table-format]
-        YL[yaml-lint]
+        WV[workflow-validation-scan]
         FV[frontmatter-validation]
         LLC[link-lang-check]
         MLC[markdown-link-check]
@@ -208,7 +208,7 @@ flowchart LR
 | discover-node-projects          | Inline                                | Enumerates Node project directories (skills and slide decks) |
 | python-lint                     | `python-lint.yml`                     | Python code quality, per project                             |
 | copyright-headers               | `copyright-headers.yml`               | Copyright header compliance                                  |
-| yaml-lint                       | `yaml-lint.yml`                       | YAML syntax                                                  |
+| workflow-validation-scan        | `workflow-validation-scan.yml`        | Workflow parser, custom checks, and shellcheck               |
 | pester-tests                    | `pester-tests.yml`                    | PowerShell unit tests                                        |
 | pytest                          | `pytest-tests.yml`                    | Python unit tests, per project                               |
 | copilot-otel-runtime-tests      | `pytest-tests.yml`                    | Copilot OTEL runtime tests                                   |
@@ -432,8 +432,7 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `lint:frontmatter`              | `Validate-MarkdownFrontmatter.ps1`                                                                         | frontmatter-validation.yml                  |
 | `lint:md-links`                 | `Markdown-Link-Check.ps1`                                                                                  | markdown-link-check.yml                     |
 | `lint:links`                    | `Invoke-LinkLanguageCheck.ps1`                                                                             | link-lang-check.yml                         |
-| `lint:yaml`                     | `Invoke-YamlLint.ps1`                                                                                      | yaml-lint.yml                               |
-| `lint:workflows`                | `workflow-validator/validate-workflows.mjs`                                                                | Local                                       |
+| `lint:workflows`                | `workflow-validator/validate-workflows.mjs`                                                                | workflow-validation-scan.yml                |
 | `lint:ps`                       | `Invoke-PSScriptAnalyzer.ps1`                                                                              | ps-script-analyzer.yml                      |
 | `lint:plugin-manifest`          | `Sync-PluginManifest.ps1 -Check`                                                                           | plugin-validation.yml                       |
 | `lint:version-consistency`      | `Test-ActionVersionConsistency.ps1`                                                                        | Local                                       |

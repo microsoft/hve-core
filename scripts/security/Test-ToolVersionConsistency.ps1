@@ -29,7 +29,7 @@
       tool-version/unregistered-tool     a file pins <NAME>_VERSION with a matching
                                          <NAME>_SHA256 but the manifest has no such tool
       tool-version/unpinned-install      a step uses astral-sh/setup-uv instead of the
-                                         manifest-verified ./.github/actions/setup-uv
+                                         manifest-verified $/.github/actions/setup-uv
       tool-version/runtime-invalid       .node-version or .python-version does not hold
                                          exactly one X.Y.Z version
       tool-version/runtime-mismatch      a setup-node or setup-python step reads another
@@ -300,7 +300,7 @@ function Get-ToolFileFinding {
 
         foreach ($match in [regex]::Matches($Content, "(?m)^\s*(?:-\s+)?uses:\s*['""]?astral-sh/setup-uv(?:[@/'""\s]|$)")) {
             $findings.Add((New-Finding -RuleId 'tool-version/unpinned-install' -File $RelativePath -Line (Get-LineNumber $Content $match.Index) `
-                        -Message 'astral-sh/setup-uv installs uv outside scripts/security/tool-checksums.json; use ./.github/actions/setup-uv.'))
+                        -Message 'astral-sh/setup-uv installs uv outside scripts/security/tool-checksums.json; use $/.github/actions/setup-uv.'))
         }
     }
     else {

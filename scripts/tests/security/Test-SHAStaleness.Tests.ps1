@@ -473,7 +473,6 @@ Describe 'Main Script Execution' {
                 $repoName = ($Uri -split '/')[-3]
                 return @{
                     tag_name = switch ($repoName) {
-                        'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
                         'cosign'     { 'v3.0.5' }
                         default      { 'v0.0.1' }
@@ -546,7 +545,6 @@ Describe 'Main Script Execution' {
                 $repoName = ($Uri -split '/')[-3]
                 return @{
                     tag_name = switch ($repoName) {
-                        'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
                         'cosign'     { 'v3.0.5' }
                         default      { 'v0.0.1' }
@@ -594,7 +592,6 @@ Describe 'Main Script Execution' {
                 $repoName = ($Uri -split '/')[-3]
                 return @{
                     tag_name = switch ($repoName) {
-                        'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
                         'cosign'     { 'v3.0.5' }
                         default      { 'v0.0.1' }

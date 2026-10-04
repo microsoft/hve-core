@@ -111,7 +111,6 @@ for the complete set.
 | `lint:md`                       | `npm run lint:md`                       | Markdown linting via markdownlint-cli2                                              |
 | `lint:md:fix`                   | `npm run lint:md:fix`                   | Markdown linting with auto-fix                                                      |
 | `lint:ps`                       | `npm run lint:ps`                       | PowerShell analysis via PSScriptAnalyzer                                            |
-| `lint:yaml`                     | `npm run lint:yaml`                     | YAML syntax and structure validation                                                |
 | `lint:workflows`                | `npm run lint:workflows`                | Workflow and composite action validation with GitHub's parser and pinned shellcheck |
 | `lint:links`                    | `npm run lint:links`                    | Link language checking                                                              |
 | `lint:md-links`                 | `npm run lint:md-links`                 | Markdown link target validation                                                     |
@@ -167,7 +166,7 @@ The `validate:local` script chains local-safe checks in a fixed sequence:
 2. `lint:tables` checks markdown table columns without modifying them
 3. `lint:md` checks markdown style rules (`.markdownlint.json`)
 4. `lint:ps` analyzes PowerShell scripts (`PSScriptAnalyzer.psd1`)
-5. `lint:yaml` validates YAML file syntax
+5. `lint:workflows` validates workflows and composite actions with GitHub's parser, custom checks, and pinned shellcheck
 6. `lint:json` validates JSON syntax
 7. `lint:links` checks link text language patterns
 8. `lint:md-links` resolves markdown link targets

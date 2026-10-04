@@ -58,29 +58,7 @@ main() {
   fi
   
   # Dependencies are pinned for stability. Dependabot and security workflows manage updates.
-  echo "Installing actionlint..."
-  ACTIONLINT_VERSION="1.7.10"
   ARCH=$(uname -m)
-  if [[ "${ARCH}" == "x86_64" ]]; then
-    ACTIONLINT_ARCH="amd64"
-    ACTIONLINT_SHA256="f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f"
-  elif [[ "${ARCH}" == "aarch64" ]]; then
-    ACTIONLINT_ARCH="arm64"
-    ACTIONLINT_SHA256="cd3dfe5f66887ec6b987752d8d9614e59fd22f39415c5ad9f28374623f41773a"
-  else
-    echo "ERROR: Unsupported architecture: ${ARCH}" >&2
-    exit 1
-  fi
-  curl -sSfL "${GITHUB_RELEASES_URL}/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${ACTIONLINT_ARCH}.tar.gz" -o /tmp/actionlint.tar.gz
-
-  echo "Checking actionlint tarball integrity..."
-  if ! echo "${ACTIONLINT_SHA256}  /tmp/actionlint.tar.gz" | sha256sum -c --quiet -; then
-    echo "ERROR: SHA256 checksum verification failed for actionlint tarball" >&2
-    rm /tmp/actionlint.tar.gz
-    exit 1
-  fi
-  sudo tar -xzf /tmp/actionlint.tar.gz -C /usr/local/bin actionlint
-  rm /tmp/actionlint.tar.gz
 
   echo "Installing shellcheck..."
   # The workflow validator requires this exact version; the distribution

@@ -88,55 +88,14 @@ Configuration file for PSScriptAnalyzer rules.
 
 * `PSAvoidUsingWriteHost` - Allowed for script output
 
-### YAML Linting
-
-#### `Invoke-YamlLint.ps1`
-
-Static analysis for GitHub Actions workflow files using actionlint.
-
-Purpose: Validate GitHub Actions workflow YAML syntax and best practices.
-
-##### Features
-
-* Validates `.github/workflows/*.yml` and `.yaml` files
-* Detects changed workflow files via Git
-* Supports analyzing all files or changed files only
-* Creates CI annotations for violations
-* Exports JSON results and markdown summary
-* Configurable via `.github/actionlint.yaml`
-
-##### Parameters
-
-* `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch, or every workflow file when `.github/actionlint.yaml` changed
-* `-BaseBranch` (string) - Base branch for comparison (default: `origin/main`)
-* `-OutputPath` (string) - Output path for JSON results (default: `logs/yaml-lint-results.json`)
-
-##### Usage
-
-```powershell
-# Analyze all workflow files
-./scripts/linting/Invoke-YamlLint.ps1 -Verbose
-
-# Analyze only changed files
-./scripts/linting/Invoke-YamlLint.ps1 -ChangedFilesOnly
-
-# View detailed output
-./scripts/linting/Invoke-YamlLint.ps1 -Verbose -Debug
-```
-
-##### GitHub Actions Integration
-
-* Workflow: `.github/workflows/yaml-lint.yml`
-* Configuration: `.github/actionlint.yaml`
-* Artifacts: `yaml-lint-results` (JSON)
-* Exit Code: Non-zero if violations are found or actionlint itself fails (invalid options or an unreadable configuration)
+### Workflow Validation
 
 #### `workflow-validator/validate-workflows.mjs`
 
 Validates every workflow and composite action with GitHub's own parser
 (`@actions/workflow-parser`) and runs the pinned shellcheck over every bash and
-sh `run:` script. It is built to replace actionlint, needs no ignore rules, and
-accepts current syntax such as `concurrency.queue`, `job.workflow_sha`, and `$/`.
+sh `run:` script. It needs no ignore rules, disables no checks, and accepts
+current syntax such as `concurrency.queue`, `job.workflow_sha`, and `$/`.
 
 ##### Features
 
@@ -207,6 +166,12 @@ Install the pinned shellcheck with the `.github/actions/setup-shellcheck`
 composite in workflows; the devcontainer and Copilot setup steps install the same
 version. Tests run with `npm test` in the validator directory and in the PR
 `node-tests` lane.
+
+##### GitHub Actions Integration
+
+* Workflow: `.github/workflows/workflow-validation-scan.yml`, called by PR validation
+* SARIF category: `workflow-validation`; the upload is skipped for fork pull requests
+* Exit code: 1 on any finding, and 2 when shellcheck is not the manifest version
 
 ### Markdown Validation
 
@@ -1039,7 +1004,7 @@ All linting scripts are integrated into GitHub Actions workflows:
 | Script                 | Workflow                                           |
 |------------------------|----------------------------------------------------|
 | PSScriptAnalyzer       | `.github/workflows/ps-script-analyzer.yml`         |
-| YAML Lint              | `.github/workflows/yaml-lint.yml`                  |
+| Workflow Validation    | `.github/workflows/workflow-validation-scan.yml`   |
 | Frontmatter Validation | `.github/workflows/frontmatter-validation.yml`     |
 | Link Language Check    | `.github/workflows/link-lang-check.yml`            |
 | Markdown Link Check    | `.github/workflows/markdown-link-check.yml`        |

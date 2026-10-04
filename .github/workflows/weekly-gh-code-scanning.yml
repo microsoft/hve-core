@@ -19,7 +19,7 @@ permissions:
 jobs:
   gh-code-scanning:
     name: GitHub Code Scanning
-    uses: ./.github/workflows/gh-code-scanning.yml
+    uses: $/.github/workflows/gh-code-scanning.yml
     permissions:
       contents: read
       security-events: read
@@ -27,7 +27,7 @@ jobs:
   create-gh-code-scanning-issues:
     name: Create GitHub Code Scanning Issues
     needs: [gh-code-scanning]
-    uses: ./.github/workflows/create-gh-code-scanning-issues.yml
+    uses: $/.github/workflows/create-gh-code-scanning-issues.yml
     permissions:
       issues: write
       actions: read

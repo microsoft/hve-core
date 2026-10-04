@@ -86,7 +86,7 @@ Describe 'setup-uv composite action' -Tag 'Unit' {
             foreach ($job in $workflow.jobs.Values) {
                 $steps = @($job.steps)
                 for ($i = 0; $i -lt $steps.Count; $i++) {
-                    if ($steps[$i].uses -ne './.github/actions/setup-uv') { continue }
+                    if ($steps[$i].uses -ne '$/.github/actions/setup-uv') { continue }
                     $found++
                     $checkout = @($steps[0..$i] | Where-Object { $_.uses -like 'actions/checkout@*' })
                     $checkout | Should -HaveCount 1

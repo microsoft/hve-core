@@ -323,13 +323,13 @@ async function readActionMetadata(ctx, uses, usesNode) {
   return { inputs: [...mapKeys(root.get('inputs', true))], docker: using === 'docker' };
 }
 
-// Reads a local or SHA-pinned remote action or workflow file. Returns undefined
-// when it cannot be read (and reports why), or when the reference is not pinned
-// to a commit, which the pinning check owns.
+// Reads a same-repository (`./` or `$/`) or SHA-pinned remote action or
+// workflow file. Returns undefined when it cannot be read (and reports why), or
+// when the reference is not pinned to a commit, which the pinning check owns.
 async function readUsedFile(ctx, uses, usesNode, actionFiles) {
   const { repoRoot, fetchText, cacheDir } = ctx.options;
-  if (uses.startsWith('./')) {
-    const base = join(repoRoot, uses);
+  if (uses.startsWith('./') || uses.startsWith('$/')) {
+    const base = join(repoRoot, uses.slice(2));
     for (const candidate of actionFiles ? actionFiles.map((name) => join(base, name)) : [base]) {
       if (existsSync(candidate)) return readFileSync(candidate, 'utf8');
     }

@@ -248,7 +248,7 @@ jobs:
           python-version-file: .python-version
 
       - name: Setup uv
-        uses: ./.github/actions/setup-uv
+        uses: $/.github/actions/setup-uv
         with:
           enable-cache: 'false'
 

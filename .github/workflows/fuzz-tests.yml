@@ -126,7 +126,7 @@ jobs:
 
       - name: Install uv
         if: env.SHOULD_FUZZ == 'true'
-        uses: ./.github/actions/setup-uv
+        uses: $/.github/actions/setup-uv
 
       - name: Set up Python
         if: env.SHOULD_FUZZ == 'true'

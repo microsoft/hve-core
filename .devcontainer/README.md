@@ -76,7 +76,6 @@ endpoints and credentials out of repository files.
 * GitHub CLI (`gh`)
 * GitHub Copilot CLI (`copilot`)
 * Azure CLI (`az`)
-* actionlint (GitHub Actions workflow linter)
 
 ### Code Quality
 

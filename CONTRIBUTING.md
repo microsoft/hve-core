@@ -95,7 +95,7 @@ lanes with browser, model, moderation, or credential prerequisites.
 npm run validate:local             # Run the local-safe validation aggregate
 npm run lint:md                   # Run markdownlint
 npm run lint:ps                   # Run PowerShell analyzer
-npm run lint:yaml                 # Run YAML linter
+npm run lint:workflows            # Validate workflows and composite actions
 npm run lint:frontmatter          # Validate markdown frontmatter
 npm run lint:links                # Check link language paths
 npm run lint:md-links             # Check markdown links

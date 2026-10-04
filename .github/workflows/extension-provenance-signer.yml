@@ -272,7 +272,7 @@ jobs:
         run: npm ci --ignore-scripts=false
 
       - name: Setup PowerShell modules
-        uses: ./.github/actions/setup-ps-modules
+        uses: $/.github/actions/setup-ps-modules
 
       - name: Prepare extension resources
         shell: pwsh

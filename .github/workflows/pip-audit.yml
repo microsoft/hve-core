@@ -106,7 +106,7 @@ jobs:
 
       - name: Install uv
         if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
-        uses: ./.github/actions/setup-uv
+        uses: $/.github/actions/setup-uv
 
       - name: Setup Python
         if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"

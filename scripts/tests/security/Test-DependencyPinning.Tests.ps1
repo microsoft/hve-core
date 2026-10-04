@@ -447,14 +447,17 @@ dependencies = [
                 '      - uses: actions/checkout'
                 "      - uses: 'owner/repo/sub/path' # no ref"
                 '      - uses: ./.github/actions/local'
+                '      - uses: $/.github/actions/local'
                 '      - uses: docker://alpine@sha256:0000000000000000000000000000000000000000000000000000000000000000'
                 "      - uses: actions/setup-node@$('a' * 40) # v1.0.0"
                 '  b:'
                 '    uses: org/repo/.github/workflows/x.yml'
+                '  c:'
+                '    uses: $/.github/workflows/y.yml'
             )
             $result = Get-DependencyViolation -FileInfo @{ Path = $path; Type = 'github-actions'; RelativePath = 'no-ref.yml' }
             @($result.Violations | ForEach-Object Name) | Should -Be @('actions/checkout', 'owner/repo/sub/path', 'org/repo/.github/workflows/x.yml')
-            @($result.Violations | ForEach-Object Line) | Should -Be @(4, 5, 10)
+            @($result.Violations | ForEach-Object Line) | Should -Be @(4, 5, 11)
         }
 
         It 'Catches the workflow validator uses-without-ref capability probe' {

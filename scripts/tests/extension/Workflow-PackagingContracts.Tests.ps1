@@ -1337,7 +1337,7 @@ Describe 'Retained provenance and SBOM assurance' -Tag 'Unit', 'SignerIsolation'
         $attestText = $script:ProvenanceSteps -join "`n"
         $attestText | Should -Not -Match 'npm ci'
         $attestText | Should -Not -Match 'Package-Extension\.ps1'
-        $attestText | Should -Not -Match 'actions/checkout@|\./scripts/|\./\.github/actions/'
+        $attestText | Should -Not -Match 'actions/checkout@|\./scripts/|(\./|\$/)\.github/actions/'
     }
 
     It 'Requires the attestation source ref to be this run commit' {
@@ -1492,7 +1492,7 @@ Describe 'Retained marketplace publication' -Tag 'Unit' {
     ) {
         $document = Get-WorkflowDocument -Name $Workflow
         $publish = $document['jobs']['publish']
-        [string]$publish['uses'] | Should -BeExactly './.github/workflows/extension-marketplace-publish.yml'
+        [string]$publish['uses'] | Should -BeExactly '$/.github/workflows/extension-marketplace-publish.yml'
         [string]$publish['with']['tag'] | Should -BeExactly "`${{ needs.$Source.outputs.tag }}"
         $publish['with']['pre-release'] | Should -Be $PreRelease
         $publish['with'].Contains('packages-matrix') | Should -BeFalse
@@ -1538,7 +1538,7 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit', 'ReleaseReco
 
     It 'Attests and uploads the Stable OpenVEX document' {
         $document = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
-        [string]$document['jobs']['vex-attest']['uses'] | Should -BeExactly './.github/workflows/vex-attest.yml'
+        [string]$document['jobs']['vex-attest']['uses'] | Should -BeExactly '$/.github/workflows/vex-attest.yml'
         [string]$document['jobs']['vex-attest']['with']['sbom-artifact'] | Should -BeExactly 'sbom-dependencies'
         [string]$document['jobs']['vex-attest']['if'] | Should -Match "channel == 'Stable'"
 
@@ -2110,7 +2110,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
         Test-Path -LiteralPath (Join-Path $script:WorkflowDirectory 'extension-package.yml') | Should -BeFalse
         foreach ($workflow in Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml') {
             (Get-Content -LiteralPath $workflow.FullName -Raw -Encoding utf8) |
-                Should -Not -Match 'uses:\s+\./\.github/workflows/extension-package\.yml'
+                Should -Not -Match 'uses:\s+(\./|\$/)\.github/workflows/extension-package\.yml'
         }
     }
 }
@@ -2360,7 +2360,7 @@ Describe 'PR validation hosted conformance boundary' -Tag 'Unit' {
     BeforeAll {
         $script:PrValidation = Get-WorkflowDocument -Name 'pr-validation.yml'
         $script:ConformanceJobs = @($script:PrValidation['jobs'].GetEnumerator() | Where-Object {
-                [string]$_.Value['uses'] -eq './.github/workflows/agent-conformance.yml'
+                [string]$_.Value['uses'] -eq '$/.github/workflows/agent-conformance.yml'
             })
     }
 

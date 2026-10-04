@@ -128,11 +128,11 @@ Describe 'File checks' -Tag 'Unit' {
         $result = Invoke-Check (New-Repo -Files @{ '.github/workflows/py.yml' = $workflow })
         @($result.Findings.RuleId) | Should -Be @('tool-version/unpinned-install')
         $result.Findings.Line | Should -Be 5
-        $result.Findings.Message | Should -Match '\./\.github/actions/setup-uv'
+        $result.Findings.Message | Should -Match '\$/\.github/actions/setup-uv'
     }
 
     It 'accepts the local setup-uv composite and similarly named actions' {
-        $workflow = "jobs:`n  a:`n    steps:`n      - uses: ./.github/actions/setup-uv`n      - uses: astral-sh/setup-uv-extra@0123456789abcdef0123456789abcdef01234567`n      - run: echo astral-sh/setup-uv"
+        $workflow = "jobs:`n  a:`n    steps:`n      - uses: $/.github/actions/setup-uv`n      - uses: ./.github/actions/setup-uv`n      - uses: astral-sh/setup-uv-extra@0123456789abcdef0123456789abcdef01234567`n      - run: echo astral-sh/setup-uv"
         (Invoke-Check (New-Repo -Files @{ '.github/workflows/py.yml' = $workflow })).Findings | Should -BeNullOrEmpty
     }
 

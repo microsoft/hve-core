@@ -77,7 +77,7 @@ jobs:
           "artifact-name=python-lint-$name" >> $env:GITHUB_OUTPUT
 
       - name: Install uv
-        uses: ./.github/actions/setup-uv
+        uses: $/.github/actions/setup-uv
 
       - name: Setup Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0

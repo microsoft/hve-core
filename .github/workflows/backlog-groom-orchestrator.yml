@@ -680,7 +680,7 @@ jobs:
       max-parallel: 2
       matrix:
         shard: ${{ fromJSON(needs.plan.outputs.shard-matrix) }}
-    uses: ./.github/workflows/backlog-groom.lock.yml
+    uses: $/.github/workflows/backlog-groom.lock.yml
     with:
       shard_id: ${{ matrix.shard.shard_id }}
       manifest_digest: ${{ needs.plan.outputs.manifest-digest }}
