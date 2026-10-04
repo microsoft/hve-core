@@ -575,6 +575,16 @@ BeforeAll {
     $script:WorkflowRoot = Join-Path $PSScriptRoot '../../../.github/workflows'
     $script:AggregateWorkflowPath = Join-Path $PSScriptRoot '../../../.github/workflows/pr-validation.yml'
     $script:AggregateWorkflow = Get-Content -Raw -Path $script:AggregateWorkflowPath | ConvertFrom-Yaml
+
+    # Every aggregate job that scopes work by change range, mapped to its reusable workflow file.
+    $script:ChangedFileSelectorJobs = @{}
+    foreach ($JobEntry in $script:AggregateWorkflow['jobs'].GetEnumerator()) {
+        $With = $JobEntry.Value['with']
+        if ($With -isnot [System.Collections.IDictionary]) { continue }
+        if ($With['changed-files-only'] -eq $true -or $With.Contains('change-mode')) {
+            $script:ChangedFileSelectorJobs[[string]$JobEntry.Key] = Split-Path -Leaf ([string]$JobEntry.Value['uses'])
+        }
+    }
 }
 
 Describe 'Trusted checkout contract' -Tag 'Unit' {
@@ -583,14 +593,14 @@ Describe 'Trusted checkout contract' -Tag 'Unit' {
         $script:CanonicalHeadVerificationBodies = @{
             pwsh = @'
 $actualHeadSha = (git rev-parse HEAD).Trim()
-if ($env:EXPECTED_HEAD_SHA -cnotmatch '^[0-9a-f]{40,64}$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
+if ($env:EXPECTED_HEAD_SHA -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
   Write-Output "::error::Checked-out commit $actualHeadSha does not match the resolved head commit."
   exit 1
 }
 '@ -replace "`r`n", "`n"
             bash = @'
 actual_head_sha="$(git rev-parse HEAD)"
-if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^[0-9a-f]{40,64}$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
+if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
   echo "::error::Checked-out commit ${actual_head_sha} does not match the resolved head commit."
   exit 1
 fi
@@ -704,89 +714,56 @@ jobs:
         $Violations | Should -Contain 'moving-ref-fallback:selector'
     }
 
-    It 'Routes every inline selector caller through the aggregate range contract' {
-        $SelectorJobIds = @(
-            'python-lint'
-            'pytest'
-            'copilot-otel-runtime-tests'
-            'node-tests'
-            'fuzz-tests'
-            'pip-audit'
-            'docusaurus-tests'
-            'adr-consistency-validation'
+    It 'Routes every changed-file aggregate job through the range contract' {
+        $ChangedFileJobs = @($script:ChangedFileSelectorJobs.Keys)
+        $ChangedFilesOnlyJobs = @(
+            $script:AggregateWorkflow['jobs'].GetEnumerator() |
+                Where-Object { $_.Value['with'] -is [System.Collections.IDictionary] -and $_.Value['with']['changed-files-only'] -eq $true } |
+                ForEach-Object { [string]$_.Key }
         )
 
-        $Violations = Get-WorkflowRangeContractViolation -WorkflowPath $script:AggregateWorkflowPath -SelectorJobId $SelectorJobIds
-
-        $Violations | Should -BeNullOrEmpty
+        $ChangedFileJobs | Should -Not -BeNullOrEmpty
+        foreach ($JobId in $ChangedFilesOnlyJobs) {
+            $ChangedFileJobs | Should -Contain $JobId
+        }
+        Get-WorkflowRangeContractViolation -WorkflowPath $script:AggregateWorkflowPath -SelectorJobId $ChangedFileJobs |
+            Should -BeNullOrEmpty
     }
 
-    It 'Defines full-or-range inputs without moving-ref fallbacks in every inline selector' {
-        $WorkflowNames = @(
-            'python-lint.yml'
-            'pytest-tests.yml'
-            'node-tests.yml'
-            'fuzz-tests.yml'
-            'pip-audit.yml'
-            'docusaurus-tests.yml'
-            'adr-consistency-validation.yml'
-        )
+    It 'Defines full-or-range inputs without moving-ref fallbacks in every changed-file workflow' {
+        $WorkflowNames = @($script:ChangedFileSelectorJobs.Values | Sort-Object -Unique)
 
+        $WorkflowNames | Should -Not -BeNullOrEmpty
         foreach ($WorkflowName in $WorkflowNames) {
             $WorkflowPath = Join-Path $PSScriptRoot "../../../.github/workflows/$WorkflowName"
             $WorkflowText = Get-Content -Raw -Path $WorkflowPath
             $Workflow = $WorkflowText | ConvertFrom-Yaml
             $Inputs = $Workflow['on']['workflow_call']['inputs']
 
-            $Inputs['change-mode']['default'] | Should -BeExactly 'full'
-            $Inputs.Contains('base-sha') | Should -BeTrue
-            $Inputs.Contains('head-sha') | Should -BeTrue
-            $WorkflowText | Should -Match 'inputs\.base-sha'
-            $WorkflowText | Should -Not -Match 'github\.base_ref|github\.event\.before|origin/main|origin/\$'
+            $Inputs['change-mode']['default'] | Should -BeExactly 'full' -Because "$WorkflowName must default to full validation"
+            $Inputs.Contains('base-sha') | Should -BeTrue -Because "$WorkflowName must accept the resolved base"
+            $Inputs.Contains('head-sha') | Should -BeTrue -Because "$WorkflowName must accept the resolved head"
+            $WorkflowText | Should -Match 'inputs\.base-sha' -Because "$WorkflowName must use the resolved base"
+            $WorkflowText | Should -Not -Match 'inputs\.base-branch|github\.base_ref|github\.event\.before|origin/main|origin/\$' -Because "$WorkflowName must not fall back to a moving ref"
         }
     }
 
-    It 'Routes every script-backed selector caller through the aggregate range contract' {
-        $SelectorJobIds = @(
-            'psscriptanalyzer'
-            'yaml-lint'
-            'frontmatter-validation'
-            'asset-docs-validation'
-            'msdate-freshness'
-            'skill-validation'
-            'markdown-link-check'
-        )
-
-        $Violations = Get-WorkflowRangeContractViolation -WorkflowPath $script:AggregateWorkflowPath -SelectorJobId $SelectorJobIds
+    It 'Lets change-range errors fail the step unless the caller opts into soft-fail' {
+        $Violations = foreach ($WorkflowName in @($script:ChangedFileSelectorJobs.Values | Sort-Object -Unique)) {
+            $Workflow = Get-Content -Raw -Path (Join-Path $PSScriptRoot "../../../.github/workflows/$WorkflowName") | ConvertFrom-Yaml
+            foreach ($JobEntry in $Workflow['jobs'].GetEnumerator()) {
+                foreach ($Step in @($JobEntry.Value['steps'])) {
+                    if ($Step -isnot [System.Collections.IDictionary]) { continue }
+                    if ([string]$Step['run'] -notmatch 'CHANGE_MODE|BASE_SHA') { continue }
+                    if ($Step['continue-on-error'] -is [bool] -and $Step['continue-on-error']) {
+                        "$($WorkflowName):$($JobEntry.Key):$($Step['name'])"
+                    }
+                }
+            }
+        }
 
         $Violations | Should -BeNullOrEmpty
     }
-
-    It 'Defines full-or-range inputs without moving-ref fallbacks in every script-backed selector' {
-        $WorkflowNames = @(
-            'ps-script-analyzer.yml'
-            'yaml-lint.yml'
-            'frontmatter-validation.yml'
-            'asset-docs-validation.yml'
-            'msdate-freshness-check.yml'
-            'skill-validation.yml'
-            'markdown-link-check.yml'
-        )
-
-        foreach ($WorkflowName in $WorkflowNames) {
-            $WorkflowPath = Join-Path $PSScriptRoot "../../../.github/workflows/$WorkflowName"
-            $WorkflowText = Get-Content -Raw -Path $WorkflowPath
-            $Workflow = $WorkflowText | ConvertFrom-Yaml
-            $Inputs = $Workflow['on']['workflow_call']['inputs']
-
-            $Inputs['change-mode']['default'] | Should -BeExactly 'full'
-            $Inputs.Contains('base-sha') | Should -BeTrue
-            $Inputs.Contains('head-sha') | Should -BeTrue
-            $WorkflowText | Should -Match 'inputs\.base-sha'
-            $WorkflowText | Should -Not -Match 'inputs\.base-branch|github\.base_ref|github\.event\.before|origin/main|origin/\$'
-        }
-    }
-
     It 'Reports ms.date freshness as advisory in full mode for changed-files callers only' {
         $WorkflowRoot = Join-Path $PSScriptRoot '../../../.github/workflows'
         $Workflow = Get-Content -Raw -Path (Join-Path $WorkflowRoot 'msdate-freshness-check.yml') | ConvertFrom-Yaml
@@ -810,12 +787,6 @@ jobs:
         $WorkflowText | Should -Match 'internal links are always validated repository-wide'
         $WorkflowText | Should -Match '\$params\[''ChangedFilesOnly''\] = \$true'
         $WorkflowText | Should -Match '\$params\[''BaseBranch''\] = \$env:INPUT_BASE_SHA'
-    }
-
-    It 'Routes eval and gitleaks callers through the aggregate range contract' {
-        $Violations = Get-WorkflowRangeContractViolation -WorkflowPath $script:AggregateWorkflowPath -SelectorJobId @('eval-validation', 'gitleaks-scan')
-
-        $Violations | Should -BeNullOrEmpty
     }
 
     It 'Bypasses the eval range artifact and forces unprivileged linting in full mode' {
@@ -1010,6 +981,13 @@ Describe 'Aggregate merge-group ownership' -Tag 'Unit' {
 
     It 'Keeps the resolver in the stable aggregate gate' {
         @($script:AggregateWorkflow['jobs']['pr-validation-success']['needs']) | Should -Contain 'change-range'
+    }
+
+    It 'Gives each manual dispatch its own eval concurrency group' {
+        $EvalWorkflow = Get-Content -Raw -Path (Join-Path $script:WorkflowRoot 'eval-validation.yml') | ConvertFrom-Yaml
+
+        $EvalWorkflow['concurrency']['group'] | Should -Match "github\.event_name == 'workflow_dispatch' && github\.run_id \|\|"
+        $EvalWorkflow['concurrency']['cancel-in-progress'] | Should -BeFalse
     }
 
     It 'Keeps release-promotion checks limited to pull requests' {

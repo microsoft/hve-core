@@ -161,6 +161,15 @@ Describe 'Resolve-WorkflowChangeRange' -Tag 'Unit' {
             $Result.mode | Should -BeExactly 'full'
         }
 
+        It 'Selects full mode when a commit ID is neither 40 nor 64 hex characters' {
+            $RefShapedId = 'a' * 41
+            Invoke-TestGit -RepoRoot $script:RepoRoot -ArgumentList @('branch', $RefShapedId, $script:BaseSha) | Out-Null
+
+            $Result = Resolve-WorkflowChangeRange -EventName 'merge_group' -BaseSha $RefShapedId -HeadSha $script:HeadSha -RepoRoot $script:RepoRoot
+
+            $Result.mode | Should -BeExactly 'full'
+        }
+
         It 'Selects full mode when a commit is unavailable' {
             $Result = Resolve-WorkflowChangeRange -EventName 'merge_group' -BaseSha ('a' * 40) -HeadSha $script:HeadSha -RepoRoot $script:RepoRoot
 

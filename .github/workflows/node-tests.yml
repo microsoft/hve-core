@@ -65,7 +65,7 @@ jobs:
           EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
         run: |
           actual_head_sha="$(git rev-parse HEAD)"
-          if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^[0-9a-f]{40,64}$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
+          if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
             echo "::error::Checked-out commit ${actual_head_sha} does not match the resolved head commit."
             exit 1
           fi
@@ -113,7 +113,7 @@ jobs:
             pattern="^${INPUT_WORKING_DIRECTORY}/.*\.(mjs|cjs|js)$"
           fi
           changed_files=$(git diff --name-only "$BASE_SHA..$HEAD_SHA" --)
-          if printf '%s\n' "$changed_files" | grep -qE "$pattern"; then
+          if grep -Eq "$pattern" <<< "$changed_files"; then
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
             echo "Tracked files changed for pattern $pattern"
           else

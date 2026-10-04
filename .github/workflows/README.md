@@ -70,8 +70,8 @@ not subscribe to merge-group events independently. The aggregate resolves one
 immutable base and head pair, then passes that decision to every changed-file
 selector.
 
-Range mode validates the exact resolved commits. The resolver derives each base
-from commit structure rather than from event payload fields:
+Range mode validates the exact resolved commits. The resolver picks a base per
+event and verifies it before use:
 
 * Pull requests use the first parent of the checked-out test-merge commit after
   verifying that its second parent is the pull request head.

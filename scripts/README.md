@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2026-09-25
+ms.date: 2026-10-04
 ms.topic: reference
 keywords:
   - powershell
@@ -179,13 +179,14 @@ pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 -ChangeSetPath log
 pwsh -NoProfile -File scripts/evals/Get-ChangedSpecStimulus.ps1 -ChangeSetPath logs/eval-change-set.json
 ```
 
-The PR workflow passes GitHub's test-merge commit as `-MergeRef` and the pull
-request head SHA as `-HeadRef`. The generator uses the merge commit's first
-parent as the base, which is exactly the base-branch commit the checkout
-integrates, after verifying the merge has two parents and its second parent is
-the head. Any other shape fails rather than guessing. Manual dispatch has no
-merge commit and uses `-BaseRef origin/main`. The merge checkout still executes
-the tooling, but cannot add newer `main` changes to the selection.
+The eval lane passes the change-range resolver's verified base and head
+commits for every event as `-BaseRef` and `-HeadRef`. For pull requests the
+base is the first parent of GitHub's test-merge commit and the head is the
+test-merge commit itself, so the selection contains only the pull request's
+changes and cannot pick up newer `main` changes. The resolver, not the
+generator, verifies the merge shape and selects full validation when it cannot
+prove a range. In full mode the lane skips the generator and validates every
+tracked artifact.
 `eval-change-set.json` records resolved `baseRef`, `headRef`, `comparisonBase`,
 and ordered `changes`. Changed-spec content and package patches use
 `comparisonBase` and `headRef`, never the working tree. Renamed and copied

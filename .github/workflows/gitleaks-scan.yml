@@ -61,7 +61,7 @@ jobs:
           EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
         run: |
           actual_head_sha="$(git rev-parse HEAD)"
-          if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^[0-9a-f]{40,64}$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
+          if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
             echo "::error::Checked-out commit ${actual_head_sha} does not match the resolved head commit."
             exit 1
           fi
