@@ -115,11 +115,11 @@ jobs:
               echo '::error::Range mode requires immutable base and head commit IDs.'
               exit 1
             fi
-            SCAN_ARGS+=("--log-opts=${INPUT_BASE_SHA}..${INPUT_HEAD_SHA}")
-            echo 'Scanning the verified immutable workflow range.'
+            SCAN_ARGS+=("--log-opts=--diff-merges=first-parent ${INPUT_BASE_SHA}..${INPUT_HEAD_SHA}")
+            echo 'Scanning the verified immutable workflow range, including first-parent merge-commit patches.'
           elif [ "$INPUT_CHANGE_MODE" = 'full' ]; then
-            SCAN_ARGS+=("--log-opts=--full-history --diff-filter=tuxdb HEAD")
-            echo 'Full validation mode selected; scanning the full history of the checked-out commit.'
+            SCAN_ARGS+=("--log-opts=--full-history --diff-filter=tuxdb --diff-merges=first-parent HEAD")
+            echo 'Full validation mode selected; scanning the full history of the checked-out commit, including first-parent merge-commit patches.'
           else
             echo "::error::Unsupported change mode: $INPUT_CHANGE_MODE"
             exit 1

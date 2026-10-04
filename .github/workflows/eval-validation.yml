@@ -404,7 +404,7 @@ jobs:
           INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
         run: |
           if [[ "${INPUT_CHANGE_MODE}" != 'range' ]]; then
-            echo "::error::Agent eval selection requires a verified change range; the change-range resolver selected full mode. Investigate the change-range job before rerunning."
+            echo "::error::Agent eval selection requires a verified change range; the change-range resolver selected full mode. A manual dispatch from the default branch tip, or from a branch with no commits ahead of it, has no range to verify; dispatch from a branch with changes. Otherwise, investigate the change-range job before rerunning."
             exit 1
           fi
 

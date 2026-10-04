@@ -18,8 +18,9 @@
       and origin/<default branch>.
 
     Every range requires a well-formed, available base that is an ancestor of
-    the head, a head equal to the checked-out HEAD, and a diffable pair. Any
-    unknown event or failed check returns full mode with empty commit IDs.
+    the head and distinct from it, a head equal to the checked-out HEAD, and a
+    diffable pair. Any unknown event or failed check returns full mode with
+    empty commit IDs, so a base equal to the head never yields an empty range.
 .PARAMETER EventName
     GitHub Actions event that triggered the calling workflow.
 .PARAMETER BaseSha
@@ -358,6 +359,7 @@ function Resolve-WorkflowChangeRange {
 
     if (
         [string]::IsNullOrWhiteSpace($ResolvedBase) -or
+        $ResolvedBase -ceq $ResolvedHead -or
         -not (Test-WorkflowGitAncestor -RepoRoot $RepoRoot -BaseSha $ResolvedBase -HeadSha $ResolvedHead) -or
         -not (Test-WorkflowGitDiff -RepoRoot $RepoRoot -BaseSha $ResolvedBase -HeadSha $ResolvedHead)
     ) {
@@ -376,21 +378,30 @@ function Resolve-WorkflowChangeRange {
 #region Main Execution
 
 if ($MyInvocation.InvocationName -ne '.') {
-    $ResolveParams = @{
-        EventName          = $EventName
-        BaseSha            = $BaseSha
-        HeadSha            = $HeadSha
-        PullRequestHeadSha = $PullRequestHeadSha
-        DefaultBranch      = $DefaultBranch
-        RepoRoot           = $RepoRoot
+    try {
+        $ResolveParams = @{
+            EventName          = $EventName
+            BaseSha            = $BaseSha
+            HeadSha            = $HeadSha
+            PullRequestHeadSha = $PullRequestHeadSha
+            DefaultBranch      = $DefaultBranch
+            RepoRoot           = $RepoRoot
+        }
+        $Result = Resolve-WorkflowChangeRange @ResolveParams
+
+        Set-CIOutput -Name 'mode' -Value $Result.mode
+        Set-CIOutput -Name 'base-sha' -Value $Result.'base-sha'
+        Set-CIOutput -Name 'head-sha' -Value $Result.'head-sha'
+
+        Write-Host "Workflow change-range event: $EventName; mode: $($Result.mode)"
+        exit 0
     }
-    $Result = Resolve-WorkflowChangeRange @ResolveParams
-
-    Set-CIOutput -Name 'mode' -Value $Result.mode
-    Set-CIOutput -Name 'base-sha' -Value $Result.'base-sha'
-    Set-CIOutput -Name 'head-sha' -Value $Result.'head-sha'
-
-    Write-Host "Workflow change-range event: $EventName; mode: $($Result.mode)"
+    catch {
+        # A crash means the environment is broken, not that a range is unprovable, so fail instead of selecting full mode.
+        Write-CIAnnotation -Level 'Error' -Message "Resolve-WorkflowChangeRange failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Resolve-WorkflowChangeRange failed: $($_.Exception.Message)"
+        exit 1
+    }
 }
 
 #endregion Main Execution

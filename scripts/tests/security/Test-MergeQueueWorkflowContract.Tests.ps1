@@ -578,6 +578,26 @@ BeforeAll {
 }
 
 Describe 'Trusted checkout contract' -Tag 'Unit' {
+    BeforeAll {
+        # Inline copies stay byte-identical per shell so a weakened comparison in any copy fails here.
+        $script:CanonicalHeadVerificationBodies = @{
+            pwsh = @'
+$actualHeadSha = (git rev-parse HEAD).Trim()
+if ($env:EXPECTED_HEAD_SHA -cnotmatch '^[0-9a-f]{40,64}$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
+  Write-Output "::error::Checked-out commit $actualHeadSha does not match the resolved head commit."
+  exit 1
+}
+'@ -replace "`r`n", "`n"
+            bash = @'
+actual_head_sha="$(git rev-parse HEAD)"
+if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^[0-9a-f]{40,64}$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
+  echo "::error::Checked-out commit ${actual_head_sha} does not match the resolved head commit."
+  exit 1
+fi
+'@ -replace "`r`n", "`n"
+        }
+    }
+
     It 'Reports a checkout ref derived from caller inputs, including compound expressions' {
         $WorkflowPath = Join-Path $TestDrive 'input-derived-checkout.yml'
         @'
@@ -616,6 +636,33 @@ jobs:
         [string]$VerifyStep['run'] | Should -Match 'git rev-parse HEAD'
         [string]$VerifyStep['run'] | Should -Match 'exit 1'
         [string]$VerifyStep['run'] | Should -Not -Match '\$\{\{'
+    }
+
+    It 'Uses the canonical head-verification body for its shell in <Workflow> job <Job>' -ForEach $script:TrustedCheckoutSites {
+        $Document = Get-Content -Raw -Path (Join-Path $script:WorkflowRoot $Workflow) | ConvertFrom-Yaml
+        $VerifyStep = @($Document['jobs'][$Job]['steps']) | Where-Object { $_['name'] -eq 'Verify resolved head commit' }
+        $Shell = [string]$VerifyStep['shell']
+        $Body = ([string]$VerifyStep['run']) -replace "`r`n", "`n"
+
+        $script:CanonicalHeadVerificationBodies.Keys | Should -Contain $Shell
+        $Body.Trim() | Should -BeExactly $script:CanonicalHeadVerificationBodies[$Shell]
+    }
+
+    It 'Lists every workflow job that verifies a resolved head commit' -ForEach @(@{ Sites = $script:TrustedCheckoutSites }) {
+        $DiscoveredSites = foreach ($WorkflowFile in Get-ChildItem -Path $script:WorkflowRoot -Filter '*.yml') {
+            $Document = Get-Content -Raw -Path $WorkflowFile.FullName | ConvertFrom-Yaml
+            if ($Document -isnot [System.Collections.IDictionary] -or $Document['jobs'] -isnot [System.Collections.IDictionary]) { continue }
+
+            foreach ($JobEntry in $Document['jobs'].GetEnumerator()) {
+                $Steps = @($JobEntry.Value['steps'])
+                if (@($Steps | Where-Object { $_ -is [System.Collections.IDictionary] -and $_['name'] -eq 'Verify resolved head commit' }).Count -gt 0) {
+                    "$($WorkflowFile.Name):$($JobEntry.Key)"
+                }
+            }
+        }
+        $ListedSites = foreach ($Site in $Sites) { "$($Site.Workflow):$($Site.Job)" }
+
+        @($DiscoveredSites | Sort-Object) | Should -BeExactly @($ListedSites | Sort-Object)
     }
 }
 
@@ -740,6 +787,22 @@ jobs:
         }
     }
 
+    It 'Reports ms.date freshness as advisory in full mode for changed-files callers only' {
+        $WorkflowRoot = Join-Path $PSScriptRoot '../../../.github/workflows'
+        $Workflow = Get-Content -Raw -Path (Join-Path $WorkflowRoot 'msdate-freshness-check.yml') | ConvertFrom-Yaml
+        $CheckStep = @($Workflow['jobs']['msdate-freshness']['steps']) | Where-Object { $_['name'] -eq 'Run ms.date freshness check' }
+        $WeeklyWorkflow = Get-Content -Raw -Path (Join-Path $WorkflowRoot 'weekly-validation.yml') | ConvertFrom-Yaml
+        $AggregateCaller = $script:AggregateWorkflow['jobs']['msdate-freshness']['with']
+        $WeeklyCaller = @($WeeklyWorkflow['jobs'].Values | Where-Object { $_['uses'] -eq './.github/workflows/msdate-freshness-check.yml' })
+
+        $CheckStep['run'] | Should -Match "(?s)CHANGED_FILES_ONLY -eq 'true' -and \`$env:INPUT_CHANGE_MODE -eq 'full'\) \{\s+Write-Output '::warning::[^']+'\s+& scripts/linting/Invoke-MsDateFreshnessCheck\.ps1 @params\s+exit 0\s+\}"
+        $AggregateCaller['changed-files-only'] | Should -BeTrue
+        $AggregateCaller['soft-fail'] | Should -BeFalse
+        $WeeklyCaller | Should -HaveCount 1
+        $WeeklyCaller[0]['with']['changed-files-only'] | Should -BeFalse
+        $WeeklyCaller[0]['with']['soft-fail'] | Should -BeFalse
+    }
+
     It 'Preserves repository-wide internal markdown-link validation' {
         $WorkflowPath = Join-Path $PSScriptRoot '../../../.github/workflows/markdown-link-check.yml'
         $WorkflowText = Get-Content -Raw -Path $WorkflowPath
@@ -806,9 +869,9 @@ jobs:
 
         $Inputs['change-mode']['default'] | Should -BeExactly 'full'
         $Inputs.Contains('log-opts') | Should -BeFalse
-        $ScanStep['run'] | Should -Match '\$\{INPUT_BASE_SHA\}\.\.\$\{INPUT_HEAD_SHA\}'
+        $ScanStep['run'] | Should -Match ([regex]::Escape('"--log-opts=--diff-merges=first-parent ${INPUT_BASE_SHA}..${INPUT_HEAD_SHA}"'))
         $ScanStep['run'] | Should -Match "INPUT_CHANGE_MODE.*= 'full'"
-        $ScanStep['run'] | Should -Match '"--log-opts=--full-history --diff-filter=tuxdb HEAD"'
+        $ScanStep['run'] | Should -Match ([regex]::Escape('"--log-opts=--full-history --diff-filter=tuxdb --diff-merges=first-parent HEAD"'))
         $ScanStep['run'] | Should -Not -Match '--all'
         $WorkflowText | Should -Not -Match 'github\.event\.pull_request'
     }
@@ -957,5 +1020,49 @@ Describe 'Aggregate merge-group ownership' -Tag 'Unit' {
         foreach ($PromotionStep in $PromotionSteps) {
             $PromotionStep['if'] | Should -Match "github\.event_name == 'pull_request'"
         }
+    }
+
+    It 'Bounds the write scopes and secrets reachable from merge_group' {
+        # merge_group runs fork-originated code in the base-repository context, so every write grant is deliberate.
+        $ExpectedWriteGrants = @(
+            'action-version-consistency-scan=security-events'
+            'adr-consistency-validation=security-events'
+            'codeql=security-events'
+            'copilot-otel-runtime-tests=id-token'
+            'dangerous-workflow-check=security-events'
+            'dependency-pinning-check=security-events'
+            'docusaurus-tests=id-token'
+            'eval-validation=pull-requests'
+            'gitleaks-scan=security-events'
+            'node-tests=id-token'
+            'pester-tests=id-token'
+            'pytest=id-token'
+            'workflow-permissions-check=security-events'
+            'workflow-runner-check=security-events'
+        )
+        $TopLevelPermissions = $script:AggregateWorkflow['permissions']
+        $NonMapPermissionJobs = [System.Collections.Generic.List[string]]::new()
+        $ActualWriteGrants = foreach ($JobEntry in $script:AggregateWorkflow['jobs'].GetEnumerator()) {
+            $Permissions = $JobEntry.Value['permissions']
+            if ($null -eq $Permissions) { continue }
+            if ($Permissions -isnot [System.Collections.IDictionary]) {
+                $NonMapPermissionJobs.Add($JobEntry.Key)
+                continue
+            }
+
+            foreach ($Scope in $Permissions.GetEnumerator()) {
+                if ([string]$Scope.Value -eq 'write') { "$($JobEntry.Key)=$($Scope.Key)" }
+            }
+        }
+        $AggregateText = Get-Content -Raw -Path $script:AggregateWorkflowPath
+        $SecretNames = @([regex]::Matches($AggregateText, 'secrets\.([A-Za-z0-9_]+)') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+
+        $NonMapPermissionJobs | Should -BeNullOrEmpty
+        $TopLevelPermissions | Should -BeOfType [System.Collections.IDictionary]
+        @($TopLevelPermissions.Keys) | Should -BeExactly @('contents')
+        $TopLevelPermissions['contents'] | Should -BeExactly 'read'
+        @($ActualWriteGrants | Sort-Object) | Should -BeExactly @($ExpectedWriteGrants | Sort-Object)
+        $SecretNames | Should -BeExactly @('COPILOT_GITHUB_TOKEN')
+        $AggregateText | Should -Not -Match 'secrets:\s*inherit'
     }
 }

@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-10-03
+ms.date: 2026-10-04
 ms.topic: reference
 keywords:
   - github actions
@@ -79,9 +79,11 @@ from commit structure rather than from event payload fields:
 * Manual dispatch uses the merge base of the checked-out commit and
   `origin/<default branch>`.
 
-Every range requires a base that is an ancestor of the head, a head equal to
-the checked-out commit, and a pair Git can diff. Any failed check, or an event
-without a range rule, selects full mode with empty commit IDs.
+Every range requires a base that is an ancestor of the head and distinct from
+it, a head equal to the checked-out commit, and a pair Git can diff. Any failed
+check, or an event without a range rule, selects full mode with empty commit
+IDs. A manual dispatch from the default-branch tip, or from a branch with no
+commits ahead of it, therefore selects full mode rather than an empty range.
 
 Every range-capable reusable workflow checks out `github.sha`, the trusted
 event commit, instead of a caller-supplied ref. In range mode, each job then
@@ -93,10 +95,19 @@ skipping it:
 
 * Content moderation covers every eval spec and every tracked AI artifact.
 * Agent-eval selection fails, because a pull request or manual dispatch reaches
-  full mode only when the resolver cannot prove a range.
+  full mode only when the resolver cannot prove a non-empty range. Dispatch
+  from a branch with commits ahead of the default branch to select agent evals.
+* ms.date freshness checks every markdown file but reports stale files as an
+  advisory warning for the aggregate's changed-files caller, because staleness
+  accrues with time rather than with the change. The weekly repository-wide run
+  stays blocking.
 * Gitleaks scans every commit reachable from the checked-out commit, with the
   same history and diff filters as its default scan, instead of every fetched
   ref.
+
+Gitleaks passes `--diff-merges=first-parent` in both modes, so content that
+exists only in a merge commit, such as a conflict resolution, is scanned
+against the merge's first parent.
 
 `PR Validation Success` is the sole stable required status context for hosted
 branch and queue policy. Do not require individual validation or matrix-job
@@ -113,8 +124,17 @@ the token, or needs a job that does, repeats that same-repository check. The
 `full_name` comparison fails closed when the head repository is missing, unlike
 a `fork == false` check, which GitHub's type coercion treats as true for a
 missing value. Manual dispatch resolves a range against the default branch, so
-it selects agent evals the same way a pull request does. Gitleaks scans the
-resolved commit range in range mode.
+when the dispatched commit is ahead of the default branch it selects agent
+evals the same way a pull request does. Gitleaks scans the resolved commit
+range in range mode.
+
+Merge-group runs execute in the base-repository context, including for pull
+requests that originated in a fork. Their jobs can reach `id-token: write` for
+Codecov OIDC uploads, `security-events: write` for SARIF uploads, and
+`pull-requests: write`, which only the pull-request-only eval report uses. No
+secret other than the gated `COPILOT_GITHUB_TOKEN` is passed. The merge-queue
+contract test pins each job's write scopes and the workflow's secret references
+so that a new grant fails until it is reviewed.
 
 Pull requests and merge groups share a concurrency group per ref and cancel
 superseded runs. Each manual dispatch run gets its own concurrency group, so
@@ -134,7 +154,10 @@ serial:
 | Required status context  | `PR Validation Success` |
 
 These values describe the activation target, not evidence that Merge Queue is
-active. After the compatible workflow is on `main`, apply the hosted policy and
+active. Before applying the hosted policy, administrators confirm that no
+federated identity credential, in Azure, Entra ID, or elsewhere, trusts a
+wildcard branch subject that matches `refs/heads/gh-readonly-queue/main/*`.
+After the compatible workflow is on `main`, apply the hosted policy and
 queue one pull request to prove that the merge-group run reports the stable
 context and completes a squash merge.
 

@@ -204,6 +204,14 @@ Describe 'Resolve-WorkflowChangeRange' -Tag 'Unit' {
 
             $Result.mode | Should -BeExactly 'full'
         }
+
+        It 'Selects full mode when the base equals the head' {
+            $Result = Resolve-WorkflowChangeRange -EventName 'merge_group' -BaseSha $script:HeadSha -HeadSha $script:HeadSha -RepoRoot $script:RepoRoot
+
+            $Result.mode | Should -BeExactly 'full'
+            $Result.'base-sha' | Should -BeNullOrEmpty
+            $Result.'head-sha' | Should -BeNullOrEmpty
+        }
     }
 
     Context 'when a pull request test-merge commit is checked out' {
@@ -253,6 +261,16 @@ Describe 'Resolve-WorkflowChangeRange' -Tag 'Unit' {
 
             $Result.mode | Should -BeExactly 'full'
         }
+
+        It 'Selects full mode when the checked-out head is the default branch tip' {
+            Invoke-TestGit -RepoRoot $script:RepoRoot -ArgumentList @('update-ref', 'refs/remotes/origin/main', $script:HeadSha) | Out-Null
+
+            $Result = Resolve-WorkflowChangeRange -EventName 'workflow_dispatch' -HeadSha $script:HeadSha -DefaultBranch 'main' -RepoRoot $script:RepoRoot
+
+            $Result.mode | Should -BeExactly 'full'
+            $Result.'base-sha' | Should -BeNullOrEmpty
+            $Result.'head-sha' | Should -BeNullOrEmpty
+        }
     }
 }
 
@@ -279,6 +297,29 @@ Describe 'Resolve-WorkflowChangeRange script outputs' -Tag 'Unit' {
             $Outputs | Should -Contain 'mode=full'
             $Outputs | Should -Contain 'base-sha='
             $Outputs | Should -Contain 'head-sha='
+        }
+        finally {
+            $env:GITHUB_ACTIONS = $PreviousGitHubActions
+            $env:GITHUB_OUTPUT = $PreviousGitHubOutput
+        }
+    }
+
+    It 'Fails with an error annotation when outputs cannot be written' {
+        $UnwritableOutputPath = Join-Path $TestDrive 'github-output-directory'
+        New-Item -ItemType Directory -Path $UnwritableOutputPath -Force | Out-Null
+        $PreviousGitHubActions = $env:GITHUB_ACTIONS
+        $PreviousGitHubOutput = $env:GITHUB_OUTPUT
+
+        try {
+            $env:GITHUB_ACTIONS = 'true'
+            $env:GITHUB_OUTPUT = $UnwritableOutputPath
+
+            $Output = & pwsh -NoProfile -File $script:ResolverPath -EventName 'merge_group' -BaseSha $script:BaseSha -HeadSha $script:HeadSha -RepoRoot $script:RepoRoot *>&1
+            $ExitCode = $LASTEXITCODE
+            $ErrorAnnotations = @($Output | ForEach-Object { [string]$_ } | Where-Object { $_ -like '::error::Resolve-WorkflowChangeRange failed:*' })
+
+            $ExitCode | Should -Not -Be 0
+            $ErrorAnnotations | Should -Not -BeNullOrEmpty
         }
         finally {
             $env:GITHUB_ACTIONS = $PreviousGitHubActions

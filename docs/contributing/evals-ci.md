@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-04
 ms.topic: how-to
 keywords:
   - evals
@@ -266,13 +266,13 @@ The `eval-presence` and `eval-lint` jobs do run on fork PRs because they require
 
 The eval lane receives one change-range decision from `pr-validation.yml`. In range mode, it validates the exact resolved commits. Full mode occurs when the resolver cannot prove a range, so the lane validates everything it can without the token, and fails instead of skipping the steps that need a proven range.
 
-| Run                             | Content moderation                             | Agent-eval selection and execution                                                      |
-|---------------------------------|------------------------------------------------|-----------------------------------------------------------------------------------------|
-| Pull request or manual dispatch | Changed artifacts plus every eval spec         | Runs for eligible changes; dispatch resolves against `main`                             |
-| Merge group                     | Changed artifacts plus every eval spec         | Skipped; merge groups never receive `COPILOT_GITHUB_TOKEN`                              |
-| Any run in full mode            | Every tracked AI artifact plus every eval spec | Fails for eligible pull requests and manual dispatch; merge groups and forks still skip |
+| Run                             | Content moderation                             | Agent-eval selection and execution                                                        |
+|---------------------------------|------------------------------------------------|-------------------------------------------------------------------------------------------|
+| Pull request or manual dispatch | Changed artifacts plus every eval spec         | Runs for eligible changes; dispatch resolves against `main` and needs commits ahead of it |
+| Merge group                     | Changed artifacts plus every eval spec         | Skipped; merge groups never receive `COPILOT_GITHUB_TOKEN`                                |
+| Any run in full mode            | Every tracked AI artifact plus every eval spec | Fails for eligible pull requests and manual dispatch; merge groups and forks still skip   |
 
-Merge groups run relevance, lint, and content moderation unprivileged. A full-mode failure in agent-eval selection means the change-range job could not verify the commits; investigate that job before rerunning.
+Merge groups run relevance, lint, and content moderation unprivileged. A full-mode failure in agent-eval selection means the change-range job could not verify a non-empty range. A manual dispatch from the `main` tip, or from a branch with no commits ahead of `main`, has no range to verify and always takes this path; dispatch from a branch with changes instead. Otherwise, investigate the change-range job before rerunning.
 
 ## Published Artifacts and the Transcript Boundary
 
