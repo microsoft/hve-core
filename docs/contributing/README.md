@@ -3,9 +3,11 @@ title: Contributing AI Artifacts
 description: Guides for contributing agents, instructions, and prompts to hve-core
 sidebar_position: 1
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Contributing AI Artifacts"
 pagination_label: Contributing AI Artifacts
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-04
 ms.topic: overview
 keywords:
   - contributing

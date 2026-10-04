@@ -3,9 +3,11 @@ title: Agent Systems Catalog
 description: Overview of all hve-core agent systems with workflow documentation and quick links
 sidebar_position: 1
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Agent Systems Catalog"
 pagination_label: Agent Systems Catalog
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-04
 ms.topic: overview
 keywords:
   - github copilot

@@ -3,9 +3,11 @@ title: Reference
 description: Generated reference documentation for HVE Core GenAI assets.
 sidebar_position: 0
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Reference"
 pagination_label: Reference
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-04
 ms.topic: overview
 keywords:
   - reference

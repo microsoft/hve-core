@@ -3,9 +3,11 @@ title: Templates
 description: Reusable document templates for architecture decisions, root cause analysis, security planning, and user journey mapping
 sidebar_position: 1
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Templates"
 pagination_label: Templates
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-04
 ms.topic: overview
 keywords:
   - templates

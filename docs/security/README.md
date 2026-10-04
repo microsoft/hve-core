@@ -3,9 +3,11 @@ title: Security Documentation
 description: Index of security documentation including security model and assurance case for HVE Core
 sidebar_position: 1
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Security Documentation"
 pagination_label: Security Documentation
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-04
 ms.topic: overview
 keywords:
   - security

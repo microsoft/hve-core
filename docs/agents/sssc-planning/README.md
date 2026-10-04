@@ -3,6 +3,8 @@ title: SSSC Planning
 description: Supply chain security assessment agent that guides teams through capability inventory, OpenSSF standards mapping, gap analysis, and backlog generation using a structured six-phase workflow
 sidebar_position: 1
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: SSSC Planning"
 keywords:
   - supply chain security
   - OpenSSF Scorecard
@@ -14,7 +16,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-08-20
+ms.date: 2026-10-04
 ms.topic: concept
 estimated_reading_time: 8
 ---

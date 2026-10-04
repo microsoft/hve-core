@@ -338,16 +338,30 @@ for (const surface of SURFACES) {
       for (const category of LANDING_CATEGORIES) {
         const toggle = await openCategoryPath(root, category.path);
 
-        const firstChildHref = await toggle.evaluate((button) => {
+        const firstChild = await toggle.evaluate((button) => {
           const list = button.closest('li')?.querySelector(':scope > ul.menu__list');
           const firstLink = list?.querySelector(':scope > li a[href]') as HTMLAnchorElement | null;
-          return firstLink ? new URL(firstLink.href).pathname : null;
+          return firstLink
+            ? {
+                href: new URL(firstLink.href).pathname,
+                label: firstLink.textContent?.trim() ?? '',
+                ariaLabel: firstLink.getAttribute('aria-label'),
+              }
+            : null;
         });
 
         expect(
-          firstChildHref,
+          firstChild?.href ?? null,
           `category "${category.identity}" must expose ${category.landingRoute} as its first child`,
         ).toBe(category.landingRoute);
+
+        // Every landing link reads "Overview", so its accessible name adds the
+        // section and still starts with the visible label (WCAG 2.5.3).
+        expect(firstChild?.label, `landing link for "${category.identity}"`).toBe('Overview');
+        expect(
+          firstChild?.ariaLabel,
+          `landing link for "${category.identity}" must name its section`,
+        ).toMatch(/^Overview: \S/);
       }
     });
 

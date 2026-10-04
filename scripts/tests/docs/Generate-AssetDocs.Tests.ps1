@@ -135,8 +135,10 @@ Describe 'Invoke-AssetDocsGeneration scaffolding' -Tag 'Unit' {
     It 'Labels only the root index as Overview in the sidebar' {
         Get-PageField -Path (Join-Path $script:repo 'docs/reference/README.md') -Field 'sidebar_label' | Should -Be 'Overview'
         Get-PageField -Path (Join-Path $script:repo 'docs/reference/README.md') -Field 'pagination_label' | Should -Be 'Reference'
+        Get-Content -LiteralPath (Join-Path $script:repo 'docs/reference/README.md') -Raw |
+            Should -Match '(?m)^sidebar_custom_props:\r?\n  accessibleName: "Overview: Reference"$'
         foreach ($rel in @('docs/reference/agents/README.md', 'docs/reference/agents/hve-core/alpha-agent.md')) {
-            Get-Content -LiteralPath (Join-Path $script:repo $rel) -Raw | Should -Not -Match '(?m)^(sidebar|pagination)_label:' -Because "'$rel' keeps its title as its label"
+            Get-Content -LiteralPath (Join-Path $script:repo $rel) -Raw | Should -Not -Match '(?m)^(sidebar|pagination)_(label|custom_props):' -Because "'$rel' keeps its title as its label"
         }
     }
 
@@ -427,11 +429,12 @@ Describe 'New-DocFrontmatter' -Tag 'Unit' {
 
     It 'Emits sidebar and pagination labels only when provided' {
         $plain = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'overview' -Keywords @('demo')
-        $plain | Should -Not -Match '(?m)^(sidebar|pagination)_label:'
+        $plain | Should -Not -Match '(?m)^(sidebar|pagination)_(label|custom_props):'
 
-        $labelled = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'overview' -Keywords @('demo') -SidebarLabel 'Overview' -PaginationLabel 'Demo'
+        $labelled = New-DocFrontmatter -Title 'Demo' -Description 'A demo.' -SidebarPosition 1 -MsDate '2026-07-02' -Topic 'overview' -Keywords @('demo') -SidebarLabel 'Overview' -PaginationLabel 'Demo' -SidebarAccessibleName 'Overview: Demo'
         $labelled | Should -Match '(?m)^sidebar_label: Overview$'
         $labelled | Should -Match '(?m)^pagination_label: Demo$'
+        $labelled | Should -Match '(?m)^sidebar_custom_props:\n  accessibleName: "Overview: Demo"$'
     }
 
     It 'Rejects a topic outside the docs schema enum' {
