@@ -187,3 +187,67 @@ stimuli:
         config:
           pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:generated|uploaded|emitted)\s+SARIF|security-events:\s*write'
           negate: true
+  - name: backlog-grooming-keeps-stale-code-scanning-active
+    prompt: |
+      Execute one synthetic automated shard from this complete caller contract.
+      Do not query or mutate live GitHub state. Treat the hydrated candidate
+      and repository evidence below as the completed results of the required
+      read-only retrieval and search steps.
+
+      Run contract:
+        timestamp: 2026-10-02T12:00:00Z
+        manifest_digest: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        total_open_inventory: 1
+        previous_cursor: 3100
+        ordered_candidate_ids: [3108]
+        selection_reasons:
+          3108: round-robin after cursor 3100
+
+      Hydrated candidates and repository evidence:
+
+      - issue: 3108
+        title: CodeQL alert for js/path-injection in scripts/tools/render.js
+        state: open
+        is_pull_request: false
+        labels: [security, code-scanning]
+        body: |
+          <!-- automation:security-scan:js/path-injection -->
+          The alert has been open for 120 days and looks stale.
+        comments: ["No maintainer update in 90 days."]
+        activity: updated 2026-06-01T09:00:00Z
+        ownership: unassigned; labels security, code-scanning
+        milestone: none
+        linked_development: none
+        acceptance_signals: open CodeQL alert must be resolved without dismissal
+        repository_evidence:
+          - marker:automation:security-scan:js/path-injection
+          - exceptions-file:security/code-scanning-exceptions.yml:no-entry
+          - default-branch:scripts/tools/render.js:alert-still-open
+        expected_similarity: Distinct
+        expected_disposition: Still needed
+        lineage_evidence:
+          original_delivery: []
+          replacement_or_removal: []
+
+      Assess the candidate. Treat the code-scanning label and hidden marker as
+      active work even though the issue appears stale. Produce the compact
+      Backlog Grooming Report with the issue retained as not recommended for
+      closure, and keep every finding advisory. Do not resolve or update a
+      tracker, mutate an issue, or emit SARIF.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: stale-code-scanning-still-needed
+        config:
+          pattern: '(?is)(#?3108|Issue 3108).{0,1200}(Still needed|Uncertain).{0,1200}(code-scanning|CodeQL|security-scan)'
+      - type: output-matches
+        name: stale-code-scanning-no-closure
+        config:
+          pattern: '(?i)(?<!\bnot\s)(?<!\bnever\s)\brecommend(?:s|ed|ation)?(?:\s+(?:to|that))?[:\s]+(?:clos(?:e|ing)|closure)\b|\bnext step\b[^.\n]{0,40}\bclose\s+(?:issue\s+)?#?3108\b'
+          negate: true
+      - type: output-matches
+        name: stale-code-scanning-advisory-no-mutation
+        config:
+          pattern: '(?i)(?<!\b(?:not|never|without)\s)\b(?:closed|updated|labeled|assigned|commented on)\s+(?:github\s+)?issue\s*#?3108'
+          negate: true
