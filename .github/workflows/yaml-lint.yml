@@ -5,6 +5,21 @@ name: YAML Lint
 on:
   workflow_call:
     inputs:
+      change-mode:
+        description: 'Use an exact immutable range or run full validation'
+        required: false
+        type: string
+        default: full
+      base-sha:
+        description: 'Immutable base commit used in range mode'
+        required: false
+        type: string
+        default: ''
+      head-sha:
+        description: 'Immutable head commit used in range mode'
+        required: false
+        type: string
+        default: ''
       soft-fail:
         description: 'Whether to continue on YAML lint violations'
         required: false
@@ -31,6 +46,19 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Verify resolved head commit
+        if: inputs.change-mode == 'range'
+        shell: pwsh
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+        run: |
+          $actualHeadSha = (git rev-parse HEAD).Trim()
+          if ($env:EXPECTED_HEAD_SHA -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
+            Write-Output "::error::Checked-out commit $actualHeadSha does not match the resolved head commit."
+            exit 1
+          }
 
       - name: Install actionlint
         env:
@@ -49,11 +77,18 @@ jobs:
       - name: Run YAML Lint
         id: lint
         shell: pwsh
+        env:
+          INPUT_BASE_SHA: ${{ inputs.base-sha }}
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
           $params = @{}
-          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+          if ($env:INPUT_CHANGE_MODE -notin @('full', 'range')) { throw 'Unsupported change mode.' }
+          if ($env:INPUT_CHANGED_FILES_ONLY -eq 'true' -and $env:INPUT_CHANGE_MODE -eq 'range') {
+            if (-not $env:INPUT_BASE_SHA) { throw 'Range mode requires an immutable base commit ID.' }
             $params['ChangedFilesOnly'] = $true
+            $params['BaseBranch'] = $env:INPUT_BASE_SHA
           }
           
           & scripts/linting/Invoke-YamlLint.ps1 @params

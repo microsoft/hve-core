@@ -230,6 +230,11 @@ Describe 'Set-CIOutput' -Tag 'Unit' {
             $content | Should -Match 'key1=value1'
             $content | Should -Match 'key2=value2'
         }
+
+        It 'Writes an explicit empty value' {
+            Set-CIOutput -Name 'empty-key' -Value ''
+            Get-Content -Path $env:GITHUB_OUTPUT | Should -Contain 'empty-key='
+        }
     }
 
     Context 'In Azure DevOps environment' {
