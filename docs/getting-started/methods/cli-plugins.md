@@ -3,7 +3,7 @@ title: Copilot CLI Plugin
 description: Register the HVE Core marketplace and install the complete hve-core plugin
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-04
 ms.topic: how-to
 keywords:
   - copilot cli
@@ -56,7 +56,7 @@ copilot plugin update hve-core@hve-core
 
 ## Replace an Earlier Registration
 
-If you registered a release-channel or tag ref, such as `microsoft/hve-core#release/stable` or `microsoft/hve-core#v<version>`, and want to follow `main`, remove that registration and register the repository again. Switching replaces release-gated, attested content with `main` content:
+If you registered a release-channel or tag ref, such as `microsoft/hve-core#release/stable` or `microsoft/hve-core#hve-core-v<version>`, remove that registration and register the repository again to follow `main`. The repository does not publish `release/prerelease` or `release/stable` branches, so those refs no longer resolve, and a tag ref stays fixed at that tag:
 
 ```bash
 copilot plugin marketplace remove hve-core --force

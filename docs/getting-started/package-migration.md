@@ -3,7 +3,7 @@ title: Migrate to the HVE Core Identity
 description: Move retired package installations to the single HVE Core plugin or extension
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-04
 ms.topic: how-to
 keywords:
   - migration
@@ -33,7 +33,7 @@ Register the repository as a marketplace. The registration tracks `main`:
 copilot plugin marketplace add microsoft/hve-core
 ```
 
-There are no PreRelease or Stable plugin channels. A release-channel or tag ref such as `microsoft/hve-core#release/stable` or `microsoft/hve-core#v<version>` resolves release-gated, attested content, and switching to `microsoft/hve-core` gives that up. To follow `main`, remove the earlier registration and register again:
+There are no PreRelease or Stable plugin channels. The repository does not publish `release/prerelease` or `release/stable` branches, so a registration such as `microsoft/hve-core#release/stable` no longer resolves, and a tag ref such as `microsoft/hve-core#hve-core-v<version>` stays fixed at that tag. To follow `main`, remove the earlier registration and register again:
 
 ```bash
 copilot plugin marketplace remove hve-core --force
