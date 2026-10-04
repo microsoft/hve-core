@@ -14,7 +14,7 @@ keywords:
 HVE Core is the single plugin and extension identity for all distributable HVE Core content.
 
 > [!CAUTION]
-> HVE Core evolves quickly. Evaluate these assets as adaptable engineering patterns, review changes before adoption, and use a pinned selective clone when reproducible source is required.
+> HVE Core evolves quickly. Evaluate these assets as adaptable engineering patterns, review changes before adoption, and use the VS Code extension or a pinned selective clone when reproducible, release-gated source is required. The Copilot CLI plugin tracks `main`, which has no release gate or release attestation.
 
 Root `plugin.json` owns complete membership. `.github/plugin/marketplace.json` contains one `hve-core` entry whose relative source is the repository root; it does not repeat component membership. The plugin details view resolves root `README.md` and `LICENSE`, while the VSIX retains its own generated README and license.
 
