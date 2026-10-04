@@ -19,14 +19,15 @@
     composite actions, and devcontainer scripts:
 
       tool-version/manifest-invalid      the manifest entry is malformed
-      tool-version/version-mismatch      <PREFIX>_VERSION, a setup-uv version input,
-                                         or a gh-aw lock compiler_version differs
+      tool-version/version-mismatch      <PREFIX>_VERSION or a gh-aw lock
+                                         compiler_version differs
       tool-version/checksum-mismatch     <PREFIX>[_<ARCH>]_SHA256 is not a manifest digest
       tool-version/commit-mismatch       <PREFIX>_URL lacks the manifest commit
       tool-version/image-mismatch        a gh-aw-firewall image tag or digest differs
       tool-version/unregistered-tool     a file pins <NAME>_VERSION with a matching
                                          <NAME>_SHA256 but the manifest has no such tool
-      tool-version/unpinned-install      a setup-uv step has no version input
+      tool-version/unpinned-install      a step uses astral-sh/setup-uv instead of the
+                                         manifest-verified ./.github/actions/setup-uv
 
     Writes a console summary, optional SARIF (tool name hve-tool-version-consistency),
     and exits 1 when any finding exists.
@@ -69,7 +70,7 @@ $script:Rules = @(
     @{ id = 'tool-version/commit-mismatch'; name = 'CommitMismatch'; description = 'A tool download URL does not use the commit recorded in the tool manifest.'; level = 'error' }
     @{ id = 'tool-version/image-mismatch'; name = 'ImageMismatch'; description = 'A container image tag or digest differs from the tool manifest.'; level = 'error' }
     @{ id = 'tool-version/unregistered-tool'; name = 'UnregisteredTool'; description = 'A file pins a downloaded tool version and checksum that the tool manifest does not register.'; level = 'error' }
-    @{ id = 'tool-version/unpinned-install'; name = 'UnpinnedInstall'; description = 'A tool install step has no pinned version.'; level = 'error' }
+    @{ id = 'tool-version/unpinned-install'; name = 'UnpinnedInstall'; description = 'A tool install bypasses the manifest-verified installer.'; level = 'error' }
 )
 
 function New-Finding {
@@ -213,28 +214,9 @@ function Get-ToolFileFinding {
             }
         }
 
-        $uv = $tools | Where-Object name -EQ 'uv' | Select-Object -First 1
-        $lines = $Content -split "`n"
-        for ($i = 0; $i -lt $lines.Count; $i++) {
-            $uses = [regex]::Match($lines[$i], '^(\s*)(-\s+)?uses:\s*astral-sh/setup-uv@')
-            if (-not $uses.Success) { continue }
-            # Step keys share the column of the uses key; with: inputs are deeper.
-            $keyColumn = $uses.Groups[1].Length + $uses.Groups[2].Length
-            $versionValue = $null
-            for ($j = $i + 1; $j -lt $lines.Count; $j++) {
-                if ($lines[$j].Trim() -eq '') { continue }
-                $leading = $lines[$j].Length - $lines[$j].TrimStart().Length
-                if ($leading -lt $keyColumn -or ($leading -eq $keyColumn -and $lines[$j].TrimStart().StartsWith('- '))) { break }
-                $versionInput = [regex]::Match($lines[$j], "^\s+version:\s*['""]?([^'""\s]+)")
-                if ($leading -gt $keyColumn -and $versionInput.Success) { $versionValue = $versionInput.Groups[1].Value; break }
-            }
-            if (-not $versionValue) {
-                $findings.Add((New-Finding -RuleId 'tool-version/unpinned-install' -File $RelativePath -Line ($i + 1) -Message 'setup-uv has no version input, so it installs the latest uv.'))
-            }
-            elseif ($uv -and $versionValue -cne $uv.version) {
-                $findings.Add((New-Finding -RuleId 'tool-version/version-mismatch' -File $RelativePath -Line ($i + 1) `
-                            -Message "setup-uv installs uv $versionValue but scripts/security/tool-checksums.json pins $($uv.version)."))
-            }
+        foreach ($match in [regex]::Matches($Content, "(?m)^\s*(?:-\s+)?uses:\s*['""]?astral-sh/setup-uv(?:[@/'""\s]|$)")) {
+            $findings.Add((New-Finding -RuleId 'tool-version/unpinned-install' -File $RelativePath -Line (Get-LineNumber $Content $match.Index) `
+                        -Message 'astral-sh/setup-uv installs uv outside scripts/security/tool-checksums.json; use ./.github/actions/setup-uv.'))
         }
     }
     else {

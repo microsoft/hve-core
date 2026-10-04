@@ -504,7 +504,8 @@ devcontainer, Copilot setup steps, and workflows cannot drift apart.
   values in workflows, composite actions, and devcontainer scripts with the tool
   whose `envPrefix` matches
 * Flags a tool pinned with a version and checksum that the manifest does not
-  register, and a `setup-uv` step without the manifest version
+  register, and any `astral-sh/setup-uv` step, which bypasses the manifest; use
+  the `.github/actions/setup-uv` composite instead
 * Checks each gh-aw lock file's `compiler_version` and gh-aw-firewall image tags
   and digests
 * Writes SARIF (tool `hve-tool-version-consistency`) with `-SarifPath` and exits

@@ -242,10 +242,9 @@ jobs:
           cp -R "${RUNNER_TEMP}/content/${LEVEL}" "${LEVEL_DIR}"
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: ./.github/actions/setup-uv
         with:
-          version: "0.10.9"
-          enable-cache: false
+          enable-cache: 'false'
 
       - name: Setup Node.js for the HTML slide deck
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0

@@ -119,15 +119,21 @@ Describe 'File checks' -Tag 'Unit' {
         (Invoke-Check (New-Repo -Files $files)).Findings.RuleId | Should -Be 'tool-version/commit-mismatch'
     }
 
-    It 'checks setup-uv version inputs: <Name>' -ForEach @(
-        @{ Name = 'matching'; With = "        with:`n          version: `"0.10.9`"`n          enable-cache: auto"; Expected = @() }
-        @{ Name = 'different'; With = "        with:`n          version: `"0.10.8`""; Expected = @('tool-version/version-mismatch') }
-        @{ Name = 'missing'; With = "        with:`n          enable-cache: false"; Expected = @('tool-version/unpinned-install') }
-        @{ Name = 'no with block'; With = ''; Expected = @('tool-version/unpinned-install') }
+    It 'reports any astral-sh/setup-uv step: <Name>' -ForEach @(
+        @{ Name = 'matching version'; Uses = 'astral-sh/setup-uv@0123456789abcdef0123456789abcdef01234567 # v10'; With = "        with:`n          version: `"0.10.9`"" }
+        @{ Name = 'no with block'; Uses = 'astral-sh/setup-uv@0123456789abcdef0123456789abcdef01234567 # v10'; With = '' }
+        @{ Name = 'quoted tag ref'; Uses = "'astral-sh/setup-uv@v7'"; With = '' }
     ) {
-        $workflow = "jobs:`n  a:`n    steps:`n      - name: Setup uv`n        uses: astral-sh/setup-uv@0123456789abcdef0123456789abcdef01234567 # v10`n$With`n      - name: Next step`n        run: echo hi`n          version: 9.9.9"
+        $workflow = "jobs:`n  a:`n    steps:`n      - name: Setup uv`n        uses: $Uses`n$With`n      - name: Next step`n        run: echo hi"
         $result = Invoke-Check (New-Repo -Files @{ '.github/workflows/py.yml' = $workflow })
-        @($result.Findings.RuleId) | Should -Be $Expected
+        @($result.Findings.RuleId) | Should -Be @('tool-version/unpinned-install')
+        $result.Findings.Line | Should -Be 5
+        $result.Findings.Message | Should -Match '\./\.github/actions/setup-uv'
+    }
+
+    It 'accepts the local setup-uv composite and similarly named actions' {
+        $workflow = "jobs:`n  a:`n    steps:`n      - uses: ./.github/actions/setup-uv`n      - uses: astral-sh/setup-uv-extra@0123456789abcdef0123456789abcdef01234567`n      - run: echo astral-sh/setup-uv"
+        (Invoke-Check (New-Repo -Files @{ '.github/workflows/py.yml' = $workflow })).Findings | Should -BeNullOrEmpty
     }
 
     It 'checks the gh-aw compiler version and firewall images in lock files' {
