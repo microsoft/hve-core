@@ -19,6 +19,11 @@ on:
 permissions:
   contents: read
 
+# Pull request runs supersede each other; main SBOM publication always completes.
+concurrency:
+  group: dependency-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   main-sbom:
     name: Publish Main SBOM

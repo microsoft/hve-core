@@ -12,8 +12,7 @@ on:
         default: gh-code-scanning-alerts
 
 permissions:
-  issues: write
-  actions: read
+  contents: read
 
 jobs:
   create-gh-code-scanning-issues:

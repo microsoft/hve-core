@@ -13,8 +13,6 @@ concurrency:
 
 permissions:
   contents: read
-  issues: write
-  security-events: read
 
 jobs:
   gh-code-scanning:

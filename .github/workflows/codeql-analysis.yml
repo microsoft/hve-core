@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: codeql-analysis-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   verify-slide-bundles:
     name: Verify Slide Bundle Sources
