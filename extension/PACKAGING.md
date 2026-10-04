@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-09-04
+ms.date: 2026-10-04
 ms.topic: reference
 ---
 
@@ -280,7 +280,7 @@ publish.
 
 The generic publisher receives the exact channel tag, downloads the one matching
 VSIX release asset, verifies its provenance against `extension-provenance-signer.yml`
-at signer revision `3a09401536cef0c4559db1aa64b7d1010638fd67`, and publishes it
+at signer revision `3b36a825662603c0d564eb0f3b98ce5ba53857da`, and publishes it
 with `--azure-credential`.
 
 Release verification first authenticates the attestation cryptographically,

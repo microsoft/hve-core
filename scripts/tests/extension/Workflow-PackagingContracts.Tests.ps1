@@ -978,7 +978,7 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
 
     It 'Limits the reusable signer to one protected release-tag push caller' {
         $callers = @(Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
-            Select-String -Pattern 'uses:\s+microsoft/hve-core/\.github/workflows/extension-provenance-signer\.yml@3a09401536cef0c4559db1aa64b7d1010638fd67\s+# PR #2823 squash\s*$')
+            Select-String -Pattern 'uses:\s+microsoft/hve-core/\.github/workflows/extension-provenance-signer\.yml@3b36a825662603c0d564eb0f3b98ce5ba53857da\s+# snapshot-20260908\s*$')
         $callers | Should -HaveCount 1
         Split-Path -Path $callers[0].Path -Leaf | Should -BeExactly 'release-vsix-publish.yml'
 
@@ -1558,7 +1558,7 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit', 'ReleaseReco
         @([regex]::Matches($notes, '--source-digest')) | Should -HaveCount 3
         @([regex]::Matches($notes, '--source-ref')) | Should -HaveCount 3
         $notes | Should -Match 'extension-provenance-signer\.yml'
-        $notes | Should -Match '3a09401536cef0c4559db1aa64b7d1010638fd67'
+        $notes | Should -Match '3b36a825662603c0d564eb0f3b98ce5ba53857da'
         $notes | Should -Match 'SBOMs are\s+predicate payloads'
         $notes | Should -Not -Match 'All release assets include.*build-provenance'
         $notes | Should -Not -Match '<file>\.zip'
@@ -1988,7 +1988,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
     It 'Calls the consolidated authorized signer with all validated inputs' {
         $builder = $script:ReleaseProducer['jobs']['extension-provenance']
         [string[]]@($builder['needs']) | Should -Be @('validate-release')
-        [string]$builder['uses'] | Should -BeExactly 'microsoft/hve-core/.github/workflows/extension-provenance-signer.yml@3a09401536cef0c4559db1aa64b7d1010638fd67'
+        [string]$builder['uses'] | Should -BeExactly 'microsoft/hve-core/.github/workflows/extension-provenance-signer.yml@3b36a825662603c0d564eb0f3b98ce5ba53857da'
         [string]$builder['with']['source-ref'] | Should -BeExactly '${{ github.sha }}'
         [string]$builder['with']['version'] | Should -BeExactly '${{ needs.validate-release.outputs.version }}'
         [string]$builder['with']['channel'] | Should -BeExactly '${{ needs.validate-release.outputs.channel }}'
@@ -2007,7 +2007,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
         [string]$publishedVerification['run'] | Should -Match 'gh release download.*\-p "\$asset"'
         [string]$publishedVerification['run'] | Should -Match 'Invoke-ProvenanceVerification\.ps1'
         [string]$publishedVerification['run'] | Should -Match 'ExpectedSourceSha.*EXPECTED_SHA'
-        [string]$publishedVerification['run'] | Should -Match 'ExpectedSignerSha.*3a09401536cef0c4559db1aa64b7d1010638fd67'
+        [string]$publishedVerification['run'] | Should -Match 'ExpectedSignerSha.*3b36a825662603c0d564eb0f3b98ce5ba53857da'
         [string]$publishedVerification['env']['EXPECTED_SHA'] | Should -BeExactly '${{ steps.identity.outputs.source-sha }}'
         [string]$script:ReleaseProducer['jobs']['validate-release']['permissions']['attestations'] | Should -BeExactly 'read'
     }
@@ -2028,7 +2028,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
         ) -Environment @{
             CHANNEL         = 'Stable'
             EXPECTED_SHA    = $sourceSha
-            EXPECTED_SIGNER_SHA = '3a09401536cef0c4559db1aa64b7d1010638fd67'
+            EXPECTED_SIGNER_SHA = '3b36a825662603c0d564eb0f3b98ce5ba53857da'
             GH_TOKEN        = 'fixture-token'
             RELEASE_ID      = '123'
             RELEASE_TAG     = "v$version"
@@ -2037,7 +2037,7 @@ Describe 'Sole post-tag release producer' -Tag 'Unit' {
         }
         $result.ExitCode | Should -Be 0
         $result.Output | Should -Match "ExpectedSourceSha $sourceSha"
-        $result.Output | Should -Match 'ExpectedSignerSha 3a09401536cef0c4559db1aa64b7d1010638fd67'
+        $result.Output | Should -Match 'ExpectedSignerSha 3b36a825662603c0d564eb0f3b98ce5ba53857da'
     }
 
     It 'Fails published verification when the source SHA binding is absent' -Skip:$script:SkipShellFixtureTests {

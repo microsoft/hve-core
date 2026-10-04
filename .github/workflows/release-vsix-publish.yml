@@ -300,14 +300,14 @@ jobs:
             -ArtifactDirectory "$ARTIFACT_DIRECTORY" \
             -Repository "$REPOSITORY" \
             -ExpectedSourceSha "$EXPECTED_SHA" \
-            -ExpectedSignerSha "3a09401536cef0c4559db1aa64b7d1010638fd67" \
+            -ExpectedSignerSha "3b36a825662603c0d564eb0f3b98ce5ba53857da" \
             -ReleaseTag "$RELEASE_TAG"
 
   extension-provenance:
     name: Package and Attest VS Code Extension
     needs: [validate-release]
     if: ${{ needs.validate-release.outputs.release-state == 'draft' }}
-    uses: microsoft/hve-core/.github/workflows/extension-provenance-signer.yml@3a09401536cef0c4559db1aa64b7d1010638fd67 # PR #2823 squash
+    uses: microsoft/hve-core/.github/workflows/extension-provenance-signer.yml@3b36a825662603c0d564eb0f3b98ce5ba53857da # snapshot-20260908
     with:
       source-ref: ${{ github.sha }}
       version: ${{ needs.validate-release.outputs.version }}
@@ -371,7 +371,7 @@ jobs:
         env:
           ARTIFACT_DIRECTORY: ./artifacts
           EXPECTED_SOURCE_SHA: ${{ needs.validate-release.outputs.source-sha }}
-          EXPECTED_SIGNER_SHA: 3a09401536cef0c4559db1aa64b7d1010638fd67
+          EXPECTED_SIGNER_SHA: 3b36a825662603c0d564eb0f3b98ce5ba53857da
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.validate-release.outputs.tag-name }}
           REPOSITORY: ${{ github.repository }}
@@ -505,7 +505,7 @@ jobs:
 
           gh attestation verify <file>.vsix --repo microsoft/hve-core \
             --signer-workflow microsoft/hve-core/.github/workflows/extension-provenance-signer.yml \
-            --signer-digest 3a09401536cef0c4559db1aa64b7d1010638fd67 \
+            --signer-digest 3b36a825662603c0d564eb0f3b98ce5ba53857da \
             --source-digest "$SOURCE_SHA" --source-ref "refs/tags/$TAG"
           ```
 

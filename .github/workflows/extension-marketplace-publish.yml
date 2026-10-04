@@ -156,7 +156,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_DIGEST: ${{ needs.validate-inputs.outputs.release-digest }}
           REPOSITORY: ${{ github.repository }}
-          SIGNER_SHA: 3a09401536cef0c4559db1aa64b7d1010638fd67
+          SIGNER_SHA: 3b36a825662603c0d564eb0f3b98ce5ba53857da
           SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/extension-provenance-signer.yml
         run: |
           set -euo pipefail
@@ -277,7 +277,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_DIGEST: ${{ needs.validate-inputs.outputs.release-digest }}
           REPOSITORY: ${{ github.repository }}
-          SIGNER_SHA: 3a09401536cef0c4559db1aa64b7d1010638fd67
+          SIGNER_SHA: 3b36a825662603c0d564eb0f3b98ce5ba53857da
           SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/extension-provenance-signer.yml
         run: |
           set -euo pipefail

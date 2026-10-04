@@ -220,7 +220,7 @@ Describe 'Immutable extension provenance signer' -Tag 'Unit' {
     It 'Has one caller pinned to the merged signer revision' {
         $Callers = @(Get-ChildItem -LiteralPath (Join-Path $script:RepositoryRoot '.github/workflows') -Filter '*.yml' |
                 Where-Object { $_.FullName -ne $script:SignerPath } |
-                Select-String -Pattern 'uses:\s+microsoft/hve-core/\.github/workflows/extension-provenance-signer\.yml@3a09401536cef0c4559db1aa64b7d1010638fd67\s+# PR #2823 squash\s*$')
+                Select-String -Pattern 'uses:\s+microsoft/hve-core/\.github/workflows/extension-provenance-signer\.yml@3b36a825662603c0d564eb0f3b98ce5ba53857da\s+# snapshot-20260908\s*$')
         $Callers | Should -HaveCount 1
         Split-Path -Path $Callers[0].Path -Leaf | Should -BeExactly 'release-vsix-publish.yml'
     }
