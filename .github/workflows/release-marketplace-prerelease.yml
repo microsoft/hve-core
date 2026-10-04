@@ -29,7 +29,7 @@ jobs:
   validate-version:
     name: Validate Pre-Release Version
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.prerelease == true) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -113,7 +113,7 @@ jobs:
   verify-catalog:
     name: Verify Pre-Release Catalog Version
     needs: [validate-version]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:

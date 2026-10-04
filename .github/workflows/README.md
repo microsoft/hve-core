@@ -847,7 +847,7 @@ jobs:
 
   summary:
     needs: security-scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check compliance
         run: |
@@ -874,7 +874,7 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@<sha>  # v4.2.2
         with:

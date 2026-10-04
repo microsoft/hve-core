@@ -5,7 +5,8 @@
 # Test-ToolVersionConsistency.ps1
 #
 # Purpose: Fail when a hard-coded tool version or checksum disagrees with
-#          scripts/security/tool-checksums.json, the single tool-version source.
+#          scripts/security/tool-checksums.json, the single tool-version source,
+#          or a runtime setup disagrees with .node-version or .python-version.
 # Author: HVE Core Team
 
 #Requires -Version 7.4
@@ -28,6 +29,13 @@
                                          <NAME>_SHA256 but the manifest has no such tool
       tool-version/unpinned-install      a step uses astral-sh/setup-uv instead of the
                                          manifest-verified ./.github/actions/setup-uv
+      tool-version/runtime-invalid       .node-version or .python-version does not hold
+                                         exactly one X.Y.Z version
+      tool-version/runtime-mismatch      a setup-node or setup-python step reads another
+                                         file or pins a different literal, or a
+                                         devcontainer runtime feature differs
+      tool-version/runtime-unpinned      a setup-node or setup-python step sets no version,
+                                         or its version file is missing
 
     Writes a console summary, optional SARIF (tool name hve-tool-version-consistency),
     and exits 1 when any finding exists.
@@ -71,6 +79,17 @@ $script:Rules = @(
     @{ id = 'tool-version/image-mismatch'; name = 'ImageMismatch'; description = 'A container image tag or digest differs from the tool manifest.'; level = 'error' }
     @{ id = 'tool-version/unregistered-tool'; name = 'UnregisteredTool'; description = 'A file pins a downloaded tool version and checksum that the tool manifest does not register.'; level = 'error' }
     @{ id = 'tool-version/unpinned-install'; name = 'UnpinnedInstall'; description = 'A tool install bypasses the manifest-verified installer.'; level = 'error' }
+    @{ id = 'tool-version/runtime-invalid'; name = 'RuntimeInvalid'; description = 'A runtime version file does not hold exactly one X.Y.Z version.'; level = 'error' }
+    @{ id = 'tool-version/runtime-mismatch'; name = 'RuntimeMismatch'; description = 'A runtime version differs from its version file or reads another file.'; level = 'error' }
+    @{ id = 'tool-version/runtime-unpinned'; name = 'RuntimeUnpinned'; description = 'A runtime setup step has no exact version from the runtime version file.'; level = 'error' }
+)
+
+# Each runtime has one exact version in a root version file. setup-node and
+# setup-python read it with their *-version-file input; a job without a checkout
+# may use a literal that equals it. The devcontainer feature must match it too.
+$script:Runtimes = @(
+    @{ Name = 'node'; File = '.node-version'; Action = 'actions/setup-node'; VersionKey = 'node-version'; FileKey = 'node-version-file'; Feature = 'ghcr.io/devcontainers/features/node' }
+    @{ Name = 'python'; File = '.python-version'; Action = 'actions/setup-python'; VersionKey = 'python-version'; FileKey = 'python-version-file'; Feature = 'ghcr.io/devcontainers/features/python' }
 )
 
 function New-Finding {
@@ -249,6 +268,146 @@ function Get-ToolFileFinding {
     return $findings.ToArray()
 }
 
+function Get-RuntimePin {
+    <#
+    .SYNOPSIS
+        Reads each runtime version file and reports malformed ones.
+    .OUTPUTS
+        PSCustomObject with Pins (runtime name to version, or $null) and Findings.
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject])]
+    param(
+        [Parameter(Mandatory)][string]$RepoRoot
+    )
+
+    $pins = @{}
+    $findings = [System.Collections.Generic.List[object]]::new()
+    foreach ($runtime in $script:Runtimes) {
+        $pins[$runtime.Name] = $null
+        $path = Join-Path $RepoRoot $runtime.File
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { continue }
+        $lines = @((Get-Content -LiteralPath $path) | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+        if ($lines.Count -eq 1 -and $lines[0] -match '^\d+\.\d+\.\d+$') {
+            $pins[$runtime.Name] = $lines[0]
+        }
+        else {
+            $findings.Add((New-Finding -RuleId 'tool-version/runtime-invalid' -File $runtime.File `
+                        -Message "$($runtime.File) must hold exactly one X.Y.Z $($runtime.Name) version."))
+        }
+    }
+    return [pscustomobject]@{ Pins = $pins; Findings = $findings.ToArray() }
+}
+
+function Get-RuntimeStepFinding {
+    <#
+    .SYNOPSIS
+        Checks every setup-node and setup-python step in one workflow or action file.
+    .DESCRIPTION
+        Finds each step whose uses: names a runtime setup action, bounds the step
+        by indentation, and requires the runtime's *-version-file input to name
+        the root version file or a literal version input to equal its pin.
+    #>
+    [CmdletBinding()]
+    [OutputType([object[]])]
+    param(
+        [Parameter(Mandatory)][string]$RelativePath,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Content,
+        [Parameter(Mandatory)][hashtable]$Pins
+    )
+
+    $findings = [System.Collections.Generic.List[object]]::new()
+    $lines = $Content -split "`n"
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $match = [regex]::Match($lines[$i], '^(?<indent>\s*)(?<dash>-\s+)?uses:\s*[''"]?(?<action>actions/setup-(?:node|python))@')
+        if (-not $match.Success) { continue }
+        $runtime = $script:Runtimes | Where-Object Action -EQ $match.Groups['action'].Value | Select-Object -First 1
+
+        $start = $i
+        $itemIndent = $match.Groups['indent'].Length
+        if (-not $match.Groups['dash'].Success) {
+            for ($j = $i - 1; $j -ge 0; $j--) {
+                $item = [regex]::Match($lines[$j], '^(\s*)-\s')
+                if ($item.Success -and $item.Groups[1].Length -lt $itemIndent) {
+                    $start = $j
+                    $itemIndent = $item.Groups[1].Length
+                    break
+                }
+            }
+        }
+        $end = $lines.Count
+        for ($k = $i + 1; $k -lt $lines.Count; $k++) {
+            if ($lines[$k] -match '^\s*(#.*)?$') { continue }
+            if (([regex]::Match($lines[$k], '^\s*')).Length -le $itemIndent) { $end = $k; break }
+        }
+        $step = $lines[$start..($end - 1)]
+
+        $fileValue = $null
+        $versionValue = $null
+        foreach ($line in $step) {
+            $inputMatch = [regex]::Match($line, "^\s*(?<key>$([regex]::Escape($runtime.FileKey))|$([regex]::Escape($runtime.VersionKey))):\s*(?<value>.*?)\s*(?:#.*)?$")
+            if (-not $inputMatch.Success) { continue }
+            $value = $inputMatch.Groups['value'].Value.Trim('''', '"')
+            if ($inputMatch.Groups['key'].Value -eq $runtime.FileKey) { $fileValue = $value } else { $versionValue = $value }
+        }
+
+        $pin = $Pins[$runtime.Name]
+        $lineNumber = $i + 1
+        if (-not $pin) {
+            $findings.Add((New-Finding -RuleId 'tool-version/runtime-unpinned' -File $RelativePath -Line $lineNumber `
+                        -Message "$($runtime.Action) has no exact version source: $($runtime.File) is missing or invalid."))
+        }
+        elseif ($null -ne $fileValue) {
+            if (($fileValue -replace '^\./', '') -cne $runtime.File) {
+                $findings.Add((New-Finding -RuleId 'tool-version/runtime-mismatch' -File $RelativePath -Line $lineNumber `
+                            -Message "$($runtime.Action) reads $fileValue; read $($runtime.File), the single $($runtime.Name) version source."))
+            }
+        }
+        elseif ($null -ne $versionValue) {
+            if ($versionValue -cne $pin) {
+                $findings.Add((New-Finding -RuleId 'tool-version/runtime-mismatch' -File $RelativePath -Line $lineNumber `
+                            -Message "$($runtime.Action) pins $($runtime.Name) $versionValue but $($runtime.File) pins $pin. Use $($runtime.FileKey): $($runtime.File)."))
+            }
+        }
+        else {
+            $findings.Add((New-Finding -RuleId 'tool-version/runtime-unpinned' -File $RelativePath -Line $lineNumber `
+                        -Message "$($runtime.Action) sets no version; add $($runtime.FileKey): $($runtime.File)."))
+        }
+    }
+    return $findings.ToArray()
+}
+
+function Get-DevcontainerRuntimeFinding {
+    <#
+    .SYNOPSIS
+        Compares devcontainer runtime feature versions to the runtime version files.
+    #>
+    [CmdletBinding()]
+    [OutputType([object[]])]
+    param(
+        [Parameter(Mandatory)][string]$RelativePath,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Content,
+        [Parameter(Mandatory)][hashtable]$Pins
+    )
+
+    $findings = [System.Collections.Generic.List[object]]::new()
+    foreach ($runtime in $script:Runtimes) {
+        $pattern = '"' + [regex]::Escape($runtime.Feature) + ':[^"]*"\s*:\s*\{(?<body>[^}]*)\}'
+        foreach ($match in [regex]::Matches($Content, $pattern)) {
+            $version = [regex]::Match($match.Groups['body'].Value, '"version"\s*:\s*"(?<v>[^"]*)"')
+            $value = if ($version.Success) { $version.Groups['v'].Value } else { $null }
+            $pin = $Pins[$runtime.Name]
+            if (-not $pin -or $value -cne $pin) {
+                $expected = if ($pin) { $pin } else { "an exact version in $($runtime.File)" }
+                $shown = if ($value) { $value } else { 'no version' }
+                $findings.Add((New-Finding -RuleId 'tool-version/runtime-mismatch' -File $RelativePath -Line (Get-LineNumber $Content $match.Index) `
+                            -Message "The $($runtime.Name) devcontainer feature uses $shown but needs $expected."))
+            }
+        }
+    }
+    return $findings.ToArray()
+}
+
 function Get-ScannedFile {
     <#
     .SYNOPSIS
@@ -272,6 +431,10 @@ function Get-ScannedFile {
     $devcontainer = Join-Path $RepoRoot '.devcontainer/scripts'
     if (Test-Path -LiteralPath $devcontainer) {
         $files.AddRange([string[]]@(Get-ChildItem -LiteralPath $devcontainer -File -Filter '*.sh' | ForEach-Object FullName))
+    }
+    $devcontainerJson = Join-Path $RepoRoot '.devcontainer/devcontainer.json'
+    if (Test-Path -LiteralPath $devcontainerJson) {
+        $files.Add((Resolve-Path -LiteralPath $devcontainerJson).Path)
     }
     $rootFull = (Resolve-Path -LiteralPath $RepoRoot).Path
     return @($files | Sort-Object | ForEach-Object { [System.IO.Path]::GetRelativePath($rootFull, $_) -replace '\\', '/' })
@@ -298,11 +461,20 @@ function Invoke-ToolVersionConsistency {
 
     $findings = [System.Collections.Generic.List[object]]::new()
     $findings.AddRange([object[]]@(Get-ToolManifestFinding -Manifest $manifest -ManifestFile $manifestRelative))
+    $runtimePins = Get-RuntimePin -RepoRoot $RepoRoot
+    $findings.AddRange([object[]]@($runtimePins.Findings))
     $scanned = @(Get-ScannedFile -RepoRoot $RepoRoot)
     foreach ($relative in $scanned) {
         $content = (Get-Content -Raw -LiteralPath (Join-Path $RepoRoot $relative)) -replace "`r`n", "`n"
         if ($null -eq $content) { $content = '' }
+        if ($relative -eq '.devcontainer/devcontainer.json') {
+            $findings.AddRange([object[]]@(Get-DevcontainerRuntimeFinding -RelativePath $relative -Content $content -Pins $runtimePins.Pins))
+            continue
+        }
         $findings.AddRange([object[]]@(Get-ToolFileFinding -Manifest $manifest -RelativePath $relative -Content $content))
+        if ($relative -like '*.yml' -or $relative -like '*.yaml') {
+            $findings.AddRange([object[]]@(Get-RuntimeStepFinding -RelativePath $relative -Content $content -Pins $runtimePins.Pins))
+        }
     }
 
     if ($SarifPath) {

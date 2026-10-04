@@ -36,7 +36,7 @@ jobs:
         github.event.pull_request.head.ref == 'release-promotion--main--to--release-prerelease'
         || github.event.pull_request.head.ref == 'release-please--branches--release/prerelease'
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -191,7 +191,7 @@ jobs:
         github.event.pull_request.head.ref == 'release-promotion--main--to--release-prerelease'
         || github.event.pull_request.head.ref == 'release-please--branches--release/prerelease'
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       pull-requests: write
@@ -349,7 +349,7 @@ jobs:
     needs:
       - release-please
     if: ${{ !cancelled() && !failure() && needs.release-please.outputs.release-pr-branch != '' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:

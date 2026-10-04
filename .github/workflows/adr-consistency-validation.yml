@@ -47,7 +47,7 @@ permissions:
 jobs:
   detect-changes:
     name: Detect ADR Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -103,7 +103,7 @@ jobs:
 
   report-skipped:
     name: Report Skipped ADR Validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: detect-changes
     if: inputs.changed-files-only && needs.detect-changes.outputs.has-adr-changes != 'true'
     permissions:
@@ -120,7 +120,7 @@ jobs:
 
   validate:
     name: Validate ADR Consistency
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: detect-changes
     if: needs.detect-changes.outputs.has-adr-changes == 'true'
     permissions:
@@ -194,7 +194,7 @@ jobs:
 
   upload-sarif:
     name: Upload ADR SARIF
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: validate
     if: inputs.upload-sarif && always() && needs.validate.result != 'skipped'
     permissions:

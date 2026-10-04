@@ -19,7 +19,7 @@ jobs:
   discover:
     name: Discover terminal publication input
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
       contents: read
@@ -73,7 +73,7 @@ jobs:
     name: Revalidate and publish compact trusted sweep state
     needs: discover
     if: ${{ needs.discover.outputs.terminal == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
       issues: write
@@ -260,7 +260,7 @@ jobs:
       - publish
     if: ${{ vars.BACKLOG_GROOM_PUBLISH_GH_PAGES == 'true' }}
     continue-on-error: true
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
       contents: write

@@ -881,6 +881,115 @@ function Get-PSModuleStaleness {
 
 #region Main Execution
 
+function Get-RuntimeStaleness {
+    <#
+    .SYNOPSIS
+        Checks pinned runtimes and the dated runner image for newer releases.
+
+    .DESCRIPTION
+        Node and Python are compared with the newest release on the same line
+        (major for Node, major.minor for Python) that setup-node and setup-python
+        can install; moving to a new line is a deliberate change. The runner
+        image is the newest dated Ubuntu label used by workflows, compared with
+        the newest Ubuntu image published in actions/runner-images.
+
+    .PARAMETER RepoRoot
+        Repository root holding .node-version, .python-version, and .github/workflows.
+
+    .PARAMETER GitHubToken
+        GitHub API token, sent only to the GitHub API.
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject[]])]
+    param(
+        [Parameter()]
+        [string]$RepoRoot = (Join-Path $PSScriptRoot '../..'),
+
+        [Parameter()]
+        [string]$GitHubToken = $env:GITHUB_TOKEN
+    )
+
+    $plainHeaders = @{ 'Accept' = 'application/json' }
+    $githubHeaders = @{
+        'Accept'               = 'application/vnd.github+json'
+        'X-GitHub-Api-Version' = '2022-11-28'
+    }
+    if ($GitHubToken) {
+        $githubHeaders['Authorization'] = "Bearer $GitHubToken"
+    }
+
+    $results = @()
+    $newResult = {
+        param($Name, $Source, $Current, $Latest, $ErrorMessage)
+        [PSCustomObject]@{
+            Runtime        = $Name
+            Source         = $Source
+            CurrentVersion = $Current
+            LatestVersion  = $Latest
+            IsStale        = $(if ($Current -and $Latest) { Compare-ToolVersion -Current $Current -Latest $Latest } else { $null })
+            Error          = $ErrorMessage
+        }
+    }
+
+    $runtimes = @(
+        @{ Name = 'node'; File = '.node-version'; LinePattern = '^(\d+)\.' }
+        @{ Name = 'python'; File = '.python-version'; LinePattern = '^(\d+\.\d+)\.' }
+    )
+    foreach ($runtime in $runtimes) {
+        $path = Join-Path $RepoRoot $runtime.File
+        $current = if (Test-Path -LiteralPath $path) { ((Get-Content -LiteralPath $path) | Where-Object { $_.Trim() } | Select-Object -First 1).Trim() } else { $null }
+        if (-not $current -or $current -notmatch $runtime.LinePattern) {
+            $errorMsg = "Failed to check $($runtime.Name): $($runtime.File) has no X.Y.Z version"
+            Write-Warning $errorMsg
+            $results += & $newResult $runtime.Name $runtime.File $current $null $errorMsg
+            continue
+        }
+        $line = $Matches[1]
+
+        $latest = $null
+        if ($runtime.Name -eq 'node') {
+            $index = Invoke-GitHubAPIWithRetry -Uri 'https://nodejs.org/dist/index.json' -Method GET -Headers $plainHeaders
+            $latest = @($index | Where-Object { "$($_.version)" -like "v$line.*" } | Select-Object -First 1 | ForEach-Object { "$($_.version)" -replace '^v', '' })[0]
+        }
+        else {
+            $manifest = Invoke-GitHubAPIWithRetry -Uri 'https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json' -Method GET -Headers $plainHeaders
+            $latest = @($manifest | Where-Object { $_.stable -and "$($_.version)" -like "$line.*" } | Select-Object -First 1 | ForEach-Object { "$($_.version)" })[0]
+        }
+
+        if ($latest) {
+            $results += & $newResult $runtime.Name $runtime.File $current $latest $null
+        }
+        else {
+            $errorMsg = "Failed to check $($runtime.Name): no release found on the $line line"
+            Write-Warning $errorMsg
+            $results += & $newResult $runtime.Name $runtime.File $current $null $errorMsg
+        }
+    }
+
+    $workflowDir = Join-Path $RepoRoot '.github/workflows'
+    $used = @()
+    if (Test-Path -LiteralPath $workflowDir) {
+        $used = @(Get-ChildItem -LiteralPath $workflowDir -File | Where-Object { $_.Extension -in '.yml', '.yaml' } |
+                Select-String -Pattern '^\s*runs-on:\s*[''"]?ubuntu-(\d{2}\.\d{2})(?:-arm|-firewall)?[''"]?\s*(?:#.*)?$' |
+                ForEach-Object { $_.Matches[0].Groups[1].Value } | Sort-Object { [version]$_ } -Unique)
+    }
+    if ($used.Count -gt 0) {
+        $current = $used[-1]
+        $listing = Invoke-GitHubAPIWithRetry -Uri "$(Get-GitHubApiBase)/repos/actions/runner-images/contents/images/ubuntu" -Method GET -Headers $githubHeaders
+        $published = @($listing | ForEach-Object { if ("$($_.name)" -match '^Ubuntu(\d{2})(\d{2})-Readme\.md$') { "$($Matches[1]).$($Matches[2])" } } | Sort-Object { [version]$_ })
+        if ($published.Count -gt 0) {
+            $results += & $newResult 'ubuntu-runner-image' '.github/workflows' $current $published[-1] $null
+        }
+        else {
+            $errorMsg = 'Failed to check ubuntu-runner-image: actions/runner-images listing returned no Ubuntu images'
+            Write-Warning $errorMsg
+            $results += & $newResult 'ubuntu-runner-image' '.github/workflows' $current $null $errorMsg
+        }
+    }
+
+    return $results
+}
+
 function Invoke-SHAStalenessCheck {
     [CmdletBinding()]
     [OutputType([void])]
@@ -1001,6 +1110,28 @@ function Invoke-SHAStalenessCheck {
                 Message        = $bad.Error
             })
         }
+    }
+
+    # Run staleness check for runtimes (.node-version, .python-version) and the dated runner image
+    Write-SecurityLog "Checking runtime and runner image staleness" -Level Info
+
+    $runtimeResults = @(Get-RuntimeStaleness)
+    foreach ($runtime in @($runtimeResults | Where-Object { $_.IsStale -eq $true })) {
+        Write-SecurityLog "  - $($runtime.Runtime): $($runtime.CurrentVersion) -> $($runtime.LatestVersion)" -Level Warning
+        $script:StaleDependencies.Add([PSCustomObject]@{
+            Type           = $(if ($runtime.Runtime -eq 'ubuntu-runner-image') { 'RunnerImage' } else { 'Runtime' })
+            File           = $runtime.Source
+            Name           = $runtime.Runtime
+            CurrentVersion = $runtime.CurrentVersion
+            LatestVersion  = $runtime.LatestVersion
+            DaysOld        = $null
+            Severity       = "Medium"
+            Message        = "$($runtime.Runtime) has a newer version available: $($runtime.CurrentVersion) -> $($runtime.LatestVersion)"
+        })
+    }
+    $errorRuntimes = @($runtimeResults | Where-Object { $null -ne $_.Error })
+    if (@($errorRuntimes).Count -gt 0) {
+        Write-SecurityLog "Failed to check $(@($errorRuntimes).Count) runtime(s)" -Level Warning
     }
 
     Write-SecurityOutput -Dependencies $script:StaleDependencies -OutputFormat $OutputFormat -OutputPath $OutputPath

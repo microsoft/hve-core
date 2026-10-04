@@ -260,6 +260,73 @@ Describe 'Get-ToolLatestVersion' -Tag 'Unit' {
     }
 }
 
+Describe 'Get-RuntimeStaleness' -Tag 'Unit' {
+    BeforeAll {
+        function script:New-RuntimeRepo {
+            param([string]$Node = '24.20.0', [string]$Python = '3.12.14', [string[]]$Labels = @('ubuntu-24.04', 'ubuntu-24.04-firewall'))
+            $root = Join-Path $TestDrive ([guid]::NewGuid().ToString())
+            New-Item -ItemType Directory -Path (Join-Path $root '.github/workflows') -Force | Out-Null
+            if ($Node) { Set-Content -LiteralPath (Join-Path $root '.node-version') -Value $Node }
+            if ($Python) { Set-Content -LiteralPath (Join-Path $root '.python-version') -Value $Python }
+            $jobs = (0..($Labels.Count - 1) | ForEach-Object { "  j${_}:`n    runs-on: $($Labels[$_])" }) -join "`n"
+            Set-Content -LiteralPath (Join-Path $root '.github/workflows/ci.yml') -Value "jobs:`n$jobs"
+            return $root
+        }
+    }
+
+    BeforeEach {
+        Mock Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -eq 'https://nodejs.org/dist/index.json' } {
+            @([pscustomobject]@{ version = 'v25.1.0' }, [pscustomobject]@{ version = 'v24.21.0' }, [pscustomobject]@{ version = 'v24.20.0' })
+        }
+        Mock Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like 'https://raw.githubusercontent.com/actions/python-versions/*' } {
+            @([pscustomobject]@{ version = '3.13.16'; stable = $true }, [pscustomobject]@{ version = '3.12.16rc1'; stable = $false }, [pscustomobject]@{ version = '3.12.15'; stable = $true })
+        }
+        Mock Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/repos/actions/runner-images/contents/images/ubuntu' } {
+            @('Ubuntu2204-Readme.md', 'Ubuntu2404-Arm64-Readme.md', 'Ubuntu2404-Readme.md', 'Ubuntu2604-Readme.md', 'scripts') | ForEach-Object { [pscustomobject]@{ name = $_ } }
+        }
+    }
+
+    It 'compares each runtime with the newest stable release on its own line' {
+        $results = Get-RuntimeStaleness -RepoRoot (New-RuntimeRepo) -GitHubToken 'token-value'
+        $node = $results | Where-Object Runtime -EQ 'node'
+        $node.LatestVersion | Should -Be '24.21.0'
+        $node.IsStale | Should -BeTrue
+        $python = $results | Where-Object Runtime -EQ 'python'
+        $python.LatestVersion | Should -Be '3.12.15'
+        $python.IsStale | Should -BeTrue
+    }
+
+    It 'reports current runtimes as not stale' {
+        $results = Get-RuntimeStaleness -RepoRoot (New-RuntimeRepo -Node '24.21.0' -Python '3.12.15')
+        ($results | Where-Object Runtime -In 'node', 'python').IsStale | Should -Not -Contain $true
+    }
+
+    It 'compares the newest dated runner label with the newest published Ubuntu image' {
+        $result = Get-RuntimeStaleness -RepoRoot (New-RuntimeRepo -Labels @('ubuntu-22.04', 'ubuntu-24.04-arm', 'ubuntu-latest')) | Where-Object Runtime -EQ 'ubuntu-runner-image'
+        $result.CurrentVersion | Should -Be '24.04'
+        $result.LatestVersion | Should -Be '26.04'
+        $result.IsStale | Should -BeTrue
+    }
+
+    It 'sends the GitHub token only to the GitHub API' {
+        $null = Get-RuntimeStaleness -RepoRoot (New-RuntimeRepo) -GitHubToken 'token-value'
+        Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/repos/actions/runner-images/*' -and $Headers.Authorization } -Times 1
+        Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -notlike '*/repos/*' -and $Headers.ContainsKey('Authorization') } -Times 0
+    }
+
+    It 'reports an error for a missing or malformed version file' {
+        $results = Get-RuntimeStaleness -RepoRoot (New-RuntimeRepo -Node '' -Python '3.12') -WarningAction SilentlyContinue
+        ($results | Where-Object Runtime -EQ 'node').Error | Should -Match 'no X.Y.Z version'
+        ($results | Where-Object Runtime -EQ 'python').Error | Should -Match 'no X.Y.Z version'
+        @($results | Where-Object { $_.Runtime -in 'node', 'python' -and $null -ne $_.IsStale }) | Should -HaveCount 0
+    }
+
+    It 'skips the runner image when no workflow uses a dated label' {
+        $results = Get-RuntimeStaleness -RepoRoot (New-RuntimeRepo -Labels @('ubuntu-latest'))
+        $results.Runtime | Should -Not -Contain 'ubuntu-runner-image'
+    }
+}
+
 Describe 'Repository tool manifest' -Tag 'Unit' {
     It 'gives every tool a name, repo, version, and verification' {
         $manifest = Get-Content -Raw (Join-Path $PSScriptRoot '../../security/tool-checksums.json') | ConvertFrom-Json
@@ -1304,6 +1371,7 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
 
             Mock Test-GitHubActionsForStaleness { return @() }
             Mock Get-ToolStaleness { }
+            Mock Get-RuntimeStaleness { }
             Mock Write-SecurityOutput { }
             Mock New-Item { } -ParameterFilter { $ItemType -eq 'Directory' }
             Mock Write-SecurityLog { }
@@ -1325,6 +1393,7 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
                 )
             }
             Mock Get-ToolStaleness { }
+            Mock Get-RuntimeStaleness { }
             Mock Get-PSModuleStaleness { }
             Mock Write-SecurityOutput { }
 
@@ -1340,11 +1409,37 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
                 $script:StaleDependencies = @()
             }
             Mock Get-ToolStaleness { }
+            Mock Get-RuntimeStaleness { }
             Mock Get-PSModuleStaleness { }
             Mock Write-SecurityOutput { }
 
             { Invoke-SHAStalenessCheck -OutputFormat 'console' -FailOnStale } |
                 Should -Not -Throw
+        }
+    }
+
+    Context 'Runtime and runner image staleness' {
+        It 'Adds stale runtimes and runner images to the report' {
+            Mock Write-SecurityLog { }
+            Mock New-Item { }
+            Mock Test-GitHubActionsForStaleness { }
+            Mock Get-ToolStaleness { }
+            Mock Get-PSModuleStaleness { }
+            Mock Get-RuntimeStaleness {
+                @(
+                    [pscustomobject]@{ Runtime = 'node'; Source = '.node-version'; CurrentVersion = '24.20.0'; LatestVersion = '24.21.0'; IsStale = $true; Error = $null }
+                    [pscustomobject]@{ Runtime = 'python'; Source = '.python-version'; CurrentVersion = '3.12.15'; LatestVersion = '3.12.15'; IsStale = $false; Error = $null }
+                    [pscustomobject]@{ Runtime = 'ubuntu-runner-image'; Source = '.github/workflows'; CurrentVersion = '24.04'; LatestVersion = '26.04'; IsStale = $true; Error = $null }
+                )
+            }
+            Mock Write-SecurityOutput { $script:CapturedDependencies = $Dependencies }
+
+            Invoke-SHAStalenessCheck -OutputFormat 'console'
+
+            @($script:CapturedDependencies).Count | Should -Be 2
+            ($script:CapturedDependencies | Where-Object Name -EQ 'node').Type | Should -Be 'Runtime'
+            ($script:CapturedDependencies | Where-Object Name -EQ 'node').File | Should -Be '.node-version'
+            ($script:CapturedDependencies | Where-Object Name -EQ 'ubuntu-runner-image').Type | Should -Be 'RunnerImage'
         }
     }
 }

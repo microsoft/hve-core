@@ -98,7 +98,7 @@ jobs:
 
   discover-python-projects:
     name: Discover Python Projects
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -138,7 +138,7 @@ jobs:
 
   discover-node-projects:
     name: Discover Node Projects
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -302,7 +302,7 @@ jobs:
 
   accessibility-browser-smoke:
     name: Accessibility Browser Smoke
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -314,7 +314,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
 
       - name: Install accessibility skill Node dependencies
         shell: bash
@@ -605,7 +605,7 @@ jobs:
 
   npm-audit:
     name: npm Security Audit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -617,7 +617,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Validate public dependency feeds
@@ -641,7 +641,7 @@ jobs:
 
   gate-completeness-check:
     name: PR Gate Completeness
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       # The promotion checks read the pull request head through the API instead
@@ -860,7 +860,7 @@ jobs:
 
   pr-validation-success:
     name: PR Validation Success
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     if: always()

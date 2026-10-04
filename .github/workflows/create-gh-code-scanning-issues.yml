@@ -18,7 +18,7 @@ permissions:
 jobs:
   create-gh-code-scanning-issues:
     name: Create GitHub Code Scanning Issues
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       issues: write
       actions: read

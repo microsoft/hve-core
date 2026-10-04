@@ -70,7 +70,7 @@ env:
 jobs:
   plan:
     name: Discover or plan bounded sweep wave
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
       issues: read
@@ -714,7 +714,7 @@ jobs:
           needs.plan.outputs.mode != 'complete-noop' &&
           (needs.assess.result == 'success' ||
            (needs.assess.result == 'skipped' && needs.plan.outputs.shard-matrix == '[]')) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
     outputs:
@@ -770,7 +770,7 @@ jobs:
       - plan
       - validate-wave
     if: ${{ needs.validate-wave.result == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
     outputs:
@@ -945,7 +945,7 @@ jobs:
       - plan
       - checkpoint
     if: ${{ needs.checkpoint.result == 'success' && needs.checkpoint.outputs.sweep-complete == 'false' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: write
       contents: read
@@ -977,7 +977,7 @@ jobs:
       - plan
       - checkpoint
     if: ${{ needs.checkpoint.result == 'success' && needs.checkpoint.outputs.sweep-complete == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
     outputs:

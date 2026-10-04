@@ -23,7 +23,7 @@ concurrency:
 jobs:
   # Job MUST be named 'copilot-setup-steps' to be recognized by Copilot
   copilot-setup-steps:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     # Minimal permissions; Copilot receives its own token for operations
     permissions:
@@ -38,7 +38,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: "npm"
 
       # continue-on-error allows Copilot to start work even if dependencies fail,
@@ -50,7 +50,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.11"
+          python-version-file: .python-version
 
       - name: Install actionlint
         env:

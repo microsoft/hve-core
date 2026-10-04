@@ -155,6 +155,91 @@ Describe 'File checks' -Tag 'Unit' {
     }
 }
 
+Describe 'Runtime checks' -Tag 'Unit' {
+    BeforeAll {
+        $script:Versions = @{ '.node-version' = '24.21.0'; '.python-version' = '3.12.15' }
+    }
+
+    It 'accepts version-file inputs, a matching literal, and matching devcontainer features' {
+        $workflow = @"
+jobs:
+  build:
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@0000000000000000000000000000000000000000 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-python@0000000000000000000000000000000000000000 # v7.0.0
+        with:
+          python-version-file: ./.python-version
+  publish:
+    steps:
+      - uses: actions/setup-node@0000000000000000000000000000000000000000 # v7.0.0
+        with:
+          node-version: "24.21.0"
+"@
+        $devcontainer = '{ "features": { "ghcr.io/devcontainers/features/node:1": { "version": "24.21.0" }, "ghcr.io/devcontainers/features/python:1": { "version": "3.12.15", "installTools": false } } }'
+        $result = Invoke-Check (New-Repo -Files ($script:Versions + @{ '.github/workflows/ci.yml' = $workflow; '.devcontainer/devcontainer.json' = $devcontainer }))
+        $result.Findings | Should -BeNullOrEmpty
+        $result.ScannedFiles | Should -Contain '.devcontainer/devcontainer.json'
+    }
+
+    It 'reports <Name>' -ForEach @(
+        @{ Name = 'a floating literal'; With = "        with:`n          node-version: '24'"; Rule = 'tool-version/runtime-mismatch'; Pattern = 'pins node 24 but' }
+        @{ Name = 'another version file'; With = "        with:`n          node-version-file: package.json"; Rule = 'tool-version/runtime-mismatch'; Pattern = 'reads package.json' }
+        @{ Name = 'an expression'; With = "        with:`n          node-version: `${{ matrix.node }}"; Rule = 'tool-version/runtime-mismatch'; Pattern = 'matrix.node' }
+        @{ Name = 'no version input'; With = "        with:`n          cache: npm"; Rule = 'tool-version/runtime-unpinned'; Pattern = 'sets no version' }
+    ) {
+        $workflow = "jobs:`n  build:`n    steps:`n      - name: Setup`n        uses: actions/setup-node@0000000000000000000000000000000000000000`n$With"
+        $result = Invoke-Check (New-Repo -Files ($script:Versions + @{ '.github/workflows/ci.yml' = $workflow }))
+        $result.ExitCode | Should -Be 1
+        @($result.Findings).Count | Should -Be 1
+        $result.Findings[0].RuleId | Should -Be $Rule
+        $result.Findings[0].Message | Should -Match ([regex]::Escape($Pattern))
+        $result.Findings[0].Line | Should -Be 5
+    }
+
+    It 'does not attribute a later step input to a setup step' {
+        $workflow = @"
+jobs:
+  build:
+    steps:
+      - uses: actions/setup-python@0000000000000000000000000000000000000000
+      - uses: example/other@0000000000000000000000000000000000000000
+        with:
+          python-version-file: .python-version
+"@
+        $result = Invoke-Check (New-Repo -Files ($script:Versions + @{ '.github/workflows/ci.yml' = $workflow }))
+        @($result.Findings).RuleId | Should -Be @('tool-version/runtime-unpinned')
+    }
+
+    It 'checks setup steps in lock files and composite actions' {
+        $step = "      - uses: actions/setup-node@0000000000000000000000000000000000000000`n        with:`n          node-version: '24'"
+        $files = $script:Versions + @{
+            '.github/workflows/x.lock.yml'     = "jobs:`n  agent:`n    steps:`n$step"
+            '.github/actions/setup/action.yml' = "runs:`n  using: composite`n  steps:`n$step"
+        }
+        $result = Invoke-Check (New-Repo -Files $files)
+        @($result.Findings | Where-Object RuleId -EQ 'tool-version/runtime-mismatch').Count | Should -Be 2
+    }
+
+    It 'reports a malformed version file and treats its setup steps as unpinned' {
+        $workflow = "jobs:`n  build:`n    steps:`n      - uses: actions/setup-python@0000000000000000000000000000000000000000`n        with:`n          python-version-file: .python-version"
+        $result = Invoke-Check (New-Repo -Files @{ '.node-version' = '24.21.0'; '.python-version' = '3.12'; '.github/workflows/ci.yml' = $workflow })
+        $result.Findings.RuleId | Should -Contain 'tool-version/runtime-invalid'
+        $result.Findings.RuleId | Should -Contain 'tool-version/runtime-unpinned'
+    }
+
+    It 'reports a devcontainer feature that differs from the version file' {
+        $devcontainer = "{`n  `"features`": {`n    `"ghcr.io/devcontainers/features/python:1`": { `"version`": `"3.11`" }`n  }`n}"
+        $result = Invoke-Check (New-Repo -Files ($script:Versions + @{ '.devcontainer/devcontainer.json' = $devcontainer }))
+        @($result.Findings).Count | Should -Be 1
+        $result.Findings[0].RuleId | Should -Be 'tool-version/runtime-mismatch'
+        $result.Findings[0].Message | Should -Match 'uses 3\.11 but needs 3\.12\.15'
+        $result.Findings[0].Line | Should -Be 3
+    }
+}
+
 Describe 'SARIF output' -Tag 'Unit' {
     It 'writes every rule and each finding to SARIF' {
         $sarif = Join-Path $TestDrive 'out/tool.sarif'
@@ -162,7 +247,7 @@ Describe 'SARIF output' -Tag 'Unit' {
         $null = Invoke-Check -Root (New-Repo -Files $files) -Sarif $sarif
         $doc = Get-Content -Raw $sarif | ConvertFrom-Json
         $doc.runs[0].tool.driver.name | Should -Be 'hve-tool-version-consistency'
-        @($doc.runs[0].tool.driver.rules).Count | Should -Be 7
+        @($doc.runs[0].tool.driver.rules).Count | Should -Be 10
         @($doc.runs[0].results).Count | Should -Be 1
         $doc.runs[0].results[0].locations[0].physicalLocation.artifactLocation.uri | Should -Be '.devcontainer/scripts/on-create.sh'
     }

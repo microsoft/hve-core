@@ -28,7 +28,7 @@ permissions:
 jobs:
   create-stale-docs-issues:
     name: Create or Update Issues for Stale Documentation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       issues: write

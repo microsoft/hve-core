@@ -7,21 +7,23 @@
 
 <#
 .SYNOPSIS
-    Validates that GitHub Actions workflow jobs run on GitHub-hosted Ubuntu runners.
+    Validates that GitHub Actions workflow jobs run on dated GitHub-hosted Ubuntu runners.
 
 .DESCRIPTION
     Parses GitHub Actions workflow YAML files and checks every job's `runs-on`
     value against the GitHub-hosted Ubuntu allow list documented in
-    workflows.instructions.md § Runners: `ubuntu-latest`, dated Ubuntu labels
-    such as `ubuntu-24.04` or `ubuntu-22.04`, their `-arm` variants, and the
-    lightweight `ubuntu-slim` runner.
+    workflows.instructions.md § Runners: dated Ubuntu labels such as
+    `ubuntu-24.04`, their `-arm` variants, and the `-firewall` variants that
+    run behind GitHub's native egress firewall.
 
-    A job whose `runs-on` is a non-Ubuntu label (for example `windows-latest`,
-    `macos-latest`, or `self-hosted`), an array containing any non-Ubuntu
-    entry, an unresolvable expression (for example `${{ matrix.os }}`), or is
-    missing entirely, is reported as a violation. Unresolvable expressions are
-    treated as violations rather than passes because the actual runner cannot
-    be verified from the workflow file alone.
+    The floating labels `ubuntu-latest` and `ubuntu-slim` are reported as
+    FloatingRunnerLabel violations because the image behind them changes
+    without a workflow change. A job whose `runs-on` is a non-Ubuntu label
+    (for example `windows-latest`, `macos-latest`, or `self-hosted`), an array
+    containing any disallowed entry, an unresolvable expression (for example
+    `${{ matrix.os }}`), or is missing entirely, is also reported. Unresolvable
+    expressions are treated as violations rather than passes because the
+    actual runner cannot be verified from the workflow file alone.
 
 .PARAMETER Path
     Directory containing workflow YAML files. Defaults to '.github/workflows'.
@@ -37,7 +39,7 @@
 
 .PARAMETER ExcludePaths
     Comma-separated list of workflow filenames to exclude from scanning.
-    Defaults to 'copilot-setup-steps.yml'.
+    Defaults to none, so copilot-setup-steps.yml is held to the same policy.
 
 .EXAMPLE
     ./scripts/security/Test-WorkflowRunner.ps1
@@ -70,7 +72,7 @@ param(
     [switch]$FailOnViolation,
 
     [Parameter(Mandatory = $false)]
-    [string]$ExcludePaths = 'copilot-setup-steps.yml'
+    [string]$ExcludePaths = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -81,16 +83,19 @@ Import-Module powershell-yaml -ErrorAction Stop
 
 # region Helper Functions
 
-# GitHub-hosted Ubuntu labels: ubuntu-latest, dated releases (ubuntu-24.04,
-# ubuntu-22.04, future ubuntu-26.04, ...), their -arm variants, and the
-# lightweight ubuntu-slim runner. Anchored so partial matches (for example a
-# custom label ending in "ubuntu-latest-custom") do not slip through.
-$script:UbuntuRunnerPattern = '^ubuntu-(latest|\d{2}\.\d{2}(-arm)?|slim)$'
+# Dated GitHub-hosted Ubuntu labels (ubuntu-24.04, future ubuntu-26.04, ...),
+# their -arm variants, and the -firewall variants behind GitHub's native egress
+# firewall. Anchored so partial matches (for example "ubuntu-24.04-custom") do
+# not slip through.
+$script:UbuntuRunnerPattern = '^ubuntu-\d{2}\.\d{2}(-arm|-firewall)?$'
+
+# GitHub-hosted Ubuntu labels whose image moves without a workflow change.
+$script:FloatingRunnerPattern = '^ubuntu-(latest|slim)$'
 
 function Test-UbuntuRunnerLabel {
     <#
     .SYNOPSIS
-        Returns whether a single runs-on label is an allowed GitHub-hosted Ubuntu label.
+        Returns whether a single runs-on label is an allowed dated GitHub-hosted Ubuntu label.
     #>
     [CmdletBinding()]
     [OutputType([bool])]
@@ -335,23 +340,32 @@ function Test-WorkflowRunner {
         $violation.Type = 'workflow-runner'
         $violation.Name = $job.Name
 
+        $disallowed = @($job.Labels | Where-Object { -not (Test-UbuntuRunnerLabel -Label $_) })
+        $onlyFloating = $disallowed.Count -gt 0 -and -not ($disallowed | Where-Object { $_ -notmatch $script:FloatingRunnerPattern })
+
         if (-not $job.HasRunsOn) {
             $violation.ViolationType = 'MissingRunner'
             $violation.Severity = 'High'
             $violation.Description = "Job '$($job.Name)' in workflow '$fileName' has no 'runs-on' value"
-            $violation.Remediation = "Add 'runs-on: ubuntu-latest' (or another GitHub-hosted Ubuntu label) to the job"
+            $violation.Remediation = "Add 'runs-on: ubuntu-24.04' (or another dated GitHub-hosted Ubuntu label) to the job"
         }
         elseif ($job.IsExpression) {
             $violation.ViolationType = 'NonUbuntuRunner'
             $violation.Severity = 'High'
             $violation.Description = "Job '$($job.Name)' in workflow '$fileName' has a 'runs-on' value that cannot be resolved from the workflow file: $($job.Labels -join ', ')"
-            $violation.Remediation = 'Use a literal GitHub-hosted Ubuntu label, such as ubuntu-latest, instead of an expression that may resolve to a non-Ubuntu runner'
+            $violation.Remediation = 'Use a literal dated GitHub-hosted Ubuntu label, such as ubuntu-24.04, instead of an expression that may resolve to another runner'
+        }
+        elseif ($onlyFloating) {
+            $violation.ViolationType = 'FloatingRunnerLabel'
+            $violation.Severity = 'High'
+            $violation.Description = "Job '$($job.Name)' in workflow '$fileName' runs on the floating label '$($disallowed -join ', ')', whose image changes without a workflow change"
+            $violation.Remediation = 'Change runs-on to a dated GitHub-hosted Ubuntu label, such as ubuntu-24.04 or ubuntu-24.04-firewall'
         }
         else {
             $violation.ViolationType = 'NonUbuntuRunner'
             $violation.Severity = 'High'
-            $violation.Description = "Job '$($job.Name)' in workflow '$fileName' runs on '$($job.Labels -join ', ')', which is not a GitHub-hosted Ubuntu runner"
-            $violation.Remediation = 'Change runs-on to a GitHub-hosted Ubuntu label, such as ubuntu-latest, ubuntu-24.04, or ubuntu-slim'
+            $violation.Description = "Job '$($job.Name)' in workflow '$fileName' runs on '$($job.Labels -join ', ')', which is not a dated GitHub-hosted Ubuntu runner"
+            $violation.Remediation = 'Change runs-on to a dated GitHub-hosted Ubuntu label, such as ubuntu-24.04, ubuntu-24.04-arm, or ubuntu-24.04-firewall'
         }
 
         $violation.Metadata = @{ FullPath = $Model.FilePath; Job = $job.Name; Labels = $job.Labels }
@@ -374,8 +388,9 @@ function ConvertTo-RunnerSarif {
     )
 
     $ruleIds = @{
-        NonUbuntuRunner = 'non-ubuntu-runner'
-        MissingRunner   = 'missing-runner'
+        NonUbuntuRunner     = 'non-ubuntu-runner'
+        FloatingRunnerLabel = 'floating-runner-label'
+        MissingRunner       = 'missing-runner'
     }
 
     $rules = @(
@@ -383,7 +398,15 @@ function ConvertTo-RunnerSarif {
             id                   = 'non-ubuntu-runner'
             name                 = 'NonUbuntuRunner'
             shortDescription     = @{ text = "Job runs on a non-Ubuntu or unresolvable runner" }
-            fullDescription      = @{ text = 'hve-core workflows must run on GitHub-hosted Ubuntu runners (ubuntu-latest, dated Ubuntu labels, their -arm variants, or ubuntu-slim). Other runner types are not supported.' }
+            fullDescription      = @{ text = 'hve-core workflows must run on dated GitHub-hosted Ubuntu runners (for example ubuntu-24.04), their -arm variants, or their -firewall variants. Other runner types are not supported.' }
+            helpUri              = 'https://github.com/microsoft/hve-core/blob/main/.github/instructions/workflows.instructions.md'
+            defaultConfiguration = @{ level = 'error' }
+        }
+        @{
+            id                   = 'floating-runner-label'
+            name                 = 'FloatingRunnerLabel'
+            shortDescription     = @{ text = 'Job runs on a floating runner label' }
+            fullDescription      = @{ text = 'ubuntu-latest and ubuntu-slim move to new images without a workflow change. Use a dated label such as ubuntu-24.04 or ubuntu-24.04-firewall so image changes are reviewed.' }
             helpUri              = 'https://github.com/microsoft/hve-core/blob/main/.github/instructions/workflows.instructions.md'
             defaultConfiguration = @{ level = 'error' }
         }
@@ -462,7 +485,7 @@ function Invoke-WorkflowRunnerCheck {
         [switch]$FailOnViolation,
 
         [Parameter(Mandatory = $false)]
-        [string]$ExcludePaths = 'copilot-setup-steps.yml'
+        [string]$ExcludePaths = ''
     )
 
     Write-SecurityLog "Starting workflow runner policy validation" -Level Info -CIAnnotation

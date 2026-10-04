@@ -33,21 +33,26 @@ AfterAll {
 }
 
 Describe 'Test-UbuntuRunnerLabel' -Tag 'Unit' {
-    It 'Should accept ubuntu-latest' {
-        Test-UbuntuRunnerLabel -Label 'ubuntu-latest' | Should -BeTrue
-    }
-
     It 'Should accept dated ubuntu labels' {
         Test-UbuntuRunnerLabel -Label 'ubuntu-24.04' | Should -BeTrue
         Test-UbuntuRunnerLabel -Label 'ubuntu-22.04' | Should -BeTrue
+        Test-UbuntuRunnerLabel -Label 'ubuntu-26.04' | Should -BeTrue
     }
 
     It 'Should accept arm variants of dated ubuntu labels' {
         Test-UbuntuRunnerLabel -Label 'ubuntu-24.04-arm' | Should -BeTrue
     }
 
-    It 'Should accept ubuntu-slim' {
-        Test-UbuntuRunnerLabel -Label 'ubuntu-slim' | Should -BeTrue
+    It 'Should accept firewall variants of dated ubuntu labels' {
+        Test-UbuntuRunnerLabel -Label 'ubuntu-24.04-firewall' | Should -BeTrue
+    }
+
+    It 'Should reject the floating label <Label>' -TestCases @(
+        @{ Label = 'ubuntu-latest' }
+        @{ Label = 'ubuntu-slim' }
+    ) {
+        param($Label)
+        Test-UbuntuRunnerLabel -Label $Label | Should -BeFalse
     }
 
     It 'Should reject windows-latest' {
@@ -63,40 +68,31 @@ Describe 'Test-UbuntuRunnerLabel' -Tag 'Unit' {
     }
 
     It 'Should reject a label that merely contains an allowed label as a substring' {
-        Test-UbuntuRunnerLabel -Label 'ubuntu-latest-custom' | Should -BeFalse
+        Test-UbuntuRunnerLabel -Label 'ubuntu-24.04-custom' | Should -BeFalse
+        Test-UbuntuRunnerLabel -Label 'ubuntu-24.04-arm-firewall' | Should -BeFalse
+        Test-UbuntuRunnerLabel -Label 'my-ubuntu-24.04' | Should -BeFalse
     }
 }
 
 Describe 'Test-WorkflowRunner' -Tag 'Unit' {
     Context 'Compliant runners' {
-        It 'Should return no violations for ubuntu-latest' {
-            $filePath = New-TestWorkflow -Name 'ubuntu-latest' -Content @'
-name: Ubuntu Latest
+        It 'Should return no violations for <Label>' -TestCases @(
+            @{ Label = 'ubuntu-24.04' }
+            @{ Label = 'ubuntu-24.04-arm' }
+            @{ Label = 'ubuntu-24.04-firewall' }
+        ) {
+            param($Label)
+            $filePath = New-TestWorkflow -Name "compliant-$Label" -Content @"
+name: Compliant
 on: push
 permissions:
   contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: $Label
     steps:
       - run: echo hi
-'@
-            $result = @(Test-WorkflowRunner -FilePath $filePath)
-            $result | Should -HaveCount 0
-        }
-
-        It 'Should return no violations for ubuntu-slim' {
-            $filePath = New-TestWorkflow -Name 'ubuntu-slim' -Content @'
-name: Ubuntu Slim
-on: push
-permissions:
-  contents: read
-jobs:
-  build:
-    runs-on: ubuntu-slim
-    steps:
-      - run: echo hi
-'@
+"@
             $result = @(Test-WorkflowRunner -FilePath $filePath)
             $result | Should -HaveCount 0
         }
@@ -115,6 +111,48 @@ jobs:
 '@
             $result = @(Test-WorkflowRunner -FilePath $filePath)
             $result | Should -HaveCount 0
+        }
+    }
+
+    Context 'Floating runners' {
+        It 'Should flag <Label> as FloatingRunnerLabel' -TestCases @(
+            @{ Label = 'ubuntu-latest' }
+            @{ Label = 'ubuntu-slim' }
+        ) {
+            param($Label)
+            $filePath = New-TestWorkflow -Name "floating-$Label" -Content @"
+name: Floating
+on: push
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: $Label
+    steps:
+      - run: echo hi
+"@
+            $result = @(Test-WorkflowRunner -FilePath $filePath)
+            $result | Should -HaveCount 1
+            $result[0].ViolationType | Should -Be 'FloatingRunnerLabel'
+            $result[0].Severity | Should -Be 'High'
+            $result[0].Remediation | Should -Match 'ubuntu-24\.04'
+        }
+
+        It 'Should classify a list mixing a floating and a non-Ubuntu label as NonUbuntuRunner' {
+            $filePath = New-TestWorkflow -Name 'floating-and-windows' -Content @'
+name: Mixed
+on: push
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: [ubuntu-latest, windows-latest]
+    steps:
+      - run: echo hi
+'@
+            $result = @(Test-WorkflowRunner -FilePath $filePath)
+            $result | Should -HaveCount 1
+            $result[0].ViolationType | Should -Be 'NonUbuntuRunner'
         }
     }
 
@@ -260,7 +298,7 @@ Describe 'ConvertTo-RunnerSarif' -Tag 'Unit' {
             $script:violation.ViolationType = 'NonUbuntuRunner'
             $script:violation.Severity = 'High'
             $script:violation.Description = "Job 'build' runs on 'windows-latest'"
-            $script:violation.Remediation = 'Use ubuntu-latest'
+            $script:violation.Remediation = 'Use ubuntu-24.04'
         }
 
         It 'Should produce valid SARIF structure' {
@@ -272,6 +310,20 @@ Describe 'ConvertTo-RunnerSarif' -Tag 'Unit' {
         It 'Should route NonUbuntuRunner to the non-ubuntu-runner rule' {
             $sarif = ConvertTo-RunnerSarif -Violations @($script:violation)
             $sarif.runs[0].results[0].ruleId | Should -Be 'non-ubuntu-runner'
+        }
+
+        It 'Should route FloatingRunnerLabel to the floating-runner-label rule' {
+            $floating = [DependencyViolation]::new()
+            $floating.File = '.github/workflows/example.yml'
+            $floating.Line = 6
+            $floating.Type = 'workflow-runner'
+            $floating.Name = 'build'
+            $floating.ViolationType = 'FloatingRunnerLabel'
+            $floating.Severity = 'High'
+            $floating.Description = "Job 'build' runs on the floating label 'ubuntu-latest'"
+            $sarif = ConvertTo-RunnerSarif -Violations @($floating)
+            $sarif.runs[0].results[0].ruleId | Should -Be 'floating-runner-label'
+            $sarif.runs[0].tool.driver.rules.id | Should -Contain 'floating-runner-label'
         }
 
         It 'Should never emit a startLine below 1' {
@@ -309,7 +361,7 @@ permissions:
   contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - run: echo hi
 '@ -Encoding utf8
@@ -369,6 +421,27 @@ jobs:
             $outputPath = Join-Path $TestDrive 'results-excluded.json'
             $exitCode = Invoke-WorkflowRunnerCheck -Path $excludeDir -Format json -OutputPath $outputPath -FailOnViolation -ExcludePaths 'excluded.yml'
             $exitCode | Should -Be 0
+        }
+
+        It 'Should scan copilot-setup-steps.yml by default' {
+            $defaultDir = New-TestWorkflowDir -Name 'default-exclusions'
+            Set-Content -Path (Join-Path $defaultDir 'copilot-setup-steps.yml') -Value @'
+name: Copilot Setup Steps
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hi
+'@ -Encoding utf8
+
+            $outputPath = Join-Path $TestDrive 'results-default-exclusions.json'
+            $exitCode = Invoke-WorkflowRunnerCheck -Path $defaultDir -Format json -OutputPath $outputPath -FailOnViolation
+            $exitCode | Should -Be 1
+            $results = Get-Content $outputPath -Raw | ConvertFrom-Json
+            $results.Violations[0].ViolationType | Should -Be 'FloatingRunnerLabel'
         }
     }
 

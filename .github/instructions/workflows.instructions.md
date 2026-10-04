@@ -51,7 +51,7 @@ permissions:
 jobs:
   validate:
     name: Validate Code
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -98,21 +98,46 @@ Workflows MUST NOT persist GitHub credentials by default. Credential persistence
 
 ## Runners
 
-Workflows MUST run on GitHub-hosted Ubuntu runners. Windows, macOS, self-hosted, and other non-Ubuntu runner types are not supported in hve-core.
+Workflows MUST run on dated GitHub-hosted Ubuntu runners. Windows, macOS, self-hosted, and other non-Ubuntu runner types are not supported in hve-core.
 
-**Allowed `runs-on` labels** (GitHub-hosted Ubuntu images only):
+**Allowed `runs-on` labels** (dated GitHub-hosted Ubuntu images only):
 
-* `ubuntu-latest`
-* `ubuntu-24.04`, `ubuntu-22.04` (and other GitHub-hosted Ubuntu version labels as they become available, including ARM variants such as `ubuntu-24.04-arm`)
-* `ubuntu-slim` (lightweight 1 vCPU GitHub-hosted runner; still Ubuntu, still GitHub-hosted)
+* `ubuntu-24.04` (and other dated GitHub-hosted Ubuntu labels such as `ubuntu-22.04` or `ubuntu-26.04`)
+* ARM variants of dated labels, such as `ubuntu-24.04-arm`
+* Firewall variants of dated labels, such as `ubuntu-24.04-firewall`, which run behind GitHub's native egress firewall
 
-**Disallowed `runs-on` values:** `windows-*`, `macos-*`, `self-hosted`, and any custom or third-party runner label.
+**Disallowed `runs-on` values:**
+
+* `ubuntu-latest` and `ubuntu-slim`: their image changes without a workflow change, so an image upgrade would skip review.
+* `windows-*`, `macos-*`, `self-hosted`, and any custom or third-party runner label.
+* Expressions such as `${{ matrix.os }}`: the runner cannot be verified from the workflow file.
 
 **Required pattern:**
 
 ```yaml
-runs-on: ubuntu-latest
+runs-on: ubuntu-24.04
 ```
+
+Moving to a newer image is a deliberate change that updates every job together. `scripts/security/Test-SHAStaleness.ps1` reports when GitHub publishes a newer Ubuntu image.
+
+## Runtime Versions
+
+Node.js and Python versions come from the root `.node-version` and `.python-version` files, each holding one exact `X.Y.Z` version. The devcontainer, `copilot-setup-steps.yml`, and uv read the same files.
+
+* `actions/setup-node` MUST use `node-version-file: .node-version`.
+* `actions/setup-python` MUST use `python-version-file: .python-version`.
+* A job without a checkout MAY use a literal `node-version` or `python-version`; the literal MUST equal the version file.
+
+**Required pattern:**
+
+```yaml
+- name: Setup Node.js
+  uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+  with:
+    node-version-file: .node-version
+```
+
+**Enforcement:** `scripts/security/Test-ToolVersionConsistency.ps1` fails on a setup step without a version, a step that reads another file, a literal that differs from the version file, or a devcontainer runtime feature that differs. `scripts/security/Test-SHAStaleness.ps1` reports a newer patch release on the pinned line.
 
 ## Workflow Structure
 
@@ -148,7 +173,7 @@ permissions:
 jobs:
   validate:
     name: Validate Code
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -202,7 +227,7 @@ permissions:
 jobs:
   scan:
     name: Validate Compliance
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -279,7 +304,7 @@ All workflows MUST pass the following validation checks:
 ### Runner Policy Validation
 
 * **Script:** `scripts/security/Test-WorkflowRunner.ps1`
-* **What it enforces:** Every job's `runs-on` value is a GitHub-hosted Ubuntu label (see § Runners for the allow list)
+* **What it enforces:** Every job's `runs-on` value is a dated GitHub-hosted Ubuntu label (see § Runners for the allow list). Floating labels are reported under their own `floating-runner-label` rule. `copilot-setup-steps.yml` is scanned like every other workflow.
 * **CI blocking:** Failures block CI when configured to enforce compliance
 
 ## Security Requirements
@@ -353,7 +378,7 @@ The following scripts enforce compliance:
 * `scripts/security/Test-DependencyPinning.ps1` - Validates dependency pinning
 * `scripts/security/Test-SHAStaleness.ps1` - Checks for stale dependencies
 * `scripts/security/Test-WorkflowPermissions.ps1` - Validates workflow permissions declarations
-* `scripts/security/Test-WorkflowRunner.ps1` - Validates `runs-on` values against the GitHub-hosted Ubuntu allow-list
+* `scripts/security/Test-WorkflowRunner.ps1` - Validates `runs-on` values against the dated GitHub-hosted Ubuntu allow-list
 * `scripts/linting/Invoke-YamlLint.ps1` - Runs actionlint validation
 * `scripts/security/Test-PrValidationGate.ps1` - Validates the PR validation gate `needs:` completeness
 

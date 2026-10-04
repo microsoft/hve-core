@@ -23,7 +23,7 @@ jobs:
   main-sbom:
     name: Publish Main SBOM
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
 
@@ -82,7 +82,7 @@ jobs:
         github.event_name == 'pull_request'
         && github.event.pull_request.head.repo.full_name == github.repository
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # Elevated for Dependency Submission API (uv.lock)
 
@@ -107,7 +107,7 @@ jobs:
         needs.dependency-submission.result == 'success'
         || needs.dependency-submission.result == 'skipped'
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       pull-requests: write

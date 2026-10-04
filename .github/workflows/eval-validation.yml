@@ -76,7 +76,7 @@ concurrency:
 jobs:
   eval-validation:
     name: Eval Validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Lint-only job; observed ~2 min. Without this it inherits the 6h default.
     timeout-minutes: 20
     permissions:
@@ -106,7 +106,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Install dependencies
@@ -253,7 +253,7 @@ jobs:
 
   content-moderation:
     name: Content Moderation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     needs: eval-validation
     outputs:
@@ -283,7 +283,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Install dependencies
@@ -298,7 +298,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.12"
+          python-version-file: .python-version
 
       - name: Sync moderation environment
         run: uv sync --locked
@@ -386,7 +386,7 @@ jobs:
 
   agent-plan:
     name: Agent Eval Plan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [eval-validation, content-moderation]
     if: needs.eval-validation.outputs.eval-relevant == 'true' && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) || github.event_name == 'workflow_dispatch')
     permissions:
@@ -488,7 +488,7 @@ jobs:
 
   eval-execute:
     name: Eval Execute (${{ matrix.producer }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     needs: [eval-validation, content-moderation, agent-plan]
     # Repository secrets are not exposed to fork PRs; clean-skip execution there.
@@ -516,7 +516,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Install dependencies
@@ -531,7 +531,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.12"
+          python-version-file: .python-version
 
       - name: Sync moderation environment
         run: uv sync --locked
@@ -615,7 +615,7 @@ jobs:
 
   equivalence-execute:
     name: Baseline Equivalence (${{ matrix.model }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 120
     needs: [eval-validation, content-moderation, agent-plan]
     if: >-
@@ -647,7 +647,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Install dependencies
@@ -741,7 +741,7 @@ jobs:
   # artifact name matches no fan-in download pattern.
   equivalence-advisory:
     name: Advisory Equivalence (${{ matrix.model }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 120
     continue-on-error: true
     needs: [eval-validation, content-moderation, agent-plan]
@@ -772,7 +772,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Install dependencies
@@ -852,7 +852,7 @@ jobs:
 
   equivalence-fan-in:
     name: Baseline Equivalence Fan-In
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [eval-validation, content-moderation, agent-plan, equivalence-execute]
     if: >-
       always() && !cancelled() &&
@@ -939,7 +939,7 @@ jobs:
 
   eval-fan-in:
     name: Authoritative Eval Fan-In
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [eval-validation, agent-plan, eval-execute, equivalence-fan-in]
     if: >-
       always() && !cancelled() &&
@@ -1007,7 +1007,7 @@ jobs:
 
   eval-report:
     name: Eval Report
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: [eval-fan-in]
     # Present the canonical authoritative summary even when execution failed.

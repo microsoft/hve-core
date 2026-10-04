@@ -71,7 +71,7 @@ permissions:
 jobs:
   pytest:
     name: Python Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write  # Required for Codecov OIDC
@@ -150,7 +150,7 @@ jobs:
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.12"
+          python-version-file: .python-version
 
       - name: Install dependencies
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
@@ -172,7 +172,7 @@ jobs:
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version-file: .node-version
 
       - name: Install skill-local Node dependencies
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"

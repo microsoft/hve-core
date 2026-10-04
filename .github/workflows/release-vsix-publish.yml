@@ -20,7 +20,7 @@ permissions:
 jobs:
   validate-release:
     name: Validate Tag and Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       attestations: read
@@ -337,7 +337,7 @@ jobs:
     name: Verify Provenance
     needs: [validate-release, extension-provenance, vex-attest]
     if: ${{ always() && !cancelled() && !failure() && needs.validate-release.outputs.release-state == 'draft' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       attestations: read
@@ -387,7 +387,7 @@ jobs:
     name: Stable SBOM Dependency Diff
     needs: [validate-release, extension-provenance]
     if: ${{ needs.validate-release.outputs.release-state == 'draft' && needs.validate-release.outputs.channel == 'Stable' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     continue-on-error: true
     permissions:
       contents: write
@@ -476,7 +476,7 @@ jobs:
     name: Append Stable Verification Instructions
     needs: [validate-release, extension-provenance, verify-provenance]
     if: ${{ needs.validate-release.outputs.release-state == 'draft' && needs.validate-release.outputs.channel == 'Stable' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
@@ -575,7 +575,7 @@ jobs:
       - sbom-diff
       - append-verification-notes
     if: ${{ always() && !cancelled() && !failure() && needs.validate-release.outputs.release-state == 'draft' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:

@@ -56,7 +56,7 @@ jobs:
     name: Security Maintenance Summary
     needs: [validate-pinning, check-staleness, codeql-analysis]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       issues: write

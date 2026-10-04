@@ -2,7 +2,7 @@
 title: Dev Container
 description: Pre-configured development environment for HVE Core with all required tools and extensions
 author: HVE Core Team
-ms.date: 2026-08-11
+ms.date: 2026-10-04
 ms.topic: guide
 keywords:
   - devcontainer
@@ -66,8 +66,8 @@ endpoints and credentials out of repository files.
 
 ### Languages & Runtimes
 
-* Node.js 24
-* Python 3.11
+* Node.js 24.21.0 (from `.node-version`)
+* Python 3.12.15 (from `.python-version`)
 * PowerShell 7.x
 
 ### CLI Tools

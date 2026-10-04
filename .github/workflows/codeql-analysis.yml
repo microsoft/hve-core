@@ -14,7 +14,7 @@ permissions:
 jobs:
   verify-slide-bundles:
     name: Verify Slide Bundle Sources
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -26,7 +26,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version-file: .node-version
 
       - name: Restore slide build dependencies
         env:
@@ -39,7 +39,7 @@ jobs:
   analyze:
     name: CodeQL Analysis
     needs: verify-slide-bundles
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
@@ -97,7 +97,7 @@ jobs:
   analyze-generated-slides:
     name: CodeQL Analysis (generated slides)
     needs: verify-slide-bundles
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab

@@ -46,7 +46,7 @@ permissions:
 jobs:
   node-tests:
     name: Node Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write  # Required for Codecov OIDC
@@ -125,7 +125,7 @@ jobs:
         if: steps.detect.outputs.has_tests == 'true' && (!inputs.changed-files-only || steps.check-mjs.outputs.has_changes == 'true')
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version-file: .node-version
 
       - name: Install skill-local Node dependencies
         if: steps.detect.outputs.has_tests == 'true' && (!inputs.changed-files-only || steps.check-mjs.outputs.has_changes == 'true')

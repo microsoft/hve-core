@@ -45,7 +45,7 @@ env:
 jobs:
   resolve:
     name: Resolve render inputs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
       contents: read
@@ -205,7 +205,7 @@ jobs:
     name: Render ${{ matrix.level }}
     needs: resolve
     if: ${{ needs.resolve.outputs.mode == 'render' && needs.resolve.outputs.levels != '[]' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
       actions: read
@@ -241,6 +241,13 @@ jobs:
           mkdir -p "$(dirname "${LEVEL_DIR}")"
           cp -R "${RUNNER_TEMP}/content/${LEVEL}" "${LEVEL_DIR}"
 
+      # uv honors the root .python-version; install that exact interpreter
+      # rather than letting uv download a managed one.
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version-file: .python-version
+
       - name: Setup uv
         uses: ./.github/actions/setup-uv
         with:
@@ -249,7 +256,7 @@ jobs:
       - name: Setup Node.js for the HTML slide deck
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24"
+          node-version-file: .node-version
 
       - name: Install LibreOffice and FFmpeg
         shell: bash
@@ -345,7 +352,7 @@ jobs:
       - resolve
       - render
     if: ${{ always() && (needs.resolve.outputs.mode == 'render' || needs.resolve.outputs.mode == 'refresh') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
     steps:

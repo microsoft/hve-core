@@ -30,7 +30,7 @@ jobs:
 
   discover-python-projects:
     name: Discover Python Projects
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
