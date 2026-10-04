@@ -429,6 +429,11 @@ html {
   color: var(--ifm-link-color);
 }
 
+/* Grouping crumbs with no landing page are plain text, not links. */
+span.breadcrumbs__link:not([aria-current]) {
+  color: var(--ifm-font-color-base);
+}
+
 /* Content area padding */
 .theme-doc-markdown {
   padding: 24px 0;
