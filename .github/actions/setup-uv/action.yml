@@ -82,8 +82,16 @@ runs:
           echo "::error::Installed uv reports ${installed}, expected ${version}."
           exit 1
         fi
-        echo "${install_dir}" >> "${GITHUB_PATH}"
-        echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+        # Installing into /usr/local/bin avoids a GITHUB_PATH write, which every
+        # later step would trust; the check fails if another uv shadows it.
+        sudo install -m 0755 -t /usr/local/bin "${install_dir}/uv" "${install_dir}/uvx"
+        for tool in uv uvx; do
+          resolved="$(command -v "${tool}" || true)"
+          if [[ "${resolved}" != "/usr/local/bin/${tool}" ]]; then
+            echo "::error::${tool} resolves to '${resolved}', not the verified /usr/local/bin/${tool}."
+            exit 1
+          fi
+        done
 
         # Mirrors astral-sh/setup-uv enable-cache: auto, which skips caching for
         # events where a poisoned cache could reach a privileged context.
@@ -105,10 +113,9 @@ runs:
         save='false'
         if [[ "${cache}" == 'true' && "${GITHUB_EVENT_NAME}" != 'merge_group' ]]; then save='true'; fi
 
-        cache_dir="${UV_CACHE_DIR:-${RUNNER_TEMP}/setup-uv-cache}"
-        if [[ "${cache}" == 'true' ]]; then
-          echo "UV_CACHE_DIR=${cache_dir}" >> "${GITHUB_ENV}"
-        fi
+        # uv's own default cache directory, so no GITHUB_ENV write is needed for
+        # later steps to use the restored cache.
+        cache_dir="${UV_CACHE_DIR:-${XDG_CACHE_HOME:-${HOME}/.cache}/uv}"
 
         {
           echo "uv-version=${version}"

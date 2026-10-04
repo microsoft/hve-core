@@ -271,7 +271,13 @@ jobs:
         run: |
           set -euo pipefail
           uv sync --locked --project scripts/tools/piper
-          echo "${GITHUB_WORKSPACE}/scripts/tools/piper/.venv/bin" >> "${GITHUB_PATH}"
+          # A verified link in /usr/local/bin replaces a GITHUB_PATH write, which
+          # would also have put the venv's python ahead of setup-python's.
+          sudo ln -sfn "${GITHUB_WORKSPACE}/scripts/tools/piper/.venv/bin/piper" /usr/local/bin/piper
+          if [[ "$(command -v piper || true)" != '/usr/local/bin/piper' ]]; then
+            echo "::error::piper does not resolve to /usr/local/bin/piper."
+            exit 1
+          fi
           mkdir -p "${PIPER_DATA_DIR}"
           cd "${PIPER_DATA_DIR}"
           curl --fail --location --silent --show-error \
@@ -301,7 +307,11 @@ jobs:
             --output "${cli_dir}/cli.tar.gz" "${VSCODE_CLI_URL}"
           printf '%s  %s\n' "${VSCODE_CLI_SHA256}" "${cli_dir}/cli.tar.gz" | sha256sum --check
           tar -xzf "${cli_dir}/cli.tar.gz" -C "${cli_dir}"
-          echo "${cli_dir}" >> "${GITHUB_PATH}"
+          sudo install -m 0755 -t /usr/local/bin "${cli_dir}/code"
+          if [[ "$(command -v code || true)" != '/usr/local/bin/code' ]]; then
+            echo "::error::code does not resolve to the verified /usr/local/bin/code."
+            exit 1
+          fi
 
       - name: Render ${{ matrix.level }}
         shell: bash
