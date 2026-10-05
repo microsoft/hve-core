@@ -2,7 +2,7 @@
 title: Release Process
 description: Release HVE Core through reviewed PreRelease metadata and Stable promotion workflows
 sidebar_position: 9
-ms.date: 2026-09-28
+ms.date: 2026-10-04
 ms.topic: how-to
 author: WilliamBerryiii
 keywords:
@@ -64,6 +64,12 @@ Workflow ownership is explicit:
     preparation, and lets release-please create the Stable tag and draft.
 * `release-vsix-publish.yml` is the sole post-tag producer for both channels.
 
+Every job that mints a release GitHub App token reads the app key from the
+`release-governance` environment, which admits only `main`, the two release
+branches, and the `v*` and `prerelease-v*` tags. The three merge-driven
+workflows therefore start on the push a reviewed merge produces rather than on
+the pull request event, whose `refs/pull/N/merge` ref the environment rejects.
+
 ## How Releases Work
 
 ```mermaid
@@ -94,8 +100,8 @@ flowchart TD
 
 ### PreRelease Flow
 
-1. `Pre-Release Promotion Preparation` runs after an eligible merged PR to
-   `main`, or through its input-free recovery dispatch.
+1. `Pre-Release Promotion Preparation` runs on each push to `main` (a merged
+   PR), or through its input-free recovery dispatch.
 2. It refreshes the target-based promotion head from `release/prerelease`,
    merges current `main`, restores channel-owned release state, writes the
    exact `release-as`, and opens a reviewed PR to `release/prerelease`.

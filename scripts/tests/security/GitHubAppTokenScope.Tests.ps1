@@ -68,3 +68,44 @@ Describe 'GitHub App installation tokens' -Tag 'Unit' {
         $checkout['with'].Contains('token') | Should -BeFalse
     }
 }
+
+Describe 'Release app key governance' -Tag 'Unit' {
+    # The key is a release-governance environment secret. The environment admits
+    # only main, the release branches, and release tags, so a job reads the key
+    # only when it runs on one of those refs.
+    It 'Reads RELEASE_APP_PRIVATE_KEY only from release-governance in <_.Name>' -ForEach $WorkflowFiles {
+        $document = Get-Content -Raw -LiteralPath $_.FullName | ConvertFrom-Yaml
+        foreach ($job in $document['jobs'].GetEnumerator()) {
+            if (($job.Value | ConvertTo-Json -Depth 12 -Compress) -notmatch 'secrets\.RELEASE_APP_PRIVATE_KEY') { continue }
+            $environment = $job.Value['environment']
+            # The signer's authorization records a deployment per signing as an
+            # audit trail; every other key-reading job skips deployment records.
+            if ($_.Name -eq 'extension-provenance-signer.yml' -and $job.Key -eq 'authorize') {
+                [string]$environment | Should -BeExactly 'release-governance'
+                continue
+            }
+            $environment | Should -BeOfType [System.Collections.IDictionary] -Because "job '$($job.Key)' reads the release app key"
+            [string]$environment['name'] | Should -BeExactly 'release-governance'
+            $environment['deployment'] | Should -BeFalse
+        }
+    }
+
+    It 'Starts no key-reading workflow from a pull request event in <_.Name>' -ForEach $WorkflowFiles {
+        $text = Get-Content -Raw -LiteralPath $_.FullName
+        if ($text -notmatch 'secrets\.RELEASE_APP_PRIVATE_KEY') { return }
+        $document = $text | ConvertFrom-Yaml
+        $document['on'].Keys | Should -Not -Contain 'pull_request'
+        $document['on'].Keys | Should -Not -Contain 'pull_request_target'
+        $text | Should -Not -Match 'github\.event\.pull_request'
+    }
+
+    It 'Resolves the merged pull request read-only in <_>' -ForEach @('release-prerelease.yml', 'release-stable-publish.yml') {
+        $document = Get-Content -Raw -LiteralPath (Join-Path $RepoRoot ".github/workflows/$_") | ConvertFrom-Yaml
+        $resolve = $document['jobs']['resolve-merge']
+        $resolve.Contains('environment') | Should -BeFalse
+        ($resolve['permissions'].Keys | Sort-Object) | Should -Be @('contents', 'pull-requests')
+        $resolve['permissions'].Values | Should -Not -Contain 'write'
+        [string]$resolve['steps'][0]['run'] | Should -Match 'commits/\$EVENT_SHA/pulls'
+        [string]$resolve['steps'][0]['run'] | Should -Match '\.merge_commit_sha == \$sha and \.base\.ref == \$base'
+    }
+}

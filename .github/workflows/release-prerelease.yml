@@ -10,8 +10,7 @@ name: Pre-Release Preparation
 # and draft release at the merge commit. The resulting tag push starts the sole
 # post-tag producer.
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
       - release/prerelease
 # One release at a time per target branch. The reviewed promotion merge and the
@@ -23,18 +22,66 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  # A push to a protected release branch is the merge of a reviewed pull
+  # request. Resolve that pull request from the pushed commit so every later
+  # job checks the same merged-head identity the pull_request event carried,
+  # while running on the branch ref the release-governance environment allows.
+  resolve-merge:
+    name: Resolve Merged Pull Request
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read # list the pull request merged by this push
+    outputs:
+      merged: ${{ steps.pr.outputs.merged }}
+      base-ref: ${{ steps.pr.outputs.base-ref }}
+      head-ref: ${{ steps.pr.outputs.head-ref }}
+      head-repository: ${{ steps.pr.outputs.head-repository }}
+      head-sha: ${{ steps.pr.outputs.head-sha }}
+      merge-sha: ${{ steps.pr.outputs.merge-sha }}
+    steps:
+      - name: Find the pull request this push merged
+        id: pr
+        env:
+          BASE_BRANCH: ${{ github.ref_name }}
+          EVENT_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          PULLS="$RUNNER_TEMP/pulls.json"
+          gh api "/repos/$REPOSITORY/commits/$EVENT_SHA/pulls" > "$PULLS"
+          MERGED=$(jq -c --arg sha "$EVENT_SHA" --arg base "$BASE_BRANCH" \
+            '[.[] | select(.merged_at != null and .merge_commit_sha == $sha and .base.ref == $base)]' "$PULLS")
+          COUNT=$(jq 'length' <<< "$MERGED")
+          if [ "$COUNT" -eq 0 ]; then
+            echo "::notice::$EVENT_SHA on $BASE_BRANCH is not a pull request merge; nothing to release"
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$COUNT" -ne 1 ]; then
+            echo "::error::$EVENT_SHA is the merge commit of $COUNT pull requests into $BASE_BRANCH"
+            exit 1
+          fi
+          jq -r '.[0] | "merged=true",
+            "base-ref=\(.base.ref)",
+            "head-ref=\(.head.ref)",
+            "head-repository=\(.head.repo.full_name // "")",
+            "head-sha=\(.head.sha)",
+            "merge-sha=\(.merge_commit_sha)"' <<< "$MERGED" >> "$GITHUB_OUTPUT"
   # Every mutable pre-tag decision happens here, before any job holds release
   # write permission. validate-release keeps sole ownership of the post-tag
   # release-output and channel-state checks.
   validate-trigger:
+    needs: [resolve-merge]
     name: Validate Pre-Release Trigger
     if: >
-      github.event.pull_request.merged == true
-      && github.event.pull_request.base.ref == 'release/prerelease'
-      && github.event.pull_request.head.repo.full_name == github.repository
+      needs.resolve-merge.outputs.merged == 'true'
+      && needs.resolve-merge.outputs.base-ref == 'release/prerelease'
+      && needs.resolve-merge.outputs.head-repository == github.repository
       && (
-        github.event.pull_request.head.ref == 'release-promotion--main--to--release-prerelease'
-        || github.event.pull_request.head.ref == 'release-please--branches--release/prerelease'
+        needs.resolve-merge.outputs.head-ref == 'release-promotion--main--to--release-prerelease'
+        || needs.resolve-merge.outputs.head-ref == 'release-please--branches--release/prerelease'
       )
     runs-on: ubuntu-24.04
     permissions:
@@ -47,13 +94,13 @@ jobs:
       - name: Validate merged head identity
         id: identity
         env:
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_REF: ${{ needs.resolve-merge.outputs.base-ref }}
           EVENT_SHA: ${{ github.sha }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_REF: ${{ needs.resolve-merge.outputs.head-ref }}
+          HEAD_REPOSITORY: ${{ needs.resolve-merge.outputs.head-repository }}
           MANAGED_HEAD: release-please--branches--release/prerelease
-          MERGED: ${{ github.event.pull_request.merged }}
-          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          MERGED: ${{ needs.resolve-merge.outputs.merged }}
+          MERGE_SHA: ${{ needs.resolve-merge.outputs.merge-sha }}
           PROMOTION_HEAD: release-promotion--main--to--release-prerelease
           REPOSITORY: ${{ github.repository }}
         run: |
@@ -182,16 +229,19 @@ jobs:
 
   release-please:
     name: Release Please on release/prerelease
-    needs: [validate-trigger]
+    needs: [resolve-merge, validate-trigger]
     if: >
-      github.event.pull_request.merged == true
-      && github.event.pull_request.base.ref == 'release/prerelease'
-      && github.event.pull_request.head.repo.full_name == github.repository
+      needs.resolve-merge.outputs.merged == 'true'
+      && needs.resolve-merge.outputs.base-ref == 'release/prerelease'
+      && needs.resolve-merge.outputs.head-repository == github.repository
       && (
-        github.event.pull_request.head.ref == 'release-promotion--main--to--release-prerelease'
-        || github.event.pull_request.head.ref == 'release-please--branches--release/prerelease'
+        needs.resolve-merge.outputs.head-ref == 'release-promotion--main--to--release-prerelease'
+        || needs.resolve-merge.outputs.head-ref == 'release-please--branches--release/prerelease'
       )
     runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
     outputs:
@@ -352,6 +402,9 @@ jobs:
       - release-please
     if: ${{ !cancelled() && !failure() && needs.release-please.outputs.release-pr-branch != '' }}
     runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
     steps:

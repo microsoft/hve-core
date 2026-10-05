@@ -7,8 +7,9 @@ name: Pre-Release Promotion Preparation
 # merges, when release-prerelease.yml runs release-please on release/prerelease.
 
 on:
-  pull_request:
-    types: [closed]
+  # Every push to main is a reviewed merge through the merge queue, and it runs
+  # on the branch ref the release-governance environment allows.
+  push:
     branches:
       - main
 
@@ -34,14 +35,10 @@ env:
 jobs:
   prepare-promotion:
     name: Prepare Pre-Release Promotion
-    if: >
-      github.event_name == 'workflow_dispatch'
-      || (
-        github.event.pull_request.merged == true
-        && github.event.pull_request.base.ref == 'main'
-        && github.event.pull_request.head.repo.full_name == github.repository
-      )
     runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
       pull-requests: read # check for open release and promotion pull requests
@@ -431,6 +428,9 @@ jobs:
     needs: [prepare-promotion]
     if: ${{ needs.prepare-promotion.outputs.promote == 'true' }}
     runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
     steps:

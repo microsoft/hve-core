@@ -49,6 +49,9 @@ jobs:
         && startsWith(github.event.release.tag_name, 'prerelease-v')
       )
     runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
       pull-requests: read # check for open release and promotion pull requests
@@ -489,6 +492,9 @@ jobs:
     needs: [prepare-promotion]
     if: ${{ needs.prepare-promotion.outputs.promote == 'true' }}
     runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
     steps:

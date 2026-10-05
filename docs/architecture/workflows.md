@@ -71,10 +71,10 @@ flowchart TD
 | Workflow                             | Trigger                                                                    | Purpose                                                                                              |
 |--------------------------------------|----------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
 | `pr-validation.yml`                  | Pull request, manual                                                       | Pre-merge quality gate for main, develop, and both release branches                                  |
-| `release-prerelease-prepare.yml`     | Merged PR to `main`, manual                                                | Open the reviewed `main` to `release/prerelease` promotion PR                                        |
-| `release-prerelease.yml`             | Merged PR to `release/prerelease`                                          | Prepare metadata or create the exact odd-minor tag and draft                                         |
+| `release-prerelease-prepare.yml`     | Push to `main` (a merged PR), manual                                       | Open the reviewed `main` to `release/prerelease` promotion PR                                        |
+| `release-prerelease.yml`             | Push to `release/prerelease` (a merged PR)                                 | Prepare metadata or create the exact odd-minor tag and draft                                         |
 | `release-stable.yml`                 | Published PreRelease, manual                                               | Open the reviewed `release/prerelease` to `release/stable` promotion PR                              |
-| `release-stable-publish.yml`         | Merged PR to `release/stable`                                              | Prepare metadata or create the exact even-minor tag and draft                                        |
+| `release-stable-publish.yml`         | Push to `release/stable` (a merged PR)                                     | Prepare metadata or create the exact even-minor tag and draft                                        |
 | `release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`                                            | Produce and publish the exact immutable channel release                                              |
 | `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual                                                    | Scheduled security posture review                                                                    |
 | `weekly-validation.yml`              | Schedule, manual                                                           | Weekly full validation sweep                                                                         |
@@ -290,7 +290,10 @@ not a requirement of `MAJOR.MINOR.PATCH` syntax.
 ### Release Channel Jobs
 
 `release-prerelease.yml` and `release-stable-publish.yml` each contain only
-`validate-trigger`, `release-please`, and `sync-release-pr`. They remain
+`resolve-merge`, `validate-trigger`, `release-please`, and `sync-release-pr`. They
+start on the push a reviewed merge produces, and `resolve-merge` finds that pull
+request read-only, so every release-app job runs on a ref the
+`release-governance` environment admits. They remain
 reviewed, pre-tag workflows. They validate the promotion or managed head,
 synchronize committed release state, and let release-please create the exact
 immutable tag and draft.

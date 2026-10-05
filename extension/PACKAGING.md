@@ -57,16 +57,16 @@ Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Scope CurrentUser
 
 The extension is automatically packaged and published through GitHub Actions:
 
-| Workflow                                               | Trigger                            | Purpose                                                 |
-|--------------------------------------------------------|------------------------------------|---------------------------------------------------------|
-| `.github/workflows/release-prerelease-prepare.yml`     | Merged PR to `main`; dispatch      | Opens the reviewed `main` to PreRelease promotion       |
-| `.github/workflows/release-prerelease.yml`             | Merged PR to `release/prerelease`  | Prepares metadata or creates the exact tag and draft    |
-| `.github/workflows/release-stable.yml`                 | Published PreRelease; dispatch     | Opens the reviewed PreRelease to Stable promotion       |
-| `.github/workflows/release-stable-publish.yml`         | Merged PR to `release/stable`      | Prepares metadata or creates the exact tag and draft    |
-| `.github/workflows/release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`    | Produces and publishes the release assets from the tag  |
-| `.github/workflows/extension-provenance-signer.yml`    | Reusable workflow                  | Packages, transfers, and attests the VSIX in split jobs |
-| `.github/workflows/release-marketplace-stable.yml`     | Published Stable release; dispatch | Publishes the release VSIX to VS Code Marketplace       |
-| `.github/workflows/release-marketplace-prerelease.yml` | Published PreRelease; dispatch     | Publishes the release VSIX to VS Code Marketplace       |
+| Workflow                                               | Trigger                                  | Purpose                                                 |
+|--------------------------------------------------------|------------------------------------------|---------------------------------------------------------|
+| `.github/workflows/release-prerelease-prepare.yml`     | Push to `main` (merged PR); dispatch     | Opens the reviewed `main` to PreRelease promotion       |
+| `.github/workflows/release-prerelease.yml`             | Push to `release/prerelease` (merged PR) | Prepares metadata or creates the exact tag and draft    |
+| `.github/workflows/release-stable.yml`                 | Published PreRelease; dispatch           | Opens the reviewed PreRelease to Stable promotion       |
+| `.github/workflows/release-stable-publish.yml`         | Push to `release/stable` (merged PR)     | Prepares metadata or creates the exact tag and draft    |
+| `.github/workflows/release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`          | Produces and publishes the release assets from the tag  |
+| `.github/workflows/extension-provenance-signer.yml`    | Reusable workflow                        | Packages, transfers, and attests the VSIX in split jobs |
+| `.github/workflows/release-marketplace-stable.yml`     | Published Stable release; dispatch       | Publishes the release VSIX to VS Code Marketplace       |
+| `.github/workflows/release-marketplace-prerelease.yml` | Published PreRelease; dispatch           | Publishes the release VSIX to VS Code Marketplace       |
 
 `release-prerelease-prepare.yml` opens the reviewed, target-based `main` to
 `release/prerelease` promotion. Its merge creates no tag and runs

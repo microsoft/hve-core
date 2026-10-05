@@ -50,10 +50,10 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 | Workflow                          | Triggers                                                                     | Mode                          | Purpose                                                                           |
 |-----------------------------------|------------------------------------------------------------------------------|-------------------------------|-----------------------------------------------------------------------------------|
 | `pr-validation.yml`               | PR to main, develop, or either release branch; merge group to main; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator |
-| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                                                | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                 |
-| `release-prerelease.yml`          | Merged PR to `release/prerelease`                                            | Managed PreRelease release    | Prepare the managed release PR or create the exact odd-minor tag and draft        |
+| `release-prerelease-prepare.yml`  | Push to `main` (a merged PR); dispatch                                       | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                 |
+| `release-prerelease.yml`          | Push to `release/prerelease` (a merged PR)                                   | Managed PreRelease release    | Prepare the managed release PR or create the exact odd-minor tag and draft        |
 | `release-stable.yml`              | Published PreRelease; dispatch                                               | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR       |
-| `release-stable-publish.yml`      | Merged PR to `release/stable`                                                | Managed Stable release        | Prepare the managed release PR or create the exact even-minor tag and draft       |
+| `release-stable-publish.yml`      | Push to `release/stable` (a merged PR)                                       | Managed Stable release        | Prepare the managed release PR or create the exact even-minor tag and draft       |
 | `release-vsix-publish.yml`        | Push of `v*` or `prerelease-v*`                                              | Post-tag release producer     | Validate, package, attest, verify, and publish the exact immutable release        |
 | `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                                       | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate       |
 | `backlog-groom-publisher.yml`     | Completed sweep                                                              | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history |
@@ -163,16 +163,37 @@ context and completes a squash merge.
 
 release-stable.yml jobs: prepare-promotion, open-promotion-pr
 
-release-stable-publish.yml jobs: validate-trigger, release-please,
-sync-release-pr
+release-stable-publish.yml jobs: resolve-merge, validate-trigger,
+release-please, sync-release-pr
 
 release-prerelease-prepare.yml jobs: prepare-promotion, open-promotion-pr
 
-release-prerelease.yml jobs: validate-trigger, release-please, sync-release-pr
+release-prerelease.yml jobs: resolve-merge, validate-trigger, release-please,
+sync-release-pr
 
 release-vsix-publish.yml jobs: validate-release, generate-dependency-sbom,
 extension-provenance, vex-attest, verify-provenance, sbom-diff,
 append-verification-notes, publish-release, close-milestone
+
+### Release App Key Governance
+
+Every job that mints a release GitHub App token reads `RELEASE_APP_PRIVATE_KEY`
+from the `release-governance` environment, declared as
+`environment: { name: release-governance, deployment: false }`. The
+environment admits only `main`, `release/prerelease`, `release/stable`, and the
+`v*` and `prerelease-v*` tags, so a workflow on any other ref, including a pull
+request's `refs/pull/N/merge`, cannot read the key, and no deployment record is
+created. The signer's `authorize` job uses the same environment and records one
+deployment per signing.
+
+For that reason `release-prerelease-prepare.yml`, `release-prerelease.yml`, and
+`release-stable-publish.yml` start on the push a reviewed merge produces, not on
+the pull request event. `release-prerelease.yml` and `release-stable-publish.yml`
+first run a read-only `resolve-merge` job that finds the pull request the pushed
+commit merged (`commits/{sha}/pulls`, matched on merge commit and base branch)
+and passes its merged state, base, head branch, head repository, and head SHA to
+the existing checks. A push that is not a pull request merge, such as creating
+the branch, resolves to `merged=false` and releases nothing.
 
 ### Release Channel Contract
 

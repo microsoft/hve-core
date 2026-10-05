@@ -21,6 +21,9 @@ jobs:
   validate-release:
     name: Validate Tag and Release
     runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
       attestations: read # verify attestations when recovering a published release
@@ -576,6 +579,9 @@ jobs:
       - append-verification-notes
     if: ${{ always() && !cancelled() && !failure() && needs.validate-release.outputs.release-state == 'draft' }}
     runs-on: ubuntu-24.04
+    environment:
+      name: release-governance
+      deployment: false # use the environment's key and ref rules without deployment records
     permissions:
       contents: read
     steps:

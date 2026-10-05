@@ -1619,13 +1619,13 @@ Describe 'Retained release reconciliation and OpenVEX' -Tag 'Unit', 'ReleaseReco
         }
     }
 
-    It 'Leaves both pull-request workflows with pre-tag jobs only' -ForEach @(
+    It 'Leaves both merged-pull-request workflows with pre-tag jobs only' -ForEach @(
         @{ Workflow = 'release-prerelease.yml' }
         @{ Workflow = 'release-stable-publish.yml' }
     ) {
         $document = Get-WorkflowDocument -Name $Workflow
         [string[]]@($document['jobs'].Keys) | Sort-Object |
-            Should -Be @('release-please', 'sync-release-pr', 'validate-trigger')
+            Should -Be @('release-please', 'resolve-merge', 'sync-release-pr', 'validate-trigger')
         (Get-WorkflowText -Name $Workflow) | Should -Not -Match 'extension-vsix|sbom-dependencies|attest-build-provenance|vex-attest|verify-provenance|publish-release|close-milestone'
     }
 }
