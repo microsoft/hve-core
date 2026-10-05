@@ -64,9 +64,9 @@ runs:
           echo "::error::Installed shellcheck reports ${installed}, expected ${version}."
           exit 1
         fi
-        # Installing into /usr/local/bin, ahead of the image's apt shellcheck in
-        # /usr/bin, avoids a GITHUB_PATH write; the check fails if another
-        # shellcheck shadows it.
+        # Installing into /usr/local/bin, ahead of the image's apt package in
+        # /usr/bin, avoids a GITHUB_PATH write; the check fails if another copy
+        # of the binary shadows it.
         sudo install -m 0755 -t /usr/local/bin "${install_dir}/shellcheck"
         resolved="$(command -v shellcheck || true)"
         if [[ "${resolved}" != '/usr/local/bin/shellcheck' ]]; then
