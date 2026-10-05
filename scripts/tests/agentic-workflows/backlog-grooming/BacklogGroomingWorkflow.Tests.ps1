@@ -1067,18 +1067,15 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
         $script:Source | Should -Match '(?ms)^      continuation_authenticated:\s+.*?required: true\s+type: boolean'
         $script:Source | Should -Match "(?m)^if: needs\.pre_activation\.outputs\.trusted_caller == 'true'$"
         $script:Source | Should -Match '(?m)^      trusted_caller: \$\{\{ steps\.trusted-caller\.outputs\.trusted_caller \}\}$'
-        $script:Source | Should -Match 'run\.path === "\.github/workflows/backlog-groom-orchestrator\.yml"'
-        $script:Source | Should -Match 'run\.actor\?\.login === bot'
-        $script:Source | Should -Match 'run\.triggering_actor\?\.login === bot'
-        $script:Source | Should -Match 'context\.eventName === "schedule"'
-        $script:Source | Should -Match 'run\.event === "schedule"'
-        $script:Source | Should -Match 'process\.env\.CONTINUATION_AUTHENTICATED === "false"'
-        $script:Source | Should -Match 'context\.eventName === "workflow_dispatch"'
-        $script:Source | Should -Match 'run\.event === "workflow_dispatch"'
-        $script:Source | Should -Match 'process\.env\.CONTINUATION_AUTHENTICATED === "true"'
-        $script:Source | Should -Match '\(initialRun \|\| continuationRun\)'
-        $script:Source | Should -Match 'String\(process\.env\.ORCHESTRATOR_RUN_ID\) === String\(context\.runId\)'
-        $script:Source | Should -Match 'Number\(process\.env\.ORCHESTRATOR_ATTEMPT\) === Number\(process\.env\.GITHUB_RUN_ATTEMPT\)'
+        $script:Source | Should -Match '\.path == "\.github/workflows/backlog-groom-orchestrator\.yml"'
+        $script:Source | Should -Match '\.actor\.login == \$bot'
+        $script:Source | Should -Match '\.triggering_actor\.login == \$bot'
+        $script:Source | Should -Match '\$event_name == "schedule" and \.event == "schedule" and \$authenticated == "false"'
+        $script:Source | Should -Match '\$event_name == "workflow_dispatch" and \.event == "workflow_dispatch" and \$authenticated == "true"'
+        $script:Source | Should -Match '\(\.id \| tostring\) == \$run_id'
+        $script:Source | Should -Match '\(\.run_attempt \| tostring\) == \$run_attempt'
+        $script:Source | Should -Match '\$orchestrator_run_id == \$run_id'
+        $script:Source | Should -Match '\$orchestrator_attempt == \$run_attempt'
 
         $script:Orchestrator | Should -Match 'continuation-authenticated: \$\{\{ steps\.plan\.outputs\.continuation-authenticated \}\}'
         $script:Orchestrator | Should -Match 'core\.setOutput\("continuation-authenticated", String\(isContinuation\)\)'
@@ -2020,5 +2017,161 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
         }
         $script:WorkflowReadme | Should -Match '(?s)It refuses to run\s+from any ref other than the default branch'
         $script:WorkflowReadme | Should -Match 'rerun the failed jobs in that original publisher run'
+    }
+}
+
+# The trusted-caller check gates every model worker, so each trust branch runs
+# the compiled step against a stubbed workflow-run API response.
+$script:TrustedCallerBash = (Get-Command bash -CommandType Application -ErrorAction SilentlyContinue |
+    Select-Object -First 1).Source
+$script:SkipTrustedCallerFixtures = -not $script:TrustedCallerBash
+if (-not $script:SkipTrustedCallerFixtures) {
+    & $script:TrustedCallerBash -c 'command -v jq >/dev/null' 2>$null
+    $script:SkipTrustedCallerFixtures = $LASTEXITCODE -ne 0
+}
+
+Describe 'Backlog grooming trusted caller step' -Tag 'Unit' {
+    BeforeAll {
+        $script:TrustedCallerBash = (Get-Command bash -CommandType Application -ErrorAction SilentlyContinue |
+            Select-Object -First 1).Source
+        $lock = Get-Content -LiteralPath (Join-Path $script:RepoRoot '.github/workflows/backlog-groom.lock.yml') -Raw |
+            ConvertFrom-Yaml
+        $script:TrustedCallerStep = @($lock['jobs']['pre_activation']['steps']) |
+            Where-Object { $_['name'] -eq 'Verify trusted continuation caller' }
+
+        $script:TrustedRun = [ordered]@{
+            id               = 777
+            run_attempt      = 2
+            event            = 'workflow_dispatch'
+            path             = '.github/workflows/backlog-groom-orchestrator.yml'
+            actor            = @{ login = 'github-actions[bot]' }
+            triggering_actor = @{ login = 'github-actions[bot]' }
+        }
+
+        $script:FakeGh = @(
+            '#!/usr/bin/env bash'
+            'set -euo pipefail'
+            'test "$1" = ''api'''
+            'test "$2" = "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"'
+            'echo called > ./api-called.txt'
+            'test -z "${MOCK_API_FAILS}"'
+            'cat ./run.json'
+        ) -join "`n"
+
+        function script:Invoke-TrustedCallerStep {
+            param(
+                [hashtable]$Environment = @{},
+                [System.Collections.IDictionary]$Run = $script:TrustedRun,
+                [switch]$ApiFails
+            )
+
+            $fixture = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString('n'))
+            New-Item -ItemType Directory -Path (Join-Path $fixture 'bin') -Force | Out-Null
+            try {
+                $values = [ordered]@{
+                    GITHUB_ACTOR               = 'github-actions[bot]'
+                    GITHUB_REPOSITORY          = 'microsoft/hve-core'
+                    GITHUB_RUN_ID              = '777'
+                    GITHUB_RUN_ATTEMPT         = '2'
+                    GITHUB_EVENT_NAME          = 'workflow_dispatch'
+                    GITHUB_OUTPUT              = './github-output.txt'
+                    GH_TOKEN                   = 'fixture-token'
+                    CONTINUATION_AUTHENTICATED = 'true'
+                    ORCHESTRATOR_RUN_ID        = '777'
+                    ORCHESTRATOR_ATTEMPT       = '2'
+                    MOCK_API_FAILS             = $(if ($ApiFails) { 'true' } else { '' })
+                }
+                foreach ($key in $Environment.Keys) { $values[$key] = $Environment[$key] }
+                $exports = foreach ($entry in $values.GetEnumerator()) {
+                    $encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes([string]$entry.Value))
+                    "export $($entry.Key)=`"`$(printf '%s' '$encoded' | base64 --decode)`""
+                }
+                $utf8 = [Text.UTF8Encoding]::new($false)
+                [IO.File]::WriteAllText((Join-Path $fixture 'environment.sh'), ($exports -join "`n") + "`n", $utf8)
+                [IO.File]::WriteAllText((Join-Path $fixture 'run.json'), ($Run | ConvertTo-Json -Compress), $utf8)
+                [IO.File]::WriteAllText((Join-Path $fixture 'bin/gh'), $script:FakeGh + "`n", $utf8)
+                [IO.File]::WriteAllText((Join-Path $fixture 'step.sh'),
+                    ([string]$script:TrustedCallerStep['run'] -replace "`r?`n", "`n"), $utf8)
+
+                Push-Location -LiteralPath $fixture
+                try {
+                    & $script:TrustedCallerBash -c 'chmod +x ./bin/gh && source ./environment.sh && export PATH="$PWD/bin:$PATH" && bash ./step.sh' 2>$null |
+                        Out-Null
+                    $exitCode = $LASTEXITCODE
+                    $output = if (Test-Path -LiteralPath './github-output.txt') {
+                        (Get-Content -LiteralPath './github-output.txt' -Raw).Trim()
+                    } else { '' }
+                    return [pscustomobject]@{
+                        ExitCode  = $exitCode
+                        Output    = $output
+                        ApiCalled = Test-Path -LiteralPath './api-called.txt'
+                    }
+                } finally {
+                    Pop-Location
+                }
+            } finally {
+                Remove-Item -LiteralPath $fixture -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        function script:Copy-TrustedRun {
+            param([hashtable]$Change = @{})
+            $copy = [ordered]@{}
+            foreach ($key in $script:TrustedRun.Keys) { $copy[$key] = $script:TrustedRun[$key] }
+            foreach ($key in $Change.Keys) { $copy[$key] = $Change[$key] }
+            return $copy
+        }
+    }
+
+    It 'runs as a shell step with the job token and no action' {
+        $script:TrustedCallerStep | Should -Not -BeNullOrEmpty
+        $script:TrustedCallerStep.Contains('uses') | Should -BeFalse
+        [string]$script:TrustedCallerStep['env']['GH_TOKEN'] | Should -BeExactly '${{ github.token }}'
+        [string]$script:TrustedCallerStep['run'] | Should -Not -Match '\$\{\{'
+    }
+
+    It 'trusts a human caller without calling the API' -Skip:$script:SkipTrustedCallerFixtures {
+        $result = Invoke-TrustedCallerStep -Environment @{ GITHUB_ACTOR = 'octocat' }
+        $result.ExitCode | Should -Be 0
+        $result.Output | Should -BeExactly 'trusted_caller=true'
+        $result.ApiCalled | Should -BeFalse
+    }
+
+    It 'trusts the authenticated orchestrator continuation' -Skip:$script:SkipTrustedCallerFixtures {
+        $result = Invoke-TrustedCallerStep
+        $result.ExitCode | Should -Be 0
+        $result.Output | Should -BeExactly 'trusted_caller=true'
+        $result.ApiCalled | Should -BeTrue
+    }
+
+    It 'trusts the scheduled initial orchestrator run' -Skip:$script:SkipTrustedCallerFixtures {
+        $result = Invoke-TrustedCallerStep -Environment @{ GITHUB_EVENT_NAME = 'schedule'; CONTINUATION_AUTHENTICATED = 'false' } `
+            -Run (Copy-TrustedRun -Change @{ event = 'schedule' })
+        $result.ExitCode | Should -Be 0
+        $result.Output | Should -BeExactly 'trusted_caller=true'
+    }
+
+    It 'rejects a bot caller when <Name>' -Skip:$script:SkipTrustedCallerFixtures -ForEach @(
+        @{ Name = 'a schedule claims authentication'; Environment = @{ GITHUB_EVENT_NAME = 'schedule'; CONTINUATION_AUTHENTICATED = 'true' }; Change = @{ event = 'schedule' } }
+        @{ Name = 'a dispatch is not authenticated'; Environment = @{ CONTINUATION_AUTHENTICATED = 'false' }; Change = @{} }
+        @{ Name = 'the run event differs from the context'; Environment = @{}; Change = @{ event = 'schedule' } }
+        @{ Name = 'the run is another workflow'; Environment = @{}; Change = @{ path = '.github/workflows/other.yml' } }
+        @{ Name = 'a person started the run'; Environment = @{}; Change = @{ actor = @{ login = 'octocat' } } }
+        @{ Name = 'a person re-triggered the run'; Environment = @{}; Change = @{ triggering_actor = @{ login = 'octocat' } } }
+        @{ Name = 'the run id differs'; Environment = @{}; Change = @{ id = 778 } }
+        @{ Name = 'the run attempt differs'; Environment = @{}; Change = @{ run_attempt = 1 } }
+        @{ Name = 'the orchestrator run id input differs'; Environment = @{ ORCHESTRATOR_RUN_ID = '778' }; Change = @{} }
+        @{ Name = 'the orchestrator attempt input differs'; Environment = @{ ORCHESTRATOR_ATTEMPT = '1' }; Change = @{} }
+        @{ Name = 'the actors are missing'; Environment = @{}; Change = @{ actor = $null; triggering_actor = $null } }
+    ) {
+        $result = Invoke-TrustedCallerStep -Environment $Environment -Run (Copy-TrustedRun -Change $Change)
+        $result.ExitCode | Should -Be 0
+        $result.Output | Should -BeExactly 'trusted_caller=false'
+    }
+
+    It 'fails closed when the workflow-run API fails' -Skip:$script:SkipTrustedCallerFixtures {
+        $result = Invoke-TrustedCallerStep -ApiFails
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -BeNullOrEmpty
     }
 }

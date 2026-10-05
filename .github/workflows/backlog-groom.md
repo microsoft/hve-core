@@ -59,44 +59,43 @@ jobs:
     outputs:
       trusted_caller: ${{ steps.trusted-caller.outputs.trusted_caller }}
     steps:
+      # Human callers pass gh-aw's role check. A github-actions[bot] caller is
+      # trusted only when this run is the orchestrator's own scheduled initial run
+      # or authenticated workflow_dispatch continuation, at this run attempt.
       - name: Verify trusted continuation caller
         id: trusted-caller
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
+          GH_TOKEN: ${{ github.token }}
           CONTINUATION_AUTHENTICATED: ${{ inputs.continuation_authenticated }}
           ORCHESTRATOR_RUN_ID: ${{ inputs.orchestrator_run_id }}
           ORCHESTRATOR_ATTEMPT: ${{ inputs.orchestrator_attempt }}
-        with:
-          script: |
-            const bot = "github-actions[bot]";
-            if (context.actor !== bot) {
-              core.setOutput("trusted_caller", "true");
-              return;
-            }
-
-            const { data: run } = await github.rest.actions.getWorkflowRun({
-              ...context.repo,
-              run_id: context.runId,
-            });
-            const initialRun =
-              context.eventName === "schedule" &&
-              run.event === "schedule" &&
-              process.env.CONTINUATION_AUTHENTICATED === "false";
-            const continuationRun =
-              context.eventName === "workflow_dispatch" &&
-              run.event === "workflow_dispatch" &&
-              process.env.CONTINUATION_AUTHENTICATED === "true";
-            const trusted =
-              (initialRun || continuationRun) &&
-              run.path === ".github/workflows/backlog-groom-orchestrator.yml" &&
-              run.actor?.login === bot &&
-              run.triggering_actor?.login === bot &&
-              String(run.id) === String(context.runId) &&
-              Number(run.run_attempt) === Number(process.env.GITHUB_RUN_ATTEMPT) &&
-              String(process.env.ORCHESTRATOR_RUN_ID) === String(context.runId) &&
-              Number(process.env.ORCHESTRATOR_ATTEMPT) === Number(process.env.GITHUB_RUN_ATTEMPT);
-            core.setOutput("trusted_caller", String(trusted));
-
+        run: |
+          set -euo pipefail
+          bot='github-actions[bot]'
+          if [ "${GITHUB_ACTOR}" != "${bot}" ]; then
+            echo 'trusted_caller=true' >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}")"
+          trusted="$(jq -r \
+            --arg event_name "${GITHUB_EVENT_NAME}" \
+            --arg bot "${bot}" \
+            --arg authenticated "${CONTINUATION_AUTHENTICATED:-}" \
+            --arg run_id "${GITHUB_RUN_ID}" \
+            --arg run_attempt "${GITHUB_RUN_ATTEMPT}" \
+            --arg orchestrator_run_id "${ORCHESTRATOR_RUN_ID:-}" \
+            --arg orchestrator_attempt "${ORCHESTRATOR_ATTEMPT:-}" '
+              (($event_name == "schedule" and .event == "schedule" and $authenticated == "false")
+                or ($event_name == "workflow_dispatch" and .event == "workflow_dispatch" and $authenticated == "true"))
+              and .path == ".github/workflows/backlog-groom-orchestrator.yml"
+              and .actor.login == $bot
+              and .triggering_actor.login == $bot
+              and (.id | tostring) == $run_id
+              and (.run_attempt | tostring) == $run_attempt
+              and $orchestrator_run_id == $run_id
+              and $orchestrator_attempt == $run_attempt
+            ' <<< "${run_json}")"
+          echo "trusted_caller=${trusted}" >> "${GITHUB_OUTPUT}"
 engine: copilot
 runs-on: ubuntu-24.04
 runs-on-slim: ubuntu-24.04

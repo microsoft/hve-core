@@ -1,5 +1,5 @@
-# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"6a2b418910cb8838b5961a39d46708260db7d95bce19b01f95e6d17eb967aec0","body_hash":"6d034b3db78d09d8d2ecd0e47da13f9bb5019a3a17371ae26ee33eeeff382ce5","compiler_version":"v0.89.21","strict":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.87"},"agent_image_runner":"ubuntu-24.04"}
-# gh-aw-manifest: {"version":1,"secrets":["COPILOT_GITHUB_TOKEN","GH_AW_DEFAULT_OTLP_ENDPOINT","GH_AW_DEFAULT_OTLP_HEADERS","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/checkout","sha":"3d3c42e5aac5ba805825da76410c181273ba90b1","version":"v7.0.1"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"3a2844b7e9c422d3c10d287c895573f7108da1b3"},{"repo":"actions/setup-node","sha":"820762786026740c76f36085b0efc47a31fe5020","version":"v7.0.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw-actions/setup","sha":"924af5fdc64061cfbf66fb584c8b07e2ac230c60","version":"v0.89.21"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.28.23","digest":"sha256:2c78aaba1c108e130e2d6d01e4f2cca334ea04c53e6f258913ac34173fe7e3b2","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.28.23@sha256:2c78aaba1c108e130e2d6d01e4f2cca334ea04c53e6f258913ac34173fe7e3b2"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.28.23","digest":"sha256:c15c3d1208df10c5b588a3657be53742aa982ae0909d1eb1812525268794ca64","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.28.23@sha256:c15c3d1208df10c5b588a3657be53742aa982ae0909d1eb1812525268794ca64"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.28.23","digest":"sha256:02ffc56dd40158223064ef03a78c2d9717473c93723b4e403d455ea6f0b09ae0","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.28.23@sha256:02ffc56dd40158223064ef03a78c2d9717473c93723b4e403d455ea6f0b09ae0"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.4.25@sha256:9be0a86220e807a0ecc89e53d7453468f7a53fbc6b3d1efd2299025ffe01d086"},{"image":"ghcr.io/github/gh-aw-node@sha256:11c2c544876cdbaffefe0f7f1283b74838c209654b4934a78e23ed11f750490f"},{"image":"ghcr.io/github/github-mcp-server:v1.12.2@sha256:508a0857ec762b1ab1cece29193345b501fab1dd9d1228a7b617062954cecac6"}],"mcp_servers":[{"name":"github","tools":["get_commit","get_file_contents","get_latest_release","get_me","get_pull_request","get_pull_request_comments","get_pull_request_diff","get_pull_request_files","get_pull_request_review_comments","get_pull_request_reviews","get_pull_request_status","get_release_by_tag","get_tag","issue_read","list_branches","list_commits","list_issue_types","list_issues","list_pull_requests","list_releases","list_starred_repositories","list_tags","pull_request_read","search_code","search_issues","search_pull_requests","search_repositories"]},{"name":"safeoutputs","tools":["noop","publish_backlog_grooming_result"]}]}
+# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"808576fe7c80bc781624dda2c281619c0989728f171d8a45da8e1e7cdafff3b4","body_hash":"6d034b3db78d09d8d2ecd0e47da13f9bb5019a3a17371ae26ee33eeeff382ce5","compiler_version":"v0.89.21","strict":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.87"},"agent_image_runner":"ubuntu-24.04"}
+# gh-aw-manifest: {"version":1,"secrets":["COPILOT_GITHUB_TOKEN","GH_AW_DEFAULT_OTLP_ENDPOINT","GH_AW_DEFAULT_OTLP_HEADERS","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/checkout","sha":"3d3c42e5aac5ba805825da76410c181273ba90b1","version":"v7.0.1"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"820762786026740c76f36085b0efc47a31fe5020","version":"v7.0.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw-actions/setup","sha":"924af5fdc64061cfbf66fb584c8b07e2ac230c60","version":"v0.89.21"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.28.23","digest":"sha256:2c78aaba1c108e130e2d6d01e4f2cca334ea04c53e6f258913ac34173fe7e3b2","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.28.23@sha256:2c78aaba1c108e130e2d6d01e4f2cca334ea04c53e6f258913ac34173fe7e3b2"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.28.23","digest":"sha256:c15c3d1208df10c5b588a3657be53742aa982ae0909d1eb1812525268794ca64","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.28.23@sha256:c15c3d1208df10c5b588a3657be53742aa982ae0909d1eb1812525268794ca64"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.28.23","digest":"sha256:02ffc56dd40158223064ef03a78c2d9717473c93723b4e403d455ea6f0b09ae0","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.28.23@sha256:02ffc56dd40158223064ef03a78c2d9717473c93723b4e403d455ea6f0b09ae0"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.4.25@sha256:9be0a86220e807a0ecc89e53d7453468f7a53fbc6b3d1efd2299025ffe01d086"},{"image":"ghcr.io/github/gh-aw-node@sha256:11c2c544876cdbaffefe0f7f1283b74838c209654b4934a78e23ed11f750490f"},{"image":"ghcr.io/github/github-mcp-server:v1.12.2@sha256:508a0857ec762b1ab1cece29193345b501fab1dd9d1228a7b617062954cecac6"}],"mcp_servers":[{"name":"github","tools":["get_commit","get_file_contents","get_latest_release","get_me","get_pull_request","get_pull_request_comments","get_pull_request_diff","get_pull_request_files","get_pull_request_review_comments","get_pull_request_reviews","get_pull_request_status","get_release_by_tag","get_tag","issue_read","list_branches","list_commits","list_issue_types","list_issues","list_pull_requests","list_releases","list_starred_repositories","list_tags","pull_request_read","search_code","search_issues","search_pull_requests","search_repositories"]},{"name":"safeoutputs","tools":["noop","publish_backlog_grooming_result"]}]}
 # This file was automatically generated by gh-aw (v0.89.21). DO NOT EDIT. To debug this workflow, load the skill at https://github.com/github/gh-aw/blob/main/debug.md
 #
 #    ___                   _   _
@@ -41,7 +41,6 @@
 # Custom actions used:
 #   - actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 #   - actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-#   - actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
 #   - actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
 #   - actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
 #   - actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -1500,41 +1499,38 @@ jobs:
             await main();
       - name: Verify trusted continuation caller
         id: trusted-caller
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        run: |
+          set -euo pipefail
+          bot='github-actions[bot]'
+          if [ "${GITHUB_ACTOR}" != "${bot}" ]; then
+            echo 'trusted_caller=true' >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}")"
+          trusted="$(jq -r \
+            --arg event_name "${GITHUB_EVENT_NAME}" \
+            --arg bot "${bot}" \
+            --arg authenticated "${CONTINUATION_AUTHENTICATED:-}" \
+            --arg run_id "${GITHUB_RUN_ID}" \
+            --arg run_attempt "${GITHUB_RUN_ATTEMPT}" \
+            --arg orchestrator_run_id "${ORCHESTRATOR_RUN_ID:-}" \
+            --arg orchestrator_attempt "${ORCHESTRATOR_ATTEMPT:-}" '
+              (($event_name == "schedule" and .event == "schedule" and $authenticated == "false")
+                or ($event_name == "workflow_dispatch" and .event == "workflow_dispatch" and $authenticated == "true"))
+              and .path == ".github/workflows/backlog-groom-orchestrator.yml"
+              and .actor.login == $bot
+              and .triggering_actor.login == $bot
+              and (.id | tostring) == $run_id
+              and (.run_attempt | tostring) == $run_attempt
+              and $orchestrator_run_id == $run_id
+              and $orchestrator_attempt == $run_attempt
+            ' <<< "${run_json}")"
+          echo "trusted_caller=${trusted}" >> "${GITHUB_OUTPUT}"
         env:
           CONTINUATION_AUTHENTICATED: ${{ inputs.continuation_authenticated }}
+          GH_TOKEN: ${{ github.token }}
           ORCHESTRATOR_ATTEMPT: ${{ inputs.orchestrator_attempt }}
           ORCHESTRATOR_RUN_ID: ${{ inputs.orchestrator_run_id }}
-        with:
-          script: |
-            const bot = "github-actions[bot]";
-            if (context.actor !== bot) {
-              core.setOutput("trusted_caller", "true");
-              return;
-            }
-
-            const { data: run } = await github.rest.actions.getWorkflowRun({
-              ...context.repo,
-              run_id: context.runId,
-            });
-            const initialRun =
-              context.eventName === "schedule" &&
-              run.event === "schedule" &&
-              process.env.CONTINUATION_AUTHENTICATED === "false";
-            const continuationRun =
-              context.eventName === "workflow_dispatch" &&
-              run.event === "workflow_dispatch" &&
-              process.env.CONTINUATION_AUTHENTICATED === "true";
-            const trusted =
-              (initialRun || continuationRun) &&
-              run.path === ".github/workflows/backlog-groom-orchestrator.yml" &&
-              run.actor?.login === bot &&
-              run.triggering_actor?.login === bot &&
-              String(run.id) === String(context.runId) &&
-              Number(run.run_attempt) === Number(process.env.GITHUB_RUN_ATTEMPT) &&
-              String(process.env.ORCHESTRATOR_RUN_ID) === String(context.runId) &&
-              Number(process.env.ORCHESTRATOR_ATTEMPT) === Number(process.env.GITHUB_RUN_ATTEMPT);
-            core.setOutput("trusted_caller", String(trusted));
 
   publish_backlog_grooming_result:
     name: Publish the shard result

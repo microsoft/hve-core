@@ -6,6 +6,10 @@ on:
     events: [pull_request_comment, pull_request_review_comment]
   roles: [admin, maintainer, write]
   reaction: eyes
+  # The pre-activation job needs no token scopes; declaring that explicitly
+  # keeps scanners from reading the empty workflow default as unset.
+  permissions:
+    contents: none
 
 engine: copilot
 runs-on: ubuntu-24.04
