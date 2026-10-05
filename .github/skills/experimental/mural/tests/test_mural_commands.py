@@ -280,21 +280,30 @@ def test_auth_login_write_flag_when_env_unset(
     assert seen["scopes"] == expected
 
 
-def test_auth_login_short_circuits_when_credentials_present_without_force(
+def test_auth_login_short_circuits_when_refresh_token_is_present(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     fake_token_store: pathlib.Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Login exits 0 with hint when credentials exist and --force absent."""
-
-    class _StubBackend:
-        name = "stub"
-
-        def get(self, service: str, key: str) -> str | None:
-            return "seeded" if key == "MURAL_REFRESH_TOKEN" else None
-
-    monkeypatch.setattr(mural_module, "resolve_backend", lambda profile: _StubBackend())
+    fake_token_store.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "profiles": {
+                    "default": {
+                        "client_id": TEST_CLIENT_ID,
+                        "access_token": "",
+                        "refresh_token": "seeded-refresh-token",
+                        "token_type": "Bearer",
+                        "obtained_at": 0,
+                        "expires_at": 0,
+                    },
+                },
+            }
+        )
+    )
 
     def _boom(**_kwargs: Any) -> dict[str, Any]:
         raise AssertionError("_run_login must not be invoked")
@@ -341,12 +350,12 @@ def test_auth_login_short_circuits_when_access_token_is_present(
     assert rc == mural_module.EXIT_SUCCESS
 
 
-def test_auth_login_proceeds_when_only_app_credentials_are_present(
+def test_auth_login_proceeds_when_only_backend_credentials_are_present(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     fake_token_store: pathlib.Path,
 ) -> None:
-    """Client credentials prepare OAuth login but do not authenticate it."""
+    """Credential backend entries do not replace an authenticated token store."""
 
     class _StubBackend:
         name = "stub"
@@ -356,6 +365,8 @@ def test_auth_login_proceeds_when_only_app_credentials_are_present(
                 return "seeded-client-id"
             if key == mural_module.ENV_CLIENT_SECRET:
                 return "seeded-client-secret"
+            if key == "MURAL_REFRESH_TOKEN":
+                return "seeded-backend-refresh-token"
             return None
 
     monkeypatch.setattr(mural_module, "resolve_backend", lambda profile: _StubBackend())
@@ -855,12 +866,37 @@ def test_auth_setup_profile_allows_subsequent_login(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
     fake_token_store: pathlib.Path,
+    tmp_path: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The documented setup then login sequence starts OAuth."""
-    monkeypatch.setenv("MURAL_CLIENT_ID", "env-client")
+    """The documented setup then login sequence reports and starts correctly."""
+    credential_path = tmp_path / "mural.alpha.env"
+    monkeypatch.setenv(ENV_ENV_FILE, str(credential_path))
     monkeypatch.setenv("MURAL_SCOPES", "murals:read")
+    monkeypatch.setenv("MURAL_PROFILE", "alpha")
+    monkeypatch.setenv("MURAL_CREDENTIAL_BACKEND", "file")
+    monkeypatch.delenv("MURAL_CLIENT_ID", raising=False)
+    monkeypatch.delenv("MURAL_CLIENT_SECRET", raising=False)
+    monkeypatch.delenv("MURAL_REFRESH_TOKEN", raising=False)
+    monkeypatch.setattr(
+        mural_module,
+        "_probe_keyring_availability",
+        lambda: (False, None, None),
+    )
 
-    setup_rc = mural_module.main(["auth", "setup", "--profile", "alpha"])
+    setup_rc = mural_module.main(
+        [
+            "auth",
+            "setup",
+            "--client-id",
+            "setup-client",
+            "--profile",
+            "alpha",
+        ]
+    )
+    capsys.readouterr()
+    status_rc = mural_module.main(["auth", "status"])
+    status = json.loads(capsys.readouterr().out)
     invoked: dict[str, Any] = {}
 
     def _fake_login(*, scopes: str | None, timeout_seconds: int) -> dict[str, Any]:
@@ -877,8 +913,13 @@ def test_auth_setup_profile_allows_subsequent_login(
     login_rc = mural_module.main(["auth", "login", "--profile", "alpha"])
 
     assert setup_rc == mural_module.EXIT_SUCCESS
+    assert credential_path.exists()
+    assert status_rc == mural_module.EXIT_SUCCESS
+    assert status["authenticated"] is False
     assert login_rc == mural_module.EXIT_SUCCESS
     assert invoked.get("called") is True
+    store = mural_module._load_token_store(fake_token_store)
+    assert mural_module._select_profile(store, "alpha")["access_token"] == "x"
 
 
 def test_auth_setup_requires_client_id(

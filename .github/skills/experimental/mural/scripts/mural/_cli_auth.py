@@ -330,17 +330,11 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
         return EXIT_USAGE
     _maybe_promote_file_credentials_to_keyring(profile_name)
     force = bool(getattr(args, "force", False))
-    service = _service_name_for(profile_name)
     try:
-        backend = _pkg().resolve_backend(profile_name)
+        _pkg().resolve_backend(profile_name)
     except MuralError as exc:
         _emit(str(exc), level=logging.ERROR)
         return EXIT_FAILURE
-    backend_refresh_present = False
-    try:
-        backend_refresh_present = bool(backend.get(service, "MURAL_REFRESH_TOKEN"))
-    except _KeyringUnavailable:
-        backend_refresh_present = False
     profile_authenticated = False
     try:
         store = _pkg()._load_token_store(_resolve_token_store_path())
@@ -355,7 +349,7 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
                     )
     except Exception:  # noqa: BLE001 - probe must never raise
         profile_authenticated = False
-    if (backend_refresh_present or profile_authenticated) and not force:
+    if profile_authenticated and not force:
         _emit(
             f"profile {profile_name!r} already has stored credentials; "
             "rerun with --force to overwrite",
@@ -1263,8 +1257,11 @@ def _cmd_auth_status(args: argparse.Namespace) -> int:
             )
         )
         return EXIT_SUCCESS if backends_have_creds else EXIT_FAILURE
+    authenticated = bool(
+        profile.get("access_token") or profile.get("refresh_token")
+    )
     info = {
-        "authenticated": True,
+        "authenticated": authenticated,
         "token_store": str(path),
         "profile": profile_name,
         "granted_scopes": list(_token_granted_scopes(store, profile_name)),
