@@ -27,6 +27,7 @@ max-ai-credits: 2000
 
 jobs:
   detect:
+    name: Select levels to author
     runs-on: ubuntu-24.04
     permissions:
       actions: read
@@ -101,6 +102,7 @@ jobs:
   # Hands authored content to Demo Material Render in a separate run, which
   # waits for this run to finish and revalidates it before rendering.
   dispatch-render:
+    name: Start the render
     needs: [agent]
     if: needs.agent.result == 'success'
     runs-on: ubuntu-24.04

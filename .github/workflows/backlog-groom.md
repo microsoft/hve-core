@@ -142,6 +142,7 @@ safe-outputs:
     report-as-issue: false
   jobs:
     publish-backlog-grooming-result:
+      name: Publish the shard result
       description: "Publish one candidate-addressed semantic backlog grooming assessment"
       max: 5
       runs-on: ubuntu-24.04
@@ -234,10 +235,10 @@ safe-outputs:
           required: false
           type: string
       steps:
+        # The default ref is the trusted orchestrator commit that called this workflow.
         - name: Check out the collector implementation
           uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
           with:
-            ref: ${{ github.workflow_sha }}
             persist-credentials: false
         - name: Collect and write shard result
           shell: pwsh

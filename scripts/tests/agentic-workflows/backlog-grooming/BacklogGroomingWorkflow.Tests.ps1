@@ -430,7 +430,8 @@ Describe 'Backlog grooming workflow source' -Tag 'Unit' {
     It 'emits one independently validated immutable shard result' {
         $script:Source | Should -Match '(?m)^        - name: Check out the collector implementation$'
         $script:Source | Should -Match 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
-        $script:Source | Should -Match 'ref: \$\{\{ github\.workflow_sha \}\}'
+        $script:Source | Should -Match '(?s)- name: Check out the collector implementation\s+uses: actions/checkout@[0-9a-f]{40} # v7\.0\.1\s+with:\s+persist-credentials: false\s'
+        $script:Source | Should -Not -Match 'github\.workflow_sha'
         $script:Source | Should -Match 'persist-credentials: false'
         $script:Source | Should -Match '(?m)^          run: \./scripts/agentic-workflows/backlog-grooming/Invoke-BacklogGroomResultCollector\.ps1$'
         $script:Source | Should -Match '(?m)^        - name: Upload immutable shard result$'
@@ -1049,7 +1050,7 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
 
     It 'uploads the validated result without issue-write or SARIF permissions' {
         $script:Lock | Should -Match 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
-        $script:Lock | Should -Match 'ref: \$\{\{ github\.workflow_sha \}\}'
+        $script:Lock | Should -Not -Match 'github\.workflow_sha'
         $script:Lock | Should -Match 'persist-credentials: false'
         $script:Lock | Should -Match 'GH_AW_AGENT_OUTPUT'
         $script:Lock | Should -Match 'Invoke-BacklogGroomResultCollector\.ps1'
