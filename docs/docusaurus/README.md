@@ -2,7 +2,7 @@
 title: HVE Core Documentation Site
 description: Docusaurus 3 documentation site for HVE Core
 author: Microsoft
-ms.date: 2026-09-12
+ms.date: 2026-10-05
 ms.topic: reference
 keywords:
   - docusaurus
