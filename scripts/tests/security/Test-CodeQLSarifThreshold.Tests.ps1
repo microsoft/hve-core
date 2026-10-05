@@ -412,11 +412,15 @@ Describe 'Tracked exceptions' {
         $withFile.ExceptionErrors | Should -BeNullOrEmpty
     }
 
+    # Shipped entries are checked against today, the date the gate uses in CI.
     It 'validates the repository exceptions file as shipped' {
         $repoFile = Join-Path $PSScriptRoot '../../../security/code-scanning-exceptions.yml'
-        $read = Read-CodeScanningException -Path $repoFile -CheckDate $script:CheckDate
+        $read = Read-CodeScanningException -Path $repoFile -CheckDate ([datetime]::UtcNow.Date)
         $read.Errors | Should -BeNullOrEmpty
-        @($read.Entries).Count | Should -Be 0
+        foreach ($entry in $read.Entries) {
+            $entry.Upstream | Should -Match '^https://github\.com/[^/]+/[^/]+/issues/\d+$'
+            $entry.Issue | Should -BeGreaterThan 0
+        }
     }
 
     It 'fails when an explicit exceptions path does not exist' {

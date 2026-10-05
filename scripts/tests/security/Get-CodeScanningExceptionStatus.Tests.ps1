@@ -122,9 +122,11 @@ Describe 'Get-CodeScanningExceptionStatus' -Tag 'Unit' {
 
     It 'reads the repository exceptions file as shipped' {
         $repoFile = Join-Path $PSScriptRoot '../../../security/code-scanning-exceptions.yml'
-        $status = Get-CodeScanningExceptionStatus -ExceptionsPath $repoFile -OpenAlerts @() -CheckDate $script:CheckDate
+        $shipped = @((Get-Content -LiteralPath $repoFile -Raw | ConvertFrom-Yaml)['exceptions'])
+        $status = Get-CodeScanningExceptionStatus -ExceptionsPath $repoFile -OpenAlerts @() -CheckDate ([datetime]::UtcNow.Date)
 
-        @($status) | Should -HaveCount 0
+        @($status) | Should -HaveCount $shipped.Count
+        @($status | Where-Object { $_.DaysLeft -lt 0 }) | Should -BeNullOrEmpty
     }
 }
 
