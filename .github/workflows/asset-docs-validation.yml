@@ -5,16 +5,26 @@ name: Asset Docs Validation
 on:
   workflow_call:
     inputs:
+      change-mode:
+        description: 'Use an exact immutable range or run full validation'
+        required: false
+        type: string
+        default: full
+      base-sha:
+        description: 'Immutable base commit used in range mode'
+        required: false
+        type: string
+        default: ''
+      head-sha:
+        description: 'Immutable head commit used in range mode'
+        required: false
+        type: string
+        default: ''
       changed-files-only:
         description: 'Only validate assets and documentation affected by changed files'
         required: false
         type: boolean
         default: true
-      base-branch:
-        description: 'Base branch or SHA for change detection (defaults to origin/main)'
-        required: false
-        type: string
-        default: ''
       soft-fail:
         description: 'Whether to continue on asset documentation validation failures'
         required: false
@@ -36,6 +46,19 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Verify resolved head commit
+        if: inputs.change-mode == 'range'
+        shell: pwsh
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+        run: |
+          $actualHeadSha = (git rev-parse HEAD).Trim()
+          if ($env:EXPECTED_HEAD_SHA -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
+            Write-Output "::error::Checked-out commit $actualHeadSha does not match the resolved head commit."
+            exit 1
+          }
 
       - name: Setup PowerShell modules
         uses: ./.github/actions/setup-ps-modules
@@ -43,18 +66,19 @@ jobs:
       - name: Run asset documentation validation
         shell: pwsh
         env:
-          BASE_BRANCH: ${{ inputs.base-branch }}
-          CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
+          INPUT_BASE_SHA: ${{ inputs.base-sha }}
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
+          INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
         run: |
           $params = @{
             FailOnMissing = $true
             CheckSync     = $true
           }
-          if ($env:CHANGED_FILES_ONLY -eq 'true') {
+          if ($env:INPUT_CHANGE_MODE -notin @('full', 'range')) { throw 'Unsupported change mode.' }
+          if ($env:INPUT_CHANGED_FILES_ONLY -eq 'true' -and $env:INPUT_CHANGE_MODE -eq 'range') {
+            if (-not $env:INPUT_BASE_SHA) { throw 'Range mode requires an immutable base commit ID.' }
             $params['ChangedFilesOnly'] = $true
-            if (-not [string]::IsNullOrEmpty($env:BASE_BRANCH)) {
-              $params['BaseBranch'] = $env:BASE_BRANCH
-            }
+            $params['BaseBranch'] = $env:INPUT_BASE_SHA
           }
           & './scripts/linting/Validate-AssetDocs.ps1' @params
         continue-on-error: ${{ inputs.soft-fail }}
