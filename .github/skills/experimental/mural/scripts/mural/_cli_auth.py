@@ -1257,9 +1257,7 @@ def _cmd_auth_status(args: argparse.Namespace) -> int:
             )
         )
         return EXIT_SUCCESS if backends_have_creds else EXIT_FAILURE
-    authenticated = bool(
-        profile.get("access_token") or profile.get("refresh_token")
-    )
+    authenticated = bool(profile.get("access_token") or profile.get("refresh_token"))
     info = {
         "authenticated": authenticated,
         "token_store": str(path),
