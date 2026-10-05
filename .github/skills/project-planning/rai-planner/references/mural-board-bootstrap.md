@@ -4,7 +4,7 @@ description: Optional Mural team-board bootstrap for Phase 2 of the RAI Planner,
 
 # Mural Board Bootstrap
 
-Use this note only when the user accepts the Phase 2 Mural board offer or asks for a Mural board. Do not run any `mural` command before reading it.
+Use this note only when the user accepts the Phase 2 Mural board offer or asks for a Mural board. Do not run any board-seeding `mural` command before reading it. Reading a Phase 1 Mural template follows the `mural` skill `references/bootstrap.md` instead.
 
 Seed a Mural board reflecting Phase 2 risk classification when the user wants a visible team artifact. Inputs: `workspace`, `room`, `source_mural`, `project_slug`, optional `title`, optional `archive_mural_id`. Cross-cutting conventions (duplicate-then-populate, source-artifact-to-area binding, anchor inheritance, probe-before-bulk, layout-primitive enforcement, 404 recovery, reserved tag hygiene) are owned by the `mural` skill `references/seeding-patterns.md`; do not restate the six patterns here.
 

@@ -46,7 +46,7 @@ Six sequential phases structure the RAI assessment. Each phase declares entry cr
 
 * **Entry criteria**: New session started or `from-prd`/`from-security-plan` entry mode activated.
 * **Activities**: Resolve the project slug and output requirements, then run the Phase 1 preflight:
-  1. Discover optional document and Mural templates. Validate and persist references by kind without URLs, credentials, or signed query data.
+  1. Discover optional document and Mural templates. Validate and persist references by kind without URLs, credentials, or signed query data. Before the first `mural` command that reads a Mural template, follow the `mural` skill `references/bootstrap.md`.
   2. When templates exist, create `assessment-content.md` for their structure, output requirements, stable IDs, and recovery mappings. Persist a non-empty `stableIdMap` within every document or Mural template object, using ordinary source-key properties such as `A1/system-purpose`. Separate template ownership makes repeated source keys valid across templates. Treat placeholders as layout rather than content capacity.
   3. Discover project materials and evidence. Inspect PRD or security-plan content here, and inspect recent communications only when WorkIQ is available and the user grants permission.
   4. When templates exist, populate `assessment-content.md`, record evidence gaps, and expand it as needed while keeping `rai-plan.md` authoritative.
