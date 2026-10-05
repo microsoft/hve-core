@@ -6,7 +6,7 @@ compatibility: 'Requires FFmpeg on PATH'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-09-23"
+  last_updated: "2026-09-27"
 ---
 
 # Demo Video Assembly Skill
@@ -69,7 +69,12 @@ The assembly step accepts the following high-level controls:
 * `--output` or `-OutputPath` sets the destination MP4 path
 * `--fps` or `-Fps` controls the output frame rate for rendered segments
 * `--resolution` or `-Resolution` controls the output width and height in the form `WIDTHxHEIGHT`
+* `--timeout` or `-TimeoutSeconds` sets the maximum seconds for each ffprobe or ffmpeg invocation (1-86400, default 600); a timed-out step stops the run with an error that names the step
 * `duration` per segment lets you override the inferred length when narration timing is known in advance
+
+## Failure Behavior
+
+The assembled MP4 is written to a temporary file next to the destination and moved into place only after FFmpeg succeeds. A failed, timed-out, or interrupted run leaves no partial MP4 at the output path and keeps any existing file there unchanged. A successful run replaces an existing file at the output path. Temporary segment files are always removed.
 
 ## Narration Quality
 

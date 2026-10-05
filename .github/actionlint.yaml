@@ -26,7 +26,7 @@ config-variables:
   - HVE_GITHUB_RELEASES_URL
   - HVE_PSGALLERY_REPOSITORY
   - HVE_PSGALLERY_SOURCE_URL
-  - RELEASE_APP_ID
+  - RELEASE_APP_CLIENT_ID
 
 # Path-specific configurations for generated lock files.
 # Lock files are produced by `gh aw compile` and contain shell scripts

@@ -557,6 +557,11 @@ stimuli:
     Open the agent artifact at `.github/agents/project-planning/subagents/ado-backlog-executor.agent.md`.
 
     Report the human-readable agent name declared in its frontmatter, then restate its declared description verbatim. Do not paraphrase the description and do not describe the file itself.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/subagents/ado-backlog-executor.agent.md
+      dest: .github/agents/project-planning/subagents/ado-backlog-executor.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -573,13 +578,18 @@ stimuli:
   - type: output-matches
     name: ado-backlog-executor-frontmatter-name-and-descripti-4cd894c3
     config:
-      pattern: (?i)name\s*(is|:)\s*.{0,3}ado-backlog-executor
+      pattern: (?i)(?<!file\s?)\bname\s*(?:is|:)\s*.{0,3}ado-backlog-executor\b(?!\.agent\.md)
       negate: true
 - name: ado-backlog-executor-user-invocable-flag
   prompt: |
     Open the agent artifact at `.github/agents/project-planning/subagents/ado-backlog-executor.agent.md`.
 
     Report the value its frontmatter declares for `user-invocable`, and explain how a user reaches this artifact given that value.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/subagents/ado-backlog-executor.agent.md
+      dest: .github/agents/project-planning/subagents/ado-backlog-executor.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -588,7 +598,7 @@ stimuli:
   - type: output-matches
     name: ado-backlog-executor-user-invocable-flag-reports-de-90237384
     config:
-      pattern: (?i)user-invocable\s*(is|:|=)?\s*.{0,3}false
+      pattern: (?im)(?<![\s\S])(?![\s\S]*(?:\b(?:not|never|no|omits?|omitted|lacks?)\b|\b\w+n[\x27\u2019]t\b)[\s`*_~]+(?:(?!(?:true|because|since|as|so|given|hence|thus)\b)\w+[\s`*_~]+){0,2}(?:user-invocable[\s`*_~]*:[\s`*_~]*)?\bfalse\b)[\s\S]*?(?:^|[.!?](?=\s|$))(?=(?:[^.!?\n]|[.!?](?=\S))*(?:\buser-invocable\b(?:[^.!?\n]|[.!?](?=\S)){0,40}\bfalse\b|\bfalse\b(?:[^.!?\n]|[.!?](?=\S)){0,60}\buser-invocable\b))(?!(?:[^.!?\n]|[.!?](?=\S))*\bfalse\b[\s`*_~]*(?:is|are)\s+(?:absent|not\s+(?:set|declared|present))\b)(?:[^.!?\n]|[.!?](?=\S))*
   - type: output-matches
     name: ado-backlog-executor-user-invocable-flag-reaches-th-738997a8
     config:
@@ -596,13 +606,18 @@ stimuli:
   - type: output-matches
     name: ado-backlog-executor-user-invocable-flag-not-descri-340903dd
     config:
-      pattern: (?i)(appears in|select(able)? from|choose it in) the (agent )?picker
+      pattern: (?i)(?<!(?:\b(?:not|never)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})(?:appears in|select(?:able)? from|choose it in) the (?:agent )?picker
       negate: true
 - name: ado-backlog-executor-structural-template
   prompt: |
     Open the agent artifact at `.github/agents/project-planning/subagents/ado-backlog-executor.agent.md`.
 
-    List its top-level section headings in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+    List every level-one and level-two section heading in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/subagents/ado-backlog-executor.agent.md
+      dest: .github/agents/project-planning/subagents/ado-backlog-executor.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -611,11 +626,11 @@ stimuli:
   - type: output-matches
     name: ado-backlog-executor-structural-template-reports-pu-a88fba78
     config:
-      pattern: (?im)^\W*Purpose\b
+      pattern: '\bPurpose\b'
   - type: output-matches
     name: ado-backlog-executor-structural-template-reports-in-bbc6a6fc
     config:
-      pattern: (?im)^\W*Inputs\b
+      pattern: '\bInputs\b'
   - type: output-matches
     name: ado-backlog-executor-structural-template-reports-re-1ed0a1af
     config:
@@ -633,10 +648,20 @@ stimuli:
     Open the agent artifact at `.github/agents/project-planning/subagents/ado-backlog-executor.agent.md`.
 
     Read its declared `tools:` list together with its declared description. Assess whether that restriction set is appropriate for the role the description states, and name any tool whose presence or absence you consider inconsistent with that role. Justify the assessment from the artifact rather than from general expectations.
+    Distinguish what the declared tool grants make possible from what the host enforces and from the boundaries the artifact's own execution contract adds.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/subagents/ado-backlog-executor.agent.md
+      dest: .github/agents/project-planning/subagents/ado-backlog-executor.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
     agent: ado-backlog-executor
+  rubric:
+  - Grounds the tool-fit assessment in the artifact's declared tools and description without inventing tools.
+  - Identifies Azure DevOps read and write tools, no other tracker family, and no terminal, and relates that grant to the single-project execution role.
+  - Attributes project-level confinement to the artifact's destination-binding contract rather than claiming the tool grant enforces it.
   graders:
   - type: prompt
     name: ado-backlog-executor-tool-restriction-fit-tool-rest-74ab33a9
@@ -887,6 +912,71 @@ stimuli:
     name: no-sarif
     config:
       pattern: (?i)(?<!\b(?:not|never|without)\s)\b(?:generated|uploaded|emitted)\s+SARIF|security-events:\s*write
+      negate: true
+- name: backlog-grooming-keeps-stale-code-scanning-active
+  prompt: |
+    Execute one synthetic automated shard from this complete caller contract.
+    Do not query or mutate live GitHub state. Treat the hydrated candidate
+    and repository evidence below as the completed results of the required
+    read-only retrieval and search steps.
+
+    Run contract:
+      timestamp: 2026-10-02T12:00:00Z
+      manifest_digest: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      total_open_inventory: 1
+      previous_cursor: 3100
+      ordered_candidate_ids: [3108]
+      selection_reasons:
+        3108: round-robin after cursor 3100
+
+    Hydrated candidates and repository evidence:
+
+    - issue: 3108
+      title: CodeQL alert for js/path-injection in scripts/tools/render.js
+      state: open
+      is_pull_request: false
+      labels: [security, code-scanning]
+      body: |
+        <!-- automation:security-scan:js/path-injection -->
+        The alert has been open for 120 days and looks stale.
+      comments: ["No maintainer update in 90 days."]
+      activity: updated 2026-06-01T09:00:00Z
+      ownership: unassigned; labels security, code-scanning
+      milestone: none
+      linked_development: none
+      acceptance_signals: open CodeQL alert must be resolved without dismissal
+      repository_evidence:
+        - marker:automation:security-scan:js/path-injection
+        - exceptions-file:security/code-scanning-exceptions.yml:no-entry
+        - default-branch:scripts/tools/render.js:alert-still-open
+      expected_similarity: Distinct
+      expected_disposition: Still needed
+      lineage_evidence:
+        original_delivery: []
+        replacement_or_removal: []
+
+    Assess the candidate. Treat the code-scanning label and hidden marker as
+    active work even though the issue appears stale. Produce the compact
+    Backlog Grooming Report with the issue retained as not recommended for
+    closure, and keep every finding advisory. Do not resolve or update a
+    tracker, mutate an issue, or emit SARIF.
+  tags:
+    category: agent-behavior
+    agent: backlog-grooming
+  graders:
+  - type: output-matches
+    name: stale-code-scanning-still-needed
+    config:
+      pattern: (?is)(#?3108|Issue 3108).{0,1200}(Still needed|Uncertain).{0,1200}(code-scanning|CodeQL|security-scan)
+  - type: output-matches
+    name: stale-code-scanning-no-closure
+    config:
+      pattern: (?i)(?<!\bnot\s)(?<!\bnever\s)\brecommend(?:s|ed|ation)?(?:\s+(?:to|that))?[:\s]+(?:clos(?:e|ing)|closure)\b|\bnext step\b[^.\n]{0,40}\bclose\s+(?:issue\s+)?#?3108\b
+      negate: true
+  - type: output-matches
+    name: stale-code-scanning-advisory-no-mutation
+    config:
+      pattern: (?i)(?<!\b(?:not|never|without)\s)\b(?:closed|updated|labeled|assigned|commented on)\s+(?:github\s+)?issue\s*#?3108
       negate: true
 - name: backlog-manager-frontmatter-name-and-description
   prompt: |
@@ -4853,6 +4943,11 @@ stimuli:
     Open the agent artifact at `.github/agents/project-planning/functional-planner.agent.md`.
 
     Report the human-readable agent name declared in its frontmatter, then restate its declared description verbatim. Do not paraphrase the description and do not describe the file itself.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/functional-planner.agent.md
+      dest: .github/agents/project-planning/functional-planner.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -4869,13 +4964,18 @@ stimuli:
   - type: output-matches
     name: functional-planner-frontmatter-name-and-description-c8e4161a
     config:
-      pattern: (?i)name\s*(is|:)\s*.{0,3}functional-planner
+      pattern: (?i)(?<!file\s?)\bname\s*(?:is|:)\s*.{0,3}functional-planner\b(?!\.agent\.md)
       negate: true
 - name: functional-planner-handoff-target-and-label
   prompt: |
     Open the agent artifact at `.github/agents/project-planning/functional-planner.agent.md`.
 
     List every agent it can hand off to and the label each handoff entry carries. Identify each target agent the way the artifact identifies it.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/functional-planner.agent.md
+      dest: .github/agents/project-planning/functional-planner.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -4899,10 +4999,19 @@ stimuli:
     Open the agent artifact at `.github/agents/project-planning/functional-planner.agent.md`.
 
     Its frontmatter grants terminal execution. Report what the artifact says that grant is for, and state which of its declared platform boundaries the tool list enforces and which it does not.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/functional-planner.agent.md
+      dest: .github/agents/project-planning/functional-planner.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
     agent: functional-planner
+  rubric:
+  - Reports that terminal execution is granted for the Jira CLI read path rather than claiming the agent has no terminal.
+  - Explains that the read-only Azure DevOps and GitHub tool families make their mutation operations unreachable through those tool families.
+  - Identifies Jira's read-only boundary as stated policy not enforced by the general terminal grant, without inventing additional restrictions.
   graders:
   - type: prompt
     name: separates-enforced-boundary-from-stated-policy
@@ -4920,7 +5029,7 @@ stimuli:
   - type: output-matches
     name: does-not-claim-tool-list-enforces-jira-boundary
     config:
-      pattern: (?i)the tool (list|grant|frontmatter) (prevents|blocks|enforces|makes it impossible).{0,60}Jira
+      pattern: (?i)(?<!(?:\b(?:not|never|nor|neither|no)|n[\x27\u2019]t)\s+(?:\w+\s+){0,3})\bthe tool (?:list|grant|frontmatter) (?:prevents|blocks|enforces|makes it impossible)[^.\n]{0,60}\bJira\b
       negate: true
 - name: functional-planner-jira-credential-loading-boundary
   prompt: |
@@ -4929,6 +5038,11 @@ stimuli:
     Report how Jira configuration reaches the CLI and what the agent must do
     when CLI validation says configuration is incomplete. Report only the
     declared behavior; do not run commands, inspect credentials, or contact Jira.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/functional-planner.agent.md
+      dest: .github/agents/project-planning/functional-planner.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -4937,11 +5051,11 @@ stimuli:
   - type: output-matches
     name: reports-in-process-data-loading
     config:
-      pattern: (?i)(CLI|jira skill).{0,100}(loads?|reads?).{0,80}\.jira\.env.{0,100}(in-process|as data|not.{0,20}shell)
+      pattern: (?is)^(?=[\s\S]*\b(?:CLI|jira skill)\b)(?=[\s\S]*\b(?:load|loads|loaded|loading|read|reads|reading)\b)(?=[\s\S]*\.jira\.env)(?=[\s\S]*(?:in-process|in process|as data|not[^.\n]{0,20}shell))
   - type: output-matches
     name: reports-value-free-stop
     config:
-      pattern: (?i)(incomplete|missing|required).{0,100}variables?.{0,100}(stop|stops)
+      pattern: (?im)(?<![\s\S])(?![\s\S]*(?:^|[.!?]\s+)[\s>*_`-]*(?:(?:then|and|but)\s+)?(?:continu(?:e|ing)|proceed(?:ing)?|keep\s+going)\b(?!(?:[^.!?\n]|[.!?](?=\S))*\b(?:once|after|until|only|requires?|required|not\s+(?:allowed|permitted)|no\s+further)\b))[\s\S]*?(?:^|[.!?](?=\s|$))(?=(?:[^.!?\n]|[.!?](?=\S))*\b(?:incomplete|missing|required)\b)(?=(?:[^.!?\n]|[.!?](?=\S))*\bvariables?\b)(?=(?:[^.!?\n]|[.!?](?=\S))*\b(?:stop|stops|stopping|halt|halts|pause|pauses)\b)(?!(?:[^.!?\n]|[.!?](?=\S))*(?:\b(?:not|never|without)\b|\bno\b(?!\s+further\b)|\b\w+n[\x27\u2019]t\b|\binstead\s+of\b|\brather\s+than\b)(?:\s+\w+){0,2}\s+\b(?:stop(?:s|ped|ping)?|halt(?:s|ed|ing)?|paus(?:e|es|ed|ing))\b)(?!(?:[^.!?\n]|[.!?](?=\S))*\b(?:stop(?:s|ped|ping)?|halt(?:s|ed|ing)?|paus(?:e|es|ed|ing))\b(?:\s+(?:is|are|was)\s+(?:not|never)\b(?!\s+(?:optional|negotiable)\b)|\s+(?:isn|aren|wasn)[\x27\u2019]t\b|\s+(?:(?!not\b|never\b)\w+\s+)?(?:unnecessary|optional)\b))(?!(?:[^.!?\n]|[.!?](?=\S))*(?<!(?:\b(?:not|never|cannot|before|until|without)|\b\w+n[\x27\u2019]t|\binstead\s+of|\brather\s+than)[\s`*_~]+(?:\w+[\s`*_~]+){0,3})(?<!\botherwise[\s,]+|\bonce\b[^.;\n]{0,60}|\b(?:if|when)\b(?:(?!\b(?:not|missing|incomplete)\b)[^.;\n]){0,40}\b(?:present|set|configured|complete|available|provided)\b[^.;\n]{0,20})\b(?:continu(?:e|es|ed|ing)|proceed(?:s|ed|ing)?|keep(?:s|ing)?\s+going)\b(?!\s+no\s+further\b))(?:[^.!?\n]|[.!?](?=\S))*
   - type: output-matches
     name: does-not-report-credential-values
     config:
@@ -4957,6 +5071,11 @@ stimuli:
     Open the agent artifact at `.github/agents/project-planning/subagents/github-backlog-executor.agent.md`.
 
     Report the human-readable agent name declared in its frontmatter, then restate its declared description verbatim. Do not paraphrase the description and do not describe the file itself.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/subagents/github-backlog-executor.agent.md
+      dest: .github/agents/project-planning/subagents/github-backlog-executor.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -4973,13 +5092,18 @@ stimuli:
   - type: output-matches
     name: github-backlog-executor-frontmatter-name-and-descri-429fa822
     config:
-      pattern: (?i)name\s*(is|:)\s*.{0,3}github-backlog-executor
+      pattern: (?i)(?<!file\s?)\bname\s*(?:is|:)\s*.{0,3}github-backlog-executor\b(?!\.agent\.md)
       negate: true
 - name: github-backlog-executor-user-invocable-flag
   prompt: |
     Open the agent artifact at `.github/agents/project-planning/subagents/github-backlog-executor.agent.md`.
 
     Report the value its frontmatter declares for `user-invocable`, and explain how a user reaches this artifact given that value.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/subagents/github-backlog-executor.agent.md
+      dest: .github/agents/project-planning/subagents/github-backlog-executor.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -4988,7 +5112,7 @@ stimuli:
   - type: output-matches
     name: github-backlog-executor-user-invocable-flag-reports-94615eac
     config:
-      pattern: (?i)user-invocable\s*(is|:|=)?\s*.{0,3}false
+      pattern: (?im)(?<![\s\S])(?![\s\S]*(?:\b(?:not|never|no|omits?|omitted|lacks?)\b|\b\w+n[\x27\u2019]t\b)[\s`*_~]+(?:(?!(?:true|because|since|as|so|given|hence|thus)\b)\w+[\s`*_~]+){0,2}(?:user-invocable[\s`*_~]*:[\s`*_~]*)?\bfalse\b)[\s\S]*?(?:^|[.!?](?=\s|$))(?=(?:[^.!?\n]|[.!?](?=\S))*(?:\buser-invocable\b(?:[^.!?\n]|[.!?](?=\S)){0,40}\bfalse\b|\bfalse\b(?:[^.!?\n]|[.!?](?=\S)){0,60}\buser-invocable\b))(?!(?:[^.!?\n]|[.!?](?=\S))*\bfalse\b[\s`*_~]*(?:is|are)\s+(?:absent|not\s+(?:set|declared|present))\b)(?:[^.!?\n]|[.!?](?=\S))*
   - type: output-matches
     name: github-backlog-executor-user-invocable-flag-reaches-8375e6af
     config:
@@ -4996,13 +5120,18 @@ stimuli:
   - type: output-matches
     name: github-backlog-executor-user-invocable-flag-not-des-4db5a97e
     config:
-      pattern: (?i)(appears in|select(able)? from|choose it in) the (agent )?picker
+      pattern: (?i)(?<!(?:\b(?:not|never)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})(?:appears in|select(?:able)? from|choose it in) the (?:agent )?picker
       negate: true
 - name: github-backlog-executor-structural-template
   prompt: |
     Open the agent artifact at `.github/agents/project-planning/subagents/github-backlog-executor.agent.md`.
 
-    List its top-level section headings in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+    List every level-one and level-two section heading in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/subagents/github-backlog-executor.agent.md
+      dest: .github/agents/project-planning/subagents/github-backlog-executor.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -5011,11 +5140,11 @@ stimuli:
   - type: output-matches
     name: github-backlog-executor-structural-template-reports-5ca849de
     config:
-      pattern: (?im)^\W*Purpose\b
+      pattern: '\bPurpose\b'
   - type: output-matches
     name: github-backlog-executor-structural-template-reports-c87e95c7
     config:
-      pattern: (?im)^\W*Inputs\b
+      pattern: '\bInputs\b'
   - type: output-matches
     name: github-backlog-executor-structural-template-reports-427b55be
     config:
@@ -5033,10 +5162,20 @@ stimuli:
     Open the agent artifact at `.github/agents/project-planning/subagents/github-backlog-executor.agent.md`.
 
     Read its declared `tools:` list together with its declared description. Assess whether that restriction set is appropriate for the role the description states, and name any tool whose presence or absence you consider inconsistent with that role. Justify the assessment from the artifact rather than from general expectations.
+    Distinguish what the declared tool grants make possible from what the host enforces and from the boundaries the artifact's own execution contract adds.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/subagents/github-backlog-executor.agent.md
+      dest: .github/agents/project-planning/subagents/github-backlog-executor.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
     agent: github-backlog-executor
+  rubric:
+  - Grounds the tool-fit assessment in the artifact's declared tools and description without inventing tools.
+  - Identifies GitHub issue read and write tools, no other tracker family, and no terminal, and relates that grant to the single-repository execution role.
+  - Attributes repository-level confinement to the artifact's contract rather than claiming the tool grant enforces it.
   graders:
   - type: prompt
     name: github-backlog-executor-tool-restriction-fit-tool-r-3056e84e
@@ -5122,11 +5261,84 @@ stimuli:
     config:
       pattern: (?i)(?<!(?:\b(?:not|never|without)|n[\x27\u2019]t)\s+(?:(?:yet|ever|actually|explicitly|intentionally|really|previously)\s+)*)\b(?:created|wrote|modified|edited|patched|added)\s+\S{0,40}(?:\.cs|\.py|\.ts|\.js|package\.json)\b
       negate: true
+- name: issue-triage-code-scanning-alert
+  prompt: |
+    This is a prompt-visible smoke scenario, not a native tracker operation.
+    Read `policy/issue-triage.agent.md` for the triage rules and label
+    taxonomy, then triage this synthetic human-filed issue:
+
+    Title: CodeQL reports js/path-injection in scripts/tools/render.js
+    Body: GitHub Code Scanning shows an open CodeQL alert for rule
+    js/path-injection in scripts/tools/render.js. Please label and route the
+    issue so maintainers follow the repository alert lifecycle.
+
+    Return the triage decision in chat. Do not mutate GitHub, write files, or
+    claim that labels or comments were applied.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/issue-triage.agent.md
+      dest: policy/issue-triage.agent.md
+  tags:
+    category: agent-behavior
+    agent: issue-triage
+  graders:
+  - type: output-matches
+    name: code-scanning-labels
+    config:
+      pattern: (?is)\bsecurity\b.{0,300}\bcode-scanning\b|\bcode-scanning\b.{0,300}\bsecurity\b
+  - type: output-matches
+    name: lifecycle-page-linked
+    config:
+      pattern: https://github\.com/microsoft/hve-core/blob/main/docs/security/code-scanning-alert-lifecycle\.md
+  - type: output-matches
+    name: no-dismissal-recommended
+    config:
+      pattern: (?i)(?<!\b(?:do not|don\x27t|never|must not|cannot|should not)\s)(?:recommend|suggest|advise|propose).{0,80}\bdismiss
+      negate: true
+- name: issue-triage-dismissal-request
+  prompt: |
+    This is a prompt-visible smoke scenario, not a native tracker operation.
+    Read `policy/issue-triage.agent.md` for the triage rules and label
+    taxonomy, then triage this synthetic human-filed issue:
+
+    Title: Dismiss CodeQL false positive for generated parser
+    Body: Please ask maintainers to dismiss the open CodeQL alert for
+    js/unsafe-deserialization as a false positive. We do not want to change
+    code or create a tracked exception.
+
+    Return the triage decision in chat. Do not mutate GitHub, write files, or
+    claim that labels or comments were applied.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/issue-triage.agent.md
+      dest: policy/issue-triage.agent.md
+  tags:
+    category: agent-behavior
+    agent: issue-triage
+  graders:
+  - type: output-matches
+    name: dismissal-flagged-contrary-policy
+    config:
+      pattern: (?is)(dismiss|dismissal).{0,200}(contrary to|against|violates|not allowed|not permitted).{0,200}polic
+  - type: output-matches
+    name: dismissal-lifecycle-page-linked
+    config:
+      pattern: https://github\.com/microsoft/hve-core/blob/main/docs/security/code-scanning-alert-lifecycle\.md
+  - type: output-matches
+    name: dismissal-not-recommended
+    config:
+      pattern: (?i)(?<!\b(?:do not|don\x27t|never|must not|cannot|should not)\s)(?:recommend|suggest|advise|propose).{0,80}\bdismiss
+      negate: true
 - name: jira-backlog-executor-frontmatter-name-and-description
   prompt: |
     Open the agent artifact at `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md`.
 
     Report the human-readable agent name declared in its frontmatter, then restate its declared description verbatim. Do not paraphrase the description and do not describe the file itself.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/subagents/jira-backlog-executor.agent.md
+      dest: .github/agents/project-planning/subagents/jira-backlog-executor.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -5143,13 +5355,18 @@ stimuli:
   - type: output-matches
     name: jira-backlog-executor-frontmatter-name-and-descript-e1b92f51
     config:
-      pattern: (?i)name\s*(is|:)\s*.{0,3}jira-backlog-executor
+      pattern: (?i)(?<!file\s?)\bname\s*(?:is|:)\s*.{0,3}jira-backlog-executor\b(?!\.agent\.md)
       negate: true
 - name: jira-backlog-executor-user-invocable-flag
   prompt: |
     Open the agent artifact at `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md`.
 
     Report the value its frontmatter declares for `user-invocable`, and explain how a user reaches this artifact given that value.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/subagents/jira-backlog-executor.agent.md
+      dest: .github/agents/project-planning/subagents/jira-backlog-executor.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -5158,7 +5375,7 @@ stimuli:
   - type: output-matches
     name: jira-backlog-executor-user-invocable-flag-reports-d-faabdd22
     config:
-      pattern: (?i)user-invocable\s*(is|:|=)?\s*.{0,3}false
+      pattern: (?im)(?<![\s\S])(?![\s\S]*(?:\b(?:not|never|no|omits?|omitted|lacks?)\b|\b\w+n[\x27\u2019]t\b)[\s`*_~]+(?:(?!(?:true|because|since|as|so|given|hence|thus)\b)\w+[\s`*_~]+){0,2}(?:user-invocable[\s`*_~]*:[\s`*_~]*)?\bfalse\b)[\s\S]*?(?:^|[.!?](?=\s|$))(?=(?:[^.!?\n]|[.!?](?=\S))*(?:\buser-invocable\b(?:[^.!?\n]|[.!?](?=\S)){0,40}\bfalse\b|\bfalse\b(?:[^.!?\n]|[.!?](?=\S)){0,60}\buser-invocable\b))(?!(?:[^.!?\n]|[.!?](?=\S))*\bfalse\b[\s`*_~]*(?:is|are)\s+(?:absent|not\s+(?:set|declared|present))\b)(?:[^.!?\n]|[.!?](?=\S))*
   - type: output-matches
     name: jira-backlog-executor-user-invocable-flag-reaches-t-3a1c6be6
     config:
@@ -5166,13 +5383,18 @@ stimuli:
   - type: output-matches
     name: jira-backlog-executor-user-invocable-flag-not-descr-e4fadcaa
     config:
-      pattern: (?i)(appears in|select(able)? from|choose it in) the (agent )?picker
+      pattern: (?i)(?<!(?:\b(?:not|never)|n[\x27\u2019]t)\s+(?:\w+\s+){0,2})(?:appears in|select(?:able)? from|choose it in) the (?:agent )?picker
       negate: true
 - name: jira-backlog-executor-structural-template
   prompt: |
     Open the agent artifact at `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md`.
 
-    List its top-level section headings in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+    List every level-one and level-two section heading in order, exactly as written, and state whether its first heading matches the name declared in its frontmatter.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/subagents/jira-backlog-executor.agent.md
+      dest: .github/agents/project-planning/subagents/jira-backlog-executor.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
@@ -5181,11 +5403,11 @@ stimuli:
   - type: output-matches
     name: jira-backlog-executor-structural-template-reports-p-46d00f78
     config:
-      pattern: (?im)^\W*Purpose\b
+      pattern: '\bPurpose\b'
   - type: output-matches
     name: jira-backlog-executor-structural-template-reports-i-d241804d
     config:
-      pattern: (?im)^\W*Inputs\b
+      pattern: '\bInputs\b'
   - type: output-matches
     name: jira-backlog-executor-structural-template-reports-r-985aa9ef
     config:
@@ -5203,10 +5425,20 @@ stimuli:
     Open the agent artifact at `.github/agents/project-planning/subagents/jira-backlog-executor.agent.md`.
 
     Read its declared `tools:` list together with its declared description and the boundary its body states for that grant. Assess whether the restriction set is appropriate for the role the description states, and state which part of the boundary the tool list enforces and which part it does not. Justify the assessment from the artifact rather than from general expectations.
+    Distinguish what the declared grant makes possible from what the host enforces.
+    If the file cannot be read, report the task as blocked without inventing its declarations.
+  agent_environment:
+    files:
+    - src: ../../.github/agents/project-planning/subagents/jira-backlog-executor.agent.md
+      dest: .github/agents/project-planning/subagents/jira-backlog-executor.agent.md
   tags:
     category: agent-behavior
     advisory: "true"
     agent: jira-backlog-executor
+  rubric:
+  - Grounds the tool-fit assessment in the artifact's declared tools, description, and stated boundary without inventing tools.
+  - Identifies the grant as a general terminal rather than a Jira-specific tool family and relates it to the declared Jira execution role.
+  - Explains that prose narrows usage to the Jira CLI invocation shape while the host and tool list do not enforce that narrowing.
   graders:
   - type: prompt
     name: jira-backlog-executor-tool-restriction-fit-tool-res-2ae1d4c5
@@ -5224,7 +5456,7 @@ stimuli:
   - type: output-matches
     name: does-not-claim-host-enforces-cli-only
     config:
-      pattern: (?i)the (tool (list|grant)|host|frontmatter) (enforces|prevents|blocks|guarantees).{0,60}(only the Jira CLI|CLI[- ]only)
+      pattern: (?i)(?<!(?:\b(?:not|never|nor|neither)|n[\x27\u2019]t)\s+(?:\w+\s+){0,3})\bthe (?:tool (?:list|grant)|host|frontmatter) (?:enforces|prevents|blocks|guarantees).{0,60}(?:only the Jira CLI|CLI[- ]only)
       negate: true
 - name: meeting-analyst-class-recipe
   prompt: |

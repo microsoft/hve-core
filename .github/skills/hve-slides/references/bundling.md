@@ -156,8 +156,8 @@ Every `bundleDeck()` and `checkBundle()` run applies these checks through
 
 ## reveal.js Security Patch and Provenance
 
-The bundler removes two classes of unused reveal.js code from the inlined copy instead of
-sanitizing it:
+The bundler removes four classes of unused or redundant reveal.js code from the inlined copy
+instead of sanitizing it:
 
 * `reveal-lazy-src-neutralized`: reveal.js copies `data-src` and background-media attributes into
   `src` when it lazy-loads media and frames. CodeQL reports those reads as DOM text reinterpreted
@@ -165,29 +165,37 @@ sanitizing it:
 * `reveal-embed-host-regex-neutralized`: unanchored YouTube and Vimeo host regexes choose an
   embedded iframe's `postMessage` command. CodeQL reports them as missing regular expression
   anchors.
+* `reveal-postmessage-listener-removed`: reveal.js registers a window `message` listener, with no
+  origin check, when its `postMessage` option is on. Every deck sets `postMessage: false`, so the
+  bundler removes the registration. CodeQL reports the handler as a missing origin check.
+* `reveal-getslide-redundant-conditional-removed`: `getSlide` tests its slide list a second time
+  inside a branch whose guard already proved the list is truthy. The bundler drops the redundant
+  inner test without changing the result. CodeQL reports it as a useless conditional.
 
-Decks reject media, frames and `data-src` attributes in markup, so neither path can run. Each
-removal is anchored to an exact substring of the supported reveal.js release and checked against
-an expected match count. An unsupported version, a missing anchor or an unexpected count throws
-an error that names the anchor.
+Decks reject media, frames and `data-src` attributes in markup and disable the cross-window API,
+so none of the removed paths can run. Each removal is anchored to an exact substring of the supported
+reveal.js release and checked against an expected match count. An unsupported version, a missing
+anchor or an unexpected count throws an error that names the anchor.
 
 Each bundle records how it was produced in one inert JSON block beside `hve-slide-metadata`.
 The block is deterministic so `npm run slides:check` stays byte-stable:
 
 ```html
-<script type="application/json" id="hve-slide-provenance">{"generator":"hve-slides","revealVersion":"6.0.2","patches":["reveal-lazy-src-neutralized","reveal-embed-host-regex-neutralized"],"securityChecks":["raw-text-delimiters","inline-styles","resource-markup","reveal-lazy-src"],"securityCheckResult":"passed"}</script>
+<script type="application/json" id="hve-slide-provenance">{"generator":"hve-slides","revealVersion":"6.0.2","patches":["reveal-lazy-src-neutralized","reveal-embed-host-regex-neutralized","reveal-postmessage-listener-removed","reveal-getslide-redundant-conditional-removed"],"securityChecks":["raw-text-delimiters","inline-styles","resource-markup","reveal-lazy-src"],"securityCheckResult":"passed"}</script>
 ```
 
 The block is written only after every check passes, so `passed` is the only result a
 committed bundle can contain. It is escaped like the catalog block and is not executable.
 
 To update reveal.js, inspect the new release's `dist/reveal.js` for code that assigns
-`data-src`, `data-background-video` or `data-background-iframe` values to `src`, and for the
-embedded-media host checks. Update the anchors, counts and `supportedRevealVersion` in the
+`data-src`, `data-background-video` or `data-background-iframe` values to `src`, for the
+embedded-media host checks, for the window `message` listener registration, and for the
+`getSlide` conditional. Update the anchors, counts and `supportedRevealVersion` in the
 maintained bundler together, extend the fixture tests for any new sink, then run
 `npm run slides:build` and commit the regenerated bundles. Do not relax the count checks to
 make an update pass. Treat any new generated-slides CodeQL alert the same way: remove the path
-when decks cannot use it, otherwise fix it in the deck source or bundler.
+when decks cannot use it, otherwise fix it in the deck source or bundler. Never dismiss the
+alert or exclude the generated bundles from analysis.
 
 Validation masks comments and already embedded styles with separators rather than
 joining adjacent markup. This masking is only for resource checks, not HTML sanitization;

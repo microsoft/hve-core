@@ -378,7 +378,7 @@ def _authenticated_request(
             f"no token store at {store_path}; run `python -m mural auth login` first"
         )
     profile_name = _resolve_active_profile(
-        store, src, profile if profile is not None else _state._CLI_PROFILE
+        store, src, profile if profile is not None else _state.cli_profile()
     )
     profile_data = _select_profile(store, profile_name)
     profile_client_id = profile_data.get("client_id")

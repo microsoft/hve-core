@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-09-17
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - powershell
@@ -107,7 +107,7 @@ Purpose: Validate GitHub Actions workflow YAML syntax and best practices.
 
 ##### Parameters
 
-* `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch
+* `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch, or every workflow file when `.github/actionlint.yaml` changed
 * `-BaseBranch` (string) - Base branch for comparison (default: `origin/main`)
 * `-OutputPath` (string) - Output path for JSON results (default: `logs/yaml-lint-results.json`)
 
@@ -129,7 +129,7 @@ Purpose: Validate GitHub Actions workflow YAML syntax and best practices.
 * Workflow: `.github/workflows/yaml-lint.yml`
 * Configuration: `.github/actionlint.yaml`
 * Artifacts: `yaml-lint-results` (JSON)
-* Exit Code: Non-zero if violations found
+* Exit Code: Non-zero if violations are found or actionlint itself fails (invalid options or an unreadable configuration)
 
 ### Markdown Validation
 
@@ -237,6 +237,7 @@ Purpose: Detect broken links before deployment.
 * Discovers tracked and untracked, non-ignored Markdown files so local validation does not require staging
 * Validates internal links repository-wide, because renaming or deleting a target breaks references in files the change never touched
 * Restricts external-link fetching to files changed against a base branch with `-ChangedFilesOnly` and `-BaseBranch`; external links in unchanged files are reported as skipped
+* Supports `-ExternalLinksAsWarnings` so external findings remain visible without weakening internal-link failures
 * Fetches each unique external URL once, no matter how many files reference it
 * Checks files concurrently, bounded by `-ThrottleLimit` (default 8)
 * Configurable via `markdown-link-check.config.json`
@@ -258,9 +259,9 @@ Purpose: Detect broken links before deployment.
 * Workflow: `.github/workflows/markdown-link-check.yml`
 * Configuration: `markdown-link-check.config.json`
 * Artifacts: `markdown-link-check-results` (JSON)
-* Annotations: Error for each broken link
-* Exit Code: Non-zero if broken links found
-* Scope: pull request validation always checks internal links repository-wide and limits external-link fetching to changed files; `weekly-validation.yml` fetches external links across the full repository
+* Annotations: Errors for blocking findings; warnings for external findings when `-ExternalLinksAsWarnings` is active
+* Exit Code: Non-zero for any finding by default, or only for internal and source-report failures with `-ExternalLinksAsWarnings`
+* Scope: pull request validation hard-gates internal links repository-wide, reports external findings from changed files as advisory, and `weekly-validation.yml` fetches external links across the full repository
 
 ### ADR Consistency Validation
 
@@ -320,8 +321,9 @@ Purpose: Ensure all skill packages comply with the agentskills.io specification 
 * Validates Python skills with `tests/` include `tests/fuzz_harness.py` for Scorecard compliance
 * Warns when a Python skill has `pyproject.toml` without a committed `uv.lock` (required for Dependabot uv ecosystem coverage)
 * When `SECURITY.md` is present, validates the canonical per-skill security-model headings: trust buckets at H2 and STRIDE categories plus Risk Rating at H3
+* Requires every skill that ships non-test scripts to have a `SECURITY.md` or an exempt or pending entry in `scripts/linting/skill-security-classification.json`, and rejects entries that name a missing skill or a skill that already has a model
 * Warns on unrecognized directories
-* Supports changed-files-only mode via Git
+* Supports changed-files-only mode via Git; the skill security classification coverage check still runs across every skill so a classification change cannot pass unchecked
 * Creates CI annotations for violations
 * Exports JSON results to `logs/skill-validation-results.json`
 
@@ -329,8 +331,9 @@ Purpose: Ensure all skill packages comply with the agentskills.io specification 
 
 * `-SkillsPath` (string) - Root path containing skill directories (default: `.github/skills`)
 * `-WarningsAsErrors` (switch) - Treat warnings as errors
-* `-ChangedFilesOnly` (switch) - Validate only skills with changed files
+* `-ChangedFilesOnly` (switch) - Validate only skills with changed files, plus repository-wide skill security classification coverage
 * `-BaseBranch` (string) - Git reference for changed file detection (default: `origin/main`)
+* `-SecurityClassificationPath` (string) - Skill security classification file (default: `scripts/linting/skill-security-classification.json`)
 
 ##### Usage
 
@@ -713,8 +716,9 @@ blockquote markers, so line wrapping does not affect matching.
 ##### GitHub Actions Integration
 
 * Workflow: `.github/workflows/ai-artifact-validation.yml`
-* Artifacts: `ai-artifact-results` (JSON)
-* npm script: `npm run lint:ai-artifacts`
+* Validation: footer and disclaimer validation plus artifact path portability run independently before one blocking result gate
+* Artifacts: `ai-artifact-results` (contains `ai-artifact-results.json` and `artifact-path-portability-results.json`)
+* npm scripts: `npm run lint:ai-artifacts` and `npm run lint:artifact-portability`
 * Exit Code: Non-zero when `-FailOnMissing` is set and issues are found
 
 ## npm Scripts
@@ -722,6 +726,7 @@ blockquote markers, so line wrapping does not affect matching.
 | npm Script                       | Description                                                                                                                                                          |
 |----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `lint:ai-artifacts`              | Run `pwsh -NoProfile -File ./scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing` to enforce footers                                                        |
+| `lint:artifact-portability`      | Run `pwsh -NoProfile -File scripts/linting/Test-ArtifactPathPortability.ps1` to reject operational source-tree paths in distributed runtime artifacts                |
 | `lint:asset-docs`                | Run `pwsh -NoProfile -File scripts/linting/Validate-AssetDocs.ps1 -FailOnMissing -CheckSync` to enforce asset docs and Required authored guidance for all four kinds |
 | `lint:extension-artifact-naming` | Run `pwsh -NoProfile -File scripts/linting/Test-ExtensionArtifactNaming.ps1` to validate extension VSIX artifact names                                               |
 | `lint:hooks`                     | Run `pwsh -File scripts/linting/Validate-HookManifests.ps1` to validate collection-scoped hook manifests                                                             |

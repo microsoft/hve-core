@@ -199,15 +199,15 @@ Describe 'Eligibility trigger logging' -Tag 'Unit' {
     }
 }
 
-Describe 'Merge-parent base derivation' -Tag 'Unit' {
-    It 'derives a docs-only selection from a stale-base merge checkout through the entry point' {
-        $OutputPath = Join-Path $TestDrive 'merge-mode.json'
-        $Output = & pwsh -NoProfile -File $script:Generator -RepoRoot $script:Repo -MergeRef $script:MergeHead -HeadRef $script:DocsHead -OutFile $OutputPath 2>&1
+Describe 'Resolver-shaped range selection' -Tag 'Unit' {
+    It 'selects only the pull request changes when the base is the test-merge first parent' {
+        $OutputPath = Join-Path $TestDrive 'resolver-range.json'
+        $null = & pwsh -NoProfile -File $script:Generator -RepoRoot $script:Repo -BaseRef $script:MainHead -HeadRef $script:MergeHead -OutFile $OutputPath 2>&1
         $LASTEXITCODE | Should -Be 0
-        "$Output" | Should -Match "Derived base $($script:MainHead) from merge ref $($script:MergeHead) first parent"
         $Set = Read-EvalChangeSet -Path $OutputPath
         $Set.baseRef | Should -Be $script:MainHead
-        $Set.comparisonBase | Should -Be $script:Base
+        $Set.headRef | Should -Be $script:MergeHead
+        $Set.comparisonBase | Should -Be $script:MainHead
         $Set.changes.path | Should -Be @('CONTRIBUTING.md', 'TRANSPARENCY-NOTE.md')
         Test-EvalChangeSetRelevance -ChangeSet $Set -RepoRoot $script:Repo | Should -BeFalse
     }
@@ -225,16 +225,15 @@ Describe 'Merge-parent base derivation' -Tag 'Unit' {
             $null = Invoke-FixtureGit @('merge', '--no-ff', '--no-edit', $BranchHead)
             $Merge = Invoke-FixtureGit @('rev-parse', 'HEAD')
 
-            $Set = New-EvalChangeSet -RepoRoot $script:Repo -MergeRef $Merge -HeadRef $BranchHead
-            $Set.baseRef | Should -Be $LaterMain
-            $Set.comparisonBase | Should -Be $script:MainHead
+            $Set = New-EvalChangeSet -RepoRoot $script:Repo -BaseRef $LaterMain -HeadRef $Merge
+            $Set.comparisonBase | Should -Be $LaterMain
             $Set.changes.path | Should -Be @('CONTRIBUTING.md')
             Test-EvalChangeSetRelevance -ChangeSet $Set -RepoRoot $script:Repo | Should -BeFalse
         }
         finally { $null = Invoke-FixtureGit @('checkout', '--detach', $script:MergeHead) }
     }
 
-    It 'keeps a genuine AI change eligible in merge mode' {
+    It 'keeps a genuine AI change eligible' {
         $null = Invoke-FixtureGit @('checkout', '--detach', $script:Base)
         try {
             Set-FixtureFile '.github/agents/core/pr.agent.md' 'PR agent'
@@ -243,29 +242,11 @@ Describe 'Merge-parent base derivation' -Tag 'Unit' {
             $null = Invoke-FixtureGit @('merge', '--no-ff', '--no-edit', $Head)
             $Merge = Invoke-FixtureGit @('rev-parse', 'HEAD')
 
-            $Set = New-EvalChangeSet -RepoRoot $script:Repo -MergeRef $Merge -HeadRef $Head
+            $Set = New-EvalChangeSet -RepoRoot $script:Repo -BaseRef $script:MainHead -HeadRef $Merge
             $Set.changes.path | Should -Be '.github/agents/core/pr.agent.md'
             Test-EvalChangeSetRelevance -ChangeSet $Set -RepoRoot $script:Repo | Should -BeTrue
         }
         finally { $null = Invoke-FixtureGit @('checkout', '--detach', $script:MergeHead) }
-    }
-
-    It 'rejects a merge ref that is not a two-parent merge' {
-        { New-EvalChangeSet -RepoRoot $script:Repo -MergeRef $script:DocsHead -HeadRef $script:DocsHead } |
-            Should -Throw "*$($script:DocsHead) must have exactly two parents; found 1*"
-    }
-
-    It 'rejects a merge ref whose second parent is not the head' {
-        { New-EvalChangeSet -RepoRoot $script:Repo -MergeRef $script:MergeHead -HeadRef $script:Base } |
-            Should -Throw "*second parent $($script:DocsHead) does not match head $($script:Base)*"
-    }
-
-    It 'rejects supplying both merge and base refs to the entry point' {
-        $OutputPath = Join-Path $TestDrive 'ambiguous.json'
-        $Output = & pwsh -NoProfile -File $script:Generator -RepoRoot $script:Repo -MergeRef $script:MergeHead -BaseRef $script:Base -HeadRef $script:DocsHead -OutFile $OutputPath 2>&1
-        $LASTEXITCODE | Should -Not -Be 0
-        "$Output" | Should -Match 'Parameter set cannot be resolved'
-        Test-Path $OutputPath | Should -BeFalse
     }
 }
 

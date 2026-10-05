@@ -3,6 +3,8 @@ title: Code Review
 description: Human-gated code review for pull requests, branch diffs, and local changes across five skill-backed findings perspectives
 sidebar_position: 1
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Code Review"
 keywords:
   - code review
   - pre-PR review
@@ -17,7 +19,7 @@ tags:
   - code-review
   - coding-standards
 author: Microsoft
-ms.date: 2026-09-09
+ms.date: 2026-10-04
 ms.topic: concept
 estimated_reading_time: 10
 ---

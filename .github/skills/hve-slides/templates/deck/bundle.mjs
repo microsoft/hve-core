@@ -10,19 +10,29 @@ const scriptTag = /(?:^[ \t]*)?<script defer src="([^"]+)"><\/script>/gm;
 
 export const revealAsset = 'vendor/reveal.js';
 export const supportedRevealVersion = '6.0.2';
-export const revealPatches = ['reveal-lazy-src-neutralized', 'reveal-embed-host-regex-neutralized'];
+export const revealPatches = [
+  'reveal-lazy-src-neutralized',
+  'reveal-embed-host-regex-neutralized',
+  'reveal-postmessage-listener-removed',
+  'reveal-getslide-redundant-conditional-removed'
+];
 export const securityChecks = ['raw-text-delimiters', 'inline-styles', 'resource-markup', 'reveal-lazy-src'];
 
 // Decks reject media, frames, and data-src attributes, so the bundler removes these unused reveal.js
 // paths instead of sanitizing them: DOM-text-to-URL sinks that copy data-src and background-media
 // attributes into src, and unanchored embed-host regexes that pick an iframe postMessage target.
+// Decks also disable the cross-window API (postMessage: false), so the bundler removes the window
+// message listener registration, which has no origin check, rather than leaving an unreachable
+// handler in the scanned output. The getSlide conditional drops a branch its outer guard makes redundant.
 // Exact anchors and counts fail closed when a reveal.js update changes the minified code.
 const revealSinks = [
   { name: 'lazy-loaded media, source, and iframe data-src', search: 'e.setAttribute(`src`,e.getAttribute(`data-src`))', count: 3, replacement: 'void 0' },
   { name: 'background video source', search: 'n.setAttribute(`src`,t);', count: 1, replacement: 'void 0;' },
   { name: 'background iframe', search: 'a.setAttribute(`src`,r)', count: 1, replacement: 'void 0' },
   { name: 'embedded YouTube host check', search: '/youtube\\.com\\/embed\\//.test(t.getAttribute(`src`))', count: 1, replacement: '!1' },
-  { name: 'embedded Vimeo host check', search: '/player\\.vimeo\\.com\\//.test(t.getAttribute(`src`))', count: 1, replacement: '!1' }
+  { name: 'embedded Vimeo host check', search: '/player\\.vimeo\\.com\\//.test(t.getAttribute(`src`))', count: 1, replacement: '!1' },
+  { name: 'window message listener registration', search: 'f.postMessage&&window.addEventListener(`message`,Jt,!1)', count: 1, replacement: 'void 0' },
+  { name: 'getSlide redundant conditional', search: 'r&&r.length&&typeof t==`number`?r?r[t]:void 0:n', count: 1, replacement: 'r&&r.length&&typeof t==`number`?r[t]:n' }
 ];
 const lazySourceFlow = /setAttribute\(\s*[`'"]src[`'"]\s*,\s*[\w$.]+\.getAttribute\(\s*[`'"]data-src[`'"]\s*\)\s*\)/;
 

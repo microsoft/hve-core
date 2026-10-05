@@ -26,19 +26,34 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      # Dismissed alerts that are still detected are reported too: a dismissal
+      # never resolves an alert, so they get an issue that asks for a reopen.
       - name: Fetch code scanning alerts
         shell: pwsh
         run: |
           $alerts = & .github/skills/security/gh-code-scanning/scripts/Get-CodeScanningAlerts.ps1 `
             -Owner $env:OWNER `
             -Repo $env:REPO `
-            -OutputFormat Json
+            -OutputFormat Json `
+            -IncludeDismissedStillDetected
           $alerts | Set-Content alerts.json -Encoding utf8
+
+      - name: Report tracked exception status
+        shell: pwsh
+        run: |
+          $status = & ./scripts/security/Get-CodeScanningExceptionStatus.ps1 -Owner $env:OWNER -Repo $env:REPO
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $status | Set-Content exceptions.json -Encoding utf8
 
       - name: Upload alerts artifact
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: gh-code-scanning-alerts
-          path: alerts.json
+          path: |
+            alerts.json
+            exceptions.json
           retention-days: 30

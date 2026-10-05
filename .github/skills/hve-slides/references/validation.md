@@ -46,7 +46,9 @@ A separate job scans the committed bundles with `.github/codeql/generated-slides
 reveal.js that recipients actually run. Both analyses run only after the source-to-bundle
 check passes in a separate job, so generated intermediates do not enter the scan workspace.
 Fix a generated-category finding in the deck source or the bundler, never by hand-editing
-the bundle. Keep dependency audits and notice checks.
+the bundle, dismissing the alert, or excluding the bundles from analysis. The generated-slides
+category is expected to report zero findings; the CodeQL threshold gate fails the job when it
+does not. Keep dependency audits and notice checks.
 
 Pull request validation runs a deck's Node tests whenever a file in that deck changes, and
 runs the starter's tests with this skill's tests whenever a skill file changes. Dependabot

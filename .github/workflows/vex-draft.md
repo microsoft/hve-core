@@ -193,17 +193,26 @@ existing finding set non-interactively.
    determined, the only valid status is `under_investigation`. You are
    forbidden from drafting `not_affected` at low confidence.
 
-7. **Update the VEX document.** Apply the drafted statements to
+7. **Find upstream-bump tracking.** For every advisory with no patched release
+   where you draft `not_affected` or `under_investigation`, search open issues
+   for an upstream-bump issue for the affected package. Link the issue in the
+   PR body when one exists. When none exists, state in the PR body that the
+   reviewer must file an upstream-bump issue before merging and link the alert
+   lifecycle policy:
+   <https://github.com/microsoft/hve-core/blob/main/docs/security/code-scanning-alert-lifecycle.md>.
+
+8. **Update the VEX document.** Apply the drafted statements to
    `security/vex/hve-core.openvex.json` per the mutation contract (bump the
    document version, set timestamps, never rewrite unrelated statements).
 
-8. **Open one pull request.** Emit a single `create-pull-request` safe output.
+9. **Open one pull request.** Emit a single `create-pull-request` safe output.
    Populate the PR body from the scaffold at
    `.github/skills/security/vex/assets/pr-body-scaffold.yml`: render the
    summary, the evidence checklist, and one CVE assessment block per finding
    (from `cve_assessment_template`) recording the drafted status, confidence
-   band, code-citation evidence, and impact statement. Title the PR `VEX: draft
-   status for untriaged findings`.
+   band, code-citation evidence, upstream-bump issue link or reviewer filing
+   requirement, and impact statement. Title the PR `VEX: draft status for
+   untriaged findings`.
 
 ## Constraints
 
