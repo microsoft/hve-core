@@ -292,7 +292,7 @@ def test_auth_login_short_circuits_when_credentials_present_without_force(
         name = "stub"
 
         def get(self, service: str, key: str) -> str | None:
-            return "seeded" if key == mural_module.ENV_CLIENT_ID else None
+            return "seeded" if key == "MURAL_REFRESH_TOKEN" else None
 
     monkeypatch.setattr(mural_module, "resolve_backend", lambda profile: _StubBackend())
 
@@ -305,6 +305,47 @@ def test_auth_login_short_circuits_when_credentials_present_without_force(
 
     assert rc == mural_module.EXIT_SUCCESS
     assert "already has stored credentials" in capsys.readouterr().err
+
+
+def test_auth_login_proceeds_when_only_app_credentials_are_present(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    fake_token_store: pathlib.Path,
+) -> None:
+    """Client credentials prepare OAuth login but do not authenticate it."""
+
+    class _StubBackend:
+        name = "stub"
+
+        def get(self, service: str, key: str) -> str | None:
+            if key == mural_module.ENV_CLIENT_ID:
+                return "seeded-client-id"
+            if key == mural_module.ENV_CLIENT_SECRET:
+                return "seeded-client-secret"
+            return None
+
+    monkeypatch.setattr(mural_module, "resolve_backend", lambda profile: _StubBackend())
+    invoked: dict[str, Any] = {}
+
+    def _fake_login(*, scopes: str | None, timeout_seconds: int) -> dict[str, Any]:
+        invoked["called"] = True
+        return {
+            "access_token": "x",
+            "expires_at": 0,
+            "obtained_at": 0,
+            "token_type": "Bearer",
+        }
+
+    monkeypatch.setattr(mural_module, "_run_login", _fake_login)
+    monkeypatch.setattr(mural_module, "_load_token_store_locked", lambda path: None)
+    monkeypatch.setattr(
+        mural_module, "_save_token_store_locked", lambda path, data: None
+    )
+
+    rc = mural_module.main(["auth", "login"])
+
+    assert rc == mural_module.EXIT_SUCCESS
+    assert invoked.get("called") is True
 
 
 def test_auth_login_proceeds_with_force_when_credentials_present(
@@ -770,8 +811,10 @@ def test_auth_setup_non_interactive(
     profile = data["profiles"]["alpha"]
     assert profile["client_id"] == "env-client"
     assert profile["access_token"] == ""
+    assert profile["expires_at"] == 0
     assert "scope" not in profile
     assert profile["granted_scopes"] == ["murals:read"]
+    mural_module._select_profile(data, "alpha")
 
 
 def test_auth_setup_requires_client_id(

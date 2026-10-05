@@ -336,14 +336,11 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
     except MuralError as exc:
         _emit(str(exc), level=logging.ERROR)
         return EXIT_FAILURE
-    existing: dict[str, str] = {}
+    backend_refresh_present = False
     try:
-        for key in _KNOWN_CREDENTIAL_KEYS:
-            value = backend.get(service, key)
-            if value:
-                existing[key] = value
+        backend_refresh_present = bool(backend.get(service, "MURAL_REFRESH_TOKEN"))
     except _KeyringUnavailable:
-        existing = {}
+        backend_refresh_present = False
     refresh_present = False
     try:
         store = _pkg()._load_token_store(_resolve_token_store_path())
@@ -355,7 +352,7 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
                     refresh_present = bool(profile_record.get("refresh_token"))
     except Exception:  # noqa: BLE001 - probe must never raise
         refresh_present = False
-    if (existing or refresh_present) and not force:
+    if (backend_refresh_present or refresh_present) and not force:
         _emit(
             f"profile {profile_name!r} already has stored credentials; "
             "rerun with --force to overwrite",
@@ -536,6 +533,7 @@ def _cmd_auth_setup(args: argparse.Namespace) -> int:
         "access_token": "",
         "token_type": "Bearer",
         "obtained_at": int(time.time()),
+        "expires_at": 0,
         "granted_scopes": list(granted),
     }
     path = _resolve_token_store_path()
