@@ -460,3 +460,13 @@ exceptions:
     owner: WilliamBerryiii
     reason: gh-aw threat-detection Setup Node.js ignores runtimes.node.version and pins node 24
     expires: 2026-12-31
+  - tool: poutine
+    rule: untrusted_checkout_exec
+    path: .github/workflows/backlog-groom.lock.yml
+    count: 4
+    kind: false-positive
+    upstream: https://github.com/boostsecurityio/poutine/issues/457
+    issue: 3137
+    owner: WilliamBerryiii
+    reason: gh-aw activation runs its own scripts from RUNNER_TEMP, which the computed .github checkout cannot supply
+    expires: 2026-12-31
