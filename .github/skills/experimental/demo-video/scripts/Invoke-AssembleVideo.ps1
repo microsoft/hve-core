@@ -27,6 +27,9 @@
 .PARAMETER Resolution
     Output resolution in WIDTHxHEIGHT format.
 
+.PARAMETER TimeoutSeconds
+    Maximum seconds for each ffprobe or ffmpeg invocation (1-86400). Defaults to 600 when omitted.
+
 .EXAMPLE
     ./Invoke-AssembleVideo.ps1 -ManifestPath examples/segments.yml -OutputPath ./output/demo.mp4
 #>
@@ -43,7 +46,11 @@ param(
     [int]$Fps,
 
     [Parameter(Mandatory = $false)]
-    [string]$Resolution
+    [string]$Resolution,
+
+    [Parameter(Mandatory = $false)]
+    [ValidateRange(1, 86400)]
+    [int]$TimeoutSeconds
 )
 
 $ErrorActionPreference = 'Stop'
@@ -89,6 +96,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         if ($OutputPath) { $PythonArgs += '--output', $OutputPath }
         if ($PSBoundParameters.ContainsKey('Fps')) { $PythonArgs += '--fps', $Fps }
         if ($Resolution) { $PythonArgs += '--resolution', $Resolution }
+        if ($PSBoundParameters.ContainsKey('TimeoutSeconds')) { $PythonArgs += '--timeout', $TimeoutSeconds }
 
         & $python $script @PythonArgs
         if ($LASTEXITCODE -ne 0) {

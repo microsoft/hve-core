@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-07-28
+ms.date: 2026-10-02
 ms.topic: reference
 keywords:
   - powershell
@@ -41,6 +41,7 @@ The security scripts share common modules and follow a consistent pattern:
 * [`Test-WorkflowPermissions.ps1`](#test-workflowpermissionsps1): workflow permissions validation
 * [`Test-DangerousWorkflow.ps1`](#test-dangerousworkflowps1): workflow template-injection detection
 * [`Test-PrValidationGate.ps1`](#test-prvalidationgateps1): PR-validation gate completeness
+* [`Test-CodeQLSarifThreshold.ps1`](#test-codeqlsarifthresholdps1): CodeQL SARIF threshold gate with tracked exceptions
 * [`Install-PSModules.ps1`](#install-psmodulesps1): centralized PS module install with retry
 * [`Test-PSModulePins.ps1`](#test-psmodulepinsps1): PS module version pin enforcement
 * [`Sign-PlannerArtifacts.ps1`](#sign-plannerartifactsps1): planner artifact manifest and signing
@@ -388,6 +389,51 @@ the gate job never waits on it.
 
 This validator requires the `PowerShell-Yaml` module at the version pinned in
 `ps-module-versions.json`.
+
+### `Test-CodeQLSarifThreshold.ps1`
+
+Fails a CodeQL analysis job when its SARIF contains a finding at the repository's
+code-scanning threshold.
+
+Purpose: Block new findings at merge time in pull requests and merge-queue groups,
+where ruleset code-scanning protection does not apply, without dismissing or
+hiding any alert. See the
+[code-scanning alert lifecycle](../../docs/security/code-scanning-alert-lifecycle.md).
+
+#### Features
+
+* Fails a result whose rule has `security-severity` of 4.0 or higher, or whose
+  rule has no security severity and whose effective level is `error` or `warning`
+* Resolves the effective level from the result, then the rule's default, then the
+  SARIF default of `warning`
+* Resolves rules through `ruleId`, `ruleIndex`, and `toolComponent` across the
+  driver and extensions; inline SARIF suppressions do not exempt a result
+* Fails closed on a missing, unreadable, or run-less SARIF input
+* Excuses a result only through a matching entry in
+  `security/code-scanning-exceptions.yml`, lists every excused result, and fails
+  on expired, malformed, over-90-day, or stale entries
+* Writes a Markdown summary to `$GITHUB_STEP_SUMMARY` or `-SummaryPath`
+* Integrates with `npm run security:codeql-gate`
+
+#### Parameters
+
+* `-SarifPath` - SARIF files or directories containing `*.sarif` files
+* `-ExceptionsPath` - Tracked exceptions file (default: `security/code-scanning-exceptions.yml`)
+* `-CheckDate` - Date used for expiry checks (default: current UTC date)
+* `-SummaryPath` - Markdown summary destination (default: `$env:GITHUB_STEP_SUMMARY`)
+
+#### Usage
+
+```powershell
+# Gate a downloaded analysis
+./scripts/security/Test-CodeQLSarifThreshold.ps1 -SarifPath ./python.sarif
+
+# Gate every SARIF file the CodeQL action wrote
+npm run security:codeql-gate -- -SarifPath ../results
+```
+
+This gate requires the `PowerShell-Yaml` module at the version pinned in
+`ps-module-versions.json` when the exceptions file is present.
 
 ### `Install-PSModules.ps1`
 

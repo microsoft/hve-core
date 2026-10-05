@@ -1,10 +1,10 @@
 {
   "@context": "https://openvex.dev/ns/v0.2.0",
-  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-09-08-v5",
+  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-10-03-v7",
   "author": "Microsoft HVE Core Maintainers",
-  "timestamp": "2026-09-04T01:28:45Z",
-  "last_updated": "2026-09-08T15:17:45.003Z",
-  "version": 5,
+  "timestamp": "2026-10-03T01:26:58.000Z",
+  "last_updated": "2026-10-03T01:26:58.000Z",
+  "version": 7,
   "tooling": "Maintained via the hve-core SSSC Reviewer VEX assessment capability (AI-assisted drafting) with human review and merge; published and Sigstore-attested by the microsoft/hve-core/.github/workflows/vex-attest.yml reusable workflow.",
   "statements": [
     {
@@ -210,6 +210,606 @@
       "impact_statement": "The committed moderation environment resolves Transformers 5.16.1, later than the 5.5.0 release where this issue was fixed. The repository directly constrains Transformers to versions from 5.15.0 up to, but excluding, 6.0.0 and installs the committed uv.lock with locked resolution, preventing dependency resolution from selecting an affected release. The moderation implementation uses Detoxify text classification and does not load LightGlue models or accept an attacker-selected model repository or model configuration. This environment is used by CI evaluation moderation and is not packaged in HVE Core release artifacts.",
       "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-fgcw-684q-jj6r; upstream fix: https://github.com/huggingface/transformers/commit/676559d5022b74aaa0cee1cee0842b7f27c5320e. Pin evidence: scripts/evals/moderation/pyproject.toml requires transformers>=5.15.0,<6; scripts/evals/moderation/uv.lock resolves transformers 5.16.1. Reachability evidence: scripts/evals/moderation/moderate.py constructs Detoxify from a fixed model enumeration and passes text only to model.predict; no moderation path loads a LightGlue model.",
       "timestamp": "2026-09-08T15:17:45.003Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-2gx3-rcp4-g85q",
+        "@id": "https://osv.dev/GHSA-2gx3-rcp4-g85q",
+        "aliases": [
+          "CVE-2026-101917",
+          "PYSEC-2026-4140"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than the 2.14.0 release where this issue was fixed. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-2gx3-rcp4-g85q. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-42vr-xj54-vc7v",
+        "@id": "https://osv.dev/GHSA-42vr-xj54-vc7v",
+        "aliases": [
+          "CVE-2026-101918",
+          "PYSEC-2026-4141"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than the 2.15.0 release where this issue was fixed. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-42vr-xj54-vc7v. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-8wjv-2p76-3863",
+        "@id": "https://osv.dev/GHSA-8wjv-2p76-3863",
+        "aliases": [
+          "CVE-2026-102265",
+          "PYSEC-2026-4142"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than the 2.14.0 release where this issue was fixed. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-8wjv-2p76-3863. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-9j54-fg26-wv3r",
+        "@id": "https://osv.dev/GHSA-9j54-fg26-wv3r",
+        "aliases": [
+          "CVE-2026-102266",
+          "PYSEC-2026-4143"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than the 2.14.0 release where this issue was fixed. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-9j54-fg26-wv3r. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-9v7f-9g4p-ffgj",
+        "@id": "https://osv.dev/GHSA-9v7f-9g4p-ffgj",
+        "aliases": [
+          "CVE-2026-102267",
+          "PYSEC-2026-4144"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than the 2.14.0 release where this issue was fixed. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-9v7f-9g4p-ffgj. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-ffc3-869f-jxw9",
+        "@id": "https://osv.dev/GHSA-ffc3-869f-jxw9",
+        "aliases": [
+          "CVE-2026-102268",
+          "PYSEC-2026-4145"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than the 2.14.0 release where this issue was fixed. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-ffc3-869f-jxw9. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-gvp8-978c-rx2q",
+        "@id": "https://osv.dev/GHSA-gvp8-978c-rx2q",
+        "aliases": [
+          "CVE-2026-103001",
+          "PYSEC-2026-4146"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than 2.13.0, the last release this advisory lists as affected. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-gvp8-978c-rx2q. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-hxm8-2xgr-2p9m",
+        "@id": "https://osv.dev/GHSA-hxm8-2xgr-2p9m",
+        "aliases": [
+          "CVE-2026-102269",
+          "PYSEC-2026-4147"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than the 2.14.0 release where this issue was fixed. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-hxm8-2xgr-2p9m. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-jwrc-g2q2-pq5p",
+        "@id": "https://osv.dev/GHSA-jwrc-g2q2-pq5p",
+        "aliases": [
+          "CVE-2026-102270",
+          "PYSEC-2026-4148"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than the 2.14.0 release where this issue was fixed. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-jwrc-g2q2-pq5p. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-p4g4-x82p-q773",
+        "@id": "https://osv.dev/GHSA-p4g4-x82p-q773",
+        "aliases": [
+          "CVE-2026-102271",
+          "PYSEC-2026-4149"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than the 2.14.0 release where this issue was fixed. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-p4g4-x82p-q773. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-r6x4-923q-g947",
+        "@id": "https://osv.dev/GHSA-r6x4-923q-g947",
+        "aliases": [
+          "CVE-2026-102272",
+          "PYSEC-2026-4150"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than the 2.14.0 release where this issue was fixed. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-r6x4-923q-g947. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-w2cx-738m-mc7w",
+        "@id": "https://osv.dev/GHSA-w2cx-738m-mc7w",
+        "aliases": [
+          "CVE-2026-102273",
+          "PYSEC-2026-4151"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than the 2.14.0 release where this issue was fixed. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-w2cx-738m-mc7w. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-w6j9-cwv2-h6wq",
+        "@id": "https://osv.dev/GHSA-w6j9-cwv2-h6wq",
+        "aliases": [
+          "CVE-2026-102274",
+          "PYSEC-2026-4152"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pyjwt@2.15.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pyjwt@2.15.1"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves pyjwt 2.15.1, later than the 2.14.0 release where this issue was fixed. PyJWT is a transitive dependency of azure-identity through MSAL in the TTS voiceover skill environment. The skill's project manifest constrains PyJWT to versions from 2.15.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.15.1, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-w6j9-cwv2-h6wq. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires pyjwt[crypto]>=2.15.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves pyjwt 2.15.1. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-8988-9cw3-xx77",
+        "@id": "https://osv.dev/GHSA-8988-9cw3-xx77",
+        "aliases": [
+          "CVE-2026-97687",
+          "PYSEC-2026-4175"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/urllib3@2.8.0",
+              "identifiers": {
+                "purl": "pkg:pypi/urllib3@2.8.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves urllib3 2.8.0, the same as the 2.8.0 release where this issue was fixed. urllib3 is a transitive dependency of requests, which azure-core and MSAL use for HTTP transport in the TTS voiceover skill environment. The skill's project manifest constrains urllib3 to versions from 2.8.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.8.0, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-8988-9cw3-xx77. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires urllib3>=2.8.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves urllib3 2.8.0. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-gh4c-6fx4-qh6g",
+        "@id": "https://osv.dev/GHSA-gh4c-6fx4-qh6g",
+        "aliases": [
+          "CVE-2026-97688",
+          "PYSEC-2026-4176"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/urllib3@2.8.0",
+              "identifiers": {
+                "purl": "pkg:pypi/urllib3@2.8.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves urllib3 2.8.0, the same as the 2.8.0 release where this issue was fixed. urllib3 is a transitive dependency of requests, which azure-core and MSAL use for HTTP transport in the TTS voiceover skill environment. The skill's project manifest constrains urllib3 to versions from 2.8.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.8.0, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-gh4c-6fx4-qh6g. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires urllib3>=2.8.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves urllib3 2.8.0. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-vxq7-64xx-v4gw",
+        "@id": "https://osv.dev/GHSA-vxq7-64xx-v4gw",
+        "aliases": [
+          "CVE-2026-97689",
+          "PYSEC-2026-4177"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/urllib3@2.8.0",
+              "identifiers": {
+                "purl": "pkg:pypi/urllib3@2.8.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves urllib3 2.8.0, the same as the 2.8.0 release where this issue was fixed. urllib3 is a transitive dependency of requests, which azure-core and MSAL use for HTTP transport in the TTS voiceover skill environment. The skill's project manifest constrains urllib3 to versions from 2.8.0 up to, but excluding, 3.0, and the committed uv.lock resolves 2.8.0, preventing locked installs from selecting an affected release.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-vxq7-64xx-v4gw. Pin evidence: .github/skills/experimental/tts-voiceover/pyproject.toml requires urllib3>=2.8.0,<3.0; .github/skills/experimental/tts-voiceover/uv.lock resolves urllib3 2.8.0. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-p98j-92pf-mc4p",
+        "@id": "https://osv.dev/GHSA-p98j-92pf-mc4p",
+        "aliases": [
+          null
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/dompurify@3.4.16",
+              "identifiers": {
+                "purl": "pkg:npm/dompurify@3.4.16"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves dompurify 3.4.16, the same as the 3.4.16 release where this issue was fixed. DOMPurify is a transitive dependency of Mermaid, which renders diagrams in the documentation site. The documentation site's package manifest overrides DOMPurify to exactly 3.4.16, and the committed package-lock.json resolves that version for clean installs.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-p98j-92pf-mc4p. Pin evidence: docs/docusaurus/package.json overrides dompurify to 3.4.16; docs/docusaurus/package-lock.json resolves dompurify 3.4.16. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-g84c-rxfj-3j2c",
+        "@id": "https://osv.dev/GHSA-g84c-rxfj-3j2c",
+        "aliases": [
+          "CVE-2024-29180",
+          "CVE-2026-76844",
+          "GHSA-wr3j-pwj9-hqq6"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/webpack-dev-middleware@7.4.6",
+              "identifiers": {
+                "purl": "pkg:npm/webpack-dev-middleware@7.4.6"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "fixed",
+      "impact_statement": "The committed environment resolves webpack-dev-middleware 7.4.6, the same as the 7.4.6 release where this issue was fixed. webpack-dev-middleware is a transitive dependency of webpack-dev-server through @docusaurus/core and runs only in the local documentation development server; the published site is static output. The documentation site's package manifest overrides webpack-dev-middleware to exactly 7.4.6, and the committed package-lock.json resolves that version for clean installs.",
+      "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-g84c-rxfj-3j2c. Pin evidence: docs/docusaurus/package.json overrides webpack-dev-middleware to 7.4.6; docs/docusaurus/package-lock.json resolves webpack-dev-middleware 7.4.6. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
+      "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-vfj7-8cjw-p6xm",
+        "@id": "https://osv.dev/GHSA-vfj7-8cjw-p6xm",
+        "aliases": [
+          "CVE-2026-93687"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/braces@3.0.3",
+              "identifiers": {
+                "purl": "pkg:npm/braces@3.0.3"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_cannot_be_controlled_by_adversary",
+      "impact_statement": "braces 3.0.3 is a development and build-time dependency only. It expands glob patterns, never file contents or file names, and every pattern it can receive is authored in this repository. In the root toolchain it arrives through markdownlint-cli2, which matches files with the main micromatch function; that function compiles patterns with picomatch and never calls braces. In the documentation toolchain, fast-glob expands brace patterns that Docusaurus derives from the site configuration's static directories, and chokidar expands the configured watch paths only while the local development server runs. A pull request that edits those patterns can at most fail its own validation job. The published site is static output and performs no glob expansion at request time. No patched release exists, so the finding is tracked rather than upgraded away.",
+      "status_notes": "OSV entry: https://osv.dev/GHSA-vfj7-8cjw-p6xm. Dependency paths: package-lock.json resolves braces 3.0.3 as a dev dependency through markdownlint-cli2 0.23.3 and micromatch 4.0.8; docs/docusaurus/package-lock.json resolves braces 3.0.3 through @docusaurus/core 3.10.2 via chokidar 3.6.0 and micromatch 4.0.8 (used by fast-glob, @docusaurus/utils, and http-proxy-middleware). Call sites: markdownlint-cli2.mjs filterByGlobs calls micromatch(files, globs); micromatch/index.js invokes braces only from micromatch.parse, micromatch.braces, and micromatch.braceExpand; fast-glob/out/utils/pattern.js expandBraceExpansion calls micromatch.braces; chokidar/index.js calls braces.expand on watched paths; @docusaurus/utils globUtils.js createMatcher uses micromatch.makeRe, which delegates to picomatch. Every parent package is at its latest release. Upstream bump tracked in https://github.com/microsoft/hve-core/issues/3109; Scorecard alert #16 stays open until it is fixed.",
+      "timestamp": "2026-10-03T01:26:58.000Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-ch52-4w7c-c8xp",
+        "@id": "https://osv.dev/GHSA-ch52-4w7c-c8xp",
+        "aliases": [
+          "CVE-2026-93748"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/http-cache-semantics@4.2.0",
+              "identifiers": {
+                "purl": "pkg:npm/http-cache-semantics@4.2.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "http-cache-semantics 4.2.0 is installed only in the documentation toolchain, where its sole consumer is cacheable-request, which got 12.6.1 creates only when a request sets the cache option. The only got caller in the tree is package-json 8.1.1, reached through the Docusaurus update notifier, and it builds its request options from headers and agents alone, so got's default of no cache applies and the cache-policy code is never executed. Nothing in the repository or the published static site uses this package to cache HTTP responses for multiple users. No patched release exists, so the finding is tracked rather than upgraded away.",
+      "status_notes": "OSV entry: https://osv.dev/GHSA-ch52-4w7c-c8xp. Dependency path: docs/docusaurus/package-lock.json resolves http-cache-semantics 4.2.0 through @docusaurus/core 3.10.2, update-notifier 6.0.2, latest-version 7.0.0, package-json 8.1.1, got 12.6.1, and cacheable-request 10.2.14; no other package depends on cacheable-request or http-cache-semantics. Execute-path evidence: got/dist/source/core/options.js defaults cache to undefined; got/dist/source/core/index.js selects _createCacheableRequest only when options.cache is set; package-json/index.js passes gotOptions containing only headers and agent. Every parent package is at its latest release. Upstream bump tracked in https://github.com/microsoft/hve-core/issues/3109; Scorecard alert #16 stays open until it is fixed.",
+      "timestamp": "2026-10-03T01:26:58.000Z"
     }
   ]
 }

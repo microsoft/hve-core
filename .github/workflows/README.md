@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-09-29
+ms.date: 2026-10-05
 ms.topic: reference
 keywords:
   - github actions
@@ -47,20 +47,119 @@ Modular reusable workflows following Single Responsibility Principle. Each workf
 
 Compose multiple reusable workflows for comprehensive validation and security scanning.
 
-| Workflow                          | Triggers                                                | Mode                          | Purpose                                                                           |
-|-----------------------------------|---------------------------------------------------------|-------------------------------|-----------------------------------------------------------------------------------|
-| `pr-validation.yml`               | PR to main, develop, or either release branch; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator |
-| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                           | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                 |
-| `release-prerelease.yml`          | Merged PR to `release/prerelease`                       | Managed PreRelease release    | Prepare the managed release PR or create the exact odd-minor tag and draft        |
-| `release-stable.yml`              | Published PreRelease; dispatch                          | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR       |
-| `release-stable-publish.yml`      | Merged PR to `release/stable`                           | Managed Stable release        | Prepare the managed release PR or create the exact even-minor tag and draft       |
-| `release-vsix-publish.yml`        | Push of `v*` or `prerelease-v*`                         | Post-tag release producer     | Validate, package, attest, verify, and publish the exact immutable release        |
-| `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                  | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate       |
-| `backlog-groom-publisher.yml`     | Completed sweep                                         | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history |
-| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                  | Soft-fail warnings            | Weekly security posture                                                           |
-| `scorecard.yml`                   | Push to main, post-tag release, schedule (Sun 3AM UTC)  | SARIF upload                  | OpenSSF Scorecard security posture                                                |
+| Workflow                          | Triggers                                                                     | Mode                          | Purpose                                                                           |
+|-----------------------------------|------------------------------------------------------------------------------|-------------------------------|-----------------------------------------------------------------------------------|
+| `pr-validation.yml`               | PR to main, develop, or either release branch; merge group to main; dispatch | Strict validation             | Pre-merge quality gate with the `PR Validation Success` required-check aggregator |
+| `release-prerelease-prepare.yml`  | Merged PR to `main`; dispatch                                                | Reviewed PreRelease promotion | Open the target-based `main` to `release/prerelease` promotion PR                 |
+| `release-prerelease.yml`          | Merged PR to `release/prerelease`                                            | Managed PreRelease release    | Prepare the managed release PR or create the exact odd-minor tag and draft        |
+| `release-stable.yml`              | Published PreRelease; dispatch                                               | Reviewed Stable promotion     | Open the target-based `release/prerelease` to `release/stable` promotion PR       |
+| `release-stable-publish.yml`      | Merged PR to `release/stable`                                                | Managed Stable release        | Prepare the managed release PR or create the exact even-minor tag and draft       |
+| `release-vsix-publish.yml`        | Push of `v*` or `prerelease-v*`                                              | Post-tag release producer     | Validate, package, attest, verify, and publish the exact immutable release        |
+| `backlog-groom-orchestrator.yml`  | First-Monday schedule; manual dispatch                                       | Advisory multi-run sweep      | Assess one immutable backlog snapshot and retain a complete final aggregate       |
+| `backlog-groom-publisher.yml`     | Completed sweep                                                              | Authenticated publication     | Update the compact trusted tracker and optionally publish immutable Pages history |
+| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                                                       | Soft-fail warnings            | Weekly security posture                                                           |
+| `scorecard.yml`                   | Push to main, post-tag release, schedule (Sun 3AM UTC)                       | SARIF upload                  | OpenSSF Scorecard security posture                                                |
 
 The validation jobs in `pr-validation.yml` feed the `pr-validation-success` aggregator, which is the required merge signal. The `gate-completeness-check` job verifies that every validation job appears in that gate's `needs:` list.
+
+### Merge Queue Contract
+
+`pr-validation.yml` owns both pull-request validation and the `merge_group`
+`checks_requested` event for candidates targeting `main`. Reusable workflows do
+not subscribe to merge-group events independently. The aggregate resolves one
+immutable base and head pair, then passes that decision to every changed-file
+selector.
+
+Range mode validates the exact resolved commits. The resolver picks a base per
+event and verifies it before use:
+
+* Pull requests use the first parent of the checked-out test-merge commit after
+  verifying that its second parent is the pull request head.
+* Merge groups use the merge-group base and head commits.
+* Manual dispatch uses the merge base of the checked-out commit and
+  `origin/<default branch>`.
+
+Every range requires a base that is an ancestor of the head and distinct from
+it, a head equal to the checked-out commit, and a pair Git can diff. Any failed
+check, or an event without a range rule, selects full mode with empty commit
+IDs. A manual dispatch from the default-branch tip, or from a branch with no
+commits ahead of it, therefore selects full mode rather than an empty range.
+
+Every range-capable reusable workflow checks out `github.sha`, the trusted
+event commit, instead of a caller-supplied ref. In range mode, each job then
+fails before it runs repository code unless `HEAD` equals the resolved head
+commit.
+
+Full mode runs each owning validation across its complete scope instead of
+skipping it:
+
+* Content moderation covers every eval spec and every tracked AI artifact.
+* Agent-eval selection fails, because a pull request or manual dispatch reaches
+  full mode only when the resolver cannot prove a non-empty range. Dispatch
+  from a branch with commits ahead of the default branch to select agent evals.
+* ms.date freshness checks every markdown file but reports stale files as an
+  advisory warning for the aggregate's changed-files caller, because staleness
+  accrues with time rather than with the change. The weekly repository-wide run
+  stays blocking.
+* Gitleaks scans every commit reachable from the checked-out commit instead of
+  every fetched ref, keeping its default history and diff filters and adding
+  first-parent merge patches.
+
+Gitleaks passes `--diff-merges=first-parent` in both modes, so content that
+exists only in a merge commit, such as a conflict resolution, is scanned
+against the merge's first parent.
+
+`PR Validation Success` is the sole stable required status context for hosted
+branch and queue policy. Do not require individual validation or matrix-job
+contexts because those names and cardinalities can change. The aggregate gate
+must continue to depend on every non-gate job, as enforced by
+`npm run lint:pr-gate`.
+
+Merge-group evals run unprivileged relevance, lint, and content-moderation
+validation without `COPILOT_GITHUB_TOKEN`. The aggregate passes the custom
+token only for manual dispatch and for pull requests whose head repository
+`full_name` equals `github.repository`, and passes an empty value for merge
+groups, fork pull requests, and every other event. Every eval job that uses
+the token, or needs a job that does, repeats that same-repository check. The
+`full_name` comparison fails closed when the head repository is missing, unlike
+a `fork == false` check, which GitHub's type coercion treats as true for a
+missing value. Manual dispatch resolves a range against the default branch, so
+when the dispatched commit is ahead of the default branch it selects agent
+evals the same way a pull request does. Gitleaks scans the resolved commit
+range in range mode.
+
+Merge-group runs execute in the base-repository context, including for pull
+requests that originated in a fork. Their jobs can reach `id-token: write` for
+Codecov OIDC uploads, `security-events: write` for SARIF uploads, and
+`pull-requests: write`, which only the pull-request-only eval report uses. No
+secret other than the gated `COPILOT_GITHUB_TOKEN` is passed. The merge-queue
+contract test pins each job's write scopes and the workflow's secret references
+so that a new grant fails until it is reviewed.
+
+Pull requests and merge groups share a concurrency group per ref and cancel
+superseded runs. Each manual dispatch run gets its own concurrency group, so
+manual runs do not cancel each other.
+
+Workflow compatibility must reach `main` before maintainers activate or change
+the hosted ruleset. The confirmed initial hosted policy is intentionally
+serial:
+
+| Hosted setting           | Confirmed value         |
+|--------------------------|-------------------------|
+| Merge method             | Squash                  |
+| Build concurrency        | `1`                     |
+| Minimum merge group size | `1`                     |
+| Maximum merge group size | `1`                     |
+| Strict branch freshness  | Disabled                |
+| Required status context  | `PR Validation Success` |
+
+These values describe the activation target, not evidence that Merge Queue is
+active. Before applying the hosted policy, administrators confirm that no
+federated identity credential, in Azure, Entra ID, or elsewhere, trusts a
+wildcard branch subject that matches `refs/heads/gh-readonly-queue/main/*`.
+After the compatible workflow is on `main`, apply the hosted policy and
+queue one pull request to prove that the merge-group run reports the stable
+context and completes a squash merge.
 
 release-stable.yml jobs: prepare-promotion, open-promotion-pr
 
@@ -109,15 +208,9 @@ be restored only before publication. The producer has no default
 a tag or converts a published release back to draft. Bounded discovery is a
 fail-closed safety control, not a draft-visibility guarantee.
 
-| Registration                               | Repository contract                                    |
-|--------------------------------------------|--------------------------------------------------------|
-| `microsoft/hve-core`                       | Ref-less development-tip registration for `main`       |
-| `microsoft/hve-core#release/prerelease`    | Moving registration for the reviewed PreRelease branch |
-| `microsoft/hve-core#release/stable`        | Moving registration for the reviewed Stable branch     |
-| `microsoft/hve-core#prerelease-v<version>` | Immutable exact PreRelease registration                |
-| `microsoft/hve-core#v<version>`            | Immutable exact Stable registration                    |
+The Copilot CLI plugin has one registration, `microsoft/hve-core`, which tracks `main`. Release channels apply to the VSIX only; there are no release-channel plugin registrations.
 
-Publication does not synchronize release metadata or changelog history back to `main`. An explicit marketplace refresh and plugin update are required for ref-less main, which has no release gate, SBOM, or attestation. Release-channel assets remain release-gated, SBOM-covered, and attested.
+Publication does not synchronize release metadata or changelog history back to `main`. An explicit marketplace refresh and plugin update are required for the `main` registration, which has no release gate or release attestation. Each push to `main` publishes an unattested dependency SBOM, described in [Continuous Main SBOM](../../docs/contributing/release-process.md#continuous-main-sbom). Release-channel VSIX assets remain release-gated, SBOM-covered, and attested.
 
 Both release channels preserve one VSIX, its SPDX, Sigstore, and in-toto
 sidecars, `dependencies.spdx.json`, provenance verification, and Azure OIDC
@@ -170,7 +263,7 @@ release-state decision. Odd/even minor parity remains repository policy
 aligned with VS Code Marketplace guidance and behavior, rather than a
 requirement of `MAJOR.MINOR.PATCH` syntax.
 
-Release branches and exact tags retain the repository-root plugin source from their selected snapshots. Their reviewed, release-gated VSIX assets remain SBOM-covered, attested, and immutable. The ref-less main catalog instead sources current root `plugin.json` and canonical `.github` artifacts from `main` and has no published-release assurance.
+Reviewed, release-gated VSIX assets from release branches and exact tags remain SBOM-covered, attested, and immutable. The Copilot CLI plugin registration instead sources current root `plugin.json` and canonical `.github` artifacts from `main` and has no published-release assurance.
 
 Final publication in `release-vsix-publish.yml` mints a release GitHub App
 token and atomically runs the channel-specific `gh release edit` command with
@@ -474,18 +567,18 @@ and cannot start or continue a sweep.
 
 ### Validation Workflows
 
-| Workflow                     | Tool                     | Purpose                              | Key Inputs                                                                                                      | Artifacts                      |
-|------------------------------|--------------------------|--------------------------------------|-----------------------------------------------------------------------------------------------------------------|--------------------------------|
-| `spell-check.yml`            | cspell                   | Validate spelling across all files   | `soft-fail` (false)                                                                                             | spell-check-results            |
-| `markdown-lint.yml`          | markdownlint-cli         | Enforce markdown standards           | `soft-fail` (false)                                                                                             | markdown-lint-results          |
-| `table-format.yml`           | markdown-table-formatter | Verify table formatting (check-only) | `soft-fail` (false)                                                                                             | table-format-results           |
-| `ps-script-analyzer.yml`     | PSScriptAnalyzer         | PowerShell static analysis           | `soft-fail` (false), `changed-files-only` (true)                                                                | psscriptanalyzer-results       |
-| `frontmatter-validation.yml` | Custom PS script         | YAML frontmatter validation          | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true) | frontmatter-validation-results |
-| `skill-validation.yml`       | Custom PS script         | Skill directory structure validation | `soft-fail` (false), `changed-files-only` (true)                                                                | skill-validation-results       |
-| `link-lang-check.yml`        | Custom PS script         | Detect language-specific URLs        | `soft-fail` (false)                                                                                             | link-lang-check-results        |
-| `markdown-link-check.yml`    | markdown-link-check      | Validate internal and external links | `soft-fail` (false), `changed-files-only` (true, external links only), `throttle-limit` (8)                     | markdown-link-check-results    |
+| Workflow                     | Tool                     | Purpose                              | Key Inputs                                                                                                                        | Artifacts                      |
+|------------------------------|--------------------------|--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|--------------------------------|
+| `spell-check.yml`            | cspell                   | Validate spelling across all files   | `soft-fail` (false)                                                                                                               | spell-check-results            |
+| `markdown-lint.yml`          | markdownlint-cli         | Enforce markdown standards           | `soft-fail` (false)                                                                                                               | markdown-lint-results          |
+| `table-format.yml`           | markdown-table-formatter | Verify table formatting (check-only) | `soft-fail` (false)                                                                                                               | table-format-results           |
+| `ps-script-analyzer.yml`     | PSScriptAnalyzer         | PowerShell static analysis           | `soft-fail` (false), `changed-files-only` (true)                                                                                  | psscriptanalyzer-results       |
+| `frontmatter-validation.yml` | Custom PS script         | YAML frontmatter validation          | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true)                   | frontmatter-validation-results |
+| `skill-validation.yml`       | Custom PS script         | Skill directory structure validation | `soft-fail` (false), `changed-files-only` (true)                                                                                  | skill-validation-results       |
+| `link-lang-check.yml`        | Custom PS script         | Detect language-specific URLs        | `soft-fail` (false)                                                                                                               | link-lang-check-results        |
+| `markdown-link-check.yml`    | markdown-link-check      | Validate internal and external links | `soft-fail` (false), `changed-files-only` (true, external links only), `external-links-as-warnings` (false), `throttle-limit` (8) | markdown-link-check-results    |
 
-Parenthesized values are the defaults declared by each reusable workflow, not the values its callers pass. Callers override them per lane: `pr-validation.yml` and `weekly-validation.yml` both invoke `markdown-link-check.yml` with `soft-fail: true`, and `weekly-validation.yml` additionally sets `changed-files-only: false` for the full-repository sweep.
+Parenthesized values are the defaults declared by each reusable workflow, not the values its callers pass. `pr-validation.yml` sets `soft-fail: false` and `external-links-as-warnings: true`, so internal failures block while external findings remain advisory. `weekly-validation.yml` sets `soft-fail: true` and `changed-files-only: false` for an advisory full-repository sweep.
 
 All validation workflows use `permissions: contents: read`, publish PR annotations, and retain artifacts for 30 days.
 
@@ -567,12 +660,17 @@ Triggers: `schedule` (Sundays at 4 AM UTC), `workflow_call`
 Features:
 
 * Languages: `actions` (GitHub Actions workflows), `python` (Python scripts), and `javascript-typescript` (VS Code extension source)
+* Generated slides: the `analyze-generated-slides` job scans the delivered `docs/slides/*.html` decks, including the inlined and bundler-patched reveal.js, with `.github/codeql/generated-slides.yml` under category `/language:javascript-typescript/generated-slides`. The authored-source categories keep ignoring those generated files, so third-party findings stay separate from the authored-source baseline
 * Queries: security-extended and security-and-quality query suites
 * Coverage: Detects SQL injection, XSS, command injection, path traversal, and 200+ other vulnerabilities
+* Not analyzed: CodeQL does not analyze Markdown, generic YAML, PowerShell, shell, or PPTX content; markdownlint, YAML lint, PSScriptAnalyzer, shellcheck, and the dependency and workflow security lints cover those formats
 * Integration: Results appear in Security > Code Scanning tab
+* Threshold gate: after each analysis uploads its SARIF, `scripts/security/Test-CodeQLSarifThreshold.ps1` fails the job on any result with `security-severity` of 4.0 or higher, or any error- or warning-level result from a rule without a security severity. Because the gate runs inside the job, it also blocks merge-queue groups, which ruleset code-scanning protection does not cover.
+  A finding is excused only by a tracked entry in `security/code-scanning-exceptions.yml`; the alert stays open and the gate lists it.
+  Alerts are never dismissed. See the [code-scanning alert lifecycle](../../docs/security/code-scanning-alert-lifecycle.md)
 * Auto-build: Prepares compiled code where required for each language target; Actions analysis needs no compilation
 
-Outputs: SARIF results uploaded to GitHub Security tab, job summary with analysis details
+Outputs: SARIF results uploaded to GitHub Security tab, job summary with analysis details and the threshold gate result
 
 #### `dangerous-workflow-scan.yml`
 

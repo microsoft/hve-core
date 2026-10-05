@@ -8,6 +8,34 @@ import { buildDeck } from './build.mjs';
 const stylesheetTag = /<link rel="stylesheet" href="([^"]+)">/g;
 const scriptTag = /(?:^[ \t]*)?<script defer src="([^"]+)"><\/script>/gm;
 
+export const revealAsset = 'vendor/reveal.js';
+export const supportedRevealVersion = '6.0.2';
+export const revealPatches = [
+  'reveal-lazy-src-neutralized',
+  'reveal-embed-host-regex-neutralized',
+  'reveal-postmessage-listener-removed',
+  'reveal-getslide-redundant-conditional-removed'
+];
+export const securityChecks = ['raw-text-delimiters', 'inline-styles', 'resource-markup', 'reveal-lazy-src'];
+
+// Decks reject media, frames, and data-src attributes, so the bundler removes these unused reveal.js
+// paths instead of sanitizing them: DOM-text-to-URL sinks that copy data-src and background-media
+// attributes into src, and unanchored embed-host regexes that pick an iframe postMessage target.
+// Decks also disable the cross-window API (postMessage: false), so the bundler removes the window
+// message listener registration, which has no origin check, rather than leaving an unreachable
+// handler in the scanned output. The getSlide conditional drops a branch its outer guard makes redundant.
+// Exact anchors and counts fail closed when a reveal.js update changes the minified code.
+const revealSinks = [
+  { name: 'lazy-loaded media, source, and iframe data-src', search: 'e.setAttribute(`src`,e.getAttribute(`data-src`))', count: 3, replacement: 'void 0' },
+  { name: 'background video source', search: 'n.setAttribute(`src`,t);', count: 1, replacement: 'void 0;' },
+  { name: 'background iframe', search: 'a.setAttribute(`src`,r)', count: 1, replacement: 'void 0' },
+  { name: 'embedded YouTube host check', search: '/youtube\\.com\\/embed\\//.test(t.getAttribute(`src`))', count: 1, replacement: '!1' },
+  { name: 'embedded Vimeo host check', search: '/player\\.vimeo\\.com\\//.test(t.getAttribute(`src`))', count: 1, replacement: '!1' },
+  { name: 'window message listener registration', search: 'f.postMessage&&window.addEventListener(`message`,Jt,!1)', count: 1, replacement: 'void 0' },
+  { name: 'getSlide redundant conditional', search: 'r&&r.length&&typeof t==`number`?r?r[t]:void 0:n', count: 1, replacement: 'r&&r.length&&typeof t==`number`?r[t]:n' }
+];
+const lazySourceFlow = /setAttribute\(\s*[`'"]src[`'"]\s*,\s*[\w$.]+\.getAttribute\(\s*[`'"]data-src[`'"]\s*\)\s*\)/;
+
 function escapeHtml(text) {
   return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 }
@@ -19,7 +47,39 @@ function localAssetPath(source) {
   return source;
 }
 
-export function createStandaloneHtml(html, assets, license, metadata) {
+export function neutralizeRevealSinks(js, revealVersion) {
+  const refresh = 'Review the patched reveal.js code and refresh the anchors in the hve-slides bundler before updating reveal.js.';
+  if (revealVersion !== supportedRevealVersion) {
+    throw new Error(`reveal.js ${revealVersion} is not supported by the bundler security patches; expected ${supportedRevealVersion}. ${refresh}`);
+  }
+  let patched = js;
+  for (const { name, search, count, replacement } of revealSinks) {
+    const found = patched.split(search).length - 1;
+    if (found !== count) {
+      throw new Error(`reveal.js ${revealVersion} anchor "${name}" matched ${found} times; expected ${count}. ${refresh}`);
+    }
+    patched = patched.replaceAll(search, replacement);
+  }
+  return patched;
+}
+
+export async function readRevealVersion(dependencyRoot) {
+  const manifest = JSON.parse(await readFile(path.join(dependencyRoot, 'package.json'), 'utf8'));
+  const pinned = manifest.dependencies?.['reveal.js'];
+  let installed;
+  try {
+    installed = JSON.parse(await readFile(path.join(dependencyRoot, 'node_modules/reveal.js/package.json'), 'utf8')).version;
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    throw new Error(`reveal.js is missing. Run npm ci in ${dependencyRoot} before bundling.`, { cause: error });
+  }
+  if (installed !== pinned) {
+    throw new Error(`Installed reveal.js ${installed} does not match the deck pin ${pinned} in ${dependencyRoot}. Run npm ci before bundling.`);
+  }
+  return installed;
+}
+
+export function createStandaloneHtml(html, assets, license, metadata, { revealVersion } = {}) {
   // Mask ignored regions with separators so validation cannot join new markup tokens.
   const sourceMarkup = html.replace(/<!--[\s\S]*?-->/g, ' ');
   if (/<style\b/i.test(sourceMarkup) || /<[^>]*\sstyle\s*=/i.test(sourceMarkup)) {
@@ -49,10 +109,18 @@ export function createStandaloneHtml(html, assets, license, metadata) {
     styles.push(source);
     return `<style data-bundled-source="${escapeHtml(source)}">\n${css}\n</style>`;
   });
+  let patchedReveal = false;
   document = document.replace(scriptTag, (_, source) => {
-    const js = asset(source);
+    let js = asset(source);
+    if (source === revealAsset) {
+      js = neutralizeRevealSinks(js, revealVersion);
+      patchedReveal = true;
+    }
     if (/<\/script(?=[\s/>])|<!--/i.test(js)) {
       throw new Error(`Cannot inline ${source}: an HTML raw-text delimiter needs to be removed from the JavaScript source.`);
+    }
+    if (lazySourceFlow.test(js)) {
+      throw new Error(`Cannot inline ${source}: it copies a data-src attribute into src.`);
     }
     scripts.push(`<script data-bundled-source="${escapeHtml(source)}">\n${js}\n</script>`);
     return '';
@@ -83,39 +151,53 @@ export function createStandaloneHtml(html, assets, license, metadata) {
       .replaceAll('<', '\\u003c');
     catalog = `<script type="application/json" id="hve-slide-metadata">${json}</script>\n`;
   }
+  let provenance = '';
+  if (patchedReveal) {
+    // Deterministic by design: no timestamps or host details, so generated decks stay byte-stable.
+    const json = JSON.stringify({
+      generator: 'hve-slides',
+      revealVersion,
+      patches: revealPatches,
+      securityChecks,
+      securityCheckResult: 'passed'
+    }).replaceAll('<', '\\u003c');
+    provenance = `<script type="application/json" id="hve-slide-provenance">${json}</script>\n`;
+  }
   // Inline classic scripts do not support defer; run in document order after the slide markup exists.
-  return document.replace(/<\/body>/i, () => `${notices}\n${catalog}${scripts.join('\n')}\n</body>`);
+  return document.replace(/<\/body>/i, () => `${notices}\n${catalog}${provenance}${scripts.join('\n')}\n</body>`);
 }
 
-async function renderBundle(build) {
+async function renderBundle(build, dependencyRoot) {
   const output = await build();
   const html = await readFile(path.join(output, 'index.html'), 'utf8');
   const paths = new Set([
     ...[...html.matchAll(stylesheetTag)].map(match => match[1]),
     ...[...html.matchAll(scriptTag)].map(match => match[1])
   ]);
+  if (!paths.has(revealAsset)) throw new Error(`The deck must load reveal.js from ${revealAsset} so the bundler can apply its security patch.`);
   const assets = new Map(await Promise.all([...paths].map(async source => [
     source,
     await readFile(path.join(output, localAssetPath(source)), 'utf8')
   ])));
   const license = await readFile(path.join(output, 'vendor/reveal-LICENSE.txt'), 'utf8');
   const metadata = JSON.parse(await readFile(path.join(output, 'deck.json'), 'utf8'));
-  const standalone = createStandaloneHtml(html, assets, license, metadata);
   const deckDirectory = path.dirname(output);
+  const revealVersion = await readRevealVersion(dependencyRoot ?? deckDirectory);
+  const standalone = createStandaloneHtml(html, assets, license, metadata, { revealVersion });
   const destinationDirectory = path.resolve(deckDirectory, '../../docs/slides');
   const destination = path.join(destinationDirectory, `${path.basename(deckDirectory)}.html`);
   return { destination, standalone };
 }
 
-export async function bundleDeck({ build = buildDeck } = {}) {
-  const { destination, standalone } = await renderBundle(build);
+export async function bundleDeck({ build = buildDeck, dependencyRoot } = {}) {
+  const { destination, standalone } = await renderBundle(build, dependencyRoot);
   await mkdir(path.dirname(destination), { recursive: true });
   await writeFile(destination, standalone, 'utf8');
   return destination;
 }
 
-export async function checkBundle({ build = buildDeck } = {}) {
-  const { destination, standalone } = await renderBundle(build);
+export async function checkBundle({ build = buildDeck, dependencyRoot } = {}) {
+  const { destination, standalone } = await renderBundle(build, dependencyRoot);
   let actual;
   try {
     actual = await readFile(destination, 'utf8');

@@ -13,7 +13,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-09-28
 ms.topic: reference
 estimated_reading_time: 8
 ---
@@ -52,6 +52,7 @@ The agent asks 3-5 questions per turn covering:
 * Package managers (npm, pip, NuGet, etc.).
 * CI/CD platform (GitHub Actions, Azure Pipelines, etc.).
 * Release strategy (tags, branches, release-please, etc.).
+* Deployment targets (cloud, on-prem, hybrid, container registries).
 * Compliance targets (OpenSSF Scorecard tier, SLSA level, Badge tier).
 * Existing supply chain security tooling already in place.
 * Cross-agent references (Security Planner link, RAI Planner link).
@@ -95,18 +96,18 @@ Capabilities are classified into three source categories:
 
 #### physical-ai-toolchain Unique (10)
 
-| #  | Capability                 | Description                                         |
-|----|----------------------------|-----------------------------------------------------|
-| 7  | SBOM generation            | anchore/sbom-action with SPDX-JSON output           |
-| 8  | Sigstore signing           | gitsign keyless commit and artifact signing         |
-| 9  | DAST / ZAP integration     | Dynamic application security testing                |
-| 10 | Dual attestation           | Build provenance + SBOM attestation                 |
-| 11 | Stale docs → issue         | Automated issue creation for outdated documentation |
-| 12 | Best Practices Badge       | OpenSSF Best Practices Badge enrollment             |
-| 13 | Dependabot security prefix | Security-prefixed Dependabot branch naming          |
-| 14 | Threat model               | Structured threat model documentation               |
-| 15 | release-please             | Automated release management                        |
-| 16 | Vulnerability SLA          | Time-bound vulnerability remediation policy         |
+| #  | Capability                 | Description                                               |
+|----|----------------------------|-----------------------------------------------------------|
+| 7  | SBOM generation            | anchore/sbom-action with SPDX-JSON output                 |
+| 8  | Sigstore signing           | gitsign keyless signing for release tags and commits      |
+| 9  | DAST / ZAP integration     | Dynamic application security testing                      |
+| 10 | Dual attestation           | Build provenance + SBOM attestation                       |
+| 11 | Stale docs → issue         | Automated issue creation for outdated documentation       |
+| 12 | Best Practices Badge       | OpenSSF Best Practices Badge enrollment                   |
+| 13 | Dependabot security prefix | `security(deps):` title prefix on security Dependabot PRs |
+| 14 | Threat model               | Structured threat model documentation                     |
+| 15 | release-please             | Automated release management                              |
+| 16 | Vulnerability SLA          | Time-bound vulnerability remediation policy               |
 
 #### Shared (11)
 
@@ -128,12 +129,12 @@ Capabilities are classified into three source categories:
 
 The agent follows a four-step protocol for each capability:
 
-| Step     | Action                                                      |
-|----------|-------------------------------------------------------------|
-| Detect   | Scan the target repository for evidence of the capability   |
-| Classify | Assign a source (hve-core, PAT, shared) and coverage status |
-| Document | Record findings in the assessment artifact                  |
-| Verify   | Confirm with the user before proceeding                     |
+| Step     | Action                                                                                           |
+|----------|--------------------------------------------------------------------------------------------------|
+| Detect   | Scan the target repository for evidence of the capability                                        |
+| Classify | Assign a source (hve-core, PAT, shared) and coverage status                                      |
+| Document | Record findings in the assessment artifact                                                       |
+| Verify   | Confirm present and partial items match the hve-core or physical-ai-toolchain reference patterns |
 
 ### Coverage Icons
 
@@ -169,20 +170,20 @@ Map the capability inventory to five standard areas, assigning current score est
 | 4  | CII-Best-Practices     | Low      | 0-10        | Badge enrollment         |
 | 5  | Code-Review            | High     | 0-10        | CODEOWNERS enforcement   |
 | 6  | Contributors           | Low      | 0-10        | Organic                  |
-| 7  | Dangerous-Workflow     | Critical | 0-10        | Pattern validation       |
-| 8  | Dependency-Update-Tool | High     | 0-10        | Dependabot configuration |
-| 9  | Fuzzing                | Medium   | 0-10        | New capability           |
-| 10 | License                | Low      | 0-10        | LICENSE file presence    |
+| 7  | Dangerous-Workflow     | Critical | 0/10        | Pattern validation       |
+| 8  | Dependency-Update-Tool | High     | 0/10        | Dependabot configuration |
+| 9  | Fuzzing                | Medium   | 0/10        | New capability           |
+| 10 | License                | Low      | 0/10        | LICENSE file presence    |
 | 11 | Maintained             | High     | 0-10        | Organic                  |
-| 12 | Packaging              | Medium   | 0-10        | Existing capability      |
+| 12 | Packaging              | Medium   | 0/10        | Existing capability      |
 | 13 | Pinned-Dependencies    | Medium   | 0-10        | Script adoption          |
 | 14 | SAST                   | Medium   | 0-10        | CodeQL + linters         |
 | 15 | SBOM                   | Medium   | 0-10        | Workflow adoption        |
-| 16 | Security-Policy        | Medium   | 0-10        | SECURITY.md presence     |
+| 16 | Security-Policy        | Medium   | 0/10        | SECURITY.md presence     |
 | 17 | Signed-Releases        | High     | 0-10        | Sigstore adoption        |
 | 18 | Token-Permissions      | High     | 0-10        | Script validation        |
 | 19 | Vulnerabilities        | High     | 0-10        | Scanner integration      |
-| 20 | Webhooks               | Critical | 0-10        | Platform managed         |
+| 20 | Webhooks               | Critical | 0/10        | Platform managed         |
 
 #### SLSA Build Track
 
@@ -195,26 +196,27 @@ Map the capability inventory to five standard areas, assigning current score est
 
 #### Best Practices Badge
 
-| Tier    | Key criteria                                  |
-|---------|-----------------------------------------------|
-| Passing | Basic security practices in place             |
-| Silver  | Advanced testing, static analysis, governance |
-| Gold    | Dynamic analysis, full reproducibility        |
+| Tier    | Key criteria                                                       |
+|---------|--------------------------------------------------------------------|
+| Passing | Basic security practices in place                                  |
+| Silver  | GOVERNANCE.md, code coverage, reproducible builds, signed releases |
+| Gold    | Formal verification, security audits, advanced threat modeling     |
 
 #### Sigstore Maturity
 
-| Level        | Description                                            |
-|--------------|--------------------------------------------------------|
-| Not adopted  | No signing in place                                    |
-| Basic        | Manual key-based signing                               |
-| Intermediate | gitsign for commit signing                             |
-| Advanced     | Keyless signing with Fulcio + Rekor + SBOM attestation |
+| Level        | Description                                                                                                       |
+|--------------|-------------------------------------------------------------------------------------------------------------------|
+| Not adopted  | No signing in place                                                                                               |
+| Basic        | Build provenance via `actions/attest-build-provenance`                                                            |
+| Intermediate | Build provenance and SBOM attestation via `actions/attest`                                                        |
+| Advanced     | Tag signing via gitsign, cosign artifact signing, build provenance, SBOM attestation, and a verification workflow |
 
 #### SBOM Standards
 
 | Standard     | Description                          |
 |--------------|--------------------------------------|
 | SPDX-JSON    | Standard SBOM format                 |
+| CycloneDX    | Alternative SBOM format              |
 | NTIA minimum | Minimum elements for SBOM compliance |
 
 ### State Transitions
@@ -234,9 +236,9 @@ Compare current posture against desired state, classify gaps by adoption categor
 
 Gaps are sorted by Scorecard risk level (Critical > High > Medium > Low):
 
-| Gap           | Scorecard Check | Risk    | Current State | Target State | Adoption Type | Effort     |
-|---------------|-----------------|---------|---------------|--------------|---------------|------------|
-| *description* | *check_name*    | *level* | *current*     | *target*     | *category*    | *S/M/L/XL* |
+| Gap           | Scorecard Check | Risk    | Concern                 | Current State | Target State | Adoption Type | Effort     | Workflow/Script Reference |
+|---------------|-----------------|---------|-------------------------|---------------|--------------|---------------|------------|---------------------------|
+| *description* | *check_name*    | *level* | *Low / Moderate / High* | *current*     | *target*     | *category*    | *S/M/L/XL* | *reference*               |
 
 ### Six Adoption Categories
 
@@ -302,11 +304,11 @@ Convert gap analysis results into actionable work items with adoption steps, acc
 
 ### Autonomy Tiers
 
-| Tier    | Human involvement          | Typical use                              |
-|---------|----------------------------|------------------------------------------|
-| Full    | None required              | Low-risk configuration changes           |
-| Partial | Review and approve         | Default for most supply chain work items |
-| Guided  | Human plans and implements | New capability builds, policy decisions  |
+| Tier    | Human involvement                           | Behavior                                                        |
+|---------|---------------------------------------------|-----------------------------------------------------------------|
+| Full    | Pre-approves the run                        | All work items are created in one operation                     |
+| Partial | Reviews each batch of 5 to 10 items         | Default; items are created only after their batch is approved   |
+| Guided  | Creates each work item in the target system | The planner writes a handoff file and invokes no creation tools |
 
 ### State Transitions
 
@@ -328,7 +330,10 @@ Validate the complete analysis, generate improvement projections, and produce pl
 3. Generate improvement projections (Scorecard, SLSA, Badge).
 4. Present the complete plan to the user for final review.
 5. On confirmation, generate platform-specific handoff files.
-6. Update state with handoff flags.
+6. Finalize the consolidated SSSC plan markdown.
+7. Sign the planner artifacts.
+8. Update state with handoff flags and signing fields.
+9. Present the completion summary as the final message.
 
 ### Scorecard Improvement Projection
 

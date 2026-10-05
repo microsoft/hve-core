@@ -39,18 +39,23 @@ ignored intermediate assets, compares every bundle with its current source, and 
 on missing, stale, or orphaned HTML without rewriting the committed bundles. Regenerate
 with `npm run slides:build` when the source changes.
 
-CodeQL excludes only `docs/slides/*.html`, which contains embedded copies of third-party
-code alongside generated first-party code. Authored JavaScript, TypeScript, and build
-scripts remain in scope. The CodeQL workflow requires the source-to-bundle check in a
-separate job before analysis, so generated intermediates do not enter the scan workspace.
-This avoids scanning vendored reveal.js again inside generated HTML; it does not establish
-that upstream library findings are fixed. Keep dependency audits and notice checks.
+CodeQL analyzes generated HTML in its own category. The authored-source categories ignore
+`docs/slides/*.html` so embedded third-party code does not mix with first-party results.
+A separate job scans the committed bundles with `.github/codeql/generated-slides.yml` under
+`/language:javascript-typescript/generated-slides`, which covers the inlined, patched
+reveal.js that recipients actually run. Both analyses run only after the source-to-bundle
+check passes in a separate job, so generated intermediates do not enter the scan workspace.
+Fix a generated-category finding in the deck source or the bundler, never by hand-editing
+the bundle, dismissing the alert, or excluding the bundles from analysis. The generated-slides
+category is expected to report zero findings; the CodeQL threshold gate fails the job when it
+does not. Keep dependency audits and notice checks.
 
 Pull request validation runs a deck's Node tests whenever a file in that deck changes, and
 runs the starter's tests with this skill's tests whenever a skill file changes. Dependabot
-proposes reveal.js updates for every deck and for the starter. A deck update changes the
-embedded library, so `npm run slides:check` fails on that branch until the bundle is
-rebuilt with `npm run slides:build` and committed.
+proposes reveal.js updates for every deck and for the starter. A reveal.js update fails
+`npm run slides:check` and `npm run slides:build` until the bundler's patch anchors and
+supported version are refreshed as described in [bundling.md](bundling.md), and the
+regenerated bundles are committed.
 
 The starter and HVE Updates disable reveal.js `postMessage` commands and events because
 they do not need cross-window control. Presenter buttons and local keyboard navigation
@@ -76,6 +81,15 @@ Keep inspection batched:
    spacing and .16em word spacing). Do not treat viewport resizing alone as zoom evidence.
 3. Read representative full-size frames and contact sheets for whole-deck composition.
    Compare text baselines, node/edge alignment, content density and bottom-control clearance.
+   Compare the bottom chrome with the starter build or `slides/rpi-with-hve` at the same
+   viewport: bar height and tone, the deck mark and chapter, the footer divider, and step
+   controls inside the walkthrough frame. Check the bar on every slide, because each chapter
+   label changes its width, and confirm the bar's contents stay inside it with reading view
+   off at the compact and stacked widths. In reading view, presenter and walkthrough buttons
+   should be at least 44 CSS pixels tall. For every walkthrough step, confirm from geometry
+   that content ends above the frame footer and that the frame body does not scroll.
+   Viewer overlays such as SharePoint's Copilot button do not appear in a local browser, so
+   confirm from geometry that the chapter label and slide navigation stay inside the bar inset.
    Computed overflow alone misses obscured elements, wrapping and poor visual hierarchy.
 4. Gather all material findings, apply one compatible correction batch, then verify the
    affected final states. Run another pass only for a remaining defect, new evidence or
@@ -93,7 +107,10 @@ Use actual browser inputs, not only calls to internal transition functions.
 * Each walkthrough moves forward/back, reaches its endpoints and resets independently.
 * Local toggles and reconstructed walkthrough buttons perform only their declared local
   behavior; display-only chrome does not become a dead keyboard stop or execute real tools.
-* Focused inputs, buttons, selections and modifier shortcuts are not hijacked by deck keys.
+* Left / Right and Page Up / Page Down still change slides after a presenter button or
+  link is clicked. Text entry, dialogs, components that claim those keys and modifier
+  shortcuts keep them, as does selected text unless a button or link has focus. Focused
+  controls keep Space, Enter and character keys.
 * Dialog Tab/Shift+Tab, Escape, focus return and reopening work. Scrolling one dialog must
   not hide the top of the next view. Close controls remain reachable on narrow screens.
 * Optional motion settles, reduced motion overrides it, and leaving a slide does not leave

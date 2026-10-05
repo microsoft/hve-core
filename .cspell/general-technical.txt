@@ -828,6 +828,7 @@ purescale
 pyodbc
 pypackages
 pydantic
+pyjwt
 pypi
 pytest
 Pythonic

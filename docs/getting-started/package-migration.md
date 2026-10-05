@@ -3,7 +3,7 @@ title: Migrate to the HVE Core Identity
 description: Move retired package installations to the single HVE Core plugin or extension
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-04
 ms.topic: how-to
 keywords:
   - migration
@@ -27,27 +27,21 @@ Remove any retired domain, utility, or `hve-core-all` plugin registration before
 
 Changing a Copilot marketplace registration is a configuration operation. It does not delete files from your repository or modify a cloned HVE Core installation.
 
-Use the ref-less development tip:
+Register the repository as a marketplace. The registration tracks `main`:
 
 ```bash
 copilot plugin marketplace add microsoft/hve-core
 ```
 
-Use a moving reviewed channel:
+There are no PreRelease or Stable plugin channels. The repository does not publish `release/prerelease` or `release/stable` branches, so a registration such as `microsoft/hve-core#release/stable` no longer resolves, and a tag ref such as `microsoft/hve-core#hve-core-v<version>` stays fixed at that tag. To follow `main`, remove the earlier registration and register again:
 
 ```bash
-copilot plugin marketplace add microsoft/hve-core#release/prerelease
-copilot plugin marketplace add microsoft/hve-core#release/stable
+copilot plugin marketplace remove hve-core --force
+copilot plugin marketplace add microsoft/hve-core
+copilot plugin install hve-core@hve-core
 ```
 
-Use an immutable channel tag:
-
-```bash
-copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
-copilot plugin marketplace add microsoft/hve-core#v<version>
-```
-
-The ref-less registration resolves current `main`. A release-branch registration resolves the current reviewed branch. An exact-tag registration fixes the catalog, manifest, and source tree together.
+The `--force` option also uninstalls plugins installed from that marketplace.
 
 Refresh the marketplace before requesting an installed-plugin update:
 
@@ -55,9 +49,6 @@ Refresh the marketplace before requesting an installed-plugin update:
 copilot plugin marketplace update hve-core
 copilot plugin update hve-core@hve-core
 ```
-
-Switching registrations can require removing and re-adding the marketplace.
-Do not depend on a specific outcome for duplicate same-name registrations.
 
 ## VS Code Extension Selection
 

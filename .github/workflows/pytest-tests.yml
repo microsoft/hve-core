@@ -5,6 +5,21 @@ name: Pytest Tests
 on:
   workflow_call:
     inputs:
+      change-mode:
+        description: 'Use an exact immutable range or run full validation'
+        required: false
+        type: string
+        default: full
+      base-sha:
+        description: 'Immutable base commit used in range mode'
+        required: false
+        type: string
+        default: ''
+      head-sha:
+        description: 'Immutable head commit used in range mode'
+        required: false
+        type: string
+        default: ''
       working-directory:
         description: 'Directory containing the Python skill to test'
         required: true
@@ -66,6 +81,19 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Verify resolved head commit
+        if: inputs.change-mode == 'range'
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+        run: |
+          actual_head_sha="$(git rev-parse HEAD)"
+          if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then
+            echo "::error::Checked-out commit ${actual_head_sha} does not match the resolved head commit."
+            exit 1
+          fi
 
       - name: Set artifact name
         id: artifact-name
@@ -84,9 +112,20 @@ jobs:
         env:
           INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
           INPUT_CHANGED_PATHS_PATTERN: ${{ inputs.changed-paths-pattern }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BASE_SHA: ${{ inputs.base-sha }}
+          CHANGE_MODE: ${{ inputs.change-mode }}
+          HEAD_SHA: ${{ inputs.head-sha }}
         run: |
           set -euo pipefail
+          if [ "$CHANGE_MODE" = 'full' ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo 'Full validation mode selected.'
+            exit 0
+          fi
+          if [ "$CHANGE_MODE" != 'range' ] || [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
+            echo '::error::Range mode requires immutable base and head commit IDs.'
+            exit 1
+          fi
           # A lane that owns non-Python inputs supplies its own pattern; the
           # default keeps the generic Python-file behaviour for every caller.
           if [ -n "$INPUT_CHANGED_PATHS_PATTERN" ]; then
@@ -94,7 +133,8 @@ jobs:
           else
             pattern="^${INPUT_WORKING_DIRECTORY}/.*\.py$"
           fi
-          if git diff --name-only "$BASE_SHA" HEAD | grep -Eq "$pattern"; then
+          changed_files=$(git diff --name-only "$BASE_SHA..$HEAD_SHA" --)
+          if grep -Eq "$pattern" <<< "$changed_files"; then
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
             echo "Tracked files changed for pattern $pattern"
           else
@@ -104,7 +144,7 @@ jobs:
 
       - name: Install uv
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.10.9"
 

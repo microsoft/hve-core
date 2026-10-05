@@ -237,7 +237,7 @@
       title.textContent = 'Presentation keys';
       const grid = element('div', 'key-grid');
       [
-        ['Left / Right', 'Previous / next slide. Page Up / Page Down and Space also navigate.'],
+        ['Left / Right', 'Previous / next slide, including from a focused button or link. Page Up / Page Down and Space also navigate.'],
         ['Home / End', 'First / last slide.'],
         ['[ / ]', 'Previous / next demonstration step on a demo slide.'],
         ['R', 'Reset only the current demonstration.'],
@@ -246,7 +246,7 @@
         ['F', 'Toggle full screen when the browser supports it.'],
         ['Motion button', 'Optional short slide fades. Off by default; reduced-motion preference takes priority.'],
         ['Escape', 'Close a dialog and return focus; exits browser full screen.'],
-        ['Tab / Enter', 'Reach and activate visible controls. Arrow/Space shortcuts do not hijack focused controls.']
+        ['Tab / Enter', 'Reach and activate visible controls. Space and letter shortcuts do not take keys from focused controls.']
       ].forEach(([key, description]) => grid.append(element('kbd', '', key), element('span', '', description)));
       dialogContent.append(grid, element('p', 'source-note', 'Slides and demo steps are separate. Steps are preserved when revisiting a slide. Reload restores the slide URL but resets all demonstrations. Reduced-motion preference disables transitions. Character shortcuts work only when the presentation surface has focus. Reading view provides unscaled, scrollable content and starts automatically on compact screens.'));
     }
@@ -316,20 +316,31 @@
     if (document.activeElement === document.body || document.activeElement === null) restoreTarget.focus();
   });
 
+  // Buttons and links do not use these keys, so paging keeps working after a control is clicked.
+  // Components that need them call preventDefault or stopPropagation on their own element.
+  const pagingKeys = { arrowright: 1, pagedown: 1, arrowleft: -1, pageup: -1 };
   document.addEventListener('keydown', event => {
-    if (!ready || dialog.open || event.altKey || event.ctrlKey || event.metaKey) return;
-    const target = event.target;
-    if (target instanceof Element && target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]')) return;
-    if (globalThis.getSelection()?.toString()) return;
+    if (!ready || dialog.open || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
     const key = event.key.toLowerCase();
+    const target = event.target instanceof Element ? event.target : null;
+    const onButtonOrLink = Boolean(target?.closest('button, a'));
+    // Selected text keeps its keys unless a button or link has focus.
+    if (globalThis.getSelection()?.toString() && !onButtonOrLink) return;
+    if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+    if (Object.hasOwn(pagingKeys, key)) {
+      event.preventDefault();
+      if (pagingKeys[key] > 0) deck.next();
+      else deck.prev();
+      return;
+    }
+    if (target?.closest('button, a, summary')) return;
     if (key.length === 1 && target !== document.querySelector('main.slides')) return;
     const activeDemo = deck.getCurrentSlide().querySelector('[data-demo]');
-    const handled = ['arrowright', 'pagedown', ' ', 'arrowleft', 'pageup', 'home', 'end', 'o', 's', 'n', '?', 'f'].includes(key)
+    const handled = [' ', 'home', 'end', 'o', 's', 'n', '?', 'f'].includes(key)
       || (activeDemo && ['[', ']', 'r'].includes(key));
     if (!handled) return;
     event.preventDefault();
-    if (['arrowright', 'pagedown', ' '].includes(key)) event.shiftKey && key === ' ' ? deck.prev() : deck.next();
-    else if (['arrowleft', 'pageup'].includes(key)) deck.prev();
+    if (key === ' ') event.shiftKey ? deck.prev() : deck.next();
     else if (key === 'home') deck.slide(0);
     else if (key === 'end') deck.slide(sections.length - 1);
     else if (key === 'f') {

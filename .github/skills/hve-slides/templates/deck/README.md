@@ -69,7 +69,7 @@ blocks and `style` attributes are rejected by the bundler.
 
 | Control                           | Behavior                                                 |
 |-----------------------------------|----------------------------------------------------------|
-| Left / Right, Page Up / Page Down | Previous / next slide                                    |
+| Left / Right, Page Up / Page Down | Previous / next slide, including from a focused button   |
 | Space / Shift+Space               | Next / previous slide                                    |
 | Home / End                        | First / last slide                                       |
 | Back / Next step, \[ / \]         | Previous / next walkthrough step                         |
@@ -80,16 +80,35 @@ blocks and `style` attributes are rejected by the bundler.
 | Tab / Enter                       | Reach and activate controls                              |
 | Motion                            | Optional fades; reduced-motion preference takes priority |
 
-Focused controls, editable fields, text selections and modifier shortcuts keep their
-normal behavior. Walkthroughs retain their step when revisiting slides. Reload restores
-the slide hash but resets walkthroughs. Nothing advances automatically.
-The unused reveal.js cross-window `postMessage` API is disabled.
+Left / Right and Page Up / Page Down keep paging after a presenter button or link is
+clicked, because those controls do not use the keys. Editable fields, open dialogs and
+modifier shortcuts keep their normal behavior, and so does selected text unless a button
+or link has focus. A component that needs the keys, such as a roving-focus diagram or
+focusable scroll region, handles them on its own element and calls `preventDefault()` or
+`stopPropagation()`. Other shortcuts wait while a control has focus, so Space and Enter
+activate it. Walkthroughs retain their step when revisiting slides. Reload restores the
+slide hash but resets walkthroughs. Nothing advances automatically. The unused reveal.js
+cross-window `postMessage` API is disabled.
 
 The design canvas is 1600 by 900 and should also be checked at 1280 by 720.
 Reading view switches to unscaled, scrollable content. It starts automatically on compact
 viewports and can be toggled at any size. Character shortcuts, including Space, work only
 while the presentation surface itself has focus; Tab reaches that surface and its controls.
 New layouts must preserve reading-view reflow as well as the projected layout.
+
+The bottom bar shows the HVE Core mark and current chapter, the presenter buttons, then
+slide navigation. `--presenter-height` sizes both the bar and the slide area above it. The
+bar keeps its ends `--presenter-inset` from the window edges, so viewer overlays such as the
+Copilot button SharePoint places at the bottom right do not cover the chapter label or slide
+navigation. With reading view off, the bar compacts at 1366 pixels wide and stacks
+centered rows at 1240 pixels or narrower. Keep chapter labels short: the bottom-chrome
+test allows 28 characters, which keeps the bar on one row at desktop widths.
+
+Opening and closing slides use `.slide-bottom` for repository and fidelity labels above a
+divider. Each walkthrough keeps Back, Next step and Reset in the footer of its example
+frame, so the controls stay in place between steps. Fit every step inside that frame
+without internal scrolling. The bottom-chrome test in `deck.test.cjs` records this
+contract; change it only with a deliberate redesign.
 
 ## Verify and share
 

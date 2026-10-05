@@ -1,9 +1,9 @@
 ---
 title: HVE Core Identity and Channels
-description: Understand the single HVE Core identity and its development, PreRelease, and Stable channels
+description: Understand the single HVE Core identity, its Copilot CLI plugin registration, and its VS Code extension PreRelease and Stable channels
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-03
 ms.topic: overview
 keywords:
   - packages
@@ -17,9 +17,13 @@ HVE Core publishes one plugin named `hve-core` and one VS Code extension named `
 
 Root `plugin.json` is the deterministic membership authority for both products. `.github/plugin/marketplace.json` contains one `hve-core` locator whose relative source is the repository root; it does not repeat component membership. Plugin clients resolve root README and LICENSE, while the VSIX packages `extension/README.md` and `extension/LICENSE`.
 
-## Stable and PreRelease
+## Copilot CLI Plugin
 
-Stable and PreRelease contain the same complete plugin and extension content. They differ in source ownership, cadence, version, and immutable release tag.
+The Copilot CLI plugin has one registration, `microsoft/hve-core`, which tracks `main`. There are no PreRelease or Stable plugin channels. A marketplace refresh followed by a plugin update resolves current `main` content from the repository root, with artifact discovery bounded to package-scoped `.github` paths. Plugin content from `main` has no published-release assurance.
+
+## VS Code Extension Channels
+
+The extension's Stable and PreRelease channels contain the same complete content. They differ in source ownership, cadence, version, and immutable release tag.
 
 | Channel    | Reviewed source path                              | Exact source tag        |
 |------------|---------------------------------------------------|-------------------------|
@@ -37,50 +41,33 @@ Source moves in one direction through reviewed target-based promotion PRs:
 no tag. Release-please opens a separate managed PR on the target branch, and
 merging that PR creates the channel's exact tag and draft release.
 
-`main` is not a release-please target. It is a ref-less development-tip channel, so a marketplace refresh followed by a plugin update resolves current `main` content from the repository root. Release branches, tags, and published releases own release state and history; PreRelease publication does not synchronize versions or `CHANGELOG.md` state back into `main`.
+`main` is not a release-please target. Release branches, tags, and published releases own release state and history; PreRelease publication does not synchronize versions or `CHANGELOG.md` state back into `main`.
 
-The plugin root remains the repository root on every branch and exact tag, with artifact discovery bounded to package-scoped `.github` paths. The extension identity remains `ise-hve-essentials.hve-core` on both Marketplace channels.
-
-Release branches are reviewed moving channels. Registering a branch resolves its current committed manifest and source, while an exact tag fixes both catalog selection and source content.
+The extension identity remains `ise-hve-essentials.hve-core` on both Marketplace channels.
 
 A published channel release is the assurance boundary for its exact tag. The
 release workflow applies review and release gates, produces one VSIX plus
 SBOM and provenance sidecars, attaches attestations, verifies provenance, and uses the configured
-publication path. Ref-less main content intentionally has no published-release
-assurance.
+publication path.
 
 ## Membership Parity
 
-| Content                | Stable | PreRelease |
-|------------------------|--------|------------|
-| Agents                 | Same   | Same       |
-| Prompts                | Same   | Same       |
-| Instructions           | Same   | Same       |
-| Distributable skills   | Same   | Same       |
-| Bundled telemetry hook | Same   | Same       |
+| Content              | Stable | PreRelease |
+|----------------------|--------|------------|
+| Agents               | Same   | Same       |
+| Prompts              | Same   | Same       |
+| Instructions         | Same   | Same       |
+| Distributable skills | Same   | Same       |
 
 The sync policy includes tracked package-scoped artifacts that match canonical paths. Skills with a top-level noncommercial license qualifier are excluded from distribution. Channel selection never filters the manifest.
 
 ## Copilot Marketplace Registration
 
-Register the development tip without a ref:
+Register the marketplace and install the plugin:
 
 ```bash
 copilot plugin marketplace add microsoft/hve-core
-```
-
-Register moving reviewed channels:
-
-```bash
-copilot plugin marketplace add microsoft/hve-core#release/prerelease
-copilot plugin marketplace add microsoft/hve-core#release/stable
-```
-
-Register immutable channel tags:
-
-```bash
-copilot plugin marketplace add microsoft/hve-core#prerelease-v<version>
-copilot plugin marketplace add microsoft/hve-core#v<version>
+copilot plugin install hve-core@hve-core
 ```
 
 Refresh the marketplace before requesting an installed-plugin update:
@@ -90,12 +77,10 @@ copilot plugin marketplace update hve-core
 copilot plugin update hve-core@hve-core
 ```
 
-Switching registrations can require removing and re-adding the marketplace.
-Do not rely on any unverified duplicate same-name registration behavior.
+If you registered a release-channel or tag ref earlier, follow
+[Replace an Earlier Registration](methods/cli-plugins#replace-an-earlier-registration).
 
 ## Selective Clone Adoption
-
-The `hve-core` plugin declares the telemetry hook. VS Code has no declarative hook contribution point, so extension users configure its location manually.
 
 For a smaller repository-owned footprint, use the installer to copy all manifest components or a selected subset. Schema version 2 records `selection.profile` and `selection.components`, does not assign package ownership, and never copies hooks.
 

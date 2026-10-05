@@ -5,6 +5,21 @@ name: Eval Validation
 on:
   workflow_call:
     inputs:
+      change-mode:
+        description: "Use an exact immutable range or run full unprivileged validation"
+        required: false
+        type: string
+        default: full
+      base-sha:
+        description: "Immutable base commit used in range mode"
+        required: false
+        type: string
+        default: ""
+      head-sha:
+        description: "Immutable head commit used in range mode"
+        required: false
+        type: string
+        default: ""
       soft-fail:
         description: "Whether to continue on eval validation failures"
         required: false
@@ -15,20 +30,6 @@ on:
         required: false
         type: boolean
         default: true
-      base-ref:
-        description: "Explicit base ref, used only when merge-ref is empty (manual runs)"
-        required: false
-        type: string
-        default: "origin/main"
-      head-ref:
-        description: "PR event head SHA, or workflow SHA for manual runs"
-        required: true
-        type: string
-      merge-ref:
-        description: "PR test-merge commit SHA; its first parent is the base and its second parent must equal head-ref"
-        required: false
-        type: string
-        default: ""
       ordinary-shard-count:
         description: "Ordinary agent shard count (1 or 4)"
         required: false
@@ -49,6 +50,16 @@ on:
         required: false
         type: number
         default: 2
+      compare-shard-count:
+        description: "Concurrent vally compare shards per baseline model job (1, 5, or 7)"
+        required: false
+        type: number
+        default: 7
+      advisory-equivalence:
+        description: "Run the non-gating advisory baseline-equivalence model lanes"
+        required: false
+        type: boolean
+        default: true
     secrets:
       copilot-github-token:
         description: "GitHub credential exported as COPILOT_GITHUB_TOKEN for the Copilot CLI used by vally eval"
@@ -59,7 +70,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: eval-validation-${{ github.event.pull_request.number || github.ref }}
+  group: eval-validation-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -78,6 +89,19 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Verify resolved head commit
+        if: inputs.change-mode == 'range'
+        shell: pwsh
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+        run: |
+          $actualHeadSha = (git rev-parse HEAD).Trim()
+          if ($env:EXPECTED_HEAD_SHA -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
+            Write-Output "::error::Checked-out commit $actualHeadSha does not match the resolved head commit."
+            exit 1
+          }
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -95,22 +119,21 @@ jobs:
         run: mkdir -p logs
 
       - name: Generate immutable eval change set
+        if: inputs.change-mode == 'range'
         shell: pwsh
         env:
-          INPUT_BASE_REF: ${{ inputs.base-ref }}
-          INPUT_HEAD_REF: ${{ inputs.head-ref }}
-          INPUT_MERGE_REF: ${{ inputs.merge-ref }}
+          INPUT_BASE_SHA: ${{ inputs.base-sha }}
+          INPUT_HEAD_SHA: ${{ inputs.head-sha }}
         run: |
-          if ($env:INPUT_MERGE_REF) {
-            pwsh -NoProfile -File scripts/evals/Get-EvalChangeSet.ps1 `
-              -MergeRef $env:INPUT_MERGE_REF -HeadRef $env:INPUT_HEAD_REF -OutFile logs/eval-change-set.json
-          } else {
-            pwsh -NoProfile -File scripts/evals/Get-EvalChangeSet.ps1 `
-              -BaseRef $env:INPUT_BASE_REF -HeadRef $env:INPUT_HEAD_REF -OutFile logs/eval-change-set.json
+          if (-not $env:INPUT_BASE_SHA -or -not $env:INPUT_HEAD_SHA) {
+            throw 'Range mode requires immutable base and head commit IDs.'
           }
+          pwsh -NoProfile -File scripts/evals/Get-EvalChangeSet.ps1 `
+            -BaseRef $env:INPUT_BASE_SHA -HeadRef $env:INPUT_HEAD_SHA -OutFile logs/eval-change-set.json
           if ($LASTEXITCODE -ne 0) { throw 'Eval change-set generation failed; selection is unavailable.' }
 
       - name: Upload immutable eval change set
+        if: inputs.change-mode == 'range'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: eval-change-set
@@ -122,14 +145,18 @@ jobs:
         id: detect
         shell: pwsh
         env:
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
           INPUT_CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
         run: |
-          Import-Module ./scripts/evals/Modules/EvalChangeSet.psm1 -Force
-          $changeSet = Read-EvalChangeSet -Path logs/eval-change-set.json
-          $relevant = Test-EvalChangeSetRelevance -ChangeSet $changeSet -RepoRoot $PWD.Path
-          if ($env:INPUT_CHANGED_FILES_ONLY -ne 'true') {
+          if ($env:INPUT_CHANGE_MODE -eq 'full' -or $env:INPUT_CHANGED_FILES_ONLY -ne 'true') {
             $relevant = $true
-            Write-Output 'changed-files-only is false; running full eval suite.'
+            Write-Output 'Full eval validation selected.'
+          } elseif ($env:INPUT_CHANGE_MODE -eq 'range') {
+            Import-Module ./scripts/evals/Modules/EvalChangeSet.psm1 -Force
+            $changeSet = Read-EvalChangeSet -Path logs/eval-change-set.json
+            $relevant = Test-EvalChangeSetRelevance -ChangeSet $changeSet -RepoRoot $PWD.Path
+          } else {
+            throw "Unsupported change mode: $env:INPUT_CHANGE_MODE"
           }
 
           if ($relevant) {
@@ -239,6 +266,19 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Verify resolved head commit
+        if: inputs.change-mode == 'range'
+        shell: pwsh
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+        run: |
+          $actualHeadSha = (git rev-parse HEAD).Trim()
+          if ($env:EXPECTED_HEAD_SHA -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
+            Write-Output "::error::Checked-out commit $actualHeadSha does not match the resolved head commit."
+            exit 1
+          }
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -253,7 +293,7 @@ jobs:
         uses: ./.github/actions/setup-ps-modules
 
       - name: Install uv
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.10.9"
 
@@ -270,6 +310,7 @@ jobs:
         run: mkdir -p logs
 
       - name: Download immutable eval change set
+        if: inputs.change-mode == 'range'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: eval-change-set
@@ -278,9 +319,20 @@ jobs:
       - name: Generate changed-artifact manifest
         id: artifact-manifest
         shell: pwsh
+        env:
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
         run: |
-          pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
-            -ChangeSetPath logs/eval-change-set.json -OutFile logs/changed-ai-artifacts.json
+          switch -CaseSensitive ($env:INPUT_CHANGE_MODE) {
+            'range' {
+              pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
+                -ChangeSetPath logs/eval-change-set.json -OutFile logs/changed-ai-artifacts.json
+            }
+            'full' {
+              pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
+                -AllTracked -OutFile logs/changed-ai-artifacts.json
+            }
+            default { throw 'Unsupported change mode.' }
+          }
           if ($LASTEXITCODE -ne 0) { throw 'Changed-artifact selection failed.' }
           $manifest = Get-Content -LiteralPath logs/changed-ai-artifacts.json -Raw | ConvertFrom-Json
           $affectedAgents = if ($null -ne $manifest.affectedAgents) { @($manifest.affectedAgents) } else { @() }
@@ -338,7 +390,7 @@ jobs:
     name: Agent Eval Plan
     runs-on: ubuntu-latest
     needs: [eval-validation, content-moderation]
-    if: needs.eval-validation.outputs.eval-relevant == 'true' && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'workflow_dispatch')
+    if: needs.eval-validation.outputs.eval-relevant == 'true' && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) || github.event_name == 'workflow_dispatch')
     permissions:
       contents: read
     outputs:
@@ -346,6 +398,16 @@ jobs:
       baseline-required: ${{ steps.plan.outputs.baseline-required }}
       execution-enabled: ${{ steps.plan.outputs.execution-enabled }}
     steps:
+      - name: Require a verified change range
+        shell: bash
+        env:
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
+        run: |
+          if [[ "${INPUT_CHANGE_MODE}" != 'range' ]]; then
+            echo "::error::Agent eval selection requires a verified change range; the change-range resolver selected full mode. A manual dispatch from the default branch tip, or from a branch with no commits ahead of it, has no range to verify; dispatch from a branch with changes. Otherwise, investigate the change-range job before rerunning."
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -376,6 +438,7 @@ jobs:
           INSTRUCTION_SHARD_COUNT: ${{ inputs.instruction-shard-count || 2 }}
           SKILL_SHARD_COUNT: ${{ inputs.skill-shard-count || 2 }}
           BASELINE_MAX_PARALLEL: ${{ inputs.baseline-max-parallel || 2 }}
+          COMPARE_SHARD_COUNT: ${{ inputs.compare-shard-count || 7 }}
           COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
         run: |
           if ($env:ORDINARY_SHARD_COUNT -notin @('1', '4')) {
@@ -389,6 +452,9 @@ jobs:
           }
           if ($env:BASELINE_MAX_PARALLEL -notin @('1', '2')) {
             throw "baseline-max-parallel must be 1 or 2; received '$env:BASELINE_MAX_PARALLEL'."
+          }
+          if ($env:COMPARE_SHARD_COUNT -notin @('1', '5', '7')) {
+            throw "compare-shard-count must be 1, 5, or 7; received '$env:COMPARE_SHARD_COUNT'."
           }
           pwsh -NoProfile -File scripts/evals/New-AgentEvalPlan.ps1 `
             -ManifestPath logs/changed-ai-artifacts.json `
@@ -432,7 +498,7 @@ jobs:
     if: >-
       needs.eval-validation.outputs.eval-relevant == 'true' &&
       needs.agent-plan.outputs.execution-enabled == 'true' &&
-      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
       github.event_name == 'workflow_dispatch')
     permissions:
       contents: read
@@ -462,7 +528,7 @@ jobs:
         uses: ./.github/actions/setup-ps-modules
 
       - name: Install uv
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.10.9"
 
@@ -560,7 +626,7 @@ jobs:
       needs.eval-validation.outputs.eval-relevant == 'true' &&
       needs.agent-plan.outputs.execution-enabled == 'true' &&
       needs.agent-plan.outputs.baseline-required == 'true' &&
-      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
       github.event_name == 'workflow_dispatch')
     permissions:
       contents: read
@@ -620,6 +686,7 @@ jobs:
         shell: pwsh
         env:
           SELECTED_MODEL: ${{ matrix.model }}
+          COMPARE_SHARD_COUNT: ${{ inputs.compare-shard-count || 7 }}
           WORKFLOW_RUN_ID: ${{ github.run_id }}
           WORKFLOW_RUN_ATTEMPT: ${{ github.run_attempt }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -632,6 +699,7 @@ jobs:
           }
           npm run ci:eval:equivalence -- -Agent rpi-agent -Tier calibration `
             -CalibrationModel $env:SELECTED_MODEL `
+            -CompareShardCount ([int]$env:COMPARE_SHARD_COUNT) `
             -RepoRoot $PWD -OutputPath $summaryPath
           $producerExitCode = $LASTEXITCODE
           $summary = $null
@@ -672,6 +740,120 @@ jobs:
           echo "Baseline equivalence failed for ${{ matrix.model }}"
           exit 1
 
+  # Advisory only: this job reports how additional models behave on the baseline
+  # equivalence suite. It never gates the PR, no fan-in lists it in `needs`, and its
+  # artifact name matches no fan-in download pattern.
+  equivalence-advisory:
+    name: Advisory Equivalence (${{ matrix.model }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    continue-on-error: true
+    needs: [eval-validation, content-moderation, agent-plan]
+    if: >-
+      inputs.advisory-equivalence != false &&
+      needs.eval-validation.outputs.eval-relevant == 'true' &&
+      needs.agent-plan.outputs.execution-enabled == 'true' &&
+      needs.agent-plan.outputs.baseline-required == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - model: mai-code-1.1-flash
+            key: mai
+    env:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      - name: Create logs directory
+        run: mkdir -p logs
+
+      - name: Check Copilot token availability
+        shell: pwsh
+        run: |
+          "COPILOT_HOME=$env:RUNNER_TEMP/copilot-home" >> $env:GITHUB_ENV
+          if ([string]::IsNullOrWhiteSpace($env:COPILOT_GITHUB_TOKEN)) {
+            throw 'COPILOT_GITHUB_TOKEN is required for advisory equivalence.'
+          }
+
+      - name: Probe Copilot token
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/evals/Test-CopilotToken.ps1 -SmokeTest
+
+      - name: Execute advisory model
+        shell: pwsh
+        env:
+          ADVISORY_MODEL: ${{ matrix.model }}
+          COMPARE_SHARD_COUNT: ${{ inputs.compare-shard-count || 7 }}
+        run: |
+          npm run ci:eval:equivalence -- -Agent rpi-agent -Tier devloop `
+            -Model $env:ADVISORY_MODEL `
+            -CompareShardCount ([int]$env:COMPARE_SHARD_COUNT) `
+            -NoBaselineCache `
+            -RepoRoot $PWD -OutputPath "logs/advisory-equivalence-$env:ADVISORY_MODEL.json"
+
+      - name: Summarize advisory result
+        if: always()
+        shell: pwsh
+        env:
+          ADVISORY_MODEL: ${{ matrix.model }}
+        run: |
+          $summaryPath = "logs/advisory-equivalence-$env:ADVISORY_MODEL.json"
+          $lines = [System.Collections.Generic.List[string]]::new()
+          $lines.Add("## Advisory Equivalence: $env:ADVISORY_MODEL")
+          $lines.Add('')
+          $lines.Add('> Advisory only. This result does not gate the pull request.')
+          $lines.Add('')
+          $summary = $null
+          if (Test-Path -LiteralPath $summaryPath -PathType Leaf) {
+            try { $summary = Get-Content -LiteralPath $summaryPath -Raw | ConvertFrom-Json }
+            catch { $summary = $null }
+          }
+          if ($null -eq $summary) {
+            $lines.Add('No readable advisory summary was produced.')
+          }
+          else {
+            # Only fixed field values and fixed diagnostic categories are rendered;
+            # diagnostic text can carry model output and is never published.
+            $categories = @($summary.executionDiagnostics | ForEach-Object { @($_.errors) } | ForEach-Object { [string]$_.category } | Sort-Object -Unique)
+            $lines.Add('| Field | Value |')
+            $lines.Add('|-------|-------|')
+            foreach ($field in @('verdict', 'equivalenceGate', 'runs', 'ties', 'baselineWins', 'treatmentWins', 'equivalentTies', 'equivalentTrials', 'invariantFailures', 'invocationFailures', 'judgeErrors', 'dataQualityViolations', 'runHealthFailures')) {
+              $lines.Add("| $field | $($summary.$field) |")
+            }
+            $lines.Add("| executionErrorCategories | $(if ($categories.Count -gt 0) { $categories -join ', ' } else { 'none' }) |")
+          }
+          $lines -join "`n" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload advisory summary
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: advisory-equivalence-${{ matrix.key }}
+          path: logs/advisory-equivalence-${{ matrix.model }}.json
+          retention-days: 30
+          if-no-files-found: warn
+
   equivalence-fan-in:
     name: Baseline Equivalence Fan-In
     runs-on: ubuntu-latest
@@ -680,7 +862,7 @@ jobs:
       always() && !cancelled() &&
       needs.eval-validation.outputs.eval-relevant == 'true' &&
       needs.agent-plan.outputs.execution-enabled == 'true' &&
-      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
       github.event_name == 'workflow_dispatch')
     permissions:
       contents: read
@@ -767,7 +949,7 @@ jobs:
       always() && !cancelled() &&
       needs.eval-validation.outputs.eval-relevant == 'true' &&
       needs.agent-plan.outputs.execution-enabled == 'true' &&
-      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
       github.event_name == 'workflow_dispatch')
     permissions:
       contents: read
@@ -833,7 +1015,7 @@ jobs:
     timeout-minutes: 10
     needs: [eval-fan-in]
     # Present the canonical authoritative summary even when execution failed.
-    if: always() && github.event.pull_request.head.repo.fork == false && github.event_name == 'pull_request'
+    if: always() && github.event.pull_request.head.repo.full_name == github.repository && github.event_name == 'pull_request'
     permissions:
       contents: read
       pull-requests: write

@@ -10,10 +10,14 @@ on:
       - develop
       - release/prerelease
       - release/stable
+  merge_group:
+    types: [checks_requested]
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}
   cancel-in-progress: true
 
 # Minimal permissions for security
@@ -21,6 +25,40 @@ permissions:
   contents: read
 
 jobs:
+  change-range:
+    name: Resolve Workflow Change Range
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      mode: ${{ steps.resolve.outputs.mode }}
+      base-sha: ${{ steps.resolve.outputs.base-sha }}
+      head-sha: ${{ steps.resolve.outputs.head-sha }}
+    steps:
+      - name: Checkout event head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Resolve immutable change range
+        id: resolve
+        shell: pwsh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event_name == 'merge_group' && github.event.merge_group.base_sha || '' }}
+          HEAD_SHA: ${{ github.event_name == 'merge_group' && github.event.merge_group.head_sha || github.sha }}
+          PR_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: >-
+          ./scripts/ci/Resolve-WorkflowChangeRange.ps1
+          -EventName "$env:EVENT_NAME"
+          -BaseSha "$env:BASE_SHA"
+          -HeadSha "$env:HEAD_SHA"
+          -PullRequestHeadSha "$env:PR_HEAD_SHA"
+          -DefaultBranch "$env:DEFAULT_BRANCH"
+
   spell-check:
     name: Spell Check
     uses: ./.github/workflows/spell-check.yml
@@ -47,10 +85,14 @@ jobs:
 
   psscriptanalyzer:
     name: PowerShell Lint
+    needs: change-range
     uses: ./.github/workflows/ps-script-analyzer.yml
     permissions:
       contents: read
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       soft-fail: false
       changed-files-only: true
 
@@ -140,7 +182,7 @@ jobs:
 
   python-lint:
     name: "Python Lint (${{ matrix.directory }})"
-    needs: discover-python-projects
+    needs: [change-range, discover-python-projects]
     if: needs.discover-python-projects.outputs.has-projects == 'true'
     strategy:
       fail-fast: false
@@ -150,6 +192,9 @@ jobs:
     permissions:
       contents: read
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       soft-fail: false
       changed-files-only: true
       working-directory: ${{ matrix.directory }}
@@ -164,10 +209,14 @@ jobs:
 
   yaml-lint:
     name: YAML Lint
+    needs: change-range
     uses: ./.github/workflows/yaml-lint.yml
     permissions:
       contents: read
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       soft-fail: false
       changed-files-only: true
 
@@ -184,13 +233,16 @@ jobs:
 
   pytest:
     name: "Python Tests (${{ matrix.directory }})"
-    needs: discover-python-projects
+    needs: [change-range, discover-python-projects]
     if: needs.discover-python-projects.outputs.has-projects == 'true'
     uses: ./.github/workflows/pytest-tests.yml
     permissions:
       contents: read
       id-token: write
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       working-directory: ${{ matrix.directory }}
       soft-fail: false
       changed-files-only: true
@@ -204,11 +256,15 @@ jobs:
 
   copilot-otel-runtime-tests:
     name: Copilot OTEL Runtime Tests
+    needs: change-range
     uses: ./.github/workflows/pytest-tests.yml
     permissions:
       contents: read
       id-token: write
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       working-directory: .github/skills/experimental/copilot-otel-metrics
       soft-fail: false
       changed-files-only: true
@@ -221,13 +277,16 @@ jobs:
 
   node-tests:
     name: "Node Tests (${{ matrix.directory }})"
-    needs: discover-node-projects
+    needs: [change-range, discover-node-projects]
     if: needs.discover-node-projects.outputs.has-projects == 'true'
     uses: ./.github/workflows/node-tests.yml
     permissions:
       contents: read
       id-token: write
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       working-directory: ${{ matrix.directory }}
       soft-fail: false
       changed-files-only: true
@@ -283,12 +342,15 @@ jobs:
 
   fuzz-tests:
     name: "Fuzz Tests (${{ matrix.directory }})"
-    needs: discover-python-projects
+    needs: [change-range, discover-python-projects]
     if: needs.discover-python-projects.outputs.has-projects == 'true'
     uses: ./.github/workflows/fuzz-tests.yml
     permissions:
       contents: read
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       working-directory: ${{ matrix.directory }}
       soft-fail: false
       changed-files-only: true
@@ -299,7 +361,7 @@ jobs:
 
   pip-audit:
     name: "pip-audit (${{ matrix.directory }})"
-    needs: discover-python-projects
+    needs: [change-range, discover-python-projects]
     if: needs.discover-python-projects.outputs.has-projects == 'true'
     strategy:
       fail-fast: false
@@ -309,26 +371,37 @@ jobs:
     permissions:
       contents: read
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       working-directory: ${{ matrix.directory }}
       soft-fail: false
       changed-files-only: true
 
   docusaurus-tests:
     name: Docusaurus Tests
+    needs: change-range
     uses: ./.github/workflows/docusaurus-tests.yml
     permissions:
       contents: read
       id-token: write # Required for Codecov OIDC in the reusable workflow
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       soft-fail: false
       changed-files-only: true
 
   frontmatter-validation:
     name: Frontmatter Validation
+    needs: change-range
     uses: ./.github/workflows/frontmatter-validation.yml
     permissions:
       contents: read
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       soft-fail: false
       changed-files-only: true
       skip-footer-validation: false
@@ -336,11 +409,15 @@ jobs:
 
   adr-consistency-validation:
     name: ADR Consistency Validation
+    needs: change-range
     uses: ./.github/workflows/adr-consistency-validation.yml
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       soft-fail: false
       changed-files-only: true
       upload-sarif: true
@@ -356,22 +433,27 @@ jobs:
 
   asset-docs-validation:
     name: Asset Docs Validation
+    needs: change-range
     uses: ./.github/workflows/asset-docs-validation.yml
     permissions:
       contents: read
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       soft-fail: false
       changed-files-only: true
-      # Outside a pull request both operands are empty, so fall back to a real
-      # ref instead of the literal 'origin/'.
-      base-branch: ${{ github.event.pull_request.base.sha || (github.base_ref && format('origin/{0}', github.base_ref)) || 'origin/main' }}
 
   msdate-freshness:
     name: ms.date Freshness Check
+    needs: change-range
     uses: ./.github/workflows/msdate-freshness-check.yml
     permissions:
       contents: read
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       staleness-threshold-days: 90
       changed-files-only: true
       soft-fail: false
@@ -386,27 +468,32 @@ jobs:
 
   skill-validation:
     name: Skill Validation
+    needs: change-range
     uses: ./.github/workflows/skill-validation.yml
     permissions:
       contents: read
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       soft-fail: false
       changed-files-only: true
-      base-branch: ${{ github.event.pull_request.base.sha || (github.base_ref && format('origin/{0}', github.base_ref)) || 'origin/main' }}
 
   eval-validation:
     name: Eval Validation
+    needs: change-range
     uses: ./.github/workflows/eval-validation.yml
     permissions:
       contents: read
       pull-requests: write
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       soft-fail: false
       changed-files-only: true
-      merge-ref: ${{ github.event_name == 'pull_request' && github.sha || '' }}
-      head-ref: ${{ github.event.pull_request.head.sha || github.sha }}
     secrets:
-      copilot-github-token: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+      copilot-github-token: ${{ (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) && secrets.COPILOT_GITHUB_TOKEN || '' }}
 
   link-lang-check:
     name: Link Language Check
@@ -418,13 +505,17 @@ jobs:
 
   markdown-link-check:
     name: Markdown Link Check
+    needs: change-range
     uses: ./.github/workflows/markdown-link-check.yml
     permissions:
       contents: read
     with:
-      soft-fail: true
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
+      soft-fail: false
       changed-files-only: true
-      base-branch: ${{ github.event.pull_request.base.sha || format('origin/{0}', github.base_ref) }}
+      external-links-as-warnings: true
 
   dependency-pinning-check:
     name: Validate Dependency Pinning
@@ -492,15 +583,18 @@ jobs:
 
   gitleaks-scan:
     name: Gitleaks Secret Scan
+    needs: change-range
     uses: ./.github/workflows/gitleaks-scan.yml
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
     with:
+      change-mode: ${{ needs.change-range.outputs.mode }}
+      base-sha: ${{ needs.change-range.outputs.base-sha }}
+      head-sha: ${{ needs.change-range.outputs.head-sha }}
       soft-fail: false
       upload-sarif: true
       upload-artifact: false
-      log-opts: "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
 
   npm-audit:
     name: npm Security Audit
@@ -764,6 +858,7 @@ jobs:
       contents: read
     if: always()
     needs:
+      - change-range
       - spell-check
       - markdown-lint
       - table-format

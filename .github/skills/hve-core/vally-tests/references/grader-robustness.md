@@ -1,14 +1,14 @@
 ---
 title: Grader Robustness
-description: Authoring rules that keep Vally graders from asserting the impossible or rejecting correct behavior, with a pre-commit verification probe
+description: Authoring rules that keep Vally graders from asserting the impossible, rejecting correct behavior, or passing without it, with a pre-commit verification probe
 ---
 <!-- markdownlint-disable-file -->
 
 # Grader Robustness
 
-[grader-catalog.md](./grader-catalog.md) covers which grader type to reach for. This reference covers the failure modes that survive correct grader selection: a grader that can never pass, or one that fails an agent doing exactly what the stimulus asked.
+[grader-catalog.md](./grader-catalog.md) covers which grader type to reach for. This reference covers the failure modes that survive correct grader selection: a grader that can never pass, one that fails an agent doing exactly what the stimulus asked, or one that passes when the behavior never happened.
 
-Both classes can look identical to an agent defect in a hosted evaluation. Use the checks below in the repository that consumes the skill, before model execution.
+All three classes can look identical to an agent defect or a healthy result in a hosted evaluation. Use the checks below in the repository that consumes the skill, before model execution.
 
 ## Rule 1: Mount everything the grader demands
 
@@ -81,6 +81,17 @@ negate: true
 ```
 
 Check straight and curly contractions and qualified denials such as "not yet" and "not actually". A later affirmative mutation must still fail even when an earlier sentence denies a write. Keep each guard's real file-extension scope; a denial test for an unrelated filename proves nothing.
+
+## Rule 7: The prompt must not satisfy the grader
+
+A positive grader that matches words the stimulus prompt already contains can pass on a reply that only repeats the question. For example, `(?i)(vally|conformance|grader|skill)` on a prompt asking which skill authors "conformance test stimuli" for "Vally graders" passes a reply that says "I cannot find that skill". The stimulus then reports success while testing nothing, a failure a green run hides.
+
+Assert something only a correct answer supplies: a value, name, or reason taken from the staged artifact rather than from the prompt. Add both of these to every positive grader's reject list:
+
+* The stimulus prompt text itself.
+* A reply stating the artifact under test is unavailable, for example "I can't find that skill in this workspace."
+
+If either one passes, the grader is echo-satisfiable. Re-anchor it on reply substance. Staging the artifact (Rule 1) does not fix an echo-satisfiable grader; it only makes a real answer possible.
 
 ## Verify before committing
 

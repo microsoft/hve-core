@@ -438,10 +438,20 @@ def _run(args: argparse.Namespace) -> int:
     token_expires_at = 0
     speechsdk: Any = None
     speech_key: str | None = None
-    speech_region: str = "eastus"
+    speech_region: str = ""
     speech_resource_id: str | None = None
     use_entra_auth = False
     if not args.dry_run and not use_piper:
+        # Speaker notes leave the machine for Azure synthesis, so the
+        # destination region must be chosen explicitly rather than defaulted.
+        speech_region = os.environ.get("SPEECH_REGION", "").strip()
+        if not speech_region:
+            logger.error(
+                "SPEECH_REGION must be set to an approved Azure region before "
+                "synthesis; speaker notes are sent to that region"
+            )
+            return EXIT_ERROR
+
         try:
             import azure.cognitiveservices.speech as speechsdk  # noqa: PLC0415
         except ImportError:
@@ -452,7 +462,6 @@ def _run(args: argparse.Namespace) -> int:
             return EXIT_FAILURE
 
         speech_key = os.environ.get("SPEECH_KEY")
-        speech_region = os.environ.get("SPEECH_REGION", "eastus")
         speech_resource_id = os.environ.get("SPEECH_RESOURCE_ID")
 
         if speech_key and speech_resource_id:

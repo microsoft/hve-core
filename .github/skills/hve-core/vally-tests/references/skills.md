@@ -57,15 +57,15 @@ Grader identifiers below use the Vally CLI 0.9.0 catalog (`semantic_similarity`,
 * Testable behavior: a playbook-style skill that delegates execution to subagents MUST present its sections in the order Title (H1), Goal, Flow (or Execution), Inputs, Success criteria, Constraints, Stop rules, Handoff, and an optional response contract; a script-bearing skill MAY instead use the legacy script-oriented order (Overview, Prerequisites, Quick Start, or Architecture plus Workflow Steps, then Parameters Reference or Troubleshooting).
 * Suggested stimulus: ask the assistant to list the section headings of a named skill in order and confirm they follow the playbook shape for a delegating skill or the script-oriented shape for a script-bearing skill.
 * Grader recommendation: `semantic_similarity` with rubric "For a delegating playbook skill, do the section headings follow the playbook order (Goal, Flow, Inputs, Success criteria, Constraints, Stop rules, Handoff); for a script-bearing skill, do they follow the Overview/Prerequisites/Quick Start order?".
-* Evidence: a playbook-style skill such as `.github/skills/hve-core/prompt-analyze/SKILL.md` exhibits the Goal/Flow/Inputs/Success-criteria/Constraints/Stop-rules/Handoff order.
+* Evidence: a playbook-style skill such as `.github/skills/engagement-reporting/engagement-reporting/SKILL.md` exhibits the Goal/Flow/Inputs/Success-criteria/Constraints/Stop-rules/Handoff order.
 
 ### Check 6: Relative Path Portability
 
 * Contract source: `hve-builder.instructions.md`, Frontmatter and Portability.
-* Testable behavior: all file path references within SKILL.md MUST be relative to the skill root. Repo-root-relative paths starting with `.github/` and absolute paths (Unix `/` or Windows drive-letter) are non-conforming.
-* Suggested stimulus: ask the assistant to enumerate the file references inside a named skill's SKILL.md and confirm none are repo-root-relative.
-* Grader recommendation: `regex` with negate pattern `(?m)(?:\]\(|\s|^)(?:\.github/|/[a-z]|[A-Za-z]:[\\/])` evaluated over SKILL.md path references.
-* Evidence: `.github/skills/experimental/vscode-playwright/SKILL.md` references resources by skill-root-relative paths under its own directory.
+* Testable behavior: operational file references within SKILL.md MUST be portable in distributed contexts. Bundled resources use skill-root-relative paths, packaged instruction directives use source-relative paths, and cross-artifact dependencies use stable artifact or skill names. Operational workspace-root `.github/` references are non-conforming; descriptive repository-shape examples and valid runtime values such as slash commands, API routes, installation destinations, and temporary-file paths are not source-tree references.
+* Suggested stimulus: ask the assistant to enumerate operational file references inside a named skill's SKILL.md, explain how each resolves after distribution, and distinguish them from commands, routes, destinations, and descriptive examples.
+* Grader recommendation: `semantic_similarity` with rubric "Do operational file references avoid workspace-root source-tree assumptions, use the portable reference form for their target, and avoid misclassifying valid runtime slash-prefixed values as source-tree paths?". Use `npm run lint:artifact-portability` for deterministic source-tree path enforcement; do not apply a blanket absolute-path regex.
+* Evidence: `.github/skills/experimental/vscode-playwright/SKILL.md` references bundled resources by skill-root-relative paths, while the artifact-portability validator rejects operational workspace-root `.github/` references across distributed runtime Markdown.
 
 ### Check 7: Progressive Disclosure Structure
 

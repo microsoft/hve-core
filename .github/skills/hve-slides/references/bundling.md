@@ -31,12 +31,18 @@ Deck source + locally installed reveal.js
 The single-file bundle goes in the repository's `docs/slides/` directory, not inside `dist/`.
 The bundler is a build-time Node module, not a browser script or server.
 
-| Export                                                  | Input/output                                                             | Responsibility                                                                 |
-|---------------------------------------------------------|--------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| `buildDeck()`                                           | Returns the absolute `dist` path                                         | Build the portable folder beside the selected deck's source                    |
-| `createStandaloneHtml(html, assets, license, metadata)` | HTML, asset map, notice text and optional catalog metadata; returns HTML | Pure transformation, resource validation and ordered embedding                 |
-| `bundleDeck({ build } = {})`                            | Optional build function; returns the absolute standalone file path       | Call the selected build, gather assets/notices and write the single file       |
-| `checkBundle({ build } = {})`                           | Optional build function; returns the absolute standalone file path       | Rebuild intermediate assets and compare the existing HTML without rewriting it |
+| Export                                                                     | Input/output                                                                                              | Responsibility                                                                       |
+|----------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| `buildDeck()`                                                              | Returns the absolute `dist` path                                                                          | Build the portable folder beside the selected deck's source                          |
+| `createStandaloneHtml(html, assets, license, metadata, { revealVersion })` | HTML, asset map, notice text, optional catalog metadata and the installed reveal.js version; returns HTML | Pure transformation, security checks, reveal.js patching and ordered embedding       |
+| `bundleDeck({ build, dependencyRoot } = {})`                               | Optional build function and reveal.js dependency root; returns the absolute standalone file path          | Call the selected build, gather assets/notices and write the single file             |
+| `checkBundle({ build, dependencyRoot } = {})`                              | Optional build function and reveal.js dependency root; returns the absolute standalone file path          | Rebuild intermediate assets and compare the existing HTML without rewriting it       |
+| `neutralizeRevealSinks(js, revealVersion)`                                 | reveal.js source and version; returns patched source                                                      | Remove the patched reveal.js sinks or throw when an anchor or version does not match |
+| `readRevealVersion(dependencyRoot)`                                        | Deck directory; returns the installed reveal.js version                                                   | Require the installed reveal.js to match the deck's `package.json` pin               |
+
+`dependencyRoot` defaults to the parent of the build output, which is the deck directory
+whose `node_modules/reveal.js` the build copied. Pass it only when a test copies the build
+output somewhere without that dependency tree.
 
 ## Create the Modules for a New Deck
 
@@ -91,11 +97,12 @@ These edits create a deck-local build pair with one maintained source to start f
 Do not write a second, less strict string-replacement bundler from the short snippets here.
 When the source shape changes, adapt the maintained implementation and its tests together.
 
-HVE Updates uses a thin build-time wrapper that imports this canonical bundler and passes
-its existing `buildDeck` function. That keeps one maintained implementation in this
-repository without changing its slides or output format. Generated decks copy the complete
-module and remain independent of the skill directory; do not copy the HVE Updates wrapper
-as their bundler. Future template changes are not automatically applied to existing decks.
+HVE Updates, RPI with HVE and RAI Planner use a thin build-time wrapper that imports this canonical
+bundler and passes their own `buildDeck` function. That keeps one maintained implementation,
+including its security checks, for every deck in this repository. Scaffolded decks copy the
+complete module and remain independent of the skill directory; do not copy the wrapper as
+their bundler. Future template changes are not automatically applied to independent copies,
+so re-copy the maintained module when its security checks change.
 
 ## HTML and Script Contract
 
@@ -140,6 +147,55 @@ Preserve the implementation's failure checks:
 * Inline CSS/JavaScript containing unsafe HTML raw-text delimiters is rejected.
 * Unsupported resource markup, such as images, media, frames or extra scripts, is rejected.
 * The HTML has one closing body tag, and the reveal.js notice is nonempty.
+* The deck loads reveal.js from `vendor/reveal.js`, and the installed reveal.js version
+  matches the deck's `package.json` pin.
+* No inlined script copies a `data-src` attribute into `src`.
+
+Every `bundleDeck()` and `checkBundle()` run applies these checks through
+`createStandaloneHtml`; a failed check throws before any file is written.
+
+## reveal.js Security Patch and Provenance
+
+The bundler removes four classes of unused or redundant reveal.js code from the inlined copy
+instead of sanitizing it:
+
+* `reveal-lazy-src-neutralized`: reveal.js copies `data-src` and background-media attributes into
+  `src` when it lazy-loads media and frames. CodeQL reports those reads as DOM text reinterpreted
+  as HTML.
+* `reveal-embed-host-regex-neutralized`: unanchored YouTube and Vimeo host regexes choose an
+  embedded iframe's `postMessage` command. CodeQL reports them as missing regular expression
+  anchors.
+* `reveal-postmessage-listener-removed`: reveal.js registers a window `message` listener, with no
+  origin check, when its `postMessage` option is on. Every deck sets `postMessage: false`, so the
+  bundler removes the registration. CodeQL reports the handler as a missing origin check.
+* `reveal-getslide-redundant-conditional-removed`: `getSlide` tests its slide list a second time
+  inside a branch whose guard already proved the list is truthy. The bundler drops the redundant
+  inner test without changing the result. CodeQL reports it as a useless conditional.
+
+Decks reject media, frames and `data-src` attributes in markup and disable the cross-window API,
+so none of the removed paths can run. Each removal is anchored to an exact substring of the supported
+reveal.js release and checked against an expected match count. An unsupported version, a missing
+anchor or an unexpected count throws an error that names the anchor.
+
+Each bundle records how it was produced in one inert JSON block beside `hve-slide-metadata`.
+The block is deterministic so `npm run slides:check` stays byte-stable:
+
+```html
+<script type="application/json" id="hve-slide-provenance">{"generator":"hve-slides","revealVersion":"6.0.2","patches":["reveal-lazy-src-neutralized","reveal-embed-host-regex-neutralized","reveal-postmessage-listener-removed","reveal-getslide-redundant-conditional-removed"],"securityChecks":["raw-text-delimiters","inline-styles","resource-markup","reveal-lazy-src"],"securityCheckResult":"passed"}</script>
+```
+
+The block is written only after every check passes, so `passed` is the only result a
+committed bundle can contain. It is escaped like the catalog block and is not executable.
+
+To update reveal.js, inspect the new release's `dist/reveal.js` for code that assigns
+`data-src`, `data-background-video` or `data-background-iframe` values to `src`, for the
+embedded-media host checks, for the window `message` listener registration, and for the
+`getSlide` conditional. Update the anchors, counts and `supportedRevealVersion` in the
+maintained bundler together, extend the fixture tests for any new sink, then run
+`npm run slides:build` and commit the regenerated bundles. Do not relax the count checks to
+make an update pass. Treat any new generated-slides CodeQL alert the same way: remove the path
+when decks cannot use it, otherwise fix it in the deck source or bundler. Never dismiss the
+alert or exclude the generated bundles from analysis.
 
 Validation masks comments and already embedded styles with separators rather than
 joining adjacent markup. This masking is only for resource checks, not HTML sanitization;
