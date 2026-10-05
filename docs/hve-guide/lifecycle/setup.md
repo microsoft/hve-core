@@ -1,9 +1,9 @@
 ---
 title: "Stage 1: Setup"
 description: Install and configure HVE Core tooling for your project with guided onboarding
-sidebar_position: 4
+sidebar_position: 2
 author: Microsoft
-ms.date: 2026-09-29
+ms.date: 2026-10-03
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
