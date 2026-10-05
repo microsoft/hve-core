@@ -21,6 +21,7 @@ export const CHECK_RULES = {
   'workflow-check/unknown-action-input': 'with: passes an input the action or reusable workflow does not declare',
   'workflow-check/missing-required-input': 'A required reusable workflow input or secret is not passed',
   'workflow-check/action-metadata-unavailable': 'Action or reusable workflow metadata could not be read, so its inputs were not verified',
+  'workflow-check/sourced-helper-unavailable': 'A gh-aw helper script that a run: step sources could not be read at its pinned commit, so shellcheck could not follow it',
 };
 
 // First-level properties of contexts with a fixed shape, lowercase because

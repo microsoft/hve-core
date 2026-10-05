@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-10-04
+ms.date: 2026-10-05
 ms.topic: reference
 keywords:
   - powershell
@@ -105,7 +105,10 @@ current syntax such as `concurrency.queue`, `job.workflow_sha`, and `$/`.
 * Resolves each step's shell from the step, job defaults, and workflow defaults,
   and checks bash and sh scripts with shellcheck. `${{ }}` expressions are masked
   with same-length placeholders, so findings map to the exact workflow line and
-  column, and sourced repository files are followed from the repository root
+  column, and sourced repository files are followed from the repository root.
+  A gh-aw helper sourced from `${RUNNER_TEMP}/gh-aw/actions` is read from
+  `setup/sh` at the `github/gh-aw-actions/setup` commit the workflow pins,
+  where the setup action copies it from, so shellcheck follows it too
 * Requires the shellcheck version in `scripts/security/tool-checksums.json` and
   stops with exit code 2 for any other version
 * Writes SARIF (tool `hve-workflow-validator`) with `--sarif`
@@ -129,6 +132,7 @@ current syntax such as `concurrency.queue`, `job.workflow_sha`, and `$/`.
   | `workflow-check/unknown-action-input`        | A `with:` input or `secrets:` entry the referenced action or reusable workflow does not declare                       |
   | `workflow-check/missing-required-input`      | A required reusable-workflow input or secret that is not passed; `secrets: inherit` satisfies secrets                 |
   | `workflow-check/action-metadata-unavailable` | An action or reusable workflow whose metadata cannot be read, so its inputs were not verified; the check fails closed |
+  | `workflow-check/sourced-helper-unavailable`  | A gh-aw helper a `run:` script sources that cannot be read at the pinned `github/gh-aw-actions/setup` commit          |
 
   Remote action metadata is fetched by commit SHA from
   `raw.githubusercontent.com` and cached in

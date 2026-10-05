@@ -5,7 +5,7 @@
 // runs a pinned shellcheck over every bash and sh `run:` script.
 import './json-import-hooks.mjs';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +22,8 @@ export const PARSER_RULE = 'workflow-parser/error';
 
 const SHELLCHECK_LEVELS = { error: 'error', warning: 'warning', info: 'note', style: 'note' };
 const SHELLCHECK_BATCH = 100;
+const GH_AW_SETUP_PIN = /github\/gh-aw-actions\/setup@([0-9a-f]{40})\b/g;
+const GH_AW_HELPER_SOURCE = /^\s*(?:source|\.)\s+"\$\{RUNNER_TEMP\}\/gh-aw\/actions\/([A-Za-z0-9_.-]+\.sh)"\s*$/;
 
 /**
  * Lists repository-relative workflow and composite action files.
@@ -138,13 +140,15 @@ export function extractRunScripts(content, kind) {
 /**
  * Runs shellcheck over extracted scripts and maps each comment to the source file.
  * Sourced files are followed relative to options.sourcePath (the repository
- * root), so a `source scripts/x.sh` resolves as it does on the runner.
+ * root, plus any staged helper directory), so a `source scripts/x.sh`
+ * resolves as it does on the runner.
  * @param {{ file: string, script: ReturnType<typeof extractRunScripts>[number] }[]} entries
- * @param {{ shellcheck: string, sourcePath?: string, run?: typeof spawnSync }} options
+ * @param {{ shellcheck: string, sourcePath?: string | string[], run?: typeof spawnSync }} options
  */
 export function getShellcheckFindings(entries, options) {
   const run = options.run ?? spawnSync;
-  const sourceArgs = options.sourcePath ? ['--external-sources', `--source-path=${options.sourcePath}`] : [];
+  const sourcePaths = [options.sourcePath ?? []].flat();
+  const sourceArgs = sourcePaths.length > 0 ? ['--external-sources', ...sourcePaths.map((path) => `--source-path=${path}`)] : [];
   const findings = [];
   if (entries.length === 0) return findings;
   const directory = mkdtempSync(join(tmpdir(), 'hve-workflow-validator-'));
@@ -218,6 +222,71 @@ export function getManifestShellcheckVersion(repoRoot) {
 }
 
 /**
+ * Stages the gh-aw helper scripts that run: steps source from
+ * ${RUNNER_TEMP}/gh-aw/actions. The pinned github/gh-aw-actions/setup action
+ * copies its setup/sh directory there, so each helper is read from that same
+ * commit and staged as gh-aw/actions/<name> under a per-commit directory that
+ * shellcheck searches. A helper that cannot be read becomes a finding.
+ * @param {{ file: string, script: ReturnType<typeof extractRunScripts>[number] }[]} entries
+ * @param {Map<string, string>} contents Workflow text by repository-relative path.
+ * @param {{ fetchText?: (url: string) => Promise<string | null>, cacheDir?: string }} options
+ * @param {string} stagingRoot Directory that receives the staged helpers.
+ * @returns {Promise<{ sourcePaths: Map<string, string>, findings: object[] }>}
+ */
+export async function stageGhAwHelpers(entries, contents, options, stagingRoot) {
+  const sourcePaths = new Map();
+  const findings = [];
+  const fetched = new Map();
+  for (const entry of entries) {
+    const scriptLines = entry.script.text.split('\n');
+    for (let index = 0; index < scriptLines.length; index++) {
+      const name = GH_AW_HELPER_SOURCE.exec(scriptLines[index])?.[1];
+      if (!name) continue;
+      const position = entry.script.lines[index] ?? entry.script.lines.at(-1);
+      const report = (message) => findings.push({
+        ruleId: 'workflow-check/sourced-helper-unavailable',
+        level: 'error',
+        message,
+        file: entry.file,
+        line: position.line,
+        column: position.column,
+      });
+      const commits = [...new Set([...(contents.get(entry.file) ?? '').matchAll(GH_AW_SETUP_PIN)].map((match) => match[1]))];
+      if (commits.length !== 1) {
+        report(`${name} is sourced from gh-aw/actions, but the workflow does not pin exactly one github/gh-aw-actions/setup commit`);
+        continue;
+      }
+      const [commit] = commits;
+      const key = `${commit}/${name}`;
+      if (!fetched.has(key)) fetched.set(key, readGhAwHelper(commit, name, options));
+      const text = await fetched.get(key);
+      if (typeof text !== 'string') {
+        report(`Could not read setup/sh/${name} from github/gh-aw-actions at ${commit.slice(0, 12)}, so shellcheck could not follow it`);
+        continue;
+      }
+      const root = join(stagingRoot, commit);
+      mkdirSync(join(root, 'gh-aw', 'actions'), { recursive: true });
+      writeFileSync(join(root, 'gh-aw', 'actions', name), text);
+      sourcePaths.set(entry.file, root);
+    }
+  }
+  return { sourcePaths, findings };
+}
+
+async function readGhAwHelper(commit, name, options) {
+  const cacheFile = options.cacheDir ? join(options.cacheDir, 'github', 'gh-aw-actions', commit, 'setup', 'sh', name) : null;
+  if (cacheFile && existsSync(cacheFile)) return readFileSync(cacheFile, 'utf8');
+  const text = options.fetchText
+    ? await options.fetchText(`https://raw.githubusercontent.com/github/gh-aw-actions/${commit}/setup/sh/${name}`)
+    : null;
+  if (typeof text === 'string' && cacheFile) {
+    mkdirSync(dirname(cacheFile), { recursive: true });
+    writeFileSync(cacheFile, text);
+  }
+  return text;
+}
+
+/**
  * Validates every workflow and composite action under repoRoot.
  * Remote action metadata is read at its pinned commit and cached under
  * options.cacheDir; options.fetchText replaces the network for tests.
@@ -228,6 +297,7 @@ export async function validateRepository(repoRoot, options) {
   const files = discoverFiles(repoRoot);
   const findings = [];
   const entries = [];
+  const contents = new Map();
   const checkOptions = {
     repoRoot,
     fetchText: options.fetchText ?? fetchTextFromGitHub,
@@ -235,13 +305,29 @@ export async function validateRepository(repoRoot, options) {
   };
   for (const file of files) {
     const content = readFileSync(join(repoRoot, file.path), 'utf8');
+    contents.set(file.path, content);
     findings.push(...(await getParserFindings(file.path, content, file.kind)));
     findings.push(...(await getCheckFindings(file.path, content, file.kind, checkOptions)));
     for (const script of extractRunScripts(content, file.kind)) {
       entries.push({ file: file.path, script });
     }
   }
-  findings.push(...getShellcheckFindings(entries, { sourcePath: repoRoot, ...options }));
+  const stagingRoot = mkdtempSync(join(tmpdir(), 'hve-gh-aw-helpers-'));
+  try {
+    const helpers = await stageGhAwHelpers(entries, contents, checkOptions, stagingRoot);
+    findings.push(...helpers.findings);
+    const groups = new Map();
+    for (const entry of entries) {
+      const helperRoot = helpers.sourcePaths.get(entry.file) ?? '';
+      if (!groups.has(helperRoot)) groups.set(helperRoot, []);
+      groups.get(helperRoot).push(entry);
+    }
+    for (const [helperRoot, group] of groups) {
+      findings.push(...getShellcheckFindings(group, { sourcePath: helperRoot ? [repoRoot, helperRoot] : repoRoot, ...options }));
+    }
+  } finally {
+    rmSync(stagingRoot, { recursive: true, force: true });
+  }
   findings.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line || a.column - b.column || a.ruleId.localeCompare(b.ruleId));
   return { files, scripts: entries.length, findings };
 }

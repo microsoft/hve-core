@@ -15,6 +15,7 @@ import {
   getManifestShellcheckVersion,
   getParserFindings,
   getShellcheckFindings,
+  stageGhAwHelpers,
   toSarif,
 } from '../validator.mjs';
 import { CHECK_RULES } from '../checks.mjs';
@@ -181,6 +182,17 @@ describe('getShellcheckFindings', () => {
     assert.throws(() => getShellcheckFindings([{ file: 'w.yml', script }], { shellcheck: 'sc', run }), /exited 3: bad option/);
   });
 
+  it('passes every source path when given several', () => {
+    let captured;
+    const run = (command, args) => {
+      captured = args;
+      return { status: 0, stdout: '{"comments":[]}' };
+    };
+    getShellcheckFindings([{ file: 'w.yml', script }], { shellcheck: 'sc', sourcePath: ['/repo', '/staged'], run });
+    assert.ok(captured.includes('--source-path=/repo'));
+    assert.ok(captured.includes('--source-path=/staged'));
+  });
+
   it('returns no findings without scripts and does not run shellcheck', () => {
     assert.deepEqual(getShellcheckFindings([], { shellcheck: 'sc', run: () => assert.fail('should not run') }), []);
   });
@@ -219,5 +231,71 @@ describe('repository', () => {
       findings.push(...(await getParserFindings(file.path, readFileSync(join(repoRoot, file.path), 'utf8'), file.kind)));
     }
     assert.deepEqual(findings, []);
+  });
+});
+
+describe('stageGhAwHelpers', () => {
+  const commit = 'a'.repeat(40);
+  const workflow = `jobs:\n  a:\n    steps:\n      - uses: github/gh-aw-actions/setup@${commit} # v1.0.0\n`;
+  const entry = {
+    file: '.github/workflows/w.lock.yml',
+    script: {
+      dialect: 'bash',
+      text: 'set -e\nsource "${RUNNER_TEMP}/gh-aw/actions/helper.sh"\necho "$X"\n',
+      lines: [{ line: 20, column: 11 }, { line: 21, column: 11 }, { line: 22, column: 11 }],
+    },
+  };
+  const contents = new Map([[entry.file, workflow]]);
+
+  it('stages a sourced helper from the pinned gh-aw-actions commit', async () => {
+    const staging = mkdtempSync(join(tmpdir(), 'stage-test-'));
+    const urls = [];
+    const fetchText = async (url) => {
+      urls.push(url);
+      return 'X=1\n';
+    };
+    const result = await stageGhAwHelpers([entry, entry], contents, { fetchText }, staging);
+    assert.deepEqual(result.findings, []);
+    assert.deepEqual(urls, [`https://raw.githubusercontent.com/github/gh-aw-actions/${commit}/setup/sh/helper.sh`]);
+    assert.equal(result.sourcePaths.get(entry.file), join(staging, commit));
+    assert.equal(readFileSync(join(staging, commit, 'gh-aw', 'actions', 'helper.sh'), 'utf8'), 'X=1\n');
+  });
+
+  it('reads a cached helper without fetching', async () => {
+    const staging = mkdtempSync(join(tmpdir(), 'stage-test-'));
+    const cacheDir = mkdtempSync(join(tmpdir(), 'stage-cache-'));
+    const cached = join(cacheDir, 'github', 'gh-aw-actions', commit, 'setup', 'sh', 'helper.sh');
+    mkdirSync(dirname(cached), { recursive: true });
+    writeFileSync(cached, 'X=2\n');
+    const result = await stageGhAwHelpers([entry], contents, { cacheDir, fetchText: () => assert.fail('should not fetch') }, staging);
+    assert.deepEqual(result.findings, []);
+    assert.equal(readFileSync(join(staging, commit, 'gh-aw', 'actions', 'helper.sh'), 'utf8'), 'X=2\n');
+  });
+
+  it('reports a helper that cannot be read at the source line', async () => {
+    const staging = mkdtempSync(join(tmpdir(), 'stage-test-'));
+    const result = await stageGhAwHelpers([entry], contents, { fetchText: async () => null }, staging);
+    assert.equal(result.sourcePaths.size, 0);
+    assert.equal(result.findings.length, 1);
+    assert.equal(result.findings[0].ruleId, 'workflow-check/sourced-helper-unavailable');
+    assert.equal(result.findings[0].level, 'error');
+    assert.equal(result.findings[0].line, 21);
+    assert.ok(CHECK_RULES['workflow-check/sourced-helper-unavailable']);
+  });
+
+  it('reports a helper when the workflow pins no single setup commit', async () => {
+    const staging = mkdtempSync(join(tmpdir(), 'stage-test-'));
+    const ambiguous = new Map([[entry.file, `${workflow}      - uses: github/gh-aw-actions/setup@${'b'.repeat(40)}\n`]]);
+    for (const map of [new Map([[entry.file, 'jobs: {}\n']]), ambiguous]) {
+      const result = await stageGhAwHelpers([entry], map, { fetchText: () => assert.fail('should not fetch') }, staging);
+      assert.equal(result.findings.length, 1);
+      assert.match(result.findings[0].message, /exactly one github\/gh-aw-actions\/setup commit/);
+    }
+  });
+
+  it('ignores scripts that source nothing from gh-aw/actions', async () => {
+    const plain = { file: entry.file, script: { dialect: 'bash', text: 'source ./scripts/x.sh\n', lines: [{ line: 1, column: 1 }] } };
+    const result = await stageGhAwHelpers([plain], contents, { fetchText: () => assert.fail('should not fetch') }, tmpdir());
+    assert.deepEqual(result, { sourcePaths: new Map(), findings: [] });
   });
 });
