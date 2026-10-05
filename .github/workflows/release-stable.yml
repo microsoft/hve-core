@@ -92,8 +92,7 @@ jobs:
           ref: main
           fetch-depth: 0
           path: promotion
-          token: ${{ steps.app-token.outputs.token }}
-          persist-credentials: true
+          persist-credentials: false
 
       - name: Resolve promotion state
         id: state
@@ -467,8 +466,23 @@ jobs:
             exit 0
           fi
 
-          git push origin "HEAD:refs/heads/$PROMOTION_HEAD"
           echo "promote=true" >> "$GITHUB_OUTPUT"
+
+      # Only this step receives the app token, and only for the push; the
+      # checkout keeps no credential, so earlier steps that run repository
+      # scripts against the working tree never see one.
+      - name: Push the promotion head
+        if: ${{ steps.promote.outputs.promote == 'true' }}
+        env:
+          PUSH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PROMOTION_HEAD: ${{ steps.state.outputs.promotion-head }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/promotion"
+          auth="$(printf 'x-access-token:%s' "$PUSH_TOKEN" | base64 -w0)"
+          echo "::add-mask::${auth}"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" \
+            push origin "HEAD:refs/heads/$PROMOTION_HEAD"
 
   open-promotion-pr:
     name: Open Stable Promotion PR

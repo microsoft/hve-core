@@ -57,4 +57,14 @@ Describe 'GitHub App installation tokens' -Tag 'Unit' {
         ($actual.Keys | Sort-Object) | Should -Be ($Scopes.Keys | Sort-Object)
         foreach ($key in $Scopes.Keys) { $actual[$key] | Should -BeExactly $Scopes[$key] }
     }
+
+    It 'Hands the promotion push token only to the push step in <_>' -ForEach @('release-prerelease-prepare.yml', 'release-stable.yml') {
+        $document = Get-Content -Raw -LiteralPath (Join-Path $RepoRoot ".github/workflows/$_") | ConvertFrom-Yaml
+        $steps = @($document['jobs']['prepare-promotion']['steps'])
+        $consumers = @($steps | Where-Object { ($_ | ConvertTo-Json -Depth 6 -Compress) -match 'steps\.app-token\.outputs\.token' } | ForEach-Object { $_['name'] })
+        $consumers | Should -Be @('Push the promotion head')
+        $checkout = $steps | Where-Object { $_['name'] -eq 'Checkout promotion working tree' }
+        $checkout['with']['persist-credentials'] | Should -BeFalse
+        $checkout['with'].Contains('token') | Should -BeFalse
+    }
 }
