@@ -239,11 +239,27 @@ function Test-AgentColdStartBudget {
     }
 }
 
-#endregion Functions
+function Invoke-AgentColdStartBudgetCheck {
+    <#
+    .SYNOPSIS
+        Runs the budget check, writes JSON results, reports each agent, and returns the process exit code.
+    .OUTPUTS
+        [int] 0 when every budget passes; 1 when any issue is found or the check fails.
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
 
-#region Main Execution
+        [Parameter(Mandatory = $false)]
+        [string]$ConfigPath = '',
 
-if ($MyInvocation.InvocationName -ne '.') {
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath = ''
+    )
+
     try {
         if ([string]::IsNullOrWhiteSpace($ConfigPath)) { $ConfigPath = Join-Path $RepoRoot 'scripts/linting/agent-cold-start-budgets.json' }
         if ([string]::IsNullOrWhiteSpace($OutputPath)) { $OutputPath = Join-Path $RepoRoot 'logs/agent-cold-start-results.json' }
@@ -259,16 +275,24 @@ if ($MyInvocation.InvocationName -ne '.') {
 
         if (-not $result.Passed) {
             foreach ($issue in $result.Issues) { Write-Error -ErrorAction Continue $issue }
-            exit 1
+            return 1
         }
 
         Write-Host 'Agent cold-start budget check passed.' -ForegroundColor Green
-        exit 0
+        return 0
     }
     catch {
         Write-Error -ErrorAction Continue "Test-AgentColdStartBudget failed: $($_.Exception.Message)"
-        exit 1
+        return 1
     }
+}
+
+#endregion Functions
+
+#region Main Execution
+
+if ($MyInvocation.InvocationName -ne '.') {
+    exit (Invoke-AgentColdStartBudgetCheck -RepoRoot $RepoRoot -ConfigPath $ConfigPath -OutputPath $OutputPath)
 }
 
 #endregion Main Execution

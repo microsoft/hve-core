@@ -111,6 +111,47 @@ Describe 'Test-AgentColdStartBudget' -Tag 'Unit' {
     }
 }
 
+Describe 'Invoke-AgentColdStartBudgetCheck' -Tag 'Unit' {
+    BeforeAll {
+        $script:RunRoot = Join-Path $TestDrive 'run'
+        New-TestFile $script:RunRoot '.github/agents/x.agent.md' ('x' * 100)
+        Mock Write-Host {}
+        Mock Write-Warning {}
+        Mock Write-Error {}
+    }
+
+    It 'Returns <Code> and writes JSON results when the budget is <Name>' -ForEach @(
+        @{ Name = 'within target'; Target = 1000; Ceiling = 2000; Code = 0; Warnings = 0; Errors = 0 }
+        @{ Name = 'within tolerance'; Target = 50; Ceiling = 2000; Code = 0; Warnings = 1; Errors = 0 }
+        @{ Name = 'over ceiling'; Target = 50; Ceiling = 60; Code = 1; Warnings = 0; Errors = 1 }
+    ) {
+        $config = New-TestConfig $script:RunRoot @{ '.github/agents/x.agent.md' = @{ target = $Target; ceiling = $Ceiling; rationale = 'r' } }
+        $output = Join-Path $TestDrive "out-$Code-$Warnings/results.json"
+
+        Invoke-AgentColdStartBudgetCheck -RepoRoot $script:RunRoot -ConfigPath $config -OutputPath $output | Should -Be $Code
+
+        (Get-Content -Path $output -Raw | ConvertFrom-Json).Agents[0].agent | Should -Be '.github/agents/x.agent.md'
+        Should -Invoke Write-Warning -Exactly -Times $Warnings -Scope It
+        Should -Invoke Write-Error -Exactly -Times $Errors -Scope It
+    }
+
+    It 'Resolves the default config and output paths under the repository root' {
+        $root = Join-Path $TestDrive 'defaults'
+        New-TestFile $root '.github/agents/x.agent.md' 'x'
+        $configPath = Join-Path $root 'scripts/linting/agent-cold-start-budgets.json'
+        New-Item -ItemType Directory -Path (Split-Path -Parent $configPath) -Force | Out-Null
+        @{ agents = @{ '.github/agents/x.agent.md' = @{ target = 10; ceiling = 10; rationale = 'r' } } } | ConvertTo-Json -Depth 5 | Set-Content -Path $configPath
+
+        Invoke-AgentColdStartBudgetCheck -RepoRoot $root | Should -Be 0
+        Join-Path $root 'logs/agent-cold-start-results.json' | Should -Exist
+    }
+
+    It 'Returns 1 and reports the failure when the check throws' {
+        Invoke-AgentColdStartBudgetCheck -RepoRoot $script:RunRoot -ConfigPath (Join-Path $TestDrive 'missing.json') -OutputPath (Join-Path $TestDrive 'never.json') | Should -Be 1
+        Should -Invoke Write-Error -Exactly -Times 1 -Scope It -ParameterFilter { "$Message" -match 'Test-AgentColdStartBudget failed' }
+    }
+}
+
 Describe 'Repository cold-start budgets' -Tag 'Unit' {
     It 'Keeps every configured planning-chain agent at or below its ceiling' {
         $result = Test-AgentColdStartBudget -RepoRoot $script:RepoRoot -ConfigPath (Join-Path $script:RepoRoot 'scripts/linting/agent-cold-start-budgets.json')
