@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: read # check for open release and promotion pull requests
     outputs:
       promote: ${{ steps.promote.outputs.promote }}
       version: ${{ steps.resolve.outputs.version }}
@@ -420,7 +420,6 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - name: Generate GitHub App Token
         id: app-token

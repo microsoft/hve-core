@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       security-events: write  # Required for SARIF upload to Security tab
-      id-token: write
+      id-token: write # publish results to the OpenSSF Scorecard API
       contents: read
     steps:
       - name: Checkout repository

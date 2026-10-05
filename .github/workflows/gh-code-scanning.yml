@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  security-events: read
+  security-events: read # read code scanning alerts
 
 jobs:
   # Runs the workflow validator's capability probes against the newest
@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      security-events: read
+      security-events: read # read code scanning alerts
     env:
       GH_TOKEN: ${{ github.token }}
       OWNER: ${{ github.repository_owner }}

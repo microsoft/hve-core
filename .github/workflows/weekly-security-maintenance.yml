@@ -51,7 +51,7 @@ jobs:
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
-      actions: read
+      actions: read # codeql-action reads workflow run metadata
 
   # Job 4: Generate consolidated summary
   summary:
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      issues: write
+      issues: write # create or update the weekly maintenance issue
     steps:
       - name: Generate summary
         shell: pwsh

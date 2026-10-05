@@ -47,7 +47,7 @@ jobs:
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
-      actions: read
+      actions: read # codeql-action reads workflow run metadata
     
     strategy:
       fail-fast: false
@@ -107,7 +107,7 @@ jobs:
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
-      actions: read
+      actions: read # codeql-action reads workflow run metadata
 
     steps:
       - name: Checkout repository

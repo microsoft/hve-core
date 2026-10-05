@@ -72,8 +72,8 @@ jobs:
     name: Discover or plan bounded sweep wave
     runs-on: ubuntu-24.04
     permissions:
-      actions: read
-      issues: read
+      actions: read # find and download prior snapshot and checkpoint artifacts
+      issues: read # snapshot the open issue inventory
     outputs:
       mode: ${{ steps.plan.outputs.mode }}
       sweep-id: ${{ steps.plan.outputs.sweep-id }}
@@ -694,10 +694,10 @@ jobs:
       continuation_authenticated: ${{ needs.plan.outputs.continuation-authenticated == 'true' }}
       worker_timeout_minutes: ${{ matrix.shard.worker_timeout_minutes }}
     permissions:
-      actions: write
+      actions: write # required by the gh-aw conclusion job in backlog-groom.lock.yml
       contents: read
-      issues: read
-      pull-requests: read
+      issues: read # the assessment agent reads issues
+      pull-requests: read # the assessment agent reads linked pull requests
     secrets:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
       GH_AW_GITHUB_MCP_SERVER_TOKEN: ${{ secrets.GH_AW_GITHUB_MCP_SERVER_TOKEN }}
@@ -716,7 +716,7 @@ jobs:
            (needs.assess.result == 'skipped' && needs.plan.outputs.shard-matrix == '[]')) }}
     runs-on: ubuntu-24.04
     permissions:
-      actions: read
+      actions: read # download this run's shard result artifacts
     outputs:
       aggregate-digest: ${{ steps.validate.outputs.aggregate-digest }}
       aggregate-artifact-id: ${{ steps.aggregate.outputs.artifact-id }}
@@ -772,7 +772,7 @@ jobs:
     if: ${{ needs.validate-wave.result == 'success' }}
     runs-on: ubuntu-24.04
     permissions:
-      actions: read
+      actions: read # download the wave manifest and aggregate artifacts
     outputs:
       checkpoint-digest: ${{ steps.checkpoint.outputs.checkpoint-digest }}
       sweep-complete: ${{ steps.checkpoint.outputs.sweep-complete }}
@@ -949,7 +949,7 @@ jobs:
     if: ${{ needs.checkpoint.result == 'success' && needs.checkpoint.outputs.sweep-complete == 'false' }}
     runs-on: ubuntu-24.04
     permissions:
-      actions: write
+      actions: write # dispatch the next sweep wave
       contents: read
     steps:
       - name: Dispatch exact successor
@@ -990,7 +990,7 @@ jobs:
     if: ${{ needs.checkpoint.result == 'success' && needs.checkpoint.outputs.sweep-complete == 'true' }}
     runs-on: ubuntu-24.04
     permissions:
-      actions: read
+      actions: read # download and authenticate the sweep's checkpoint artifacts
     outputs:
       final-digest: ${{ steps.reduce.outputs.final-digest }}
       final-artifact-id: ${{ steps.final.outputs.artifact-id }}

@@ -148,5 +148,5 @@ jobs:
       pre-release: true
     permissions:
       contents: read
-      attestations: read
-      id-token: write
+      attestations: read # the publish workflow verifies VSIX provenance
+      id-token: write # Azure OIDC login in the publish workflow

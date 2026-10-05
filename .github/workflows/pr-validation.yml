@@ -222,7 +222,7 @@ jobs:
     uses: $/.github/workflows/pester-tests.yml
     permissions:
       contents: read
-      id-token: write
+      id-token: write # Codecov OIDC upload in the reusable test workflow
     with:
       soft-fail: false
       changed-files-only: false
@@ -235,7 +235,7 @@ jobs:
     uses: $/.github/workflows/pytest-tests.yml
     permissions:
       contents: read
-      id-token: write
+      id-token: write # Codecov OIDC upload in the reusable test workflow
     with:
       change-mode: ${{ needs.change-range.outputs.mode }}
       base-sha: ${{ needs.change-range.outputs.base-sha }}
@@ -257,7 +257,7 @@ jobs:
     uses: $/.github/workflows/pytest-tests.yml
     permissions:
       contents: read
-      id-token: write
+      id-token: write # Codecov OIDC upload in the reusable test workflow
     with:
       change-mode: ${{ needs.change-range.outputs.mode }}
       base-sha: ${{ needs.change-range.outputs.base-sha }}
@@ -279,7 +279,7 @@ jobs:
     uses: $/.github/workflows/node-tests.yml
     permissions:
       contents: read
-      id-token: write
+      id-token: write # Codecov OIDC upload in the reusable test workflow
     with:
       change-mode: ${{ needs.change-range.outputs.mode }}
       base-sha: ${{ needs.change-range.outputs.base-sha }}
@@ -482,7 +482,7 @@ jobs:
     uses: $/.github/workflows/eval-validation.yml
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: write # post or update the eval report comment
     with:
       change-mode: ${{ needs.change-range.outputs.mode }}
       base-sha: ${{ needs.change-range.outputs.base-sha }}
@@ -643,7 +643,7 @@ jobs:
     permissions:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
-      actions: read
+      actions: read # codeql-action reads workflow run metadata
 
   gate-completeness-check:
     name: PR Gate Completeness
@@ -652,7 +652,7 @@ jobs:
       contents: read
       # The promotion checks read the pull request head through the API instead
       # of fetching its ref, which needs this scope and nothing more.
-      pull-requests: read
+      pull-requests: read # read the pull request head through the API
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -16,4 +16,4 @@ jobs:
     permissions:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
-      actions: read
+      actions: read # codeql-action reads workflow run metadata

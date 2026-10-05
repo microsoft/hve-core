@@ -18,7 +18,7 @@ jobs:
     name: Close Milestone
     runs-on: ubuntu-24.04
     permissions:
-      issues: write
+      issues: write # close the release milestone
     steps:
       - name: Close milestone for released version
         env:

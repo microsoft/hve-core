@@ -46,7 +46,7 @@ jobs:
     name: Resolve render inputs
     runs-on: ubuntu-24.04
     permissions:
-      actions: read
+      actions: read # find author runs and their content artifacts
       contents: read
     outputs:
       mode: ${{ steps.resolve.outputs.mode }}
@@ -207,7 +207,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
-      actions: read
+      actions: read # download the author content artifact
       contents: read
     strategy:
       fail-fast: false
@@ -365,7 +365,7 @@ jobs:
     if: ${{ always() && (needs.resolve.outputs.mode == 'render' || needs.resolve.outputs.mode == 'refresh') }}
     runs-on: ubuntu-24.04
     permissions:
-      actions: read
+      actions: read # download render outputs and the previous bundle
     steps:
       - name: Checkout the lookup script
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

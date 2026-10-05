@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     permissions:
-      actions: read
+      actions: read # read the sweep run and list its artifacts
       contents: read
     outputs:
       terminal: ${{ steps.discover.outputs.terminal }}
@@ -96,8 +96,8 @@ jobs:
     if: ${{ needs.discover.outputs.terminal == 'true' }}
     runs-on: ubuntu-24.04
     permissions:
-      actions: read
-      issues: write
+      actions: read # read and download the sweep's final artifact
+      issues: write # create or update the compact tracker issue
     steps:
       - name: Authenticate exact final artifact metadata
         id: authenticate
@@ -283,8 +283,8 @@ jobs:
     continue-on-error: true
     runs-on: ubuntu-24.04
     permissions:
-      actions: read
-      contents: write
+      actions: read # read and download the sweep's final artifact
+      contents: write # commit report history to backlog-grooming-reports
     steps:
       - name: Authenticate exact final artifact metadata
         id: authenticate

@@ -45,9 +45,9 @@ jobs:
     needs: test
     runs-on: ubuntu-24.04
     permissions:
-      actions: read
+      actions: read # read producer runs and download their artifacts
       contents: read
-      pages: write
+      pages: write # configure GitHub Pages for the site build
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -268,8 +268,8 @@ jobs:
     needs: build
     runs-on: ubuntu-24.04
     permissions:
-      pages: write
-      id-token: write
+      pages: write # deploy the site to GitHub Pages
+      id-token: write # OIDC token that actions/deploy-pages requires
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

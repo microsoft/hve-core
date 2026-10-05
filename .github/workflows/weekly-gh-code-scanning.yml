@@ -20,13 +20,12 @@ jobs:
     uses: $/.github/workflows/gh-code-scanning.yml
     permissions:
       contents: read
-      security-events: read
+      security-events: read # read code scanning alerts
 
   create-gh-code-scanning-issues:
     name: Create GitHub Code Scanning Issues
     needs: [gh-code-scanning]
     uses: $/.github/workflows/create-gh-code-scanning-issues.yml
     permissions:
-      issues: write
-      actions: read
-      security-events: read
+      issues: write # create, update, and comment on alert issues
+      actions: read # download the alert artifact

@@ -1126,11 +1126,11 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $script:Orchestrator | Should -Match 'shard_id: \$\{\{ matrix\.shard\.shard_id \}\}'
         $script:Orchestrator | Should -Match 'ordered_candidate_ids: \$\{\{ toJSON\(matrix\.shard\.ordered_candidate_ids\) \}\}'
         $script:Orchestrator | Should -Not -Match '(?ms)^  assess:.*?shard_id: shard-01'
-        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read\s+pull-requests: read'
+        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write(?: #[^\n]*)?\s+contents: read(?: #[^\n]*)?\s+issues: read(?: #[^\n]*)?\s+pull-requests: read'
         $script:Orchestrator | Should -Match '(?ms)^  assess:.*?secrets:\s+COPILOT_GITHUB_TOKEN: \$\{\{ secrets\.COPILOT_GITHUB_TOKEN \}\}\s+GH_AW_GITHUB_MCP_SERVER_TOKEN: \$\{\{ secrets\.GH_AW_GITHUB_MCP_SERVER_TOKEN \}\}\s+GH_AW_GITHUB_TOKEN: \$\{\{ secrets\.GH_AW_GITHUB_TOKEN \}\}'
         $script:Orchestrator | Should -Not -Match '(?ms)^  assess:.*?secrets: inherit'
-        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
-        [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
+        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 0
+        [regex]::Matches($script:Publisher, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 1
         $script:WaveValidator | Should -Match '\$ByShard\.Count -ne \$ManifestShards\.Count'
         $script:WaveValidator | Should -Match 'Wave result set is incomplete'
         foreach ($rejection in @('missing', 'stale', 'unexpected', 'duplicate', 'manifest-mismatched')) {
@@ -1156,7 +1156,7 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $script:WaveValidator | Should -Match 'Shard result digest mismatch'
         $script:WaveValidator | Should -Match 'Wave result set is incomplete'
         $script:WaveValidator | Should -Match 'Wave issue coverage is incomplete or out of snapshot'
-        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
+        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 0
         $script:Publisher | Should -Match '(?ms)^  workflow_dispatch:\s+inputs:\s+sweep-run-id:\s+description: [^\n]+\s+required: true\s+type: string\s+concurrency:'
     }
 }
@@ -1176,8 +1176,8 @@ Describe 'Backlog grooming deterministic fan-in behavior' -Tag 'Unit' {
 
 Describe 'Backlog grooming production publisher' -Tag 'Unit' {
     It 'isolates the sole issue-write permission behind complete fan-in' {
-        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
-        [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
+        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 0
+        [regex]::Matches($script:Publisher, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 1
         $script:Publisher | Should -Not -Match '(?m)^  workflow_run:$'
         $script:Publisher | Should -Match '(?ms)^  workflow_dispatch:\s+inputs:\s+sweep-run-id:\s+description: [^\n]+\s+required: true\s+type: string\s+concurrency:'
         $script:Publisher | Should -Match 'parsePositiveInteger\("sweep-run-id", process\.env\.SWEEP_RUN_ID\)'
@@ -1191,7 +1191,7 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:Publisher | Should -Match "if: \$\{\{ needs\.discover\.outputs\.terminal == 'true' \}\}"
         $script:Publisher | Should -Match '(?m)^          artifact-ids: \$\{\{ steps\.authenticate\.outputs\.final-artifact-id \}\}$'
         $script:Publisher | Should -Match 'run\.path !== "\.github/workflows/backlog-groom-orchestrator\.yml"'
-        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write\s+contents: read\s+issues: read\s+pull-requests: read'
+        $script:Orchestrator | Should -Match '(?ms)^  assess:.*?permissions:\s+actions: write(?: #[^\n]*)?\s+contents: read(?: #[^\n]*)?\s+issues: read(?: #[^\n]*)?\s+pull-requests: read'
         $script:Source | Should -Not -Match '(?m)^\s+issues: write$'
         $script:Lock | Should -Not -Match '(?m)^\s+issues: write$'
     }
@@ -1272,10 +1272,10 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         ).Count | Should -Be 1
         [regex]::Matches($script:Publisher, '(?m)^    continue-on-error: true$').Count | Should -Be 1
         $script:HistoryPublisher | Should -Match '(?ms)^  publish-history:.*?needs:\s+- discover\s+- publish'
-        $script:CorePublisher | Should -Match '(?ms)^  publish:.*?permissions:\s+actions: read\s+issues: write'
+        $script:CorePublisher | Should -Match '(?ms)^  publish:.*?permissions:\s+actions: read(?: #[^\n]*)?\s+issues: write'
         $script:CorePublisher | Should -Not -Match 'contents: write|GitHub Pages|pagesRoot|reportUrl|backlog-grooming-reports'
         $script:CorePublisher | Should -Match 'Inspect the \[source workflow run\]'
-        $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read\s+contents: write'
+        $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read(?: #[^\n]*)?\s+contents: write'
         $script:HistoryPublisher | Should -Not -Match 'issues: write'
         $script:HistoryPublisher | Should -Match 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'
     }
@@ -1898,7 +1898,7 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
     It 'S09 dispatches no successor when wave validation or checkpoint upload fails' {
         $script:Orchestrator | Should -Match '(?ms)^  checkpoint:.*?if:.*?needs\.validate-wave\.result == ''success'''
         $script:Orchestrator | Should -Match '(?ms)^  continue:.*?if:.*?needs\.checkpoint\.result == ''success''.*?sweep-complete == ''false'''
-        $script:Orchestrator | Should -Match '(?ms)^  validate-wave:.*?permissions:\s+actions: read\s+outputs:'
+        $script:Orchestrator | Should -Match '(?ms)^  validate-wave:.*?permissions:\s+actions: read(?: #[^\n]*)?\s+outputs:'
     }
 
     It 'S10 narrows paginated discovery and resumes the first missing wave within a download limit' {
@@ -1934,14 +1934,15 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
     }
 
     It 'S12 isolates lifecycle dispatch and publisher write scopes' {
-        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
-        [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
-        [regex]::Matches($script:Orchestrator, '(?m)^\s+actions: write$').Count | Should -Be 2
-        $script:Orchestrator | Should -Match '(?ms)^  continue:.*?permissions:\s+actions: write\s+contents: read'
-        $script:CorePublisher | Should -Match '(?ms)permissions:\s+actions: read\s+issues: write'
-        $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read\s+contents: write'
-        $script:Publisher | Should -Not -Match '(?m)^\s+actions: write$'
-        $script:DeployDocs | Should -Match '(?ms)^  build:.*?permissions:\s+actions: read\s+contents: read\s+pages: write'
+        [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 0
+        [regex]::Matches($script:Publisher, '(?m)^\s+issues: write(?: #[^\n]*)?$').Count | Should -Be 1
+        [regex]::Matches($script:Orchestrator, '(?m)^\s+actions: write(?: #[^\n]*)?$').Count | Should -Be 3
+        $script:Orchestrator | Should -Match '(?ms)^  continue:.*?permissions:\s+actions: write(?: #[^\n]*)?\s+contents: read'
+        $script:CorePublisher | Should -Match '(?ms)permissions:\s+actions: read(?: #[^\n]*)?\s+issues: write'
+        $script:HistoryPublisher | Should -Match '(?ms)permissions:\s+actions: read(?: #[^\n]*)?\s+contents: write'
+        [regex]::Matches($script:Publisher, '(?m)^\s+actions: write(?: #[^\n]*)?$').Count | Should -Be 1
+        $script:Publisher | Should -Match '(?ms)^  dispatch-deploy:.*?permissions:\s+actions: write # start Deploy Documentation Site'
+        $script:DeployDocs | Should -Match '(?ms)^  build:.*?permissions:\s+actions: read(?: #[^\n]*)?\s+contents: read(?: #[^\n]*)?\s+pages: write'
     }
 }
 

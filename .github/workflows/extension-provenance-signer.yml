@@ -378,9 +378,9 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      id-token: write
-      attestations: write
-      artifact-metadata: write
+      id-token: write # Sigstore OIDC identity for attestations
+      attestations: write # store build provenance and SBOM attestations
+      artifact-metadata: write # record attestation artifact metadata
     steps:
       - name: Derive immutable attestation policy
         id: policy

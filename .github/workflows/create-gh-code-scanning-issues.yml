@@ -19,8 +19,8 @@ jobs:
     name: Create GitHub Code Scanning Issues
     runs-on: ubuntu-24.04
     permissions:
-      issues: write
-      actions: read
+      issues: write # create, update, and comment on alert issues
+      actions: read # download the alert artifact
     env:
       GH_TOKEN: ${{ github.token }}
       OWNER: ${{ github.repository_owner }}

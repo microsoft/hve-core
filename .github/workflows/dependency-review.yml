@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: write # post the dependency review summary comment
 
     steps:
       - name: Checkout code

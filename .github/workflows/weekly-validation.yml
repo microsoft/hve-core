@@ -21,7 +21,7 @@ jobs:
     uses: $/.github/workflows/pester-tests.yml
     permissions:
       contents: read
-      id-token: write
+      id-token: write # Codecov OIDC upload in the reusable test workflow
     with:
       soft-fail: true
       changed-files-only: false
@@ -71,7 +71,7 @@ jobs:
     uses: $/.github/workflows/pytest-tests.yml
     permissions:
       contents: read
-      id-token: write
+      id-token: write # Codecov OIDC upload in the reusable test workflow
     with:
       working-directory: ${{ matrix.directory }}
       soft-fail: true
@@ -110,7 +110,7 @@ jobs:
       artifact-name: msdate-freshness-results
     permissions:
       contents: read
-      issues: write
+      issues: write # create or update stale documentation issues
 
   agent-conformance:
     name: Agent Behavioral Conformance

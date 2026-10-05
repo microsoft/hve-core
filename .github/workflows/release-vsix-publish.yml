@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      attestations: read
+      attestations: read # verify attestations when recovering a published release
     outputs:
       channel: ${{ steps.identity.outputs.channel }}
       version: ${{ steps.identity.outputs.version }}
@@ -315,9 +315,9 @@ jobs:
       release-tag: ${{ needs.validate-release.outputs.tag-name }}
     permissions:
       contents: read
-      id-token: write
-      attestations: write
-      artifact-metadata: write
+      id-token: write # Sigstore OIDC identity for the signer's attestations
+      attestations: write # store build provenance and SBOM attestations
+      artifact-metadata: write # record attestation artifact metadata
 
   vex-attest:
     name: Attest and Upload Stable VEX
@@ -328,10 +328,10 @@ jobs:
       version: ${{ needs.validate-release.outputs.tag-name }}
       sbom-artifact: sbom-dependencies
     permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
+      contents: write # upload the attested VEX document to the draft release
+      id-token: write # Sigstore OIDC identity for the VEX attestation
+      attestations: write # store the VEX attestation
+      artifact-metadata: write # record attestation artifact metadata
 
   verify-provenance:
     name: Verify Provenance
@@ -340,7 +340,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      attestations: read
+      attestations: read # verify the release asset attestations
     steps:
       - name: Checkout verification script
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -390,7 +390,7 @@ jobs:
     runs-on: ubuntu-24.04
     continue-on-error: true
     permissions:
-      contents: write
+      contents: write # upload the SBOM diff to the draft release
     steps:
       - name: Download current dependency SBOM
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -478,7 +478,7 @@ jobs:
     if: ${{ needs.validate-release.outputs.release-state == 'draft' && needs.validate-release.outputs.channel == 'Stable' }}
     runs-on: ubuntu-24.04
     permissions:
-      contents: write
+      contents: write # append verification notes to the draft release
     steps:
       - name: Append verification section to release notes
         shell: bash
@@ -731,7 +731,7 @@ jobs:
     with:
       version: ${{ needs.validate-release.outputs.version }}
     permissions:
-      issues: write
+      issues: write # close the release milestone
 
   # Scorecard grades the newest releases' signature and SBOM assets, which exist
   # only once the release is public. Scorecard accepts published results only
