@@ -3,7 +3,7 @@ title: Branch Protection
 description: Main branch protection requirements for the hve-core repository
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-23
+ms.date: 2026-10-03
 ms.topic: reference
 keywords:
   - branch protection

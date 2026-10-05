@@ -12,6 +12,10 @@ keywords:
   - L100
   - L400
 sidebar_position: 1
+sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Demo Material"
+pagination_label: Demo Material
 estimated_reading_time: 3
 ---
 

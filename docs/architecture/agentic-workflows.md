@@ -221,8 +221,6 @@ The `hve-builder` skill uses one lifecycle for agents, prompts, instructions, su
 
 The main agent reviews the candidate itself by default. When fresh context would help, it dispatches the read-only `HVE Builder Reviewer` subagent, which returns severity-graded findings as suggestions for the main agent to verify before recording. The lifecycle lead keeps bounded authoring and local validation in the current context rather than creating a worker turn for each stage.
 
-The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills remain compatibility aliases that route legacy requests to this lifecycle.
-
 ### Security Review
 
 The [Security Reviewer](https://github.com/microsoft/hve-core/blob/main/.github/agents/security/security-reviewer.agent.md) orchestrates security skill assessment through four subagents: Codebase Profiler, Skill Assessor, Finding Deep Verifier, and Report Generator. It supports audit, diff, and plan modes across OWASP and Secure by Design frameworks.

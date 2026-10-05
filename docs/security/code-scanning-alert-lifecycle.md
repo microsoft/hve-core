@@ -1,6 +1,7 @@
 ---
 title: Code-Scanning Alert Lifecycle
 description: How HVE Core detects, blocks, tracks, and resolves code-scanning alerts without ever dismissing them
+sidebar_position: 9
 author: Microsoft
 ms.date: 2026-10-05
 ms.topic: concept

@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-10-02
+ms.date: 2026-10-03
 ms.topic: reference
 keywords:
   - copilot
@@ -182,8 +182,7 @@ Activate the `hve-builder` skill:
 3. HVE Builder resolves the mode, write boundary, and applicable conventions
 4. HVE Builder runs a review pass against its requirements catalog and review rubric, reviewing the candidate itself or dispatching the read-only `HVE Builder Reviewer` subagent in fresh context, and verifies every finding before recording it
 5. Known target files and caller-supplied canonical references remain bounded lifecycle reads; open-ended exploration and decision-critical research activate `rpi-research`
-6. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills remain compatibility aliases
-7. The final response reports each gate and an overall Pass, Revise, Deferred, or Blocked outcome
+6. The final response reports each gate and an overall Pass, Revise, Deferred, or Blocked outcome
 
 For manual creation, see [Contributing Instructions](../../docs/contributing/instructions.md).
 

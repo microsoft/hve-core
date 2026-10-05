@@ -2,9 +2,11 @@
 title: Setup Methods
 description: Detailed guides for each HVE Core installation and workspace configuration method
 sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Setup Methods"
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-08-02
+ms.date: 2026-10-04
 ms.topic: overview
 keywords:
   - setup
