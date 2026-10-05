@@ -487,3 +487,25 @@ jobs:
           path: ${{ runner.temp }}/index
           retention-days: 90
           if-no-files-found: error
+
+  # Hands the new bundle to the documentation deploy in a separate run, which
+  # waits for this run to finish before it looks up the newest bundle.
+  dispatch-deploy:
+    name: Start the documentation deploy
+    needs: bundle
+    if: ${{ needs.bundle.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write # start Deploy Documentation Site on the default branch
+    steps:
+      - name: Dispatch the documentation deploy for this run
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: "deploy-docs.yml",
+              ref: repository.default_branch,
+              inputs: { "source-run-id": String(context.runId) },
+            });

@@ -68,33 +68,33 @@ flowchart TD
 
 ## Workflow Inventory
 
-| Workflow                             | Trigger                           | Purpose                                                                                              |
-|--------------------------------------|-----------------------------------|------------------------------------------------------------------------------------------------------|
-| `pr-validation.yml`                  | Pull request, manual              | Pre-merge quality gate for main, develop, and both release branches                                  |
-| `release-prerelease-prepare.yml`     | Merged PR to `main`, manual       | Open the reviewed `main` to `release/prerelease` promotion PR                                        |
-| `release-prerelease.yml`             | Merged PR to `release/prerelease` | Prepare metadata or create the exact odd-minor tag and draft                                         |
-| `release-stable.yml`                 | Published PreRelease, manual      | Open the reviewed `release/prerelease` to `release/stable` promotion PR                              |
-| `release-stable-publish.yml`         | Merged PR to `release/stable`     | Prepare metadata or create the exact even-minor tag and draft                                        |
-| `release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`   | Produce and publish the exact immutable channel release                                              |
-| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual           | Scheduled security posture review                                                                    |
-| `weekly-validation.yml`              | Schedule, manual                  | Weekly full validation sweep                                                                         |
-| `security-scan.yml`                  | Push to main/develop              | CodeQL security validation                                                                           |
-| `release-marketplace-stable.yml`     | Published Stable release, manual  | VS Code extension Marketplace publishing                                                             |
-| `release-marketplace-prerelease.yml` | Published PreRelease, manual      | VS Code extension pre-release publishing                                                             |
-| `copilot-setup-steps.yml`            | Manual                            | Coding agent environment setup                                                                       |
-| `devcontainer-change-log.yml`        | Push to main/develop              | Logs devcontainer infrastructure file changes to the step summary                                    |
-| `devcontainer-lockfile-check.yml`    | Reusable                          | Validates devcontainer lockfile integrity and SHA-256 pinning                                        |
-| `scorecard.yml`                      | Schedule, push, post-tag release  | OpenSSF Scorecard security analysis                                                                  |
-| `codeql-analysis.yml`                | Sunday 4 AM UTC                   | Weekly CodeQL security scan with threshold gate (also reusable)                                      |
-| `dependency-review.yml`              | Pull request                      | Dependency vulnerability review (also reusable)                                                      |
-| `sha-staleness-check.yml`            | Manual                            | SHA reference freshness check (also reusable)                                                        |
-| `deploy-docs.yml`                    | Push to main, manual              | Docusaurus documentation site deployment                                                             |
-| `create-stale-docs-issues.yml`       | Schedule                          | Automated stale docs issue creation from ms.date freshness                                           |
-| `msdate-freshness-check.yml`         | Schedule, manual                  | ms.date freshness validation across documentation                                                    |
-| `label-sync.yml`                     | Push to main, manual              | Repository label synchronization                                                                     |
-| `workflow-permissions-scan.yml`      | Schedule, manual                  | GitHub Actions permissions audit                                                                     |
-| `weekly-gh-code-scanning.yml`        | Monday 3 AM UTC, manual           | Weekly code-scanning issue filing, including dismissed-still-detected alerts and exception follow-up |
-| `vex-detect.yml`                     | Schedule, release, manual         | Dependency vulnerability scan and VEX triage issue creation                                          |
+| Workflow                             | Trigger                                                                    | Purpose                                                                                              |
+|--------------------------------------|----------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| `pr-validation.yml`                  | Pull request, manual                                                       | Pre-merge quality gate for main, develop, and both release branches                                  |
+| `release-prerelease-prepare.yml`     | Merged PR to `main`, manual                                                | Open the reviewed `main` to `release/prerelease` promotion PR                                        |
+| `release-prerelease.yml`             | Merged PR to `release/prerelease`                                          | Prepare metadata or create the exact odd-minor tag and draft                                         |
+| `release-stable.yml`                 | Published PreRelease, manual                                               | Open the reviewed `release/prerelease` to `release/stable` promotion PR                              |
+| `release-stable-publish.yml`         | Merged PR to `release/stable`                                              | Prepare metadata or create the exact even-minor tag and draft                                        |
+| `release-vsix-publish.yml`           | Push of `v*` or `prerelease-v*`                                            | Produce and publish the exact immutable channel release                                              |
+| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual                                                    | Scheduled security posture review                                                                    |
+| `weekly-validation.yml`              | Schedule, manual                                                           | Weekly full validation sweep                                                                         |
+| `security-scan.yml`                  | Push to main/develop                                                       | CodeQL security validation                                                                           |
+| `release-marketplace-stable.yml`     | Published Stable release, manual                                           | VS Code extension Marketplace publishing                                                             |
+| `release-marketplace-prerelease.yml` | Published PreRelease, manual                                               | VS Code extension pre-release publishing                                                             |
+| `copilot-setup-steps.yml`            | Manual                                                                     | Coding agent environment setup                                                                       |
+| `devcontainer-change-log.yml`        | Push to main/develop                                                       | Logs devcontainer infrastructure file changes to the step summary                                    |
+| `devcontainer-lockfile-check.yml`    | Reusable                                                                   | Validates devcontainer lockfile integrity and SHA-256 pinning                                        |
+| `scorecard.yml`                      | Schedule, push, dispatch after a release is published                      | OpenSSF Scorecard security analysis                                                                  |
+| `codeql-analysis.yml`                | Sunday 4 AM UTC                                                            | Weekly CodeQL security scan with threshold gate (also reusable)                                      |
+| `dependency-review.yml`              | Pull request                                                               | Dependency vulnerability review (also reusable)                                                      |
+| `sha-staleness-check.yml`            | Manual                                                                     | SHA reference freshness check (also reusable)                                                        |
+| `deploy-docs.yml`                    | Push to main, manual, dispatch from the backlog publisher or demo renderer | Docusaurus documentation site deployment                                                             |
+| `create-stale-docs-issues.yml`       | Schedule                                                                   | Automated stale docs issue creation from ms.date freshness                                           |
+| `msdate-freshness-check.yml`         | Schedule, manual                                                           | ms.date freshness validation across documentation                                                    |
+| `label-sync.yml`                     | Push to main, manual                                                       | Repository label synchronization                                                                     |
+| `workflow-permissions-scan.yml`      | Schedule, manual                                                           | GitHub Actions permissions audit                                                                     |
+| `weekly-gh-code-scanning.yml`        | Monday 3 AM UTC, manual                                                    | Weekly code-scanning issue filing, including dismissed-still-detected alerts and exception follow-up |
+| `vex-detect.yml`                     | Schedule, release, manual                                                  | Dependency vulnerability scan and VEX triage issue creation                                          |
 
 GitHub Agentic Workflow markdown files (`issue-triage.md`, `issue-implement.md`, `pr-review.md`, `dependency-pr-review.md`, `doc-update-check.md`, and `vex-draft.md`) compile to `*.lock.yml` workflows and are documented in [Agentic Workflows](agentic-workflows).
 

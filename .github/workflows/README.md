@@ -310,9 +310,10 @@ handoff can proceed to GitHub Backlog Executor, and `Close` remains prohibited.
 
 The reducer retains detailed JSON and Markdown for 30 days and writes the exact
 terminal artifact identity to its job summary. It does not mutate the tracker.
-Completion activates `backlog-groom-publisher.yml` through the platform
-`workflow_run` event. The publisher resolves the terminal artifact from the
-completed run, authenticates its producer and source revision, revalidates the
+Its final `dispatch-publisher` job, which holds only `actions: write`, starts
+`backlog-groom-publisher.yml` on the default branch with the sweep run ID. The
+publisher waits for that run to complete, requires it to have succeeded, resolves
+the terminal artifact from it, authenticates its producer and source revision, revalidates the
 final aggregate, and compares the trusted tracker state before any persistence.
 
 Core publication revalidates the aggregate and updates or reopens the compact
@@ -327,8 +328,9 @@ Optional report publication is disabled unless the repository variable
 `BACKLOG_GROOM_PUBLISH_GH_PAGES` equals the exact lowercase value `true`. When
 enabled, a downstream non-blocking job stores escaped HTML, `aggregate.json`,
 `history.json`, and `latest.json` on `backlog-grooming-reports`. A separate
-job dispatches `deploy-docs.yml` with the authenticated current branch-head
-SHA. The existing Docusaurus deployment stages that history at
+job, holding only `actions: write`, dispatches `deploy-docs.yml` with the publisher
+run ID. The deploy waits for that run to complete and revalidates its Pages
+provenance. The existing Docusaurus deployment stages that history at
 `/backlog-grooming/`, so production retains one GitHub Pages deployment.
 History or deployment failures do not roll back the completed core tracker
 publication.
@@ -363,11 +365,13 @@ worker execution.
 | `checkpoint-artifact-id` | `string` | Empty                       | Positive immutable artifact ID               | Continuation | Requires plan `actions: read` |
 | `checkpoint-digest`      | `string` | Empty                       | 64 lowercase hex characters                  | Continuation | No added permission           |
 
-Publication derives the run, artifact, sweep, and source identities only from
-the completed orchestrator run delivered by `workflow_run`. The publisher has
-no `workflow_dispatch` trigger or caller-supplied identity inputs. If an
-automatic publisher attempt fails while the exact final artifact remains
-retained, rerun the failed jobs in that original publisher run. When the
+Publication takes one input, `sweep-run-id`, and derives the artifact, sweep,
+and source identities only from that run after it completes. It refuses to run
+from any ref other than the default branch, and it rejects a run that is not a
+successful default-branch orchestrator run at the current default-branch commit.
+If a publisher attempt fails while the exact final artifact remains retained,
+rerun the failed jobs in that original publisher run, or start the publisher manually with
+the same `sweep-run-id`. When the
 artifact has expired or its source revision is no longer accepted, start a new
 sweep instead of replaying publication from another ref.
 
@@ -526,10 +530,9 @@ path. Any proposed bypass or alternate privileged recovery path requires a
 reviewed workflow change with CODEOWNER approval; operators must not run
 publisher code from another ref.
 
-During transition from the former manual publisher, cancel queued manual
-publisher runs and use only new `workflow_run` activations. Rerun failed jobs
-only in the original automatic publisher run while its authenticated artifact
-is retained. Expired or abandoned sweeps are replaced by a fresh snapshot.
+Start the publisher only for a completed sweep run, either through the sweep's
+`dispatch-publisher` job or manually with that run's `sweep-run-id`, while its
+authenticated artifact is retained. Expired or abandoned sweeps are replaced by a fresh snapshot.
 GitHub removes ordinary artifacts according to the 30-day retention setting;
 optional immutable history is removed only through a reviewed repository
 maintenance change.

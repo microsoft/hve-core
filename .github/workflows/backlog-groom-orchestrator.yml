@@ -1314,5 +1314,28 @@ jobs:
                 ["snapshot-digest", process.env.SNAPSHOT_DIGEST],
                 ["source-sha", process.env.SOURCE_SHA],
               ])
-              .addRaw("\nThe completed run activates Backlog Grooming Publisher automatically. These values also support an exact manual replay.\n")
+              .addRaw("\nThis run starts Backlog Grooming Publisher when it completes. To replay publication, run Backlog Grooming Publisher with sweep-run-id set to final-run-id.\n")
               .write();
+
+  # Hands the completed sweep to the publisher in a separate run, so the
+  # issue-writing jobs never share a run with the AI assessment jobs. The
+  # publisher waits for this run to finish and revalidates everything.
+  dispatch-publisher:
+    name: Start trusted publication
+    needs: reduce
+    if: ${{ needs.reduce.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write # start Backlog Grooming Publisher on the default branch
+    steps:
+      - name: Dispatch the publisher for this run
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: "backlog-groom-publisher.yml",
+              ref: repository.default_branch,
+              inputs: { "sweep-run-id": String(context.runId) },
+            });

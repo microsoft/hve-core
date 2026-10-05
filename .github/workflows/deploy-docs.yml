@@ -13,15 +13,15 @@ on:
     paths:
       - 'docs/**'
       - '.github/workflows/deploy-docs.yml'
+  # Backlog Grooming Publisher and Demo Material Render dispatch this with their
+  # run ID after they produce new content; a manual run leaves it empty.
   workflow_dispatch:
-  workflow_run:
-    workflows:
-      - Backlog Grooming Publisher
-      - Demo Material Render
-    branches:
-      - main
-    types:
-      - completed
+    inputs:
+      source-run-id:
+        description: 'Publisher or render run that requested this deploy (optional)'
+        required: false
+        type: string
+        default: ''
 
 concurrency:
   group: pages-deploy-${{ github.ref }}
@@ -70,18 +70,48 @@ jobs:
         working-directory: docs/docusaurus
         run: npm run build
 
-      - name: Authenticate publisher provenance artifact
-        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.path == '.github/workflows/backlog-groom-publisher.yml' }}
-        id: reports
+      # A producer dispatches this deploy from its last job, so its run is still
+      # finishing; wait for it, then accept only a successful default-branch run
+      # of one of the two producers.
+      - name: Wait for the requesting run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.source-run-id != '' }}
+        id: requester
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SOURCE_RUN_ID: ${{ inputs.source-run-id }}
         with:
           script: |
-            const run = context.payload.workflow_run;
+            const waitForRun = async (runId) => {
+              const deadline = Date.now() + 30 * 60 * 1000;
+              for (;;) {
+                const { data: run } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: runId });
+                if (run.status === "completed") return run;
+                if (Date.now() > deadline) throw new Error(`Run ${runId} did not complete within 30 minutes`);
+                await new Promise((resolve) => setTimeout(resolve, 15000));
+              }
+            };
+            const runId = Number(process.env.SOURCE_RUN_ID);
+            if (!Number.isSafeInteger(runId) || runId <= 0) throw new Error("source-run-id must be a positive safe integer");
+            const run = await waitForRun(runId);
             const { data: repository } = await github.rest.repos.get({ ...context.repo });
-            if (run.path !== ".github/workflows/backlog-groom-publisher.yml" ||
-                run.head_branch !== repository.default_branch || run.conclusion !== "success") {
-              throw new Error("Report staging requires a successful default-branch publisher run");
+            const producers = [".github/workflows/backlog-groom-publisher.yml", ".github/workflows/demo-material-render.yml"];
+            if (!producers.includes(run.path) || run.head_branch !== repository.default_branch || run.conclusion !== "success") {
+              throw new Error("A deploy request must come from a successful default-branch publisher or render run");
             }
+            core.setOutput("path", run.path);
+            core.setOutput("run-id", String(run.id));
+            core.setOutput("run-attempt", String(run.run_attempt));
+            core.setOutput("head-sha", run.head_sha);
+
+      - name: Authenticate publisher provenance artifact
+        if: ${{ steps.requester.outputs.path == '.github/workflows/backlog-groom-publisher.yml' }}
+        id: reports
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PUBLISHER_RUN_ID: ${{ steps.requester.outputs.run-id }}
+        with:
+          script: |
+            const run = { id: Number(process.env.PUBLISHER_RUN_ID) };
             const artifacts = await github.paginate(
               github.rest.actions.listWorkflowRunArtifacts,
               { ...context.repo, run_id: run.id, per_page: 100 },
@@ -109,6 +139,10 @@ jobs:
         if: ${{ steps.reports.outputs.artifact-id != '' }}
         id: provenance
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PUBLISHER_RUN_ID: ${{ steps.requester.outputs.run-id }}
+          PUBLISHER_RUN_ATTEMPT: ${{ steps.requester.outputs.run-attempt }}
+          PUBLISHER_HEAD_SHA: ${{ steps.requester.outputs.head-sha }}
         with:
           script: |
             const crypto = require("crypto");
@@ -125,7 +159,11 @@ jobs:
               return JSON.stringify(value);
             };
             const computedDigest = crypto.createHash("sha256").update(canonicalize(material)).digest("hex");
-            const run = context.payload.workflow_run;
+            const run = {
+              id: Number(process.env.PUBLISHER_RUN_ID),
+              run_attempt: Number(process.env.PUBLISHER_RUN_ATTEMPT),
+              head_sha: process.env.PUBLISHER_HEAD_SHA,
+            };
             const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value) &&
               Object.keys(value).sort().join("|") === [...keys].sort().join("|");
             if (!exactKeys(provenance, [
@@ -139,7 +177,7 @@ jobs:
                 provenance.repository_id !== String(context.payload.repository.id) ||
                 !/^[a-f0-9]{40}$/.test(provenance.report_commit_sha) ||
                 !/^[a-f0-9]{64}$/.test(recordedDigest) || recordedDigest !== computedDigest) {
-              throw new Error("Pages provenance is not bound to the triggering publisher run");
+              throw new Error("Pages provenance is not bound to the requesting publisher run");
             }
             await github.rest.git.getCommit({
               ...context.repo,

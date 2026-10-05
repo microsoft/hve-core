@@ -1157,7 +1157,7 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $script:WaveValidator | Should -Match 'Wave result set is incomplete'
         $script:WaveValidator | Should -Match 'Wave issue coverage is incomplete or out of snapshot'
         [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
-        $script:Publisher | Should -Not -Match '(?m)^  workflow_dispatch:$'
+        $script:Publisher | Should -Match '(?ms)^  workflow_dispatch:\s+inputs:\s+sweep-run-id:\s+description: [^\n]+\s+required: true\s+type: string\s+concurrency:'
     }
 }
 
@@ -1178,9 +1178,11 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
     It 'isolates the sole issue-write permission behind complete fan-in' {
         [regex]::Matches($script:Orchestrator, '(?m)^\s+issues: write$').Count | Should -Be 0
         [regex]::Matches($script:Publisher, '(?m)^\s+issues: write$').Count | Should -Be 1
-        $script:Publisher | Should -Not -Match '(?m)^  workflow_dispatch:$'
-        $script:Publisher | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Sweep\s+branches:\s+- main\s+types:\s+- completed'
-        $script:Publisher | Should -Match 'context\.payload\.workflow_run\?\.id'
+        $script:Publisher | Should -Not -Match '(?m)^  workflow_run:$'
+        $script:Publisher | Should -Match '(?ms)^  workflow_dispatch:\s+inputs:\s+sweep-run-id:\s+description: [^\n]+\s+required: true\s+type: string\s+concurrency:'
+        $script:Publisher | Should -Match 'parsePositiveInteger\("sweep-run-id", process\.env\.SWEEP_RUN_ID\)'
+        $script:Publisher | Should -Match 'context\.ref !== `refs/heads/\$\{repository\.default_branch\}`'
+        $script:Publisher | Should -Match 'const run = await waitForRun\(finalRunId\)'
         $script:Publisher | Should -Not -Match 'manualReplay|inputs\.final-|inputs\.snapshot-digest|inputs\.source-sha|inputs\.sweep-id'
         $script:Publisher | Should -Match 'run\.head_branch !== repository\.default_branch'
         $script:Publisher | Should -Match 'run\.head_sha !== defaultRef\.object\.sha'
@@ -1206,7 +1208,9 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:Orchestrator | Should -Match "steps\.plan\.outputs\.mode != 'calendar-noop'"
         $script:Orchestrator | Should -Match "needs\.plan\.outputs\.mode != 'calendar-noop'"
         $script:Orchestrator | Should -Match "needs\.plan\.outputs\.mode != 'complete-noop'"
-        $script:Publisher | Should -Match "github\.event\.workflow_run\.conclusion == 'success'"
+        $script:Publisher | Should -Match 'if \(run\.conclusion !== "success"\) \{\s+core\.info\(`Sweep run \$\{finalRunId\} concluded'
+        $script:Orchestrator | Should -Match "(?ms)^  dispatch-publisher:\s+name: [^\n]+\s+needs: reduce\s+if: \`$\{\{ needs\.reduce\.result == 'success' \}\}\s+runs-on: ubuntu-24\.04\s+permissions:\s+actions: write"
+        $script:Orchestrator | Should -Match 'workflow_id: "backlog-groom-publisher\.yml",\s+ref: repository\.default_branch,\s+inputs: \{ "sweep-run-id": String\(context\.runId\) \}'
         $script:Source | Should -Match '(?m)^  workflow_call:$'
         $script:Source | Should -Not -Match '(?m)^  (schedule|workflow_dispatch):$'
     }
@@ -1312,10 +1316,14 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
     }
 
     It 'stages reports only from immutable provenance bound to a successful publisher run' {
-        $script:DeployDocs | Should -Match '(?ms)^  workflow_run:\s+workflows:\s+- Backlog Grooming Publisher\s+(?:- [^\r\n]+\s+)*branches:\s+- main\s+types:\s+- completed'
-        $script:DeployDocs | Should -Match "if: \$\{\{ github\.event_name == 'workflow_run' && github\.event\.workflow_run\.conclusion == 'success' && github\.event\.workflow_run\.path == '\.github/workflows/backlog-groom-publisher\.yml' \}\}"
-        $script:DeployDocs | Should -Match "github\.event_name == 'workflow_run' && github\.event\.workflow_run\.conclusion == 'success'"
-        $script:DeployDocs | Should -Match 'run\.path !== "\.github/workflows/backlog-groom-publisher\.yml"'
+        $script:DeployDocs | Should -Not -Match '(?m)^  workflow_run:$'
+        $script:DeployDocs | Should -Match '(?ms)^  workflow_dispatch:\s+inputs:\s+source-run-id:'
+        $script:DeployDocs | Should -Match "if: \$\{\{ github\.event_name == 'workflow_dispatch' && inputs\.source-run-id != '' \}\}"
+        $script:DeployDocs | Should -Match 'const producers = \["\.github/workflows/backlog-groom-publisher\.yml", "\.github/workflows/demo-material-render\.yml"\]'
+        $script:DeployDocs | Should -Match 'run\.head_branch !== repository\.default_branch \|\| run\.conclusion !== "success"'
+        $script:DeployDocs | Should -Match "if: \$\{\{ steps\.requester\.outputs\.path == '\.github/workflows/backlog-groom-publisher\.yml' \}\}"
+        $script:Publisher | Should -Match "(?ms)^  dispatch-deploy:\s+name: [^\n]+\s+needs: publish-history\s+if: \`$\{\{ needs\.publish-history\.result == 'success' \}\}\s+runs-on: ubuntu-24\.04\s+permissions:\s+actions: write"
+        $script:Publisher | Should -Match 'workflow_id: "deploy-docs\.yml",\s+ref: repository\.default_branch,\s+inputs: \{ "source-run-id": String\(context\.runId\) \}'
         $script:DeployDocs | Should -Match 'github\.rest\.actions\.listWorkflowRunArtifacts'
         $script:DeployDocs | Should -Match 'Publisher run must contain exactly one immutable Pages provenance artifact'
         $script:DeployDocs | Should -Match 'artifact-ids: \$\{\{ steps\.reports\.outputs\.artifact-id \}\}'
@@ -1323,7 +1331,7 @@ Describe 'Backlog grooming production publisher' -Tag 'Unit' {
         $script:DeployDocs | Should -Match 'provenance\.publisher_run_attempt !== run\.run_attempt'
         $script:DeployDocs | Should -Match 'provenance\.publisher_source_sha !== run\.head_sha'
         $script:DeployDocs | Should -Match 'recordedDigest !== computedDigest'
-        $script:DeployDocs | Should -Match 'Pages provenance is not bound to the triggering publisher run'
+        $script:DeployDocs | Should -Match 'Pages provenance is not bound to the requesting publisher run'
         $script:DeployDocs | Should -Not -Match 'const reportsBranch = "backlog-grooming-reports"|requestedRef|report-ref'
         $script:DeployDocs | Should -Match 'ref: \$\{\{ steps\.provenance\.outputs\.ref \}\}'
         $script:DeployDocs | Should -Match 'docs/docusaurus/build/backlog-grooming'
@@ -1990,7 +1998,7 @@ Describe 'Backlog grooming sweep reduction publication and documentation contrac
             )) {
             $script:WorkflowReadme | Should -Match $content
         }
-        $script:WorkflowReadme | Should -Match 'no `workflow_dispatch` trigger'
+        $script:WorkflowReadme | Should -Match '(?s)It refuses to run\s+from any ref other than the default branch'
         $script:WorkflowReadme | Should -Match 'rerun the failed jobs in that original publisher run'
     }
 }

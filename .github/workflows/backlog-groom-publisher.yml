@@ -1,13 +1,14 @@
 name: Backlog Grooming Publisher
 
 on:
-  workflow_run:
-    workflows:
-      - Backlog Grooming Sweep
-    branches:
-      - main
-    types:
-      - completed
+  # Started by the sweep's dispatch-publisher job, or manually to replay a
+  # completed sweep run. Every input is revalidated against the run itself.
+  workflow_dispatch:
+    inputs:
+      sweep-run-id:
+        description: 'Backlog Grooming Sweep run to publish'
+        required: true
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.repository_id }}
@@ -18,8 +19,8 @@ permissions: {}
 jobs:
   discover:
     name: Discover terminal publication input
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 40
     permissions:
       actions: read
       contents: read
@@ -33,6 +34,8 @@ jobs:
       - name: Resolve completed-run input
         id: discover
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SWEEP_RUN_ID: ${{ inputs.sweep-run-id }}
         with:
           script: |
             const parsePositiveInteger = (name, value) => {
@@ -40,9 +43,27 @@ jobs:
               if (!Number.isSafeInteger(parsed) || parsed <= 0) throw new Error(`${name} must be a positive safe integer`);
               return parsed;
             };
-            const finalRunId = parsePositiveInteger("final-run-id", String(context.payload.workflow_run?.id));
-            const { data: run } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: finalRunId });
+            const waitForRun = async (runId) => {
+              const deadline = Date.now() + 30 * 60 * 1000;
+              for (;;) {
+                const { data: run } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: runId });
+                if (run.status === "completed") return run;
+                if (Date.now() > deadline) throw new Error(`Run ${runId} did not complete within 30 minutes`);
+                await new Promise((resolve) => setTimeout(resolve, 15000));
+              }
+            };
+            // A manual start can name any ref; only the default-branch publisher may run.
             const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            if (context.ref !== `refs/heads/${repository.default_branch}`) {
+              throw new Error(`The publisher runs only from ${repository.default_branch}, not ${context.ref}`);
+            }
+            const finalRunId = parsePositiveInteger("sweep-run-id", process.env.SWEEP_RUN_ID);
+            const run = await waitForRun(finalRunId);
+            if (run.conclusion !== "success") {
+              core.info(`Sweep run ${finalRunId} concluded ${run.conclusion}; publication is not required`);
+              core.setOutput("terminal", "false");
+              return;
+            }
             const { data: defaultRef } = await github.rest.git.getRef({
               ...context.repo,
               ref: `heads/${repository.default_branch}`,
@@ -547,3 +568,25 @@ jobs:
           path: pages-provenance/provenance.json
           if-no-files-found: error
           retention-days: 30
+
+  # Hands the report history to the documentation deploy in a separate run,
+  # which waits for this run to finish and revalidates the Pages provenance.
+  dispatch-deploy:
+    name: Start the documentation deploy
+    needs: publish-history
+    if: ${{ needs.publish-history.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write # start Deploy Documentation Site on the default branch
+    steps:
+      - name: Dispatch the documentation deploy for this run
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: "deploy-docs.yml",
+              ref: repository.default_branch,
+              inputs: { "source-run-id": String(context.runId) },
+            });
