@@ -1,6 +1,9 @@
 {
   "maintenance": {
-    "runs_on": "ubuntu-24.04"
+    "runs_on": "ubuntu-24.04",
+    "disabled_jobs": [
+      "apply_safe_outputs"
+    ]
   },
   "action_pins": {
     "actions/github-script@v9": "actions/github-script@v9.0.0"

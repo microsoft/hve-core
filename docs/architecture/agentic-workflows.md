@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-10-04
+ms.date: 2026-10-05
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -149,7 +149,7 @@ Compiler settings that keep the generated workflows within repository policy liv
 
 * Every source sets `runs-on` and `runs-on-slim` to a dated runner label, and `safe-outputs.threat-detection.runs-on` for workflows with threat detection. Custom jobs set their own `runs-on`.
 * Every source sets `runtimes.node.version` to the `.node-version` value.
-* `.github/workflows/aw.json` sets the `agentics-maintenance.yml` runner (`maintenance.runs_on`), remaps `actions/github-script@v9` to the exact `v9.0.0` release (`action_pins`), and pins the MCP gateway and MCP server images by digest (`container_pins`).
+* `.github/workflows/aw.json` sets the `agentics-maintenance.yml` runner (`maintenance.runs_on`), turns off its unused safe-output replay job (`maintenance.disabled_jobs`), remaps `actions/github-script@v9` to the exact `v9.0.0` release (`action_pins`), and pins the MCP gateway and MCP server images by digest (`container_pins`).
 
 To upgrade:
 

@@ -81,8 +81,8 @@ on:
         description: 'The maintenance operation that was completed (empty when none ran or a scheduled job ran)'
         value: ${{ jobs.run_operation.outputs.operation || inputs.operation }}
       applied_run_url:
-        description: 'The run URL that safe outputs were applied from'
-        value: ${{ jobs.apply_safe_outputs.outputs.run_url }}
+        description: 'The run URL that safe outputs were applied from (workflow_call falls back to inputs.run_url when apply_safe_outputs is disabled; other triggers leave this empty)'
+        value: ${{ inputs.run_url }}
 
 permissions: {}
 
@@ -269,64 +269,6 @@ jobs:
             setupGlobals(core, github, context, exec, io, getOctokit);
             const { main } = require(path.join(actionsDir, 'update_pull_request_branches.cjs'));
             await main();
-
-  apply_safe_outputs:
-    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && inputs.operation == 'safe_outputs' && (!(github.event.repository.fork)) }}
-    runs-on: ubuntu-24.04
-    permissions:
-      actions: read
-      contents: write
-      discussions: write
-      issues: write
-      pull-requests: write
-    outputs:
-      run_url: ${{ steps.record.outputs.run_url }}
-    steps:
-      - name: Checkout actions folder
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          sparse-checkout: |
-            actions
-          clean: false
-          persist-credentials: false
-
-      - name: Setup Scripts
-        uses: github/gh-aw-actions/setup@924af5fdc64061cfbf66fb584c8b07e2ac230c60 # v0.89.21
-        with:
-          destination: ${{ runner.temp }}/gh-aw/actions
-
-      - name: Check admin/maintainer permissions
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const path = require('path');
-            const actionsDir = path.join(process.env.RUNNER_TEMP, 'gh-aw', 'actions');
-            const { setupGlobals } = require(path.join(actionsDir, 'setup_globals.cjs'));
-            setupGlobals(core, github, context, exec, io, getOctokit);
-            const { main } = require(path.join(actionsDir, 'check_team_member.cjs'));
-            await main();
-
-      - name: Apply Safe Outputs
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_AW_RUN_URL: ${{ inputs.run_url }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const path = require('path');
-            const actionsDir = path.join(process.env.RUNNER_TEMP, 'gh-aw', 'actions');
-            const { setupGlobals } = require(path.join(actionsDir, 'setup_globals.cjs'));
-            setupGlobals(core, github, context, exec, io, getOctokit);
-            const { main } = require(path.join(actionsDir, 'apply_safe_outputs_replay.cjs'));
-            await main();
-
-      - name: Record outputs
-        id: record
-        env:
-          GH_AW_RUN_URL: ${{ inputs.run_url }}
-        run: echo "run_url=$GH_AW_RUN_URL" >> "$GITHUB_OUTPUT"
 
   create_labels:
     if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && inputs.operation == 'create_labels' && (!(github.event.repository.fork)) }}
