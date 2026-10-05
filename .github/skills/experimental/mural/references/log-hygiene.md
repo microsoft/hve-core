@@ -6,7 +6,7 @@ description: 'Operator log-hygiene contract for Mural customizations: never echo
 
 Mural traffic carries credential material at every hop: the OAuth authorization flow, the localhost browser callback, the `Authorization: Bearer …` header on every authenticated API call, and Azure Blob SAS query strings returned by asset-upload responses. None of that material may be echoed into chat, transcripts, planning artifacts, work items, screenshots, or pasted shell output. Mural is the durable record of human conversation (see [human-record.md](human-record.md)); the operator is the second line of defense behind the skill's `_redact` and is responsible for what leaves the terminal.
 
-# Sensitive Material Inventory
+## Sensitive Material Inventory
 
 | Material                              | Surface where it appears                                             |
 |---------------------------------------|----------------------------------------------------------------------|
@@ -19,7 +19,7 @@ Mural traffic carries credential material at every hop: the OAuth authorization 
 | Azure Blob SAS query string           | Asset-upload responses and follow-on PUT URLs (`?sig=…&se=…&sp=…`)   |
 | Authorization code (`code`)           | Browser callback URL, token-exchange request body                    |
 
-# Skill Guarantees (defense-in-depth backstop)
+## Skill Guarantees (defense-in-depth backstop)
 
 The `mural` skill provides a single `_redact(text)` helper that masks the items in the inventory above wherever they appear in JSON bodies, form-encoded bodies, `Authorization` headers, or Azure Blob SAS query strings. Coverage is verified by the skill's `tests/test_redaction.py` and documented in its `SECURITY.md` §B4 Information Disclosure.
 
@@ -29,7 +29,7 @@ The `mural` skill provides a single `_redact(text)` helper that masks the items 
 * The mask pattern set drifts as new endpoints, new headers, and new credential shapes are added. A passing test suite at one revision is not a guarantee at the next.
 * Operators must never assume a log line is safe just because it appears to come from the skill. Re-evaluate every line that quotes a URL, header, request body, or response body before it leaves the terminal.
 
-# Operator Contract
+## Operator Contract
 
 * Never paste raw Mural API URLs into chat, transcripts, or planning artifacts. Truncate query strings or sanitize before quoting.
 * Never echo a token, refresh token, PKCE value, authorization code, or `Authorization` header back to the user, even to confirm a value the user just provided.
@@ -37,7 +37,7 @@ The `mural` skill provides a single `_redact(text)` helper that masks the items 
 * Treat any artifact that captures network requests (HAR exports, mitmproxy dumps, `curl -v` output, browser devtools exports, `fetch` traces) as compromised until manually scrubbed against the inventory above.
 * Never propose code that adds a `LOGGER.*` or `print(*)` site emitting a URL, header, request body, or response body without first wrapping the value through `_redact`.
 
-# Cross-references
+## Cross-references
 
 * [human-record.md](human-record.md)
 * [writeback-hygiene.md](writeback-hygiene.md)

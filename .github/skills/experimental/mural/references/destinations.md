@@ -8,7 +8,7 @@ Action-item destinations are an open registry of named adapters. The extractor c
 
 The Mural skill provides an effect-free control plane for this registry. `load_destination_registry` validates the base and optional override with `yaml.safe_load`; `DispatchRequest` requires explicit destination and action intent; and `dispatch_destination` calls only an adapter injected by the owning caller. The skill does not import or implement GitHub, Jira, Azure DevOps, ADR, document, PowerPoint, or workshop-seed adapters.
 
-# Registry data file
+## Registry data file
 
 The authoritative list of adapters lives in [assets/destinations/registry.yml](../assets/destinations/registry.yml). Layer B agents read it at invocation time. Do not hardcode the destination set into agent or prompt logic.
 
@@ -21,7 +21,7 @@ Each registry entry has:
 | `target`       | Glob describing the artifact the adapter writes to                    |
 | `loop_closure` | Description of how items committed via this adapter return to source  |
 
-# Intent axis (Decision D5)
+## Intent axis (Decision D5)
 
 Every extracted action item carries `intent ∈ {create, mutate, append, no-op}`. The (destination, intent) pair selects the adapter:
 
@@ -34,7 +34,7 @@ Every extracted action item carries `intent ∈ {create, mutate, append, no-op}`
 
 `intent` is required. Slot 2 elicits it from the user during adjudication when the board structure does not make it visually obvious. The extractor never guesses intent.
 
-# Loop-closure metrics (Decision D4 + Pattern I)
+## Loop-closure metrics (Decision D4 + Pattern I)
 
 Loop closure is parameterized per destination. Each adapter declares its `loop_closure` in `registry.yml`. Examples:
 
@@ -48,7 +48,7 @@ Loop closure is parameterized per destination. Each adapter declares its `loop_c
 
 Aggregate "loop closure rate" weighs each destination equally unless a workshop family overrides the weights in its own configuration.
 
-# Reserved tag mapping
+## Reserved tag mapping
 
 The writeback applies one reserved tag per writeback channel:
 
@@ -59,17 +59,17 @@ The writeback applies one reserved tag per writeback channel:
 
 Reserved-tag protection rules in [writeback-hygiene.md](writeback-hygiene.md) apply.
 
-# Adding a new destination
+## Adding a new destination
 
 1. Add an entry to `assets/destinations/registry.yml` in the Mural skill with `id`, `intent`, `target`, and `loop_closure`.
 2. Implement the adapter as a handoff target on the relevant Slot 2 agent (work item creation prompt, ADR creation prompt, instructions writer, etc.).
 3. Update the workshop family's Slot 2 agent `handoffs` frontmatter to include the new adapter.
 4. Do not modify extractor core logic.
 
-# v1 retro coverage
+## v1 retro coverage
 
 The retro v1 wedge ships with the first three adapters (`backlog-item`, `instructions-file`, `adr`) plus the `unactioned` sink. Other adapters in the registry (`living-document`, `powerpoint-deck`, `next-workshop-seed`) are reserved for subsequent workshop families.
 
-# Override file
+## Override file
 
 Repos that need to hide or override registry entries can supply `assets/destinations/dt-sections.yml` (deep-merge override; not populated by default). The Mural registry loader reads both files, applies removals, merges entries by `id`, validates the merged result, and fails before adapter dispatch when either input is invalid.

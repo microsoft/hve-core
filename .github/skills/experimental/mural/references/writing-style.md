@@ -6,7 +6,7 @@ description: 'Asymmetric writing style for Mural: outbound (writing into Mural) 
 
 The writing style for Mural is asymmetric. Content moving *into* Mural is constrained by the medium (room-readable stickies). Content moving *out of* Mural is hydrated with the context the medium dropped. Pattern J (role-shape) and the M2 Q3 contract govern both directions.
 
-# Outbound — writing into Mural
+## Outbound — writing into Mural
 
 Stickies and textboxes are a workshop medium, not a document medium. AI-authored content into Mural follows these limits:
 
@@ -29,7 +29,7 @@ Style rules:
 * Title areas as nouns or short noun phrases (not sentences).
 * Lineage prefix `[dt:method=N section=NAME run=ID]` is prepended automatically by `_apply_lineage_prefix`; do not author it manually.
 
-# Inbound — extracting from Mural
+## Inbound — extracting from Mural
 
 The downstream consumer (work-item creation, RAI capture, retro action tracking, ADR draft) must not need to round-trip to Mural to disambiguate an extracted widget. Each extracted record carries:
 
@@ -42,7 +42,7 @@ The downstream consumer (work-item creation, RAI capture, retro action tracking,
 
 Hydration is multi-call (no `expand` / `include` in the Mural API). Use the widget context read helpers for single widgets and batched siblings; both cache the mural, room, workspace, and parent-area chain per invocation.
 
-# Hydration depth heuristic
+## Hydration depth heuristic
 
 | Destination type     | Required hydration                                                              |
 |----------------------|---------------------------------------------------------------------------------|
@@ -54,11 +54,11 @@ Hydration is multi-call (no `expand` / `include` in the Mural API). Use the widg
 | `next-workshop-seed` | Full chain plus lineage marker; preserves run_id for downstream traceability    |
 | `unactioned`         | Parent area title; tags; widget URL; rationale captured by Slot 2 adjudication  |
 
-# Outbound–inbound asymmetry rationale
+## Outbound–inbound asymmetry rationale
 
 Stickies are shorthand for a conversation that happened in the room. Outbound writing protects the medium (room readability). Inbound reading promotes that shorthand into a structured artifact and must restore the conversational context the shorthand assumed. Under-hydration on inbound silently destroys the workshop's value; over-stuffing on outbound silently destroys the workshop itself.
 
-# Language
+## Language
 
 * English-only for tag text and reserved-tag prefixes.
 * Sticky text follows the workshop's working language; the skill does not translate.

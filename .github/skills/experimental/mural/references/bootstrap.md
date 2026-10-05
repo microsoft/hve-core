@@ -19,7 +19,7 @@ Use the command scope policy exported by the Mural skill. Common sequences requi
 | Room creation                                                   | `--require-scope rooms:write`                                 |
 | DT board bootstrap                                              | `--require-scope rooms:write --require-scope murals:write`    |
 
-# Credential Backend Defaults
+## Credential Backend Defaults
 
 | Host environment | Credential backend             |
 |------------------|--------------------------------|
@@ -28,7 +28,7 @@ Use the command scope policy exported by the Mural skill. Common sequences requi
 | Remote-SSH       | `file`                         |
 | WSL2             | `auto` with fallback to `file` |
 
-# Verdict Handling
+## Verdict Handling
 
 If `mural doctor` returns `ready`, continue with the requested Mural workflow.
 
@@ -62,6 +62,6 @@ If `mural doctor` returns `deps_missing`, pause and say:
 The Mural tool dependencies are not installed in this environment. Please run the repository's documented dependency setup for the Mural skill, then ask me to retry.
 ```
 
-# Sensitive Data Hygiene
+## Sensitive Data Hygiene
 
 Never print, summarize, or ask the user to paste secrets into chat. This includes raw authentication URLs, OAuth tokens, authorization headers, Azure SAS query strings, refresh tokens, and credential file contents. When escalation is needed, name the verdict and the remediation path without exposing sensitive values.
