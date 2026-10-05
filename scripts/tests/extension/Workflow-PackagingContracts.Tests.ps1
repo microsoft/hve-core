@@ -972,8 +972,8 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
             REPOSITORY        = 'microsoft/hve-core'
         }
         $script:RulesetList = '[{"id":101,"name":"release-tags-creation-by-release-app"},{"id":102,"name":"release-tags-immutable"}]'
-        $script:CreationRuleset = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","bypass_actors":[{"actor_id":2646666,"actor_type":"Integration","bypass_mode":"always"}],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'
-        $script:ImmutableRuleset = '{"id":102,"name":"release-tags-immutable","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","bypass_actors":[],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"update"},{"type":"deletion"},{"type":"non_fast_forward"}]}'
+        $script:CreationRuleset = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"always","bypass_actors":[{"actor_id":2646666,"actor_type":"Integration","bypass_mode":"always"}],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'
+        $script:ImmutableRuleset = '{"id":102,"name":"release-tags-immutable","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"never","bypass_actors":[],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"update"},{"type":"deletion"},{"type":"non_fast_forward"}]}'
     }
 
     It 'Limits the reusable signer to one protected release-tag push caller' {
@@ -1005,7 +1005,7 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
         $document['on']['workflow_call'].Contains('secrets') | Should -BeFalse
         $token = Get-NamedJobStep -Document $document -JobName 'authorize' `
             -StepName 'Generate governance-read Release App token'
-        [string]$token['with']['permission-administration'] | Should -BeExactly 'read'
+        $token['with'].Contains('permission-administration') | Should -BeFalse
         [string]$token['with']['private-key'] | Should -BeExactly '${{ secrets.RELEASE_APP_PRIVATE_KEY }}'
 
         $authorizeText = (Get-JobStepText -Document $document -JobName 'authorize') -join "`n"
@@ -1014,7 +1014,7 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
             'source_type == "Repository"', 'conditions\.ref_name\.include',
             'conditions\.ref_name\.exclude', 'rules\[\]\.type', '/releases\?per_page=100',
             '/compare/\$EVENT_SHA\.\.\.\$BRANCH_SHA', 'Exact draft release identity',
-            'bypass_actors', 'actor_type', 'actor_id', 'bypass_mode')) {
+            'current_user_can_bypass', 'bypass_actors', 'actor_type', 'actor_id', 'bypass_mode')) {
             $authorizeText | Should -Match $contract
         }
 
@@ -1034,6 +1034,19 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
         $result = Invoke-ReleaseAuthorizationShellStep -Body ([string]$step['run']) `
             -Environment $script:AuthorizationEnvironment -RulesetList $script:RulesetList `
             -CreationRuleset $script:CreationRuleset -ImmutableRuleset $script:ImmutableRuleset
+        $result.ExitCode | Should -Be 0
+    }
+
+    It 'Accepts hidden bypass lists when the app reports its own bypass state' -Skip:$script:SkipShellFixtureTests {
+        $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-provenance-signer.yml') `
+            -JobName 'authorize' -StepName 'Authenticate release principal and governance'
+        $creation = $script:CreationRuleset -replace ',"bypass_actors":\[[^\]]*\]', ''
+        $immutable = $script:ImmutableRuleset -replace ',"bypass_actors":\[[^\]]*\]', ''
+        $creation | Should -Not -Match 'bypass_actors'
+        $immutable | Should -Not -Match 'bypass_actors'
+        $result = Invoke-ReleaseAuthorizationShellStep -Body ([string]$step['run']) `
+            -Environment $script:AuthorizationEnvironment -RulesetList $script:RulesetList `
+            -CreationRuleset $creation -ImmutableRuleset $immutable
         $result.ExitCode | Should -Be 0
     }
 
@@ -1081,8 +1094,11 @@ Describe 'Trusted source binding' -Tag 'Unit', 'SignerIsolation' {
         @{ Name = 'missing ruleset'; List = '[{"id":101,"name":"release-tags-creation-by-release-app"}]'; Creation = $null; Immutable = $null; Error = 'match count 0' }
         @{ Name = 'inactive creation'; List = $null; Creation = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","enforcement":"evaluate","conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'; Immutable = $null; Error = 'exact active release-tag creation boundary' }
         @{ Name = 'excluded tag'; List = $null; Creation = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","enforcement":"active","conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":["refs/tags/v3.4.0"]}},"rules":[{"type":"creation"}]}'; Immutable = $null; Error = 'exact active release-tag creation boundary' }
-        @{ Name = 'missing creation bypass'; List = $null; Creation = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","bypass_actors":[],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'; Immutable = $null; Error = 'exact active release-tag creation boundary' }
-        @{ Name = 'immutable bypass'; List = $null; Creation = $null; Immutable = '{"id":102,"name":"release-tags-immutable","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","bypass_actors":[{"actor_id":2646666,"actor_type":"Integration","bypass_mode":"always"}],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"update"},{"type":"deletion"},{"type":"non_fast_forward"}]}'; Error = 'exact active release-tag immutability boundary' }
+        @{ Name = 'creation not bypassable by app'; List = $null; Creation = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"never","bypass_actors":[],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'; Immutable = $null; Error = 'exact active release-tag creation boundary' }
+        @{ Name = 'creation bypass state unreported'; List = $null; Creation = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'; Immutable = $null; Error = 'exact active release-tag creation boundary' }
+        @{ Name = 'extra visible creation bypass actor'; List = $null; Creation = '{"id":101,"name":"release-tags-creation-by-release-app","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"always","bypass_actors":[{"actor_id":2646666,"actor_type":"Integration","bypass_mode":"always"},{"actor_id":1,"actor_type":"User","bypass_mode":"always"}],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"creation"}]}'; Immutable = $null; Error = 'exact active release-tag creation boundary' }
+        @{ Name = 'immutable bypassable by app'; List = $null; Creation = $null; Immutable = '{"id":102,"name":"release-tags-immutable","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"always","bypass_actors":[],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"update"},{"type":"deletion"},{"type":"non_fast_forward"}]}'; Error = 'exact active release-tag immutability boundary' }
+        @{ Name = 'visible immutable bypass actor'; List = $null; Creation = $null; Immutable = '{"id":102,"name":"release-tags-immutable","target":"tag","source_type":"Repository","source":"microsoft/hve-core","enforcement":"active","current_user_can_bypass":"never","bypass_actors":[{"actor_id":1,"actor_type":"User","bypass_mode":"always"}],"conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"update"},{"type":"deletion"},{"type":"non_fast_forward"}]}'; Error = 'exact active release-tag immutability boundary' }
         @{ Name = 'mutable allocation'; List = $null; Creation = $null; Immutable = '{"id":102,"name":"release-tags-immutable","target":"tag","enforcement":"active","conditions":{"ref_name":{"include":["refs/tags/v*","refs/tags/prerelease-v*"],"exclude":[]}},"rules":[{"type":"deletion"},{"type":"non_fast_forward"}]}'; Error = 'exact active release-tag immutability boundary' }
     ) {
         $step = Get-NamedJobStep -Document (Get-WorkflowDocument -Name 'extension-provenance-signer.yml') `

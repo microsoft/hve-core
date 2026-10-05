@@ -45,7 +45,6 @@ jobs:
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
           owner: microsoft
           repositories: hve-core
-          permission-administration: read
           permission-contents: read
 
       - name: Authenticate release principal and governance
@@ -152,6 +151,8 @@ jobs:
             exit 1
           fi
 
+          # Rulesets need only Metadata read; GitHub hides bypass lists from callers without ruleset write access,
+          # so current_user_can_bypass carries the app's own bypass state and any visible list must still be exact.
           RULESET_PAGES="$RUNNER_TEMP/tag-ruleset-pages.json"
           RULESET_LIST="$RUNNER_TEMP/tag-rulesets.json"
           gh api --paginate --slurp "/repos/$REPOSITORY/rulesets?includes_parents=true&targets=tag&per_page=100" \
@@ -181,10 +182,9 @@ jobs:
             and ((.conditions.ref_name.include | sort) == (["refs/tags/prerelease-v*", "refs/tags/v*"] | sort))
             and .conditions.ref_name.exclude == []
             and (([.rules[].type] | sort) == (["creation"] | sort))
-            and (.bypass_actors | type == "array" and length == 1)
-            and .bypass_actors[0].actor_type == "Integration"
-            and .bypass_actors[0].actor_id == 2646666
-            and .bypass_actors[0].bypass_mode == "always"
+            and .current_user_can_bypass == "always"
+            and ((.bypass_actors // []) | type == "array" and all(
+              .actor_type == "Integration" and .actor_id == 2646666 and .bypass_mode == "always"))
           ' "$RUNNER_TEMP/$CREATION_RULESET.json" >/dev/null; then
             echo "::error::$CREATION_RULESET does not provide the exact active release-tag creation boundary"
             exit 1
@@ -196,7 +196,8 @@ jobs:
             and ((.conditions.ref_name.include | sort) == (["refs/tags/prerelease-v*", "refs/tags/v*"] | sort))
             and .conditions.ref_name.exclude == []
             and (([.rules[].type] | sort) == (["deletion", "non_fast_forward", "update"] | sort))
-            and .bypass_actors == []
+            and .current_user_can_bypass == "never"
+            and (.bypass_actors // []) == []
           ' "$RUNNER_TEMP/$IMMUTABLE_RULESET.json" >/dev/null; then
             echo "::error::$IMMUTABLE_RULESET does not provide the exact active release-tag immutability boundary"
             exit 1
