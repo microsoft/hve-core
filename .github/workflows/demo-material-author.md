@@ -17,12 +17,17 @@ on:
         default: false
 
 engine: copilot
+runs-on: ubuntu-24.04
+runs-on-slim: ubuntu-24.04
+runtimes:
+  node:
+    version: "24.21.0"
 timeout-minutes: 45
 max-ai-credits: 2000
 
 jobs:
   detect:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
       contents: read
@@ -93,6 +98,31 @@ jobs:
     needs: [detect]
     if: needs.detect.outputs.levels != ''
 
+  # Hands authored content to Demo Material Render in a separate run, which
+  # waits for this run to finish and revalidates it before rendering.
+  dispatch-render:
+    needs: [agent]
+    if: needs.agent.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write # start Demo Material Render on the default branch
+    steps:
+      - name: Dispatch the render for this run
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            if (context.ref !== `refs/heads/${repository.default_branch}`) {
+              core.notice(`Rendering follows only ${repository.default_branch} runs, not ${context.ref}`);
+              return;
+            }
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: "demo-material-render.yml",
+              ref: repository.default_branch,
+              inputs: { "author-run-id": String(context.runId) },
+            });
+
 permissions:
   contents: read
 
@@ -100,6 +130,8 @@ tools:
   edit:
 
 safe-outputs:
+  threat-detection:
+    runs-on: ubuntu-24.04
   noop:
     max: 1
 

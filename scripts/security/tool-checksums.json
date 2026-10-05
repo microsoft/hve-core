@@ -111,13 +111,13 @@
     {
       "name": "gh-aw",
       "repo": "github/gh-aw",
-      "version": "0.86.2",
+      "version": "0.89.21",
       "verification": "published-checksums",
       "envPrefix": "GH_AW",
-      "sha256": "b8fd100d1d56a77b842ad28375ff361215a5aa1277db6b9a05d70054cde7260e",
+      "sha256": "1c74ff5fc28b1891d32b67f4348a9b7f750946b6d4a721e909187a848868016b",
       "sha256ByArch": {
-        "linux_amd64": "b8fd100d1d56a77b842ad28375ff361215a5aa1277db6b9a05d70054cde7260e",
-        "linux_arm64": "1f70570ef24248d37a3e6833e77af5b430f46ebb98c2c522f3e0dc1f93bafda6"
+        "linux_amd64": "1c74ff5fc28b1891d32b67f4348a9b7f750946b6d4a721e909187a848868016b",
+        "linux_arm64": "4e521be28bd45030e8165c8654ee69ea1d6830b4e0fdefdd020ab1a9b1dd19ae"
       },
       "assetTemplateByArch": {
         "linux_amd64": "https://github.com/github/gh-aw/releases/download/v{version}/linux-amd64",
@@ -190,12 +190,12 @@
     {
       "name": "gh-aw-firewall",
       "repo": "github/gh-aw-firewall",
-      "version": "0.27.44",
+      "version": "0.28.23",
       "verification": "oci-digest",
       "images": {
-        "agent": "sha256:0d727725c737b58c7bdf51f640cffb928385ec46517e0917c7f1a02f1bada8b4",
-        "api-proxy": "sha256:b50fbadba138f6e9aba94aca09711335c489bb3b15861220cb66f6092e042dc7",
-        "squid": "sha256:83e48bbe12c634be8c228a576832fe45f66c529ac3659db92bddbcf2eeb6d627"
+        "agent": "sha256:2c78aaba1c108e130e2d6d01e4f2cca334ea04c53e6f258913ac34173fe7e3b2",
+        "api-proxy": "sha256:c15c3d1208df10c5b588a3657be53742aa982ae0909d1eb1812525268794ca64",
+        "squid": "sha256:02ffc56dd40158223064ef03a78c2d9717473c93723b4e403d455ea6f0b09ae0"
       },
       "notes": "Agent workflow firewall (AWF) images that the gh-aw compiler pins by digest in every *.lock.yml."
     }

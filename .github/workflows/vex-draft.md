@@ -2,12 +2,11 @@
 description: "Drafts OpenVEX status updates as a pull request after the VEX Detection workflow finds untriaged vulnerabilities"
 tracker-id: vex-draft
 on:
-  workflow_run:
-    workflows: ["VEX Detection"]
-    types: [completed]
-    branches: [main]
+  # VEX Detection's dispatch-draft job starts this run on the default branch
+  # after a successful scan there; maintainers can also start it manually.
   workflow_dispatch:
-  skip-bots: ["dependabot[bot]", "github-actions[bot]"]
+  bots: ["github-actions[bot]"]
+  skip-bots: ["dependabot[bot]"]
   reaction: eyes
   # Zero-AIC Gate A: skip while a VEX draft PR is already open. Scoped to is:pr so
   # guardrail failure issues (which also carry this tracker-id marker) can never
@@ -62,13 +61,16 @@ on:
         printf '%s' "$issue_body" | python3 "$gate_script" "$vex_doc"
 
 engine: copilot
+runs-on: ubuntu-24.04
+runs-on-slim: ubuntu-24.04
+runtimes:
+  node:
+    version: "24.21.0"
 timeout-minutes: 20
 
-# Deterministic gate: skip the agent entirely when the upstream VEX Detection
-# run did not succeed. workflow_dispatch carries no workflow_run payload, so it
-# always passes this guard.
+# Deterministic gate: skip the agent entirely when Gate B finds nothing to draft.
 if: >-
-  (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') && needs.pre_activation.outputs.vex_gate_result == 'success'
+  needs.pre_activation.outputs.vex_gate_result == 'success'
 
 imports:
   - ../agents/security/sssc-reviewer.agent.md
@@ -104,6 +106,8 @@ network:
     - services.nvd.nist.gov
 
 safe-outputs:
+  threat-detection:
+    runs-on: ubuntu-24.04
   concurrency-group: "vex-draft-${{ github.repository }}"
   report-failure-as-issue: ["!max_ai_credits_exceeded", "!daily_ai_credits_exceeded", "!ai_credits_rate_limit_error"]
   # Roll failure reports into a single parent "Failed runs" issue instead of
@@ -113,8 +117,7 @@ safe-outputs:
     max: 1
     labels: [security, automated, needs-triage]
     # Pin the PR target (and the safe_outputs checkout ref) to the trusted
-    # default branch. This workflow runs under the privileged workflow_run
-    # trigger, so the checkout ref must never derive from agent output
+    # default branch. The checkout ref must never derive from agent output
     # (Scorecard Dangerous-Workflow / untrusted code checkout).
     base-branch: main
   noop:
@@ -133,7 +136,6 @@ commit author is the accountable author of record, never the agent.
 
 **You MUST call `noop` and stop immediately if any of these conditions are true:**
 
-* The event is `workflow_run` and `github.event.workflow_run.conclusion` is not `success`. Call `noop` with message "Skipping: upstream VEX Detection run did not succeed."
 * No open issue exists with the title `VEX detection: untriaged vulnerabilities found` and the `automated` label. Call `noop` with message "Skipping: no open VEX detection issue with untriaged findings."
 * The detection issue lists no vulnerabilities in its findings table. Call `noop` with message "Skipping: detection issue has no untriaged findings."
 

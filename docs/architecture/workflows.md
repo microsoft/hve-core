@@ -94,7 +94,7 @@ flowchart TD
 | `label-sync.yml`                     | Push to main, manual                                                       | Repository label synchronization                                                                     |
 | `workflow-permissions-scan.yml`      | Schedule, manual                                                           | GitHub Actions permissions audit                                                                     |
 | `weekly-gh-code-scanning.yml`        | Monday 3 AM UTC, manual                                                    | Weekly code-scanning issue filing, including dismissed-still-detected alerts and exception follow-up |
-| `vex-detect.yml`                     | Schedule, release, manual                                                  | Dependency vulnerability scan and VEX triage issue creation                                          |
+| `vex-detect.yml`                     | Schedule, release, manual                                                  | Dependency vulnerability scan and VEX triage issue; starts VEX Draft after default-branch scans      |
 
 GitHub Agentic Workflow markdown files (`issue-triage.md`, `issue-implement.md`, `pr-review.md`, `dependency-pr-review.md`, `doc-update-check.md`, and `vex-draft.md`) compile to `*.lock.yml` workflows and are documented in [Agentic Workflows](agentic-workflows).
 

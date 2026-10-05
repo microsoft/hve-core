@@ -175,6 +175,20 @@ BeforeAll {
         return $jobMatch.Value
     }
 
+    function Get-SafeOutputsConfig {
+        param([Parameter(Mandatory)] [string]$LockSource)
+
+        # The compiler embeds the safe-outputs config as a YAML double-quoted JSON string.
+        $configMatches = [regex]::Matches(
+            $LockSource,
+            '(?m)^\s+GH_AW_SAFE_OUTPUTS_CONFIG: "(?<json>(?:[^"\\]|\\.)*)"\s*$'
+        )
+        if ($configMatches.Count -eq 0) { throw 'GH_AW_SAFE_OUTPUTS_CONFIG was not found' }
+        $decoded = @($configMatches | ForEach-Object { $_.Groups['json'].Value -replace '\\(.)', '$1' } | Select-Object -Unique)
+        if ($decoded.Count -ne 1) { throw 'GH_AW_SAFE_OUTPUTS_CONFIG differs between jobs' }
+        return $decoded[0] | ConvertFrom-Json -AsHashtable
+    }
+
     function Test-OptionalPublicationEnabled {
         param([AllowEmptyString()] [string]$Value)
 
@@ -1006,7 +1020,10 @@ Describe 'Compiled backlog grooming workflow' -Tag 'Unit' {
 
     It 'allows only the artifact-bound result job and noop from agent output' {
         $script:Lock | Should -Match 'publish_backlog_grooming_result'
-        $script:Lock | Should -Match '"noop":\{"max":1,"report-as-issue":"false"\}'
+        $config = Get-SafeOutputsConfig -LockSource $script:Lock
+        [string[]]@($config.Keys | Sort-Object) | Should -Be @('noop', 'publish-backlog-grooming-result')
+        $config['noop']['max'] | Should -Be 1
+        $config['noop']['report-as-issue'] | Should -BeExactly 'false'
         $script:Lock | Should -Match 'Upload immutable shard result'
         $script:Lock | Should -Match 'Invoke-BacklogGroomResultCollector\.ps1'
         $script:Lock | Should -Not -Match '"add_comment"'
@@ -1083,7 +1100,8 @@ Describe 'Backlog grooming sharded orchestration contracts' -Tag 'Unit' {
         $shardWidth.Success | Should -BeTrue
         $callLimit.Success | Should -BeTrue
         $callLimit.Groups['value'].Value | Should -Be $shardWidth.Groups['value'].Value
-        $script:Lock | Should -Match '(?s)"publish-backlog-grooming-result":\{.*?"max":5'
+        (Get-SafeOutputsConfig -LockSource $script:Lock)['publish-backlog-grooming-result']['max'] |
+            Should -Be ([int]$shardWidth.Groups['value'].Value)
     }
 
     It 'defines typed worker identity, manifest envelopes, and shard-specific generated concurrency' {

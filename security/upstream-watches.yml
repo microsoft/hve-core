@@ -200,3 +200,12 @@ watches:
       The parser now catches this (with: passes an input the action does not declare); retire the workflow-check/unknown-action-input custom check and its probe
     probe: unknown-action-input
     baseline: fail
+  # gh-aw compiles every agentic workflow lock file; newer releases may fix the
+  # generated findings recorded as generated-code exceptions.
+  - id: gh-aw-release-newer
+    kind: release-newer
+    issue: 3112
+    action: >-
+      Upgrade gh-aw following "Upgrading gh-aw" in docs/architecture/agentic-workflows.md, then retire generated-code exceptions the new compiler output no longer needs
+    repo: github/gh-aw
+    pinned: 0.89.21

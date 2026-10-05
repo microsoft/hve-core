@@ -445,7 +445,7 @@ planned_sweep_aic = required_waves * planned_aic_per_wave
 
 The workflow rejects capacity or AIC values that exceed safe integer
 arithmetic. `max-parallel: 2` bounds concurrent model workers. gh-aw is pinned
-at `v0.86.2`; its worker uses the Copilot engine, a 20-minute timeout, and at
+at `v0.89.21`; its worker uses the Copilot engine, a 20-minute timeout, and at
 most 1,000 AIC. The 2,000 planned AIC per nonempty wave is the sum of two
 per-worker ceilings. gh-aw does not provide one shared runtime AIC pool across
 the matrix. Planned AIC is a configuration ceiling, not measured use or a

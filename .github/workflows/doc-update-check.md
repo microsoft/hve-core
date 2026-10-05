@@ -16,6 +16,11 @@ on:
   skip-bots: ["dependabot[bot]", "github-actions[bot]"]
 
 engine: copilot
+runs-on: ubuntu-24.04
+runs-on-slim: ubuntu-24.04
+runtimes:
+  node:
+    version: "24.21.0"
 timeout-minutes: 15
 
 imports:
@@ -86,6 +91,8 @@ permissions:
   issues: read
 
 safe-outputs:
+  threat-detection:
+    runs-on: ubuntu-24.04
   create-issue:
     max: 3
     labels: [documentation, needs-triage]

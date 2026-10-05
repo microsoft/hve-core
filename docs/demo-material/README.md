@@ -2,7 +2,7 @@
 title: Demo Material
 description: Levelled HVE Core training decks, narrated videos, and browser slides from L100 to L400, rebuilt weekly when their source documents change
 author: Microsoft
-ms.date: 2026-09-24
+ms.date: 2026-10-04
 ms.topic: overview
 keywords:
   - demo material
@@ -66,9 +66,10 @@ source documents changed:
    agent writes new slide content only for the levels that changed. When
    nothing changed, the agent does not run.
 2. The [Demo Material Render](https://github.com/microsoft/hve-core/blob/main/.github/workflows/demo-material-render.yml)
-   workflow builds each authored level into a deck, narration, a video, and
-   browser slides from the same slide content, then scores the checks a machine
-   can verify: narration paired to every slide, the video landing inside the
+   workflow starts when an author run finishes authoring; it waits for that run to
+   complete and checks it before building. It builds each authored level into a
+   deck, narration, a video, and browser slides from the same slide content, then
+   scores the checks a machine can verify: narration paired to every slide, the video landing inside the
    level's length, readable live captures, the pinned house style, the
    accessibility items above, and browser slides that open offline with no
    slide overflowing. A level that fails any check keeps its previous files.

@@ -2484,6 +2484,45 @@ Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
         [string]$vex['jobs']['vex-detect']['if'] | Should -Match "!github\.event\.release\.prerelease && startsWith\(github\.event\.release\.tag_name, 'v'\)"
     }
 
+    It 'Hands successful default-branch VEX scans to VEX Draft by dispatch' {
+        $vex = Get-WorkflowDocument -Name 'vex-detect.yml'
+        $dispatch = $vex['jobs']['dispatch-draft']
+        @($dispatch['needs']) | Should -Be @('vex-detect')
+        [string]$dispatch['if'] | Should -Match "needs\.vex-detect\.result == 'success'"
+        [string[]]@($dispatch['permissions'].Keys) | Should -Be @('actions')
+        [string]$dispatch['permissions']['actions'] | Should -BeExactly 'write'
+        $script = [string]@($dispatch['steps'])[0]['with']['script']
+        $script | Should -Match 'context\.ref !== `refs/heads/\$\{repository\.default_branch\}`'
+        $script | Should -Match 'workflow_id: "vex-draft\.lock\.yml"'
+        $script | Should -Match 'ref: repository\.default_branch'
+
+        $draft = Get-WorkflowDocument -Name 'vex-draft.lock.yml'
+        $draft['on'].Contains('workflow_run') | Should -BeFalse
+        $draft['on'].Contains('workflow_dispatch') | Should -BeTrue
+        $source = Get-Content -LiteralPath (Join-Path $script:WorkflowDirectory 'vex-draft.md') -Raw
+        $source | Should -Match '(?m)^  bots: \["github-actions\[bot\]"\]\r?$'
+        $source | Should -Match '(?m)^  skip-bots: \["dependabot\[bot\]"\]\r?$'
+    }
+
+    It 'Hands authored demo content to the render by dispatch' {
+        $render = Get-WorkflowDocument -Name 'demo-material-render.yml'
+        $render['on'].Contains('workflow_run') | Should -BeFalse
+        $render['on']['workflow_dispatch']['inputs'].Contains('author-run-id') | Should -BeTrue
+        $resolve = Get-NamedJobStep -Document $render -JobName 'resolve' -StepName 'Resolve author run and render mode'
+        [string]$resolve['with']['script'] | Should -Match 'authorRun = await waitForRun\(Number\(process\.env\.DISPATCH_AUTHOR_RUN_ID\)\)'
+        [string]$resolve['with']['script'] | Should -Match 'authorRun\.head_branch !== defaultBranch'
+
+        $author = Get-WorkflowDocument -Name 'demo-material-author.lock.yml'
+        $dispatch = $author['jobs']['dispatch-render']
+        @($dispatch['needs']) | Should -Contain 'agent'
+        [string]$dispatch['if'] | Should -Match "needs\.agent\.result == 'success'"
+        [string[]]@($dispatch['permissions'].Keys) | Should -Be @('actions')
+        [string]$dispatch['permissions']['actions'] | Should -BeExactly 'write'
+        $script = [string]@($dispatch['steps'] | Where-Object { $_['name'] -eq 'Dispatch the render for this run' })[0]['with']['script']
+        $script | Should -Match 'workflow_id: "demo-material-render\.yml"'
+        $script | Should -Match '"author-run-id": String\(context\.runId\)'
+    }
+
     It 'Uses the verified create-github-app-token version comment consistently' {
         $pinMatches = Get-ChildItem -LiteralPath $script:WorkflowDirectory -Filter '*.yml' |
             Select-String -SimpleMatch 'actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1'

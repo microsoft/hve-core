@@ -8,13 +8,8 @@
 name: Demo Material Render
 
 on:
-  workflow_run:
-    workflows:
-      - Demo Material Author
-    branches:
-      - main
-    types:
-      - completed
+  # Started by the author's dispatch-render job with its run ID, weekly to
+  # refresh the bundle, or manually. A named author run is revalidated here.
   schedule:
     - cron: '47 3 * * 1'
   workflow_dispatch:
@@ -108,17 +103,23 @@ jobs:
 
             const previousCreatedAt = process.env.PREVIOUS_CREATED_AT;
 
+            // The author dispatches this run before its own run completes.
+            const waitForRun = async (runId) => {
+              const deadline = Date.now() + 30 * 60 * 1000;
+              for (;;) {
+                const { data: run } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: runId });
+                if (run.status === "completed") return run;
+                if (Date.now() > deadline) throw new Error(`Run ${runId} did not complete within 30 minutes`);
+                await new Promise((resolve) => setTimeout(resolve, 15000));
+              }
+            };
+
             let authorRun = null;
-            if (context.eventName === "workflow_run") {
-              authorRun = context.payload.workflow_run;
-            } else if (context.eventName === "workflow_dispatch" && process.env.DISPATCH_AUTHOR_RUN_ID) {
+            if (context.eventName === "workflow_dispatch" && process.env.DISPATCH_AUTHOR_RUN_ID) {
               if (!/^[0-9]+$/.test(process.env.DISPATCH_AUTHOR_RUN_ID)) {
                 throw new Error("author-run-id must be a numeric run ID");
               }
-              ({ data: authorRun } = await github.rest.actions.getWorkflowRun({
-                ...context.repo,
-                run_id: Number(process.env.DISPATCH_AUTHOR_RUN_ID),
-              }));
+              authorRun = await waitForRun(Number(process.env.DISPATCH_AUTHOR_RUN_ID));
             }
 
             if (authorRun) {

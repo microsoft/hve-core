@@ -243,3 +243,28 @@ jobs:
             gh issue close "${existing}" \
               --repo "${REPO_SLUG}"
           fi
+
+  # Hands a successful default-branch scan to VEX Draft in a separate run.
+  # Release-tag scans only report; drafting follows the default branch.
+  dispatch-draft:
+    name: Start VEX drafting
+    needs: vex-detect
+    if: ${{ needs.vex-detect.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write # start VEX Draft on the default branch
+    steps:
+      - name: Dispatch VEX drafting
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            if (context.ref !== `refs/heads/${repository.default_branch}`) {
+              core.notice(`Drafting follows only ${repository.default_branch} scans, not ${context.ref}`);
+              return;
+            }
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: "vex-draft.lock.yml",
+              ref: repository.default_branch,
+            });

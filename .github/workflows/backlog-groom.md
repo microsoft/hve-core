@@ -98,6 +98,11 @@ jobs:
             core.setOutput("trusted_caller", String(trusted));
 
 engine: copilot
+runs-on: ubuntu-24.04
+runs-on-slim: ubuntu-24.04
+runtimes:
+  node:
+    version: "24.21.0"
 timeout-minutes: ${{ inputs.worker_timeout_minutes || 20 }}
 max-ai-credits: 1000
 
@@ -139,7 +144,7 @@ safe-outputs:
     publish-backlog-grooming-result:
       description: "Publish one candidate-addressed semantic backlog grooming assessment"
       max: 5
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-24.04
       permissions:
         contents: read
       output: "Validated shard result uploaded as an immutable run-attempt artifact"

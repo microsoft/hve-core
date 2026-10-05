@@ -2086,7 +2086,7 @@ SC-9 spans three workflows: detection finds untriaged vulnerabilities, drafting 
 | **Detection Trigger**     | Tuesdays 08:00 UTC, after a successful Stable Release Pipeline run, or manual dispatch |
 | **Detection Workflow**    | `vex-detect.yml` runs OSV-Scanner and files or updates a single triage issue           |
 | **Detection Permissions** | `contents: read`, `issues: write`                                                      |
-| **Drafting Trigger**      | `workflow_run` from VEX Detection, plus manual dispatch                                |
+| **Drafting Trigger**      | Dispatch from VEX Detection after a successful default-branch scan, or manual dispatch |
 | **Drafting Workflow**     | `vex-draft.md` invokes the SSSC Reviewer agent and opens one pull request              |
 | **Drafting Permissions**  | `contents: read`, `issues: read`                                                       |
 | **Release Attestation**   | `vex-attest` job in `release-stable.yml`, via the reusable `vex-attest.yml`            |

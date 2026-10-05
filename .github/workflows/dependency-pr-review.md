@@ -13,6 +13,11 @@ on:
   reaction: eyes
 
 engine: copilot
+runs-on: ubuntu-24.04
+runs-on-slim: ubuntu-24.04
+runtimes:
+  node:
+    version: "24.21.0"
 timeout-minutes: 15
 
 imports:
@@ -35,6 +40,8 @@ permissions:
   pull-requests: read
 
 safe-outputs:
+  threat-detection:
+    runs-on: ubuntu-24.04
   create-pull-request-review-comment:
     max: 5
   submit-pull-request-review:

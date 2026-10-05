@@ -9,6 +9,11 @@ on:
   reaction: eyes
 
 engine: copilot
+runs-on: ubuntu-24.04
+runs-on-slim: ubuntu-24.04
+runtimes:
+  node:
+    version: "24.21.0"
 timeout-minutes: 10
 
 # The opened and template-applied needs-triage labeled events both fire within a
@@ -41,6 +46,8 @@ permissions:
   issues: read
 
 safe-outputs:
+  threat-detection:
+    runs-on: ubuntu-24.04
   # An unreadable issue is an expected author-trust condition, not a workflow
   # fault. Genuine faults still report through the remaining categories.
   report-failure-as-issue:
