@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-10-04
+ms.date: 2026-10-05
 ms.topic: reference
 keywords:
   - powershell
@@ -544,7 +544,8 @@ devcontainer, Copilot setup steps, and workflows cannot drift apart.
   runtime features to match (`runtime-invalid`, `runtime-mismatch`,
   `runtime-unpinned`)
 * Writes SARIF (tool `hve-tool-version-consistency`) with `-SarifPath` and exits
-  1 on any finding; `tool-version-consistency-scan.yml` runs it in PR validation
+  1 on any finding; `tool-version-consistency-scan.yml` runs it in PR validation and
+  gates the SARIF with `Test-CodeQLSarifThreshold.ps1 -Threshold All`
 
 #### Usage
 
@@ -584,7 +585,8 @@ impostor commit from a fork looks.
 * Calls the compare API only for untagged commits; a free-text comment is
   allowed only for such a commit in the default branch history
 * Writes SARIF (tool `hve-action-pin-provenance`) with `-SarifPath`;
-  `action-pin-provenance-scan.yml` runs it in PR validation
+  `action-pin-provenance-scan.yml` runs it in PR validation and gates the SARIF with
+  `Test-CodeQLSarifThreshold.ps1 -Threshold All`
 
 #### Usage
 
@@ -794,9 +796,9 @@ Security scripts integrate with these workflows:
 
 | Workflow                            | Script(s)                                                            | Trigger                                                          |
 |-------------------------------------|----------------------------------------------------------------------|------------------------------------------------------------------|
-| `dependency-pinning-scan.yml`       | `Test-DependencyPinning.ps1`                                         | PR, schedule                                                     |
-| `tool-version-consistency-scan.yml` | `Test-ToolVersionConsistency.ps1`                                    | Called by `pr-validation.yml`                                    |
-| `action-pin-provenance-scan.yml`    | `Test-ActionPinProvenance.ps1`                                       | Called by `pr-validation.yml`                                    |
+| `dependency-pinning-scan.yml`       | `Test-DependencyPinning.ps1`, then the threshold gate                | PR, schedule                                                     |
+| `tool-version-consistency-scan.yml` | `Test-ToolVersionConsistency.ps1`, then the threshold gate           | Called by `pr-validation.yml`                                    |
+| `action-pin-provenance-scan.yml`    | `Test-ActionPinProvenance.ps1`, then the threshold gate              | Called by `pr-validation.yml`                                    |
 | `zizmor-scan.yml`                   | zizmor, then `Test-CodeQLSarifThreshold.ps1 -Threshold All`          | Called by `pr-validation.yml`; also on push to `main` and weekly |
 | `gh-code-scanning.yml`              | `Get-CodeScanningExceptionStatus.ps1`, `Get-UpstreamWatchStatus.ps1` | Weekly                                                           |
 | `sha-staleness-check.yml`           | `Test-SHAStaleness.ps1`                                              | Schedule                                                         |

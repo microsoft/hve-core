@@ -730,13 +730,13 @@ Behavior: Blocks PRs introducing vulnerable dependencies (moderate+ severity)
 
 #### `dependency-pinning-scan.yml`
 
-Purpose: Validates dependency pinning across every rule type in `Test-DependencyPinning.ps1`
+Purpose: Validates dependency pinning across every rule type in `Test-DependencyPinning.ps1`. The job always writes SARIF and, unless `soft-fail` is set, fails on any unpinned dependency that no tracked exception in `security/code-scanning-exceptions.yml` excuses.
 
 Inputs:
 
-* `threshold` (number, default: 100): Minimum compliance percentage
+* `threshold` (number, default: 100): Compliance percentage reported in `is-compliant`; it does not gate
 * `dependency-types` (string, default: all nine types): Types to validate (`github-actions,npm,pip,workflow-npm-commands,shell-downloads,setup-action-versions,python-tool-runs,container-images,install-hints`)
-* `soft-fail` (boolean, default: false): Continue on failures
+* `soft-fail` (boolean, default: false): Skip the gate and only report
 * `upload-sarif` (boolean, default: false): Upload to Security tab
 * `upload-artifact` (boolean, default: true): Upload JSON results
 

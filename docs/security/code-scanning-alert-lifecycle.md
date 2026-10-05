@@ -2,7 +2,7 @@
 title: Code-Scanning Alert Lifecycle
 description: How HVE Core detects, blocks, tracks, and resolves code-scanning alerts without ever dismissing them
 author: Microsoft
-ms.date: 2026-10-03
+ms.date: 2026-10-05
 ms.topic: concept
 keywords:
   - security
@@ -67,7 +67,7 @@ After each CodeQL analysis uploads its results, `scripts/security/Test-CodeQLSar
 
 Note-level quality results pass the gate but still appear as alerts, and you still resolve them. Inline SARIF suppressions do not exempt a result, and a missing or unreadable SARIF file fails the job.
 
-The gate accepts SARIF from any code-scanning tool and attributes each result to its tool name. Scanners gated at zero findings run it with `-Threshold All`, which fails every result regardless of level or severity.
+The gate accepts SARIF from any code-scanning tool and attributes each result to its tool name. Scanners gated at zero findings run it with `-Threshold All`, which fails every result regardless of level or severity: zizmor, the workflow validator, the tool version and action pin provenance checks, and dependency pinning. Each scanner writes its SARIF first, so a tracked exception applies to its results the same way.
 
 A newly adopted scanner's gate becomes blocking only once each of its findings is fixed or registered as a tracked exception with its upstream report. Until then its findings still upload and appear as alerts; nothing is suppressed while the gate waits.
 

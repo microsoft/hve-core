@@ -297,9 +297,22 @@ Describe 'SARIF output' -Tag 'Unit' {
 }
 
 Describe 'Repository' -Tag 'Unit' {
-    It 'has no tool version drift' {
+    # Mirrors tool-version-consistency-scan.yml: every finding fails unless a tracked
+    # exception in security/code-scanning-exceptions.yml excuses it.
+    It 'has no tool version drift that a tracked exception does not excuse' {
         $root = Join-Path $PSScriptRoot '../../..'
-        $result = Invoke-ToolVersionConsistency -RepoRoot $root
-        ($result.Findings | ForEach-Object { "$($_.File):$($_.Line) $($_.Message)" }) | Should -BeNullOrEmpty
+        $sarif = Join-Path $TestDrive 'tool-version-consistency.sarif'
+        $null = Invoke-ToolVersionConsistency -RepoRoot $root -SarifPath $sarif
+
+        . (Join-Path $PSScriptRoot '../../security/Test-CodeQLSarifThreshold.ps1')
+        $gate = Invoke-CodeQLSarifGate -SarifPath $sarif -Threshold All `
+            -ExceptionsPath (Join-Path $root 'security/code-scanning-exceptions.yml') `
+            -SummaryPath (Join-Path $TestDrive 'summary.md')
+
+        @(
+            @($gate.Failing | ForEach-Object { "$($_.Path):$($_.Line) $($_.RuleId)" })
+            @($gate.ExceptionErrors)
+            @($gate.InputErrors)
+        ) | Should -BeNullOrEmpty
     }
 }
