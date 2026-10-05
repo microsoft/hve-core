@@ -85,6 +85,28 @@ main() {
   sudo tar -xJf /tmp/shellcheck.tar.xz -C /usr/local/bin --strip-components=1 "shellcheck-v${SHELLCHECK_VERSION}/shellcheck"
   rm /tmp/shellcheck.tar.xz
 
+  echo "Installing zizmor..."
+  # GitHub Actions static analysis at the version PR validation gates on.
+  ZIZMOR_VERSION="1.30.1"
+  if [[ "${ARCH}" == "x86_64" ]]; then
+    ZIZMOR_SHA256="e65324f4430c2717591937edcec90ccbefaf14c174f8ec9415e03ca875b46e1a"
+  elif [[ "${ARCH}" == "aarch64" ]]; then
+    ZIZMOR_SHA256="7ff1dce33bdd18fd2a4affe63bdd47efcccca97b2cec1c1863ec26e9e2647540"
+  else
+    echo "ERROR: Unsupported architecture for zizmor: ${ARCH}" >&2
+    exit 1
+  fi
+  curl -sSfL "${GITHUB_RELEASES_URL}/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/zizmor-${ARCH}-unknown-linux-gnu.tar.gz" -o /tmp/zizmor.tar.gz
+
+  echo "Checking zizmor tarball integrity..."
+  if ! echo "${ZIZMOR_SHA256}  /tmp/zizmor.tar.gz" | sha256sum -c --quiet -; then
+    echo "ERROR: SHA256 checksum verification failed for zizmor tarball" >&2
+    rm /tmp/zizmor.tar.gz
+    exit 1
+  fi
+  sudo tar -xzf /tmp/zizmor.tar.gz -C /usr/local/bin zizmor
+  rm /tmp/zizmor.tar.gz
+
   echo "Installing PowerShell modules..."
   if [[ -n "${PSGALLERY_SOURCE}" ]]; then
     # shellcheck disable=SC2016  # PowerShell expands these environment variables.

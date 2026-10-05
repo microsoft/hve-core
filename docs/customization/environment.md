@@ -30,6 +30,7 @@ The DevContainer ships with these tools:
 * GitHub Copilot CLI (`copilot`)
 * Azure CLI
 * shellcheck 0.11.0 for bash and workflow `run:` script validation
+* zizmor 1.30.1 for GitHub Actions security auditing
 * cosign for artifact signing and verification
 * gitleaks for secret scanning
 
@@ -264,6 +265,7 @@ The coding agent environment includes:
 * Python 3.12.15 (from `.python-version`)
 * PowerShell 7.4 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
 * shellcheck 0.11.0, pinned and checksum-verified from `scripts/security/tool-checksums.json`
+* zizmor 1.30.1, pinned and checksum-verified from `scripts/security/tool-checksums.json`
 * cosign for artifact signing and verification
 * osv-scanner for dependency vulnerability scanning
 
@@ -304,6 +306,7 @@ share most tools but differ intentionally in a few areas.
 | PSScriptAnalyzer 1.25.0 | Yes          | Yes          |
 | Pester 5.7.1            | Yes          | Yes          |
 | shellcheck              | Yes          | Yes          |
+| zizmor                  | Yes          | Yes          |
 | cosign                  | Yes          | Yes          |
 | osv-scanner             | Yes          | Yes          |
 

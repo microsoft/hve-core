@@ -792,17 +792,18 @@ Node.js and Python versions are not in the manifest. They live in the root
 
 Security scripts integrate with these workflows:
 
-| Workflow                            | Script(s)                                                            | Trigger                       |
-|-------------------------------------|----------------------------------------------------------------------|-------------------------------|
-| `dependency-pinning-scan.yml`       | `Test-DependencyPinning.ps1`                                         | PR, schedule                  |
-| `tool-version-consistency-scan.yml` | `Test-ToolVersionConsistency.ps1`                                    | Called by `pr-validation.yml` |
-| `action-pin-provenance-scan.yml`    | `Test-ActionPinProvenance.ps1`                                       | Called by `pr-validation.yml` |
-| `gh-code-scanning.yml`              | `Get-CodeScanningExceptionStatus.ps1`, `Get-UpstreamWatchStatus.ps1` | Weekly                        |
-| `sha-staleness-check.yml`           | `Test-SHAStaleness.ps1`                                              | Schedule                      |
-| `pr-validation.yml`                 | `Test-DependencyPinning.ps1`                                         | Pull request                  |
-| `pip-audit.yml`                     | `Invoke-PipAudit.ps1`                                                | PR, schedule                  |
-| `workflow-permissions-scan.yml`     | `Test-WorkflowPermissions.ps1`                                       | PR, schedule                  |
-| `dangerous-workflow-scan.yml`       | `Test-DangerousWorkflow.ps1`                                         | Called by `pr-validation.yml` |
+| Workflow                            | Script(s)                                                            | Trigger                                                          |
+|-------------------------------------|----------------------------------------------------------------------|------------------------------------------------------------------|
+| `dependency-pinning-scan.yml`       | `Test-DependencyPinning.ps1`                                         | PR, schedule                                                     |
+| `tool-version-consistency-scan.yml` | `Test-ToolVersionConsistency.ps1`                                    | Called by `pr-validation.yml`                                    |
+| `action-pin-provenance-scan.yml`    | `Test-ActionPinProvenance.ps1`                                       | Called by `pr-validation.yml`                                    |
+| `zizmor-scan.yml`                   | zizmor, then `Test-CodeQLSarifThreshold.ps1 -Threshold All`          | Called by `pr-validation.yml`; also on push to `main` and weekly |
+| `gh-code-scanning.yml`              | `Get-CodeScanningExceptionStatus.ps1`, `Get-UpstreamWatchStatus.ps1` | Weekly                                                           |
+| `sha-staleness-check.yml`           | `Test-SHAStaleness.ps1`                                              | Schedule                                                         |
+| `pr-validation.yml`                 | `Test-DependencyPinning.ps1`                                         | Pull request                                                     |
+| `pip-audit.yml`                     | `Invoke-PipAudit.ps1`                                                | PR, schedule                                                     |
+| `workflow-permissions-scan.yml`     | `Test-WorkflowPermissions.ps1`                                       | PR, schedule                                                     |
+| `dangerous-workflow-scan.yml`       | `Test-DangerousWorkflow.ps1`                                         | Called by `pr-validation.yml`                                    |
 
 `dangerous-workflow-scan.yml` is a reusable `workflow_call` workflow rather than a
 directly triggered one. It runs `Test-DangerousWorkflow.ps1` as the blocking gate and

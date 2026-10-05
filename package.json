@@ -25,6 +25,7 @@
     "lint:version-consistency": "pwsh -NoProfile -File ./scripts/security/Test-ActionVersionConsistency.ps1 -FailOnMismatch -Format Json -OutputPath logs/action-version-consistency-results.json",
     "lint:tool-version-consistency": "pwsh -NoProfile -File ./scripts/security/Test-ToolVersionConsistency.ps1 -SarifPath logs/tool-version-consistency.sarif",
     "lint:workflows": "node scripts/linting/workflow-validator/validate-workflows.mjs --sarif logs/workflow-validation.sarif",
+    "lint:zizmor": "zizmor --persona pedantic --no-progress .",
     "lint:action-pin-provenance": "pwsh -NoProfile -File ./scripts/security/Test-ActionPinProvenance.ps1 -SarifPath logs/action-pin-provenance.sarif",
     "lint:permissions": "pwsh -NoProfile -File ./scripts/security/Test-WorkflowPermissions.ps1 -FailOnViolation",
     "lint:workflow-runner": "pwsh -NoProfile -File ./scripts/security/Test-WorkflowRunner.ps1 -FailOnViolation",

@@ -82,6 +82,7 @@ endpoints and credentials out of repository files.
 * Markdown: markdownlint, markdown-table-formatter
 * Spelling: Code Spell Checker (VS Code extension)
 * Shell: shellcheck 0.11.0, pinned and checksum-verified from `scripts/security/tool-checksums.json`
+* Workflows: zizmor 1.30.1, pinned and checksum-verified from `scripts/security/tool-checksums.json`
 
 ### Security
 

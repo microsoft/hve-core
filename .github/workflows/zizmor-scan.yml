@@ -1,0 +1,83 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+name: zizmor Scan
+
+# Audits every workflow, composite action, and dependabot.yml with the
+# manifest-pinned zizmor at the pedantic persona. PR validation calls this; the
+# push and schedule triggers keep code-scanning alerts current on main.
+on:
+  workflow_call:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - '.github/dependabot.yml'
+      - 'security/code-scanning-exceptions.yml'
+      - 'scripts/security/tool-checksums.json'
+  schedule:
+    - cron: '30 4 * * 1' # Mondays at 04:30 UTC, so new online-audit advisories surface weekly
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zizmor-scan-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    name: Audit Workflows with zizmor
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write # upload SARIF to code scanning
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install pinned zizmor
+        uses: $/.github/actions/setup-zizmor
+
+      # The workflow validator maps this probe's gap (attacker-controlled context
+      # in run:) to zizmor; fail if zizmor stops reporting it.
+      - name: Verify zizmor covers the untrusted-input probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          zizmor --offline --format json --no-progress \
+            scripts/linting/workflow-validator/probes/untrusted-input-in-run.yml > "${RUNNER_TEMP}/probe.json" || true
+          if ! jq -e 'any(.[]; .ident == "template-injection")' "${RUNNER_TEMP}/probe.json" > /dev/null; then
+            echo "::error::zizmor no longer reports template-injection for the untrusted-input-in-run probe."
+            exit 1
+          fi
+
+      # SARIF mode exits 0 with findings, so a non-zero exit is a tool failure.
+      # Online audits use this job's read-only token.
+      - name: Run zizmor at the pedantic persona
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p logs
+          zizmor --persona pedantic --format sarif --no-progress . > logs/zizmor.sarif
+
+      # Uploading needs security-events: write, which a fork pull request never
+      # receives. Skip the step for forks rather than attempt it; the gate below
+      # still decides every pull request.
+      - name: Upload SARIF to Security tab
+        if: always() && hashFiles('logs/zizmor.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          sarif_file: logs/zizmor.sarif
+          category: zizmor
+
+      # Every pedantic finding fails unless a tracked exception excuses it.
+      - name: Gate on findings
+        shell: pwsh
+        run: ./scripts/security/Test-CodeQLSarifThreshold.ps1 -SarifPath logs/zizmor.sarif -Threshold All

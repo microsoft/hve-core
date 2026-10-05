@@ -284,6 +284,12 @@ All workflows MUST pass the following validation checks:
 * **What it enforces:** GitHub's own workflow parser validates every workflow and composite action, custom checks catch undefined references and undeclared action inputs, and the manifest-pinned shellcheck checks every bash and sh `run:` script. Nothing is ignored or disabled.
 * **CI blocking:** `workflow-validation-scan.yml` fails PR validation on any finding and reports SARIF to code scanning
 
+### zizmor Audit
+
+* **Tool:** zizmor at the `pedantic` persona, installed from `scripts/security/tool-checksums.json` by `.github/actions/setup-zizmor` (`npm run lint:zizmor` in the devcontainer)
+* **What it enforces:** Every workflow, composite action, and `dependabot.yml` passes zizmor's audits, including template injection, `GITHUB_PATH` and `GITHUB_ENV` writes, dangerous triggers, unscoped GitHub App tokens, and undocumented permissions. Every permission beyond `contents: read` carries a `# reason` comment.
+* **CI blocking:** `zizmor-scan.yml` uploads SARIF under category `zizmor` and fails PR validation on any result that no tracked exception in `security/code-scanning-exceptions.yml` excuses (`Test-CodeQLSarifThreshold.ps1 -Threshold All`)
+
 ### Dependency Pinning Validation
 
 * **Script:** `scripts/security/Test-DependencyPinning.ps1`

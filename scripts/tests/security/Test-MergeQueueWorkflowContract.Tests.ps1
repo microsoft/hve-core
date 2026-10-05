@@ -1019,6 +1019,7 @@ Describe 'Aggregate merge-group ownership' -Tag 'Unit' {
             'workflow-permissions-check=security-events'
             'workflow-runner-check=security-events'
             'workflow-validation-scan=security-events'
+            'zizmor-scan=security-events'
         )
         $TopLevelPermissions = $script:AggregateWorkflow['permissions']
         $NonMapPermissionJobs = [System.Collections.Generic.List[string]]::new()

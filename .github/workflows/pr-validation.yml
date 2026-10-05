@@ -217,6 +217,13 @@ jobs:
       contents: read
       security-events: write # Required for SARIF upload to Security tab
 
+  zizmor-scan:
+    name: zizmor Scan
+    uses: $/.github/workflows/zizmor-scan.yml
+    permissions:
+      contents: read
+      security-events: write # Required for SARIF upload to Security tab
+
   pester-tests:
     name: PowerShell Tests
     uses: $/.github/workflows/pester-tests.yml
@@ -880,6 +887,7 @@ jobs:
       - python-lint
       - copyright-headers
       - workflow-validation-scan
+      - zizmor-scan
       - pester-tests
       - pytest
       - copilot-otel-runtime-tests

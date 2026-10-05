@@ -105,25 +105,26 @@ for the complete set.
 
 ### Linting
 
-| Script                          | Command                                 | Description                                                                         |
-|---------------------------------|-----------------------------------------|-------------------------------------------------------------------------------------|
-| `validate:local`                | `npm run validate:local`                | Runs the local-safe validation aggregate                                            |
-| `lint:md`                       | `npm run lint:md`                       | Markdown linting via markdownlint-cli2                                              |
-| `lint:md:fix`                   | `npm run lint:md:fix`                   | Markdown linting with auto-fix                                                      |
-| `lint:ps`                       | `npm run lint:ps`                       | PowerShell analysis via PSScriptAnalyzer                                            |
-| `lint:workflows`                | `npm run lint:workflows`                | Workflow and composite action validation with GitHub's parser and pinned shellcheck |
-| `lint:links`                    | `npm run lint:links`                    | Link language checking                                                              |
-| `lint:md-links`                 | `npm run lint:md-links`                 | Markdown link target validation                                                     |
-| `lint:frontmatter`              | `npm run lint:frontmatter`              | Frontmatter schema validation                                                       |
-| `lint:json`                     | `npm run lint:json`                     | JSON syntax validation                                                              |
-| `lint:adr-consistency`          | `npm run lint:adr-consistency`          | ADR structure and consistency checks                                                |
-| `lint:plugin-manifest`          | `npm run lint:plugin-manifest`          | Plugin manifest and locator drift check                                             |
-| `lint:hooks`                    | `npm run lint:hooks`                    | Hook manifest validation                                                            |
-| `lint:version-consistency`      | `npm run lint:version-consistency`      | GitHub Action version consistency                                                   |
-| `lint:tool-version-consistency` | `npm run lint:tool-version-consistency` | Tool, runtime, and tool-lock versions against the manifest                          |
-| `lint:action-pin-provenance`    | `npm run lint:action-pin-provenance`    | Action pin comments and commits against upstream tags (network)                     |
-| `lint:permissions`              | `npm run lint:permissions`              | Workflow permissions validation                                                     |
-| `lint:models`                   | `npm run lint:models`                   | Model reference validation against catalog                                          |
+| Script                          | Command                                 | Description                                                                                   |
+|---------------------------------|-----------------------------------------|-----------------------------------------------------------------------------------------------|
+| `validate:local`                | `npm run validate:local`                | Runs the local-safe validation aggregate                                                      |
+| `lint:md`                       | `npm run lint:md`                       | Markdown linting via markdownlint-cli2                                                        |
+| `lint:md:fix`                   | `npm run lint:md:fix`                   | Markdown linting with auto-fix                                                                |
+| `lint:ps`                       | `npm run lint:ps`                       | PowerShell analysis via PSScriptAnalyzer                                                      |
+| `lint:zizmor`                   | `npm run lint:zizmor`                   | zizmor `pedantic` audit of workflows, actions, and `dependabot.yml` (needs the pinned zizmor) |
+| `lint:workflows`                | `npm run lint:workflows`                | Workflow and composite action validation with GitHub's parser and pinned shellcheck           |
+| `lint:links`                    | `npm run lint:links`                    | Link language checking                                                                        |
+| `lint:md-links`                 | `npm run lint:md-links`                 | Markdown link target validation                                                               |
+| `lint:frontmatter`              | `npm run lint:frontmatter`              | Frontmatter schema validation                                                                 |
+| `lint:json`                     | `npm run lint:json`                     | JSON syntax validation                                                                        |
+| `lint:adr-consistency`          | `npm run lint:adr-consistency`          | ADR structure and consistency checks                                                          |
+| `lint:plugin-manifest`          | `npm run lint:plugin-manifest`          | Plugin manifest and locator drift check                                                       |
+| `lint:hooks`                    | `npm run lint:hooks`                    | Hook manifest validation                                                                      |
+| `lint:version-consistency`      | `npm run lint:version-consistency`      | GitHub Action version consistency                                                             |
+| `lint:tool-version-consistency` | `npm run lint:tool-version-consistency` | Tool, runtime, and tool-lock versions against the manifest                                    |
+| `lint:action-pin-provenance`    | `npm run lint:action-pin-provenance`    | Action pin comments and commits against upstream tags (network)                               |
+| `lint:permissions`              | `npm run lint:permissions`              | Workflow permissions validation                                                               |
+| `lint:models`                   | `npm run lint:models`                   | Model reference validation against catalog                                                    |
 
 ### Validation
 

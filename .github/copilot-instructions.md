@@ -216,6 +216,7 @@ Copilot Coding Agent uses a cloud-based GitHub Actions environment, separate fro
 * uv and uvx for Python package management and skill dependency sync
 * PowerShell 7 with PSScriptAnalyzer, PowerShell-Yaml, and Pester 5.7.1 modules
 * shellcheck 0.11.0 for bash script validation, pinned and checksum-verified from `scripts/security/tool-checksums.json`
+* zizmor 1.30.1 for GitHub Actions security auditing, pinned and checksum-verified from `scripts/security/tool-checksums.json`
 * cosign for artifact manifest signing
 
 ### Using npm Scripts
