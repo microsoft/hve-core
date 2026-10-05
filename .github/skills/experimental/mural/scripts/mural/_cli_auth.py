@@ -341,7 +341,7 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
         backend_refresh_present = bool(backend.get(service, "MURAL_REFRESH_TOKEN"))
     except _KeyringUnavailable:
         backend_refresh_present = False
-    refresh_present = False
+    profile_authenticated = False
     try:
         store = _pkg()._load_token_store(_resolve_token_store_path())
         if isinstance(store, dict):
@@ -349,10 +349,13 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
             if isinstance(profiles, dict):
                 profile_record = profiles.get(profile_name)
                 if isinstance(profile_record, dict):
-                    refresh_present = bool(profile_record.get("refresh_token"))
+                    profile_authenticated = bool(
+                        profile_record.get("access_token")
+                        or profile_record.get("refresh_token")
+                    )
     except Exception:  # noqa: BLE001 - probe must never raise
-        refresh_present = False
-    if (backend_refresh_present or refresh_present) and not force:
+        profile_authenticated = False
+    if (backend_refresh_present or profile_authenticated) and not force:
         _emit(
             f"profile {profile_name!r} already has stored credentials; "
             "rerun with --force to overwrite",

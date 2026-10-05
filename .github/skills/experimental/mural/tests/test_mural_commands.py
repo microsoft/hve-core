@@ -307,6 +307,40 @@ def test_auth_login_short_circuits_when_credentials_present_without_force(
     assert "already has stored credentials" in capsys.readouterr().err
 
 
+def test_auth_login_short_circuits_when_access_token_is_present(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    fake_token_store: pathlib.Path,
+) -> None:
+    """An existing access token remains an authenticated session."""
+
+    fake_token_store.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "profiles": {
+                    "default": {
+                        "client_id": TEST_CLIENT_ID,
+                        "access_token": "seeded-access-token",
+                        "token_type": "Bearer",
+                        "obtained_at": 0,
+                        "expires_at": 9_999_999_999,
+                    },
+                },
+            }
+        )
+    )
+
+    def _boom(**_kwargs: Any) -> dict[str, Any]:
+        raise AssertionError("_run_login must not be invoked")
+
+    monkeypatch.setattr(mural_module, "_run_login", _boom)
+
+    rc = mural_module.main(["auth", "login"])
+
+    assert rc == mural_module.EXIT_SUCCESS
+
+
 def test_auth_login_proceeds_when_only_app_credentials_are_present(
     mural_module: Any,
     monkeypatch: pytest.MonkeyPatch,
@@ -815,6 +849,36 @@ def test_auth_setup_non_interactive(
     assert "scope" not in profile
     assert profile["granted_scopes"] == ["murals:read"]
     mural_module._select_profile(data, "alpha")
+
+
+def test_auth_setup_profile_allows_subsequent_login(
+    mural_module: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    fake_token_store: pathlib.Path,
+) -> None:
+    """The documented setup then login sequence starts OAuth."""
+    monkeypatch.setenv("MURAL_CLIENT_ID", "env-client")
+    monkeypatch.setenv("MURAL_SCOPES", "murals:read")
+
+    setup_rc = mural_module.main(["auth", "setup", "--profile", "alpha"])
+    invoked: dict[str, Any] = {}
+
+    def _fake_login(*, scopes: str | None, timeout_seconds: int) -> dict[str, Any]:
+        invoked["called"] = True
+        return {
+            "access_token": "x",
+            "expires_at": 9_999_999_999,
+            "obtained_at": 0,
+            "token_type": "Bearer",
+        }
+
+    monkeypatch.setattr(mural_module, "_run_login", _fake_login)
+
+    login_rc = mural_module.main(["auth", "login", "--profile", "alpha"])
+
+    assert setup_rc == mural_module.EXIT_SUCCESS
+    assert login_rc == mural_module.EXIT_SUCCESS
+    assert invoked.get("called") is True
 
 
 def test_auth_setup_requires_client_id(
