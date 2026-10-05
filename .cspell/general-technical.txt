@@ -853,6 +853,7 @@ rbsc
 rcnn
 rdbms
 rdma
+readback
 readonly
 rearchitect
 rearchitected

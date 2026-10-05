@@ -1,3 +1,4 @@
+# cspell:ignore duplicat occlu
 name: behavior-conformance-instructions
 description: >
   Advisory-tier behavior conformance evals for high-signal Markdown-applyTo

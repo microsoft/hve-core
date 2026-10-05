@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-# cspell:ignore declin
+# cspell:ignore declin didn
 stimuli:
   - name: dt-coach-class-recipe
     prompt: |
