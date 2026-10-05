@@ -150,6 +150,44 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result.inputTokens | Should -Be 0
         }
 
+        It 'Treats unrepresentable token counts as unmeasured without throwing or raising record issues' {
+            $runDir = Join-Path $script:WorkRoot 'run-tokens-range'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $records = @(
+                '{"trajectory":{"stimulus":{"name":"double"},"metrics":{"wallTimeMs":1,"tokenUsage":{"inputTokens":1e20,"outputTokens":2}}},"gradeResult":{"passed":true}}'
+                '{"trajectory":{"stimulus":{"name":"bigint"},"metrics":{"wallTimeMs":1,"tokenUsage":{"inputTokens":100000000000000000000,"outputTokens":2}}},"gradeResult":{"passed":true}}'
+                '{"trajectory":{"stimulus":{"name":"beyond-decimal"},"metrics":{"wallTimeMs":1,"tokenUsage":{"inputTokens":1e30,"outputTokens":2}}},"gradeResult":{"passed":true}}'
+                '{"trajectory":{"stimulus":{"name":"fraction"},"metrics":{"wallTimeMs":1,"tokenUsage":{"inputTokens":1.5,"outputTokens":2}}},"gradeResult":{"passed":true}}'
+            )
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value $records -Encoding utf8
+
+            { $script:RangeResult = Read-VallyResultsJsonl -RunDir $runDir } | Should -Not -Throw
+            $script:RangeResult.trials | Should -Be 4
+            $script:RangeResult.assertionsPassed | Should -Be 4
+            $script:RangeResult.tokenTrials | Should -Be 0
+            $script:RangeResult.inputTokens | Should -Be 0
+            @($script:RangeResult.recordIssues) | Should -HaveCount 0
+        }
+
+        It 'Accepts Int64.MaxValue exactly and skips a trial that would overflow the running total' {
+            $runDir = Join-Path $script:WorkRoot 'run-tokens-overflow'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $records = @(
+                '{"trajectory":{"stimulus":{"name":"max"},"metrics":{"wallTimeMs":1,"tokenUsage":{"inputTokens":9223372036854775807,"outputTokens":1}}},"gradeResult":{"passed":true}}'
+                '{"trajectory":{"stimulus":{"name":"overflow"},"metrics":{"wallTimeMs":1,"tokenUsage":{"inputTokens":5,"outputTokens":1}}},"gradeResult":{"passed":false}}'
+            )
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value $records -Encoding utf8
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir
+            $result.tokenTrials | Should -Be 1
+            $result.inputTokens | Should -Be ([long]::MaxValue)
+            $result.inputTokens | Should -BeOfType ([long])
+            $result.outputTokens | Should -Be 1
+            $result.assertionsPassed | Should -Be 1
+            $result.assertionsFailed | Should -Be 1
+            @($result.recordIssues) | Should -HaveCount 0
+        }
+
         It 'Treats a score above the configured threshold as passed even when gradeResult.passed is false' {
             $runDir = Join-Path $script:WorkRoot 'run-threshold'
             New-Item -ItemType Directory -Path $runDir -Force | Out-Null

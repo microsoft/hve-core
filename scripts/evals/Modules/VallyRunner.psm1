@@ -459,11 +459,13 @@ function Read-VallyResultsJsonl {
     thrown so a partial run still yields counts.
 
     Native token usage from `trajectory.metrics.tokenUsage` is summed across
-    trials whose input and output token counts are finite and non-negative.
-    A record whose `callCount` is present and zero carries Vally's zero-filled
-    default rather than measured usage, so it is treated as unmeasured. Trials
-    without valid usage add nothing to the token totals and are not counted in
-    `tokenTrials`; they never affect pass, fail, or record issues.
+    trials whose input and output token counts are whole numbers from 0
+    through `Int64.MaxValue`. A record whose `callCount` is present and zero
+    carries Vally's zero-filled default rather than measured usage, so it is
+    treated as unmeasured, as is a trial whose counts would push a running
+    total past `Int64.MaxValue`. Trials without valid usage add nothing to the
+    token totals and are not counted in `tokenTrials`; token parsing never
+    throws and never affects pass, fail, or record issues.
 
     .PARAMETER RunDir
     Directory returned by `Resolve-VallyRunDir`.
@@ -522,13 +524,15 @@ function Read-VallyResultsJsonl {
     $outputTokens = [long]0
     $cacheReadTokens = [long]0
     $tokenTrials = 0
+    $maxTokenCount = [decimal][long]::MaxValue
     $readTokenCount = {
         param($Usage, [string]$Name)
         if ($null -eq $Usage -or -not $Usage.PSObject.Properties[$Name]) { return $null }
         $value = $Usage.$Name
         if ($null -eq $value -or $value -isnot [ValueType] -or $value -is [bool]) { return $null }
-        $number = [double]$value
-        if (-not [double]::IsFinite($number) -or $number -lt 0) { return $null }
+        # Decimal keeps Int64 values exact; NaN, infinities, and values beyond decimal range throw here.
+        try { $number = [decimal]$value } catch { return $null }
+        if ($number -lt 0 -or $number -gt $maxTokenCount -or $number -ne [decimal]::Truncate($number)) { return $null }
         return [long]$number
     }
     $trials = 0
@@ -620,10 +624,15 @@ function Read-VallyResultsJsonl {
             $cacheReadInvalid = $null -eq $trialCacheReadTokens -and
                 $usage.PSObject.Properties['cacheReadTokens'] -and $null -ne $usage.cacheReadTokens
             if (-not $unmeasured -and $null -ne $trialInputTokens -and $null -ne $trialOutputTokens -and -not $cacheReadInvalid) {
-                $tokenTrials++
-                $inputTokens += $trialInputTokens
-                $outputTokens += $trialOutputTokens
-                if ($null -ne $trialCacheReadTokens) { $cacheReadTokens += $trialCacheReadTokens }
+                $nextInputTokens = [decimal]$inputTokens + $trialInputTokens
+                $nextOutputTokens = [decimal]$outputTokens + $trialOutputTokens
+                $nextCacheReadTokens = [decimal]$cacheReadTokens + $(if ($null -ne $trialCacheReadTokens) { $trialCacheReadTokens } else { 0 })
+                if ($nextInputTokens -le $maxTokenCount -and $nextOutputTokens -le $maxTokenCount -and $nextCacheReadTokens -le $maxTokenCount) {
+                    $tokenTrials++
+                    $inputTokens = [long]$nextInputTokens
+                    $outputTokens = [long]$nextOutputTokens
+                    $cacheReadTokens = [long]$nextCacheReadTokens
+                }
             }
         }
 
