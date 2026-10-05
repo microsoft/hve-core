@@ -1988,7 +1988,8 @@ Describe 'Backlog grooming sweep dispatch and recovery contracts' -Tag 'Unit' {
         $script:Orchestrator | Should -Match 'ref: executionTag'
         $script:Orchestrator | Should -Match '"source-ref": sourceRef'
         $script:Orchestrator | Should -Not -Match 'ref: "\$\{\{ needs\.plan\.outputs\.source-ref-name \}\}"'
-        $script:Orchestrator | Should -Match '(?ms)Check out the validator implementation.*?with:\s+ref: \$\{\{ needs\.plan\.outputs\.source-sha \}\}\s+persist-credentials: false'
+        $script:Orchestrator | Should -Match '(?ms)Check out the validator implementation.*?with:\s+ref: \$\{\{ github\.sha \}\}\s+persist-credentials: false'
+        $script:Orchestrator | Should -Not -Match '(?ms)Check out the validator implementation.*?with:\s+ref: \$\{\{ needs\.'
     }
 
     It 'S12 isolates lifecycle dispatch and publisher write scopes' {
