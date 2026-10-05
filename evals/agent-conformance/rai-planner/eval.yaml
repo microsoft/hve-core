@@ -31,6 +31,10 @@ agent_environment:
     dest: .github/instructions/shared/planner-identity-base.instructions.md
   - src: ../../../.github/instructions/shared/disclaimer-language.instructions.md
     dest: .github/instructions/shared/disclaimer-language.instructions.md
+  - src: ../../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+    dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
+  - src: ../../../.github/instructions/shared/coaching-patterns.instructions.md
+    dest: .github/instructions/shared/coaching-patterns.instructions.md
 stimuli:
 - name: consequential-use-risk-recognition
   turns:

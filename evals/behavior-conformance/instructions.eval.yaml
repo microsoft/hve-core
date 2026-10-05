@@ -236,6 +236,47 @@ stimuli:
         config:
           pattern: "(?i)stop|halt|do not proceed|cannot proceed|before the mutation"
 
+  - name: instruction-skill-security-model-conformance
+    prompt: |
+      You are adding a `LOGGER.warning(...)` call that includes an HTTP
+      response to `.github/skills/experimental/mural/scripts/mural/_transport.py`.
+      Which `.github/instructions/**/*.instructions.md` file applies (cite its
+      path), which of the skill's security references must you read before
+      editing, and how must the logged values be handled?
+    agent_environment:
+      files:
+        - src: ../../.github/instructions/skill-security-model.instructions.md
+          dest: .github/instructions/skill-security-model.instructions.md
+        - src: ../../.github/skills/experimental/mural/SKILL.md
+          dest: .github/skills/experimental/mural/SKILL.md
+        - src: ../../.github/skills/experimental/mural/SECURITY.md
+          dest: .github/skills/experimental/mural/SECURITY.md
+        - src: ../../.github/skills/experimental/mural/references/log-hygiene.md
+          dest: .github/skills/experimental/mural/references/log-hygiene.md
+        - src: ../../.github/skills/experimental/mural/scripts/mural/_transport.py
+          dest: .github/skills/experimental/mural/scripts/mural/_transport.py
+    tags:
+      category: behavior-conformance
+      instruction: skill-security-model
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-skill-security-model-path
+        config:
+          pattern: '(?i)skill-security-model'
+      - type: output-matches
+        name: instruction-skill-security-model-security-md
+        config:
+          pattern: '(?i)SECURITY\.md'
+      - type: output-matches
+        name: instruction-skill-security-model-log-hygiene
+        config:
+          pattern: '(?i)log-hygiene'
+      - type: output-matches
+        name: instruction-skill-security-model-redaction
+        config:
+          pattern: '(?i)_redact|redact|mask'
+
   - name: instruction-markdown-conformance
     prompt: |
       You are creating or editing a Markdown file at `docs/example.md`. Which
@@ -1481,7 +1522,7 @@ stimuli:
       - type: output-matches
         name: mural-writeback-default-protection
         config:
-          pattern: '(?is)(MuralHumanAuthoredProtected|protected|blocked\b[^.]{0,40}\bby default|fail).{0,200}--force-human|--force-human.{0,200}(MuralHumanAuthoredProtected|block|reject)'
+          pattern: '(?is)(MuralHumanAuthoredProtected|(?<!\bnot\s)\bprotected\b|blocked\b[^.]{0,40}\bby default|fail).{0,200}--force-human|--force-human.{0,200}(MuralHumanAuthoredProtected|block|reject)'
       - type: output-matches
         name: mural-writeback-no-old-flag
         config:

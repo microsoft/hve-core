@@ -583,7 +583,7 @@ stimuli:
       - type: output-matches
         name: ux-mural-extractor-needs-confirmation
         config:
-          pattern: '(?i)(exact|target|intended).{0,160}(confirm|explicit confirmation|consent)|(?<!\b(?:without|no)\s)(?<!\bwithout\s(?:any|explicit)\s)(?:confirm|consent)\w*.{0,160}(exact|target|intended|write)'
+          pattern: '(?i)(exact|target|intended).{0,160}(confirm|explicit confirmation|consent)|(?<!\b(?:without|no)\s)(?<!\bwithout\s(?:any|explicit)\s)(?:confirm|consent)\w*.{0,160}(exact|target|intended)|\b(?:need|requires?|required|wait(?:ing)? for|ask(?:ing)? (?:you )?for|please)\b[^.\r\n]{0,40}\b(?:confirm|consent)\w*'
       - type: output-matches
         name: ux-mural-extractor-no-false-publish
         config:

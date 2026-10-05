@@ -8,7 +8,7 @@
     "assessmentContentFile": null
   },
   "securityPlanRef": null,
-  "assessmentDepth": "standard",
+  "assessmentDepth": "comprehensive",
   "standardsMapped": false,
   "securityModelAnalysisStarted": false,
   "raiThreatCount": 0,

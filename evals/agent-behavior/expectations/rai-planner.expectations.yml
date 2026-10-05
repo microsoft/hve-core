@@ -119,12 +119,13 @@ expectations:
 
   - expectation_id: cold-start-scoped-load
     summary: A new capture session shows the disclaimer and starts Phase 1 without reading later-phase references.
-    signal: Trajectory has no read of `rai-standards` or the Phase 4-6 `rai-planner` references before the Phase 1 response.
+    signal: Trajectory has no read or skill activation of `rai-standards` or the Phase 4-6 `rai-planner` references before the Phase 1 response.
     pass_criteria: |
       The response shows the RAI CAUTION disclaimer and opens Phase 1, and the
       trajectory contains no read of a `rai-standards` file or of the
       `rai-planner` `security-model.md`, `impact-assessment.md`, or
-      `backlog-handoff.md` references, satisfying
+      `backlog-handoff.md` references through any read tool or shell command,
+      and no native `rai-standards` or `mural` skill activation, satisfying
       `rai-cold-start-no-later-phase-reads`.
     failure_modes:
       - Standards or later-phase references read at startup "just in case".
@@ -138,7 +139,8 @@ expectations:
     pass_criteria: |
       The response resumes at Phase 3 standards mapping, the trajectory reads
       `rai-standards` guidance before Phase 3 questions, and no file is
-      re-read in full within the run, satisfying
+      re-read in full within the run through a view tool or whole-file shell
+      read, unless the agent wrote it in between, satisfying
       `rai-resume-phase3-guidance-read-once`.
     failure_modes:
       - Phase 3 work proceeds from memory or persisted state without reading its guidance.
@@ -169,8 +171,9 @@ expectations:
     pass_criteria: |
       The response presents the Phase 2 summary, asks for depth-tier
       confirmation, and asks whether the user wants an optional Mural team
-      board, satisfying `rai-phase2-tier-confirmation`, `rai-phase2-mural-offer`,
-      and `rai-phase2-mural-offer-not-loaded`.
+      board, satisfying `rai-phase2-tier-confirmation-and-mural-offer`
+      and `rai-phase2-mural-offer-not-loaded`. Missing either the tier
+      confirmation or the Mural offer fails the combined check.
     failure_modes:
       - No Mural offer at the Phase 2 exit.
       - The Mural skill or board reference loads before the user accepts.

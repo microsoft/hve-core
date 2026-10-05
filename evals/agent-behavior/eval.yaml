@@ -6059,6 +6059,10 @@ stimuli:
       dest: .github/instructions/shared/planner-identity-base.instructions.md
     - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
       dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+      dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
+    - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
+      dest: .github/instructions/shared/coaching-patterns.instructions.md
   tags:
     category: agent-behavior
     scenario: mural-setup-login-verdicts
@@ -6119,6 +6123,10 @@ stimuli:
       dest: .github/instructions/shared/planner-identity-base.instructions.md
     - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
       dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+      dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
+    - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
+      dest: .github/instructions/shared/coaching-patterns.instructions.md
   tags:
     category: agent-behavior
     scenario: mural-data-and-adapter-failure
@@ -6156,6 +6164,10 @@ stimuli:
       dest: .github/instructions/shared/planner-identity-base.instructions.md
     - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
       dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+      dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
+    - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
+      dest: .github/instructions/shared/coaching-patterns.instructions.md
   tags:
     category: agent-behavior
     scenario: cold-start-scoped-load
@@ -6177,14 +6189,17 @@ stimuli:
           const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
           if (!Array.isArray(input.trajectory.events)) process.exit(1);
           const laterPhase = /rai-standards[\\/][^\s'"]*\.md|rai-planner[\\/]references[\\/](?:security-model|impact-assessment|backlog-handoff|mural-board-bootstrap)\.md|[\\/]mural[\\/](?:SKILL|references[\\/][^\s'"]*)\.md/i;
+          // Existence checks and listings name a file without loading it.
+          const nonRead = /^\s*(?:Test-Path|ls|dir|Get-ChildItem|gci)\b/i;
           const eager = input.trajectory.events.some(event => {
+            if (event.type === 'skill_activation') return /^(?:rai-standards|mural)$/i.test(String(event.data?.name || ''));
             if (event.type !== 'tool_call') return false;
             const name = String(event.data?.toolName || '');
             const args = event.data?.arguments || {};
             if (/skill/i.test(name)) return /rai-standards|"mural"/i.test(JSON.stringify(args));
             if (/^(?:view|read|read_file)$/i.test(name)) return laterPhase.test(String(args.path || args.filePath || ''));
             const command = String(args.command || '');
-            return /\b(?:Get-Content|gc|cat|type)\b/i.test(command) && laterPhase.test(command);
+            return !nonRead.test(command) && laterPhase.test(command);
           });
           process.exit(eager ? 1 : 0);
         } catch { process.exit(1); }
@@ -6207,6 +6222,10 @@ stimuli:
       dest: .github/instructions/shared/planner-identity-base.instructions.md
     - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
       dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+      dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
+    - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
+      dest: .github/instructions/shared/coaching-patterns.instructions.md
     - src: fixtures/rai-planner-resume/state.json
       dest: .copilot-tracking/rai-plans/support-reply-assistant/state.json
     - src: fixtures/rai-planner-resume/rai-plan.md
@@ -6232,10 +6251,26 @@ stimuli:
           const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
           if (!Array.isArray(input.trajectory.events)) process.exit(1);
           const phaseGuidance = /rai-standards[\\/][^\s'"]*\.md/i;
-          const normalize = value => String(value).trim().replace(/\\/g, '/').replace(/^\.\//, '').toLowerCase();
+          const normalize = value => String(value).trim().replace(/^["']|["']$/g, '').replace(/\\/g, '/').replace(/^\.\//, '').toLowerCase();
+          const sameFile = (a, b) => a === b || a.endsWith('/' + b) || b.endsWith('/' + a);
+          // Partial shell reads mirror view_range and are not repeats.
+          const wholeShellRead = /^\s*(?:Get-Content|gc|cat|type)\s+(?:-(?:Path|LiteralPath|Raw)\s+)*(["']?)([^\s|;"']+\.[a-z0-9]+)\1\s*(?:-Raw\s*)?$/i;
           const counts = new Map();
+          const countRead = target => {
+            const key = normalize(target);
+            const existing = [...counts.keys()].find(k => sameFile(k, key)) || key;
+            counts.set(existing, (counts.get(existing) || 0) + 1);
+          };
+          const resetWritten = target => {
+            const written = normalize(target);
+            for (const key of [...counts.keys()]) if (sameFile(key, written)) counts.delete(key);
+          };
           let guidanceRead = false;
           for (const event of input.trajectory.events) {
+            if (event.type === 'skill_activation') {
+              if (/^rai-standards$/i.test(String(event.data?.name || ''))) guidanceRead = true;
+              continue;
+            }
             if (event.type !== 'tool_call') continue;
             const name = String(event.data?.toolName || '');
             const args = event.data?.arguments || {};
@@ -6246,25 +6281,20 @@ stimuli:
             }
             if (/patch|edit|create|write/i.test(name)) {
               // A read after the agent's own write sees new content, so it is not a repeat.
-              for (const match of argText.matchAll(/\*\*\* (?:Update|Add) File: ([^\r\n"]+)/g)) {
-                const written = normalize(match[1].replace(/\\\\/g, '\\'));
-                for (const key of counts.keys()) {
-                  if (key === written || key.endsWith('/' + written)) counts.delete(key);
-                }
-              }
+              for (const match of argText.matchAll(/\*\*\* (?:Update|Add) File: ([^\r\n"]+)/g)) resetWritten(match[1].replace(/\\\\/g, '\\'));
+              if (args.path || args.filePath) resetWritten(args.path || args.filePath);
               continue;
             }
             if (/^(?:view|read|read_file)$/i.test(name)) {
               const target = String(args.path || args.filePath || '');
               if (phaseGuidance.test(target)) guidanceRead = true;
-              if (/\.[a-z0-9]+$/i.test(target) && !Array.isArray(args.view_range)) {
-                const key = normalize(target);
-                counts.set(key, (counts.get(key) || 0) + 1);
-              }
+              if (/\.[a-z0-9]+$/i.test(target) && !Array.isArray(args.view_range)) countRead(target);
               continue;
             }
             const command = String(args.command || '');
-            if (/\b(?:Get-Content|gc|cat|type)\b/i.test(command) && phaseGuidance.test(command)) guidanceRead = true;
+            if (/\b(?:Get-Content|gc|cat|type|head|tail|sed|rg|grep|Select-String)\b/i.test(command) && phaseGuidance.test(command)) guidanceRead = true;
+            const whole = wholeShellRead.exec(command);
+            if (whole) countRead(whole[2]);
           }
           const repeated = [...counts.values()].some(count => count > 1);
           process.exit(guidanceRead && !repeated ? 0 : 1);
@@ -6289,6 +6319,10 @@ stimuli:
       dest: .github/instructions/shared/planner-identity-base.instructions.md
     - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
       dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+      dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
+    - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
+      dest: .github/instructions/shared/coaching-patterns.instructions.md
     - src: fixtures/rai-planner-phase2/state.json
       dest: .copilot-tracking/rai-plans/support-reply-assistant/state.json
     - src: fixtures/rai-planner-phase2/rai-plan.md
@@ -6299,13 +6333,9 @@ stimuli:
     agent: rai-planner
   graders:
   - type: output-matches
-    name: rai-phase2-tier-confirmation
+    name: rai-phase2-tier-confirmation-and-mural-offer
     config:
-      pattern: (?is)(?:depth|tier).{0,200}(?:confirm|approve)|(?:confirm|approve).{0,200}(?:depth|tier)
-  - type: output-matches
-    name: rai-phase2-mural-offer
-    config:
-      pattern: (?is)\bmural\b[^?]{0,240}\?|(?:would you|do you|want|like|optional)[^\r\n]{0,160}\bmural\b
+      pattern: (?is)^(?=.*(?:(?:depth|tier).{0,200}(?:confirm|approve)|(?:confirm|approve).{0,200}(?:depth|tier)))(?=.*(?:\bmural\b[^?]{0,240}\?|(?:would you|do you|want|like|optional)[^\r\n]{0,160}\bmural\b))
   - type: program
     name: rai-phase2-mural-offer-not-loaded
     config:
@@ -6360,6 +6390,10 @@ stimuli:
       dest: .github/instructions/shared/planner-identity-base.instructions.md
     - src: ../../.github/instructions/shared/disclaimer-language.instructions.md
       dest: .github/instructions/shared/disclaimer-language.instructions.md
+    - src: ../../.github/instructions/rai-planning/rai-license-posture.instructions.md
+      dest: .github/instructions/rai-planning/rai-license-posture.instructions.md
+    - src: ../../.github/instructions/shared/coaching-patterns.instructions.md
+      dest: .github/instructions/shared/coaching-patterns.instructions.md
     - src: fixtures/rai-planner-phase2/state.json
       dest: .copilot-tracking/rai-plans/support-reply-assistant/state.json
     - src: fixtures/rai-planner-phase2/rai-plan.md
@@ -8026,7 +8060,7 @@ stimuli:
   - type: output-matches
     name: ux-mural-extractor-needs-confirmation
     config:
-      pattern: (?i)(exact|target|intended).{0,160}(confirm|explicit confirmation|consent)|(?<!\b(?:without|no)\s)(?<!\bwithout\s(?:any|explicit)\s)(?:confirm|consent)\w*.{0,160}(exact|target|intended|write)
+      pattern: (?i)(exact|target|intended).{0,160}(confirm|explicit confirmation|consent)|(?<!\b(?:without|no)\s)(?<!\bwithout\s(?:any|explicit)\s)(?:confirm|consent)\w*.{0,160}(exact|target|intended)|\b(?:need|requires?|required|wait(?:ing)? for|ask(?:ing)? (?:you )?for|please)\b[^.\r\n]{0,40}\b(?:confirm|consent)\w*
   - type: output-matches
     name: ux-mural-extractor-no-false-publish
     config:
