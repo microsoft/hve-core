@@ -2,8 +2,12 @@
 title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
 sidebar_position: 1
+sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Getting Started with HVE Core"
+pagination_label: Getting Started with HVE Core
 author: Microsoft
-ms.date: 2026-08-13
+ms.date: 2026-10-04
 ms.topic: tutorial
 keywords:
   - github copilot

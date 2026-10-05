@@ -2,9 +2,13 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-09-11
+ms.date: 2026-10-04
 ms.topic: overview
 sidebar_position: 1
+sidebar_label: Overview
+sidebar_custom_props:
+  accessibleName: "Overview: Customizing HVE Core"
+pagination_label: Customizing HVE Core
 keywords:
   - customization
   - github copilot
@@ -91,10 +95,6 @@ It uses as few cycles as needed, stopping rather than repeating unchanged
 failures or chasing advisory polish. Known target files and caller-supplied
 canonical references remain bounded lifecycle reads; open-ended exploration and
 decision-critical research activate `rpi-research`.
-
-The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills
-remain compatibility aliases for legacy requests. They route to `hve-builder`
-and do not own separate authoring workflows.
 
 Each artifact guide below includes an "Authoring with HVE Builder" section
 with type-specific examples.

@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-08-19
+ms.date: 2026-10-03
 ms.topic: reference
 keywords:
   - contributing
@@ -163,11 +163,11 @@ Root `plugin.json` is the distribution authority for the single `hve-core` plugi
 * Instructions under `.github/instructions/<package>/**/*.instructions.md`
 * Skills with `.github/skills/<package>/<skill>/SKILL.md` unless the skill's top-level license has a noncommercial qualifier
 
-Root-level repository-only artifacts are excluded. The manifest retains the fixed telemetry hook. `.github/plugin/marketplace.json` contains one `hve-core` entry with the relative source `.` and no component recipe.
+Root-level repository-only artifacts are excluded. The manifest declares no hooks. `.github/plugin/marketplace.json` contains one `hve-core` entry with the relative source `.` and no component recipe.
 
 ## Extension Packaging
 
-`Prepare-Extension.ps1` maps the complete plugin manifest to the single `ise-hve-essentials.hve-core` extension. `Package-Extension.ps1` stages only git-tracked files from those contribution roots plus explicit shared resources. Hooks remain plugin-only because VS Code has no declarative hook contribution point.
+`Prepare-Extension.ps1` maps the complete plugin manifest to the single `ise-hve-essentials.hve-core` extension. `Package-Extension.ps1` stages only git-tracked files from those contribution roots plus explicit shared resources.
 
 Stable and PreRelease contain the same manifest membership. Their differences are version, cadence, source branch, release assurance, and the VS Code Marketplace pre-release flag.
 
