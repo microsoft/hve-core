@@ -51,7 +51,7 @@
     "@types/jest": "30.0.0",
     "@types/jest-axe": "3.5.9",
     "@types/react": "19.3.0",
-    "@typescript-eslint/parser": "8.70.1",
+    "@typescript-eslint/parser": "8.71.0",
     "compression": "1.8.2",
     "eslint": "9.39.5",
     "eslint-plugin-jsx-a11y": "6.10.2",
@@ -62,7 +62,7 @@
     "jest": "30.5.2",
     "jest-axe": "11.0.0",
     "ts-jest": "29.4.14",
-    "wait-on": "9.1.0"
+    "wait-on": "9.5.1"
   },
   "browserslist": {
     "production": [
