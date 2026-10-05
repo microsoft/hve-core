@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-09-29
+ms.date: 2026-10-03
 ms.topic: reference
 keywords:
   - copilot
@@ -73,7 +73,7 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 | [hve-core/copilot-tracking.instructions.md](hve-core/copilot-tracking.instructions.md)                   | RPI, HVE Builder, and proposal-response tracking folders | Intermediate tracking artifact conventions       |
 | [hve-core/copilot-tracking-location.instructions.md](hve-core/copilot-tracking-location.instructions.md) | `**/.copilot-tracking/**`                                | Tracking root and ignored-file search            |
 | [hve-core/licensing-posture.instructions.md](hve-core/licensing-posture.instructions.md)                 | `**/skills/**, **/.copilot-tracking/**`                  | Licensing, reproduction, and attribution posture |
-| [skill-security-model.instructions.md](skill-security-model.instructions.md)                             | `**/.github/skills/**/SECURITY.md`                       | Per-skill STRIDE security model rules            |
+| [skill-security-model.instructions.md](skill-security-model.instructions.md)                             | Skill `SECURITY.md`, skill scripts, classification JSON  | Per-skill STRIDE security model rules            |
 | [workflows.instructions.md](workflows.instructions.md)                                                   | `**/.github/workflows/*.yml`                             | GitHub Actions workflow conventions              |
 
 ### GitHub Integration
@@ -182,8 +182,7 @@ Activate the `hve-builder` skill:
 3. HVE Builder resolves the mode, write boundary, and applicable conventions
 4. HVE Builder runs a review pass against its requirements catalog and review rubric, reviewing the candidate itself or dispatching the read-only `HVE Builder Reviewer` subagent in fresh context, and verifies every finding before recording it
 5. Known target files and caller-supplied canonical references remain bounded lifecycle reads; open-ended exploration and decision-critical research activate `rpi-research`
-6. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills remain compatibility aliases
-7. The final response reports each gate and an overall Pass, Revise, Deferred, or Blocked outcome
+6. The final response reports each gate and an overall Pass, Revise, Deferred, or Blocked outcome
 
 For manual creation, see [Contributing Instructions](../../docs/contributing/instructions.md).
 

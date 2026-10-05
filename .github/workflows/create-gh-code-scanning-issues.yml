@@ -29,6 +29,7 @@ jobs:
       GITHUB_SERVER_URL: ${{ github.server_url }}
       GITHUB_REPOSITORY: ${{ github.repository }}
       GITHUB_RUN_ID: ${{ github.run_id }}
+      LIFECYCLE_URL: https://github.com/${{ github.repository }}/blob/main/docs/security/code-scanning-alert-lifecycle.md
     steps:
       - name: Download alerts artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -55,11 +56,19 @@ jobs:
             HAS_FILE_PATHS=$(echo "$alert" | jq -r '.HasFilePaths')
             ALERT_URL=$(echo "$alert" | jq -r '.AlertUrl // ""')
             FINDING_DESC=$(echo "$alert" | jq -r '.FindingDescription // ""')
-            MARKER="automation:security-scan:${RULE_ID}"
-            if [[ -n "$SEVERITY" ]]; then
-              ISSUE_TITLE="[Security][${SEVERITY}] ${RULE_DESC}"
+            KIND=$(echo "$alert" | jq -r '.Kind // "open"')
+            DISMISSED_REASON=$(echo "$alert" | jq -r '.DismissedReason // ""')
+            if [[ "$KIND" == "dismissed-still-detected" ]]; then
+              MARKER="automation:security-scan-dismissed:${RULE_ID}"
+              TITLE_PREFIX="[Security][Dismissed but still detected]"
             else
-              ISSUE_TITLE="[Security] ${RULE_DESC}"
+              MARKER="automation:security-scan:${RULE_ID}"
+              TITLE_PREFIX="[Security]"
+            fi
+            if [[ -n "$SEVERITY" ]]; then
+              ISSUE_TITLE="${TITLE_PREFIX}[${SEVERITY}] ${RULE_DESC}"
+            else
+              ISSUE_TITLE="${TITLE_PREFIX} ${RULE_DESC}"
             fi
             OCCURRENCE_WORD="$([ "$COUNT" = "1" ] && echo "occurrence" || echo "occurrences")"
             DETECTION_DATE=$(date -u '+%Y-%m-%d')
@@ -71,6 +80,28 @@ jobs:
               PATHS_SECTION=$'### Affected paths\n\n'"${AFFECTED_LIST}"
             else
               PATHS_SECTION=$'### Repository configuration finding\n\nThis alert refers to a repository-level configuration setting with no associated source file.'
+            fi
+
+            if [[ "$KIND" == "dismissed-still-detected" ]]; then
+              REASON_TEXT=""
+              if [[ -n "$DISMISSED_REASON" ]]; then
+                REASON_TEXT=" as \"${DISMISSED_REASON}\""
+              fi
+              DISMISSAL_NOTE="This alert was dismissed${REASON_TEXT} but the analysis still detects it on \`main\`. A dismissal hides an alert without resolving it, so it must be reopened and fixed."
+              ACTION_REQUIRED=$(cat <<EOF
+            - [ ] Reopen the dismissed alert so it is visible again
+            - [ ] Find the root cause and resolve it in code or configuration
+            - [ ] After the fix merges, confirm the alert shows Fixed on \`main\`, then close this issue
+            EOF
+              )
+            else
+              DISMISSAL_NOTE=""
+              ACTION_REQUIRED=$(cat <<EOF
+            - [ ] Find the root cause using the alert and the rule documentation
+            - [ ] Resolve it in code or configuration; never dismiss the alert
+            - [ ] After the fix merges, confirm the alert shows Fixed on \`main\`, then close this issue
+            EOF
+              )
             fi
 
             existing=$(gh issue list \
@@ -88,6 +119,8 @@ jobs:
             **Occurrences:** ${COUNT} ${OCCURRENCE_WORD}
             $([ -n "${ALERT_URL}" ] && echo "**Alert:** ${ALERT_URL}")
 
+            ${DISMISSAL_NOTE}
+
             ### What was found
             $([ -n "${FINDING_DESC}" ] && echo "${FINDING_DESC}" || echo "See the linked alert for details.")
 
@@ -98,9 +131,9 @@ jobs:
             **Workflow Run:** ${RUN_URL}
 
             ### Action Required
-            - [ ] Review the alert and confirm it is not a false positive
-            - [ ] Remediate or dismiss the finding with a documented reason
-            - [ ] Close this issue after the fix is merged
+            ${ACTION_REQUIRED}
+
+            Alerts are resolved in code or configuration, never dismissed. If no fix is possible yet, follow the tracked-exception process in the [code-scanning alert lifecycle](${LIFECYCLE_URL}).
             EOF
             )
 
@@ -108,16 +141,114 @@ jobs:
               gh issue create \
                 --repo "${OWNER}/${REPO}" \
                 --title "${ISSUE_TITLE}" \
-                --label "security,automated,needs-triage" \
+                --label "security,automated,code-scanning" \
                 --body "${ISSUE_BODY}"
             else
               gh issue edit "${existing}" \
                 --repo "${OWNER}/${REPO}" \
                 --title "${ISSUE_TITLE}" \
                 --body "${ISSUE_BODY}" \
-                --add-label "automated,needs-triage"
+                --add-label "security,automated,code-scanning" \
+                --remove-label "needs-triage"
               gh issue comment "${existing}" \
                 --repo "${OWNER}/${REPO}" \
                 --body "Weekly scan update: ${COUNT} ${OCCURRENCE_WORD} as of ${DETECTION_DATE}."
             fi
             done < <(jq -c '.[]' alerts.json)
+
+      # Keeps each tracked exception's issue current. Exceptions never dismiss an
+      # alert; when the linked issue is closed while the finding persists, a new
+      # issue is filed so the work stays tracked.
+      - name: Follow up on tracked exceptions
+        shell: bash
+        run: |
+            set -euo pipefail
+            if [[ ! -f exceptions.json ]]; then
+              echo "No exceptions status in the artifact; nothing to follow up."
+              exit 0
+            fi
+            if ! jq -e 'type == "array"' exceptions.json > /dev/null; then
+              echo "::error::exceptions.json is not a JSON array. The exception status step produced a malformed artifact."
+              exit 1
+            fi
+
+            CHECK_DATE=$(date -u '+%Y-%m-%d')
+            while IFS= read -r entry; do
+            RULE_ID=$(echo "$entry" | jq -r '.Rule')
+            ALERT_PATH=$(echo "$entry" | jq -r '.Path')
+            ISSUE=$(echo "$entry" | jq -r '.Issue')
+            EXCEPTION_OWNER=$(echo "$entry" | jq -r '.Owner')
+            EXPIRES=$(echo "$entry" | jq -r '.Expires')
+            DAYS_LEFT=$(echo "$entry" | jq -r '.DaysLeft // "unknown"')
+            ALERT_OPEN=$(echo "$entry" | jq -r '.AlertOpen')
+            ALERT_URL=$(echo "$entry" | jq -r '.AlertUrl // ""')
+            STATUS_MARKER="automation:code-scanning-exception-status:${RULE_ID}:${ALERT_PATH}"
+
+            STATE=$(gh issue view "${ISSUE}" --repo "${OWNER}/${REPO}" --json state --jq '.state' 2>/dev/null || echo "MISSING")
+
+            if [[ "$STATE" == "OPEN" ]]; then
+              if [[ "$ALERT_OPEN" == "true" ]]; then
+                ALERT_STATE="still open${ALERT_URL:+ (${ALERT_URL})}"
+              else
+                ALERT_STATE="no longer open on \`main\`; remove the exception entry"
+              fi
+              STATUS_BODY=$(cat <<EOF
+            <!-- ${STATUS_MARKER} -->
+            ### Tracked code-scanning exception status
+
+            | Field | Value |
+            |-------|-------|
+            | Rule | \`${RULE_ID}\` |
+            | Path | \`${ALERT_PATH}\` |
+            | Owner | ${EXCEPTION_OWNER} |
+            | Expires | ${EXPIRES} |
+            | Days left | ${DAYS_LEFT} |
+            | Alert | ${ALERT_STATE} |
+
+            Updated ${CHECK_DATE} by the weekly code-scanning workflow. The alert stays open while it is excused; see the [code-scanning alert lifecycle](${LIFECYCLE_URL}).
+            EOF
+              )
+              COMMENT_ID=$(gh api "repos/${OWNER}/${REPO}/issues/${ISSUE}/comments" --paginate \
+                | jq -s -r --arg marker "<!-- ${STATUS_MARKER} -->" '[.[][] | select(.body | contains($marker)) | .id][0] // empty')
+              if [[ -n "$COMMENT_ID" ]]; then
+                gh api -X PATCH "repos/${OWNER}/${REPO}/issues/comments/${COMMENT_ID}" -f body="${STATUS_BODY}" > /dev/null
+              else
+                gh issue comment "${ISSUE}" --repo "${OWNER}/${REPO}" --body "${STATUS_BODY}"
+              fi
+            elif [[ "$ALERT_OPEN" == "true" ]]; then
+              MARKER="automation:code-scanning-exception:${RULE_ID}:${ALERT_PATH}"
+              existing=$(gh issue list \
+                --repo "${OWNER}/${REPO}" \
+                --search "\"${MARKER}\" in:body" \
+                --state open --json number --jq '.[0].number // empty')
+              FOLLOW_UP_BODY=$(cat <<EOF
+            <!-- ${MARKER} -->
+            ## Tracked exception outlived its issue
+
+            The tracked exception for \`${RULE_ID}\` in \`${ALERT_PATH}\` links issue #${ISSUE}, which is no longer open, but the alert is still open${ALERT_URL:+: ${ALERT_URL}}.
+
+            **Owner:** ${EXCEPTION_OWNER}
+            **Exception expires:** ${EXPIRES}
+
+            ### Action Required
+            - [ ] Fix the finding in code or configuration and remove the exception entry, or
+            - [ ] Renew the exception through review with this issue as its tracking issue
+
+            See the [code-scanning alert lifecycle](${LIFECYCLE_URL}).
+            EOF
+              )
+              if [[ -z "$existing" ]]; then
+                gh issue create \
+                  --repo "${OWNER}/${REPO}" \
+                  --title "[Security][Exception] ${RULE_ID} still detected in ${ALERT_PATH}" \
+                  --label "security,automated,code-scanning" \
+                  --body "${FOLLOW_UP_BODY}"
+              else
+                gh issue comment "${existing}" \
+                  --repo "${OWNER}/${REPO}" \
+                  --body "Weekly scan update: the alert is still open as of ${CHECK_DATE}."
+              fi
+            else
+              echo "Exception ${RULE_ID} in ${ALERT_PATH}: issue #${ISSUE} is ${STATE} and the alert is no longer open."
+            fi
+            done < <(jq -c '.[]' exceptions.json)

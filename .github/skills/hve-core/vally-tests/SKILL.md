@@ -47,7 +47,7 @@ Do not invoke this skill to:
 Each invocation follows the same six-step pipeline:
 
 1. **Artifact-kind detection.** Resolve the kind from the artifact path or the corpus row's `kind` column. Supported kinds: `prompt`, `instructions`, `agent`, `skill`. Reject unknown kinds with a refusal block.
-2. **Reference lookup.** Load the matching reference file from `references/` and select the check or checks the stimulus exercises.
+2. **Reference lookup.** Load the matching reference file from `references/` and select the check or checks the stimulus exercises. Stage the artifact under test in the stimulus's `agent_environment` so the agent can read what the prompt names.
 3. **Grader selection.** Use `references/grader-catalog.md` as the authoritative selection surface. Pick the registered Vally grader family that directly observes the expected behavior and follow its stimulus-shape guidance.
 4. **Robustness check.** Apply `references/grader-robustness.md`. Confirm the stimulus stages every file whose wording the grader asserts, that the pattern constrains order and proximity only where those are the behavior under test, that a compliant agent phrasing the behavior differently still passes, and that no positive grader passes on the prompt text alone. Verify the pattern offline against answers that must pass and answers that must still fail before appending.
 5. **Safety self-check.** Run a safety self-check against the refusal taxonomy regex set. Refusing here is the correct outcome for any stimulus that matches a refusal category.

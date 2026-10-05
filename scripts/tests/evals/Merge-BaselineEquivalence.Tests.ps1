@@ -268,27 +268,29 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
         $script:Caller = Get-Content (Join-Path $PSScriptRoot '../../../.github/workflows/pr-validation.yml') -Raw | ConvertFrom-Yaml
     }
 
-    It 'passes immutable PR revisions with an explicit dispatch fallback' {
+    It 'passes the aggregate immutable range-or-full contract' {
         $inputs = $script:Caller.jobs['eval-validation'].with
-        $inputs['merge-ref'] | Should -BeExactly '${{ github.event_name == ''pull_request'' && github.sha || '''' }}'
-        $inputs['head-ref'] | Should -BeExactly '${{ github.event.pull_request.head.sha || github.sha }}'
-        $inputs.ContainsKey('base-branch') | Should -BeFalse
-        ($inputs.Values -join "`n") | Should -Not -Match 'pull_request\.base\.sha'
-        $script:EvalWorkflow.on.workflow_call.inputs['head-ref'].required | Should -BeTrue
-        $script:EvalWorkflow.on.workflow_call.inputs['base-ref'].default | Should -Be 'origin/main'
-        $script:EvalWorkflow.on.workflow_call.inputs['merge-ref'].required | Should -BeFalse
-        $script:EvalWorkflow.on.workflow_call.inputs['merge-ref'].default | Should -BeExactly ''
+        $inputs['change-mode'] | Should -BeExactly '${{ needs.change-range.outputs.mode }}'
+        $inputs['base-sha'] | Should -BeExactly '${{ needs.change-range.outputs.base-sha }}'
+        $inputs['head-sha'] | Should -BeExactly '${{ needs.change-range.outputs.head-sha }}'
+        @($script:Caller.jobs['eval-validation'].needs) | Should -Contain 'change-range'
+        foreach ($legacyInput in @('base-ref', 'head-ref', 'merge-ref')) {
+            $inputs.ContainsKey($legacyInput) | Should -BeFalse
+            $script:EvalWorkflow.on.workflow_call.inputs.ContainsKey($legacyInput) | Should -BeFalse
+        }
+        $script:EvalWorkflow.on.workflow_call.inputs['change-mode'].default | Should -Be 'full'
     }
 
     It 'generates and uploads exactly one canonical comparison before eligibility' {
         $steps = $script:EvalWorkflow.jobs['eval-validation'].steps
         $generation = @($steps | Where-Object { $_.run -match 'Get-EvalChangeSet.ps1' })
         $generation | Should -HaveCount 1
-        $generation[0].run | Should -Match '-BaseRef \$env:INPUT_BASE_REF -HeadRef \$env:INPUT_HEAD_REF'
-        $generation[0].run | Should -Match 'if \(\$env:INPUT_MERGE_REF\)[\s\S]+-MergeRef \$env:INPUT_MERGE_REF -HeadRef \$env:INPUT_HEAD_REF'
+        $generation[0]['if'] | Should -BeExactly "inputs.change-mode == 'range'"
+        $generation[0].run | Should -Match '-BaseRef \$env:INPUT_BASE_SHA -HeadRef \$env:INPUT_HEAD_SHA'
         $generation[0].run | Should -Match 'if \(\$LASTEXITCODE -ne 0\) \{ throw'
         $upload = @($steps | Where-Object { $_.with.name -eq 'eval-change-set' })
         $upload | Should -HaveCount 1
+        $upload[0]['if'] | Should -BeExactly "inputs.change-mode == 'range'"
         $upload[0].with.path | Should -Be 'logs/eval-change-set.json'
         $upload[0].with['if-no-files-found'] | Should -Be 'error'
         $detect = $steps | Where-Object { $_.id -eq 'detect' }
@@ -303,6 +305,7 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
         $moderationSteps = $script:EvalWorkflow.jobs['content-moderation'].steps
         $download = $moderationSteps | Where-Object { $_.with.name -eq 'eval-change-set' }
         $artifact = $moderationSteps | Where-Object { $_.id -eq 'artifact-manifest' }
+        $download.if | Should -BeExactly "inputs.change-mode == 'range'"
         $moderationSteps.IndexOf($download) | Should -BeLessThan $moderationSteps.IndexOf($artifact)
         $artifact.run | Should -Match '-ChangeSetPath logs/eval-change-set.json'
         $artifact.run | Should -Match 'if \(\$LASTEXITCODE -ne 0\) \{ throw'
@@ -323,11 +326,12 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
                 Should -Match "needs\.eval-validation\.outputs\.eval-relevant == 'true'"
         }
         $detect = $script:EvalWorkflow.jobs['eval-validation'].steps | Where-Object { $_.id -eq 'detect' }
+        $detect.run | Should -Match "INPUT_CHANGE_MODE -eq 'full'"
         $detect.run | Should -Match "INPUT_CHANGED_FILES_ONLY -ne 'true'"
         $detect.run | Should -Match '\$relevant = \$true'
         $checkouts = @($script:EvalWorkflow.jobs['eval-validation'].steps | Where-Object { $_.uses -like 'actions/checkout@*' })
         $checkouts[0].with['fetch-depth'] | Should -Be 0
-        $checkouts[0].with.ContainsKey('ref') | Should -BeFalse
+        $checkouts[0].with['ref'] | Should -BeExactly '${{ github.sha }}'
     }
 
     It 'keeps baseline equivalence out of ordinary eval dispatch' {
@@ -422,7 +426,8 @@ Describe 'Eval validation workflow contract' -Tag 'Unit' {
         foreach ($jobName in @('agent-plan', 'eval-execute', 'equivalence-execute', 'equivalence-fan-in', 'eval-fan-in')) {
             $condition = [string]$workflow.jobs[$jobName]['if']
             $condition | Should -Match "github.event_name == 'workflow_dispatch'"
-            $condition | Should -Match "github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false"
+            $condition | Should -Match ([regex]::Escape("github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository"))
+            $condition | Should -Not -Match 'head\.repo\.fork'
         }
     }
 

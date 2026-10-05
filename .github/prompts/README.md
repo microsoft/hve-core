@@ -2,7 +2,7 @@
 title: GitHub Copilot Prompts
 description: Coaching and guidance prompts for specific development tasks that provide step-by-step assistance and context-aware support
 author: Edge AI Team
-ms.date: 2026-09-28
+ms.date: 2026-10-03
 ms.topic: hub-page
 estimated_reading_time: 3
 keywords:
@@ -54,7 +54,7 @@ Use `/rpi-research`, `/rpi-plan`, `/rpi-implement`, or `/rpi-review` when you ne
 * **[Vally Test Write](./hve-core/vally-test-write.prompt.md)** - Author Vally conformance test stimuli for an existing prompt, instructions, agent, or skill
 * **[Evals Import](./hve-core/evals-import.prompt.md)** - Import a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe
 
-Use the `hve-builder` skill to create, improve, refactor, review, or validate prompt-engineering artifacts. The retained `prompt-builder`, `prompt-analyze`, and `prompt-refactor` skills are compatibility aliases that route legacy requests to `hve-builder`; they are not prompt files or independent lifecycle owners. Vally conformance authoring remains owned by `Vally Test Author` and the `vally-tests` skill.
+Use the `hve-builder` skill to create, improve, refactor, review, or validate prompt-engineering artifacts. Vally conformance authoring remains owned by `Vally Test Author` and the `vally-tests` skill.
 
 ### Backlog & Work Item Management
 

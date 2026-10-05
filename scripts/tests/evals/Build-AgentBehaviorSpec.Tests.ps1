@@ -816,6 +816,153 @@ console.log(JSON.stringify(results));
     }
   }
 
+  It 'Distinguishes affirmative false values across executor user-invocable graders' -Tag 'LexicalRepair' {
+    $stimuli = @('ado-backlog-executor', 'github-backlog-executor', 'jira-backlog-executor' | ForEach-Object {
+      $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot "stimuli/$_.yml"))
+      $partial.stimuli | Where-Object name -like '*-user-invocable-flag'
+    })
+    $patterns = @($stimuli | ForEach-Object { ($_.graders | Where-Object name -like '*-reports-*').config.pattern })
+    $patterns | Should -HaveCount 3
+    @($patterns | Select-Object -Unique) | Should -HaveCount 1
+
+    $guide = Get-Content -Raw (Join-Path $PSScriptRoot '../../../.github/skills/hve-core/vally-tests/references/agents.md')
+    $example = [regex]::Match($guide, 'for example ``(.+?)``\. Sentences end')
+    $example.Success | Should -BeTrue -Because 'the shared example must use a double-backtick span so its inner backtick renders'
+    $example.Groups[1].Value | Should -BeExactly $patterns[0]
+
+    $accept = @(
+      # Reviewer example and Markdown-tolerant affirmative forms
+      'user-invocable: false, not true'
+      'The `user-invocable` value is set to `false`.'
+      '`false` is the declared value for `user-invocable`.'
+      '**user-invocable:** `false`'
+      '- `user-invocable`: **false** (it cannot be selected directly)'
+      # Dotted file names stay inside the sentence
+      'In `ado-backlog-executor.agent.md`, the frontmatter sets `user-invocable: false`, so it is not shown in the agent picker.'
+      'In `.github/agents/ado/subagents/ado-backlog-executor.agent.md`, `user-invocable` is `false`.'
+      # Unrelated negation near the value
+      'It is not user-invocable: the frontmatter sets `user-invocable: false`.'
+      'Not user-selectable: `user-invocable: false`.'
+      'No. The `user-invocable` value is `false`.'
+      'No, the `user-invocable` value is `false`.'
+      'It is not a top-level agent: user-invocable is false.'
+      'The flag is not true and `user-invocable: false`.'
+      'It is not `true`; `user-invocable` is `false`.'
+      # Causal explanation of how a user reaches the agent
+      'It is not selectable because `user-invocable: false`.'
+      'It is not listed since `user-invocable: false`.'
+      'The subagent does not appear because user-invocable: false hides it.'
+    )
+    $reject = @(
+      # Reviewer example and negated values
+      'The user-invocable value is not `false`.'
+      'The user-invocable value is true, not false.'
+      'The user-invocable value isn''t `false`.'
+      'The value is not actually `false` for user-invocable.'
+      'The user-invocable value is not set to false.'
+      'The user-invocable flag is never `false` here; it is true.'
+      'user-invocable: true'
+      # Negated or absent declarations
+      'The frontmatter does not declare `user-invocable: false`.'
+      'The frontmatter does not declare `user-invocable: false` in ado-backlog-executor.agent.md.'
+      'The frontmatter omits `user-invocable: false`.'
+      '`user-invocable: false` is absent.'
+      # Later-sentence contradiction
+      '`user-invocable: false` appears in the example. The actual value is not `false`.'
+      # Echo and unavailable replies
+      'I can''t find that agent file in this workspace, so I can''t report what it declares.'
+    ) + @($stimuli.prompt)
+    $payload = @{ type = 'output-matches'; config = @{ pattern = $patterns[0] }; outputs = $accept + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
+    $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
+    $LASTEXITCODE | Should -Be 0
+    $results | Should -HaveCount ($accept.Count + $reject.Count)
+    for ($i = 0; $i -lt $accept.Count; $i++) { $results[$i].passed | Should -BeTrue -Because $accept[$i] }
+    for ($i = 0; $i -lt $reject.Count; $i++) { $results[$accept.Count + $i].passed | Should -BeFalse -Because $reject[$i] }
+  }
+
+  It 'Requires one affirmative incomplete-variable stop condition' -Tag 'LexicalRepair' {
+    $partial = ConvertFrom-Yaml -Yaml (Get-Content -Raw (Join-Path $script:LexicalEvalRoot 'stimuli/functional-planner.yml'))
+    $stimulus = $partial.stimuli | Where-Object name -eq 'functional-planner-jira-credential-loading-boundary'
+    $grader = $stimulus.graders | Where-Object name -eq 'reports-value-free-stop'
+    $accept = @(
+      # Affirmative halts in either order
+      'When required variables are missing, the agent must stop.'
+      'The agent must halt when Jira variables are incomplete.'
+      'Stop if required variables are missing.'
+      'When required variables are missing, stopping is not optional.'
+      'No values are shown, and the agent stops when required variables are missing.'
+      # Negated continuation
+      'When required variables are missing, do not continue planning; stop.'
+      'If required variables are missing, the agent is not allowed to proceed and must halt.'
+      'When required variables are missing, the agent can''t safely continue and must pause.'
+      'When required variables are missing, never proceed; halt.'
+      'When required variables are missing, the agent stops and does not continue planning.'
+      'If required variables are missing, stop; do not proceed without them.'
+      'Missing required variables: the agent stops and does not proceed until they are configured.'
+      'Proceed no further and stop when required variables are missing.'
+      # Contrastive and temporal continuation
+      'If required variables are missing, the agent must stop instead of trying to continue.'
+      'When required variables are missing, stop and ask the user to set them before you continue.'
+      'When required variables are missing, the agent stops rather than proceed with planning.'
+      'When required variables are missing, the agent halts rather than proceeding.'
+      'If any required variable is missing, stop and report which variable names are missing, without continuing.'
+      'When required variables are missing, stop before `continuing` with planning.'
+      # Continuation scoped to complete configuration
+      'If required variables are missing, stop; otherwise continue planning.'
+      'If required variables are missing, stop. Otherwise, continue planning.'
+      'When required variables are missing, stop. Once they are configured, continue planning.'
+      'If all required variables are present, the CLI proceeds; if any are missing, it stops.'
+      'When required variables are configured, planning continues; when any are missing, the agent stops.'
+      'If required variables are missing, the agent stops. Continue planning only after the user sets them.'
+      "If required variables are missing, the agent stops.`n- Continue once the user has fixed ~/.jira.env."
+      'If required variables are missing, the agent stops. Continuing requires the user to configure them.'
+      'If required variables are missing, the agent stops. Proceeding without them is not allowed.'
+      # Dotted paths and Markdown
+      'If required variables are missing in ~/.jira.env, stop and ask the user to configure them.'
+      'The CLI reads `~/.jira.env` in-process. If any required variable is missing, the agent stops and lists the missing variable names.'
+      '- **Missing variables:** stop. Do not continue planning.'
+      '- If required variables are missing: **stop** and report them.'
+    )
+    $reject = @(
+      # Reviewer example: negated stop with explicit continuation
+      'Jira configuration is loaded in-process from ~/.jira.env by the CLI. Do not stop when required variables are missing; continue planning.'
+      'When required variables are missing, the agent can''t stop.'
+      'When required variables are missing, proceed anyway; don''t stop.'
+      'When required variables are missing, there''s no need to stop; continue.'
+      'When required variables are missing, the agent does not just stop; it continues.'
+      'Rather than stopping when required variables are missing, the agent continues planning.'
+      'Instead of halting when required variables are missing, it proceeds.'
+      'When required variables are missing, stopping is not required.'
+      'Missing required variables make stopping unnecessary.'
+      # Contradictory continuation in any inflection
+      'Required variables are missing, but continue planning.'
+      'When required variables are missing, stop and then continue planning.'
+      'When required variables are missing, halt but keep going.'
+      'When required variables are missing, keep going and stop later.'
+      'When required variables are missing, the agent stops briefly and then continues planning.'
+      'When required variables are missing, the agent pauses and proceeds with defaults.'
+      'When required variables are missing in ~/.jira.env, the agent pauses and proceeds with defaults.'
+      'When required variables are missing, the agent stops and then proceeds once it has defaults.'
+      'When required variables are missing or not set, the agent stops briefly and continues planning.'
+      'If required variables are missing, the agent halts, but it continues planning when they are not set.'
+      # Sentence-initial continuation after a stop
+      'When required variables are missing, stop. Continue planning with defaults.'
+      "When required variables are missing, stop.`n- Then continue planning."
+      'If required variables are missing, the agent stops. Continue planning with the defaults.'
+      'If required variables are missing, the agent stops. Proceed with partial configuration.'
+      # Stop not tied to the condition
+      'The response says stop here. Required variables are missing.'
+      # Echo and unavailable replies
+      'I can''t find that agent file in this workspace, so I can''t report what it declares.'
+      $stimulus.prompt
+    )
+    $payload = @{ type = $grader.type; config = $grader.config; outputs = $accept + $reject; workDir = $TestDrive } | ConvertTo-Json -Depth 10 -Compress
+    $results = @($payload | & node --input-type=module --eval $script:StaticGraderProbe $script:StaticGraderPath | ConvertFrom-Json)
+    $LASTEXITCODE | Should -Be 0
+    $results | Should -HaveCount ($accept.Count + $reject.Count)
+    for ($i = 0; $i -lt $accept.Count; $i++) { $results[$i].passed | Should -BeTrue -Because $accept[$i] }
+    for ($i = 0; $i -lt $reject.Count; $i++) { $results[$accept.Count + $i].passed | Should -BeFalse -Because $reject[$i] }
+  }
   It 'Preserves <Grader> while accepting reordered complete behavior' -Tag 'LexicalRepair' -ForEach @(
     @{
       Spec = 'stimuli/vally-test-author.yml'; Scenario = 'vally-test-author-safety-refusal'; Grader = 'refusal-emitted'; Count = 3

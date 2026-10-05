@@ -6,7 +6,7 @@ compatibility: 'Requires Python 3.11+ and a Mural OAuth app'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-08-13"
+  last_updated: "2026-10-02"
 ---
 
 # Mural Skill
@@ -378,6 +378,13 @@ The CLI returns BSD `sysexits.h` codes so callers can distinguish failure modes 
 Use `--quiet` to silence informational stderr and `--json` to force JSON output
 on stdout regardless of TTY detection. Color follows `--color`, then
 `NO_COLOR`, then `FORCE_COLOR`, then TTY autodetection.
+
+When color is on, human-readable stderr messages are styled by severity:
+errors in bold red, warnings in yellow, informational messages in cyan, and
+debug messages dimmed. Messages are redacted before styling. Color never
+applies to stdout (records, tables, and JSON), to JSON error envelopes, or to
+logger records, and `--json` turns it off. On Windows, color applies only when
+the console can process ANSI sequences; otherwise output stays plain.
 
 ## Troubleshooting
 

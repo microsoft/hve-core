@@ -382,6 +382,15 @@ class _RecordingBackend:
         self.deleted.append(key)
 
 
+def test_known_credential_keys_match_env_constants(mural_module: Any) -> None:
+    """The literal credential key names stay aligned with the ENV_* constants."""
+    assert mural_module._KNOWN_CREDENTIAL_KEYS[:2] == (
+        mural_module.ENV_CLIENT_ID,
+        mural_module.ENV_CLIENT_SECRET,
+    )
+    assert mural_module._KNOWN_CREDENTIAL_KEYS[2] == "MURAL_REFRESH_TOKEN"
+
+
 def test_logout_removed_keys_are_real_credential_key_names(
     mural_module: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:

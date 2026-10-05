@@ -1,10 +1,10 @@
 {
   "@context": "https://openvex.dev/ns/v0.2.0",
-  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-10-01-v6",
+  "@id": "https://github.com/microsoft/hve-core/security/vex/2026-10-03-v7",
   "author": "Microsoft HVE Core Maintainers",
-  "timestamp": "2026-10-01T21:39:41.724Z",
-  "last_updated": "2026-10-01T21:39:41.724Z",
-  "version": 6,
+  "timestamp": "2026-10-03T01:26:58.000Z",
+  "last_updated": "2026-10-03T01:26:58.000Z",
+  "version": 7,
   "tooling": "Maintained via the hve-core SSSC Reviewer VEX assessment capability (AI-assisted drafting) with human review and merge; published and Sigstore-attested by the microsoft/hve-core/.github/workflows/vex-attest.yml reusable workflow.",
   "statements": [
     {
@@ -750,6 +750,66 @@
       "impact_statement": "The committed environment resolves webpack-dev-middleware 7.4.6, the same as the 7.4.6 release where this issue was fixed. webpack-dev-middleware is a transitive dependency of webpack-dev-server through @docusaurus/core and runs only in the local documentation development server; the published site is static output. The documentation site's package manifest overrides webpack-dev-middleware to exactly 7.4.6, and the committed package-lock.json resolves that version for clean installs.",
       "status_notes": "OSV range and fix evidence: https://osv.dev/GHSA-g84c-rxfj-3j2c. Pin evidence: docs/docusaurus/package.json overrides webpack-dev-middleware to 7.4.6; docs/docusaurus/package-lock.json resolves webpack-dev-middleware 7.4.6. Remediation tracked in https://github.com/microsoft/hve-core/issues/3095.",
       "timestamp": "2026-10-01T21:39:41.724Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-vfj7-8cjw-p6xm",
+        "@id": "https://osv.dev/GHSA-vfj7-8cjw-p6xm",
+        "aliases": [
+          "CVE-2026-93687"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/braces@3.0.3",
+              "identifiers": {
+                "purl": "pkg:npm/braces@3.0.3"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_cannot_be_controlled_by_adversary",
+      "impact_statement": "braces 3.0.3 is a development and build-time dependency only. It expands glob patterns, never file contents or file names, and every pattern it can receive is authored in this repository. In the root toolchain it arrives through markdownlint-cli2, which matches files with the main micromatch function; that function compiles patterns with picomatch and never calls braces. In the documentation toolchain, fast-glob expands brace patterns that Docusaurus derives from the site configuration's static directories, and chokidar expands the configured watch paths only while the local development server runs. A pull request that edits those patterns can at most fail its own validation job. The published site is static output and performs no glob expansion at request time. No patched release exists, so the finding is tracked rather than upgraded away.",
+      "status_notes": "OSV entry: https://osv.dev/GHSA-vfj7-8cjw-p6xm. Dependency paths: package-lock.json resolves braces 3.0.3 as a dev dependency through markdownlint-cli2 0.23.3 and micromatch 4.0.8; docs/docusaurus/package-lock.json resolves braces 3.0.3 through @docusaurus/core 3.10.2 via chokidar 3.6.0 and micromatch 4.0.8 (used by fast-glob, @docusaurus/utils, and http-proxy-middleware). Call sites: markdownlint-cli2.mjs filterByGlobs calls micromatch(files, globs); micromatch/index.js invokes braces only from micromatch.parse, micromatch.braces, and micromatch.braceExpand; fast-glob/out/utils/pattern.js expandBraceExpansion calls micromatch.braces; chokidar/index.js calls braces.expand on watched paths; @docusaurus/utils globUtils.js createMatcher uses micromatch.makeRe, which delegates to picomatch. Every parent package is at its latest release. Upstream bump tracked in https://github.com/microsoft/hve-core/issues/3109; Scorecard alert #16 stays open until it is fixed.",
+      "timestamp": "2026-10-03T01:26:58.000Z"
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-ch52-4w7c-c8xp",
+        "@id": "https://osv.dev/GHSA-ch52-4w7c-c8xp",
+        "aliases": [
+          "CVE-2026-93748"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:github/microsoft/hve-core@v3.2.2",
+          "identifiers": {
+            "purl": "pkg:github/microsoft/hve-core@v3.2.2"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/http-cache-semantics@4.2.0",
+              "identifiers": {
+                "purl": "pkg:npm/http-cache-semantics@4.2.0"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "http-cache-semantics 4.2.0 is installed only in the documentation toolchain, where its sole consumer is cacheable-request, which got 12.6.1 creates only when a request sets the cache option. The only got caller in the tree is package-json 8.1.1, reached through the Docusaurus update notifier, and it builds its request options from headers and agents alone, so got's default of no cache applies and the cache-policy code is never executed. Nothing in the repository or the published static site uses this package to cache HTTP responses for multiple users. No patched release exists, so the finding is tracked rather than upgraded away.",
+      "status_notes": "OSV entry: https://osv.dev/GHSA-ch52-4w7c-c8xp. Dependency path: docs/docusaurus/package-lock.json resolves http-cache-semantics 4.2.0 through @docusaurus/core 3.10.2, update-notifier 6.0.2, latest-version 7.0.0, package-json 8.1.1, got 12.6.1, and cacheable-request 10.2.14; no other package depends on cacheable-request or http-cache-semantics. Execute-path evidence: got/dist/source/core/options.js defaults cache to undefined; got/dist/source/core/index.js selects _createCacheableRequest only when options.cache is set; package-json/index.js passes gotOptions containing only headers and agent. Every parent package is at its latest release. Upstream bump tracked in https://github.com/microsoft/hve-core/issues/3109; Scorecard alert #16 stays open until it is fixed.",
+      "timestamp": "2026-10-03T01:26:58.000Z"
     }
   ]
 }
