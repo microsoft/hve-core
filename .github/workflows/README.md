@@ -208,15 +208,9 @@ be restored only before publication. The producer has no default
 a tag or converts a published release back to draft. Bounded discovery is a
 fail-closed safety control, not a draft-visibility guarantee.
 
-| Registration                               | Repository contract                                    |
-|--------------------------------------------|--------------------------------------------------------|
-| `microsoft/hve-core`                       | Ref-less development-tip registration for `main`       |
-| `microsoft/hve-core#release/prerelease`    | Moving registration for the reviewed PreRelease branch |
-| `microsoft/hve-core#release/stable`        | Moving registration for the reviewed Stable branch     |
-| `microsoft/hve-core#prerelease-v<version>` | Immutable exact PreRelease registration                |
-| `microsoft/hve-core#v<version>`            | Immutable exact Stable registration                    |
+The Copilot CLI plugin has one registration, `microsoft/hve-core`, which tracks `main`. Release channels apply to the VSIX only; there are no release-channel plugin registrations.
 
-Publication does not synchronize release metadata or changelog history back to `main`. An explicit marketplace refresh and plugin update are required for ref-less main, which has no release gate, SBOM, or attestation. Release-channel assets remain release-gated, SBOM-covered, and attested.
+Publication does not synchronize release metadata or changelog history back to `main`. An explicit marketplace refresh and plugin update are required for the `main` registration, which has no release gate or release attestation. Each push to `main` publishes an unattested dependency SBOM, described in [Continuous Main SBOM](../../docs/contributing/release-process.md#continuous-main-sbom). Release-channel VSIX assets remain release-gated, SBOM-covered, and attested.
 
 Both release channels preserve one VSIX, its SPDX, Sigstore, and in-toto
 sidecars, `dependencies.spdx.json`, provenance verification, and Azure OIDC
@@ -269,7 +263,7 @@ release-state decision. Odd/even minor parity remains repository policy
 aligned with VS Code Marketplace guidance and behavior, rather than a
 requirement of `MAJOR.MINOR.PATCH` syntax.
 
-Release branches and exact tags retain the repository-root plugin source from their selected snapshots. Their reviewed, release-gated VSIX assets remain SBOM-covered, attested, and immutable. The ref-less main catalog instead sources current root `plugin.json` and canonical `.github` artifacts from `main` and has no published-release assurance.
+Reviewed, release-gated VSIX assets from release branches and exact tags remain SBOM-covered, attested, and immutable. The Copilot CLI plugin registration instead sources current root `plugin.json` and canonical `.github` artifacts from `main` and has no published-release assurance.
 
 Final publication in `release-vsix-publish.yml` mints a release GitHub App
 token and atomically runs the channel-specific `gh release edit` command with

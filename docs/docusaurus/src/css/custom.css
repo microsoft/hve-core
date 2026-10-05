@@ -348,6 +348,7 @@ html {
 
 .menu__list-item-collapsible > .menu__link {
   font-weight: 400;
+  text-align: start;
 }
 
 /* Move caret/chevron to left side of label */
@@ -377,10 +378,6 @@ html {
   margin: -4px;
   padding: 0 4px;
   box-sizing: border-box;
-}
-
-.menu__link--sublist {
-  padding-left: 4px;
 }
 
 /* Child items indented */
@@ -430,6 +427,11 @@ html {
   padding: 2px 0;
   font-size: 14px;
   color: var(--ifm-link-color);
+}
+
+/* Grouping crumbs with no landing page are plain text, not links. */
+span.breadcrumbs__link:not([aria-current]) {
+  color: var(--ifm-font-color-base);
 }
 
 /* Content area padding */

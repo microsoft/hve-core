@@ -1,9 +1,9 @@
 ---
 title: "Stage 4: Decomposition"
 description: Break product requirements into actionable work items and task hierarchies
-sidebar_position: 6
+sidebar_position: 5
 author: Microsoft
-ms.date: 2026-08-06
+ms.date: 2026-10-03
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
