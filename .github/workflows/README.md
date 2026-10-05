@@ -101,9 +101,9 @@ skipping it:
   advisory warning for the aggregate's changed-files caller, because staleness
   accrues with time rather than with the change. The weekly repository-wide run
   stays blocking.
-* Gitleaks scans every commit reachable from the checked-out commit, with the
-  same history and diff filters as its default scan, instead of every fetched
-  ref.
+* Gitleaks scans every commit reachable from the checked-out commit instead of
+  every fetched ref, keeping its default history and diff filters and adding
+  first-parent merge patches.
 
 Gitleaks passes `--diff-merges=first-parent` in both modes, so content that
 exists only in a merge commit, such as a conflict resolution, is scanned
