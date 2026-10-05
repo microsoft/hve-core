@@ -6,12 +6,12 @@ name: VEX Detection
 # this workflow only detects and reports.
 
 on:
-  # Run after a stable release publishes (re-check the just-released dependency set).
-  workflow_run:
-    workflows:
-      - 'Stable Release Pipeline'
+  # Re-check the dependency set of a stable release once it is public. The
+  # release app publishes drafts, so this event fires; the job guard skips
+  # PreReleases. The run checks out the released tag.
+  release:
     types:
-      - completed
+      - published
   # Weekly sweep on Tuesday, after the Monday Dependabot cadence has opened PRs.
   schedule:
     - cron: '0 8 * * 2'  # Tuesdays at 08:00 UTC
@@ -28,10 +28,9 @@ jobs:
   vex-detect:
     name: VEX Vulnerability Detection
     runs-on: ubuntu-24.04
-    # Skip runs triggered by a failed release pipeline.
     if: >-
-      github.event_name != 'workflow_run'
-      || github.event.workflow_run.conclusion == 'success'
+      github.event_name != 'release'
+      || (!github.event.release.prerelease && startsWith(github.event.release.tag_name, 'v'))
     permissions:
       contents: read   # read the repository and the VEX document
       issues: write    # file or update the detection issue

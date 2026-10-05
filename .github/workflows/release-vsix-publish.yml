@@ -732,3 +732,25 @@ jobs:
       version: ${{ needs.validate-release.outputs.version }}
     permissions:
       issues: write
+
+  # Scorecard grades the newest releases' signature and SBOM assets, which exist
+  # only once the release is public. Scorecard accepts published results only
+  # from default-branch runs, so this starts it there. GITHUB_TOKEN may start
+  # workflow_dispatch runs; the release app has no actions permission.
+  refresh-scorecard:
+    name: Refresh OpenSSF Scorecard
+    needs: [publish-release]
+    if: ${{ needs.publish-release.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write # start the Scorecard workflow on the default branch
+    steps:
+      - name: Start Scorecard on the default branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          gh workflow run scorecard.yml --ref "$DEFAULT_BRANCH" -R "$REPOSITORY"

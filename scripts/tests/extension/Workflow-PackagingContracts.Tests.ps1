@@ -2444,10 +2444,28 @@ Describe 'AI artifact portability gate contract' -Tag 'Unit' {
 }
 
 Describe 'Release workflow consumers and metadata' -Tag 'Unit' {
-    It 'Runs Scorecard after the consolidated post-tag producer' {
+    It 'Runs Scorecard on the default branch after the post-tag producer publishes' {
         $scorecard = Get-WorkflowDocument -Name 'scorecard.yml'
-        [string[]]@($scorecard['on']['workflow_run']['workflows']) |
-            Should -Be @('Release VSIX Publish')
+        $scorecard['on'].Contains('workflow_run') | Should -BeFalse
+        $scorecard['on'].Contains('workflow_dispatch') | Should -BeTrue
+
+        $producer = Get-WorkflowDocument -Name 'release-vsix-publish.yml'
+        $refresh = $producer['jobs']['refresh-scorecard']
+        @($refresh['needs']) | Should -Be @('publish-release')
+        [string]$refresh['if'] | Should -Match "needs\.publish-release\.result == 'success'"
+        $refresh['permissions'].Keys | Should -Be @('actions')
+        [string]$refresh['permissions']['actions'] | Should -BeExactly 'write'
+        $step = @($refresh['steps'])[0]
+        [string]$step['env']['GH_TOKEN'] | Should -BeExactly '${{ github.token }}'
+        [string]$step['env']['DEFAULT_BRANCH'] | Should -BeExactly '${{ github.event.repository.default_branch }}'
+        [string]$step['run'] | Should -Match 'gh workflow run scorecard\.yml --ref "\$DEFAULT_BRANCH"'
+    }
+
+    It 'Re-checks VEX status when a Stable release is published' {
+        $vex = Get-WorkflowDocument -Name 'vex-detect.yml'
+        $vex['on'].Contains('workflow_run') | Should -BeFalse
+        @($vex['on']['release']['types']) | Should -Be @('published')
+        [string]$vex['jobs']['vex-detect']['if'] | Should -Match "!github\.event\.release\.prerelease && startsWith\(github\.event\.release\.tag_name, 'v'\)"
     }
 
     It 'Uses the verified create-github-app-token version comment consistently' {
