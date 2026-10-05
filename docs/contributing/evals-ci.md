@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-10-01
+ms.date: 2026-10-04
 ms.topic: how-to
 keywords:
   - evals
@@ -235,17 +235,44 @@ change with scheduling.
 
 GitHub Actions does not expose repository secrets to workflows triggered by pull requests from forks. Without `COPILOT_GITHUB_TOKEN`, the `eval-execute` job cannot succeed.
 
-The pipeline clean-skips eval execution for fork PRs rather than failing the check:
+The credential boundary uses an allowlist at two layers. The `pr-validation.yml` caller passes the token only for manual dispatch and same-repository pull requests, and passes an empty value for merge groups, fork pull requests, and every other event:
+
+```yaml
+secrets:
+  copilot-github-token: ${{ (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) && secrets.COPILOT_GITHUB_TOKEN || '' }}
+```
+
+Each job in `eval-validation.yml` that uses the token, or needs a job that does, repeats the same-repository check in its condition, so the pipeline clean-skips eval execution for fork PRs rather than failing the check:
 
 ```yaml
 jobs:
   eval-execute:
-    if: needs.eval-validation.outputs.eval-relevant == 'true' && github.event.pull_request.head.repo.fork == false
+    if: >-
+      needs.eval-validation.outputs.eval-relevant == 'true' &&
+      needs.agent-plan.outputs.execution-enabled == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      github.event_name == 'workflow_dispatch')
 ```
+
+Compare the head repository's `full_name` with `github.repository` instead of using a `fork == false` check. GitHub expressions coerce both `null` and `false` to `0` before comparing, so a `fork == false` check passes when the head repository is missing, for example after a fork is deleted. The `full_name` comparison fails closed in that case.
+
+The `Eval credential boundary` tests in `scripts/tests/security/Test-MergeQueueWorkflowContract.Tests.ps1` evaluate both layers for trusted and untrusted events and fail when a token job lacks the check.
 
 The `eval-execute` job is also skipped for non-eval-relevant PRs (those that change only documentation or other non-AI-artifact paths) through the `eval-relevant` output gate, independent of the fork policy.
 
 The `eval-presence` and `eval-lint` jobs do run on fork PRs because they require no secrets. Structural problems with eval specs (missing coverage, schema violations, profanity in stimulus text) surface immediately. Eval execution itself runs only after a maintainer merges the fork branch into a trusted topic branch on the upstream repository.
+
+## Merge Groups and Full-Mode Validation
+
+The eval lane receives one change-range decision from `pr-validation.yml`. In range mode, it validates the exact resolved commits. Full mode occurs when the resolver cannot prove a range, so the lane validates everything it can without the token, and fails instead of skipping the steps that need a proven range.
+
+| Run                             | Content moderation                             | Agent-eval selection and execution                                                        |
+|---------------------------------|------------------------------------------------|-------------------------------------------------------------------------------------------|
+| Pull request or manual dispatch | Changed artifacts plus every eval spec         | Runs for eligible changes; dispatch resolves against `main` and needs commits ahead of it |
+| Merge group                     | Changed artifacts plus every eval spec         | Skipped; merge groups never receive `COPILOT_GITHUB_TOKEN`                                |
+| Any run in full mode            | Every tracked AI artifact plus every eval spec | Fails for eligible pull requests and manual dispatch; merge groups and forks still skip   |
+
+Merge groups run relevance, lint, and content moderation unprivileged. A full-mode failure in agent-eval selection means the change-range job could not verify a non-empty range. A manual dispatch from the `main` tip, or from a branch with no commits ahead of `main`, has no range to verify and always takes this path; dispatch from a branch with changes instead. Otherwise, investigate the change-range job before rerunning.
 
 ## Published Artifacts and the Transcript Boundary
 
