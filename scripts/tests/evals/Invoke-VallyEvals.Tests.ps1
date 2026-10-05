@@ -122,6 +122,34 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             @($result.recordIssues) | Should -HaveCount 0
         }
 
+        It 'Excludes zero-filled callCount 0 usage from token means' {
+            $runDir = Join-Path $script:WorkRoot 'run-tokens-callcount'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $records = @(
+                (@{ trajectory = @{ stimulus = @{ name = 's1' }; metrics = @{ wallTimeMs = 1; tokenUsage = @{ inputTokens = 1000; outputTokens = 40; cacheReadTokens = 600; callCount = 2 } } }; gradeResult = @{ passed = $true } } | ConvertTo-Json -Depth 6 -Compress),
+                (@{ trajectory = @{ stimulus = @{ name = 's2' }; metrics = @{ wallTimeMs = 1; tokenUsage = @{ inputTokens = 0; outputTokens = 0; cacheReadTokens = 0; callCount = 0 } } }; gradeResult = @{ passed = $true } } | ConvertTo-Json -Depth 6 -Compress)
+            )
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value $records -Encoding utf8
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir
+            $result.trials | Should -Be 2
+            $result.inputTokens | Should -Be 1000
+            $result.cacheReadTokens | Should -Be 600
+            $result.tokenTrials | Should -Be 1
+            @($result.recordIssues) | Should -HaveCount 0
+        }
+
+        It 'Reports no token trials when every record is zero-filled with callCount 0' {
+            $runDir = Join-Path $script:WorkRoot 'run-tokens-unmeasured'
+            New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+            $record = @{ trajectory = @{ stimulus = @{ name = 's1' }; metrics = @{ wallTimeMs = 1; tokenUsage = @{ inputTokens = 0; outputTokens = 0; cacheReadTokens = 0; callCount = 0 } } }; gradeResult = @{ passed = $true } } | ConvertTo-Json -Depth 6 -Compress
+            Set-Content -LiteralPath (Join-Path $runDir 'results.jsonl') -Value @($record) -Encoding utf8
+
+            $result = Read-VallyResultsJsonl -RunDir $runDir
+            $result.tokenTrials | Should -Be 0
+            $result.inputTokens | Should -Be 0
+        }
+
         It 'Treats a score above the configured threshold as passed even when gradeResult.passed is false' {
             $runDir = Join-Path $script:WorkRoot 'run-threshold'
             New-Item -ItemType Directory -Path $runDir -Force | Out-Null

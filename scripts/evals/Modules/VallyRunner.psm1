@@ -460,8 +460,10 @@ function Read-VallyResultsJsonl {
 
     Native token usage from `trajectory.metrics.tokenUsage` is summed across
     trials whose input and output token counts are finite and non-negative.
-    Trials without valid usage add nothing to the token totals and are not
-    counted in `tokenTrials`; they never affect pass, fail, or record issues.
+    A record whose `callCount` is present and zero carries Vally's zero-filled
+    default rather than measured usage, so it is treated as unmeasured. Trials
+    without valid usage add nothing to the token totals and are not counted in
+    `tokenTrials`; they never affect pass, fail, or record issues.
 
     .PARAMETER RunDir
     Directory returned by `Resolve-VallyRunDir`.
@@ -611,12 +613,13 @@ function Read-VallyResultsJsonl {
             $obj.trajectory.PSObject.Properties['metrics'] -and $obj.trajectory.metrics -and
             $obj.trajectory.metrics.PSObject.Properties['tokenUsage'] -and $obj.trajectory.metrics.tokenUsage) {
             $usage = $obj.trajectory.metrics.tokenUsage
+            $unmeasured = $usage.PSObject.Properties['callCount'] -and (& $readTokenCount $usage 'callCount') -eq 0
             $trialInputTokens = & $readTokenCount $usage 'inputTokens'
             $trialOutputTokens = & $readTokenCount $usage 'outputTokens'
             $trialCacheReadTokens = & $readTokenCount $usage 'cacheReadTokens'
             $cacheReadInvalid = $null -eq $trialCacheReadTokens -and
                 $usage.PSObject.Properties['cacheReadTokens'] -and $null -ne $usage.cacheReadTokens
-            if ($null -ne $trialInputTokens -and $null -ne $trialOutputTokens -and -not $cacheReadInvalid) {
+            if (-not $unmeasured -and $null -ne $trialInputTokens -and $null -ne $trialOutputTokens -and -not $cacheReadInvalid) {
                 $tokenTrials++
                 $inputTokens += $trialInputTokens
                 $outputTokens += $trialOutputTokens
