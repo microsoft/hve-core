@@ -5,6 +5,21 @@ name: ms.date Freshness Check
 on:
   workflow_call:
     inputs:
+      change-mode:
+        description: 'Use an exact immutable range or run full validation'
+        required: false
+        type: string
+        default: full
+      base-sha:
+        description: 'Immutable base commit used in range mode'
+        required: false
+        type: string
+        default: ''
+      head-sha:
+        description: 'Immutable head commit used in range mode'
+        required: false
+        type: string
+        default: ''
       staleness-threshold-days:
         description: 'Number of days before a document is considered stale'
         required: false
@@ -36,6 +51,19 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Verify resolved head commit
+        if: inputs.change-mode == 'range'
+        shell: pwsh
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+        run: |
+          $actualHeadSha = (git rev-parse HEAD).Trim()
+          if ($env:EXPECTED_HEAD_SHA -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$' -or $actualHeadSha -cne $env:EXPECTED_HEAD_SHA) {
+            Write-Output "::error::Checked-out commit $actualHeadSha does not match the resolved head commit."
+            exit 1
+          }
 
       - name: Create logs directory
         shell: pwsh
@@ -48,14 +76,24 @@ jobs:
       - name: Run ms.date freshness check
         shell: pwsh
         env:
+          INPUT_BASE_SHA: ${{ inputs.base-sha }}
+          INPUT_CHANGE_MODE: ${{ inputs.change-mode }}
           THRESHOLD_DAYS: ${{ inputs.staleness-threshold-days }}
           CHANGED_FILES_ONLY: ${{ inputs.changed-files-only }}
         run: |
           $params = @{
-              ThresholdDays = [int]$env:THRESHOLD_DAYS
+            ThresholdDays = [int]$env:THRESHOLD_DAYS
+          }
+          if ($env:INPUT_CHANGE_MODE -notin @('full', 'range')) { throw 'Unsupported change mode.' }
+          if ($env:CHANGED_FILES_ONLY -eq 'true' -and $env:INPUT_CHANGE_MODE -eq 'full') {
+            Write-Output '::warning::No verified change range; reporting repository-wide ms.date freshness as advisory.'
+            & scripts/linting/Invoke-MsDateFreshnessCheck.ps1 @params
+            exit 0
           }
           if ($env:CHANGED_FILES_ONLY -eq 'true') {
-              $params['ChangedFilesOnly'] = $true
+            if (-not $env:INPUT_BASE_SHA) { throw 'Range mode requires an immutable base commit ID.' }
+            $params['ChangedFilesOnly'] = $true
+            $params['BaseBranch'] = $env:INPUT_BASE_SHA
           }
           & scripts/linting/Invoke-MsDateFreshnessCheck.ps1 @params
         continue-on-error: ${{ inputs.soft-fail }}

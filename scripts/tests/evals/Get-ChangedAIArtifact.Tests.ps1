@@ -264,3 +264,40 @@ Describe 'AI artifact canonical input' -Tag 'Unit' {
         { Invoke-ChangedArtifactScan -ChangeSetPath (Join-Path $TestDrive 'missing.json') -RepoRoot $TestDrive } | Should -Throw
     }
 }
+
+Describe 'AI artifact full-scope input' -Tag 'Unit' {
+    BeforeAll {
+        $script:FullScopeRepo = Join-Path $TestDrive ('full-' + [Guid]::NewGuid())
+        $null = New-Item -ItemType Directory -Path (Join-Path $script:FullScopeRepo '.github/agents/core') -Force
+        $null = New-Item -ItemType Directory -Path (Join-Path $script:FullScopeRepo '.github/prompts/core') -Force
+        & git -C $script:FullScopeRepo init --quiet --initial-branch=main 2>&1 | Out-Null
+        & git -C $script:FullScopeRepo config user.email 'test@example.com' 2>&1 | Out-Null
+        & git -C $script:FullScopeRepo config user.name 'Test User' 2>&1 | Out-Null
+        & git -C $script:FullScopeRepo config commit.gpgsign false 2>&1 | Out-Null
+        Set-Content (Join-Path $script:FullScopeRepo '.github/agents/core/tracked.agent.md') 'agent'
+        Set-Content (Join-Path $script:FullScopeRepo '.github/prompts/core/tracked.prompt.md') 'prompt'
+        Set-Content (Join-Path $script:FullScopeRepo 'README.md') 'readme'
+        & git -C $script:FullScopeRepo add . 2>&1 | Out-Null
+        & git -C $script:FullScopeRepo commit --quiet -m 'tracked' 2>&1 | Out-Null
+        Set-Content (Join-Path $script:FullScopeRepo '.github/agents/core/untracked.agent.md') 'untracked'
+        $script:FullScopeHead = (& git -C $script:FullScopeRepo rev-parse HEAD).Trim()
+    }
+
+    It 'classifies every tracked artifact as added without a change set' {
+        $result = Invoke-ChangedArtifactScan -AllTracked -RepoRoot $script:FullScopeRepo
+
+        $result.baseRef | Should -BeNullOrEmpty
+        $result.headRef | Should -BeExactly $script:FullScopeHead
+        @($result.artifacts.path | Sort-Object) | Should -BeExactly @('.github/agents/core/tracked.agent.md', '.github/prompts/core/tracked.prompt.md')
+        @($result.artifacts.status | Sort-Object -Unique) | Should -BeExactly @('A')
+        @($result.affectedAgents) | Should -Contain 'tracked'
+    }
+
+    It 'rejects combining the full-scope option with a change set' {
+        $outFile = Join-Path $TestDrive 'exclusive.json'
+        & pwsh -NoProfile -File $script:ScriptPath -AllTracked -ChangeSetPath 'logs/eval-change-set.json' -OutFile $outFile -RepoRoot $script:FullScopeRepo *> $null
+
+        $LASTEXITCODE | Should -Not -Be 0
+        Test-Path -LiteralPath $outFile | Should -BeFalse
+    }
+}
