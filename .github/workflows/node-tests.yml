@@ -56,13 +56,11 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: ${{ github.sha }}
 
       - name: Verify resolved head commit
-        if: inputs.change-mode == 'range'
         shell: bash
         env:
-          EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+          EXPECTED_HEAD_SHA: ${{ inputs.change-mode == 'range' && inputs.head-sha || inputs.change-mode != 'range' && github.sha || '' }}
         run: |
           actual_head_sha="$(git rev-parse HEAD)"
           if [[ ! "${EXPECTED_HEAD_SHA}" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ || "${actual_head_sha}" != "${EXPECTED_HEAD_SHA}" ]]; then

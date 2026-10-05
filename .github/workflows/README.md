@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-10-04
+ms.date: 2026-10-05
 ms.topic: reference
 keywords:
   - github actions
@@ -85,10 +85,11 @@ check, or an event without a range rule, selects full mode with empty commit
 IDs. A manual dispatch from the default-branch tip, or from a branch with no
 commits ahead of it, therefore selects full mode rather than an empty range.
 
-Every range-capable reusable workflow checks out `github.sha`, the trusted
-event commit, instead of a caller-supplied ref. In range mode, each job then
-fails before it runs repository code unless `HEAD` equals the resolved head
-commit.
+Every range-capable reusable workflow runs `actions/checkout` with no `ref`
+or `repository`, so it checks out the trusted event commit (`github.sha`)
+instead of a caller-supplied ref. Each job then fails before it runs
+repository code unless `HEAD` equals the resolved head commit in range mode,
+or `github.sha` in full mode.
 
 Full mode runs each owning validation across its complete scope instead of
 skipping it:

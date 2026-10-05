@@ -637,10 +637,13 @@ jobs:
         $CheckoutStep = $Steps[$CheckoutIndex]
         $VerifyStep = $Steps[$CheckoutIndex + 1]
 
-        $CheckoutStep['with']['ref'] | Should -BeExactly '${{ github.sha }}'
+        # With no ref or repository, actions/checkout resolves the event's trusted commit (github.sha).
+        $CheckoutStep['with'].Contains('ref') | Should -BeFalse
+        $CheckoutStep['with'].Contains('repository') | Should -BeFalse
         $CheckoutStep['with']['persist-credentials'] | Should -BeFalse
-        $VerifyStep['if'] | Should -BeExactly "inputs.change-mode == 'range'"
-        $VerifyStep['env']['EXPECTED_HEAD_SHA'] | Should -BeExactly '${{ inputs.head-sha }}'
+        $VerifyStep.Contains('if') | Should -BeFalse
+        $VerifyStep['env']['EXPECTED_HEAD_SHA'] |
+            Should -BeExactly "`${{ inputs.change-mode == 'range' && inputs.head-sha || inputs.change-mode != 'range' && github.sha || '' }}"
         $VerifyStep.Contains('uses') | Should -BeFalse
         [string]$VerifyStep['run'] | Should -Match 'git rev-parse HEAD'
         [string]$VerifyStep['run'] | Should -Match 'exit 1'
