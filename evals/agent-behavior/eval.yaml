@@ -6416,13 +6416,21 @@ stimuli:
           if (!Array.isArray(input.trajectory.events)) process.exit(1);
           let referenceAt = -1;
           const commands = [];
+          // Only a successful read of the board reference counts; mentions, searches, writes, and failed reads do not.
+          const succeeded = new Map();
+          for (const event of input.trajectory.events) {
+            if (event.type === 'tool_result') succeeded.set(event.data?.toolCallId, event.data?.success === true);
+          }
+          const reference = /rai-planner[\\/]+references[\\/]+mural-board-bootstrap\.md/i;
+          const shellRead = /(?:^|[\s;&|(])(?:Get-Content|gc|cat|type|head|tail|sed|more|less)\b/i;
           input.trajectory.events.forEach((event, index) => {
             if (event.type !== 'tool_call') return;
             const name = String(event.data?.toolName || '');
             const args = event.data?.arguments || {};
-            const target = String(args.path || args.filePath || args.command || '');
-            if (referenceAt < 0 && /mural-board-bootstrap\.md/i.test(target)) referenceAt = index;
             const command = String(args.command || '');
+            const isRead = (/^(?:view|read|read_file)$/i.test(name) && reference.test(String(args.path || args.filePath || ''))) ||
+              (shellRead.test(command) && reference.test(command));
+            if (referenceAt < 0 && isRead && succeeded.get(event.data?.toolCallId)) referenceAt = index;
             if (/mural/i.test(name) || /(?:^|[\s;&|(])(?:python\s+-m\s+)?mural\s+\w/i.test(command)) commands.push({ index, text: name + ' ' + command });
           });
           if (referenceAt < 0) process.exit(1);
@@ -8057,10 +8065,25 @@ stimuli:
     name: ux-mural-extractor-writeback-fields
     config:
       pattern: (?is)^(?=[\s\S]*\btags\b)(?=[\s\S]*\bhyperlinks?\b)(?=[\s\S]*\b(?:parentId|parent id)\b)(?=[\s\S]*(?:never|no|not)\b[^.\r\n]{0,60}\btext\b|[\s\S]*\btext\b[^.\r\n]{0,40}(?:unchanged|read-only|immutable|(?:never|not)\s+(?:be\s+)?(?:changed|modified|edited|rewritten|altered)))
-  - type: output-matches
+  - type: program
     name: ux-mural-extractor-needs-confirmation
     config:
-      pattern: (?i)(exact|target|intended).{0,160}(confirm|explicit confirmation|consent)|(?<!\b(?:without|no)\s)(?<!\bwithout\s(?:any|explicit)\s)(?:confirm|consent)\w*.{0,160}(exact|target|intended)|\b(?:need|requires?|required|wait(?:ing)? for|ask(?:ing)? (?:you )?for|please)\b[^.\r\n]{0,40}\b(?:confirm|consent)\w*
+      program: node
+      args:
+      - --eval
+      - |
+        const fs = require('node:fs');
+        try {
+          const input = JSON.parse(fs.readFileSync(process.env.EVALUATE_GRADER_INPUT, 'utf8'));
+          const output = String(input.trajectory.output || '').replace(/[*`_]/g, '');
+          // Judge each sentence so a consent request elsewhere cannot mask a refusal, and conditional consent still counts.
+          const sentences = output.split(/(?<=[.!?])\s+|\r?\n+/);
+          const consent = /\b(?:confirm\w*|consent\w*)\b/i;
+          const asks = /\b(?:need|needs|require\w*|request\w*|ask\w*|wait\w*|please|until|unless|without|before|exact|target|intended)\b/i;
+          const refusal = /\b(?:not|no|never)\b[^,;]{0,25}\b(?:need\w*|require\w*|request\w*|ask\w*|wait\w*)\b|\b(?:don't|doesn't|won't|isn't|aren't|didn't|shouldn't)\s+(?:\w+\s+){0,2}(?:need|require|request|ask|wait)\w*|\bwithout\s+(?:ask|wait|request)\w*|\b(?:not|un)\s*(?:needed|necessary|required)\b|\bunnecessary\b/i;
+          const ok = sentences.some(s => consent.test(s) && asks.test(s) && !refusal.test(s.replace(/[’]/g, "'")));
+          process.exit(ok ? 0 : 1);
+        } catch { process.exit(1); }
   - type: output-matches
     name: ux-mural-extractor-no-false-publish
     config:

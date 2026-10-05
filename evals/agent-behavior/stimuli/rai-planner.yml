@@ -426,13 +426,21 @@ stimuli:
                 if (!Array.isArray(input.trajectory.events)) process.exit(1);
                 let referenceAt = -1;
                 const commands = [];
+                // Only a successful read of the board reference counts; mentions, searches, writes, and failed reads do not.
+                const succeeded = new Map();
+                for (const event of input.trajectory.events) {
+                  if (event.type === 'tool_result') succeeded.set(event.data?.toolCallId, event.data?.success === true);
+                }
+                const reference = /rai-planner[\\/]+references[\\/]+mural-board-bootstrap\.md/i;
+                const shellRead = /(?:^|[\s;&|(])(?:Get-Content|gc|cat|type|head|tail|sed|more|less)\b/i;
                 input.trajectory.events.forEach((event, index) => {
                   if (event.type !== 'tool_call') return;
                   const name = String(event.data?.toolName || '');
                   const args = event.data?.arguments || {};
-                  const target = String(args.path || args.filePath || args.command || '');
-                  if (referenceAt < 0 && /mural-board-bootstrap\.md/i.test(target)) referenceAt = index;
                   const command = String(args.command || '');
+                  const isRead = (/^(?:view|read|read_file)$/i.test(name) && reference.test(String(args.path || args.filePath || ''))) ||
+                    (shellRead.test(command) && reference.test(command));
+                  if (referenceAt < 0 && isRead && succeeded.get(event.data?.toolCallId)) referenceAt = index;
                   if (/mural/i.test(name) || /(?:^|[\s;&|(])(?:python\s+-m\s+)?mural\s+\w/i.test(command)) commands.push({ index, text: name + ' ' + command });
                 });
                 if (referenceAt < 0) process.exit(1);
