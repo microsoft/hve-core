@@ -710,6 +710,7 @@ def build_transcript_page(level: str, level_dir: Path) -> str:
         "form-action 'none'\">"
         f"<title>{esc(title)}: video and transcript</title>"
         f"<style>{_PAGE_STYLE}</style></head><body><main>"
+        '<p><a href="../../docs/demo-material/">Back to Demo Material</a></p>'
         f"<h1>{esc(title)}</h1><p>{esc(level)}{length}</p>"
         f'<video controls preload="metadata"><source src="{stem}.mp4" type="video/mp4">'
         f'<track kind="captions" src="{stem}.vtt" srclang="{esc(language[:2])}" '

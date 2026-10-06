@@ -996,6 +996,7 @@ class TestTranscriptPage:
         page = build_transcript_page("L100", tmp_path)
 
         # Assert
+        assert '<a href="../../docs/demo-material/">Back to Demo Material</a>' in page
         assert '<track kind="captions" src="hve-demo-L100.vtt"' in page
         assert "Say &lt;b&gt;hi&lt;/b&gt;." in page
         assert "<b>hi</b>" not in page

@@ -48,11 +48,12 @@ jobs:
     name: Resolve render inputs
     runs-on: ubuntu-latest
     permissions:
-      actions: write
+      actions: read
       contents: read
     outputs:
       mode: ${{ steps.resolve.outputs.mode }}
       levels: ${{ steps.levels.outputs.levels || '[]' }}
+      retry-levels: ${{ steps.resolve.outputs.retry-levels }}
       source-sha: ${{ steps.resolve.outputs.source-sha }}
       author-run-id: ${{ steps.resolve.outputs.author-run-id }}
       content-artifact-id: ${{ steps.resolve.outputs.content-artifact-id }}
@@ -147,6 +148,9 @@ jobs:
             };
 
             const previousCreatedAt = process.env.PREVIOUS_CREATED_AT;
+            const stale = previousCreatedAt
+              ? Date.now() - Date.parse(previousCreatedAt) > refreshAfterMs
+              : process.env.PUBLISHED_STATUS === "recovered";
 
             let authorRun = null;
             if (context.eventName === "workflow_run") {
@@ -188,14 +192,8 @@ jobs:
               if (!/^L[1-4]00(?: L[1-4]00)*$/.test(retryLevels)) {
                 throw new Error(`invalid retry levels: ${retryLevels}`);
               }
-              await github.rest.actions.createWorkflowDispatch({
-                ...context.repo,
-                workflow_id: "demo-material-author.lock.yml",
-                ref: defaultBranch,
-                inputs: { levels: retryLevels, force: "true" },
-              });
-              core.notice(`Dispatched forced authoring for: ${retryLevels}`);
-              core.setOutput("mode", "skip");
+              core.setOutput("retry-levels", retryLevels);
+              core.setOutput("mode", stale ? "refresh" : "skip");
               return;
             }
 
@@ -204,7 +202,6 @@ jobs:
               core.setOutput("mode", process.env.PUBLISHED_STATUS === "recovered" ? "refresh" : "skip");
               return;
             }
-            const stale = Date.now() - Date.parse(previousCreatedAt) > refreshAfterMs;
             const manual = context.eventName === "workflow_dispatch";
             core.setOutput("mode", stale || manual ? "refresh" : "skip");
 
@@ -255,6 +252,28 @@ jobs:
               out.write(f"levels={json.dumps(levels)}\n")
           print(f"Levels to render: {levels}")
           PY
+
+  dispatch-retry:
+    name: Dispatch forced authoring for failed levels
+    needs: resolve
+    if: ${{ github.event_name == 'schedule' && needs.resolve.outputs.retry-levels != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch forced authoring
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          RETRY_LEVELS: ${{ needs.resolve.outputs.retry-levels }}
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get({ ...context.repo });
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: "demo-material-author.lock.yml",
+              ref: repository.default_branch,
+              inputs: { levels: process.env.RETRY_LEVELS, force: "true" },
+            });
 
   render:
     name: Render ${{ matrix.level }}
