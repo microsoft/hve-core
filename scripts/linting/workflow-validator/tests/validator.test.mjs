@@ -295,7 +295,8 @@ describe('stageGhAwHelpers', () => {
 
   it('ignores scripts that source nothing from gh-aw/actions', async () => {
     const plain = { file: entry.file, script: { dialect: 'bash', text: 'source ./scripts/x.sh\n', lines: [{ line: 1, column: 1 }] } };
-    const result = await stageGhAwHelpers([plain], contents, { fetchText: () => assert.fail('should not fetch') }, tmpdir());
+    const staging = mkdtempSync(join(tmpdir(), 'stage-test-'));
+    const result = await stageGhAwHelpers([plain], contents, { fetchText: () => assert.fail('should not fetch') }, staging);
     assert.deepEqual(result, { sourcePaths: new Map(), findings: [] });
   });
 });
