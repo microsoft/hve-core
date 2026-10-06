@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      security-events: read # read code scanning alerts
+      security-events: read # read code scanning alerts and analyses
     env:
       GH_TOKEN: ${{ github.token }}
       OWNER: ${{ github.repository_owner }}

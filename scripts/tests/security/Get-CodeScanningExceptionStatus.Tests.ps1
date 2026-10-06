@@ -68,6 +68,18 @@ Describe 'Get-CodeScanningExceptionStatus' -Tag 'Unit' {
         $status[0].AlertUrl | Should -Be ''
     }
 
+    It 'reports alert state <Expected> when <Case>' -ForEach @(
+        @{ Case = 'a matching alert is open'; Path = 'docs/slides/deck.html'; Observed = @(); Expected = 'open' }
+        @{ Case = 'the tool has an analysis and no matching alert'; Path = 'docs/slides/other.html'; Observed = @('CodeQL'); Expected = 'closed' }
+        @{ Case = 'the tool has no analysis on the branch'; Path = 'docs/slides/other.html'; Observed = @('zizmor'); Expected = 'not-observed' }
+        @{ Case = 'only a differently cased tool has an analysis'; Path = 'docs/slides/other.html'; Observed = @('codeql'); Expected = 'not-observed' }
+    ) {
+        $yaml = $script:Entry.Replace('docs/slides/deck.html', $Path)
+        $status = Get-CodeScanningExceptionStatus -ExceptionsPath (Write-ExceptionsFile $yaml) -OpenAlerts $script:OpenAlerts -CheckDate $script:CheckDate -ObservedTools $Observed
+
+        $status[0].AlertState | Should -BeExactly $Expected
+    }
+
     It 'does not match an alert from a different tool' {
         $status = Get-CodeScanningExceptionStatus -ExceptionsPath (Write-ExceptionsFile $script:Entry) -OpenAlerts @(New-Alert -Tool 'zizmor') -CheckDate $script:CheckDate
 
@@ -130,6 +142,23 @@ Describe 'Get-CodeScanningExceptionStatus' -Tag 'Unit' {
     }
 }
 
+Describe 'Get-ExceptionFieldValue' -Tag 'Unit' {
+    It 'returns the field from every shipped entry' {
+        $repoFile = Join-Path $PSScriptRoot '../../../security/code-scanning-exceptions.yml'
+        $shipped = @((Get-Content -LiteralPath $repoFile -Raw | ConvertFrom-Yaml)['exceptions'])
+        $tools = Get-ExceptionFieldValue -ExceptionsPath $repoFile -Field 'tool'
+
+        $tools.Count | Should -Be $shipped.Count
+        $tools | Should -Contain 'CodeQL'
+    }
+
+    It 'returns an empty list for an empty register' {
+        $values = Get-ExceptionFieldValue -ExceptionsPath (Write-ExceptionsFile 'exceptions: []') -Field 'upstream'
+
+        $values.Count | Should -Be 0
+    }
+}
+
 Describe 'Get-GitHubIssueApiPath' -Tag 'Unit' {
     It 'converts <Url>' -ForEach @(
         @{ Url = 'https://github.com/github/codeql/issues/17'; Expected = 'repos/github/codeql/issues/17' }
@@ -162,5 +191,37 @@ Describe 'Get-UpstreamState' -Tag 'Unit' {
         $states = Get-UpstreamState -Url @('https://github.com/a/b/issues/2')
 
         $states['https://github.com/a/b/issues/2'] | Should -Be 'unknown'
+    }
+}
+
+Describe 'Get-ObservedTool' -Tag 'Unit' {
+    It 'keeps tools with an analysis and drops empty and 404 results' {
+        Mock gh {
+            $global:LASTEXITCODE = 0
+            switch -Wildcard ("$args") {
+                '*tool_name=CodeQL&*' { '1' }
+                '*tool_name=zizmor&*' { '0' }
+                default { $global:LASTEXITCODE = 1; 'gh: no analysis found (HTTP 404)' }
+            }
+        }
+        $observed = Get-ObservedTool -Owner 'o' -Repo 'r' -Branch 'main' -Tool @('CodeQL', 'zizmor', 'hve-workflow-validator', 'CodeQL')
+
+        $observed | Should -Be @('CodeQL')
+        Should -Invoke gh -Times 3 -Exactly
+    }
+
+    It 'warns and leaves a tool out when the lookup fails' {
+        Mock gh { $global:LASTEXITCODE = 1; 'gh: Resource not accessible by integration (HTTP 403)' }
+        $observed = Get-ObservedTool -Owner 'o' -Repo 'r' -Branch 'main' -Tool @('CodeQL') -WarningVariable warnings -WarningAction SilentlyContinue
+
+        @($observed) | Should -HaveCount 0
+        "$warnings" | Should -Match 'not-observed'
+    }
+
+    It 'filters by ref and URL-encoded tool name' {
+        Mock gh { $global:LASTEXITCODE = 0; '1' }
+        Get-ObservedTool -Owner 'o' -Repo 'r' -Branch 'main' -Tool @('dependency pinning') | Out-Null
+
+        Should -Invoke gh -Times 1 -Exactly -ParameterFilter { "$args" -like '*repos/o/r/code-scanning/analyses?ref=refs/heads/main&tool_name=dependency%20pinning&per_page=1*' }
     }
 }

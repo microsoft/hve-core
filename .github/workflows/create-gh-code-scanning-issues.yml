@@ -186,20 +186,25 @@ jobs:
             EXPIRES=$(echo "$entry" | jq -r '.Expires')
             DAYS_LEFT=$(echo "$entry" | jq -r '.DaysLeft // "unknown"')
             ALERT_OPEN=$(echo "$entry" | jq -r '.AlertOpen')
+            ALERT_STATE_KIND=$(echo "$entry" | jq -r '.AlertState // "not-observed"')
             ALERT_URL=$(echo "$entry" | jq -r '.AlertUrl // ""')
             STATUS_MARKER="automation:code-scanning-exception-status:${TOOL}:${RULE_ID}:${ALERT_PATH}"
 
             STATE=$(gh issue view "${ISSUE}" --repo "${OWNER}/${REPO}" --json state --jq '.state' 2>/dev/null || echo "MISSING")
 
             if [[ "$STATE" == "OPEN" ]]; then
-              if [[ "$ALERT_OPEN" == "true" ]]; then
-                ALERT_STATE="${OPEN_COUNT} open on \`main\`${ALERT_URL:+ (${ALERT_URL})}"
-                if [[ "$OPEN_COUNT" != "$PINNED_COUNT" ]]; then
-                  ALERT_STATE="${ALERT_STATE}; the entry pins ${PINNED_COUNT}, so fix the new results or correct the count in review"
-                fi
-              else
-                ALERT_STATE="no longer open on \`main\`; remove the exception entry"
-              fi
+              # Removal is suggested only when the tool analyzed main and the alert is gone.
+              # Tools that upload only from pull requests have no analysis on main.
+              case "$ALERT_STATE_KIND" in
+                open)
+                  ALERT_STATE="${OPEN_COUNT} open on \`main\`${ALERT_URL:+ (${ALERT_URL})}"
+                  if [[ "$OPEN_COUNT" != "$PINNED_COUNT" ]]; then
+                    ALERT_STATE="${ALERT_STATE}; the entry pins ${PINNED_COUNT}, so fix the new results or correct the count in review"
+                  fi
+                  ;;
+                closed) ALERT_STATE="no longer open on \`main\`; remove the exception entry" ;;
+                *) ALERT_STATE="not observed: \`${TOOL}\` has no analysis on \`main\`, so this run cannot confirm the alert state; check the latest pull-request scan" ;;
+              esac
               case "$UPSTREAM_STATE" in
                 closed) UPSTREAM_NOTE="closed; check whether the upstream fix has shipped and retire this exception" ;;
                 open) UPSTREAM_NOTE="open" ;;
@@ -266,6 +271,8 @@ jobs:
                   --repo "${OWNER}/${REPO}" \
                   --body "Weekly scan update: the alert is still open as of ${CHECK_DATE}."
               fi
+            elif [[ "$ALERT_STATE_KIND" == "not-observed" ]]; then
+              echo "::warning::Exception ${TOOL} ${RULE_ID} in ${ALERT_PATH} links issue #${ISSUE}, which is ${STATE}, and ${TOOL} has no analysis on main to confirm the alert. Renew the tracking issue or remove the entry in review."
             else
               echo "Exception ${TOOL} ${RULE_ID} in ${ALERT_PATH}: issue #${ISSUE} is ${STATE} and the alert is no longer open."
             fi
