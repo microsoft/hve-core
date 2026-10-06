@@ -182,6 +182,7 @@ def test_given_external_target_without_authorization_when_resolve_then_rejects()
     [
         "file:////attacker.example/share/page.html",
         "file://localhost//attacker.example/share/page.html",
+        "file:///%3F%3F/UNC/attacker.example/share/page.html",
     ],
 )
 def test_given_unc_file_uri_when_resolve_then_rejects_before_network_probe(
@@ -209,6 +210,8 @@ def test_given_unc_file_uri_when_resolve_then_rejects_before_network_probe(
         r"/\attacker.example\share\page.html",
         r"\/attacker.example/share/page.html",
         r"/\?\UNC\attacker.example\share\page.html",
+        r"\??\UNC\attacker.example\share\page.html",
+        r"\??\GLOBALROOT\Device\Mup\attacker.example\share\page.html",
     ],
 )
 def test_given_mixed_separator_unc_target_when_resolve_then_rejects_without_probe(

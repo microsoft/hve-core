@@ -195,7 +195,7 @@ flowchart TD
 
 ### Elevation of Privilege
 
-* Network shares, non-local file authorities, leading-dash targets, and shell interpretation are rejected. Network-shaped targets are rejected before any filesystem probe: the raw target is checked with separators normalized, so mixed forms such as `/\server\share` are caught, and the parsed, home-expanded path is checked as well. Network-shaped paths are also rejected at the filesystem boundary on the resolved path, so a `file:` URI cannot decode into a UNC path and elicit an outbound request before the scan starts. Reads still occur with the invoking user's filesystem permissions.
+* Network shares, non-local file authorities, leading-dash targets, and shell interpretation are rejected. Network-shaped targets are rejected before any filesystem probe: the raw target is checked with separators normalized, so mixed forms such as `/\server\share` and Windows NT-namespace paths such as `\??\UNC\server\share` are caught, and the parsed, home-expanded path is checked as well. Network-shaped paths are also rejected at the filesystem boundary on the resolved path, so a `file:` URI cannot decode into a UNC path and elicit an outbound request before the scan starts. Reads still occur with the invoking user's filesystem permissions.
 
 ### Risk Rating
 
