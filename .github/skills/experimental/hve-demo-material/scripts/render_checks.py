@@ -16,6 +16,10 @@ Usage::
     python render_checks.py segments --level-dir DIR --output-name x.mp4
     python render_checks.py captions --level-dir DIR --output DIR/output/x.vtt
     python render_checks.py transcript --level L100 --level-dir DIR
+    python render_checks.py verify-open-captions --control BASE --finalized MP4 \
+        --captions VTT --output JSON
+    python render_checks.py check-open-caption-evidence --video MP4 \
+        --captions VTT --evidence JSON
     python render_checks.py evaluate --level L100 --level-dir DIR [--html-deck]
 
 ``levels`` and ``changed`` use only the standard library so a runner can call
@@ -29,8 +33,10 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
+import os
 import re
 import subprocess
 import sys
@@ -70,6 +76,20 @@ MIN_RENDERED_FONT_PT = 18.0
 # Two caption lines of about 42 characters each, the common broadcast limit.
 CAPTION_LINE_CHARS = 42
 CAPTION_MAX_CHARS = 2 * CAPTION_LINE_CHARS
+MIN_OPEN_CAPTION_LUMA_DIFFERENCE = 64
+MIN_OPEN_CAPTION_BOX_DIMENSION = 8
+MIN_OPEN_CAPTION_BOX_AREA = 64
+
+
+def ffmpeg_command() -> str:
+    """Return the caller-selected FFmpeg executable."""
+    return os.environ.get("FFMPEG_COMMAND", "ffmpeg")
+
+
+def ffprobe_command() -> str:
+    """Return the caller-selected FFprobe executable."""
+    return os.environ.get("FFPROBE_COMMAND", "ffprobe")
+
 
 TEXT_KEYS = ("text", "title", "subtitle", "label", "heading", "description")
 TEXT_LIST_KEYS = ("bullets", "items", "segments", "paragraphs", "rows", "cells")
@@ -233,6 +253,11 @@ def build_segments(level_dir: Path, output_name: str) -> str:
         f"output: ./{output_name}",
         "resolution: 1920x1080",
         "fps: 24",
+        "transition:",
+        "  type: crossfade",
+        "  duration: 0.5",
+        "  fade_in: true",
+        "  fade_out: true",
         "segments:",
     ]
     for number in numbers:
@@ -380,7 +405,7 @@ def measure_minutes(mp4: Path) -> float | None:
     try:
         result = subprocess.run(
             [
-                "ffprobe",
+                ffprobe_command(),
                 "-v",
                 "error",
                 "-show_entries",
@@ -503,6 +528,31 @@ def _timestamp(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d}.{millis:03d}"
 
 
+def transition_overlap(level_dir: Path, segment_count: int) -> float:
+    """Return the scene overlap declared by ``output/segments.yml``."""
+    import yaml
+
+    manifest = level_dir / "output" / "segments.yml"
+    if not manifest.is_file():
+        return 0.0
+    data = yaml.safe_load(manifest.read_text(encoding="utf-8")) or {}
+    transition = data.get("transition") if isinstance(data, dict) else None
+    if not isinstance(transition, dict):
+        return 0.0
+    segments = data.get("segments") or []
+    if len(segments) != segment_count:
+        raise CheckError(
+            "caption generation requires one authored content item per video segment"
+        )
+    try:
+        duration = float(transition.get("duration", 0.5))
+    except (TypeError, ValueError) as exc:
+        raise CheckError("segments.yml has an invalid transition duration") from exc
+    if duration <= 0:
+        raise CheckError("segments.yml transition duration must be positive")
+    return duration
+
+
 def build_captions(level_dir: Path) -> str:
     """Return WebVTT captions for the level's narration.
 
@@ -513,7 +563,9 @@ def build_captions(level_dir: Path) -> str:
     lines = ["WEBVTT", ""]
     offset = 0.0
     index = 1
-    for number, slide in load_slides(level_dir / "content"):
+    slides = load_slides(level_dir / "content")
+    overlap = transition_overlap(level_dir, len(slides))
+    for slide_index, (number, slide) in enumerate(slides):
         wav = level_dir / "audio" / f"slide-{number:03d}.wav"
         if not wav.is_file():
             raise CheckError(f"missing narration {wav}")
@@ -536,6 +588,8 @@ def build_captions(level_dir: Path) -> str:
             index += 1
             start = end
         offset += duration
+        if slide_index < len(slides) - 1:
+            offset -= overlap
     return "\n".join(lines)
 
 
@@ -611,7 +665,6 @@ def build_transcript_page(level: str, level_dir: Path) -> str:
         "form-action 'none'\">"
         f"<title>{esc(title)}: video and transcript</title>"
         f"<style>{_PAGE_STYLE}</style></head><body><main>"
-        '<p><a href="../../docs/demo-material/">Back to Demo Material</a></p>'
         f"<h1>{esc(title)}</h1><p>{esc(level)}{length}</p>"
         f'<video controls preload="metadata"><source src="{stem}.mp4" type="video/mp4">'
         f'<track kind="captions" src="{stem}.vtt" srclang="{esc(language[:2])}" '
@@ -712,7 +765,7 @@ def subtitle_languages(mp4: Path) -> list[str] | None:
     try:
         result = subprocess.run(
             [
-                "ffprobe",
+                ffprobe_command(),
                 "-v",
                 "error",
                 "-select_streams",
@@ -738,6 +791,115 @@ def subtitle_languages(mp4: Path) -> list[str] | None:
     return [
         str((stream.get("tags") or {}).get("language", "und")) for stream in streams
     ]
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def verify_open_captions(
+    control: Path, finalized: Path, captions: Path, evidence: Path
+) -> dict:
+    """Compare captioned and uncaptioned encodes and write hash-bound evidence."""
+    cues = parse_webvtt(captions.read_text(encoding="utf-8"))
+    if not cues:
+        raise CheckError("captions file has no cues")
+    sample_seconds = (cues[0][0] + cues[0][1]) / 2
+    result = subprocess.run(
+        [
+            ffmpeg_command(),
+            "-v",
+            "error",
+            "-ss",
+            f"{sample_seconds:.3f}",
+            "-i",
+            str(control),
+            "-ss",
+            f"{sample_seconds:.3f}",
+            "-i",
+            str(finalized),
+            "-filter_complex",
+            "[0:v][1:v]blend=all_mode=difference,"
+            "crop=iw:ih/3:0:2*ih/3,signalstats,bbox=min_val=16,"
+            "metadata=mode=print:file=-",
+            "-frames:v",
+            "1",
+            "-f",
+            "null",
+            "-",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise CheckError("could not compare the source and captioned video frames")
+    values = {
+        line.rsplit(".", 1)[1].split("=", 1)[0]: int(line.rsplit("=", 1)[1])
+        for line in result.stdout.splitlines()
+        if line.startswith(
+            ("lavfi.signalstats.YMAX=", "lavfi.bbox.w=", "lavfi.bbox.h=")
+        )
+    }
+    box_area = values.get("w", 0) * values.get("h", 0)
+    if (
+        values.get("YMAX", 0) < MIN_OPEN_CAPTION_LUMA_DIFFERENCE
+        or values.get("w", 0) < MIN_OPEN_CAPTION_BOX_DIMENSION
+        or values.get("h", 0) < MIN_OPEN_CAPTION_BOX_DIMENSION
+        or box_area < MIN_OPEN_CAPTION_BOX_AREA
+    ):
+        raise CheckError(
+            "caption burn-in did not create a visible frame difference "
+            f"(YMAX={values.get('YMAX', 0)}, box={values.get('w', 0)}x"
+            f"{values.get('h', 0)})"
+        )
+    record = {
+        "schema_version": 1,
+        "result": "pass",
+        "sample_seconds": round(sample_seconds, 3),
+        "maximum_luma_difference": values["YMAX"],
+        "difference_box_width": values["w"],
+        "difference_box_height": values["h"],
+        "difference_box_area": box_area,
+        "control_video_sha256": _sha256(control),
+        "video_sha256": _sha256(finalized),
+        "captions_sha256": _sha256(captions),
+    }
+    evidence.parent.mkdir(parents=True, exist_ok=True)
+    evidence.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    return record
+
+
+def open_caption_evidence_problems(
+    video: Path, captions: Path, evidence: Path
+) -> list[str]:
+    """Return problems with hash-bound open-caption verification evidence."""
+    if not evidence.is_file():
+        return ["open-caption verification evidence missing"]
+    try:
+        record = json.loads(evidence.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ["open-caption verification evidence is unreadable"]
+    problems = []
+    if record.get("result") != "pass":
+        problems.append("open-caption verification did not pass")
+    if record.get("maximum_luma_difference", 0) < MIN_OPEN_CAPTION_LUMA_DIFFERENCE:
+        problems.append("open-caption frame difference is below the visibility floor")
+    if (
+        record.get("difference_box_width", 0) < MIN_OPEN_CAPTION_BOX_DIMENSION
+        or record.get("difference_box_height", 0) < MIN_OPEN_CAPTION_BOX_DIMENSION
+        or record.get("difference_box_area", 0) < MIN_OPEN_CAPTION_BOX_AREA
+    ):
+        problems.append("open-caption difference region is below the visibility floor")
+    if not video.is_file() or record.get("video_sha256") != _sha256(video):
+        problems.append("open-caption evidence does not match the delivered MP4")
+    if not captions.is_file() or record.get("captions_sha256") != _sha256(captions):
+        problems.append("open-caption evidence does not match the delivered WebVTT")
+    return problems
 
 
 class _TranscriptParser(HTMLParser):
@@ -846,6 +1008,9 @@ def check_accessibility(level: str, level_dir: Path) -> dict:
     if not video.is_file():
         problems.append("video missing")
     else:
+        problems += open_caption_evidence_problems(
+            video, captions, output / "open-captions.json"
+        )
         languages = subtitle_languages(video)
         if languages is None:
             problems.append("could not read the MP4 streams")
@@ -865,8 +1030,9 @@ def check_accessibility(level: str, level_dir: Path) -> dict:
     return {
         "result": "fail" if problems else "pass",
         "evidence": "; ".join(problems)
-        or "English caption track and captions matching the narration, a transcript "
-        "covering every slide, slide titles, alt text, and language present",
+        or "open captions, an English selectable caption track, captions matching "
+        "the narration, a transcript covering every slide, slide titles, alt text, "
+        "and language present",
     }
 
 
@@ -991,6 +1157,19 @@ def build_parser() -> argparse.ArgumentParser:
     transcript = sub.add_parser("transcript", help="Write output/index.html")
     transcript.add_argument("--level", required=True, choices=LEVELS)
     transcript.add_argument("--level-dir", type=Path, required=True)
+    verify_captions = sub.add_parser(
+        "verify-open-captions", help="Verify caption burn-in and write evidence"
+    )
+    verify_captions.add_argument("--control", type=Path, required=True)
+    verify_captions.add_argument("--finalized", type=Path, required=True)
+    verify_captions.add_argument("--captions", type=Path, required=True)
+    verify_captions.add_argument("--output", type=Path, required=True)
+    caption_status = sub.add_parser(
+        "check-open-caption-evidence", help="Check existing caption evidence"
+    )
+    caption_status.add_argument("--video", type=Path, required=True)
+    caption_status.add_argument("--captions", type=Path, required=True)
+    caption_status.add_argument("--evidence", type=Path, required=True)
     evaluate_cmd = sub.add_parser("evaluate", help="Score a rendered level")
     evaluate_cmd.add_argument("--level", required=True, choices=LEVELS)
     evaluate_cmd.add_argument("--level-dir", type=Path, required=True)
@@ -1038,6 +1217,18 @@ def main(argv: list[str] | None = None) -> int:
                 build_transcript_page(args.level, args.level_dir), encoding="utf-8"
             )
             return EXIT_SUCCESS
+        if args.command == "verify-open-captions":
+            result = verify_open_captions(
+                args.control, args.finalized, args.captions, args.output
+            )
+            print(json.dumps(result, indent=2))
+            return EXIT_SUCCESS
+        if args.command == "check-open-caption-evidence":
+            problems = open_caption_evidence_problems(
+                args.video, args.captions, args.evidence
+            )
+            print(json.dumps({"ok": not problems, "problems": problems}, indent=2))
+            return EXIT_FAILURE if problems else EXIT_SUCCESS
         result = evaluate(
             args.level,
             args.level_dir,

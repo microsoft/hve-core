@@ -8,6 +8,7 @@ from pathlib import Path
 
 import yaml
 from generate_voiceover import (
+    DEFAULT_PIPER_VOICE,
     _resolve_lexicon,
     apply_acronym_aliases,
     apply_plain_aliases,
@@ -87,6 +88,7 @@ class TestCreateParser:
         assert args.engine == "azure"
         assert args.voice is None
         assert args.rate is not None
+        assert DEFAULT_PIPER_VOICE == "en_US-norman-medium"
 
     def test_given_dry_run_flag_when_parsed_then_dry_run_true(self):
         # Act

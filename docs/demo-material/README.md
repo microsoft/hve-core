@@ -2,7 +2,7 @@
 title: Demo Material
 description: Levelled HVE Core training decks, narrated videos, and browser slides from L100 to L400, rebuilt weekly when their source documents change
 author: Microsoft
-ms.date: 2026-10-04
+ms.date: 2026-10-06
 ms.topic: overview
 keywords:
   - demo material
@@ -21,14 +21,11 @@ estimated_reading_time: 3
 
 HVE Core publishes a training deck, a narrated video, and a browser slide deck
 for each of four depth levels. Each level targets a different audience and
-builds on the one before it.
+builds on the one before it. The catalog reads the published build index and
+shows links only when that level has a complete passing bundle.
 
-| Level | Audience                                        | Length       | Watch                                                        | Present                                                          | Download                                                                                                                     |
-|-------|-------------------------------------------------|--------------|--------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| L100  | New contributors and first-time HVE Core users  | 4 to 6 min   | [L100 video and transcript](pathname:///demo-material/L100/) | [L100 slides](pathname:///demo-material/L100/hve-demo-L100.html) | [L100 deck](pathname:///demo-material/L100/hve-demo-L100.pptx), [L100 MP4](pathname:///demo-material/L100/hve-demo-L100.mp4) |
-| L200  | Contributors ready to follow a guided task      | 6 to 8 min   | [L200 video and transcript](pathname:///demo-material/L200/) | [L200 slides](pathname:///demo-material/L200/hve-demo-L200.html) | [L200 deck](pathname:///demo-material/L200/hve-demo-L200.pptx), [L200 MP4](pathname:///demo-material/L200/hve-demo-L200.mp4) |
-| L300  | Engineers choosing an applied workflow          | 8 to 10 min  | [L300 video and transcript](pathname:///demo-material/L300/) | [L300 slides](pathname:///demo-material/L300/hve-demo-L300.html) | [L300 deck](pathname:///demo-material/L300/hve-demo-L300.pptx), [L300 MP4](pathname:///demo-material/L300/hve-demo-L300.mp4) |
-| L400  | Maintainers and contributors extending HVE Core | 10 to 12 min | [L400 video and transcript](pathname:///demo-material/L400/) | [L400 slides](pathname:///demo-material/L400/hve-demo-L400.html) | [L400 deck](pathname:///demo-material/L400/hve-demo-L400.pptx), [L400 MP4](pathname:///demo-material/L400/hve-demo-L400.mp4) |
+<!-- markdownlint-disable-next-line MD033 -->
+<DemoMaterialCatalog />
 
 L100 and L200 videos show the deck slides. L300 and L400 add live VS Code
 captures of the repository files they discuss.
@@ -65,21 +62,29 @@ The material is rebuilt by two scheduled workflows, and only for the levels whos
 source documents changed:
 
 1. The [Demo Material Author](https://github.com/microsoft/hve-core/blob/main/.github/workflows/demo-material-author.md)
-   agentic workflow runs weekly. A deterministic step compares each level's
-   pinned sources with the commit its current material was built from, and the
-   agent writes new slide content only for the levels that changed. When
-   nothing changed, the agent does not run.
+  agentic workflow runs weekly. A deterministic step compares each level's
+  pinned sources with the commit its current material was built from. The
+  agent writes new slide content for changed, failed, or unpublished levels.
+  When every level is current and published, the agent does not run.
 2. The [Demo Material Render](https://github.com/microsoft/hve-core/blob/main/.github/workflows/demo-material-render.yml)
    workflow builds each authored level into a deck, narration, a video, and
    browser slides from the same slide content, then scores the checks a machine
    can verify: narration paired to every slide, the video landing inside the
    level's length, readable live captures, the pinned house style, the
    accessibility items above, and browser slides that open offline with no
-   slide overflowing. A level that fails any check keeps its previous files.
-3. The documentation deployment publishes the latest passing files on this page.
+  slide overflowing. A level that fails any check keeps its previous files.
+  The later weekly render check forces another authoring attempt for any level
+  whose latest attempt failed or whose first passing bundle is still missing.
+3. The documentation deployment publishes the latest passing files. This page
+  reads that same index, so a missing level appears as unavailable rather than
+  linking to files that do not exist.
 
 The narration uses an offline [Piper](https://github.com/OHF-Voice/piper1-gpl)
-voice (`en_US-joe-medium`, CC0), so the builds need no cloud speech service. The
+voice (`en_US-norman-medium`), so the builds need no cloud speech service.
+Norman's [model
+card](https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/norman/medium/MODEL_CARD)
+records that it was trained from scratch on public-domain LibriVox recordings,
+and the Piper voices repository is MIT licensed. The
 [level contracts and sources](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/hve-demo-material/references/curriculum.md)
 define what each level covers.
 
@@ -92,8 +97,8 @@ result of every check, including the most recent failed attempt.
 > [!NOTE]
 > The decks, videos, and slides are drafted by an AI agent from this repository's
 > documentation and checked automatically, not reviewed by a person before
-> publication. Review a deck before presenting it to an external audience. A
-> level's links resolve after its first successful render.
+> publication. Review a deck before presenting it to an external audience. An
+> unavailable level exposes no media links until its first successful render.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

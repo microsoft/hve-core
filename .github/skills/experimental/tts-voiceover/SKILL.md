@@ -56,7 +56,7 @@ Piper is not a dependency of this skill. It is licensed GPL-3.0-or-later, so the
 
 ```bash
 uv tool install piper-tts
-uvx --from piper-tts python -m piper.download_voices en_US-joe-medium --data-dir ~/.local/share/piper
+uvx --from piper-tts python -m piper.download_voices en_US-norman-medium --data-dir ~/.local/share/piper
 export PIPER_DATA_DIR=~/.local/share/piper
 ```
 
@@ -71,7 +71,13 @@ export PIPER_COMMAND="uvx --from piper-tts piper"
 | `PIPER_COMMAND`  | Command that runs Piper, split without a shell (default: `piper`)        |
 | `PIPER_DATA_DIR` | Directory holding downloaded voices; `--piper-data-dir` takes precedence |
 
-Voice models carry their own licenses, listed in each voice's `MODEL_CARD`. The default `en_US-joe-medium` is CC0. Check the model card before publishing narration from any other voice, because some Piper voices are non-commercial or require attribution.
+Voice models carry their own licenses and dataset provenance in each voice's
+`MODEL_CARD`. The default `en_US-norman-medium` [model
+card](https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/norman/medium/MODEL_CARD)
+records that it was trained from scratch on public-domain LibriVox recordings,
+and the Piper voices repository is MIT licensed. Check the model card before
+publishing narration from any other voice, because some voices have
+noncommercial or research-only source restrictions.
 
 ## Quick Start
 
@@ -108,7 +114,7 @@ uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output 
 |:----------------------|:-------|:------------------------------------|:-------------------------------------------------------------------------------------------|
 | `--dry-run`           | flag   | `false`                             | Print SSML (`azure`) or plain text (`piper`) without generating audio                      |
 | `--engine`            | string | `azure`                             | Synthesis engine: `azure` or `piper`                                                       |
-| `--voice`             | string | `en-US-Andrew:DragonHDLatestNeural` | Voice name; the `piper` default is `en_US-joe-medium`                                      |
+| `--voice`             | string | `en-US-Andrew:DragonHDLatestNeural` | Voice name; the `piper` default is `en_US-norman-medium`                                   |
 | `--rate`              | string | `+10%`                              | Azure speech prosody rate; ignored by `piper`                                              |
 | `--piper-data-dir`    | path   | `PIPER_DATA_DIR`                    | Directory holding downloaded Piper voices                                                  |
 | `--content-dir`       | path   | `content`                           | Path to slide content directory                                                            |

@@ -21,6 +21,7 @@ readonly PPTX_PIPELINE="${SKILLS_ROOT}/powerpoint/scripts/invoke-pptx-pipeline.s
 readonly VOICEOVER="${SKILLS_ROOT}/tts-voiceover/scripts/generate-voiceover.sh"
 readonly ASSEMBLE="${SKILLS_ROOT}/demo-video/scripts/assemble-video.sh"
 readonly CAPTURE_SKILL="${SKILLS_ROOT}/vscode-playwright"
+readonly FINALIZE_ACCESSIBLE_VIDEO="${SCRIPT_DIR}/finalize-accessible-video.sh"
 # The HVE Slides starter lives only in the hve-core repository, not in the plugin.
 readonly DEFAULT_HTML_DECK_TEMPLATE="${SKILLS_ROOT}/../hve-slides/templates/deck"
 
@@ -93,6 +94,17 @@ validate_args() {
     esac
   fi
   [[ "${CAPTURE}" =~ ^(live|deck-export)$ ]] || err "--capture must be live or deck-export."
+  local tool_report ffmpeg_path ffprobe_path ffmpeg_dir ffprobe_dir
+  tool_report="$(bash "${FINALIZE_ACCESSIBLE_VIDEO}" --check-prerequisites)"
+  ffmpeg_path="$(printf '%s\n' "${tool_report}" | sed -n 's/^ffmpeg=//p')"
+  ffprobe_path="$(printf '%s\n' "${tool_report}" | sed -n 's/^ffprobe=//p')"
+  [[ -n "${ffmpeg_path}" && -n "${ffprobe_path}" ]] \
+    || err "Could not resolve compatible FFmpeg tools."
+  ffmpeg_dir="$(dirname "${ffmpeg_path}")"
+  ffprobe_dir="$(dirname "${ffprobe_path}")"
+  export FFMPEG_COMMAND="${ffmpeg_path}"
+  export FFPROBE_COMMAND="${ffprobe_path}"
+  export PATH="${ffmpeg_dir}:${ffprobe_dir}:${PATH}"
   LEVEL_DIR="$(cd "${LEVEL_DIR}" && pwd)"
   WORKSPACE="$(cd "${WORKSPACE}" && pwd)"
   case "${HTML_DECK}" in
@@ -195,19 +207,8 @@ build_html_deck() {
 }
 
 write_accessible_media() {
-  local video="${LEVEL_DIR}/output/$1"
-  local captions="${video%.mp4}.vtt"
-  local captioned="${video%.mp4}.captioned.mp4"
-  log "Writing captions and transcript"
-  uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py captions \
-    --level-dir "${LEVEL_DIR}" \
-    --output "${captions}"
-  ffmpeg -y -v error -i "${video}" -i "${captions}" \
-    -map 0 -map 1 -c copy -c:s mov_text \
-    -metadata:s:a:0 language=eng -metadata:s:s:0 language=eng \
-    "${captioned}"
-  mv "${captioned}" "${video}"
-  uv run --directory "${SKILL_ROOT}" python scripts/render_checks.py transcript \
+  log "Burning captions and writing accessible media"
+  bash "${FINALIZE_ACCESSIBLE_VIDEO}" \
     --level "${LEVEL}" \
     --level-dir "${LEVEL_DIR}"
 }
@@ -232,7 +233,7 @@ main() {
   else
     log "Skipping the HTML slide deck: no HVE Slides starter"
   fi
-  write_accessible_media "${video_name}"
+  write_accessible_media
 
   log "Scoring machine-verifiable criteria"
   local exit_code=0

@@ -296,6 +296,119 @@ class TestAssembleVideo:
                 assemble_video._read_manifest(manifest_path),
             )
 
+    def test_given_crossfade_when_validated_then_normalizes_configuration(self):
+        # Arrange
+        manifest = {
+            "transition": {
+                "type": "fade",
+                "duration": 0.5,
+                "fade_in": True,
+                "fade_out": True,
+            },
+            "segments": [
+                {"visual": "intro.png", "narration": "intro.wav"},
+            ],
+        }
+
+        # Act
+        config, _ = assemble_video._validate_manifest(manifest)
+
+        # Assert
+        assert config["transition"] == {
+            "type": "crossfade",
+            "duration": 0.5,
+            "fade_in": True,
+            "fade_out": True,
+        }
+
+    @pytest.mark.parametrize(
+        ("transition", "message"),
+        [
+            ({"type": "wipe"}, "Unsupported transition type"),
+            ({"duration": 0}, "positive finite"),
+            ({"duration": float("nan")}, "positive finite"),
+            ({"fade_in": "yes"}, "must be booleans"),
+            ({"unknown": True}, "unsupported keys"),
+        ],
+    )
+    def test_given_invalid_transition_when_validated_then_raises(
+        self, transition, message
+    ):
+        # Arrange
+        manifest = {
+            "transition": transition,
+            "segments": [
+                {"visual": "intro.png", "narration": "intro.wav"},
+            ],
+        }
+
+        # Act / Assert
+        with pytest.raises(assemble_video.ManifestError, match=message):
+            assemble_video._validate_manifest(manifest)
+
+    def test_given_transition_when_assembled_then_uses_video_and_audio_fades(
+        self, tmp_path, mocker, mock_ffmpeg_dependencies
+    ):
+        # Arrange
+        manifest_path = tmp_path / "segments.yml"
+        for name in ("one.png", "two.png", "one.wav", "two.wav"):
+            (tmp_path / name).write_bytes(b"fixture")
+        manifest_path.write_text(
+            "output: demo.mp4\n"
+            "transition:\n"
+            "  type: crossfade\n"
+            "  duration: 0.5\n"
+            "  fade_in: true\n"
+            "  fade_out: true\n"
+            "segments:\n"
+            "  - visual: one.png\n"
+            "    narration: one.wav\n"
+            "    duration: 3\n"
+            "  - visual: two.png\n"
+            "    narration: two.wav\n"
+            "    duration: 4\n",
+            encoding="utf-8",
+        )
+        commands = []
+
+        def record_command(command, **_kwargs):
+            commands.append(command)
+            Path(command[-1]).write_bytes(b"mp4")
+
+        mocker.patch.object(assemble_video, "_render_segment")
+        mocker.patch.object(assemble_video, "_run_ffmpeg", side_effect=record_command)
+
+        # Act
+        assemble_video.assemble_video(
+            manifest_path=manifest_path,
+            output_path=None,
+            fps=None,
+            resolution=None,
+        )
+
+        # Assert
+        final_command = commands[-1]
+        filter_graph = final_command[final_command.index("-filter_complex") + 1]
+        assert "fade=t=in:st=0:d=0.5" in filter_graph
+        assert "afade=t=in:st=0:d=0.5" in filter_graph
+        assert "xfade=transition=fade:duration=0.5:offset=2.5" in filter_graph
+        assert "acrossfade=d=0.5:c1=tri:c2=tri" in filter_graph
+        assert "fade=t=out:st=6:d=0.5" in filter_graph
+        assert "afade=t=out:st=6:d=0.5" in filter_graph
+
+    def test_given_short_segment_when_transition_built_then_raises(self):
+        # Act / Assert
+        with pytest.raises(assemble_video.ManifestError, match="longer than twice"):
+            assemble_video._transition_filter(
+                [0.8, 3.0],
+                {
+                    "type": "crossfade",
+                    "duration": 0.5,
+                    "fade_in": True,
+                    "fade_out": True,
+                },
+            )
+
     def test_given_type_mismatched_source_when_validate_manifest_then_raises(
         self, tmp_path
     ):
@@ -361,3 +474,19 @@ class TestAssembleVideo:
         args, kwargs = run_mock.call_args
         assert isinstance(args[0], list)
         assert kwargs.get("shell") is not True
+
+    def test_given_command_override_when_required_then_returns_override(
+        self, monkeypatch, mocker
+    ):
+        # Arrange
+        monkeypatch.setenv("FFMPEG_COMMAND", "/opt/tools/ffmpeg-full")
+        which_mock = mocker.patch(
+            "assemble_video.shutil.which", return_value="/opt/tools/ffmpeg-full"
+        )
+
+        # Act
+        result = assemble_video._require_command("ffmpeg")
+
+        # Assert
+        assert result == "/opt/tools/ffmpeg-full"
+        which_mock.assert_called_once_with("/opt/tools/ffmpeg-full")

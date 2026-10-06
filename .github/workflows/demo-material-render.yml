@@ -32,10 +32,11 @@ permissions: {}
 
 env:
   PIPER_VERSION: '1.8.0'
-  PIPER_VOICE: en_US-joe-medium
-  PIPER_VOICE_BASE: https://huggingface.co/rhasspy/piper-voices/resolve/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/joe/medium
-  PIPER_VOICE_ONNX_SHA256: 58afce0321b8d9c46d7cdf9c16500cc55a793b4220212dba6b70fb788b3baf06
-  PIPER_VOICE_JSON_SHA256: 3d6d5410b3795cb1950595247ef8f06190719e6fdbfa3a2356d8ec368e1aad33
+  PIPER_VOICE: en_US-norman-medium
+  PIPER_VOICE_BASE: https://huggingface.co/rhasspy/piper-voices/resolve/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/norman/medium
+  PIPER_VOICE_ONNX_SHA256: b9739443232a80a59c7d18810dd856899bf16a7964725f5ab81ea49b1351cb71
+  PIPER_VOICE_JSON_SHA256: 6c2db7f558a4a8deb9fe822583c1c5105f6c4e834dd0f9de8ad17a888ee9fe1d
+  PIPER_VOICE_MODEL_CARD_SHA256: 60eaf4d10009d1bd4a1aa555d337dae00f60421d72fee415b9139a021e7cb5d0
   VSCODE_CLI_URL: https://vscode.download.prss.microsoft.com/dbazure/download/stable/2242ebbb54efeeb0129e08e919e7e8d43033cd83/vscode_cli_linux_x64_cli.tar.gz
   VSCODE_CLI_SHA256: 651bc54695531375589c837b907a4e784bc2892076592e2464da12ead994d4bd
   # A bundle older than this is re-uploaded so it never reaches the 90-day artifact expiry.
@@ -47,7 +48,7 @@ jobs:
     name: Resolve render inputs
     runs-on: ubuntu-latest
     permissions:
-      actions: read
+      actions: write
       contents: read
     outputs:
       mode: ${{ steps.resolve.outputs.mode }}
@@ -75,6 +76,43 @@ jobs:
             --artifact-prefix demo-material-site \
             --exclude-run-id "${GITHUB_RUN_ID}" --github-output "${GITHUB_OUTPUT}"
 
+      - name: Find the latest render index
+        id: retry-index
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 "${LOOKUP}" find --workflow demo-material-render.yml \
+            --artifact-prefix demo-material-index \
+            --exclude-run-id "${GITHUB_RUN_ID}" --github-output "${GITHUB_OUTPUT}"
+
+      - name: Download the latest render index
+        if: ${{ steps.retry-index.outputs.artifact-id != '' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ steps.retry-index.outputs.artifact-id }}
+          run-id: ${{ steps.retry-index.outputs.run-id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/retry-index
+
+      - name: Recover the published render index
+        if: ${{ steps.retry-index.outputs.artifact-id == '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "${LOOKUP}" recover --index-only \
+            --target "${RUNNER_TEMP}/retry-index"
+
+      - name: Select failed or unpublished levels
+        id: retry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "${LOOKUP}" retry-levels \
+            --index "${RUNNER_TEMP}/retry-index/index.json" \
+            --github-output "${GITHUB_OUTPUT}"
+
       # Pages keeps the last published bundle after every artifact has expired.
       - name: Check for a published bundle to recover
         id: published
@@ -92,6 +130,7 @@ jobs:
           DISPATCH_AUTHOR_RUN_ID: ${{ inputs.author-run-id }}
           PREVIOUS_CREATED_AT: ${{ steps.previous.outputs.created-at }}
           PUBLISHED_STATUS: ${{ steps.published.outputs.status }}
+          RETRY_LEVELS: ${{ steps.retry.outputs.levels }}
         with:
           script: |
             const refreshAfterMs = Number(process.env.REFRESH_AFTER_DAYS) * 86400000;
@@ -141,6 +180,22 @@ jobs:
               core.setOutput("source-sha", authorRun.head_sha);
               core.setOutput("author-run-id", String(authorRun.id));
               core.setOutput("content-artifact-id", String(content.id));
+              return;
+            }
+
+            const retryLevels = process.env.RETRY_LEVELS.trim();
+            if (context.eventName === "schedule" && retryLevels) {
+              if (!/^L[1-4]00(?: L[1-4]00)*$/.test(retryLevels)) {
+                throw new Error(`invalid retry levels: ${retryLevels}`);
+              }
+              await github.rest.actions.createWorkflowDispatch({
+                ...context.repo,
+                workflow_id: "demo-material-author.lock.yml",
+                ref: defaultBranch,
+                inputs: { levels: retryLevels, force: "true" },
+              });
+              core.notice(`Dispatched forced authoring for: ${retryLevels}`);
+              core.setOutput("mode", "skip");
               return;
             }
 
@@ -270,9 +325,12 @@ jobs:
             --output "${PIPER_VOICE}.onnx" "${PIPER_VOICE_BASE}/${PIPER_VOICE}.onnx"
           curl --fail --location --silent --show-error \
             --output "${PIPER_VOICE}.onnx.json" "${PIPER_VOICE_BASE}/${PIPER_VOICE}.onnx.json"
-          printf '%s  %s\n%s  %s\n' \
+          curl --fail --location --silent --show-error \
+            --output MODEL_CARD "${PIPER_VOICE_BASE}/MODEL_CARD"
+          printf '%s  %s\n%s  %s\n%s  %s\n' \
             "${PIPER_VOICE_ONNX_SHA256}" "${PIPER_VOICE}.onnx" \
-            "${PIPER_VOICE_JSON_SHA256}" "${PIPER_VOICE}.onnx.json" | sha256sum --check
+            "${PIPER_VOICE_JSON_SHA256}" "${PIPER_VOICE}.onnx.json" \
+            "${PIPER_VOICE_MODEL_CARD_SHA256}" MODEL_CARD | sha256sum --check
 
       - name: Install Chromium for the HTML deck check and live capture
         shell: bash

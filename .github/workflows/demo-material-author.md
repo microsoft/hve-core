@@ -178,7 +178,7 @@ assemble video here.
 * `topic: hve-core-general`, `autonomy: full`, `narration: piper`
 * `capture`: the level default (`deck-export` for L100 and L200, `live` for
   L300 and L400)
-* Narration voice: `en_US-joe-medium`
+* Narration voice: `en_US-norman-medium`
 
 If the level list is empty, call `noop` with the message "No level sources
 changed." and stop.
@@ -211,7 +211,8 @@ For each level in the level list, work in
 2. Set the narration word budget from the curriculum's narration budget before
    writing any speaker note, and keep the notes inside it. The measured
    duration of the rendered MP4 is scored against the level's duration
-   contract, so a budget miss fails the level.
+  contract, so a budget miss fails the level. For L400, target about 10.5
+  minutes and 1,850 narration words rather than the 10-minute lower boundary.
 3. Copy `templates/style.yaml` to `content/global/style.yaml` and change only
    the four substitutable fields. Use only the pinned palette colours in every
    `content.yaml` element as well; the render job fails any other colour.
@@ -229,7 +230,7 @@ For each level in the level list, work in
    create the image; the render job captures it.
 6. Write `manifest.yml` from the output contract's schema with
    `autonomy: full`, `narration.engine: piper`, `narration.provider: Piper`,
-   `narration.voice: en_US-joe-medium`, and
+  `narration.voice: en_US-norman-medium`, and
    `narration.speech_region: not-applicable`. Score the content criteria you can
    judge from sources (T-01, T-02, T-03). Record T-04 through T-09 as `deferred`
    with the evidence "scored by the render job", set

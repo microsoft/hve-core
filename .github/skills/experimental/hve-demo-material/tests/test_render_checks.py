@@ -3,6 +3,8 @@
 """Tests for render_checks module."""
 
 import json
+import os
+import shutil
 import subprocess
 import wave
 import zipfile
@@ -29,10 +31,12 @@ from render_checks import (
     measure_minutes,
     normalized_text,
     on_screen_text,
+    open_caption_evidence_problems,
     parse_curriculum,
     parse_webvtt,
     style_metadata,
     subtitle_languages,
+    verify_open_captions,
 )
 
 _MINI_CURRICULUM = """# Curriculum
@@ -265,6 +269,10 @@ class TestBuildSegments:
 
         # Assert
         assert "output: ./hve-demo-L100.mp4" in text
+        assert "type: crossfade" in text
+        assert "duration: 0.5" in text
+        assert "fade_in: true" in text
+        assert "fade_out: true" in text
         assert "visual: ../frames/deck/slide-002.jpg" in text
         assert "narration: ../audio/slide-001.wav" in text
 
@@ -386,6 +394,7 @@ class TestEvaluate:
     @pytest.fixture(autouse=True)
     def _english_subtitles(self, mocker):
         mocker.patch("render_checks.subtitle_languages", return_value=["eng"])
+        mocker.patch("render_checks.open_caption_evidence_problems", return_value=[])
 
     @pytest.mark.parametrize("probe", [measure_minutes, subtitle_languages])
     def test_given_no_ffprobe_when_probed_then_none(self, tmp_path, mocker, probe):
@@ -554,6 +563,251 @@ class TestCaptions:
         assert len(cues) > 1
         assert all(len(line) <= 60 for cue in cues for line in cue.splitlines())
 
+    def test_given_crossfade_when_built_then_cues_follow_overlapped_timeline(
+        self, tmp_path
+    ):
+        # Arrange
+        _write_slides(tmp_path, 2, notes="First sentence. Second sentence.")
+        output = tmp_path / "output"
+        output.mkdir()
+        (output / "segments.yml").write_text(
+            "transition:\n"
+            "  type: crossfade\n"
+            "  duration: 0.5\n"
+            "segments:\n"
+            "  - narration: ../audio/slide-001.wav\n"
+            "  - narration: ../audio/slide-002.wav\n",
+            encoding="utf-8",
+        )
+
+        # Act
+        cues = parse_webvtt(build_captions(tmp_path))
+
+        # Assert
+        assert cues[2][0] == pytest.approx(1.5)
+        assert cues[-1][1] == pytest.approx(3.5)
+
+
+class TestAccessibleVideoFinalizer:
+    """Tests for the portable accessible-media finalizer."""
+
+    def test_given_authored_level_when_finalized_then_captions_are_visible(
+        self, tmp_path
+    ):
+        # Arrange
+        script = (
+            Path(__file__).resolve().parents[1]
+            / "scripts"
+            / "finalize-accessible-video.sh"
+        )
+        prerequisite_check = subprocess.run(
+            ["bash", str(script), "--check-prerequisites"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if prerequisite_check.returncode != 0:
+            pytest.skip(prerequisite_check.stderr.strip())
+        tools = {
+            name: value
+            for line in prerequisite_check.stdout.splitlines()
+            for name, value in [line.split("=", 1)]
+        }
+        ffmpeg = tools["ffmpeg"]
+        ffprobe = tools["ffprobe"]
+        _write_slides(tmp_path, 1, notes="These captions must be visible.")
+        output = tmp_path / "output"
+        output.mkdir()
+        video = output / "hve-demo-L100.mp4"
+        subprocess.run(
+            [
+                ffmpeg,
+                "-y",
+                "-v",
+                "error",
+                "-f",
+                "lavfi",
+                "-i",
+                "color=c=black:s=640x360:r=24:d=2",
+                "-f",
+                "lavfi",
+                "-i",
+                "anullsrc=r=8000:cl=mono",
+                "-t",
+                "2",
+                "-c:v",
+                "libx264",
+                "-pix_fmt",
+                "yuv420p",
+                "-c:a",
+                "aac",
+                str(video),
+            ],
+            check=True,
+        )
+        source = tmp_path / "source.mp4"
+        shutil.copyfile(video, source)
+        # Act
+        subprocess.run(
+            ["bash", str(script), "--level", "L100", "--level-dir", str(tmp_path)],
+            check=True,
+        )
+
+        # Assert
+        streams = json.loads(
+            subprocess.run(
+                [
+                    ffprobe,
+                    "-v",
+                    "error",
+                    "-show_entries",
+                    "stream=codec_type,codec_name:stream_tags=language",
+                    "-of",
+                    "json",
+                    str(video),
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout
+        )["streams"]
+        assert any(
+            stream.get("codec_type") == "subtitle"
+            and stream.get("codec_name") == "mov_text"
+            and stream.get("tags", {}).get("language") == "eng"
+            for stream in streams
+        )
+        assert (
+            open_caption_evidence_problems(
+                video,
+                output / "hve-demo-L100.vtt",
+                output / "open-captions.json",
+            )
+            == []
+        )
+        pixels = subprocess.run(
+            [
+                ffmpeg,
+                "-v",
+                "error",
+                "-ss",
+                "1",
+                "-i",
+                str(video),
+                "-frames:v",
+                "1",
+                "-vf",
+                "crop=iw:ih/3:0:2*ih/3,signalstats,metadata=mode=print:file=-",
+                "-f",
+                "null",
+                "-",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        ymax = next(
+            int(line.rsplit("=", 1)[1])
+            for line in pixels.splitlines()
+            if line.startswith("lavfi.signalstats.YMAX=")
+        )
+        assert ymax > 100
+        assert (output / "hve-demo-L100.vtt").is_file()
+        assert (output / "index.html").is_file()
+        first_render = video.read_bytes()
+
+        subprocess.run(
+            ["bash", str(script), "--level", "L100", "--level-dir", str(tmp_path)],
+            check=True,
+        )
+
+        assert video.read_bytes() == first_render
+
+        control = tmp_path / "uncaptioned-control.mp4"
+        candidate = tmp_path / "uncaptioned-candidate.mp4"
+        for target in (control, candidate):
+            subprocess.run(
+                [
+                    ffmpeg,
+                    "-y",
+                    "-v",
+                    "error",
+                    "-i",
+                    str(source),
+                    "-map",
+                    "0:v:0",
+                    "-map",
+                    "0:a?",
+                    "-c:v",
+                    "libx264",
+                    "-preset",
+                    "medium",
+                    "-crf",
+                    "18",
+                    "-c:a",
+                    "copy",
+                    str(target),
+                ],
+                check=True,
+            )
+
+        with pytest.raises(CheckError, match="visible frame difference"):
+            verify_open_captions(
+                control,
+                candidate,
+                output / "hve-demo-L100.vtt",
+                output / "false-evidence.json",
+            )
+
+    def test_given_invalid_override_when_checked_then_reports_it(self):
+        # Arrange
+        script = (
+            Path(__file__).resolve().parents[1]
+            / "scripts"
+            / "finalize-accessible-video.sh"
+        )
+        environment = {**os.environ, "FFMPEG_COMMAND": "/missing/ffmpeg"}
+
+        # Act
+        result = subprocess.run(
+            ["bash", str(script), "--check-prerequisites"],
+            capture_output=True,
+            text=True,
+            env=environment,
+            check=False,
+        )
+
+        # Assert
+        assert result.returncode == 1
+        assert "FFMPEG_COMMAND does not resolve" in result.stderr
+
+    def test_given_unusable_ffprobe_override_when_checked_then_reports_it(
+        self, tmp_path
+    ):
+        # Arrange
+        script = (
+            Path(__file__).resolve().parents[1]
+            / "scripts"
+            / "finalize-accessible-video.sh"
+        )
+        fake_probe = tmp_path / "ffprobe"
+        fake_probe.write_text("#!/usr/bin/env bash\nexit 1\n", encoding="utf-8")
+        fake_probe.chmod(0o755)
+        environment = {**os.environ, "FFPROBE_COMMAND": str(fake_probe)}
+
+        # Act
+        result = subprocess.run(
+            ["bash", str(script), "--check-prerequisites"],
+            capture_output=True,
+            text=True,
+            env=environment,
+            check=False,
+        )
+
+        # Assert
+        assert result.returncode == 1
+        assert "FFPROBE_COMMAND is not a usable" in result.stderr
+
 
 class TestTranscriptPage:
     """Tests for build_transcript_page."""
@@ -638,12 +892,24 @@ class TestAccessibilityDelivery:
             build_transcript_page("L100", tmp_path), encoding="utf-8"
         )
         mocker.patch("render_checks.subtitle_languages", return_value=list(languages))
+        mocker.patch("render_checks.open_caption_evidence_problems", return_value=[])
         return tmp_path
 
     def test_given_complete_delivery_when_scored_then_pass(self, tmp_path, mocker):
         level_dir = self._level(tmp_path, mocker)
 
         assert check_accessibility("L100", level_dir)["result"] == "pass"
+
+    def test_given_soft_captions_only_when_scored_then_fail(self, tmp_path, mocker):
+        level_dir = self._level(tmp_path, mocker)
+        mocker.patch(
+            "render_checks.open_caption_evidence_problems",
+            return_value=["open-caption verification evidence missing"],
+        )
+
+        result = check_accessibility("L100", level_dir)
+
+        assert "open-caption verification evidence missing" in result["evidence"]
 
     @pytest.mark.parametrize("languages", [(), ("deu",)])
     def test_given_mp4_without_english_subtitles_when_scored_then_fail(

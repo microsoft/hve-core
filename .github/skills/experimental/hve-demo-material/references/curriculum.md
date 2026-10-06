@@ -62,6 +62,9 @@ Apply the budget this way:
 * Record the produced word count and measured duration in the manifest as
   `narration.total_word_count` and `narration.measured_duration_minutes`, so a
   later run recomputes the rate from evidence instead of re-deriving it.
+* For unattended L400 authoring, target about 10.5 minutes and 1,850 words.
+  This stays near the middle of the allowed word range and avoids publishing at
+  the 10-minute boundary when a voice's natural rate varies.
 
 The measured rate assumes narration was synthesized with newline collapsing in
 effect. Speaker notes written as YAML block scalars are synthesized with the
@@ -69,9 +72,9 @@ effect. Speaker notes written as YAML block scalars are synthesized with the
 wrap in a block scalar is otherwise spoken as a pause and inflates the duration
 without adding a single word.
 
-The same budget applies under `narration: piper`. The same L100 notes ran 284
-seconds with the Azure voice and 285 seconds with Piper's default
-`en_US-joe-medium` voice at its natural rate.
+The same budget applies under `narration: piper`, but natural speaking rate
+varies by voice. Treat the word budget as a planning aid and keep the measured
+duration as the acceptance evidence.
 
 The narration is also the video's audio description. Write speaker notes that
 voice every claim a slide shows and describe every live capture in words, so a

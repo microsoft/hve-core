@@ -12,6 +12,7 @@ from artifact_lookup import (
     find_artifact,
     main,
     recover_site,
+    retry_levels,
 )
 
 NOW = datetime(2026, 9, 28, tzinfo=timezone.utc)
@@ -150,6 +151,8 @@ def _published(levels=("L100",)):
                 "files": {
                     "pptx": f"{level}/hve-demo-{level}.pptx",
                     "mp4": f"{level}/hve-demo-{level}.mp4",
+                    "vtt": f"{level}/hve-demo-{level}.vtt",
+                    "html": f"{level}/hve-demo-{level}.html",
                     "page": f"{level}/index.html",
                 }
             }
@@ -227,3 +230,52 @@ class TestRecoverSite:
 
         assert result["files"] == 1
         assert not (tmp_path / "L100").exists()
+
+
+class TestRetryLevels:
+    def test_given_complete_levels_when_selected_then_none_retry(self):
+        # Arrange
+        index = json.loads(
+            next(iter(_published(("L100", "L200", "L300", "L400")).values()))
+        )
+
+        # Act
+        result = retry_levels(index)
+
+        # Assert
+        assert result == []
+
+    def test_given_failed_and_unpublished_levels_when_selected_then_both_retry(self):
+        # Arrange
+        index = json.loads(next(iter(_published(("L100", "L200", "L300")).values())))
+        index["levels"]["L300"]["last_failed_attempt"] = {"checks": {}}
+
+        # Act
+        result = retry_levels(index)
+
+        # Assert
+        assert result == ["L300", "L400"]
+
+    def test_given_retry_cli_when_run_then_writes_space_separated_levels(
+        self, tmp_path, capsys
+    ):
+        # Arrange
+        index_path = tmp_path / "index.json"
+        index_path.write_bytes(_published(("L100",))[f"{SITE}demo-material/index.json"])
+        output = tmp_path / "out"
+
+        # Act
+        code = main(
+            [
+                "retry-levels",
+                "--index",
+                str(index_path),
+                "--github-output",
+                str(output),
+            ]
+        )
+
+        # Assert
+        assert code == 0
+        assert output.read_text(encoding="utf-8") == "levels=L200 L300 L400\n"
+        assert json.loads(capsys.readouterr().out) == {"levels": "L200 L300 L400"}
