@@ -57,7 +57,8 @@ jobs:
           fi
 
       # SARIF mode exits 0 with findings, so a non-zero exit is a tool failure.
-      # Online audits use this job's read-only token.
+      # Online audits use this job's read-only token. --no-ignores disables inline
+      # "zizmor: ignore" comments, so the exception register is the only exception path.
       - name: Run zizmor at the pedantic persona
         shell: bash
         env:
@@ -65,7 +66,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p logs
-          zizmor --persona pedantic --format sarif --no-progress . > logs/zizmor.sarif
+          zizmor --persona pedantic --no-ignores --format sarif --no-progress . > logs/zizmor.sarif
 
       # Uploading needs security-events: write, which a fork pull request never
       # receives. Skip the step for forks rather than attempt it; the gate below
